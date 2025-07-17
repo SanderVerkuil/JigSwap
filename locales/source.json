@@ -126,6 +126,8 @@
     "notesPlaceholder": "Any additional notes about this puzzle"
   },
   "trades": {
+    "title": "Trades",
+    "subtitle": "Manage your trade requests and exchanges",
     "pending": "Pending",
     "accepted": "Accepted",
     "declined": "Declined",
@@ -135,7 +137,25 @@
     "acceptTrade": "Accept Trade",
     "declineTrade": "Decline Trade",
     "completeTrade": "Complete Trade",
-    "cancelTrade": "Cancel Trade"
+    "cancelTrade": "Cancel Trade",
+    "incoming": "Incoming",
+    "outgoing": "Outgoing",
+    "allStatuses": "All Statuses",
+    "noTrades": "No trades yet",
+    "noTradesDescription": "Start browsing puzzles to make your first trade request",
+    "tradeRequest": "Trade Request",
+    "yourRequest": "Your Request",
+    "theyWant": "They Want",
+    "youWant": "You Want",
+    "theyOffer": "They Offer",
+    "youOffer": "You Offer",
+    "from": "From",
+    "to": "To",
+    "accept": "Accept",
+    "decline": "Decline",
+    "cancel": "Cancel",
+    "markComplete": "Mark Complete",
+    "message": "Message"
   },
   "messages": {
     "sendMessage": "Send Message",

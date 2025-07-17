@@ -305,3 +305,195 @@ export const getTradeMessages = query({
     return messagesWithSenders.sort((a, b) => a.createdAt - b.createdAt);
   },
 });
+
+// Get trade requests by owner
+export const getTradeRequestsByOwner = query({
+  args: { ownerId: v.id("users") },
+  handler: async (ctx, args) => {
+    const tradeRequests = await ctx.db
+      .query("tradeRequests")
+      .withIndex("by_owner", (q) => q.eq("ownerId", args.ownerId))
+      .collect();
+
+    // Get related data for each trade request
+    const enrichedTradeRequests = await Promise.all(
+      tradeRequests.map(async (tr) => {
+        const [requester, owner, ownerPuzzle, requesterPuzzle] = await Promise.all([
+          ctx.db.get(tr.requesterId),
+          ctx.db.get(tr.ownerId),
+          ctx.db.get(tr.ownerPuzzleId),
+          tr.requesterPuzzleId ? ctx.db.get(tr.requesterPuzzleId) : null,
+        ]);
+
+        return {
+          ...tr,
+          requester,
+          owner,
+          ownerPuzzle,
+          requesterPuzzle,
+        };
+      })
+    );
+
+    return enrichedTradeRequests.sort((a, b) => b.createdAt - a.createdAt);
+  },
+});
+
+// Get trade requests by requester
+export const getTradeRequestsByRequester = query({
+  args: { requesterId: v.id("users") },
+  handler: async (ctx, args) => {
+    const tradeRequests = await ctx.db
+      .query("tradeRequests")
+      .withIndex("by_requester", (q) => q.eq("requesterId", args.requesterId))
+      .collect();
+
+    // Get related data for each trade request
+    const enrichedTradeRequests = await Promise.all(
+      tradeRequests.map(async (tr) => {
+        const [requester, owner, ownerPuzzle, requesterPuzzle] = await Promise.all([
+          ctx.db.get(tr.requesterId),
+          ctx.db.get(tr.ownerId),
+          ctx.db.get(tr.ownerPuzzleId),
+          tr.requesterPuzzleId ? ctx.db.get(tr.requesterPuzzleId) : null,
+        ]);
+
+        return {
+          ...tr,
+          requester,
+          owner,
+          ownerPuzzle,
+          requesterPuzzle,
+        };
+      })
+    );
+
+    return enrichedTradeRequests.sort((a, b) => b.createdAt - a.createdAt);
+  },
+});
+
+// Accept trade request
+export const acceptTradeRequest = mutation({
+  args: { tradeRequestId: v.id("tradeRequests") },
+  handler: async (ctx, args) => {
+    const tradeRequest = await ctx.db.get(args.tradeRequestId);
+    if (!tradeRequest) {
+      throw new Error("Trade request not found");
+    }
+
+    await ctx.db.patch(args.tradeRequestId, {
+      status: "accepted",
+      updatedAt: Date.now(),
+    });
+
+    // Create notification for the requester
+    await ctx.db.insert("notifications", {
+      userId: tradeRequest.requesterId,
+      type: "trade_accepted",
+      title: "Trade Accepted",
+      message: "Your trade request has been accepted!",
+      relatedId: args.tradeRequestId,
+      isRead: false,
+      createdAt: Date.now(),
+    });
+  },
+});
+
+// Decline trade request
+export const declineTradeRequest = mutation({
+  args: {
+    tradeRequestId: v.id("tradeRequests"),
+    responseMessage: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const tradeRequest = await ctx.db.get(args.tradeRequestId);
+    if (!tradeRequest) {
+      throw new Error("Trade request not found");
+    }
+
+    await ctx.db.patch(args.tradeRequestId, {
+      status: "declined",
+      responseMessage: args.responseMessage,
+      updatedAt: Date.now(),
+    });
+
+    // Create notification for the requester
+    await ctx.db.insert("notifications", {
+      userId: tradeRequest.requesterId,
+      type: "trade_declined",
+      title: "Trade Declined",
+      message: "Your trade request has been declined",
+      relatedId: args.tradeRequestId,
+      isRead: false,
+      createdAt: Date.now(),
+    });
+  },
+});
+
+// Complete trade request
+export const completeTradeRequest = mutation({
+  args: {
+    tradeRequestId: v.id("tradeRequests"),
+    actualTradeDate: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const tradeRequest = await ctx.db.get(args.tradeRequestId);
+    if (!tradeRequest) {
+      throw new Error("Trade request not found");
+    }
+
+    await ctx.db.patch(args.tradeRequestId, {
+      status: "completed",
+      actualTradeDate: args.actualTradeDate || Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    // Mark puzzles as unavailable
+    await ctx.db.patch(tradeRequest.ownerPuzzleId, { isAvailable: false });
+    if (tradeRequest.requesterPuzzleId) {
+      await ctx.db.patch(tradeRequest.requesterPuzzleId, { isAvailable: false });
+    }
+
+    // Create notification for the other party
+    const notificationUserId = tradeRequest.requesterId === tradeRequest.requesterId
+      ? tradeRequest.ownerId
+      : tradeRequest.requesterId;
+
+    await ctx.db.insert("notifications", {
+      userId: notificationUserId,
+      type: "trade_completed",
+      title: "Trade Completed",
+      message: "Trade has been marked as completed",
+      relatedId: args.tradeRequestId,
+      isRead: false,
+      createdAt: Date.now(),
+    });
+  },
+});
+
+// Cancel trade request
+export const cancelTradeRequest = mutation({
+  args: { tradeRequestId: v.id("tradeRequests") },
+  handler: async (ctx, args) => {
+    const tradeRequest = await ctx.db.get(args.tradeRequestId);
+    if (!tradeRequest) {
+      throw new Error("Trade request not found");
+    }
+
+    await ctx.db.patch(args.tradeRequestId, {
+      status: "cancelled",
+      updatedAt: Date.now(),
+    });
+
+    // Create notification for the owner
+    await ctx.db.insert("notifications", {
+      userId: tradeRequest.ownerId,
+      type: "trade_cancelled",
+      title: "Trade Cancelled",
+      message: "Trade request has been cancelled",
+      relatedId: args.tradeRequestId,
+      isRead: false,
+      createdAt: Date.now(),
+    });
+  },
+});
