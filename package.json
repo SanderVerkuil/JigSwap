@@ -4,15 +4,15 @@
   "private": true,
   "packageManager": "pnpm@9.15.2",
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
+    "dev": "nx next:dev --turbopack",
+    "build": "nx next:build",
+    "start": "nx next:start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "type-check": "tsc --noEmit",
-    "build:analyze": "ANALYZE=true next build",
-    "build:production": "NODE_ENV=production next build",
-    "preview": "next build && next start",
+    "build:analyze": "ANALYZE=true nx next:build",
+    "build:production": "NODE_ENV=production nx next:build",
+    "preview": "nx next:build && nx next:start",
     "clean": "rm -rf .next out dist",
     "convex:dev": "convex dev",
     "convex:deploy": "convex deploy",
@@ -35,6 +35,8 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-switch": "^1.1.2",
     "@radix-ui/react-toast": "^1.2.4",
+    "@swc-node/core": "^1.13.3",
+    "@swc-node/register": "^1.10.10",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "convex": "^1.19.0",
@@ -51,6 +53,8 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@nx/eslint": "21.2.4",
+    "@nx/next": "21.2.4",
     "@tailwindcss/postcss": "^4",
     "@types/negotiator": "^0.6.4",
     "@types/node": "^20",
@@ -58,7 +62,9 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.4.1",
+    "nx": "21.2.4",
     "tailwindcss": "^4",
     "typescript": "^5"
-  }
+  },
+  "nx": {}
 }
