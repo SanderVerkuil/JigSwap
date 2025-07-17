@@ -4,6 +4,8 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ClerkClientProvider } from "@/lib/clerk-provider";
 import { ConvexClientProvider } from "@/lib/convex-provider";
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages } from 'next-intl/server';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -38,24 +40,29 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Providing all messages to the client side
+  const messages = await getMessages();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
-        <ClerkClientProvider>
-          <ConvexClientProvider>
-            <ThemeProvider
-              defaultTheme="system"
-              storageKey="jigswap-ui-theme"
-            >
-              {children}
-            </ThemeProvider>
-          </ConvexClientProvider>
-        </ClerkClientProvider>
+        <NextIntlClientProvider messages={messages}>
+          <ClerkClientProvider>
+            <ConvexClientProvider>
+              <ThemeProvider
+                defaultTheme="system"
+                storageKey="jigswap-ui-theme"
+              >
+                {children}
+              </ThemeProvider>
+            </ConvexClientProvider>
+          </ClerkClientProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

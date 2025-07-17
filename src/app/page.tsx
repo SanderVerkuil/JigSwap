@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { Puzzle, Users, Recycle, Star, ArrowRight } from "lucide-react";
+import { useTranslations } from 'next-intl';
 
 export default function HomePage() {
+  const t = useTranslations();
+  
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -14,12 +18,13 @@ export default function HomePage() {
             <span className="text-xl font-bold text-jigsaw-primary">JigSwap</span>
           </div>
           <div className="flex items-center space-x-4">
+            <LanguageSwitcher />
             <ThemeToggle />
             <Link href="/sign-in">
-              <Button variant="ghost">Sign In</Button>
+              <Button variant="ghost">{t('navigation.signIn')}</Button>
             </Link>
             <Link href="/sign-up">
-              <Button variant="jigsaw">Get Started</Button>
+              <Button variant="jigsaw">{t('navigation.signUp')}</Button>
             </Link>
           </div>
         </div>
@@ -29,23 +34,21 @@ export default function HomePage() {
       <section className="py-20 px-4">
         <div className="container mx-auto text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-6">
-            Trade Jigsaw Puzzles with{" "}
-            <span className="text-jigsaw-primary">Fellow Enthusiasts</span>
+            {t('home.title')}
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Connect with puzzle lovers worldwide. Trade your completed puzzles, 
-            discover new challenges, and make the hobby more sustainable.
+            {t('home.subtitle')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/sign-up">
               <Button size="lg" variant="jigsaw" className="w-full sm:w-auto">
-                Start Trading
+                {t('home.startTrading')}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
             <Link href="/browse">
               <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                Browse Puzzles
+                {t('home.browsePuzzles')}
               </Button>
             </Link>
           </div>
