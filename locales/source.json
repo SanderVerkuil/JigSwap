@@ -1,0 +1,131 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "next": "Next",
+    "previous": "Previous",
+    "close": "Close"
+  },
+  "navigation": {
+    "home": "Home",
+    "browse": "Browse Puzzles",
+    "myPuzzles": "My Puzzles",
+    "trades": "Trades",
+    "profile": "Profile",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out"
+  },
+  "home": {
+    "title": "Trade Jigsaw Puzzles with Fellow Enthusiasts",
+    "subtitle": "Connect with puzzle lovers worldwide. Trade your completed puzzles, discover new challenges, and make the hobby more sustainable.",
+    "startTrading": "Start Trading",
+    "browsePuzzles": "Browse Puzzles",
+    "whyChoose": "Why Choose JigSwap?",
+    "howItWorks": "How It Works",
+    "readyToStart": "Ready to Start Trading?",
+    "joinThousands": "Join thousands of puzzle enthusiasts already trading on JigSwap",
+    "createAccount": "Create Your Account"
+  },
+  "features": {
+    "vastCollection": {
+      "title": "Vast Collection",
+      "description": "Access thousands of puzzles from fellow enthusiasts. Find rare pieces and discover new favorites."
+    },
+    "communityDriven": {
+      "title": "Community Driven",
+      "description": "Join a passionate community of puzzle lovers. Share experiences and build lasting connections."
+    },
+    "sustainable": {
+      "title": "Sustainable",
+      "description": "Reduce waste by giving puzzles a second life. Make your hobby more environmentally friendly."
+    }
+  },
+  "steps": {
+    "listPuzzles": {
+      "title": "List Your Puzzles",
+      "description": "Upload photos and details of puzzles you've completed and want to trade."
+    },
+    "browseDiscover": {
+      "title": "Browse & Discover",
+      "description": "Explore puzzles from other users and find ones you'd love to try."
+    },
+    "makeTrade": {
+      "title": "Make a Trade",
+      "description": "Send trade requests and negotiate exchanges with other users."
+    },
+    "enjoyReview": {
+      "title": "Enjoy & Review",
+      "description": "Complete your new puzzle and leave reviews to build trust in the community."
+    }
+  },
+  "auth": {
+    "welcomeBack": "Welcome back to the puzzle trading community",
+    "joinCommunity": "Join the puzzle trading community",
+    "signInToAccount": "Sign in to your account",
+    "createNewAccount": "Create a new account"
+  },
+  "puzzles": {
+    "title": "Title",
+    "description": "Description",
+    "brand": "Brand",
+    "pieceCount": "Piece Count",
+    "difficulty": "Difficulty",
+    "condition": "Condition",
+    "category": "Category",
+    "tags": "Tags",
+    "owner": "Owner",
+    "available": "Available",
+    "unavailable": "Unavailable",
+    "completed": "Completed",
+    "addPuzzle": "Add Puzzle",
+    "editPuzzle": "Edit Puzzle",
+    "deletePuzzle": "Delete Puzzle",
+    "requestTrade": "Request Trade"
+  },
+  "trades": {
+    "pending": "Pending",
+    "accepted": "Accepted",
+    "declined": "Declined",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "newRequest": "New Trade Request",
+    "acceptTrade": "Accept Trade",
+    "declineTrade": "Decline Trade",
+    "completeTrade": "Complete Trade",
+    "cancelTrade": "Cancel Trade"
+  },
+  "messages": {
+    "sendMessage": "Send Message",
+    "typeMessage": "Type your message...",
+    "noMessages": "No messages yet",
+    "newMessage": "New Message"
+  },
+  "profile": {
+    "editProfile": "Edit Profile",
+    "username": "Username",
+    "bio": "Bio",
+    "location": "Location",
+    "language": "Language",
+    "puzzlesOwned": "Puzzles Owned",
+    "tradesCompleted": "Trades Completed",
+    "averageRating": "Average Rating",
+    "reviews": "Reviews"
+  },
+  "footer": {
+    "tagline": "Making jigsaw puzzle trading accessible and sustainable for everyone.",
+    "about": "About",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "contact": "Contact"
+  }
+}
