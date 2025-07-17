@@ -39,10 +39,11 @@ export const puzzleSchema = z.object({
     .optional(),
   
   tags: z
-    .string()
+    .union([z.string(), z.array(z.string())])
     .optional()
     .transform((val) => {
       if (!val) return [];
+      if (Array.isArray(val)) return val;
       return val
         .split(",")
         .map((tag) => tag.trim())

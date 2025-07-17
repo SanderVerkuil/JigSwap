@@ -120,6 +120,7 @@ export default defineSchema({
       v.literal("trade_accepted"),
       v.literal("trade_declined"),
       v.literal("trade_completed"),
+      v.literal("trade_cancelled"),
       v.literal("message_received"),
       v.literal("review_received"),
       v.literal("puzzle_favorited")

@@ -13,6 +13,22 @@ import { ArrowLeft } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { puzzleSchema, type PuzzleFormData, transformPuzzleData } from "@/lib/validations";
+
+// Form input type (before validation transformation)
+type PuzzleFormInputs = {
+  title: string;
+  description?: string;
+  brand?: string;
+  pieceCount: number;
+  difficulty?: "easy" | "medium" | "hard" | "expert";
+  condition?: "excellent" | "good" | "fair" | "poor";
+  category?: string;
+  tags: string;
+  isCompleted: boolean;
+  completedDate?: string;
+  acquisitionDate?: string;
+  notes?: string;
+};
 import {
   Form,
   FormControl,
@@ -37,7 +53,7 @@ export default function AddPuzzlePage() {
 
   const createPuzzle = useMutation(api.puzzles.createPuzzle);
 
-  const form = useForm<PuzzleFormData>({
+  const form = useForm<PuzzleFormInputs>({
     resolver: zodResolver(puzzleSchema),
     defaultValues: {
       title: "",
@@ -55,7 +71,7 @@ export default function AddPuzzlePage() {
     },
   });
 
-  const onSubmit = async (data: PuzzleFormData) => {
+  const onSubmit = async (data: PuzzleFormInputs) => {
     if (!convexUser?._id) {
       addToast({
         type: "error",
@@ -66,7 +82,9 @@ export default function AddPuzzlePage() {
     }
 
     try {
-      const transformedData = transformPuzzleData(data);
+      // Validate and transform the data using the schema
+      const validatedData = puzzleSchema.parse(data);
+      const transformedData = transformPuzzleData(validatedData);
       
       await createPuzzle({
         ...transformedData,
