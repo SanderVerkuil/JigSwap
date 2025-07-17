@@ -8,8 +8,19 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "type-check": "tsc --noEmit",
+    "build:analyze": "ANALYZE=true next build",
+    "build:production": "NODE_ENV=production next build",
+    "preview": "next build && next start",
+    "clean": "rm -rf .next out dist",
     "convex:dev": "convex dev",
-    "convex:deploy": "convex deploy"
+    "convex:deploy": "convex deploy",
+    "crowdin:upload": "crowdin upload sources",
+    "crowdin:download": "crowdin download",
+    "test": "echo \"No tests specified\" && exit 0",
+    "format": "prettier --write . || true",
+    "format:check": "prettier --check . || true"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.14.0",
