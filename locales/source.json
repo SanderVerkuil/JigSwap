@@ -197,6 +197,20 @@
       "noActivity": "No recent activity"
     }
   },
+  "browse": {
+    "title": "Browse Puzzles",
+    "subtitle": "Discover amazing puzzles from the community",
+    "puzzlesFound": "puzzles found",
+    "searchPlaceholder": "Search puzzles by title, brand, or description...",
+    "allCategories": "All Categories",
+    "allDifficulties": "All Difficulties",
+    "allConditions": "All Conditions",
+    "minPieces": "Min Pieces",
+    "maxPieces": "Max Pieces",
+    "clearFilters": "Clear Filters",
+    "noPuzzlesFound": "No puzzles found",
+    "tryDifferentFilters": "Try adjusting your search criteria or filters"
+  },
   "footer": {
     "tagline": "Making jigsaw puzzle trading accessible and sustainable for everyone.",
     "about": "About",
