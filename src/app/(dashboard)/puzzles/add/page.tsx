@@ -5,89 +5,89 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Upload, X } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { puzzleSchema, type PuzzleFormData, transformPuzzleData } from "@/lib/validations";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useToast } from "@/components/ui/toast";
 
 export default function AddPuzzlePage() {
   const { user } = useUser();
   const router = useRouter();
   const t = useTranslations("puzzles");
   const tCommon = useTranslations("common");
-  
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    brand: "",
-    pieceCount: "",
-    difficulty: "",
-    condition: "",
-    category: "",
-    tags: "",
-    images: [] as string[],
-    isCompleted: false,
-    completedDate: "",
-    acquisitionDate: "",
-    notes: "",
-  });
+  const { addToast } = useToast();
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const convexUser = useQuery(api.users.getUserByClerkId, 
+  const convexUser = useQuery(api.users.getUserByClerkId,
     user?.id ? { clerkId: user.id } : "skip"
   );
 
   const createPuzzle = useMutation(api.puzzles.createPuzzle);
 
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+  const form = useForm<PuzzleFormData>({
+    resolver: zodResolver(puzzleSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      brand: "",
+      pieceCount: 1000,
+      difficulty: undefined,
+      condition: undefined,
+      category: "",
+      tags: "",
+      isCompleted: false,
+      completedDate: "",
+      acquisitionDate: "",
+      notes: "",
+    },
+  });
 
-  const handleTagsChange = (value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: value
-    }));
-  };
+  const onSubmit = async (data: PuzzleFormData) => {
+    if (!convexUser?._id) {
+      addToast({
+        type: "error",
+        title: "Authentication Error",
+        description: "Please sign in to add a puzzle.",
+      });
+      return;
+    }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!convexUser?._id) return;
-
-    setIsSubmitting(true);
     try {
-      const tagsArray = formData.tags
-        .split(",")
-        .map(tag => tag.trim())
-        .filter(tag => tag.length > 0);
-
+      const transformedData = transformPuzzleData(data);
+      
       await createPuzzle({
-        title: formData.title,
-        description: formData.description || undefined,
-        brand: formData.brand || undefined,
-        pieceCount: parseInt(formData.pieceCount),
-        difficulty: formData.difficulty as any || undefined,
-        condition: formData.condition as any,
-        category: formData.category || undefined,
-        tags: tagsArray.length > 0 ? tagsArray : undefined,
-        images: formData.images,
+        ...transformedData,
         ownerId: convexUser._id,
-        isCompleted: formData.isCompleted,
-        completedDate: formData.completedDate ? new Date(formData.completedDate).getTime() : undefined,
-        acquisitionDate: formData.acquisitionDate ? new Date(formData.acquisitionDate).getTime() : undefined,
-        notes: formData.notes || undefined,
+        images: [], // Will be handled separately for file uploads
+      });
+
+      addToast({
+        type: "success",
+        title: "Puzzle Added",
+        description: "Your puzzle has been successfully added to your collection.",
       });
 
       router.push("/puzzles");
     } catch (error) {
       console.error("Failed to create puzzle:", error);
-    } finally {
-      setIsSubmitting(false);
+      addToast({
+        type: "error",
+        title: "Error",
+        description: "Failed to add puzzle. Please try again.",
+      });
     }
   };
 
@@ -121,217 +121,265 @@ export default function AddPuzzlePage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Basic Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("basicInformation")}</CardTitle>
-            <CardDescription>{t("basicInformationDescription")}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                {t("title")} <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.title}
-                onChange={(e) => handleInputChange("title", e.target.value)}
-                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder={t("titlePlaceholder")}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Basic Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("basicInformation")}</CardTitle>
+              <CardDescription>{t("basicInformationDescription")}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {t("title")} <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder={t("titlePlaceholder")} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                {t("description")}
-              </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => handleInputChange("description", e.target.value)}
-                rows={3}
-                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder={t("descriptionPlaceholder")}
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("description")}</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder={t("descriptionPlaceholder")}
+                        rows={3}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  {t("brand")}
-                </label>
-                <input
-                  type="text"
-                  value={formData.brand}
-                  onChange={(e) => handleInputChange("brand", e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder={t("brandPlaceholder")}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="brand"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("brand")}</FormLabel>
+                      <FormControl>
+                        <Input placeholder={t("brandPlaceholder")} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="pieceCount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {t("pieceCount")} <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="1"
+                          placeholder="1000"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  {t("pieceCount")} <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  required
-                  min="1"
-                  value={formData.pieceCount}
-                  onChange={(e) => handleInputChange("pieceCount", e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="1000"
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="difficulty"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("difficulty")}</FormLabel>
+                      <FormControl>
+                        <select
+                          className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                          {...field}
+                        >
+                          <option value="">{t("selectDifficulty")}</option>
+                          <option value="easy">{t("easy")}</option>
+                          <option value="medium">{t("medium")}</option>
+                          <option value="hard">{t("hard")}</option>
+                          <option value="expert">{t("expert")}</option>
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="condition"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {t("condition")} <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <select
+                          className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                          {...field}
+                        >
+                          <option value="">{t("selectCondition")}</option>
+                          <option value="excellent">{t("excellent")}</option>
+                          <option value="good">{t("good")}</option>
+                          <option value="fair">{t("fair")}</option>
+                          <option value="poor">{t("poor")}</option>
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  {t("difficulty")}
-                </label>
-                <select
-                  value={formData.difficulty}
-                  onChange={(e) => handleInputChange("difficulty", e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="">{t("selectDifficulty")}</option>
-                  <option value="easy">{t("easy")}</option>
-                  <option value="medium">{t("medium")}</option>
-                  <option value="hard">{t("hard")}</option>
-                  <option value="expert">{t("expert")}</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  {t("condition")} <span className="text-red-500">*</span>
-                </label>
-                <select
-                  required
-                  value={formData.condition}
-                  onChange={(e) => handleInputChange("condition", e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="">{t("selectCondition")}</option>
-                  <option value="excellent">{t("excellent")}</option>
-                  <option value="good">{t("good")}</option>
-                  <option value="fair">{t("fair")}</option>
-                  <option value="poor">{t("poor")}</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                {t("category")}
-              </label>
-              <input
-                type="text"
-                value={formData.category}
-                onChange={(e) => handleInputChange("category", e.target.value)}
-                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder={t("categoryPlaceholder")}
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("category")}</FormLabel>
+                    <FormControl>
+                      <Input placeholder={t("categoryPlaceholder")} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                {t("tags")}
-              </label>
-              <input
-                type="text"
-                value={formData.tags}
-                onChange={(e) => handleTagsChange(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder={t("tagsPlaceholder")}
+              <FormField
+                control={form.control}
+                name="tags"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("tags")}</FormLabel>
+                    <FormControl>
+                      <Input placeholder={t("tagsPlaceholder")} {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      {t("tagsHelp")}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                {t("tagsHelp")}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Status Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("statusInformation")}</CardTitle>
-            <CardDescription>{t("statusInformationDescription")}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="isCompleted"
-                checked={formData.isCompleted}
-                onChange={(e) => handleInputChange("isCompleted", e.target.checked)}
-                className="rounded border-gray-300 text-primary focus:ring-primary"
+          {/* Status Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("statusInformation")}</CardTitle>
+              <CardDescription>{t("statusInformationDescription")}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="isCompleted"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <input
+                        type="checkbox"
+                        checked={field.value}
+                        onChange={field.onChange}
+                        className="rounded border-gray-300 text-primary focus:ring-primary"
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-medium">
+                      {t("puzzleCompleted")}
+                    </FormLabel>
+                  </FormItem>
+                )}
               />
-              <label htmlFor="isCompleted" className="text-sm font-medium">
-                {t("puzzleCompleted")}
-              </label>
-            </div>
 
-            {formData.isCompleted && (
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  {t("completedDate")}
-                </label>
-                <input
-                  type="date"
-                  value={formData.completedDate}
-                  onChange={(e) => handleInputChange("completedDate", e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              {form.watch("isCompleted") && (
+                <FormField
+                  control={form.control}
+                  name="completedDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("completedDate")}</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-            )}
+              )}
 
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                {t("acquisitionDate")}
-              </label>
-              <input
-                type="date"
-                value={formData.acquisitionDate}
-                onChange={(e) => handleInputChange("acquisitionDate", e.target.value)}
-                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              <FormField
+                control={form.control}
+                name="acquisitionDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("acquisitionDate")}</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                {t("notes")}
-              </label>
-              <textarea
-                value={formData.notes}
-                onChange={(e) => handleInputChange("notes", e.target.value)}
-                rows={3}
-                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder={t("notesPlaceholder")}
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("notes")}</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder={t("notesPlaceholder")}
+                        rows={3}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Submit Buttons */}
-        <div className="flex items-center justify-end gap-4">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={() => router.back()}
-          >
-            {tCommon("cancel")}
-          </Button>
-          <Button 
-            type="submit" 
-            disabled={isSubmitting || !formData.title || !formData.pieceCount || !formData.condition}
-          >
-            {isSubmitting ? tCommon("loading") : t("addPuzzle")}
-          </Button>
-        </div>
-      </form>
+          {/* Submit Buttons */}
+          <div className="flex items-center justify-end gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+            >
+              {tCommon("cancel")}
+            </Button>
+            <Button
+              type="submit"
+              disabled={form.formState.isSubmitting}
+            >
+              {form.formState.isSubmitting ? tCommon("loading") : t("addPuzzle")}
+            </Button>
+          </div>
+        </form>
+      </Form>
     </div>
   );
 }
