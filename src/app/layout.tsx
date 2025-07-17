@@ -6,6 +6,8 @@ import { ClerkClientProvider } from "@/lib/clerk-provider";
 import { ConvexClientProvider } from "@/lib/convex-provider";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { ToastProvider } from "@/components/ui/toast";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -58,7 +60,11 @@ export default async function RootLayout({
                 defaultTheme="system"
                 storageKey="jigswap-ui-theme"
               >
-                {children}
+                <ToastProvider>
+                  <ErrorBoundary>
+                    {children}
+                  </ErrorBoundary>
+                </ToastProvider>
               </ThemeProvider>
             </ConvexClientProvider>
           </ClerkClientProvider>
