@@ -59,6 +59,22 @@ export const getUserByClerkId = query({
   },
 });
 
+// Get current user (authenticated user)
+export const getCurrentUser = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return null;
+    }
+
+    return await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+  },
+});
+
 // Get user by ID
 export const getUserById = query({
   args: { userId: v.id("users") },
