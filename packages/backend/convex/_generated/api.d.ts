@@ -13,6 +13,7 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as personal_library from "../personal_library.js";
 import type * as puzzles from "../puzzles.js";
 import type * as trades from "../trades.js";
 import type * as users from "../users.js";
@@ -26,6 +27,7 @@ import type * as users from "../users.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  personal_library: typeof personal_library;
   puzzles: typeof puzzles;
   trades: typeof trades;
   users: typeof users;

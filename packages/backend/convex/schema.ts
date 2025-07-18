@@ -56,6 +56,81 @@ export default defineSchema({
     .index('by_category', ['category'])
     .index('by_difficulty', ['difficulty']),
 
+  // Personal library collections - user-puzzle relationships
+  collections: defineTable({
+    userId: v.id('users'),
+    puzzleId: v.id('puzzles'),
+    visibility: v.union(
+      v.literal('private'),
+      v.literal('visible'),
+      v.literal('lendable'),
+      v.literal('swappable'),
+      v.literal('tradeable'),
+    ),
+    customTags: v.optional(v.array(v.string())),
+    personalNotes: v.optional(v.string()),
+    acquisitionDate: v.optional(v.number()),
+    acquisitionSource: v.optional(v.string()), // e.g., "gift", "purchase", "trade"
+    acquisitionPrice: v.optional(v.number()),
+    isWishlist: v.boolean(), // false = owned, true = wishlist
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_puzzle', ['puzzleId'])
+    .index('by_user_puzzle', ['userId', 'puzzleId'])
+    .index('by_visibility', ['visibility'])
+    .index('by_wishlist', ['isWishlist']),
+
+  // Completion records for puzzles
+  completions: defineTable({
+    userId: v.id('users'),
+    puzzleId: v.id('puzzles'),
+    startDate: v.number(),
+    endDate: v.number(),
+    completionTimeMinutes: v.number(),
+    rating: v.optional(v.number()), // 1-5 stars
+    review: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    photos: v.array(v.string()), // Array of photo URLs (max 5)
+    isCompleted: v.boolean(), // true = completed, false = in progress
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_puzzle', ['puzzleId'])
+    .index('by_user_puzzle', ['userId', 'puzzleId'])
+    .index('by_completion_date', ['endDate'])
+    .index('by_rating', ['rating']),
+
+  // User-defined categories for organizing collections
+  categories: defineTable({
+    userId: v.id('users'),
+    name: v.string(),
+    color: v.optional(v.string()), // hex color code
+    description: v.optional(v.string()),
+    isDefault: v.boolean(), // true for system categories, false for user-created
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_user_name', ['userId', 'name']),
+
+  // User goals for puzzle completion
+  goals: defineTable({
+    userId: v.id('users'),
+    title: v.string(),
+    description: v.optional(v.string()),
+    targetCompletions: v.number(),
+    currentCompletions: v.number(),
+    targetDate: v.optional(v.number()),
+    isActive: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_user_active', ['userId', 'isActive']),
+
   tradeRequests: defineTable({
     requesterId: v.id('users'),
     ownerId: v.id('users'),
