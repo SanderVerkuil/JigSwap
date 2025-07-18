@@ -9,36 +9,42 @@ import { getLocaleFromCookies } from '@/lib/intl-cookies';
 export const locales = ['en', 'nl'] as const;
 export const defaultLocale = 'en' as const;
 
-export type Locale = typeof locales[number];
+export type Locale = (typeof locales)[number];
 
 // Function to detect locale from cookies and Accept-Language header
 export async function getLocale(): Promise<string> {
   // First, check if there's a locale cookie
   const localeCookie = await getLocaleFromCookies();
-  
+
   if (localeCookie && locales.includes(localeCookie as Locale)) {
     return localeCookie;
   }
-  
+
   // If no cookie, check Accept-Language header
   const headersList = await headers();
   const acceptLanguage = headersList.get('accept-language');
-  
+
   if (acceptLanguage) {
     try {
       // Use negotiator to parse Accept-Language header
-      const negotiator = new Negotiator({ headers: { 'accept-language': acceptLanguage } });
+      const negotiator = new Negotiator({
+        headers: { 'accept-language': acceptLanguage },
+      });
       const languages = negotiator.languages();
-      
+
       // Use @formatjs/intl-localematcher to find the best match
-      const matchedLocale = match(languages, locales as readonly string[], defaultLocale);
-      
+      const matchedLocale = match(
+        languages,
+        locales as readonly string[],
+        defaultLocale,
+      );
+
       return matchedLocale;
     } catch (error) {
       console.warn('Error matching locale:', error);
     }
   }
-  
+
   // Fallback to default locale
   return defaultLocale;
 }
@@ -50,27 +56,29 @@ async function getCrowdinMessages(locale: string) {
     if (locale === 'en' || process.env.NODE_ENV === 'development') {
       return (await import('./locales/source.json')).default;
     }
-    
+
     // For production, fetch from Crowdin OTA distribution
     const crowdinProjectId = process.env.CROWDIN_PROJECT_ID;
     const crowdinDistributionHash = process.env.CROWDIN_DISTRIBUTION_HASH;
-    
+
     if (!crowdinProjectId || !crowdinDistributionHash) {
-      console.warn('Crowdin configuration missing, falling back to source.json');
+      console.warn(
+        'Crowdin configuration missing, falling back to source.json',
+      );
       return (await import('./locales/source.json')).default;
     }
-    
+
     const response = await fetch(
       `https://distributions.crowdin.net/${crowdinDistributionHash}/content/${locale}.json`,
       {
         next: { revalidate: 3600 }, // Cache for 1 hour
-      }
+      },
     );
-    
+
     if (!response.ok) {
       throw new Error(`Failed to fetch translations for ${locale}`);
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error(`Error loading translations for ${locale}:`, error);
@@ -82,7 +90,7 @@ async function getCrowdinMessages(locale: string) {
 export default getRequestConfig(async () => {
   // Detect locale from cookies/headers
   const locale = await getLocale();
-  
+
   // Validate that the detected locale is valid
   if (!locales.includes(locale as Locale)) {
     notFound();
@@ -93,6 +101,6 @@ export default getRequestConfig(async () => {
   return {
     locale,
     messages,
-    timeZone: 'Europe/Amsterdam'
+    timeZone: 'Europe/Amsterdam',
   };
 });

@@ -1,13 +1,13 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { LanguageSwitcher } from "@/components/ui/language-switcher";
-import { Puzzle, Users, Recycle, Star, ArrowRight } from "lucide-react";
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { LanguageSwitcher } from '@/components/ui/language-switcher';
+import { Puzzle, Users, Recycle, Star, ArrowRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 export default function HomePage() {
   const t = useTranslations();
-  
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -15,7 +15,9 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <span className="text-2xl">🧩</span>
-            <span className="text-xl font-bold text-jigsaw-primary">JigSwap</span>
+            <span className="text-xl font-bold text-jigsaw-primary">
+              JigSwap
+            </span>
           </div>
           <div className="flex items-center space-x-4">
             <LanguageSwitcher />
@@ -68,8 +70,8 @@ export default function HomePage() {
               </div>
               <h3 className="text-xl font-semibold mb-2">Vast Collection</h3>
               <p className="text-muted-foreground">
-                Access thousands of puzzles from fellow enthusiasts. Find rare pieces 
-                and discover new favorites.
+                Access thousands of puzzles from fellow enthusiasts. Find rare
+                pieces and discover new favorites.
               </p>
             </div>
             <div className="text-center">
@@ -78,7 +80,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-xl font-semibold mb-2">Community Driven</h3>
               <p className="text-muted-foreground">
-                Join a passionate community of puzzle lovers. Share experiences 
+                Join a passionate community of puzzle lovers. Share experiences
                 and build lasting connections.
               </p>
             </div>
@@ -88,7 +90,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-xl font-semibold mb-2">Sustainable</h3>
               <p className="text-muted-foreground">
-                Reduce waste by giving puzzles a second life. Make your hobby 
+                Reduce waste by giving puzzles a second life. Make your hobby
                 more environmentally friendly.
               </p>
             </div>
@@ -99,9 +101,7 @@ export default function HomePage() {
       {/* How It Works Section */}
       <section className="py-20 px-4">
         <div className="container mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">
-            How It Works
-          </h2>
+          <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
           <div className="grid md:grid-cols-4 gap-8">
             <div className="text-center">
               <div className="w-12 h-12 bg-jigsaw-primary text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">
@@ -109,7 +109,8 @@ export default function HomePage() {
               </div>
               <h3 className="text-lg font-semibold mb-2">List Your Puzzles</h3>
               <p className="text-muted-foreground text-sm">
-                Upload photos and details of puzzles you've completed and want to trade.
+                Upload photos and details of puzzles you've completed and want
+                to trade.
               </p>
             </div>
             <div className="text-center">
@@ -118,7 +119,8 @@ export default function HomePage() {
               </div>
               <h3 className="text-lg font-semibold mb-2">Browse & Discover</h3>
               <p className="text-muted-foreground text-sm">
-                Explore puzzles from other users and find ones you'd love to try.
+                Explore puzzles from other users and find ones you'd love to
+                try.
               </p>
             </div>
             <div className="text-center">
@@ -136,7 +138,8 @@ export default function HomePage() {
               </div>
               <h3 className="text-lg font-semibold mb-2">Enjoy & Review</h3>
               <p className="text-muted-foreground text-sm">
-                Complete your new puzzle and leave reviews to build trust in the community.
+                Complete your new puzzle and leave reviews to build trust in the
+                community.
               </p>
             </div>
           </div>
@@ -146,9 +149,7 @@ export default function HomePage() {
       {/* CTA Section */}
       <section className="py-20 px-4 bg-jigsaw-primary text-white">
         <div className="container mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">
-            Ready to Start Trading?
-          </h2>
+          <h2 className="text-3xl font-bold mb-4">Ready to Start Trading?</h2>
           <p className="text-xl mb-8 opacity-90">
             Join thousands of puzzle enthusiasts already trading on JigSwap
           </p>
@@ -169,13 +170,22 @@ export default function HomePage() {
             <span className="font-semibold">JigSwap</span>
           </div>
           <p className="text-sm">
-            Making jigsaw puzzle trading accessible and sustainable for everyone.
+            Making jigsaw puzzle trading accessible and sustainable for
+            everyone.
           </p>
           <div className="mt-4 flex justify-center space-x-6 text-sm">
-            <Link href="/about" className="hover:text-foreground">About</Link>
-            <Link href="/privacy" className="hover:text-foreground">Privacy</Link>
-            <Link href="/terms" className="hover:text-foreground">Terms</Link>
-            <Link href="/contact" className="hover:text-foreground">Contact</Link>
+            <Link href="/about" className="hover:text-foreground">
+              About
+            </Link>
+            <Link href="/privacy" className="hover:text-foreground">
+              Privacy
+            </Link>
+            <Link href="/terms" className="hover:text-foreground">
+              Terms
+            </Link>
+            <Link href="/contact" className="hover:text-foreground">
+              Contact
+            </Link>
           </div>
         </div>
       </footer>

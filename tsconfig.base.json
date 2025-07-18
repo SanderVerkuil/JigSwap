@@ -14,8 +14,7 @@
     "jsx": "preserve",
     "incremental": true,
     "baseUrl": ".",
-    "paths": {
-    }
+    "paths": {}
   },
   "exclude": ["node_modules", "dist", ".next", "out"]
 }

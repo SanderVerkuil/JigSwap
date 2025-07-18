@@ -1,4 +1,4 @@
-import { SignUp } from "@clerk/nextjs";
+import { SignUp } from '@clerk/nextjs';
 
 export default function SignUpPage() {
   return (
@@ -10,12 +10,12 @@ export default function SignUpPage() {
             Join the puzzle trading community
           </p>
         </div>
-        <SignUp 
+        <SignUp
           appearance={{
             elements: {
-              rootBox: "mx-auto",
-              card: "shadow-lg",
-            }
+              rootBox: 'mx-auto',
+              card: 'shadow-lg',
+            },
           }}
         />
       </div>

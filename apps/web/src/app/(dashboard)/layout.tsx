@@ -1,10 +1,10 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { LanguageSwitcher } from "@/components/ui/language-switcher";
-import { UserButton } from "@clerk/nextjs";
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { LanguageSwitcher } from '@/components/ui/language-switcher';
+import { UserButton } from '@clerk/nextjs';
 import { useTranslations } from 'next-intl';
 import {
   Home,
@@ -13,8 +13,8 @@ import {
   Package,
   MessageSquare,
   User,
-  ArrowLeftRight
-} from "lucide-react";
+  ArrowLeftRight,
+} from 'lucide-react';
 
 export default async function DashboardLayout({
   children,
@@ -24,7 +24,7 @@ export default async function DashboardLayout({
   const { userId } = await auth();
 
   if (!userId) {
-    redirect("/sign-in");
+    redirect('/sign-in');
   }
 
   return (
@@ -35,17 +35,19 @@ export default async function DashboardLayout({
           <div className="flex items-center space-x-2">
             <Link href="/" className="flex items-center space-x-2">
               <span className="text-2xl">🧩</span>
-              <span className="text-xl font-bold text-jigsaw-primary">JigSwap</span>
+              <span className="text-xl font-bold text-jigsaw-primary">
+                JigSwap
+              </span>
             </Link>
           </div>
           <div className="flex items-center space-x-4">
             <LanguageSwitcher />
             <ThemeToggle />
-            <UserButton 
+            <UserButton
               appearance={{
                 elements: {
-                  avatarBox: "w-8 h-8"
-                }
+                  avatarBox: 'w-8 h-8',
+                },
               }}
             />
           </div>
@@ -102,9 +104,7 @@ export default async function DashboardLayout({
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-6">
-          {children}
-        </main>
+        <main className="flex-1 p-6">{children}</main>
       </div>
     </div>
   );

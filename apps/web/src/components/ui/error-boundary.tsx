@@ -1,9 +1,15 @@
-"use client";
+'use client';
 
-import React from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import React from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -15,7 +21,10 @@ interface ErrorBoundaryProps {
   fallback?: React.ComponentType<{ error?: Error; resetError: () => void }>;
 }
 
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+class ErrorBoundary extends React.Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
@@ -26,7 +35,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("Error caught by boundary:", error, errorInfo);
+    console.error('Error caught by boundary:', error, errorInfo);
   }
 
   resetError = () => {
@@ -37,17 +46,33 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     if (this.state.hasError) {
       if (this.props.fallback) {
         const FallbackComponent = this.props.fallback;
-        return <FallbackComponent error={this.state.error} resetError={this.resetError} />;
+        return (
+          <FallbackComponent
+            error={this.state.error}
+            resetError={this.resetError}
+          />
+        );
       }
 
-      return <DefaultErrorFallback error={this.state.error} resetError={this.resetError} />;
+      return (
+        <DefaultErrorFallback
+          error={this.state.error}
+          resetError={this.resetError}
+        />
+      );
     }
 
     return this.props.children;
   }
 }
 
-function DefaultErrorFallback({ error, resetError }: { error?: Error; resetError: () => void }) {
+function DefaultErrorFallback({
+  error,
+  resetError,
+}: {
+  error?: Error;
+  resetError: () => void;
+}) {
   return (
     <div className="min-h-[400px] flex items-center justify-center p-6">
       <Card className="w-full max-w-md">
@@ -57,13 +82,16 @@ function DefaultErrorFallback({ error, resetError }: { error?: Error; resetError
           </div>
           <CardTitle>Something went wrong</CardTitle>
           <CardDescription>
-            An unexpected error occurred. Please try again or contact support if the problem persists.
+            An unexpected error occurred. Please try again or contact support if
+            the problem persists.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {error && process.env.NODE_ENV === "development" && (
+          {error && process.env.NODE_ENV === 'development' && (
             <div className="p-3 bg-muted rounded-lg">
-              <p className="text-sm font-mono text-destructive">{error.message}</p>
+              <p className="text-sm font-mono text-destructive">
+                {error.message}
+              </p>
             </div>
           )}
           <div className="flex gap-2">
@@ -71,7 +99,11 @@ function DefaultErrorFallback({ error, resetError }: { error?: Error; resetError
               <RefreshCw className="h-4 w-4 mr-2" />
               Try Again
             </Button>
-            <Button variant="outline" onClick={() => window.location.reload()} className="flex-1">
+            <Button
+              variant="outline"
+              onClick={() => window.location.reload()}
+              className="flex-1"
+            >
               Reload Page
             </Button>
           </div>

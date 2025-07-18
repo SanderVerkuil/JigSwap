@@ -1,36 +1,36 @@
-"use client"
+'use client';
 
-import * as React from "react"
-import { Globe } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import * as React from 'react';
+import { Globe } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { useTranslations, useLocale } from 'next-intl'
-import { useRouter } from 'next/navigation'
+} from '@/components/ui/dropdown-menu';
+import { useTranslations, useLocale } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { setLocaleCookie } from '@/lib/intl-cookies';
 
 const languages = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
   { code: 'nl', name: 'Nederlands', flag: '🇳🇱' },
-]
+];
 
 export function LanguageSwitcher() {
-  const t = useTranslations('common')
-  const router = useRouter()
+  const t = useTranslations('common');
+  const router = useRouter();
 
   const currentLocale = useLocale();
-  
-  
+
   const handleLanguageChange = async (locale: string) => {
-    await setLocaleCookie(locale as Locale)
-  }
-  
-  const currentLanguage = languages.find(lang => lang.code === currentLocale) || languages[0]
-  
+    await setLocaleCookie(locale as Locale);
+  };
+
+  const currentLanguage =
+    languages.find((lang) => lang.code === currentLocale) || languages[0];
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -44,7 +44,7 @@ export function LanguageSwitcher() {
           <DropdownMenuItem
             key={language.code}
             onClick={() => handleLanguageChange(language.code)}
-            className={currentLocale === language.code ? "bg-accent" : ""}
+            className={currentLocale === language.code ? 'bg-accent' : ''}
           >
             <span className="mr-2">{language.flag}</span>
             {language.name}
@@ -52,5 +52,5 @@ export function LanguageSwitcher() {
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

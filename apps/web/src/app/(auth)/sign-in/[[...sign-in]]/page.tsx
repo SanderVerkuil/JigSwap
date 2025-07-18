@@ -1,4 +1,4 @@
-import { SignIn } from "@clerk/nextjs";
+import { SignIn } from '@clerk/nextjs';
 
 export default function SignInPage() {
   return (
@@ -10,12 +10,12 @@ export default function SignInPage() {
             Welcome back to the puzzle trading community
           </p>
         </div>
-        <SignIn 
+        <SignIn
           appearance={{
             elements: {
-              rootBox: "mx-auto",
-              card: "shadow-lg",
-            }
+              rootBox: 'mx-auto',
+              card: 'shadow-lg',
+            },
           }}
         />
       </div>

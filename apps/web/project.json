@@ -85,10 +85,7 @@
     "preview": {
       "executor": "nx:run-commands",
       "options": {
-        "commands": [
-          "nx build web",
-          "nx start web"
-        ],
+        "commands": ["nx build web", "nx start web"],
         "parallel": false
       }
     },

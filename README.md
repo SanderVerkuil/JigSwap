@@ -17,6 +17,7 @@ A modern, full-stack web application for trading jigsaw puzzles with fellow enth
 ## 🚀 Tech Stack
 
 ### Frontend
+
 - **Next.js 15** - React framework with App Router
 - **TypeScript** - Type-safe development
 - **Tailwind CSS v4** - Utility-first CSS framework
@@ -26,14 +27,17 @@ A modern, full-stack web application for trading jigsaw puzzles with fellow enth
 - **next-intl** - Internationalization
 
 ### Backend
+
 - **Convex** - Real-time backend and database
 - **Clerk** - Authentication and user management
 
 ### Localization
+
 - **Crowdin** - Translation management platform
 - **Cookie-based locale detection** - No URL-based routing
 
 ### Development Tools
+
 - **Nx** - Monorepo build system and development tools
 - **pnpm** - Fast, disk space efficient package manager (v10.13.1)
 - **ESLint** - Code linting
@@ -45,6 +49,7 @@ A modern, full-stack web application for trading jigsaw puzzles with fellow enth
 ## 📋 Prerequisites
 
 Before you begin, ensure you have the following installed:
+
 - **Node.js** (v18 or higher)
 - **pnpm** (v10.13.1 or higher)
 - **Git**
@@ -52,6 +57,7 @@ Before you begin, ensure you have the following installed:
 ## 🛠️ Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/SanderVerkuil/jigswap.git
    cd jigswap
@@ -59,27 +65,30 @@ Before you begin, ensure you have the following installed:
 
 2. **Install dependencies**
    This project uses a monorepo structure with Nx workspace:
+
    ```bash
    pnpm install
    ```
 
 3. **Set up environment variables**
    Copy the example environment file and fill in your values:
+
    ```bash
    cp apps/web/.env.example apps/web/.env.local
    ```
-   
+
    Fill in the required environment variables in `apps/web/.env.local`:
    - Get Convex URL by running the backend setup (step 4)
    - Get Clerk keys from your [Clerk dashboard](https://clerk.com)
    - Crowdin settings are optional for translation contributions
 
 4. **Set up Convex**
+
    ```bash
    cd packages/backend
    pnpm convex:dev
    ```
-   
+
    This will:
    - Create a new Convex project (if needed)
    - Deploy your schema and functions
@@ -87,6 +96,7 @@ Before you begin, ensure you have the following installed:
 
 5. **Start the development server**
    In a separate terminal, from the root directory:
+
    ```bash
    pnpm dev
    ```
@@ -175,6 +185,7 @@ jigswap/
 ## 🎯 Available Scripts
 
 ### Root Workspace Scripts
+
 - `pnpm dev` - Start development server for web app with Turbopack
 - `pnpm dev:web` - Start web app development server
 - `pnpm build` - Build all projects
@@ -190,6 +201,7 @@ jigswap/
 - `pnpm graph` - View Nx dependency graph
 
 ### Web App Scripts (apps/web)
+
 - `pnpm dev` - Start Next.js development server with Turbopack
 - `pnpm build` - Build for production
 - `pnpm start` - Start production server
@@ -204,6 +216,7 @@ jigswap/
 - `pnpm crowdin:download` - Download translations
 
 ### Backend Scripts (packages/backend)
+
 - `pnpm convex:dev` - Start Convex development server
 - `pnpm convex:deploy` - Deploy Convex functions to production
 
@@ -259,6 +272,7 @@ The application uses Convex with the following main entities:
 ### Other Platforms
 
 The application can be deployed to any platform that supports Next.js:
+
 - Netlify
 - Railway
 - DigitalOcean App Platform
@@ -290,6 +304,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 If you have any questions or need help, please:
+
 - Open an issue on GitHub
 - Check the documentation
 - Contact the development team

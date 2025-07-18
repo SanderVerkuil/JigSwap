@@ -12,11 +12,11 @@ We have a [Code of Conduct](CODE_OF_CONDUCT.md) to ensure that the JigSwap commu
 
 There are many ways to contribute to the project!
 
-*   **🐛 Reporting Bugs:** If you find a bug, please open an issue and provide as much detail as possible, including steps to reproduce it.
-*   **✨ Suggesting Enhancements:** Have an idea for a new feature or an improvement to an existing one? Open an issue to start a discussion. This is the best way to ensure your idea aligns with the project's goals before you start working on it.
-*   **📝 Improving Documentation:** If you see a typo, find something confusing, or think a section could be clearer, feel free to open a pull request to improve the documentation.
-*   **🌐 Helping with Translations:** We use Crowdin to manage translations. If you'd like to help translate JigSwap into another language, please [link to your Crowdin project here].
-*   **🧑‍💻 Writing Code:** If you're ready to write some code, you can get started with the development setup below.
+- **🐛 Reporting Bugs:** If you find a bug, please open an issue and provide as much detail as possible, including steps to reproduce it.
+- **✨ Suggesting Enhancements:** Have an idea for a new feature or an improvement to an existing one? Open an issue to start a discussion. This is the best way to ensure your idea aligns with the project's goals before you start working on it.
+- **📝 Improving Documentation:** If you see a typo, find something confusing, or think a section could be clearer, feel free to open a pull request to improve the documentation.
+- **🌐 Helping with Translations:** We use Crowdin to manage translations. If you'd like to help translate JigSwap into another language, please [link to your Crowdin project here].
+- **🧑‍💻 Writing Code:** If you're ready to write some code, you can get started with the development setup below.
 
 ## 🚀 Development Setup
 
@@ -24,9 +24,9 @@ Ready to start coding? Here's how to get the project running on your local machi
 
 ### Prerequisites
 
-*   [Node.js](https://nodejs.org/) (v18 or later recommended)
-*   [pnpm](https://pnpm.io/installation) (v10.13.1 or later - our preferred package manager)
-*   [Git](https://git-scm.com/)
+- [Node.js](https://nodejs.org/) (v18 or later recommended)
+- [pnpm](https://pnpm.io/installation) (v10.13.1 or later - our preferred package manager)
+- [Git](https://git-scm.com/)
 
 ### 1. Fork & Clone the Repository
 
@@ -92,6 +92,7 @@ JigSwap uses a monorepo structure with separate backend and frontend packages. Y
     ```
 
     Or alternatively, run the web app directly:
+
     ```bash
     cd apps/web
     pnpm dev
@@ -123,7 +124,7 @@ jigswap/
 └── nx.json                  # Nx workspace configuration
 ```
 
-##  Pull Request Workflow
+## Pull Request Workflow
 
 1.  **Create a Branch:** Create a new branch for your changes. Use a descriptive name, like `feat/add-puzzle-search` or `fix/login-button-style`.
 
@@ -161,12 +162,12 @@ We use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) fo
 
 The basic format is: `<type>(<scope>): <subject>`
 
-*   **`feat`**: A new feature
-*   **`fix`**: A bug fix
-*   **`docs`**: Documentation only changes
-*   **`style`**: Changes that do not affect the meaning of the code (white-space, formatting, etc)
-*   **`refactor`**: A code change that neither fixes a bug nor adds a feature
-*   **`chore`**: Changes to the build process or auxiliary tools
+- **`feat`**: A new feature
+- **`fix`**: A bug fix
+- **`docs`**: Documentation only changes
+- **`style`**: Changes that do not affect the meaning of the code (white-space, formatting, etc)
+- **`refactor`**: A code change that neither fixes a bug nor adds a feature
+- **`chore`**: Changes to the build process or auxiliary tools
 
 ### Code Style
 
