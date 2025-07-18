@@ -115,11 +115,9 @@ jigswap/
 │       ├── locales/         # Internationalization files
 │       └── package.json     # Web app dependencies
 ├── packages/
-│   ├── backend/             # Convex backend functions and schema
-│   │   ├── convex/          # Convex functions and schema
-│   │   └── package.json     # Backend dependencies
-│   ├── ui/           # Shared UI components
-│   └── utils/        # Shared utility functions
+│   └── backend/             # Convex backend functions and schema
+│       ├── convex/          # Convex functions and schema
+│       └── package.json     # Backend dependencies
 ├── package.json             # Root workspace configuration
 └── nx.json                  # Nx workspace configuration
 ```

@@ -11,6 +11,23 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
+  {
+    rules: {
+      'import/no-anonymous-default-export': [
+        'error',
+        {
+          "allowArray": true,
+          "allowArrowFunction": true,
+          "allowAnonymousClass": true,
+          "allowAnonymousFunction": true,
+          "allowCallExpression": true, // The true value here is for backward compatibility
+          "allowNew": true,
+          "allowLiteral": true,
+          "allowObject": true
+        },
+      ],
+    },
+  },
 ];
 
 export default eslintConfig;

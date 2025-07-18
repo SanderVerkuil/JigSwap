@@ -166,17 +166,13 @@ jigswap/
 │       ├── next.config.ts     # Next.js configuration
 │       └── package.json       # Web app dependencies
 ├── packages/
-│   ├── backend/               # Convex backend functions and schema
-│   │   ├── convex/            # Convex functions and schema
-│   │   │   ├── schema.ts      # Database schema
-│   │   │   ├── users.ts       # User functions
-│   │   │   ├── puzzles.ts     # Puzzle functions
-│   │   │   └── trades.ts      # Trade functions
-│   │   └── package.json       # Backend dependencies
-│   ├── ui/             # Shared UI components
-│   │   └── src/lib/           # Shared UI library
-│   └── utils/          # Shared utility functions
-│       └── src/lib/           # Shared utilities library
+│   └── backend/               # Convex backend functions and schema
+│       ├── convex/            # Convex functions and schema
+│       │   ├── schema.ts      # Database schema
+│       │   ├── users.ts       # User functions
+│       │   ├── puzzles.ts     # Puzzle functions
+│       │   └── trades.ts      # Trade functions
+│       └── package.json       # Backend dependencies
 ├── package.json               # Root workspace configuration
 ├── nx.json                    # Nx workspace configuration
 └── pnpm-workspace.yaml        # pnpm workspace configuration
