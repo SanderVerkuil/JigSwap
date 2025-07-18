@@ -117,8 +117,8 @@ jigswap/
 │   ├── backend/             # Convex backend functions and schema
 │   │   ├── convex/          # Convex functions and schema
 │   │   └── package.json     # Backend dependencies
-│   ├── shared-ui/           # Shared UI components
-│   └── shared-utils/        # Shared utility functions
+│   ├── ui/           # Shared UI components
+│   └── utils/        # Shared utility functions
 ├── package.json             # Root workspace configuration
 └── nx.json                  # Nx workspace configuration
 ```

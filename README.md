@@ -163,9 +163,9 @@ jigswap/
 │   │   │   ├── puzzles.ts     # Puzzle functions
 │   │   │   └── trades.ts      # Trade functions
 │   │   └── package.json       # Backend dependencies
-│   ├── shared-ui/             # Shared UI components
+│   ├── ui/             # Shared UI components
 │   │   └── src/lib/           # Shared UI library
-│   └── shared-utils/          # Shared utility functions
+│   └── utils/          # Shared utility functions
 │       └── src/lib/           # Shared utilities library
 ├── package.json               # Root workspace configuration
 ├── nx.json                    # Nx workspace configuration

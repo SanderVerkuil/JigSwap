@@ -15,11 +15,6 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
-      "@jigswap/shared-ui": ["packages/shared-ui/src"],
-      "@jigswap/shared-utils": ["packages/shared-utils/src"],
-      "backend": ["packages/backend/src/index.ts"],
-      "shared-ui": ["packages/shared-ui/src/index.ts"],
-      "shared-utils": ["packages/shared-utils/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "dist", ".next", "out"]
