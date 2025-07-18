@@ -1,5 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
+  "baseUrl": "./",
   "compilerOptions": {
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
@@ -20,7 +21,7 @@
       }
     ],
     "paths": {
-      "@/*": ["./apps/web/src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

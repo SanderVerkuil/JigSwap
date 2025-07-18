@@ -8,8 +8,6 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { ToastProvider } from '@/components/ui/toast';
-import { getThemeFromCookies } from '@/lib/theme-cookies';
-import { resolveTheme } from '@/lib/theme';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -61,15 +59,16 @@ export default async function RootLayout({
   // Providing all messages to the client side
   const messages = await getMessages();
 
-  // Get theme from cookies to prevent flickering
-  const theme = await getThemeFromCookies();
-  const resolvedTheme = resolveTheme(theme);
-
   return (
-    <html lang="en" className={resolvedTheme} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
         <NextIntlClientProvider messages={messages}>
-          <ThemeProvider defaultTheme={theme} storageKey="jigswap-ui-theme">
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
             <ClerkClientProvider>
               <ConvexClientProvider>
                 <ToastProvider>

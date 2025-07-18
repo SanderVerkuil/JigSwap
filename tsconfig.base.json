@@ -12,9 +12,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
-    "incremental": true,
-    "baseUrl": ".",
-    "paths": {}
+    "incremental": true
   },
   "exclude": ["node_modules", "dist", ".next", "out"]
 }

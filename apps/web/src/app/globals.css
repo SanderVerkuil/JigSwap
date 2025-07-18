@@ -165,13 +165,7 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-* {
-  border-color: hsl(var(--border));
-}
-
 body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
   font-feature-settings:
     'rlig' 1,
     'calt' 1;
@@ -182,6 +176,10 @@ body {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground !min-w-full;
+  }
+
+  html {
+    @apply overflow-x-hidden;
   }
 }

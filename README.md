@@ -1,13 +1,32 @@
-# JigSwap - Jigsaw Puzzle Trading Platform
+# JigSwap - Personal Puzzle Library & Exchange Platform
 
-A modern, full-stack web application for trading jigsaw puzzles with fellow enthusiasts. Built with Next.js 15, Convex, Clerk, and Tailwind CSS.
+A comprehensive platform for jigsaw puzzle enthusiasts to manage their personal collections, track completion history, and engage in various types of puzzle exchanges. Built with Next.js 15, Convex, Clerk, and Tailwind CSS.
 
 ## 🧩 Features
 
-- **User Authentication**: Secure authentication with Clerk
-- **Puzzle Management**: Add, edit, and manage your puzzle collection
-- **Browse & Search**: Discover puzzles from other users with advanced filtering
-- **Trade System**: Request and manage puzzle trades with other users
+### Personal Library Management
+- **Collection Tracking**: Maintain your personal puzzle library with detailed information
+- **Completion History**: Record and track every puzzle completion with timing, ratings, and reviews
+- **Performance Analytics**: Analyze your solving patterns, preferences, and progress over time
+- **Photo Documentation**: Upload completion photos and track puzzle condition changes
+- **Multiple Completions**: Track how often you complete the same puzzle and see your improvement over time
+- **Personal Reviews**: Write detailed reviews and notes for each completion experience
+
+### Puzzle Exchange System
+- **Multiple Exchange Types**: Lend, swap, or trade puzzles with other enthusiasts
+- **Visibility Controls**: Set puzzles as private, visible, lendable, swappable, or tradeable
+- **Ownership History**: Complete chain of custody tracking while preserving personal history
+- **Condition Tracking**: Monitor puzzle condition through all exchanges
+- **History Preservation**: Your completion history remains intact even after trading puzzles
+- **New Instance Creation**: When puzzles are exchanged, new instances are created to maintain ownership history
+
+### Community Features
+- **User Profiles**: Showcase your collection and completion achievements
+- **Reviews & Ratings**: Share and discover community reviews of puzzles
+- **Social Discovery**: Find nearby users and discover new puzzles
+- **Real-time Messaging**: Communicate directly with other users during exchanges
+
+### Technical Excellence
 - **Real-time Updates**: Live updates using Convex real-time database
 - **Internationalization**: Support for English and Dutch with Crowdin
 - **Responsive Design**: Mobile-first design with dark mode support
@@ -171,8 +190,17 @@ jigswap/
 │       │   ├── schema.ts      # Database schema
 │       │   ├── users.ts       # User functions
 │       │   ├── puzzles.ts     # Puzzle functions
-│       │   └── trades.ts      # Trade functions
+│       │   ├── collections.ts # Collection management
+│       │   ├── completions.ts # Completion tracking
+│       │   ├── exchanges.ts   # Exchange system
+│       │   └── reviews.ts     # Review system
 │       └── package.json       # Backend dependencies
+├── spec/                      # Platform specifications
+│   ├── README.md             # Main specification document
+│   ├── database-schema.md    # Database schema specification
+│   ├── user-interface.md     # UI/UX specification
+│   ├── api-specification.md  # API specification
+│   └── feature-roadmap.md    # Development roadmap
 ├── package.json               # Root workspace configuration
 ├── nx.json                    # Nx workspace configuration
 └── pnpm-workspace.yaml        # pnpm workspace configuration
@@ -242,12 +270,16 @@ JigSwap supports multiple languages using next-intl and Crowdin:
 
 The application uses Convex with the following main entities:
 
-- **Users**: User profiles and preferences
-- **Puzzles**: Puzzle information and ownership
-- **Trade Requests**: Trade proposals and status
-- **Messages**: Trade-related messaging
-- **Reviews**: User ratings and feedback
-- **Notifications**: System notifications
+- **Users**: User profiles, preferences, and statistics
+- **Puzzles**: Puzzle information and metadata
+- **Collections**: User-puzzle relationships with ownership tracking and visibility levels
+- **Completions**: Detailed completion records with timing, ratings, and personal reviews
+- **Exchange Instances**: New puzzle instances created during exchanges to preserve history
+- **Exchanges**: All types of puzzle exchanges (lend, swap, trade, auction)
+- **Exchange Messages**: Real-time communication during exchanges
+- **Ownership History**: Complete chain of custody tracking for each puzzle instance
+- **Reviews**: Community ratings and feedback
+- **Notifications**: System and exchange notifications
 
 ## 🎨 Styling & Theming
 
