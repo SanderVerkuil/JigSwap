@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getRequestConfig } from 'next-intl/server';
-import { cookies, headers } from 'next/headers';
+import { headers } from 'next/headers';
 import Negotiator from 'negotiator';
 import { match } from '@formatjs/intl-localematcher';
 import { getLocaleFromCookies } from '@/lib/intl-cookies';

@@ -8,6 +8,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { ToastProvider } from '@/components/ui/toast';
+import { Toaster } from '@/components/ui/sonner';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -73,6 +74,7 @@ export default async function RootLayout({
               <ConvexClientProvider>
                 <ToastProvider>
                   <ErrorBoundary>{children}</ErrorBoundary>
+                  <Toaster />
                 </ToastProvider>
               </ConvexClientProvider>
             </ClerkClientProvider>
