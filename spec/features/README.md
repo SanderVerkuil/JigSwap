@@ -29,6 +29,15 @@ Social features that connect puzzle enthusiasts:
 - **Real-time Messaging**: Communication during exchanges
 - **Following System**: Track other users' activity
 
+### [Friend Circles](friend-circles.md)
+Private group features for trusted puzzle sharing:
+- **Private Circles**: Create and manage exclusive friend groups
+- **Granular Visibility**: Control puzzle access within specific circles
+- **Circle Exchanges**: Exchange puzzles only within trusted circles
+- **Permission Management**: Different access levels for circle members
+- **Privacy Controls**: Maintain security within friend circles
+- **Activity Tracking**: Monitor activity within private circles
+
 ### [Analytics and Insights](analytics.md)
 Data-driven features for personal and community insights:
 - **Personal Analytics**: Completion statistics and trends
@@ -57,14 +66,19 @@ Platform-wide technical specifications:
 graph TD
     A[Personal Library] --> B[Exchange System]
     A --> C[Community Features]
+    A --> G[Friend Circles]
     A --> D[Analytics]
     B --> C
+    B --> G
     B --> E[Advanced Features]
+    C --> G
     C --> D
+    G --> D
     D --> E
     F[Technical Requirements] --> A
     F --> B
     F --> C
+    F --> G
     F --> D
     F --> E
 ```
@@ -75,14 +89,16 @@ graph TD
 2. **Technical Requirements** - Foundation for reliable platform operation
 3. **Puzzle Exchange System** - Primary value proposition for users
 4. **Community Features** - Social engagement and discovery
-5. **Analytics and Insights** - Data-driven user experience
-6. **Advanced Features** - Enhanced functionality for power users
+5. **Friend Circles** - Private sharing and trusted group features
+6. **Analytics and Insights** - Data-driven user experience
+7. **Advanced Features** - Enhanced functionality for power users
 
 ## Cross-Feature Dependencies
 
 - **Exchange System** depends on **Personal Library** for puzzle data
 - **Community Features** depend on **Personal Library** for user collections
-- **Analytics** depend on **Personal Library** and **Community Features** for data
+- **Friend Circles** depend on **Personal Library** for puzzle data and **Community Features** for user relationships
+- **Analytics** depend on **Personal Library**, **Community Features**, and **Friend Circles** for data
 - **Advanced Features** depend on all other features for comprehensive functionality
 - **Technical Requirements** support all features with infrastructure and performance
 

@@ -39,6 +39,7 @@ Users can engage in various types of puzzle exchanges with other enthusiasts whi
 ### Exchange Discovery
 - [ ] Users can browse puzzles available for exchange with filtering options
 - [ ] Users can filter by exchange type (lend, swap, trade), location, piece count, difficulty, brand
+- [ ] Users can filter by friend circle to see puzzles shared within their circles
 - [ ] Users can search for specific puzzles by title or brand
 - [ ] Users can view puzzle details including condition, completion history, and owner rating
 - [ ] Users can see distance to puzzle owner for local exchanges

@@ -55,6 +55,7 @@ Users can interact with the puzzle enthusiast community through profiles, review
 - [ ] Users can participate in community discussions
 - [ ] Users can see community statistics and trends
 - [ ] Users can get recommendations based on their preferences
+- [ ] Users can discover puzzles shared within their friend circles
 
 ### Messaging and Communication
 - [ ] Users can send and receive real-time messages

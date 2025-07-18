@@ -12,6 +12,7 @@ This specification is organized into the following documents:
   - [Personal Puzzle Library](features/personal-library.md)
   - [Puzzle Exchange System](features/puzzle-exchange.md)
   - [Community Features](features/community.md)
+  - [Friend Circles](features/friend-circles.md)
   - [Analytics and Insights](features/analytics.md)
   - [Advanced Features](features/advanced-features.md)
   - [Technical Requirements](features/technical-requirements.md)
@@ -29,8 +30,9 @@ The platform serves as your personal puzzle library where you can:
 - Organize puzzles with custom categories and visibility levels
 
 ### Puzzle Visibility Levels
-Each puzzle in your collection can be set to one of five visibility levels:
+Each puzzle in your collection can be set to one of six visibility levels:
 - **Private**: Only visible to you
+- **Friend Circle**: Visible only to members of specific friend circles
 - **Visible**: Publicly viewable but not available for exchange
 - **Lendable**: Available for temporary borrowing with return agreement
 - **Swappable**: Available for permanent swaps with other puzzles
@@ -162,7 +164,50 @@ Users can interact with the puzzle enthusiast community through profiles, review
 - [ ] Users can report inappropriate content
 - [ ] Users can see community statistics and trends
 
-### 4. Analytics and Insights
+### 4. Friend Circles
+
+#### Feature Description
+Users can create and manage private friend circles to share puzzles exclusively within their trusted groups, enabling private puzzle collections that are only discoverable and exchangeable within chosen friend circles.
+
+#### Requirements
+- Users must be able to create private friend circles with custom names and descriptions
+- Users must be able to invite friends to join their friend circles
+- Users must be able to set different permission levels for circle members
+- Users must be able to set puzzle visibility to specific friend circles
+- Users must be able to exchange puzzles only within their friend circles
+- Users must be able to manage friend circle settings and memberships
+- Users must be able to maintain privacy controls within friend circles
+
+#### User Stories
+
+**As a friend circle creator,**
+- I want to create a private friend circle so that I can share puzzles only with trusted friends
+- I want to invite specific friends to my circle so that they can access my private puzzles
+- I want to set different permissions for different members so that I can control who can see what
+- I want to manage my friend circle settings so that I can maintain privacy and control
+
+**As a friend circle member,**
+- I want to join friend circles so that I can access private puzzle collections
+- I want to see puzzles shared within my friend circles so that I can discover new ones
+- I want to exchange puzzles within my friend circles so that I can share with trusted friends
+- I want to see which friend circles I'm part of so that I can manage my memberships
+
+**As a puzzle owner,**
+- I want to set my puzzles as visible only to specific friend circles so that I can control who sees them
+- I want to share puzzles exclusively within my friend circles so that I can maintain privacy
+- I want to see which friend circles can access my puzzles so that I can track sharing
+
+#### Acceptance Criteria
+- [ ] Users can create private friend circles with custom names and descriptions
+- [ ] Users can invite friends to join their friend circles
+- [ ] Users can set different permission levels for circle members (view only, exchange, admin)
+- [ ] Users can set puzzle visibility to specific friend circles
+- [ ] Users can exchange puzzles only within their friend circles
+- [ ] Users can see puzzles shared within their friend circles
+- [ ] Users can manage friend circle settings and memberships
+- [ ] Users can maintain privacy controls within friend circles
+
+### 5. Analytics and Insights
 
 #### Feature Description
 Users can access detailed analytics about their puzzle-solving habits, community trends, and personal progress over time.
