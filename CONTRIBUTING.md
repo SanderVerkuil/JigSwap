@@ -20,12 +20,12 @@ There are many ways to contribute to the project!
 
 ## 🚀 Development Setup
 
-Ready to start coding? Here’s how to get the project running on your local machine.
+Ready to start coding? Here's how to get the project running on your local machine.
 
 ### Prerequisites
 
 *   [Node.js](https://nodejs.org/) (v18 or later recommended)
-*   [pnpm](https://pnpm.io/installation) (our preferred package manager)
+*   [pnpm](https://pnpm.io/installation) (v10.13.1 or later - our preferred package manager)
 *   [Git](https://git-scm.com/)
 
 ### 1. Fork & Clone the Repository
@@ -39,7 +39,7 @@ cd jigswap
 
 ### 2. Install Dependencies
 
-Install the project dependencies using `pnpm`:
+This project uses a monorepo structure with Nx workspace. Install all dependencies using `pnpm`:
 
 ```bash
 pnpm install
@@ -49,47 +49,79 @@ pnpm install
 
 You'll need to set up accounts with Convex and Clerk to get the necessary API keys.
 
-1.  Create a file named `.env.local` in the root of the project.
-2.  Copy the contents of `.env` into it.
-3.  Fill in the values:
+1.  Create a file named `.env.local` in the `apps/web` directory.
+2.  Fill in the required values:
 
 ```env
-# .env.local
+# apps/web/.env.local
 
-# Convex Deployment URL
-# 1. Run `pnpm convex dev`
+# Convex Backend
+# 1. Run `cd packages/backend && pnpm convex:dev`
 # 2. A new Convex project will be created for you.
 # 3. Copy the URL from the command line output.
-CONVEX_URL=
+NEXT_PUBLIC_CONVEX_URL=https://your-convex-deployment.convex.cloud
 
-# Clerk Public Key
-# Get this from your Clerk project dashboard -> API Keys
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+# Clerk Authentication
+# Get these from your Clerk project dashboard -> API Keys
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
 
-# Clerk Secret Key
-# Get this from your Clerk project dashboard -> API Keys
-CLERK_SECRET_KEY=
+# Optional: Crowdin Localization
+CROWDIN_PROJECT_ID=your_project_id
+CROWDIN_API_TOKEN=your_api_token
+NEXT_PUBLIC_CROWDIN_DISTRIBUTION_HASH=your_distribution_hash
 ```
 
 ### 4. Run the Development Servers
 
-JigSwap requires two processes to run concurrently: the Convex backend and the Next.js frontend.
+JigSwap uses a monorepo structure with separate backend and frontend packages. You'll need to run both:
 
 1.  **Start the Convex backend:**
-    This command watches your `convex/` directory for changes and pushes them to your Convex deployment.
+    This watches your `packages/backend/convex/` directory for changes and pushes them to your Convex deployment.
 
     ```bash
-    pnpm convex dev
+    cd packages/backend
+    pnpm convex:dev
     ```
 
 2.  **Start the Next.js frontend:**
-    In a separate terminal window, run:
+    In a separate terminal window, run from the root directory:
 
     ```bash
     pnpm dev
     ```
 
+    Or alternatively, run the web app directly:
+    ```bash
+    cd apps/web
+    pnpm dev
+    ```
+
 You should now be able to access the app at `http://localhost:3000`.
+
+### Project Structure
+
+This is a monorepo managed by Nx with the following structure:
+
+```
+jigswap/
+├── apps/
+│   └── web/                 # Next.js 15 frontend application
+│       ├── src/
+│       │   ├── app/         # Next.js App Router pages
+│       │   ├── components/  # React components
+│       │   └── lib/         # Utility functions and providers
+│       ├── locales/         # Internationalization files
+│       └── package.json     # Web app dependencies
+├── packages/
+│   ├── backend/             # Convex backend functions and schema
+│   │   ├── convex/          # Convex functions and schema
+│   │   └── package.json     # Backend dependencies
+│   ├── shared-ui/           # Shared UI components
+│   └── shared-utils/        # Shared utility functions
+├── package.json             # Root workspace configuration
+└── nx.json                  # Nx workspace configuration
+```
 
 ##  Pull Request Workflow
 
@@ -104,7 +136,7 @@ You should now be able to access the app at `http://localhost:3000`.
 3.  **Format and Lint:** Before committing, run the linter to ensure your code follows our style guidelines.
 
     ```bash
-    pnpm lint --fix
+    pnpm lint:fix
     ```
 
 4.  **Commit Your Changes:** Use a descriptive commit message that follows our [commit message conventions](#git-commit-messages).
@@ -138,7 +170,7 @@ The basic format is: `<type>(<scope>): <subject>`
 
 ### Code Style
 
-We use [Prettier](https://prettier.io/) for code formatting and [ESLint](https://eslint.org/) for linting. The rules are defined in the repository. Please run `pnpm lint --fix` before committing your changes to automatically format your code.
+We use [Prettier](https://prettier.io/) for code formatting and [ESLint](https://eslint.org/) for linting. The rules are defined in the repository. Please run `pnpm lint:fix` before committing your changes to automatically format your code.
 
 ---
 
