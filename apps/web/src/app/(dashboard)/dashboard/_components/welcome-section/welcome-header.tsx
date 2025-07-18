@@ -28,11 +28,7 @@ export function WelcomeHeader() {
     convexUser?._id ? { userId: convexUser._id } : 'skip',
   );
 
-  if (!user) {
-    return <div>Loading...</div>;
-  }
-
-  if (!convexUser) {
+  if (!user || !convexUser) {
     return (
       <div className="flex items-center justify-center min-h-[75px]">
         <div className="text-center">

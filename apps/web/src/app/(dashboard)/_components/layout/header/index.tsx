@@ -5,7 +5,7 @@ import { Bell, TrendingUp, HelpCircle, Settings } from 'lucide-react';
 
 export function Header() {
   return (
-    <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+    <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50 h-[57px]">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center space-x-2">
