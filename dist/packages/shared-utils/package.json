@@ -1,15 +1,11 @@
 {
-  "name": "@jigswap/backend",
+  "name": "@jigswap/shared-utils",
   "version": "0.0.1",
   "private": true,
+  "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
-    "convex": "^1.19.0",
     "tslib": "^2.3.0"
-  },
-  "scripts": {
-    "convex:dev": "convex dev",
-    "convex:deploy": "convex deploy"
   }
 }

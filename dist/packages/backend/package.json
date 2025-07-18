@@ -2,7 +2,6 @@
   "name": "@jigswap/backend",
   "version": "0.0.1",
   "private": true,
-  "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
@@ -12,5 +11,7 @@
   "scripts": {
     "convex:dev": "convex dev",
     "convex:deploy": "convex deploy"
-  }
+  },
+  "module": "./src/index.js",
+  "type": "module"
 }

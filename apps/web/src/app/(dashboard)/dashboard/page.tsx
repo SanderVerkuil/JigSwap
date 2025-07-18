@@ -1,8 +1,8 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
+import { useQuery, useConvexAuth } from "convex/react";
+import { api } from "@jigswap/backend/convex/_generated/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useTranslations } from 'next-intl';
@@ -19,24 +19,39 @@ import {
 export default function DashboardPage() {
   const { user } = useUser();
   const t = useTranslations();
+  const { isLoading } = useConvexAuth();
+  
+  // Get current user from Convex (this will be null until user sync completes)
+  const convexUser = useQuery(api.users.getCurrentUser, isLoading ? 'skip' : {});
   
   // Get user stats
-  const userStats = useQuery(api.users.getUserStats, 
-    user?.id ? { userId: user.id as any } : "skip"
+  const userStats = useQuery(api.users.getUserStats,
+    convexUser?._id ? { userId: convexUser._id } : "skip"
   );
 
   // Get recent puzzles
-  const recentPuzzles = useQuery(api.puzzles.getPuzzlesByOwner, 
-    user?.id ? { ownerId: user.id as any, includeUnavailable: false } : "skip"
+  const recentPuzzles = useQuery(api.puzzles.getPuzzlesByOwner,
+    convexUser?._id ? { ownerId: convexUser._id, includeUnavailable: false } : "skip"
   );
 
   // Get recent trades
-  const recentTrades = useQuery(api.trades.getUserTradeRequests, 
-    user?.id ? { userId: user.id as any } : "skip"
+  const recentTrades = useQuery(api.trades.getUserTradeRequests,
+    convexUser?._id ? { userId: convexUser._id } : "skip"
   );
 
   if (!user) {
     return <div>Loading...</div>;
+  }
+
+  if (!convexUser) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-jigsaw-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Setting up your account...</p>
+        </div>
+      </div>
+    );
   }
 
   return (

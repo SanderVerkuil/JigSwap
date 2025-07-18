@@ -60,20 +60,20 @@ export default async function RootLayout({
     <html lang="en" className={resolvedTheme} suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
         <NextIntlClientProvider messages={messages}>
-          <ClerkClientProvider>
-            <ConvexClientProvider>
               <ThemeProvider
                 defaultTheme={theme}
                 storageKey="jigswap-ui-theme"
               >
+          <ClerkClientProvider>
+            <ConvexClientProvider>
                 <ToastProvider>
                   <ErrorBoundary>
                     {children}
                   </ErrorBoundary>
                 </ToastProvider>
-              </ThemeProvider>
             </ConvexClientProvider>
           </ClerkClientProvider>
+              </ThemeProvider>
         </NextIntlClientProvider>
       </body>
     </html>

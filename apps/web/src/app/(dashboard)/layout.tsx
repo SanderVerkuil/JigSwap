@@ -6,12 +6,12 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { UserButton } from "@clerk/nextjs";
 import { useTranslations } from 'next-intl';
-import { 
-  Home, 
-  Search, 
-  PlusCircle, 
-  Package, 
-  MessageSquare, 
+import {
+  Home,
+  Search,
+  PlusCircle,
+  Package,
+  MessageSquare,
   User,
   ArrowLeftRight
 } from "lucide-react";

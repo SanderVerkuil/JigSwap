@@ -2,7 +2,7 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server';
 import Negotiator from 'negotiator';
 import { match } from '@formatjs/intl-localematcher';
-import { locales, defaultLocale } from './i18n';
+import { locales, defaultLocale } from '../i18n';
 
 function getLocale(request: NextRequest): string {
   // First, check if there's a locale cookie
