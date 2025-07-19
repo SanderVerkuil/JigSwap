@@ -12,7 +12,6 @@ import {
   BookOpen,
   Calendar,
   Clock,
-  Eye,
   Filter,
   Globe,
   Home,
@@ -87,13 +86,6 @@ function getSidebarContent(pathname: string) {
     { label: "My Circles", value: "my-circles", icon: Shield },
     { label: "Invitations", value: "invitations", icon: Bell },
     { label: "Discover", value: "discover", icon: Search },
-  ];
-
-  const advancedFilters = [
-    { label: "Smart Recommendations", value: "recommendations", icon: Award },
-    { label: "Condition Tracking", value: "condition", icon: Eye },
-    { label: "Notifications", value: "notifications", icon: Bell },
-    { label: "Settings", value: "settings", icon: Settings },
   ];
 
   switch (pathname) {

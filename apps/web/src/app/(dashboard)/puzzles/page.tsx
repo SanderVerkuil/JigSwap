@@ -24,6 +24,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -170,10 +171,10 @@ export default function PuzzlesPage() {
                 <>
                   <div className="aspect-square bg-muted rounded-t-lg relative overflow-hidden">
                     {puzzle.images && puzzle.images.length > 0 ? (
-                      <img
+                      <Image
                         src={puzzle.images[0]}
                         alt={puzzle.title}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover object-center"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-muted-foreground">
@@ -245,10 +246,10 @@ export default function PuzzlesPage() {
                 <div className="flex w-full">
                   <div className="w-24 h-24 bg-muted rounded-l-lg flex-shrink-0 overflow-hidden">
                     {puzzle.images && puzzle.images.length > 0 ? (
-                      <img
+                      <Image
                         src={puzzle.images[0]}
                         alt={puzzle.title}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover object-center"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-muted-foreground">

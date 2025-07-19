@@ -5,6 +5,7 @@ import { api } from "@jigswap/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { Grid, Heart, List, MessageCircle, Search, User } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 import { useState } from "react";
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
@@ -254,7 +255,7 @@ export default function BrowsePage() {
                 <>
                   <div className="aspect-square bg-muted rounded-t-lg relative overflow-hidden">
                     {puzzle.images && puzzle.images.length > 0 ? (
-                      <img
+                      <Image
                         src={puzzle.images[0]}
                         alt={puzzle.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
@@ -332,10 +333,10 @@ export default function BrowsePage() {
                 <div className="flex w-full">
                   <div className="w-32 h-32 bg-muted rounded-l-lg flex-shrink-0 overflow-hidden">
                     {puzzle.images && puzzle.images.length > 0 ? (
-                      <img
+                      <Image
                         src={puzzle.images[0]}
                         alt={puzzle.title}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover object-center"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-muted-foreground">
