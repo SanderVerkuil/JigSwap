@@ -312,7 +312,7 @@ export function PuzzleForm({
         </div>
 
         {/* Images */}
-        <div className="space-y-4">
+        {/* <div className="space-y-4">
           <h3 className="text-lg font-semibold">Images</h3>
           <FormField
             control={form.control}
@@ -343,7 +343,7 @@ export function PuzzleForm({
               </FormItem>
             )}
           />
-        </div>
+        </div> */}
 
         {/* Additional Information */}
         <div className="space-y-4">

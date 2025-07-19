@@ -175,6 +175,8 @@ export default function PuzzlesPage() {
                         src={puzzle.images[0]}
                         alt={puzzle.title}
                         className="w-full h-full object-cover object-center"
+                        width={500}
+                        height={500}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-muted-foreground">
@@ -250,6 +252,8 @@ export default function PuzzlesPage() {
                         src={puzzle.images[0]}
                         alt={puzzle.title}
                         className="w-full h-full object-cover object-center"
+                        width={500}
+                        height={500}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-muted-foreground">

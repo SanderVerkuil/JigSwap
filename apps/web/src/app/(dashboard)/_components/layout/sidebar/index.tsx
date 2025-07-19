@@ -31,12 +31,12 @@ const getItems: () => Item[] = () => {
     },
     {
       title: "Add Puzzle",
-      url: "/my-puzzles/add",
+      url: "/puzzles/add",
       icon: PlusCircle,
     },
     {
       title: "My Puzzles",
-      url: "/my-puzzles",
+      url: "/puzzles",
       icon: Package,
     },
     {

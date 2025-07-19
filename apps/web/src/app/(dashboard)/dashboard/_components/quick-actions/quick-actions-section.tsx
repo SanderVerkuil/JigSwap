@@ -30,11 +30,7 @@ export function QuickActionsSection() {
             icon={ArrowLeftRight}
             label="View Trades"
           />
-          <ActionButton
-            href="/my-puzzles"
-            icon={Package}
-            label="My Collection"
-          />
+          <ActionButton href="/puzzles" icon={Package} label="My Collection" />
         </div>
       </CardContent>
     </Card>

@@ -25,11 +25,7 @@ export function PersonalLibrarySection() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <FeatureButton
-            href="/my-puzzles"
-            icon={Package}
-            label="My Collection"
-          />
+          <FeatureButton href="/puzzles" icon={Package} label="My Collection" />
           <FeatureButton href="/analytics" icon={BarChart3} label="Analytics" />
           <FeatureButton
             href="/completion-tracking"

@@ -58,7 +58,7 @@ export function RecentPuzzlesCard() {
                 </div>
               </div>
             ))}
-            <Link href="/my-puzzles">
+            <Link href="/puzzles">
               <Button variant="outline" className="w-full">
                 View All Puzzles
               </Button>
