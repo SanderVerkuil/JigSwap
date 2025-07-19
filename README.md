@@ -2,6 +2,8 @@
 
 A comprehensive platform for jigsaw puzzle enthusiasts to manage their personal collections, track completion history, and engage in various types of puzzle exchanges. Built with Next.js 15, Convex, Clerk, and Tailwind CSS.
 
+**JigSwap is a family side project** born from our own need to easily see and exchange puzzles with friends and family. What started as a simple solution for our puzzle-loving family has grown into a platform for the broader puzzle community.
+
 ## 🧩 Features
 
 ### Personal Library Management
@@ -36,6 +38,12 @@ A comprehensive platform for jigsaw puzzle enthusiasts to manage their personal 
 - **Responsive Design**: Mobile-first design with dark mode support
 - **Form Validation**: Comprehensive form validation with Zod and react-hook-form
 - **Error Handling**: Robust error boundaries and user feedback systems
+
+## 🏠 Our Story
+
+JigSwap began as a family side project in 2024. We were tired of constantly asking friends and family "What puzzles do you have?" and wanted an easy way to see and exchange puzzles within our circle. What started as a simple solution for our puzzle-loving family has grown into a platform that serves the broader puzzle community.
+
+Our mission is to make puzzle sharing sustainable, accessible, and enjoyable for everyone - whether you're trading with family members or connecting with fellow enthusiasts worldwide.
 
 ## 🚀 Tech Stack
 
@@ -343,4 +351,4 @@ If you have any questions or need help, please:
 
 ---
 
-Made with ❤️ for the jigsaw puzzle community
+Made with ❤️ by a puzzle-loving family for the jigsaw puzzle community

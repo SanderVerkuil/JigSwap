@@ -623,6 +623,130 @@
       "questions": "We're committed to transparency and will respond to your inquiries promptly."
     }
   },
+  "about": {
+    "title": "About JigSwap",
+    "subtitle": "The complete platform for jigsaw puzzle enthusiasts",
+    "introduction": "JigSwap is more than just a puzzle trading platform. We're building a community where puzzle enthusiasts can connect, share, and grow their passion for jigsaw puzzles in a sustainable way.",
+    "mission": {
+      "title": "Our Mission",
+      "description": "We believe that puzzles should have multiple lives. Our mission is to create a sustainable ecosystem where puzzle enthusiasts can share their completed puzzles with others, discover new challenges, and build meaningful connections within the community."
+    },
+    "vision": {
+      "title": "Our Vision",
+      "description": "We envision a world where every puzzle enthusiast has access to an endless variety of puzzles without the environmental impact of constant new purchases. A world where the joy of puzzling is shared and celebrated across borders and cultures."
+    },
+    "values": {
+      "title": "Our Values",
+      "sustainability": {
+        "title": "Sustainability",
+        "description": "We're committed to reducing waste in the puzzle industry by promoting reuse and sharing of completed puzzles."
+      },
+      "community": {
+        "title": "Community",
+        "description": "We believe in the power of community and fostering connections between puzzle enthusiasts worldwide."
+      },
+      "transparency": {
+        "title": "Transparency",
+        "description": "We operate with complete transparency in our data practices and platform operations."
+      },
+      "accessibility": {
+        "title": "Accessibility",
+        "description": "We strive to make puzzle trading accessible to everyone, regardless of location or economic background."
+      }
+    },
+    "story": {
+      "title": "Our Story",
+      "description": "JigSwap was born from a simple family need: we wanted to easily see what puzzles our friends and family owned so we could exchange them. Completed puzzles often sit on shelves, taking up space while others search for new challenges. We saw an opportunity to create a platform that not only solves this problem but also builds a community around the shared love of puzzling.",
+      "founded": "Founded in 2024 as a family side project, JigSwap has grown from a simple idea to a thriving community of puzzle enthusiasts. Our platform combines modern technology with the timeless joy of jigsaw puzzles, creating an experience that's both nostalgic and innovative."
+    },
+    "team": {
+      "title": "The Team",
+      "description": "JigSwap is built by a family of puzzle enthusiasts, for puzzle enthusiasts. We started this as a side project to solve our own need for sharing puzzles with friends and family.",
+      "passion": "We're passionate about creating a platform that serves the puzzle community while promoting sustainable practices in the hobby we all love."
+    },
+    "technology": {
+      "title": "Technology",
+      "description": "Built with modern web technologies, JigSwap provides a seamless experience for managing collections, tracking completions, and facilitating trades.",
+      "features": [
+        "Real-time updates and messaging",
+        "Advanced search and filtering",
+        "Secure authentication and data protection",
+        "Mobile-responsive design",
+        "Internationalization support"
+      ]
+    },
+    "community": {
+      "title": "Join Our Community",
+      "description": "Whether you're a casual puzzler or a dedicated enthusiast, JigSwap has something for you. Join thousands of users who are already trading, connecting, and growing their puzzle collections.",
+      "getStarted": "Ready to start your puzzle journey? Create an account and begin exploring the world of sustainable puzzle trading."
+    }
+  },
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "We'd love to hear from you",
+    "introduction": "Have questions, suggestions, or just want to say hello? We're here to help and would love to hear from you. Our team is committed to providing excellent support to the JigSwap community.",
+    "waysToContact": {
+      "title": "Ways to Contact Us",
+      "description": "Choose the method that works best for you. We typically respond within 24 hours during business days."
+    },
+    "email": {
+      "title": "Email Support",
+      "description": "For general inquiries, support questions, or feedback:",
+      "address": "hello@jigswap.site",
+      "responseTime": "We typically respond within 24 hours"
+    },
+    "support": {
+      "title": "Technical Support",
+      "description": "For technical issues, bug reports, or feature requests:",
+      "address": "support@jigswap.site",
+      "responseTime": "We aim to respond within 12 hours for urgent issues"
+    },
+    "privacy": {
+      "title": "Privacy & Legal",
+      "description": "For privacy concerns or legal matters:",
+      "address": "privacy@jigswap.site",
+      "responseTime": "We respond to all privacy inquiries within 48 hours"
+    },
+    "business": {
+      "title": "Business Inquiries",
+      "description": "For partnerships, collaborations, or business opportunities:",
+      "address": "business@jigswap.site",
+      "responseTime": "We'll get back to you within 2-3 business days"
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "description": "Before reaching out, you might find answers to common questions in our FAQ section.",
+      "link": "Check our FAQ",
+      "topics": [
+        "How to get started with JigSwap",
+        "Understanding the trading process",
+        "Account and profile management",
+        "Privacy and data security",
+        "Community guidelines"
+      ]
+    },
+    "feedback": {
+      "title": "Feedback & Suggestions",
+      "description": "We're always looking to improve JigSwap. Your feedback helps us make the platform better for everyone.",
+      "types": [
+        "Feature requests and ideas",
+        "User experience feedback",
+        "Bug reports and technical issues",
+        "Community suggestions",
+        "General platform feedback"
+      ]
+    },
+    "response": {
+      "title": "What to Expect",
+      "description": "When you contact us, here's what you can expect:",
+      "expectations": [
+        "Acknowledgment of your message within 24 hours",
+        "Detailed response from our team",
+        "Follow-up if additional information is needed",
+        "Escalation to appropriate team members when necessary"
+      ]
+    }
+  },
   "callToAction": {
     "title": "Ready to Transform Your Puzzle Experience?",
     "description": "Join thousands of puzzle enthusiasts who are already managing their collections, trading puzzles, and connecting with the community on JigSwap",
