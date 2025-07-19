@@ -36,7 +36,10 @@
     "howItWorks": "How It Works",
     "readyToStart": "Ready to Start Trading?",
     "joinThousands": "Join thousands of puzzle enthusiasts already trading on JigSwap",
-    "createAccount": "Create Your Account"
+    "createAccount": "Create Your Account",
+    "trackProgress": "Track Progress",
+    "exchangePuzzles": "Exchange Puzzles",
+    "connectCommunity": "Connect Community"
   },
   "features": {
     "vastCollection": {
@@ -50,6 +53,148 @@
     "sustainable": {
       "title": "Sustainable",
       "description": "Reduce waste by giving puzzles a second life. Make your hobby more environmentally friendly."
+    },
+    "core": {
+      "title": "Complete Puzzle Management Platform",
+      "personalLibrary": {
+        "title": "Personal Library",
+        "description": "Track your collection, completion history, and personal analytics with detailed statistics and progress tracking."
+      },
+      "smartExchange": {
+        "title": "Smart Exchange",
+        "description": "Lend, swap, or trade puzzles while preserving your completion history and tracking ownership chains."
+      },
+      "community": {
+        "title": "Community",
+        "description": "Connect with fellow enthusiasts, share reviews, and discover new puzzles through social features."
+      },
+      "analytics": {
+        "title": "Analytics",
+        "description": "Gain insights into your solving patterns, set goals, and compare with community trends."
+      }
+    },
+    "detailed": {
+      "title": "Powerful Features for Puzzle Enthusiasts",
+      "personalLibrary": {
+        "title": "📚 Personal Puzzle Library",
+        "collectionManagement": {
+          "title": "Collection Management",
+          "items": [
+            "Add puzzles with detailed information",
+            "Organize with custom categories & tags",
+            "Set visibility levels (private to tradeable)",
+            "Search and filter your collection"
+          ]
+        },
+        "completionTracking": {
+          "title": "Completion Tracking",
+          "items": [
+            "Record start and completion times",
+            "Rate puzzles and add personal notes",
+            "Upload photos of completed puzzles",
+            "Track multiple completions"
+          ]
+        },
+        "personalAnalytics": {
+          "title": "Personal Analytics",
+          "items": [
+            "View completion statistics",
+            "Analyze solving time trends",
+            "Set and track personal goals",
+            "Export your data"
+          ]
+        }
+      },
+      "exchangeSystem": {
+        "title": "🔄 Advanced Exchange System",
+        "multipleExchangeTypes": {
+          "title": "Multiple Exchange Types",
+          "items": [
+            "Lending with return agreements",
+            "Permanent swaps between users",
+            "Direct sales and auctions",
+            "Negotiable terms and conditions"
+          ]
+        },
+        "historyPreservation": {
+          "title": "History Preservation",
+          "items": [
+            "Keep your completion records",
+            "Complete ownership tracking",
+            "Chain of custody for all puzzles",
+            "Condition tracking through exchanges"
+          ]
+        },
+        "exchangeManagement": {
+          "title": "Exchange Management",
+          "items": [
+            "Real-time messaging during exchanges",
+            "Photo documentation of condition",
+            "Dispute resolution system",
+            "Exchange ratings and feedback"
+          ]
+        }
+      },
+      "community": {
+        "title": "👥 Community & Social Features",
+        "userProfiles": {
+          "title": "User Profiles",
+          "items": [
+            "Showcase your collection",
+            "Display achievements and statistics",
+            "Follow other enthusiasts",
+            "Location-based discovery"
+          ]
+        },
+        "reviewsRatings": {
+          "title": "Reviews & Ratings",
+          "items": [
+            "Write detailed puzzle reviews",
+            "Rate on multiple criteria",
+            "Vote on helpful reviews",
+            "See community opinions"
+          ]
+        },
+        "socialDiscovery": {
+          "title": "Social Discovery",
+          "items": [
+            "Find users by location",
+            "Discover trending puzzles",
+            "Community discussions",
+            "Smart recommendations"
+          ]
+        }
+      },
+      "advanced": {
+        "title": "⚡ Advanced Features",
+        "conditionTracking": {
+          "title": "Condition Tracking",
+          "items": [
+            "Document puzzle condition",
+            "Track changes over time",
+            "Photo documentation",
+            "Condition-based filtering"
+          ]
+        },
+        "smartRecommendations": {
+          "title": "Smart Recommendations",
+          "items": [
+            "AI-powered puzzle suggestions",
+            "Find similar users",
+            "Optimal exchange opportunities",
+            "Collaborative filtering"
+          ]
+        },
+        "notificationSystem": {
+          "title": "Notification System",
+          "items": [
+            "Real-time exchange alerts",
+            "Goal achievement notifications",
+            "Community activity updates",
+            "Customizable preferences"
+          ]
+        }
+      }
     }
   },
   "steps": {
@@ -68,6 +213,25 @@
     "enjoyReview": {
       "title": "Enjoy & Review",
       "description": "Complete your new puzzle and leave reviews to build trust in the community."
+    },
+    "howItWorks": {
+      "title": "How JigSwap Works",
+      "buildLibrary": {
+        "title": "Build Your Library",
+        "description": "Add your puzzles to your personal library with detailed information, photos, and completion tracking."
+      },
+      "discoverConnect": {
+        "title": "Discover & Connect",
+        "description": "Browse puzzles from other enthusiasts, read reviews, and connect with the community."
+      },
+      "exchangeTrade": {
+        "title": "Exchange & Trade",
+        "description": "Initiate exchanges, negotiate terms, and track the entire process while preserving your history."
+      },
+      "analyzeImprove": {
+        "title": "Analyze & Improve",
+        "description": "Track your progress, set goals, and gain insights from comprehensive analytics and community data."
+      }
     }
   },
   "auth": {
@@ -237,6 +401,226 @@
     "about": "About",
     "privacy": "Privacy",
     "terms": "Terms",
-    "contact": "Contact"
+    "contact": "Contact",
+    "description": "The complete platform for jigsaw puzzle enthusiasts - manage, trade, connect, and grow."
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last Updated",
+    "introduction": "This Privacy Policy describes how JigSwap ('we', 'our', or 'us') collects, uses, and protects your personal information when you use our jigsaw puzzle trading platform.",
+    "effectiveDate": "July 20, 2025",
+    "informationWeCollect": {
+      "title": "Information We Collect",
+      "description": "We collect information you provide directly to us and information we collect automatically when you use our service.",
+      "personalInformation": {
+        "title": "Personal Information",
+        "items": [
+          "Account information (name, email address, username)",
+          "Profile information (bio, location, interests)",
+          "Puzzle collection data and photos",
+          "Trade history and communications",
+          "Reviews and ratings you provide"
+        ]
+      },
+      "automaticallyCollected": {
+        "title": "Automatically Collected Information",
+        "items": [
+          "Device information (IP address, browser type, operating system)",
+          "Usage data (pages visited, features used, time spent)",
+          "Analytics data (interaction patterns, preferences)",
+          "Technical logs and error reports"
+        ]
+      }
+    },
+    "howWeUseInformation": {
+      "title": "How We Use Your Information",
+      "description": "We use the information we collect to provide, improve, and secure our services.",
+      "purposes": [
+        "Provide and maintain our puzzle trading platform",
+        "Process trades and facilitate exchanges between users",
+        "Personalize your experience and show relevant content",
+        "Send important service updates and notifications",
+        "Analyze usage patterns to improve our service",
+        "Prevent fraud and ensure platform security",
+        "Respond to your questions and support requests"
+      ]
+    },
+    "dataStorage": {
+      "title": "Data Storage and Hosting",
+      "description": "Your data is securely stored and managed by trusted third-party services:",
+      "convex": {
+        "title": "Convex",
+        "description": "Our primary database and backend services are hosted by Convex. They handle data storage, user authentication, and real-time features."
+      },
+      "vercel": {
+        "title": "Vercel",
+        "description": "Our web application is hosted on Vercel's infrastructure, which provides fast, reliable, and secure hosting services."
+      }
+    },
+    "analytics": {
+      "title": "Analytics and Tracking",
+      "description": "We use analytics to understand how our service is used and improve user experience.",
+      "posthog": {
+        "title": "PostHog Analytics",
+        "description": "We use PostHog to collect anonymous usage analytics. This helps us understand user behavior and improve our platform. PostHog data is used solely for service improvement and is not sold to third parties."
+      },
+      "noAdvertising": "We do not use your data for advertising purposes. Your information will never be sold to advertisers or third parties for marketing purposes."
+    },
+    "dataSharing": {
+      "title": "Data Sharing and Third Parties",
+      "description": "We are committed to protecting your privacy and do not sell your personal information.",
+      "noSale": "We do not sell, rent, or trade your personal information to third parties for advertising or marketing purposes.",
+      "limitedSharing": "We may share your information only in these limited circumstances:",
+      "circumstances": [
+        "With your explicit consent",
+        "To comply with legal obligations",
+        "To protect our rights and prevent fraud",
+        "With service providers who assist in platform operations (under strict confidentiality agreements)"
+      ]
+    },
+    "dataSecurity": {
+      "title": "Data Security",
+      "description": "We implement appropriate security measures to protect your personal information:",
+      "measures": [
+        "Encryption of data in transit and at rest",
+        "Regular security audits and updates",
+        "Access controls and authentication",
+        "Secure hosting infrastructure"
+      ]
+    },
+    "yourRights": {
+      "title": "Your Rights and Choices",
+      "description": "You have control over your personal information:",
+      "rights": [
+        "Access and review your personal data",
+        "Update or correct your information",
+        "Delete your account and associated data",
+        "Opt out of certain data collection",
+        "Export your data in a portable format",
+        "Contact us with privacy concerns"
+      ]
+    },
+    "cookies": {
+      "title": "Cookies and Tracking",
+      "description": "We use cookies and similar technologies to enhance your experience:",
+      "types": [
+        "Essential cookies for platform functionality",
+        "Analytics cookies to understand usage patterns",
+        "Preference cookies to remember your settings"
+      ],
+      "control": "You can control cookie settings through your browser preferences."
+    },
+    "children": {
+      "title": "Children's Privacy",
+      "description": "Our service is not intended for children under 13. We do not knowingly collect personal information from children under 13."
+    },
+    "international": {
+      "title": "International Data Transfers",
+      "description": "Your data may be processed in countries other than your own. We ensure appropriate safeguards are in place to protect your information."
+    },
+    "changes": {
+      "title": "Changes to This Policy",
+      "description": "We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new policy on our website and updating the 'Last Updated' date."
+    },
+    "contact": {
+      "title": "Contact Us",
+      "description": "If you have any questions about this Privacy Policy or our data practices, please contact us:",
+      "email": "Email",
+      "questions": "We're committed to transparency and will respond to your privacy inquiries promptly."
+    }
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "lastUpdated": "Last Updated",
+    "introduction": "These Terms of Service ('Terms') govern your use of JigSwap, our jigsaw puzzle trading platform. By using our service, you agree to these terms.",
+    "effectiveDate": "July 20, 2025",
+    "acceptance": {
+      "title": "Acceptance of Terms",
+      "description": "By accessing or using JigSwap, you agree to be bound by these Terms. If you disagree with any part of these terms, you may not access our service."
+    },
+    "serviceDescription": {
+      "title": "Service Description",
+      "description": "JigSwap is a platform that enables users to trade, exchange, and manage jigsaw puzzles. Our service includes:",
+      "features": [
+        "Puzzle collection management and tracking",
+        "Trading and exchange functionality",
+        "Community features and reviews",
+        "Analytics and progress tracking"
+      ]
+    },
+    "userAccounts": {
+      "title": "User Accounts",
+      "description": "To use certain features of our service, you must create an account. You are responsible for:",
+      "responsibilities": [
+        "Maintaining the security of your account",
+        "Providing accurate and complete information",
+        "Notifying us of any unauthorized use",
+        "Being at least 13 years old to use the service"
+      ]
+    },
+    "userConduct": {
+      "title": "User Conduct",
+      "description": "You agree to use our service responsibly and in accordance with these terms:",
+      "prohibited": [
+        "Violating any applicable laws or regulations",
+        "Infringing on intellectual property rights",
+        "Harassing or harming other users",
+        "Attempting to gain unauthorized access to our systems",
+        "Using the service for commercial purposes without permission"
+      ],
+      "expected": [
+        "Treating other users with respect",
+        "Providing accurate information about puzzles",
+        "Honoring trade agreements and commitments",
+        "Reporting suspicious or inappropriate behavior"
+      ]
+    },
+    "trading": {
+      "title": "Trading and Exchanges",
+      "description": "Our platform facilitates puzzle trading between users. By participating in trades, you agree to:",
+      "agreements": [
+        "Accurately describe puzzle condition and completeness",
+        "Honor agreed-upon trade terms",
+        "Communicate promptly and honestly",
+        "Resolve disputes amicably when possible"
+      ],
+      "disclaimer": "JigSwap acts as a facilitator for trades but is not responsible for the quality, condition, or completeness of traded puzzles. Users trade at their own risk."
+    },
+    "intellectualProperty": {
+      "title": "Intellectual Property",
+      "description": "Our service and its original content, features, and functionality are owned by JigSwap and are protected by international copyright, trademark, and other intellectual property laws."
+    },
+    "privacy": {
+      "title": "Privacy",
+      "description": "Your privacy is important to us. Please review our Privacy Policy, which also governs your use of the service."
+    },
+    "termination": {
+      "title": "Account Termination",
+      "description": "We may terminate or suspend your account immediately, without prior notice, for any reason, including breach of these Terms."
+    },
+    "disclaimer": {
+      "title": "Disclaimer of Warranties",
+      "description": "The service is provided 'as is' without warranties of any kind. We do not guarantee that the service will be uninterrupted or error-free."
+    },
+    "limitation": {
+      "title": "Limitation of Liability",
+      "description": "JigSwap shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of the service."
+    },
+    "changes": {
+      "title": "Changes to Terms",
+      "description": "We reserve the right to modify these terms at any time. We will notify users of any material changes by posting the new terms on our website."
+    },
+    "contact": {
+      "title": "Contact Information",
+      "description": "If you have any questions about these Terms of Service, please contact us:",
+      "email": "Email",
+      "questions": "We're committed to transparency and will respond to your inquiries promptly."
+    }
+  },
+  "callToAction": {
+    "title": "Ready to Transform Your Puzzle Experience?",
+    "description": "Join thousands of puzzle enthusiasts who are already managing their collections, trading puzzles, and connecting with the community on JigSwap",
+    "startJourney": "Start Your Puzzle Journey",
+    "goToDashboard": "Go to Dashboard"
   }
 }

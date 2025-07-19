@@ -1,8 +1,11 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 
 export function Footer() {
+  const t = useTranslations();
+
   return (
     <footer className="border-t py-8 px-4">
       <div className="container mx-auto text-center text-muted-foreground">
@@ -10,22 +13,19 @@ export function Footer() {
           <span className="text-xl">🧩</span>
           <span className="font-semibold">JigSwap</span>
         </div>
-        <p className="text-sm">
-          The complete platform for jigsaw puzzle enthusiasts - manage, trade,
-          connect, and grow.
-        </p>
+        <p className="text-sm">{t("footer.description")}</p>
         <div className="mt-4 flex justify-center space-x-6 text-sm">
           <Link href="/about" className="hover:text-foreground">
-            About
+            {t("footer.about")}
           </Link>
           <Link href="/privacy" className="hover:text-foreground">
-            Privacy
+            {t("footer.privacy")}
           </Link>
           <Link href="/terms" className="hover:text-foreground">
-            Terms
+            {t("footer.terms")}
           </Link>
           <Link href="/contact" className="hover:text-foreground">
-            Contact
+            {t("footer.contact")}
           </Link>
         </div>
       </div>

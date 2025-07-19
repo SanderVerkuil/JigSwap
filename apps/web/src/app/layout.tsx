@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://jigswap.com",
+    url: "https://jigswap.site",
     title: "JigSwap - Trade Jigsaw Puzzles",
     description:
       "Connect with jigsaw puzzle enthusiasts and trade your completed puzzles.",

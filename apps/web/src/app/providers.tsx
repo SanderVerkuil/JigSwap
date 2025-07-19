@@ -1,3 +1,4 @@
+import CookieConsent from "@/components/blocks/cookie-consent";
 import { ToastProvider } from "@/components/ui/toast";
 import { ClerkClientProvider } from "@/lib/clerk-provider";
 import { ConvexClientProvider } from "@/lib/convex-provider";
@@ -23,6 +24,7 @@ export async function Providers({ children }: { children: React.ReactNode }) {
             <ToastProvider>
               {children}
               <Toaster />
+              <CookieConsent variant="mini" />
             </ToastProvider>
           </ConvexClientProvider>
         </ClerkClientProvider>

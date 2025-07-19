@@ -1,44 +1,118 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 export function DetailedFeatures() {
+  const t = useTranslations();
+
   return (
     <section className="py-20 px-4">
       <div className="container mx-auto">
         <h2 className="text-3xl font-bold text-center mb-12">
-          Powerful Features for Puzzle Enthusiasts
+          {t("features.detailed.title")}
         </h2>
 
         {/* Personal Library Features */}
         <div className="mb-16">
           <h3 className="text-2xl font-semibold mb-6 text-center">
-            📚 Personal Puzzle Library
+            {t("features.detailed.personalLibrary.title")}
           </h3>
           <div className="grid md:grid-cols-3 gap-6">
             <div className="bg-card p-6 rounded-lg border">
-              <h4 className="font-semibold mb-3">Collection Management</h4>
+              <h4 className="font-semibold mb-3">
+                {t(
+                  "features.detailed.personalLibrary.collectionManagement.title",
+                )}
+              </h4>
               <ul className="text-sm text-muted-foreground space-y-2">
-                <li>• Add puzzles with detailed information</li>
-                <li>• Organize with custom categories & tags</li>
-                <li>• Set visibility levels (private to tradeable)</li>
-                <li>• Search and filter your collection</li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.personalLibrary.collectionManagement.items.0",
+                  )}
+                </li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.personalLibrary.collectionManagement.items.1",
+                  )}
+                </li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.personalLibrary.collectionManagement.items.2",
+                  )}
+                </li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.personalLibrary.collectionManagement.items.3",
+                  )}
+                </li>
               </ul>
             </div>
             <div className="bg-card p-6 rounded-lg border">
-              <h4 className="font-semibold mb-3">Completion Tracking</h4>
+              <h4 className="font-semibold mb-3">
+                {t(
+                  "features.detailed.personalLibrary.completionTracking.title",
+                )}
+              </h4>
               <ul className="text-sm text-muted-foreground space-y-2">
-                <li>• Record start and completion times</li>
-                <li>• Rate puzzles and add personal notes</li>
-                <li>• Upload photos of completed puzzles</li>
-                <li>• Track multiple completions</li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.personalLibrary.completionTracking.items.0",
+                  )}
+                </li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.personalLibrary.completionTracking.items.1",
+                  )}
+                </li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.personalLibrary.completionTracking.items.2",
+                  )}
+                </li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.personalLibrary.completionTracking.items.3",
+                  )}
+                </li>
               </ul>
             </div>
             <div className="bg-card p-6 rounded-lg border">
-              <h4 className="font-semibold mb-3">Personal Analytics</h4>
+              <h4 className="font-semibold mb-3">
+                {t("features.detailed.personalLibrary.personalAnalytics.title")}
+              </h4>
               <ul className="text-sm text-muted-foreground space-y-2">
-                <li>• View completion statistics</li>
-                <li>• Analyze solving time trends</li>
-                <li>• Set and track personal goals</li>
-                <li>• Export your data</li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.personalLibrary.personalAnalytics.items.0",
+                  )}
+                </li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.personalLibrary.personalAnalytics.items.1",
+                  )}
+                </li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.personalLibrary.personalAnalytics.items.2",
+                  )}
+                </li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.personalLibrary.personalAnalytics.items.3",
+                  )}
+                </li>
               </ul>
             </div>
           </div>
@@ -47,34 +121,104 @@ export function DetailedFeatures() {
         {/* Exchange System Features */}
         <div className="mb-16">
           <h3 className="text-2xl font-semibold mb-6 text-center">
-            🔄 Advanced Exchange System
+            {t("features.detailed.exchangeSystem.title")}
           </h3>
           <div className="grid md:grid-cols-3 gap-6">
             <div className="bg-card p-6 rounded-lg border">
-              <h4 className="font-semibold mb-3">Multiple Exchange Types</h4>
+              <h4 className="font-semibold mb-3">
+                {t(
+                  "features.detailed.exchangeSystem.multipleExchangeTypes.title",
+                )}
+              </h4>
               <ul className="text-sm text-muted-foreground space-y-2">
-                <li>• Lending with return agreements</li>
-                <li>• Permanent swaps between users</li>
-                <li>• Direct sales and auctions</li>
-                <li>• Negotiable terms and conditions</li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.exchangeSystem.multipleExchangeTypes.items.0",
+                  )}
+                </li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.exchangeSystem.multipleExchangeTypes.items.1",
+                  )}
+                </li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.exchangeSystem.multipleExchangeTypes.items.2",
+                  )}
+                </li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.exchangeSystem.multipleExchangeTypes.items.3",
+                  )}
+                </li>
               </ul>
             </div>
             <div className="bg-card p-6 rounded-lg border">
-              <h4 className="font-semibold mb-3">History Preservation</h4>
+              <h4 className="font-semibold mb-3">
+                {t(
+                  "features.detailed.exchangeSystem.historyPreservation.title",
+                )}
+              </h4>
               <ul className="text-sm text-muted-foreground space-y-2">
-                <li>• Keep your completion records</li>
-                <li>• Complete ownership tracking</li>
-                <li>• Chain of custody for all puzzles</li>
-                <li>• Condition tracking through exchanges</li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.exchangeSystem.historyPreservation.items.0",
+                  )}
+                </li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.exchangeSystem.historyPreservation.items.1",
+                  )}
+                </li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.exchangeSystem.historyPreservation.items.2",
+                  )}
+                </li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.exchangeSystem.historyPreservation.items.3",
+                  )}
+                </li>
               </ul>
             </div>
             <div className="bg-card p-6 rounded-lg border">
-              <h4 className="font-semibold mb-3">Exchange Management</h4>
+              <h4 className="font-semibold mb-3">
+                {t("features.detailed.exchangeSystem.exchangeManagement.title")}
+              </h4>
               <ul className="text-sm text-muted-foreground space-y-2">
-                <li>• Real-time messaging during exchanges</li>
-                <li>• Photo documentation of condition</li>
-                <li>• Dispute resolution system</li>
-                <li>• Exchange ratings and feedback</li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.exchangeSystem.exchangeManagement.items.0",
+                  )}
+                </li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.exchangeSystem.exchangeManagement.items.1",
+                  )}
+                </li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.exchangeSystem.exchangeManagement.items.2",
+                  )}
+                </li>
+                <li>
+                  •{" "}
+                  {t(
+                    "features.detailed.exchangeSystem.exchangeManagement.items.3",
+                  )}
+                </li>
               </ul>
             </div>
           </div>
@@ -83,34 +227,64 @@ export function DetailedFeatures() {
         {/* Community Features */}
         <div className="mb-16">
           <h3 className="text-2xl font-semibold mb-6 text-center">
-            👥 Community & Social Features
+            {t("features.detailed.community.title")}
           </h3>
           <div className="grid md:grid-cols-3 gap-6">
             <div className="bg-card p-6 rounded-lg border">
-              <h4 className="font-semibold mb-3">User Profiles</h4>
+              <h4 className="font-semibold mb-3">
+                {t("features.detailed.community.userProfiles.title")}
+              </h4>
               <ul className="text-sm text-muted-foreground space-y-2">
-                <li>• Showcase your collection</li>
-                <li>• Display achievements and statistics</li>
-                <li>• Follow other enthusiasts</li>
-                <li>• Location-based discovery</li>
+                <li>
+                  • {t("features.detailed.community.userProfiles.items.0")}
+                </li>
+                <li>
+                  • {t("features.detailed.community.userProfiles.items.1")}
+                </li>
+                <li>
+                  • {t("features.detailed.community.userProfiles.items.2")}
+                </li>
+                <li>
+                  • {t("features.detailed.community.userProfiles.items.3")}
+                </li>
               </ul>
             </div>
             <div className="bg-card p-6 rounded-lg border">
-              <h4 className="font-semibold mb-3">Reviews & Ratings</h4>
+              <h4 className="font-semibold mb-3">
+                {t("features.detailed.community.reviewsRatings.title")}
+              </h4>
               <ul className="text-sm text-muted-foreground space-y-2">
-                <li>• Write detailed puzzle reviews</li>
-                <li>• Rate on multiple criteria</li>
-                <li>• Vote on helpful reviews</li>
-                <li>• See community opinions</li>
+                <li>
+                  • {t("features.detailed.community.reviewsRatings.items.0")}
+                </li>
+                <li>
+                  • {t("features.detailed.community.reviewsRatings.items.1")}
+                </li>
+                <li>
+                  • {t("features.detailed.community.reviewsRatings.items.2")}
+                </li>
+                <li>
+                  • {t("features.detailed.community.reviewsRatings.items.3")}
+                </li>
               </ul>
             </div>
             <div className="bg-card p-6 rounded-lg border">
-              <h4 className="font-semibold mb-3">Social Discovery</h4>
+              <h4 className="font-semibold mb-3">
+                {t("features.detailed.community.socialDiscovery.title")}
+              </h4>
               <ul className="text-sm text-muted-foreground space-y-2">
-                <li>• Find users by location</li>
-                <li>• Discover trending puzzles</li>
-                <li>• Community discussions</li>
-                <li>• Smart recommendations</li>
+                <li>
+                  • {t("features.detailed.community.socialDiscovery.items.0")}
+                </li>
+                <li>
+                  • {t("features.detailed.community.socialDiscovery.items.1")}
+                </li>
+                <li>
+                  • {t("features.detailed.community.socialDiscovery.items.2")}
+                </li>
+                <li>
+                  • {t("features.detailed.community.socialDiscovery.items.3")}
+                </li>
               </ul>
             </div>
           </div>
@@ -119,34 +293,68 @@ export function DetailedFeatures() {
         {/* Advanced Features */}
         <div className="mb-16">
           <h3 className="text-2xl font-semibold mb-6 text-center">
-            ⚡ Advanced Features
+            {t("features.detailed.advanced.title")}
           </h3>
           <div className="grid md:grid-cols-3 gap-6">
             <div className="bg-card p-6 rounded-lg border">
-              <h4 className="font-semibold mb-3">Condition Tracking</h4>
+              <h4 className="font-semibold mb-3">
+                {t("features.detailed.advanced.conditionTracking.title")}
+              </h4>
               <ul className="text-sm text-muted-foreground space-y-2">
-                <li>• Document puzzle condition</li>
-                <li>• Track changes over time</li>
-                <li>• Photo documentation</li>
-                <li>• Condition-based filtering</li>
+                <li>
+                  • {t("features.detailed.advanced.conditionTracking.items.0")}
+                </li>
+                <li>
+                  • {t("features.detailed.advanced.conditionTracking.items.1")}
+                </li>
+                <li>
+                  • {t("features.detailed.advanced.conditionTracking.items.2")}
+                </li>
+                <li>
+                  • {t("features.detailed.advanced.conditionTracking.items.3")}
+                </li>
               </ul>
             </div>
             <div className="bg-card p-6 rounded-lg border">
-              <h4 className="font-semibold mb-3">Smart Recommendations</h4>
+              <h4 className="font-semibold mb-3">
+                {t("features.detailed.advanced.smartRecommendations.title")}
+              </h4>
               <ul className="text-sm text-muted-foreground space-y-2">
-                <li>• AI-powered puzzle suggestions</li>
-                <li>• Find similar users</li>
-                <li>• Optimal exchange opportunities</li>
-                <li>• Collaborative filtering</li>
+                <li>
+                  •{" "}
+                  {t("features.detailed.advanced.smartRecommendations.items.0")}
+                </li>
+                <li>
+                  •{" "}
+                  {t("features.detailed.advanced.smartRecommendations.items.1")}
+                </li>
+                <li>
+                  •{" "}
+                  {t("features.detailed.advanced.smartRecommendations.items.2")}
+                </li>
+                <li>
+                  •{" "}
+                  {t("features.detailed.advanced.smartRecommendations.items.3")}
+                </li>
               </ul>
             </div>
             <div className="bg-card p-6 rounded-lg border">
-              <h4 className="font-semibold mb-3">Notification System</h4>
+              <h4 className="font-semibold mb-3">
+                {t("features.detailed.advanced.notificationSystem.title")}
+              </h4>
               <ul className="text-sm text-muted-foreground space-y-2">
-                <li>• Real-time exchange alerts</li>
-                <li>• Goal achievement notifications</li>
-                <li>• Community activity updates</li>
-                <li>• Customizable preferences</li>
+                <li>
+                  • {t("features.detailed.advanced.notificationSystem.items.0")}
+                </li>
+                <li>
+                  • {t("features.detailed.advanced.notificationSystem.items.1")}
+                </li>
+                <li>
+                  • {t("features.detailed.advanced.notificationSystem.items.2")}
+                </li>
+                <li>
+                  • {t("features.detailed.advanced.notificationSystem.items.3")}
+                </li>
               </ul>
             </div>
           </div>

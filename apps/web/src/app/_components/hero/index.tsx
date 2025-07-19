@@ -76,15 +76,15 @@ export function Hero() {
           <div className="mt-12 flex justify-center space-x-4 opacity-60">
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <div className="w-2 h-2 bg-jigsaw-success rounded-full"></div>
-              <span>Track Progress</span>
+              <span>{t("home.trackProgress")}</span>
             </div>
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <div className="w-2 h-2 bg-jigsaw-secondary rounded-full"></div>
-              <span>Exchange Puzzles</span>
+              <span>{t("home.exchangePuzzles")}</span>
             </div>
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <div className="w-2 h-2 bg-jigsaw-warning rounded-full"></div>
-              <span>Connect Community</span>
+              <span>{t("home.connectCommunity")}</span>
             </div>
           </div>
         </div>
