@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Card,
@@ -6,9 +6,9 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Shield, Award, Bell, Settings } from 'lucide-react';
-import { AdvancedFeatureItem } from './cards/advanced-feature-item';
+} from "@/components/ui/card";
+import { Award, Bell, Settings, Shield } from "lucide-react";
+import { AdvancedFeatureItem } from "./cards/advanced-feature-item";
 
 export function AdvancedFeaturesSection() {
   return (

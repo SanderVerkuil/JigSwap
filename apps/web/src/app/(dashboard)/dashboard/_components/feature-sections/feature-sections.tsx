@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { PersonalLibrarySection } from './personal-library-section';
-import { CommunitySection } from './community-section';
+import { CommunitySection } from "./community-section";
+import { PersonalLibrarySection } from "./personal-library-section";
 
 export function FeatureSections() {
   return (

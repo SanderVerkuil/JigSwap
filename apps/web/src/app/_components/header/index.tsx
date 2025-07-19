@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { ModeToggle } from '@/components/ui/theme-toggle';
-import { LanguageSwitcher } from '@/components/ui/language-switcher';
-import { useTranslations } from 'next-intl';
-import { Authenticated, Unauthenticated } from 'convex/react';
+import { Button } from "@/components/ui/button";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
+import { ModeToggle } from "@/components/ui/theme-toggle";
+import { Authenticated, Unauthenticated } from "convex/react";
+import { useTranslations } from "next-intl";
+import Link from "next/link";
 
 export function Header() {
   const t = useTranslations();
@@ -22,15 +22,15 @@ export function Header() {
           <ModeToggle />
           <Unauthenticated>
             <Link href="/sign-in">
-              <Button variant="ghost">{t('navigation.signIn')}</Button>
+              <Button variant="ghost">{t("navigation.signIn")}</Button>
             </Link>
             <Link href="/sign-up">
-              <Button variant="default">{t('navigation.signUp')}</Button>
+              <Button variant="default">{t("navigation.signUp")}</Button>
             </Link>
           </Unauthenticated>
           <Authenticated>
             <Link href="/dashboard">
-              <Button variant="ghost">{t('navigation.dashboard')}</Button>
+              <Button variant="ghost">{t("navigation.dashboard")}</Button>
             </Link>
           </Authenticated>
         </div>

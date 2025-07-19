@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { Badge } from '@/components/ui/badge';
-import { LucideIcon } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { LucideIcon } from "lucide-react";
 
 interface AdvancedFeatureItemProps {
   icon: LucideIcon;

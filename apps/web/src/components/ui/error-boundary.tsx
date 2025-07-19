@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import React from 'react';
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+} from "@/components/ui/card";
+import { AlertTriangle, RefreshCw } from "lucide-react";
+import React from "react";
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -35,7 +35,7 @@ class ErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo);
+    console.error("Error caught by boundary:", error, errorInfo);
   }
 
   resetError = () => {
@@ -87,7 +87,7 @@ function DefaultErrorFallback({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {error && process.env.NODE_ENV === 'development' && (
+          {error && process.env.NODE_ENV === "development" && (
             <div className="p-3 bg-muted rounded-lg">
               <p className="text-sm font-mono text-destructive">
                 {error.message}
@@ -113,4 +113,4 @@ function DefaultErrorFallback({
   );
 }
 
-export { ErrorBoundary, DefaultErrorFallback };
+export { DefaultErrorFallback, ErrorBoundary };

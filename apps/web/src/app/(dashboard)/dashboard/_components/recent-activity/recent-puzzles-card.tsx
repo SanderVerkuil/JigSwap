@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useQuery, useConvexAuth } from 'convex/react';
-import { api } from '@jigswap/backend/convex/_generated/api';
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { Package } from 'lucide-react';
+} from "@/components/ui/card";
+import { api } from "@jigswap/backend/convex/_generated/api";
+import { useConvexAuth, useQuery } from "convex/react";
+import { Package } from "lucide-react";
+import Link from "next/link";
 
 export function RecentPuzzlesCard() {
   const { isLoading } = useConvexAuth();
@@ -19,7 +19,7 @@ export function RecentPuzzlesCard() {
   // Get current user from Convex
   const convexUser = useQuery(
     api.users.getCurrentUser,
-    isLoading ? 'skip' : {},
+    isLoading ? "skip" : {},
   );
 
   // Get recent puzzles
@@ -27,7 +27,7 @@ export function RecentPuzzlesCard() {
     api.puzzles.getPuzzlesByOwner,
     convexUser?._id
       ? { ownerId: convexUser._id, includeUnavailable: false }
-      : 'skip',
+      : "skip",
   );
 
   return (
@@ -54,7 +54,7 @@ export function RecentPuzzlesCard() {
                   </p>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  {puzzle.isAvailable ? 'Available' : 'Unavailable'}
+                  {puzzle.isAvailable ? "Available" : "Unavailable"}
                 </div>
               </div>
             ))}

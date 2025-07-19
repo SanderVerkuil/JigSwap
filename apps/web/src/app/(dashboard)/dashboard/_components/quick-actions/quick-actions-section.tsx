@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Card,
@@ -6,9 +6,9 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { PlusCircle, Search, ArrowLeftRight, Package } from 'lucide-react';
-import { ActionButton } from './cards/action-button';
+} from "@/components/ui/card";
+import { ArrowLeftRight, Package, PlusCircle, Search } from "lucide-react";
+import { ActionButton } from "./cards/action-button";
 
 export function QuickActionsSection() {
   return (

@@ -1,7 +1,7 @@
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Bell, TrendingUp, HelpCircle, Settings } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Bell, HelpCircle, Settings, TrendingUp } from "lucide-react";
+import Link from "next/link";
 
 export function Header() {
   return (

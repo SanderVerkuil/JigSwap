@@ -3,7 +3,7 @@ packages:
   - packages/*
 
 onlyBuiltDependencies:
-  - '@swc/core'
+  - "@swc/core"
   - nx
 
 linkWorkspacePackages: true

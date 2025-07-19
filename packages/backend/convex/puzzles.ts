@@ -1,5 +1,5 @@
-import { v } from 'convex/values';
-import { mutation, query } from './_generated/server';
+import { v } from "convex/values";
+import { mutation, query } from "./_generated/server";
 
 // Create a new puzzle
 export const createPuzzle = mutation({
@@ -10,22 +10,22 @@ export const createPuzzle = mutation({
     pieceCount: v.number(),
     difficulty: v.optional(
       v.union(
-        v.literal('easy'),
-        v.literal('medium'),
-        v.literal('hard'),
-        v.literal('expert'),
+        v.literal("easy"),
+        v.literal("medium"),
+        v.literal("hard"),
+        v.literal("expert"),
       ),
     ),
     condition: v.union(
-      v.literal('excellent'),
-      v.literal('good'),
-      v.literal('fair'),
-      v.literal('poor'),
+      v.literal("excellent"),
+      v.literal("good"),
+      v.literal("fair"),
+      v.literal("poor"),
     ),
     category: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
     images: v.array(v.string()),
-    ownerId: v.id('users'),
+    ownerId: v.id("users"),
     isCompleted: v.boolean(),
     completedDate: v.optional(v.number()),
     acquisitionDate: v.optional(v.number()),
@@ -34,7 +34,7 @@ export const createPuzzle = mutation({
   handler: async (ctx, args) => {
     const now = Date.now();
 
-    const puzzleId = await ctx.db.insert('puzzles', {
+    const puzzleId = await ctx.db.insert("puzzles", {
       ...args,
       isAvailable: true, // New puzzles are available by default
       createdAt: now,
@@ -47,7 +47,7 @@ export const createPuzzle = mutation({
 
 // Get puzzle by ID
 export const getPuzzleById = query({
-  args: { puzzleId: v.id('puzzles') },
+  args: { puzzleId: v.id("puzzles") },
   handler: async (ctx, args) => {
     const puzzle = await ctx.db.get(args.puzzleId);
     if (!puzzle) return null;
@@ -72,13 +72,13 @@ export const getPuzzleById = query({
 // Get puzzles by owner
 export const getPuzzlesByOwner = query({
   args: {
-    ownerId: v.id('users'),
+    ownerId: v.id("users"),
     includeUnavailable: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     let puzzles = await ctx.db
-      .query('puzzles')
-      .withIndex('by_owner', (q) => q.eq('ownerId', args.ownerId))
+      .query("puzzles")
+      .withIndex("by_owner", (q) => q.eq("ownerId", args.ownerId))
       .collect();
 
     if (!args.includeUnavailable) {
@@ -97,22 +97,22 @@ export const browsePuzzles = query({
     maxPieceCount: v.optional(v.number()),
     difficulty: v.optional(
       v.union(
-        v.literal('easy'),
-        v.literal('medium'),
-        v.literal('hard'),
-        v.literal('expert'),
+        v.literal("easy"),
+        v.literal("medium"),
+        v.literal("hard"),
+        v.literal("expert"),
       ),
     ),
     condition: v.optional(
       v.union(
-        v.literal('excellent'),
-        v.literal('good'),
-        v.literal('fair'),
-        v.literal('poor'),
+        v.literal("excellent"),
+        v.literal("good"),
+        v.literal("fair"),
+        v.literal("poor"),
       ),
     ),
     searchTerm: v.optional(v.string()),
-    excludeOwnerId: v.optional(v.id('users')),
+    excludeOwnerId: v.optional(v.id("users")),
     limit: v.optional(v.number()),
     offset: v.optional(v.number()),
   },
@@ -121,8 +121,8 @@ export const browsePuzzles = query({
     const offset = args.offset ?? 0;
 
     let puzzles = await ctx.db
-      .query('puzzles')
-      .withIndex('by_availability', (q) => q.eq('isAvailable', true))
+      .query("puzzles")
+      .withIndex("by_availability", (q) => q.eq("isAvailable", true))
       .collect();
 
     // Apply filters
@@ -194,25 +194,25 @@ export const browsePuzzles = query({
 // Update puzzle
 export const updatePuzzle = mutation({
   args: {
-    puzzleId: v.id('puzzles'),
+    puzzleId: v.id("puzzles"),
     title: v.optional(v.string()),
     description: v.optional(v.string()),
     brand: v.optional(v.string()),
     pieceCount: v.optional(v.number()),
     difficulty: v.optional(
       v.union(
-        v.literal('easy'),
-        v.literal('medium'),
-        v.literal('hard'),
-        v.literal('expert'),
+        v.literal("easy"),
+        v.literal("medium"),
+        v.literal("hard"),
+        v.literal("expert"),
       ),
     ),
     condition: v.optional(
       v.union(
-        v.literal('excellent'),
-        v.literal('good'),
-        v.literal('fair'),
-        v.literal('poor'),
+        v.literal("excellent"),
+        v.literal("good"),
+        v.literal("fair"),
+        v.literal("poor"),
       ),
     ),
     category: v.optional(v.string()),
@@ -236,19 +236,19 @@ export const updatePuzzle = mutation({
 
 // Delete puzzle
 export const deletePuzzle = mutation({
-  args: { puzzleId: v.id('puzzles') },
+  args: { puzzleId: v.id("puzzles") },
   handler: async (ctx, args) => {
     // Check if puzzle has any active trade requests
     const activeTradeRequests = await ctx.db
-      .query('tradeRequests')
-      .withIndex('by_owner_puzzle', (q) => q.eq('ownerPuzzleId', args.puzzleId))
-      .filter((q) => q.neq(q.field('status'), 'completed'))
-      .filter((q) => q.neq(q.field('status'), 'cancelled'))
-      .filter((q) => q.neq(q.field('status'), 'declined'))
+      .query("tradeRequests")
+      .withIndex("by_owner_puzzle", (q) => q.eq("ownerPuzzleId", args.puzzleId))
+      .filter((q) => q.neq(q.field("status"), "completed"))
+      .filter((q) => q.neq(q.field("status"), "cancelled"))
+      .filter((q) => q.neq(q.field("status"), "declined"))
       .collect();
 
     if (activeTradeRequests.length > 0) {
-      throw new Error('Cannot delete puzzle with active trade requests');
+      throw new Error("Cannot delete puzzle with active trade requests");
     }
 
     await ctx.db.delete(args.puzzleId);
@@ -259,7 +259,7 @@ export const deletePuzzle = mutation({
 export const getPuzzleCategories = query({
   args: {},
   handler: async (ctx) => {
-    const puzzles = await ctx.db.query('puzzles').collect();
+    const puzzles = await ctx.db.query("puzzles").collect();
     const categories = new Set<string>();
 
     puzzles.forEach((puzzle) => {
@@ -277,7 +277,7 @@ export const getPopularTags = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
-    const puzzles = await ctx.db.query('puzzles').collect();
+    const puzzles = await ctx.db.query("puzzles").collect();
     const tagCounts = new Map<string, number>();
 
     puzzles.forEach((puzzle) => {
@@ -297,7 +297,7 @@ export const getPopularTags = query({
 
 // Get puzzle by ID with collection status for current user
 export const getPuzzleWithCollectionStatus = query({
-  args: { puzzleId: v.id('puzzles') },
+  args: { puzzleId: v.id("puzzles") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
@@ -305,8 +305,8 @@ export const getPuzzleWithCollectionStatus = query({
     }
 
     const user = await ctx.db
-      .query('users')
-      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
       .unique();
 
     if (!user) {
@@ -321,20 +321,20 @@ export const getPuzzleWithCollectionStatus = query({
 
     // Get collection status for current user
     const collection = await ctx.db
-      .query('collections')
-      .withIndex('by_user_puzzle', (q) => 
-        q.eq('userId', user._id).eq('puzzleId', args.puzzleId)
+      .query("collections")
+      .withIndex("by_user_puzzle", (q) =>
+        q.eq("userId", user._id).eq("puzzleId", args.puzzleId),
       )
       .unique();
 
     // Get completion history for current user
     const completions = await ctx.db
-      .query('completions')
-      .withIndex('by_user_puzzle', (q) => 
-        q.eq('userId', user._id).eq('puzzleId', args.puzzleId)
+      .query("completions")
+      .withIndex("by_user_puzzle", (q) =>
+        q.eq("userId", user._id).eq("puzzleId", args.puzzleId),
       )
-      .filter((q) => q.eq(q.field('isCompleted'), true))
-      .order('desc')
+      .filter((q) => q.eq(q.field("isCompleted"), true))
+      .order("desc")
       .collect();
 
     return {
@@ -347,18 +347,20 @@ export const getPuzzleWithCollectionStatus = query({
             avatar: owner.avatar,
           }
         : null,
-      collectionStatus: collection ? {
-        isInCollection: true,
-        visibility: collection.visibility,
-        customTags: collection.customTags,
-        personalNotes: collection.personalNotes,
-        isWishlist: collection.isWishlist,
-        acquisitionDate: collection.acquisitionDate,
-        acquisitionSource: collection.acquisitionSource,
-        acquisitionPrice: collection.acquisitionPrice,
-      } : {
-        isInCollection: false,
-      },
+      collectionStatus: collection
+        ? {
+            isInCollection: true,
+            visibility: collection.visibility,
+            customTags: collection.customTags,
+            personalNotes: collection.personalNotes,
+            isWishlist: collection.isWishlist,
+            acquisitionDate: collection.acquisitionDate,
+            acquisitionSource: collection.acquisitionSource,
+            acquisitionPrice: collection.acquisitionPrice,
+          }
+        : {
+            isInCollection: false,
+          },
       completionHistory: completions,
     };
   },
@@ -366,7 +368,7 @@ export const getPuzzleWithCollectionStatus = query({
 
 // Get puzzles that user might be interested in (based on their collection)
 export const getRecommendedPuzzles = query({
-  args: { 
+  args: {
     limit: v.optional(v.number()),
     excludeOwned: v.optional(v.boolean()),
   },
@@ -377,8 +379,8 @@ export const getRecommendedPuzzles = query({
     }
 
     const user = await ctx.db
-      .query('users')
-      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
       .unique();
 
     if (!user) {
@@ -389,8 +391,8 @@ export const getRecommendedPuzzles = query({
 
     // Get user's collection to understand preferences
     const userCollections = await ctx.db
-      .query('collections')
-      .withIndex('by_user', (q) => q.eq('userId', user._id))
+      .query("collections")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
 
     const collectionsWithPuzzles = await Promise.all(
@@ -400,7 +402,7 @@ export const getRecommendedPuzzles = query({
           ...collection,
           puzzle: puzzle,
         };
-      })
+      }),
     );
 
     // Analyze user preferences
@@ -408,44 +410,55 @@ export const getRecommendedPuzzles = query({
     const difficultyPreferences = new Map<string, number>();
     const pieceCountPreferences = new Map<number, number>();
 
-    collectionsWithPuzzles.forEach(c => {
+    collectionsWithPuzzles.forEach((c) => {
       if (c.puzzle?.brand) {
-        brandPreferences.set(c.puzzle.brand, (brandPreferences.get(c.puzzle.brand) || 0) + 1);
+        brandPreferences.set(
+          c.puzzle.brand,
+          (brandPreferences.get(c.puzzle.brand) || 0) + 1,
+        );
       }
       if (c.puzzle?.difficulty) {
-        difficultyPreferences.set(c.puzzle.difficulty, (difficultyPreferences.get(c.puzzle.difficulty) || 0) + 1);
+        difficultyPreferences.set(
+          c.puzzle.difficulty,
+          (difficultyPreferences.get(c.puzzle.difficulty) || 0) + 1,
+        );
       }
       if (c.puzzle?.pieceCount) {
-        pieceCountPreferences.set(c.puzzle.pieceCount, (pieceCountPreferences.get(c.puzzle.pieceCount) || 0) + 1);
+        pieceCountPreferences.set(
+          c.puzzle.pieceCount,
+          (pieceCountPreferences.get(c.puzzle.pieceCount) || 0) + 1,
+        );
       }
     });
 
     // Get available puzzles
     let availablePuzzles = await ctx.db
-      .query('puzzles')
-      .withIndex('by_availability', (q) => q.eq('isAvailable', true))
+      .query("puzzles")
+      .withIndex("by_availability", (q) => q.eq("isAvailable", true))
       .collect();
 
     // Exclude puzzles owned by user if requested
     if (args.excludeOwned) {
-      const ownedPuzzleIds = new Set(userCollections.map(c => c.puzzleId));
-      availablePuzzles = availablePuzzles.filter(p => !ownedPuzzleIds.has(p._id));
+      const ownedPuzzleIds = new Set(userCollections.map((c) => c.puzzleId));
+      availablePuzzles = availablePuzzles.filter(
+        (p) => !ownedPuzzleIds.has(p._id),
+      );
     }
 
     // Score puzzles based on user preferences
-    const scoredPuzzles = availablePuzzles.map(puzzle => {
+    const scoredPuzzles = availablePuzzles.map((puzzle) => {
       let score = 0;
-      
+
       // Brand preference
       if (puzzle.brand && brandPreferences.has(puzzle.brand)) {
         score += brandPreferences.get(puzzle.brand)! * 2;
       }
-      
+
       // Difficulty preference
       if (puzzle.difficulty && difficultyPreferences.has(puzzle.difficulty)) {
         score += difficultyPreferences.get(puzzle.difficulty)! * 1.5;
       }
-      
+
       // Piece count preference
       if (pieceCountPreferences.has(puzzle.pieceCount)) {
         score += pieceCountPreferences.get(puzzle.pieceCount)! * 1;
@@ -458,7 +471,7 @@ export const getRecommendedPuzzles = query({
     const topPuzzles = scoredPuzzles
       .sort((a, b) => b.score - a.score)
       .slice(0, limit)
-      .map(item => item.puzzle);
+      .map((item) => item.puzzle);
 
     // Get owner information for each puzzle
     const puzzlesWithOwners = await Promise.all(
@@ -484,32 +497,36 @@ export const getRecommendedPuzzles = query({
 
 // Get puzzle statistics for analytics
 export const getPuzzleStats = query({
-  args: { puzzleId: v.id('puzzles') },
+  args: { puzzleId: v.id("puzzles") },
   handler: async (ctx, args) => {
     const puzzle = await ctx.db.get(args.puzzleId);
     if (!puzzle) return null;
 
     // Get all completions for this puzzle
     const completions = await ctx.db
-      .query('completions')
-      .withIndex('by_puzzle', (q) => q.eq('puzzleId', args.puzzleId))
-      .filter((q) => q.eq(q.field('isCompleted'), true))
+      .query("completions")
+      .withIndex("by_puzzle", (q) => q.eq("puzzleId", args.puzzleId))
+      .filter((q) => q.eq(q.field("isCompleted"), true))
       .collect();
 
     // Get collections for this puzzle
     const collections = await ctx.db
-      .query('collections')
-      .withIndex('by_puzzle', (q) => q.eq('puzzleId', args.puzzleId))
+      .query("collections")
+      .withIndex("by_puzzle", (q) => q.eq("puzzleId", args.puzzleId))
       .collect();
 
     const totalCompletions = completions.length;
     const totalCollections = collections.length;
-    const averageRating = totalCompletions > 0 
-      ? completions.reduce((sum, c) => sum + (c.rating ?? 0), 0) / totalCompletions 
-      : 0;
-    const averageTimeMinutes = totalCompletions > 0 
-      ? completions.reduce((sum, c) => sum + c.completionTimeMinutes, 0) / totalCompletions 
-      : 0;
+    const averageRating =
+      totalCompletions > 0
+        ? completions.reduce((sum, c) => sum + (c.rating ?? 0), 0) /
+          totalCompletions
+        : 0;
+    const averageTimeMinutes =
+      totalCompletions > 0
+        ? completions.reduce((sum, c) => sum + c.completionTimeMinutes, 0) /
+          totalCompletions
+        : 0;
 
     return {
       puzzle,

@@ -1,11 +1,10 @@
-'use client';
+"use client";
 
-import { UserButton, useUser } from '@clerk/nextjs';
-import { ModeToggle } from '@/components/ui/theme-toggle';
-import { LanguageSwitcher } from '@/components/ui/language-switcher';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Activity } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
+import { ModeToggle } from "@/components/ui/theme-toggle";
+import { UserButton, useUser } from "@clerk/nextjs";
+import { Activity } from "lucide-react";
 
 export function UserProfile() {
   const { user } = useUser();
@@ -22,7 +21,7 @@ export function UserProfile() {
           <UserButton
             appearance={{
               elements: {
-                avatarBox: 'w-6 h-6',
+                avatarBox: "w-6 h-6",
               },
             }}
           />

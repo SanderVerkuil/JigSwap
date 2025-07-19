@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Card,
@@ -6,10 +6,10 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Users, Globe, Star, MessageSquare } from 'lucide-react';
-import { FeatureButton } from './cards/feature-button';
-import { ComingSoonBadge } from './cards/coming-soon-badge';
+} from "@/components/ui/card";
+import { Globe, MessageSquare, Star, Users } from "lucide-react";
+import { ComingSoonBadge } from "./cards/coming-soon-badge";
+import { FeatureButton } from "./cards/feature-button";
 
 export function CommunitySection() {
   return (

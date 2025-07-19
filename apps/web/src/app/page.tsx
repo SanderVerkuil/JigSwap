@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { Header } from './_components/header';
-import { Hero } from './_components/hero';
-import { CoreFeatures } from './_components/core-features';
-import { DetailedFeatures } from './_components/detailed-features';
-import { HowItWorks } from './_components/how-it-works';
-import { CallToAction } from './_components/call-to-action';
-import { Footer } from './_components/footer';
+import { CallToAction } from "./_components/call-to-action";
+import { CoreFeatures } from "./_components/core-features";
+import { DetailedFeatures } from "./_components/detailed-features";
+import { Footer } from "./_components/footer";
+import { Header } from "./_components/header";
+import { Hero } from "./_components/hero";
+import { HowItWorks } from "./_components/how-it-works";
 
 export default function HomePage() {
   return (

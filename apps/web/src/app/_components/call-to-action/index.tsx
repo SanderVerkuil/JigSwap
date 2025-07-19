@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
-import { Authenticated, Unauthenticated } from 'convex/react';
+import { Button } from "@/components/ui/button";
+import { Authenticated, Unauthenticated } from "convex/react";
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 export function CallToAction() {
   return (

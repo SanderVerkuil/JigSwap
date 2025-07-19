@@ -7,6 +7,7 @@ This document describes the backend API for the Personal Library feature in JigS
 ### New Tables Added
 
 #### `collections`
+
 User-puzzle relationships with visibility settings and ownership status.
 
 ```typescript
@@ -26,6 +27,7 @@ User-puzzle relationships with visibility settings and ownership status.
 ```
 
 #### `completions`
+
 Detailed completion records with timing, rating, notes, and photos.
 
 ```typescript
@@ -46,6 +48,7 @@ Detailed completion records with timing, rating, notes, and photos.
 ```
 
 #### `categories`
+
 User-defined organization system for collections.
 
 ```typescript
@@ -61,6 +64,7 @@ User-defined organization system for collections.
 ```
 
 #### `goals`
+
 User goals for puzzle completion.
 
 ```typescript
@@ -82,9 +86,11 @@ User goals for puzzle completion.
 ### Collection Management
 
 #### `addToCollection`
+
 Add a puzzle to user's collection.
 
 **Arguments:**
+
 ```typescript
 {
   puzzleId: Id<'puzzles'>,
@@ -101,9 +107,11 @@ Add a puzzle to user's collection.
 **Returns:** `Id<'collections'>`
 
 #### `getCollection`
+
 Get user's collection with filtering and pagination.
 
 **Arguments:**
+
 ```typescript
 {
   userId?: Id<'users'>, // defaults to current user
@@ -121,6 +129,7 @@ Get user's collection with filtering and pagination.
 ```
 
 **Returns:**
+
 ```typescript
 {
   collections: Array<{
@@ -133,9 +142,11 @@ Get user's collection with filtering and pagination.
 ```
 
 #### `updateCollection`
+
 Update collection item details.
 
 **Arguments:**
+
 ```typescript
 {
   collectionId: Id<'collections'>,
@@ -150,9 +161,11 @@ Update collection item details.
 ```
 
 #### `removeFromCollection`
+
 Remove puzzle from collection.
 
 **Arguments:**
+
 ```typescript
 {
   collectionId: Id<'collections'>,
@@ -162,9 +175,11 @@ Remove puzzle from collection.
 ### Completion Tracking
 
 #### `startCompletion`
+
 Start tracking a puzzle completion.
 
 **Arguments:**
+
 ```typescript
 {
   puzzleId: Id<'puzzles'>,
@@ -175,9 +190,11 @@ Start tracking a puzzle completion.
 **Returns:** `Id<'completions'>`
 
 #### `completePuzzle`
+
 Mark a puzzle as completed with details.
 
 **Arguments:**
+
 ```typescript
 {
   completionId: Id<'completions'>,
@@ -190,9 +207,11 @@ Mark a puzzle as completed with details.
 ```
 
 #### `getCompletionHistory`
+
 Get completion history for a specific puzzle.
 
 **Arguments:**
+
 ```typescript
 {
   puzzleId: Id<'puzzles'>,
@@ -202,9 +221,11 @@ Get completion history for a specific puzzle.
 **Returns:** `Array<Completion>` (sorted by completion date, newest first)
 
 #### `getCompletionStats`
+
 Get user's completion statistics and analytics.
 
 **Arguments:**
+
 ```typescript
 {
   userId?: Id<'users'>, // defaults to current user
@@ -212,6 +233,7 @@ Get user's completion statistics and analytics.
 ```
 
 **Returns:**
+
 ```typescript
 {
   totalCompletions: number,
@@ -227,9 +249,11 @@ Get user's completion statistics and analytics.
 ### Categories
 
 #### `createCategory`
+
 Create a new category for organizing collections.
 
 **Arguments:**
+
 ```typescript
 {
   name: string,
@@ -241,6 +265,7 @@ Create a new category for organizing collections.
 **Returns:** `Id<'categories'>`
 
 #### `getCategories`
+
 Get user's categories.
 
 **Arguments:** `{}`
@@ -248,9 +273,11 @@ Get user's categories.
 **Returns:** `Array<Category>` (sorted: default categories first, then alphabetically)
 
 #### `updateCategory`
+
 Update category details.
 
 **Arguments:**
+
 ```typescript
 {
   categoryId: Id<'categories'>,
@@ -261,9 +288,11 @@ Update category details.
 ```
 
 #### `deleteCategory`
+
 Delete a category (cannot delete default categories).
 
 **Arguments:**
+
 ```typescript
 {
   categoryId: Id<'categories'>,
@@ -273,9 +302,11 @@ Delete a category (cannot delete default categories).
 ### Goals
 
 #### `createGoal`
+
 Create a new completion goal.
 
 **Arguments:**
+
 ```typescript
 {
   title: string,
@@ -288,9 +319,11 @@ Create a new completion goal.
 **Returns:** `Id<'goals'>`
 
 #### `getGoals`
+
 Get user's goals.
 
 **Arguments:**
+
 ```typescript
 {
   includeInactive?: boolean, // defaults to false
@@ -300,9 +333,11 @@ Get user's goals.
 **Returns:** `Array<Goal>` (sorted by creation date, newest first)
 
 #### `updateGoal`
+
 Update goal details.
 
 **Arguments:**
+
 ```typescript
 {
   goalId: Id<'goals'>,
@@ -316,9 +351,11 @@ Update goal details.
 ```
 
 #### `deleteGoal`
+
 Delete a goal.
 
 **Arguments:**
+
 ```typescript
 {
   goalId: Id<'goals'>,
@@ -328,9 +365,11 @@ Delete a goal.
 ### Analytics
 
 #### `getUserAnalytics`
+
 Get comprehensive user analytics.
 
 **Arguments:**
+
 ```typescript
 {
   userId?: Id<'users'>, // defaults to current user
@@ -338,6 +377,7 @@ Get comprehensive user analytics.
 ```
 
 **Returns:**
+
 ```typescript
 {
   collection: {
@@ -358,11 +398,13 @@ Get comprehensive user analytics.
 ```
 
 #### `exportUserData`
+
 Export all user data in JSON format.
 
 **Arguments:** `{}`
 
 **Returns:**
+
 ```typescript
 {
   user: User,
@@ -377,9 +419,11 @@ Export all user data in JSON format.
 ### Enhanced Puzzle Functions
 
 #### `getPuzzleWithCollectionStatus`
+
 Get puzzle details with collection status for current user.
 
 **Arguments:**
+
 ```typescript
 {
   puzzleId: Id<'puzzles'>,
@@ -387,6 +431,7 @@ Get puzzle details with collection status for current user.
 ```
 
 **Returns:**
+
 ```typescript
 {
   ...Puzzle,
@@ -406,9 +451,11 @@ Get puzzle details with collection status for current user.
 ```
 
 #### `getRecommendedPuzzles`
+
 Get puzzles recommended based on user's collection preferences.
 
 **Arguments:**
+
 ```typescript
 {
   limit?: number, // defaults to 10
@@ -419,9 +466,11 @@ Get puzzles recommended based on user's collection preferences.
 **Returns:** `Array<PuzzleWithOwner>`
 
 #### `getPuzzleStats`
+
 Get statistics for a specific puzzle.
 
 **Arguments:**
+
 ```typescript
 {
   puzzleId: Id<'puzzles'>,
@@ -429,6 +478,7 @@ Get statistics for a specific puzzle.
 ```
 
 **Returns:**
+
 ```typescript
 {
   puzzle: Puzzle,
@@ -445,50 +495,55 @@ Get statistics for a specific puzzle.
 ## Usage Examples
 
 ### Adding a puzzle to collection
+
 ```typescript
-const collectionId = await convex.mutation('personal-library:addToCollection')({
-  puzzleId: 'puzzle_id',
-  visibility: 'visible',
-  customTags: ['favorite', 'landscape'],
-  personalNotes: 'Beautiful puzzle with vibrant colors',
+const collectionId = await convex.mutation("personal-library:addToCollection")({
+  puzzleId: "puzzle_id",
+  visibility: "visible",
+  customTags: ["favorite", "landscape"],
+  personalNotes: "Beautiful puzzle with vibrant colors",
   acquisitionDate: Date.now(),
-  acquisitionSource: 'gift',
+  acquisitionSource: "gift",
   isWishlist: false,
 });
 ```
 
 ### Getting user's collection
+
 ```typescript
-const collection = await convex.query('personal-library:getCollection')({
+const collection = await convex.query("personal-library:getCollection")({
   includeWishlist: false,
-  searchTerm: 'landscape',
+  searchTerm: "landscape",
   minPieceCount: 500,
   maxPieceCount: 1000,
-  difficulty: 'medium',
+  difficulty: "medium",
 });
 ```
 
 ### Starting a completion
+
 ```typescript
-const completionId = await convex.mutation('personal-library:startCompletion')({
-  puzzleId: 'puzzle_id',
+const completionId = await convex.mutation("personal-library:startCompletion")({
+  puzzleId: "puzzle_id",
 });
 ```
 
 ### Completing a puzzle
+
 ```typescript
-await convex.mutation('personal-library:completePuzzle')({
-  completionId: 'completion_id',
+await convex.mutation("personal-library:completePuzzle")({
+  completionId: "completion_id",
   rating: 5,
-  review: 'Amazing puzzle! Loved the colors and quality.',
-  notes: 'Completed with family over the weekend',
-  photos: ['photo_url_1', 'photo_url_2'],
+  review: "Amazing puzzle! Loved the colors and quality.",
+  notes: "Completed with family over the weekend",
+  photos: ["photo_url_1", "photo_url_2"],
 });
 ```
 
 ### Getting analytics
+
 ```typescript
-const analytics = await convex.query('personal-library:getUserAnalytics')({});
+const analytics = await convex.query("personal-library:getUserAnalytics")({});
 console.log(`Total completions: ${analytics.completions.total}`);
 console.log(`Average rating: ${analytics.completions.averageRating}`);
 ```
@@ -496,6 +551,7 @@ console.log(`Average rating: ${analytics.completions.averageRating}`);
 ## Error Handling
 
 All mutations will throw errors for:
+
 - Unauthenticated users
 - Invalid puzzle/collection/completion IDs
 - Duplicate entries (e.g., adding same puzzle to collection twice)
@@ -520,4 +576,4 @@ The following indexes are available for efficient querying:
 - `categories.by_user` - Get all categories for a user
 - `categories.by_user_name` - Get specific category by name
 - `goals.by_user` - Get all goals for a user
-- `goals.by_user_active` - Get active goals for a user 
+- `goals.by_user_active` - Get active goals for a user

@@ -1,22 +1,20 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { Globe } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { useLocale } from 'next-intl';
-import { setLocaleCookie } from '@/lib/intl-cookies';
-import { Locale } from '@/lib/intl-cookies';
-import { toast } from 'sonner';
+} from "@/components/ui/dropdown-menu";
+import { Locale, setLocaleCookie } from "@/lib/intl-cookies";
+import { Globe } from "lucide-react";
+import { useLocale } from "next-intl";
+import { toast } from "sonner";
 
 const languages = [
-  { code: 'en', name: 'English', flag: '🇺🇸' },
-  { code: 'nl', name: 'Nederlands', flag: '🇳🇱' },
+  { code: "en", name: "English", flag: "🇺🇸" },
+  { code: "nl", name: "Nederlands", flag: "🇳🇱" },
 ];
 
 export function LanguageSwitcher() {
@@ -24,7 +22,7 @@ export function LanguageSwitcher() {
 
   const handleLanguageChange = async (locale: string) => {
     await setLocaleCookie(locale as Locale);
-    toast.success('Language changed successfully');
+    toast.success("Language changed successfully");
   };
 
   return (
@@ -40,7 +38,7 @@ export function LanguageSwitcher() {
           <DropdownMenuItem
             key={language.code}
             onClick={() => handleLanguageChange(language.code)}
-            className={currentLocale === language.code ? 'bg-accent' : ''}
+            className={currentLocale === language.code ? "bg-accent" : ""}
           >
             <span className="mr-2">{language.flag}</span>
             {language.name}

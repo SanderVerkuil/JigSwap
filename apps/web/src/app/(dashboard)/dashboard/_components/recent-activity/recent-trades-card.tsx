@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useQuery, useConvexAuth } from 'convex/react';
-import { api } from '@jigswap/backend/convex/_generated/api';
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { ArrowLeftRight } from 'lucide-react';
+} from "@/components/ui/card";
+import { api } from "@jigswap/backend/convex/_generated/api";
+import { useConvexAuth, useQuery } from "convex/react";
+import { ArrowLeftRight } from "lucide-react";
+import Link from "next/link";
 
 export function RecentTradesCard() {
   const { isLoading } = useConvexAuth();
@@ -19,13 +19,13 @@ export function RecentTradesCard() {
   // Get current user from Convex
   const convexUser = useQuery(
     api.users.getCurrentUser,
-    isLoading ? 'skip' : {},
+    isLoading ? "skip" : {},
   );
 
   // Get recent trades
   const recentTrades = useQuery(
     api.trades.getUserTradeRequests,
-    convexUser?._id ? { userId: convexUser._id } : 'skip',
+    convexUser?._id ? { userId: convexUser._id } : "skip",
   );
 
   return (
@@ -47,9 +47,9 @@ export function RecentTradesCard() {
                 </div>
                 <div className="flex-1">
                   <p className="font-medium">
-                    {trade.userRole === 'requester'
-                      ? 'Requested'
-                      : 'Received request for'}
+                    {trade.userRole === "requester"
+                      ? "Requested"
+                      : "Received request for"}
                     : {trade.ownerPuzzle?.title}
                   </p>
                   <p className="text-sm text-muted-foreground">

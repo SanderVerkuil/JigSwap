@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { RecentPuzzlesCard } from './recent-puzzles-card';
-import { RecentTradesCard } from './recent-trades-card';
+import { RecentPuzzlesCard } from "./recent-puzzles-card";
+import { RecentTradesCard } from "./recent-trades-card";
 
 export function RecentActivitySection() {
   return (

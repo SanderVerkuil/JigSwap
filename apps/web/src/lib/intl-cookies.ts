@@ -1,10 +1,10 @@
-'use server';
+"use server";
 
-import { cookies } from 'next/headers';
+import { cookies } from "next/headers";
 
-export type Locale = 'nl' | 'en';
+export type Locale = "nl" | "en";
 
-const INTL_COOKIE_NAME = 'jigswap-intl';
+const INTL_COOKIE_NAME = "jigswap-intl";
 
 export async function getLocaleFromCookies(): Promise<Locale | undefined> {
   const cookieStore = await cookies();

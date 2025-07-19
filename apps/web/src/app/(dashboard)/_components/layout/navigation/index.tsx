@@ -1,14 +1,14 @@
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
-  Home,
-  Search,
-  PlusCircle,
-  Package,
-  MessageSquare,
-  User,
   ArrowLeftRight,
-} from 'lucide-react';
+  Home,
+  MessageSquare,
+  Package,
+  PlusCircle,
+  Search,
+  User,
+} from "lucide-react";
+import Link from "next/link";
 
 export function Navigation() {
   return (

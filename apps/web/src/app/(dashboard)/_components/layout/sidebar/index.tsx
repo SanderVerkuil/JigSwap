@@ -1,7 +1,7 @@
-import { Separator } from '@/components/ui/separator';
-import { Navigation } from '../navigation';
-import { SidebarContent } from '../../../sidebar-content';
-import { UserProfile } from '../user-profile';
+import { Separator } from "@/components/ui/separator";
+import { SidebarContent } from "../../../sidebar-content";
+import { Navigation } from "../navigation";
+import { UserProfile } from "../user-profile";
 
 export function Sidebar() {
   return (

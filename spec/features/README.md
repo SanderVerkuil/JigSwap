@@ -5,7 +5,9 @@ This directory contains detailed specifications for each major feature area of t
 ## Feature Overview
 
 ### [Personal Puzzle Library](personal-library.md)
+
 The core personal library management system that allows users to:
+
 - Maintain their puzzle collection with detailed information
 - Track multiple completions of the same puzzle
 - Record completion times, ratings, and personal reviews
@@ -13,7 +15,9 @@ The core personal library management system that allows users to:
 - Export personal data and view comprehensive analytics
 
 ### [Puzzle Exchange System](puzzle-exchange.md)
+
 The exchange platform that enables various types of puzzle exchanges while preserving personal history:
+
 - **Lending**: Temporary borrowing with return agreements
 - **Swapping**: Permanent exchanges between users
 - **Trading/Selling**: Direct sales and auctions
@@ -22,7 +26,9 @@ The exchange platform that enables various types of puzzle exchanges while prese
 - **Complete Ownership Tracking**: Chain of custody for all puzzle instances
 
 ### [Community Features](community.md)
+
 Social features that connect puzzle enthusiasts:
+
 - **User Profiles**: Showcase collections and achievements
 - **Reviews & Ratings**: Community feedback system
 - **Social Discovery**: Find users and puzzles by location
@@ -30,7 +36,9 @@ Social features that connect puzzle enthusiasts:
 - **Following System**: Track other users' activity
 
 ### [Friend Circles](friend-circles.md)
+
 Private group features for trusted puzzle sharing:
+
 - **Private Circles**: Create and manage exclusive friend groups
 - **Granular Visibility**: Control puzzle access within specific circles
 - **Circle Exchanges**: Exchange puzzles only within trusted circles
@@ -39,21 +47,27 @@ Private group features for trusted puzzle sharing:
 - **Activity Tracking**: Monitor activity within private circles
 
 ### [Analytics and Insights](analytics.md)
+
 Data-driven features for personal and community insights:
+
 - **Personal Analytics**: Completion statistics and trends
 - **Community Insights**: Popular puzzles and trends
 - **Goal Setting**: Personal completion goals and tracking
 - **Data Export**: Backup and analysis capabilities
 
 ### [Advanced Features](advanced-features.md)
+
 Enhanced functionality for power users:
+
 - **Condition Tracking**: Document and track puzzle condition
 - **Smart Recommendations**: Algorithm-based suggestions
 - **Notification System**: Multi-channel alerts and updates
 - **Collaborative Filtering**: Discover puzzles and users
 
 ### [Technical Requirements](technical-requirements.md)
+
 Platform-wide technical specifications:
+
 - **Performance**: Load times, response times, and scalability
 - **Security**: Data protection and privacy controls
 - **Usability**: Accessibility and user experience requirements
@@ -108,4 +122,4 @@ graph TD
 - User privacy and data security are paramount across all features
 - Real-time updates should be implemented consistently
 - Mobile responsiveness is required for all user-facing features
-- Internationalization should be considered from the start 
+- Internationalization should be considered from the start

@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useUser } from '@clerk/nextjs';
-import { useQuery, useConvexAuth } from 'convex/react';
-import { api } from '@jigswap/backend/convex/_generated/api';
-import { Package, ArrowLeftRight, Star, MessageSquare } from 'lucide-react';
-import { StatsCard } from './cards/stats-card';
+import { useUser } from "@clerk/nextjs";
+import { api } from "@jigswap/backend/convex/_generated/api";
+import { useConvexAuth, useQuery } from "convex/react";
+import { ArrowLeftRight, MessageSquare, Package, Star } from "lucide-react";
+import { StatsCard } from "./cards/stats-card";
 
 export function WelcomeHeader() {
   const { user } = useUser();
@@ -13,19 +13,19 @@ export function WelcomeHeader() {
   // Get current user from Convex
   const convexUser = useQuery(
     api.users.getCurrentUser,
-    isLoading ? 'skip' : {},
+    isLoading ? "skip" : {},
   );
 
   // Get user stats
   const userStats = useQuery(
     api.users.getUserStats,
-    convexUser?._id ? { userId: convexUser._id } : 'skip',
+    convexUser?._id ? { userId: convexUser._id } : "skip",
   );
 
   // Get recent trades for active count
   const recentTrades = useQuery(
     api.trades.getUserTradeRequests,
-    convexUser?._id ? { userId: convexUser._id } : 'skip',
+    convexUser?._id ? { userId: convexUser._id } : "skip",
   );
 
   if (!user || !convexUser) {
@@ -41,7 +41,7 @@ export function WelcomeHeader() {
 
   const activeTrades =
     recentTrades?.filter(
-      (t) => t.status === 'pending' || t.status === 'accepted',
+      (t) => t.status === "pending" || t.status === "accepted",
     ).length || 0;
 
   return (
@@ -75,7 +75,7 @@ export function WelcomeHeader() {
           value={
             userStats?.averageRating
               ? userStats.averageRating.toFixed(1)
-              : 'N/A'
+              : "N/A"
           }
           subtitle={`From ${userStats?.totalReviews || 0} reviews`}
           icon={Star}

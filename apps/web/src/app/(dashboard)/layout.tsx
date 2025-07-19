@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { redirect } from 'next/navigation';
-import { Header } from './_components/layout/header';
-import { Sidebar } from './_components/layout/sidebar';
-import { MainContent } from './_components/layout/main-content';
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import { Header } from "./_components/layout/header";
+import { MainContent } from "./_components/layout/main-content";
+import { Sidebar } from "./_components/layout/sidebar";
 
 export default async function DashboardLayout({
   children,
@@ -12,7 +12,7 @@ export default async function DashboardLayout({
   const { userId } = await auth();
 
   if (!userId) {
-    redirect('/sign-in');
+    redirect("/sign-in");
   }
 
   return (

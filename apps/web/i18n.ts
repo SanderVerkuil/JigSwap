@@ -1,13 +1,13 @@
-import { notFound } from 'next/navigation';
-import { getRequestConfig } from 'next-intl/server';
-import { headers } from 'next/headers';
-import Negotiator from 'negotiator';
-import { match } from '@formatjs/intl-localematcher';
-import { getLocaleFromCookies } from '@/lib/intl-cookies';
+import { getLocaleFromCookies } from "@/lib/intl-cookies";
+import { match } from "@formatjs/intl-localematcher";
+import Negotiator from "negotiator";
+import { getRequestConfig } from "next-intl/server";
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 
 // Can be imported from a shared config
-export const locales = ['en', 'nl'] as const;
-export const defaultLocale = 'en' as const;
+export const locales = ["en", "nl"] as const;
+export const defaultLocale = "en" as const;
 
 export type Locale = (typeof locales)[number];
 
@@ -22,13 +22,13 @@ export async function getLocale(): Promise<string> {
 
   // If no cookie, check Accept-Language header
   const headersList = await headers();
-  const acceptLanguage = headersList.get('accept-language');
+  const acceptLanguage = headersList.get("accept-language");
 
   if (acceptLanguage) {
     try {
       // Use negotiator to parse Accept-Language header
       const negotiator = new Negotiator({
-        headers: { 'accept-language': acceptLanguage },
+        headers: { "accept-language": acceptLanguage },
       });
       const languages = negotiator.languages();
 
@@ -41,7 +41,7 @@ export async function getLocale(): Promise<string> {
 
       return matchedLocale;
     } catch (error) {
-      console.warn('Error matching locale:', error);
+      console.warn("Error matching locale:", error);
     }
   }
 
@@ -53,8 +53,8 @@ export async function getLocale(): Promise<string> {
 async function getCrowdinMessages(locale: string) {
   try {
     // For development, fall back to source.json for English
-    if (locale === 'en' || process.env.NODE_ENV === 'development') {
-      return (await import('./locales/source.json')).default;
+    if (locale === "en" || process.env.NODE_ENV === "development") {
+      return (await import("./locales/source.json")).default;
     }
 
     // For production, fetch from Crowdin OTA distribution
@@ -63,9 +63,9 @@ async function getCrowdinMessages(locale: string) {
 
     if (!crowdinProjectId || !crowdinDistributionHash) {
       console.warn(
-        'Crowdin configuration missing, falling back to source.json',
+        "Crowdin configuration missing, falling back to source.json",
       );
-      return (await import('./locales/source.json')).default;
+      return (await import("./locales/source.json")).default;
     }
 
     const response = await fetch(
@@ -83,7 +83,7 @@ async function getCrowdinMessages(locale: string) {
   } catch (error) {
     console.error(`Error loading translations for ${locale}:`, error);
     // Fallback to source.json
-    return (await import('./locales/source.json')).default;
+    return (await import("./locales/source.json")).default;
   }
 }
 
@@ -101,6 +101,6 @@ export default getRequestConfig(async () => {
   return {
     locale,
     messages,
-    timeZone: 'Europe/Amsterdam',
+    timeZone: "Europe/Amsterdam",
   };
 });

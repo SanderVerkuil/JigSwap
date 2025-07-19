@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { ClerkProvider } from '@clerk/nextjs';
-import { dark } from '@clerk/themes';
-import { ReactNode } from 'react';
-import { useTheme } from 'next-themes';
-import * as locales from '@clerk/localizations';
-import { useLocale } from 'next-intl';
+import * as locales from "@clerk/localizations";
+import { ClerkProvider } from "@clerk/nextjs";
+import { dark } from "@clerk/themes";
+import { useLocale } from "next-intl";
+import { useTheme } from "next-themes";
+import { ReactNode } from "react";
 
 const matchedLocale = {
   en: locales.enUS,
@@ -26,7 +26,7 @@ export function ClerkClientProvider({ children }: { children: ReactNode }) {
   return (
     <ClerkProvider
       appearance={{
-        baseTheme: resolvedTheme === 'dark' ? dark : undefined,
+        baseTheme: resolvedTheme === "dark" ? dark : undefined,
       }}
       localization={locale}
     >

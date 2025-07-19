@@ -1,40 +1,40 @@
-import { cn } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
+import { cn } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 
 interface LoadingSpinnerProps {
-  size?: 'sm' | 'md' | 'lg';
+  size?: "sm" | "md" | "lg";
   className?: string;
 }
 
 export function LoadingSpinner({
-  size = 'md',
+  size = "md",
   className,
 }: LoadingSpinnerProps) {
   const sizeClasses = {
-    sm: 'h-4 w-4',
-    md: 'h-6 w-6',
-    lg: 'h-8 w-8',
+    sm: "h-4 w-4",
+    md: "h-6 w-6",
+    lg: "h-8 w-8",
   };
 
   return (
-    <Loader2 className={cn('animate-spin', sizeClasses[size], className)} />
+    <Loader2 className={cn("animate-spin", sizeClasses[size], className)} />
   );
 }
 
 interface LoadingStateProps {
   message?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: "sm" | "md" | "lg";
   className?: string;
 }
 
 export function LoadingState({
-  message = 'Loading...',
-  size = 'md',
+  message = "Loading...",
+  size = "md",
   className,
 }: LoadingStateProps) {
   return (
     <div
-      className={cn('flex flex-col items-center justify-center p-6', className)}
+      className={cn("flex flex-col items-center justify-center p-6", className)}
     >
       <LoadingSpinner size={size} className="mb-4" />
       <p className="text-muted-foreground text-sm">{message}</p>
@@ -46,7 +46,7 @@ interface PageLoadingProps {
   message?: string;
 }
 
-export function PageLoading({ message = 'Loading...' }: PageLoadingProps) {
+export function PageLoading({ message = "Loading..." }: PageLoadingProps) {
   return (
     <div className="min-h-[400px] flex items-center justify-center">
       <LoadingState message={message} size="lg" />
@@ -59,7 +59,7 @@ interface SkeletonProps {
 }
 
 export function Skeleton({ className }: SkeletonProps) {
-  return <div className={cn('animate-pulse rounded-md bg-muted', className)} />;
+  return <div className={cn("animate-pulse rounded-md bg-muted", className)} />;
 }
 
 export function CardSkeleton() {
@@ -119,7 +119,7 @@ interface ButtonLoadingProps {
   children: React.ReactNode;
   className?: string;
   disabled?: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export function ButtonLoading({

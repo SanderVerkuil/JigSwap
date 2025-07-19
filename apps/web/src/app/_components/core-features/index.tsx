@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { Puzzle, Users, Recycle, BarChart3 } from 'lucide-react';
+import { BarChart3, Puzzle, Recycle, Users } from "lucide-react";
 
 export function CoreFeatures() {
   return (

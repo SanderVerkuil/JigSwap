@@ -5,6 +5,7 @@ A comprehensive platform for jigsaw puzzle enthusiasts to manage their personal 
 ## 🧩 Features
 
 ### Personal Library Management
+
 - **Collection Tracking**: Maintain your personal puzzle library with detailed information
 - **Completion History**: Record and track every puzzle completion with timing, ratings, and reviews
 - **Performance Analytics**: Analyze your solving patterns, preferences, and progress over time
@@ -13,6 +14,7 @@ A comprehensive platform for jigsaw puzzle enthusiasts to manage their personal 
 - **Personal Reviews**: Write detailed reviews and notes for each completion experience
 
 ### Puzzle Exchange System
+
 - **Multiple Exchange Types**: Lend, swap, or trade puzzles with other enthusiasts
 - **Visibility Controls**: Set puzzles as private, visible, lendable, swappable, or tradeable
 - **Ownership History**: Complete chain of custody tracking while preserving personal history
@@ -21,12 +23,14 @@ A comprehensive platform for jigsaw puzzle enthusiasts to manage their personal 
 - **New Instance Creation**: When puzzles are exchanged, new instances are created to maintain ownership history
 
 ### Community Features
+
 - **User Profiles**: Showcase your collection and completion achievements
 - **Reviews & Ratings**: Share and discover community reviews of puzzles
 - **Social Discovery**: Find nearby users and discover new puzzles
 - **Real-time Messaging**: Communicate directly with other users during exchanges
 
 ### Technical Excellence
+
 - **Real-time Updates**: Live updates using Convex real-time database
 - **Internationalization**: Support for English and Dutch with Crowdin
 - **Responsive Design**: Mobile-first design with dark mode support

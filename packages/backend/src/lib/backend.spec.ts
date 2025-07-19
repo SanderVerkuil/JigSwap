@@ -1,7 +1,7 @@
-import { backend } from './backend';
+import { backend } from "./backend";
 
-describe('backend', () => {
-  it('should work', () => {
-    expect(backend()).toEqual('backend');
+describe("backend", () => {
+  it("should work", () => {
+    expect(backend()).toEqual("backend");
   });
 });

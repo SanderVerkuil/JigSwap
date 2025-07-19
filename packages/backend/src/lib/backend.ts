@@ -1,3 +1,3 @@
 export function backend(): string {
-  return 'backend';
+  return "backend";
 }

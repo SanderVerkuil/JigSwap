@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Card,
@@ -6,10 +6,10 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Package, BarChart3, Target, TrendingUp, BookOpen } from 'lucide-react';
-import { FeatureButton } from './cards/feature-button';
-import { ComingSoonBadge } from './cards/coming-soon-badge';
+} from "@/components/ui/card";
+import { BarChart3, BookOpen, Package, Target, TrendingUp } from "lucide-react";
+import { ComingSoonBadge } from "./cards/coming-soon-badge";
+import { FeatureButton } from "./cards/feature-button";
 
 export function PersonalLibrarySection() {
   return (

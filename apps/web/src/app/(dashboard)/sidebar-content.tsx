@@ -1,319 +1,314 @@
-'use client';
+"use client";
 
-import { usePathname } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  Home,
-  Package,
-  Star,
-  Clock,
-  MapPin,
-  Filter,
-  ArrowLeftRight,
-  MessageSquare,
-  Bell,
   Activity,
-  Zap,
-  Users,
-  BarChart3,
-  Target,
-  TrendingUp,
-  Heart,
-  Shield,
-  Settings,
-  BookOpen,
+  ArrowLeftRight,
   Award,
-  Globe,
-  Eye,
-  Lock,
-  Calendar,
-  Search,
-  PlusCircle,
+  BarChart3,
+  Bell,
   Bookmark,
-  ThumbsUp,
+  BookOpen,
+  Calendar,
+  Clock,
+  Eye,
+  Filter,
+  Globe,
+  Home,
+  Lock,
+  MapPin,
   MessageCircle,
+  MessageSquare,
+  Package,
+  PlusCircle,
+  Search,
+  Settings,
+  Shield,
+  Star,
+  Target,
+  ThumbsUp,
+  TrendingUp,
   UserCheck,
   UserPlus,
-  Star as StarIcon,
-  Award as AwardIcon,
-  Bell as BellIcon,
-  Settings as SettingsIcon,
-} from 'lucide-react';
+  Users,
+  Zap,
+} from "lucide-react";
+import { usePathname } from "next/navigation";
 
 // Dynamic sidebar content based on current page
 function getSidebarContent(pathname: string) {
   const baseFilters = [
-    { label: 'All Items', value: 'all', icon: Package },
-    { label: 'Favorites', value: 'favorites', icon: Star },
-    { label: 'Recent', value: 'recent', icon: Clock },
+    { label: "All Items", value: "all", icon: Package },
+    { label: "Favorites", value: "favorites", icon: Star },
+    { label: "Recent", value: "recent", icon: Clock },
   ];
 
   const locationFilters = [
-    { label: 'Nearby', value: 'nearby', icon: MapPin },
-    { label: 'My City', value: 'city', icon: MapPin },
-    { label: 'My Region', value: 'region', icon: MapPin },
+    { label: "Nearby", value: "nearby", icon: MapPin },
+    { label: "My City", value: "city", icon: MapPin },
+    { label: "My Region", value: "region", icon: MapPin },
   ];
 
   const categoryFilters = [
-    { label: 'Jigsaw Puzzles', value: 'jigsaw', icon: Package },
-    { label: 'Crossword', value: 'crossword', icon: Package },
-    { label: 'Brain Teasers', value: 'brain-teasers', icon: Package },
-    { label: 'Board Games', value: 'board-games', icon: Package },
+    { label: "Jigsaw Puzzles", value: "jigsaw", icon: Package },
+    { label: "Crossword", value: "crossword", icon: Package },
+    { label: "Brain Teasers", value: "brain-teasers", icon: Package },
+    { label: "Board Games", value: "board-games", icon: Package },
   ];
 
   const statusFilters = [
-    { label: 'Available', value: 'available', icon: Zap },
-    { label: 'In Progress', value: 'in-progress', icon: Activity },
-    { label: 'Completed', value: 'completed', icon: Star },
+    { label: "Available", value: "available", icon: Zap },
+    { label: "In Progress", value: "in-progress", icon: Activity },
+    { label: "Completed", value: "completed", icon: Star },
   ];
 
   const visibilityFilters = [
-    { label: 'Public', value: 'public', icon: Globe },
-    { label: 'Friends Only', value: 'friends', icon: Users },
-    { label: 'Private', value: 'private', icon: Lock },
+    { label: "Public", value: "public", icon: Globe },
+    { label: "Friends Only", value: "friends", icon: Users },
+    { label: "Private", value: "private", icon: Lock },
   ];
 
   const analyticsFilters = [
-    { label: 'Completion Stats', value: 'completion', icon: BarChart3 },
-    { label: 'Time Tracking', value: 'time', icon: Clock },
-    { label: 'Goals', value: 'goals', icon: Target },
-    { label: 'Trends', value: 'trends', icon: TrendingUp },
+    { label: "Completion Stats", value: "completion", icon: BarChart3 },
+    { label: "Time Tracking", value: "time", icon: Clock },
+    { label: "Goals", value: "goals", icon: Target },
+    { label: "Trends", value: "trends", icon: TrendingUp },
   ];
 
   const communityFilters = [
-    { label: 'All Users', value: 'all', icon: Users },
-    { label: 'Following', value: 'following', icon: UserCheck },
-    { label: 'Followers', value: 'followers', icon: UserPlus },
-    { label: 'Nearby', value: 'nearby', icon: MapPin },
+    { label: "All Users", value: "all", icon: Users },
+    { label: "Following", value: "following", icon: UserCheck },
+    { label: "Followers", value: "followers", icon: UserPlus },
+    { label: "Nearby", value: "nearby", icon: MapPin },
   ];
 
   const friendCircleFilters = [
-    { label: 'My Circles', value: 'my-circles', icon: Shield },
-    { label: 'Invitations', value: 'invitations', icon: Bell },
-    { label: 'Discover', value: 'discover', icon: Search },
+    { label: "My Circles", value: "my-circles", icon: Shield },
+    { label: "Invitations", value: "invitations", icon: Bell },
+    { label: "Discover", value: "discover", icon: Search },
   ];
 
   const advancedFilters = [
-    { label: 'Smart Recommendations', value: 'recommendations', icon: Award },
-    { label: 'Condition Tracking', value: 'condition', icon: Eye },
-    { label: 'Notifications', value: 'notifications', icon: Bell },
-    { label: 'Settings', value: 'settings', icon: Settings },
+    { label: "Smart Recommendations", value: "recommendations", icon: Award },
+    { label: "Condition Tracking", value: "condition", icon: Eye },
+    { label: "Notifications", value: "notifications", icon: Bell },
+    { label: "Settings", value: "settings", icon: Settings },
   ];
 
   switch (pathname) {
-    case '/browse':
+    case "/browse":
       return {
-        title: 'Browse Filters',
+        title: "Browse Filters",
         icon: Filter,
         sections: [
-          { title: 'Quick Filters', items: baseFilters },
-          { title: 'Location', items: locationFilters },
-          { title: 'Categories', items: categoryFilters },
-          { title: 'Visibility', items: visibilityFilters },
+          { title: "Quick Filters", items: baseFilters },
+          { title: "Location", items: locationFilters },
+          { title: "Categories", items: categoryFilters },
+          { title: "Visibility", items: visibilityFilters },
         ],
       };
-    case '/my-puzzles':
+    case "/my-puzzles":
       return {
-        title: 'My Puzzles',
+        title: "My Puzzles",
         icon: Package,
         sections: [
-          { title: 'Status', items: statusFilters },
-          { title: 'Categories', items: categoryFilters },
-          { title: 'Visibility', items: visibilityFilters },
+          { title: "Status", items: statusFilters },
+          { title: "Categories", items: categoryFilters },
+          { title: "Visibility", items: visibilityFilters },
         ],
       };
-    case '/trades':
+    case "/trades":
       return {
-        title: 'Trade Filters',
+        title: "Trade Filters",
         icon: ArrowLeftRight,
         sections: [
           {
-            title: 'Trade Status',
+            title: "Trade Status",
             items: [
-              { label: 'Active Trades', value: 'active', icon: Activity },
-              { label: 'Pending', value: 'pending', icon: Clock },
-              { label: 'Completed', value: 'completed', icon: Star },
+              { label: "Active Trades", value: "active", icon: Activity },
+              { label: "Pending", value: "pending", icon: Clock },
+              { label: "Completed", value: "completed", icon: Star },
             ],
           },
           {
-            title: 'Exchange Type',
+            title: "Exchange Type",
             items: [
-              { label: 'Lending', value: 'lending', icon: BookOpen },
-              { label: 'Swapping', value: 'swapping', icon: ArrowLeftRight },
-              { label: 'Trading', value: 'trading', icon: Package },
+              { label: "Lending", value: "lending", icon: BookOpen },
+              { label: "Swapping", value: "swapping", icon: ArrowLeftRight },
+              { label: "Trading", value: "trading", icon: Package },
             ],
           },
         ],
       };
-    case '/messages':
+    case "/messages":
       return {
-        title: 'Messages',
+        title: "Messages",
         icon: MessageSquare,
         sections: [
           {
-            title: 'Conversations',
+            title: "Conversations",
             items: [
-              { label: 'All Messages', value: 'all', icon: MessageSquare },
-              { label: 'Unread', value: 'unread', icon: Bell },
-              { label: 'Important', value: 'important', icon: Star },
+              { label: "All Messages", value: "all", icon: MessageSquare },
+              { label: "Unread", value: "unread", icon: Bell },
+              { label: "Important", value: "important", icon: Star },
             ],
           },
         ],
       };
-    case '/analytics':
+    case "/analytics":
       return {
-        title: 'Analytics',
+        title: "Analytics",
         icon: BarChart3,
         sections: [
-          { title: 'Personal Stats', items: analyticsFilters },
+          { title: "Personal Stats", items: analyticsFilters },
           {
-            title: 'Goals',
+            title: "Goals",
             items: [
-              { label: 'Monthly Goals', value: 'monthly', icon: Calendar },
-              { label: 'Yearly Goals', value: 'yearly', icon: Calendar },
-              { label: 'Custom Goals', value: 'custom', icon: Target },
+              { label: "Monthly Goals", value: "monthly", icon: Calendar },
+              { label: "Yearly Goals", value: "yearly", icon: Calendar },
+              { label: "Custom Goals", value: "custom", icon: Target },
             ],
           },
         ],
       };
-    case '/community':
+    case "/community":
       return {
-        title: 'Community',
+        title: "Community",
         icon: Users,
         sections: [
-          { title: 'Users', items: communityFilters },
+          { title: "Users", items: communityFilters },
           {
-            title: 'Content',
+            title: "Content",
             items: [
-              { label: 'Reviews', value: 'reviews', icon: Star },
+              { label: "Reviews", value: "reviews", icon: Star },
               {
-                label: 'Discussions',
-                value: 'discussions',
+                label: "Discussions",
+                value: "discussions",
                 icon: MessageCircle,
               },
-              { label: 'Trending', value: 'trending', icon: TrendingUp },
+              { label: "Trending", value: "trending", icon: TrendingUp },
             ],
           },
         ],
       };
-    case '/friend-circles':
+    case "/friend-circles":
       return {
-        title: 'Friend Circles',
+        title: "Friend Circles",
         icon: Shield,
         sections: [
-          { title: 'Circles', items: friendCircleFilters },
+          { title: "Circles", items: friendCircleFilters },
           {
-            title: 'Privacy',
+            title: "Privacy",
             items: [
-              { label: 'Private', value: 'private', icon: Lock },
-              { label: 'Invite Only', value: 'invite-only', icon: UserPlus },
-              { label: 'Public', value: 'public', icon: Globe },
+              { label: "Private", value: "private", icon: Lock },
+              { label: "Invite Only", value: "invite-only", icon: UserPlus },
+              { label: "Public", value: "public", icon: Globe },
             ],
           },
         ],
       };
-    case '/profiles':
+    case "/profiles":
       return {
-        title: 'Profiles',
+        title: "Profiles",
         icon: Users,
         sections: [
-          { title: 'User Discovery', items: communityFilters },
+          { title: "User Discovery", items: communityFilters },
           {
-            title: 'Activity',
+            title: "Activity",
             items: [
-              { label: 'Recent Activity', value: 'recent', icon: Activity },
-              { label: 'Achievements', value: 'achievements', icon: Award },
-              { label: 'Collections', value: 'collections', icon: Package },
+              { label: "Recent Activity", value: "recent", icon: Activity },
+              { label: "Achievements", value: "achievements", icon: Award },
+              { label: "Collections", value: "collections", icon: Package },
             ],
           },
         ],
       };
-    case '/reviews':
+    case "/reviews":
       return {
-        title: 'Reviews',
+        title: "Reviews",
         icon: Star,
         sections: [
           {
-            title: 'My Reviews',
+            title: "My Reviews",
             items: [
-              { label: 'Written', value: 'written', icon: Star },
-              { label: 'Drafts', value: 'drafts', icon: Bookmark },
-              { label: 'Helpful', value: 'helpful', icon: ThumbsUp },
+              { label: "Written", value: "written", icon: Star },
+              { label: "Drafts", value: "drafts", icon: Bookmark },
+              { label: "Helpful", value: "helpful", icon: ThumbsUp },
             ],
           },
           {
-            title: 'Community',
+            title: "Community",
             items: [
-              { label: 'Recent', value: 'recent', icon: Clock },
-              { label: 'Top Rated', value: 'top-rated', icon: Star },
-              { label: 'Most Helpful', value: 'helpful', icon: ThumbsUp },
-            ],
-          },
-        ],
-      };
-    case '/goals':
-      return {
-        title: 'Goals',
-        icon: Target,
-        sections: [
-          {
-            title: 'Goal Types',
-            items: [
-              { label: 'Completion Goals', value: 'completion', icon: Target },
-              { label: 'Time Goals', value: 'time', icon: Clock },
-              { label: 'Collection Goals', value: 'collection', icon: Package },
-            ],
-          },
-          {
-            title: 'Timeframes',
-            items: [
-              { label: 'Monthly', value: 'monthly', icon: Calendar },
-              { label: 'Yearly', value: 'yearly', icon: Calendar },
-              { label: 'Custom', value: 'custom', icon: Settings },
+              { label: "Recent", value: "recent", icon: Clock },
+              { label: "Top Rated", value: "top-rated", icon: Star },
+              { label: "Most Helpful", value: "helpful", icon: ThumbsUp },
             ],
           },
         ],
       };
-    case '/completion-tracking':
+    case "/goals":
       return {
-        title: 'Progress Tracking',
+        title: "Goals",
         icon: Target,
         sections: [
           {
-            title: 'Tracking',
+            title: "Goal Types",
             items: [
-              { label: 'Active Puzzles', value: 'active', icon: Activity },
-              { label: 'Completed', value: 'completed', icon: Star },
-              { label: 'Time Logs', value: 'time-logs', icon: Clock },
+              { label: "Completion Goals", value: "completion", icon: Target },
+              { label: "Time Goals", value: "time", icon: Clock },
+              { label: "Collection Goals", value: "collection", icon: Package },
             ],
           },
           {
-            title: 'Analytics',
+            title: "Timeframes",
             items: [
-              { label: 'Progress Stats', value: 'stats', icon: BarChart3 },
+              { label: "Monthly", value: "monthly", icon: Calendar },
+              { label: "Yearly", value: "yearly", icon: Calendar },
+              { label: "Custom", value: "custom", icon: Settings },
+            ],
+          },
+        ],
+      };
+    case "/completion-tracking":
+      return {
+        title: "Progress Tracking",
+        icon: Target,
+        sections: [
+          {
+            title: "Tracking",
+            items: [
+              { label: "Active Puzzles", value: "active", icon: Activity },
+              { label: "Completed", value: "completed", icon: Star },
+              { label: "Time Logs", value: "time-logs", icon: Clock },
+            ],
+          },
+          {
+            title: "Analytics",
+            items: [
+              { label: "Progress Stats", value: "stats", icon: BarChart3 },
               {
-                label: 'Time Analysis',
-                value: 'time-analysis',
+                label: "Time Analysis",
+                value: "time-analysis",
                 icon: TrendingUp,
               },
-              { label: 'Achievements', value: 'achievements', icon: Award },
+              { label: "Achievements", value: "achievements", icon: Award },
             ],
           },
         ],
       };
     default:
       return {
-        title: 'Quick Access',
+        title: "Quick Access",
         icon: Home,
         sections: [
-          { title: 'Recent Activity', items: baseFilters },
+          { title: "Recent Activity", items: baseFilters },
           {
-            title: 'Quick Actions',
+            title: "Quick Actions",
             items: [
-              { label: 'Add Puzzle', value: 'add-puzzle', icon: PlusCircle },
-              { label: 'Browse', value: 'browse', icon: Search },
-              { label: 'My Collection', value: 'my-collection', icon: Package },
+              { label: "Add Puzzle", value: "add-puzzle", icon: PlusCircle },
+              { label: "Browse", value: "browse", icon: Search },
+              { label: "My Collection", value: "my-collection", icon: Package },
             ],
           },
         ],
@@ -329,26 +324,26 @@ export function SidebarContent() {
   // Helper function to check if a feature is coming soon
   const isComingSoon = (pathname: string, itemValue: string) => {
     const comingSoonFeatures = {
-      '/analytics': ['completion', 'time', 'goals', 'trends'],
-      '/community': ['all', 'following', 'followers', 'nearby'],
-      '/friend-circles': ['my-circles', 'invitations', 'discover'],
-      '/profiles': ['all', 'following', 'followers', 'nearby'],
-      '/reviews': ['written', 'drafts', 'helpful', 'recent', 'top-rated'],
-      '/goals': [
-        'completion',
-        'time',
-        'collection',
-        'monthly',
-        'yearly',
-        'custom',
+      "/analytics": ["completion", "time", "goals", "trends"],
+      "/community": ["all", "following", "followers", "nearby"],
+      "/friend-circles": ["my-circles", "invitations", "discover"],
+      "/profiles": ["all", "following", "followers", "nearby"],
+      "/reviews": ["written", "drafts", "helpful", "recent", "top-rated"],
+      "/goals": [
+        "completion",
+        "time",
+        "collection",
+        "monthly",
+        "yearly",
+        "custom",
       ],
-      '/completion-tracking': [
-        'active',
-        'completed',
-        'time-logs',
-        'stats',
-        'time-analysis',
-        'achievements',
+      "/completion-tracking": [
+        "active",
+        "completed",
+        "time-logs",
+        "stats",
+        "time-analysis",
+        "achievements",
       ],
     };
 
