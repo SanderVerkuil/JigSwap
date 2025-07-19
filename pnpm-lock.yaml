@@ -164,6 +164,12 @@ importers:
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      posthog-js:
+        specifier: ^1.257.0
+        version: 1.257.0
+      posthog-node:
+        specifier: ^5.5.1
+        version: 5.5.1
       react:
         specifier: 19.1.0
         version: 19.1.0
@@ -3887,6 +3893,9 @@ packages:
   core-js-compat@3.44.0:
     resolution: {integrity: sha512-JepmAj2zfl6ogy34qfWtcE7nHKAJnKsQFRn++scjVS2bZFllwptzw61BZcZFYBPpUznLfAvh0LGhxKppk04ClA==}
 
+  core-js@3.44.0:
+    resolution: {integrity: sha512-aFCtd4l6GvAXwVEh3XbbVqJGHDJt0OZRa+5ePGx3LLwi12WfexqQxcsohb2wgsa/92xtl19Hd66G/L+TaAxDMw==}
+
   core-util-is@1.0.3:
     resolution: {integrity: sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ==}
 
@@ -4498,6 +4507,9 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
+
+  fflate@0.4.8:
+    resolution: {integrity: sha512-FJqqoDBR00Mdj9ppamLa/Y7vxm+PRmNWA67N846RvsoYVMKB4q3y/de5PA7gUmRMYK/8CMz2GDZQmCRN1wBcWA==}
 
   fflate@0.8.2:
     resolution: {integrity: sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==}
@@ -6071,6 +6083,24 @@ packages:
     resolution: {integrity: sha512-3Ybi1tAuwAP9s0r1UQ2J4n5Y0G05bJkpUIO0/bI9MhwmD70S5aTWbXGBwxHrelT+XM1k6dM0pk+SwNkpTRN7Pg==}
     engines: {node: ^10 || ^12 || >=14}
 
+  posthog-js@1.257.0:
+    resolution: {integrity: sha512-Ujg9RGtWVCu+4tmlRpALSy2ZOZI6JtieSYXIDDdgMWm167KYKvTtbMPHdoBaPWcNu0Km+1hAIBnQFygyn30KhA==}
+    peerDependencies:
+      '@rrweb/types': 2.0.0-alpha.17
+      rrweb-snapshot: 2.0.0-alpha.17
+    peerDependenciesMeta:
+      '@rrweb/types':
+        optional: true
+      rrweb-snapshot:
+        optional: true
+
+  posthog-node@5.5.1:
+    resolution: {integrity: sha512-y2TBl6H27vEbXk7sqG8QISmYaUN/UcPOYYDAK0wtnXRG3ySb93mG//vri1zS2hZvYHbBv0Tz8sLpZRCq4/v99A==}
+    engines: {node: '>=20'}
+
+  preact@10.26.9:
+    resolution: {integrity: sha512-SSjF9vcnF27mJK1XyFMNJzFd5u3pQiATFqoaDy03XuN00u4ziveVVEGt5RKJrDR8MHE/wJo9Nnad56RLzS2RMA==}
+
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
@@ -7194,6 +7224,9 @@ packages:
 
   wcwidth@1.0.1:
     resolution: {integrity: sha512-XHPEwS0q6TaxcvG85+8EYkbiCux2XtWG2mkc47Ng2A77BQu9+DqIOJldST4HgPkuea7dvKSj5VgX3P1d4rW8Tg==}
+
+  web-vitals@4.2.4:
+    resolution: {integrity: sha512-r4DIlprAGwJ7YM11VZp4R884m0Vmgr6EAKe3P+kO0PPj3Unqyvv59rczf6UiGcb9Z8QxZVcqKNwv/g0WNdWwsw==}
 
   webidl-conversions@3.0.1:
     resolution: {integrity: sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==}
@@ -11280,6 +11313,8 @@ snapshots:
     dependencies:
       browserslist: 4.25.1
 
+  core-js@3.44.0: {}
+
   core-util-is@1.0.3: {}
 
   corser@2.0.1: {}
@@ -12112,6 +12147,8 @@ snapshots:
   fdir@6.4.6(picomatch@4.0.3):
     optionalDependencies:
       picomatch: 4.0.3
+
+  fflate@0.4.8: {}
 
   fflate@0.8.2: {}
 
@@ -13737,6 +13774,17 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
+  posthog-js@1.257.0:
+    dependencies:
+      core-js: 3.44.0
+      fflate: 0.4.8
+      preact: 10.26.9
+      web-vitals: 4.2.4
+
+  posthog-node@5.5.1: {}
+
+  preact@10.26.9: {}
+
   prelude-ls@1.2.1: {}
 
   prettier-plugin-organize-imports@4.1.0(prettier@3.6.2)(typescript@5.9.0-beta):
@@ -14975,6 +15023,8 @@ snapshots:
   wcwidth@1.0.1:
     dependencies:
       defaults: 1.0.4
+
+  web-vitals@4.2.4: {}
 
   webidl-conversions@3.0.1: {}
 
