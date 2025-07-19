@@ -71,7 +71,7 @@
   --ring: oklch(0.551 0.027 264.364);
 
   /* JigSwap custom colors for dark mode */
-  --jigsaw-primary: #818cf8;
+  --jigsaw-primary: #4f46e5;
   --jigsaw-secondary: #a78bfa;
   --jigsaw-success: #34d399;
   --jigsaw-warning: #fbbf24;
