@@ -1,10 +1,6 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { LanguageSwitcher } from "@/components/ui/language-switcher";
-import { ModeToggle } from "@/components/ui/theme-toggle";
 import { UserButton, useUser } from "@clerk/nextjs";
-import { Activity } from "lucide-react";
 
 export function UserProfile() {
   const { user } = useUser();
@@ -29,20 +25,6 @@ export function UserProfile() {
             <p className="text-sm font-medium truncate">
               {user.firstName} {user.lastName}
             </p>
-          </div>
-        </div>
-
-        {/* Controls */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <LanguageSwitcher />
-            <ModeToggle />
-          </div>
-          <div className="flex items-center space-x-1">
-            <Badge variant="secondary" className="text-xs">
-              <Activity className="mr-1 h-3 w-3" />
-              Online
-            </Badge>
           </div>
         </div>
       </div>
