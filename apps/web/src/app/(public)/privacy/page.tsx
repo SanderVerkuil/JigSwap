@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function PrivacyPolicyPage() {
   const t = useTranslations("privacy");
-
+  const tCommon = useTranslations("common");
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -20,7 +20,7 @@ export default function PrivacyPolicyPage() {
             </span>
             <span>•</span>
             <Link href="/" className="hover:text-foreground">
-              {t("common.backToHome")}
+              {tCommon("backToHome")}
             </Link>
           </div>
         </div>
@@ -262,7 +262,7 @@ export default function PrivacyPolicyPage() {
         <div className="border-t pt-8 mt-12">
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <Link href="/" className="hover:text-foreground">
-              {t("common.backToHome")}
+              {tCommon("backToHome")}
             </Link>
             <span>
               {t("lastUpdated")}: {t("effectiveDate")}

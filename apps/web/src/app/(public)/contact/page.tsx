@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 
 export default function ContactPage() {
+  const tCommon = useTranslations("common");
   const t = useTranslations("contact");
 
   return (
@@ -18,7 +19,7 @@ export default function ContactPage() {
           <p className="text-xl text-muted-foreground mb-4">{t("subtitle")}</p>
           <div className="flex items-center gap-4 text-muted-foreground text-sm">
             <Link href="/" className="hover:text-foreground">
-              {t("common.backToHome")}
+              {tCommon("backToHome")}
             </Link>
           </div>
         </div>
