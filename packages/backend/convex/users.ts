@@ -1,5 +1,13 @@
+import { UserJSON } from "@clerk/backend";
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { Doc } from "./_generated/dataModel";
+import {
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+  QueryCtx,
+} from "./_generated/server";
 
 // Create or update user from Clerk
 export const createOrUpdateUser = mutation({
@@ -178,3 +186,66 @@ export const searchUsers = query({
       .slice(0, limit);
   },
 });
+
+/** Get user by Clerk use id (AKA "subject" on auth)  */
+export const getUser = internalQuery({
+  args: { subject: v.string() },
+  async handler(ctx, args) {
+    return await userQuery(ctx, args.subject);
+  },
+});
+
+/** Create a new Clerk user or update existing Clerk user data. */
+export const updateOrCreateUser = internalMutation({
+  args: { clerkUser: v.any() }, // no runtime validation, trust Clerk
+  async handler(ctx, { clerkUser }: { clerkUser: UserJSON }) {
+    const userRecord = await userQuery(ctx, clerkUser.id);
+
+    if (userRecord === null) {
+      await ctx.db.insert("users", {
+        clerkId: clerkUser.id,
+        email: clerkUser.email_addresses[0].email_address,
+        name: `${clerkUser.first_name} ${clerkUser.last_name}`,
+        username: clerkUser.username ?? undefined,
+        avatar: clerkUser.image_url,
+        bio: undefined,
+        isActive: true,
+        createdAt: clerkUser.created_at,
+        updatedAt: clerkUser.updated_at,
+      });
+    } else {
+      await ctx.db.patch(userRecord._id, {
+        clerkId: clerkUser.id,
+        email: clerkUser.email_addresses[0].email_address,
+        name: `${clerkUser.first_name} ${clerkUser.last_name}`,
+        username: clerkUser.username ?? undefined,
+        avatar: clerkUser.image_url,
+        updatedAt: clerkUser.updated_at,
+      });
+    }
+  },
+});
+
+/** Delete a user by clerk user ID. */
+export const deleteUser = internalMutation({
+  args: { id: v.string() },
+  async handler(ctx, { id }) {
+    const userRecord = await userQuery(ctx, id);
+
+    if (userRecord === null) {
+      console.warn("can't delete user, does not exist", id);
+    } else {
+      await ctx.db.delete(userRecord._id);
+    }
+  },
+});
+
+export async function userQuery(
+  ctx: QueryCtx,
+  clerkUserId: string,
+): Promise<Doc<"users"> | null> {
+  return await ctx.db
+    .query("users")
+    .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+    .unique();
+}
