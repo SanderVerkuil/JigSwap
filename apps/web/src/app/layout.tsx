@@ -4,6 +4,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { ToastProvider } from "@/components/ui/toast";
 import { ClerkClientProvider } from "@/lib/clerk-provider";
 import { ConvexClientProvider } from "@/lib/convex-provider";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
@@ -80,6 +82,8 @@ export default async function RootLayout({
             </ClerkClientProvider>
           </ThemeProvider>
         </NextIntlClientProvider>
+        <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );
