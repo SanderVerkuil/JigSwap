@@ -1,26 +1,27 @@
-import { Separator } from "@/components/ui/separator";
-import { SidebarContent } from "../../../sidebar-content";
+import {
+  Sidebar as AppSidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarRail,
+  SidebarSeparator,
+} from "@/components/ui/sidebar";
 import { Navigation } from "../navigation";
 import { UserProfile } from "../user-profile";
+import { SidebarContent as SidebarContentComponent } from "./sidebar-content";
 
 export function Sidebar() {
   return (
-    <aside className="w-64 h-[calc(100vh-57px)] bg-card/30 border-r backdrop-blur-sm sticky top-[57px] flex flex-col">
-      {/* Navigation - fixed at top */}
-      <div className="flex-shrink-0">
+    <AppSidebar variant="inset">
+      <SidebarContent>
         <Navigation />
-        <Separator />
-      </div>
+        <SidebarContentComponent />
+      </SidebarContent>
 
-      {/* Dynamic Sidebar Content - scrollable middle section */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <SidebarContent />
-      </div>
-
-      {/* Bottom User Section - sticky at bottom */}
-      <div className="flex-shrink-0">
+      <SidebarFooter>
+        <SidebarSeparator />
         <UserProfile />
-      </div>
-    </aside>
+      </SidebarFooter>
+      <SidebarRail />
+    </AppSidebar>
   );
 }

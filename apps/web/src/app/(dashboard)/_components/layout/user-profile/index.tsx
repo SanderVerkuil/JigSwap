@@ -14,7 +14,7 @@ export function UserProfile() {
   }
 
   return (
-    <div className="p-4 border-t bg-card/50 backdrop-blur-sm">
+    <div className="bg-card/50 backdrop-blur-sm">
       <div className="space-y-3">
         {/* User Profile */}
         <div className="flex items-center space-x-3 p-3 rounded-lg bg-muted/30">

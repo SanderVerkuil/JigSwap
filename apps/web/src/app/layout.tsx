@@ -1,16 +1,10 @@
-import { ThemeProvider } from "@/components/theme-provider";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { Toaster } from "@/components/ui/sonner";
-import { ToastProvider } from "@/components/ui/toast";
-import { ClerkClientProvider } from "@/lib/clerk-provider";
-import { ConvexClientProvider } from "@/lib/convex-provider";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
-import { NextIntlClientProvider } from "next-intl";
-import { getMessages } from "next-intl/server";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { Providers } from "./providers";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -59,29 +53,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Providing all messages to the client side
-  const messages = await getMessages();
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
-        <NextIntlClientProvider messages={messages}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <ClerkClientProvider>
-              <ConvexClientProvider>
-                <ToastProvider>
-                  <ErrorBoundary>{children}</ErrorBoundary>
-                  <Toaster />
-                </ToastProvider>
-              </ConvexClientProvider>
-            </ClerkClientProvider>
-          </ThemeProvider>
-        </NextIntlClientProvider>
+        <Providers>
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </Providers>
         <SpeedInsights />
         <Analytics />
       </body>

@@ -1,14 +1,15 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Bell, HelpCircle, Settings, TrendingUp } from "lucide-react";
 import Link from "next/link";
 
 export function Header() {
   return (
-    <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50 h-[57px]">
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center space-x-2">
+    <header className="border-b bg-card/50 backdrop-blur-sm fixed top-0 left-0 right-0 z-50 h-[57px]">
+      <div className="mx-auto px-4 py-3 flex items-center justify-between ">
+        <div className="flex items-center w-[calc(var(--sidebar-width)-(var(--spacing)*8))]">
+          {/* Logo */}
           <Link
             href="/"
             className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
@@ -18,8 +19,8 @@ export function Header() {
               JigSwap
             </span>
           </Link>
+          <SidebarTrigger className="ml-auto" />
         </div>
-
         {/* Top Navigation */}
         <div className="flex items-center space-x-4">
           <Button variant="ghost" size="sm" className="relative">

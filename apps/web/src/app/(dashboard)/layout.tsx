@@ -1,3 +1,4 @@
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { Header } from "./_components/layout/header";
@@ -16,17 +17,16 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background ">
       {/* Top Header */}
-      <Header />
-
-      <div className="flex">
-        {/* Sidebar */}
+      <SidebarProvider>
         <Sidebar />
-
-        {/* Main Content */}
-        <MainContent>{children}</MainContent>
-      </div>
+        <SidebarInset>
+          <Header />
+          {/* Main Content */}
+          <MainContent>{children}</MainContent>
+        </SidebarInset>
+      </SidebarProvider>
     </div>
   );
 }

@@ -27,6 +27,12 @@ export function ClerkClientProvider({ children }: { children: ReactNode }) {
     <ClerkProvider
       appearance={{
         baseTheme: resolvedTheme === "dark" ? dark : undefined,
+        variables: {
+          colorPrimary: "var(--jigsaw-primary)",
+          colorBackground: "var(--card)",
+          colorInputBackground: "var(--card)",
+          colorInputText: "var(--foreground)",
+        },
       }}
       localization={locale}
     >

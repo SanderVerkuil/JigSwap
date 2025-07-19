@@ -1,7 +1,11 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import {
+  SidebarMenu,
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
 import {
   Activity,
   ArrowLeftRight,
@@ -358,30 +362,26 @@ export function SidebarContent() {
           <h4 className="px-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">
             {section.title}
           </h4>
-          <div className="space-y-1">
+          <SidebarMenu>
             {section.items.map((item, itemIndex) => {
               const ItemIcon = item.icon;
               const comingSoon = isComingSoon(pathname, item.value);
 
               return (
-                <Button
-                  key={itemIndex}
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start px-4 h-8 text-xs"
-                  disabled={comingSoon}
-                >
-                  <ItemIcon className="mr-2 h-3 w-3" />
-                  <span className="flex-1 text-left">{item.label}</span>
-                  {comingSoon && (
-                    <Badge variant="secondary" className="text-xs ml-auto">
-                      Soon™
-                    </Badge>
-                  )}
-                </Button>
+                <SidebarMenuItem key={itemIndex}>
+                  <SidebarMenuButton disabled={comingSoon} size="sm">
+                    <ItemIcon className="mr-2 h-3 w-3" />
+                    <span className="flex-1 text-left">{item.label}</span>
+                    {comingSoon && (
+                      <SidebarMenuBadge className="text-xs">
+                        Soon™
+                      </SidebarMenuBadge>
+                    )}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               );
             })}
-          </div>
+          </SidebarMenu>
         </div>
       ))}
     </div>
