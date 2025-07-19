@@ -20,7 +20,7 @@ export default function TermsOfServicePage() {
             </span>
             <span>•</span>
             <Link href="/" className="hover:text-foreground">
-              ← Back to Home
+              {t("common.backToHome")}
             </Link>
           </div>
         </div>
@@ -86,7 +86,7 @@ export default function TermsOfServicePage() {
           <div className="space-y-6">
             <div>
               <h3 className="text-lg font-medium text-foreground mb-3">
-                Prohibited Activities:
+                {t("userConduct.prohibitedTitle")}
               </h3>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
                 {t
@@ -99,7 +99,7 @@ export default function TermsOfServicePage() {
 
             <div>
               <h3 className="text-lg font-medium text-foreground mb-3">
-                Expected Behavior:
+                {t("userConduct.expectedTitle")}
               </h3>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
                 {t
@@ -198,10 +198,10 @@ export default function TermsOfServicePage() {
             <p className="text-muted-foreground mb-2">
               <span className="font-medium">{t("contact.email")}:</span>{" "}
               <a
-                href="mailto:legal@jigswap.site"
+                href={`mailto:${t("contact.emailAddress")}`}
                 className="text-primary hover:underline"
               >
-                legal@jigswap.site
+                {t("contact.emailAddress")}
               </a>
             </p>
             <p className="text-muted-foreground">{t("contact.questions")}</p>
@@ -212,7 +212,7 @@ export default function TermsOfServicePage() {
         <div className="border-t pt-8 mt-12">
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <Link href="/" className="hover:text-foreground">
-              ← Back to Home
+              {t("common.backToHome")}
             </Link>
             <span>
               {t("lastUpdated")}: {t("effectiveDate")}

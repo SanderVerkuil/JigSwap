@@ -14,7 +14,9 @@
     "next": "Next",
     "previous": "Previous",
     "close": "Close",
-    "back": "Back"
+    "back": "Back",
+    "to": "to",
+    "backToHome": "← Back to Home"
   },
   "navigation": {
     "home": "Home",
@@ -526,6 +528,7 @@
       "title": "Contact Us",
       "description": "If you have any questions about this Privacy Policy or our data practices, please contact us:",
       "email": "Email",
+      "emailAddress": "privacy@jigswap.site",
       "questions": "We're committed to transparency and will respond to your privacy inquiries promptly."
     }
   },
@@ -561,6 +564,8 @@
     "userConduct": {
       "title": "User Conduct",
       "description": "You agree to use our service responsibly and in accordance with these terms:",
+      "prohibitedTitle": "Prohibited Activities:",
+      "expectedTitle": "Expected Behavior:",
       "prohibited": [
         "Violating any applicable laws or regulations",
         "Infringing on intellectual property rights",
@@ -614,6 +619,7 @@
       "title": "Contact Information",
       "description": "If you have any questions about these Terms of Service, please contact us:",
       "email": "Email",
+      "emailAddress": "legal@jigswap.site",
       "questions": "We're committed to transparency and will respond to your inquiries promptly."
     }
   },

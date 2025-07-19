@@ -20,7 +20,7 @@ export default function PrivacyPolicyPage() {
             </span>
             <span>•</span>
             <Link href="/" className="hover:text-foreground">
-              ← Back to Home
+              {t("common.backToHome")}
             </Link>
           </div>
         </div>
@@ -248,10 +248,10 @@ export default function PrivacyPolicyPage() {
             <p className="text-muted-foreground mb-2">
               <span className="font-medium">{t("contact.email")}:</span>{" "}
               <a
-                href="mailto:privacy@jigswap.site"
+                href={`mailto:${t("contact.emailAddress")}`}
                 className="text-primary hover:underline"
               >
-                privacy@jigswap.site
+                {t("contact.emailAddress")}
               </a>
             </p>
             <p className="text-muted-foreground">{t("contact.questions")}</p>
@@ -262,7 +262,7 @@ export default function PrivacyPolicyPage() {
         <div className="border-t pt-8 mt-12">
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <Link href="/" className="hover:text-foreground">
-              ← Back to Home
+              {t("common.backToHome")}
             </Link>
             <span>
               {t("lastUpdated")}: {t("effectiveDate")}
