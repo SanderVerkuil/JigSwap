@@ -52,6 +52,10 @@ export async function getLocale(): Promise<string> {
 // Crowdin OTA distribution function
 async function getCrowdinMessages(locale: string) {
   try {
+    // For development, fall back to source.json for English
+    if (process.env.NODE_ENV === "development") {
+      return (await import("./locales/source.json")).default;
+    }
 
     return (await import(`./locales/${locale}.json`)).default;
   } catch (error) {
