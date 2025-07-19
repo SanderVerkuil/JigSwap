@@ -41,7 +41,7 @@ A comprehensive platform for jigsaw puzzle enthusiasts to manage their personal 
 
 ## 🏠 Our Story
 
-JigSwap began as a family side project in 2024. We were tired of constantly asking friends and family "What puzzles do you have?" and wanted an easy way to see and exchange puzzles within our circle. What started as a simple solution for our puzzle-loving family has grown into a platform that serves the broader puzzle community.
+JigSwap began as a family side project in 2025. We were tired of constantly asking friends and family "What puzzles do you have?" and wanted an easy way to see and exchange puzzles within our circle. What started as a simple solution for our puzzle-loving family has grown into a platform that serves the broader puzzle community.
 
 Our mission is to make puzzle sharing sustainable, accessible, and enjoyable for everyone - whether you're trading with family members or connecting with fellow enthusiasts worldwide.
 
