@@ -38,6 +38,8 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { EmojiPickerInput } from "@/components/ui/emoji-picker-input";
+
 export default function CollectionsPage() {
   const { user } = useUser();
   const router = useRouter();
@@ -415,11 +417,11 @@ export default function CollectionsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="edit-icon">{t("icon")}</Label>
-                <Input
+                <EmojiPickerInput
                   id="edit-icon"
                   value={formData.icon}
-                  onChange={(e) =>
-                    setFormData({ ...formData, icon: e.target.value })
+                  onChange={(emoji) =>
+                    setFormData({ ...formData, icon: emoji })
                   }
                   placeholder="📦"
                 />

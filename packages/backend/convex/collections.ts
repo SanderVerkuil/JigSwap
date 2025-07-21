@@ -296,7 +296,7 @@ export const updateCollection = mutation({
       const existingCollection = await ctx.db
         .query("collections")
         .withIndex("by_user_name", (q) =>
-          q.eq("userId", user._id).eq("name", args.name),
+          q.eq("userId", user._id).eq("name", args.name ?? ""),
         )
         .unique();
 
