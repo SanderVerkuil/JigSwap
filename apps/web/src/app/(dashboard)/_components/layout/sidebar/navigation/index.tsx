@@ -48,9 +48,9 @@ function MenuItem({ title, url, isActive, items, ...props }: Item) {
             {items.map((subItem) => (
               <SidebarMenuSubItem key={subItem.title}>
                 <SidebarMenuSubButton asChild>
-                  <Link href={subItem.url}>
-                    <span>{subItem.title}</span>
-                  </Link>
+                  <span className="truncate leading-right">
+                    <Link href={subItem.url}>{subItem.title}</Link>
+                  </span>
                 </SidebarMenuSubButton>
               </SidebarMenuSubItem>
             ))}
@@ -63,9 +63,9 @@ function MenuItem({ title, url, isActive, items, ...props }: Item) {
     <SidebarMenuItem>
       <SidebarMenuButton tooltip={title}>
         {props.icon && <props.icon />}
-        <Link href={url}>
-          <span>{title}</span>
-        </Link>
+        <span className="truncate leading-right">
+          <Link href={url}>{title}</Link>
+        </span>
       </SidebarMenuButton>
     </SidebarMenuItem>
   );

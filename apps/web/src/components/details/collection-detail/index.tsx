@@ -3,65 +3,86 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
-import { useUser } from "@clerk/nextjs";
 import { api } from "@jigswap/backend/convex/_generated/api";
 import { Id } from "@jigswap/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Filter, Grid, List, Plus, Search } from "lucide-react";
+import { Grid, List, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export default function PuzzlesPage() {
-  const { user } = useUser();
+import { CollectionDetailActions } from "./collection-detail-actions";
+import { CollectionDetailHeader } from "./collection-detail-header";
+
+interface CollectionDetailProps {
+  collectionId: Id<"collections">;
+  showActions?: boolean;
+  onEdit?: (collectionId: Id<"collections">) => void;
+  onAddPuzzles?: (collectionId: Id<"collections">) => void;
+  className?: string;
+}
+
+export function CollectionDetail({
+  collectionId,
+  showActions = true,
+  onEdit,
+  onAddPuzzles,
+  className = "",
+}: CollectionDetailProps) {
   const router = useRouter();
-  const t = useTranslations("puzzles");
+  const t = useTranslations("collections");
   const tCommon = useTranslations("common");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const convexUser = useQuery(
-    api.users.getUserByClerkId,
-    user?.id ? { clerkId: user.id } : "skip",
+  const collection = useQuery(api.collections.getCollectionById, {
+    collectionId,
+  });
+
+  const removeFromCollection = useMutation(
+    api.collections.removePuzzleFromCollection,
   );
 
-  const userPuzzles = useQuery(
-    api.puzzles.getPuzzlesByOwner,
-    convexUser?._id
-      ? { ownerId: convexUser._id, includeUnavailable: true }
-      : "skip",
-  );
-
-  const deletePuzzle = useMutation(api.puzzles.deletePuzzle);
-
-  const handleDeletePuzzle = async (puzzleId: string) => {
-    if (confirm("Are you sure you want to delete this puzzle?")) {
-      try {
-        await deletePuzzle({ puzzleId: puzzleId as Id<"puzzles"> });
-      } catch (error) {
-        console.error("Failed to delete puzzle:", error);
-      }
+  const handleRemovePuzzle = async (puzzleId: Id<"puzzles">) => {
+    try {
+      await removeFromCollection({
+        collectionId,
+        puzzleId,
+      });
+    } catch (error) {
+      console.error("Failed to remove puzzle from collection:", error);
     }
   };
 
-  const handleEditPuzzle = (puzzleId: Id<"puzzles">) => {
-    router.push(`/puzzles/${puzzleId}/edit`);
+  const handleEditCollection = () => {
+    if (onEdit) {
+      onEdit(collectionId);
+    } else {
+      router.push(`/collections/${collectionId}/edit`);
+    }
   };
 
-  const handleViewPuzzle = (puzzleId: Id<"puzzles">) => {
-    router.push(`/puzzles/${puzzleId}`);
+  const handleAddPuzzles = () => {
+    if (onAddPuzzles) {
+      onAddPuzzles(collectionId);
+    } else {
+      router.push(`/collections/${collectionId}/add-puzzles`);
+    }
   };
 
   // Filter puzzles based on search term
   const filteredPuzzles =
-    userPuzzles?.filter(
-      (puzzle) =>
-        puzzle.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (puzzle.brand &&
-          puzzle.brand.toLowerCase().includes(searchTerm.toLowerCase())),
-    ) || [];
+    collection?.puzzles
+      ?.filter(
+        (puzzle) =>
+          puzzle &&
+          (puzzle.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (puzzle.brand &&
+              puzzle.brand.toLowerCase().includes(searchTerm.toLowerCase()))),
+      )
+      .filter(Boolean) || [];
 
-  if (!user || !convexUser) {
+  if (!collection) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -73,18 +94,20 @@ export default function PuzzlesPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{t("myPuzzles")}</h1>
-          <p className="text-muted-foreground">{t("managePuzzles")}</p>
-        </div>
-        <Button onClick={() => router.push("/puzzles/add")}>
-          <Plus className="h-4 w-4 mr-2" />
-          {t("addPuzzle")}
-        </Button>
-      </div>
+    <div className={`space-y-6 ${className}`}>
+      <CollectionDetailHeader
+        collection={collection}
+        onEdit={showActions ? handleEditCollection : undefined}
+        onAddPuzzles={showActions ? handleAddPuzzles : undefined}
+      />
+
+      {collection.description && (
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-muted-foreground">{collection.description}</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Search and Filters */}
       <Card>
@@ -101,10 +124,6 @@ export default function PuzzlesPage() {
                   className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
-                {tCommon("filter")}
-              </Button>
             </div>
 
             <div className="flex items-center gap-2">
@@ -135,12 +154,14 @@ export default function PuzzlesPage() {
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
                 <Plus className="h-8 w-8" />
               </div>
-              <h3 className="text-lg font-medium mb-2">{t("noPuzzles")}</h3>
-              <p className="text-sm">{t("addFirstPuzzle")}</p>
+              <h3 className="text-lg font-medium mb-2">
+                {t("noPuzzlesInCollection")}
+              </h3>
+              <p className="text-sm">{t("addPuzzlesToCollection")}</p>
             </div>
-            <Button onClick={() => router.push("/puzzles/add")}>
+            <Button onClick={handleAddPuzzles}>
               <Plus className="h-4 w-4 mr-2" />
-              {t("addPuzzle")}
+              {t("addPuzzles")}
             </Button>
           </CardContent>
         </Card>
@@ -150,14 +171,19 @@ export default function PuzzlesPage() {
             <PuzzleCard
               key={puzzle._id}
               puzzle={puzzle}
-              variant="default"
-              showCollectionDropdown={true}
-              onEdit={handleEditPuzzle}
-              onView={handleViewPuzzle}
-              onDelete={handleDeletePuzzle}
+              variant="collection"
+              onRemove={handleRemovePuzzle}
             />
           ))}
         </PuzzleViewProvider>
+      )}
+
+      {showActions && (
+        <CollectionDetailActions
+          collection={collection}
+          onEdit={handleEditCollection}
+          onAddPuzzles={handleAddPuzzles}
+        />
       )}
     </div>
   );

@@ -56,8 +56,37 @@ export default defineSchema({
     .index("by_category", ["category"])
     .index("by_difficulty", ["difficulty"]),
 
-  // Personal library collections - user-puzzle relationships
+  // Named collections for organizing puzzles
   collections: defineTable({
+    userId: v.id("users"),
+    name: v.string(),
+    description: v.optional(v.string()),
+    visibility: v.union(
+      v.literal("private"),
+      v.literal("public"),
+    ),
+    color: v.optional(v.string()), // hex color code
+    icon: v.optional(v.string()), // emoji or icon name
+    isDefault: v.boolean(), // true for system collections like "Favorites"
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_name", ["userId", "name"])
+    .index("by_visibility", ["visibility"]),
+
+  // Collection membership - many-to-many relationship
+  collectionMembers: defineTable({
+    collectionId: v.id("collections"),
+    puzzleId: v.id("puzzles"),
+    addedAt: v.number(),
+  })
+    .index("by_collection", ["collectionId"])
+    .index("by_puzzle", ["puzzleId"])
+    .index("by_collection_puzzle", ["collectionId", "puzzleId"]),
+
+  // Personal library entries - user-puzzle relationships with additional metadata
+  personalLibrary: defineTable({
     userId: v.id("users"),
     puzzleId: v.id("puzzles"),
     visibility: v.union(

@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/sidebar";
 import {
   ArrowLeftRight,
+  FolderOpen,
   Home,
   MessageSquare,
   Package,
@@ -41,6 +42,11 @@ const getItems: () => Item[] = () => {
       icon: Package,
     },
     {
+      title: "Collections",
+      url: "/collections",
+      icon: FolderOpen,
+    },
+    {
       title: "Trades",
       url: "/trades",
       icon: ArrowLeftRight,
@@ -68,7 +74,7 @@ export function Sidebar() {
       </SidebarContent>
 
       <SidebarFooter>
-        <SidebarSeparator />
+        <SidebarSeparator className="mx-0 w-full" />
         <UserProfile />
       </SidebarFooter>
       <SidebarRail />

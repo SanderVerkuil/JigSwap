@@ -3,65 +3,62 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
-import { useUser } from "@clerk/nextjs";
 import { api } from "@jigswap/backend/convex/_generated/api";
 import { Id } from "@jigswap/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Filter, Grid, List, Plus, Search } from "lucide-react";
+import { Edit, Grid, List, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export default function PuzzlesPage() {
-  const { user } = useUser();
+export default function CollectionDetailPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const router = useRouter();
-  const t = useTranslations("puzzles");
+  const t = useTranslations("collections");
   const tCommon = useTranslations("common");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const convexUser = useQuery(
-    api.users.getUserByClerkId,
-    user?.id ? { clerkId: user.id } : "skip",
+  const collection = useQuery(api.collections.getCollectionById, {
+    collectionId: params.id as Id<"collections">,
+  });
+
+  const removeFromCollection = useMutation(
+    api.collections.removePuzzleFromCollection,
   );
 
-  const userPuzzles = useQuery(
-    api.puzzles.getPuzzlesByOwner,
-    convexUser?._id
-      ? { ownerId: convexUser._id, includeUnavailable: true }
-      : "skip",
-  );
-
-  const deletePuzzle = useMutation(api.puzzles.deletePuzzle);
-
-  const handleDeletePuzzle = async (puzzleId: string) => {
-    if (confirm("Are you sure you want to delete this puzzle?")) {
-      try {
-        await deletePuzzle({ puzzleId: puzzleId as Id<"puzzles"> });
-      } catch (error) {
-        console.error("Failed to delete puzzle:", error);
-      }
+  const handleRemovePuzzle = async (puzzleId: Id<"puzzles">) => {
+    try {
+      await removeFromCollection({
+        collectionId: params.id as Id<"collections">,
+        puzzleId,
+      });
+    } catch (error) {
+      console.error("Failed to remove puzzle from collection:", error);
     }
   };
 
-  const handleEditPuzzle = (puzzleId: Id<"puzzles">) => {
-    router.push(`/puzzles/${puzzleId}/edit`);
-  };
-
-  const handleViewPuzzle = (puzzleId: Id<"puzzles">) => {
-    router.push(`/puzzles/${puzzleId}`);
+  const handleEditCollection = () => {
+    router.push(`/collections/${params.id}/edit`);
   };
 
   // Filter puzzles based on search term
   const filteredPuzzles =
-    userPuzzles?.filter(
-      (puzzle) =>
-        puzzle.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (puzzle.brand &&
-          puzzle.brand.toLowerCase().includes(searchTerm.toLowerCase())),
-    ) || [];
+    collection?.puzzles
+      ?.filter(
+        (puzzle) =>
+          puzzle &&
+          (puzzle.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (puzzle.brand &&
+              puzzle.brand.toLowerCase().includes(searchTerm.toLowerCase()))),
+      )
+      .filter(Boolean) || [];
 
-  if (!user || !convexUser) {
+  if (!collection) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -76,15 +73,43 @@ export default function PuzzlesPage() {
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{t("myPuzzles")}</h1>
-          <p className="text-muted-foreground">{t("managePuzzles")}</p>
+        <div className="flex items-center gap-4">
+          <div
+            className="w-16 h-16 rounded-lg flex items-center justify-center text-2xl"
+            style={{
+              backgroundColor: collection.color || "#f3f4f6",
+            }}
+          >
+            {collection.icon || "📦"}
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold">{collection.name}</h1>
+            <p className="text-muted-foreground">
+              {filteredPuzzles.length} {t("puzzles")}
+            </p>
+          </div>
         </div>
-        <Button onClick={() => router.push("/puzzles/add")}>
-          <Plus className="h-4 w-4 mr-2" />
-          {t("addPuzzle")}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleEditCollection}>
+            <Edit className="h-4 w-4 mr-2" />
+            {tCommon("edit")}
+          </Button>
+          <Link href={`/collections/${params.id}/add-puzzles`}>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              {t("addPuzzles")}
+            </Button>
+          </Link>
+        </div>
       </div>
+
+      {collection.description && (
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-muted-foreground">{collection.description}</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Search and Filters */}
       <Card>
@@ -101,10 +126,6 @@ export default function PuzzlesPage() {
                   className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
-                {tCommon("filter")}
-              </Button>
             </div>
 
             <div className="flex items-center gap-2">
@@ -135,13 +156,17 @@ export default function PuzzlesPage() {
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
                 <Plus className="h-8 w-8" />
               </div>
-              <h3 className="text-lg font-medium mb-2">{t("noPuzzles")}</h3>
-              <p className="text-sm">{t("addFirstPuzzle")}</p>
+              <h3 className="text-lg font-medium mb-2">
+                {t("noPuzzlesInCollection")}
+              </h3>
+              <p className="text-sm">{t("addPuzzlesToCollection")}</p>
             </div>
-            <Button onClick={() => router.push("/puzzles/add")}>
-              <Plus className="h-4 w-4 mr-2" />
-              {t("addPuzzle")}
-            </Button>
+            <Link href={`/collections/${params.id}/add-puzzles`}>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                {t("addPuzzles")}
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       ) : (
@@ -150,11 +175,8 @@ export default function PuzzlesPage() {
             <PuzzleCard
               key={puzzle._id}
               puzzle={puzzle}
-              variant="default"
-              showCollectionDropdown={true}
-              onEdit={handleEditPuzzle}
-              onView={handleViewPuzzle}
-              onDelete={handleDeletePuzzle}
+              variant="collection"
+              onRemove={handleRemovePuzzle}
             />
           ))}
         </PuzzleViewProvider>

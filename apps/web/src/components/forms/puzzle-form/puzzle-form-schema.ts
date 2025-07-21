@@ -9,6 +9,7 @@ export const puzzleFormSchema = z.object({
   condition: z.enum(["excellent", "good", "fair", "poor"]),
   category: z.string().optional(), // Keep as string for form compatibility
   tags: z.array(z.string()).optional(),
+  newTag: z.string().optional(),
   images: z.array(z.string()).min(0, "At least one image is required"),
   isCompleted: z.boolean(),
   completedDate: z.number().optional(),
@@ -27,6 +28,7 @@ export const puzzleFormDefaultValues: Partial<PuzzleFormData> = {
   condition: "good",
   category: "",
   tags: [],
+  newTag: "",
   images: [],
   isCompleted: false,
   notes: "",

@@ -24,7 +24,7 @@ export function UserProfile() {
           <UserButton
             appearance={{
               elements: {
-                avatarBox: "w-6 h-6",
+                userButtonAvatarBox: "!w-8 !h-8",
               },
             }}
           />

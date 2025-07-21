@@ -509,7 +509,7 @@ function SidebarMenuButton({
   tooltip?: string | React.ComponentProps<typeof TooltipContent>;
 } & VariantProps<typeof sidebarMenuButtonVariants>) {
   const Comp = asChild ? Slot : "button";
-  const { isMobile, state } = useSidebar();
+  const { isMobile, state, setOpenMobile } = useSidebar();
 
   const button = (
     <Comp
@@ -518,6 +518,11 @@ function SidebarMenuButton({
       data-size={size}
       data-active={isActive}
       className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
+      onClick={() => {
+        if (isMobile) {
+          setOpenMobile(false);
+        }
+      }}
       {...props}
     />
   );
@@ -678,7 +683,7 @@ function SidebarMenuSubButton({
   isActive?: boolean;
 }) {
   const Comp = asChild ? Slot : "a";
-
+  const { isMobile, setOpenMobile } = useSidebar();
   return (
     <Comp
       data-slot="sidebar-menu-sub-button"
@@ -693,6 +698,11 @@ function SidebarMenuSubButton({
         "group-data-[collapsible=icon]:hidden",
         className,
       )}
+      onClick={() => {
+        if (isMobile) {
+          setOpenMobile(false);
+        }
+      }}
       {...props}
     />
   );

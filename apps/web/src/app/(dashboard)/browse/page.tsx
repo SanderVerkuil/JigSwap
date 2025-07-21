@@ -2,20 +2,17 @@
 
 import { useUser } from "@clerk/nextjs";
 import { api } from "@jigswap/backend/convex/_generated/api";
+import { Id } from "@jigswap/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
-import { Grid, Heart, List, MessageCircle, Search, User } from "lucide-react";
+import { Grid, List, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Image from "next/image";
 import { useState } from "react";
-import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
+import { Card, CardContent } from "../../../components/ui/card";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "../../../components/ui/card";
+  PuzzleCard,
+  PuzzleViewProvider,
+} from "../../../components/ui/puzzle-card";
 
 export default function BrowsePage() {
   const { user } = useUser();
@@ -41,7 +38,9 @@ export default function BrowsePage() {
 
   const browsePuzzlesResult = useQuery(api.puzzles.browsePuzzles, {
     searchTerm: searchTerm || undefined,
-    category: selectedCategory || undefined,
+    category: selectedCategory
+      ? (selectedCategory as Id<"adminCategories">)
+      : undefined,
     difficulty: (selectedDifficulty as Difficulty) || undefined,
     condition: (selectedCondition as Condition) || undefined,
     minPieceCount: minPieces ? parseInt(minPieces) : undefined,
@@ -140,8 +139,8 @@ export default function BrowsePage() {
                 >
                   <option value="">{tBrowse("allCategories")}</option>
                   {categories?.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
+                    <option key={category._id} value={category._id}>
+                      {category.name.en}
                     </option>
                   ))}
                 </select>
@@ -239,163 +238,28 @@ export default function BrowsePage() {
           </CardContent>
         </Card>
       ) : (
-        <div
-          className={
-            viewMode === "grid"
-              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-              : "space-y-4"
-          }
-        >
+        <PuzzleViewProvider viewMode={viewMode}>
           {puzzles.map((puzzle) => (
-            <Card
+            <PuzzleCard
               key={puzzle._id}
-              className={`group hover:shadow-lg transition-shadow ${viewMode === "list" ? "flex" : ""}`}
-            >
-              {viewMode === "grid" ? (
-                <>
-                  <div className="aspect-square bg-muted rounded-t-lg relative overflow-hidden">
-                    {puzzle.images && puzzle.images.length > 0 ? (
-                      <Image
-                        src={puzzle.images[0]}
-                        alt={puzzle.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                        <div className="text-center">
-                          <div className="w-12 h-12 mx-auto mb-2 rounded bg-muted-foreground/10 flex items-center justify-center">
-                            <Grid className="h-6 w-6" />
-                          </div>
-                          <p className="text-sm">{t("noImage")}</p>
-                        </div>
-                      </div>
-                    )}
-                    <div className="absolute top-2 right-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="bg-white/80 hover:bg-white"
-                      >
-                        <Heart className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg line-clamp-1">
-                      {puzzle.title}
-                    </CardTitle>
-                    <CardDescription className="line-clamp-2">
-                      {puzzle.brand && (
-                        <span className="font-medium">{puzzle.brand}</span>
-                      )}
-                      {puzzle.brand && puzzle.pieceCount && " • "}
-                      {puzzle.pieceCount && (
-                        <span>
-                          {puzzle.pieceCount} {t("pieces")}
-                        </span>
-                      )}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        {puzzle.difficulty && (
-                          <Badge variant="outline" className="text-xs">
-                            {puzzle.difficulty}
-                          </Badge>
-                        )}
-                        {puzzle.condition && (
-                          <Badge variant="outline" className="text-xs">
-                            {puzzle.condition}
-                          </Badge>
-                        )}
-                      </div>
-
-                      {puzzle.owner && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <User className="h-3 w-3" />
-                          <span>{puzzle.owner.name}</span>
-                        </div>
-                      )}
-
-                      <div className="flex items-center gap-2">
-                        <Button size="sm" className="flex-1">
-                          {t("requestTrade")}
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <MessageCircle className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </>
-              ) : (
-                <div className="flex w-full">
-                  <div className="w-32 h-32 bg-muted rounded-l-lg flex-shrink-0 overflow-hidden">
-                    {puzzle.images && puzzle.images.length > 0 ? (
-                      <Image
-                        src={puzzle.images[0]}
-                        alt={puzzle.title}
-                        className="w-full h-full object-cover object-center"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                        <Grid className="h-6 w-6" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 p-4">
-                    <div className="flex items-start justify-between h-full">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg mb-1">
-                          {puzzle.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {puzzle.brand && (
-                            <span className="font-medium">{puzzle.brand}</span>
-                          )}
-                          {puzzle.brand && puzzle.pieceCount && " • "}
-                          {puzzle.pieceCount && (
-                            <span>
-                              {puzzle.pieceCount} {t("pieces")}
-                            </span>
-                          )}
-                        </p>
-                        <div className="flex items-center gap-2 mb-2">
-                          {puzzle.difficulty && (
-                            <Badge variant="outline" className="text-xs">
-                              {puzzle.difficulty}
-                            </Badge>
-                          )}
-                          {puzzle.condition && (
-                            <Badge variant="outline" className="text-xs">
-                              {puzzle.condition}
-                            </Badge>
-                          )}
-                        </div>
-                        {puzzle.owner && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <User className="h-3 w-3" />
-                            <span>{puzzle.owner.name}</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex flex-col items-end gap-2 ml-4">
-                        <Button variant="ghost" size="sm">
-                          <Heart className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm">{t("requestTrade")}</Button>
-                        <Button variant="outline" size="sm">
-                          <MessageCircle className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </Card>
+              puzzle={puzzle}
+              variant="browse"
+              showOwner={true}
+              onRequestTrade={(puzzleId) => {
+                // Handle trade request
+                console.log("Request trade for puzzle:", puzzleId);
+              }}
+              onMessage={(puzzleId) => {
+                // Handle message
+                console.log("Message for puzzle:", puzzleId);
+              }}
+              onFavorite={(puzzleId) => {
+                // Handle favorite
+                console.log("Favorite puzzle:", puzzleId);
+              }}
+            />
           ))}
-        </div>
+        </PuzzleViewProvider>
       )}
     </div>
   );
