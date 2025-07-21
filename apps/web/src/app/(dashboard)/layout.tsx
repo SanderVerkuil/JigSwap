@@ -19,7 +19,7 @@ export default async function DashboardLayout({
   return (
     <div className="bg-background ">
       {/* Top Header */}
-      <SidebarProvider>
+      <SidebarProvider className="pt-[57px]">
         <Sidebar />
         <SidebarInset>
           <Header />

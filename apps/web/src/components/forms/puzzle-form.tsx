@@ -3,6 +3,7 @@
 import { useUser } from "@clerk/nextjs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { api } from "@jigswap/backend/convex/_generated/api";
+import { Id } from "@jigswap/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { Plus, X } from "lucide-react";
 import * as React from "react";
@@ -36,6 +37,18 @@ import {
   type PuzzleFormData,
 } from "./puzzle-form-schema";
 
+// Common puzzle piece counts
+const COMMON_PIECE_COUNTS = [
+  { value: "500", label: "500 pieces" },
+  { value: "1000", label: "1000 pieces" },
+  { value: "1500", label: "1500 pieces" },
+  { value: "2000", label: "2000 pieces" },
+  { value: "3000", label: "3000 pieces" },
+  { value: "4000", label: "4000 pieces" },
+  { value: "5000", label: "5000 pieces" },
+  { value: "custom", label: "Custom amount" },
+];
+
 interface PuzzleFormProps {
   id: string;
   onSuccess?: () => void;
@@ -58,33 +71,91 @@ export function PuzzleForm({
     user?.id ? { clerkId: user.id } : "skip",
   );
 
+  // Get admin categories
+  const categories = useQuery(api.adminCategories.getActiveAdminCategories);
+
   const form = useForm<PuzzleFormData>({
     resolver: zodResolver(puzzleFormSchema),
     defaultValues,
   });
 
-  const onSubmit = async (data: PuzzleFormData) => {
-    if (!user) {
-      toast.error("You must be logged in to create a puzzle");
-      return;
-    }
+  // State for custom piece count input
+  const [showCustomPieceCount, setShowCustomPieceCount] = React.useState(false);
+  const [customPieceCount, setCustomPieceCount] = React.useState(
+    defaultValues.pieceCount?.toString() || "",
+  );
 
+  // Initialize custom piece count state based on default values
+  React.useEffect(() => {
+    const currentValue = defaultValues.pieceCount;
+    if (currentValue) {
+      const isCommonValue = COMMON_PIECE_COUNTS.some(
+        (option) => parseInt(option.value) === currentValue,
+      );
+      if (!isCommonValue) {
+        setShowCustomPieceCount(true);
+        setCustomPieceCount(currentValue.toString());
+      }
+    }
+  }, [defaultValues.pieceCount]);
+
+  // Handle piece count selection
+  const handlePieceCountChange = (value: string) => {
+    if (value === "custom") {
+      setShowCustomPieceCount(true);
+      // Don't reset to 0, keep the current value if it exists
+      if (!customPieceCount) {
+        form.setValue("pieceCount", 0);
+      }
+    } else {
+      setShowCustomPieceCount(false);
+      form.setValue("pieceCount", parseInt(value));
+    }
+  };
+
+  // Handle custom piece count input
+  const handleCustomPieceCountChange = (value: string) => {
+    setCustomPieceCount(value);
+    const numValue = parseInt(value) || 0;
+    form.setValue("pieceCount", numValue);
+  };
+
+  // Get the current piece count value for the select
+  const getCurrentPieceCountValue = () => {
+    const currentValue = form.watch("pieceCount");
+    if (showCustomPieceCount) {
+      return "custom";
+    }
+    const commonValue = COMMON_PIECE_COUNTS.find(
+      (option) => parseInt(option.value) === currentValue,
+    );
+    return commonValue ? commonValue.value : "custom";
+  };
+
+  const onSubmit = async (data: PuzzleFormData) => {
     if (!convexUser) {
-      toast.error("User not found. Please try again.");
+      toast.error("User not found");
       return;
     }
 
     try {
+      // Convert category string to ID if it's a valid category ID
+      const categoryId =
+        data.category && categories?.find((cat) => cat._id === data.category)
+          ? (data.category as Id<"adminCategories">)
+          : undefined;
+
       await createPuzzle({
         ...data,
+        category: categoryId,
         ownerId: convexUser._id,
       });
 
       toast.success("Puzzle created successfully!");
       onSuccess?.();
     } catch (error) {
-      console.error("Error creating puzzle:", error);
-      toast.error("Failed to create puzzle. Please try again.");
+      console.error("Failed to create puzzle:", error);
+      toast.error("Failed to create puzzle");
     }
   };
 
@@ -177,19 +248,42 @@ export function PuzzleForm({
             <FormField
               control={form.control}
               name="pieceCount"
-              render={({ field }) => (
+              render={() => (
                 <FormItem>
                   <FormLabel>Piece Count *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="1000"
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(parseInt(e.target.value) || 0)
-                      }
-                    />
-                  </FormControl>
+                  <div className="space-y-2">
+                    <Select
+                      value={getCurrentPieceCountValue()}
+                      onValueChange={handlePieceCountChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select piece count" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {COMMON_PIECE_COUNTS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {showCustomPieceCount && (
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="Enter custom piece count"
+                          value={customPieceCount}
+                          onChange={(e) =>
+                            handleCustomPieceCountChange(e.target.value)
+                          }
+                          min="1"
+                        />
+                      </FormControl>
+                    )}
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -264,7 +358,18 @@ export function PuzzleForm({
               <FormItem>
                 <FormLabel>Category</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., Nature, Art, Animals" {...field} />
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories?.map((category) => (
+                        <SelectItem key={category._id} value={category._id}>
+                          {category.name.en}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </FormControl>
                 <FormMessage />
               </FormItem>

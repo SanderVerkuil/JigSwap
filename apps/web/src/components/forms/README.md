@@ -87,6 +87,21 @@ type PuzzleFormData = {
 - **Tag Management**: Dynamic tag addition and removal
 - **Condition Selection**: Dropdown for puzzle condition
 - **Difficulty Selection**: Dropdown for puzzle difficulty
+- **Piece Count Selection**: Smart piece count input with common options (500, 1000, 1500, 2000, 3000, 4000, 5000) and custom input capability
+
+### Piece Count Feature
+
+The piece count field now provides a better user experience with:
+
+- **Common Options**: Predefined dropdown options for the most common puzzle piece counts (500, 1000, 1500, 2000, 3000, 4000, 5000)
+- **Custom Input**: Option to enter any custom piece count when the predefined options don't match
+- **Smart Initialization**: Automatically detects if the default value is a common option or custom value
+- **Validation**: Ensures piece count is a positive number with minimum value of 1
+
+**Usage Examples:**
+- Select "1000 pieces" from dropdown for standard 1000-piece puzzles
+- Select "Custom amount" and enter "750" for non-standard piece counts
+- The form automatically handles both common and custom values seamlessly
 
 ## TODO
 

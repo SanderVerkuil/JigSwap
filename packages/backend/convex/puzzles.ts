@@ -22,7 +22,7 @@ export const createPuzzle = mutation({
       v.literal("fair"),
       v.literal("poor"),
     ),
-    category: v.optional(v.string()),
+    category: v.optional(v.id("adminCategories")),
     tags: v.optional(v.array(v.string())),
     images: v.array(v.string()),
     ownerId: v.id("users"),
@@ -92,7 +92,7 @@ export const getPuzzlesByOwner = query({
 // Browse available puzzles with filters
 export const browsePuzzles = query({
   args: {
-    category: v.optional(v.string()),
+    category: v.optional(v.id("adminCategories")),
     minPieceCount: v.optional(v.number()),
     maxPieceCount: v.optional(v.number()),
     difficulty: v.optional(
@@ -215,7 +215,7 @@ export const updatePuzzle = mutation({
         v.literal("poor"),
       ),
     ),
-    category: v.optional(v.string()),
+    category: v.optional(v.id("adminCategories")),
     tags: v.optional(v.array(v.string())),
     images: v.optional(v.array(v.string())),
     isAvailable: v.optional(v.boolean()),
@@ -259,16 +259,14 @@ export const deletePuzzle = mutation({
 export const getPuzzleCategories = query({
   args: {},
   handler: async (ctx) => {
-    const puzzles = await ctx.db.query("puzzles").collect();
-    const categories = new Set<string>();
+    // Get all active admin categories
+    const adminCategories = await ctx.db
+      .query("adminCategories")
+      .withIndex("by_active", (q) => q.eq("isActive", true))
+      .order("asc")
+      .collect();
 
-    puzzles.forEach((puzzle) => {
-      if (puzzle.category) {
-        categories.add(puzzle.category);
-      }
-    });
-
-    return Array.from(categories).sort();
+    return adminCategories;
   },
 });
 

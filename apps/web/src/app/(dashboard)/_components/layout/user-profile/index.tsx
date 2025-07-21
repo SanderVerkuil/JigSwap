@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
 import { UserButton, useUser } from "@clerk/nextjs";
 
 export function UserProfile() {
@@ -10,10 +15,12 @@ export function UserProfile() {
   }
 
   return (
-    <div className="bg-card/50 backdrop-blur-sm">
-      <div className="space-y-3">
-        {/* User Profile */}
-        <div className="flex items-center space-x-3 p-3 rounded-lg bg-muted/30">
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          size="lg"
+          className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+        >
           <UserButton
             appearance={{
               elements: {
@@ -21,13 +28,16 @@ export function UserProfile() {
               },
             }}
           />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">
+          <div className="grid flex-1 text-left text-sm leading-right">
+            <span className="truncate font-medium">
               {user.firstName} {user.lastName}
-            </p>
+            </span>
+            <span className="truncate text-xs">
+              {user.username || user.primaryEmailAddress?.emailAddress || ""}
+            </span>
           </div>
-        </div>
-      </div>
-    </div>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
   );
 }

@@ -12,6 +12,7 @@ import {
   Package,
   PlusCircle,
   Search,
+  Settings,
 } from "lucide-react";
 import { UserProfile } from "../user-profile";
 import { Item, Navigation } from "./navigation";
@@ -49,12 +50,17 @@ const getItems: () => Item[] = () => {
       url: "/messages",
       icon: MessageSquare,
     },
+    {
+      title: "Admin",
+      url: "/admin",
+      icon: Settings,
+    },
   ];
 };
 
 export function Sidebar() {
   return (
-    <AppSidebar variant="inset" collapsible="icon">
+    <AppSidebar variant="inset" collapsible="icon" className="top-[57px]">
       <SidebarContent>
         <Navigation items={getItems()} />
         <SidebarSeparator />

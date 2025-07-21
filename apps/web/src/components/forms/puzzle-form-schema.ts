@@ -7,7 +7,7 @@ export const puzzleFormSchema = z.object({
   pieceCount: z.number().min(1, "Piece count must be at least 1"),
   difficulty: z.enum(["easy", "medium", "hard", "expert"]).optional(),
   condition: z.enum(["excellent", "good", "fair", "poor"]),
-  category: z.string().optional(),
+  category: z.string().optional(), // Keep as string for form compatibility
   tags: z.array(z.string()).optional(),
   images: z.array(z.string()).min(0, "At least one image is required"),
   isCompleted: z.boolean(),

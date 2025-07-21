@@ -38,7 +38,7 @@ export default defineSchema({
       v.literal("fair"),
       v.literal("poor"),
     ),
-    category: v.optional(v.string()),
+    category: v.optional(v.id("adminCategories")),
     tags: v.optional(v.array(v.string())),
     images: v.array(v.string()), // Array of image URLs
     ownerId: v.id("users"),
@@ -115,6 +115,25 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_name", ["userId", "name"]),
+
+  // Admin-managed global categories with localization support
+  adminCategories: defineTable({
+    name: v.object({
+      en: v.string(),
+      nl: v.string(),
+    }),
+    description: v.optional(v.object({
+      en: v.string(),
+      nl: v.string(),
+    })),
+    color: v.optional(v.string()), // hex color code
+    isActive: v.boolean(),
+    sortOrder: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_active", ["isActive"])
+    .index("by_sort_order", ["sortOrder"]),
 
   // User goals for puzzle completion
   goals: defineTable({

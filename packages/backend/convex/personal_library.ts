@@ -84,7 +84,7 @@ export const getCollection = query({
       ),
     ),
     searchTerm: v.optional(v.string()),
-    category: v.optional(v.string()),
+    category: v.optional(v.id("adminCategories")),
     minPieceCount: v.optional(v.number()),
     maxPieceCount: v.optional(v.number()),
     difficulty: v.optional(
