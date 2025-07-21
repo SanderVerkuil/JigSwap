@@ -1,4 +1,4 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { clerkMiddleware, createRouteMatcher,  } from "@clerk/nextjs/server";
 import { match } from "@formatjs/intl-localematcher";
 import Negotiator from "negotiator";
 import { NextRequest, NextResponse } from "next/server";
@@ -52,6 +52,8 @@ const isProtectedRoute = createRouteMatcher([
   "/messages(.*)",
 ]);
 
+const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
+
 export default clerkMiddleware(async (auth, req) => {
   // Handle locale detection and set cookie if needed
   const locale = getLocale(req);
@@ -71,6 +73,15 @@ export default clerkMiddleware(async (auth, req) => {
   // Handle protected routes
   if (isProtectedRoute(req)) {
     await auth.protect();
+  }
+
+  if (
+    isAdminRoute(req) &&
+    (await auth()).sessionClaims?.metadata?.role !== "admin"
+  ) {
+    const url = new URL("/dashboard", req.url);
+
+    return NextResponse.redirect(url);
   }
 
   return response;
