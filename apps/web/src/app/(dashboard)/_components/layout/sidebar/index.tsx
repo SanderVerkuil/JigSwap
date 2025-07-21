@@ -2,9 +2,12 @@ import {
   Sidebar as AppSidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarRail,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { CheckRole } from "@/components/utils/check-role/server";
 import {
   ArrowLeftRight,
   FolderOpen,
@@ -13,7 +16,9 @@ import {
   Package,
   PlusCircle,
   Search,
+  Settings,
 } from "lucide-react";
+import Link from "next/link";
 import { UserProfile } from "../user-profile";
 import { Item, Navigation } from "./navigation";
 import { SidebarContent as SidebarContentComponent } from "./sidebar-content";
@@ -70,6 +75,15 @@ export function Sidebar() {
       <SidebarFooter>
         <SidebarSeparator className="mx-0 w-full" />
         <UserProfile />
+
+        <CheckRole role="admin">
+          <SidebarMenuItem>
+            <SidebarMenuButton>
+              <Settings />
+              <Link href="/admin">Admin</Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </CheckRole>
       </SidebarFooter>
       <SidebarRail />
     </AppSidebar>

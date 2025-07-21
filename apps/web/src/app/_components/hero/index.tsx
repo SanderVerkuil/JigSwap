@@ -65,7 +65,7 @@ export function Hero() {
                 <Button
                   size="lg"
                   variant="default"
-                  className="w-full sm:w-auto bg-gradient-to-r from-jigsaw-primary to-jigsaw-secondary hover:from-jigsaw-primary/90 hover:to-jigsaw-secondary/90 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                  className="w-full sm:w-auto bg-gradient-to-r from-jigsaw-primary to-jigsaw-primary-accent hover:from-jigsaw-primary/90 hover:to-jigsaw-primary-accent/90 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                 >
                   {t("home.startTrading")}
                   <ArrowRight className="ml-2 h-4 w-4" />
