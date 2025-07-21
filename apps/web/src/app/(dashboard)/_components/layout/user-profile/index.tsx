@@ -5,7 +5,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { CheckRole } from "@/components/utils/check-role";
 import { UserButton, useUser } from "@clerk/nextjs";
+import { Settings } from "lucide-react";
+import Link from "next/link";
 
 export function UserProfile() {
   const { user } = useUser();
@@ -38,6 +41,14 @@ export function UserProfile() {
           </div>
         </SidebarMenuButton>
       </SidebarMenuItem>
+      <CheckRole role="admin">
+        <SidebarMenuItem>
+          <SidebarMenuButton>
+            <Settings />
+            <Link href="/admin">Admin</Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </CheckRole>
     </SidebarMenu>
   );
 }

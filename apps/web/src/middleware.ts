@@ -79,6 +79,7 @@ export default clerkMiddleware(async (auth, req) => {
     isAdminRoute(req) &&
     (await auth()).sessionClaims?.metadata?.role !== "admin"
   ) {
+    console.warn("Unauthorized admin access", (await auth()).sessionClaims?.metadata);
     const url = new URL("/dashboard", req.url);
 
     return NextResponse.redirect(url);

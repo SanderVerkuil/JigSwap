@@ -13,7 +13,6 @@ import {
   Package,
   PlusCircle,
   Search,
-  Settings,
 } from "lucide-react";
 import { UserProfile } from "../user-profile";
 import { Item, Navigation } from "./navigation";
@@ -55,11 +54,6 @@ const getItems: () => Item[] = () => {
       title: "Messages",
       url: "/messages",
       icon: MessageSquare,
-    },
-    {
-      title: "Admin",
-      url: "/admin",
-      icon: Settings,
     },
   ];
 };
