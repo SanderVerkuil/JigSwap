@@ -243,11 +243,11 @@ export default function CollectionsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="icon">{t("icon")}</Label>
-                  <Input
+                  <EmojiPickerInput
                     id="icon"
                     value={formData.icon}
-                    onChange={(e) =>
-                      setFormData({ ...formData, icon: e.target.value })
+                    onChange={(emoji) =>
+                      setFormData({ ...formData, icon: emoji })
                     }
                     placeholder="📦"
                   />

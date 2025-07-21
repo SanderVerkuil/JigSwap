@@ -29,7 +29,7 @@ export function EmojiPickerInput({
   disabled?: boolean;
   className?: string;
 }) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div id={id}>
