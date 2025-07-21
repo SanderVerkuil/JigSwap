@@ -9,14 +9,11 @@ import { Id } from "@jigswap/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { Grid, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
-export default function AddPuzzlesToCollectionPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function AddPuzzlesToCollectionPage() {
+  const { id } = useParams();
   const { user } = useUser();
   const router = useRouter();
   const t = useTranslations("collections");
@@ -32,7 +29,7 @@ export default function AddPuzzlesToCollectionPage({
   );
 
   const collection = useQuery(api.collections.getCollectionById, {
-    collectionId: params.id as Id<"collections">,
+    collectionId: id as Id<"collections">,
   });
 
   const availablePuzzles = useQuery(
@@ -60,11 +57,11 @@ export default function AddPuzzlesToCollectionPage({
     try {
       for (const puzzleId of selectedPuzzles) {
         await addPuzzleToCollection({
-          collectionId: params.id as Id<"collections">,
+          collectionId: id as Id<"collections">,
           puzzleId,
         });
       }
-      router.push(`/collections/${params.id}`);
+      router.push(`/collections/${id}`);
     } catch (error) {
       console.error("Failed to add puzzles to collection:", error);
     }
@@ -108,7 +105,7 @@ export default function AddPuzzlesToCollectionPage({
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            onClick={() => router.push(`/collections/${params.id}`)}
+            onClick={() => router.push(`/collections/${id}`)}
           >
             Cancel
           </Button>
