@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ColorPicker } from "@/components/ui/color-picker";
 import {
   Dialog,
   DialogContent,
@@ -250,12 +251,10 @@ export default function CollectionsPage() {
                 </div>
                 <div>
                   <Label htmlFor="color">{t("color")}</Label>
-                  <Input
-                    id="color"
-                    type="color"
+                  <ColorPicker
                     value={formData.color}
-                    onChange={(e) =>
-                      setFormData({ ...formData, color: e.target.value })
+                    onChange={(color) =>
+                      setFormData({ ...formData, color: color })
                     }
                   />
                 </div>
@@ -427,12 +426,10 @@ export default function CollectionsPage() {
               </div>
               <div>
                 <Label htmlFor="edit-color">{t("color")}</Label>
-                <Input
-                  id="edit-color"
-                  type="color"
+                <ColorPicker
                   value={formData.color}
-                  onChange={(e) =>
-                    setFormData({ ...formData, color: e.target.value })
+                  onChange={(color) =>
+                    setFormData({ ...formData, color: color })
                   }
                 />
               </div>
