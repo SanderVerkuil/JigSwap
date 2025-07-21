@@ -9,14 +9,11 @@ import { useMutation, useQuery } from "convex/react";
 import { Edit, Grid, List, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
-export default function CollectionDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function CollectionDetailPage() {
+  const params = useParams();
   const router = useRouter();
   const t = useTranslations("collections");
   const tCommon = useTranslations("common");

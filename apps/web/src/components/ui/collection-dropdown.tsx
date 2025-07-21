@@ -62,7 +62,7 @@ export function CollectionDropdown({
   };
 
   const isInCollection = (collectionId: Id<"collections">) => {
-    return puzzleCollections?.some((c) => c._id === collectionId) || false;
+    return puzzleCollections?.some((c) => c?._id === collectionId) || false;
   };
 
   if (!collections || collections.length === 0) {

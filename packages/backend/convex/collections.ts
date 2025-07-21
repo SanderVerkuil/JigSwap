@@ -16,6 +16,7 @@ export const createCollection = mutation({
     ),
     color: v.optional(v.string()),
     icon: v.optional(v.string()),
+    personalNotes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -53,6 +54,7 @@ export const createCollection = mutation({
       color: args.color,
       icon: args.icon,
       isDefault: false,
+      personalNotes: args.personalNotes,
       createdAt: now,
       updatedAt: now,
     });

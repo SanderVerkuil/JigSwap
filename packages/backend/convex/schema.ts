@@ -68,6 +68,7 @@ export default defineSchema({
     color: v.optional(v.string()), // hex color code
     icon: v.optional(v.string()), // emoji or icon name
     isDefault: v.boolean(), // true for system collections like "Favorites"
+    personalNotes: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

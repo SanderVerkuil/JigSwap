@@ -85,6 +85,7 @@ export default function CollectionsPage() {
         visibility: formData.visibility,
         color: formData.color,
         icon: formData.icon,
+        personalNotes: "",
       });
       setIsCreateDialogOpen(false);
       setFormData({

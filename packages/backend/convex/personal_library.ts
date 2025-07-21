@@ -40,7 +40,7 @@ export const addToCollection = mutation({
 
     // Check if puzzle is already in collection
     const existingCollection = await ctx.db
-      .query("collections")
+      .query("personalLibrary")
       .withIndex("by_user_puzzle", (q) =>
         q.eq("userId", user._id).eq("puzzleId", args.puzzleId),
       )
@@ -51,7 +51,7 @@ export const addToCollection = mutation({
     }
 
     const now = Date.now();
-    const collectionId = await ctx.db.insert("collections", {
+    const collectionId = await ctx.db.insert("personalLibrary", {
       userId: user._id,
       puzzleId: args.puzzleId,
       visibility: args.visibility,
@@ -119,7 +119,7 @@ export const getCollection = query({
     const offset = args.offset ?? 0;
 
     let collections = await ctx.db
-      .query("collections")
+      .query("personalLibrary")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
@@ -209,7 +209,7 @@ export const getCollection = query({
 // Update collection item
 export const updateCollection = mutation({
   args: {
-    collectionId: v.id("collections"),
+    collectionId: v.id("personalLibrary"),
     visibility: v.optional(
       v.union(
         v.literal("private"),
@@ -238,7 +238,7 @@ export const updateCollection = mutation({
 
 // Remove puzzle from collection
 export const removeFromCollection = mutation({
-  args: { collectionId: v.id("collections") },
+  args: { collectionId: v.id("personalLibrary") },
   handler: async (ctx, args) => {
     await ctx.db.delete(args.collectionId);
   },
@@ -690,7 +690,7 @@ export const getUserAnalytics = query({
 
     // Get collection stats
     const collections = await ctx.db
-      .query("collections")
+      .query("personalLibrary")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
@@ -811,7 +811,7 @@ export const exportUserData = query({
 
     // Get all user data
     const collections = await ctx.db
-      .query("collections")
+      .query("personalLibrary")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
 
