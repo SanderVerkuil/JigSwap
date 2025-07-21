@@ -1,5 +1,6 @@
 "use client";
 
+import { HeaderLogo } from "@/components/common/header-logo";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/ui/theme-toggle";
@@ -22,10 +23,7 @@ export function Header() {
               href="/"
               className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
             >
-              <span className="text-2xl">🧩</span>
-              <span className="text-xl font-bold bg-gradient-to-r from-jigsaw-primary to-jigsaw-secondary bg-clip-text text-transparent">
-                JigSwap
-              </span>
+              <HeaderLogo />
             </Link>
           </div>
           {/* Top Navigation */}
@@ -48,10 +46,7 @@ export function Header() {
             href="/"
             className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
           >
-            <span className="text-2xl">🧩</span>
-            <span className="text-xl font-bold bg-gradient-to-r from-jigsaw-primary to-jigsaw-secondary bg-clip-text text-transparent">
-              JigSwap
-            </span>
+            <HeaderLogo />
           </Link>
         </div>
         {/* Top Navigation */}

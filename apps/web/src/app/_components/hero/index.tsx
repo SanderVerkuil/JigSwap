@@ -1,8 +1,9 @@
 "use client";
 
+import { HeaderIcon } from "@/components/common/header-icon";
 import { Button } from "@/components/ui/button";
 import { Unauthenticated } from "convex/react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Puzzle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 
@@ -16,16 +17,24 @@ export function Hero() {
 
       {/* Decorative puzzle pieces */}
       <div className="absolute top-10 left-10 w-16 h-16 opacity-20">
-        <div className="w-full h-full bg-jigsaw-primary rounded-lg transform rotate-12" />
+        <div className="w-full h-full rounded-lg transform rotate-12">
+          <Puzzle className="text-jigsaw-primary w-full h-full" />
+        </div>
       </div>
       <div className="absolute top-32 right-20 w-12 h-12 opacity-15">
-        <div className="w-full h-full bg-jigsaw-secondary rounded-lg transform -rotate-6" />
+        <div className="w-full h-full rounded-lg transform -rotate-6">
+          <Puzzle className="text-jigsaw-secondary w-full h-full" />
+        </div>
       </div>
       <div className="absolute bottom-20 left-1/4 w-20 h-20 opacity-10">
-        <div className="w-full h-full bg-jigsaw-success rounded-lg transform rotate-45" />
+        <div className="w-full h-full rounded-lg transform rotate-45">
+          <Puzzle className="text-jigsaw-success w-full h-full" />
+        </div>
       </div>
       <div className="absolute top-1/2 right-1/3 w-8 h-8 opacity-20">
-        <div className="w-full h-full bg-jigsaw-warning rounded-lg transform -rotate-12" />
+        <div className="w-full h-full rounded-lg transform -rotate-12">
+          <Puzzle className="text-jigsaw-warning w-full h-full" />
+        </div>
       </div>
 
       {/* Animated floating elements */}
@@ -40,9 +49,11 @@ export function Hero() {
       <div className="flex items-center justify-center h-svh">
         <div className="container mx-auto text-center relative z-10">
           <div className="mb-6">
-            <span className="text-6xl md:text-8xl mb-4 block">🧩</span>
+            <span className="text-6xl md:text-8xl mb-4 block">
+              <HeaderIcon />
+            </span>
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-jigsaw-primary to-jigsaw-secondary bg-clip-text text-transparent">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-jigsaw-primary to-jigsaw-primary-accent bg-clip-text text-transparent">
             {t("home.title")}
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">

@@ -2,13 +2,21 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Baloo_2, Poppins } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const inter = Inter({
+const baloo2 = Baloo_2({
+  subsets: ["latin"],
+  variable: "--font-heading",
+  preload: true,
+});
+
+const poppins = Poppins({
   subsets: ["latin"],
   variable: "--font-sans",
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -55,7 +63,9 @@ export default async function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body
+        className={`${baloo2.variable} ${poppins.variable} font-sans antialiased`}
+      >
         <Providers>
           <ErrorBoundary>{children}</ErrorBoundary>
         </Providers>

@@ -1,5 +1,6 @@
 "use client";
 
+import { HeaderLogo } from "@/components/common/header-logo";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { ModeToggle } from "@/components/ui/theme-toggle";
@@ -15,8 +16,7 @@ export function Header() {
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 will-change-transform">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <span className="text-2xl">🧩</span>
-            <span className="text-xl font-bold text-primary">JigSwap</span>
+            <HeaderLogo />
           </div>
           <div className="flex items-center space-x-4">
             <LanguageSwitcher />

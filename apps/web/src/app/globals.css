@@ -25,8 +25,9 @@
   --radius: 0.625rem;
 
   /* JigSwap custom colors */
-  --jigsaw-primary: #6366f1;
-  --jigsaw-secondary: #8b5cf6;
+  --jigsaw-primary: #494e92;
+  --jigsaw-primary-accent: #ec4899;
+  --jigsaw-secondary: #19c316;
   --jigsaw-success: #10b981;
   --jigsaw-warning: #f59e0b;
   --jigsaw-puzzle: #ec4899;
@@ -71,8 +72,9 @@
   --ring: oklch(0.551 0.027 264.364);
 
   /* JigSwap custom colors for dark mode */
-  --jigsaw-primary: #4f46e5;
-  --jigsaw-secondary: #a78bfa;
+  --jigsaw-primary: #494e92;
+  --jigsaw-primary-accent: #ec4899;
+  --jigsaw-secondary: #19c316;
   --jigsaw-success: #34d399;
   --jigsaw-warning: #fbbf24;
   --jigsaw-puzzle: #f472b6;
@@ -116,6 +118,7 @@
   /* JigSwap custom color utilities */
   --color-jigsaw-primary: var(--jigsaw-primary);
   --color-jigsaw-secondary: var(--jigsaw-secondary);
+  --color-jigsaw-primary-accent: var(--jigsaw-primary-accent);
   --color-jigsaw-success: var(--jigsaw-success);
   --color-jigsaw-warning: var(--jigsaw-warning);
   --color-jigsaw-puzzle: var(--jigsaw-puzzle);
@@ -127,6 +130,7 @@
   --font-mono:
     ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo,
     monospace;
+  --font-heading: "Baloo 2", var(--font-sans);
 
   --radius: var(--radius);
 
