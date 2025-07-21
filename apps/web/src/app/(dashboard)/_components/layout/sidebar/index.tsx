@@ -2,6 +2,7 @@ import {
   Sidebar as AppSidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
@@ -77,12 +78,14 @@ export function Sidebar() {
         <UserProfile />
 
         <CheckRole role="admin">
-          <SidebarMenuItem>
-            <SidebarMenuButton>
-              <Settings />
-              <Link href="/admin">Admin</Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton>
+                <Settings />
+                <Link href="/admin">Admin</Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
         </CheckRole>
       </SidebarFooter>
       <SidebarRail />

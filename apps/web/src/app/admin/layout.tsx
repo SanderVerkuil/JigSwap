@@ -1,3 +1,4 @@
+import { HeaderLogo } from "@/components/common/header-logo";
 import {
   Sidebar,
   SidebarHeader,
@@ -27,7 +28,7 @@ export default async function AdminLayout({
       <SidebarProvider>
         <Sidebar variant="inset">
           <SidebarHeader>
-            <h1>Admin Panel</h1>
+            <HeaderLogo className="pl-0 h-16" />
           </SidebarHeader>
         </Sidebar>
         <SidebarInset>
