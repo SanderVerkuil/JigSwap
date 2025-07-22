@@ -31,16 +31,44 @@ export const createPuzzle = mutation({
     completedDate: v.optional(v.number()),
     acquisitionDate: v.optional(v.number()),
     notes: v.optional(v.string()),
+    completions: v.optional(v.array(
+      v.object({
+        completedDate: v.number(),
+        completionTimeMinutes: v.optional(v.number()),
+        notes: v.optional(v.string()),
+      })
+    )),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
+    const { completions, ...puzzleData } = args;
 
     const puzzleId = await ctx.db.insert("puzzles", {
-      ...args,
+      ...puzzleData,
       isAvailable: true, // New puzzles are available by default
       createdAt: now,
       updatedAt: now,
     });
+
+    // If there are completions, create them
+    if (completions && completions.length > 0) {
+      for (const completion of completions) {
+        await ctx.db.insert("completions", {
+          userId: args.ownerId,
+          puzzleId,
+          startDate: completion.completedDate, // Use completion date as start date for simplicity
+          endDate: completion.completedDate,
+          completionTimeMinutes: completion.completionTimeMinutes ?? 0,
+          rating: undefined,
+          review: undefined,
+          notes: completion.notes,
+          photos: [],
+          isCompleted: true,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    }
 
     return puzzleId;
   },
@@ -405,5 +433,58 @@ export const getPuzzleStats = query({
         completionHistory: completions.sort((a, b) => b.endDate - a.endDate),
       },
     };
+  },
+});
+
+// Get puzzle suggestions for form auto-fill
+export const getPuzzleSuggestions = query({
+  args: {
+    searchTerm: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 5;
+    const searchTerm = args.searchTerm.toLowerCase().trim();
+
+    if (searchTerm.length < 2) {
+      return [];
+    }
+
+    const puzzles = await ctx.db
+      .query("puzzles")
+      .withIndex("by_availability", (q) => q.eq("isAvailable", true))
+      .collect();
+
+    // Filter puzzles by search term
+    const matchingPuzzles = puzzles.filter(
+      (puzzle) =>
+        puzzle.title.toLowerCase().includes(searchTerm) ||
+        (puzzle.description && puzzle.description.toLowerCase().includes(searchTerm)) ||
+        (puzzle.brand && puzzle.brand.toLowerCase().includes(searchTerm)) ||
+        (puzzle.tags && puzzle.tags.some((tag) => tag.toLowerCase().includes(searchTerm)))
+    );
+
+    // Sort by relevance (exact matches first, then partial matches)
+    const sortedPuzzles = matchingPuzzles.sort((a, b) => {
+      const aExactMatch = a.title.toLowerCase() === searchTerm;
+      const bExactMatch = b.title.toLowerCase() === searchTerm;
+      
+      if (aExactMatch && !bExactMatch) return -1;
+      if (!aExactMatch && bExactMatch) return 1;
+      
+      // If both are exact matches or both are partial matches, sort by creation date
+      return b.createdAt - a.createdAt;
+    });
+
+    return sortedPuzzles.slice(0, limit).map(puzzle => ({
+      _id: puzzle._id,
+      title: puzzle.title,
+      brand: puzzle.brand,
+      pieceCount: puzzle.pieceCount,
+      difficulty: puzzle.difficulty,
+      category: puzzle.category,
+      tags: puzzle.tags,
+      description: puzzle.description,
+    }));
   },
 });

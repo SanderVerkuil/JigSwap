@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+// Completion entry schema
+const completionEntrySchema = z.object({
+  id: z.string(),
+  completedDate: z.number(),
+  completionTimeMinutes: z.number().optional(),
+  notes: z.string().optional(),
+});
+
 export const puzzleFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
@@ -15,6 +23,7 @@ export const puzzleFormSchema = z.object({
   completedDate: z.number().optional(),
   acquisitionDate: z.number().optional(),
   notes: z.string().optional(),
+  completions: z.array(completionEntrySchema).optional(),
 });
 
 export type PuzzleFormData = z.infer<typeof puzzleFormSchema>;
@@ -32,4 +41,5 @@ export const puzzleFormDefaultValues: Partial<PuzzleFormData> = {
   images: [],
   isCompleted: false,
   notes: "",
+  completions: [],
 }; 

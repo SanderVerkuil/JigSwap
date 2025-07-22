@@ -869,3 +869,55 @@ export const exportUserData = query({
     };
   },
 });
+
+// Create multiple completions for a puzzle
+export const createMultipleCompletions = mutation({
+  args: {
+    puzzleId: v.id("puzzles"),
+    completions: v.array(
+      v.object({
+        completedDate: v.number(),
+        completionTimeMinutes: v.optional(v.number()),
+        notes: v.optional(v.string()),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const now = Date.now();
+    const completionIds: string[] = [];
+
+    for (const completion of args.completions) {
+      const completionId = await ctx.db.insert("completions", {
+        userId: user._id,
+        puzzleId: args.puzzleId,
+        startDate: completion.completedDate, // Use completion date as start date for simplicity
+        endDate: completion.completedDate,
+        completionTimeMinutes: completion.completionTimeMinutes ?? 0,
+        rating: undefined,
+        review: undefined,
+        notes: completion.notes,
+        photos: [],
+        isCompleted: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      completionIds.push(completionId);
+    }
+
+    return completionIds;
+  },
+});

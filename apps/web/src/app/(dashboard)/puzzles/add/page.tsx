@@ -2,10 +2,12 @@
 
 import { PuzzleForm } from "@/components/forms/puzzle-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 
 export default function AddPuzzlePage() {
   const router = useRouter();
+  const t = useTranslations("puzzles");
 
   const handleSuccess = () => {
     router.push("/puzzles");
@@ -19,15 +21,13 @@ export default function AddPuzzlePage() {
     <div className="container mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Add New Puzzle</h1>
-          <p className="text-muted-foreground">
-            Add a new puzzle to your collection
-          </p>
+          <h1 className="text-3xl font-bold">{t("addPuzzle")}</h1>
+          <p className="text-muted-foreground">{t("addPuzzleDescription")}</p>
         </div>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Puzzle Details</CardTitle>
+          <CardTitle>{t("basicInformation")}</CardTitle>
         </CardHeader>
         <CardContent>
           <PuzzleForm

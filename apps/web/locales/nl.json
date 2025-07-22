@@ -289,8 +289,32 @@
     "puzzleCompleted": "Ik heb deze puzzel voltooid",
     "completedDate": "Voltooi datum",
     "acquisitionDate": "Datum verwerving",
+    "acquisitionDateDescription": "Wanneer heb je deze puzzel verworven? (optioneel)",
     "notes": "Opmerkingen",
-    "notesPlaceholder": "Alle extra notities over deze puzzel"
+    "notesPlaceholder": "Alle extra notities over deze puzzel",
+    "completions": {
+      "title": "Voltooiing Tracking",
+      "description": "Volg je puzzel voltooiingen met gedetailleerde timing en notities",
+      "statusDescription": "Markeer deze puzzel als voltooid om je voortgang bij te houden",
+      "completion": "Voltooiing",
+      "timeSpent": "Tijd Besteed",
+      "optional": "optioneel",
+      "timeDescription": "Hoe lang duurde het om deze puzzel te voltooien? (geschat)",
+      "minutes": "minuten",
+      "notes": "Voltooiing Notities",
+      "notesPlaceholder": "Alle notities over deze voltooiing ervaring",
+      "addCompletion": "Nog een voltooiing toevoegen"
+    },
+    "suggestions": {
+      "title": "Puzzel Suggesties",
+      "description": "Gevonden vergelijkbare puzzels in de database. Klik om details automatisch in te vullen.",
+      "searchExisting": "Zoek Bestaande Puzzels",
+      "searchDescription": "Zoek naar puzzels die al bestaan in de database om details automatisch in te vullen",
+      "searchPlaceholder": "Zoek op titel, merk of beschrijving...",
+      "found": "Gevonden Puzzels",
+      "useThis": "Gebruik Dit",
+      "noResults": "Geen overeenkomende puzzels gevonden"
+    }
   },
   "trades": {
     "title": "Transacties",

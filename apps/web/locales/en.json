@@ -289,8 +289,32 @@
     "puzzleCompleted": "I have completed this puzzle",
     "completedDate": "Completion Date",
     "acquisitionDate": "Acquisition Date",
+    "acquisitionDateDescription": "When did you acquire this puzzle? (optional)",
     "notes": "Notes",
-    "notesPlaceholder": "Any additional notes about this puzzle"
+    "notesPlaceholder": "Any additional notes about this puzzle",
+    "completions": {
+      "title": "Completion Tracking",
+      "description": "Track your puzzle completions with detailed timing and notes",
+      "statusDescription": "Mark this puzzle as completed to track your progress",
+      "completion": "Completion",
+      "timeSpent": "Time Spent",
+      "optional": "optional",
+      "timeDescription": "How long did it take to complete this puzzle? (estimated)",
+      "minutes": "minutes",
+      "notes": "Completion Notes",
+      "notesPlaceholder": "Any notes about this completion experience",
+      "addCompletion": "Add Another Completion"
+    },
+    "suggestions": {
+      "title": "Puzzle Suggestions",
+      "description": "Found similar puzzles in the database. Click to auto-fill details.",
+      "searchExisting": "Search Existing Puzzles",
+      "searchDescription": "Search for puzzles that already exist in the database to auto-fill details",
+      "searchPlaceholder": "Search by title, brand, or description...",
+      "found": "Found Puzzles",
+      "useThis": "Use This",
+      "noResults": "No matching puzzles found"
+    }
   },
   "trades": {
     "title": "Trades",

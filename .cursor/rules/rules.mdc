@@ -356,6 +356,7 @@ apps/web/src/components/details/
 - **ALL text content must be internationalized** - no hardcoded English text
 - Use `useTranslations` hook from `next-intl` for all text content
 - Translation keys should be descriptive and organized by feature/component
+- The source strings are defined in `apps/web/locales/source.json` and should be containing the source strings
 - Follow the existing translation structure in `apps/web/locales/en.json` and `apps/web/locales/nl.json`
 - Translation files are managed through Crowdin - do not modify them directly unless necessary
 - Use proper translation namespacing (e.g., `t("puzzles.title")`, `t("common.loading")`)

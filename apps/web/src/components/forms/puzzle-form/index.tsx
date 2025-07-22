@@ -4,6 +4,7 @@ import { useUser } from "@clerk/nextjs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { api } from "@jigswap/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { Form } from "@/components/ui/form";
@@ -12,6 +13,7 @@ import { toast } from "sonner";
 import { Id } from "@jigswap/backend/convex/_generated/dataModel";
 import { PuzzleFormActions } from "./puzzle-form-actions";
 import { PuzzleFormBasicInfo } from "./puzzle-form-basic-info";
+import { PuzzleFormCompletions } from "./puzzle-form-completions";
 import {
   puzzleFormDefaultValues,
   puzzleFormSchema,
@@ -51,6 +53,24 @@ export function PuzzleForm({
     defaultValues,
   });
 
+  // Watch the title field and track interaction states
+  const titleValue = form.watch("title");
+  const [hasInteractedWithTitle, setHasInteractedWithTitle] = useState(false);
+  const [hasUsedSuggestion, setHasUsedSuggestion] = useState(false);
+
+  // Show other sections only after suggestion is used or title loses focus
+  const shouldShowOtherSections =
+    hasUsedSuggestion ||
+    (hasInteractedWithTitle && titleValue && titleValue.trim().length > 0);
+
+  const handleTitleInteraction = () => {
+    setHasInteractedWithTitle(true);
+  };
+
+  const handleSuggestionUsed = () => {
+    setHasUsedSuggestion(true);
+  };
+
   const onSubmit = async (data: PuzzleFormData) => {
     if (!convexUser?._id) {
       toast.error("User not found");
@@ -58,10 +78,16 @@ export function PuzzleForm({
     }
 
     try {
-      await createPuzzle({
+      // Create the puzzle with completions
+      const puzzleId = await createPuzzle({
         ...data,
         ownerId: convexUser._id as Id<"users">,
         category: data.category as Id<"adminCategories">,
+        completions: data.completions?.map((completion) => ({
+          completedDate: completion.completedDate,
+          completionTimeMinutes: completion.completionTimeMinutes,
+          notes: completion.notes,
+        })),
       });
 
       toast.success("Puzzle created successfully!");
@@ -74,16 +100,36 @@ export function PuzzleForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <PuzzleFormBasicInfo form={form} categories={categories} />
-
-        <PuzzleFormStatusInfo form={form} />
-
-        {showActions && (
-          <PuzzleFormActions
-            onCancel={onCancel}
-            isSubmitting={form.formState.isSubmitting}
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        {/* Basic Information */}
+        <div className="space-y-6">
+          <PuzzleFormBasicInfo
+            form={form}
+            categories={categories}
+            onTitleInteraction={handleTitleInteraction}
+            onSuggestionUsed={handleSuggestionUsed}
           />
+        </div>
+
+        {/* Status Information - only show when title is entered and interacted with */}
+        {shouldShowOtherSections && (
+          <div className="space-y-6 animate-in slide-in-from-top-2 duration-300">
+            <PuzzleFormStatusInfo form={form} />
+          </div>
+        )}
+
+        {/* Completion Tracking - only show when title is entered and interacted with */}
+        {shouldShowOtherSections && (
+          <div className="space-y-6 animate-in slide-in-from-top-2 duration-300">
+            <PuzzleFormCompletions form={form} />
+          </div>
+        )}
+
+        {/* Form Actions - only show when title is entered and interacted with */}
+        {showActions && shouldShowOtherSections && (
+          <div className="animate-in slide-in-from-top-2 duration-300">
+            <PuzzleFormActions onCancel={onCancel} />
+          </div>
         )}
       </form>
     </Form>
