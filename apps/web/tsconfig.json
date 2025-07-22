@@ -2,6 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "baseUrl": "./",
   "compilerOptions": {
+    "allowArbitraryExtensions": true,
     "target": "ES2017",
     "lib": [
       "dom",
@@ -25,6 +26,9 @@
       }
     ],
     "paths": {
+      "@/locales/*": [
+        "./locales/*"
+      ],
       "@/*": [
         "./src/*"
       ]

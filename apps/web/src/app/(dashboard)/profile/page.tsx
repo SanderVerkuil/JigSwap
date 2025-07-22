@@ -47,6 +47,10 @@ export default function ProfilePage() {
     return <PageLoading message={t("loading")} />;
   }
 
+  if (userProfile === null) {
+    return <div>{t("notFound")}</div>;
+  }
+
   return (
     <div className="container mx-auto space-y-6">
       {/* Profile Header */}

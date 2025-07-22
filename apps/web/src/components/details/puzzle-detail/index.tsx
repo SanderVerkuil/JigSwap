@@ -50,6 +50,10 @@ export function PuzzleDetail({
     return <PageLoading message="Loading puzzle..." />;
   }
 
+  if (puzzle === null) {
+    return <div>{t("notFound")}</div>;
+  }
+
   return (
     <div className={`space-y-6 ${className}`}>
       <PuzzleDetailHeader puzzle={puzzle} />

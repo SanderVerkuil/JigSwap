@@ -60,6 +60,10 @@ export default function CollectionDetailPage() {
     return <PageLoading message={tCommon("loading")} />;
   }
 
+  if (collection === null) {
+    return <div>{t("notFound")}</div>;
+  }
+
   return (
     <div className="container mx-auto space-y-6">
       {/* Header */}

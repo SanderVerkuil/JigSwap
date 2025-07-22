@@ -87,6 +87,10 @@ export function CollectionDetail({
     return <PageLoading message={tCommon("loading")} />;
   }
 
+  if (collection === null) {
+    return <div>{t("notFound")}</div>;
+  }
+
   return (
     <div className={`space-y-6 ${className}`}>
       <CollectionDetailHeader
