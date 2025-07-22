@@ -14,6 +14,27 @@
         "tsConfig": "packages/backend/tsconfig.lib.json",
         "assets": ["packages/backend/*.md"]
       }
+    },
+    "dev": {
+      "executor": "nx:run-commands",
+      "continuous": true,
+      "defaultConfiguration": "development",
+      "options": {
+        "command": "pnpm run convex:dev",
+        "cwd": "packages/backend"
+      },
+      "configurations": {
+        "development": {
+          "command": "pnpm run convex:dev",
+          "cwd": "packages/backend"
+        }
+      }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm run convex:deploy"
+      }
     }
   }
 }
