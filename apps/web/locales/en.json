@@ -280,6 +280,8 @@
     "hard": "Hard",
     "expert": "Expert",
     "selectCondition": "Select condition",
+    "selectPieceCount": "Select piece count",
+    "customPieceCountPlaceholder": "Enter custom piece count",
     "excellent": "Excellent",
     "good": "Good",
     "fair": "Fair",

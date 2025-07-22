@@ -6,25 +6,30 @@ import { Edit, Eye, Heart, MessageCircle, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 interface PuzzleData {
-  _id: Id<"puzzles">;
-  title: string;
-  description?: string;
-  brand?: string;
-  pieceCount: number;
-  difficulty?: "easy" | "medium" | "hard" | "expert";
-  condition: "excellent" | "good" | "fair" | "poor";
-  category?: Id<"adminCategories">;
-  tags?: string[];
-  images: string[];
+  _id: Id<"puzzleInstances">;
+  productId: Id<"puzzleProducts">;
   ownerId: Id<"users">;
+  condition: "excellent" | "good" | "fair" | "poor";
   isAvailable: boolean;
-  isCompleted: boolean;
-  completedDate?: number;
   acquisitionDate?: number;
   notes?: string;
   createdAt: number;
   updatedAt: number;
   _creationTime?: number;
+  product: {
+    _id: Id<"puzzleProducts">;
+    title: string;
+    description?: string;
+    brand?: string;
+    pieceCount: number;
+    difficulty?: "easy" | "medium" | "hard" | "expert";
+    category?: Id<"adminCategories">;
+    tags?: string[];
+    images?: string[];
+    createdAt: number;
+    updatedAt: number;
+    _creationTime?: number;
+  } | null;
   owner?: {
     _id: Id<"users">;
     name: string;
@@ -35,12 +40,12 @@ interface PuzzleData {
 
 interface PuzzleDetailActionsProps {
   puzzle: PuzzleData;
-  onEdit?: (puzzleId: Id<"puzzles">) => void;
-  onView?: (puzzleId: Id<"puzzles">) => void;
-  onDelete?: (puzzleId: Id<"puzzles">) => void;
-  onRequestTrade?: (puzzleId: Id<"puzzles">) => void;
-  onMessage?: (puzzleId: Id<"puzzles">) => void;
-  onFavorite?: (puzzleId: Id<"puzzles">) => void;
+  onEdit?: (puzzleId: Id<"puzzleInstances">) => void;
+  onView?: (puzzleId: Id<"puzzleInstances">) => void;
+  onDelete?: (puzzleId: Id<"puzzleInstances">) => void;
+  onRequestTrade?: (puzzleId: Id<"puzzleInstances">) => void;
+  onMessage?: (puzzleId: Id<"puzzleInstances">) => void;
+  onFavorite?: (puzzleId: Id<"puzzleInstances">) => void;
 }
 
 export function PuzzleDetailActions({

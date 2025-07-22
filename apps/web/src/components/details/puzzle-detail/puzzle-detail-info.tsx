@@ -7,25 +7,30 @@ import { Calendar, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 interface PuzzleData {
-  _id: Id<"puzzles">;
-  title: string;
-  description?: string;
-  brand?: string;
-  pieceCount: number;
-  difficulty?: "easy" | "medium" | "hard" | "expert";
-  condition: "excellent" | "good" | "fair" | "poor";
-  category?: Id<"adminCategories">;
-  tags?: string[];
-  images: string[];
+  _id: Id<"puzzleInstances">;
+  productId: Id<"puzzleProducts">;
   ownerId: Id<"users">;
+  condition: "excellent" | "good" | "fair" | "poor";
   isAvailable: boolean;
-  isCompleted: boolean;
-  completedDate?: number;
   acquisitionDate?: number;
   notes?: string;
   createdAt: number;
   updatedAt: number;
   _creationTime?: number;
+  product: {
+    _id: Id<"puzzleProducts">;
+    title: string;
+    description?: string;
+    brand?: string;
+    pieceCount: number;
+    difficulty?: "easy" | "medium" | "hard" | "expert";
+    category?: Id<"adminCategories">;
+    tags?: string[];
+    images?: string[];
+    createdAt: number;
+    updatedAt: number;
+    _creationTime?: number;
+  } | null;
   owner?: {
     _id: Id<"users">;
     name: string;
@@ -45,6 +50,11 @@ export function PuzzleDetailInfo({
 }: PuzzleDetailInfoProps) {
   const t = useTranslations("puzzles");
 
+  // Early return if no product data
+  if (!puzzle.product) {
+    return <div>Puzzle not found</div>;
+  }
+
   return (
     <div className="space-y-6">
       {/* Basic Info */}
@@ -59,15 +69,15 @@ export function PuzzleDetailInfo({
                 Piece Count
               </p>
               <p className="text-lg">
-                {puzzle.pieceCount} {t("pieces")}
+                {puzzle.product.pieceCount} {t("pieces")}
               </p>
             </div>
-            {puzzle.difficulty && (
+            {puzzle.product.difficulty && (
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
                   Difficulty
                 </p>
-                <Badge variant="outline">{puzzle.difficulty}</Badge>
+                <Badge variant="outline">{puzzle.product.difficulty}</Badge>
               </div>
             )}
             <div>
@@ -76,24 +86,24 @@ export function PuzzleDetailInfo({
               </p>
               <Badge variant="outline">{puzzle.condition}</Badge>
             </div>
-            {puzzle.category && (
+            {puzzle.product.category && (
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
                   Category
                 </p>
-                <p className="text-lg">{puzzle.category}</p>
+                <p className="text-lg">{puzzle.product.category}</p>
               </div>
             )}
           </div>
 
           {/* Tags */}
-          {puzzle.tags && puzzle.tags.length > 0 && (
+          {puzzle.product.tags && puzzle.product.tags.length > 0 && (
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-2">
                 Tags
               </p>
               <div className="flex flex-wrap gap-2">
-                {puzzle.tags.map((tag, index) => (
+                {puzzle.product.tags.map((tag, index) => (
                   <Badge key={index} variant="secondary">
                     {tag}
                   </Badge>
@@ -132,17 +142,6 @@ export function PuzzleDetailInfo({
                 <p className="text-sm font-medium">Acquired</p>
                 <p className="text-sm text-muted-foreground">
                   {new Date(puzzle.acquisitionDate).toLocaleDateString()}
-                </p>
-              </div>
-            </div>
-          )}
-          {puzzle.completedDate && (
-            <div className="flex items-center gap-3">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">Completed</p>
-                <p className="text-sm text-muted-foreground">
-                  {new Date(puzzle.completedDate).toLocaleDateString()}
                 </p>
               </div>
             </div>

@@ -282,10 +282,10 @@ export default function TradesPage() {
                           <Package className="h-8 w-8 text-muted-foreground" />
                           <div>
                             <p className="font-medium">
-                              {trade.ownerPuzzle?.title}
+                              {trade.ownerPuzzleProduct?.title}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              {trade.ownerPuzzle?.pieceCount} pieces
+                              {trade.ownerPuzzleProduct?.pieceCount} pieces
                             </p>
                           </div>
                         </div>
@@ -303,10 +303,11 @@ export default function TradesPage() {
                             <Package className="h-8 w-8 text-muted-foreground" />
                             <div>
                               <p className="font-medium">
-                                {trade.requesterPuzzle.title}
+                                {trade.requesterPuzzleProduct?.title}
                               </p>
                               <p className="text-sm text-muted-foreground">
-                                {trade.requesterPuzzle.pieceCount} pieces
+                                {trade.requesterPuzzleProduct?.pieceCount}{" "}
+                                pieces
                               </p>
                             </div>
                           </div>

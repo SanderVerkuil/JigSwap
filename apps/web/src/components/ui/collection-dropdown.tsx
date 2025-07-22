@@ -17,12 +17,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface CollectionDropdownProps {
-  puzzleId: Id<"puzzles">;
+  puzzleInstanceId: Id<"puzzleInstances">;
   className?: string;
 }
 
 export function CollectionDropdown({
-  puzzleId,
+  puzzleInstanceId,
   className,
 }: CollectionDropdownProps) {
   const { user } = useUser();
@@ -39,12 +39,15 @@ export function CollectionDropdown({
     convexUser?._id ? { userId: convexUser._id } : "skip",
   );
 
-  const puzzleCollections = useQuery(api.collections.getCollectionsForPuzzle, {
-    puzzleId,
-  });
+  const puzzleCollections = useQuery(
+    api.collections.getCollectionsForPuzzleInstance,
+    {
+      puzzleInstanceId,
+    },
+  );
 
   const addPuzzleToCollection = useMutation(
-    api.collections.addPuzzleToCollection,
+    api.collections.addPuzzleInstanceToCollection,
   );
 
   const handleAddToCollection = async (collectionId: Id<"collections">) => {
@@ -52,7 +55,7 @@ export function CollectionDropdown({
     try {
       await addPuzzleToCollection({
         collectionId,
-        puzzleId,
+        puzzleInstanceId,
       });
     } catch (error) {
       console.error("Failed to add puzzle to collection:", error);

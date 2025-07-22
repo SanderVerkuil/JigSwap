@@ -15,14 +15,14 @@ import { PuzzleDetailHeader } from "./puzzle-detail-header";
 import { PuzzleDetailInfo } from "./puzzle-detail-info";
 
 interface PuzzleDetailProps {
-  puzzleId: Id<"puzzles">;
+  puzzleId: Id<"puzzleInstances">;
   showActions?: boolean;
-  onEdit?: (puzzleId: Id<"puzzles">) => void;
-  onView?: (puzzleId: Id<"puzzles">) => void;
-  onDelete?: (puzzleId: Id<"puzzles">) => void;
-  onRequestTrade?: (puzzleId: Id<"puzzles">) => void;
-  onMessage?: (puzzleId: Id<"puzzles">) => void;
-  onFavorite?: (puzzleId: Id<"puzzles">) => void;
+  onEdit?: (puzzleId: Id<"puzzleInstances">) => void;
+  onView?: (puzzleId: Id<"puzzleInstances">) => void;
+  onDelete?: (puzzleId: Id<"puzzleInstances">) => void;
+  onRequestTrade?: (puzzleId: Id<"puzzleInstances">) => void;
+  onMessage?: (puzzleId: Id<"puzzleInstances">) => void;
+  onFavorite?: (puzzleId: Id<"puzzleInstances">) => void;
   showOwner?: boolean;
   className?: string;
 }
@@ -42,31 +42,36 @@ export function PuzzleDetail({
   const router = useRouter();
   const t = useTranslations("puzzles");
 
-  const puzzle = useQuery(api.puzzles.getPuzzleWithCollectionStatus, {
+  const puzzleInstance = useQuery(api.puzzles.getPuzzleWithCollectionStatus, {
     puzzleId,
   });
 
-  if (puzzle === undefined) {
+  if (puzzleInstance === undefined) {
     return <PageLoading message="Loading puzzle..." />;
   }
 
-  if (puzzle === null) {
+  if (puzzleInstance === null) {
+    return <div>{t("notFound")}</div>;
+  }
+
+  // Early return if no product data
+  if (!puzzleInstance.product) {
     return <div>{t("notFound")}</div>;
   }
 
   return (
     <div className={`space-y-6 ${className}`}>
-      <PuzzleDetailHeader puzzle={puzzle} />
+      <PuzzleDetailHeader puzzle={puzzleInstance} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Image */}
         <Card>
           <CardContent className="p-0">
             <div className="aspect-square bg-muted rounded-t-lg relative overflow-hidden">
-              {puzzle.images && puzzle.images.length > 0 ? (
+              {puzzleInstance.images && puzzleInstance.images.length > 0 ? (
                 <Image
-                  src={puzzle.images[0]}
-                  alt={puzzle.title}
+                  src={puzzleInstance.images[0]}
+                  alt={puzzleInstance.product.title}
                   className="w-full h-full object-cover"
                   width={500}
                   height={500}
@@ -87,11 +92,11 @@ export function PuzzleDetail({
 
         {/* Info */}
         <div className="space-y-6">
-          <PuzzleDetailInfo puzzle={puzzle} showOwner={showOwner} />
+          <PuzzleDetailInfo puzzle={puzzleInstance} showOwner={showOwner} />
 
           {showActions && (
             <PuzzleDetailActions
-              puzzle={puzzle}
+              puzzle={puzzleInstance}
               onEdit={onEdit}
               onView={onView}
               onDelete={onDelete}

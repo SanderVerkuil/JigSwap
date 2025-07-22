@@ -19,7 +19,8 @@ export default defineSchema({
     .index("by_email", ["email"])
     .index("by_username", ["username"]),
 
-  puzzles: defineTable({
+  // Puzzle products - the actual puzzle designs that exist in the world
+  puzzleProducts: defineTable({
     title: v.string(),
     description: v.optional(v.string()),
     brand: v.optional(v.string()),
@@ -32,29 +33,41 @@ export default defineSchema({
         v.literal("expert"),
       ),
     ),
+    category: v.optional(v.id("adminCategories")),
+    tags: v.optional(v.array(v.string())),
+    image: v.optional(v.string()),
+    searchableText: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_piece_count", ["pieceCount"])
+    .index("by_category", ["category"])
+    .index("by_difficulty", ["difficulty"])
+    .index("by_brand", ["brand"])
+    .searchIndex("by_searchable_text", {
+      searchField: "searchableText",
+    }),
+
+  // Puzzle instances - individual copies that people own
+  puzzleInstances: defineTable({
+    productId: v.id("puzzleProducts"), // Reference to the puzzle product
+    ownerId: v.id("users"),
     condition: v.union(
       v.literal("excellent"),
       v.literal("good"),
       v.literal("fair"),
       v.literal("poor"),
     ),
-    category: v.optional(v.id("adminCategories")),
-    tags: v.optional(v.array(v.string())),
-    images: v.array(v.string()), // Array of image URLs
-    ownerId: v.id("users"),
     isAvailable: v.boolean(),
-    isCompleted: v.boolean(),
-    completedDate: v.optional(v.number()),
+    images: v.optional(v.array(v.string())),
     acquisitionDate: v.optional(v.number()),
     notes: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_owner", ["ownerId"])
-    .index("by_availability", ["isAvailable"])
-    .index("by_piece_count", ["pieceCount"])
-    .index("by_category", ["category"])
-    .index("by_difficulty", ["difficulty"]),
+    .index("by_product", ["productId"])
+    .index("by_availability", ["isAvailable"]),
 
   // Named collections for organizing puzzles
   collections: defineTable({
@@ -76,46 +89,21 @@ export default defineSchema({
     .index("by_user_name", ["userId", "name"])
     .index("by_visibility", ["visibility"]),
 
-  // Collection membership - many-to-many relationship
+  // Collection membership - many-to-many relationship (now references puzzleInstances)
   collectionMembers: defineTable({
     collectionId: v.id("collections"),
-    puzzleId: v.id("puzzles"),
+    puzzleInstanceId: v.id("puzzleInstances"),
     addedAt: v.number(),
   })
     .index("by_collection", ["collectionId"])
-    .index("by_puzzle", ["puzzleId"])
-    .index("by_collection_puzzle", ["collectionId", "puzzleId"]),
+    .index("by_puzzle_instance", ["puzzleInstanceId"])
+    .index("by_collection_puzzle_instance", ["collectionId", "puzzleInstanceId"]),
 
-  // Personal library entries - user-puzzle relationships with additional metadata
-  personalLibrary: defineTable({
-    userId: v.id("users"),
-    puzzleId: v.id("puzzles"),
-    visibility: v.union(
-      v.literal("private"),
-      v.literal("visible"),
-      v.literal("lendable"),
-      v.literal("swappable"),
-      v.literal("tradeable"),
-    ),
-    customTags: v.optional(v.array(v.string())),
-    personalNotes: v.optional(v.string()),
-    acquisitionDate: v.optional(v.number()),
-    acquisitionSource: v.optional(v.string()), // e.g., "gift", "purchase", "trade"
-    acquisitionPrice: v.optional(v.number()),
-    isWishlist: v.boolean(), // false = owned, true = wishlist
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_user", ["userId"])
-    .index("by_puzzle", ["puzzleId"])
-    .index("by_user_puzzle", ["userId", "puzzleId"])
-    .index("by_visibility", ["visibility"])
-    .index("by_wishlist", ["isWishlist"]),
-
-  // Completion records for puzzles
+  // Completion records for puzzles (can reference either puzzleProducts or puzzleInstances)
   completions: defineTable({
     userId: v.id("users"),
-    puzzleId: v.id("puzzles"),
+    puzzleProductId: v.optional(v.id("puzzleProducts")), // Reference to puzzle product (for general completions)
+    puzzleInstanceId: v.optional(v.id("puzzleInstances")), // Reference to specific instance (for specific completions)
     startDate: v.number(),
     endDate: v.number(),
     completionTimeMinutes: v.number(),
@@ -128,8 +116,10 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_puzzle", ["puzzleId"])
-    .index("by_user_puzzle", ["userId", "puzzleId"])
+    .index("by_puzzle_product", ["puzzleProductId"])
+    .index("by_puzzle_instance", ["puzzleInstanceId"])
+    .index("by_user_puzzle_product", ["userId", "puzzleProductId"])
+    .index("by_user_puzzle_instance", ["userId", "puzzleInstanceId"])
     .index("by_completion_date", ["endDate"])
     .index("by_rating", ["rating"]),
 
@@ -183,8 +173,8 @@ export default defineSchema({
   tradeRequests: defineTable({
     requesterId: v.id("users"),
     ownerId: v.id("users"),
-    requesterPuzzleId: v.optional(v.id("puzzles")), // Puzzle offered by requester
-    ownerPuzzleId: v.id("puzzles"), // Puzzle requested from owner
+    requesterPuzzleInstanceId: v.optional(v.id("puzzleInstances")), // Puzzle instance offered by requester
+    ownerPuzzleInstanceId: v.id("puzzleInstances"), // Puzzle instance requested from owner
     status: v.union(
       v.literal("pending"),
       v.literal("accepted"),
@@ -206,8 +196,8 @@ export default defineSchema({
     .index("by_requester", ["requesterId"])
     .index("by_owner", ["ownerId"])
     .index("by_status", ["status"])
-    .index("by_requester_puzzle", ["requesterPuzzleId"])
-    .index("by_owner_puzzle", ["ownerPuzzleId"]),
+    .index("by_requester_puzzle_instance", ["requesterPuzzleInstanceId"])
+    .index("by_owner_puzzle_instance", ["ownerPuzzleInstanceId"]),
 
   messages: defineTable({
     tradeRequestId: v.id("tradeRequests"),
@@ -248,12 +238,12 @@ export default defineSchema({
 
   favorites: defineTable({
     userId: v.id("users"),
-    puzzleId: v.id("puzzles"),
+    puzzleProductId: v.id("puzzleProducts"), // Now favorites reference puzzle products
     createdAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_puzzle", ["puzzleId"])
-    .index("by_user_puzzle", ["userId", "puzzleId"]),
+    .index("by_puzzle_product", ["puzzleProductId"])
+    .index("by_user_puzzle_product", ["userId", "puzzleProductId"]),
 
   notifications: defineTable({
     userId: v.id("users"),

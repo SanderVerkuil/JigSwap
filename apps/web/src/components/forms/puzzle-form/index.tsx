@@ -21,6 +21,11 @@ import {
 } from "./puzzle-form-schema";
 import { PuzzleFormStatusInfo } from "./puzzle-form-status-info";
 
+// Import compound form components
+import { PuzzleFormForm } from "./puzzle-form-form";
+import { PuzzleFormRoot } from "./puzzle-form-root";
+import { PuzzleFormTitle } from "./puzzle-form-title";
+
 interface PuzzleFormProps {
   id: string;
   onSuccess?: () => void;
@@ -29,6 +34,7 @@ interface PuzzleFormProps {
   showActions?: boolean;
 }
 
+// Legacy component for backward compatibility
 export function PuzzleForm({
   id,
   onSuccess,
@@ -37,7 +43,7 @@ export function PuzzleForm({
   showActions = true,
 }: PuzzleFormProps) {
   const { user } = useUser();
-  const createPuzzle = useMutation(api.puzzles.createPuzzle);
+  const createPuzzle = useMutation(api.puzzles.createPuzzleWithProduct);
 
   // Get the current user from the database
   const convexUser = useQuery(
@@ -61,7 +67,9 @@ export function PuzzleForm({
   // Show other sections only after suggestion is used or title loses focus
   const shouldShowOtherSections =
     hasUsedSuggestion ||
-    (hasInteractedWithTitle && titleValue && titleValue.trim().length > 0);
+    (hasInteractedWithTitle &&
+      typeof titleValue === "string" &&
+      titleValue.trim().length > 0);
 
   const handleTitleInteraction = () => {
     setHasInteractedWithTitle(true);
@@ -78,16 +86,24 @@ export function PuzzleForm({
     }
 
     try {
-      // Create the puzzle with completions
-      const puzzleId = await createPuzzle({
-        ...data,
-        ownerId: convexUser._id as Id<"users">,
+      // Create the puzzle with both product and instance
+      const result = await createPuzzle({
+        // Product fields
+        title: data.title,
+        description: data.description,
+        brand: data.brand,
+        pieceCount: data.pieceCount,
+        difficulty: data.difficulty,
         category: data.category as Id<"adminCategories">,
-        completions: data.completions?.map((completion) => ({
-          completedDate: completion.completedDate,
-          completionTimeMinutes: completion.completionTimeMinutes,
-          notes: completion.notes,
-        })),
+        tags: data.tags || [],
+        images: data.images || [],
+
+        // Instance fields
+        ownerId: convexUser._id as Id<"users">,
+        condition: data.condition,
+        isAvailable: data.isAvailable,
+        acquisitionDate: data.acquisitionDate,
+        notes: data.notes,
       });
 
       toast.success("Puzzle created successfully!");
@@ -106,7 +122,6 @@ export function PuzzleForm({
           <PuzzleFormBasicInfo
             form={form}
             categories={categories}
-            onTitleInteraction={handleTitleInteraction}
             onSuggestionUsed={handleSuggestionUsed}
           />
         </div>
@@ -128,10 +143,16 @@ export function PuzzleForm({
         {/* Form Actions - only show when title is entered and interacted with */}
         {showActions && shouldShowOtherSections && (
           <div className="animate-in slide-in-from-top-2 duration-300">
-            <PuzzleFormActions onCancel={onCancel} />
+            <PuzzleFormActions />
           </div>
         )}
       </form>
     </Form>
   );
 }
+
+// Compound form components
+PuzzleForm.Root = PuzzleFormRoot;
+PuzzleForm.Form = PuzzleFormForm;
+PuzzleForm.Title = PuzzleFormTitle;
+PuzzleForm.Actions = PuzzleFormActions;

@@ -1,7 +1,13 @@
 "use client";
 
 import { PuzzleForm } from "@/components/forms/puzzle-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 
@@ -20,23 +26,21 @@ export default function AddPuzzlePage() {
   return (
     <div className="container mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{t("addPuzzle")}</h1>
-          <p className="text-muted-foreground">{t("addPuzzleDescription")}</p>
-        </div>
+        <PuzzleForm.Title />
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("basicInformation")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <PuzzleForm
-            id="add-puzzle-form"
-            onSuccess={handleSuccess}
-            onCancel={handleCancel}
-          />
-        </CardContent>
-      </Card>
+      <PuzzleForm.Root onSuccess={handleSuccess} onCancel={handleCancel}>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("basicInformation")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PuzzleForm.Form />
+          </CardContent>
+          <CardFooter>
+            <PuzzleForm.Actions />
+          </CardFooter>
+        </Card>
+      </PuzzleForm.Root>
     </div>
   );
 }

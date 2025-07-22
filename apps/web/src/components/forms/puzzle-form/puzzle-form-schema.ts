@@ -9,20 +9,26 @@ const completionEntrySchema = z.object({
 });
 
 export const puzzleFormSchema = z.object({
+  // Product fields
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   brand: z.string().optional(),
   pieceCount: z.number().min(1, "Piece count must be at least 1"),
   difficulty: z.enum(["easy", "medium", "hard", "expert"]).optional(),
-  condition: z.enum(["excellent", "good", "fair", "poor"]),
   category: z.string().optional(), // Keep as string for form compatibility
   tags: z.array(z.string()).optional(),
   newTag: z.string().optional(),
   images: z.array(z.string()).min(0, "At least one image is required"),
-  isCompleted: z.boolean(),
-  completedDate: z.number().optional(),
+  
+  // Instance fields
+  condition: z.enum(["excellent", "good", "fair", "poor"]),
+  isAvailable: z.boolean(),
   acquisitionDate: z.number().optional(),
   notes: z.string().optional(),
+  
+  // Legacy fields for backward compatibility
+  isCompleted: z.boolean().optional(),
+  completedDate: z.number().optional(),
   completions: z.array(completionEntrySchema).optional(),
 });
 
@@ -39,7 +45,7 @@ export const puzzleFormDefaultValues: Partial<PuzzleFormData> = {
   tags: [],
   newTag: "",
   images: [],
-  isCompleted: false,
+  isAvailable: true,
   notes: "",
   completions: [],
 }; 

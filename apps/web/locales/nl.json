@@ -280,6 +280,8 @@
     "hard": "Moedig",
     "expert": "Deskundige",
     "selectCondition": "Selecteer voorwaarde",
+    "selectPieceCount": "Selecteer aantal stukjes",
+    "customPieceCountPlaceholder": "Voer aangepast aantal stukjes in",
     "excellent": "Uitstekend",
     "good": "goed",
     "fair": "Redelijk",

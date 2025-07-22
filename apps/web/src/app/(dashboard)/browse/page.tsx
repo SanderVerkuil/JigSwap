@@ -37,23 +37,26 @@ export default function BrowsePage() {
     user?.id ? { clerkId: user.id } : "skip",
   );
 
-  const browsePuzzlesResult = useQuery(api.puzzles.browsePuzzles, {
-    searchTerm: searchTerm || undefined,
-    category: selectedCategory
-      ? (selectedCategory as Id<"adminCategories">)
-      : undefined,
-    difficulty: (selectedDifficulty as Difficulty) || undefined,
-    condition: (selectedCondition as Condition) || undefined,
-    minPieceCount: minPieces ? parseInt(minPieces) : undefined,
-    maxPieceCount: maxPieces ? parseInt(maxPieces) : undefined,
-    excludeOwnerId: convexUser?._id,
-    limit: 50,
-  });
+  const browsePuzzleInstancesResult = useQuery(
+    api.puzzles.browsePuzzleInstances,
+    {
+      searchTerm: searchTerm || undefined,
+      category: selectedCategory
+        ? (selectedCategory as Id<"adminCategories">)
+        : undefined,
+      difficulty: (selectedDifficulty as Difficulty) || undefined,
+      condition: (selectedCondition as Condition) || undefined,
+      minPieceCount: minPieces ? parseInt(minPieces) : undefined,
+      maxPieceCount: maxPieces ? parseInt(maxPieces) : undefined,
+      excludeOwnerId: convexUser?._id,
+      limit: 50,
+    },
+  );
 
   const categories = useQuery(api.puzzles.getPuzzleCategories);
 
-  const puzzles = browsePuzzlesResult?.puzzles || [];
-  const totalPuzzles = browsePuzzlesResult?.total || 0;
+  const puzzleInstances = browsePuzzleInstancesResult?.instances || [];
+  const totalPuzzleInstances = browsePuzzleInstancesResult?.total || 0;
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -72,7 +75,11 @@ export default function BrowsePage() {
     minPieces ||
     maxPieces;
 
-  if (!user || convexUser === undefined || browsePuzzlesResult === undefined) {
+  if (
+    !user ||
+    convexUser === undefined ||
+    browsePuzzleInstancesResult === undefined
+  ) {
     return <PageLoading message={tCommon("loading")} />;
   }
 
@@ -83,7 +90,8 @@ export default function BrowsePage() {
         <div>
           <h1 className="text-3xl font-bold">{tBrowse("title")}</h1>
           <p className="text-muted-foreground">
-            {tBrowse("subtitle")} ({totalPuzzles} {tBrowse("puzzlesFound")})
+            {tBrowse("subtitle")} ({totalPuzzleInstances}{" "}
+            {tBrowse("puzzlesFound")})
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -217,7 +225,7 @@ export default function BrowsePage() {
       </Card>
 
       {/* Results */}
-      {puzzles.length === 0 ? (
+      {puzzleInstances.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center">
             <div className="text-muted-foreground">
@@ -233,10 +241,10 @@ export default function BrowsePage() {
         </Card>
       ) : (
         <PuzzleViewProvider viewMode={viewMode}>
-          {puzzles.map((puzzle) => (
+          {puzzleInstances.map((puzzleInstance) => (
             <PuzzleCard
-              key={puzzle._id}
-              puzzle={puzzle}
+              key={puzzleInstance._id}
+              puzzle={puzzleInstance}
               variant="browse"
               showOwner={true}
               onRequestTrade={(puzzleId) => {

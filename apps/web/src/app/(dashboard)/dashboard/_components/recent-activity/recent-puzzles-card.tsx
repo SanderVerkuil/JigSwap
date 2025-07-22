@@ -23,16 +23,20 @@ export function RecentPuzzlesCard() {
     isLoading ? "skip" : {},
   );
 
-  // Get recent puzzles
-  const recentPuzzles = useQuery(
-    api.puzzles.getPuzzlesByOwner,
+  // Get recent puzzle instances
+  const recentPuzzleInstances = useQuery(
+    api.puzzles.getPuzzleInstancesByOwner,
     convexUser?._id
       ? { ownerId: convexUser._id, includeUnavailable: false }
       : "skip",
   );
 
   // Show loading state while data is being fetched
-  if (isLoading || convexUser === undefined || recentPuzzles === undefined) {
+  if (
+    isLoading ||
+    convexUser === undefined ||
+    recentPuzzleInstances === undefined
+  ) {
     return (
       <Card>
         <CardHeader>
@@ -53,24 +57,27 @@ export function RecentPuzzlesCard() {
         <CardDescription>Puzzles you&apos;ve added recently</CardDescription>
       </CardHeader>
       <CardContent>
-        {recentPuzzles && recentPuzzles.length > 0 ? (
+        {recentPuzzleInstances && recentPuzzleInstances.length > 0 ? (
           <div className="space-y-3">
-            {recentPuzzles.slice(0, 3).map((puzzle) => (
+            {recentPuzzleInstances.slice(0, 3).map((instance) => (
               <div
-                key={puzzle._id}
+                key={instance._id}
                 className="flex items-center space-x-3 p-3 border rounded-lg"
               >
                 <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
                   🧩
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium">{puzzle.title}</p>
+                  <p className="font-medium">
+                    {instance.product?.title || "Unknown Puzzle"}
+                  </p>
                   <p className="text-sm text-muted-foreground">
-                    {puzzle.pieceCount} pieces • {puzzle.condition}
+                    {instance.product?.pieceCount || 0} pieces •{" "}
+                    {instance.condition}
                   </p>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  {puzzle.isAvailable ? "Available" : "Unavailable"}
+                  {instance.isAvailable ? "Available" : "Unavailable"}
                 </div>
               </div>
             ))}

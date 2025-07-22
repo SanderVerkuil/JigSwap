@@ -68,7 +68,7 @@ export function RecentTradesCard() {
                     {trade.userRole === "requester"
                       ? "Requested"
                       : "Received request for"}
-                    : {trade.ownerPuzzle?.title}
+                    : {trade.ownerPuzzleProduct?.title}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Status: {trade.status}

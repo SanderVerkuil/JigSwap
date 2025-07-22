@@ -41,14 +41,14 @@ export function CollectionDetail({
   });
 
   const removeFromCollection = useMutation(
-    api.collections.removePuzzleFromCollection,
+    api.collections.removePuzzleInstanceFromCollection,
   );
 
-  const handleRemovePuzzle = async (puzzleId: Id<"puzzles">) => {
+  const handleRemovePuzzle = async (puzzleId: Id<"puzzleInstances">) => {
     try {
       await removeFromCollection({
         collectionId,
-        puzzleId,
+        puzzleInstanceId: puzzleId,
       });
     } catch (error) {
       console.error("Failed to remove puzzle from collection:", error);
@@ -77,9 +77,13 @@ export function CollectionDetail({
       ?.filter(
         (puzzle) =>
           puzzle &&
-          (puzzle.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (puzzle.brand &&
-              puzzle.brand.toLowerCase().includes(searchTerm.toLowerCase()))),
+          (puzzle.product?.title
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+            (puzzle.product?.brand &&
+              puzzle.product.brand
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase()))),
       )
       .filter(Boolean) || [];
 

@@ -20,9 +20,9 @@ export default function AddPuzzlesToCollectionPage() {
   const t = useTranslations("collections");
   const tCommon = useTranslations("common");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedPuzzles, setSelectedPuzzles] = useState<Set<Id<"puzzles">>>(
-    new Set(),
-  );
+  const [selectedPuzzles, setSelectedPuzzles] = useState<
+    Set<Id<"puzzleInstances">>
+  >(new Set());
 
   const convexUser = useQuery(
     api.users.getUserByClerkId,
@@ -34,17 +34,17 @@ export default function AddPuzzlesToCollectionPage() {
   });
 
   const availablePuzzles = useQuery(
-    api.puzzles.getPuzzlesByOwner,
+    api.puzzles.getPuzzleInstancesByOwner,
     convexUser?._id
       ? { ownerId: convexUser._id, includeUnavailable: false }
       : "skip",
   );
 
   const addPuzzleToCollection = useMutation(
-    api.collections.addPuzzleToCollection,
+    api.collections.addPuzzleInstanceToCollection,
   );
 
-  const togglePuzzleSelection = (puzzleId: Id<"puzzles">) => {
+  const togglePuzzleSelection = (puzzleId: Id<"puzzleInstances">) => {
     const newSelected = new Set(selectedPuzzles);
     if (newSelected.has(puzzleId)) {
       newSelected.delete(puzzleId);
@@ -59,7 +59,7 @@ export default function AddPuzzlesToCollectionPage() {
       for (const puzzleId of selectedPuzzles) {
         await addPuzzleToCollection({
           collectionId: id as Id<"collections">,
-          puzzleId,
+          puzzleInstanceId: puzzleId,
         });
       }
       router.push(`/collections/${id}`);
@@ -77,9 +77,13 @@ export default function AddPuzzlesToCollectionPage() {
       )
       ?.filter(
         (puzzle) =>
-          puzzle.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (puzzle.brand &&
-            puzzle.brand.toLowerCase().includes(searchTerm.toLowerCase())),
+          puzzle.product?.title
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          (puzzle.product?.brand &&
+            puzzle.product.brand
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())),
       ) || [];
 
   if (

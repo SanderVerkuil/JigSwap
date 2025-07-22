@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Id } from "@jigswap/backend/convex/_generated/dataModel";
 import { Edit, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -10,7 +11,15 @@ interface CollectionData {
   description?: string;
   color?: string;
   icon?: string;
-  puzzles?: Array<{ _id: string; title: string; brand?: string }>;
+  puzzles?: Array<{
+    _id: Id<"puzzleInstances">;
+    productId: Id<"puzzleProducts">;
+    product: {
+      _id: Id<"puzzleProducts">;
+      title: string;
+      brand?: string;
+    } | null;
+  }>;
 }
 
 interface CollectionDetailHeaderProps {

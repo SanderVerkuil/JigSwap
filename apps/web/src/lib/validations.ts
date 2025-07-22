@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-// Puzzle validation schema
-export const puzzleSchema = z.object({
+// Puzzle product validation schema (for the actual puzzle design)
+export const puzzleProductSchema = z.object({
   title: z
     .string()
     .min(1, "Title is required")
@@ -23,7 +23,69 @@ export const puzzleSchema = z.object({
 
   difficulty: z.enum(["easy", "medium", "hard", "expert"]),
 
+  category: z
+    .string()
+    .max(50, "Category must be less than 50 characters")
+    .optional(),
+
+  tags: z
+    .union([z.string(), z.array(z.string())])
+    .optional()
+    .transform((val) => {
+      if (!val) return [];
+      if (Array.isArray(val)) return val;
+      return val
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0);
+    }),
+
+  images: z.array(z.string()).default([]),
+});
+
+// Puzzle instance validation schema (for the owned copy)
+export const puzzleInstanceSchema = z.object({
   condition: z.enum(["excellent", "good", "fair", "poor"]),
+
+  isAvailable: z.boolean().default(true),
+
+  acquisitionDate: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (!val) return undefined;
+      return new Date(val).getTime();
+    }),
+
+  notes: z
+    .string()
+    .max(1000, "Notes must be less than 1000 characters")
+    .optional(),
+});
+
+// Combined puzzle schema for form data (product + instance)
+export const puzzleSchema = z.object({
+  // Product fields
+  title: z
+    .string()
+    .min(1, "Title is required")
+    .min(3, "Title must be at least 3 characters")
+    .max(100, "Title must be less than 100 characters"),
+
+  description: z
+    .string()
+    .max(500, "Description must be less than 500 characters")
+    .optional(),
+
+  brand: z.string().max(50, "Brand must be less than 50 characters").optional(),
+
+  pieceCount: z
+    .number()
+    .min(1, "Piece count must be at least 1")
+    .max(50000, "Piece count must be less than 50,000")
+    .int("Piece count must be a whole number"),
+
+  difficulty: z.enum(["easy", "medium", "hard", "expert"]),
 
   category: z
     .string()
@@ -42,15 +104,12 @@ export const puzzleSchema = z.object({
         .filter((tag) => tag.length > 0);
     }),
 
-  isCompleted: z.boolean().default(false),
+  images: z.array(z.string()).default([]),
 
-  completedDate: z
-    .string()
-    .optional()
-    .transform((val) => {
-      if (!val) return undefined;
-      return new Date(val).getTime();
-    }),
+  // Instance fields
+  condition: z.enum(["excellent", "good", "fair", "poor"]),
+
+  isAvailable: z.boolean().default(true),
 
   acquisitionDate: z
     .string()
@@ -67,6 +126,8 @@ export const puzzleSchema = z.object({
 });
 
 export type PuzzleFormData = z.infer<typeof puzzleSchema>;
+export type PuzzleProductFormData = z.infer<typeof puzzleProductSchema>;
+export type PuzzleInstanceFormData = z.infer<typeof puzzleInstanceSchema>;
 
 // User profile validation schema
 export const profileSchema = z.object({
@@ -100,9 +161,9 @@ export type ProfileFormData = z.infer<typeof profileSchema>;
 
 // Trade request validation schema
 export const tradeRequestSchema = z.object({
-  ownerPuzzleId: z.string().min(1, "Please select a puzzle to request"),
+  ownerPuzzleInstanceId: z.string().min(1, "Please select a puzzle to request"),
 
-  requesterPuzzleId: z.string().optional(),
+  requesterPuzzleInstanceId: z.string().optional(),
 
   message: z
     .string()
@@ -183,6 +244,6 @@ export const transformPuzzleData = (data: PuzzleFormData) => {
     ...data,
     pieceCount: Number(data.pieceCount),
     tags: Array.isArray(data.tags) ? data.tags : [],
-    images: [], // Will be handled separately for file uploads
+    images: Array.isArray(data.images) ? data.images : [],
   };
 };

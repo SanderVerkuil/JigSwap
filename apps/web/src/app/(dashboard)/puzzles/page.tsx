@@ -25,8 +25,8 @@ export default function PuzzlesPage() {
     user?.id ? { clerkId: user.id } : "skip",
   );
 
-  const userPuzzles = useQuery(
-    api.puzzles.getPuzzlesByOwner,
+  const userPuzzleInstances = useQuery(
+    api.puzzles.getPuzzleInstancesByOwner,
     convexUser?._id
       ? { ownerId: convexUser._id, includeUnavailable: true }
       : "skip",
@@ -37,31 +37,35 @@ export default function PuzzlesPage() {
   const handleDeletePuzzle = async (puzzleId: string) => {
     if (confirm("Are you sure you want to delete this puzzle?")) {
       try {
-        await deletePuzzle({ puzzleId: puzzleId as Id<"puzzles"> });
+        await deletePuzzle({ puzzleId: puzzleId as Id<"puzzleInstances"> });
       } catch (error) {
         console.error("Failed to delete puzzle:", error);
       }
     }
   };
 
-  const handleEditPuzzle = (puzzleId: Id<"puzzles">) => {
+  const handleEditPuzzle = (puzzleId: Id<"puzzleInstances">) => {
     router.push(`/puzzles/${puzzleId}/edit`);
   };
 
-  const handleViewPuzzle = (puzzleId: Id<"puzzles">) => {
+  const handleViewPuzzle = (puzzleId: Id<"puzzleInstances">) => {
     router.push(`/puzzles/${puzzleId}`);
   };
 
-  // Filter puzzles based on search term
-  const filteredPuzzles =
-    userPuzzles?.filter(
-      (puzzle) =>
-        puzzle.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (puzzle.brand &&
-          puzzle.brand.toLowerCase().includes(searchTerm.toLowerCase())),
+  // Filter puzzle instances based on search term
+  const filteredPuzzleInstances =
+    userPuzzleInstances?.filter(
+      (instance) =>
+        instance.product?.title
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        (instance.product?.brand &&
+          instance.product.brand
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())),
     ) || [];
 
-  if (!user || !convexUser || userPuzzles === undefined) {
+  if (!user || !convexUser || userPuzzleInstances === undefined) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -128,7 +132,7 @@ export default function PuzzlesPage() {
       </Card>
 
       {/* Puzzles Grid/List */}
-      {filteredPuzzles.length === 0 ? (
+      {filteredPuzzleInstances.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center">
             <div className="text-muted-foreground mb-4">
@@ -146,10 +150,10 @@ export default function PuzzlesPage() {
         </Card>
       ) : (
         <PuzzleViewProvider viewMode={viewMode}>
-          {filteredPuzzles.map((puzzle) => (
+          {filteredPuzzleInstances.map((instance) => (
             <PuzzleCard
-              key={puzzle._id}
-              puzzle={puzzle}
+              key={instance._id}
+              puzzle={instance}
               variant="default"
               showCollectionDropdown={true}
               onEdit={handleEditPuzzle}

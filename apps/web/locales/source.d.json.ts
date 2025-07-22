@@ -283,6 +283,8 @@ declare const messages: {
     "hard": "Hard",
     "expert": "Expert",
     "selectCondition": "Select condition",
+    "selectPieceCount": "Select piece count",
+    "customPieceCountPlaceholder": "Enter custom piece count",
     "excellent": "Excellent",
     "good": "Good",
     "fair": "Fair",
@@ -314,9 +316,12 @@ declare const messages: {
       "searchExisting": "Search Existing Puzzles",
       "searchDescription": "Search for puzzles that already exist in the database to auto-fill details",
       "searchPlaceholder": "Search by title, brand, or description...",
+      "placeholder": "Search for puzzles...",
       "found": "Found Puzzles",
       "useThis": "Use This",
-      "noResults": "No matching puzzles found"
+      "noResults": "No matching puzzles found",
+      "loading": "Loading suggestions...",
+      "typeToSearch": "Type to search for puzzles..."
     },
     "notFound": "Puzzle not found"
   },

@@ -2,20 +2,12 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Id } from "@jigswap/backend/convex/_generated/dataModel";
 import {
   Check,
   Edit,
   Eye,
-  Grid,
   Heart,
   MessageCircle,
   Trash2,
@@ -69,27 +61,33 @@ export function PuzzleViewProvider({
   );
 }
 
-// Puzzle data type
-interface PuzzleData {
-  _id: Id<"puzzles">;
-  title: string;
-  description?: string;
-  brand?: string;
-  pieceCount: number;
-  difficulty?: "easy" | "medium" | "hard" | "expert";
-  condition: "excellent" | "good" | "fair" | "poor";
-  category?: Id<"adminCategories">;
-  tags?: string[];
-  images: string[];
+// Puzzle instance data type with product information
+interface PuzzleInstanceData {
+  _id: Id<"puzzleInstances">;
+  productId: Id<"puzzleProducts">;
   ownerId: Id<"users">;
+  condition: "excellent" | "good" | "fair" | "poor";
   isAvailable: boolean;
-  isCompleted: boolean;
-  completedDate?: number;
   acquisitionDate?: number;
   notes?: string;
   createdAt: number;
   updatedAt: number;
   _creationTime?: number;
+  addedAt?: number; // For collection members
+  product: {
+    _id: Id<"puzzleProducts">;
+    title: string;
+    description?: string;
+    brand?: string;
+    pieceCount: number;
+    difficulty?: "easy" | "medium" | "hard" | "expert";
+    category?: Id<"adminCategories">;
+    tags?: string[];
+    images?: string[]; // Make optional to match backend schema
+    createdAt: number;
+    updatedAt: number;
+    _creationTime?: number;
+  } | null;
   owner?: {
     _id: Id<"users">;
     name: string;
@@ -98,18 +96,17 @@ interface PuzzleData {
   } | null;
 }
 
-// Props for the PuzzleCard component
 interface PuzzleCardProps {
-  puzzle: PuzzleData;
+  puzzle: PuzzleInstanceData;
   variant?: "default" | "browse" | "collection" | "selection";
-  onEdit?: (puzzleId: Id<"puzzles">) => void;
-  onView?: (puzzleId: Id<"puzzles">) => void;
-  onDelete?: (puzzleId: Id<"puzzles">) => void;
-  onRemove?: (puzzleId: Id<"puzzles">) => void;
-  onSelect?: (puzzleId: Id<"puzzles">) => void;
-  onRequestTrade?: (puzzleId: Id<"puzzles">) => void;
-  onMessage?: (puzzleId: Id<"puzzles">) => void;
-  onFavorite?: (puzzleId: Id<"puzzles">) => void;
+  onEdit?: (puzzleId: Id<"puzzleInstances">) => void;
+  onView?: (puzzleId: Id<"puzzleInstances">) => void;
+  onDelete?: (puzzleId: Id<"puzzleInstances">) => void;
+  onRemove?: (puzzleId: Id<"puzzleInstances">) => void;
+  onSelect?: (puzzleId: Id<"puzzleInstances">) => void;
+  onRequestTrade?: (puzzleId: Id<"puzzleInstances">) => void;
+  onMessage?: (puzzleId: Id<"puzzleInstances">) => void;
+  onFavorite?: (puzzleId: Id<"puzzleInstances">) => void;
   isSelected?: boolean;
   showOwner?: boolean;
   showActions?: boolean;
@@ -136,82 +133,37 @@ export function PuzzleCard({
   showCollectionDropdown = false,
   className = "",
 }: PuzzleCardProps) {
-  const { viewMode } = usePuzzleView();
   const t = useTranslations("puzzles");
+  const { viewMode } = usePuzzleView();
+
+  // Early return if no product data
+  if (!puzzle.product) {
+    return null;
+  }
 
   const renderImage = () => {
-    const imageContainerClass =
-      viewMode === "grid"
-        ? "aspect-square bg-muted rounded-t-lg relative overflow-hidden"
-        : "w-32 h-32 bg-muted rounded-l-lg flex-shrink-0 relative overflow-hidden";
-
-    const imageClass =
-      viewMode === "grid"
-        ? "w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-        : "w-full h-full object-cover object-center";
-
+    const imageUrl = puzzle.product?.images?.[0] || "/placeholder-puzzle.jpg";
     return (
-      <div className={imageContainerClass}>
-        {puzzle.images && puzzle.images.length > 0 ? (
-          <Image
-            src={puzzle.images[0]}
-            alt={puzzle.title}
-            className={imageClass}
-            width={viewMode === "grid" ? 500 : 128}
-            height={viewMode === "grid" ? 500 : 128}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-            <div className="text-center">
-              <div className="w-12 h-12 mx-auto mb-2 rounded bg-muted-foreground/10 flex items-center justify-center">
-                <Grid className="h-6 w-6" />
-              </div>
-              <p className="text-sm">{t("noImage")}</p>
-            </div>
+      <div className="relative aspect-square overflow-hidden rounded-t-lg">
+        <Image
+          src={imageUrl}
+          alt={puzzle.product?.title || "Puzzle"}
+          fill
+          className="object-cover transition-transform hover:scale-105"
+        />
+        {isSelected && (
+          <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+            <Check className="h-8 w-8 text-primary" />
           </div>
         )}
-
-        {/* Overlay badges and buttons */}
-        <div className="absolute top-2 right-2 flex gap-1">
-          {showAvailability && viewMode === "grid" && (
-            <Badge
-              variant={puzzle.isAvailable ? "default" : "secondary"}
-              className="text-xs"
-            >
-              {puzzle.isAvailable ? t("available") : t("unavailable")}
-            </Badge>
-          )}
-
-          {variant === "selection" && isSelected && (
-            <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-              <Check className="h-4 w-4 text-white" />
-            </div>
-          )}
-
-          {variant === "browse" && onFavorite && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="bg-white/80 hover:bg-white"
-              onClick={() => onFavorite(puzzle._id)}
-            >
-              <Heart className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-
-        {/* Action buttons for grid view */}
-        {viewMode === "grid" && showActions && (
-          <div className="absolute bottom-2 right-2 flex gap-1">
-            {variant === "collection" && onRemove && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => onRemove(puzzle._id)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
+        {variant === "selection" && (
+          <div className="absolute top-2 right-2">
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={() => onSelect?.(puzzle._id)}
+              className="h-4 w-4"
+            />
           </div>
         )}
       </div>
@@ -219,34 +171,78 @@ export function PuzzleCard({
   };
 
   const renderActions = () => {
+    if (!showActions) return null;
+
     return (
       <div className="flex items-center gap-2">
-        {variant === "browse" && onRequestTrade && (
-          <Button size="sm" className="flex-1">
-            {t("requestTrade")}
-          </Button>
-        )}
-        {variant === "browse" && onMessage && (
-          <Button variant="outline" size="sm">
-            <MessageCircle className="h-4 w-4" />
-          </Button>
-        )}
-        {variant === "default" && showCollectionDropdown && (
-          <CollectionDropdown puzzleId={puzzle._id} />
-        )}
-        {variant === "default" && onView && (
-          <Button variant="ghost" size="sm">
+        {onView && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onView(puzzle._id)}
+            className="h-8 w-8 p-0"
+          >
             <Eye className="h-4 w-4" />
           </Button>
         )}
-        {variant === "default" && onEdit && (
-          <Button variant="ghost" size="sm">
+        {onEdit && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onEdit(puzzle._id)}
+            className="h-8 w-8 p-0"
+          >
             <Edit className="h-4 w-4" />
           </Button>
         )}
-        {variant === "default" && onDelete && (
-          <Button variant="ghost" size="sm">
+        {onDelete && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onDelete(puzzle._id)}
+            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+          >
             <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
+        {onRemove && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onRemove(puzzle._id)}
+            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
+        {onRequestTrade && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onRequestTrade(puzzle._id)}
+            className="h-8 w-8 p-0"
+          >
+            <MessageCircle className="h-4 w-4" />
+          </Button>
+        )}
+        {onMessage && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onMessage(puzzle._id)}
+            className="h-8 w-8 p-0"
+          >
+            <MessageCircle className="h-4 w-4" />
+          </Button>
+        )}
+        {onFavorite && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onFavorite(puzzle._id)}
+            className="h-8 w-8 p-0"
+          >
+            <Heart className="h-4 w-4" />
           </Button>
         )}
       </div>
@@ -254,123 +250,105 @@ export function PuzzleCard({
   };
 
   const renderContent = () => {
-    if (viewMode === "grid") {
-      return (
-        <>
-          {renderImage()}
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg line-clamp-1">
-              {puzzle.title}
-            </CardTitle>
-            <CardDescription className="line-clamp-2">
-              {puzzle.brand && (
-                <span className="font-medium">{puzzle.brand}</span>
+    return (
+      <div className="p-4">
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex-1">
+            <h3 className="font-semibold text-sm line-clamp-2 mb-1">
+              {puzzle.product?.title || "Unknown Puzzle"}
+            </h3>
+            {puzzle.product?.brand && (
+              <p className="text-xs text-muted-foreground mb-1">
+                {puzzle.product.brand}
+              </p>
+            )}
+            <div className="flex items-center gap-2 mb-2">
+              <Badge variant="secondary" className="text-xs">
+                {puzzle.product?.pieceCount || 0} {t("pieces")}
+              </Badge>
+              {puzzle.product?.difficulty && (
+                <Badge variant="outline" className="text-xs">
+                  {puzzle.product.difficulty}
+                </Badge>
               )}
-              {puzzle.brand && puzzle.pieceCount && " • "}
-              {puzzle.pieceCount && (
-                <span>
-                  {puzzle.pieceCount} {t("pieces")}
-                </span>
-              )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                {puzzle.difficulty && (
-                  <Badge variant="outline" className="text-xs">
-                    {puzzle.difficulty}
-                  </Badge>
-                )}
-                {puzzle.condition && (
-                  <Badge variant="outline" className="text-xs">
-                    {puzzle.condition}
-                  </Badge>
-                )}
-              </div>
-
-              {showOwner && puzzle.owner && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <User className="h-3 w-3" />
-                  <span>{puzzle.owner.name}</span>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </>
-      );
-    } else {
-      // List view
-      return (
-        <div className="flex w-full">
-          {renderImage()}
-          <div className="flex-1 p-4">
-            <div className="flex items-start justify-between h-full">
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg mb-1">{puzzle.title}</h3>
-                <p className="text-sm text-muted-foreground mb-2">
-                  {puzzle.brand && (
-                    <span className="font-medium">{puzzle.brand}</span>
-                  )}
-                  {puzzle.brand && puzzle.pieceCount && " • "}
-                  {puzzle.pieceCount && (
-                    <span>
-                      {puzzle.pieceCount} {t("pieces")}
-                    </span>
-                  )}
-                </p>
-                <div className="flex items-center gap-2 mb-2">
-                  {showAvailability && (
-                    <Badge
-                      variant={puzzle.isAvailable ? "default" : "secondary"}
-                      className="text-xs"
-                    >
-                      {puzzle.isAvailable ? t("available") : t("unavailable")}
-                    </Badge>
-                  )}
-                  {puzzle.difficulty && (
-                    <Badge variant="outline" className="text-xs">
-                      {puzzle.difficulty}
-                    </Badge>
-                  )}
-                  {puzzle.condition && (
-                    <Badge variant="outline" className="text-xs">
-                      {puzzle.condition}
-                    </Badge>
-                  )}
-                </div>
-                {showOwner && puzzle.owner && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <User className="h-3 w-3" />
-                    <span>{puzzle.owner.name}</span>
-                  </div>
-                )}
-              </div>
-              {showActions && renderActions()}
+              <Badge
+                variant={
+                  puzzle.condition === "excellent" ? "default" : "secondary"
+                }
+                className="text-xs"
+              >
+                {puzzle.condition}
+              </Badge>
             </div>
           </div>
+          {showCollectionDropdown && (
+            <CollectionDropdown puzzleInstanceId={puzzle._id} />
+          )}
         </div>
-      );
-    }
+
+        {showAvailability && (
+          <div className="flex items-center gap-2 mb-2">
+            <Badge
+              variant={puzzle.isAvailable ? "default" : "secondary"}
+              className="text-xs"
+            >
+              {puzzle.isAvailable ? t("available") : t("unavailable")}
+            </Badge>
+          </div>
+        )}
+
+        {showOwner && puzzle.owner && (
+          <div className="flex items-center gap-2 mb-2">
+            <User className="h-3 w-3 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">
+              {puzzle.owner.name}
+            </span>
+          </div>
+        )}
+
+        {puzzle.product?.description && (
+          <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
+            {puzzle.product.description}
+          </p>
+        )}
+
+        {puzzle.product?.tags && puzzle.product.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-2">
+            {puzzle.product.tags.slice(0, 3).map((tag, index) => (
+              <Badge key={index} variant="outline" className="text-xs">
+                {tag}
+              </Badge>
+            ))}
+            {puzzle.product.tags.length > 3 && (
+              <Badge variant="outline" className="text-xs">
+                +{puzzle.product.tags.length - 3}
+              </Badge>
+            )}
+          </div>
+        )}
+
+        {renderActions()}
+      </div>
+    );
   };
 
+  if (viewMode === "list") {
+    return (
+      <Card
+        className={`${className} ${isSelected ? "ring-2 ring-primary" : ""}`}
+      >
+        <div className="flex">
+          <div className="w-32 flex-shrink-0">{renderImage()}</div>
+          <div className="flex-1">{renderContent()}</div>
+        </div>
+      </Card>
+    );
+  }
+
   return (
-    <Card
-      className={`group hover:shadow-lg transition-shadow ${
-        viewMode === "list" ? "flex py-0" : "pt-0"
-      } ${className}`}
-      onClick={
-        variant === "selection" && onSelect
-          ? () => onSelect(puzzle._id)
-          : undefined
-      }
-    >
+    <Card className={`${className} ${isSelected ? "ring-2 ring-primary" : ""}`}>
+      {renderImage()}
       {renderContent()}
-      {viewMode === "grid" && (
-        <CardFooter className="ml-auto">
-          {showActions && renderActions()}
-        </CardFooter>
-      )}
     </Card>
   );
 }

@@ -10,8 +10,8 @@ interface TradeRequestWithUserRole extends Doc<"tradeRequests"> {
 interface EnrichedTradeRequest extends TradeRequestWithUserRole {
   requester: Doc<"users"> | null;
   owner: Doc<"users"> | null;
-  ownerPuzzle: Doc<"puzzles"> | null;
-  requesterPuzzle: Doc<"puzzles"> | null;
+  ownerPuzzle: Doc<"puzzleInstances"> | null;
+  requesterPuzzle: Doc<"puzzleInstances"> | null;
 }
 
 // Type for notification types
@@ -28,8 +28,8 @@ export const createTradeRequest = mutation({
   args: {
     requesterId: v.id("users"),
     ownerId: v.id("users"),
-    requesterPuzzleId: v.optional(v.id("puzzles")),
-    ownerPuzzleId: v.id("puzzles"),
+    requesterPuzzleInstanceId: v.optional(v.id("puzzleInstances")),
+    ownerPuzzleInstanceId: v.id("puzzleInstances"),
     message: v.optional(v.string()),
     proposedTradeDate: v.optional(v.number()),
     shippingMethod: v.optional(
@@ -43,14 +43,14 @@ export const createTradeRequest = mutation({
     }
 
     // Validate that the owner puzzle exists and is available
-    const ownerPuzzle = await ctx.db.get(args.ownerPuzzleId);
+    const ownerPuzzle = await ctx.db.get(args.ownerPuzzleInstanceId);
     if (!ownerPuzzle || !ownerPuzzle.isAvailable) {
       throw new Error("Requested puzzle is not available");
     }
 
     // Validate that the requester puzzle exists and is available (if provided)
-    if (args.requesterPuzzleId) {
-      const requesterPuzzle = await ctx.db.get(args.requesterPuzzleId);
+    if (args.requesterPuzzleInstanceId) {
+      const requesterPuzzle = await ctx.db.get(args.requesterPuzzleInstanceId);
       if (!requesterPuzzle || !requesterPuzzle.isAvailable) {
         throw new Error("Offered puzzle is not available");
       }
@@ -65,7 +65,7 @@ export const createTradeRequest = mutation({
       .filter((q) =>
         q.and(
           q.eq(q.field("requesterId"), args.requesterId),
-          q.eq(q.field("ownerPuzzleId"), args.ownerPuzzleId),
+          q.eq(q.field("ownerPuzzleInstanceId"), args.ownerPuzzleInstanceId),
           q.eq(q.field("status"), "pending"),
         ),
       )
@@ -111,9 +111,9 @@ export const getTradeRequestById = query({
     const [requester, owner, ownerPuzzle, requesterPuzzle] = await Promise.all([
       ctx.db.get(tradeRequest.requesterId),
       ctx.db.get(tradeRequest.ownerId),
-      ctx.db.get(tradeRequest.ownerPuzzleId),
-      tradeRequest.requesterPuzzleId
-        ? ctx.db.get(tradeRequest.requesterPuzzleId)
+      ctx.db.get(tradeRequest.ownerPuzzleInstanceId),
+      tradeRequest.requesterPuzzleInstanceId
+        ? ctx.db.get(tradeRequest.requesterPuzzleInstanceId)
         : null,
     ]);
 
@@ -186,16 +186,27 @@ export const getUserTradeRequests = query({
           await Promise.all([
             ctx.db.get(tr.requesterId),
             ctx.db.get(tr.ownerId),
-            ctx.db.get(tr.ownerPuzzleId),
-            tr.requesterPuzzleId ? ctx.db.get(tr.requesterPuzzleId) : null,
+            ctx.db.get(tr.ownerPuzzleInstanceId),
+            tr.requesterPuzzleInstanceId
+              ? ctx.db.get(tr.requesterPuzzleInstanceId)
+              : null,
           ]);
+
+        const [ownerPuzzleProduct, requesterPuzzleProduct] = await Promise.all([
+          ownerPuzzle ? ctx.db.get(ownerPuzzle.productId) : null,
+          requesterPuzzle
+            ? ctx.db.get(requesterPuzzle.productId)
+            : null,
+        ]);
 
         return {
           ...tr,
           requester,
           owner,
           ownerPuzzle,
+          ownerPuzzleProduct,
           requesterPuzzle,
+          requesterPuzzleProduct,
         };
       }),
     );
@@ -257,9 +268,11 @@ export const updateTradeRequestStatus = mutation({
 
     // If trade is completed, mark puzzles as unavailable
     if (status === "completed") {
-      await ctx.db.patch(tradeRequest.ownerPuzzleId, { isAvailable: false });
-      if (tradeRequest.requesterPuzzleId) {
-        await ctx.db.patch(tradeRequest.requesterPuzzleId, {
+      await ctx.db.patch(tradeRequest.ownerPuzzleInstanceId, {
+        isAvailable: false,
+      });
+      if (tradeRequest.requesterPuzzleInstanceId) {
+        await ctx.db.patch(tradeRequest.requesterPuzzleInstanceId, {
           isAvailable: false,
         });
       }
@@ -381,16 +394,27 @@ export const getTradeRequestsByOwner = query({
           await Promise.all([
             ctx.db.get(tr.requesterId),
             ctx.db.get(tr.ownerId),
-            ctx.db.get(tr.ownerPuzzleId),
-            tr.requesterPuzzleId ? ctx.db.get(tr.requesterPuzzleId) : null,
+            ctx.db.get(tr.ownerPuzzleInstanceId),
+            tr.requesterPuzzleInstanceId
+              ? ctx.db.get(tr.requesterPuzzleInstanceId)
+              : null,
           ]);
+
+        const [ownerPuzzleProduct, requesterPuzzleProduct] = await Promise.all([
+          ownerPuzzle ? ctx.db.get(ownerPuzzle.productId) : null,
+          requesterPuzzle
+            ? ctx.db.get(requesterPuzzle.productId)
+            : null,
+        ]);
 
         return {
           ...tr,
           requester,
           owner,
           ownerPuzzle,
+          ownerPuzzleProduct,
           requesterPuzzle,
+          requesterPuzzleProduct,
         };
       }),
     );
@@ -415,16 +439,27 @@ export const getTradeRequestsByRequester = query({
           await Promise.all([
             ctx.db.get(tr.requesterId),
             ctx.db.get(tr.ownerId),
-            ctx.db.get(tr.ownerPuzzleId),
-            tr.requesterPuzzleId ? ctx.db.get(tr.requesterPuzzleId) : null,
+            ctx.db.get(tr.ownerPuzzleInstanceId),
+            tr.requesterPuzzleInstanceId
+              ? ctx.db.get(tr.requesterPuzzleInstanceId)
+              : null,
           ]);
+
+        const [ownerPuzzleProduct, requesterPuzzleProduct] = await Promise.all([
+          ownerPuzzle ? ctx.db.get(ownerPuzzle.productId) : null,
+          requesterPuzzle
+            ? ctx.db.get(requesterPuzzle.productId)
+            : null,
+        ]);
 
         return {
           ...tr,
           requester,
           owner,
           ownerPuzzle,
+          ownerPuzzleProduct,
           requesterPuzzle,
+          requesterPuzzleProduct,
         };
       }),
     );
@@ -510,9 +545,11 @@ export const completeTradeRequest = mutation({
     });
 
     // Mark puzzles as unavailable
-    await ctx.db.patch(tradeRequest.ownerPuzzleId, { isAvailable: false });
-    if (tradeRequest.requesterPuzzleId) {
-      await ctx.db.patch(tradeRequest.requesterPuzzleId, {
+    await ctx.db.patch(tradeRequest.ownerPuzzleInstanceId, {
+      isAvailable: false,
+    });
+    if (tradeRequest.requesterPuzzleInstanceId) {
+      await ctx.db.patch(tradeRequest.requesterPuzzleInstanceId, {
         isAvailable: false,
       });
     }

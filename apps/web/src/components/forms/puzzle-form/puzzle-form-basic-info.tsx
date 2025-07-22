@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
@@ -25,6 +26,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 import { Id } from "@jigswap/backend/convex/_generated/dataModel";
+import { PuzzleSuggestion } from "@jigswap/backend/convex/puzzles";
 import { type PuzzleFormData } from "./puzzle-form-schema";
 import { PuzzleFormSuggestions } from "./puzzle-form-suggestions";
 
@@ -50,9 +52,10 @@ interface PuzzleFormBasicInfoProps {
 export function PuzzleFormBasicInfo({
   form,
   categories,
-  onTitleInteraction,
   onSuggestionUsed,
 }: PuzzleFormBasicInfoProps) {
+  const t = useTranslations("puzzles");
+
   // State for custom piece count input
   const [showCustomPieceCount, setShowCustomPieceCount] = React.useState(false);
   const [customPieceCount, setCustomPieceCount] = React.useState(
@@ -128,64 +131,50 @@ export function PuzzleFormBasicInfo({
 
   // Watch the title field to determine if we should show other sections
   const titleValue = form.watch("title");
-  const [hasInteractedWithTitle, setHasInteractedWithTitle] = useState(false);
   const [hasUsedSuggestion, setHasUsedSuggestion] = useState(false);
 
   // Show other sections only after suggestion is used or title loses focus
   const shouldShowOtherSections =
-    hasUsedSuggestion ||
-    (hasInteractedWithTitle && titleValue && titleValue.trim().length > 0);
+    hasUsedSuggestion || (titleValue && titleValue.trim().length > 0);
 
-  const handleTitleFocus = () => {
-    setHasInteractedWithTitle(true);
-    onTitleInteraction?.();
-  };
-
-  const handleTitleBlur = () => {
-    setHasInteractedWithTitle(true);
-    onTitleInteraction?.();
-  };
-
-  const handleSuggestionUsed = () => {
+  const handleSuggestionUsed = (suggestion: PuzzleSuggestion) => {
     setHasUsedSuggestion(true);
+    form.setValue("title", suggestion.title);
+    if (suggestion.brand) form.setValue("brand", suggestion.brand);
+    if (suggestion.tags) form.setValue("tags", suggestion.tags);
+    if (suggestion.description)
+      form.setValue("description", suggestion.description);
     onSuggestionUsed?.();
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
         <p className="text-sm text-muted-foreground mb-6">
-          Enter the essential details about your puzzle
+          {t("basicInformationDescription")}
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Title */}
-        <div className="md:col-span-2 relative">
+        {/* Title with integrated suggestions */}
+        <div className="md:col-span-2">
           <FormField
             control={form.control}
             name="title"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Title</FormLabel>
+                <FormLabel>{t("title")}</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder="Enter puzzle title"
-                    {...field}
-                    onFocus={handleTitleFocus}
-                    onBlur={handleTitleBlur}
+                  <PuzzleFormSuggestions
+                    value={field.value}
+                    onChange={field.onChange}
+                    onSuggestionUsed={handleSuggestionUsed}
+                    placeholder={t("titlePlaceholder")}
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
-          />
-
-          {/* Suggestions appear as overlay */}
-          <PuzzleFormSuggestions
-            form={form}
-            onSuggestionUsed={handleSuggestionUsed}
           />
         </div>
 
@@ -199,10 +188,10 @@ export function PuzzleFormBasicInfo({
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description (optional)</FormLabel>
+                    <FormLabel>{t("description")} (optional)</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Describe your puzzle (optional)"
+                        placeholder={t("descriptionPlaceholder")}
                         {...field}
                       />
                     </FormControl>
@@ -218,12 +207,9 @@ export function PuzzleFormBasicInfo({
               name="brand"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Brand (optional)</FormLabel>
+                  <FormLabel>{t("brand")} (optional)</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="e.g. Ravensburger, Clementoni"
-                      {...field}
-                    />
+                    <Input placeholder={t("brandPlaceholder")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -236,11 +222,11 @@ export function PuzzleFormBasicInfo({
               name="category"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Category (optional)</FormLabel>
+                  <FormLabel>{t("category")} (optional)</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="e.g. Landscape, Animals, Art" />
+                        <SelectValue placeholder={t("categoryPlaceholder")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -262,7 +248,7 @@ export function PuzzleFormBasicInfo({
               name="pieceCount"
               render={() => (
                 <FormItem>
-                  <FormLabel>Piece Count</FormLabel>
+                  <FormLabel>{t("pieceCount")}</FormLabel>
                   <div className="space-y-2">
                     <Select
                       onValueChange={handlePieceCountChange}
@@ -270,7 +256,7 @@ export function PuzzleFormBasicInfo({
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select piece count" />
+                          <SelectValue placeholder={t("selectPieceCount")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -286,7 +272,7 @@ export function PuzzleFormBasicInfo({
                       <FormControl>
                         <Input
                           type="number"
-                          placeholder="Enter custom piece count"
+                          placeholder={t("customPieceCountPlaceholder")}
                           value={customPieceCount}
                           onChange={(e) =>
                             handleCustomPieceCountChange(e.target.value)
@@ -307,18 +293,18 @@ export function PuzzleFormBasicInfo({
               name="difficulty"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Difficulty (optional)</FormLabel>
+                  <FormLabel>{t("difficulty")} (optional)</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select difficulty" />
+                        <SelectValue placeholder={t("selectDifficulty")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="easy">Easy</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="hard">Hard</SelectItem>
-                      <SelectItem value="expert">Expert</SelectItem>
+                      <SelectItem value="easy">{t("easy")}</SelectItem>
+                      <SelectItem value="medium">{t("medium")}</SelectItem>
+                      <SelectItem value="hard">{t("hard")}</SelectItem>
+                      <SelectItem value="expert">{t("expert")}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -332,18 +318,20 @@ export function PuzzleFormBasicInfo({
               name="condition"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Condition</FormLabel>
+                  <FormLabel>{t("condition")}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select condition" />
+                        <SelectValue placeholder={t("selectCondition")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="excellent">Excellent</SelectItem>
-                      <SelectItem value="good">Good</SelectItem>
-                      <SelectItem value="fair">Fair</SelectItem>
-                      <SelectItem value="poor">Poor</SelectItem>
+                      <SelectItem value="excellent">
+                        {t("excellent")}
+                      </SelectItem>
+                      <SelectItem value="good">{t("good")}</SelectItem>
+                      <SelectItem value="fair">{t("fair")}</SelectItem>
+                      <SelectItem value="poor">{t("poor")}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -361,11 +349,11 @@ export function PuzzleFormBasicInfo({
               name="newTag"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tags (optional)</FormLabel>
+                  <FormLabel>{t("tags")} (optional)</FormLabel>
                   <div className="flex gap-2">
                     <FormControl>
                       <Input
-                        placeholder="nature, colorful, challenging"
+                        placeholder={t("tagsPlaceholder")}
                         {...field}
                         onKeyPress={handleKeyPress}
                       />
@@ -380,7 +368,7 @@ export function PuzzleFormBasicInfo({
                     </Button>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Separate tags with commas
+                    {t("tagsHelp")}
                   </p>
                   <FormMessage />
                 </FormItem>
