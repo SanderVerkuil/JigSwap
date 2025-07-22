@@ -5,6 +5,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Locale, setLocaleCookie } from "@/lib/intl-cookies";
@@ -34,6 +35,7 @@ export function LanguageSwitcher() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Language</DropdownMenuLabel>
         {languages.map((language) => (
           <DropdownMenuItem
             key={language.code}
