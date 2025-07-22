@@ -62,6 +62,8 @@ export function PuzzleFormBasicInfo({
     form.getValues("pieceCount")?.toString() || "",
   );
 
+  const tags = form.watch("tags");
+
   // Initialize custom piece count state based on default values
   React.useEffect(() => {
     const currentValue = form.getValues("pieceCount");
@@ -104,6 +106,7 @@ export function PuzzleFormBasicInfo({
   const addTag = () => {
     const currentTags = form.getValues("tags") || [];
     const newTag = form.getValues("newTag") || "";
+    console.info("Adding tag", { currentTags, newTag });
     if (
       typeof newTag === "string" &&
       newTag.trim() &&
@@ -355,7 +358,7 @@ export function PuzzleFormBasicInfo({
                       <Input
                         placeholder={t("tagsPlaceholder")}
                         {...field}
-                        onKeyPress={handleKeyPress}
+                        onKeyDown={handleKeyPress}
                       />
                     </FormControl>
                     <Button
@@ -376,9 +379,9 @@ export function PuzzleFormBasicInfo({
             />
 
             {/* Display Tags */}
-            {(form.getValues("tags") || []).length > 0 && (
+            {(tags || []).length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {form.getValues("tags")?.map((tag, index) => (
+                {tags?.map((tag, index) => (
                   <Badge key={index} variant="secondary" className="gap-1">
                     {tag}
                     <Button

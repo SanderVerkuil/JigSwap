@@ -50,6 +50,9 @@ export function PuzzleFormRoot({
     }
 
     try {
+      if ("newTag" in data) {
+        delete data.newTag;
+      }
       // Create the puzzle with completions
       const puzzleId = await createPuzzle({
         ...data,

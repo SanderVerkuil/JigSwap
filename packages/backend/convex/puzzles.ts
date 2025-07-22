@@ -688,6 +688,7 @@ export const createPuzzle = mutation({
     isAvailable: v.boolean(),
     acquisitionDate: v.optional(v.number()),
     notes: v.optional(v.string()),
+    isCompleted: v.optional(v.boolean()),
     completions: v.optional(v.array(v.object({
       completedDate: v.number(),
       completionTimeMinutes: v.optional(v.number()),
@@ -704,6 +705,9 @@ export const createPuzzle = mutation({
       isAvailable,
       acquisitionDate,
       notes,
+      completions,
+      isCompleted,
+      images,
       ...productFields
     } = args;
 
