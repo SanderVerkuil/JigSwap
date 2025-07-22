@@ -28,12 +28,26 @@ export function WelcomeHeader() {
     convexUser?._id ? { userId: convexUser._id } : "skip",
   );
 
-  if (!user || !convexUser) {
+  // Show loading state while data is being fetched
+  if (!user || isLoading || convexUser === undefined) {
     return (
-      <div className="flex items-center justify-center min-h-[75px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-jigsaw-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Setting up your account...</p>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Welcome back! 🧩</h1>
+          <p className="text-muted-foreground mt-2">
+            Setting up your dashboard...
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-lg border bg-card p-6 space-y-4">
+              <div className="space-y-2">
+                <div className="h-4 w-3/4 bg-muted animate-pulse rounded" />
+                <div className="h-4 w-1/2 bg-muted animate-pulse rounded" />
+              </div>
+              <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+            </div>
+          ))}
         </div>
       </div>
     );

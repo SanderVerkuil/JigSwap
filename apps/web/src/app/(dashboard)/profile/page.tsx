@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageLoading } from "@/components/ui/loading";
 import { useUser } from "@clerk/nextjs";
 import { api } from "@jigswap/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
@@ -37,15 +38,13 @@ export default function ProfilePage() {
     convexUser?._id ? { userId: convexUser._id } : "skip",
   );
 
-  if (!user || !userProfile) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">{t("loading")}</p>
-        </div>
-      </div>
-    );
+  if (
+    !user ||
+    userProfile === undefined ||
+    convexUser === undefined ||
+    userStats === undefined
+  ) {
+    return <PageLoading message={t("loading")} />;
   }
 
   return (

@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { api } from "@jigswap/backend/convex/_generated/api";
 import { Id } from "@jigswap/backend/convex/_generated/dataModel";
@@ -82,15 +83,8 @@ export function CollectionDetail({
       )
       .filter(Boolean) || [];
 
-  if (!collection) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">{tCommon("loading")}</p>
-        </div>
-      </div>
-    );
+  if (collection === undefined) {
+    return <PageLoading message={tCommon("loading")} />;
   }
 
   return (

@@ -12,6 +12,7 @@ import {
 import { ColorPicker } from "@/components/ui/color-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PageLoading } from "@/components/ui/loading";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@jigswap/backend/convex/_generated/api";
@@ -124,7 +125,7 @@ export default function CategoriesPage() {
   };
 
   if (categories === undefined) {
-    return <div>Loading...</div>;
+    return <PageLoading message="Loading categories..." />;
   }
 
   return (

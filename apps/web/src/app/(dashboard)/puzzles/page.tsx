@@ -61,7 +61,7 @@ export default function PuzzlesPage() {
           puzzle.brand.toLowerCase().includes(searchTerm.toLowerCase())),
     ) || [];
 
-  if (!user || !convexUser) {
+  if (!user || !convexUser || userPuzzles === undefined) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">

@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { LoadingState } from "@/components/ui/loading";
 import { api } from "@jigswap/backend/convex/_generated/api";
 import { useConvexAuth, useQuery } from "convex/react";
 import { Package } from "lucide-react";
@@ -29,6 +30,21 @@ export function RecentPuzzlesCard() {
       ? { ownerId: convexUser._id, includeUnavailable: false }
       : "skip",
   );
+
+  // Show loading state while data is being fetched
+  if (isLoading || convexUser === undefined || recentPuzzles === undefined) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Recent Puzzles</CardTitle>
+          <CardDescription>Puzzles you&apos;ve added recently</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <LoadingState message="Loading recent puzzles..." />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

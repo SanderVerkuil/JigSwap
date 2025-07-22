@@ -9,6 +9,7 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
+import { PageLoading } from "@/components/ui/loading";
 import { PuzzleDetailActions } from "./puzzle-detail-actions";
 import { PuzzleDetailHeader } from "./puzzle-detail-header";
 import { PuzzleDetailInfo } from "./puzzle-detail-info";
@@ -45,15 +46,8 @@ export function PuzzleDetail({
     puzzleId,
   });
 
-  if (!puzzle) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading puzzle...</p>
-        </div>
-      </div>
-    );
+  if (puzzle === undefined) {
+    return <PageLoading message="Loading puzzle..." />;
   }
 
   return (

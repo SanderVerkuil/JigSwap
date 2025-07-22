@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { LoadingState } from "@/components/ui/loading";
 import { api } from "@jigswap/backend/convex/_generated/api";
 import { useConvexAuth, useQuery } from "convex/react";
 import { ArrowLeftRight } from "lucide-react";
@@ -27,6 +28,23 @@ export function RecentTradesCard() {
     api.trades.getUserTradeRequests,
     convexUser?._id ? { userId: convexUser._id } : "skip",
   );
+
+  // Show loading state while data is being fetched
+  if (isLoading || convexUser === undefined || recentTrades === undefined) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Trade Activity</CardTitle>
+          <CardDescription>
+            Your latest trade requests and offers
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <LoadingState message="Loading recent trades..." />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
