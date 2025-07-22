@@ -13,6 +13,7 @@
   },
   "scripts": {
     "convex:dev": "convex dev",
-    "convex:deploy": "convex deploy"
+    "convex:deploy": "convex deploy",
+    "type-check": "tsc --noEmit"
   }
 }

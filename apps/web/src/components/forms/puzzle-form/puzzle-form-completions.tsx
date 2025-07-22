@@ -52,10 +52,10 @@ export function PuzzleFormCompletions({ form }: PuzzleFormCompletionsProps) {
     );
   };
 
-  const updateCompletion = (
+  const updateCompletion = <K extends keyof CompletionEntry>(
     id: string,
-    field: keyof CompletionEntry,
-    value: any,
+    field: K,
+    value: CompletionEntry[K],
   ) => {
     form.setValue(
       "completions",

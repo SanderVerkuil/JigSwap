@@ -68,11 +68,10 @@
       }
     },
     "type-check": {
-      "executor": "@nx/js:tsc",
-      "outputs": [],
+      "executor": "nx:run-commands",
       "options": {
-        "tsConfig": "apps/web/tsconfig.json",
-        "noEmit": true
+        "command": "pnpm run type-check",
+        "cwd": "apps/web"
       }
     },
     "clean": {

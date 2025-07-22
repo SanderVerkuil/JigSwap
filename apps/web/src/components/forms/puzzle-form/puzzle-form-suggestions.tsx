@@ -14,6 +14,17 @@ import { FormDescription } from "@/components/ui/form";
 
 import { type PuzzleFormData } from "./puzzle-form-schema";
 
+interface PuzzleSuggestion {
+  _id: string;
+  title: string;
+  brand?: string;
+  pieceCount: number;
+  difficulty?: "easy" | "medium" | "hard" | "expert";
+  category?: string;
+  tags?: string[];
+  description?: string;
+}
+
 interface PuzzleFormSuggestionsProps {
   form: UseFormReturn<PuzzleFormData>;
   onSuggestionUsed: () => void;
@@ -56,7 +67,7 @@ export function PuzzleFormSuggestions({
     }
   }, [suggestions]);
 
-  const useSuggestion = (suggestion: any) => {
+  const applySuggestion = (suggestion: PuzzleSuggestion) => {
     form.setValue("title", suggestion.title);
     if (suggestion.brand) form.setValue("brand", suggestion.brand);
     if (suggestion.pieceCount)
@@ -111,7 +122,7 @@ export function PuzzleFormSuggestions({
                   <Card
                     key={suggestion._id}
                     className="p-3 hover:bg-muted/50 transition-colors cursor-pointer active:bg-muted/70 touch-manipulation"
-                    onClick={() => useSuggestion(suggestion)}
+                    onClick={() => applySuggestion(suggestion)}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="space-y-1 flex-1 min-w-0">
@@ -159,7 +170,7 @@ export function PuzzleFormSuggestions({
                         className="flex-shrink-0"
                         onClick={(e) => {
                           e.stopPropagation();
-                          useSuggestion(suggestion);
+                          applySuggestion(suggestion);
                         }}
                       >
                         {t("suggestions.useThis")}

@@ -1,0 +1,38 @@
+# .cursorrules for an Nx Monorepo with Next.js and Convex
+
+workspace:
+  # A descriptive name for your workspace.
+  name: "Nx Monorepo (Next.js + Convex)"
+  # This tells Cursor that any directory containing nx.json is the root of this workspace.
+  root: "nx.json"
+  # You can optionally list your projects here for better context.
+  # This helps the AI know the key parts of your codebase.
+  projects:
+    - path: "apps/frontend"
+      name: "frontend"
+      description: "The main Next.js application."
+    - path: "packages/backend"
+      name: "backend"
+      description: "The Convex backend functions and schema."
+
+rules:
+  # Rule for type-checking a single project
+  - name: "Type-check a single project"
+    description: "Runs TypeScript type-checking on a specific project (e.g., 'frontend' or 'backend') within the Nx workspace."
+    command: "pnpx nx type-check {{project}}"
+    type: "type-checker"
+    args:
+      - name: "project"
+        description: "The name of the project to type-check (e.g., 'frontend', 'backend')."
+
+  # Rule for type-checking all projects at once
+  - name: "Type-check all projects"
+    description: "Runs TypeScript type-checking on all projects in the Nx workspace simultaneously."
+    command: "pnpx nx run-many -t type-check"
+    type: "type-checker"
+
+  # Rule for linting and fixing files
+  - name: "Lint and fix all files"
+    description: "Runs the linter (ESLint) across the entire workspace and automatically fixes any fixable issues using the 'pnpm lint:fix' script."
+    command: "pnpm lint:fix"
+    type: "linter"
