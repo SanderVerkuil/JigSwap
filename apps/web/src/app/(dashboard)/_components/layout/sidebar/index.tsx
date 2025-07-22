@@ -20,7 +20,7 @@ import {
   Settings,
 } from "lucide-react";
 import Link from "next/link";
-import { UserProfile } from "../user-profile";
+import { UserProfile } from "../../../../../components/common/user-profile";
 import { Item, Navigation } from "./navigation";
 import { SidebarContent as SidebarContentComponent } from "./sidebar-content";
 
@@ -37,14 +37,14 @@ const getItems: () => Item[] = () => {
       icon: Search,
     },
     {
-      title: "Add Puzzle",
-      url: "/puzzles/add",
-      icon: PlusCircle,
-    },
-    {
       title: "My Puzzles",
       url: "/puzzles",
       icon: Package,
+      action: {
+        title: "Add Puzzle",
+        url: "/puzzles/add",
+        icon: PlusCircle,
+      },
     },
     {
       title: "Collections",
@@ -80,9 +80,11 @@ export function Sidebar() {
         <CheckRole role="admin">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton>
-                <Settings />
-                <Link href="/admin">Admin</Link>
+              <SidebarMenuButton asChild>
+                <Link href="/admin">
+                  <Settings />
+                  Admin
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

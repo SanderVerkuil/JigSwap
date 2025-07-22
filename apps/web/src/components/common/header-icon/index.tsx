@@ -6,7 +6,7 @@ export function HeaderIcon() {
     <Image
       src={HeaderIconImage}
       alt="JigSwap Logo"
-      className="h-48 w-auto mx-auto"
+      className="h-48 w-auto mx-auto object-contain"
     />
   );
 }

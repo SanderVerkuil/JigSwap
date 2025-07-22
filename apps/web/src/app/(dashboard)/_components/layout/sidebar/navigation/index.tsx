@@ -7,12 +7,18 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ChevronRight, LucideIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -21,13 +27,42 @@ export type Item = {
   url: string;
   icon?: LucideIcon;
   isActive?: boolean;
+  action?: {
+    title: string;
+    url: string;
+    icon: LucideIcon;
+  };
   items?: {
     title: string;
     url: string;
   }[];
 };
 
-function MenuItem({ title, url, isActive, items, ...props }: Item) {
+function Action({
+  title,
+  url,
+  ...props
+}: {
+  title: string;
+  url: string;
+  icon: LucideIcon;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <SidebarMenuAction asChild>
+          <Link href={url}>
+            <props.icon />
+            <span className="sr-only">{title}</span>
+          </Link>
+        </SidebarMenuAction>
+      </TooltipTrigger>
+      <TooltipContent>{title}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function MenuItem({ title, url, isActive, items, action, ...props }: Item) {
   if (undefined !== items) {
     <Collapsible
       key={title}
@@ -48,9 +83,11 @@ function MenuItem({ title, url, isActive, items, ...props }: Item) {
             {items.map((subItem) => (
               <SidebarMenuSubItem key={subItem.title}>
                 <SidebarMenuSubButton asChild>
-                  <span className="truncate leading-right">
-                    <Link href={subItem.url}>{subItem.title}</Link>
-                  </span>
+                  <Link href={subItem.url}>
+                    <span className="truncate leading-right">
+                      {subItem.title}
+                    </span>
+                  </Link>
                 </SidebarMenuSubButton>
               </SidebarMenuSubItem>
             ))}
@@ -61,12 +98,14 @@ function MenuItem({ title, url, isActive, items, ...props }: Item) {
   }
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton tooltip={title}>
-        {props.icon && <props.icon />}
-        <span className="truncate leading-right">
-          <Link href={url}>{title}</Link>
-        </span>
+      <SidebarMenuButton tooltip={title} asChild>
+        <Link href={url}>
+          {props.icon && <props.icon />}
+          <span className="truncate leading-right">{title}</span>
+        </Link>
       </SidebarMenuButton>
+
+      {action && <Action {...action} />}
     </SidebarMenuItem>
   );
 }

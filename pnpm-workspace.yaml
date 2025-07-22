@@ -5,6 +5,13 @@ packages:
 linkWorkspacePackages: true
 
 onlyBuiltDependencies:
+  - '@clerk/shared'
+  - '@parcel/watcher'
   - '@swc/core'
+  - '@tailwindcss/oxide'
   - '@vercel/speed-insights'
+  - core-js
+  - esbuild
   - nx
+  - sharp
+  - unrs-resolver

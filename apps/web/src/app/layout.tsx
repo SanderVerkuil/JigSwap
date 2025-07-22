@@ -9,7 +9,7 @@ import { Providers } from "./providers";
 const baloo2 = Baloo_2({
   subsets: ["latin"],
   variable: "--font-heading",
-  preload: true,
+  preload: false,
 });
 
 const poppins = Poppins({

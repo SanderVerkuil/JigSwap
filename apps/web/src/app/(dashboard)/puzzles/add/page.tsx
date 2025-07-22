@@ -16,28 +16,27 @@ export default function AddPuzzlePage() {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
+    <div className="container mx-auto space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
           <h1 className="text-3xl font-bold">Add New Puzzle</h1>
-          <p className="text-muted-foreground mt-2">
+          <p className="text-muted-foreground">
             Add a new puzzle to your collection
           </p>
         </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Puzzle Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <PuzzleForm
-              id="add-puzzle-form"
-              onSuccess={handleSuccess}
-              onCancel={handleCancel}
-            />
-          </CardContent>
-        </Card>
       </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Puzzle Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PuzzleForm
+            id="add-puzzle-form"
+            onSuccess={handleSuccess}
+            onCancel={handleCancel}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }

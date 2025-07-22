@@ -9,7 +9,7 @@ export default async function DashboardLayout({
   return (
     <div className="bg-background pt-[57px]">
       <Header />
-      {children}
+      <div className="container mx-auto py-6">{children}</div>
       <Footer />
     </div>
   );

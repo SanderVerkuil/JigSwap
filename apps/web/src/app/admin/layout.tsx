@@ -1,11 +1,19 @@
 import { HeaderLogo } from "@/components/common/header-logo";
+import { UserProfile } from "@/components/common/user-profile";
 import {
   Sidebar,
+  SidebarContent,
+  SidebarFooter,
   SidebarHeader,
   SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarProvider,
 } from "@/components/ui/sidebar";
 import { auth } from "@clerk/nextjs/server";
+import { Home } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 export default async function AdminLayout({
@@ -28,11 +36,25 @@ export default async function AdminLayout({
       <SidebarProvider>
         <Sidebar variant="inset">
           <SidebarHeader>
-            <HeaderLogo className="pl-0 h-16" />
+            <HeaderLogo className="pl-0 h-8" />
           </SidebarHeader>
+          <SidebarContent />
+          <SidebarFooter>
+            <UserProfile />
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link href="/dashboard">
+                    <Home />
+                    Home
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarFooter>
         </Sidebar>
         <SidebarInset>
-          <main className="container mx-auto px-4 py-8">{children}</main>
+          <main className="container p-6 mx-auto">{children}</main>
         </SidebarInset>
       </SidebarProvider>
     </div>
