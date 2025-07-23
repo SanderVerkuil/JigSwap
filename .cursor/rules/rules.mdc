@@ -1,6 +1,5 @@
 ---
-description: Creating or modifying react components, or when modifying tsx files
-alwaysApply: false
+alwaysApply: true
 ---
 # Component Organization Rules
 

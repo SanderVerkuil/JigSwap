@@ -5,7 +5,7 @@
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
-    "@clerk/backend": "^2.5.0",
+    "@clerk/backend": "^2.5.1",
     "convex": "^1.25.4",
     "convex-helpers": "^0.1.99",
     "svix": "^1.69.0",

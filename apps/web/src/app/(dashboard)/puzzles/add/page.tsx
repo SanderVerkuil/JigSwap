@@ -6,41 +6,41 @@ import {
   CardContent,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function AddPuzzlePage() {
   const router = useRouter();
-  const t = useTranslations("puzzles");
+  const t = useTranslations("puzzles.form");
 
-  const handleSuccess = () => {
+  const handleSuccess = (data: { productId: string; instanceId: string }) => {
+    toast.success(t("success.puzzleAdded"));
     router.push("/puzzles");
   };
 
   const handleCancel = () => {
-    router.back();
+    router.push("/puzzles");
   };
 
   return (
-    <div className="container mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <PuzzleForm.Title />
+    <div className="container mx-auto py-8">
+      <div className="max-w-2xl mx-auto">
+        <PuzzleForm.Root onSuccess={handleSuccess} onCancel={handleCancel}>
+          <Card>
+            <CardHeader>
+              <PuzzleForm.Title />
+            </CardHeader>
+            <CardContent>
+              <PuzzleForm.Form />
+            </CardContent>
+            <CardFooter>
+              <PuzzleForm.Actions />
+            </CardFooter>
+          </Card>
+        </PuzzleForm.Root>
       </div>
-      <PuzzleForm.Root onSuccess={handleSuccess} onCancel={handleCancel}>
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("basicInformation")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <PuzzleForm.Form />
-          </CardContent>
-          <CardFooter>
-            <PuzzleForm.Actions />
-          </CardFooter>
-        </Card>
-      </PuzzleForm.Root>
     </div>
   );
 }

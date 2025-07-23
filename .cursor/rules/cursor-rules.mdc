@@ -1,0 +1,250 @@
+---
+globs: *.mdc
+alwaysApply: false
+---
+# Cursor Rules Writing Guidelines
+
+## Core Principles
+
+### 1. Rule Structure and Formatting
+- **File Extension:** Use `.mdc` extension for all cursor rule files
+- **Frontmatter:** Always include proper YAML frontmatter with metadata
+- **Naming:** Use kebab-case for file names (e.g., `component-rules.mdc`)
+- **Organization:** Group related rules in the `.cursor/rules/` directory
+
+### 2. Frontmatter Requirements
+```yaml
+---
+globs: [file patterns this rule applies to]
+description: Brief description of the rule's purpose
+alwaysApply: [true/false] - whether to apply automatically
+---
+```
+
+### 3. Content Organization
+- **Clear Headers:** Use markdown headers (# ## ###) for organization
+- **Logical Flow:** Start with principles, then specific guidelines
+- **Examples:** Include real code examples from the codebase
+- **Cross-references:** Link to related rules using `@rule-name.mdc`
+
+## Writing Best Practices
+
+### 1. Clarity and Specificity
+- **Be Explicit:** Avoid ambiguous language that could be interpreted differently
+- **Use Active Voice:** "Always use TypeScript interfaces" not "TypeScript interfaces should be used"
+- **Provide Context:** Explain why a rule exists, not just what it requires
+- **Include Examples:** Show both correct and incorrect implementations
+
+### 2. Scope and Applicability
+- **Define Scope:** Clearly specify which files/components the rule applies to
+- **Use Globs:** Leverage file patterns to target specific file types
+- **Consider Context:** Rules should adapt based on file location and type
+- **Avoid Conflicts:** Ensure rules don't contradict each other
+
+### 3. Examples and Patterns
+```typescript
+// ✅ Good: Clear, specific example
+interface ComponentProps {
+  children: React.ReactNode;
+  className?: string;
+  variant?: 'primary' | 'secondary';
+}
+
+// ❌ Bad: Vague or incomplete example
+interface Props {
+  children: any;
+  className?: string;
+}
+```
+
+### 4. Rule Categories and Organization
+
+#### A. Technology-Specific Rules
+- **Framework Rules:** React, Next.js, TypeScript patterns
+- **Library Rules:** Specific library usage patterns
+- **Tool Rules:** Build tools, testing frameworks, etc.
+
+#### B. Architecture Rules
+- **Component Organization:** File structure, naming conventions
+- **State Management:** Data flow, state patterns
+- **API Integration:** Backend communication patterns
+
+#### C. Quality Rules
+- **Code Style:** Formatting, naming conventions
+- **Performance:** Optimization patterns
+- **Security:** Security best practices
+- **Accessibility:** A11y requirements
+
+## Rule Writing Process
+
+### 1. Research Phase
+- **Analyze Codebase:** Look for existing patterns and inconsistencies
+- **Identify Pain Points:** Find common issues or repeated mistakes
+- **Check Documentation:** Review existing rules for gaps or conflicts
+- **Gather Examples:** Collect real code examples from the project
+
+### 2. Drafting Phase
+- **Define Scope:** Determine which files/components the rule applies to
+- **Write Clear Guidelines:** Create specific, actionable instructions
+- **Include Examples:** Add both positive and negative examples
+- **Consider Edge Cases:** Address common exceptions or special cases
+
+### 3. Review and Refinement
+- **Test Applicability:** Ensure the rule works across different scenarios
+- **Check for Conflicts:** Verify it doesn't contradict existing rules
+- **Validate Examples:** Confirm examples are accurate and up-to-date
+- **Get Feedback:** Review with team members if possible
+
+## Rule Maintenance
+
+### 1. Regular Updates
+- **Monitor Usage:** Track how often rules are applied
+- **Update Examples:** Keep examples synchronized with codebase changes
+- **Remove Outdated Rules:** Deprecate rules that no longer apply
+- **Add New Rules:** Create rules for emerging patterns
+
+### 2. Quality Assurance
+- **Consistency Check:** Ensure rules are consistently applied
+- **Effectiveness Review:** Verify rules actually improve code quality
+- **Performance Impact:** Consider if rules affect development speed
+- **Team Feedback:** Gather input on rule effectiveness
+
+## Common Rule Patterns
+
+### 1. Component Rules
+```markdown
+## Component Structure
+- Always use functional components with TypeScript
+- Include proper prop interfaces
+- Use compound component pattern for complex components
+- Implement proper error boundaries
+```
+
+### 2. Form Rules
+```markdown
+## Form Guidelines
+- Use react-hook-form for form management
+- Implement proper validation with Zod
+- Include proper error handling
+- Support both page and dialog usage patterns
+```
+
+### 3. API Rules
+```markdown
+## API Integration
+- Use generated types from API schemas
+- Implement proper error handling
+- Include loading states
+- Cache responses appropriately
+```
+
+## Rule Documentation Standards
+
+### 1. Header Structure
+```markdown
+# Rule Name
+Brief description of what this rule covers
+
+## Principles
+Core concepts and reasoning
+
+## Guidelines
+Specific requirements and patterns
+
+## Examples
+Real code examples from the codebase
+
+## Exceptions
+When rules don't apply or special cases
+```
+
+### 2. Cross-Referencing
+- **Use `@rule-name.mdc`:** Reference other rules when relevant
+- **Maintain Links:** Keep cross-references up to date
+- **Avoid Circular References:** Don't create dependency loops
+- **Group Related Rules:** Organize rules by domain or technology
+
+## Rule Testing and Validation
+
+### 1. Test Scenarios
+- **New Files:** Verify rules apply to newly created files
+- **Existing Files:** Check if rules improve existing code
+- **Edge Cases:** Test with unusual file structures or patterns
+- **Performance:** Ensure rules don't significantly slow development
+
+### 2. Validation Checklist
+- [ ] Rule applies to intended file types
+- [ ] Examples are accurate and current
+- [ ] No conflicts with existing rules
+- [ ] Clear and unambiguous language
+- [ ] Proper frontmatter configuration
+- [ ] Cross-references are valid
+- [ ] Rule improves code quality
+
+## Rule Evolution
+
+### 1. When to Create New Rules
+- **New Technology:** When adopting new frameworks or libraries
+- **Pattern Emergence:** When consistent patterns develop
+- **Quality Issues:** When common mistakes need prevention
+- **Team Feedback:** When developers request guidance
+
+### 2. When to Update Rules
+- **Technology Changes:** When underlying tools or frameworks change
+- **Pattern Evolution:** When best practices evolve
+- **Codebase Growth:** When new patterns emerge
+- **Feedback Integration:** When team feedback suggests improvements
+
+### 3. When to Remove Rules
+- **Outdated Technology:** When tools or patterns are no longer used
+- **Contradictory Patterns:** When rules conflict with new best practices
+- **Low Usage:** When rules are rarely applied or followed
+- **Better Alternatives:** When superior rules replace existing ones
+
+## Rule Communication
+
+### 1. Clear Language
+- **Use Imperative Mood:** "Always use..." not "You should..."
+- **Be Specific:** Avoid vague terms like "appropriate" or "proper"
+- **Provide Context:** Explain why rules exist, not just what they require
+- **Include Rationale:** Help developers understand the reasoning
+
+### 2. Effective Examples
+- **Real Code:** Use actual examples from the codebase
+- **Before/After:** Show both incorrect and correct implementations
+- **Complete Context:** Include enough code to understand the pattern
+- **Edge Cases:** Address common exceptions or special situations
+
+## Rule Governance
+
+### 1. Ownership
+- **Clear Ownership:** Assign responsibility for rule maintenance
+- **Review Process:** Establish regular review cycles
+- **Update Procedures:** Define how rules can be modified
+- **Version Control:** Track rule changes over time
+
+### 2. Team Integration
+- **Onboarding:** Include rule review in new developer onboarding
+- **Training:** Provide guidance on rule interpretation
+- **Feedback Loop:** Create channels for rule feedback
+- **Documentation:** Maintain clear documentation of all rules
+
+## Rule Metrics and Success
+
+### 1. Success Indicators
+- **Consistency:** Code follows rules consistently
+- **Quality:** Code quality improves over time
+- **Productivity:** Development speed is maintained or improved
+- **Team Satisfaction:** Developers find rules helpful
+
+### 2. Monitoring
+- **Usage Tracking:** Monitor how often rules are applied
+- **Compliance Checking:** Verify rule adherence
+- **Feedback Collection:** Gather team input on rule effectiveness
+- **Quality Metrics:** Track code quality improvements
+
+Remember: The goal of cursor rules is to improve code quality, consistency, and developer productivity. Rules should be helpful guides, not restrictive constraints. Always prioritize clarity, maintainability, and team effectiveness when writing and maintaining rules.
+You apply this knowledge graciously, by writing clean and clear instructions that are not ambiguous and leave little to no room for interpretation.
+
+When asked to write cursor rules, feel free to ask follow up questions if things are not clear, or if you need more information or when you think that there are areas that have been missed.
+Take the input into consideration.

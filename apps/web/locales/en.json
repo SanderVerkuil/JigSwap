@@ -316,6 +316,88 @@
       "found": "Found Puzzles",
       "useThis": "Use This",
       "noResults": "No matching puzzles found"
+    },
+    "form": {
+      "title": "Add New Puzzle",
+      "subtitle": "Search for existing puzzles or create a new one",
+      "steps": {
+        "findPuzzle": {
+          "title": "Find Puzzle",
+          "description": "Search or create"
+        },
+        "yourCopy": {
+          "title": "Your Copy",
+          "description": "Instance details"
+        }
+      },
+      "validation": {
+        "titleRequired": "Title is required",
+        "pieceCountMin": "Piece count must be at least 1"
+      },
+      "actions": {
+        "back": "Back",
+        "cancel": "Cancel",
+        "next": "Next",
+        "createPuzzle": "Create Puzzle",
+        "creating": "Creating..."
+      },
+      "search": {
+        "title": "Find Your Puzzle",
+        "subtitle": "Search for an existing puzzle or create a new one",
+        "searchPlaceholder": "Search puzzles by title, brand, or description...",
+        "suggestions": "Suggestions",
+        "noResultsFound": "No puzzles found matching \"{searchTerm}\"",
+        "startTyping": "Start typing to search for existing puzzles",
+        "createNewPuzzle": "Create New Puzzle",
+        "selectedPuzzle": "Selected Puzzle"
+      },
+      "create": {
+        "title": "Create New Puzzle",
+        "subtitle": "Add details about the puzzle you want to create",
+        "puzzleTitle": "Puzzle Title *",
+        "titlePlaceholder": "Enter puzzle title...",
+        "brand": "Brand",
+        "brandPlaceholder": "Enter brand name...",
+        "pieceCount": "Piece Count *",
+        "pieceCountPlaceholder": "1000",
+        "difficulty": "Difficulty",
+        "selectDifficulty": "Select difficulty",
+        "description": "Description",
+        "descriptionPlaceholder": "Describe the puzzle...",
+        "tags": "Tags",
+        "addTagPlaceholder": "Add a tag and press Enter...",
+        "backToSearch": "Back to Search"
+      },
+      "instance": {
+        "title": "Your Puzzle Details",
+        "subtitle": "Tell us about your specific puzzle copy",
+        "selectedPuzzle": "Selected Puzzle",
+        "condition": "Condition *",
+        "selectCondition": "Select condition",
+        "conditionOptions": {
+          "excellent": "Excellent - Like new",
+          "good": "Good - Minor wear",
+          "fair": "Fair - Some wear",
+          "poor": "Poor - Significant wear"
+        },
+        "availableForSwap": "Available for Swap",
+        "availableDescription": "Make this puzzle available for other users to see and request",
+        "acquisitionDate": "When did you acquire this puzzle?",
+        "personalNotes": "Personal Notes",
+        "notesPlaceholder": "Any notes about your puzzle copy...",
+        "availableInfo": {
+          "title": "Available for Swap",
+          "description": "Other users will be able to see and request this puzzle for swapping."
+        }
+      },
+      "success": {
+        "puzzleAdded": "Your puzzle has been added successfully."
+      },
+      "error": {
+        "failedToCreate": "Failed to create puzzle. Please try again.",
+        "noProductSelected": "No product selected or created",
+        "missingProductFields": "Please fill in all required product fields (title and piece count)"
+      }
     }
   },
   "trades": {

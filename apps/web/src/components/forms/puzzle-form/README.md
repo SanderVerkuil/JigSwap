@@ -1,178 +1,229 @@
-# Puzzle Form Components
+# Puzzle Form Component
 
-This directory contains the puzzle form components organized as compound components for flexibility and reusability.
+A stepper-based form component for creating puzzle instances with compound components architecture.
 
-## Components
+## Features
 
-### `index.tsx` - Main Puzzle Form
-The main puzzle form component that orchestrates all sub-components.
+- **Stepper Interface**: Two-step process for creating puzzles
+- **Product Search**: Search existing puzzles or create new ones
+- **Instance Details**: Configure your specific puzzle copy
+- **Compound Components**: Modular architecture for easy customization
+- **Form Validation**: Comprehensive validation using Zod
+- **User-Friendly UX**: Clear navigation and feedback
+- **Flexible Composition**: Can be used in cards, dialogs, or any container
+
+## Usage Patterns
+
+### 1. Basic Usage (Legacy)
+
+```tsx
+import { PuzzleForm } from "@/components/forms/puzzle-form";
+
+function MyPage() {
+  const handleSuccess = (data: { productId: string; instanceId: string }) => {
+    console.log("Puzzle created:", data);
+  };
+
+  return (
+    <PuzzleForm
+      onSuccess={handleSuccess}
+      onCancel={() => router.back()}
+    />
+  );
+}
+```
+
+### 2. Compound Components in Card
+
+```tsx
+import { PuzzleForm } from "@/components/forms/puzzle-form";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+
+function MyPage() {
+  return (
+    <PuzzleForm.Root onSuccess={handleSuccess} onCancel={handleCancel}>
+      <Card>
+        <CardHeader>
+          <PuzzleForm.Title />
+        </CardHeader>
+        <CardContent>
+          <PuzzleForm.Form />
+        </CardContent>
+        <CardFooter>
+          <PuzzleForm.Actions />
+        </CardFooter>
+      </Card>
+    </PuzzleForm.Root>
+  );
+}
+```
+
+### 3. Compound Components in Dialog
+
+```tsx
+import { PuzzleForm } from "@/components/forms/puzzle-form";
+import { Dialog, DialogContent, DialogFooter, DialogHeader } from "@/components/ui/dialog";
+
+function MyDialog() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button>Add Puzzle</Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <PuzzleForm.Root onSuccess={handleSuccess} onCancel={() => setIsOpen(false)}>
+          <DialogHeader>
+            <PuzzleForm.Title />
+          </DialogHeader>
+          <div className="py-4">
+            <PuzzleForm.Form />
+          </div>
+          <DialogFooter>
+            <PuzzleForm.Actions />
+          </DialogFooter>
+        </PuzzleForm.Root>
+      </DialogContent>
+    </Dialog>
+  );
+}
+```
+
+### 4. Custom Layout
+
+```tsx
+function CustomLayout() {
+  return (
+    <PuzzleForm.Root onSuccess={handleSuccess} onCancel={handleCancel}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+          <PuzzleForm.Title />
+          <PuzzleForm.Form />
+        </div>
+        <div className="bg-muted p-4 rounded-lg">
+          <h3>Preview</h3>
+          {/* Custom preview content */}
+        </div>
+      </div>
+      <div className="mt-6">
+        <PuzzleForm.Actions />
+      </div>
+    </PuzzleForm.Root>
+  );
+}
+```
+
+## Compound Components
+
+The form uses compound components for maximum flexibility:
+
+### `PuzzleForm.Root`
+The root component that provides context and manages form state.
 
 **Props:**
-- `id: string` - Unique form identifier
-- `onSuccess?: () => void` - Callback when form is successfully submitted
-- `onCancel?: () => void` - Callback when form is cancelled
-- `defaultValues?: Partial<PuzzleFormData>` - Initial form values
-- `showActions?: boolean` - Whether to show form actions (default: true)
+- `onSuccess?: (data: { productId: string; instanceId: string }) => void`
+- `onCancel?: () => void`
+- `defaultValues?: Partial<PuzzleFormData>`
+- `children: React.ReactNode`
 
-**Usage:**
-```tsx
-<PuzzleForm
-  id="add-puzzle-form"
-  onSuccess={() => router.push("/puzzles")}
-  onCancel={() => router.back()}
-/>
+### `PuzzleForm.Title`
+Displays the form title and description.
+
+### `PuzzleForm.Form`
+Renders the stepper and form content (search/create + instance details).
+
+### `PuzzleForm.Actions`
+Renders the navigation buttons (Back, Next, Cancel, Submit).
+
+## Form Steps
+
+### Step 1: Find Puzzle
+- Search for existing puzzles by title, brand, or description
+- View suggestions with piece count and difficulty
+- Option to create a new puzzle if none exists
+
+### Step 2: Your Copy Details
+- Set condition (excellent, good, fair, poor)
+- Configure availability for swapping
+- Add acquisition date and personal notes
+
+## Form Schema
+
+```typescript
+interface PuzzleFormData {
+  // Product fields (for creating new products)
+  title: string;
+  description?: string;
+  brand?: string;
+  pieceCount: number;
+  difficulty?: "easy" | "medium" | "hard" | "expert";
+  category?: string;
+  tags?: string[];
+  images: string[];
+  
+  // Instance fields
+  productId?: string | null;
+  ownerId?: string; // Set automatically from current user
+  condition: "excellent" | "good" | "fair" | "poor";
+  isAvailable: boolean;
+  acquisitionDate?: number;
+  notes?: string;
+}
 ```
 
-### `puzzle-form-suggestions.tsx` - Puzzle Suggestions
-Provides puzzle suggestions from existing puzzles in the database to help users quickly fill in details.
+## Context and State Management
 
-**Features:**
-- Search existing puzzles by title, brand, or description
-- Auto-fill form fields when a suggestion is selected
-- Real-time search with debouncing
-- Internationalized text content
+The form uses React Context to share state between components:
 
-### `puzzle-form-basic-info.tsx` - Basic Information
-Handles the core puzzle information (title, brand, piece count, difficulty, etc.).
-
-**Fields:**
-- Title (required)
-- Description (optional)
-- Brand (optional)
-- Piece count (required)
-- Difficulty (optional)
-- Condition (required)
-- Category (optional)
-- Tags (optional)
-- Images (required)
-
-### `puzzle-form-completions.tsx` - Completion Tracking
-Allows users to track multiple puzzle completions with detailed timing and notes.
-
-**Features:**
-- Multiple completion entries
-- Optional time tracking (in minutes)
-- Completion notes for each entry
-- Add/remove completion entries
-- Internationalized text content
-
-**Fields per completion:**
-- Completion date
-- Time spent (optional, in minutes)
-- Notes (optional)
-
-### `puzzle-form-status-info.tsx` - Status Information
-Handles acquisition date and general notes.
-
-**Fields:**
-- Acquisition date (optional)
-- General notes (optional)
-
-### `puzzle-form-actions.tsx` - Form Actions
-Provides form submission and cancellation buttons.
-
-**Actions:**
-- Save/Cancel buttons
-- Loading states
-- Internationalized text
-
-### `puzzle-form-modal.tsx` - Modal Wrapper
-Provides a modal wrapper for the puzzle form.
-
-**Usage:**
-```tsx
-<PuzzleFormModal
-  open={open}
-  onOpenChange={setOpen}
-  onSuccess={() => setOpen(false)}
-/>
+```typescript
+interface PuzzleFormContextValue {
+  currentStep: number;
+  selectedProduct: PuzzleProduct | null;
+  isCreatingProduct: boolean;
+  isSubmitting: boolean;
+  isValid: boolean;
+  canProceed: boolean;
+  handleProductSelected: (product: PuzzleProduct) => void;
+  handleCreateNew: () => void;
+  handleBackToSearch: () => void;
+  handleStepClick: (step: number) => void;
+  handleNext: () => void;
+  handleBack: () => void;
+  handleSubmit: () => void;
+  handleCancel: () => void;
+}
 ```
-
-## Schema
-
-### `puzzle-form-schema.ts`
-Defines the form validation schema using Zod.
-
-**Key additions:**
-- `completions: CompletionEntry[]` - Array of completion entries
-- `CompletionEntry` interface with id, completedDate, completionTimeMinutes, and notes
-
-## Internationalization
-
-All text content is internationalized using `useTranslations` from `next-intl`.
-
-**Translation keys:**
-- `puzzles.suggestions.*` - Puzzle suggestions
-- `puzzles.completions.*` - Completion tracking
-- `puzzles.statusInformation*` - Status information
-- `puzzles.basicInformation*` - Basic information
-
-## Form Flow
-
-1. **Suggestions** - Users can search for existing puzzles to auto-fill details
-2. **Basic Information** - Core puzzle details
-3. **Completions** - Track multiple completions with timing
-4. **Status Information** - Acquisition date and notes
-5. **Actions** - Save or cancel the form
 
 ## Backend Integration
 
-The form creates puzzles using the `createPuzzle` mutation. Completion records are planned to be created using the existing `completions` table structure.
+The form integrates with Convex backend:
 
-**TODO:**
-- Implement completion record creation in the backend
-- Add bulk completion creation mutation
-- Update puzzle creation to handle multiple completions
+- Uses `createPuzzleProduct` mutation for new products
+- Uses `createPuzzleInstance` mutation for instances
+- Automatically handles user authentication
+- Provides real-time search suggestions
 
-## Usage Examples
+## Styling
 
-### In a page:
-```tsx
-<PuzzleForm
-  id="add-puzzle-form"
-  onSuccess={() => router.push("/puzzles")}
-  onCancel={() => router.back()}
-/>
-```
+The form uses Tailwind CSS classes and follows the design system:
 
-### In a modal:
-```tsx
-<PuzzleFormModal
-  open={open}
-  onOpenChange={setOpen}
-  onSuccess={() => setOpen(false)}
-/>
-```
+- Responsive design
+- Dark mode support
+- Accessible form controls
+- Loading states and error handling
 
-### With default values:
-```tsx
-<PuzzleForm
-  id="edit-puzzle-form"
-  defaultValues={{
-    title: "My Puzzle",
-    pieceCount: 1000,
-    condition: "good",
-    isCompleted: true,
-    completions: [
-      {
-        id: "1",
-        completedDate: Date.now(),
-        completionTimeMinutes: 120,
-        notes: "Completed with family"
-      }
-    ]
-  }}
-  onSuccess={handleSuccess}
-/>
-```
+## Dependencies
 
-## Component Organization
+- `react-hook-form` - Form state management
+- `zod` - Schema validation
+- `convex` - Backend integration
+- `@clerk/nextjs` - User authentication
+- `lucide-react` - Icons
+- `sonner` - Toast notifications
 
-Following the established patterns:
-- Main component: `index.tsx`
-- Sub-components: `puzzle-form-<section>.tsx`
-- Schema: `puzzle-form-schema.ts`
-- Modal wrapper: `puzzle-form-modal.tsx`
-- Actions: `puzzle-form-actions.tsx`
+## Examples
 
-All components are compound components that can be used independently or together in the main form. 
+See the following files for complete examples:
+- `apps/web/src/app/(dashboard)/puzzles/add/page.tsx` - Card layout example
+- `apps/web/src/components/forms/puzzle-form/dialog-example.tsx` - Dialog example 

@@ -55,7 +55,6 @@ export const createPuzzleProduct = mutation({
 export const createPuzzleInstance = mutation({
   args: {
     productId: v.id("puzzleProducts"),
-    ownerId: v.id("users"),
     condition: v.union(
       v.literal("excellent"),
       v.literal("good"),
@@ -68,9 +67,23 @@ export const createPuzzleInstance = mutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
 
     const instanceId = await ctx.db.insert("puzzleInstances", {
       ...args,
+      ownerId: user._id,
       createdAt: now,
       updatedAt: now,
     });
@@ -79,121 +92,6 @@ export const createPuzzleInstance = mutation({
   },
 });
 
-// Create a puzzle product and instance together
-export const createPuzzleWithProduct = mutation({
-  args: {
-    // Product fields
-    title: v.string(),
-    description: v.optional(v.string()),
-    brand: v.optional(v.string()),
-    pieceCount: v.number(),
-    difficulty: v.optional(
-      v.union(
-        v.literal("easy"),
-        v.literal("medium"),
-        v.literal("hard"),
-        v.literal("expert"),
-      ),
-    ),
-    category: v.optional(v.id("adminCategories")),
-    tags: v.optional(v.array(v.string())),
-    images: v.array(v.string()),
-    // Instance fields
-    ownerId: v.id("users"),
-    condition: v.union(
-      v.literal("excellent"),
-      v.literal("good"),
-      v.literal("fair"),
-      v.literal("poor"),
-    ),
-    isAvailable: v.boolean(),
-    acquisitionDate: v.optional(v.number()),
-    notes: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const now = Date.now();
-    
-    // Extract product and instance fields
-    const {
-      ownerId,
-      condition,
-      isAvailable,
-      acquisitionDate,
-      notes,
-      ...productFields
-    } = args;
-
-    const searchableText = [
-      productFields.title,
-      productFields.description,
-      productFields.brand,
-      ...(productFields.tags || []),
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
-
-    // Create the puzzle product
-    const productId = await ctx.db.insert("puzzleProducts", {
-      ...productFields,
-      searchableText,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    // Create the puzzle instance
-    const instanceId = await ctx.db.insert("puzzleInstances", {
-      productId,
-      ownerId,
-      condition,
-      isAvailable,
-      acquisitionDate,
-      notes,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    return { productId, instanceId };
-  },
-});
-
-// Get puzzle product by ID
-export const getPuzzleProductById = query({
-  args: { productId: v.id("puzzleProducts") },
-  handler: async (ctx, args) => {
-    const product = await ctx.db.get(args.productId);
-    return product;
-  },
-});
-
-// Get puzzle instance by ID with product and owner info
-export const getPuzzleInstanceById = query({
-  args: { instanceId: v.id("puzzleInstances") },
-  handler: async (ctx, args) => {
-    const instance = await ctx.db.get(args.instanceId);
-    if (!instance) return null;
-
-    // Get product information
-    const product = await ctx.db.get(instance.productId);
-    if (!product) return null;
-
-    // Get owner information
-    const owner = await ctx.db.get(instance.ownerId);
-
-    return {
-      ...instance,
-      product,
-      owner: owner
-        ? {
-            _id: owner._id,
-            name: owner.name,
-            username: owner.username,
-            avatar: owner.avatar,
-          }
-        : null,
-    };
-  },
-});
 
 // Get puzzle instances by owner
 export const getPuzzleInstancesByOwner = query({
@@ -465,176 +363,6 @@ export const getPuzzleCategories = query({
   },
 });
 
-// Get popular tags
-export const getPopularTags = query({
-  args: { limit: v.optional(v.number()) },
-  handler: async (ctx, args) => {
-    const limit = args.limit ?? 20;
-    const products = await ctx.db.query("puzzleProducts").collect();
-    const tagCounts = new Map<string, number>();
-
-    products.forEach((product) => {
-      if (product.tags) {
-        product.tags.forEach((tag) => {
-          tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
-        });
-      }
-    });
-
-    return Array.from(tagCounts.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, limit)
-      .map(([tag, count]) => ({ tag, count }));
-  },
-});
-
-// Get puzzle instance by ID with collection status for current user
-export const getPuzzleInstanceWithCollectionStatus = query({
-  args: { instanceId: v.id("puzzleInstances") },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return null;
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .unique();
-
-    if (!user) {
-      return null;
-    }
-
-    const instance = await ctx.db.get(args.instanceId);
-    if (!instance) return null;
-
-    // Get product information
-    const product = await ctx.db.get(instance.productId);
-    if (!product) return null;
-
-    // Get owner information
-    const owner = await ctx.db.get(instance.ownerId);
-
-    // Get collection status for current user
-    const collection = await ctx.db
-      .query("collections")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
-      .unique();
-
-    // Get completion history for current user (for this specific instance)
-    const completions = await ctx.db
-      .query("completions")
-      .withIndex("by_user_puzzle_instance", (q) =>
-        q.eq("userId", user._id).eq("puzzleInstanceId", args.instanceId),
-      )
-      .filter((q) => q.eq(q.field("isCompleted"), true))
-      .order("desc")
-      .collect();
-
-    return {
-      ...instance,
-      product,
-      owner: owner
-        ? {
-            _id: owner._id,
-            name: owner.name,
-            username: owner.username,
-            avatar: owner.avatar,
-          }
-        : null,
-      collectionStatus: collection
-        ? {
-            isInCollection: true,
-            visibility: collection.visibility,
-            personalNotes: collection.personalNotes,
-          }
-        : {
-            isInCollection: false,
-          },
-      completionHistory: completions,
-    };
-  },
-});
-
-// Get puzzle product statistics for analytics
-export const getPuzzleProductStats = query({
-  args: { productId: v.id("puzzleProducts") },
-  handler: async (ctx, args) => {
-    const product = await ctx.db.get(args.productId);
-    if (!product) return null;
-
-    // Get all instances of this product
-    const instances = await ctx.db
-      .query("puzzleInstances")
-      .withIndex("by_product", (q) => q.eq("productId", args.productId))
-      .collect();
-
-    // Get all completions for this product (both product-level and instance-level)
-    const productCompletions = await ctx.db
-      .query("completions")
-      .withIndex("by_puzzle_product", (q) => q.eq("puzzleProductId", args.productId))
-      .filter((q) => q.eq(q.field("isCompleted"), true))
-      .collect();
-
-    // Get completions for each instance individually since 'in' operator doesn't exist
-    const instanceCompletions = await Promise.all(
-      instances.map(async (instance) => {
-        return await ctx.db
-          .query("completions")
-          .withIndex("by_puzzle_instance", (q) => q.eq("puzzleInstanceId", instance._id))
-          .filter((q) => q.eq(q.field("isCompleted"), true))
-          .collect();
-      })
-    );
-    const flatInstanceCompletions = instanceCompletions.flat();
-
-    // Combine all completions
-    const allCompletions = [...productCompletions, ...flatInstanceCompletions];
-
-    // Get collections for this product - handle each instance separately
-    const collections = await Promise.all(
-      instances.map(async (instance) => {
-        return await getManyVia(
-          ctx.db,
-          "collectionMembers",
-          "puzzleInstanceId",
-          "by_puzzle_instance",
-          instance._id,
-          "puzzleInstanceId"
-        );
-      })
-    );
-    const flatCollections = collections.flat();
-
-    const totalInstances = instances.length;
-    const totalCompletions = allCompletions.length;
-    const totalCollections = collections.length;
-    const averageRating =
-      totalCompletions > 0
-        ? allCompletions.reduce((sum, c) => sum + (c.rating ?? 0), 0) /
-          totalCompletions
-        : 0;
-    const averageTimeMinutes =
-      totalCompletions > 0
-        ? allCompletions.reduce((sum, c) => sum + c.completionTimeMinutes, 0) /
-          totalCompletions
-        : 0;
-
-    return {
-      product,
-      stats: {
-        totalInstances,
-        totalCompletions,
-        totalCollections,
-        averageRating: Math.round(averageRating * 10) / 10,
-        averageTimeMinutes: Math.round(averageTimeMinutes),
-        completionHistory: allCompletions.sort((a, b) => b.endDate - a.endDate),
-      },
-    };
-  },
-});
-
 // Get puzzle product suggestions for form auto-fill
 export const getPuzzleProductSuggestions = query({
   args: {
@@ -660,8 +388,8 @@ export const getPuzzleProductSuggestions = query({
   },
 });
 
-// Legacy functions for backward compatibility (deprecated)
-export const createPuzzle = mutation({
+// Find or create a puzzle product based on title, brand, and piece count
+export const findOrCreatePuzzleProduct = mutation({
   args: {
     title: v.string(),
     description: v.optional(v.string()),
@@ -675,64 +403,151 @@ export const createPuzzle = mutation({
         v.literal("expert"),
       ),
     ),
+    category: v.optional(v.id("adminCategories")),
+    tags: v.optional(v.array(v.string())),
+    images: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    
+    // First, try to find an existing product with the same title, brand, and piece count
+    const existingProducts = await ctx.db
+      .query("puzzleProducts")
+      .withIndex("by_piece_count", (q) => q.eq("pieceCount", args.pieceCount))
+      .collect();
+
+    // Filter by title and brand (case-insensitive)
+    const matchingProduct = existingProducts.find(product => {
+      const titleMatch = product.title.toLowerCase() === args.title.toLowerCase();
+      const brandMatch = (product.brand || "").toLowerCase() === (args.brand || "").toLowerCase();
+      return titleMatch && brandMatch;
+    });
+
+    if (matchingProduct) {
+      // Return existing product
+      return matchingProduct._id;
+    }
+
+    // Create new product if none exists
+    const searchableText = [
+      args.title,
+      args.description,
+      args.brand,
+      ...(args.tags || []),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    const productId = await ctx.db.insert("puzzleProducts", {
+      ...args,
+      searchableText,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return productId;
+  },
+});
+
+// Create a puzzle instance with existing or new product
+export const createPuzzleInstanceWithProduct = mutation({
+  args: {
+    // Product fields
+    title: v.string(),
+    description: v.optional(v.string()),
+    brand: v.optional(v.string()),
+    pieceCount: v.number(),
+    difficulty: v.optional(
+      v.union(
+        v.literal("easy"),
+        v.literal("medium"),
+        v.literal("hard"),
+        v.literal("expert"),
+      ),
+    ),
+    category: v.optional(v.id("adminCategories")),
+    tags: v.optional(v.array(v.string())),
+    images: v.array(v.string()),
     condition: v.union(
       v.literal("excellent"),
       v.literal("good"),
       v.literal("fair"),
       v.literal("poor"),
     ),
-    category: v.optional(v.id("adminCategories")),
-    tags: v.optional(v.array(v.string())),
-    images: v.array(v.string()),
-    ownerId: v.id("users"),
     isAvailable: v.boolean(),
     acquisitionDate: v.optional(v.number()),
     notes: v.optional(v.string()),
-    isCompleted: v.optional(v.boolean()),
-    completions: v.optional(v.array(v.object({
-      completedDate: v.number(),
-      completionTimeMinutes: v.optional(v.number()),
-      notes: v.optional(v.string()),
-    }))),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
     const now = Date.now();
     
     // Extract product and instance fields
     const {
-      ownerId,
       condition,
       isAvailable,
       acquisitionDate,
       notes,
-      completions,
-      isCompleted,
-      images,
       ...productFields
     } = args;
 
-    const searchableText = [
-      productFields.title,
-      productFields.description,
-      productFields.brand,
-      ...(productFields.tags || []),
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
+    // Find or create the puzzle product
+    // First, try to find an existing product with the same title, brand, and piece count
+    const existingProducts = await ctx.db
+      .query("puzzleProducts")
+      .withIndex("by_piece_count", (q) => q.eq("pieceCount", productFields.pieceCount))
+      .collect();
 
-    // Create the puzzle product
-    const productId = await ctx.db.insert("puzzleProducts", {
-      ...productFields,
-      searchableText,
-      createdAt: now,
-      updatedAt: now,
+    // Filter by title and brand (case-insensitive)
+    const matchingProduct = existingProducts.find(product => {
+      const titleMatch = product.title.toLowerCase() === productFields.title.toLowerCase();
+      const brandMatch = (product.brand || "").toLowerCase() === (productFields.brand || "").toLowerCase();
+      return titleMatch && brandMatch;
     });
+
+    let productId: any;
+    
+    if (matchingProduct) {
+      // Use existing product
+      productId = matchingProduct._id;
+    } else {
+      // Create new product if none exists
+      const searchableText = [
+        productFields.title,
+        productFields.description,
+        productFields.brand,
+        ...(productFields.tags || []),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      productId = await ctx.db.insert("puzzleProducts", {
+        ...productFields,
+        searchableText,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
 
     // Create the puzzle instance
     const instanceId = await ctx.db.insert("puzzleInstances", {
       productId,
-      ownerId,
+      ownerId: user._id,
       condition,
       isAvailable,
       acquisitionDate,
@@ -745,63 +560,6 @@ export const createPuzzle = mutation({
   },
 });
 
-export const getPuzzleById = query({
-  args: { puzzleId: v.id("puzzleInstances") },
-  handler: async (ctx, args) => {
-    const instance = await ctx.db.get(args.puzzleId);
-    if (!instance) return null;
-
-    // Get product information
-    const product = await ctx.db.get(instance.productId);
-    if (!product) return null;
-
-    // Get owner information
-    const owner = await ctx.db.get(instance.ownerId);
-
-    return {
-      ...instance,
-      product,
-      owner: owner
-        ? {
-            _id: owner._id,
-            name: owner.name,
-            username: owner.username,
-            avatar: owner.avatar,
-          }
-        : null,
-    };
-  },
-});
-
-export const getPuzzlesByOwner = query({
-  args: {
-    ownerId: v.id("users"),
-    includeUnavailable: v.optional(v.boolean()),
-  },
-  handler: async (ctx, args) => {
-    let instances = await ctx.db
-      .query("puzzleInstances")
-      .withIndex("by_owner", (q) => q.eq("ownerId", args.ownerId))
-      .collect();
-
-    if (!args.includeUnavailable) {
-      instances = instances.filter((i) => i.isAvailable);
-    }
-
-    // Get product information for each instance
-    const instancesWithProducts = await Promise.all(
-      instances.map(async (instance) => {
-        const product = await ctx.db.get(instance.productId);
-        return {
-          ...instance,
-          product,
-        };
-      })
-    );
-
-    return instancesWithProducts.sort((a, b) => b.createdAt - a.createdAt);
-  },
-});
 
 export const browsePuzzles = query({
   args: {
@@ -1124,26 +882,3 @@ export const getPuzzleStats = query({
   },
 });
 
-export const getPuzzleSuggestions = query({
-  args: {
-    searchTerm: v.string(),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const limit = args.limit ?? 5;
-    const searchTerm = args.searchTerm.toLowerCase().trim();
-
-    if (searchTerm.length < 1) {
-      return [];
-    }
-
-    const products = await ctx.db
-      .query("puzzleProducts")
-      .withSearchIndex("by_searchable_text", (q) =>
-        q.search("searchableText", searchTerm),
-      )
-      .take(limit);
-
-    return products;
-  },
-});

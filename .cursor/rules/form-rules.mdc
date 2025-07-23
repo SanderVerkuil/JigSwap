@@ -1,0 +1,983 @@
+---
+description: form generation and refactoring
+alwaysApply: false
+---
+# Form Generation and Refactoring Rules
+
+## Core Principles
+
+### 1. Compound Form Architecture
+Forms must be implemented as compound components that can be used in multiple contexts:
+- **Flexible Layout**: Forms should work in dialogs, cards, pages, or any container
+- **Context-Aware**: Form elements should adapt to their container context
+- **Reusable**: Same form should work in different UI patterns
+
+### 2. Required Technologies
+- **Zod**: All form validation schemas must use Zod
+- **React Hook Form**: All form state management must use react-hook-form
+- **TypeScript**: Full type safety with proper interfaces
+- **shadcn/ui**: Use existing components from the `components` library
+- **next-intl**: All text content must be internationalized
+
+## Form Structure
+
+### Directory Organization
+```
+src/components/forms/
+├── <form-name>/
+│   ├── index.tsx (main compound component)
+│   ├── <form-name>-schema.ts (Zod validation schema)
+│   ├── <form-name>-types.ts (TypeScript interfaces)
+│   ├── <form-name>-context.tsx (form context provider)
+│   ├── <form-name>-root.tsx (root component)
+│   ├── <form-name>-content.tsx (form content)
+│   ├── <form-name>-actions.tsx (form actions)
+│   ├── <form-name>-title.tsx (form title)
+│   └── README.md (usage documentation)
+```
+
+### Component Structure
+
+#### Main Export (`index.tsx`)
+```tsx
+import { FormRoot } from './<form-name>-root';
+import { FormContent } from './<form-name>-content';
+import { FormActions } from './<form-name>-actions';
+import { FormTitle } from './<form-name>-title';
+
+// Compound component with all parts
+export const Form = Object.assign(FormRoot, {
+  Root: FormRoot,
+  Content: FormContent,
+  Actions: FormActions,
+  Title: FormTitle,
+});
+
+// Default export for simple usage
+export default Form;
+```
+
+#### Schema Definition (`<form-name>-schema.ts`)
+```tsx
+import { z } from 'zod';
+
+export const formSchema = z.object({
+  // Define your form fields with proper validation
+  fieldName: z.string().min(1, 'Field is required'),
+  // ... other fields
+});
+
+export type FormData = z.infer<typeof formSchema>;
+```
+
+#### Context Provider (`<form-name>-context.tsx`)
+```tsx
+import { createContext, useContext } from 'react';
+import { UseFormReturn } from 'react-hook-form';
+import { FormData } from './<form-name>-types';
+
+interface FormContextValue {
+  form: UseFormReturn<FormData>;
+  formId: string;
+  isPending: boolean;
+}
+
+const FormContext = createContext<FormContextValue | null>(null);
+
+export const useFormContext = () => {
+  const context = useContext(FormContext);
+  if (!context) {
+    throw new Error('useFormContext must be used within FormProvider');
+  }
+  return context;
+};
+
+export const FormProvider = FormContext.Provider;
+```
+
+#### Root Component (`<form-name>-root.tsx`)
+```tsx
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { FormProvider } from './<form-name>-context';
+import { formSchema, FormData } from './<form-name>-schema';
+
+interface FormRootProps {
+  onSubmit: (data: FormData) => void | Promise<void>;
+  onCancel?: () => void;
+  pending?: boolean;
+  defaultValues?: Partial<FormData>;
+  children: React.ReactNode;
+}
+
+export const FormRoot = ({
+  onSubmit,
+  onCancel,
+  pending = false,
+  defaultValues,
+  children
+}: FormRootProps) => {
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues,
+  });
+
+  const formId = useId();
+  
+  const handleSubmit = form.handleSubmit(async (data) => {
+    try {
+      await onSubmit(data);
+    } catch (error) {
+      // Handle error appropriately
+    }
+  });
+
+  return (
+    <FormProvider value={{ form, formId, isPending: pending }}>
+      {children}
+    </FormProvider>
+  );
+};
+```
+
+#### Content Component (`<form-name>-content.tsx`)
+```tsx
+import { useFormContext } from './<form-name>-context';
+import { useTranslations } from 'next-intl';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+
+export const FormContent = () => {
+  const { form, formId } = useFormContext();
+  const t = useTranslations('forms.<form-name>');
+
+  return (
+    <Form {...form}>
+      <form id={formId} onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="fieldName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('fieldName.label')}</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder={t('fieldName.placeholder')}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </form>
+    </Form>
+  );
+};
+```
+
+#### Actions Component (`<form-name>-actions.tsx`)
+```tsx
+import { useFormContext } from './<form-name>-context';
+import { useTranslations } from 'next-intl';
+import { Button } from '@/components/ui/button';
+
+export const FormActions = () => {
+  const { formId, isPending } = useFormContext();
+  const t = useTranslations('forms.<form-name>');
+
+  return (
+    <div className="flex gap-2 justify-end">
+      <Button
+        type="submit"
+        form={formId}
+        disabled={isPending}
+      >
+        {isPending ? t('actions.submitting') : t('actions.submit')}
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={onCancel}
+        disabled={isPending}
+      >
+        {t('actions.cancel')}
+      </Button>
+    </div>
+  );
+};
+```
+
+#### Title Component (`<form-name>-title.tsx`)
+```tsx
+import { useTranslations } from 'next-intl';
+
+interface FormTitleProps {
+  children?: React.ReactNode;
+}
+
+export const FormTitle = ({ children }: FormTitleProps) => {
+  const t = useTranslations('forms.<form-name>');
+  
+  return (
+    <h2 className="text-lg font-semibold">
+      {children || t('title')}
+    </h2>
+  );
+};
+```
+
+## Usage Patterns
+
+### 1. Dialog Usage
+```tsx
+<Dialog open={open} onOpenChange={setOpen}>
+  <Form.Root onSubmit={handleSubmit} onCancel={() => setOpen(false)} pending={isPending}>
+    <Dialog.Title>
+      <Form.Title>Form Title</Form.Title>
+    </Dialog.Title>
+    <Dialog.Content>
+      <Form.Content />
+    </Dialog.Content>
+    <Dialog.Footer>
+      <Form.Actions />
+    </Dialog.Footer>
+  </Form.Root>
+</Dialog>
+```
+
+### 2. Card Usage
+```tsx
+<Form.Root onSubmit={handleSubmit} onCancel={handleCancel} pending={isPending}>
+  <Card>
+    <CardHeader>
+      <Form.Title>Form Title</Form.Title>
+    </CardHeader>
+    <CardBody>
+      <Form.Content />
+    </CardBody>
+    <CardFooter>
+      <Form.Actions />
+    </CardFooter>
+  </Card>
+</Form.Root>
+```
+
+### 3. Simple Usage
+```tsx
+<Form onSubmit={handleSubmit} onCancel={handleCancel} pending={isPending} />
+```
+
+## Implementation Guidelines
+
+### 1. shadcn/ui Components
+- Use existing shadcn/ui components from the `components` library
+- Required components for forms:
+  - `@/components/ui/form` - Form, FormControl, FormField, FormItem, FormLabel, FormMessage
+  - `@/components/ui/input` - Input component
+  - `@/components/ui/textarea` - Textarea component
+  - `@/components/ui/select` - Select components
+  - `@/components/ui/checkbox` - Checkbox component
+  - `@/components/ui/radio-group` - Radio group components
+  - `@/components/ui/button` - Button component
+- Install missing components using: `npx shadcn@latest add <component-name>`
+- Follow shadcn/ui patterns and styling conventions
+
+### 2. Form Validation
+- Use Zod schemas for all validation
+- Provide meaningful error messages
+- Include proper accessibility attributes
+- Handle async validation when needed
+
+### 3. Type Safety
+- Define proper TypeScript interfaces
+- Use Zod inference for form data types
+- Ensure all props are properly typed
+- Export types for external use
+
+### 4. Accessibility
+- Include proper ARIA labels and descriptions
+- Use semantic HTML elements
+- Provide error announcements
+- Ensure keyboard navigation works
+
+### 5. Error Handling
+- Display validation errors clearly
+- Handle submission errors gracefully
+- Provide user feedback for all states
+- Include loading states
+
+### 6. Internationalization
+- All text content must be internationalized using `next-intl`
+- Use translation keys for labels, placeholders, and messages
+- Support multiple languages (English and Dutch)
+- Follow existing i18n patterns in `apps/web/locales/`
+- Translation keys should follow the pattern: `forms.<form-name>.<field-name>.<property>`
+- Example translation structure:
+  ```json
+  {
+    "forms": {
+      "user-form": {
+        "title": "User Information",
+        "email": {
+          "label": "Email Address",
+          "placeholder": "Enter your email"
+        },
+        "actions": {
+          "submit": "Save User",
+          "submitting": "Saving...",
+          "cancel": "Cancel"
+        }
+      }
+    }
+  }
+  ```
+  
+### Translation File Structure
+Forms should add their translations to the appropriate locale files:
+- `apps/web/locales/en.json` - English translations
+- `apps/web/locales/nl.json` - Dutch translations
+- `apps/web/locales/source.json` - Source strings (managed by Crowdin)
+
+Example form translation structure:
+```json
+{
+  "forms": {
+    "user-form": {
+      "title": "User Information",
+      "description": "Update your personal information",
+      "email": {
+        "label": "Email Address",
+        "placeholder": "Enter your email address",
+        "error": {
+          "required": "Email is required",
+          "invalid": "Please enter a valid email address"
+        }
+      },
+      "name": {
+        "label": "Full Name",
+        "placeholder": "Enter your full name",
+        "error": {
+          "required": "Name is required",
+          "min": "Name must be at least 2 characters"
+        }
+      },
+      "actions": {
+        "submit": "Save Changes",
+        "submitting": "Saving...",
+        "cancel": "Cancel"
+      },
+      "errors": {
+        "submissionFailed": "Failed to save changes. Please try again.",
+        "networkError": "Network error. Please check your connection."
+      }
+    }
+  }
+}
+```
+
+## Common Patterns
+
+### Async Form Submission
+```tsx
+import { useTranslations } from 'next-intl';
+
+const handleSubmit = async (data: FormData) => {
+  const t = useTranslations('forms.<form-name>');
+  
+  try {
+    await submitToAPI(data);
+    // Handle success
+  } catch (error) {
+    // Handle error
+    form.setError('root', {
+      type: 'manual',
+      message: t('errors.submissionFailed')
+    });
+  }
+};
+```
+
+## Testing Guidelines
+
+### 1. Unit Tests
+- Test form validation logic
+- Test form submission handlers
+- Test error handling
+- Test accessibility features
+
+### 2. Integration Tests
+- Test form in different contexts (dialog, card, page)
+- Test form with different data scenarios
+- Test form with network errors
+- Test form accessibility
+
+### 3. E2E Tests
+- Test complete form workflows
+- Test form in different browsers
+- Test form with different screen readers
+- Test form performance
+
+## Migration Guidelines
+
+### When Refactoring Existing Forms
+1. Identify the form's current structure
+2. Create the new compound component structure
+3. Migrate validation to Zod schemas
+4. Update all usage locations
+5. Ensure backward compatibility during transition
+6. Update tests to match new structure
+
+### When Adding New Forms
+1. Follow the established compound pattern
+2. Create proper TypeScript interfaces
+3. Implement Zod validation schemas
+4. Include proper accessibility features
+5. Add comprehensive tests
+6. Document usage examples
+
+## Best Practices
+
+### 1. Performance
+- Use React.memo for form components when appropriate
+- Avoid unnecessary re-renders
+- Optimize form validation
+- Use proper dependency arrays in hooks
+
+### 2. Security
+- Validate all form inputs
+- Sanitize data before submission
+- Use CSRF protection when needed
+- Implement proper error boundaries
+
+### 3. UX
+- Provide clear feedback for all states
+- Use progressive disclosure for complex forms
+- Implement proper loading states
+- Handle edge cases gracefully
+
+### 4. Maintainability
+- Keep forms focused and single-purpose
+- Use consistent naming conventions
+- Document complex validation logic
+- Follow established patterns
+
+## Common Anti-Patterns to Avoid
+
+### ❌ Don't
+- Hardcode form structure in components
+- Use inline validation instead of Zod
+- Mix form state management approaches
+- Create forms that only work in one context
+- Skip accessibility features
+- Use any types instead of proper interfaces
+- Use hardcoded text instead of translations
+- Use custom form components when shadcn/ui equivalents exist
+- Skip proper form field components from shadcn/ui
+- Hardcode labels, text, or validation errors
+
+### ✅ Do
+- Use compound component pattern
+- Implement proper Zod validation
+- Use react-hook-form consistently
+- Make forms context-agnostic
+- Include full accessibility support
+- Use proper TypeScript types
+- Internationalize all text content with next-intl
+- Use shadcn/ui form components (Form, FormField, FormControl, etc.)
+- Install missing shadcn/ui components when needed
+- Follow the established translation key patterns 
+# Form Generation and Refactoring Rules
+
+## Core Principles
+
+### 1. Compound Form Architecture
+Forms must be implemented as compound components that can be used in multiple contexts:
+- **Flexible Layout**: Forms should work in dialogs, cards, pages, or any container
+- **Context-Aware**: Form elements should adapt to their container context
+- **Reusable**: Same form should work in different UI patterns
+
+### 2. Required Technologies
+- **Zod**: All form validation schemas must use Zod
+- **React Hook Form**: All form state management must use react-hook-form
+- **TypeScript**: Full type safety with proper interfaces
+- **shadcn/ui**: Use existing components from the `components` library
+- **next-intl**: All text content must be internationalized
+
+## Form Structure
+
+### Directory Organization
+```
+src/components/forms/
+├── <form-name>/
+│   ├── index.tsx (main compound component)
+│   ├── <form-name>-schema.ts (Zod validation schema)
+│   ├── <form-name>-types.ts (TypeScript interfaces)
+│   ├── <form-name>-context.tsx (form context provider)
+│   ├── <form-name>-root.tsx (root component)
+│   ├── <form-name>-content.tsx (form content)
+│   ├── <form-name>-actions.tsx (form actions)
+│   ├── <form-name>-title.tsx (form title)
+│   └── README.md (usage documentation)
+```
+
+### Component Structure
+
+#### Main Export (`index.tsx`)
+```tsx
+import { FormRoot } from './<form-name>-root';
+import { FormContent } from './<form-name>-content';
+import { FormActions } from './<form-name>-actions';
+import { FormTitle } from './<form-name>-title';
+
+// Compound component with all parts
+export const Form = Object.assign(FormRoot, {
+  Root: FormRoot,
+  Content: FormContent,
+  Actions: FormActions,
+  Title: FormTitle,
+});
+
+// Default export for simple usage
+export default Form;
+```
+
+#### Schema Definition (`<form-name>-schema.ts`)
+```tsx
+import { z } from 'zod';
+
+export const formSchema = z.object({
+  // Define your form fields with proper validation
+  fieldName: z.string().min(1, 'Field is required'),
+  // ... other fields
+});
+
+export type FormData = z.infer<typeof formSchema>;
+```
+
+#### Context Provider (`<form-name>-context.tsx`)
+```tsx
+import { createContext, useContext } from 'react';
+import { UseFormReturn } from 'react-hook-form';
+import { FormData } from './<form-name>-types';
+
+interface FormContextValue {
+  form: UseFormReturn<FormData>;
+  formId: string;
+  isPending: boolean;
+}
+
+const FormContext = createContext<FormContextValue | null>(null);
+
+export const useFormContext = () => {
+  const context = useContext(FormContext);
+  if (!context) {
+    throw new Error('useFormContext must be used within FormProvider');
+  }
+  return context;
+};
+
+export const FormProvider = FormContext.Provider;
+```
+
+#### Root Component (`<form-name>-root.tsx`)
+```tsx
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { FormProvider } from './<form-name>-context';
+import { formSchema, FormData } from './<form-name>-schema';
+
+interface FormRootProps {
+  onSubmit: (data: FormData) => void | Promise<void>;
+  onCancel?: () => void;
+  pending?: boolean;
+  defaultValues?: Partial<FormData>;
+  children: React.ReactNode;
+}
+
+export const FormRoot = ({
+  onSubmit,
+  onCancel,
+  pending = false,
+  defaultValues,
+  children
+}: FormRootProps) => {
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues,
+  });
+
+  const formId = useId();
+  
+  const handleSubmit = form.handleSubmit(async (data) => {
+    try {
+      await onSubmit(data);
+    } catch (error) {
+      // Handle error appropriately
+    }
+  });
+
+  return (
+    <FormProvider value={{ form, formId, isPending: pending }}>
+      {children}
+    </FormProvider>
+  );
+};
+```
+
+#### Content Component (`<form-name>-content.tsx`)
+```tsx
+import { useFormContext } from './<form-name>-context';
+import { useTranslations } from 'next-intl';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+
+export const FormContent = () => {
+  const { form, formId } = useFormContext();
+  const t = useTranslations('forms.<form-name>');
+
+  return (
+    <Form {...form}>
+      <form id={formId} onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="fieldName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('fieldName.label')}</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder={t('fieldName.placeholder')}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </form>
+    </Form>
+  );
+};
+```
+
+#### Actions Component (`<form-name>-actions.tsx`)
+```tsx
+import { useFormContext } from './<form-name>-context';
+import { useTranslations } from 'next-intl';
+import { Button } from '@/components/ui/button';
+
+export const FormActions = () => {
+  const { formId, isPending } = useFormContext();
+  const t = useTranslations('forms.<form-name>');
+
+  return (
+    <div className="flex gap-2 justify-end">
+      <Button
+        type="submit"
+        form={formId}
+        disabled={isPending}
+      >
+        {isPending ? t('actions.submitting') : t('actions.submit')}
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={onCancel}
+        disabled={isPending}
+      >
+        {t('actions.cancel')}
+      </Button>
+    </div>
+  );
+};
+```
+
+#### Title Component (`<form-name>-title.tsx`)
+```tsx
+import { useTranslations } from 'next-intl';
+
+interface FormTitleProps {
+  children?: React.ReactNode;
+}
+
+export const FormTitle = ({ children }: FormTitleProps) => {
+  const t = useTranslations('forms.<form-name>');
+  
+  return (
+    <h2 className="text-lg font-semibold">
+      {children || t('title')}
+    </h2>
+  );
+};
+```
+
+## Usage Patterns
+
+### 1. Dialog Usage
+```tsx
+<Dialog open={open} onOpenChange={setOpen}>
+  <Form.Root onSubmit={handleSubmit} onCancel={() => setOpen(false)} pending={isPending}>
+    <Dialog.Title>
+      <Form.Title>Form Title</Form.Title>
+    </Dialog.Title>
+    <Dialog.Content>
+      <Form.Content />
+    </Dialog.Content>
+    <Dialog.Footer>
+      <Form.Actions />
+    </Dialog.Footer>
+  </Form.Root>
+</Dialog>
+```
+
+### 2. Card Usage
+```tsx
+<Form.Root onSubmit={handleSubmit} onCancel={handleCancel} pending={isPending}>
+  <Card>
+    <CardHeader>
+      <Form.Title>Form Title</Form.Title>
+    </CardHeader>
+    <CardBody>
+      <Form.Content />
+    </CardBody>
+    <CardFooter>
+      <Form.Actions />
+    </CardFooter>
+  </Card>
+</Form.Root>
+```
+
+### 3. Simple Usage
+```tsx
+<Form onSubmit={handleSubmit} onCancel={handleCancel} pending={isPending} />
+```
+
+## Implementation Guidelines
+
+### 1. shadcn/ui Components
+- Use existing shadcn/ui components from the `components` library
+- Required components for forms:
+  - `@/components/ui/form` - Form, FormControl, FormField, FormItem, FormLabel, FormMessage
+  - `@/components/ui/input` - Input component
+  - `@/components/ui/textarea` - Textarea component
+  - `@/components/ui/select` - Select components
+  - `@/components/ui/checkbox` - Checkbox component
+  - `@/components/ui/radio-group` - Radio group components
+  - `@/components/ui/button` - Button component
+- Install missing components using: `npx shadcn@latest add <component-name>`
+- Follow shadcn/ui patterns and styling conventions
+
+### 2. Form Validation
+- Use Zod schemas for all validation
+- Provide meaningful error messages
+- Include proper accessibility attributes
+- Handle async validation when needed
+
+### 3. Type Safety
+- Define proper TypeScript interfaces
+- Use Zod inference for form data types
+- Ensure all props are properly typed
+- Export types for external use
+
+### 4. Accessibility
+- Include proper ARIA labels and descriptions
+- Use semantic HTML elements
+- Provide error announcements
+- Ensure keyboard navigation works
+
+### 5. Error Handling
+- Display validation errors clearly
+- Handle submission errors gracefully
+- Provide user feedback for all states
+- Include loading states
+
+### 6. Internationalization
+- All text content must be internationalized using `next-intl`
+- Use translation keys for labels, placeholders, and messages
+- Support multiple languages (English and Dutch)
+- Follow existing i18n patterns in `apps/web/locales/`
+- Translation keys should follow the pattern: `forms.<form-name>.<field-name>.<property>`
+- Example translation structure:
+  ```json
+  {
+    "forms": {
+      "user-form": {
+        "title": "User Information",
+        "email": {
+          "label": "Email Address",
+          "placeholder": "Enter your email"
+        },
+        "actions": {
+          "submit": "Save User",
+          "submitting": "Saving...",
+          "cancel": "Cancel"
+        }
+      }
+    }
+  }
+  ```
+  
+### Translation File Structure
+Forms should add their translations to the appropriate locale files:
+- `apps/web/locales/en.json` - English translations
+- `apps/web/locales/nl.json` - Dutch translations
+- `apps/web/locales/source.json` - Source strings (managed by Crowdin)
+
+Example form translation structure:
+```json
+{
+  "forms": {
+    "user-form": {
+      "title": "User Information",
+      "description": "Update your personal information",
+      "email": {
+        "label": "Email Address",
+        "placeholder": "Enter your email address",
+        "error": {
+          "required": "Email is required",
+          "invalid": "Please enter a valid email address"
+        }
+      },
+      "name": {
+        "label": "Full Name",
+        "placeholder": "Enter your full name",
+        "error": {
+          "required": "Name is required",
+          "min": "Name must be at least 2 characters"
+        }
+      },
+      "actions": {
+        "submit": "Save Changes",
+        "submitting": "Saving...",
+        "cancel": "Cancel"
+      },
+      "errors": {
+        "submissionFailed": "Failed to save changes. Please try again.",
+        "networkError": "Network error. Please check your connection."
+      }
+    }
+  }
+}
+```
+
+## Common Patterns
+
+### Async Form Submission
+```tsx
+import { useTranslations } from 'next-intl';
+
+const handleSubmit = async (data: FormData) => {
+  const t = useTranslations('forms.<form-name>');
+  
+  try {
+    await submitToAPI(data);
+    // Handle success
+  } catch (error) {
+    // Handle error
+    form.setError('root', {
+      type: 'manual',
+      message: t('errors.submissionFailed')
+    });
+  }
+};
+```
+
+## Testing Guidelines
+
+### 1. Unit Tests
+- Test form validation logic
+- Test form submission handlers
+- Test error handling
+- Test accessibility features
+
+### 2. Integration Tests
+- Test form in different contexts (dialog, card, page)
+- Test form with different data scenarios
+- Test form with network errors
+- Test form accessibility
+
+### 3. E2E Tests
+- Test complete form workflows
+- Test form in different browsers
+- Test form with different screen readers
+- Test form performance
+
+## Migration Guidelines
+
+### When Refactoring Existing Forms
+1. Identify the form's current structure
+2. Create the new compound component structure
+3. Migrate validation to Zod schemas
+4. Update all usage locations
+5. Ensure backward compatibility during transition
+6. Update tests to match new structure
+
+### When Adding New Forms
+1. Follow the established compound pattern
+2. Create proper TypeScript interfaces
+3. Implement Zod validation schemas
+4. Include proper accessibility features
+5. Add comprehensive tests
+6. Document usage examples
+
+## Best Practices
+
+### 1. Performance
+- Use React.memo for form components when appropriate
+- Avoid unnecessary re-renders
+- Optimize form validation
+- Use proper dependency arrays in hooks
+
+### 2. Security
+- Validate all form inputs
+- Sanitize data before submission
+- Use CSRF protection when needed
+- Implement proper error boundaries
+
+### 3. UX
+- Provide clear feedback for all states
+- Use progressive disclosure for complex forms
+- Implement proper loading states
+- Handle edge cases gracefully
+
+### 4. Maintainability
+- Keep forms focused and single-purpose
+- Use consistent naming conventions
+- Document complex validation logic
+- Follow established patterns
+
+## Common Anti-Patterns to Avoid
+
+### ❌ Don't
+- Hardcode form structure in components
+- Use inline validation instead of Zod
+- Mix form state management approaches
+- Create forms that only work in one context
+- Skip accessibility features
+- Use any types instead of proper interfaces
+- Use hardcoded text instead of translations
+- Use custom form components when shadcn/ui equivalents exist
+- Skip proper form field components from shadcn/ui
+- Hardcode labels, text, or validation errors
+
+### ✅ Do
+- Use compound component pattern
+- Implement proper Zod validation
+- Use react-hook-form consistently
+- Make forms context-agnostic
+- Include full accessibility support
+- Use proper TypeScript types
+- Infer TypeScript types from Zod where possible
+- Internationalize all text content with next-intl
+- Use shadcn/ui form components (Form, FormField, FormControl, etc.)
+- Install missing shadcn/ui components when needed
+- Follow the established translation key patterns 
