@@ -337,89 +337,7 @@ declare const messages: {
     "change": "Change",
     "fillInProductDetails": "Fill in the details for your new puzzle product",
     "orFillInNewProductDetails": "Or fill in details to create a new product if none exists",
-    "notFound": "Puzzle not found",
-    "form": {
-      "title": "Add New Puzzle",
-      "subtitle": "Search for existing puzzles or create a new one",
-      "steps": {
-        "findPuzzle": {
-          "title": "Find Puzzle",
-          "description": "Search or create"
-        },
-        "yourCopy": {
-          "title": "Your Copy",
-          "description": "Instance details"
-        }
-      },
-      "validation": {
-        "titleRequired": "Title is required",
-        "pieceCountMin": "Piece count must be at least 1"
-      },
-      "actions": {
-        "back": "Back",
-        "cancel": "Cancel",
-        "next": "Next",
-        "createPuzzle": "Create Puzzle",
-        "creating": "Creating..."
-      },
-      "search": {
-        "title": "Find Your Puzzle",
-        "subtitle": "Search for an existing puzzle or create a new one",
-        "searchPlaceholder": "Search puzzles by title, brand, or description...",
-        "suggestions": "Suggestions",
-        "noResultsFound": "No puzzles found matching \"{searchTerm}\"",
-        "startTyping": "Start typing to search for existing puzzles",
-        "createNewPuzzle": "Create New Puzzle",
-        "selectedPuzzle": "Selected Puzzle"
-      },
-      "create": {
-        "title": "Create New Puzzle",
-        "subtitle": "Add details about the puzzle you want to create",
-        "puzzleTitle": "Puzzle Title *",
-        "titlePlaceholder": "Enter puzzle title...",
-        "brand": "Brand",
-        "brandPlaceholder": "Enter brand name...",
-        "pieceCount": "Piece Count *",
-        "pieceCountPlaceholder": "1000",
-        "difficulty": "Difficulty",
-        "selectDifficulty": "Select difficulty",
-        "description": "Description",
-        "descriptionPlaceholder": "Describe the puzzle...",
-        "tags": "Tags",
-        "addTagPlaceholder": "Add a tag and press Enter...",
-        "backToSearch": "Back to Search"
-      },
-      "instance": {
-        "title": "Your Puzzle Details",
-        "subtitle": "Tell us about your specific puzzle copy",
-        "selectedPuzzle": "Selected Puzzle",
-        "condition": "Condition *",
-        "selectCondition": "Select condition",
-        "conditionOptions": {
-          "excellent": "Excellent - Like new",
-          "good": "Good - Minor wear",
-          "fair": "Fair - Some wear",
-          "poor": "Poor - Significant wear"
-        },
-        "availableForSwap": "Available for Swap",
-        "availableDescription": "Make this puzzle available for other users to see and request",
-        "acquisitionDate": "When did you acquire this puzzle?",
-        "personalNotes": "Personal Notes",
-        "notesPlaceholder": "Any notes about your puzzle copy...",
-        "availableInfo": {
-          "title": "Available for Swap",
-          "description": "Other users will be able to see and request this puzzle for swapping."
-        }
-      },
-      "success": {
-        "puzzleAdded": "Your puzzle has been added successfully."
-      },
-      "error": {
-        "failedToCreate": "Failed to create puzzle. Please try again.",
-        "noProductSelected": "No product selected or created",
-        "missingProductFields": "Please fill in all required product fields (title and piece count)"
-      }
-    }
+    "notFound": "Puzzle not found"
   },
   "trades": {
     "title": "Trades",
@@ -926,6 +844,112 @@ declare const messages: {
     "backToCollections": "Back to Collections",
     "manageCollections": "Manage Collections",
     "notFound": "Collection not found"
+  },
+  "forms": {
+    "puzzle-form": {
+      "title": "Add New Puzzle",
+      "step1": {
+        "title": "Product Selection",
+        "searchLabel": "Search for existing products",
+        "searchPlaceholder": "Search by title, brand, or piece count...",
+        "createNew": "Create New Product",
+        "suggestions": "Found Products",
+        "pieces": "pieces",
+        "createNewTitle": "Create New Product",
+        "titleLabel": "Title",
+        "titlePlaceholder": "Enter puzzle title",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "Describe your puzzle (optional)",
+        "brandLabel": "Brand",
+        "brandPlaceholder": "e.g. Ravensburger, Clementoni",
+        "pieceCountLabel": "Piece Count",
+        "pieceCountPlaceholder": "Enter piece count",
+        "difficultyLabel": "Difficulty",
+        "difficultyPlaceholder": "Select difficulty",
+        "difficulty": {
+          "easy": "Easy",
+          "medium": "Medium",
+          "hard": "Hard",
+          "expert": "Expert"
+        },
+        "tagsLabel": "Tags",
+        "tagsPlaceholder": "nature, colorful, challenging",
+        "selectedProduct": "Selected Product"
+      },
+      "step2": {
+        "title": "Instance Details",
+        "conditionLabel": "Condition",
+        "conditionPlaceholder": "Select condition",
+        "condition": {
+          "excellent": "Excellent",
+          "good": "Good",
+          "fair": "Fair",
+          "poor": "Poor"
+        },
+        "availableLabel": "Available for Trade",
+        "availableDescription": "Is this puzzle available for trading?",
+        "acquisitionDateLabel": "Acquisition Date",
+        "acquisitionDatePlaceholder": "Select acquisition date",
+        "notesLabel": "Notes",
+        "notesPlaceholder": "Any additional notes about this puzzle"
+      },
+      "navigation": {
+        "previous": "Previous",
+        "next": "Next",
+        "submit": "Create Puzzle"
+      },
+      "actions": {
+        "submit": "Create Puzzle",
+        "submitting": "Creating...",
+        "cancel": "Cancel"
+      }
+    },
+    "puzzle-product-form": {
+      "title": "Puzzle Product",
+      "description": "Create or update a puzzle product",
+      "title": {
+        "label": "Title",
+        "placeholder": "Enter puzzle title"
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Describe the puzzle (optional)"
+      },
+      "brand": {
+        "label": "Brand",
+        "placeholder": "e.g. Ravensburger, Clementoni"
+      },
+      "pieceCount": {
+        "label": "Piece Count",
+        "placeholder": "Enter number of pieces",
+        "custom": "Custom"
+      },
+      "difficulty": {
+        "label": "Difficulty",
+        "placeholder": "Select difficulty level",
+        "easy": "Easy",
+        "medium": "Medium",
+        "hard": "Hard",
+        "expert": "Expert"
+      },
+      "category": {
+        "label": "Category",
+        "placeholder": "e.g. Landscape, Animals, Art"
+      },
+      "tags": {
+        "label": "Tags",
+        "placeholder": "nature, colorful, challenging"
+      },
+      "actions": {
+        "submit": "Save Product",
+        "submitting": "Saving...",
+        "cancel": "Cancel"
+      },
+      "errors": {
+        "submissionFailed": "Failed to save product. Please try again.",
+        "networkError": "Network error. Please check your connection."
+      }
+    }
   }
 };
 export default messages;

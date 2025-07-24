@@ -316,88 +316,6 @@
       "found": "Gevonden Puzzels",
       "useThis": "Gebruik Dit",
       "noResults": "Geen overeenkomende puzzels gevonden"
-    },
-    "form": {
-      "title": "Nieuwe Puzzel Toevoegen",
-      "subtitle": "Zoek naar bestaande puzzels of maak een nieuwe aan",
-      "steps": {
-        "findPuzzle": {
-          "title": "Puzzel Zoeken",
-          "description": "Zoeken of aanmaken"
-        },
-        "yourCopy": {
-          "title": "Jouw Exemplaar",
-          "description": "Exemplaar details"
-        }
-      },
-      "validation": {
-        "titleRequired": "Titel is verplicht",
-        "pieceCountMin": "Aantal stukjes moet minimaal 1 zijn"
-      },
-      "actions": {
-        "back": "Terug",
-        "cancel": "Annuleren",
-        "next": "Volgende",
-        "createPuzzle": "Puzzel Aanmaken",
-        "creating": "Aanmaken..."
-      },
-      "search": {
-        "title": "Vind Je Puzzel",
-        "subtitle": "Zoek naar een bestaande puzzel of maak een nieuwe aan",
-        "searchPlaceholder": "Zoek puzzels op titel, merk of beschrijving...",
-        "suggestions": "Suggesties",
-        "noResultsFound": "Geen puzzels gevonden die overeenkomen met \"{searchTerm}\"",
-        "startTyping": "Begin met typen om naar bestaande puzzels te zoeken",
-        "createNewPuzzle": "Nieuwe Puzzel Aanmaken",
-        "selectedPuzzle": "Geselecteerde Puzzel"
-      },
-      "create": {
-        "title": "Nieuwe Puzzel Aanmaken",
-        "subtitle": "Voeg details toe over de puzzel die je wilt aanmaken",
-        "puzzleTitle": "Puzzel Titel *",
-        "titlePlaceholder": "Voer puzzel titel in...",
-        "brand": "Merk",
-        "brandPlaceholder": "Voer merknaam in...",
-        "pieceCount": "Aantal Stukjes *",
-        "pieceCountPlaceholder": "1000",
-        "difficulty": "Moeilijkheidsgraad",
-        "selectDifficulty": "Selecteer moeilijkheidsgraad",
-        "description": "Beschrijving",
-        "descriptionPlaceholder": "Beschrijf de puzzel...",
-        "tags": "Labels",
-        "addTagPlaceholder": "Voeg een label toe en druk op Enter...",
-        "backToSearch": "Terug naar Zoeken"
-      },
-      "instance": {
-        "title": "Je Puzzel Details",
-        "subtitle": "Vertel ons over je specifieke puzzel exemplaar",
-        "selectedPuzzle": "Geselecteerde Puzzel",
-        "condition": "Voorwaarde *",
-        "selectCondition": "Selecteer voorwaarde",
-        "conditionOptions": {
-          "excellent": "Uitstekend - Als nieuw",
-          "good": "Goed - Lichte slijtage",
-          "fair": "Redelijk - Enige slijtage",
-          "poor": "Slecht - Aanzienlijke slijtage"
-        },
-        "availableForSwap": "Beschikbaar voor Ruil",
-        "availableDescription": "Maak deze puzzel beschikbaar voor andere gebruikers om te zien en aan te vragen",
-        "acquisitionDate": "Wanneer heb je deze puzzel verworven?",
-        "personalNotes": "Persoonlijke Notities",
-        "notesPlaceholder": "Eventuele notities over je puzzel exemplaar...",
-        "availableInfo": {
-          "title": "Beschikbaar voor Ruil",
-          "description": "Andere gebruikers kunnen deze puzzel zien en aanvragen voor ruil."
-        }
-      },
-      "success": {
-        "puzzleAdded": "Je puzzel is succesvol toegevoegd."
-      },
-      "error": {
-        "failedToCreate": "Puzzel aanmaken mislukt. Probeer het opnieuw.",
-        "noProductSelected": "Geen product geselecteerd of aangemaakt",
-        "missingProductFields": "Vul alle vereiste productvelden in (titel en aantal stukjes)"
-      }
     }
   },
   "trades": {
@@ -903,5 +821,65 @@
     "collectionNotFound": "Collectie niet gevonden",
     "backToCollections": "Terug naar Collecties",
     "manageCollections": "Collecties Beheren"
+  },
+  "forms": {
+    "puzzle-form": {
+      "title": "Nieuwe Puzzel Toevoegen",
+      "step1": {
+        "title": "Product Selectie",
+        "searchLabel": "Zoek naar bestaande producten",
+        "searchPlaceholder": "Zoek op titel, merk of aantal stukjes...",
+        "createNew": "Nieuw Product Maken",
+        "suggestions": "Gevonden Producten",
+        "pieces": "stukjes",
+        "createNewTitle": "Nieuw Product Maken",
+        "titleLabel": "Titel",
+        "titlePlaceholder": "Voer puzzel titel in",
+        "descriptionLabel": "Beschrijving",
+        "descriptionPlaceholder": "Beschrijf je puzzel (optioneel)",
+        "brandLabel": "Merk",
+        "brandPlaceholder": "bijv. Ravensburger, Clementoni",
+        "pieceCountLabel": "Aantal Stukjes",
+        "pieceCountPlaceholder": "Voer aantal stukjes in",
+        "difficultyLabel": "Moeilijkheidsgraad",
+        "difficultyPlaceholder": "Selecteer moeilijkheidsgraad",
+        "difficulty": {
+          "easy": "Gemakkelijk",
+          "medium": "Gemiddeld",
+          "hard": "Moeilijk",
+          "expert": "Expert"
+        },
+        "tagsLabel": "Tags",
+        "tagsPlaceholder": "natuur, kleurrijk, uitdagend",
+        "selectedProduct": "Geselecteerd Product"
+      },
+      "step2": {
+        "title": "Exemplaar Details",
+        "conditionLabel": "Conditie",
+        "conditionPlaceholder": "Selecteer conditie",
+        "condition": {
+          "excellent": "Uitstekend",
+          "good": "Goed",
+          "fair": "Redelijk",
+          "poor": "Slecht"
+        },
+        "availableLabel": "Beschikbaar voor Handel",
+        "availableDescription": "Is deze puzzel beschikbaar voor handel?",
+        "acquisitionDateLabel": "Aanschafdatum",
+        "acquisitionDatePlaceholder": "Selecteer aanschafdatum",
+        "notesLabel": "Notities",
+        "notesPlaceholder": "Eventuele aanvullende notities over deze puzzel"
+      },
+      "navigation": {
+        "previous": "Vorige",
+        "next": "Volgende",
+        "submit": "Puzzel Aanmaken"
+      },
+      "actions": {
+        "submit": "Puzzel Aanmaken",
+        "submitting": "Aanmaken...",
+        "cancel": "Annuleren"
+      }
+    }
   }
 }

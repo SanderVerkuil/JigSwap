@@ -32,12 +32,14 @@ export default function PuzzlesPage() {
       : "skip",
   );
 
-  const deletePuzzle = useMutation(api.puzzles.deletePuzzle);
+  const deletePuzzle = useMutation(api.puzzles.deletePuzzleInstance);
 
   const handleDeletePuzzle = async (puzzleId: string) => {
     if (confirm("Are you sure you want to delete this puzzle?")) {
       try {
-        await deletePuzzle({ puzzleId: puzzleId as Id<"puzzleInstances"> });
+        await deletePuzzle({
+          instanceId: puzzleId as Id<"puzzleInstances">,
+        });
       } catch (error) {
         console.error("Failed to delete puzzle:", error);
       }

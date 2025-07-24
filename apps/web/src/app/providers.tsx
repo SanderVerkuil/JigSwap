@@ -1,11 +1,9 @@
 import CookieConsent from "@/components/blocks/cookie-consent";
-import { ToastProvider } from "@/components/ui/toast";
 import { ClerkClientProvider } from "@/lib/clerk-provider";
 import { ConvexClientProvider } from "@/lib/convex-provider";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { ThemeProvider } from "next-themes";
-import { Toaster } from "sonner";
 
 export async function Providers({ children }: { children: React.ReactNode }) {
   // Providing all messages to the client side
@@ -21,11 +19,8 @@ export async function Providers({ children }: { children: React.ReactNode }) {
       >
         <ClerkClientProvider>
           <ConvexClientProvider>
-            <ToastProvider>
-              {children}
-              <Toaster />
-              <CookieConsent variant="mini" />
-            </ToastProvider>
+            {children}
+            <CookieConsent variant="mini" />
           </ConvexClientProvider>
         </ClerkClientProvider>
       </ThemeProvider>
