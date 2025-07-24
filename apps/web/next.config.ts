@@ -1,9 +1,10 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import path from "path";
 
 const withNextIntl = createNextIntlPlugin({
   experimental: {
-    createMessagesDeclaration: "./locales/source.json",
+    createMessagesDeclaration: path.join(__dirname, "./locales/source.json"),
   },
 });
 
