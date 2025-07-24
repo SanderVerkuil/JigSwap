@@ -16,7 +16,13 @@ export function Header() {
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 will-change-transform">
         <div className="container mx-auto py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <HeaderLogo />
+            {/* Logo */}
+            <Link
+              href="/"
+              className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+            >
+              <HeaderLogo />
+            </Link>
           </div>
           <div className="flex items-center space-x-4">
             <LanguageSwitcher />
