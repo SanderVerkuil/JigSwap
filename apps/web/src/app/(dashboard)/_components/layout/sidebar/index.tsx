@@ -16,6 +16,7 @@ import {
   MessageSquare,
   Package,
   PlusCircle,
+  Puzzle,
   Search,
   Settings,
 } from "lucide-react";
@@ -35,6 +36,16 @@ const getItems: () => Item[] = () => {
       title: "Browse Puzzles",
       url: "/browse",
       icon: Search,
+    },
+    {
+      title: "Puzzles",
+      url: "/puzzles/products",
+      icon: Puzzle,
+      action: {
+        title: "Add Puzzle",
+        url: "/puzzles/products/add",
+        icon: PlusCircle,
+      },
     },
     {
       title: "My Puzzles",
