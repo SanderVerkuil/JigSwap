@@ -19,7 +19,10 @@ declare const messages: {
     "close": "Close",
     "back": "Back",
     "to": "to",
-    "backToHome": "← Back to Home"
+    "backToHome": "← Back to Home",
+    "removeOption": "Remove {option} option",
+    "removeOptionButton": "button to remove option",
+    "inputTag": "input tag"
   },
   "navigation": {
     "home": "Home",

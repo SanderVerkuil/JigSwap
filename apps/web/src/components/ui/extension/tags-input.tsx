@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { X as RemoveIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import React from "react";
 
 /**
@@ -52,6 +53,7 @@ export const TagsInput = React.forwardRef<HTMLDivElement, TagsInputProps>(
     },
     ref,
   ) => {
+    const t = useTranslations("common");
     const [activeIndex, setActiveIndex] = React.useState(-1);
     const [inputValue, setInputValue] = React.useState("");
     const [disableInput, setDisableInput] = React.useState(false);
@@ -296,21 +298,23 @@ export const TagsInput = React.forwardRef<HTMLDivElement, TagsInputProps>(
                 type="button"
                 size="icon"
                 variant="ghost"
-                aria-label={`Remove ${item} option`}
-                aria-roledescription="button to remove option"
+                aria-label={t("removeOption", { option: item })}
+                aria-roledescription={t("removeOptionButton")}
                 disabled={disableButton}
                 onMouseDown={mousePreventDefault}
                 onClick={() => RemoveValue(item)}
                 className="disabled:cursor-not-allowed size-4 hover:text-destructive"
               >
-                <span className="sr-only">Remove {item} option</span>
+                <span className="sr-only">
+                  {t("removeOption", { option: item })}
+                </span>
                 <RemoveIcon className="size-4 " />
               </Button>
             </Badge>
           ))}
           <Input
             tabIndex={0}
-            aria-label="input tag"
+            aria-label={t("inputTag")}
             disabled={disableInput}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
