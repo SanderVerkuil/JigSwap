@@ -21,6 +21,13 @@
     "removeOptionButton": "knop om optie te verwijderen",
     "inputTag": "invoertag"
   },
+  "notFound": {
+    "title": "Pagina Niet Gevonden",
+    "description": "Oeps! De pagina die je zoekt bestaat niet.",
+    "message": "De pagina die je probeert te openen is mogelijk verplaatst, verwijderd, of je hebt de verkeerde URL ingevoerd.",
+    "backToHome": "Terug naar Home",
+    "browsePuzzles": "Puzzels Bladeren"
+  },
   "navigation": {
     "home": "Home",
     "browse": "Puzzels Bladeren",
@@ -956,8 +963,10 @@
       }
     },
     "puzzle-product-form": {
-      "title": "Puzzelproduct",
-      "description": "Maak of update een puzzelproduct",
+      "image": {
+        "label": "Afbeelding",
+        "placeholder": "Upload een afbeelding van de puzzel"
+      },
       "title": {
         "label": "Titel",
         "placeholder": "Voer puzzeltitel in"

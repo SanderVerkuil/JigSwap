@@ -21,6 +21,13 @@
     "removeOptionButton": "button to remove option",
     "inputTag": "input tag"
   },
+  "notFound": {
+    "title": "Page Not Found",
+    "description": "Oops! The page you're looking for doesn't exist.",
+    "message": "The page you're trying to access might have been moved, deleted, or you entered the wrong URL.",
+    "backToHome": "Back to Home",
+    "browsePuzzles": "Browse Puzzles"
+  },
   "navigation": {
     "home": "Home",
     "browse": "Browse Puzzles",
@@ -956,8 +963,10 @@
       }
     },
     "puzzle-product-form": {
-      "title": "Puzzle Product",
-      "description": "Create or update a puzzle product",
+      "image": {
+        "label": "Image",
+        "placeholder": "Upload an image of the puzzle"
+      },
       "title": {
         "label": "Title",
         "placeholder": "Enter puzzle title"
