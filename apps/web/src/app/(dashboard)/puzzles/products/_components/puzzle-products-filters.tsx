@@ -85,7 +85,7 @@ export function PuzzleProductsFilters({
           value={filters.brand}
           onValueChange={(value) => updateFilter("brand", value)}
         >
-          <SelectTrigger id="brand-filter">
+          <SelectTrigger id="brand-filter" className="w-full">
             <SelectValue placeholder={t("filters.allBrands")} />
           </SelectTrigger>
           <SelectContent>
@@ -105,7 +105,7 @@ export function PuzzleProductsFilters({
           value={filters.minPieces}
           onValueChange={(value) => updateFilter("minPieces", value)}
         >
-          <SelectTrigger id="min-pieces">
+          <SelectTrigger id="min-pieces" className="w-full">
             <SelectValue placeholder={t("filters.noMinimum")} />
           </SelectTrigger>
           <SelectContent>
@@ -125,7 +125,7 @@ export function PuzzleProductsFilters({
           value={filters.maxPieces}
           onValueChange={(value) => updateFilter("maxPieces", value)}
         >
-          <SelectTrigger id="max-pieces">
+          <SelectTrigger id="max-pieces" className="w-full">
             <SelectValue placeholder={t("filters.selectMaxPieces")} />
           </SelectTrigger>
           <SelectContent>
@@ -145,7 +145,7 @@ export function PuzzleProductsFilters({
           value={filters.difficulty}
           onValueChange={(value) => updateFilter("difficulty", value)}
         >
-          <SelectTrigger id="difficulty-filter">
+          <SelectTrigger id="difficulty-filter" className="w-full">
             <SelectValue placeholder={t("filters.allDifficulties")} />
           </SelectTrigger>
           <SelectContent>
@@ -164,7 +164,7 @@ export function PuzzleProductsFilters({
           value={filters.category}
           onValueChange={(value) => updateFilter("category", value)}
         >
-          <SelectTrigger id="category-filter">
+          <SelectTrigger id="category-filter" className="w-full">
             <SelectValue placeholder={t("filters.allCategories")} />
           </SelectTrigger>
           <SelectContent>

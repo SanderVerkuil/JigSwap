@@ -9,6 +9,8 @@ import { Id } from "@jigswap/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { ArrowLeft, Calendar, Plus, Star, Tag } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 interface PuzzleProductDetailProps {
@@ -25,7 +27,14 @@ export function PuzzleProductDetail({ productId }: PuzzleProductDetailProps) {
     productId: productId as Id<"puzzleProducts">,
   });
 
-  if (product === undefined) {
+  const category = useQuery(
+    api.adminCategories.getAdminCategoryById,
+    product !== undefined && product !== null
+      ? { id: product?.category as Id<"adminCategories"> }
+      : "skip",
+  );
+
+  if (product === undefined || category === undefined) {
     return <PageLoading message={tCommon("loading")} />;
   }
 
@@ -75,21 +84,15 @@ export function PuzzleProductDetail({ productId }: PuzzleProductDetailProps) {
     return new Date(timestamp).toLocaleDateString();
   };
 
-  const handleAddPuzzle = () => {
-    router.push(`/puzzles/add?productId=${productId}`);
-  };
-
-  const handleBack = () => {
-    router.back();
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={handleBack}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {tCommon("back")}
+        <Button variant="outline" asChild>
+          <Link href="/puzzles/products">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {tCommon("back")}
+          </Link>
         </Button>
         <div className="flex-1">
           <h1 className="text-3xl font-bold">{product.title}</h1>
@@ -97,9 +100,11 @@ export function PuzzleProductDetail({ productId }: PuzzleProductDetailProps) {
             <p className="text-lg text-muted-foreground">{product.brand}</p>
           )}
         </div>
-        <Button onClick={handleAddPuzzle}>
-          <Plus className="h-4 w-4 mr-2" />
-          {t("addPuzzle")}
+        <Button asChild>
+          <Link href={`/puzzles/add?productId=${productId}`}>
+            <Plus className="h-4 w-4 mr-2" />
+            {t("addPuzzle")}
+          </Link>
         </Button>
       </div>
 
@@ -111,7 +116,7 @@ export function PuzzleProductDetail({ productId }: PuzzleProductDetailProps) {
             <Card>
               <CardContent className="p-6">
                 <div className="aspect-square rounded-lg overflow-hidden bg-muted">
-                  <img
+                  <Image
                     src={product.image}
                     alt={product.title}
                     className="w-full h-full object-cover"
@@ -196,7 +201,7 @@ export function PuzzleProductDetail({ productId }: PuzzleProductDetailProps) {
               {product.category && (
                 <div className="flex justify-between items-center">
                   <span className="font-medium">{tPuzzles("category")}</span>
-                  <span>{product.category}</span>
+                  <span>{category?.name.en}</span>
                 </div>
               )}
             </CardContent>
@@ -233,9 +238,11 @@ export function PuzzleProductDetail({ productId }: PuzzleProductDetailProps) {
               <CardTitle>{t("actions")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button onClick={handleAddPuzzle} className="w-full">
-                <Plus className="h-4 w-4 mr-2" />
-                {t("addPuzzle")}
+              <Button asChild className="w-full">
+                <Link href={`/puzzles/add?productId=${productId}`}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t("addPuzzle")}
+                </Link>
               </Button>
 
               <Button variant="outline" className="w-full">

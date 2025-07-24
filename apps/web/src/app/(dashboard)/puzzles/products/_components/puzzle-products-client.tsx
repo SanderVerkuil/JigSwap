@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { api } from "@jigswap/backend/convex/_generated/api";
-import { Id } from "@jigswap/backend/convex/_generated/dataModel";
 import { usePaginatedQuery } from "convex/react";
 import { Filter, Grid, List, Plus, Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -137,14 +136,6 @@ export function PuzzleProductsClient({
     Array.isArray(value) ? value.length > 0 : value !== "",
   );
 
-  const handleAddPuzzle = (productId: Id<"puzzleProducts">) => {
-    router.push(`/puzzles/add?productId=${productId}`);
-  };
-
-  const handleViewDetails = (productId: Id<"puzzleProducts">) => {
-    router.push(`/puzzles/products/${productId}`);
-  };
-
   if (isLoading && products.length === 0) {
     return <PageLoading message={tCommon("loading")} />;
   }
@@ -165,7 +156,7 @@ export function PuzzleProductsClient({
 
       {/* Filters and Search */}
       <Card>
-        <CardContent className="p-4">
+        <CardContent>
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Search */}
             <div className="flex-1 relative">
@@ -259,12 +250,7 @@ export function PuzzleProductsClient({
       ) : (
         <PuzzleProductViewProvider viewMode={viewMode}>
           {filteredProducts.map((product) => (
-            <PuzzleProductCard
-              key={product._id}
-              product={product}
-              onAddPuzzle={handleAddPuzzle}
-              onViewDetails={handleViewDetails}
-            />
+            <PuzzleProductCard key={product._id} product={product} />
           ))}
         </PuzzleProductViewProvider>
       )}

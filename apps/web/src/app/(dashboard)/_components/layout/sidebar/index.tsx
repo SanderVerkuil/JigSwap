@@ -76,7 +76,11 @@ const getItems: () => Item[] = () => {
 
 export function Sidebar() {
   return (
-    <AppSidebar variant="inset" collapsible="icon" className="top-[57px]">
+    <AppSidebar
+      variant="inset"
+      collapsible="icon"
+      className="h-[calc(100svh-57px)] top-[57px]"
+    >
       <SidebarContent>
         <Navigation items={getItems()} />
         <SidebarContentComponent />
