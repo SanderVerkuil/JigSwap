@@ -8,7 +8,7 @@
       "executor": "@nx/next:build",
       "outputs": ["{projectRoot}/.next"],
       "defaultConfiguration": "production",
-      "options": {},
+      "options": {"debug": true},
       "configurations": {
         "development": {
           "outputPath": ".next"
