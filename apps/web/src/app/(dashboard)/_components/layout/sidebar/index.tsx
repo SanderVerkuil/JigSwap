@@ -6,7 +6,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { CheckRole } from "@/components/utils/check-role/server";
 import {
@@ -83,8 +82,8 @@ export function Sidebar() {
         <SidebarContentComponent />
       </SidebarContent>
 
-      <SidebarSeparator className="mx-0 w-full" />
       <SidebarFooter>
+        <UserProfile />
         <CheckRole role="admin">
           <SidebarMenu>
             <SidebarMenuItem>
@@ -97,7 +96,6 @@ export function Sidebar() {
             </SidebarMenuItem>
           </SidebarMenu>
         </CheckRole>
-        <UserProfile />
       </SidebarFooter>
       <SidebarRail />
     </AppSidebar>

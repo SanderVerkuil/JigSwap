@@ -44,6 +44,7 @@ export default defineSchema({
     .index("by_category", ["category"])
     .index("by_difficulty", ["difficulty"])
     .index("by_brand", ["brand"])
+    .index("by_tags", ["tags"])
     .searchIndex("by_searchable_text", {
       searchField: "searchableText",
     }),

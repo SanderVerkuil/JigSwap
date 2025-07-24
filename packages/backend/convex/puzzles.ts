@@ -1,5 +1,8 @@
 import { v } from "convex/values";
+import { paginationOptsValidator } from "convex/server";
 import { mutation, query } from "./_generated/server";
+import { stream } from "convex-helpers/server/stream";
+import schema from "./schema";
 
 export type PuzzleSuggestion = {
   title: string;
@@ -121,6 +124,62 @@ export const getPuzzleInstancesByOwner = query({
     return instancesWithProducts.sort((a, b) => b.createdAt - a.createdAt);
   },
 });
+
+export const listAllPuzzleProducts = query({
+  args: {
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
+    const products = await ctx.db.query("puzzleProducts").paginate(args.paginationOpts);
+    return products;
+  },
+});
+
+// Get a single puzzle product by ID
+export const getPuzzleProductById = query({
+  args: {
+    productId: v.id("puzzleProducts"),
+  },
+  handler: async (ctx, args) => {
+    const product = await ctx.db.get(args.productId);
+    return product;
+  },
+});
+
+export const getAllBrands = query({
+  args: {},
+  handler: async (ctx) => {
+    const brands = await stream(ctx.db, schema)
+    .query("puzzleProducts")
+    .withIndex("by_brand", (q) => q)
+    .distinct(["brand"])
+    .collect();
+    return brands.map((brand) => brand.brand);
+  },
+})
+
+export const getAllTags = query({
+  args: {},
+  handler: async (ctx) => {
+    const tags = await stream(ctx.db, schema)
+      .query("puzzleProducts")
+      .withIndex("by_tags", (q) => q)
+      .distinct(["tags"])
+      .collect();
+    return  tags
+        .map((tag) => tag.tags)
+        .flat()
+        .filter((tags) => tags !== undefined)
+        .reduce((acc, tag) => {
+          if (tag && !acc.includes(tag)) {
+            acc.push(tag);
+          }
+          return acc;
+        }, [] as string[]);
+      ;
+  },
+})
+
 
 // Browse available puzzle instances with filters
 export const browsePuzzleInstances = query({
