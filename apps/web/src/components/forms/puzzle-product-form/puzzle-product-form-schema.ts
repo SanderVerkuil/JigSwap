@@ -25,7 +25,7 @@ export const puzzleProductFormSchema = z.object({
 
   tags: z.array(z.string()),
 
-  image: z.string().optional(),
+  image: z.instanceof(File).optional(),
 });
 
 export type PuzzleProductFormData = z.infer<typeof puzzleProductFormSchema>; 

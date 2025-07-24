@@ -28,7 +28,7 @@ export const createPuzzleProduct = mutation({
     ),
     category: v.optional(v.id("adminCategories")),
     tags: v.optional(v.array(v.string())),
-    image: v.optional(v.string()),
+    image: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -50,6 +50,14 @@ export const createPuzzleProduct = mutation({
     });
 
     return productId;
+  },
+});
+
+export const generateUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const url = await ctx.storage.generateUploadUrl();
+    return url;
   },
 });
 
@@ -131,7 +139,14 @@ export const listAllPuzzleProducts = query({
   },
   handler: async (ctx, args) => {
     const products = await ctx.db.query("puzzleProducts").paginate(args.paginationOpts);
-    return products;
+    const page = await Promise.all(products.page.map(async (product) => ({
+      ...product,
+      image: product.image ? await ctx.storage.getUrl(product.image) : undefined,
+    })));
+    return {
+      ...products,
+      page,
+    }
   },
 });
 
@@ -142,7 +157,10 @@ export const getPuzzleProductById = query({
   },
   handler: async (ctx, args) => {
     const product = await ctx.db.get(args.productId);
-    return product;
+    return {
+      ...product,
+      image: product?.image ? await ctx.storage.getUrl(product.image) : undefined,
+    };
   },
 });
 
@@ -441,7 +459,10 @@ export const getPuzzleProductSuggestions = query({
       )
       .take(limit);
 
-    return products;
+    return products.map(async (product) => ({
+      ...product,
+      image: product.image ? await ctx.storage.getUrl(product.image) : undefined,
+    }));
   },
 });
 

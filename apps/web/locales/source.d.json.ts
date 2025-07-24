@@ -959,8 +959,10 @@ declare const messages: {
       }
     },
     "puzzle-product-form": {
-      "title": "Puzzle Product",
-      "description": "Create or update a puzzle product",
+      "image": {
+        "label": "Image",
+        "placeholder": "Upload an image of the puzzle"
+      },
       "title": {
         "label": "Title",
         "placeholder": "Enter puzzle title"

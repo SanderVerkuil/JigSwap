@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { TagsInput } from "@/components/ui/extension/tags-input";
 import {
   Form,
@@ -19,7 +20,9 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@jigswap/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
+import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 import { useState } from "react";
 import { usePuzzleProductFormContext } from "./puzzle-product-form-context";
 
@@ -55,11 +58,51 @@ export const PuzzleProductFormContent = () => {
     <Form {...form}>
       <form
         id={formId}
-        onSubmit={form.handleSubmit((data) => {
-          onSubmit(data);
-        })}
+        onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-8"
       >
+        <FormField
+          control={form.control}
+          name="image"
+          render={({ field: { value, ...field } }) => (
+            <FormItem>
+              <FormLabel>{t("image.label")}</FormLabel>
+              <FormControl>
+                {value ? (
+                  <div className="flex items-center gap-2">
+                    <Image
+                      src={URL.createObjectURL(value as unknown as Blob)}
+                      alt="Puzzle Image"
+                      width={100}
+                      height={100}
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => field.onChange(null)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Input
+                    {...field}
+                    placeholder={t("image.placeholder")}
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        field.onChange(file);
+                      }
+                    }}
+                  />
+                )}
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="title"

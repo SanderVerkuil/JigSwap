@@ -35,7 +35,7 @@ export default defineSchema({
     ),
     category: v.optional(v.id("adminCategories")),
     tags: v.optional(v.array(v.string())),
-    image: v.optional(v.string()),
+    image: v.optional(v.id("_storage")),
     searchableText: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -60,7 +60,7 @@ export default defineSchema({
       v.literal("poor"),
     ),
     isAvailable: v.boolean(),
-    images: v.optional(v.array(v.string())),
+    images: v.optional(v.array(v.id("_storage"))),
     acquisitionDate: v.optional(v.number()),
     notes: v.optional(v.string()),
     createdAt: v.number(),
@@ -111,7 +111,7 @@ export default defineSchema({
     rating: v.optional(v.number()), // 1-5 stars
     review: v.optional(v.string()),
     notes: v.optional(v.string()),
-    photos: v.array(v.string()), // Array of photo URLs (max 5)
+    photos: v.array(v.id("_storage")), // Array of photo URLs (max 5)
     isCompleted: v.boolean(), // true = completed, false = in progress
     createdAt: v.number(),
     updatedAt: v.number(),

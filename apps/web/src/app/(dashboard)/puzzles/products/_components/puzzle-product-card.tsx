@@ -19,7 +19,7 @@ interface PuzzleProduct {
   difficulty?: "easy" | "medium" | "hard" | "expert";
   category?: Id<"adminCategories">;
   tags?: string[];
-  image?: string;
+  image?: string | null;
   createdAt: number;
   updatedAt: number;
 }
@@ -72,7 +72,9 @@ export function PuzzleProductCard({ product }: PuzzleProductCardProps) {
           <Image
             src={product.image}
             alt={product.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
+            width={viewMode === "list" ? 128 : 480}
+            height={viewMode === "list" ? 128 : 480}
           />
         </div>
       );

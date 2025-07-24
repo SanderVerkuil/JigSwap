@@ -29,12 +29,15 @@ export function PuzzleProductDetail({ productId }: PuzzleProductDetailProps) {
 
   const category = useQuery(
     api.adminCategories.getAdminCategoryById,
-    product !== undefined && product !== null
+    product !== undefined && product !== null && product.category !== undefined
       ? { id: product?.category as Id<"adminCategories"> }
       : "skip",
   );
 
-  if (product === undefined || category === undefined) {
+  if (
+    product === undefined ||
+    (product.category !== undefined && category === undefined)
+  ) {
     return <PageLoading message={tCommon("loading")} />;
   }
 
@@ -118,8 +121,10 @@ export function PuzzleProductDetail({ productId }: PuzzleProductDetailProps) {
                 <div className="aspect-square rounded-lg overflow-hidden bg-muted">
                   <Image
                     src={product.image}
-                    alt={product.title}
-                    className="w-full h-full object-cover"
+                    alt={product.title ?? ""}
+                    className="w-full h-full object-contain"
+                    width={512}
+                    height={512}
                   />
                 </div>
               </CardContent>
@@ -219,14 +224,14 @@ export function PuzzleProductDetail({ productId }: PuzzleProductDetailProps) {
               <div className="flex justify-between items-center">
                 <span className="font-medium">{t("created")}</span>
                 <span className="text-sm text-muted-foreground">
-                  {formatDate(product.createdAt)}
+                  {formatDate(product.createdAt ?? 0)}
                 </span>
               </div>
 
               <div className="flex justify-between items-center">
                 <span className="font-medium">{t("updated")}</span>
                 <span className="text-sm text-muted-foreground">
-                  {formatDate(product.updatedAt)}
+                  {formatDate(product.updatedAt ?? 0)}
                 </span>
               </div>
             </CardContent>

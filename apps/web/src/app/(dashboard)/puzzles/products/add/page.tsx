@@ -15,6 +15,7 @@ import { toast } from "sonner";
 export default function AddPuzzleProductPage() {
   const router = useRouter();
   const createProduct = useMutation(api.puzzles.createPuzzleProduct);
+  const generateUploadUrl = useMutation(api.puzzles.generateUploadUrl);
   const t = useTranslations("puzzles");
   const [isPending, startTransition] = useTransition();
 
@@ -22,6 +23,19 @@ export default function AddPuzzleProductPage() {
     startTransition(async () => {
       try {
         console.log("Creating product");
+        const storageId = await (async () => {
+          if (!(data.image instanceof File)) {
+            return undefined;
+          }
+          const imageUrl = await generateUploadUrl();
+          const result = await fetch(imageUrl, {
+            method: "POST",
+            headers: { "Content-Type": data.image.type },
+            body: data.image,
+          });
+          const { storageId } = await result.json();
+          return storageId;
+        })();
         await createProduct({
           title: data.title,
           description: data.description,
@@ -30,7 +44,7 @@ export default function AddPuzzleProductPage() {
           difficulty: data.difficulty,
           category: data.category as Id<"adminCategories">,
           tags: data.tags,
-          image: data.image,
+          image: storageId,
         });
 
         toast.success("Puzzle product created successfully!");
