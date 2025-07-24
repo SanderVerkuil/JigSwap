@@ -420,6 +420,7 @@ function SidebarGroupAction({
   ...props
 }: React.ComponentProps<"button"> & { asChild?: boolean }) {
   const Comp = asChild ? Slot : "button"
+  const { isMobile, state } = useSidebar();
 
   return (
     <Comp
@@ -432,6 +433,11 @@ function SidebarGroupAction({
         "group-data-[collapsible=icon]:hidden",
         className
       )}
+      onClick={() => {
+        if (isMobile) {
+          setOpenMobile(false);
+        }
+      }}
       {...props}
     />
   )
@@ -555,7 +561,8 @@ function SidebarMenuAction({
   showOnHover?: boolean
 }) {
   const Comp = asChild ? Slot : "button"
-
+  const { isMobile, state, setOpenMobile } = useSidebar()
+  
   return (
     <Comp
       data-slot="sidebar-menu-action"
@@ -572,6 +579,11 @@ function SidebarMenuAction({
           "peer-data-[active=true]/menu-button:text-sidebar-accent-foreground group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 md:opacity-0",
         className
       )}
+      onClick={() => {
+        if (isMobile) {
+          setOpenMobile(false);
+        }
+      }}
       {...props}
     />
   )
@@ -678,6 +690,7 @@ function SidebarMenuSubButton({
   isActive?: boolean
 }) {
   const Comp = asChild ? Slot : "a"
+  const { isMobile, setOpenMobile } = useSidebar();
 
   return (
     <Comp
@@ -693,6 +706,11 @@ function SidebarMenuSubButton({
         "group-data-[collapsible=icon]:hidden",
         className
       )}
+      onClick={() => {
+        if (isMobile) {
+          setOpenMobile(false);
+        }
+      }}
       {...props}
     />
   )
