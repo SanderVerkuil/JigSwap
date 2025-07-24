@@ -28,7 +28,7 @@ interface TagsInputProps extends React.HTMLAttributes<HTMLDivElement> {
 
 interface TagsInputContextProps {
   value: string[];
-  onValueChange: (value: any) => void;
+  onValueChange: (value: string[]) => void;
   inputValue: string;
   setInputValue: React.Dispatch<React.SetStateAction<string>>;
   activeIndex: number;
