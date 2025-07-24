@@ -31,7 +31,7 @@ export const PuzzleProductFormRoot = ({
             title: "",
             description: "",
             brand: "",
-            pieceCount: 0,
+            pieceCount: undefined,
             difficulty: undefined,
             category: undefined,
             tags: [],

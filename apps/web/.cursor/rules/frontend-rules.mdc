@@ -190,6 +190,12 @@ export default function Chat() {
 - Configure `staleTimes` for client-side router cache
 - Monitor Core Web Vitals
 
+### Folder structure
+- Define routes in the `src/app/<route>`, use `kebab-case` for the folder names.
+- Define specific components in the `src/app/<route>/_components` directory to keep the components close to the page
+- If a component is used in more places, move it to the `src/components/` directory.
+- You **must** write server components as the `page.tsx` to ensure SSR.
+
 ## Configuration
 
 ### Next.js Config

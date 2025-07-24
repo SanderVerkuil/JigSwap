@@ -215,6 +215,13 @@ export const TagsInput = React.forwardRef<HTMLDivElement, TagsInputProps>(
             const newIndex = activeIndex === -1 ? value.length - 1 : -1;
             setActiveIndex(newIndex);
             break;
+          case "Tab":
+            if (inputValue.trim() !== "") {
+              e.preventDefault();
+              onValueChangeHandler(inputValue);
+              setInputValue("");
+            }
+            break;
 
           case " ":
           case ",":

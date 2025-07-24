@@ -66,7 +66,6 @@ async function getCrowdinMessages(locale: string) {
 }
 
 export default getRequestConfig(async () => {
-  console.log("getRequestConfig");
   // Detect locale from cookies/headers
   const locale = await getLocale();
 

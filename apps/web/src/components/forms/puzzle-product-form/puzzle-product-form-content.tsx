@@ -35,9 +35,8 @@ export const PuzzleProductFormContent = () => {
       ? form.getValues("pieceCount")
       : "custom",
   );
-  const categories = useQuery(api.adminCategories.getAllAdminCategories);
 
-  console.log(form.getValues("pieceCount"), commonPiece);
+  const categories = useQuery(api.adminCategories.getAllAdminCategories);
 
   const t = useTranslations("forms.puzzle-product-form");
 
@@ -57,7 +56,6 @@ export const PuzzleProductFormContent = () => {
       <form
         id={formId}
         onSubmit={form.handleSubmit((data) => {
-          console.log("Form submitted", data);
           onSubmit(data);
         })}
         className="space-y-8"
@@ -140,7 +138,7 @@ export const PuzzleProductFormContent = () => {
                 <FormControl>
                   <Input
                     {...field}
-                    value={field.value || ""}
+                    value={field.value ?? ""}
                     onChange={(e) => {
                       const value = e.target.value;
                       if (value === "") {
