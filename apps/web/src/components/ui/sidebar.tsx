@@ -420,7 +420,7 @@ function SidebarGroupAction({
   ...props
 }: React.ComponentProps<"button"> & { asChild?: boolean }) {
   const Comp = asChild ? Slot : "button"
-  const { isMobile, state } = useSidebar();
+  const { isMobile, setOpenMobile } = useSidebar();
 
   return (
     <Comp
