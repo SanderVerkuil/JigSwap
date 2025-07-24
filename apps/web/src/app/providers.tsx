@@ -1,4 +1,5 @@
 import CookieConsent from "@/components/blocks/cookie-consent";
+import { PostHogPageView } from "@/components/posthog-page-view";
 import { ClerkClientProvider } from "@/lib/clerk-provider";
 import { ConvexClientProvider } from "@/lib/convex-provider";
 import { NextIntlClientProvider } from "next-intl";
@@ -21,6 +22,7 @@ export async function Providers({ children }: { children: React.ReactNode }) {
           <ConvexClientProvider>
             {children}
             <CookieConsent variant="mini" />
+            <PostHogPageView />
           </ConvexClientProvider>
         </ClerkClientProvider>
       </ThemeProvider>

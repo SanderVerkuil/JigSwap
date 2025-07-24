@@ -29,7 +29,6 @@ const mockUsers: User[] = [
   {
     id: "1",
     name: "Alice Johnson",
-    avatar: "/avatars/alice.jpg",
     lastMessage: "Hey! How's the puzzle collection coming along?",
     lastMessageTime: "2:30 PM",
     unreadCount: 2,
@@ -38,7 +37,6 @@ const mockUsers: User[] = [
   {
     id: "2",
     name: "Bob Smith",
-    avatar: "/avatars/bob.jpg",
     lastMessage: "I have a new puzzle to trade if you're interested",
     lastMessageTime: "1:45 PM",
     unreadCount: 0,
@@ -47,7 +45,6 @@ const mockUsers: User[] = [
   {
     id: "3",
     name: "Carol Davis",
-    avatar: "/avatars/carol.jpg",
     lastMessage: "Thanks for the trade! The puzzle is amazing",
     lastMessageTime: "Yesterday",
     unreadCount: 0,
@@ -56,7 +53,6 @@ const mockUsers: User[] = [
   {
     id: "4",
     name: "David Wilson",
-    avatar: "/avatars/david.jpg",
     lastMessage: "Are you still looking for that specific puzzle?",
     lastMessageTime: "Yesterday",
     unreadCount: 1,
@@ -165,7 +161,6 @@ export default function MessagesPage() {
                 >
                   <div className="relative">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={user.avatar} alt={user.name} />
                       <AvatarFallback>
                         {user.name
                           .split(" ")
