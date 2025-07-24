@@ -16,7 +16,10 @@
     "close": "Close",
     "back": "Back",
     "to": "to",
-    "backToHome": "← Back to Home"
+    "backToHome": "← Back to Home",
+    "removeOption": "Remove {option} option",
+    "removeOptionButton": "button to remove option",
+    "inputTag": "input tag"
   },
   "navigation": {
     "home": "Home",
@@ -304,7 +307,7 @@
       "timeDescription": "How long did it take to complete this puzzle? (estimated)",
       "minutes": "minutes",
       "notes": "Completion Notes",
-      "notesPlaceholder": "Any notes about this completion experience",
+      "notesPlaceholder": "Any notes about this completion",
       "addCompletion": "Add Another Completion"
     },
     "suggestions": {
@@ -313,10 +316,28 @@
       "searchExisting": "Search Existing Puzzles",
       "searchDescription": "Search for puzzles that already exist in the database to auto-fill details",
       "searchPlaceholder": "Search by title, brand, or description...",
+      "placeholder": "Search for puzzles...",
       "found": "Found Puzzles",
       "useThis": "Use This",
-      "noResults": "No matching puzzles found"
-    }
+      "noResults": "No matching puzzles found",
+      "loading": "Loading suggestions...",
+      "typeToSearch": "Type to search for puzzles..."
+    },
+    "productSelection": "Product Selection",
+    "productSelectionDescription": "Choose whether to create a new puzzle product or select an existing one",
+    "createNewProduct": "Create New Product",
+    "selectExistingProduct": "Select Existing Product",
+    "searchExistingProducts": "Search Existing Products",
+    "searchProducts": "Search Products",
+    "searchProductsPlaceholder": "Search by title, brand, or piece count...",
+    "selectProduct": "Select a product",
+    "typeToSearch": "Type to search for products...",
+    "loading": "Loading...",
+    "noResults": "No matching products found",
+    "change": "Change",
+    "fillInProductDetails": "Fill in the details for your new puzzle product",
+    "orFillInNewProductDetails": "Or fill in details to create a new product if none exists",
+    "notFound": "Puzzle not found"
   },
   "trades": {
     "title": "Trades",
@@ -387,7 +408,8 @@
     "averageRating": "Average Rating",
     "reviews": "Reviews",
     "trustLevel": "Trust Level",
-    "trustLevelDescription": "Based on completed trades and reviews"
+    "trustLevelDescription": "Based on completed trades and reviews",
+    "notFound": "User not found"
   },
   "dashboard": {
     "welcome": "Welcome back",
@@ -820,7 +842,8 @@
     "removePuzzleFromCollection": "Remove puzzle from collection",
     "collectionNotFound": "Collection not found",
     "backToCollections": "Back to Collections",
-    "manageCollections": "Manage Collections"
+    "manageCollections": "Manage Collections",
+    "notFound": "Collection not found"
   },
   "forms": {
     "puzzle-form": {
@@ -879,6 +902,52 @@
         "submit": "Create Puzzle",
         "submitting": "Creating...",
         "cancel": "Cancel"
+      }
+    },
+    "puzzle-product-form": {
+      "title": "Puzzle Product",
+      "description": "Create or update a puzzle product",
+      "title": {
+        "label": "Title",
+        "placeholder": "Enter puzzle title"
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Describe the puzzle (optional)"
+      },
+      "brand": {
+        "label": "Brand",
+        "placeholder": "e.g. Ravensburger, Clementoni"
+      },
+      "pieceCount": {
+        "label": "Piece Count",
+        "placeholder": "Enter number of pieces",
+        "custom": "Custom"
+      },
+      "difficulty": {
+        "label": "Difficulty",
+        "placeholder": "Select difficulty level",
+        "easy": "Easy",
+        "medium": "Medium",
+        "hard": "Hard",
+        "expert": "Expert"
+      },
+      "category": {
+        "label": "Category",
+        "placeholder": "e.g. Landscape, Animals, Art"
+      },
+      "tags": {
+        "label": "Tags",
+        "placeholder": "nature, colorful, challenging"
+      },
+      "actions": {
+        "submit": "Save Product",
+        "submitting": "Saving...",
+        "cancel": "Cancel"
+      },
+      "errors": {
+        "submissionFailed": "Failed to save product. Please try again.",
+        "networkError": "Network error. Please check your connection."
       }
     }
   }
