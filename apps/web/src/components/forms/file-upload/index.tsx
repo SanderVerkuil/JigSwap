@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import Compressor from "compressorjs";
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 import { useState } from "react";
 import { FieldValues } from "react-hook-form";
 
@@ -59,10 +60,12 @@ export function FileUpload({
   }
   return (
     <div className="relative flex flex-col items-center gap-2">
-      <img
+      <Image
         src={URL.createObjectURL(value as unknown as Blob)}
         alt="Puzzle Image"
         className="w-full object-contain"
+        width={1024}
+        height={1024}
       />
       <div className="absolute top-0 right-0 p-4">
         <Button
