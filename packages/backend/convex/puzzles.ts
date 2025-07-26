@@ -351,11 +351,13 @@ export const updatePuzzleProduct = mutation({
   handler: async (ctx, args) => {
     const { productId, ...updates } = args;
 
+    let searchableText = undefined;
+
     // Update searchable text if any text fields changed
     if (updates.title || updates.description || updates.brand || updates.tags) {
       const product = await ctx.db.get(productId);
       if (product) {
-        const searchableText = [
+        searchableText = [
           updates.title || product.title,
           updates.description || product.description,
           updates.brand || product.brand,
@@ -364,14 +366,13 @@ export const updatePuzzleProduct = mutation({
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
-
-        (updates as any).searchableText = searchableText;
       }
     }
 
     await ctx.db.patch(productId, {
       ...updates,
       updatedAt: Date.now(),
+      ...(searchableText ? { searchableText } : {}),
     });
   },
 });
