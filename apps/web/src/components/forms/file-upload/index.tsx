@@ -39,6 +39,8 @@ export function FileUpload({
 
             new Compressor(file, {
               quality: 0.6,
+              maxWidth: 1024,
+              maxHeight: 1024,
               success: (result) => {
                 setIsCompressing(false);
                 onChange(new File([result], file.name, { type: file.type }));
