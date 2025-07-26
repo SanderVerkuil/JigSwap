@@ -41,7 +41,7 @@ export function FileUpload({
               quality: 0.6,
               success: (result) => {
                 setIsCompressing(false);
-                onChange(result);
+                onChange(new File([result], file.name, { type: file.type }));
               },
               error: (error) => {
                 setIsCompressing(false);
