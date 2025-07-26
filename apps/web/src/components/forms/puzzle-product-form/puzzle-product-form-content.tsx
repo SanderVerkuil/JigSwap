@@ -52,7 +52,7 @@ export const PuzzleProductFormContent = () => {
   const isFileEnabled = useFeatureFlagEnabled("file-upload");
 
   if (categories === undefined) {
-    return <LoadingState message="Loading form..." />;
+    return <LoadingState message={t("loading")} />;
   }
 
   return (

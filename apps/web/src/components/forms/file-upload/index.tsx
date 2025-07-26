@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Compressor from "compressorjs";
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { FieldValues } from "react-hook-form";
 
@@ -15,36 +16,43 @@ export function FileUpload({
   placeholder,
   onChange,
 }: FileUploadProps) {
+  const t = useTranslations("forms.file-upload");
   const [isCompressing, setIsCompressing] = useState(false);
+  const [hasError, setHasError] = useState(false);
   if (isCompressing) {
-    return <div>Compressing...</div>;
+    return <div>{t("compressing")}</div>;
   }
   if (!value) {
     return (
-      <Input
-        {...field}
-        placeholder={placeholder}
-        type="file"
-        accept="image/*"
-        onChange={(e) => {
-          setIsCompressing(true);
-          e.preventDefault();
-          const file = e.target.files?.[0];
-          if (!file) return;
+      <>
+        <Input
+          {...field}
+          placeholder={placeholder}
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            setHasError(false);
+            setIsCompressing(true);
+            e.preventDefault();
+            const file = e.target.files?.[0];
+            if (!file) return;
 
-          new Compressor(file, {
-            quality: 0.6,
-            success: (result) => {
-              setIsCompressing(false);
-              onChange(result);
-            },
-            error: (error) => {
-              setIsCompressing(false);
-              onChange(file);
-            },
-          });
-        }}
-      />
+            new Compressor(file, {
+              quality: 0.6,
+              success: (result) => {
+                setIsCompressing(false);
+                onChange(result);
+              },
+              error: (error) => {
+                setIsCompressing(false);
+                setHasError(true);
+                console.error(error);
+              },
+            });
+          }}
+        />
+        {hasError && <p className="text-destructive text-sm">{t("error")}</p>}
+      </>
     );
   }
   return (

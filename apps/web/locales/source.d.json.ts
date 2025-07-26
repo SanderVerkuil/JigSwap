@@ -966,6 +966,7 @@ declare const messages: {
       }
     },
     "puzzle-product-form": {
+      "loading": "Loading form...",
       "image": {
         "label": "Image",
         "placeholder": "Upload an image of the puzzle"
@@ -1012,6 +1013,10 @@ declare const messages: {
         "submissionFailed": "Failed to save product. Please try again.",
         "networkError": "Network error. Please check your connection."
       }
+    },
+    "file-upload": {
+      "error": "Error compressing image. Please select a different file.",
+      "compressing": "Compressing..."
     }
   }
 };

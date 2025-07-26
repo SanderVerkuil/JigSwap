@@ -963,6 +963,7 @@
       }
     },
     "puzzle-product-form": {
+      "loading": "Laden van formulier...",
       "image": {
         "label": "Afbeelding",
         "placeholder": "Upload een afbeelding van de puzzel"
@@ -1009,6 +1010,10 @@
         "submissionFailed": "Product opslaan mislukt. Probeer het opnieuw.",
         "networkError": "Netwerkfout. Controleer je verbinding."
       }
+    },
+    "file-upload": {
+      "error": "Fout bij comprimeren van afbeelding. Selecteer een ander bestand.",
+      "compressing": "Comprimeren..."
     }
   }
 }
