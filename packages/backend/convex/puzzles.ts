@@ -307,7 +307,7 @@ export const browseOwnedPuzzles = query({
       }),
     );
 
-    // Apply product-based filters
+    // Apply puzzle-based filters
     let filteredInstances = ownedPuzzlesWithPuzzles;
 
     if (args.category) {
@@ -565,7 +565,7 @@ export const getOwnedPuzzleWithCollectionStatus = query({
     const ownedPuzzle = await ctx.db.get(args.ownedPuzzleId);
     if (!ownedPuzzle) return null;
 
-    // Get product information
+    // Get puzzle information
     const puzzle = await ctx.db.get(ownedPuzzle.puzzleId);
     if (!puzzle) return null;
 

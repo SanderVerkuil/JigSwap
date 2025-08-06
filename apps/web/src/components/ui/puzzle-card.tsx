@@ -61,7 +61,7 @@ export function PuzzleViewProvider({
   );
 }
 
-// Puzzle instance data type with product information
+// Puzzle instance data type with puzzle information
 interface OwnedPuzzleData {
   _id: Id<"ownedPuzzles">;
   puzzleId: Id<"puzzles">;
@@ -140,7 +140,7 @@ export function PuzzleCard({
   const t = useTranslations("puzzles");
   const { viewMode } = usePuzzleView();
 
-  // Early return if no product data
+  // Early return if no puzzle data
   if (!puzzle.puzzle) {
     return null;
   }

@@ -23,14 +23,14 @@ import { useTranslations } from "next-intl";
 import { useFeatureFlagEnabled } from "posthog-js/react";
 import { useState } from "react";
 import { FileUpload } from "../file-upload";
-import { usePuzzleProductFormContext } from "./puzzle-form-context";
+import { usePuzzleFormContext } from "./puzzle-form-context";
 
 const COMMON_PIECE_COUNTS = [
   100, 200, 300, 400, 500, 750, 1000, 1500, 2000, 3000, 4000,
 ];
 
 export const PuzzleFormContent = () => {
-  const { form, formId, onSubmit } = usePuzzleProductFormContext();
+  const { form, formId, onSubmit } = usePuzzleFormContext();
   const [commonPiece, setCommonPiece] = useState(
     COMMON_PIECE_COUNTS.includes(form.getValues("pieceCount")) ||
       form.getValues("pieceCount") === undefined

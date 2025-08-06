@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useId } from "react";
 import { useForm } from "react-hook-form";
-import { PuzzleProductFormProvider } from "./puzzle-form-context";
+import { PuzzleFormProvider } from "./puzzle-form-context";
 import { PuzzleFormData, puzzleFormSchema } from "./puzzle-form-schema";
 
 interface PuzzleFormRootProps {
@@ -38,10 +38,10 @@ export const PuzzleFormRoot = ({
   const formId = useId();
 
   return (
-    <PuzzleProductFormProvider
+    <PuzzleFormProvider
       value={{ form, formId, isPending: pending, onSubmit, onCancel }}
     >
       {children}
-    </PuzzleProductFormProvider>
+    </PuzzleFormProvider>
   );
 };

@@ -68,7 +68,7 @@ export function RecentExchangesCard() {
                     {exchange.userRole === "requester"
                       ? "Requested"
                       : "Received request for"}
-                    : {exchange.ownerPuzzleProduct?.title}
+                    : {exchange.requestedPuzzle?.title}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Status: {exchange.status}

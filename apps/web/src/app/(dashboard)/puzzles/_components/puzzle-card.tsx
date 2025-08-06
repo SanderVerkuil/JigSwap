@@ -8,7 +8,7 @@ import { Eye, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
-import { usePuzzleProductView } from "./puzzle-view-provider";
+import { usePuzzleView } from "./puzzle-view-provider";
 
 interface Puzzle {
   _id: Id<"puzzles">;
@@ -29,9 +29,9 @@ interface PuzzleCardProps {
 }
 
 export function PuzzleCard({ puzzle }: PuzzleCardProps) {
-  const t = useTranslations("puzzles.products");
+  const t = useTranslations("puzzles");
   const tPuzzles = useTranslations("puzzles");
-  const { viewMode } = usePuzzleProductView();
+  const { viewMode } = usePuzzleView();
 
   const getDifficultyColor = (difficulty?: string) => {
     switch (difficulty) {
@@ -115,7 +115,7 @@ export function PuzzleCard({ puzzle }: PuzzleCardProps) {
           </p>
         )}
 
-        {/* Product Details */}
+        {/* Puzzle Details */}
         <div className="flex flex-row w-full space-y-2 mb-4">
           <div className="flex-1 flex items-start justify-between flex-col">
             <span className="text-sm font-bold">{tPuzzles("pieceCount")}</span>
@@ -188,7 +188,7 @@ export function PuzzleCard({ puzzle }: PuzzleCardProps) {
   return (
     <Card className="h-full flex flex-col p-0 pb-6 overflow-hidden">
       <CardHeader className="p-0 relative">
-        {/* Product Image */}
+        {/* Puzzle Image */}
         {renderImage()}
 
         <div className="absolute bottom-0 left-0 w-full py-3 hover:py-6 transition-all duration-300 bg-foreground/30 hover:bg-foreground/50 backdrop-blur-sm dark:bg-background/30 dark:hover:bg-background/50">
@@ -215,7 +215,7 @@ export function PuzzleCard({ puzzle }: PuzzleCardProps) {
           </p>
         )}
 
-        {/* Product Details */}
+        {/* Puzzle Details */}
         <div className="space-y-2 mb-4">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">

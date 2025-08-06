@@ -42,10 +42,10 @@ export function PuzzleFilters({
   onFiltersChange,
   className = "",
 }: PuzzleFiltersProps) {
-  const t = useTranslations("puzzles.products");
+  const t = useTranslations("puzzles.puzzles");
   const tPuzzles = useTranslations("puzzles");
 
-  // Extract unique brands and categories from products
+  // Extract unique brands and categories from puzzles
   const brands = useQuery(api.puzzles.getAllBrands);
 
   const categories = useQuery(api.adminCategories.getAllAdminCategories);

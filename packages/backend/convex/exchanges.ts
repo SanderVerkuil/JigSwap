@@ -197,7 +197,7 @@ export const getUserExchanges = query({
     // Get related data for each trade request
     const enrichedExchanges = await Promise.all(
       exchanges.map(async (tr) => {
-        const [requester, owner, ownerPuzzle, requesterPuzzle] =
+        const [requester, owner, requestedOwnedPuzzle, offeredOwnedPuzzle] =
           await Promise.all([
             ctx.db.get(tr.initiatorId),
             ctx.db.get(tr.recipientId),
@@ -205,19 +205,21 @@ export const getUserExchanges = query({
             tr.offeredPuzzleId ? ctx.db.get(tr.offeredPuzzleId) : null,
           ]);
 
-        const [ownerPuzzleProduct, requesterPuzzleProduct] = await Promise.all([
-          ownerPuzzle ? ctx.db.get(ownerPuzzle.puzzleId) : null,
-          requesterPuzzle ? ctx.db.get(requesterPuzzle.puzzleId) : null,
+        const [requestedPuzzle, offeredPuzzle] = await Promise.all([
+          requestedOwnedPuzzle
+            ? ctx.db.get(requestedOwnedPuzzle.puzzleId)
+            : null,
+          offeredOwnedPuzzle ? ctx.db.get(offeredOwnedPuzzle.puzzleId) : null,
         ]);
 
         return {
           ...tr,
           requester,
           owner,
-          ownerPuzzle,
-          ownerPuzzleProduct,
-          requesterPuzzle,
-          requesterPuzzleProduct,
+          requestedPuzzle,
+          requestedOwnedPuzzle,
+          offeredPuzzle,
+          offeredOwnedPuzzle,
         };
       }),
     );
@@ -397,17 +399,31 @@ export const getExchangeMessages = query({
 
 // Get trade requests by owner
 export const getExchangesByOwner = query({
-  args: { recipientId: v.id("users") },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      return [];
+    }
+
     const exchanges = await ctx.db
       .query("exchanges")
-      .withIndex("by_recipient", (q) => q.eq("recipientId", args.recipientId))
+      .withIndex("by_recipient", (q) => q.eq("recipientId", user._id))
       .collect();
 
     // Get related data for each trade request
     const enrichedExchanges = await Promise.all(
       exchanges.map(async (tr) => {
-        const [requester, owner, ownerPuzzle, requesterPuzzle] =
+        const [requester, owner, requestedOwnedPuzzle, offeredOwnedPuzzle] =
           await Promise.all([
             ctx.db.get(tr.initiatorId),
             ctx.db.get(tr.recipientId),
@@ -415,19 +431,21 @@ export const getExchangesByOwner = query({
             tr.offeredPuzzleId ? ctx.db.get(tr.offeredPuzzleId) : null,
           ]);
 
-        const [ownerPuzzleProduct, requesterPuzzleProduct] = await Promise.all([
-          ownerPuzzle ? ctx.db.get(ownerPuzzle.puzzleId) : null,
-          requesterPuzzle ? ctx.db.get(requesterPuzzle.puzzleId) : null,
+        const [requestedPuzzle, offeredPuzzle] = await Promise.all([
+          requestedOwnedPuzzle
+            ? ctx.db.get(requestedOwnedPuzzle.puzzleId)
+            : null,
+          offeredOwnedPuzzle ? ctx.db.get(offeredOwnedPuzzle.puzzleId) : null,
         ]);
 
         return {
           ...tr,
           requester,
           owner,
-          ownerPuzzle,
-          ownerPuzzleProduct,
-          requesterPuzzle,
-          requesterPuzzleProduct,
+          requestedOwnedPuzzle,
+          requestedPuzzle,
+          offeredOwnedPuzzle,
+          offeredPuzzle,
         };
       }),
     );
@@ -438,17 +456,31 @@ export const getExchangesByOwner = query({
 
 // Get trade requests by requester
 export const getExchangesByRequester = query({
-  args: { initiatorId: v.id("users") },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      return [];
+    }
+
     const exchanges = await ctx.db
       .query("exchanges")
-      .withIndex("by_initiator", (q) => q.eq("initiatorId", args.initiatorId))
+      .withIndex("by_initiator", (q) => q.eq("initiatorId", user._id))
       .collect();
 
     // Get related data for each trade request
     const enrichedExchanges = await Promise.all(
       exchanges.map(async (tr) => {
-        const [requester, owner, ownerPuzzle, requesterPuzzle] =
+        const [requester, owner, requestedOwnedPuzzle, offeredOwnedPuzzle] =
           await Promise.all([
             ctx.db.get(tr.initiatorId),
             ctx.db.get(tr.recipientId),
@@ -456,19 +488,21 @@ export const getExchangesByRequester = query({
             tr.offeredPuzzleId ? ctx.db.get(tr.offeredPuzzleId) : null,
           ]);
 
-        const [ownerPuzzleProduct, requesterPuzzleProduct] = await Promise.all([
-          ownerPuzzle ? ctx.db.get(ownerPuzzle.puzzleId) : null,
-          requesterPuzzle ? ctx.db.get(requesterPuzzle.puzzleId) : null,
+        const [requestedPuzzle, offeredPuzzle] = await Promise.all([
+          requestedOwnedPuzzle
+            ? ctx.db.get(requestedOwnedPuzzle.puzzleId)
+            : null,
+          offeredOwnedPuzzle ? ctx.db.get(offeredOwnedPuzzle.puzzleId) : null,
         ]);
 
         return {
           ...tr,
           requester,
           owner,
-          ownerPuzzle,
-          ownerPuzzleProduct,
-          requesterPuzzle,
-          requesterPuzzleProduct,
+          requestedPuzzle,
+          requestedOwnedPuzzle,
+          offeredPuzzle,
+          offeredOwnedPuzzle,
         };
       }),
     );

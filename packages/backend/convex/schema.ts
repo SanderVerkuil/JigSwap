@@ -19,7 +19,7 @@ export default defineSchema({
     .index("by_email", ["email"])
     .index("by_username", ["username"]),
 
-  // Puzzle products - the actual puzzle designs that exist in the world
+  // Puzzles  - the actual puzzle designs that exist in the world
   puzzles: defineTable({
     // --- Core Info ---
     title: v.string(),
@@ -202,7 +202,7 @@ export default defineSchema({
   // Completion records for puzzles (can reference either puzzles or ownedPuzzles)
   completions: defineTable({
     userId: v.id("users"),
-    puzzleId: v.optional(v.id("puzzles")), // Reference to puzzle product (for general completions)
+    puzzleId: v.optional(v.id("puzzles")), // Reference to puzzle (for general completions)
     ownedPuzzleId: v.optional(v.id("ownedPuzzles")), // Reference to specific instance (for specific completions)
     startDate: v.number(),
     endDate: v.number(),

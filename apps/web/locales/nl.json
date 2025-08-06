@@ -1013,16 +1013,16 @@
         "label": "Tags",
         "placeholder": "natuur, kleurrijk, uitdagend"
       },
-              "actions": {
-          "submit": "Puzzel Opslaan",
-          "submitting": "Opslaan...",
-          "cancel": "Annuleren"
-        },
-        "errors": {
-          "submissionFailed": "Puzzel opslaan mislukt. Probeer het opnieuw.",
-          "networkError": "Netwerkfout. Controleer je verbinding."
-        }
+      "actions": {
+        "submit": "Puzzel Opslaan",
+        "submitting": "Opslaan...",
+        "cancel": "Annuleren"
       },
+      "errors": {
+        "submissionFailed": "Puzzel opslaan mislukt. Probeer het opnieuw.",
+        "networkError": "Netwerkfout. Controleer je verbinding."
+      }
+    },
     "file-upload": {
       "error": "Fout bij comprimeren van afbeelding. Selecteer een ander bestand.",
       "compressing": "Comprimeren..."

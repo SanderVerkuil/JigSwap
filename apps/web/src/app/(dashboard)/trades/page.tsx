@@ -47,16 +47,10 @@ export default function ExchangesPage() {
   );
 
   // Get incoming trade requests (where user is the owner)
-  const incomingExchanges = useQuery(
-    api.exchanges.getExchangesByOwner,
-    convexUser?._id ? { recipientId: convexUser._id } : "skip",
-  );
+  const incomingExchanges = useQuery(api.exchanges.getExchangesByOwner);
 
   // Get outgoing trade requests (where user is the requester)
-  const outgoingExchanges = useQuery(
-    api.exchanges.getExchangesByRequester,
-    convexUser?._id ? { initiatorId: convexUser._id } : "skip",
-  );
+  const outgoingExchanges = useQuery(api.exchanges.getExchangesByRequester);
 
   const acceptExchange = useMutation(api.exchanges.acceptExchange);
   const declineExchange = useMutation(api.exchanges.declineExchange);
@@ -304,17 +298,17 @@ export default function ExchangesPage() {
                           <Package className="h-8 w-8 text-muted-foreground" />
                           <div>
                             <p className="font-medium">
-                              {exchange.ownerPuzzleProduct?.title}
+                              {exchange.requestedPuzzle?.title}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              {exchange.ownerPuzzleProduct?.pieceCount} pieces
+                              {exchange.requestedPuzzle?.pieceCount} pieces
                             </p>
                           </div>
                         </div>
                       </div>
 
                       {/* Offered Puzzle */}
-                      {exchange.requesterPuzzle && (
+                      {exchange.offeredPuzzle && (
                         <div className="space-y-2">
                           <h4 className="font-medium text-sm text-muted-foreground">
                             {activeTab === "incoming"
@@ -325,11 +319,10 @@ export default function ExchangesPage() {
                             <Package className="h-8 w-8 text-muted-foreground" />
                             <div>
                               <p className="font-medium">
-                                {exchange.requesterPuzzleProduct?.title}
+                                {exchange.offeredPuzzle?.title}
                               </p>
                               <p className="text-sm text-muted-foreground">
-                                {exchange.requesterPuzzleProduct?.pieceCount}{" "}
-                                pieces
+                                {exchange.offeredPuzzle?.pieceCount} pieces
                               </p>
                             </div>
                           </div>

@@ -48,7 +48,7 @@ interface PuzzleDetailHeaderProps {
 export function PuzzleDetailHeader({ puzzle }: PuzzleDetailHeaderProps) {
   const t = useTranslations("puzzles");
 
-  // Early return if no product data
+  // Early return if no puzzle data
   if (!puzzle.puzzle) {
     return <div>Puzzle not found</div>;
   }

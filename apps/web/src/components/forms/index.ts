@@ -1,1 +1,1 @@
-export { PuzzleProductForm } from "./puzzle-form";
+export { PuzzleForm } from "./puzzle-form";

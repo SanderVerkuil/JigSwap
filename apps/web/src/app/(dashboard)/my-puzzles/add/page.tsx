@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  PuzzleProductForm,
-  PuzzleProductFormData,
-} from "@/components/forms/puzzle-form";
+import { PuzzleForm, PuzzleFormData } from "@/components/forms/puzzle-form";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -89,22 +86,22 @@ export default function AddPuzzlePage() {
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
-  const [selectedProduct, setSelectedProduct] = useState<{
+  const [selectedPuzzle, setSelectedPuzzle] = useState<{
     _id: Id<"puzzles">;
     title: string;
     brand?: string;
     pieceCount: number;
     image?: string | null;
   } | null>(null);
-  const [createProductOpen, setCreateProductOpen] = useState(false);
-  const [isCreatingProduct, setIsCreatingProduct] = useState(false);
-  const [isCreatingInstance, setIsCreatingInstance] = useState(false);
+  const [createPuzzleOpen, setCreatePuzzleOpen] = useState(false);
+  const [isCreatingPuzzle, setIsCreatingPuzzle] = useState(false);
+  const [isCreatingOwnedPuzzle, setIsCreatingOwnedPuzzle] = useState(false);
 
   const createInstance = useMutation(api.puzzles.createOwnedPuzzle);
   const createPuzzle = useMutation(api.puzzles.createPuzzle);
   const generateUploadUrl = useMutation(api.puzzles.generateUploadUrl);
 
-  // Get product suggestions based on search
+  // Get puzzle suggestions based on search
   const puzzleSuggestions = useQuery(
     api.puzzles.getPuzzleSuggestions,
     searchValue.length > 0 ? { searchTerm: searchValue, limit: 10 } : "skip",
@@ -113,24 +110,24 @@ export default function AddPuzzlePage() {
   // Check if there's a puzzleId in URL params
   const puzzleIdFromUrl = searchParams.get("puzzleId") as Id<"puzzles"> | null;
 
-  // If puzzleId is provided, fetch that specific product
-  const specificProduct = useQuery(
+  // If puzzleId is provided, fetch that specific puzzle
+  const specificPuzzle = useQuery(
     api.puzzles.getPuzzleById,
     puzzleIdFromUrl ? { puzzleId: puzzleIdFromUrl } : "skip",
   );
 
-  // Set selected product from URL if available
+  // Set selected puzzle from URL if available
   useEffect(() => {
-    if (puzzleIdFromUrl && specificProduct && !selectedProduct) {
-      setSelectedProduct({
-        _id: specificProduct._id,
-        title: specificProduct.title,
-        brand: specificProduct.brand,
-        pieceCount: specificProduct.pieceCount,
-        image: specificProduct.image ?? undefined,
+    if (puzzleIdFromUrl && specificPuzzle && !selectedPuzzle) {
+      setSelectedPuzzle({
+        _id: specificPuzzle._id,
+        title: specificPuzzle.title,
+        brand: specificPuzzle.brand,
+        pieceCount: specificPuzzle.pieceCount,
+        image: specificPuzzle.image ?? undefined,
       });
     }
-  }, [puzzleIdFromUrl, specificProduct, selectedProduct]);
+  }, [puzzleIdFromUrl, specificPuzzle, selectedPuzzle]);
 
   const instanceForm = useForm<InstanceFormData>({
     resolver: zodResolver(instanceFormSchema),
@@ -144,20 +141,20 @@ export default function AddPuzzlePage() {
     },
   });
 
-  const handleProductSelect = (puzzle: {
+  const handlePuzzleSelect = (puzzle: {
     _id: Id<"puzzles">;
     title: string;
     brand?: string;
     pieceCount: number;
     image?: string | null;
   }) => {
-    setSelectedProduct(puzzle);
+    setSelectedPuzzle(puzzle);
     setSearchOpen(false);
     setSearchValue(puzzle.title);
   };
 
-  const handleCreateProduct = async (data: PuzzleProductFormData) => {
-    setIsCreatingProduct(true);
+  const handleCreatePuzzle = async (data: PuzzleFormData) => {
+    setIsCreatingPuzzle(true);
     try {
       // Handle image upload if provided
       let imageId: Id<"_storage"> | undefined;
@@ -183,8 +180,8 @@ export default function AddPuzzlePage() {
         image: imageId,
       });
 
-      // Set the newly created product as selected
-      setSelectedProduct({
+      // Set the newly created puzzle as selected
+      setSelectedPuzzle({
         _id: puzzleId,
         title: data.title,
         brand: data.brand,
@@ -192,26 +189,26 @@ export default function AddPuzzlePage() {
         image: imageId,
       });
       setSearchValue(data.title);
-      setCreateProductOpen(false);
+      setCreatePuzzleOpen(false);
       toast.success(t("puzzleCreated"));
     } catch (error) {
       console.error("Failed to create puzzle:", error);
       toast.error(t("puzzleCreationFailed"));
     } finally {
-      setIsCreatingProduct(false);
+      setIsCreatingPuzzle(false);
     }
   };
 
   const handleCreateInstance = async (data: InstanceFormData) => {
-    if (!selectedProduct) {
+    if (!selectedPuzzle) {
       toast.error(t("noPuzzleSelected"));
       return;
     }
 
-    setIsCreatingInstance(true);
+    setIsCreatingOwnedPuzzle(true);
     try {
       const ownedPuzzleId = await createInstance({
-        puzzleId: selectedProduct._id,
+        puzzleId: selectedPuzzle._id,
         condition: data.condition,
         availability: {
           forTrade: data.availability.forTrade,
@@ -230,7 +227,7 @@ export default function AddPuzzlePage() {
       console.error("Failed to create puzzle instance:", error);
       toast.error(t("puzzleCreationFailed"));
     } finally {
-      setIsCreatingInstance(false);
+      setIsCreatingOwnedPuzzle(false);
     }
   };
 
@@ -248,7 +245,7 @@ export default function AddPuzzlePage() {
             <CardDescription>{t("selectPuzzleDescription")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Product Search Combobox */}
+            {/* Puzzle Search Combobox */}
             <div className="space-y-2">
               <label className="text-sm font-medium">{t("searchPuzzle")}</label>
               <Popover open={searchOpen} onOpenChange={setSearchOpen}>
@@ -259,8 +256,8 @@ export default function AddPuzzlePage() {
                     aria-expanded={searchOpen}
                     className="w-full justify-between"
                   >
-                    {selectedProduct
-                      ? selectedProduct.title
+                    {selectedPuzzle
+                      ? selectedPuzzle.title
                       : t("searchPlaceholder")}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
@@ -279,8 +276,8 @@ export default function AddPuzzlePage() {
                             {t("noPuzzlesFound")}
                           </p>
                           <Dialog
-                            open={createProductOpen}
-                            onOpenChange={setCreateProductOpen}
+                            open={createPuzzleOpen}
+                            onOpenChange={setCreatePuzzleOpen}
                           >
                             <DialogTrigger asChild>
                               <Button size="sm">
@@ -297,14 +294,14 @@ export default function AddPuzzlePage() {
                                   {t("createNewPuzzleDescription")}
                                 </DialogDescription>
                               </DialogHeader>
-                              <PuzzleProductForm
-                                onSubmit={handleCreateProduct}
-                                onCancel={() => setCreateProductOpen(false)}
-                                pending={isCreatingProduct}
+                              <PuzzleForm
+                                onSubmit={handleCreatePuzzle}
+                                onCancel={() => setCreatePuzzleOpen(false)}
+                                pending={isCreatingPuzzle}
                               >
-                                <PuzzleProductForm.Content />
-                                <PuzzleProductForm.Actions />
-                              </PuzzleProductForm>
+                                <PuzzleForm.Content />
+                                <PuzzleForm.Actions />
+                              </PuzzleForm>
                             </DialogContent>
                           </Dialog>
                         </div>
@@ -314,12 +311,12 @@ export default function AddPuzzlePage() {
                           <CommandItem
                             key={puzzle._id}
                             value={puzzle._id}
-                            onSelect={() => handleProductSelect(puzzle)}
+                            onSelect={() => handlePuzzleSelect(puzzle)}
                           >
                             <Check
                               className={cn(
                                 "mr-2 h-4 w-4",
-                                selectedProduct?._id === puzzle._id
+                                selectedPuzzle?._id === puzzle._id
                                   ? "opacity-100"
                                   : "opacity-0",
                               )}
@@ -353,23 +350,23 @@ export default function AddPuzzlePage() {
               </Popover>
             </div>
 
-            {/* Selected Product Display */}
-            {selectedProduct && (
+            {/* Selected Puzzle Display */}
+            {selectedPuzzle && (
               <Card className="border-primary/20 bg-primary/5">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-4">
-                    {selectedProduct.image && (
+                    {selectedPuzzle.image && (
                       <img
-                        src={selectedProduct.image}
-                        alt={selectedProduct.title}
+                        src={selectedPuzzle.image}
+                        alt={selectedPuzzle.title}
                         className="w-16 h-16 rounded object-cover"
                       />
                     )}
                     <div className="flex-1">
-                      <h3 className="font-semibold">{selectedProduct.title}</h3>
+                      <h3 className="font-semibold">{selectedPuzzle.title}</h3>
                       <p className="text-sm text-muted-foreground">
-                        {selectedProduct.brand && `${selectedProduct.brand} • `}
-                        {selectedProduct.pieceCount} {t("pieces")}
+                        {selectedPuzzle.brand && `${selectedPuzzle.brand} • `}
+                        {selectedPuzzle.pieceCount} {t("pieces")}
                       </p>
                     </div>
                   </div>
@@ -378,7 +375,7 @@ export default function AddPuzzlePage() {
             )}
 
             {/* Instance Details Form */}
-            {selectedProduct && (
+            {selectedPuzzle && (
               <Form {...instanceForm}>
                 <form
                   onSubmit={instanceForm.handleSubmit(handleCreateInstance)}
@@ -458,10 +455,10 @@ export default function AddPuzzlePage() {
                   <div className="flex gap-2 pt-4">
                     <Button
                       type="submit"
-                      disabled={isCreatingInstance}
+                      disabled={isCreatingOwnedPuzzle}
                       className="flex-1"
                     >
-                      {isCreatingInstance
+                      {isCreatingOwnedPuzzle
                         ? tCommon("saving")
                         : t("addToCollection")}
                     </Button>

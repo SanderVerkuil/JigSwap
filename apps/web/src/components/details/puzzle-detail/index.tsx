@@ -52,7 +52,7 @@ export function PuzzleDetail({
     return <div>{t("notFound")}</div>;
   }
 
-  // Early return if no product data
+  // Early return if no puzzle data
   if (!ownedPuzzle.puzzle) {
     return <div>{t("notFound")}</div>;
   }

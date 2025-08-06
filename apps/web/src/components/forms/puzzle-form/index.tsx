@@ -4,7 +4,7 @@ import { PuzzleFormRoot } from "./puzzle-form-root";
 import { PuzzleFormTitle } from "./puzzle-form-title";
 
 // Compound component with all parts
-export const PuzzleProductForm = Object.assign(PuzzleFormRoot, {
+export const PuzzleForm = Object.assign(PuzzleFormRoot, {
   Root: PuzzleFormRoot,
   Content: PuzzleFormContent,
   Actions: PuzzleFormActions,
@@ -12,7 +12,7 @@ export const PuzzleProductForm = Object.assign(PuzzleFormRoot, {
 });
 
 // Default export for simple usage
-export default PuzzleProductForm;
+export default PuzzleForm;
 
 // Export types
-export type { PuzzleFormData as PuzzleProductFormData } from "./puzzle-form-schema";
+export type { PuzzleFormData } from "./puzzle-form-schema";

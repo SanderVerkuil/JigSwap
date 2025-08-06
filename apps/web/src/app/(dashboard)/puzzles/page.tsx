@@ -1,5 +1,5 @@
 import { PuzzlesClient } from "./_components/puzzle-client";
 
-export default function PuzzlesProductsPage() {
+export default function PuzzlesPage() {
   return <PuzzlesClient />;
 }

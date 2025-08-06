@@ -11,14 +11,14 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PuzzleCard } from "./puzzle-card";
 import { PuzzleFilters } from "./puzzle-filters";
-import { PuzzleProductViewProvider } from "./puzzle-view-provider";
+import { PuzzleViewProvider } from "./puzzle-view-provider";
 
 interface PuzzlesClientProps {
   className?: string;
 }
 
 export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
-  const t = useTranslations("puzzles.products");
+  const t = useTranslations("puzzles.puzzles");
   const tCommon = useTranslations("common");
   const tBrowse = useTranslations("browse");
 
@@ -38,7 +38,7 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
 
   // Use paginated query for infinite scroll
   const {
-    results: products,
+    results: puzzles,
     status,
     loadMore,
     isLoading,
@@ -73,38 +73,38 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
     return () => observer.unobserve(element);
   }, [handleObserver]);
 
-  // Filter products based on current filters
-  const filteredProducts = products.filter((product) => {
+  // Filter puzzles based on current filters
+  const filteredPuzzles = puzzles.filter((puzzle) => {
     const matchesSearch =
       !filters.searchTerm ||
-      product.title.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-      (product.description &&
-        product.description
+      puzzle.title.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+      (puzzle.description &&
+        puzzle.description
           .toLowerCase()
           .includes(filters.searchTerm.toLowerCase())) ||
-      (product.brand &&
-        product.brand.toLowerCase().includes(filters.searchTerm.toLowerCase()));
+      (puzzle.brand &&
+        puzzle.brand.toLowerCase().includes(filters.searchTerm.toLowerCase()));
 
     const matchesBrand =
       !filters.brand ||
-      (product.brand &&
-        product.brand.toLowerCase().includes(filters.brand.toLowerCase()));
+      (puzzle.brand &&
+        puzzle.brand.toLowerCase().includes(filters.brand.toLowerCase()));
 
     const matchesMinPieces =
-      !filters.minPieces || product.pieceCount >= parseInt(filters.minPieces);
+      !filters.minPieces || puzzle.pieceCount >= parseInt(filters.minPieces);
 
     const matchesMaxPieces =
-      !filters.maxPieces || product.pieceCount <= parseInt(filters.maxPieces);
+      !filters.maxPieces || puzzle.pieceCount <= parseInt(filters.maxPieces);
 
     const matchesDifficulty =
-      !filters.difficulty || product.difficulty === filters.difficulty;
+      !filters.difficulty || puzzle.difficulty === filters.difficulty;
 
     const matchesCategory =
-      !filters.category || product.category === filters.category;
+      !filters.category || puzzle.category === filters.category;
 
     const matchesTags =
       filters.tags.length === 0 ||
-      (product.tags && filters.tags.some((tag) => product.tags!.includes(tag)));
+      (puzzle.tags && filters.tags.some((tag) => puzzle.tags!.includes(tag)));
 
     return (
       matchesSearch &&
@@ -133,7 +133,7 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
     Array.isArray(value) ? value.length > 0 : value !== "",
   );
 
-  if (isLoading && products.length === 0) {
+  if (isLoading && puzzles.length === 0) {
     return <PageLoading message={tCommon("loading")} />;
   }
 
@@ -147,7 +147,7 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
         </div>
         <Link href="/puzzles/add">
           <Plus className="h-4 w-4 mr-2" />
-          {t("addProduct")}
+          {t("addPuzzle")}
         </Link>
       </div>
 
@@ -225,12 +225,12 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
           </Button>
         </div>
         <div className="text-sm text-muted-foreground">
-          {t("productsFound", { count: filteredProducts.length })}
+          {t("puzzlesFound", { count: filteredPuzzles.length })}
         </div>
       </div>
 
-      {/* Products Grid/List */}
-      {filteredProducts.length === 0 ? (
+      {/* Puzzles Grid/List */}
+      {filteredPuzzles.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center">
             <div className="text-muted-foreground">
@@ -238,18 +238,18 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
                 <Search className="h-8 w-8" />
               </div>
               <h3 className="text-lg font-medium mb-2">
-                {t("noProductsFound")}
+                {t("noPuzzlesFound")}
               </h3>
               <p className="text-sm">{t("tryDifferentFilters")}</p>
             </div>
           </CardContent>
         </Card>
       ) : (
-        <PuzzleProductViewProvider viewMode={viewMode}>
-          {filteredProducts.map((puzzle) => (
+        <PuzzleViewProvider viewMode={viewMode}>
+          {filteredPuzzles.map((puzzle) => (
             <PuzzleCard key={puzzle._id} puzzle={puzzle} />
           ))}
-        </PuzzleProductViewProvider>
+        </PuzzleViewProvider>
       )}
 
       {/* Infinite Scroll Observer */}

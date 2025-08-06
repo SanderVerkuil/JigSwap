@@ -10,18 +10,16 @@ interface PuzzleFormContextValue {
   onCancel?: () => void;
 }
 
-const PuzzleProductFormContext = createContext<PuzzleFormContextValue | null>(
-  null,
-);
+const PuzzleFormContext = createContext<PuzzleFormContextValue | null>(null);
 
-export const usePuzzleProductFormContext = () => {
-  const context = useContext(PuzzleProductFormContext);
+export const usePuzzleFormContext = () => {
+  const context = useContext(PuzzleFormContext);
   if (!context) {
     throw new Error(
-      "usePuzzleProductFormContext must be used within PuzzleProductFormProvider",
+      "usePuzzleFormContext must be used within PuzzleFormProvider",
     );
   }
   return context;
 };
 
-export const PuzzleProductFormProvider = PuzzleProductFormContext.Provider;
+export const PuzzleFormProvider = PuzzleFormContext.Provider;

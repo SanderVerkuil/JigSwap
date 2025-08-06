@@ -19,7 +19,7 @@ interface PuzzleDetailProps {
 
 export function PuzzleDetail({ puzzleId }: PuzzleDetailProps) {
   const router = useRouter();
-  const t = useTranslations("puzzles.products");
+  const t = useTranslations("puzzles");
   const tPuzzles = useTranslations("puzzles");
   const tCommon = useTranslations("common");
 
@@ -35,7 +35,7 @@ export function PuzzleDetail({ puzzleId }: PuzzleDetailProps) {
   );
 
   if (puzzle === null) {
-    return <h1>Product not found</h1>;
+    return <h1>Puzzle not found</h1>;
   }
 
   if (
@@ -118,7 +118,7 @@ export function PuzzleDetail({ puzzleId }: PuzzleDetailProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Product Image */}
+          {/* Puzzle Image */}
           {puzzle.image ? (
             <Card>
               <CardContent className="p-6">
@@ -182,10 +182,10 @@ export function PuzzleDetail({ puzzleId }: PuzzleDetailProps) {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Product Details */}
+          {/* Puzzle Details */}
           <Card>
             <CardHeader>
-              <CardTitle>{t("productDetails")}</CardTitle>
+              <CardTitle>{t("puzzleDetails")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center">

@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  PuzzleProductForm,
-  PuzzleProductFormData,
-} from "@/components/forms/puzzle-form";
+import { PuzzleForm, PuzzleFormData } from "@/components/forms/puzzle-form";
 import { api } from "@jigswap/backend/convex/_generated/api";
 import { Id } from "@jigswap/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
@@ -12,14 +9,14 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 
-export default function AddPuzzleProductPage() {
+export default function AddPuzzlePage() {
   const router = useRouter();
   const createPuzzle = useMutation(api.puzzles.createPuzzle);
   const generateUploadUrl = useMutation(api.puzzles.generateUploadUrl);
   const t = useTranslations("puzzles");
   const [isPending, startTransition] = useTransition();
 
-  const handleSubmit = async (data: PuzzleProductFormData) => {
+  const handleSubmit = async (data: PuzzleFormData) => {
     startTransition(async () => {
       try {
         console.log("Creating puzzle");
@@ -64,14 +61,14 @@ export default function AddPuzzleProductPage() {
           <p className="text-muted-foreground">{t("addPuzzleDescription")}</p>
         </div>
 
-        <PuzzleProductForm
+        <PuzzleForm
           onSubmit={handleSubmit}
           onCancel={() => router.push("/puzzles")}
           pending={isPending}
         >
-          <PuzzleProductForm.Content />
-          <PuzzleProductForm.Actions />
-        </PuzzleProductForm>
+          <PuzzleForm.Content />
+          <PuzzleForm.Actions />
+        </PuzzleForm>
       </div>
     </div>
   );

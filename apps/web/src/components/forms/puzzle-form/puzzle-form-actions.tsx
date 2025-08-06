@@ -1,9 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
-import { usePuzzleProductFormContext } from "./puzzle-form-context";
+import { usePuzzleFormContext } from "./puzzle-form-context";
 
 export const PuzzleFormActions = () => {
-  const { formId, isPending, onCancel } = usePuzzleProductFormContext();
+  const { formId, isPending, onCancel } = usePuzzleFormContext();
   const t = useTranslations("forms.puzzle-form");
 
   return (

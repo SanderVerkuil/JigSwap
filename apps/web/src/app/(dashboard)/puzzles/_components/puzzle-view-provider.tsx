@@ -2,25 +2,25 @@
 
 import { createContext, ReactNode, useContext } from "react";
 
-interface PuzzleProductViewContextType {
+interface PuzzleViewContextType {
   viewMode: "grid" | "list";
 }
 
-const PuzzleProductViewContext = createContext<
-  PuzzleProductViewContextType | undefined
->(undefined);
+const PuzzleViewContext = createContext<PuzzleViewContextType | undefined>(
+  undefined,
+);
 
-interface PuzzleProductViewProviderProps {
+interface PuzzleViewProviderProps {
   viewMode: "grid" | "list";
   children: ReactNode;
 }
 
-export function PuzzleProductViewProvider({
+export function PuzzleViewProvider({
   viewMode,
   children,
-}: PuzzleProductViewProviderProps) {
+}: PuzzleViewProviderProps) {
   return (
-    <PuzzleProductViewContext.Provider value={{ viewMode }}>
+    <PuzzleViewContext.Provider value={{ viewMode }}>
       <div
         className={
           viewMode === "grid"
@@ -30,16 +30,14 @@ export function PuzzleProductViewProvider({
       >
         {children}
       </div>
-    </PuzzleProductViewContext.Provider>
+    </PuzzleViewContext.Provider>
   );
 }
 
-export function usePuzzleProductView() {
-  const context = useContext(PuzzleProductViewContext);
+export function usePuzzleView() {
+  const context = useContext(PuzzleViewContext);
   if (context === undefined) {
-    throw new Error(
-      "usePuzzleProductView must be used within a PuzzleProductViewProvider",
-    );
+    throw new Error("usePuzzleView must be used within a PuzzleViewProvider");
   }
   return context;
 }

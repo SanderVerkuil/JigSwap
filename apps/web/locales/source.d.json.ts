@@ -2,1034 +2,1034 @@
 // See: https://next-intl.dev/docs/workflows/typescript#messages-arguments
 
 declare const messages: {
-  "common": {
-    "loading": "Loading...",
-    "error": "Error",
-    "success": "Success",
-    "cancel": "Cancel",
-    "save": "Save",
-    "delete": "Delete",
-    "edit": "Edit",
-    "view": "View",
-    "search": "Search",
-    "filter": "Filter",
-    "sort": "Sort",
-    "next": "Next",
-    "previous": "Previous",
-    "close": "Close",
-    "back": "Back",
-    "to": "to",
-    "backToHome": "← Back to Home",
-    "removeOption": "Remove {option} option",
-    "removeOptionButton": "button to remove option",
-    "inputTag": "input tag"
-  },
-  "notFound": {
-    "title": "Page Not Found",
-    "description": "Oops! The page you're looking for doesn't exist.",
-    "message": "The page you're trying to access might have been moved, deleted, or you entered the wrong URL.",
-    "backToHome": "Back to Home",
-    "browsePuzzles": "Browse Puzzles"
-  },
-  "navigation": {
-    "home": "Home",
-    "browse": "Browse Puzzles",
-    "myPuzzles": "My Puzzles",
-    "trades": "Exchanges",
-    "profile": "Profile",
-    "signIn": "Sign In",
-    "signUp": "Sign Up",
-    "signOut": "Sign Out",
-    "dashboard": "Dashboard"
-  },
-  "home": {
-    "title": "Exchange Jigsaw Puzzles with Fellow Enthusiasts",
-    "subtitle": "Connect with puzzle lovers worldwide. Exchange your completed puzzles, discover new challenges, and make the hobby more sustainable.",
-    "startTrading": "Start Trading",
-    "browsePuzzles": "Browse Puzzles",
-    "whyChoose": "Why Choose JigSwap?",
-    "howItWorks": "How It Works",
-    "readyToStart": "Ready to Start Trading?",
-    "joinThousands": "Join thousands of puzzle enthusiasts already trading on JigSwap",
-    "createAccount": "Create Your Account",
-    "trackProgress": "Track Progress",
-    "exchangePuzzles": "Exchange Puzzles",
-    "connectCommunity": "Connect Community"
-  },
-  "features": {
-    "vastCollection": {
-      "title": "Vast Collection",
-      "description": "Access thousands of puzzles from fellow enthusiasts. Find rare pieces and discover new favorites."
-    },
-    "communityDriven": {
-      "title": "Community Driven",
-      "description": "Join a passionate community of puzzle lovers. Share experiences and build lasting connections."
-    },
-    "sustainable": {
-      "title": "Sustainable",
-      "description": "Reduce waste by giving puzzles a second life. Make your hobby more environmentally friendly."
-    },
-    "core": {
-      "title": "Complete Puzzle Management Platform",
-      "personalLibrary": {
-        "title": "Personal Library",
-        "description": "Track your collection, completion history, and personal analytics with detailed statistics and progress tracking."
-      },
-      "smartExchange": {
-        "title": "Smart Exchange",
-        "description": "Lend, swap, or trade puzzles while preserving your completion history and tracking ownership chains."
-      },
-      "community": {
-        "title": "Community",
-        "description": "Connect with fellow enthusiasts, share reviews, and discover new puzzles through social features."
-      },
-      "analytics": {
-        "title": "Analytics",
-        "description": "Gain insights into your solving patterns, set goals, and compare with community trends."
-      }
-    },
-    "detailed": {
-      "title": "Powerful Features for Puzzle Enthusiasts",
-      "personalLibrary": {
-        "title": "📚 Personal Puzzle Library",
-        "collectionManagement": {
-          "title": "Collection Management",
-          "items": [
+  common: {
+    loading: "Loading...";
+    error: "Error";
+    success: "Success";
+    cancel: "Cancel";
+    save: "Save";
+    delete: "Delete";
+    edit: "Edit";
+    view: "View";
+    search: "Search";
+    filter: "Filter";
+    sort: "Sort";
+    next: "Next";
+    previous: "Previous";
+    close: "Close";
+    back: "Back";
+    to: "to";
+    backToHome: "← Back to Home";
+    removeOption: "Remove {option} option";
+    removeOptionButton: "button to remove option";
+    inputTag: "input tag";
+  };
+  notFound: {
+    title: "Page Not Found";
+    description: "Oops! The page you're looking for doesn't exist.";
+    message: "The page you're trying to access might have been moved, deleted, or you entered the wrong URL.";
+    backToHome: "Back to Home";
+    browsePuzzles: "Browse Puzzles";
+  };
+  navigation: {
+    home: "Home";
+    browse: "Browse Puzzles";
+    myPuzzles: "My Puzzles";
+    trades: "Exchanges";
+    profile: "Profile";
+    signIn: "Sign In";
+    signUp: "Sign Up";
+    signOut: "Sign Out";
+    dashboard: "Dashboard";
+  };
+  home: {
+    title: "Exchange Jigsaw Puzzles with Fellow Enthusiasts";
+    subtitle: "Connect with puzzle lovers worldwide. Exchange your completed puzzles, discover new challenges, and make the hobby more sustainable.";
+    startTrading: "Start Trading";
+    browsePuzzles: "Browse Puzzles";
+    whyChoose: "Why Choose JigSwap?";
+    howItWorks: "How It Works";
+    readyToStart: "Ready to Start Trading?";
+    joinThousands: "Join thousands of puzzle enthusiasts already trading on JigSwap";
+    createAccount: "Create Your Account";
+    trackProgress: "Track Progress";
+    exchangePuzzles: "Exchange Puzzles";
+    connectCommunity: "Connect Community";
+  };
+  features: {
+    vastCollection: {
+      title: "Vast Collection";
+      description: "Access thousands of puzzles from fellow enthusiasts. Find rare pieces and discover new favorites.";
+    };
+    communityDriven: {
+      title: "Community Driven";
+      description: "Join a passionate community of puzzle lovers. Share experiences and build lasting connections.";
+    };
+    sustainable: {
+      title: "Sustainable";
+      description: "Reduce waste by giving puzzles a second life. Make your hobby more environmentally friendly.";
+    };
+    core: {
+      title: "Complete Puzzle Management Platform";
+      personalLibrary: {
+        title: "Personal Library";
+        description: "Track your collection, completion history, and personal analytics with detailed statistics and progress tracking.";
+      };
+      smartExchange: {
+        title: "Smart Exchange";
+        description: "Lend, swap, or trade puzzles while preserving your completion history and tracking ownership chains.";
+      };
+      community: {
+        title: "Community";
+        description: "Connect with fellow enthusiasts, share reviews, and discover new puzzles through social features.";
+      };
+      analytics: {
+        title: "Analytics";
+        description: "Gain insights into your solving patterns, set goals, and compare with community trends.";
+      };
+    };
+    detailed: {
+      title: "Powerful Features for Puzzle Enthusiasts";
+      personalLibrary: {
+        title: "📚 Personal Puzzle Library";
+        collectionManagement: {
+          title: "Collection Management";
+          items: [
             "Add puzzles with detailed information",
             "Organize with custom categories & tags",
             "Set visibility levels (private to tradeable)",
-            "Search and filter your collection"
-          ]
-        },
-        "completionTracking": {
-          "title": "Completion Tracking",
-          "items": [
+            "Search and filter your collection",
+          ];
+        };
+        completionTracking: {
+          title: "Completion Tracking";
+          items: [
             "Record start and completion times",
             "Rate puzzles and add personal notes",
             "Upload photos of completed puzzles",
-            "Track multiple completions"
-          ]
-        },
-        "personalAnalytics": {
-          "title": "Personal Analytics",
-          "items": [
+            "Track multiple completions",
+          ];
+        };
+        personalAnalytics: {
+          title: "Personal Analytics";
+          items: [
             "View completion statistics",
             "Analyze solving time trends",
             "Set and track personal goals",
-            "Export your data"
-          ]
-        }
-      },
-      "exchangeSystem": {
-        "title": "🔄 Advanced Exchange System",
-        "multipleExchangeTypes": {
-          "title": "Multiple Exchange Types",
-          "items": [
+            "Export your data",
+          ];
+        };
+      };
+      exchangeSystem: {
+        title: "🔄 Advanced Exchange System";
+        multipleExchangeTypes: {
+          title: "Multiple Exchange Types";
+          items: [
             "Lending with return agreements",
             "Permanent swaps between users",
             "Direct sales and auctions",
-            "Negotiable terms and conditions"
-          ]
-        },
-        "historyPreservation": {
-          "title": "History Preservation",
-          "items": [
+            "Negotiable terms and conditions",
+          ];
+        };
+        historyPreservation: {
+          title: "History Preservation";
+          items: [
             "Keep your completion records",
             "Complete ownership tracking",
             "Chain of custody for all puzzles",
-            "Condition tracking through exchanges"
-          ]
-        },
-        "exchangeManagement": {
-          "title": "Exchange Management",
-          "items": [
+            "Condition tracking through exchanges",
+          ];
+        };
+        exchangeManagement: {
+          title: "Exchange Management";
+          items: [
             "Real-time messaging during exchanges",
             "Photo documentation of condition",
             "Dispute resolution system",
-            "Exchange ratings and feedback"
-          ]
-        }
-      },
-      "community": {
-        "title": "👥 Community & Social Features",
-        "userProfiles": {
-          "title": "User Profiles",
-          "items": [
+            "Exchange ratings and feedback",
+          ];
+        };
+      };
+      community: {
+        title: "👥 Community & Social Features";
+        userProfiles: {
+          title: "User Profiles";
+          items: [
             "Showcase your collection",
             "Display achievements and statistics",
             "Follow other enthusiasts",
-            "Location-based discovery"
-          ]
-        },
-        "reviewsRatings": {
-          "title": "Reviews & Ratings",
-          "items": [
+            "Location-based discovery",
+          ];
+        };
+        reviewsRatings: {
+          title: "Reviews & Ratings";
+          items: [
             "Write detailed puzzle reviews",
             "Rate on multiple criteria",
             "Vote on helpful reviews",
-            "See community opinions"
-          ]
-        },
-        "socialDiscovery": {
-          "title": "Social Discovery",
-          "items": [
+            "See community opinions",
+          ];
+        };
+        socialDiscovery: {
+          title: "Social Discovery";
+          items: [
             "Find users by location",
             "Discover trending puzzles",
             "Community discussions",
-            "Smart recommendations"
-          ]
-        }
-      },
-      "advanced": {
-        "title": "⚡ Advanced Features",
-        "conditionTracking": {
-          "title": "Condition Tracking",
-          "items": [
+            "Smart recommendations",
+          ];
+        };
+      };
+      advanced: {
+        title: "⚡ Advanced Features";
+        conditionTracking: {
+          title: "Condition Tracking";
+          items: [
             "Document puzzle condition",
             "Track changes over time",
             "Photo documentation",
-            "Condition-based filtering"
-          ]
-        },
-        "smartRecommendations": {
-          "title": "Smart Recommendations",
-          "items": [
+            "Condition-based filtering",
+          ];
+        };
+        smartRecommendations: {
+          title: "Smart Recommendations";
+          items: [
             "AI-powered puzzle suggestions",
             "Find similar users",
             "Optimal exchange opportunities",
-            "Collaborative filtering"
-          ]
-        },
-        "notificationSystem": {
-          "title": "Notification System",
-          "items": [
+            "Collaborative filtering",
+          ];
+        };
+        notificationSystem: {
+          title: "Notification System";
+          items: [
             "Real-time exchange alerts",
             "Goal achievement notifications",
             "Community activity updates",
-            "Customizable preferences"
-          ]
-        }
-      }
-    }
-  },
-  "steps": {
-    "listPuzzles": {
-      "title": "List Your Puzzles",
-      "description": "Upload photos and details of puzzles you've completed and want to trade."
-    },
-    "browseDiscover": {
-      "title": "Browse & Discover",
-      "description": "Explore puzzles from other users and find ones you'd love to try."
-    },
-    "makeExchange": {
-      "title": "Make a Exchange",
-      "description": "Send trade requests and negotiate exchanges with other users."
-    },
-    "enjoyReview": {
-      "title": "Enjoy & Review",
-      "description": "Complete your new puzzle and leave reviews to build trust in the community."
-    },
-    "howItWorks": {
-      "title": "How JigSwap Works",
-      "buildLibrary": {
-        "title": "Build Your Library",
-        "description": "Add your puzzles to your personal library with detailed information, photos, and completion tracking."
-      },
-      "discoverConnect": {
-        "title": "Discover & Connect",
-        "description": "Browse puzzles from other enthusiasts, read reviews, and connect with the community."
-      },
-      "exchangeExchange": {
-        "title": "Exchange & Exchange",
-        "description": "Initiate exchanges, negotiate terms, and track the entire process while preserving your history."
-      },
-      "analyzeImprove": {
-        "title": "Analyze & Improve",
-        "description": "Track your progress, set goals, and gain insights from comprehensive analytics and community data."
-      }
-    }
-  },
-  "auth": {
-    "welcomeBack": "Welcome back to the puzzle trading community",
-    "joinCommunity": "Join the puzzle trading community",
-    "signInToAccount": "Sign in to your account",
-    "createNewAccount": "Create a new account"
-  },
-  "puzzles": {
-    "title": "Title",
-    "description": "Description",
-    "brand": "Brand",
-    "pieceCount": "Piece Count",
-    "pieces": "pieces",
-    "difficulty": "Difficulty",
-    "condition": "Condition",
-    "category": "Category",
-    "tags": "Tags",
-    "owner": "Owner",
-    "available": "Available",
-    "unavailable": "Unavailable",
-    "completed": "Completed",
-    "addPuzzle": "Add Puzzle",
-    "editPuzzle": "Edit Puzzle",
-    "deletePuzzle": "Delete Puzzle",
-    "requestExchange": "Request Exchange",
-    "myPuzzles": "My Puzzles",
-    "managePuzzles": "Manage your puzzle collection",
-    "noPuzzles": "No puzzles yet",
-    "addFirstPuzzle": "Add your first puzzle to start trading",
-    "noImage": "No Image",
-    "addPuzzleDescription": "Add a new puzzle to your collection",
-    "selectPuzzle": "Select Puzzle",
-    "selectPuzzleDescription": "Search for an existing puzzle or create a new one",
-    "searchPuzzle": "Search for a puzzle",
-    "searchPlaceholder": "Search puzzles...",
-    "noPuzzlesFound": "No puzzles found",
-    "createNewPuzzle": "Create New Puzzle",
-    "createNewPuzzleDescription": "Create a new puzzle that doesn't exist yet",
-    "puzzleCreated": "Puzzle created successfully",
-    "puzzleCreationFailed": "Failed to create puzzle",
-    "noPuzzleSelected": "Please select a puzzle first",
-    "puzzleAdded": "Puzzle added to your collection",
-    "puzzleAdditionFailed": "Failed to add puzzle to collection",
-    "addToCollection": "Add to Collection",
-    "acquisitionDatePlaceholder": "When did you acquire this puzzle?",
-    "notesPlaceholder": "Any additional notes about this puzzle",
-    "basicInformation": "Basic Information",
-    "basicInformationDescription": "Enter the essential details about your puzzle",
-    "titlePlaceholder": "Enter puzzle title",
-    "descriptionPlaceholder": "Describe your puzzle (optional)",
-    "brandPlaceholder": "e.g. Ravensburger, Clementoni",
-    "categoryPlaceholder": "e.g. Landscape, Animals, Art",
-    "tagsPlaceholder": "nature, colorful, challenging",
-    "tagsHelp": "Separate tags with commas",
-    "selectDifficulty": "Select difficulty",
-    "easy": "Easy",
-    "medium": "Medium",
-    "hard": "Hard",
-    "expert": "Expert",
-    "selectCondition": "Select condition",
-    "selectPieceCount": "Select piece count",
-    "customPieceCountPlaceholder": "Enter custom piece count",
-    "excellent": "Excellent",
-    "good": "Good",
-    "fair": "Fair",
-    "poor": "Poor",
-    "statusInformation": "Status Information",
-    "statusInformationDescription": "Track your puzzle completion and acquisition details",
-    "puzzleCompleted": "I have completed this puzzle",
-    "completedDate": "Completion Date",
-    "acquisitionDate": "Acquisition Date",
-    "acquisitionDateDescription": "When did you acquire this puzzle? (optional)",
-    "notes": "Notes",
-    "completions": {
-      "title": "Completion Tracking",
-      "description": "Track your puzzle completions with detailed timing and notes",
-      "statusDescription": "Mark this puzzle as completed to track your progress",
-      "completion": "Completion",
-      "timeSpent": "Time Spent",
-      "optional": "optional",
-      "timeDescription": "How long did it take to complete this puzzle? (estimated)",
-      "minutes": "minutes",
-      "notes": "Completion Notes",
-      "notesPlaceholder": "Any notes about this completion",
-      "addCompletion": "Add Another Completion"
-    },
-    "suggestions": {
-      "title": "Puzzle Suggestions",
-      "description": "Found similar puzzles in the database. Click to auto-fill details.",
-      "searchExisting": "Search Existing Puzzles",
-      "searchDescription": "Search for puzzles that already exist in the database to auto-fill details",
-      "searchPlaceholder": "Search by title, brand, or description...",
-      "placeholder": "Search for puzzles...",
-      "found": "Found Puzzles",
-      "useThis": "Use This",
-      "noResults": "No matching puzzles found",
-      "loading": "Loading suggestions...",
-      "typeToSearch": "Type to search for puzzles..."
-    },
-    "puzzleSelection": "Puzzle Selection",
-    "puzzleSelectionDescription": "Choose whether to create a new puzzle or select an existing one",
-    "selectExistingPuzzle": "Select Existing Puzzle",
-    "searchExistingPuzzles": "Search Existing Puzzles",
-    "searchPuzzles": "Search Puzzles",
-    "searchPuzzlesPlaceholder": "Search by title, brand, or piece count...",
-    "typeToSearch": "Type to search for puzzles...",
-    "loading": "Loading...",
-    "noResults": "No matching puzzles found",
-    "change": "Change",
-    "fillInPuzzleDetails": "Fill in the details for your new puzzle",
-    "orFillInNewPuzzleDetails": "Or fill in details to create a new puzzle if none exists",
-    "notFound": "Puzzle not found",
-    "puzzles": {
-      "title": "Puzzles",
-      "subtitle": "Browse and discover puzzles from the community",
-      "addPuzzle": "Add Puzzle",
-      "searchPlaceholder": "Search puzzles by title, brand, or description...",
-      "filtersLabel": "Filters",
-      "clearFilters": "Clear Filters",
-      "puzzlesFound": "{count} puzzles found",
-      "noPuzzlesFound": "No puzzles found",
-      "tryDifferentFilters": "Try adjusting your search criteria or filters",
-      "viewDetails": "View Details",
-      "ownPuzzle": "I Own This",
-      "noImage": "No Image",
-      "pieceCount": "Piece Count",
-      "pieces": "pieces",
-      "difficulty": {
-        "easy": "Easy",
-        "medium": "Medium",
-        "hard": "Hard",
-        "expert": "Expert",
-        "unknown": "Unknown"
-      },
-      "filters": {
-        "brand": "Brand",
-        "selectBrand": "Select brand",
-        "allBrands": "All brands",
-        "minPieces": "Min Pieces",
-        "selectMinPieces": "Select minimum pieces",
-        "noMinimum": "No minimum",
-        "maxPieces": "Max Pieces",
-        "selectMaxPieces": "Select maximum pieces",
-        "noMaximum": "No maximum",
-        "difficulty": "Difficulty",
-        "selectDifficulty": "Select difficulty",
-        "allDifficulties": "All difficulties",
-        "category": "Category",
-        "selectCategory": "Select category",
-        "allCategories": "All categories",
-        "tags": "Tags",
-        "customRange": "Custom Range",
-        "min": "Min",
-        "max": "Max"
-      },
-      "puzzleDetails": "Puzzle Details",
-      "metadata": "Metadata",
-      "created": "Created",
-      "updated": "Updated",
-      "actions": "Actions",
-      "addToFavorites": "Add to Favorites",
-      "notFound": "Puzzle not found"
-    }
-  },
-  "trades": {
-    "title": "Exchanges",
-    "subtitle": "Manage your trade requests and exchanges",
-    "pending": "Pending",
-    "accepted": "Accepted",
-    "declined": "Declined",
-    "completed": "Completed",
-    "cancelled": "Cancelled",
-    "newRequest": "New Exchange Request",
-    "acceptExchange": "Accept Exchange",
-    "declineExchange": "Decline Exchange",
-    "completeExchange": "Complete Exchange",
-    "cancelExchange": "Cancel Exchange",
-    "incoming": "Incoming",
-    "outgoing": "Outgoing",
-    "allStatuses": "All Statuses",
-    "noExchanges": "No trades yet",
-    "noExchangesDescription": "Start browsing puzzles to make your first trade request",
-    "tradeRequest": "Exchange Request",
-    "yourRequest": "Your Request",
-    "theyWant": "They Want",
-    "youWant": "You Want",
-    "theyOffer": "They Offer",
-    "youOffer": "You Offer",
-    "from": "From",
-    "to": "To",
-    "accept": "Accept",
-    "decline": "Decline",
-    "cancel": "Cancel",
-    "markComplete": "Mark Complete",
-    "message": "Message"
-  },
-  "messages": {
-    "sendMessage": "Send Message",
-    "typeMessage": "Type your message...",
-    "noMessages": "No messages yet",
-    "newMessage": "New Message"
-  },
-  "profile": {
-    "title": "Profile",
-    "subtitle": "Manage your account and preferences",
-    "loading": "Loading profile...",
-    "edit": "Edit Profile",
-    "cancel": "Cancel",
-    "editProfile": "Edit Profile",
-    "username": "Username",
-    "bio": "Bio",
-    "location": "Location",
-    "locationNotSet": "Location not set",
-    "language": "Language",
-    "memberSince": "Member since",
-    "interests": "Interests",
-    "recentActivity": "Recent Activity",
-    "recentActivityDescription": "Your latest actions on JigSwap",
-    "addedPuzzle": "Added a new puzzle",
-    "completedExchange": "Completed a trade",
-    "receivedReview": "Received a review",
-    "daysAgo": "days ago",
-    "weekAgo": "week ago",
-    "weeksAgo": "weeks ago",
-    "stats": "Statistics",
-    "totalPuzzles": "Total Puzzles",
-    "availablePuzzles": "Available Puzzles",
-    "puzzlesOwned": "Puzzles Owned",
-    "tradesCompleted": "Exchanges Completed",
-    "completedExchanges": "Completed Exchanges",
-    "averageRating": "Average Rating",
-    "reviews": "Reviews",
-    "trustLevel": "Trust Level",
-    "trustLevelDescription": "Based on completed trades and reviews",
-    "notFound": "User not found"
-  },
-  "dashboard": {
-    "welcome": "Welcome back",
-    "subtitle": "Here's what's happening with your puzzle collection",
-    "stats": {
-      "totalPuzzles": "Total Puzzles",
-      "availablePuzzles": "Available for Exchange",
-      "activeExchanges": "Active Exchanges",
-      "completedExchanges": "Completed Exchanges"
-    },
-    "quickActions": {
-      "title": "Quick Actions",
-      "addPuzzle": "Add New Puzzle",
-      "browsePuzzles": "Browse Puzzles",
-      "viewExchanges": "View Exchanges",
-      "editProfile": "Edit Profile"
-    },
-    "recentActivity": {
-      "title": "Recent Activity",
-      "noActivity": "No recent activity"
-    }
-  },
-  "browse": {
-    "title": "Browse Puzzles",
-    "subtitle": "Discover amazing puzzles from the community",
-    "puzzlesFound": "puzzles found",
-    "searchPlaceholder": "Search puzzles by title, brand, or description...",
-    "allCategories": "All Categories",
-    "allDifficulties": "All Difficulties",
-    "allConditions": "All Conditions",
-    "minPieces": "Min Pieces",
-    "maxPieces": "Max Pieces",
-    "clearFilters": "Clear Filters",
-    "noPuzzlesFound": "No puzzles found",
-    "tryDifferentFilters": "Try adjusting your search criteria or filters"
-  },
-  "footer": {
-    "tagline": "Making jigsaw puzzle trading accessible and sustainable for everyone.",
-    "about": "About",
-    "privacy": "Privacy",
-    "terms": "Terms",
-    "contact": "Contact",
-    "description": "The complete platform for jigsaw puzzle enthusiasts - manage, trade, connect, and grow."
-  },
-  "privacy": {
-    "title": "Privacy Policy",
-    "lastUpdated": "Last Updated",
-    "introduction": "This Privacy Policy describes how JigSwap ('we', 'our', or 'us') collects, uses, and protects your personal information when you use our jigsaw puzzle trading platform.",
-    "effectiveDate": "July 20, 2025",
-    "informationWeCollect": {
-      "title": "Information We Collect",
-      "description": "We collect information you provide directly to us and information we collect automatically when you use our service.",
-      "personalInformation": {
-        "title": "Personal Information",
-        "items": [
+            "Customizable preferences",
+          ];
+        };
+      };
+    };
+  };
+  steps: {
+    listPuzzles: {
+      title: "List Your Puzzles";
+      description: "Upload photos and details of puzzles you've completed and want to trade.";
+    };
+    browseDiscover: {
+      title: "Browse & Discover";
+      description: "Explore puzzles from other users and find ones you'd love to try.";
+    };
+    makeExchange: {
+      title: "Make a Exchange";
+      description: "Send trade requests and negotiate exchanges with other users.";
+    };
+    enjoyReview: {
+      title: "Enjoy & Review";
+      description: "Complete your new puzzle and leave reviews to build trust in the community.";
+    };
+    howItWorks: {
+      title: "How JigSwap Works";
+      buildLibrary: {
+        title: "Build Your Library";
+        description: "Add your puzzles to your personal library with detailed information, photos, and completion tracking.";
+      };
+      discoverConnect: {
+        title: "Discover & Connect";
+        description: "Browse puzzles from other enthusiasts, read reviews, and connect with the community.";
+      };
+      exchangeExchange: {
+        title: "Exchange & Exchange";
+        description: "Initiate exchanges, negotiate terms, and track the entire process while preserving your history.";
+      };
+      analyzeImprove: {
+        title: "Analyze & Improve";
+        description: "Track your progress, set goals, and gain insights from comprehensive analytics and community data.";
+      };
+    };
+  };
+  auth: {
+    welcomeBack: "Welcome back to the puzzle trading community";
+    joinCommunity: "Join the puzzle trading community";
+    signInToAccount: "Sign in to your account";
+    createNewAccount: "Create a new account";
+  };
+  puzzles: {
+    title: "Title";
+    description: "Description";
+    brand: "Brand";
+    pieceCount: "Piece Count";
+    pieces: "pieces";
+    difficulty: "Difficulty";
+    condition: "Condition";
+    category: "Category";
+    tags: "Tags";
+    owner: "Owner";
+    available: "Available";
+    unavailable: "Unavailable";
+    completed: "Completed";
+    addPuzzle: "Add Puzzle";
+    editPuzzle: "Edit Puzzle";
+    deletePuzzle: "Delete Puzzle";
+    requestExchange: "Request Exchange";
+    myPuzzles: "My Puzzles";
+    managePuzzles: "Manage your puzzle collection";
+    noPuzzles: "No puzzles yet";
+    addFirstPuzzle: "Add your first puzzle to start trading";
+    noImage: "No Image";
+    addPuzzleDescription: "Add a new puzzle to your collection";
+    selectPuzzle: "Select Puzzle";
+    selectPuzzleDescription: "Search for an existing puzzle or create a new one";
+    searchPuzzle: "Search for a puzzle";
+    searchPlaceholder: "Search puzzles...";
+    noPuzzlesFound: "No puzzles found";
+    createNewPuzzle: "Create New Puzzle";
+    createNewPuzzleDescription: "Create a new puzzle that doesn't exist yet";
+    puzzleCreated: "Puzzle created successfully";
+    puzzleCreationFailed: "Failed to create puzzle";
+    noPuzzleSelected: "Please select a puzzle first";
+    puzzleAdded: "Puzzle added to your collection";
+    puzzleAdditionFailed: "Failed to add puzzle to collection";
+    addToCollection: "Add to Collection";
+    acquisitionDatePlaceholder: "When did you acquire this puzzle?";
+    notesPlaceholder: "Any additional notes about this puzzle";
+    basicInformation: "Basic Information";
+    basicInformationDescription: "Enter the essential details about your puzzle";
+    titlePlaceholder: "Enter puzzle title";
+    descriptionPlaceholder: "Describe your puzzle (optional)";
+    brandPlaceholder: "e.g. Ravensburger, Clementoni";
+    categoryPlaceholder: "e.g. Landscape, Animals, Art";
+    tagsPlaceholder: "nature, colorful, challenging";
+    tagsHelp: "Separate tags with commas";
+    selectDifficulty: "Select difficulty";
+    easy: "Easy";
+    medium: "Medium";
+    hard: "Hard";
+    expert: "Expert";
+    selectCondition: "Select condition";
+    selectPieceCount: "Select piece count";
+    customPieceCountPlaceholder: "Enter custom piece count";
+    excellent: "Excellent";
+    good: "Good";
+    fair: "Fair";
+    poor: "Poor";
+    statusInformation: "Status Information";
+    statusInformationDescription: "Track your puzzle completion and acquisition details";
+    puzzleCompleted: "I have completed this puzzle";
+    completedDate: "Completion Date";
+    acquisitionDate: "Acquisition Date";
+    acquisitionDateDescription: "When did you acquire this puzzle? (optional)";
+    notes: "Notes";
+    completions: {
+      title: "Completion Tracking";
+      description: "Track your puzzle completions with detailed timing and notes";
+      statusDescription: "Mark this puzzle as completed to track your progress";
+      completion: "Completion";
+      timeSpent: "Time Spent";
+      optional: "optional";
+      timeDescription: "How long did it take to complete this puzzle? (estimated)";
+      minutes: "minutes";
+      notes: "Completion Notes";
+      notesPlaceholder: "Any notes about this completion";
+      addCompletion: "Add Another Completion";
+    };
+    suggestions: {
+      title: "Puzzle Suggestions";
+      description: "Found similar puzzles in the database. Click to auto-fill details.";
+      searchExisting: "Search Existing Puzzles";
+      searchDescription: "Search for puzzles that already exist in the database to auto-fill details";
+      searchPlaceholder: "Search by title, brand, or description...";
+      placeholder: "Search for puzzles...";
+      found: "Found Puzzles";
+      useThis: "Use This";
+      noResults: "No matching puzzles found";
+      loading: "Loading suggestions...";
+      typeToSearch: "Type to search for puzzles...";
+    };
+    puzzleSelection: "Puzzle Selection";
+    puzzleSelectionDescription: "Choose whether to create a new puzzle or select an existing one";
+    selectExistingPuzzle: "Select Existing Puzzle";
+    searchExistingPuzzles: "Search Existing Puzzles";
+    searchPuzzles: "Search Puzzles";
+    searchPuzzlesPlaceholder: "Search by title, brand, or piece count...";
+    typeToSearch: "Type to search for puzzles...";
+    loading: "Loading...";
+    noResults: "No matching puzzles found";
+    change: "Change";
+    fillInPuzzleDetails: "Fill in the details for your new puzzle";
+    orFillInNewPuzzleDetails: "Or fill in details to create a new puzzle if none exists";
+    notFound: "Puzzle not found";
+    puzzles: {
+      title: "Puzzles";
+      subtitle: "Browse and discover puzzles from the community";
+      addPuzzle: "Add Puzzle";
+      searchPlaceholder: "Search puzzles by title, brand, or description...";
+      filtersLabel: "Filters";
+      clearFilters: "Clear Filters";
+      puzzlesFound: "{count} puzzles found";
+      noPuzzlesFound: "No puzzles found";
+      tryDifferentFilters: "Try adjusting your search criteria or filters";
+      viewDetails: "View Details";
+      ownPuzzle: "I Own This";
+      noImage: "No Image";
+      pieceCount: "Piece Count";
+      pieces: "pieces";
+      difficulty: {
+        easy: "Easy";
+        medium: "Medium";
+        hard: "Hard";
+        expert: "Expert";
+        unknown: "Unknown";
+      };
+      filters: {
+        brand: "Brand";
+        selectBrand: "Select brand";
+        allBrands: "All brands";
+        minPieces: "Min Pieces";
+        selectMinPieces: "Select minimum pieces";
+        noMinimum: "No minimum";
+        maxPieces: "Max Pieces";
+        selectMaxPieces: "Select maximum pieces";
+        noMaximum: "No maximum";
+        difficulty: "Difficulty";
+        selectDifficulty: "Select difficulty";
+        allDifficulties: "All difficulties";
+        category: "Category";
+        selectCategory: "Select category";
+        allCategories: "All categories";
+        tags: "Tags";
+        customRange: "Custom Range";
+        min: "Min";
+        max: "Max";
+      };
+      puzzleDetails: "Puzzle Details";
+      metadata: "Metadata";
+      created: "Created";
+      updated: "Updated";
+      actions: "Actions";
+      addToFavorites: "Add to Favorites";
+      notFound: "Puzzle not found";
+    };
+  };
+  trades: {
+    title: "Exchanges";
+    subtitle: "Manage your trade requests and exchanges";
+    pending: "Pending";
+    accepted: "Accepted";
+    declined: "Declined";
+    completed: "Completed";
+    cancelled: "Cancelled";
+    newRequest: "New Exchange Request";
+    acceptExchange: "Accept Exchange";
+    declineExchange: "Decline Exchange";
+    completeExchange: "Complete Exchange";
+    cancelExchange: "Cancel Exchange";
+    incoming: "Incoming";
+    outgoing: "Outgoing";
+    allStatuses: "All Statuses";
+    noExchanges: "No trades yet";
+    noExchangesDescription: "Start browsing puzzles to make your first trade request";
+    tradeRequest: "Exchange Request";
+    yourRequest: "Your Request";
+    theyWant: "They Want";
+    youWant: "You Want";
+    theyOffer: "They Offer";
+    youOffer: "You Offer";
+    from: "From";
+    to: "To";
+    accept: "Accept";
+    decline: "Decline";
+    cancel: "Cancel";
+    markComplete: "Mark Complete";
+    message: "Message";
+  };
+  messages: {
+    sendMessage: "Send Message";
+    typeMessage: "Type your message...";
+    noMessages: "No messages yet";
+    newMessage: "New Message";
+  };
+  profile: {
+    title: "Profile";
+    subtitle: "Manage your account and preferences";
+    loading: "Loading profile...";
+    edit: "Edit Profile";
+    cancel: "Cancel";
+    editProfile: "Edit Profile";
+    username: "Username";
+    bio: "Bio";
+    location: "Location";
+    locationNotSet: "Location not set";
+    language: "Language";
+    memberSince: "Member since";
+    interests: "Interests";
+    recentActivity: "Recent Activity";
+    recentActivityDescription: "Your latest actions on JigSwap";
+    addedPuzzle: "Added a new puzzle";
+    completedExchange: "Completed a trade";
+    receivedReview: "Received a review";
+    daysAgo: "days ago";
+    weekAgo: "week ago";
+    weeksAgo: "weeks ago";
+    stats: "Statistics";
+    totalPuzzles: "Total Puzzles";
+    availablePuzzles: "Available Puzzles";
+    puzzlesOwned: "Puzzles Owned";
+    tradesCompleted: "Exchanges Completed";
+    completedExchanges: "Completed Exchanges";
+    averageRating: "Average Rating";
+    reviews: "Reviews";
+    trustLevel: "Trust Level";
+    trustLevelDescription: "Based on completed trades and reviews";
+    notFound: "User not found";
+  };
+  dashboard: {
+    welcome: "Welcome back";
+    subtitle: "Here's what's happening with your puzzle collection";
+    stats: {
+      totalPuzzles: "Total Puzzles";
+      availablePuzzles: "Available for Exchange";
+      activeExchanges: "Active Exchanges";
+      completedExchanges: "Completed Exchanges";
+    };
+    quickActions: {
+      title: "Quick Actions";
+      addPuzzle: "Add New Puzzle";
+      browsePuzzles: "Browse Puzzles";
+      viewExchanges: "View Exchanges";
+      editProfile: "Edit Profile";
+    };
+    recentActivity: {
+      title: "Recent Activity";
+      noActivity: "No recent activity";
+    };
+  };
+  browse: {
+    title: "Browse Puzzles";
+    subtitle: "Discover amazing puzzles from the community";
+    puzzlesFound: "puzzles found";
+    searchPlaceholder: "Search puzzles by title, brand, or description...";
+    allCategories: "All Categories";
+    allDifficulties: "All Difficulties";
+    allConditions: "All Conditions";
+    minPieces: "Min Pieces";
+    maxPieces: "Max Pieces";
+    clearFilters: "Clear Filters";
+    noPuzzlesFound: "No puzzles found";
+    tryDifferentFilters: "Try adjusting your search criteria or filters";
+  };
+  footer: {
+    tagline: "Making jigsaw puzzle trading accessible and sustainable for everyone.";
+    about: "About";
+    privacy: "Privacy";
+    terms: "Terms";
+    contact: "Contact";
+    description: "The complete platform for jigsaw puzzle enthusiasts - manage, trade, connect, and grow.";
+  };
+  privacy: {
+    title: "Privacy Policy";
+    lastUpdated: "Last Updated";
+    introduction: "This Privacy Policy describes how JigSwap ('we', 'our', or 'us') collects, uses, and protects your personal information when you use our jigsaw puzzle trading platform.";
+    effectiveDate: "July 20, 2025";
+    informationWeCollect: {
+      title: "Information We Collect";
+      description: "We collect information you provide directly to us and information we collect automatically when you use our service.";
+      personalInformation: {
+        title: "Personal Information";
+        items: [
           "Account information (name, email address, username)",
           "Profile information (bio, location, interests)",
           "Puzzle collection data and photos",
           "Exchange history and communications",
-          "Reviews and ratings you provide"
-        ]
-      },
-      "automaticallyCollected": {
-        "title": "Automatically Collected Information",
-        "items": [
+          "Reviews and ratings you provide",
+        ];
+      };
+      automaticallyCollected: {
+        title: "Automatically Collected Information";
+        items: [
           "Device information (IP address, browser type, operating system)",
           "Usage data (pages visited, features used, time spent)",
           "Analytics data (interaction patterns, preferences)",
-          "Technical logs and error reports"
-        ]
-      }
-    },
-    "howWeUseInformation": {
-      "title": "How We Use Your Information",
-      "description": "We use the information we collect to provide, improve, and secure our services.",
-      "purposes": [
+          "Technical logs and error reports",
+        ];
+      };
+    };
+    howWeUseInformation: {
+      title: "How We Use Your Information";
+      description: "We use the information we collect to provide, improve, and secure our services.";
+      purposes: [
         "Provide and maintain our puzzle trading platform",
         "Process trades and facilitate exchanges between users",
         "Personalize your experience and show relevant content",
         "Send important service updates and notifications",
         "Analyze usage patterns to improve our service",
         "Prevent fraud and ensure platform security",
-        "Respond to your questions and support requests"
-      ]
-    },
-    "dataStorage": {
-      "title": "Data Storage and Hosting",
-      "description": "Your data is securely stored and managed by trusted third-party services:",
-      "convex": {
-        "title": "Convex",
-        "description": "Our primary database and backend services are hosted by Convex. They handle data storage, user authentication, and real-time features."
-      },
-      "vercel": {
-        "title": "Vercel",
-        "description": "Our web application is hosted on Vercel's infrastructure, which provides fast, reliable, and secure hosting services."
-      }
-    },
-    "analytics": {
-      "title": "Analytics and Tracking",
-      "description": "We use analytics to understand how our service is used and improve user experience.",
-      "posthog": {
-        "title": "PostHog Analytics",
-        "description": "We use PostHog to collect anonymous usage analytics. This helps us understand user behavior and improve our platform. PostHog data is used solely for service improvement and is not sold to third parties."
-      },
-      "noAdvertising": "We do not use your data for advertising purposes. Your information will never be sold to advertisers or third parties for marketing purposes."
-    },
-    "dataSharing": {
-      "title": "Data Sharing and Third Parties",
-      "description": "We are committed to protecting your privacy and do not sell your personal information.",
-      "noSale": "We do not sell, rent, or trade your personal information to third parties for advertising or marketing purposes.",
-      "limitedSharing": "We may share your information only in these limited circumstances:",
-      "circumstances": [
+        "Respond to your questions and support requests",
+      ];
+    };
+    dataStorage: {
+      title: "Data Storage and Hosting";
+      description: "Your data is securely stored and managed by trusted third-party services:";
+      convex: {
+        title: "Convex";
+        description: "Our primary database and backend services are hosted by Convex. They handle data storage, user authentication, and real-time features.";
+      };
+      vercel: {
+        title: "Vercel";
+        description: "Our web application is hosted on Vercel's infrastructure, which provides fast, reliable, and secure hosting services.";
+      };
+    };
+    analytics: {
+      title: "Analytics and Tracking";
+      description: "We use analytics to understand how our service is used and improve user experience.";
+      posthog: {
+        title: "PostHog Analytics";
+        description: "We use PostHog to collect anonymous usage analytics. This helps us understand user behavior and improve our platform. PostHog data is used solely for service improvement and is not sold to third parties.";
+      };
+      noAdvertising: "We do not use your data for advertising purposes. Your information will never be sold to advertisers or third parties for marketing purposes.";
+    };
+    dataSharing: {
+      title: "Data Sharing and Third Parties";
+      description: "We are committed to protecting your privacy and do not sell your personal information.";
+      noSale: "We do not sell, rent, or trade your personal information to third parties for advertising or marketing purposes.";
+      limitedSharing: "We may share your information only in these limited circumstances:";
+      circumstances: [
         "With your explicit consent",
         "To comply with legal obligations",
         "To protect our rights and prevent fraud",
-        "With service providers who assist in platform operations (under strict confidentiality agreements)"
-      ]
-    },
-    "dataSecurity": {
-      "title": "Data Security",
-      "description": "We implement appropriate security measures to protect your personal information:",
-      "measures": [
+        "With service providers who assist in platform operations (under strict confidentiality agreements)",
+      ];
+    };
+    dataSecurity: {
+      title: "Data Security";
+      description: "We implement appropriate security measures to protect your personal information:";
+      measures: [
         "Encryption of data in transit and at rest",
         "Regular security audits and updates",
         "Access controls and authentication",
-        "Secure hosting infrastructure"
-      ]
-    },
-    "yourRights": {
-      "title": "Your Rights and Choices",
-      "description": "You have control over your personal information:",
-      "rights": [
+        "Secure hosting infrastructure",
+      ];
+    };
+    yourRights: {
+      title: "Your Rights and Choices";
+      description: "You have control over your personal information:";
+      rights: [
         "Access and review your personal data",
         "Update or correct your information",
         "Delete your account and associated data",
         "Opt out of certain data collection",
         "Export your data in a portable format",
-        "Contact us with privacy concerns"
-      ]
-    },
-    "cookies": {
-      "title": "Cookies and Tracking",
-      "description": "We use cookies and similar technologies to enhance your experience:",
-      "types": [
+        "Contact us with privacy concerns",
+      ];
+    };
+    cookies: {
+      title: "Cookies and Tracking";
+      description: "We use cookies and similar technologies to enhance your experience:";
+      types: [
         "Essential cookies for platform functionality",
         "Analytics cookies to understand usage patterns",
-        "Preference cookies to remember your settings"
-      ],
-      "control": "You can control cookie settings through your browser preferences."
-    },
-    "cookieConsent": {
-      "title": "We use cookies",
-      "description": "We use cookies to ensure you get the best experience on our website. For more information on how we use cookies, please see our cookie policy.",
-      "acceptText": "Accept",
-      "declineText": "Decline",
-      "learnMoreText": "Learn more",
-      "acceptanceText": "By clicking \"Accept\", you agree to our use of cookies."
-    },
-    "children": {
-      "title": "Children's Privacy",
-      "description": "Our service is not intended for children under 13. We do not knowingly collect personal information from children under 13."
-    },
-    "international": {
-      "title": "International Data Transfers",
-      "description": "Your data may be processed in countries other than your own. We ensure appropriate safeguards are in place to protect your information."
-    },
-    "changes": {
-      "title": "Changes to This Policy",
-      "description": "We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new policy on our website and updating the 'Last Updated' date."
-    },
-    "contact": {
-      "title": "Contact Us",
-      "description": "If you have any questions about this Privacy Policy or our data practices, please contact us:",
-      "email": "Email",
-      "emailAddress": "privacy@jigswap.site",
-      "questions": "We're committed to transparency and will respond to your privacy inquiries promptly."
-    }
-  },
-  "terms": {
-    "title": "Terms of Service",
-    "lastUpdated": "Last Updated",
-    "introduction": "These Terms of Service ('Terms') govern your use of JigSwap, our jigsaw puzzle trading platform. By using our service, you agree to these terms.",
-    "effectiveDate": "July 20, 2025",
-    "acceptance": {
-      "title": "Acceptance of Terms",
-      "description": "By accessing or using JigSwap, you agree to be bound by these Terms. If you disagree with any part of these terms, you may not access our service."
-    },
-    "serviceDescription": {
-      "title": "Service Description",
-      "description": "JigSwap is a platform that enables users to trade, exchange, and manage jigsaw puzzles. Our service includes:",
-      "features": [
+        "Preference cookies to remember your settings",
+      ];
+      control: "You can control cookie settings through your browser preferences.";
+    };
+    cookieConsent: {
+      title: "We use cookies";
+      description: "We use cookies to ensure you get the best experience on our website. For more information on how we use cookies, please see our cookie policy.";
+      acceptText: "Accept";
+      declineText: "Decline";
+      learnMoreText: "Learn more";
+      acceptanceText: 'By clicking "Accept", you agree to our use of cookies.';
+    };
+    children: {
+      title: "Children's Privacy";
+      description: "Our service is not intended for children under 13. We do not knowingly collect personal information from children under 13.";
+    };
+    international: {
+      title: "International Data Transfers";
+      description: "Your data may be processed in countries other than your own. We ensure appropriate safeguards are in place to protect your information.";
+    };
+    changes: {
+      title: "Changes to This Policy";
+      description: "We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new policy on our website and updating the 'Last Updated' date.";
+    };
+    contact: {
+      title: "Contact Us";
+      description: "If you have any questions about this Privacy Policy or our data practices, please contact us:";
+      email: "Email";
+      emailAddress: "privacy@jigswap.site";
+      questions: "We're committed to transparency and will respond to your privacy inquiries promptly.";
+    };
+  };
+  terms: {
+    title: "Terms of Service";
+    lastUpdated: "Last Updated";
+    introduction: "These Terms of Service ('Terms') govern your use of JigSwap, our jigsaw puzzle trading platform. By using our service, you agree to these terms.";
+    effectiveDate: "July 20, 2025";
+    acceptance: {
+      title: "Acceptance of Terms";
+      description: "By accessing or using JigSwap, you agree to be bound by these Terms. If you disagree with any part of these terms, you may not access our service.";
+    };
+    serviceDescription: {
+      title: "Service Description";
+      description: "JigSwap is a platform that enables users to trade, exchange, and manage jigsaw puzzles. Our service includes:";
+      features: [
         "Puzzle collection management and tracking",
         "Trading and exchange functionality",
         "Community features and reviews",
-        "Analytics and progress tracking"
-      ]
-    },
-    "userAccounts": {
-      "title": "User Accounts",
-      "description": "To use certain features of our service, you must create an account. You are responsible for:",
-      "responsibilities": [
+        "Analytics and progress tracking",
+      ];
+    };
+    userAccounts: {
+      title: "User Accounts";
+      description: "To use certain features of our service, you must create an account. You are responsible for:";
+      responsibilities: [
         "Maintaining the security of your account",
         "Providing accurate and complete information",
         "Notifying us of any unauthorized use",
-        "Being at least 13 years old to use the service"
-      ]
-    },
-    "userConduct": {
-      "title": "User Conduct",
-      "description": "You agree to use our service responsibly and in accordance with these terms:",
-      "prohibitedTitle": "Prohibited Activities:",
-      "expectedTitle": "Expected Behavior:",
-      "prohibited": [
+        "Being at least 13 years old to use the service",
+      ];
+    };
+    userConduct: {
+      title: "User Conduct";
+      description: "You agree to use our service responsibly and in accordance with these terms:";
+      prohibitedTitle: "Prohibited Activities:";
+      expectedTitle: "Expected Behavior:";
+      prohibited: [
         "Violating any applicable laws or regulations",
         "Infringing on intellectual property rights",
         "Harassing or harming other users",
         "Attempting to gain unauthorized access to our systems",
-        "Using the service for commercial purposes without permission"
-      ],
-      "expected": [
+        "Using the service for commercial purposes without permission",
+      ];
+      expected: [
         "Treating other users with respect",
         "Providing accurate information about puzzles",
         "Honoring trade agreements and commitments",
-        "Reporting suspicious or inappropriate behavior"
-      ]
-    },
-    "trading": {
-      "title": "Trading and Exchanges",
-      "description": "Our platform facilitates puzzle trading between users. By participating in trades, you agree to:",
-      "agreements": [
+        "Reporting suspicious or inappropriate behavior",
+      ];
+    };
+    trading: {
+      title: "Trading and Exchanges";
+      description: "Our platform facilitates puzzle trading between users. By participating in trades, you agree to:";
+      agreements: [
         "Accurately describe puzzle condition and completeness",
         "Honor agreed-upon trade terms",
         "Communicate promptly and honestly",
-        "Resolve disputes amicably when possible"
-      ],
-      "disclaimer": "JigSwap acts as a facilitator for trades but is not responsible for the quality, condition, or completeness of traded puzzles. Users trade at their own risk."
-    },
-    "intellectualProperty": {
-      "title": "Intellectual Property",
-      "description": "Our service and its original content, features, and functionality are owned by JigSwap and are protected by international copyright, trademark, and other intellectual property laws."
-    },
-    "privacy": {
-      "title": "Privacy",
-      "description": "Your privacy is important to us. Please review our Privacy Policy, which also governs your use of the service."
-    },
-    "termination": {
-      "title": "Account Termination",
-      "description": "We may terminate or suspend your account immediately, without prior notice, for any reason, including breach of these Terms."
-    },
-    "disclaimer": {
-      "title": "Disclaimer of Warranties",
-      "description": "The service is provided 'as is' without warranties of any kind. We do not guarantee that the service will be uninterrupted or error-free."
-    },
-    "limitation": {
-      "title": "Limitation of Liability",
-      "description": "JigSwap shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of the service."
-    },
-    "changes": {
-      "title": "Changes to Terms",
-      "description": "We reserve the right to modify these terms at any time. We will notify users of any material changes by posting the new terms on our website."
-    },
-    "contact": {
-      "title": "Contact Information",
-      "description": "If you have any questions about these Terms of Service, please contact us:",
-      "email": "Email",
-      "emailAddress": "legal@jigswap.site",
-      "questions": "We're committed to transparency and will respond to your inquiries promptly."
-    }
-  },
-  "about": {
-    "title": "About JigSwap",
-    "subtitle": "The complete platform for jigsaw puzzle enthusiasts",
-    "introduction": "JigSwap is more than just a puzzle trading platform. We're building a community where puzzle enthusiasts can connect, share, and grow their passion for jigsaw puzzles in a sustainable way.",
-    "mission": {
-      "title": "Our Mission",
-      "description": "We believe that puzzles should have multiple lives. Our mission is to create a sustainable ecosystem where puzzle enthusiasts can share their completed puzzles with others, discover new challenges, and build meaningful connections within the community."
-    },
-    "vision": {
-      "title": "Our Vision",
-      "description": "We envision a world where every puzzle enthusiast has access to an endless variety of puzzles without the environmental impact of constant new purchases. A world where the joy of puzzling is shared and celebrated across borders and cultures."
-    },
-    "values": {
-      "title": "Our Values",
-      "sustainability": {
-        "title": "Sustainability",
-        "description": "We're committed to reducing waste in the puzzle industry by promoting reuse and sharing of completed puzzles."
-      },
-      "community": {
-        "title": "Community",
-        "description": "We believe in the power of community and fostering connections between puzzle enthusiasts worldwide."
-      },
-      "transparency": {
-        "title": "Transparency",
-        "description": "We operate with complete transparency in our data practices and platform operations."
-      },
-      "accessibility": {
-        "title": "Accessibility",
-        "description": "We strive to make puzzle trading accessible to everyone, regardless of location or economic background."
-      }
-    },
-    "story": {
-      "title": "Our Story",
-      "description": "JigSwap was born from a simple family need: we wanted to easily see what puzzles our friends and family owned so we could exchange them. Completed puzzles often sit on shelves, taking up space while others search for new challenges. We saw an opportunity to create a platform that not only solves this problem but also builds a community around the shared love of puzzling.",
-      "founded": "Founded in 2025 as a family side project, JigSwap has grown from a simple idea to a thriving community of puzzle enthusiasts. Our platform combines modern technology with the timeless joy of jigsaw puzzles, creating an experience that's both nostalgic and innovative."
-    },
-    "team": {
-      "title": "The Team",
-      "description": "JigSwap is built by a family of puzzle enthusiasts, for puzzle enthusiasts. We started this as a side project to solve our own need for sharing puzzles with friends and family.",
-      "passion": "We're passionate about creating a platform that serves the puzzle community while promoting sustainable practices in the hobby we all love."
-    },
-    "technology": {
-      "title": "Technology",
-      "description": "Built with modern web technologies, JigSwap provides a seamless experience for managing collections, tracking completions, and facilitating trades.",
-      "features": [
+        "Resolve disputes amicably when possible",
+      ];
+      disclaimer: "JigSwap acts as a facilitator for trades but is not responsible for the quality, condition, or completeness of traded puzzles. Users trade at their own risk.";
+    };
+    intellectualProperty: {
+      title: "Intellectual Property";
+      description: "Our service and its original content, features, and functionality are owned by JigSwap and are protected by international copyright, trademark, and other intellectual property laws.";
+    };
+    privacy: {
+      title: "Privacy";
+      description: "Your privacy is important to us. Please review our Privacy Policy, which also governs your use of the service.";
+    };
+    termination: {
+      title: "Account Termination";
+      description: "We may terminate or suspend your account immediately, without prior notice, for any reason, including breach of these Terms.";
+    };
+    disclaimer: {
+      title: "Disclaimer of Warranties";
+      description: "The service is provided 'as is' without warranties of any kind. We do not guarantee that the service will be uninterrupted or error-free.";
+    };
+    limitation: {
+      title: "Limitation of Liability";
+      description: "JigSwap shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of the service.";
+    };
+    changes: {
+      title: "Changes to Terms";
+      description: "We reserve the right to modify these terms at any time. We will notify users of any material changes by posting the new terms on our website.";
+    };
+    contact: {
+      title: "Contact Information";
+      description: "If you have any questions about these Terms of Service, please contact us:";
+      email: "Email";
+      emailAddress: "legal@jigswap.site";
+      questions: "We're committed to transparency and will respond to your inquiries promptly.";
+    };
+  };
+  about: {
+    title: "About JigSwap";
+    subtitle: "The complete platform for jigsaw puzzle enthusiasts";
+    introduction: "JigSwap is more than just a puzzle trading platform. We're building a community where puzzle enthusiasts can connect, share, and grow their passion for jigsaw puzzles in a sustainable way.";
+    mission: {
+      title: "Our Mission";
+      description: "We believe that puzzles should have multiple lives. Our mission is to create a sustainable ecosystem where puzzle enthusiasts can share their completed puzzles with others, discover new challenges, and build meaningful connections within the community.";
+    };
+    vision: {
+      title: "Our Vision";
+      description: "We envision a world where every puzzle enthusiast has access to an endless variety of puzzles without the environmental impact of constant new purchases. A world where the joy of puzzling is shared and celebrated across borders and cultures.";
+    };
+    values: {
+      title: "Our Values";
+      sustainability: {
+        title: "Sustainability";
+        description: "We're committed to reducing waste in the puzzle industry by promoting reuse and sharing of completed puzzles.";
+      };
+      community: {
+        title: "Community";
+        description: "We believe in the power of community and fostering connections between puzzle enthusiasts worldwide.";
+      };
+      transparency: {
+        title: "Transparency";
+        description: "We operate with complete transparency in our data practices and platform operations.";
+      };
+      accessibility: {
+        title: "Accessibility";
+        description: "We strive to make puzzle trading accessible to everyone, regardless of location or economic background.";
+      };
+    };
+    story: {
+      title: "Our Story";
+      description: "JigSwap was born from a simple family need: we wanted to easily see what puzzles our friends and family owned so we could exchange them. Completed puzzles often sit on shelves, taking up space while others search for new challenges. We saw an opportunity to create a platform that not only solves this problem but also builds a community around the shared love of puzzling.";
+      founded: "Founded in 2025 as a family side project, JigSwap has grown from a simple idea to a thriving community of puzzle enthusiasts. Our platform combines modern technology with the timeless joy of jigsaw puzzles, creating an experience that's both nostalgic and innovative.";
+    };
+    team: {
+      title: "The Team";
+      description: "JigSwap is built by a family of puzzle enthusiasts, for puzzle enthusiasts. We started this as a side project to solve our own need for sharing puzzles with friends and family.";
+      passion: "We're passionate about creating a platform that serves the puzzle community while promoting sustainable practices in the hobby we all love.";
+    };
+    technology: {
+      title: "Technology";
+      description: "Built with modern web technologies, JigSwap provides a seamless experience for managing collections, tracking completions, and facilitating trades.";
+      features: [
         "Real-time updates and messaging",
         "Advanced search and filtering",
         "Secure authentication and data protection",
         "Mobile-responsive design",
-        "Internationalization support"
-      ]
-    },
-    "community": {
-      "title": "Join Our Community",
-      "description": "Whether you're a casual puzzler or a dedicated enthusiast, JigSwap has something for you. Join thousands of users who are already trading, connecting, and growing their puzzle collections.",
-      "getStarted": "Ready to start your puzzle journey? Create an account and begin exploring the world of sustainable puzzle trading."
-    }
-  },
-  "contact": {
-    "title": "Contact Us",
-    "subtitle": "We'd love to hear from you",
-    "introduction": "Have questions, suggestions, or just want to say hello? We're here to help and would love to hear from you. Our team is committed to providing excellent support to the JigSwap community.",
-    "waysToContact": {
-      "title": "Ways to Contact Us",
-      "description": "Choose the method that works best for you. We typically respond within 24 hours during business days."
-    },
-    "email": {
-      "title": "Email Support",
-      "description": "For general inquiries, support questions, or feedback:",
-      "address": "hello@jigswap.site",
-      "responseTime": "We typically respond within 24 hours"
-    },
-    "support": {
-      "title": "Technical Support",
-      "description": "For technical issues, bug reports, or feature requests:",
-      "address": "support@jigswap.site",
-      "responseTime": "We aim to respond within 12 hours for urgent issues"
-    },
-    "privacy": {
-      "title": "Privacy & Legal",
-      "description": "For privacy concerns or legal matters:",
-      "address": "privacy@jigswap.site",
-      "responseTime": "We respond to all privacy inquiries within 48 hours"
-    },
-    "business": {
-      "title": "Business Inquiries",
-      "description": "For partnerships, collaborations, or business opportunities:",
-      "address": "business@jigswap.site",
-      "responseTime": "We'll get back to you within 2-3 business days"
-    },
-    "faq": {
-      "title": "Frequently Asked Questions",
-      "description": "Before reaching out, you might find answers to common questions in our FAQ section.",
-      "link": "Check our FAQ",
-      "topics": [
+        "Internationalization support",
+      ];
+    };
+    community: {
+      title: "Join Our Community";
+      description: "Whether you're a casual puzzler or a dedicated enthusiast, JigSwap has something for you. Join thousands of users who are already trading, connecting, and growing their puzzle collections.";
+      getStarted: "Ready to start your puzzle journey? Create an account and begin exploring the world of sustainable puzzle trading.";
+    };
+  };
+  contact: {
+    title: "Contact Us";
+    subtitle: "We'd love to hear from you";
+    introduction: "Have questions, suggestions, or just want to say hello? We're here to help and would love to hear from you. Our team is committed to providing excellent support to the JigSwap community.";
+    waysToContact: {
+      title: "Ways to Contact Us";
+      description: "Choose the method that works best for you. We typically respond within 24 hours during business days.";
+    };
+    email: {
+      title: "Email Support";
+      description: "For general inquiries, support questions, or feedback:";
+      address: "hello@jigswap.site";
+      responseTime: "We typically respond within 24 hours";
+    };
+    support: {
+      title: "Technical Support";
+      description: "For technical issues, bug reports, or feature requests:";
+      address: "support@jigswap.site";
+      responseTime: "We aim to respond within 12 hours for urgent issues";
+    };
+    privacy: {
+      title: "Privacy & Legal";
+      description: "For privacy concerns or legal matters:";
+      address: "privacy@jigswap.site";
+      responseTime: "We respond to all privacy inquiries within 48 hours";
+    };
+    business: {
+      title: "Business Inquiries";
+      description: "For partnerships, collaborations, or business opportunities:";
+      address: "business@jigswap.site";
+      responseTime: "We'll get back to you within 2-3 business days";
+    };
+    faq: {
+      title: "Frequently Asked Questions";
+      description: "Before reaching out, you might find answers to common questions in our FAQ section.";
+      link: "Check our FAQ";
+      topics: [
         "How to get started with JigSwap",
         "Understanding the trading process",
         "Account and profile management",
         "Privacy and data security",
-        "Community guidelines"
-      ]
-    },
-    "feedback": {
-      "title": "Feedback & Suggestions",
-      "description": "We're always looking to improve JigSwap. Your feedback helps us make the platform better for everyone.",
-      "types": [
+        "Community guidelines",
+      ];
+    };
+    feedback: {
+      title: "Feedback & Suggestions";
+      description: "We're always looking to improve JigSwap. Your feedback helps us make the platform better for everyone.";
+      types: [
         "Feature requests and ideas",
         "User experience feedback",
         "Bug reports and technical issues",
         "Community suggestions",
-        "General platform feedback"
-      ]
-    },
-    "response": {
-      "title": "What to Expect",
-      "description": "When you contact us, here's what you can expect:",
-      "expectations": [
+        "General platform feedback",
+      ];
+    };
+    response: {
+      title: "What to Expect";
+      description: "When you contact us, here's what you can expect:";
+      expectations: [
         "Acknowledgment of your message within 24 hours",
         "Detailed response from our team",
         "Follow-up if additional information is needed",
-        "Escalation to appropriate team members when necessary"
-      ]
-    }
-  },
-  "callToAction": {
-    "title": "Ready to Transform Your Puzzle Experience?",
-    "description": "Join thousands of puzzle enthusiasts who are already managing their collections, trading puzzles, and connecting with the community on JigSwap",
-    "startJourney": "Start Your Puzzle Journey",
-    "goToDashboard": "Go to Dashboard"
-  },
-  "collections": {
-    "myCollections": "My Collections",
-    "organizePuzzles": "Organize your puzzles into collections",
-    "createCollection": "Create Collection",
-    "createCollectionDescription": "Create a new collection to organize your puzzles",
-    "editCollection": "Edit Collection",
-    "editCollectionDescription": "Update your collection details",
-    "noCollections": "No Collections",
-    "createFirstCollection": "Create your first collection to get started",
-    "collectionNamePlaceholder": "Enter collection name",
-    "descriptionPlaceholder": "Enter collection description",
-    "name": "Name",
-    "description": "Description",
-    "visibility": "Visibility",
-    "private": "Private",
-    "public": "Public",
-    "icon": "Icon",
-    "color": "Color",
-    "create": "Create",
-    "save": "Save",
-    "puzzles": "puzzles",
-    "default": "Default",
-    "addPuzzles": "Add Puzzles",
-    "addPuzzlesToCollection": "Add Puzzles to Collection",
-    "selectPuzzlesToAdd": "Select puzzles to add to collection",
-    "noAvailablePuzzles": "No available puzzles",
-    "allPuzzlesInCollection": "All your puzzles are already in this collection or match your search",
-    "backToCollection": "Back to Collection",
-    "availablePuzzles": "available puzzles",
-    "addPuzzleToCollection": "Add puzzle to collection",
-    "removePuzzleFromCollection": "Remove puzzle from collection",
-    "collectionNotFound": "Collection not found",
-    "backToCollections": "Back to Collections",
-    "manageCollections": "Manage Collections",
-    "notFound": "Collection not found"
-  },
-  "forms": {
+        "Escalation to appropriate team members when necessary",
+      ];
+    };
+  };
+  callToAction: {
+    title: "Ready to Transform Your Puzzle Experience?";
+    description: "Join thousands of puzzle enthusiasts who are already managing their collections, trading puzzles, and connecting with the community on JigSwap";
+    startJourney: "Start Your Puzzle Journey";
+    goToDashboard: "Go to Dashboard";
+  };
+  collections: {
+    myCollections: "My Collections";
+    organizePuzzles: "Organize your puzzles into collections";
+    createCollection: "Create Collection";
+    createCollectionDescription: "Create a new collection to organize your puzzles";
+    editCollection: "Edit Collection";
+    editCollectionDescription: "Update your collection details";
+    noCollections: "No Collections";
+    createFirstCollection: "Create your first collection to get started";
+    collectionNamePlaceholder: "Enter collection name";
+    descriptionPlaceholder: "Enter collection description";
+    name: "Name";
+    description: "Description";
+    visibility: "Visibility";
+    private: "Private";
+    public: "Public";
+    icon: "Icon";
+    color: "Color";
+    create: "Create";
+    save: "Save";
+    puzzles: "puzzles";
+    default: "Default";
+    addPuzzles: "Add Puzzles";
+    addPuzzlesToCollection: "Add Puzzles to Collection";
+    selectPuzzlesToAdd: "Select puzzles to add to collection";
+    noAvailablePuzzles: "No available puzzles";
+    allPuzzlesInCollection: "All your puzzles are already in this collection or match your search";
+    backToCollection: "Back to Collection";
+    availablePuzzles: "available puzzles";
+    addPuzzleToCollection: "Add puzzle to collection";
+    removePuzzleFromCollection: "Remove puzzle from collection";
+    collectionNotFound: "Collection not found";
+    backToCollections: "Back to Collections";
+    manageCollections: "Manage Collections";
+    notFound: "Collection not found";
+  };
+  forms: {
     "owned-puzzle-form": {
-      "title": "Add New Puzzle",
-      "step1": {
-        "title": "Puzzle Selection",
-        "searchLabel": "Search for existing puzzles",
-        "searchPlaceholder": "Search by title, brand, or piece count...",
-        "createNew": "Create New Puzzle",
-        "suggestions": "Found Puzzles",
-        "pieces": "pieces",
-        "createNewTitle": "Create New Puzzle",
-        "titleLabel": "Title",
-        "titlePlaceholder": "Enter puzzle title",
-        "descriptionLabel": "Description",
-        "descriptionPlaceholder": "Describe your puzzle (optional)",
-        "brandLabel": "Brand",
-        "brandPlaceholder": "e.g. Ravensburger, Clementoni",
-        "pieceCountLabel": "Piece Count",
-        "pieceCountPlaceholder": "Enter piece count",
-        "difficultyLabel": "Difficulty",
-        "difficultyPlaceholder": "Select difficulty",
-        "difficulty": {
-          "easy": "Easy",
-          "medium": "Medium",
-          "hard": "Hard",
-          "expert": "Expert"
-        },
-        "tagsLabel": "Tags",
-        "tagsPlaceholder": "nature, colorful, challenging",
-        "selectedPuzzle": "Selected Puzzle"
-      },
-      "step2": {
-        "title": "Instance Details",
-        "conditionLabel": "Condition",
-        "conditionPlaceholder": "Select condition",
-        "condition": {
-          "excellent": "Excellent",
-          "good": "Good",
-          "fair": "Fair",
-          "poor": "Poor"
-        },
-        "availableLabel": "Available for Exchange",
-        "availableDescription": "Is this puzzle available for trading?",
-        "acquisitionDateLabel": "Acquisition Date",
-        "acquisitionDatePlaceholder": "Select acquisition date",
-        "notesLabel": "Notes",
-        "notesPlaceholder": "Any additional notes about this puzzle"
-      },
-      "navigation": {
-        "previous": "Previous",
-        "next": "Next",
-        "submit": "Create Puzzle"
-      },
-      "actions": {
-        "submit": "Create Puzzle",
-        "submitting": "Creating...",
-        "cancel": "Cancel"
-      }
-    },
+      title: "Add New Puzzle";
+      step1: {
+        title: "Puzzle Selection";
+        searchLabel: "Search for existing puzzles";
+        searchPlaceholder: "Search by title, brand, or piece count...";
+        createNew: "Create New Puzzle";
+        suggestions: "Found Puzzles";
+        pieces: "pieces";
+        createNewTitle: "Create New Puzzle";
+        titleLabel: "Title";
+        titlePlaceholder: "Enter puzzle title";
+        descriptionLabel: "Description";
+        descriptionPlaceholder: "Describe your puzzle (optional)";
+        brandLabel: "Brand";
+        brandPlaceholder: "e.g. Ravensburger, Clementoni";
+        pieceCountLabel: "Piece Count";
+        pieceCountPlaceholder: "Enter piece count";
+        difficultyLabel: "Difficulty";
+        difficultyPlaceholder: "Select difficulty";
+        difficulty: {
+          easy: "Easy";
+          medium: "Medium";
+          hard: "Hard";
+          expert: "Expert";
+        };
+        tagsLabel: "Tags";
+        tagsPlaceholder: "nature, colorful, challenging";
+        selectedPuzzle: "Selected Puzzle";
+      };
+      step2: {
+        title: "Instance Details";
+        conditionLabel: "Condition";
+        conditionPlaceholder: "Select condition";
+        condition: {
+          excellent: "Excellent";
+          good: "Good";
+          fair: "Fair";
+          poor: "Poor";
+        };
+        availableLabel: "Available for Exchange";
+        availableDescription: "Is this puzzle available for trading?";
+        acquisitionDateLabel: "Acquisition Date";
+        acquisitionDatePlaceholder: "Select acquisition date";
+        notesLabel: "Notes";
+        notesPlaceholder: "Any additional notes about this puzzle";
+      };
+      navigation: {
+        previous: "Previous";
+        next: "Next";
+        submit: "Create Puzzle";
+      };
+      actions: {
+        submit: "Create Puzzle";
+        submitting: "Creating...";
+        cancel: "Cancel";
+      };
+    };
     "puzzle-form": {
-      "loading": "Loading form...",
-      "image": {
-        "label": "Image",
-        "placeholder": "Upload an image of the puzzle"
-      },
-      "title": {
-        "label": "Title",
-        "placeholder": "Enter puzzle title"
-      },
-      "description": {
-        "label": "Description",
-        "placeholder": "Describe the puzzle (optional)"
-      },
-      "brand": {
-        "label": "Brand",
-        "placeholder": "e.g. Ravensburger, Clementoni"
-      },
-      "pieceCount": {
-        "label": "Piece Count",
-        "placeholder": "Enter number of pieces",
-        "custom": "Custom"
-      },
-      "difficulty": {
-        "label": "Difficulty",
-        "placeholder": "Select difficulty level",
-        "easy": "Easy",
-        "medium": "Medium",
-        "hard": "Hard",
-        "expert": "Expert"
-      },
-      "category": {
-        "label": "Category",
-        "placeholder": "e.g. Landscape, Animals, Art"
-      },
-      "tags": {
-        "label": "Tags",
-        "placeholder": "nature, colorful, challenging"
-      },
-      "actions": {
-        "submit": "Save Puzzle",
-        "submitting": "Saving...",
-        "cancel": "Cancel"
-      },
-      "errors": {
-        "submissionFailed": "Failed to save puzzle. Please try again.",
-        "networkError": "Network error. Please check your connection."
-      }
-    },
+      loading: "Loading form...";
+      image: {
+        label: "Image";
+        placeholder: "Upload an image of the puzzle";
+      };
+      title: {
+        label: "Title";
+        placeholder: "Enter puzzle title";
+      };
+      description: {
+        label: "Description";
+        placeholder: "Describe the puzzle (optional)";
+      };
+      brand: {
+        label: "Brand";
+        placeholder: "e.g. Ravensburger, Clementoni";
+      };
+      pieceCount: {
+        label: "Piece Count";
+        placeholder: "Enter number of pieces";
+        custom: "Custom";
+      };
+      difficulty: {
+        label: "Difficulty";
+        placeholder: "Select difficulty level";
+        easy: "Easy";
+        medium: "Medium";
+        hard: "Hard";
+        expert: "Expert";
+      };
+      category: {
+        label: "Category";
+        placeholder: "e.g. Landscape, Animals, Art";
+      };
+      tags: {
+        label: "Tags";
+        placeholder: "nature, colorful, challenging";
+      };
+      actions: {
+        submit: "Save Puzzle";
+        submitting: "Saving...";
+        cancel: "Cancel";
+      };
+      errors: {
+        submissionFailed: "Failed to save puzzle. Please try again.";
+        networkError: "Network error. Please check your connection.";
+      };
+    };
     "file-upload": {
-      "error": "Error compressing image. Please select a different file.",
-      "compressing": "Compressing..."
-    }
-  }
+      error: "Error compressing image. Please select a different file.";
+      compressing: "Compressing...";
+    };
+  };
 };
 export default messages;
