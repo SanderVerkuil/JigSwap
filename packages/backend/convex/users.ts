@@ -132,14 +132,14 @@ export const getUserStats = query({
       .collect();
 
     const tradesAsRequester = await ctx.db
-      .query("tradeRequests")
-      .withIndex("by_requester", (q) => q.eq("requesterId", args.userId))
+      .query("exchanges")
+      .withIndex("by_initiator", (q) => q.eq("initiatorId", args.userId))
       .filter((q) => q.eq(q.field("status"), "completed"))
       .collect();
 
     const tradesAsOwner = await ctx.db
-      .query("tradeRequests")
-      .withIndex("by_owner", (q) => q.eq("ownerId", args.userId))
+      .query("exchanges")
+      .withIndex("by_recipient", (q) => q.eq("recipientId", args.userId))
       .filter((q) => q.eq(q.field("status"), "completed"))
       .collect();
 

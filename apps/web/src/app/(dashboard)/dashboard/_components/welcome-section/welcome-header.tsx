@@ -23,8 +23,8 @@ export function WelcomeHeader() {
   );
 
   // Get recent trades for active count
-  const recentTrades = useQuery(
-    api.trades.getUserTradeRequests,
+  const recentExchanges = useQuery(
+    api.exchanges.getUserExchanges,
     convexUser?._id ? { userId: convexUser._id } : "skip",
   );
 
@@ -53,9 +53,12 @@ export function WelcomeHeader() {
     );
   }
 
-  const activeTrades =
-    recentTrades?.filter(
-      (t) => t.status === "pending" || t.status === "accepted",
+  const activeExchanges =
+    recentExchanges?.filter(
+      (t) =>
+        t.status === "proposed" ||
+        t.status === "accepted" ||
+        t.status === "disputed",
     ).length || 0;
 
   return (
@@ -79,7 +82,7 @@ export function WelcomeHeader() {
           icon={Package}
         />
         <StatsCard
-          title="Trades Completed"
+          title="Exchanges Completed"
           value={userStats?.tradesCompleted || 0}
           subtitle="Successful exchanges"
           icon={ArrowLeftRight}
@@ -95,8 +98,8 @@ export function WelcomeHeader() {
           icon={Star}
         />
         <StatsCard
-          title="Active Trades"
-          value={activeTrades}
+          title="Active Exchanges"
+          value={activeExchanges}
           subtitle="Ongoing negotiations"
           icon={MessageSquare}
         />

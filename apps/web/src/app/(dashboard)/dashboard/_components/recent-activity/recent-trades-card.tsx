@@ -14,7 +14,7 @@ import { useConvexAuth, useQuery } from "convex/react";
 import { ArrowLeftRight } from "lucide-react";
 import Link from "next/link";
 
-export function RecentTradesCard() {
+export function RecentExchangesCard() {
   const { isLoading } = useConvexAuth();
 
   // Get current user from Convex
@@ -24,17 +24,17 @@ export function RecentTradesCard() {
   );
 
   // Get recent trades
-  const recentTrades = useQuery(
-    api.trades.getUserTradeRequests,
+  const recentExchanges = useQuery(
+    api.exchanges.getUserExchanges,
     convexUser?._id ? { userId: convexUser._id } : "skip",
   );
 
   // Show loading state while data is being fetched
-  if (isLoading || convexUser === undefined || recentTrades === undefined) {
+  if (isLoading || convexUser === undefined || recentExchanges === undefined) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Recent Trade Activity</CardTitle>
+          <CardTitle>Recent Exchange Activity</CardTitle>
           <CardDescription>
             Your latest trade requests and offers
           </CardDescription>
@@ -49,15 +49,15 @@ export function RecentTradesCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Recent Trade Activity</CardTitle>
+        <CardTitle>Recent Exchange Activity</CardTitle>
         <CardDescription>Your latest trade requests and offers</CardDescription>
       </CardHeader>
       <CardContent>
-        {recentTrades && recentTrades.length > 0 ? (
+        {recentExchanges && recentExchanges.length > 0 ? (
           <div className="space-y-3">
-            {recentTrades.slice(0, 3).map((trade) => (
+            {recentExchanges.slice(0, 3).map((exchange) => (
               <div
-                key={trade._id}
+                key={exchange._id}
                 className="flex items-center space-x-3 p-3 border rounded-lg"
               >
                 <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
@@ -65,20 +65,20 @@ export function RecentTradesCard() {
                 </div>
                 <div className="flex-1">
                   <p className="font-medium">
-                    {trade.userRole === "requester"
+                    {exchange.userRole === "requester"
                       ? "Requested"
                       : "Received request for"}
-                    : {trade.ownerPuzzleProduct?.title}
+                    : {exchange.ownerPuzzleProduct?.title}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Status: {trade.status}
+                    Status: {exchange.status}
                   </p>
                 </div>
               </div>
             ))}
             <Link href="/trades">
               <Button variant="outline" className="w-full">
-                View All Trades
+                View All Exchanges
               </Button>
             </Link>
           </div>

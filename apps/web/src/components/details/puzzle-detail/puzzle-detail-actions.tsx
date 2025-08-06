@@ -7,16 +7,20 @@ import { useTranslations } from "next-intl";
 
 interface PuzzleData {
   _id: Id<"ownedPuzzles">;
-  productId: Id<"puzzles">;
+  puzzleId: Id<"puzzles">;
   ownerId: Id<"users">;
-  condition: "excellent" | "good" | "fair" | "poor";
-  isAvailable: boolean;
+  condition: "new_sealed" | "like_new" | "good" | "fair" | "poor";
+  availability: {
+    forTrade: boolean;
+    forSale: boolean;
+    forLend: boolean;
+  };
   acquisitionDate?: number;
   notes?: string;
   createdAt: number;
   updatedAt: number;
   _creationTime?: number;
-  product: {
+  puzzle: {
     _id: Id<"puzzles">;
     title: string;
     description?: string;
@@ -43,7 +47,7 @@ interface PuzzleDetailActionsProps {
   onEdit?: (puzzleId: Id<"ownedPuzzles">) => void;
   onView?: (puzzleId: Id<"ownedPuzzles">) => void;
   onDelete?: (puzzleId: Id<"ownedPuzzles">) => void;
-  onRequestTrade?: (puzzleId: Id<"ownedPuzzles">) => void;
+  onRequestExchange?: (puzzleId: Id<"ownedPuzzles">) => void;
   onMessage?: (puzzleId: Id<"ownedPuzzles">) => void;
   onFavorite?: (puzzleId: Id<"ownedPuzzles">) => void;
 }
@@ -53,7 +57,7 @@ export function PuzzleDetailActions({
   onEdit,
   onView,
   onDelete,
-  onRequestTrade,
+  onRequestExchange,
   onMessage,
   onFavorite,
 }: PuzzleDetailActionsProps) {
@@ -63,8 +67,8 @@ export function PuzzleDetailActions({
     <div className="space-y-4">
       {/* Primary Actions */}
       <div className="flex flex-col sm:flex-row gap-2">
-        {onRequestTrade && puzzle.isAvailable && (
-          <Button className="flex-1">{t("requestTrade")}</Button>
+        {onRequestExchange && puzzle.availability.forTrade && (
+          <Button className="flex-1">{t("requestExchange")}</Button>
         )}
         {onEdit && (
           <Button variant="outline" onClick={() => onEdit(puzzle._id)}>

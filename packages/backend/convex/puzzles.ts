@@ -11,8 +11,8 @@ export type PuzzleSuggestion = {
   tags?: string[];
 };
 
-// Create a new puzzle product
-export const createPuzzleProduct = mutation({
+// Create a new puzzle
+export const createPuzzle = mutation({
   args: {
     title: v.string(),
     description: v.optional(v.string()),
@@ -32,6 +32,19 @@ export const createPuzzleProduct = mutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
     const searchableText = [
       args.title,
       args.description,
@@ -42,14 +55,16 @@ export const createPuzzleProduct = mutation({
       .join(" ")
       .toLowerCase();
 
-    const productId = await ctx.db.insert("puzzles", {
+    const puzzleId = await ctx.db.insert("puzzles", {
       ...args,
       searchableText,
+      status: "approved",
+      submittedBy: user._id,
       createdAt: now,
       updatedAt: now,
     });
 
-    return productId;
+    return puzzleId;
   },
 });
 
@@ -61,19 +76,25 @@ export const generateUploadUrl = mutation({
   },
 });
 
-// Create a new puzzle instance (owned copy)
-export const createPuzzleInstance = mutation({
+// Create a new owned puzzle
+export const createOwnedPuzzle = mutation({
   args: {
-    productId: v.id("puzzles"),
+    puzzleId: v.id("puzzles"),
     condition: v.union(
-      v.literal("excellent"),
+      v.literal("new_sealed"),
+      v.literal("like_new"),
       v.literal("good"),
       v.literal("fair"),
       v.literal("poor"),
     ),
-    isAvailable: v.boolean(),
+    availability: v.object({
+      forTrade: v.boolean(),
+      forSale: v.boolean(),
+      forLend: v.boolean(),
+    }),
     acquisitionDate: v.optional(v.number()),
     notes: v.optional(v.string()),
+    missingPieceCount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -91,45 +112,53 @@ export const createPuzzleInstance = mutation({
       throw new Error("User not found");
     }
 
-    const instanceId = await ctx.db.insert("ownedPuzzles", {
+    const ownedPuzzleId = await ctx.db.insert("ownedPuzzles", {
       ...args,
       ownerId: user._id,
+      puzzleId: args.puzzleId,
+      missingPiecesCount: args.missingPieceCount,
+      availability: args.availability,
       createdAt: now,
       updatedAt: now,
     });
 
-    return instanceId;
+    return ownedPuzzleId;
   },
 });
 
-// Get puzzle instances by owner
-export const getownedPuzzlesByOwner = query({
+// Get owned puzzles by owner
+export const getOwnedPuzzlesByOwner = query({
   args: {
     ownerId: v.id("users"),
     includeUnavailable: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    let instances = await ctx.db
+    let ownedPuzzles = await ctx.db
       .query("ownedPuzzles")
       .withIndex("by_owner", (q) => q.eq("ownerId", args.ownerId))
       .collect();
 
     if (!args.includeUnavailable) {
-      instances = instances.filter((i) => i.isAvailable);
+      ownedPuzzles = ownedPuzzles.filter(
+        (i) =>
+          i.availability.forTrade ||
+          i.availability.forSale ||
+          i.availability.forLend,
+      );
     }
 
-    // Get product information for each instance
-    const instancesWithProducts = await Promise.all(
-      instances.map(async (instance) => {
-        const product = await ctx.db.get(instance.productId);
+    // Get puzzle information for each owned puzzle
+    const ownedPuzzlesWithPuzzles = await Promise.all(
+      ownedPuzzles.map(async (ownedPuzzle) => {
+        const puzzle = await ctx.db.get(ownedPuzzle.puzzleId);
         return {
-          ...instance,
-          product,
+          ...ownedPuzzle,
+          puzzle,
         };
       }),
     );
 
-    return instancesWithProducts.sort((a, b) => b.createdAt - a.createdAt);
+    return ownedPuzzlesWithPuzzles.sort((a, b) => b.createdAt - a.createdAt);
   },
 });
 
@@ -138,39 +167,35 @@ export const listAllpuzzles = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    const products = await ctx.db
-      .query("puzzles")
-      .paginate(args.paginationOpts);
+    const puzzles = await ctx.db.query("puzzles").paginate(args.paginationOpts);
     const page = await Promise.all(
-      products.page.map(async (product) => ({
-        ...product,
-        image: product.image
-          ? await ctx.storage.getUrl(product.image)
+      puzzles.page.map(async (puzzle) => ({
+        ...puzzle,
+        image: puzzle.image
+          ? await ctx.storage.getUrl(puzzle.image)
           : undefined,
       })),
     );
     return {
-      ...products,
+      ...puzzles,
       page,
     };
   },
 });
 
-// Get a single puzzle product by ID
-export const getPuzzleProductById = query({
+// Get a single puzzle by ID
+export const getPuzzleById = query({
   args: {
-    productId: v.id("puzzles"),
+    puzzleId: v.id("puzzles"),
   },
   handler: async (ctx, args) => {
-    const product = await ctx.db.get(args.productId);
-    if (!product) {
+    const puzzle = await ctx.db.get(args.puzzleId);
+    if (!puzzle) {
       return null;
     }
     return {
-      ...product,
-      image: product.image
-        ? await ctx.storage.getUrl(product.image)
-        : undefined,
+      ...puzzle,
+      image: puzzle.image ? await ctx.storage.getUrl(puzzle.image) : undefined,
     };
   },
 });
@@ -208,8 +233,8 @@ export const getAllTags = query({
   },
 });
 
-// Browse available puzzle instances with filters
-export const browseownedPuzzles = query({
+// Browse available owned puzzles with filters
+export const browseOwnedPuzzles = query({
   args: {
     category: v.optional(v.id("adminCategories")),
     minPieceCount: v.optional(v.number()),
@@ -224,14 +249,15 @@ export const browseownedPuzzles = query({
     ),
     condition: v.optional(
       v.union(
-        v.literal("excellent"),
+        v.literal("new_sealed"),
+        v.literal("like_new"),
         v.literal("good"),
         v.literal("fair"),
         v.literal("poor"),
       ),
     ),
     searchTerm: v.optional(v.string()),
-    excludeOwnerId: v.optional(v.id("users")),
+    includeOwnPuzzles: v.optional(v.boolean()),
     limit: v.optional(v.number()),
     offset: v.optional(v.number()),
   },
@@ -239,55 +265,74 @@ export const browseownedPuzzles = query({
     const limit = args.limit ?? 20;
     const offset = args.offset ?? 0;
 
-    let instances = await ctx.db
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    let ownedPuzzles = await ctx.db
       .query("ownedPuzzles")
-      .withIndex("by_availability", (q) => q.eq("isAvailable", true))
+      .withIndex("by_owner", (q) => q.eq("ownerId", user._id))
+      .filter((f) =>
+        f.or(
+          f.eq(f.field("availability.forTrade"), true),
+          f.eq(f.field("availability.forSale"), true),
+          f.eq(f.field("availability.forLend"), true),
+        ),
+      )
       .collect();
 
     // Apply filters
-    if (args.excludeOwnerId) {
-      instances = instances.filter((i) => i.ownerId !== args.excludeOwnerId);
-    }
-
     if (args.condition) {
-      instances = instances.filter((i) => i.condition === args.condition);
+      ownedPuzzles = ownedPuzzles.filter((i) => i.condition === args.condition);
     }
 
-    // Get product information for filtering
-    const instancesWithProducts = await Promise.all(
-      instances.map(async (instance) => {
-        const product = await ctx.db.get(instance.productId);
+    // Get puzzle information for filtering
+    const ownedPuzzlesWithPuzzles = await Promise.all(
+      ownedPuzzles.map(async (ownedPuzzle) => {
+        const puzzle = await ctx.db.get(ownedPuzzle.puzzleId);
         return {
-          ...instance,
-          product,
+          ...ownedPuzzle,
+          puzzle,
         };
       }),
     );
 
     // Apply product-based filters
-    let filteredInstances = instancesWithProducts;
+    let filteredInstances = ownedPuzzlesWithPuzzles;
 
     if (args.category) {
       filteredInstances = filteredInstances.filter(
-        (i) => i.product?.category === args.category,
+        (i) =>
+          i.puzzle?.category === args.category &&
+          i.puzzle?.category !== undefined,
       );
     }
 
     if (args.minPieceCount !== undefined) {
       filteredInstances = filteredInstances.filter(
-        (i) => i.product && i.product.pieceCount >= args.minPieceCount!,
+        (i) => i.puzzle && i.puzzle.pieceCount >= args.minPieceCount!,
       );
     }
 
     if (args.maxPieceCount !== undefined) {
       filteredInstances = filteredInstances.filter(
-        (i) => i.product && i.product.pieceCount <= args.maxPieceCount!,
+        (i) => i.puzzle && i.puzzle.pieceCount <= args.maxPieceCount!,
       );
     }
 
     if (args.difficulty) {
       filteredInstances = filteredInstances.filter(
-        (i) => i.product?.difficulty === args.difficulty,
+        (i) => i.puzzle?.difficulty === args.difficulty,
       );
     }
 
@@ -295,14 +340,14 @@ export const browseownedPuzzles = query({
       const searchTerm = args.searchTerm.toLowerCase();
       filteredInstances = filteredInstances.filter(
         (i) =>
-          i.product &&
-          (i.product.title.toLowerCase().includes(searchTerm) ||
-            (i.product.description &&
-              i.product.description.toLowerCase().includes(searchTerm)) ||
-            (i.product.brand &&
-              i.product.brand.toLowerCase().includes(searchTerm)) ||
-            (i.product.tags &&
-              i.product.tags.some((tag) =>
+          i.puzzle &&
+          (i.puzzle.title.toLowerCase().includes(searchTerm) ||
+            (i.puzzle.description &&
+              i.puzzle.description.toLowerCase().includes(searchTerm)) ||
+            (i.puzzle.brand &&
+              i.puzzle.brand.toLowerCase().includes(searchTerm)) ||
+            (i.puzzle.tags &&
+              i.puzzle.tags.some((tag) =>
                 tag.toLowerCase().includes(searchTerm),
               ))),
       );
@@ -311,36 +356,38 @@ export const browseownedPuzzles = query({
     // Sort by creation date (newest first)
     filteredInstances.sort((a, b) => b.createdAt - a.createdAt);
 
-    // Get owner information for each instance
-    const instancesWithOwners = await Promise.all(
-      filteredInstances.slice(offset, offset + limit).map(async (instance) => {
-        const owner = await ctx.db.get(instance.ownerId);
-        return {
-          ...instance,
-          owner: owner
-            ? {
-                _id: owner._id,
-                name: owner.name,
-                username: owner.username,
-                avatar: owner.avatar,
-              }
-            : null,
-        };
-      }),
+    // Get owner information for each owned puzzle
+    const ownedPuzzlesWithOwners = await Promise.all(
+      filteredInstances
+        .slice(offset, offset + limit)
+        .map(async (ownedPuzzle) => {
+          const owner = await ctx.db.get(ownedPuzzle.ownerId);
+          return {
+            ...ownedPuzzle,
+            owner: owner
+              ? {
+                  _id: owner._id,
+                  name: owner.name,
+                  username: owner.username,
+                  avatar: owner.avatar,
+                }
+              : null,
+          };
+        }),
     );
 
     return {
-      instances: instancesWithOwners,
+      ownedPuzzles: ownedPuzzlesWithOwners,
       total: filteredInstances.length,
       hasMore: offset + limit < filteredInstances.length,
     };
   },
 });
 
-// Update puzzle product
-export const updatePuzzleProduct = mutation({
+// Update puzzle
+export const updatePuzzle = mutation({
   args: {
-    productId: v.id("puzzles"),
+    puzzleId: v.id("puzzles"),
     title: v.optional(v.string()),
     description: v.optional(v.string()),
     brand: v.optional(v.string()),
@@ -358,19 +405,19 @@ export const updatePuzzleProduct = mutation({
     images: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    const { productId, ...updates } = args;
+    const { puzzleId, ...updates } = args;
 
     let searchableText = undefined;
 
     // Update searchable text if any text fields changed
     if (updates.title || updates.description || updates.brand || updates.tags) {
-      const product = await ctx.db.get(productId);
-      if (product) {
+      const puzzle = await ctx.db.get(puzzleId);
+      if (puzzle) {
         searchableText = [
-          updates.title || product.title,
-          updates.description || product.description,
-          updates.brand || product.brand,
-          ...(updates.tags || product.tags || []),
+          updates.title || puzzle.title,
+          updates.description || puzzle.description,
+          updates.brand || puzzle.brand,
+          ...(updates.tags || puzzle.tags || []),
         ]
           .filter(Boolean)
           .join(" ")
@@ -378,7 +425,7 @@ export const updatePuzzleProduct = mutation({
       }
     }
 
-    await ctx.db.patch(productId, {
+    await ctx.db.patch(puzzleId, {
       ...updates,
       updatedAt: Date.now(),
       ...(searchableText ? { searchableText } : {}),
@@ -386,13 +433,14 @@ export const updatePuzzleProduct = mutation({
   },
 });
 
-// Update puzzle instance
-export const updatePuzzleInstance = mutation({
+// Update owned puzzle
+export const updateOwnedPuzzle = mutation({
   args: {
-    instanceId: v.id("ownedPuzzles"),
+    ownedPuzzleId: v.id("ownedPuzzles"),
     condition: v.optional(
       v.union(
-        v.literal("excellent"),
+        v.literal("new_sealed"),
+        v.literal("like_new"),
         v.literal("good"),
         v.literal("fair"),
         v.literal("poor"),
@@ -403,24 +451,37 @@ export const updatePuzzleInstance = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { instanceId, ...updates } = args;
+    const { ownedPuzzleId, ...updates } = args;
 
-    await ctx.db.patch(instanceId, {
+    await ctx.db.patch(ownedPuzzleId, {
       ...updates,
       updatedAt: Date.now(),
     });
   },
 });
 
-// Delete puzzle instance
-export const deletePuzzleInstance = mutation({
-  args: { instanceId: v.id("ownedPuzzles") },
+// Delete owned puzzle
+export const deleteOwnedPuzzle = mutation({
+  args: { ownedPuzzleId: v.id("ownedPuzzles") },
   handler: async (ctx, args) => {
-    // Check if puzzle instance has any active trade requests
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+    // Check if owned puzzle has any active trade requests
     const activeTradeRequests = await ctx.db
-      .query("tradeRequests")
-      .withIndex("by_owner_puzzle_instance", (q) =>
-        q.eq("ownerPuzzleInstanceId", args.instanceId),
+      .query("exchanges")
+      .withIndex("by_initiator", (q) =>
+        q.eq("initiatorId", user._id).eq("offeredPuzzleId", args.ownedPuzzleId),
       )
       .filter((q) => q.neq(q.field("status"), "completed"))
       .filter((q) => q.neq(q.field("status"), "cancelled"))
@@ -428,12 +489,10 @@ export const deletePuzzleInstance = mutation({
       .collect();
 
     if (activeTradeRequests.length > 0) {
-      throw new Error(
-        "Cannot delete puzzle instance with active trade requests",
-      );
+      throw new Error("Cannot delete owned puzzle with active trade requests");
     }
 
-    await ctx.db.delete(args.instanceId);
+    await ctx.db.delete(args.ownedPuzzleId);
   },
 });
 
@@ -452,8 +511,8 @@ export const getPuzzleCategories = query({
   },
 });
 
-// Get puzzle product suggestions for form auto-fill
-export const getpuzzlesuggestions = query({
+// Get puzzle suggestions for form auto-fill
+export const getPuzzleSuggestions = query({
   args: {
     searchTerm: v.string(),
     limit: v.optional(v.number()),
@@ -466,28 +525,28 @@ export const getpuzzlesuggestions = query({
       return [];
     }
 
-    const products = await ctx.db
+    const puzzles = await ctx.db
       .query("puzzles")
       .withSearchIndex("by_searchable_text", (q) =>
         q.search("searchableText", searchTerm),
       )
       .take(limit);
 
-    const productsWithImages = await Promise.all(
-      products.map(async (product) => ({
-        ...product,
-        image: product.image
-          ? await ctx.storage.getUrl(product.image)
+    const puzzlesWithImages = await Promise.all(
+      puzzles.map(async (puzzle) => ({
+        ...puzzle,
+        image: puzzle.image
+          ? await ctx.storage.getUrl(puzzle.image)
           : undefined,
       })),
     );
 
-    return productsWithImages;
+    return puzzlesWithImages;
   },
 });
 
-export const getPuzzleWithCollectionStatus = query({
-  args: { puzzleId: v.id("ownedPuzzles") },
+export const getOwnedPuzzleWithCollectionStatus = query({
+  args: { ownedPuzzleId: v.id("ownedPuzzles") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
@@ -503,15 +562,15 @@ export const getPuzzleWithCollectionStatus = query({
       return null;
     }
 
-    const instance = await ctx.db.get(args.puzzleId);
-    if (!instance) return null;
+    const ownedPuzzle = await ctx.db.get(args.ownedPuzzleId);
+    if (!ownedPuzzle) return null;
 
     // Get product information
-    const product = await ctx.db.get(instance.productId);
-    if (!product) return null;
+    const puzzle = await ctx.db.get(ownedPuzzle.puzzleId);
+    if (!puzzle) return null;
 
     // Get owner information
-    const owner = await ctx.db.get(instance.ownerId);
+    const owner = await ctx.db.get(ownedPuzzle.ownerId);
 
     // Get collection status for current user
     const collection = await ctx.db
@@ -519,19 +578,27 @@ export const getPuzzleWithCollectionStatus = query({
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
 
-    // Get completion history for current user (for this specific instance)
+    // Get completion history for current user (for this specific owned puzzle)
     const completions = await ctx.db
       .query("completions")
-      .withIndex("by_user_puzzle_instance", (q) =>
-        q.eq("userId", user._id).eq("puzzleInstanceId", args.puzzleId),
+      .withIndex("by_user_owned_puzzle", (q) =>
+        q.eq("userId", user._id).eq("ownedPuzzleId", args.ownedPuzzleId),
       )
       .filter((q) => q.eq(q.field("isCompleted"), true))
       .order("desc")
       .collect();
 
+    const images = await ctx.db
+      .query("ownedPuzzleImages")
+      .withIndex("by_owned_puzzle", (q) =>
+        q.eq("ownedPuzzleId", args.ownedPuzzleId),
+      )
+      .collect();
+
     return {
-      ...instance,
-      product,
+      ...ownedPuzzle,
+      puzzle,
+      images,
       owner: owner
         ? {
             _id: owner._id,

@@ -15,7 +15,7 @@ The main `PuzzleDetail` component that displays comprehensive puzzle information
 - `onEdit?: (puzzleId: Id<"puzzles">) => void` - Edit callback
 - `onView?: (puzzleId: Id<"puzzles">) => void` - View callback
 - `onDelete?: (puzzleId: Id<"puzzles">) => void` - Delete callback
-- `onRequestTrade?: (puzzleId: Id<"puzzles">) => void` - Trade request callback
+- `onRequestExchange?: (puzzleId: Id<"puzzles">) => void` - Exchange request callback
 - `onMessage?: (puzzleId: Id<"puzzles">) => void` - Message callback
 - `onFavorite?: (puzzleId: Id<"puzzles">) => void` - Favorite callback
 - `showOwner?: boolean` - Whether to show owner information (default: false)

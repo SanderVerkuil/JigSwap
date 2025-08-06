@@ -28,7 +28,7 @@ export function QuickActionsSection() {
           <ActionButton
             href="/trades"
             icon={ArrowLeftRight}
-            label="View Trades"
+            label="View Exchanges"
           />
           <ActionButton href="/puzzles" icon={Package} label="My Collection" />
         </div>

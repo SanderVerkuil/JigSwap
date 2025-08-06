@@ -14,7 +14,7 @@ import { toast } from "sonner";
 
 export default function AddPuzzleProductPage() {
   const router = useRouter();
-  const createProduct = useMutation(api.puzzles.createPuzzleProduct);
+  const createPuzzle = useMutation(api.puzzles.createPuzzle);
   const generateUploadUrl = useMutation(api.puzzles.generateUploadUrl);
   const t = useTranslations("puzzles");
   const [isPending, startTransition] = useTransition();
@@ -22,7 +22,7 @@ export default function AddPuzzleProductPage() {
   const handleSubmit = async (data: PuzzleProductFormData) => {
     startTransition(async () => {
       try {
-        console.log("Creating product");
+        console.log("Creating puzzle");
         const storageId = await (async () => {
           if (!(data.image instanceof File)) {
             return undefined;
@@ -36,7 +36,7 @@ export default function AddPuzzleProductPage() {
           const { storageId } = await result.json();
           return storageId;
         })();
-        await createProduct({
+        await createPuzzle({
           title: data.title,
           description: data.description,
           brand: data.brand,
@@ -47,11 +47,11 @@ export default function AddPuzzleProductPage() {
           image: storageId,
         });
 
-        toast.success("Puzzle product created successfully!");
+        toast.success("Puzzle created successfully!");
         router.push("/puzzles/products");
       } catch (error) {
-        console.error("Failed to create puzzle product:", error);
-        toast.error("Failed to create puzzle product. Please try again.");
+        console.error("Failed to create puzzle:", error);
+        toast.error("Failed to create puzzle. Please try again.");
       }
     });
   };

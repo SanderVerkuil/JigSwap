@@ -62,19 +62,23 @@ export function PuzzleViewProvider({
 }
 
 // Puzzle instance data type with product information
-interface PuzzleInstanceData {
+interface OwnedPuzzleData {
   _id: Id<"ownedPuzzles">;
-  productId: Id<"puzzles">;
+  puzzleId: Id<"puzzles">;
   ownerId: Id<"users">;
-  condition: "excellent" | "good" | "fair" | "poor";
-  isAvailable: boolean;
+  condition: "new_sealed" | "like_new" | "good" | "fair" | "poor";
+  availability: {
+    forTrade: boolean;
+    forSale: boolean;
+    forLend: boolean;
+  };
   acquisitionDate?: number;
   notes?: string;
   createdAt: number;
   updatedAt: number;
   _creationTime?: number;
   addedAt?: number; // For collection members
-  product: {
+  puzzle: {
     _id: Id<"puzzles">;
     title: string;
     description?: string;
@@ -97,14 +101,14 @@ interface PuzzleInstanceData {
 }
 
 interface PuzzleCardProps {
-  puzzle: PuzzleInstanceData;
+  puzzle: OwnedPuzzleData;
   variant?: "default" | "browse" | "collection" | "selection";
   onEdit?: (puzzleId: Id<"ownedPuzzles">) => void;
   onView?: (puzzleId: Id<"ownedPuzzles">) => void;
   onDelete?: (puzzleId: Id<"ownedPuzzles">) => void;
   onRemove?: (puzzleId: Id<"ownedPuzzles">) => void;
   onSelect?: (puzzleId: Id<"ownedPuzzles">) => void;
-  onRequestTrade?: (puzzleId: Id<"ownedPuzzles">) => void;
+  onRequestExchange?: (puzzleId: Id<"ownedPuzzles">) => void;
   onMessage?: (puzzleId: Id<"ownedPuzzles">) => void;
   onFavorite?: (puzzleId: Id<"ownedPuzzles">) => void;
   isSelected?: boolean;
@@ -123,7 +127,7 @@ export function PuzzleCard({
   onDelete,
   onRemove,
   onSelect,
-  onRequestTrade,
+  onRequestExchange,
   onMessage,
   onFavorite,
   isSelected = false,
@@ -137,17 +141,17 @@ export function PuzzleCard({
   const { viewMode } = usePuzzleView();
 
   // Early return if no product data
-  if (!puzzle.product) {
+  if (!puzzle.puzzle) {
     return null;
   }
 
   const renderImage = () => {
-    const imageUrl = puzzle.product?.images?.[0] || "/placeholder-puzzle.jpg";
+    const imageUrl = puzzle.puzzle?.images?.[0] || "/placeholder-puzzle.jpg";
     return (
       <div className="relative aspect-square overflow-hidden rounded-t-lg">
         <Image
           src={imageUrl}
-          alt={puzzle.product?.title || "Puzzle"}
+          alt={puzzle.puzzle?.title || "Puzzle"}
           fill
           className="object-cover transition-transform hover:scale-105"
         />
@@ -215,11 +219,11 @@ export function PuzzleCard({
             <Trash2 className="h-4 w-4" />
           </Button>
         )}
-        {onRequestTrade && (
+        {onRequestExchange && (
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onRequestTrade(puzzle._id)}
+            onClick={() => onRequestExchange(puzzle._id)}
             className="h-8 w-8 p-0"
           >
             <MessageCircle className="h-4 w-4" />
@@ -255,25 +259,28 @@ export function PuzzleCard({
         <div className="flex items-start justify-between mb-2">
           <div className="flex-1">
             <h3 className="font-semibold text-sm line-clamp-2 mb-1">
-              {puzzle.product?.title || "Unknown Puzzle"}
+              {puzzle.puzzle?.title || "Unknown Puzzle"}
             </h3>
-            {puzzle.product?.brand && (
+            {puzzle.puzzle?.brand && (
               <p className="text-xs text-muted-foreground mb-1">
-                {puzzle.product.brand}
+                {puzzle.puzzle.brand}
               </p>
             )}
             <div className="flex items-center gap-2 mb-2">
               <Badge variant="secondary" className="text-xs">
-                {puzzle.product?.pieceCount || 0} {t("pieces")}
+                {puzzle.puzzle?.pieceCount || 0} {t("pieces")}
               </Badge>
-              {puzzle.product?.difficulty && (
+              {puzzle.puzzle?.difficulty && (
                 <Badge variant="outline" className="text-xs">
-                  {puzzle.product.difficulty}
+                  {puzzle.puzzle.difficulty}
                 </Badge>
               )}
               <Badge
                 variant={
-                  puzzle.condition === "excellent" ? "default" : "secondary"
+                  puzzle.condition === "new_sealed" ||
+                  puzzle.condition === "like_new"
+                    ? "default"
+                    : "secondary"
                 }
                 className="text-xs"
               >
@@ -282,18 +289,27 @@ export function PuzzleCard({
             </div>
           </div>
           {showCollectionDropdown && (
-            <CollectionDropdown puzzleInstanceId={puzzle._id} />
+            <CollectionDropdown ownedPuzzleId={puzzle._id} />
           )}
         </div>
 
         {showAvailability && (
           <div className="flex items-center gap-2 mb-2">
-            <Badge
-              variant={puzzle.isAvailable ? "default" : "secondary"}
-              className="text-xs"
-            >
-              {puzzle.isAvailable ? t("available") : t("unavailable")}
-            </Badge>
+            {puzzle.availability.forLend ? (
+              <Badge variant="outline" className="text-xs">
+                {t("lend")}
+              </Badge>
+            ) : null}
+            {puzzle.availability.forTrade ? (
+              <Badge variant="outline" className="text-xs">
+                {t("trade")}
+              </Badge>
+            ) : null}
+            {puzzle.availability.forSale ? (
+              <Badge variant="outline" className="text-xs">
+                {t("sale")}
+              </Badge>
+            ) : null}
           </div>
         )}
 
@@ -306,22 +322,22 @@ export function PuzzleCard({
           </div>
         )}
 
-        {puzzle.product?.description && (
+        {puzzle.puzzle?.description && (
           <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
-            {puzzle.product.description}
+            {puzzle.puzzle.description}
           </p>
         )}
 
-        {puzzle.product?.tags && puzzle.product.tags.length > 0 && (
+        {puzzle.puzzle?.tags && puzzle.puzzle.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-2">
-            {puzzle.product.tags.slice(0, 3).map((tag, index) => (
+            {puzzle.puzzle.tags.slice(0, 3).map((tag, index) => (
               <Badge key={index} variant="outline" className="text-xs">
                 {tag}
               </Badge>
             ))}
-            {puzzle.product.tags.length > 3 && (
+            {puzzle.puzzle.tags.length > 3 && (
               <Badge variant="outline" className="text-xs">
-                +{puzzle.product.tags.length - 3}
+                +{puzzle.puzzle.tags.length - 3}
               </Badge>
             )}
           </div>

@@ -25,7 +25,7 @@ export function RecentPuzzlesCard() {
 
   // Get recent puzzle instances
   const recentownedPuzzles = useQuery(
-    api.puzzles.getownedPuzzlesByOwner,
+    api.puzzles.getOwnedPuzzlesByOwner,
     convexUser?._id
       ? { ownerId: convexUser._id, includeUnavailable: false }
       : "skip",
@@ -69,15 +69,22 @@ export function RecentPuzzlesCard() {
                 </div>
                 <div className="flex-1">
                   <p className="font-medium">
-                    {instance.product?.title || "Unknown Puzzle"}
+                    {instance.puzzle?.title || "Unknown Puzzle"}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {instance.product?.pieceCount || 0} pieces •{" "}
+                    {instance.puzzle?.pieceCount || 0} pieces •{" "}
                     {instance.condition}
                   </p>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  {instance.isAvailable ? "Available" : "Unavailable"}
+                  {instance.availability.forTrade ||
+                  instance.availability.forSale ||
+                  instance.availability.forLend
+                    ? "Available"
+                    : "Unavailable"}
+                  {instance.availability.forTrade && " • For Trade"}
+                  {instance.availability.forSale && " • For Sale"}
+                  {instance.availability.forLend && " • For Lend"} •{" "}
                 </div>
               </div>
             ))}

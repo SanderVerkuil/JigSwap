@@ -21,14 +21,15 @@ import {
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-type TradeStatus =
-  | "pending"
+type ExchangeStatus =
+  | "proposed"
   | "accepted"
-  | "declined"
+  | "rejected"
   | "completed"
-  | "cancelled";
+  | "cancelled"
+  | "disputed";
 
-export default function TradesPage() {
+export default function ExchangesPage() {
   const { user } = useUser();
   const t = useTranslations("trades");
   const tCommon = useTranslations("common");
@@ -36,7 +37,9 @@ export default function TradesPage() {
   const [activeTab, setActiveTab] = useState<
     "incoming" | "outgoing" | "completed"
   >("incoming");
-  const [statusFilter, setStatusFilter] = useState<TradeStatus | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<ExchangeStatus | "all">(
+    "all",
+  );
 
   const convexUser = useQuery(
     api.users.getUserByClerkId,
@@ -44,57 +47,57 @@ export default function TradesPage() {
   );
 
   // Get incoming trade requests (where user is the owner)
-  const incomingTrades = useQuery(
-    api.trades.getTradeRequestsByOwner,
-    convexUser?._id ? { ownerId: convexUser._id } : "skip",
+  const incomingExchanges = useQuery(
+    api.exchanges.getExchangesByOwner,
+    convexUser?._id ? { recipientId: convexUser._id } : "skip",
   );
 
   // Get outgoing trade requests (where user is the requester)
-  const outgoingTrades = useQuery(
-    api.trades.getTradeRequestsByRequester,
-    convexUser?._id ? { requesterId: convexUser._id } : "skip",
+  const outgoingExchanges = useQuery(
+    api.exchanges.getExchangesByRequester,
+    convexUser?._id ? { initiatorId: convexUser._id } : "skip",
   );
 
-  const acceptTrade = useMutation(api.trades.acceptTradeRequest);
-  const declineTrade = useMutation(api.trades.declineTradeRequest);
-  const completeTrade = useMutation(api.trades.completeTradeRequest);
-  const cancelTrade = useMutation(api.trades.cancelTradeRequest);
+  const acceptExchange = useMutation(api.exchanges.acceptExchange);
+  const declineExchange = useMutation(api.exchanges.declineExchange);
+  const completeExchange = useMutation(api.exchanges.completeExchange);
+  const cancelExchange = useMutation(api.exchanges.cancelExchange);
 
-  const handleAcceptTrade = async (tradeId: string) => {
+  const handleAcceptExchange = async (tradeId: string) => {
     try {
-      await acceptTrade({ tradeRequestId: tradeId as Id<"tradeRequests"> });
+      await acceptExchange({ exchangeId: tradeId as Id<"exchanges"> });
     } catch (error) {
       console.error("Failed to accept trade:", error);
     }
   };
 
-  const handleDeclineTrade = async (tradeId: string) => {
+  const handleDeclineExchange = async (tradeId: string) => {
     try {
-      await declineTrade({ tradeRequestId: tradeId as Id<"tradeRequests"> });
+      await declineExchange({ exchangeId: tradeId as Id<"exchanges"> });
     } catch (error) {
       console.error("Failed to decline trade:", error);
     }
   };
 
-  const handleCompleteTrade = async (tradeId: string) => {
+  const handleCompleteExchange = async (tradeId: string) => {
     try {
-      await completeTrade({ tradeRequestId: tradeId as Id<"tradeRequests"> });
+      await completeExchange({ exchangeId: tradeId as Id<"exchanges"> });
     } catch (error) {
       console.error("Failed to complete trade:", error);
     }
   };
 
-  const handleCancelTrade = async (tradeId: string) => {
+  const handleCancelExchange = async (tradeId: string) => {
     try {
-      await cancelTrade({ tradeRequestId: tradeId as Id<"tradeRequests"> });
+      await cancelExchange({ exchangeId: tradeId as Id<"exchanges"> });
     } catch (error) {
       console.error("Failed to cancel trade:", error);
     }
   };
 
-  const getStatusBadge = (status: TradeStatus) => {
+  const getStatusBadge = (status: ExchangeStatus) => {
     const statusConfig = {
-      pending: {
+      proposed: {
         variant: "secondary" as const,
         icon: Clock,
         color: "text-yellow-600",
@@ -104,7 +107,7 @@ export default function TradesPage() {
         icon: CheckCircle,
         color: "text-green-600",
       },
-      declined: {
+      rejected: {
         variant: "destructive" as const,
         icon: XCircle,
         color: "text-red-600",
@@ -115,6 +118,11 @@ export default function TradesPage() {
         color: "text-green-600",
       },
       cancelled: {
+        variant: "secondary" as const,
+        icon: XCircle,
+        color: "text-gray-600",
+      },
+      disputed: {
         variant: "secondary" as const,
         icon: XCircle,
         color: "text-gray-600",
@@ -132,38 +140,42 @@ export default function TradesPage() {
     );
   };
 
-  const getTradesForTab = () => {
+  const getExchangesForTab = () => {
     switch (activeTab) {
       case "incoming":
         return (
-          incomingTrades?.filter(
-            (trade) => statusFilter === "all" || trade.status === statusFilter,
+          incomingExchanges?.filter(
+            (exchange) =>
+              statusFilter === "all" || exchange.status === statusFilter,
           ) || []
         );
       case "outgoing":
         return (
-          outgoingTrades?.filter(
-            (trade) => statusFilter === "all" || trade.status === statusFilter,
+          outgoingExchanges?.filter(
+            (exchange) =>
+              statusFilter === "all" || exchange.status === statusFilter,
           ) || []
         );
       case "completed":
-        const allTrades = [
-          ...(incomingTrades || []),
-          ...(outgoingTrades || []),
+        const allExchanges = [
+          ...(incomingExchanges || []),
+          ...(outgoingExchanges || []),
         ];
-        return allTrades.filter((trade) => trade.status === "completed");
+        return allExchanges.filter(
+          (exchange) => exchange.status === "completed",
+        );
       default:
         return [];
     }
   };
 
-  const trades = getTradesForTab();
+  const trades = getExchangesForTab();
 
   if (
     !user ||
     convexUser === undefined ||
-    incomingTrades === undefined ||
-    outgoingTrades === undefined
+    incomingExchanges === undefined ||
+    outgoingExchanges === undefined
   ) {
     return <PageLoading message={tCommon("loading")} />;
   }
@@ -188,7 +200,10 @@ export default function TradesPage() {
             className="rounded-md"
           >
             {t("incoming")} (
-            {incomingTrades?.filter((t) => t.status === "pending").length || 0})
+            {incomingExchanges?.filter(
+              (exchange) => exchange.status === "proposed",
+            ).length || 0}
+            )
           </Button>
           <Button
             variant={activeTab === "outgoing" ? "default" : "ghost"}
@@ -197,7 +212,10 @@ export default function TradesPage() {
             className="rounded-md"
           >
             {t("outgoing")} (
-            {outgoingTrades?.filter((t) => t.status === "pending").length || 0})
+            {outgoingExchanges?.filter(
+              (exchange) => exchange.status === "proposed",
+            ).length || 0}
+            )
           </Button>
           <Button
             variant={activeTab === "completed" ? "default" : "ghost"}
@@ -215,21 +233,22 @@ export default function TradesPage() {
             <select
               value={statusFilter}
               onChange={(e) =>
-                setStatusFilter(e.target.value as TradeStatus | "all")
+                setStatusFilter(e.target.value as ExchangeStatus | "all")
               }
               className="px-3 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
             >
               <option value="all">{t("allStatuses")}</option>
-              <option value="pending">{t("pending")}</option>
+              <option value="proposed">{t("proposed")}</option>
               <option value="accepted">{t("accepted")}</option>
-              <option value="declined">{t("declined")}</option>
+              <option value="rejected">{t("rejected")}</option>
               <option value="cancelled">{t("cancelled")}</option>
+              <option value="disputed">{t("disputed")}</option>
             </select>
           </div>
         )}
       </div>
 
-      {/* Trade List */}
+      {/* Exchange List */}
       {trades.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center">
@@ -237,19 +256,22 @@ export default function TradesPage() {
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
                 <ArrowRightLeft className="h-8 w-8" />
               </div>
-              <h3 className="text-lg font-medium mb-2">{t("noTrades")}</h3>
-              <p className="text-sm">{t("noTradesDescription")}</p>
+              <h3 className="text-lg font-medium mb-2">{t("noExchanges")}</h3>
+              <p className="text-sm">{t("noExchangesDescription")}</p>
             </div>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-4">
-          {trades.map((trade) => (
-            <Card key={trade._id} className="hover:shadow-md transition-shadow">
+          {trades.map((exchange) => (
+            <Card
+              key={exchange._id}
+              className="hover:shadow-md transition-shadow"
+            >
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 space-y-4">
-                    {/* Trade Header */}
+                    {/* Exchange Header */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -262,14 +284,14 @@ export default function TradesPage() {
                               : t("yourRequest")}
                           </h3>
                           <p className="text-sm text-muted-foreground">
-                            {new Date(trade.createdAt).toLocaleDateString()}
+                            {new Date(exchange.createdAt).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
-                      {getStatusBadge(trade.status)}
+                      {getStatusBadge(exchange.status)}
                     </div>
 
-                    {/* Trade Details */}
+                    {/* Exchange Details */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {/* Requested Puzzle */}
                       <div className="space-y-2">
@@ -282,17 +304,17 @@ export default function TradesPage() {
                           <Package className="h-8 w-8 text-muted-foreground" />
                           <div>
                             <p className="font-medium">
-                              {trade.ownerPuzzleProduct?.title}
+                              {exchange.ownerPuzzleProduct?.title}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              {trade.ownerPuzzleProduct?.pieceCount} pieces
+                              {exchange.ownerPuzzleProduct?.pieceCount} pieces
                             </p>
                           </div>
                         </div>
                       </div>
 
                       {/* Offered Puzzle */}
-                      {trade.requesterPuzzle && (
+                      {exchange.requesterPuzzle && (
                         <div className="space-y-2">
                           <h4 className="font-medium text-sm text-muted-foreground">
                             {activeTab === "incoming"
@@ -303,10 +325,10 @@ export default function TradesPage() {
                             <Package className="h-8 w-8 text-muted-foreground" />
                             <div>
                               <p className="font-medium">
-                                {trade.requesterPuzzleProduct?.title}
+                                {exchange.requesterPuzzleProduct?.title}
                               </p>
                               <p className="text-sm text-muted-foreground">
-                                {trade.requesterPuzzleProduct?.pieceCount}{" "}
+                                {exchange.requesterPuzzleProduct?.pieceCount}{" "}
                                 pieces
                               </p>
                             </div>
@@ -315,64 +337,59 @@ export default function TradesPage() {
                       )}
                     </div>
 
-                    {/* Trade Message */}
-                    {trade.message && (
-                      <div className="p-3 bg-muted/30 rounded-lg">
-                        <p className="text-sm">{trade.message}</p>
-                      </div>
-                    )}
-
-                    {/* Trade Partner */}
+                    {/* Exchange Partner */}
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <User className="h-4 w-4" />
                       <span>
                         {activeTab === "incoming"
-                          ? `${t("from")} ${trade.requester?.name}`
-                          : `${t("to")} ${trade.owner?.name}`}
+                          ? `${t("from")} ${exchange.requester?.name}`
+                          : `${t("to")} ${exchange.owner?.name}`}
                       </span>
                     </div>
                   </div>
 
                   {/* Actions */}
                   <div className="flex flex-col gap-2 ml-6">
-                    {trade.status === "pending" && activeTab === "incoming" && (
-                      <>
-                        <Button
-                          size="sm"
-                          onClick={() => handleAcceptTrade(trade._id)}
-                          className="flex items-center gap-2"
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                          {t("accept")}
-                        </Button>
+                    {exchange.status === "proposed" &&
+                      activeTab === "incoming" && (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => handleAcceptExchange(exchange._id)}
+                            className="flex items-center gap-2"
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                            {t("accept")}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeclineExchange(exchange._id)}
+                            className="flex items-center gap-2"
+                          >
+                            <XCircle className="h-4 w-4" />
+                            {t("decline")}
+                          </Button>
+                        </>
+                      )}
+
+                    {exchange.status === "proposed" &&
+                      activeTab === "outgoing" && (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDeclineTrade(trade._id)}
+                          onClick={() => handleCancelExchange(exchange._id)}
                           className="flex items-center gap-2"
                         >
                           <XCircle className="h-4 w-4" />
-                          {t("decline")}
+                          {t("cancel")}
                         </Button>
-                      </>
-                    )}
+                      )}
 
-                    {trade.status === "pending" && activeTab === "outgoing" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleCancelTrade(trade._id)}
-                        className="flex items-center gap-2"
-                      >
-                        <XCircle className="h-4 w-4" />
-                        {t("cancel")}
-                      </Button>
-                    )}
-
-                    {trade.status === "accepted" && (
+                    {exchange.status === "accepted" && (
                       <Button
                         size="sm"
-                        onClick={() => handleCompleteTrade(trade._id)}
+                        onClick={() => handleCompleteExchange(exchange._id)}
                         className="flex items-center gap-2"
                       >
                         <CheckCircle className="h-4 w-4" />

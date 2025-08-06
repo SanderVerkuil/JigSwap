@@ -21,7 +21,7 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: {
-    default: "JigSwap - Trade Jigsaw Puzzles",
+    default: "JigSwap - Exchange Jigsaw Puzzles",
     template: "%s | JigSwap",
   },
   description:
@@ -39,14 +39,14 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://jigswap.site",
-    title: "JigSwap - Trade Jigsaw Puzzles",
+    title: "JigSwap - Exchange Jigsaw Puzzles",
     description:
       "Connect with jigsaw puzzle enthusiasts and trade your completed puzzles.",
     siteName: "JigSwap",
   },
   twitter: {
     card: "summary_large_image",
-    title: "JigSwap - Trade Jigsaw Puzzles",
+    title: "JigSwap - Exchange Jigsaw Puzzles",
     description:
       "Connect with jigsaw puzzle enthusiasts and trade your completed puzzles.",
   },

@@ -14,38 +14,38 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 interface PuzzleProductDetailProps {
-  productId: string;
+  puzzleId: string;
 }
 
-export function PuzzleProductDetail({ productId }: PuzzleProductDetailProps) {
+export function PuzzleProductDetail({ puzzleId }: PuzzleProductDetailProps) {
   const router = useRouter();
   const t = useTranslations("puzzles.products");
   const tPuzzles = useTranslations("puzzles");
   const tCommon = useTranslations("common");
 
-  const product = useQuery(api.puzzles.getPuzzleProductById, {
-    productId: productId as Id<"puzzles">,
+  const puzzle = useQuery(api.puzzles.getPuzzleById, {
+    puzzleId: puzzleId as Id<"puzzles">,
   });
 
   const category = useQuery(
     api.adminCategories.getAdminCategoryById,
-    product !== undefined && product !== null && product.category !== undefined
-      ? { id: product?.category as Id<"adminCategories"> }
+    puzzle !== undefined && puzzle !== null && puzzle.category !== undefined
+      ? { id: puzzle?.category as Id<"adminCategories"> }
       : "skip",
   );
 
-  if (product === null) {
+  if (puzzle === null) {
     return <h1>Product not found</h1>;
   }
 
   if (
-    product === undefined ||
-    (product.category !== undefined && category === undefined)
+    puzzle === undefined ||
+    (puzzle.category !== undefined && category === undefined)
   ) {
     return <PageLoading message={tCommon("loading")} />;
   }
 
-  if (product === null) {
+  if (puzzle === null) {
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold mb-4">{t("notFound")}</h2>
@@ -102,13 +102,13 @@ export function PuzzleProductDetail({ productId }: PuzzleProductDetailProps) {
           </Link>
         </Button>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold">{product.title}</h1>
-          {product.brand && (
-            <p className="text-lg text-muted-foreground">{product.brand}</p>
+          <h1 className="text-3xl font-bold">{puzzle.title}</h1>
+          {puzzle.brand && (
+            <p className="text-lg text-muted-foreground">{puzzle.brand}</p>
           )}
         </div>
         <Button asChild>
-          <Link href={`/puzzles/add?productId=${productId}`}>
+          <Link href={`/puzzles/add?puzzleId=${puzzleId}`}>
             <Plus className="h-4 w-4 mr-2" />
             {t("addPuzzle")}
           </Link>
@@ -119,13 +119,13 @@ export function PuzzleProductDetail({ productId }: PuzzleProductDetailProps) {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Product Image */}
-          {product.image ? (
+          {puzzle.image ? (
             <Card>
               <CardContent className="p-6">
                 <div className="aspect-square rounded-lg overflow-hidden bg-muted">
                   <Image
-                    src={product.image}
-                    alt={product.title ?? ""}
+                    src={puzzle.image}
+                    alt={puzzle.title ?? ""}
                     className="w-full h-full object-contain"
                     width={512}
                     height={512}
@@ -145,21 +145,21 @@ export function PuzzleProductDetail({ productId }: PuzzleProductDetailProps) {
           )}
 
           {/* Description */}
-          {product.description && (
+          {puzzle.description && (
             <Card>
               <CardHeader>
                 <CardTitle>{tPuzzles("description")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground leading-relaxed">
-                  {product.description}
+                  {puzzle.description}
                 </p>
               </CardContent>
             </Card>
           )}
 
           {/* Tags */}
-          {product.tags && product.tags.length > 0 && (
+          {puzzle.tags && puzzle.tags.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -169,7 +169,7 @@ export function PuzzleProductDetail({ productId }: PuzzleProductDetailProps) {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {product.tags.map((tag, index) => (
+                  {puzzle.tags.map((tag, index) => (
                     <Badge key={index} variant="outline">
                       {tag}
                     </Badge>
@@ -191,23 +191,23 @@ export function PuzzleProductDetail({ productId }: PuzzleProductDetailProps) {
               <div className="flex justify-between items-center">
                 <span className="font-medium">{tPuzzles("pieceCount")}</span>
                 <span>
-                  {product.pieceCount} {tPuzzles("pieces")}
+                  {puzzle.pieceCount} {tPuzzles("pieces")}
                 </span>
               </div>
 
-              {product.difficulty && (
+              {puzzle.difficulty && (
                 <div className="flex justify-between items-center">
                   <span className="font-medium">{tPuzzles("difficulty")}</span>
                   <Badge
                     variant="secondary"
-                    className={getDifficultyColor(product.difficulty)}
+                    className={getDifficultyColor(puzzle.difficulty)}
                   >
-                    {getDifficultyLabel(product.difficulty)}
+                    {getDifficultyLabel(puzzle.difficulty)}
                   </Badge>
                 </div>
               )}
 
-              {product.category && (
+              {puzzle.category && (
                 <div className="flex justify-between items-center">
                   <span className="font-medium">{tPuzzles("category")}</span>
                   <span>{category?.name.en}</span>
@@ -228,14 +228,14 @@ export function PuzzleProductDetail({ productId }: PuzzleProductDetailProps) {
               <div className="flex justify-between items-center">
                 <span className="font-medium">{t("created")}</span>
                 <span className="text-sm text-muted-foreground">
-                  {formatDate(product.createdAt ?? 0)}
+                  {formatDate(puzzle.createdAt ?? 0)}
                 </span>
               </div>
 
               <div className="flex justify-between items-center">
                 <span className="font-medium">{t("updated")}</span>
                 <span className="text-sm text-muted-foreground">
-                  {formatDate(product.updatedAt ?? 0)}
+                  {formatDate(puzzle.updatedAt ?? 0)}
                 </span>
               </div>
             </CardContent>
@@ -248,7 +248,7 @@ export function PuzzleProductDetail({ productId }: PuzzleProductDetailProps) {
             </CardHeader>
             <CardContent className="space-y-3">
               <Button asChild className="w-full">
-                <Link href={`/puzzles/add?productId=${productId}`}>
+                <Link href={`/puzzles/add?puzzleId=${puzzleId}`}>
                   <Plus className="h-4 w-4 mr-2" />
                   {t("addPuzzle")}
                 </Link>

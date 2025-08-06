@@ -247,8 +247,8 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
         </Card>
       ) : (
         <PuzzleProductViewProvider viewMode={viewMode}>
-          {filteredProducts.map((product) => (
-            <PuzzleProductCard key={product._id} product={product} />
+          {filteredProducts.map((puzzle) => (
+            <PuzzleProductCard key={puzzle._id} puzzle={puzzle} />
           ))}
         </PuzzleProductViewProvider>
       )}

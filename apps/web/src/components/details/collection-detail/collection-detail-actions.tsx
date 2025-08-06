@@ -13,8 +13,8 @@ interface CollectionData {
   icon?: string;
   puzzles?: Array<{
     _id: Id<"ownedPuzzles">;
-    productId: Id<"puzzles">;
-    product: {
+    puzzleId: Id<"puzzles">;
+    puzzle: {
       _id: Id<"puzzles">;
       title: string;
       brand?: string;

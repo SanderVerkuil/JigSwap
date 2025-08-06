@@ -17,12 +17,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface CollectionDropdownProps {
-  puzzleInstanceId: Id<"ownedPuzzles">;
+  ownedPuzzleId: Id<"ownedPuzzles">;
   className?: string;
 }
 
 export function CollectionDropdown({
-  puzzleInstanceId,
+  ownedPuzzleId,
   className,
 }: CollectionDropdownProps) {
   const { user } = useUser();
@@ -40,14 +40,14 @@ export function CollectionDropdown({
   );
 
   const puzzleCollections = useQuery(
-    api.collections.getCollectionsForPuzzleInstance,
+    api.collections.getCollectionsForOwnedPuzzle,
     {
-      puzzleInstanceId,
+      ownedPuzzleId,
     },
   );
 
   const addPuzzleToCollection = useMutation(
-    api.collections.addPuzzleInstanceToCollection,
+    api.collections.addOwnedPuzzleToCollection,
   );
 
   const handleAddToCollection = async (collectionId: Id<"collections">) => {
@@ -55,7 +55,7 @@ export function CollectionDropdown({
     try {
       await addPuzzleToCollection({
         collectionId,
-        puzzleInstanceId,
+        ownedPuzzleId,
       });
     } catch (error) {
       console.error("Failed to add puzzle to collection:", error);

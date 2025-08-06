@@ -138,7 +138,9 @@ export default function ProfilePage() {
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                   <ArrowRightLeft className="h-5 w-5 text-green-500" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium">{t("completedTrade")}</p>
+                    <p className="text-sm font-medium">
+                      {t("completedExchange")}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       1 {t("weekAgo")}
                     </p>
@@ -178,7 +180,7 @@ export default function ProfilePage() {
                   {userStats?.tradesCompleted || 0}
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {t("completedTrades")}
+                  {t("completedExchanges")}
                 </p>
               </div>
               <div className="text-center">

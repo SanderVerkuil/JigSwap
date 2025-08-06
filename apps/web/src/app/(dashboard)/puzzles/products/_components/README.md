@@ -107,10 +107,10 @@ All text content is internationalized using `next-intl` with the following struc
 
 ```tsx
 // In a page component
-import { puzzlesClient } from "./_components/puzzle-products-client";
+import { PuzzlesClient } from "./_components/puzzle-products-client";
 
 export default function PuzzlesProductsPage() {
-  return <puzzlesClient />;
+  return <PuzzlesClient />;
 }
 ```
 

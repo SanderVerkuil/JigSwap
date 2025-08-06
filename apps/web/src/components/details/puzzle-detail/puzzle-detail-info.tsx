@@ -8,16 +8,20 @@ import { useTranslations } from "next-intl";
 
 interface PuzzleData {
   _id: Id<"ownedPuzzles">;
-  productId: Id<"puzzles">;
+  puzzleId: Id<"puzzles">;
   ownerId: Id<"users">;
-  condition: "excellent" | "good" | "fair" | "poor";
-  isAvailable: boolean;
+  condition: "new_sealed" | "like_new" | "good" | "fair" | "poor";
+  availability: {
+    forTrade: boolean;
+    forSale: boolean;
+    forLend: boolean;
+  };
   acquisitionDate?: number;
   notes?: string;
   createdAt: number;
   updatedAt: number;
   _creationTime?: number;
-  product: {
+  puzzle: {
     _id: Id<"puzzles">;
     title: string;
     description?: string;
@@ -51,7 +55,7 @@ export function PuzzleDetailInfo({
   const t = useTranslations("puzzles");
 
   // Early return if no product data
-  if (!puzzle.product) {
+  if (!puzzle.puzzle) {
     return <div>Puzzle not found</div>;
   }
 
@@ -69,15 +73,15 @@ export function PuzzleDetailInfo({
                 Piece Count
               </p>
               <p className="text-lg">
-                {puzzle.product.pieceCount} {t("pieces")}
+                {puzzle.puzzle.pieceCount} {t("pieces")}
               </p>
             </div>
-            {puzzle.product.difficulty && (
+            {puzzle.puzzle.difficulty && (
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
                   Difficulty
                 </p>
-                <Badge variant="outline">{puzzle.product.difficulty}</Badge>
+                <Badge variant="outline">{puzzle.puzzle.difficulty}</Badge>
               </div>
             )}
             <div>
@@ -86,24 +90,24 @@ export function PuzzleDetailInfo({
               </p>
               <Badge variant="outline">{puzzle.condition}</Badge>
             </div>
-            {puzzle.product.category && (
+            {puzzle.puzzle.category && (
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
                   Category
                 </p>
-                <p className="text-lg">{puzzle.product.category}</p>
+                <p className="text-lg">{puzzle.puzzle.category}</p>
               </div>
             )}
           </div>
 
           {/* Tags */}
-          {puzzle.product.tags && puzzle.product.tags.length > 0 && (
+          {puzzle.puzzle.tags && puzzle.puzzle.tags.length > 0 && (
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-2">
                 Tags
               </p>
               <div className="flex flex-wrap gap-2">
-                {puzzle.product.tags.map((tag, index) => (
+                {puzzle.puzzle.tags.map((tag, index) => (
                   <Badge key={index} variant="secondary">
                     {tag}
                   </Badge>

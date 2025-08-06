@@ -7,7 +7,6 @@ import { useQuery } from "convex/react";
 import { Grid } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleDetailActions } from "./puzzle-detail-actions";
@@ -15,12 +14,12 @@ import { PuzzleDetailHeader } from "./puzzle-detail-header";
 import { PuzzleDetailInfo } from "./puzzle-detail-info";
 
 interface PuzzleDetailProps {
-  puzzleId: Id<"ownedPuzzles">;
+  ownedPuzzleId: Id<"ownedPuzzles">;
   showActions?: boolean;
   onEdit?: (puzzleId: Id<"ownedPuzzles">) => void;
   onView?: (puzzleId: Id<"ownedPuzzles">) => void;
   onDelete?: (puzzleId: Id<"ownedPuzzles">) => void;
-  onRequestTrade?: (puzzleId: Id<"ownedPuzzles">) => void;
+  onRequestExchange?: (puzzleId: Id<"ownedPuzzles">) => void;
   onMessage?: (puzzleId: Id<"ownedPuzzles">) => void;
   onFavorite?: (puzzleId: Id<"ownedPuzzles">) => void;
   showOwner?: boolean;
@@ -28,50 +27,49 @@ interface PuzzleDetailProps {
 }
 
 export function PuzzleDetail({
-  puzzleId,
+  ownedPuzzleId,
   showActions = true,
   onEdit,
   onView,
   onDelete,
-  onRequestTrade,
+  onRequestExchange,
   onMessage,
   onFavorite,
   showOwner = false,
   className = "",
 }: PuzzleDetailProps) {
-  const router = useRouter();
   const t = useTranslations("puzzles");
 
-  const puzzleInstance = useQuery(api.puzzles.getPuzzleWithCollectionStatus, {
-    puzzleId,
+  const ownedPuzzle = useQuery(api.puzzles.getOwnedPuzzleWithCollectionStatus, {
+    ownedPuzzleId,
   });
 
-  if (puzzleInstance === undefined) {
+  if (ownedPuzzle === undefined) {
     return <PageLoading message="Loading puzzle..." />;
   }
 
-  if (puzzleInstance === null) {
+  if (ownedPuzzle === null) {
     return <div>{t("notFound")}</div>;
   }
 
   // Early return if no product data
-  if (!puzzleInstance.product) {
+  if (!ownedPuzzle.puzzle) {
     return <div>{t("notFound")}</div>;
   }
 
   return (
     <div className={`space-y-6 ${className}`}>
-      <PuzzleDetailHeader puzzle={puzzleInstance} />
+      <PuzzleDetailHeader puzzle={ownedPuzzle} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Image */}
         <Card>
           <CardContent className="p-0">
             <div className="aspect-square bg-muted rounded-t-lg relative overflow-hidden">
-              {puzzleInstance.images && puzzleInstance.images.length > 0 ? (
+              {ownedPuzzle.images && ownedPuzzle.images.length > 0 ? (
                 <Image
-                  src={puzzleInstance.images[0]}
-                  alt={puzzleInstance.product.title}
+                  src={ownedPuzzle.images[0].fileId}
+                  alt={ownedPuzzle.puzzle.title}
                   className="w-full h-full object-cover"
                   width={500}
                   height={500}
@@ -92,15 +90,15 @@ export function PuzzleDetail({
 
         {/* Info */}
         <div className="space-y-6">
-          <PuzzleDetailInfo puzzle={puzzleInstance} showOwner={showOwner} />
+          <PuzzleDetailInfo puzzle={ownedPuzzle} showOwner={showOwner} />
 
           {showActions && (
             <PuzzleDetailActions
-              puzzle={puzzleInstance}
+              puzzle={ownedPuzzle}
               onEdit={onEdit}
               onView={onView}
               onDelete={onDelete}
-              onRequestTrade={onRequestTrade}
+              onRequestExchange={onRequestExchange}
               onMessage={onMessage}
               onFavorite={onFavorite}
             />

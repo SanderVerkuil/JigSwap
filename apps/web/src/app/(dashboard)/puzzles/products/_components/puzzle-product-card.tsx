@@ -10,7 +10,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePuzzleProductView } from "./puzzle-product-view-provider";
 
-interface PuzzleProduct {
+interface Puzzle {
   _id: Id<"puzzles">;
   title: string;
   description?: string;
@@ -25,10 +25,10 @@ interface PuzzleProduct {
 }
 
 interface PuzzleProductCardProps {
-  product: PuzzleProduct;
+  puzzle: Puzzle;
 }
 
-export function PuzzleProductCard({ product }: PuzzleProductCardProps) {
+export function PuzzleProductCard({ puzzle }: PuzzleProductCardProps) {
   const t = useTranslations("puzzles.products");
   const tPuzzles = useTranslations("puzzles");
   const { viewMode } = usePuzzleProductView();
@@ -64,14 +64,14 @@ export function PuzzleProductCard({ product }: PuzzleProductCardProps) {
   };
 
   const renderImage = () => {
-    if (product.image) {
+    if (puzzle.image) {
       return (
         <div
           className={`${viewMode === "list" ? "h-32" : "aspect-square"} overflow-hidden bg-muted`}
         >
           <Image
-            src={product.image}
-            alt={product.title}
+            src={puzzle.image}
+            alt={puzzle.title}
             className="w-full h-full object-contain"
             width={viewMode === "list" ? 128 : 480}
             height={viewMode === "list" ? 128 : 480}
@@ -98,20 +98,20 @@ export function PuzzleProductCard({ product }: PuzzleProductCardProps) {
         <div className="flex items-start justify-between mb-2">
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-lg leading-tight line-clamp-2">
-              {product.title}
+              {puzzle.title}
             </h3>
-            {product.brand && (
+            {puzzle.brand && (
               <p className="text-sm text-muted-foreground mt-1">
-                {product.brand}
+                {puzzle.brand}
               </p>
             )}
           </div>
         </div>
 
         {/* Description */}
-        {product.description && (
+        {puzzle.description && (
           <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-            {product.description}
+            {puzzle.description}
           </p>
         )}
 
@@ -120,36 +120,36 @@ export function PuzzleProductCard({ product }: PuzzleProductCardProps) {
           <div className="flex-1 flex items-start justify-between flex-col">
             <span className="text-sm font-bold">{tPuzzles("pieceCount")}</span>
             <span className="text-sm">
-              {product.pieceCount} {tPuzzles("pieces")}
+              {puzzle.pieceCount} {tPuzzles("pieces")}
             </span>
           </div>
 
-          {product.difficulty && (
+          {puzzle.difficulty && (
             <div className="flex-1 flex items-start justify-between flex-col">
               <span className="text-sm font-bold">
                 {tPuzzles("difficulty")}
               </span>
               <Badge
                 variant="secondary"
-                className={`text-xs ${getDifficultyColor(product.difficulty)}`}
+                className={`text-xs ${getDifficultyColor(puzzle.difficulty)}`}
               >
-                {getDifficultyLabel(product.difficulty)}
+                {getDifficultyLabel(puzzle.difficulty)}
               </Badge>
             </div>
           )}
         </div>
 
         {/* Tags */}
-        {product.tags && product.tags.length > 0 && (
+        {puzzle.tags && puzzle.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-4">
-            {product.tags.slice(0, 3).map((tag, index) => (
+            {puzzle.tags.slice(0, 3).map((tag, index) => (
               <Badge key={index} variant="outline" className="text-xs">
                 {tag}
               </Badge>
             ))}
-            {product.tags.length > 3 && (
+            {puzzle.tags.length > 3 && (
               <Badge variant="outline" className="text-xs">
-                +{product.tags.length - 3}
+                +{puzzle.tags.length - 3}
               </Badge>
             )}
           </div>
@@ -158,13 +158,13 @@ export function PuzzleProductCard({ product }: PuzzleProductCardProps) {
         {/* Actions */}
         <div className="flex gap-2 mt-auto">
           <Button variant="outline" size="sm" asChild className="flex-1">
-            <Link href={`/puzzles/products/${product._id}`}>
+            <Link href={`/puzzles/products/${puzzle._id}`}>
               <Eye className="h-4 w-4 mr-2" />
               {t("viewDetails")}
             </Link>
           </Button>
           <Button size="sm" asChild className="flex-1">
-            <Link href={`/puzzles/add?productId=${product._id}`}>
+            <Link href={`/puzzles/add?puzzleId=${puzzle._id}`}>
               <Plus className="h-4 w-4 mr-2" />
               {t("addPuzzle")}
             </Link>
@@ -195,11 +195,11 @@ export function PuzzleProductCard({ product }: PuzzleProductCardProps) {
           <div className="flex items-end justify-end gap-2 px-6 pt-3">
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-white dark:text-foreground text-lg leading-tight line-clamp-2">
-                {product.title}
+                {puzzle.title}
               </h3>
-              {product.brand && (
+              {puzzle.brand && (
                 <p className="text-sm text-gray-50 dark:text-muted-foreground mt-1">
-                  {product.brand}
+                  {puzzle.brand}
                 </p>
               )}
             </div>
@@ -209,9 +209,9 @@ export function PuzzleProductCard({ product }: PuzzleProductCardProps) {
 
       <CardContent className="flex-1 flex flex-col">
         {/* Description */}
-        {product.description && (
+        {puzzle.description && (
           <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-            {product.description}
+            {puzzle.description}
           </p>
         )}
 
@@ -222,36 +222,36 @@ export function PuzzleProductCard({ product }: PuzzleProductCardProps) {
               {tPuzzles("pieceCount")}
             </span>
             <span className="text-sm">
-              {product.pieceCount} {tPuzzles("pieces")}
+              {puzzle.pieceCount} {tPuzzles("pieces")}
             </span>
           </div>
 
-          {product.difficulty && (
+          {puzzle.difficulty && (
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">
                 {tPuzzles("difficulty")}
               </span>
               <Badge
                 variant="secondary"
-                className={`text-xs ${getDifficultyColor(product.difficulty)}`}
+                className={`text-xs ${getDifficultyColor(puzzle.difficulty)}`}
               >
-                {getDifficultyLabel(product.difficulty)}
+                {getDifficultyLabel(puzzle.difficulty)}
               </Badge>
             </div>
           )}
         </div>
 
         {/* Tags */}
-        {product.tags && product.tags.length > 0 && (
+        {puzzle.tags && puzzle.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-4">
-            {product.tags.slice(0, 3).map((tag, index) => (
+            {puzzle.tags.slice(0, 3).map((tag, index) => (
               <Badge key={index} variant="outline" className="text-xs">
                 {tag}
               </Badge>
             ))}
-            {product.tags.length > 3 && (
+            {puzzle.tags.length > 3 && (
               <Badge variant="outline" className="text-xs">
-                +{product.tags.length - 3}
+                +{puzzle.tags.length - 3}
               </Badge>
             )}
           </div>
@@ -260,13 +260,13 @@ export function PuzzleProductCard({ product }: PuzzleProductCardProps) {
         {/* Actions */}
         <div className="flex gap-2 mt-auto">
           <Button variant="outline" size="sm" asChild className="flex-1">
-            <Link href={`/puzzles/products/${product._id}`}>
+            <Link href={`/puzzles/products/${puzzle._id}`}>
               <Eye className="h-4 w-4 mr-2" />
               {t("viewDetails")}
             </Link>
           </Button>
           <Button size="sm" asChild className="flex-1">
-            <Link href={`/puzzles/add?productId=${product._id}`}>
+            <Link href={`/puzzles/add?puzzleId=${puzzle._id}`}>
               <Plus className="h-4 w-4 mr-2" />
               {t("addPuzzle")}
             </Link>

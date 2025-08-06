@@ -32,7 +32,7 @@
     "home": "Home",
     "browse": "Browse Puzzles",
     "myPuzzles": "My Puzzles",
-    "trades": "Trades",
+    "trades": "Exchanges",
     "profile": "Profile",
     "signIn": "Sign In",
     "signUp": "Sign Up",
@@ -40,8 +40,8 @@
     "dashboard": "Dashboard"
   },
   "home": {
-    "title": "Trade Jigsaw Puzzles with Fellow Enthusiasts",
-    "subtitle": "Connect with puzzle lovers worldwide. Trade your completed puzzles, discover new challenges, and make the hobby more sustainable.",
+    "title": "Exchange Jigsaw Puzzles with Fellow Enthusiasts",
+    "subtitle": "Connect with puzzle lovers worldwide. Exchange your completed puzzles, discover new challenges, and make the hobby more sustainable.",
     "startTrading": "Start Trading",
     "browsePuzzles": "Browse Puzzles",
     "whyChoose": "Why Choose JigSwap?",
@@ -218,8 +218,8 @@
       "title": "Browse & Discover",
       "description": "Explore puzzles from other users and find ones you'd love to try."
     },
-    "makeTrade": {
-      "title": "Make a Trade",
+    "makeExchange": {
+      "title": "Make a Exchange",
       "description": "Send trade requests and negotiate exchanges with other users."
     },
     "enjoyReview": {
@@ -236,8 +236,8 @@
         "title": "Discover & Connect",
         "description": "Browse puzzles from other enthusiasts, read reviews, and connect with the community."
       },
-      "exchangeTrade": {
-        "title": "Exchange & Trade",
+      "exchangeExchange": {
+        "title": "Exchange & Exchange",
         "description": "Initiate exchanges, negotiate terms, and track the entire process while preserving your history."
       },
       "analyzeImprove": {
@@ -269,7 +269,7 @@
     "addPuzzle": "Add Puzzle",
     "editPuzzle": "Edit Puzzle",
     "deletePuzzle": "Delete Puzzle",
-    "requestTrade": "Request Trade",
+    "requestExchange": "Request Exchange",
     "myPuzzles": "My Puzzles",
     "managePuzzles": "Manage your puzzle collection",
     "noPuzzles": "No puzzles yet",
@@ -413,24 +413,24 @@
     }
   },
   "trades": {
-    "title": "Trades",
+    "title": "Exchanges",
     "subtitle": "Manage your trade requests and exchanges",
     "pending": "Pending",
     "accepted": "Accepted",
     "declined": "Declined",
     "completed": "Completed",
     "cancelled": "Cancelled",
-    "newRequest": "New Trade Request",
-    "acceptTrade": "Accept Trade",
-    "declineTrade": "Decline Trade",
-    "completeTrade": "Complete Trade",
-    "cancelTrade": "Cancel Trade",
+    "newRequest": "New Exchange Request",
+    "acceptExchange": "Accept Exchange",
+    "declineExchange": "Decline Exchange",
+    "completeExchange": "Complete Exchange",
+    "cancelExchange": "Cancel Exchange",
     "incoming": "Incoming",
     "outgoing": "Outgoing",
     "allStatuses": "All Statuses",
-    "noTrades": "No trades yet",
-    "noTradesDescription": "Start browsing puzzles to make your first trade request",
-    "tradeRequest": "Trade Request",
+    "noExchanges": "No trades yet",
+    "noExchangesDescription": "Start browsing puzzles to make your first trade request",
+    "tradeRequest": "Exchange Request",
     "yourRequest": "Your Request",
     "theyWant": "They Want",
     "youWant": "You Want",
@@ -467,7 +467,7 @@
     "recentActivity": "Recent Activity",
     "recentActivityDescription": "Your latest actions on JigSwap",
     "addedPuzzle": "Added a new puzzle",
-    "completedTrade": "Completed a trade",
+    "completedExchange": "Completed a trade",
     "receivedReview": "Received a review",
     "daysAgo": "days ago",
     "weekAgo": "week ago",
@@ -476,8 +476,8 @@
     "totalPuzzles": "Total Puzzles",
     "availablePuzzles": "Available Puzzles",
     "puzzlesOwned": "Puzzles Owned",
-    "tradesCompleted": "Trades Completed",
-    "completedTrades": "Completed Trades",
+    "tradesCompleted": "Exchanges Completed",
+    "completedExchanges": "Completed Exchanges",
     "averageRating": "Average Rating",
     "reviews": "Reviews",
     "trustLevel": "Trust Level",
@@ -489,15 +489,15 @@
     "subtitle": "Here's what's happening with your puzzle collection",
     "stats": {
       "totalPuzzles": "Total Puzzles",
-      "availablePuzzles": "Available for Trade",
-      "activeTrades": "Active Trades",
-      "completedTrades": "Completed Trades"
+      "availablePuzzles": "Available for Exchange",
+      "activeExchanges": "Active Exchanges",
+      "completedExchanges": "Completed Exchanges"
     },
     "quickActions": {
       "title": "Quick Actions",
       "addPuzzle": "Add New Puzzle",
       "browsePuzzles": "Browse Puzzles",
-      "viewTrades": "View Trades",
+      "viewExchanges": "View Exchanges",
       "editProfile": "Edit Profile"
     },
     "recentActivity": {
@@ -541,7 +541,7 @@
           "Account information (name, email address, username)",
           "Profile information (bio, location, interests)",
           "Puzzle collection data and photos",
-          "Trade history and communications",
+          "Exchange history and communications",
           "Reviews and ratings you provide"
         ]
       },
@@ -959,7 +959,7 @@
           "fair": "Fair",
           "poor": "Poor"
         },
-        "availableLabel": "Available for Trade",
+        "availableLabel": "Available for Exchange",
         "availableDescription": "Is this puzzle available for trading?",
         "acquisitionDateLabel": "Acquisition Date",
         "acquisitionDatePlaceholder": "Select acquisition date",

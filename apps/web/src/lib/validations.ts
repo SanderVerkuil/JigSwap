@@ -159,7 +159,7 @@ export const profileSchema = z.object({
 
 export type ProfileFormData = z.infer<typeof profileSchema>;
 
-// Trade request validation schema
+// Exchange request validation schema
 export const tradeRequestSchema = z.object({
   ownerPuzzleInstanceId: z.string().min(1, "Please select a puzzle to request"),
 
@@ -170,7 +170,7 @@ export const tradeRequestSchema = z.object({
     .max(500, "Message must be less than 500 characters")
     .optional(),
 
-  proposedTradeDate: z
+  proposedExchangeDate: z
     .string()
     .optional()
     .transform((val) => {
@@ -181,7 +181,7 @@ export const tradeRequestSchema = z.object({
   shippingMethod: z.enum(["pickup", "mail", "meetup"]).optional(),
 });
 
-export type TradeRequestFormData = z.infer<typeof tradeRequestSchema>;
+export type ExchangeRequestFormData = z.infer<typeof tradeRequestSchema>;
 
 // Contact/Message validation schema
 export const messageSchema = z.object({

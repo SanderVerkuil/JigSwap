@@ -15,9 +15,9 @@ import type {
 } from "convex/server";
 import type * as adminCategories from "../adminCategories.js";
 import type * as collections from "../collections.js";
+import type * as exchanges from "../exchanges.js";
 import type * as http from "../http.js";
 import type * as puzzles from "../puzzles.js";
-import type * as trades from "../trades.js";
 import type * as users from "../users.js";
 
 /**
@@ -31,9 +31,9 @@ import type * as users from "../users.js";
 declare const fullApi: ApiFromModules<{
   adminCategories: typeof adminCategories;
   collections: typeof collections;
+  exchanges: typeof exchanges;
   http: typeof http;
   puzzles: typeof puzzles;
-  trades: typeof trades;
   users: typeof users;
 }>;
 export declare const api: FilterApi<

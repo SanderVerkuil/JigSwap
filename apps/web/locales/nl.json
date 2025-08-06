@@ -218,7 +218,7 @@
       "title": "Blader & Ontdek",
       "description": "Verken puzzels van andere gebruikers en vind er een die je graag zou willen proberen."
     },
-    "makeTrade": {
+    "makeExchange": {
       "title": "Maak een Ruil",
       "description": "Stuur ruilverzoeken en onderhandel over uitwisselingen met andere gebruikers."
     },
@@ -236,7 +236,7 @@
         "title": "Ontdek & Verbind",
         "description": "Blader door puzzels van andere enthousiastelingen, lees beoordelingen en maak contact met de gemeenschap."
       },
-      "exchangeTrade": {
+      "exchangeExchange": {
         "title": "Uitwisselen & Ruilen",
         "description": "Start uitwisselingen, onderhandel over voorwaarden en volg het hele proces terwijl je geschiedenis behouden blijft."
       },
@@ -269,7 +269,7 @@
     "addPuzzle": "Puzzel Toevoegen",
     "editPuzzle": "Puzzel Bewerken",
     "deletePuzzle": "Puzzel Verwijderen",
-    "requestTrade": "Ruil Verzoeken",
+    "requestExchange": "Ruil Verzoeken",
     "myPuzzles": "Mijn Puzzels",
     "managePuzzles": "Beheer je puzzelcollectie",
     "noPuzzles": "Nog geen puzzels",
@@ -421,15 +421,15 @@
     "completed": "Voltooid",
     "cancelled": "Geannuleerd",
     "newRequest": "Nieuw Ruilverzoek",
-    "acceptTrade": "Ruil Accepteren",
-    "declineTrade": "Ruil Afwijzen",
-    "completeTrade": "Ruil Voltooien",
-    "cancelTrade": "Ruil Annuleren",
+    "acceptExchange": "Ruil Accepteren",
+    "declineExchange": "Ruil Afwijzen",
+    "completeExchange": "Ruil Voltooien",
+    "cancelExchange": "Ruil Annuleren",
     "incoming": "Inkomend",
     "outgoing": "Uitgaand",
     "allStatuses": "Alle Statussen",
-    "noTrades": "Nog geen ruilen",
-    "noTradesDescription": "Begin met het bladeren door puzzels om je eerste ruilverzoek te maken",
+    "noExchanges": "Nog geen ruilen",
+    "noExchangesDescription": "Begin met het bladeren door puzzels om je eerste ruilverzoek te maken",
     "tradeRequest": "Ruilverzoek",
     "yourRequest": "Je Verzoek",
     "theyWant": "Zij Willen",
@@ -467,7 +467,7 @@
     "recentActivity": "Recente Activiteit",
     "recentActivityDescription": "Je laatste acties op JigSwap",
     "addedPuzzle": "Een nieuwe puzzel toegevoegd",
-    "completedTrade": "Een ruil voltooid",
+    "completedExchange": "Een ruil voltooid",
     "receivedReview": "Een beoordeling ontvangen",
     "daysAgo": "dagen geleden",
     "weekAgo": "week geleden",
@@ -477,7 +477,7 @@
     "availablePuzzles": "Beschikbare Puzzels",
     "puzzlesOwned": "Puzzels in Eigendom",
     "tradesCompleted": "Voltooide Ruilen",
-    "completedTrades": "Voltooide Ruilen",
+    "completedExchanges": "Voltooide Ruilen",
     "averageRating": "Gemiddelde Beoordeling",
     "reviews": "Beoordelingen",
     "trustLevel": "Vertrouwensniveau",
@@ -490,14 +490,14 @@
     "stats": {
       "totalPuzzles": "Totaal Puzzels",
       "availablePuzzles": "Beschikbaar voor Ruil",
-      "activeTrades": "Actieve Ruilen",
-      "completedTrades": "Voltooide Ruilen"
+      "activeExchanges": "Actieve Ruilen",
+      "completedExchanges": "Voltooide Ruilen"
     },
     "quickActions": {
       "title": "Snelle Acties",
       "addPuzzle": "Nieuwe Puzzel Toevoegen",
       "browsePuzzles": "Puzzels Bladeren",
-      "viewTrades": "Ruilen Bekijken",
+      "viewExchanges": "Ruilen Bekijken",
       "editProfile": "Profiel Bewerken"
     },
     "recentActivity": {

@@ -4,18 +4,22 @@ import { Badge } from "@/components/ui/badge";
 import { Id } from "@jigswap/backend/convex/_generated/dataModel";
 import { useTranslations } from "next-intl";
 
-interface PuzzleInstanceData {
+interface OwnedPuzzleData {
   _id: Id<"ownedPuzzles">;
-  productId: Id<"puzzles">;
+  puzzleId: Id<"puzzles">;
   ownerId: Id<"users">;
-  condition: "excellent" | "good" | "fair" | "poor";
-  isAvailable: boolean;
+  condition: "new_sealed" | "like_new" | "good" | "fair" | "poor";
+  availability: {
+    forTrade: boolean;
+    forSale: boolean;
+    forLend: boolean;
+  };
   acquisitionDate?: number;
   notes?: string;
   createdAt: number;
   updatedAt: number;
   _creationTime?: number;
-  product: {
+  puzzle: {
     _id: Id<"puzzles">;
     title: string;
     description?: string;
@@ -38,14 +42,14 @@ interface PuzzleInstanceData {
 }
 
 interface PuzzleDetailHeaderProps {
-  puzzle: PuzzleInstanceData;
+  puzzle: OwnedPuzzleData;
 }
 
 export function PuzzleDetailHeader({ puzzle }: PuzzleDetailHeaderProps) {
   const t = useTranslations("puzzles");
 
   // Early return if no product data
-  if (!puzzle.product) {
+  if (!puzzle.puzzle) {
     return <div>Puzzle not found</div>;
   }
 
@@ -53,28 +57,37 @@ export function PuzzleDetailHeader({ puzzle }: PuzzleDetailHeaderProps) {
     <div className="space-y-4">
       <div className="flex items-start justify-between">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">{puzzle.product.title}</h1>
-          {puzzle.product.brand && (
+          <h1 className="text-3xl font-bold">{puzzle.puzzle.title}</h1>
+          {puzzle.puzzle.brand && (
             <p className="text-lg text-muted-foreground">
-              {puzzle.product.brand}
+              {puzzle.puzzle.brand}
             </p>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Badge
-            variant={puzzle.isAvailable ? "default" : "secondary"}
-            className="text-sm"
-          >
-            {puzzle.isAvailable ? t("available") : t("unavailable")}
-          </Badge>
+          {puzzle.availability.forTrade && (
+            <Badge variant="outline" className="text-sm">
+              {t("forTrade")}
+            </Badge>
+          )}
+          {puzzle.availability.forSale && (
+            <Badge variant="outline" className="text-sm">
+              {t("forSale")}
+            </Badge>
+          )}
+          {puzzle.availability.forLend && (
+            <Badge variant="outline" className="text-sm">
+              {t("forLend")}
+            </Badge>
+          )}
           <Badge variant="outline" className="text-sm">
             {puzzle.condition}
           </Badge>
         </div>
       </div>
 
-      {puzzle.product.description && (
-        <p className="text-muted-foreground">{puzzle.product.description}</p>
+      {puzzle.puzzle.description && (
+        <p className="text-muted-foreground">{puzzle.puzzle.description}</p>
       )}
     </div>
   );

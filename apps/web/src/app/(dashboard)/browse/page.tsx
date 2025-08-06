@@ -30,14 +30,14 @@ export default function BrowsePage() {
   const [maxPieces, setMaxPieces] = useState("");
 
   type Difficulty = "easy" | "medium" | "hard" | "expert";
-  type Condition = "excellent" | "good" | "fair" | "poor";
+  type Condition = "new_sealed" | "like_new" | "good" | "fair" | "poor";
 
   const convexUser = useQuery(
     api.users.getUserByClerkId,
     user?.id ? { clerkId: user.id } : "skip",
   );
 
-  const browseownedPuzzlesResult = useQuery(api.puzzles.browseownedPuzzles, {
+  const browseOwnedPuzzlesResult = useQuery(api.puzzles.browseOwnedPuzzles, {
     searchTerm: searchTerm || undefined,
     category: selectedCategory
       ? (selectedCategory as Id<"adminCategories">)
@@ -46,14 +46,14 @@ export default function BrowsePage() {
     condition: (selectedCondition as Condition) || undefined,
     minPieceCount: minPieces ? parseInt(minPieces) : undefined,
     maxPieceCount: maxPieces ? parseInt(maxPieces) : undefined,
-    excludeOwnerId: convexUser?._id,
+    includeOwnPuzzles: false,
     limit: 50,
   });
 
   const categories = useQuery(api.puzzles.getPuzzleCategories);
 
-  const ownedPuzzles = browseownedPuzzlesResult?.instances || [];
-  const totalownedPuzzles = browseownedPuzzlesResult?.total || 0;
+  const ownedPuzzles = browseOwnedPuzzlesResult?.ownedPuzzles || [];
+  const totalownedPuzzles = browseOwnedPuzzlesResult?.total || 0;
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -75,7 +75,7 @@ export default function BrowsePage() {
   if (
     !user ||
     convexUser === undefined ||
-    browseownedPuzzlesResult === undefined
+    browseOwnedPuzzlesResult === undefined
   ) {
     return <PageLoading message={tCommon("loading")} />;
   }
@@ -172,7 +172,8 @@ export default function BrowsePage() {
                   className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="">{tBrowse("allConditions")}</option>
-                  <option value="excellent">{t("excellent")}</option>
+                  <option value="new_sealed">{t("new_sealed")}</option>
+                  <option value="like_new">{t("like_new")}</option>
                   <option value="good">{t("good")}</option>
                   <option value="fair">{t("fair")}</option>
                   <option value="poor">{t("poor")}</option>
@@ -238,13 +239,13 @@ export default function BrowsePage() {
         </Card>
       ) : (
         <PuzzleViewProvider viewMode={viewMode}>
-          {ownedPuzzles.map((puzzleInstance) => (
+          {ownedPuzzles.map((puzzle) => (
             <PuzzleCard
-              key={puzzleInstance._id}
-              puzzle={puzzleInstance}
+              key={puzzle._id}
+              puzzle={puzzle}
               variant="browse"
               showOwner={true}
-              onRequestTrade={(puzzleId) => {
+              onRequestExchange={(puzzleId) => {
                 // Handle trade request
                 console.log("Request trade for puzzle:", puzzleId);
               }}

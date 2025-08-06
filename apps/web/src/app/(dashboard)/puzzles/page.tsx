@@ -26,19 +26,19 @@ export default function PuzzlesPage() {
   );
 
   const userownedPuzzles = useQuery(
-    api.puzzles.getownedPuzzlesByOwner,
+    api.puzzles.getOwnedPuzzlesByOwner,
     convexUser?._id
       ? { ownerId: convexUser._id, includeUnavailable: true }
       : "skip",
   );
 
-  const deletePuzzle = useMutation(api.puzzles.deletePuzzleInstance);
+  const deletePuzzle = useMutation(api.puzzles.deleteOwnedPuzzle);
 
   const handleDeletePuzzle = async (puzzleId: string) => {
     if (confirm("Are you sure you want to delete this puzzle?")) {
       try {
         await deletePuzzle({
-          instanceId: puzzleId as Id<"ownedPuzzles">,
+          ownedPuzzleId: puzzleId as Id<"ownedPuzzles">,
         });
       } catch (error) {
         console.error("Failed to delete puzzle:", error);
@@ -57,14 +57,10 @@ export default function PuzzlesPage() {
   // Filter puzzle instances based on search term
   const filteredownedPuzzles =
     userownedPuzzles?.filter(
-      (instance) =>
-        instance.product?.title
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        (instance.product?.brand &&
-          instance.product.brand
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase())),
+      (puzzle) =>
+        puzzle.puzzle?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (puzzle.puzzle?.brand &&
+          puzzle.puzzle.brand.toLowerCase().includes(searchTerm.toLowerCase())),
     ) || [];
 
   if (!user || !convexUser || userownedPuzzles === undefined) {
@@ -152,10 +148,10 @@ export default function PuzzlesPage() {
         </Card>
       ) : (
         <PuzzleViewProvider viewMode={viewMode}>
-          {filteredownedPuzzles.map((instance) => (
+          {filteredownedPuzzles.map((puzzle) => (
             <PuzzleCard
-              key={instance._id}
-              puzzle={instance}
+              key={puzzle._id}
+              puzzle={puzzle}
               variant="default"
               showCollectionDropdown={true}
               onEdit={handleEditPuzzle}

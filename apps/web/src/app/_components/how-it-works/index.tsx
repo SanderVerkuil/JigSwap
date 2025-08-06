@@ -39,10 +39,10 @@ export function HowItWorks() {
               3
             </div>
             <h3 className="text-lg font-semibold mb-2">
-              {t("steps.howItWorks.exchangeTrade.title")}
+              {t("steps.howItWorks.exchangeExchange.title")}
             </h3>
             <p className="text-muted-foreground text-sm">
-              {t("steps.howItWorks.exchangeTrade.description")}
+              {t("steps.howItWorks.exchangeExchange.description")}
             </p>
           </div>
           <div className="text-center">

@@ -25,7 +25,7 @@ export const createExchange = mutation({
     requestedPuzzleId: v.id("ownedPuzzles"),
     type: v.union(v.literal("trade"), v.literal("sale"), v.literal("loan")),
     message: v.optional(v.string()),
-    proposedTradeDate: v.optional(v.number()),
+    proposedExchangeDate: v.optional(v.number()),
     shippingMethod: v.optional(
       v.union(v.literal("pickup"), v.literal("mail"), v.literal("meetup")),
     ),
@@ -106,7 +106,7 @@ export const createExchange = mutation({
     await ctx.db.insert("notifications", {
       userId: args.recipientId,
       type: "trade_request",
-      title: "New Trade Request",
+      title: "New Exchange Request",
       message: "Someone wants to trade for one of your puzzles",
       relatedId: exchangeId,
       isRead: false,
@@ -129,9 +129,7 @@ export const getExchangeById = query({
       ctx.db.get(exchange.initiatorId),
       ctx.db.get(exchange.recipientId),
       ctx.db.get(exchange.requestedPuzzleId),
-      exchange.offeredPuzzleId
-        ? ctx.db.get(exchange.offeredPuzzleId)
-        : null,
+      exchange.offeredPuzzleId ? ctx.db.get(exchange.offeredPuzzleId) : null,
     ]);
 
     return {
@@ -165,12 +163,12 @@ export const getUserExchanges = query({
 
     // Get requests where user is the requester
     if (args.asRequester !== false) {
-      const requesterTrades = await ctx.db
+      const requesterExchanges = await ctx.db
         .query("exchanges")
         .withIndex("by_initiator", (q) => q.eq("initiatorId", args.userId))
         .collect();
       exchanges.push(
-        ...requesterTrades.map((tr) => ({
+        ...requesterExchanges.map((tr) => ({
           ...tr,
           userRole: "requester" as const,
         })),
@@ -179,12 +177,12 @@ export const getUserExchanges = query({
 
     // Get requests where user is the owner
     if (args.asOwner !== false) {
-      const ownerTrades = await ctx.db
+      const ownerExchanges = await ctx.db
         .query("exchanges")
         .withIndex("by_recipient", (q) => q.eq("recipientId", args.userId))
         .collect();
       exchanges.push(
-        ...ownerTrades.map((tr) => ({ ...tr, userRole: "owner" as const })),
+        ...ownerExchanges.map((tr) => ({ ...tr, userRole: "owner" as const })),
       );
     }
 
@@ -204,9 +202,7 @@ export const getUserExchanges = query({
             ctx.db.get(tr.initiatorId),
             ctx.db.get(tr.recipientId),
             ctx.db.get(tr.requestedPuzzleId),
-            tr.offeredPuzzleId
-              ? ctx.db.get(tr.offeredPuzzleId)
-              : null,
+            tr.offeredPuzzleId ? ctx.db.get(tr.offeredPuzzleId) : null,
           ]);
 
         const [ownerPuzzleProduct, requesterPuzzleProduct] = await Promise.all([
@@ -241,7 +237,7 @@ export const updateExchangeStatus = mutation({
       v.literal("cancelled"),
     ),
     responseMessage: v.optional(v.string()),
-    actualTradeDate: v.optional(v.number()),
+    actualExchangeDate: v.optional(v.number()),
     trackingInfo: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -249,7 +245,7 @@ export const updateExchangeStatus = mutation({
 
     const exchange = await ctx.db.get(exchangeId);
     if (!exchange) {
-      throw new Error("Trade request not found");
+      throw new Error("Exchange request not found");
     }
 
     await ctx.db.patch(exchangeId, {
@@ -267,14 +263,14 @@ export const updateExchangeStatus = mutation({
     const notificationMessages = {
       accepted: "Your trade request has been accepted!",
       rejected: "Your trade request has been declined",
-      completed: "Trade has been marked as completed",
-      cancelled: "Trade request has been cancelled",
+      completed: "Exchange has been marked as completed",
+      cancelled: "Exchange request has been cancelled",
     };
 
     await ctx.db.insert("notifications", {
       userId: notificationUserId,
       type: `trade_${status}` as NotificationType,
-      title: `Trade ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+      title: `Exchange ${status.charAt(0).toUpperCase() + status.slice(1)}`,
       message: notificationMessages[status],
       relatedId: exchangeId,
       isRead: false,
@@ -304,18 +300,18 @@ export const updateExchangeStatus = mutation({
 });
 
 // Get trade statistics
-export const getTradeStats = query({
+export const getExchangeStats = query({
   args: {},
   handler: async (ctx) => {
-    const allTrades = await ctx.db.query("exchanges").collect();
+    const allExchanges = await ctx.db.query("exchanges").collect();
 
     const stats = {
-      total: allTrades.length,
-      proposed: allTrades.filter((t) => t.status === "proposed").length,
-      accepted: allTrades.filter((t) => t.status === "accepted").length,
-      completed: allTrades.filter((t) => t.status === "completed").length,
-      rejected: allTrades.filter((t) => t.status === "rejected").length,
-      cancelled: allTrades.filter((t) => t.status === "cancelled").length,
+      total: allExchanges.length,
+      proposed: allExchanges.filter((t) => t.status === "proposed").length,
+      accepted: allExchanges.filter((t) => t.status === "accepted").length,
+      completed: allExchanges.filter((t) => t.status === "completed").length,
+      rejected: allExchanges.filter((t) => t.status === "rejected").length,
+      cancelled: allExchanges.filter((t) => t.status === "cancelled").length,
     };
 
     return stats;
@@ -323,7 +319,7 @@ export const getTradeStats = query({
 });
 
 // Send message in trade request
-export const sendTradeMessage = mutation({
+export const sendExchangeMessage = mutation({
   args: {
     exchangeId: v.id("exchanges"),
     senderId: v.id("users"),
@@ -335,7 +331,7 @@ export const sendTradeMessage = mutation({
   handler: async (ctx, args) => {
     const exchange = await ctx.db.get(args.exchangeId);
     if (!exchange) {
-      throw new Error("Trade request not found");
+      throw new Error("Exchange request not found");
     }
 
     // Determine receiver
@@ -370,14 +366,12 @@ export const sendTradeMessage = mutation({
 });
 
 // Get messages for a trade request
-export const getTradeMessages = query({
+export const getExchangeMessages = query({
   args: { exchangeId: v.id("exchanges") },
   handler: async (ctx, args) => {
     const messages = await ctx.db
       .query("messages")
-      .withIndex("by_exchange", (q) =>
-        q.eq("exchangeId", args.exchangeId),
-      )
+      .withIndex("by_exchange", (q) => q.eq("exchangeId", args.exchangeId))
       .collect();
 
     // Get sender information for each message
@@ -418,9 +412,7 @@ export const getExchangesByOwner = query({
             ctx.db.get(tr.initiatorId),
             ctx.db.get(tr.recipientId),
             ctx.db.get(tr.requestedPuzzleId),
-            tr.offeredPuzzleId
-              ? ctx.db.get(tr.offeredPuzzleId)
-              : null,
+            tr.offeredPuzzleId ? ctx.db.get(tr.offeredPuzzleId) : null,
           ]);
 
         const [ownerPuzzleProduct, requesterPuzzleProduct] = await Promise.all([
@@ -449,7 +441,7 @@ export const getExchangesByRequester = query({
   args: { initiatorId: v.id("users") },
   handler: async (ctx, args) => {
     const exchanges = await ctx.db
-        .query("exchanges")
+      .query("exchanges")
       .withIndex("by_initiator", (q) => q.eq("initiatorId", args.initiatorId))
       .collect();
 
@@ -461,9 +453,7 @@ export const getExchangesByRequester = query({
             ctx.db.get(tr.initiatorId),
             ctx.db.get(tr.recipientId),
             ctx.db.get(tr.requestedPuzzleId),
-            tr.offeredPuzzleId
-              ? ctx.db.get(tr.offeredPuzzleId)
-              : null,
+            tr.offeredPuzzleId ? ctx.db.get(tr.offeredPuzzleId) : null,
           ]);
 
         const [ownerPuzzleProduct, requesterPuzzleProduct] = await Promise.all([
@@ -493,7 +483,7 @@ export const acceptExchange = mutation({
   handler: async (ctx, args) => {
     const exchange = await ctx.db.get(args.exchangeId);
     if (!exchange) {
-      throw new Error("Trade request not found");
+      throw new Error("Exchange request not found");
     }
 
     await ctx.db.patch(args.exchangeId, {
@@ -505,7 +495,7 @@ export const acceptExchange = mutation({
     await ctx.db.insert("notifications", {
       userId: exchange.initiatorId,
       type: "trade_accepted",
-      title: "Trade Accepted",
+      title: "Exchange Accepted",
       message: "Your trade request has been accepted!",
       relatedId: args.exchangeId,
       isRead: false,
@@ -523,7 +513,7 @@ export const declineExchange = mutation({
   handler: async (ctx, args) => {
     const exchange = await ctx.db.get(args.exchangeId);
     if (!exchange) {
-      throw new Error("Trade request not found");
+      throw new Error("Exchange request not found");
     }
 
     await ctx.db.patch(args.exchangeId, {
@@ -535,7 +525,7 @@ export const declineExchange = mutation({
     await ctx.db.insert("notifications", {
       userId: exchange.initiatorId,
       type: "trade_declined",
-      title: "Trade Declined",
+      title: "Exchange Declined",
       message: "Your trade request has been declined",
       relatedId: args.exchangeId,
       isRead: false,
@@ -552,7 +542,7 @@ export const completeExchange = mutation({
   handler: async (ctx, args) => {
     const exchange = await ctx.db.get(args.exchangeId);
     if (!exchange) {
-      throw new Error("Trade request not found");
+      throw new Error("Exchange request not found");
     }
 
     await ctx.db.patch(args.exchangeId, {
@@ -573,8 +563,8 @@ export const completeExchange = mutation({
       await ctx.db.patch(exchange.offeredPuzzleId, {
         availability: {
           forTrade: false,
-        forSale: false,
-        forLend: false,
+          forSale: false,
+          forLend: false,
         },
       });
     }
@@ -588,8 +578,8 @@ export const completeExchange = mutation({
     await ctx.db.insert("notifications", {
       userId: notificationUserId,
       type: "trade_completed",
-      title: "Trade Completed",
-      message: "Trade has been marked as completed",
+      title: "Exchange Completed",
+      message: "Exchange has been marked as completed",
       relatedId: args.exchangeId,
       isRead: false,
       createdAt: Date.now(),
@@ -603,7 +593,7 @@ export const cancelExchange = mutation({
   handler: async (ctx, args) => {
     const exchange = await ctx.db.get(args.exchangeId);
     if (!exchange) {
-      throw new Error("Trade request not found");
+      throw new Error("Exchange request not found");
     }
 
     await ctx.db.patch(args.exchangeId, {
@@ -615,8 +605,8 @@ export const cancelExchange = mutation({
     await ctx.db.insert("notifications", {
       userId: exchange.recipientId,
       type: "trade_cancelled",
-      title: "Trade Cancelled",
-      message: "Trade request has been cancelled",
+      title: "Exchange Cancelled",
+      message: "Exchange request has been cancelled",
       relatedId: args.exchangeId,
       isRead: false,
       createdAt: Date.now(),

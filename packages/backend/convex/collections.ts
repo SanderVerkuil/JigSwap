@@ -141,15 +141,13 @@ export const getCollectionById = query({
 
     const puzzles = await Promise.all(
       members.map(async (member) => {
-        const puzzleInstance = member.puzzleInstanceId
-          ? await ctx.db.get(member.puzzleInstanceId)
+        const ownedPuzzle = member.ownedPuzzleId
+          ? await ctx.db.get(member.ownedPuzzleId)
           : null;
-        const product =
-          puzzleInstance !== null
-            ? await ctx.db.get(puzzleInstance.productId)
-            : null;
-        return puzzleInstance
-          ? { ...puzzleInstance, addedAt: member.addedAt, product }
+        const puzzle =
+          ownedPuzzle !== null ? await ctx.db.get(ownedPuzzle.puzzleId) : null;
+        return ownedPuzzle
+          ? { ...ownedPuzzle, addedAt: member.addedAt, puzzle }
           : null;
       }),
     );
@@ -162,10 +160,10 @@ export const getCollectionById = query({
 });
 
 // Add puzzle to collection
-export const addPuzzleInstanceToCollection = mutation({
+export const addOwnedPuzzleToCollection = mutation({
   args: {
     collectionId: v.id("collections"),
-    puzzleInstanceId: v.id("ownedPuzzles"),
+    ownedPuzzleId: v.id("ownedPuzzles"),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -195,10 +193,10 @@ export const addPuzzleInstanceToCollection = mutation({
     // Check if puzzle is already in collection
     const existingMember = await ctx.db
       .query("collectionMembers")
-      .withIndex("by_collection_puzzle_instance", (q) =>
+      .withIndex("by_collection_owned_puzzle", (q) =>
         q
           .eq("collectionId", args.collectionId)
-          .eq("puzzleInstanceId", args.puzzleInstanceId),
+          .eq("ownedPuzzleId", args.ownedPuzzleId),
       )
       .unique();
 
@@ -209,7 +207,7 @@ export const addPuzzleInstanceToCollection = mutation({
     const now = Date.now();
     await ctx.db.insert("collectionMembers", {
       collectionId: args.collectionId,
-      puzzleInstanceId: args.puzzleInstanceId,
+      ownedPuzzleId: args.ownedPuzzleId,
       addedAt: now,
     });
 
@@ -218,10 +216,10 @@ export const addPuzzleInstanceToCollection = mutation({
 });
 
 // Remove puzzle from collection
-export const removePuzzleInstanceFromCollection = mutation({
+export const removeOwnedPuzzleFromCollection = mutation({
   args: {
     collectionId: v.id("collections"),
-    puzzleInstanceId: v.id("ownedPuzzles"),
+    ownedPuzzleId: v.id("ownedPuzzles"),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -251,10 +249,10 @@ export const removePuzzleInstanceFromCollection = mutation({
     // Find and delete the membership
     const member = await ctx.db
       .query("collectionMembers")
-      .withIndex("by_collection_puzzle_instance", (q) =>
+      .withIndex("by_collection_owned_puzzle", (q) =>
         q
           .eq("collectionId", args.collectionId)
-          .eq("puzzleInstanceId", args.puzzleInstanceId),
+          .eq("ownedPuzzleId", args.ownedPuzzleId),
       )
       .unique();
 
@@ -384,8 +382,8 @@ export const deleteCollection = mutation({
 });
 
 // Get collections that contain a specific puzzle
-export const getCollectionsForPuzzleInstance = query({
-  args: { puzzleInstanceId: v.id("ownedPuzzles") },
+export const getCollectionsForOwnedPuzzle = query({
+  args: { ownedPuzzleId: v.id("ownedPuzzles") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
@@ -404,8 +402,8 @@ export const getCollectionsForPuzzleInstance = query({
     // Get all collections that contain this puzzle
     const members = await ctx.db
       .query("collectionMembers")
-      .withIndex("by_puzzle_instance", (q) =>
-        q.eq("puzzleInstanceId", args.puzzleInstanceId),
+      .withIndex("by_owned_puzzle", (q) =>
+        q.eq("ownedPuzzleId", args.ownedPuzzleId),
       )
       .collect();
 

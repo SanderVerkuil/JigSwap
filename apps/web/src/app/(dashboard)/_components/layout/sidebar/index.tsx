@@ -62,7 +62,7 @@ const getItems: () => Item[] = () => {
       icon: FolderOpen,
     },
     {
-      title: "Trades",
+      title: "Exchanges",
       url: "/trades",
       icon: ArrowLeftRight,
     },

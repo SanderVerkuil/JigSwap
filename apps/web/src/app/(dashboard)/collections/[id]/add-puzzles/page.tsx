@@ -34,14 +34,14 @@ export default function AddPuzzlesToCollectionPage() {
   });
 
   const availablePuzzles = useQuery(
-    api.puzzles.getownedPuzzlesByOwner,
+    api.puzzles.getOwnedPuzzlesByOwner,
     convexUser?._id
       ? { ownerId: convexUser._id, includeUnavailable: false }
       : "skip",
   );
 
   const addPuzzleToCollection = useMutation(
-    api.collections.addPuzzleInstanceToCollection,
+    api.collections.addOwnedPuzzleToCollection,
   );
 
   const togglePuzzleSelection = (puzzleId: Id<"ownedPuzzles">) => {
@@ -59,7 +59,7 @@ export default function AddPuzzlesToCollectionPage() {
       for (const puzzleId of selectedPuzzles) {
         await addPuzzleToCollection({
           collectionId: id as Id<"collections">,
-          puzzleInstanceId: puzzleId,
+          ownedPuzzleId: puzzleId,
         });
       }
       router.push(`/collections/${id}`);
@@ -77,11 +77,11 @@ export default function AddPuzzlesToCollectionPage() {
       )
       ?.filter(
         (puzzle) =>
-          puzzle.product?.title
+          puzzle.puzzle?.title
             .toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
-          (puzzle.product?.brand &&
-            puzzle.product.brand
+          (puzzle.puzzle?.brand &&
+            puzzle.puzzle.brand
               .toLowerCase()
               .includes(searchTerm.toLowerCase())),
       ) || [];
