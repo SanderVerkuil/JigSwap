@@ -34,6 +34,10 @@ export function PuzzleProductDetail({ productId }: PuzzleProductDetailProps) {
       : "skip",
   );
 
+  if (product === null) {
+    return <h1>Product not found</h1>;
+  }
+
   if (
     product === undefined ||
     (product.category !== undefined && category === undefined)
