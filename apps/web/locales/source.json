@@ -280,17 +280,17 @@
     "selectPuzzleDescription": "Search for an existing puzzle or create a new one",
     "searchPuzzle": "Search for a puzzle",
     "searchPlaceholder": "Search puzzles...",
-    "noProductsFound": "No products found",
-    "createNewProduct": "Create New Product",
-    "createNewProductDescription": "Create a new puzzle product that doesn't exist yet",
-    "productCreated": "Product created successfully",
-    "productCreationFailed": "Failed to create product",
-    "noProductSelected": "Please select a product first",
+    "noPuzzlesFound": "No puzzles found",
+    "createNewPuzzle": "Create New Puzzle",
+    "createNewPuzzleDescription": "Create a new puzzle that doesn't exist yet",
+    "puzzleCreated": "Puzzle created successfully",
+    "puzzleCreationFailed": "Failed to create puzzle",
+    "noPuzzleSelected": "Please select a puzzle first",
     "puzzleAdded": "Puzzle added to your collection",
-    "puzzleCreationFailed": "Failed to add puzzle to collection",
+    "puzzleAdditionFailed": "Failed to add puzzle to collection",
     "addToCollection": "Add to Collection",
     "acquisitionDatePlaceholder": "When did you acquire this puzzle?",
-    "notesPlaceholder": "Any additional notes about this puzzle instance",
+    "notesPlaceholder": "Any additional notes about this puzzle",
     "basicInformation": "Basic Information",
     "basicInformationDescription": "Enter the essential details about your puzzle",
     "titlePlaceholder": "Enter puzzle title",
@@ -318,7 +318,6 @@
     "acquisitionDate": "Acquisition Date",
     "acquisitionDateDescription": "When did you acquire this puzzle? (optional)",
     "notes": "Notes",
-    "notesPlaceholder": "Any additional notes about this puzzle",
     "completions": {
       "title": "Completion Tracking",
       "description": "Track your puzzle completions with detailed timing and notes",
@@ -345,33 +344,31 @@
       "loading": "Loading suggestions...",
       "typeToSearch": "Type to search for puzzles..."
     },
-    "productSelection": "Product Selection",
-    "productSelectionDescription": "Choose whether to create a new puzzle product or select an existing one",
-    "createNewProduct": "Create New Product",
-    "selectExistingProduct": "Select Existing Product",
-    "searchExistingProducts": "Search Existing Products",
-    "searchProducts": "Search Products",
-    "searchProductsPlaceholder": "Search by title, brand, or piece count...",
-    "selectProduct": "Select a product",
-    "typeToSearch": "Type to search for products...",
+    "puzzleSelection": "Puzzle Selection",
+    "puzzleSelectionDescription": "Choose whether to create a new puzzle or select an existing one",
+    "selectExistingPuzzle": "Select Existing Puzzle",
+    "searchExistingPuzzles": "Search Existing Puzzles",
+    "searchPuzzles": "Search Puzzles",
+    "searchPuzzlesPlaceholder": "Search by title, brand, or piece count...",
+    "typeToSearch": "Type to search for puzzles...",
     "loading": "Loading...",
-    "noResults": "No matching products found",
+    "noResults": "No matching puzzles found",
     "change": "Change",
-    "fillInProductDetails": "Fill in the details for your new puzzle product",
-    "orFillInNewProductDetails": "Or fill in details to create a new product if none exists",
+    "fillInPuzzleDetails": "Fill in the details for your new puzzle",
+    "orFillInNewPuzzleDetails": "Or fill in details to create a new puzzle if none exists",
     "notFound": "Puzzle not found",
-    "products": {
-      "title": "Puzzle Products",
-      "subtitle": "Browse and discover puzzle products from the community",
-      "addProduct": "Add Product",
-      "searchPlaceholder": "Search products by title, brand, or description...",
+    "puzzles": {
+      "title": "Puzzles",
+      "subtitle": "Browse and discover puzzles from the community",
+      "addPuzzle": "Add Puzzle",
+      "searchPlaceholder": "Search puzzles by title, brand, or description...",
       "filtersLabel": "Filters",
       "clearFilters": "Clear Filters",
-      "productsFound": "{count} products found",
-      "noProductsFound": "No products found",
+      "puzzlesFound": "{count} puzzles found",
+      "noPuzzlesFound": "No puzzles found",
       "tryDifferentFilters": "Try adjusting your search criteria or filters",
       "viewDetails": "View Details",
-      "addPuzzle": "I Have This",
+      "ownPuzzle": "I Own This",
       "noImage": "No Image",
       "pieceCount": "Piece Count",
       "pieces": "pieces",
@@ -403,13 +400,13 @@
         "min": "Min",
         "max": "Max"
       },
-      "productDetails": "Product Details",
+      "puzzleDetails": "Puzzle Details",
       "metadata": "Metadata",
       "created": "Created",
       "updated": "Updated",
       "actions": "Actions",
       "addToFavorites": "Add to Favorites",
-      "notFound": "Product not found"
+      "notFound": "Puzzle not found"
     }
   },
   "trades": {
@@ -919,16 +916,16 @@
     "notFound": "Collection not found"
   },
   "forms": {
-    "puzzle-form": {
+    "owned-puzzle-form": {
       "title": "Add New Puzzle",
       "step1": {
-        "title": "Product Selection",
-        "searchLabel": "Search for existing products",
+        "title": "Puzzle Selection",
+        "searchLabel": "Search for existing puzzles",
         "searchPlaceholder": "Search by title, brand, or piece count...",
-        "createNew": "Create New Product",
-        "suggestions": "Found Products",
+        "createNew": "Create New Puzzle",
+        "suggestions": "Found Puzzles",
         "pieces": "pieces",
-        "createNewTitle": "Create New Product",
+        "createNewTitle": "Create New Puzzle",
         "titleLabel": "Title",
         "titlePlaceholder": "Enter puzzle title",
         "descriptionLabel": "Description",
@@ -947,7 +944,7 @@
         },
         "tagsLabel": "Tags",
         "tagsPlaceholder": "nature, colorful, challenging",
-        "selectedProduct": "Selected Product"
+        "selectedPuzzle": "Selected Puzzle"
       },
       "step2": {
         "title": "Instance Details",
@@ -1017,12 +1014,12 @@
         "placeholder": "nature, colorful, challenging"
       },
       "actions": {
-        "submit": "Save Product",
+        "submit": "Save Puzzle",
         "submitting": "Saving...",
         "cancel": "Cancel"
       },
       "errors": {
-        "submissionFailed": "Failed to save product. Please try again.",
+        "submissionFailed": "Failed to save puzzle. Please try again.",
         "networkError": "Network error. Please check your connection."
       }
     },
