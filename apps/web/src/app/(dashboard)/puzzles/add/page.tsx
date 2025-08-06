@@ -143,7 +143,7 @@ export default function AddPuzzlePage() {
     title: string;
     brand?: string;
     pieceCount: number;
-    image?: string;
+    image?: string | null;
   }) => {
     setSelectedProduct(product);
     setSearchOpen(false);
