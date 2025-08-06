@@ -27,7 +27,7 @@ interface Filters {
   tags: string[];
 }
 
-interface puzzlesFiltersProps {
+interface PuzzleFiltersProps {
   filters: Filters;
   onFiltersChange: (filters: Filters) => void;
   className?: string;
@@ -37,11 +37,11 @@ const COMMON_PIECE_COUNTS = [
   100, 200, 300, 400, 500, 750, 1000, 1500, 2000, 3000, 4000, 5000,
 ];
 
-export function puzzlesFilters({
+export function PuzzleFilters({
   filters,
   onFiltersChange,
   className = "",
-}: puzzlesFiltersProps) {
+}: PuzzleFiltersProps) {
   const t = useTranslations("puzzles.products");
   const tPuzzles = useTranslations("puzzles");
 
