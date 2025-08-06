@@ -157,9 +157,12 @@ export const getPuzzleProductById = query({
   },
   handler: async (ctx, args) => {
     const product = await ctx.db.get(args.productId);
+    if (!product) {
+      return null;
+    }
     return {
       ...product,
-      image: product?.image ? await ctx.storage.getUrl(product.image) : undefined,
+      image: product.image ? await ctx.storage.getUrl(product.image) : undefined,
     };
   },
 });
@@ -460,10 +463,14 @@ export const getPuzzleProductSuggestions = query({
       )
       .take(limit);
 
-    return products.map(async (product) => ({
-      ...product,
-      image: product.image ? await ctx.storage.getUrl(product.image) : undefined,
-    }));
+    const productsWithImages = await Promise.all(
+      products.map(async (product) => ({
+        ...product,
+        image: product.image ? await ctx.storage.getUrl(product.image) : undefined,
+      }))
+    );
+
+    return productsWithImages;
   },
 });
 
