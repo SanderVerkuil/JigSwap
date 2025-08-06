@@ -37,21 +37,18 @@ export default function BrowsePage() {
     user?.id ? { clerkId: user.id } : "skip",
   );
 
-  const browseownedPuzzlesResult = useQuery(
-    api.puzzles.browseownedPuzzles,
-    {
-      searchTerm: searchTerm || undefined,
-      category: selectedCategory
-        ? (selectedCategory as Id<"adminCategories">)
-        : undefined,
-      difficulty: (selectedDifficulty as Difficulty) || undefined,
-      condition: (selectedCondition as Condition) || undefined,
-      minPieceCount: minPieces ? parseInt(minPieces) : undefined,
-      maxPieceCount: maxPieces ? parseInt(maxPieces) : undefined,
-      excludeOwnerId: convexUser?._id,
-      limit: 50,
-    },
-  );
+  const browseownedPuzzlesResult = useQuery(api.puzzles.browseownedPuzzles, {
+    searchTerm: searchTerm || undefined,
+    category: selectedCategory
+      ? (selectedCategory as Id<"adminCategories">)
+      : undefined,
+    difficulty: (selectedDifficulty as Difficulty) || undefined,
+    condition: (selectedCondition as Condition) || undefined,
+    minPieceCount: minPieces ? parseInt(minPieces) : undefined,
+    maxPieceCount: maxPieces ? parseInt(maxPieces) : undefined,
+    excludeOwnerId: convexUser?._id,
+    limit: 50,
+  });
 
   const categories = useQuery(api.puzzles.getPuzzleCategories);
 
@@ -90,8 +87,8 @@ export default function BrowsePage() {
         <div>
           <h1 className="text-3xl font-bold">{tBrowse("title")}</h1>
           <p className="text-muted-foreground">
-            {tBrowse("subtitle")} ({totalownedPuzzles}{" "}
-            {tBrowse("puzzlesFound")})
+            {tBrowse("subtitle")} ({totalownedPuzzles} {tBrowse("puzzlesFound")}
+            )
           </p>
         </div>
         <div className="flex items-center gap-2">

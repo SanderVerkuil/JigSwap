@@ -11,15 +11,12 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PuzzleProductCard } from "./puzzle-product-card";
 import { PuzzleProductViewProvider } from "./puzzle-product-view-provider";
-import { puzzlesFilters } from "./puzzle-products-filters";
 
 interface puzzlesClientProps {
   className?: string;
 }
 
-export function puzzlesClient({
-  className = "",
-}: puzzlesClientProps) {
+export function puzzlesClient({ className = "" }: puzzlesClientProps) {
   const router = useRouter();
   const t = useTranslations("puzzles.products");
   const tCommon = useTranslations("common");

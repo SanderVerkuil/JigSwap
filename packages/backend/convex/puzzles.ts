@@ -138,11 +138,17 @@ export const listAllpuzzles = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    const products = await ctx.db.query("puzzles").paginate(args.paginationOpts);
-    const page = await Promise.all(products.page.map(async (product) => ({
-      ...product,
-      image: product.image ? await ctx.storage.getUrl(product.image) : undefined,
-    })));
+    const products = await ctx.db
+      .query("puzzles")
+      .paginate(args.paginationOpts);
+    const page = await Promise.all(
+      products.page.map(async (product) => ({
+        ...product,
+        image: product.image
+          ? await ctx.storage.getUrl(product.image)
+          : undefined,
+      })),
+    );
     return {
       ...products,
       page,
@@ -173,10 +179,10 @@ export const getAllBrands = query({
   args: {},
   handler: async (ctx) => {
     const brands = await stream(ctx.db, schema)
-    .query("puzzles")
-    .withIndex("by_brand", (q) => q)
-    .distinct(["brand"])
-    .collect();
+      .query("puzzles")
+      .withIndex("by_brand", (q) => q)
+      .distinct(["brand"])
+      .collect();
     return brands.map((brand) => brand.brand);
   },
 });
