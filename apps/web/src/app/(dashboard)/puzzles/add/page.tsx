@@ -90,7 +90,7 @@ export default function AddPuzzlePage() {
     title: string;
     brand?: string;
     pieceCount: number;
-    image?: string;
+    image?: string | null;
   } | null>(null);
   const [createProductOpen, setCreateProductOpen] = useState(false);
   const [isCreatingProduct, setIsCreatingProduct] = useState(false);
