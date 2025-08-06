@@ -24,8 +24,8 @@ export function RecentPuzzlesCard() {
   );
 
   // Get recent puzzle instances
-  const recentPuzzleInstances = useQuery(
-    api.puzzles.getPuzzleInstancesByOwner,
+  const recentownedPuzzles = useQuery(
+    api.puzzles.getownedPuzzlesByOwner,
     convexUser?._id
       ? { ownerId: convexUser._id, includeUnavailable: false }
       : "skip",
@@ -35,7 +35,7 @@ export function RecentPuzzlesCard() {
   if (
     isLoading ||
     convexUser === undefined ||
-    recentPuzzleInstances === undefined
+    recentownedPuzzles === undefined
   ) {
     return (
       <Card>
@@ -57,9 +57,9 @@ export function RecentPuzzlesCard() {
         <CardDescription>Puzzles you&apos;ve added recently</CardDescription>
       </CardHeader>
       <CardContent>
-        {recentPuzzleInstances && recentPuzzleInstances.length > 0 ? (
+        {recentownedPuzzles && recentownedPuzzles.length > 0 ? (
           <div className="space-y-3">
-            {recentPuzzleInstances.slice(0, 3).map((instance) => (
+            {recentownedPuzzles.slice(0, 3).map((instance) => (
               <div
                 key={instance._id}
                 className="flex items-center space-x-3 p-3 border rounded-lg"

@@ -7,8 +7,8 @@ import { Calendar, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 interface PuzzleData {
-  _id: Id<"puzzleInstances">;
-  productId: Id<"puzzleProducts">;
+  _id: Id<"ownedPuzzles">;
+  productId: Id<"puzzles">;
   ownerId: Id<"users">;
   condition: "excellent" | "good" | "fair" | "poor";
   isAvailable: boolean;
@@ -18,7 +18,7 @@ interface PuzzleData {
   updatedAt: number;
   _creationTime?: number;
   product: {
-    _id: Id<"puzzleProducts">;
+    _id: Id<"puzzles">;
     title: string;
     description?: string;
     brand?: string;

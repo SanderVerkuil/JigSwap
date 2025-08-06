@@ -1,2 +1,4 @@
 .env.local
 crowdin.yml
+# clerk configuration (can include secrets)
+/.clerk/

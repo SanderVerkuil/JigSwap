@@ -12,10 +12,10 @@ interface CollectionData {
   color?: string;
   icon?: string;
   puzzles?: Array<{
-    _id: Id<"puzzleInstances">;
-    productId: Id<"puzzleProducts">;
+    _id: Id<"ownedPuzzles">;
+    productId: Id<"puzzles">;
     product: {
-      _id: Id<"puzzleProducts">;
+      _id: Id<"puzzles">;
       title: string;
       brand?: string;
     } | null;

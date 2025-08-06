@@ -24,7 +24,7 @@ export function PuzzleProductDetail({ productId }: PuzzleProductDetailProps) {
   const tCommon = useTranslations("common");
 
   const product = useQuery(api.puzzles.getPuzzleProductById, {
-    productId: productId as Id<"puzzleProducts">,
+    productId: productId as Id<"puzzles">,
   });
 
   const category = useQuery(

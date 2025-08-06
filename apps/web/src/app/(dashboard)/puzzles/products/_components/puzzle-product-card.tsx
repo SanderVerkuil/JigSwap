@@ -11,7 +11,7 @@ import Link from "next/link";
 import { usePuzzleProductView } from "./puzzle-product-view-provider";
 
 interface PuzzleProduct {
-  _id: Id<"puzzleProducts">;
+  _id: Id<"puzzles">;
   title: string;
   description?: string;
   brand?: string;

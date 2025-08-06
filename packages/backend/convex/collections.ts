@@ -165,7 +165,7 @@ export const getCollectionById = query({
 export const addPuzzleInstanceToCollection = mutation({
   args: {
     collectionId: v.id("collections"),
-    puzzleInstanceId: v.id("puzzleInstances"),
+    puzzleInstanceId: v.id("ownedPuzzles"),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -221,7 +221,7 @@ export const addPuzzleInstanceToCollection = mutation({
 export const removePuzzleInstanceFromCollection = mutation({
   args: {
     collectionId: v.id("collections"),
-    puzzleInstanceId: v.id("puzzleInstances"),
+    puzzleInstanceId: v.id("ownedPuzzles"),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -385,7 +385,7 @@ export const deleteCollection = mutation({
 
 // Get collections that contain a specific puzzle
 export const getCollectionsForPuzzleInstance = query({
-  args: { puzzleInstanceId: v.id("puzzleInstances") },
+  args: { puzzleInstanceId: v.id("ownedPuzzles") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {

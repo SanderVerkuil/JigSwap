@@ -63,8 +63,8 @@ export function PuzzleViewProvider({
 
 // Puzzle instance data type with product information
 interface PuzzleInstanceData {
-  _id: Id<"puzzleInstances">;
-  productId: Id<"puzzleProducts">;
+  _id: Id<"ownedPuzzles">;
+  productId: Id<"puzzles">;
   ownerId: Id<"users">;
   condition: "excellent" | "good" | "fair" | "poor";
   isAvailable: boolean;
@@ -75,7 +75,7 @@ interface PuzzleInstanceData {
   _creationTime?: number;
   addedAt?: number; // For collection members
   product: {
-    _id: Id<"puzzleProducts">;
+    _id: Id<"puzzles">;
     title: string;
     description?: string;
     brand?: string;
@@ -99,14 +99,14 @@ interface PuzzleInstanceData {
 interface PuzzleCardProps {
   puzzle: PuzzleInstanceData;
   variant?: "default" | "browse" | "collection" | "selection";
-  onEdit?: (puzzleId: Id<"puzzleInstances">) => void;
-  onView?: (puzzleId: Id<"puzzleInstances">) => void;
-  onDelete?: (puzzleId: Id<"puzzleInstances">) => void;
-  onRemove?: (puzzleId: Id<"puzzleInstances">) => void;
-  onSelect?: (puzzleId: Id<"puzzleInstances">) => void;
-  onRequestTrade?: (puzzleId: Id<"puzzleInstances">) => void;
-  onMessage?: (puzzleId: Id<"puzzleInstances">) => void;
-  onFavorite?: (puzzleId: Id<"puzzleInstances">) => void;
+  onEdit?: (puzzleId: Id<"ownedPuzzles">) => void;
+  onView?: (puzzleId: Id<"ownedPuzzles">) => void;
+  onDelete?: (puzzleId: Id<"ownedPuzzles">) => void;
+  onRemove?: (puzzleId: Id<"ownedPuzzles">) => void;
+  onSelect?: (puzzleId: Id<"ownedPuzzles">) => void;
+  onRequestTrade?: (puzzleId: Id<"ownedPuzzles">) => void;
+  onMessage?: (puzzleId: Id<"ownedPuzzles">) => void;
+  onFavorite?: (puzzleId: Id<"ownedPuzzles">) => void;
   isSelected?: boolean;
   showOwner?: boolean;
   showActions?: boolean;

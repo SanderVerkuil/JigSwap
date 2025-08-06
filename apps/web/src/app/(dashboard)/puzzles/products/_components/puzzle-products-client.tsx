@@ -11,15 +11,15 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PuzzleProductCard } from "./puzzle-product-card";
 import { PuzzleProductViewProvider } from "./puzzle-product-view-provider";
-import { PuzzleProductsFilters } from "./puzzle-products-filters";
+import { puzzlesFilters } from "./puzzle-products-filters";
 
-interface PuzzleProductsClientProps {
+interface puzzlesClientProps {
   className?: string;
 }
 
-export function PuzzleProductsClient({
+export function puzzlesClient({
   className = "",
-}: PuzzleProductsClientProps) {
+}: puzzlesClientProps) {
   const router = useRouter();
   const t = useTranslations("puzzles.products");
   const tCommon = useTranslations("common");
@@ -46,7 +46,7 @@ export function PuzzleProductsClient({
     loadMore,
     isLoading,
   } = usePaginatedQuery(
-    api.puzzles.listAllPuzzleProducts,
+    api.puzzles.listAllpuzzles,
     {},
     { initialNumItems: 20 },
   );
@@ -200,7 +200,7 @@ export function PuzzleProductsClient({
 
           {/* Advanced Filters */}
           {showFilters && (
-            <PuzzleProductsFilters
+            <puzzlesFilters
               filters={filters}
               onFiltersChange={setFilters}
               className="mt-4"

@@ -25,8 +25,8 @@ export default function PuzzlesPage() {
     user?.id ? { clerkId: user.id } : "skip",
   );
 
-  const userPuzzleInstances = useQuery(
-    api.puzzles.getPuzzleInstancesByOwner,
+  const userownedPuzzles = useQuery(
+    api.puzzles.getownedPuzzlesByOwner,
     convexUser?._id
       ? { ownerId: convexUser._id, includeUnavailable: true }
       : "skip",
@@ -38,7 +38,7 @@ export default function PuzzlesPage() {
     if (confirm("Are you sure you want to delete this puzzle?")) {
       try {
         await deletePuzzle({
-          instanceId: puzzleId as Id<"puzzleInstances">,
+          instanceId: puzzleId as Id<"ownedPuzzles">,
         });
       } catch (error) {
         console.error("Failed to delete puzzle:", error);
@@ -46,17 +46,17 @@ export default function PuzzlesPage() {
     }
   };
 
-  const handleEditPuzzle = (puzzleId: Id<"puzzleInstances">) => {
+  const handleEditPuzzle = (puzzleId: Id<"ownedPuzzles">) => {
     router.push(`/puzzles/${puzzleId}/edit`);
   };
 
-  const handleViewPuzzle = (puzzleId: Id<"puzzleInstances">) => {
+  const handleViewPuzzle = (puzzleId: Id<"ownedPuzzles">) => {
     router.push(`/puzzles/${puzzleId}`);
   };
 
   // Filter puzzle instances based on search term
-  const filteredPuzzleInstances =
-    userPuzzleInstances?.filter(
+  const filteredownedPuzzles =
+    userownedPuzzles?.filter(
       (instance) =>
         instance.product?.title
           .toLowerCase()
@@ -67,7 +67,7 @@ export default function PuzzlesPage() {
             .includes(searchTerm.toLowerCase())),
     ) || [];
 
-  if (!user || !convexUser || userPuzzleInstances === undefined) {
+  if (!user || !convexUser || userownedPuzzles === undefined) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -134,7 +134,7 @@ export default function PuzzlesPage() {
       </Card>
 
       {/* Puzzles Grid/List */}
-      {filteredPuzzleInstances.length === 0 ? (
+      {filteredownedPuzzles.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center">
             <div className="text-muted-foreground mb-4">
@@ -152,7 +152,7 @@ export default function PuzzlesPage() {
         </Card>
       ) : (
         <PuzzleViewProvider viewMode={viewMode}>
-          {filteredPuzzleInstances.map((instance) => (
+          {filteredownedPuzzles.map((instance) => (
             <PuzzleCard
               key={instance._id}
               puzzle={instance}

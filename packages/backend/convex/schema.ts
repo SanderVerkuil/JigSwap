@@ -20,7 +20,7 @@ export default defineSchema({
     .index("by_username", ["username"]),
 
   // Puzzle products - the actual puzzle designs that exist in the world
-  puzzleProducts: defineTable({
+  puzzles: defineTable({
     title: v.string(),
     description: v.optional(v.string()),
     brand: v.optional(v.string()),
@@ -50,8 +50,8 @@ export default defineSchema({
     }),
 
   // Puzzle instances - individual copies that people own
-  puzzleInstances: defineTable({
-    productId: v.id("puzzleProducts"), // Reference to the puzzle product
+  ownedPuzzles: defineTable({
+    productId: v.id("puzzles"), // Reference to the puzzle product
     ownerId: v.id("users"),
     condition: v.union(
       v.literal("excellent"),
@@ -87,10 +87,10 @@ export default defineSchema({
     .index("by_user_name", ["userId", "name"])
     .index("by_visibility", ["visibility"]),
 
-  // Collection membership - many-to-many relationship (now references puzzleInstances)
+  // Collection membership - many-to-many relationship (now references ownedPuzzles)
   collectionMembers: defineTable({
     collectionId: v.id("collections"),
-    puzzleInstanceId: v.id("puzzleInstances"),
+    puzzleInstanceId: v.id("ownedPuzzles"),
     addedAt: v.number(),
   })
     .index("by_collection", ["collectionId"])
@@ -100,11 +100,11 @@ export default defineSchema({
       "puzzleInstanceId",
     ]),
 
-  // Completion records for puzzles (can reference either puzzleProducts or puzzleInstances)
+  // Completion records for puzzles (can reference either puzzles or ownedPuzzles)
   completions: defineTable({
     userId: v.id("users"),
-    puzzleProductId: v.optional(v.id("puzzleProducts")), // Reference to puzzle product (for general completions)
-    puzzleInstanceId: v.optional(v.id("puzzleInstances")), // Reference to specific instance (for specific completions)
+    puzzleProductId: v.optional(v.id("puzzles")), // Reference to puzzle product (for general completions)
+    puzzleInstanceId: v.optional(v.id("ownedPuzzles")), // Reference to specific instance (for specific completions)
     startDate: v.number(),
     endDate: v.number(),
     completionTimeMinutes: v.number(),
@@ -176,8 +176,8 @@ export default defineSchema({
   tradeRequests: defineTable({
     requesterId: v.id("users"),
     ownerId: v.id("users"),
-    requesterPuzzleInstanceId: v.optional(v.id("puzzleInstances")), // Puzzle instance offered by requester
-    ownerPuzzleInstanceId: v.id("puzzleInstances"), // Puzzle instance requested from owner
+    requesterPuzzleInstanceId: v.optional(v.id("ownedPuzzles")), // Puzzle instance offered by requester
+    ownerPuzzleInstanceId: v.id("ownedPuzzles"), // Puzzle instance requested from owner
     status: v.union(
       v.literal("pending"),
       v.literal("accepted"),
@@ -241,7 +241,7 @@ export default defineSchema({
 
   favorites: defineTable({
     userId: v.id("users"),
-    puzzleProductId: v.id("puzzleProducts"), // Now favorites reference puzzle products
+    puzzleProductId: v.id("puzzles"), // Now favorites reference puzzle products
     createdAt: v.number(),
   })
     .index("by_user", ["userId"])

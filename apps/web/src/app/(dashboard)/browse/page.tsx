@@ -37,8 +37,8 @@ export default function BrowsePage() {
     user?.id ? { clerkId: user.id } : "skip",
   );
 
-  const browsePuzzleInstancesResult = useQuery(
-    api.puzzles.browsePuzzleInstances,
+  const browseownedPuzzlesResult = useQuery(
+    api.puzzles.browseownedPuzzles,
     {
       searchTerm: searchTerm || undefined,
       category: selectedCategory
@@ -55,8 +55,8 @@ export default function BrowsePage() {
 
   const categories = useQuery(api.puzzles.getPuzzleCategories);
 
-  const puzzleInstances = browsePuzzleInstancesResult?.instances || [];
-  const totalPuzzleInstances = browsePuzzleInstancesResult?.total || 0;
+  const ownedPuzzles = browseownedPuzzlesResult?.instances || [];
+  const totalownedPuzzles = browseownedPuzzlesResult?.total || 0;
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -78,7 +78,7 @@ export default function BrowsePage() {
   if (
     !user ||
     convexUser === undefined ||
-    browsePuzzleInstancesResult === undefined
+    browseownedPuzzlesResult === undefined
   ) {
     return <PageLoading message={tCommon("loading")} />;
   }
@@ -90,7 +90,7 @@ export default function BrowsePage() {
         <div>
           <h1 className="text-3xl font-bold">{tBrowse("title")}</h1>
           <p className="text-muted-foreground">
-            {tBrowse("subtitle")} ({totalPuzzleInstances}{" "}
+            {tBrowse("subtitle")} ({totalownedPuzzles}{" "}
             {tBrowse("puzzlesFound")})
           </p>
         </div>
@@ -225,7 +225,7 @@ export default function BrowsePage() {
       </Card>
 
       {/* Results */}
-      {puzzleInstances.length === 0 ? (
+      {ownedPuzzles.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center">
             <div className="text-muted-foreground">
@@ -241,7 +241,7 @@ export default function BrowsePage() {
         </Card>
       ) : (
         <PuzzleViewProvider viewMode={viewMode}>
-          {puzzleInstances.map((puzzleInstance) => (
+          {ownedPuzzles.map((puzzleInstance) => (
             <PuzzleCard
               key={puzzleInstance._id}
               puzzle={puzzleInstance}

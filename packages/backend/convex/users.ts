@@ -127,7 +127,7 @@ export const getUserStats = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
     const puzzlesOwned = await ctx.db
-      .query("puzzleInstances")
+      .query("ownedPuzzles")
       .withIndex("by_owner", (q) => q.eq("ownerId", args.userId))
       .collect();
 

@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface CollectionDropdownProps {
-  puzzleInstanceId: Id<"puzzleInstances">;
+  puzzleInstanceId: Id<"ownedPuzzles">;
   className?: string;
 }
 

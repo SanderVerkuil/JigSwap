@@ -21,7 +21,7 @@ export default function AddPuzzlesToCollectionPage() {
   const tCommon = useTranslations("common");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPuzzles, setSelectedPuzzles] = useState<
-    Set<Id<"puzzleInstances">>
+    Set<Id<"ownedPuzzles">>
   >(new Set());
 
   const convexUser = useQuery(
@@ -34,7 +34,7 @@ export default function AddPuzzlesToCollectionPage() {
   });
 
   const availablePuzzles = useQuery(
-    api.puzzles.getPuzzleInstancesByOwner,
+    api.puzzles.getownedPuzzlesByOwner,
     convexUser?._id
       ? { ownerId: convexUser._id, includeUnavailable: false }
       : "skip",
@@ -44,7 +44,7 @@ export default function AddPuzzlesToCollectionPage() {
     api.collections.addPuzzleInstanceToCollection,
   );
 
-  const togglePuzzleSelection = (puzzleId: Id<"puzzleInstances">) => {
+  const togglePuzzleSelection = (puzzleId: Id<"ownedPuzzles">) => {
     const newSelected = new Set(selectedPuzzles);
     if (newSelected.has(puzzleId)) {
       newSelected.delete(puzzleId);

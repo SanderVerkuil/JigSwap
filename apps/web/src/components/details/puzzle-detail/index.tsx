@@ -15,14 +15,14 @@ import { PuzzleDetailHeader } from "./puzzle-detail-header";
 import { PuzzleDetailInfo } from "./puzzle-detail-info";
 
 interface PuzzleDetailProps {
-  puzzleId: Id<"puzzleInstances">;
+  puzzleId: Id<"ownedPuzzles">;
   showActions?: boolean;
-  onEdit?: (puzzleId: Id<"puzzleInstances">) => void;
-  onView?: (puzzleId: Id<"puzzleInstances">) => void;
-  onDelete?: (puzzleId: Id<"puzzleInstances">) => void;
-  onRequestTrade?: (puzzleId: Id<"puzzleInstances">) => void;
-  onMessage?: (puzzleId: Id<"puzzleInstances">) => void;
-  onFavorite?: (puzzleId: Id<"puzzleInstances">) => void;
+  onEdit?: (puzzleId: Id<"ownedPuzzles">) => void;
+  onView?: (puzzleId: Id<"ownedPuzzles">) => void;
+  onDelete?: (puzzleId: Id<"ownedPuzzles">) => void;
+  onRequestTrade?: (puzzleId: Id<"ownedPuzzles">) => void;
+  onMessage?: (puzzleId: Id<"ownedPuzzles">) => void;
+  onFavorite?: (puzzleId: Id<"ownedPuzzles">) => void;
   showOwner?: boolean;
   className?: string;
 }

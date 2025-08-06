@@ -42,7 +42,7 @@ export const createPuzzleProduct = mutation({
       .join(" ")
       .toLowerCase();
 
-    const productId = await ctx.db.insert("puzzleProducts", {
+    const productId = await ctx.db.insert("puzzles", {
       ...args,
       searchableText,
       createdAt: now,
@@ -64,7 +64,7 @@ export const generateUploadUrl = mutation({
 // Create a new puzzle instance (owned copy)
 export const createPuzzleInstance = mutation({
   args: {
-    productId: v.id("puzzleProducts"),
+    productId: v.id("puzzles"),
     condition: v.union(
       v.literal("excellent"),
       v.literal("good"),
@@ -91,7 +91,7 @@ export const createPuzzleInstance = mutation({
       throw new Error("User not found");
     }
 
-    const instanceId = await ctx.db.insert("puzzleInstances", {
+    const instanceId = await ctx.db.insert("ownedPuzzles", {
       ...args,
       ownerId: user._id,
       createdAt: now,
@@ -103,14 +103,14 @@ export const createPuzzleInstance = mutation({
 });
 
 // Get puzzle instances by owner
-export const getPuzzleInstancesByOwner = query({
+export const getownedPuzzlesByOwner = query({
   args: {
     ownerId: v.id("users"),
     includeUnavailable: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     let instances = await ctx.db
-      .query("puzzleInstances")
+      .query("ownedPuzzles")
       .withIndex("by_owner", (q) => q.eq("ownerId", args.ownerId))
       .collect();
 
@@ -133,22 +133,16 @@ export const getPuzzleInstancesByOwner = query({
   },
 });
 
-export const listAllPuzzleProducts = query({
+export const listAllpuzzles = query({
   args: {
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    const products = await ctx.db
-      .query("puzzleProducts")
-      .paginate(args.paginationOpts);
-    const page = await Promise.all(
-      products.page.map(async (product) => ({
-        ...product,
-        image: product.image
-          ? await ctx.storage.getUrl(product.image)
-          : undefined,
-      })),
-    );
+    const products = await ctx.db.query("puzzles").paginate(args.paginationOpts);
+    const page = await Promise.all(products.page.map(async (product) => ({
+      ...product,
+      image: product.image ? await ctx.storage.getUrl(product.image) : undefined,
+    })));
     return {
       ...products,
       page,
@@ -159,7 +153,7 @@ export const listAllPuzzleProducts = query({
 // Get a single puzzle product by ID
 export const getPuzzleProductById = query({
   args: {
-    productId: v.id("puzzleProducts"),
+    productId: v.id("puzzles"),
   },
   handler: async (ctx, args) => {
     const product = await ctx.db.get(args.productId);
@@ -179,10 +173,10 @@ export const getAllBrands = query({
   args: {},
   handler: async (ctx) => {
     const brands = await stream(ctx.db, schema)
-      .query("puzzleProducts")
-      .withIndex("by_brand", (q) => q)
-      .distinct(["brand"])
-      .collect();
+    .query("puzzles")
+    .withIndex("by_brand", (q) => q)
+    .distinct(["brand"])
+    .collect();
     return brands.map((brand) => brand.brand);
   },
 });
@@ -191,7 +185,7 @@ export const getAllTags = query({
   args: {},
   handler: async (ctx) => {
     const tags = await stream(ctx.db, schema)
-      .query("puzzleProducts")
+      .query("puzzles")
       .withIndex("by_tags", (q) => q)
       .distinct(["tags"])
       .collect();
@@ -209,7 +203,7 @@ export const getAllTags = query({
 });
 
 // Browse available puzzle instances with filters
-export const browsePuzzleInstances = query({
+export const browseownedPuzzles = query({
   args: {
     category: v.optional(v.id("adminCategories")),
     minPieceCount: v.optional(v.number()),
@@ -240,7 +234,7 @@ export const browsePuzzleInstances = query({
     const offset = args.offset ?? 0;
 
     let instances = await ctx.db
-      .query("puzzleInstances")
+      .query("ownedPuzzles")
       .withIndex("by_availability", (q) => q.eq("isAvailable", true))
       .collect();
 
@@ -340,7 +334,7 @@ export const browsePuzzleInstances = query({
 // Update puzzle product
 export const updatePuzzleProduct = mutation({
   args: {
-    productId: v.id("puzzleProducts"),
+    productId: v.id("puzzles"),
     title: v.optional(v.string()),
     description: v.optional(v.string()),
     brand: v.optional(v.string()),
@@ -389,7 +383,7 @@ export const updatePuzzleProduct = mutation({
 // Update puzzle instance
 export const updatePuzzleInstance = mutation({
   args: {
-    instanceId: v.id("puzzleInstances"),
+    instanceId: v.id("ownedPuzzles"),
     condition: v.optional(
       v.union(
         v.literal("excellent"),
@@ -414,7 +408,7 @@ export const updatePuzzleInstance = mutation({
 
 // Delete puzzle instance
 export const deletePuzzleInstance = mutation({
-  args: { instanceId: v.id("puzzleInstances") },
+  args: { instanceId: v.id("ownedPuzzles") },
   handler: async (ctx, args) => {
     // Check if puzzle instance has any active trade requests
     const activeTradeRequests = await ctx.db
@@ -453,7 +447,7 @@ export const getPuzzleCategories = query({
 });
 
 // Get puzzle product suggestions for form auto-fill
-export const getPuzzleProductSuggestions = query({
+export const getpuzzlesuggestions = query({
   args: {
     searchTerm: v.string(),
     limit: v.optional(v.number()),
@@ -467,7 +461,7 @@ export const getPuzzleProductSuggestions = query({
     }
 
     const products = await ctx.db
-      .query("puzzleProducts")
+      .query("puzzles")
       .withSearchIndex("by_searchable_text", (q) =>
         q.search("searchableText", searchTerm),
       )
@@ -487,7 +481,7 @@ export const getPuzzleProductSuggestions = query({
 });
 
 export const getPuzzleWithCollectionStatus = query({
-  args: { puzzleId: v.id("puzzleInstances") },
+  args: { puzzleId: v.id("ownedPuzzles") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {

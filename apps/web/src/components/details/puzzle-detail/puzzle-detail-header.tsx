@@ -5,8 +5,8 @@ import { Id } from "@jigswap/backend/convex/_generated/dataModel";
 import { useTranslations } from "next-intl";
 
 interface PuzzleInstanceData {
-  _id: Id<"puzzleInstances">;
-  productId: Id<"puzzleProducts">;
+  _id: Id<"ownedPuzzles">;
+  productId: Id<"puzzles">;
   ownerId: Id<"users">;
   condition: "excellent" | "good" | "fair" | "poor";
   isAvailable: boolean;
@@ -16,7 +16,7 @@ interface PuzzleInstanceData {
   updatedAt: number;
   _creationTime?: number;
   product: {
-    _id: Id<"puzzleProducts">;
+    _id: Id<"puzzles">;
     title: string;
     description?: string;
     brand?: string;

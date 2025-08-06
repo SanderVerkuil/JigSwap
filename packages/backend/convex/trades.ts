@@ -10,8 +10,8 @@ interface TradeRequestWithUserRole extends Doc<"tradeRequests"> {
 interface EnrichedTradeRequest extends TradeRequestWithUserRole {
   requester: Doc<"users"> | null;
   owner: Doc<"users"> | null;
-  ownerPuzzle: Doc<"puzzleInstances"> | null;
-  requesterPuzzle: Doc<"puzzleInstances"> | null;
+  ownerPuzzle: Doc<"ownedPuzzles"> | null;
+  requesterPuzzle: Doc<"ownedPuzzles"> | null;
 }
 
 // Type for notification types
@@ -28,8 +28,8 @@ export const createTradeRequest = mutation({
   args: {
     requesterId: v.id("users"),
     ownerId: v.id("users"),
-    requesterPuzzleInstanceId: v.optional(v.id("puzzleInstances")),
-    ownerPuzzleInstanceId: v.id("puzzleInstances"),
+    requesterPuzzleInstanceId: v.optional(v.id("ownedPuzzles")),
+    ownerPuzzleInstanceId: v.id("ownedPuzzles"),
     message: v.optional(v.string()),
     proposedTradeDate: v.optional(v.number()),
     shippingMethod: v.optional(

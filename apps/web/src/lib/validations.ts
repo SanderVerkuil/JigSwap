@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // Puzzle product validation schema (for the actual puzzle design)
-export const puzzleProductSchema = z.object({
+export const puzzleschema = z.object({
   title: z
     .string()
     .min(1, "Title is required")
@@ -44,7 +44,7 @@ export const puzzleProductSchema = z.object({
 });
 
 // Puzzle instance validation schema (for the owned copy)
-export const puzzleInstanceSchema = z.object({
+export const ownedPuzzleschema = z.object({
   condition: z.enum(["excellent", "good", "fair", "poor"]),
 
   isAvailable: z.boolean().default(true),
@@ -126,8 +126,8 @@ export const puzzleSchema = z.object({
 });
 
 export type PuzzleFormData = z.infer<typeof puzzleSchema>;
-export type PuzzleProductFormData = z.infer<typeof puzzleProductSchema>;
-export type PuzzleInstanceFormData = z.infer<typeof puzzleInstanceSchema>;
+export type PuzzleProductFormData = z.infer<typeof puzzleschema>;
+export type PuzzleInstanceFormData = z.infer<typeof ownedPuzzleschema>;
 
 // User profile validation schema
 export const profileSchema = z.object({

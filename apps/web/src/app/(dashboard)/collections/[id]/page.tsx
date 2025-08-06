@@ -29,7 +29,7 @@ export default function CollectionDetailPage() {
     api.collections.removePuzzleInstanceFromCollection,
   );
 
-  const handleRemovePuzzle = async (puzzleId: Id<"puzzleInstances">) => {
+  const handleRemovePuzzle = async (puzzleId: Id<"ownedPuzzles">) => {
     try {
       await removeFromCollection({
         collectionId: params.id as Id<"collections">,
