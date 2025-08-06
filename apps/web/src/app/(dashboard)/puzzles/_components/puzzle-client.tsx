@@ -7,18 +7,17 @@ import { api } from "@jigswap/backend/convex/_generated/api";
 import { usePaginatedQuery } from "convex/react";
 import { Filter, Grid, List, Plus, Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { PuzzleProductCard } from "./puzzle-product-card";
-import { PuzzleProductViewProvider } from "./puzzle-product-view-provider";
-import { PuzzleFilters } from "./puzzle-products-filters";
+import { PuzzleCard } from "./puzzle-card";
+import { PuzzleFilters } from "./puzzle-filters";
+import { PuzzleProductViewProvider } from "./puzzle-view-provider";
 
 interface PuzzlesClientProps {
   className?: string;
 }
 
 export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
-  const router = useRouter();
   const t = useTranslations("puzzles.products");
   const tCommon = useTranslations("common");
   const tBrowse = useTranslations("browse");
@@ -146,10 +145,10 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
           <h1 className="text-3xl font-bold">{t("title")}</h1>
           <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Button onClick={() => router.push("/puzzles/products/add")}>
+        <Link href="/puzzles/add">
           <Plus className="h-4 w-4 mr-2" />
           {t("addProduct")}
-        </Button>
+        </Link>
       </div>
 
       {/* Filters and Search */}
@@ -248,7 +247,7 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
       ) : (
         <PuzzleProductViewProvider viewMode={viewMode}>
           {filteredProducts.map((puzzle) => (
-            <PuzzleProductCard key={puzzle._id} puzzle={puzzle} />
+            <PuzzleCard key={puzzle._id} puzzle={puzzle} />
           ))}
         </PuzzleProductViewProvider>
       )}

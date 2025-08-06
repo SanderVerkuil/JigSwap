@@ -13,11 +13,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-interface PuzzleProductDetailProps {
+interface PuzzleDetailProps {
   puzzleId: string;
 }
 
-export function PuzzleProductDetail({ puzzleId }: PuzzleProductDetailProps) {
+export function PuzzleDetail({ puzzleId }: PuzzleDetailProps) {
   const router = useRouter();
   const t = useTranslations("puzzles.products");
   const tPuzzles = useTranslations("puzzles");
@@ -96,7 +96,7 @@ export function PuzzleProductDetail({ puzzleId }: PuzzleProductDetailProps) {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="outline" asChild>
-          <Link href="/puzzles/products">
+          <Link href="/puzzles">
             <ArrowLeft className="h-4 w-4 mr-2" />
             {tCommon("back")}
           </Link>
@@ -108,7 +108,7 @@ export function PuzzleProductDetail({ puzzleId }: PuzzleProductDetailProps) {
           )}
         </div>
         <Button asChild>
-          <Link href={`/puzzles/add?puzzleId=${puzzleId}`}>
+          <Link href={`/my-puzzles/add?puzzleId=${puzzleId}`}>
             <Plus className="h-4 w-4 mr-2" />
             {t("addPuzzle")}
           </Link>
@@ -248,7 +248,7 @@ export function PuzzleProductDetail({ puzzleId }: PuzzleProductDetailProps) {
             </CardHeader>
             <CardContent className="space-y-3">
               <Button asChild className="w-full">
-                <Link href={`/puzzles/add?puzzleId=${puzzleId}`}>
+                <Link href={`/my-puzzles/add?puzzleId=${puzzleId}`}>
                   <Plus className="h-4 w-4 mr-2" />
                   {t("addPuzzle")}
                 </Link>

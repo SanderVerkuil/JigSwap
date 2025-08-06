@@ -1,29 +1,26 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useId } from "react";
 import { useForm } from "react-hook-form";
-import { PuzzleProductFormProvider } from "./puzzle-product-form-context";
-import {
-  PuzzleProductFormData,
-  puzzleProductFormSchema,
-} from "./puzzle-product-form-schema";
+import { PuzzleProductFormProvider } from "./puzzle-form-context";
+import { PuzzleFormData, puzzleFormSchema } from "./puzzle-form-schema";
 
-interface PuzzleProductFormRootProps {
-  onSubmit: (data: PuzzleProductFormData) => void | Promise<void>;
+interface PuzzleFormRootProps {
+  onSubmit: (data: PuzzleFormData) => void | Promise<void>;
   onCancel?: () => void;
   pending?: boolean;
-  defaultValues?: PuzzleProductFormData;
+  defaultValues?: PuzzleFormData;
   children: React.ReactNode;
 }
 
-export const PuzzleProductFormRoot = ({
+export const PuzzleFormRoot = ({
   onSubmit,
   onCancel,
   pending = false,
   defaultValues,
   children,
-}: PuzzleProductFormRootProps) => {
-  const form = useForm<PuzzleProductFormData>({
-    resolver: zodResolver(puzzleProductFormSchema),
+}: PuzzleFormRootProps) => {
+  const form = useForm<PuzzleFormData>({
+    resolver: zodResolver(puzzleFormSchema),
     defaultValues:
       defaultValues !== undefined
         ? defaultValues

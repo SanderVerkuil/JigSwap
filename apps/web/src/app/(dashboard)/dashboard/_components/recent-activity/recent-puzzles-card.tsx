@@ -88,7 +88,7 @@ export function RecentPuzzlesCard() {
                 </div>
               </div>
             ))}
-            <Link href="/puzzles">
+            <Link href="/my-puzzles">
               <Button variant="outline" className="w-full">
                 View All Puzzles
               </Button>
@@ -98,7 +98,7 @@ export function RecentPuzzlesCard() {
           <div className="text-center py-6">
             <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">No puzzles yet</p>
-            <Link href="/puzzles/new">
+            <Link href="/my-puzzles/add">
               <Button className="mt-2">Add Your First Puzzle</Button>
             </Link>
           </div>

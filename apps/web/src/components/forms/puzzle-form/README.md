@@ -15,7 +15,7 @@ A compound React component for creating and editing puzzle products. Uses react-
 ### Simple Usage
 
 ```tsx
-import { PuzzleProductForm } from "@/components/forms/puzzle-product-form";
+import { PuzzleProductForm } from "@/components/forms/puzzle-form";
 
 <PuzzleProductForm
   onSubmit={handleSubmit}
@@ -27,7 +27,7 @@ import { PuzzleProductForm } from "@/components/forms/puzzle-product-form";
 ### Compound Component Usage
 
 ```tsx
-import { PuzzleProductForm } from "@/components/forms/puzzle-product-form";
+import { PuzzleProductForm } from "@/components/forms/puzzle-form";
 
 <PuzzleProductForm.Root
   onSubmit={handleSubmit}
@@ -44,7 +44,7 @@ import { PuzzleProductForm } from "@/components/forms/puzzle-product-form";
 
 ```tsx
 import { Dialog } from "@/components/ui/dialog";
-import { PuzzleProductForm } from "@/components/forms/puzzle-product-form";
+import { PuzzleProductForm } from "@/components/forms/puzzle-form";
 
 <Dialog open={open} onOpenChange={setOpen}>
   <PuzzleProductForm.Root
@@ -74,7 +74,7 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
-import { PuzzleProductForm } from "@/components/forms/puzzle-product-form";
+import { PuzzleProductForm } from "@/components/forms/puzzle-form";
 
 <PuzzleProductForm.Root
   onSubmit={handleSubmit}
@@ -144,14 +144,14 @@ The form uses Zod validation with the following rules:
 ## Internationalization
 
 All text content is internationalized using next-intl. Translation keys follow the pattern:
-`forms.puzzle-product-form.<field-name>.<property>`
+`forms.puzzle-form.<field-name>.<property>`
 
 Example translation structure:
 
 ```json
 {
   "forms": {
-    "puzzle-product-form": {
+    "puzzle-form": {
       "title": "Puzzle Product",
       "title": {
         "label": "Title",

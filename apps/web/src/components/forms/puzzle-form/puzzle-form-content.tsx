@@ -23,13 +23,13 @@ import { useTranslations } from "next-intl";
 import { useFeatureFlagEnabled } from "posthog-js/react";
 import { useState } from "react";
 import { FileUpload } from "../file-upload";
-import { usePuzzleProductFormContext } from "./puzzle-product-form-context";
+import { usePuzzleProductFormContext } from "./puzzle-form-context";
 
 const COMMON_PIECE_COUNTS = [
   100, 200, 300, 400, 500, 750, 1000, 1500, 2000, 3000, 4000,
 ];
 
-export const PuzzleProductFormContent = () => {
+export const PuzzleFormContent = () => {
   const { form, formId, onSubmit } = usePuzzleProductFormContext();
   const [commonPiece, setCommonPiece] = useState(
     COMMON_PIECE_COUNTS.includes(form.getValues("pieceCount")) ||
@@ -40,7 +40,7 @@ export const PuzzleProductFormContent = () => {
 
   const categories = useQuery(api.adminCategories.getAllAdminCategories);
 
-  const t = useTranslations("forms.puzzle-product-form");
+  const t = useTranslations("forms.puzzle-form");
 
   const onCommonPieceChange = (value: string) => {
     setCommonPiece(value);

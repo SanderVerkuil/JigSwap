@@ -1,17 +1,18 @@
 import { createContext, useContext } from "react";
 import { SubmitHandler, UseFormReturn } from "react-hook-form";
-import { PuzzleProductFormData } from "./puzzle-product-form-schema";
+import { PuzzleFormData } from "./puzzle-form-schema";
 
-interface PuzzleProductFormContextValue {
-  form: UseFormReturn<PuzzleProductFormData>;
+interface PuzzleFormContextValue {
+  form: UseFormReturn<PuzzleFormData>;
   formId: string;
   isPending: boolean;
-  onSubmit: SubmitHandler<PuzzleProductFormData>;
+  onSubmit: SubmitHandler<PuzzleFormData>;
   onCancel?: () => void;
 }
 
-const PuzzleProductFormContext =
-  createContext<PuzzleProductFormContextValue | null>(null);
+const PuzzleProductFormContext = createContext<PuzzleFormContextValue | null>(
+  null,
+);
 
 export const usePuzzleProductFormContext = () => {
   const context = useContext(PuzzleProductFormContext);

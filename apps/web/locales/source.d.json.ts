@@ -980,7 +980,7 @@ declare const messages: {
         cancel: "Cancel";
       };
     };
-    "puzzle-product-form": {
+    "puzzle-form": {
       loading: "Loading form...";
       image: {
         label: "Image";

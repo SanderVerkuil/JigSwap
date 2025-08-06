@@ -44,12 +44,14 @@ function getLocale(request: NextRequest): string {
 }
 
 const isProtectedRoute = createRouteMatcher([
+  "/browse(.*)",
+  "/collections(.*)",
   "/dashboard(.*)",
-  "/profile(.*)",
-  "/puzzles/new",
-  "/puzzles/edit/(.*)",
-  "/trades(.*)",
   "/messages(.*)",
+  "/my-puzzles(.*)",
+  "/puzzles(.*)",
+  "/profile(.*)",
+  "/trades(.*)",
 ]);
 
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);

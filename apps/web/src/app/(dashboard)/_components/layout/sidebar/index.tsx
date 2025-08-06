@@ -38,21 +38,21 @@ const getItems: () => Item[] = () => {
     },
     {
       title: "Puzzles",
-      url: "/puzzles/products",
+      url: "/puzzles",
       icon: Puzzle,
       action: {
         title: "Add Puzzle",
-        url: "/puzzles/products/add",
+        url: "/puzzles/add",
         icon: PlusCircle,
       },
     },
     {
       title: "My Puzzles",
-      url: "/puzzles",
+      url: "/my-puzzles",
       icon: Package,
       action: {
         title: "Add Puzzle",
-        url: "/puzzles/add",
+        url: "/my-puzzles/add",
         icon: PlusCircle,
       },
     },

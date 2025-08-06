@@ -8,7 +8,7 @@ import { Eye, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
-import { usePuzzleProductView } from "./puzzle-product-view-provider";
+import { usePuzzleProductView } from "./puzzle-view-provider";
 
 interface Puzzle {
   _id: Id<"puzzles">;
@@ -24,11 +24,11 @@ interface Puzzle {
   updatedAt: number;
 }
 
-interface PuzzleProductCardProps {
+interface PuzzleCardProps {
   puzzle: Puzzle;
 }
 
-export function PuzzleProductCard({ puzzle }: PuzzleProductCardProps) {
+export function PuzzleCard({ puzzle }: PuzzleCardProps) {
   const t = useTranslations("puzzles.products");
   const tPuzzles = useTranslations("puzzles");
   const { viewMode } = usePuzzleProductView();
@@ -158,13 +158,13 @@ export function PuzzleProductCard({ puzzle }: PuzzleProductCardProps) {
         {/* Actions */}
         <div className="flex gap-2 mt-auto">
           <Button variant="outline" size="sm" asChild className="flex-1">
-            <Link href={`/puzzles/products/${puzzle._id}`}>
+            <Link href={`/puzzles/${puzzle._id}`}>
               <Eye className="h-4 w-4 mr-2" />
               {t("viewDetails")}
             </Link>
           </Button>
           <Button size="sm" asChild className="flex-1">
-            <Link href={`/puzzles/add?puzzleId=${puzzle._id}`}>
+            <Link href={`/my-puzzles/add?puzzleId=${puzzle._id}`}>
               <Plus className="h-4 w-4 mr-2" />
               {t("addPuzzle")}
             </Link>
@@ -260,13 +260,13 @@ export function PuzzleProductCard({ puzzle }: PuzzleProductCardProps) {
         {/* Actions */}
         <div className="flex gap-2 mt-auto">
           <Button variant="outline" size="sm" asChild className="flex-1">
-            <Link href={`/puzzles/products/${puzzle._id}`}>
+            <Link href={`/puzzles/${puzzle._id}`}>
               <Eye className="h-4 w-4 mr-2" />
               {t("viewDetails")}
             </Link>
           </Button>
           <Button size="sm" asChild className="flex-1">
-            <Link href={`/puzzles/add?puzzleId=${puzzle._id}`}>
+            <Link href={`/my-puzzles/add?puzzleId=${puzzle._id}`}>
               <Plus className="h-4 w-4 mr-2" />
               {t("addPuzzle")}
             </Link>

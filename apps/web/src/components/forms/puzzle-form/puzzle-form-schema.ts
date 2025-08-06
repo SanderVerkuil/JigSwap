@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const puzzleProductFormSchema = z.object({
+export const puzzleFormSchema = z.object({
   title: z
     .string()
     .min(1, "Title is required")
@@ -28,4 +28,4 @@ export const puzzleProductFormSchema = z.object({
   image: z.instanceof(File).optional(),
 });
 
-export type PuzzleProductFormData = z.infer<typeof puzzleProductFormSchema>;
+export type PuzzleFormData = z.infer<typeof puzzleFormSchema>;

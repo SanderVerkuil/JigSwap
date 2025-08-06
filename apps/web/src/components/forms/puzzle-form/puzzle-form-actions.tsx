@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
-import { usePuzzleProductFormContext } from "./puzzle-product-form-context";
+import { usePuzzleProductFormContext } from "./puzzle-form-context";
 
-export const PuzzleProductFormActions = () => {
+export const PuzzleFormActions = () => {
   const { formId, isPending, onCancel } = usePuzzleProductFormContext();
-  const t = useTranslations("forms.puzzle-product-form");
+  const t = useTranslations("forms.puzzle-form");
 
   return (
     <div className="flex gap-2 justify-end">
