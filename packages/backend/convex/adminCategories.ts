@@ -5,10 +5,7 @@ import { mutation, query } from "./_generated/server";
 export const getAllAdminCategories = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db
-      .query("adminCategories")
-      .order("asc")
-      .collect();
+    return await ctx.db.query("adminCategories").order("asc").collect();
   },
 });
 
@@ -39,17 +36,19 @@ export const createAdminCategory = mutation({
       en: v.string(),
       nl: v.string(),
     }),
-    description: v.optional(v.object({
-      en: v.string(),
-      nl: v.string(),
-    })),
+    description: v.optional(
+      v.object({
+        en: v.string(),
+        nl: v.string(),
+      }),
+    ),
     color: v.optional(v.string()),
     isActive: v.boolean(),
     sortOrder: v.number(),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    
+
     return await ctx.db.insert("adminCategories", {
       name: args.name,
       description: args.description,
@@ -66,14 +65,18 @@ export const createAdminCategory = mutation({
 export const updateAdminCategory = mutation({
   args: {
     id: v.id("adminCategories"),
-    name: v.optional(v.object({
-      en: v.string(),
-      nl: v.string(),
-    })),
-    description: v.optional(v.object({
-      en: v.string(),
-      nl: v.string(),
-    })),
+    name: v.optional(
+      v.object({
+        en: v.string(),
+        nl: v.string(),
+      }),
+    ),
+    description: v.optional(
+      v.object({
+        en: v.string(),
+        nl: v.string(),
+      }),
+    ),
     color: v.optional(v.string()),
     isActive: v.optional(v.boolean()),
     sortOrder: v.optional(v.number()),
@@ -81,12 +84,12 @@ export const updateAdminCategory = mutation({
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
     const now = Date.now();
-    
+
     await ctx.db.patch(id, {
       ...updates,
       updatedAt: now,
     });
-    
+
     return id;
   },
 });
@@ -107,14 +110,14 @@ export const reorderAdminCategories = mutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    
+
     for (let i = 0; i < args.categoryIds.length; i++) {
       await ctx.db.patch(args.categoryIds[i], {
         sortOrder: i,
         updatedAt: now,
       });
     }
-    
+
     return args.categoryIds;
   },
-}); 
+});

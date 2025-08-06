@@ -28,4 +28,4 @@ export const puzzleProductFormSchema = z.object({
   image: z.instanceof(File).optional(),
 });
 
-export type PuzzleProductFormData = z.infer<typeof puzzleProductFormSchema>; 
+export type PuzzleProductFormData = z.infer<typeof puzzleProductFormSchema>;

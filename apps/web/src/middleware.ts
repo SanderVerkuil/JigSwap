@@ -1,8 +1,8 @@
-import { clerkMiddleware, createRouteMatcher,  } from "@clerk/nextjs/server";
+import { defaultLocale, locales } from "@/i18n/request";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { match } from "@formatjs/intl-localematcher";
 import Negotiator from "negotiator";
 import { NextRequest, NextResponse } from "next/server";
-import { defaultLocale, locales } from "@/i18n/request";
 
 function getLocale(request: NextRequest): string {
   // First, check if there's a locale cookie
@@ -79,7 +79,10 @@ export default clerkMiddleware(async (auth, req) => {
     isAdminRoute(req) &&
     (await auth()).sessionClaims?.metadata?.role !== "admin"
   ) {
-    console.warn("Unauthorized admin access", (await auth()).sessionClaims?.metadata);
+    console.warn(
+      "Unauthorized admin access",
+      (await auth()).sessionClaims?.metadata,
+    );
     const url = new URL("/dashboard", req.url);
 
     return NextResponse.redirect(url);

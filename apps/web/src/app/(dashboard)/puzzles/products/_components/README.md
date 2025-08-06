@@ -7,7 +7,9 @@ This directory contains the components for the puzzle products page, which allow
 ### Main Components
 
 #### `puzzle-products-client.tsx`
+
 The main client component that orchestrates the entire puzzle products page. It handles:
+
 - Infinite scroll pagination using `usePaginatedQuery`
 - Filter state management
 - View mode switching (grid/list)
@@ -15,13 +17,16 @@ The main client component that orchestrates the entire puzzle products page. It 
 - Integration with all sub-components
 
 **Key Features:**
+
 - Infinite scroll with intersection observer
 - Real-time filtering
 - Responsive design
 - Loading states
 
 #### `puzzle-product-card.tsx`
+
 Individual product card component that displays:
+
 - Product image (with fallback)
 - Title and brand
 - Piece count and difficulty
@@ -29,12 +34,15 @@ Individual product card component that displays:
 - Action buttons (View Details, Add Puzzle)
 
 **Props:**
+
 - `product`: Puzzle product data
 - `onAddPuzzle`: Callback for adding puzzle
 - `onViewDetails`: Callback for viewing details
 
 #### `puzzle-products-filters.tsx`
+
 Advanced filtering component with:
+
 - Brand selection
 - Piece count range (min/max)
 - Difficulty filter
@@ -43,17 +51,21 @@ Advanced filtering component with:
 - Custom range inputs
 
 **Features:**
+
 - Dynamic brand/category options from existing products
 - Tag management with add/remove functionality
 - Responsive grid layout
 
 #### `puzzle-product-view-provider.tsx`
+
 Context provider for managing view modes (grid/list) and providing layout classes.
 
 ### Detail Page Components
 
 #### `puzzle-product-detail.tsx`
+
 Comprehensive product detail view showing:
+
 - Large product image
 - Full description
 - All product metadata
@@ -71,6 +83,7 @@ Comprehensive product detail view showing:
 ## Internationalization
 
 All text content is internationalized using `next-intl` with the following structure:
+
 - `puzzles.products.*` - Main product page translations
 - `puzzles.products.filters.*` - Filter-specific translations
 - `puzzles.products.difficulty.*` - Difficulty level translations
@@ -106,4 +119,4 @@ export default function PuzzlesProductsPage() {
 - `convex/react` - For data fetching and pagination
 - `next-intl` - For internationalization
 - `lucide-react` - For icons
-- `@/components/ui/*` - For UI components 
+- `@/components/ui/*` - For UI components

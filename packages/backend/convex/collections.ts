@@ -10,10 +10,7 @@ export const createCollection = mutation({
   args: {
     name: v.string(),
     description: v.optional(v.string()),
-    visibility: v.union(
-      v.literal("private"),
-      v.literal("public"),
-    ),
+    visibility: v.union(v.literal("private"), v.literal("public")),
     color: v.optional(v.string()),
     icon: v.optional(v.string()),
     personalNotes: v.optional(v.string()),
@@ -97,7 +94,7 @@ export const getUserCollections = query({
         .query("collections")
         .withIndex("by_visibility", (q) => q.eq("visibility", "public"))
         .collect();
-      
+
       collections = [...collections, ...publicCollections];
     }
 
@@ -106,14 +103,16 @@ export const getUserCollections = query({
       collections.map(async (collection) => {
         const memberCount = await ctx.db
           .query("collectionMembers")
-          .withIndex("by_collection", (q) => q.eq("collectionId", collection._id))
+          .withIndex("by_collection", (q) =>
+            q.eq("collectionId", collection._id),
+          )
           .collect();
-        
+
         return {
           ...collection,
           puzzleCount: memberCount.length,
         };
-      })
+      }),
     );
 
     return collectionsWithCounts.sort((a, b) => {
@@ -135,15 +134,24 @@ export const getCollectionById = query({
     // Get collection members with puzzle details
     const members = await ctx.db
       .query("collectionMembers")
-      .withIndex("by_collection", (q) => q.eq("collectionId", args.collectionId))
+      .withIndex("by_collection", (q) =>
+        q.eq("collectionId", args.collectionId),
+      )
       .collect();
 
     const puzzles = await Promise.all(
       members.map(async (member) => {
-        const puzzleInstance = member.puzzleInstanceId ? await ctx.db.get(member.puzzleInstanceId) : null;
-        const product = puzzleInstance !== null ? await ctx.db.get(puzzleInstance.productId) : null;
-        return puzzleInstance ? { ...puzzleInstance, addedAt: member.addedAt, product } : null;
-      })
+        const puzzleInstance = member.puzzleInstanceId
+          ? await ctx.db.get(member.puzzleInstanceId)
+          : null;
+        const product =
+          puzzleInstance !== null
+            ? await ctx.db.get(puzzleInstance.productId)
+            : null;
+        return puzzleInstance
+          ? { ...puzzleInstance, addedAt: member.addedAt, product }
+          : null;
+      }),
     );
 
     return {
@@ -188,7 +196,9 @@ export const addPuzzleInstanceToCollection = mutation({
     const existingMember = await ctx.db
       .query("collectionMembers")
       .withIndex("by_collection_puzzle_instance", (q) =>
-        q.eq("collectionId", args.collectionId).eq("puzzleInstanceId", args.puzzleInstanceId),
+        q
+          .eq("collectionId", args.collectionId)
+          .eq("puzzleInstanceId", args.puzzleInstanceId),
       )
       .unique();
 
@@ -242,7 +252,9 @@ export const removePuzzleInstanceFromCollection = mutation({
     const member = await ctx.db
       .query("collectionMembers")
       .withIndex("by_collection_puzzle_instance", (q) =>
-        q.eq("collectionId", args.collectionId).eq("puzzleInstanceId", args.puzzleInstanceId),
+        q
+          .eq("collectionId", args.collectionId)
+          .eq("puzzleInstanceId", args.puzzleInstanceId),
       )
       .unique();
 
@@ -261,12 +273,7 @@ export const updateCollection = mutation({
     collectionId: v.id("collections"),
     name: v.optional(v.string()),
     description: v.optional(v.string()),
-    visibility: v.optional(
-      v.union(
-        v.literal("private"),
-        v.literal("public"),
-      ),
-    ),
+    visibility: v.optional(v.union(v.literal("private"), v.literal("public"))),
     color: v.optional(v.string()),
     icon: v.optional(v.string()),
   },
@@ -361,7 +368,9 @@ export const deleteCollection = mutation({
     // Delete all collection members
     const members = await ctx.db
       .query("collectionMembers")
-      .withIndex("by_collection", (q) => q.eq("collectionId", args.collectionId))
+      .withIndex("by_collection", (q) =>
+        q.eq("collectionId", args.collectionId),
+      )
       .collect();
 
     for (const member of members) {
@@ -395,16 +404,18 @@ export const getCollectionsForPuzzleInstance = query({
     // Get all collections that contain this puzzle
     const members = await ctx.db
       .query("collectionMembers")
-      .withIndex("by_puzzle_instance", (q) => q.eq("puzzleInstanceId", args.puzzleInstanceId))
+      .withIndex("by_puzzle_instance", (q) =>
+        q.eq("puzzleInstanceId", args.puzzleInstanceId),
+      )
       .collect();
 
     const collections = await Promise.all(
       members.map(async (member) => {
         const collection = await ctx.db.get(member.collectionId);
         return collection && collection.userId === user._id ? collection : null;
-      })
+      }),
     );
 
     return collections.filter(Boolean);
   },
-}); 
+});

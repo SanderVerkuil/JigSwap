@@ -1,1 +1,1 @@
-export { api } from "@jigswap/backend/convex/_generated/api"; 
+export { api } from "@jigswap/backend/convex/_generated/api";

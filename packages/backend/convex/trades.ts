@@ -194,9 +194,7 @@ export const getUserTradeRequests = query({
 
         const [ownerPuzzleProduct, requesterPuzzleProduct] = await Promise.all([
           ownerPuzzle ? ctx.db.get(ownerPuzzle.productId) : null,
-          requesterPuzzle
-            ? ctx.db.get(requesterPuzzle.productId)
-            : null,
+          requesterPuzzle ? ctx.db.get(requesterPuzzle.productId) : null,
         ]);
 
         return {
@@ -402,9 +400,7 @@ export const getTradeRequestsByOwner = query({
 
         const [ownerPuzzleProduct, requesterPuzzleProduct] = await Promise.all([
           ownerPuzzle ? ctx.db.get(ownerPuzzle.productId) : null,
-          requesterPuzzle
-            ? ctx.db.get(requesterPuzzle.productId)
-            : null,
+          requesterPuzzle ? ctx.db.get(requesterPuzzle.productId) : null,
         ]);
 
         return {
@@ -447,9 +443,7 @@ export const getTradeRequestsByRequester = query({
 
         const [ownerPuzzleProduct, requesterPuzzleProduct] = await Promise.all([
           ownerPuzzle ? ctx.db.get(ownerPuzzle.productId) : null,
-          requesterPuzzle
-            ? ctx.db.get(requesterPuzzle.productId)
-            : null,
+          requesterPuzzle ? ctx.db.get(requesterPuzzle.productId) : null,
         ]);
 
         return {

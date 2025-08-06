@@ -75,10 +75,7 @@ export default defineSchema({
     userId: v.id("users"),
     name: v.string(),
     description: v.optional(v.string()),
-    visibility: v.union(
-      v.literal("private"),
-      v.literal("public"),
-    ),
+    visibility: v.union(v.literal("private"), v.literal("public")),
     color: v.optional(v.string()), // hex color code
     icon: v.optional(v.string()), // emoji or icon name
     isDefault: v.boolean(), // true for system collections like "Favorites"
@@ -98,7 +95,10 @@ export default defineSchema({
   })
     .index("by_collection", ["collectionId"])
     .index("by_puzzle_instance", ["puzzleInstanceId"])
-    .index("by_collection_puzzle_instance", ["collectionId", "puzzleInstanceId"]),
+    .index("by_collection_puzzle_instance", [
+      "collectionId",
+      "puzzleInstanceId",
+    ]),
 
   // Completion records for puzzles (can reference either puzzleProducts or puzzleInstances)
   completions: defineTable({
@@ -143,10 +143,12 @@ export default defineSchema({
       en: v.string(),
       nl: v.string(),
     }),
-    description: v.optional(v.object({
-      en: v.string(),
-      nl: v.string(),
-    })),
+    description: v.optional(
+      v.object({
+        en: v.string(),
+        nl: v.string(),
+      }),
+    ),
     color: v.optional(v.string()), // hex color code
     isActive: v.boolean(),
     sortOrder: v.number(),

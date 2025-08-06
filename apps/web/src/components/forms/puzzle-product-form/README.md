@@ -13,6 +13,7 @@ A compound React component for creating and editing puzzle products. Uses react-
 ## Usage
 
 ### Simple Usage
+
 ```tsx
 import { PuzzleProductForm } from "@/components/forms/puzzle-product-form";
 
@@ -20,27 +21,37 @@ import { PuzzleProductForm } from "@/components/forms/puzzle-product-form";
   onSubmit={handleSubmit}
   onCancel={handleCancel}
   pending={isPending}
-/>
+/>;
 ```
 
 ### Compound Component Usage
+
 ```tsx
 import { PuzzleProductForm } from "@/components/forms/puzzle-product-form";
 
-<PuzzleProductForm.Root onSubmit={handleSubmit} onCancel={handleCancel} pending={isPending}>
+<PuzzleProductForm.Root
+  onSubmit={handleSubmit}
+  onCancel={handleCancel}
+  pending={isPending}
+>
   <PuzzleProductForm.Title>Create New Puzzle Product</PuzzleProductForm.Title>
   <PuzzleProductForm.Content />
   <PuzzleProductForm.Actions onCancel={handleCancel} />
-</PuzzleProductForm.Root>
+</PuzzleProductForm.Root>;
 ```
 
 ### Dialog Usage
+
 ```tsx
 import { Dialog } from "@/components/ui/dialog";
 import { PuzzleProductForm } from "@/components/forms/puzzle-product-form";
 
 <Dialog open={open} onOpenChange={setOpen}>
-  <PuzzleProductForm.Root onSubmit={handleSubmit} onCancel={() => setOpen(false)} pending={isPending}>
+  <PuzzleProductForm.Root
+    onSubmit={handleSubmit}
+    onCancel={() => setOpen(false)}
+    pending={isPending}
+  >
     <Dialog.Title>
       <PuzzleProductForm.Title />
     </Dialog.Title>
@@ -51,15 +62,25 @@ import { PuzzleProductForm } from "@/components/forms/puzzle-product-form";
       <PuzzleProductForm.Actions onCancel={() => setOpen(false)} />
     </Dialog.Footer>
   </PuzzleProductForm.Root>
-</Dialog>
+</Dialog>;
 ```
 
 ### Card Usage
+
 ```tsx
-import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
 import { PuzzleProductForm } from "@/components/forms/puzzle-product-form";
 
-<PuzzleProductForm.Root onSubmit={handleSubmit} onCancel={handleCancel} pending={isPending}>
+<PuzzleProductForm.Root
+  onSubmit={handleSubmit}
+  onCancel={handleCancel}
+  pending={isPending}
+>
   <Card>
     <CardHeader>
       <PuzzleProductForm.Title />
@@ -71,12 +92,13 @@ import { PuzzleProductForm } from "@/components/forms/puzzle-product-form";
       <PuzzleProductForm.Actions onCancel={handleCancel} />
     </CardFooter>
   </Card>
-</PuzzleProductForm.Root>
+</PuzzleProductForm.Root>;
 ```
 
 ## Props
 
 ### PuzzleProductForm.Root
+
 - `onSubmit: (data: PuzzleProductFormData) => void | Promise<void>` - Callback when form is submitted
 - `onCancel?: () => void` - Callback when form is cancelled
 - `pending?: boolean` - Whether the form is in a pending state
@@ -84,9 +106,11 @@ import { PuzzleProductForm } from "@/components/forms/puzzle-product-form";
 - `children: React.ReactNode` - Form content
 
 ### PuzzleProductForm.Actions
+
 - `onCancel?: () => void` - Callback for cancel button
 
 ### PuzzleProductForm.Title
+
 - `children?: React.ReactNode` - Custom title content
 
 ## Form Data
@@ -123,6 +147,7 @@ All text content is internationalized using next-intl. Translation keys follow t
 `forms.puzzle-product-form.<field-name>.<property>`
 
 Example translation structure:
+
 ```json
 {
   "forms": {
@@ -150,6 +175,7 @@ The form is designed to work with the Convex backend API:
 - **Update**: `api.puzzles.updatePuzzleProduct`
 
 Example API call:
+
 ```tsx
 const createProduct = useMutation(api.puzzles.createPuzzleProduct);
 
@@ -165,4 +191,4 @@ const handleSubmit = async (data: PuzzleProductFormData) => {
     images: data.images,
   });
 };
-``` 
+```

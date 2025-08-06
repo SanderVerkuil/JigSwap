@@ -1,7 +1,7 @@
-import { v } from "convex/values";
-import { paginationOptsValidator } from "convex/server";
-import { mutation, query } from "./_generated/server";
 import { stream } from "convex-helpers/server/stream";
+import { paginationOptsValidator } from "convex/server";
+import { v } from "convex/values";
+import { mutation, query } from "./_generated/server";
 import schema from "./schema";
 
 export type PuzzleSuggestion = {
@@ -126,7 +126,7 @@ export const getPuzzleInstancesByOwner = query({
           ...instance,
           product,
         };
-      })
+      }),
     );
 
     return instancesWithProducts.sort((a, b) => b.createdAt - a.createdAt);
@@ -138,15 +138,21 @@ export const listAllPuzzleProducts = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    const products = await ctx.db.query("puzzleProducts").paginate(args.paginationOpts);
-    const page = await Promise.all(products.page.map(async (product) => ({
-      ...product,
-      image: product.image ? await ctx.storage.getUrl(product.image) : undefined,
-    })));
+    const products = await ctx.db
+      .query("puzzleProducts")
+      .paginate(args.paginationOpts);
+    const page = await Promise.all(
+      products.page.map(async (product) => ({
+        ...product,
+        image: product.image
+          ? await ctx.storage.getUrl(product.image)
+          : undefined,
+      })),
+    );
     return {
       ...products,
       page,
-    }
+    };
   },
 });
 
@@ -162,7 +168,9 @@ export const getPuzzleProductById = query({
     }
     return {
       ...product,
-      image: product.image ? await ctx.storage.getUrl(product.image) : undefined,
+      image: product.image
+        ? await ctx.storage.getUrl(product.image)
+        : undefined,
     };
   },
 });
@@ -171,13 +179,13 @@ export const getAllBrands = query({
   args: {},
   handler: async (ctx) => {
     const brands = await stream(ctx.db, schema)
-    .query("puzzleProducts")
-    .withIndex("by_brand", (q) => q)
-    .distinct(["brand"])
-    .collect();
+      .query("puzzleProducts")
+      .withIndex("by_brand", (q) => q)
+      .distinct(["brand"])
+      .collect();
     return brands.map((brand) => brand.brand);
   },
-})
+});
 
 export const getAllTags = query({
   args: {},
@@ -187,20 +195,18 @@ export const getAllTags = query({
       .withIndex("by_tags", (q) => q)
       .distinct(["tags"])
       .collect();
-    return  tags
-        .map((tag) => tag.tags)
-        .flat()
-        .filter((tags) => tags !== undefined)
-        .reduce((acc, tag) => {
-          if (tag && !acc.includes(tag)) {
-            acc.push(tag);
-          }
-          return acc;
-        }, [] as string[]);
-      ;
+    return tags
+      .map((tag) => tag.tags)
+      .flat()
+      .filter((tags) => tags !== undefined)
+      .reduce((acc, tag) => {
+        if (tag && !acc.includes(tag)) {
+          acc.push(tag);
+        }
+        return acc;
+      }, [] as string[]);
   },
-})
-
+});
 
 // Browse available puzzle instances with filters
 export const browsePuzzleInstances = query({
@@ -255,7 +261,7 @@ export const browsePuzzleInstances = query({
           ...instance,
           product,
         };
-      })
+      }),
     );
 
     // Apply product-based filters
@@ -263,25 +269,25 @@ export const browsePuzzleInstances = query({
 
     if (args.category) {
       filteredInstances = filteredInstances.filter(
-        (i) => i.product?.category === args.category
+        (i) => i.product?.category === args.category,
       );
     }
 
     if (args.minPieceCount !== undefined) {
       filteredInstances = filteredInstances.filter(
-        (i) => i.product && i.product.pieceCount >= args.minPieceCount!
+        (i) => i.product && i.product.pieceCount >= args.minPieceCount!,
       );
     }
 
     if (args.maxPieceCount !== undefined) {
       filteredInstances = filteredInstances.filter(
-        (i) => i.product && i.product.pieceCount <= args.maxPieceCount!
+        (i) => i.product && i.product.pieceCount <= args.maxPieceCount!,
       );
     }
 
     if (args.difficulty) {
       filteredInstances = filteredInstances.filter(
-        (i) => i.product?.difficulty === args.difficulty
+        (i) => i.product?.difficulty === args.difficulty,
       );
     }
 
@@ -297,8 +303,8 @@ export const browsePuzzleInstances = query({
               i.product.brand.toLowerCase().includes(searchTerm)) ||
             (i.product.tags &&
               i.product.tags.some((tag) =>
-                tag.toLowerCase().includes(searchTerm)
-              )))
+                tag.toLowerCase().includes(searchTerm),
+              ))),
       );
     }
 
@@ -320,7 +326,7 @@ export const browsePuzzleInstances = query({
               }
             : null,
         };
-      })
+      }),
     );
 
     return {
@@ -413,14 +419,18 @@ export const deletePuzzleInstance = mutation({
     // Check if puzzle instance has any active trade requests
     const activeTradeRequests = await ctx.db
       .query("tradeRequests")
-      .withIndex("by_owner_puzzle_instance", (q) => q.eq("ownerPuzzleInstanceId", args.instanceId))
+      .withIndex("by_owner_puzzle_instance", (q) =>
+        q.eq("ownerPuzzleInstanceId", args.instanceId),
+      )
       .filter((q) => q.neq(q.field("status"), "completed"))
       .filter((q) => q.neq(q.field("status"), "cancelled"))
       .filter((q) => q.neq(q.field("status"), "declined"))
       .collect();
 
     if (activeTradeRequests.length > 0) {
-      throw new Error("Cannot delete puzzle instance with active trade requests");
+      throw new Error(
+        "Cannot delete puzzle instance with active trade requests",
+      );
     }
 
     await ctx.db.delete(args.instanceId);
@@ -466,8 +476,10 @@ export const getPuzzleProductSuggestions = query({
     const productsWithImages = await Promise.all(
       products.map(async (product) => ({
         ...product,
-        image: product.image ? await ctx.storage.getUrl(product.image) : undefined,
-      }))
+        image: product.image
+          ? await ctx.storage.getUrl(product.image)
+          : undefined,
+      })),
     );
 
     return productsWithImages;
