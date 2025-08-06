@@ -93,12 +93,12 @@ export default function CollectionDetailPage() {
             <Edit className="h-4 w-4 mr-2" />
             {tCommon("edit")}
           </Button>
-          <Link href={`/collections/${params.id}/add-puzzles`}>
-            <Button>
+          <Button asChild>
+            <Link href={`/collections/${params.id}/add-puzzles`}>
               <Plus className="h-4 w-4 mr-2" />
               {t("addPuzzles")}
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -160,12 +160,12 @@ export default function CollectionDetailPage() {
               </h3>
               <p className="text-sm">{t("addPuzzlesToCollection")}</p>
             </div>
-            <Link href={`/collections/${params.id}/add-puzzles`}>
-              <Button>
+            <Button asChild>
+              <Link href={`/collections/${params.id}/add-puzzles`}>
                 <Plus className="h-4 w-4 mr-2" />
                 {t("addPuzzles")}
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       ) : (

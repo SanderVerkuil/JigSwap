@@ -20,7 +20,6 @@ interface PuzzlesClientProps {
 export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
   const t = useTranslations("puzzles.puzzles");
   const tCommon = useTranslations("common");
-  const tBrowse = useTranslations("browse");
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
@@ -145,10 +144,12 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
           <h1 className="text-3xl font-bold">{t("title")}</h1>
           <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Link href="/puzzles/add">
-          <Plus className="h-4 w-4 mr-2" />
-          {t("addPuzzle")}
-        </Link>
+        <Button asChild>
+          <Link href="/puzzles/add">
+            <Plus className="h-4 w-4 mr-2" />
+            {t("addPuzzle")}
+          </Link>
+        </Button>
       </div>
 
       {/* Filters and Search */}

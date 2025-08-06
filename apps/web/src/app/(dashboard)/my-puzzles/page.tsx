@@ -9,6 +9,7 @@ import { Id } from "@jigswap/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { Filter, Grid, List, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -82,9 +83,11 @@ export default function PuzzlesPage() {
           <h1 className="text-3xl font-bold">{t("myPuzzles")}</h1>
           <p className="text-muted-foreground">{t("managePuzzles")}</p>
         </div>
-        <Button onClick={() => router.push("/my-puzzles/add")}>
-          <Plus className="h-4 w-4 mr-2" />
-          {t("addPuzzle")}
+        <Button asChild>
+          <Link href="/my-puzzles/add">
+            <Plus className="h-4 w-4 mr-2" />
+            {t("addPuzzle")}
+          </Link>
         </Button>
       </div>
 
@@ -140,9 +143,11 @@ export default function PuzzlesPage() {
               <h3 className="text-lg font-medium mb-2">{t("noPuzzles")}</h3>
               <p className="text-sm">{t("addFirstPuzzle")}</p>
             </div>
-            <Button onClick={() => router.push("/my-puzzles/add")}>
-              <Plus className="h-4 w-4 mr-2" />
-              {t("addPuzzle")}
+            <Button asChild>
+              <Link href="/my-puzzles/add">
+                <Plus className="h-4 w-4 mr-2" />
+                {t("addPuzzle")}
+              </Link>
             </Button>
           </CardContent>
         </Card>

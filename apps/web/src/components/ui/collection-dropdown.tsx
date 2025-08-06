@@ -13,6 +13,7 @@ import { api } from "@jigswap/backend/convex/_generated/api";
 import { Id } from "@jigswap/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { FolderOpen, Plus } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -77,9 +78,11 @@ export function CollectionDropdown({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => router.push("/collections")}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Collection
+          <DropdownMenuItem asChild>
+            <Link href="/collections">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Collection
+            </Link>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -124,9 +127,11 @@ export function CollectionDropdown({
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => router.push("/collections")}>
-          <Plus className="h-4 w-4 mr-2" />
-          Manage Collections
+        <DropdownMenuItem asChild>
+          <Link href="/collections">
+            <Plus className="h-4 w-4 mr-2" />
+            Manage Collections
+          </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
