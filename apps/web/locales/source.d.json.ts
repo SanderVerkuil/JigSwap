@@ -410,6 +410,12 @@ declare const messages: {
         "expert": "Expert",
         "unknown": "Unknown"
       },
+      "condition": {
+        "excellent": "Excellent",
+        "good": "Good",
+        "fair": "Fair",
+        "poor": "Poor"
+      },
       "filters": {
         "brand": "Brand",
         "selectBrand": "Select brand",

@@ -407,6 +407,12 @@
         "expert": "Expert",
         "unknown": "Onbekend"
       },
+      "condition": {
+        "excellent": "Uitstekend",
+        "good": "Goed",
+        "fair": "Redelijk",
+        "poor": "Slecht"
+      },
       "filters": {
         "brand": "Merk",
         "selectBrand": "Selecteer merk",
