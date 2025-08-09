@@ -37,10 +37,17 @@ export default function AddPuzzlePage() {
           title: data.title,
           description: data.description,
           brand: data.brand,
+          artist: data.artist,
+          series: data.series,
           pieceCount: data.pieceCount,
           difficulty: data.difficulty,
           category: data.category as Id<"adminCategories">,
           tags: data.tags,
+          ean: data.ean,
+          upc: data.upc,
+          modelNumber: data.modelNumber,
+          dimensions: data.dimensions,
+          shape: data.shape,
           image: storageId,
         });
 

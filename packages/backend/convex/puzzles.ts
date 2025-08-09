@@ -17,6 +17,8 @@ export const createPuzzle = mutation({
     title: v.string(),
     description: v.optional(v.string()),
     brand: v.optional(v.string()),
+    artist: v.optional(v.string()),
+    series: v.optional(v.string()),
     pieceCount: v.number(),
     difficulty: v.optional(
       v.union(
@@ -28,6 +30,24 @@ export const createPuzzle = mutation({
     ),
     category: v.optional(v.id("adminCategories")),
     tags: v.optional(v.array(v.string())),
+    ean: v.optional(v.string()),
+    upc: v.optional(v.string()),
+    modelNumber: v.optional(v.string()),
+    dimensions: v.optional(
+      v.object({
+        width: v.number(),
+        height: v.number(),
+        unit: v.union(v.literal("cm"), v.literal("in")),
+      }),
+    ),
+    shape: v.optional(
+      v.union(
+        v.literal("rectangular"),
+        v.literal("panoramic"),
+        v.literal("round"),
+        v.literal("shaped"),
+      ),
+    ),
     image: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
@@ -49,6 +69,11 @@ export const createPuzzle = mutation({
       args.title,
       args.description,
       args.brand,
+      args.artist,
+      args.series,
+      args.ean,
+      args.upc,
+      args.modelNumber,
       ...(args.tags || []),
     ]
       .filter(Boolean)
@@ -391,6 +416,8 @@ export const updatePuzzle = mutation({
     title: v.optional(v.string()),
     description: v.optional(v.string()),
     brand: v.optional(v.string()),
+    artist: v.optional(v.string()),
+    series: v.optional(v.string()),
     pieceCount: v.optional(v.number()),
     difficulty: v.optional(
       v.union(
@@ -402,7 +429,25 @@ export const updatePuzzle = mutation({
     ),
     category: v.optional(v.id("adminCategories")),
     tags: v.optional(v.array(v.string())),
-    images: v.optional(v.array(v.string())),
+    ean: v.optional(v.string()),
+    upc: v.optional(v.string()),
+    modelNumber: v.optional(v.string()),
+    dimensions: v.optional(
+      v.object({
+        width: v.number(),
+        height: v.number(),
+        unit: v.union(v.literal("cm"), v.literal("in")),
+      }),
+    ),
+    shape: v.optional(
+      v.union(
+        v.literal("rectangular"),
+        v.literal("panoramic"),
+        v.literal("round"),
+        v.literal("shaped"),
+      ),
+    ),
+    // no images array in schema; single `image` field exists on create
   },
   handler: async (ctx, args) => {
     const { puzzleId, ...updates } = args;
@@ -410,13 +455,28 @@ export const updatePuzzle = mutation({
     let searchableText = undefined;
 
     // Update searchable text if any text fields changed
-    if (updates.title || updates.description || updates.brand || updates.tags) {
+    if (
+      updates.title ||
+      updates.description ||
+      updates.brand ||
+      updates.artist ||
+      updates.series ||
+      updates.ean ||
+      updates.upc ||
+      updates.modelNumber ||
+      updates.tags
+    ) {
       const puzzle = await ctx.db.get(puzzleId);
       if (puzzle) {
         searchableText = [
           updates.title || puzzle.title,
           updates.description || puzzle.description,
           updates.brand || puzzle.brand,
+          updates.artist || puzzle.artist,
+          updates.series || puzzle.series,
+          updates.ean || puzzle.ean,
+          updates.upc || puzzle.upc,
+          updates.modelNumber || puzzle.modelNumber,
           ...(updates.tags || puzzle.tags || []),
         ]
           .filter(Boolean)

@@ -28,10 +28,17 @@ export const PuzzleFormRoot = ({
             title: "",
             description: "",
             brand: "",
+            artist: "",
+            series: "",
             pieceCount: undefined,
             difficulty: undefined,
             category: undefined,
             tags: [],
+            ean: "",
+            upc: "",
+            modelNumber: "",
+            dimensions: undefined,
+            shape: undefined,
           },
   });
 
