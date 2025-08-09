@@ -71,8 +71,7 @@
         "sharingRules": "Share rules to control who can request your puzzles",
         "friendCircles": "Friend circles and private sharing",
         "advancedDiscovery": "Advanced search, reviews and recommendations"
-      },
-      "specsNote": "Specs in /spec and the main README may be updated in a separate step."
+      }
     },
     "actions": {
       "uploadPuzzlesTitle": "Upload Puzzles",

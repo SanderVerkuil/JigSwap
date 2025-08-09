@@ -19,7 +19,6 @@ export function ComingSoon() {
             <li>{t("home.comingSoon.items.friendCircles")}</li>
             <li>{t("home.comingSoon.items.advancedDiscovery")}</li>
           </ul>
-          <p className="pt-2">{t("home.comingSoon.specsNote")}</p>
         </CardContent>
       </Card>
     </section>

@@ -1,5 +1,8 @@
+"use client";
+
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
+
 import { CallToAction } from "./_components/call-to-action";
 import { ComingSoon } from "./_components/coming-soon";
 import { CoreFeatures } from "./_components/core-features";

@@ -285,7 +285,7 @@ export default function AddPuzzlePage() {
                                 {t("createNewPuzzle")}
                               </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-2xl">
+                            <DialogContent className="max-w-2xl overflow-y-auto">
                               <DialogHeader>
                                 <DialogTitle>
                                   {t("createNewPuzzle")}
@@ -299,7 +299,9 @@ export default function AddPuzzlePage() {
                                 onCancel={() => setCreatePuzzleOpen(false)}
                                 pending={isCreatingPuzzle}
                               >
-                                <PuzzleForm.Content />
+                                <div className="max-h-[60vh] overflow-y-auto pb-6">
+                                  <PuzzleForm.Content />
+                                </div>
                                 <PuzzleForm.Actions />
                               </PuzzleForm>
                             </DialogContent>

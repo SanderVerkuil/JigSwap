@@ -71,8 +71,7 @@
         "sharingRules": "Deelregels om te bepalen wie je puzzels kan aanvragen",
         "friendCircles": "Vriendenkringen en privé delen",
         "advancedDiscovery": "Geavanceerd zoeken, beoordelingen en aanbevelingen"
-      },
-      "specsNote": "Specificaties in /spec en de hoofdREADME kunnen in een aparte stap worden bijgewerkt."
+      }
     },
     "actions": {
       "uploadPuzzlesTitle": "Puzzels Uploaden",
