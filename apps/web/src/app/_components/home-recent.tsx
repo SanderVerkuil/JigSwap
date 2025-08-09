@@ -3,9 +3,23 @@
 import { Button } from "@/components/ui/button";
 import { api } from "@jigswap/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import { PuzzleCard as ProductCard } from "../(dashboard)/puzzles/_components/puzzle-card";
-import { PuzzleViewProvider } from "../(dashboard)/puzzles/_components/puzzle-view-provider";
+
+const ProductCard = dynamic(
+  () =>
+    import("../(dashboard)/puzzles/_components/puzzle-card").then(
+      (m) => m.PuzzleCard,
+    ),
+  { ssr: false },
+);
+const PuzzleViewProvider = dynamic(
+  () =>
+    import("../(dashboard)/puzzles/_components/puzzle-view-provider").then(
+      (m) => m.PuzzleViewProvider,
+    ),
+  { ssr: false },
+);
 
 export function HomeRecent() {
   const recentPuzzles = useQuery(api.puzzles.getRecentPuzzles, { limit: 8 });

@@ -50,7 +50,7 @@ export function Hero() {
         <div className="container mx-auto text-center relative z-10">
           <div className="mb-6">
             <span className="text-6xl md:text-8xl mb-4 block">
-              <HeaderIcon />
+              <HeaderIcon priority sizes="(max-width: 768px) 256px, 384px" />
             </span>
           </div>
           <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-jigsaw-primary to-jigsaw-primary-accent bg-clip-text text-transparent">
