@@ -30,27 +30,9 @@ export const puzzleFormSchema = z.object({
   tags: z.array(z.string()),
 
   // Identifiers
-  ean: z.preprocess(
-    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-    z
-      .string()
-      .regex(/^[0-9]{13}$/, "EAN must be a 13-digit number")
-      .optional(),
-  ),
-  upc: z.preprocess(
-    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-    z
-      .string()
-      .regex(/^[0-9]{12}$/, "UPC must be a 12-digit number")
-      .optional(),
-  ),
-  modelNumber: z.preprocess(
-    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-    z
-      .string()
-      .max(100, "Model number must be less than 100 characters")
-      .optional(),
-  ),
+  ean: z.string().regex(/^[0-9]{13}$/ , "EAN must be a 13-digit number").or(z.literal("")).optional(),
+  upc: z.string().regex(/^[0-9]{12}$/ , "UPC must be a 12-digit number").or(z.literal("")).optional(),
+  modelNumber: z.string().max(100, "Model number must be less than 100 characters").or(z.literal("")).optional(),
 
   // Physical details
   dimensions: z

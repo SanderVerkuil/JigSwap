@@ -258,6 +258,29 @@ export const getAllTags = query({
   },
 });
 
+// Get the most recently created puzzles (global catalogue)
+export const getRecentPuzzles = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 8;
+    const puzzles = await ctx.db
+      .query("puzzles")
+      .order("desc")
+      .take(limit);
+
+    const puzzlesWithImages = await Promise.all(
+      puzzles.map(async (puzzle) => ({
+        ...puzzle,
+        image: puzzle.image ? await ctx.storage.getUrl(puzzle.image) : undefined,
+      })),
+    );
+
+    return puzzlesWithImages;
+  },
+});
+
 // Browse available owned puzzles with filters
 export const browseOwnedPuzzles = query({
   args: {

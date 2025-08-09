@@ -83,6 +83,24 @@ export const getCurrentUser = query({
   },
 });
 
+// Get global site statistics
+export const getGlobalStats = query({
+  args: {},
+  handler: async (ctx) => {
+    const [users, puzzles, ownedPuzzles] = await Promise.all([
+      ctx.db.query("users").collect(),
+      ctx.db.query("puzzles").collect(),
+      ctx.db.query("ownedPuzzles").collect(),
+    ]);
+
+    return {
+      totalUsers: users.length,
+      totalPuzzles: puzzles.length,
+      totalOwnedPuzzles: ownedPuzzles.length,
+    } as const;
+  },
+});
+
 // Get user by ID
 export const getUserById = query({
   args: { userId: v.id("users") },

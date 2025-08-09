@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { TagsInput } from "@/components/ui/extension/tags-input";
 import {
   Form,
@@ -37,6 +38,7 @@ export const PuzzleFormContent = () => {
       ? form.getValues("pieceCount")
       : "custom",
   );
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const categories = useQuery(api.adminCategories.getAllAdminCategories);
 
@@ -91,23 +93,7 @@ export const PuzzleFormContent = () => {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("description.label")}</FormLabel>
-              <FormControl>
-                <Textarea
-                  {...field}
-                  placeholder={t("description.placeholder")}
-                  rows={3}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* description moved to advanced */}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -176,21 +162,8 @@ export const PuzzleFormContent = () => {
           />
         </div>
 
-        {/* Artist & Series */}
+        {/* Series (key info) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="artist"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("artist.label")}</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder={t("artist.placeholder")} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
           <FormField
             control={form.control}
             name="series"
@@ -206,243 +179,298 @@ export const PuzzleFormContent = () => {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="difficulty"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("difficulty.label")}</FormLabel>
-                <FormControl>
-                  <Select {...field}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder={t("difficulty.placeholder")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="easy">
-                        {t("difficulty.easy")}
-                      </SelectItem>
-                      <SelectItem value="medium">
-                        {t("difficulty.medium")}
-                      </SelectItem>
-                      <SelectItem value="hard">
-                        {t("difficulty.hard")}
-                      </SelectItem>
-                      <SelectItem value="expert">
-                        {t("difficulty.expert")}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        {/* difficulty, category moved to advanced */}
 
-          <FormField
-            control={form.control}
-            name="category"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("category.label")}</FormLabel>
-                <FormControl>
-                  <Select {...field}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder={t("category.placeholder")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories?.map((category) => (
-                        <SelectItem key={category._id} value={category._id}>
-                          {category.name.en}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        {/* identifiers moved to advanced */}
+
+        {/* dimensions moved to advanced */}
+
+        {/* Advanced toggle */}
+        <div className="pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowAdvanced((v) => !v)}
+          >
+            {showAdvanced ? t("advanced.hide") : t("advanced.show")}
+          </Button>
         </div>
 
-        {/* Identifiers */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <FormField
-            control={form.control}
-            name="ean"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("ean.label")}</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder={t("ean.placeholder")} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="upc"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("upc.label")}</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder={t("upc.placeholder")} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="modelNumber"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("modelNumber.label")}</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder={t("modelNumber.placeholder")}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        {showAdvanced && (
+          <div className="space-y-6">
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("description.label")}</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder={t("description.placeholder")}
+                      rows={3}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        {/* Dimensions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <FormField
-            control={form.control}
-            name="dimensions.width"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("dimensions.width.label")}</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    value={field.value ?? ""}
-                    onChange={(e) =>
-                      field.onChange(
-                        e.target.value === ""
-                          ? undefined
-                          : Number(e.target.value),
-                      )
-                    }
-                    type="number"
-                    step="0.1"
-                    placeholder={t("dimensions.width.placeholder")}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="dimensions.height"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("dimensions.height.label")}</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    value={field.value ?? ""}
-                    onChange={(e) =>
-                      field.onChange(
-                        e.target.value === ""
-                          ? undefined
-                          : Number(e.target.value),
-                      )
-                    }
-                    type="number"
-                    step="0.1"
-                    placeholder={t("dimensions.height.placeholder")}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="dimensions.unit"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("dimensions.unit.label")}</FormLabel>
-                <FormControl>
-                  <Select
-                    value={field.value}
-                    onValueChange={(val) => field.onChange(val)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue
-                        placeholder={t("dimensions.unit.placeholder")}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="artist"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("artist.label")}</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder={t("artist.placeholder")} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="difficulty"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("difficulty.label")}</FormLabel>
+                    <FormControl>
+                      <Select {...field}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue
+                            placeholder={t("difficulty.placeholder")}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="easy">
+                            {t("difficulty.easy")}
+                          </SelectItem>
+                          <SelectItem value="medium">
+                            {t("difficulty.medium")}
+                          </SelectItem>
+                          <SelectItem value="hard">
+                            {t("difficulty.hard")}
+                          </SelectItem>
+                          <SelectItem value="expert">
+                            {t("difficulty.expert")}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("category.label")}</FormLabel>
+                  <FormControl>
+                    <Select {...field}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder={t("category.placeholder")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories?.map((category) => (
+                          <SelectItem key={category._id} value={category._id}>
+                            {category.name.en}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="ean"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("ean.label")}</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder={t("ean.placeholder")} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="upc"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("upc.label")}</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder={t("upc.placeholder")} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="modelNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("modelNumber.label")}</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder={t("modelNumber.placeholder")}
                       />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cm">
-                        {t("dimensions.unit.cm")}
-                      </SelectItem>
-                      <SelectItem value="in">
-                        {t("dimensions.unit.in")}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-        {/* Shape */}
-        <FormField
-          control={form.control}
-          name="shape"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("shape.label")}</FormLabel>
-              <FormControl>
-                <Select {...field} onValueChange={field.onChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={t("shape.placeholder")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="rectangular">
-                      {t("shape.rectangular")}
-                    </SelectItem>
-                    <SelectItem value="panoramic">
-                      {t("shape.panoramic")}
-                    </SelectItem>
-                    <SelectItem value="round">{t("shape.round")}</SelectItem>
-                    <SelectItem value="shaped">{t("shape.shaped")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="dimensions.width"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("dimensions.width.label")}</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value === ""
+                              ? undefined
+                              : Number(e.target.value),
+                          )
+                        }
+                        type="number"
+                        step="0.1"
+                        placeholder={t("dimensions.width.placeholder")}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="dimensions.height"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("dimensions.height.label")}</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value === ""
+                              ? undefined
+                              : Number(e.target.value),
+                          )
+                        }
+                        type="number"
+                        step="0.1"
+                        placeholder={t("dimensions.height.placeholder")}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="dimensions.unit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("dimensions.unit.label")}</FormLabel>
+                    <FormControl>
+                      <Select
+                        value={field.value}
+                        onValueChange={(val) => field.onChange(val)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue
+                            placeholder={t("dimensions.unit.placeholder")}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="cm">
+                            {t("dimensions.unit.cm")}
+                          </SelectItem>
+                          <SelectItem value="in">
+                            {t("dimensions.unit.in")}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-        <FormField
-          control={form.control}
-          name="tags"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("tags.label")}</FormLabel>
-              <FormControl>
-                <TagsInput
-                  value={field.value || []}
-                  onValueChange={(value) => field.onChange(value)}
-                  placeholder={t("tags.placeholder")}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            <FormField
+              control={form.control}
+              name="shape"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("shape.label")}</FormLabel>
+                  <FormControl>
+                    <Select {...field} onValueChange={field.onChange}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder={t("shape.placeholder")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="rectangular">
+                          {t("shape.rectangular")}
+                        </SelectItem>
+                        <SelectItem value="panoramic">
+                          {t("shape.panoramic")}
+                        </SelectItem>
+                        <SelectItem value="round">
+                          {t("shape.round")}
+                        </SelectItem>
+                        <SelectItem value="shaped">
+                          {t("shape.shaped")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="tags"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("tags.label")}</FormLabel>
+                  <FormControl>
+                    <TagsInput
+                      value={field.value || []}
+                      onValueChange={(value) => field.onChange(value)}
+                      placeholder={t("tags.placeholder")}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
       </form>
     </Form>
   );

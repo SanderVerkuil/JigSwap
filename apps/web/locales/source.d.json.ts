@@ -4,6 +4,7 @@
 declare const messages: {
   "common": {
     "loading": "Loading...",
+    "saving": "Saving...",
     "error": "Error",
     "success": "Success",
     "cancel": "Cancel",
@@ -54,7 +55,34 @@ declare const messages: {
     "createAccount": "Create Your Account",
     "trackProgress": "Track Progress",
     "exchangePuzzles": "Exchange Puzzles",
-    "connectCommunity": "Connect Community"
+    "connectCommunity": "Connect Community",
+    "stats": {
+      "users": "Users",
+      "puzzles": "Puzzles",
+      "ownedPuzzles": "Owned Puzzles",
+      "exchangesComing": "Exchanges (coming)"
+    },
+    "recent": {
+      "title": "Recent Puzzles",
+      "viewAll": "View all"
+    },
+    "comingSoon": {
+      "title": "Coming soon",
+      "items": {
+        "completionTracking": "Completion tracking with timing, ratings, and photos",
+        "availabilityControls": "Availability controls for trade/exchange/lending",
+        "sharingRules": "Share rules to control who can request your puzzles",
+        "friendCircles": "Friend circles and private sharing",
+        "advancedDiscovery": "Advanced search, reviews and recommendations"
+      },
+      "specsNote": "Specs in /spec and the main README may be updated in a separate step."
+    },
+    "actions": {
+      "uploadPuzzlesTitle": "Upload Puzzles",
+      "uploadPuzzlesDescription": "Upload new puzzles to add to the JigSwap catalogue.",
+      "collectionsTitle": "Your Collections",
+      "collectionsDescription": "Add owned puzzles to your collection and organize them."
+    }
   },
   "features": {
     "vastCollection": {
@@ -979,6 +1007,7 @@ declare const messages: {
     },
     "puzzle-form": {
       "loading": "Loading form...",
+      "formTitle": "Puzzle Details",
       "image": {
         "label": "Image",
         "placeholder": "Upload an image of the puzzle"
@@ -994,6 +1023,14 @@ declare const messages: {
       "brand": {
         "label": "Brand",
         "placeholder": "e.g. Ravensburger, Clementoni"
+      },
+      "artist": {
+        "label": "Artist",
+        "placeholder": "e.g. John Doe"
+      },
+      "series": {
+        "label": "Series",
+        "placeholder": "e.g. Nature Collection"
       },
       "pieceCount": {
         "label": "Piece Count",
@@ -1011,6 +1048,46 @@ declare const messages: {
       "category": {
         "label": "Category",
         "placeholder": "e.g. Landscape, Animals, Art"
+      },
+      "ean": {
+        "label": "EAN",
+        "placeholder": "Enter 13-digit EAN"
+      },
+      "upc": {
+        "label": "UPC",
+        "placeholder": "Enter 12-digit UPC"
+      },
+      "modelNumber": {
+        "label": "Model Number",
+        "placeholder": "Enter model number"
+      },
+      "dimensions": {
+        "width": {
+          "label": "Width",
+          "placeholder": "Enter width"
+        },
+        "height": {
+          "label": "Height",
+          "placeholder": "Enter height"
+        },
+        "unit": {
+          "label": "Unit",
+          "placeholder": "Select unit",
+          "cm": "cm",
+          "in": "in"
+        }
+      },
+      "shape": {
+        "label": "Shape",
+        "placeholder": "Select puzzle shape",
+        "rectangular": "Rectangular",
+        "panoramic": "Panoramic",
+        "round": "Round",
+        "shaped": "Shaped"
+      },
+      "advanced": {
+        "show": "Show advanced",
+        "hide": "Hide advanced"
       },
       "tags": {
         "label": "Tags",

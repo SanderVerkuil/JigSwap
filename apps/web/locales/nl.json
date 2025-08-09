@@ -1,6 +1,7 @@
 {
   "common": {
     "loading": "Laden...",
+    "saving": "Opslaan...",
     "error": "Fout",
     "success": "Succes",
     "cancel": "Annuleren",
@@ -976,6 +977,7 @@
     },
     "puzzle-form": {
       "loading": "Formulier laden...",
+      "formTitle": "Puzzeldetails",
       "image": {
         "label": "Afbeelding",
         "placeholder": "Upload een afbeelding van de puzzel"
@@ -991,6 +993,14 @@
       "brand": {
         "label": "Merk",
         "placeholder": "bijv. Ravensburger, Clementoni"
+      },
+      "artist": {
+        "label": "Kunstenaar",
+        "placeholder": "bijv. Jan Jansen"
+      },
+      "series": {
+        "label": "Serie",
+        "placeholder": "bijv. Natuur Collectie"
       },
       "pieceCount": {
         "label": "Aantal Stukken",
@@ -1008,6 +1018,46 @@
       "category": {
         "label": "Categorie",
         "placeholder": "bijv. Landschap, Dieren, Kunst"
+      },
+      "ean": {
+        "label": "EAN",
+        "placeholder": "Voer 13-cijferige EAN in"
+      },
+      "upc": {
+        "label": "UPC",
+        "placeholder": "Voer 12-cijferige UPC in"
+      },
+      "modelNumber": {
+        "label": "Modelnummer",
+        "placeholder": "Voer modelnummer in"
+      },
+      "dimensions": {
+        "width": {
+          "label": "Breedte",
+          "placeholder": "Voer breedte in"
+        },
+        "height": {
+          "label": "Hoogte",
+          "placeholder": "Voer hoogte in"
+        },
+        "unit": {
+          "label": "Eenheid",
+          "placeholder": "Selecteer eenheid",
+          "cm": "cm",
+          "in": "inch"
+        }
+      },
+      "shape": {
+        "label": "Vorm",
+        "placeholder": "Selecteer puzzelvorm",
+        "rectangular": "Rechthoekig",
+        "panoramic": "Panoramisch",
+        "round": "Rond",
+        "shaped": "Vormpuzzel"
+      },
+      "advanced": {
+        "show": "Geavanceerd weergeven",
+        "hide": "Geavanceerd verbergen"
       },
       "tags": {
         "label": "Tags",
