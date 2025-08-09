@@ -52,7 +52,34 @@
     "createAccount": "Maak Je Account",
     "trackProgress": "Volg Voortgang",
     "exchangePuzzles": "Ruil Puzzels",
-    "connectCommunity": "Verbind Community"
+    "connectCommunity": "Verbind Community",
+    "stats": {
+      "users": "Gebruikers",
+      "puzzles": "Puzzels",
+      "ownedPuzzles": "Puzzels in Bezit",
+      "exchangesComing": "Uitwisselingen (binnenkort)"
+    },
+    "recent": {
+      "title": "Recente Puzzels",
+      "viewAll": "Bekijk alles"
+    },
+    "comingSoon": {
+      "title": "Binnenkort",
+      "items": {
+        "completionTracking": "Voltooiingsregistratie met timing, beoordelingen en foto's",
+        "availabilityControls": "Beschikbaarheidscontroles voor ruil/uitwisseling/uitlenen",
+        "sharingRules": "Deelregels om te bepalen wie je puzzels kan aanvragen",
+        "friendCircles": "Vriendenkringen en privé delen",
+        "advancedDiscovery": "Geavanceerd zoeken, beoordelingen en aanbevelingen"
+      },
+      "specsNote": "Specificaties in /spec en de hoofdREADME kunnen in een aparte stap worden bijgewerkt."
+    },
+    "actions": {
+      "uploadPuzzlesTitle": "Puzzels Uploaden",
+      "uploadPuzzlesDescription": "Upload nieuwe puzzels om toe te voegen aan de JigSwap catalogus.",
+      "collectionsTitle": "Jouw Collecties",
+      "collectionsDescription": "Voeg puzzels in bezit toe aan je collectie en organiseer ze."
+    }
   },
   "features": {
     "vastCollection": {
