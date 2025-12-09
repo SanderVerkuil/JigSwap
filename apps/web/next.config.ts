@@ -23,6 +23,7 @@ const nextConfig: NextConfig = {
   },
 
   turbopack: {
+    root: path.resolve(__dirname, "../.."),
     rules: {
       "*.svg": {
         loaders: ["@svgr/webpack"],
