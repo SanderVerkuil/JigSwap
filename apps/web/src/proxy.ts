@@ -35,7 +35,7 @@ function getLocale(request: NextRequest): string {
 
       return matchedLocale;
     } catch (error) {
-      console.warn("Error matching locale in middleware:", error);
+      console.warn("Error matching locale in proxy:", error);
     }
   }
 
@@ -56,7 +56,7 @@ const isProtectedRoute = createRouteMatcher([
 
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 
-export default clerkMiddleware(async (auth, req) => {
+export const proxy = clerkMiddleware(async (auth, req) => {
   // Handle locale detection and set cookie if needed
   const locale = getLocale(req);
   const response = NextResponse.next();
@@ -101,3 +101,4 @@ export const config = {
     "/(api|trpc)(.*)",
   ],
 };
+
