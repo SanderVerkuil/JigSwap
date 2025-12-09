@@ -5,10 +5,10 @@
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
-    "@clerk/backend": "^2.6.3",
-    "convex": "^1.25.4",
-    "convex-helpers": "^0.1.101",
-    "svix": "^1.70.1",
+    "@clerk/backend": "^2.26.0",
+    "convex": "^1.30.0",
+    "convex-helpers": "^0.1.107",
+    "svix": "^1.82.0",
     "tslib": "^2.8.1"
   },
   "scripts": {
