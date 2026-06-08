@@ -17,6 +17,7 @@ import type * as exchange_adapters_inProcessEventPublisher from "../exchange/ada
 import type * as exchange_adapters_mapper from "../exchange/adapters/mapper.js";
 import type * as exchange_adapters_systemClock from "../exchange/adapters/systemClock.js";
 import type * as exchange_adapters_uuidExchangeId from "../exchange/adapters/uuidExchangeId.js";
+import type * as exchange_backfill from "../exchange/backfill.js";
 import type * as exchange_cancel from "../exchange/cancel.js";
 import type * as exchange_confirmCompletion from "../exchange/confirmCompletion.js";
 import type * as exchange_decline from "../exchange/decline.js";
@@ -46,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   "exchange/adapters/mapper": typeof exchange_adapters_mapper;
   "exchange/adapters/systemClock": typeof exchange_adapters_systemClock;
   "exchange/adapters/uuidExchangeId": typeof exchange_adapters_uuidExchangeId;
+  "exchange/backfill": typeof exchange_backfill;
   "exchange/cancel": typeof exchange_cancel;
   "exchange/confirmCompletion": typeof exchange_confirmCompletion;
   "exchange/decline": typeof exchange_decline;
