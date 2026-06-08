@@ -22,7 +22,8 @@
     "format": "prettier --write . || true",
     "format:check": "prettier --check . || true",
     "graph": "nx graph",
-    "affected": "nx affected"
+    "affected": "nx affected",
+    "arch:check": "depcruise --config .dependency-cruiser.cjs packages/domain/src"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",
@@ -39,6 +40,7 @@
     "@types/node": "^25.0.1",
     "@vitest/coverage-v8": "^4.0.15",
     "@vitest/ui": "^4.0.15",
+    "dependency-cruiser": "^17.4.3",
     "eslint": "^9.39.1",
     "eslint-config-next": "16.0.10",
     "jiti": "2.6.1",

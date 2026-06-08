@@ -18,6 +18,12 @@
         "command": "pnpm run test",
         "cwd": "packages/domain"
       }
+    },
+    "arch-check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "depcruise --config .dependency-cruiser.cjs packages/domain/src"
+      }
     }
   }
 }
