@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { useUser } from "@clerk/nextjs";
-import { api } from "@jigswap/backend/convex/_generated/api";
-import { Id } from "@jigswap/backend/convex/_generated/dataModel";
+import { gateway } from "@/gateway";
+import { Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { Filter, Grid, List, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -22,18 +22,18 @@ export default function PuzzlesPage() {
   const [searchTerm, setSearchTerm] = useState("");
 
   const convexUser = useQuery(
-    api.users.getUserByClerkId,
+    gateway.identity.byClerkId,
     user?.id ? { clerkId: user.id } : "skip",
   );
 
   const userownedPuzzles = useQuery(
-    api.puzzles.getOwnedPuzzlesByOwner,
+    gateway.library.ownedByOwner,
     convexUser?._id
       ? { ownerId: convexUser._id, includeUnavailable: true }
       : "skip",
   );
 
-  const deletePuzzle = useMutation(api.puzzles.deleteOwnedPuzzle);
+  const deletePuzzle = useMutation(gateway.library.deleteOwned);
 
   const handleDeletePuzzle = async (ownedPuzzleId: Id<"ownedPuzzles">) => {
     if (confirm("Are you sure you want to delete this puzzle?")) {

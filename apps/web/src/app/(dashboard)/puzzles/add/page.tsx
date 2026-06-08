@@ -1,8 +1,8 @@
 "use client";
 
 import { PuzzleForm, PuzzleFormData } from "@/components/forms/puzzle-form";
-import { api } from "@jigswap/backend/convex/_generated/api";
-import { Id } from "@jigswap/backend/convex/_generated/dataModel";
+import { gateway } from "@/gateway";
+import { Id } from "@/gateway";
 import { useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -11,8 +11,8 @@ import { toast } from "sonner";
 
 export default function AddPuzzlePage() {
   const router = useRouter();
-  const createPuzzle = useMutation(api.puzzles.createPuzzle);
-  const generateUploadUrl = useMutation(api.puzzles.generateUploadUrl);
+  const createPuzzle = useMutation(gateway.catalog.createPuzzle);
+  const generateUploadUrl = useMutation(gateway.library.generateUploadUrl);
   const t = useTranslations("puzzles");
   const [isPending, startTransition] = useTransition();
 

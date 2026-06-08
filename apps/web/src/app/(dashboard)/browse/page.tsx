@@ -2,8 +2,8 @@
 
 import { PageLoading } from "@/components/ui/loading";
 import { useUser } from "@clerk/nextjs";
-import { api } from "@jigswap/backend/convex/_generated/api";
-import { Id } from "@jigswap/backend/convex/_generated/dataModel";
+import { gateway } from "@/gateway";
+import { Id } from "@/gateway";
 import { useQuery } from "convex/react";
 import { Grid, List, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -33,11 +33,11 @@ export default function BrowsePage() {
   type Condition = "new_sealed" | "like_new" | "good" | "fair" | "poor";
 
   const convexUser = useQuery(
-    api.users.getUserByClerkId,
+    gateway.identity.byClerkId,
     user?.id ? { clerkId: user.id } : "skip",
   );
 
-  const browseOwnedPuzzlesResult = useQuery(api.puzzles.browseOwnedPuzzles, {
+  const browseOwnedPuzzlesResult = useQuery(gateway.library.browseOwned, {
     searchTerm: searchTerm || undefined,
     category: selectedCategory
       ? (selectedCategory as Id<"adminCategories">)
@@ -50,7 +50,7 @@ export default function BrowsePage() {
     limit: 50,
   });
 
-  const categories = useQuery(api.puzzles.getPuzzleCategories);
+  const categories = useQuery(gateway.catalog.puzzleCategories);
 
   const ownedPuzzles = browseOwnedPuzzlesResult?.ownedPuzzles || [];
   const totalownedPuzzles = browseOwnedPuzzlesResult?.total || 0;

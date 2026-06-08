@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { useUser } from "@clerk/nextjs";
-import { api } from "@jigswap/backend/convex/_generated/api";
-import { Id } from "@jigswap/backend/convex/_generated/dataModel";
+import { gateway } from "@/gateway";
+import { Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import {
   ArrowRightLeft,
@@ -42,20 +42,20 @@ export default function ExchangesPage() {
   );
 
   const convexUser = useQuery(
-    api.users.getUserByClerkId,
+    gateway.identity.byClerkId,
     user?.id ? { clerkId: user.id } : "skip",
   );
 
   // Get incoming trade requests (where user is the owner)
-  const incomingExchanges = useQuery(api.exchanges.getExchangesByOwner);
+  const incomingExchanges = useQuery(gateway.exchange.incoming);
 
   // Get outgoing trade requests (where user is the requester)
-  const outgoingExchanges = useQuery(api.exchanges.getExchangesByRequester);
+  const outgoingExchanges = useQuery(gateway.exchange.outgoing);
 
-  const acceptExchange = useMutation(api.exchanges.acceptExchange);
-  const declineExchange = useMutation(api.exchanges.declineExchange);
-  const completeExchange = useMutation(api.exchanges.completeExchange);
-  const cancelExchange = useMutation(api.exchanges.cancelExchange);
+  const acceptExchange = useMutation(gateway.exchange.accept);
+  const declineExchange = useMutation(gateway.exchange.decline);
+  const completeExchange = useMutation(gateway.exchange.complete);
+  const cancelExchange = useMutation(gateway.exchange.cancel);
 
   const handleAcceptExchange = async (tradeId: string) => {
     try {

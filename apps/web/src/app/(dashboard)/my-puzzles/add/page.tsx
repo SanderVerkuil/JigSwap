@@ -49,8 +49,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { api } from "@jigswap/backend/convex/_generated/api";
-import { Id } from "@jigswap/backend/convex/_generated/dataModel";
+import { gateway } from "@/gateway";
+import { Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -97,13 +97,13 @@ export default function AddPuzzlePage() {
   const [isCreatingPuzzle, setIsCreatingPuzzle] = useState(false);
   const [isCreatingOwnedPuzzle, setIsCreatingOwnedPuzzle] = useState(false);
 
-  const createInstance = useMutation(api.puzzles.createOwnedPuzzle);
-  const createPuzzle = useMutation(api.puzzles.createPuzzle);
-  const generateUploadUrl = useMutation(api.puzzles.generateUploadUrl);
+  const createInstance = useMutation(gateway.library.createOwned);
+  const createPuzzle = useMutation(gateway.catalog.createPuzzle);
+  const generateUploadUrl = useMutation(gateway.library.generateUploadUrl);
 
   // Get puzzle suggestions based on search
   const puzzleSuggestions = useQuery(
-    api.puzzles.getPuzzleSuggestions,
+    gateway.catalog.puzzleSuggestions,
     searchValue.length > 0 ? { searchTerm: searchValue, limit: 10 } : "skip",
   );
 
@@ -112,7 +112,7 @@ export default function AddPuzzlePage() {
 
   // If puzzleId is provided, fetch that specific puzzle
   const specificPuzzle = useQuery(
-    api.puzzles.getPuzzleById,
+    gateway.catalog.puzzleById,
     puzzleIdFromUrl ? { puzzleId: puzzleIdFromUrl } : "skip",
   );
 

@@ -30,8 +30,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useUser } from "@clerk/nextjs";
-import { api } from "@jigswap/backend/convex/_generated/api";
-import { Id } from "@jigswap/backend/convex/_generated/dataModel";
+import { gateway } from "@/gateway";
+import { Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { FolderOpen, Globe, Lock, Plus, Settings } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -65,18 +65,18 @@ export default function CollectionsPage() {
   });
 
   const convexUser = useQuery(
-    api.users.getUserByClerkId,
+    gateway.identity.byClerkId,
     user?.id ? { clerkId: user.id } : "skip",
   );
 
   const collections = useQuery(
-    api.collections.getUserCollections,
+    gateway.collections.listForUser,
     convexUser?._id ? { userId: convexUser._id } : "skip",
   );
 
-  const createCollection = useMutation(api.collections.createCollection);
-  const updateCollection = useMutation(api.collections.updateCollection);
-  const deleteCollection = useMutation(api.collections.deleteCollection);
+  const createCollection = useMutation(gateway.collections.create);
+  const updateCollection = useMutation(gateway.collections.update);
+  const deleteCollection = useMutation(gateway.collections.delete);
 
   const handleCreateCollection = async () => {
     try {

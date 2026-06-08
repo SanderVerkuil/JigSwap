@@ -4,8 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
-import { api } from "@jigswap/backend/convex/_generated/api";
-import { Id } from "@jigswap/backend/convex/_generated/dataModel";
+import { gateway } from "@/gateway";
+import { Id } from "@/gateway";
 import { useQuery } from "convex/react";
 import { ArrowLeft, Calendar, Plus, Star, Tag } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -23,12 +23,12 @@ export function PuzzleDetail({ puzzleId }: PuzzleDetailProps) {
   const tPuzzles = useTranslations("puzzles");
   const tCommon = useTranslations("common");
 
-  const puzzle = useQuery(api.puzzles.getPuzzleById, {
+  const puzzle = useQuery(gateway.catalog.puzzleById, {
     puzzleId: puzzleId as Id<"puzzles">,
   });
 
   const category = useQuery(
-    api.adminCategories.getAdminCategoryById,
+    gateway.adminCatalog.byId,
     puzzle !== undefined && puzzle !== null && puzzle.category !== undefined
       ? { id: puzzle?.category as Id<"adminCategories"> }
       : "skip",

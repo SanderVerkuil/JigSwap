@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { useUser } from "@clerk/nextjs";
-import { api } from "@jigswap/backend/convex/_generated/api";
+import { gateway } from "@/gateway";
 import { useQuery } from "convex/react";
 import {
   ArrowRightLeft,
@@ -28,13 +28,13 @@ export default function ProfilePage() {
   const t = useTranslations("profile");
   const [isEditing, setIsEditing] = useState(false);
 
-  const userProfile = useQuery(api.users.getCurrentUser);
+  const userProfile = useQuery(gateway.identity.currentUser);
   const convexUser = useQuery(
-    api.users.getUserByClerkId,
+    gateway.identity.byClerkId,
     user?.id ? { clerkId: user.id } : "skip",
   );
   const userStats = useQuery(
-    api.users.getUserStats,
+    gateway.identity.userStats,
     convexUser?._id ? { userId: convexUser._id } : "skip",
   );
 

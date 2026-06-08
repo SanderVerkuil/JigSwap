@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Id } from "@jigswap/backend/convex/_generated/dataModel";
+import { Id } from "@/gateway";
 import { Eye, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";

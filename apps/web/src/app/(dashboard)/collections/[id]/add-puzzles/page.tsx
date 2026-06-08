@@ -5,8 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { useUser } from "@clerk/nextjs";
-import { api } from "@jigswap/backend/convex/_generated/api";
-import { Id } from "@jigswap/backend/convex/_generated/dataModel";
+import { gateway } from "@/gateway";
+import { Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { Grid, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -25,23 +25,23 @@ export default function AddPuzzlesToCollectionPage() {
   >(new Set());
 
   const convexUser = useQuery(
-    api.users.getUserByClerkId,
+    gateway.identity.byClerkId,
     user?.id ? { clerkId: user.id } : "skip",
   );
 
-  const collection = useQuery(api.collections.getCollectionById, {
+  const collection = useQuery(gateway.collections.byId, {
     collectionId: id as Id<"collections">,
   });
 
   const availablePuzzles = useQuery(
-    api.puzzles.getOwnedPuzzlesByOwner,
+    gateway.library.ownedByOwner,
     convexUser?._id
       ? { ownerId: convexUser._id, includeUnavailable: false }
       : "skip",
   );
 
   const addPuzzleToCollection = useMutation(
-    api.collections.addOwnedPuzzleToCollection,
+    gateway.collections.addOwnedPuzzle,
   );
 
   const togglePuzzleSelection = (puzzleId: Id<"ownedPuzzles">) => {

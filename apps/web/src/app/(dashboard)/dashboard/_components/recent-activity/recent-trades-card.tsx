@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { LoadingState } from "@/components/ui/loading";
-import { api } from "@jigswap/backend/convex/_generated/api";
+import { gateway } from "@/gateway";
 import { useConvexAuth, useQuery } from "convex/react";
 import { ArrowLeftRight } from "lucide-react";
 import Link from "next/link";
@@ -19,13 +19,13 @@ export function RecentExchangesCard() {
 
   // Get current user from Convex
   const convexUser = useQuery(
-    api.users.getCurrentUser,
+    gateway.identity.currentUser,
     isLoading ? "skip" : {},
   );
 
   // Get recent trades
   const recentExchanges = useQuery(
-    api.exchanges.getUserExchanges,
+    gateway.exchange.forUser,
     convexUser?._id ? { userId: convexUser._id } : "skip",
   );
 

@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { LoadingState } from "@/components/ui/loading";
-import { api } from "@jigswap/backend/convex/_generated/api";
+import { gateway } from "@/gateway";
 import { useConvexAuth, useQuery } from "convex/react";
 import { Package } from "lucide-react";
 import Link from "next/link";
@@ -19,13 +19,13 @@ export function RecentPuzzlesCard() {
 
   // Get current user from Convex
   const convexUser = useQuery(
-    api.users.getCurrentUser,
+    gateway.identity.currentUser,
     isLoading ? "skip" : {},
   );
 
   // Get recent puzzle instances
   const recentownedPuzzles = useQuery(
-    api.puzzles.getOwnedPuzzlesByOwner,
+    gateway.library.ownedByOwner,
     convexUser?._id
       ? { ownerId: convexUser._id, includeUnavailable: false }
       : "skip",

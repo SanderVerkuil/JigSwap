@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { api } from "@jigswap/backend/convex/_generated/api";
+import { gateway } from "@/gateway";
 import { useQuery } from "convex/react";
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -46,12 +46,12 @@ export function PuzzleFilters({
   const tPuzzles = useTranslations("puzzles");
 
   // Extract unique brands and categories from puzzles
-  const brands = useQuery(api.puzzles.getAllBrands);
+  const brands = useQuery(gateway.catalog.allBrands);
 
-  const categories = useQuery(api.adminCategories.getAllAdminCategories);
+  const categories = useQuery(gateway.adminCatalog.listAll);
 
   // Extract all unique tags
-  const allTags = useQuery(api.puzzles.getAllTags);
+  const allTags = useQuery(gateway.catalog.allTags);
 
   const updateFilter = (key: keyof Filters, value: string | string[]) => {
     onFiltersChange({ ...filters, [key]: value });
