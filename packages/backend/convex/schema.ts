@@ -274,6 +274,10 @@ export default defineSchema({
 
   // Exchanges are the core of the app. They are the way users can trade, buy, and sell puzzles.
   exchanges: defineTable({
+    // Domain aggregate identity (ExchangeId). Optional so pre-existing rows still validate;
+    // the new domain-driven functions set+use it. Legacy functions ignore it.
+    aggregateId: v.optional(v.string()),
+
     // --- Participants ---
     initiatorId: v.id("users"),
     recipientId: v.id("users"),
@@ -320,7 +324,8 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_initiator", ["initiatorId", "offeredPuzzleId"])
-    .index("by_recipient", ["recipientId", "offeredPuzzleId"]),
+    .index("by_recipient", ["recipientId", "offeredPuzzleId"])
+    .index("by_aggregate_id", ["aggregateId"]),
 
   messages: defineTable({
     exchangeId: v.id("exchanges"),
