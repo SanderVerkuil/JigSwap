@@ -6,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { useUser } from "@clerk/nextjs";
 import { gateway } from "@/gateway";
-import { Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import {
   ArrowRightLeft,
@@ -57,33 +56,39 @@ export default function ExchangesPage() {
   const completeExchange = useMutation(gateway.exchange.complete);
   const cancelExchange = useMutation(gateway.exchange.cancel);
 
-  const handleAcceptExchange = async (tradeId: string) => {
+  // The new lifecycle mutations key off the domain aggregateId, not the Convex _id.
+  // Guard against legacy rows lacking aggregateId so we never send undefined.
+  const handleAcceptExchange = async (aggregateId: string | undefined) => {
+    if (!aggregateId) return;
     try {
-      await acceptExchange({ exchangeId: tradeId as Id<"exchanges"> });
+      await acceptExchange({ exchangeId: aggregateId });
     } catch (error) {
       console.error("Failed to accept trade:", error);
     }
   };
 
-  const handleDeclineExchange = async (tradeId: string) => {
+  const handleDeclineExchange = async (aggregateId: string | undefined) => {
+    if (!aggregateId) return;
     try {
-      await declineExchange({ exchangeId: tradeId as Id<"exchanges"> });
+      await declineExchange({ exchangeId: aggregateId });
     } catch (error) {
       console.error("Failed to decline trade:", error);
     }
   };
 
-  const handleCompleteExchange = async (tradeId: string) => {
+  const handleCompleteExchange = async (aggregateId: string | undefined) => {
+    if (!aggregateId) return;
     try {
-      await completeExchange({ exchangeId: tradeId as Id<"exchanges"> });
+      await completeExchange({ exchangeId: aggregateId });
     } catch (error) {
       console.error("Failed to complete trade:", error);
     }
   };
 
-  const handleCancelExchange = async (tradeId: string) => {
+  const handleCancelExchange = async (aggregateId: string | undefined) => {
+    if (!aggregateId) return;
     try {
-      await cancelExchange({ exchangeId: tradeId as Id<"exchanges"> });
+      await cancelExchange({ exchangeId: aggregateId });
     } catch (error) {
       console.error("Failed to cancel trade:", error);
     }
@@ -348,7 +353,10 @@ export default function ExchangesPage() {
                         <>
                           <Button
                             size="sm"
-                            onClick={() => handleAcceptExchange(exchange._id)}
+                            disabled={!exchange.aggregateId}
+                            onClick={() =>
+                              handleAcceptExchange(exchange.aggregateId)
+                            }
                             className="flex items-center gap-2"
                           >
                             <CheckCircle className="h-4 w-4" />
@@ -357,7 +365,10 @@ export default function ExchangesPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDeclineExchange(exchange._id)}
+                            disabled={!exchange.aggregateId}
+                            onClick={() =>
+                              handleDeclineExchange(exchange.aggregateId)
+                            }
                             className="flex items-center gap-2"
                           >
                             <XCircle className="h-4 w-4" />
@@ -371,7 +382,10 @@ export default function ExchangesPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleCancelExchange(exchange._id)}
+                          disabled={!exchange.aggregateId}
+                          onClick={() =>
+                            handleCancelExchange(exchange.aggregateId)
+                          }
                           className="flex items-center gap-2"
                         >
                           <XCircle className="h-4 w-4" />
@@ -382,7 +396,10 @@ export default function ExchangesPage() {
                     {exchange.status === "accepted" && (
                       <Button
                         size="sm"
-                        onClick={() => handleCompleteExchange(exchange._id)}
+                        disabled={!exchange.aggregateId}
+                        onClick={() =>
+                          handleCompleteExchange(exchange.aggregateId)
+                        }
                         className="flex items-center gap-2"
                       >
                         <CheckCircle className="h-4 w-4" />
