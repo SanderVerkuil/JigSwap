@@ -1,0 +1,23 @@
+{
+  "name": "@jigswap/domain",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/domain/src",
+  "projectType": "library",
+  "tags": ["type:domain", "scope:shared"],
+  "targets": {
+    "type-check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm run type-check",
+        "cwd": "packages/domain"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm run test",
+        "cwd": "packages/domain"
+      }
+    }
+  }
+}
