@@ -15,8 +15,8 @@ import { Label } from "@/components/ui/label";
 import { PageLoading } from "@/components/ui/loading";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { api } from "@jigswap/backend/convex/_generated/api";
-import { Id } from "@jigswap/backend/convex/_generated/dataModel";
+import { gateway } from "@/gateway";
+import { Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { Edit, Plus, Save, Trash2, X } from "lucide-react";
 import { useState } from "react";
@@ -46,10 +46,10 @@ interface Category {
 }
 
 export default function CategoriesPage() {
-  const categories = useQuery(api.adminCategories.getAllAdminCategories);
-  const createCategory = useMutation(api.adminCategories.createAdminCategory);
-  const updateCategory = useMutation(api.adminCategories.updateAdminCategory);
-  const deleteCategory = useMutation(api.adminCategories.deleteAdminCategory);
+  const categories = useQuery(gateway.adminCatalog.listAll);
+  const createCategory = useMutation(gateway.adminCatalog.create);
+  const updateCategory = useMutation(gateway.adminCatalog.update);
+  const deleteCategory = useMutation(gateway.adminCatalog.delete);
 
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);

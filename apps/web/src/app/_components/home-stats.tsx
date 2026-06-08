@@ -1,13 +1,13 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { api } from "@jigswap/backend/convex/_generated/api";
+import { gateway } from "@/gateway";
 import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 
 export function HomeStats() {
   const t = useTranslations();
-  const stats = useQuery(api.users.getGlobalStats, {});
+  const stats = useQuery(gateway.insights.globalStats, {});
 
   return (
     <section className="px-4 py-20">

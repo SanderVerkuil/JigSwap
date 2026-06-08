@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { api } from "@jigswap/backend/convex/_generated/api";
+import { gateway } from "@/gateway";
 import { useQuery } from "convex/react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -22,7 +22,7 @@ const PuzzleViewProvider = dynamic(
 );
 
 export function HomeRecent() {
-  const recentPuzzles = useQuery(api.puzzles.getRecentPuzzles, { limit: 8 });
+  const recentPuzzles = useQuery(gateway.catalog.recentPuzzles, { limit: 8 });
 
   return (
     <section className="px-4 py-20">
