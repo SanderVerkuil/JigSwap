@@ -13,8 +13,13 @@ export default defineConfig(() => ({
   test: {
     watch: false,
     globals: true,
-    environment: "node",
-    include: ["src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
+    // convex-test runs the Convex JS runtime; edge-runtime provides the matching globals.
+    environment: "edge-runtime",
+    server: { deps: { inline: ["convex-test"] } },
+    include: [
+      "convex/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+      "src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+    ],
     reporters: ["default"],
     coverage: {
       reportsDirectory: "../../coverage/packages/backend",
