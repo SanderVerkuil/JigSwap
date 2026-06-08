@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Id } from "@jigswap/backend/convex/_generated/dataModel";
+import { Id } from "@/gateway";
 import { Calendar, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 

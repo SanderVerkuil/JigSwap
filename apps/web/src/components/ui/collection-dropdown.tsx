@@ -9,8 +9,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useUser } from "@clerk/nextjs";
-import { api } from "@jigswap/backend/convex/_generated/api";
-import { Id } from "@jigswap/backend/convex/_generated/dataModel";
+import { gateway } from "@/gateway";
+import { Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { FolderOpen, Plus } from "lucide-react";
 import Link from "next/link";
@@ -31,24 +31,24 @@ export function CollectionDropdown({
   const [isAdding, setIsAdding] = useState(false);
 
   const convexUser = useQuery(
-    api.users.getUserByClerkId,
+    gateway.identity.byClerkId,
     user?.id ? { clerkId: user.id } : "skip",
   );
 
   const collections = useQuery(
-    api.collections.getUserCollections,
+    gateway.collections.listForUser,
     convexUser?._id ? { userId: convexUser._id } : "skip",
   );
 
   const puzzleCollections = useQuery(
-    api.collections.getCollectionsForOwnedPuzzle,
+    gateway.collections.forOwnedPuzzle,
     {
       ownedPuzzleId,
     },
   );
 
   const addPuzzleToCollection = useMutation(
-    api.collections.addOwnedPuzzleToCollection,
+    gateway.collections.addOwnedPuzzle,
   );
 
   const handleAddToCollection = async (collectionId: Id<"collections">) => {

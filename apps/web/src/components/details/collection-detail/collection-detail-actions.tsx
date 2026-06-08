@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Id } from "@jigswap/backend/convex/_generated/dataModel";
+import { Id } from "@/gateway";
 import { Edit, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 

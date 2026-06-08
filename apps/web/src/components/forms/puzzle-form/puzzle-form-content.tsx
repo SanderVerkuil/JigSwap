@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { api } from "@jigswap/backend/convex/_generated/api";
+import { gateway } from "@/gateway";
 import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 import { useFeatureFlagEnabled } from "posthog-js/react";
@@ -40,7 +40,7 @@ export const PuzzleFormContent = () => {
   );
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const categories = useQuery(api.adminCategories.getAllAdminCategories);
+  const categories = useQuery(gateway.adminCatalog.listAll);
 
   const t = useTranslations("forms.puzzle-form");
 

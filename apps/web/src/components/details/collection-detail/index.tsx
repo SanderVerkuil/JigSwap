@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
-import { api } from "@jigswap/backend/convex/_generated/api";
-import { Id } from "@jigswap/backend/convex/_generated/dataModel";
+import { gateway } from "@/gateway";
+import { Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { Grid, List, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -36,12 +36,12 @@ export function CollectionDetail({
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const collection = useQuery(api.collections.getCollectionById, {
+  const collection = useQuery(gateway.collections.byId, {
     collectionId,
   });
 
   const removeFromCollection = useMutation(
-    api.collections.removeOwnedPuzzleFromCollection,
+    gateway.collections.removeOwnedPuzzle,
   );
 
   const handleRemovePuzzle = async (ownedPuzzleId: Id<"ownedPuzzles">) => {

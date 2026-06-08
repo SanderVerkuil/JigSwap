@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Id } from "@jigswap/backend/convex/_generated/dataModel";
+import { Id } from "@/gateway";
 import { useTranslations } from "next-intl";
 
 interface OwnedPuzzleData {

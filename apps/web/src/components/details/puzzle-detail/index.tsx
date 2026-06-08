@@ -1,8 +1,8 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { api } from "@jigswap/backend/convex/_generated/api";
-import { Id } from "@jigswap/backend/convex/_generated/dataModel";
+import { gateway } from "@/gateway";
+import { Id } from "@/gateway";
 import { useQuery } from "convex/react";
 import { Grid } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -40,7 +40,7 @@ export function PuzzleDetail({
 }: PuzzleDetailProps) {
   const t = useTranslations("puzzles");
 
-  const ownedPuzzle = useQuery(api.puzzles.getOwnedPuzzleWithCollectionStatus, {
+  const ownedPuzzle = useQuery(gateway.library.ownedWithCollectionStatus, {
     ownedPuzzleId,
   });
 
