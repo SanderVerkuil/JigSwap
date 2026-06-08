@@ -68,6 +68,28 @@ const eslintConfig = [
       ],
     },
   },
+  // The UI must reach Convex through @/gateway, never the generated API directly.
+  {
+    files: ["apps/web/src/**/*.{ts,tsx}"],
+    ignores: ["apps/web/src/gateway/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "**/_generated/api",
+                "**/_generated/dataModel",
+                "@jigswap/backend/convex/_generated/*",
+              ],
+              message: "Import Convex through @/gateway, not the generated API directly.",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ];
 
 export default eslintConfig;
