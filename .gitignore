@@ -51,6 +51,8 @@ next-env.d.ts
 # Next.js
 .next
 out
+# ...but `out` is also a hexagonal-architecture source dir (outbound ports), not build output.
+!packages/**/out/
 
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
