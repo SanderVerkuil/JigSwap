@@ -2,6 +2,16 @@ packages:
   - apps/*
   - packages/*
 
+allowBuilds:
+  '@clerk/shared': true
+  '@parcel/watcher': true
+  '@swc/core': true
+  core-js: true
+  esbuild: true
+  nx: true
+  sharp: true
+  unrs-resolver: true
+
 linkWorkspacePackages: true
 
 onlyBuiltDependencies:
