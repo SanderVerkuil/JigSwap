@@ -85,7 +85,7 @@ importers:
         version: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(less@4.4.0)(lightningcss@1.30.2)(sass-embedded@1.90.0)(sass@1.90.0)(stylus@0.64.0)(terser@5.43.1)(yaml@2.8.1)
       vitest:
         specifier: ^4.0.15
-        version: 4.0.15(@types/node@25.0.1)(@vitest/ui@4.0.15)(jiti@2.6.1)(less@4.4.0)(lightningcss@1.30.2)(sass-embedded@1.90.0)(sass@1.90.0)(stylus@0.64.0)(terser@5.43.1)(yaml@2.8.1)
+        version: 4.0.15(@edge-runtime/vm@5.0.0)(@types/node@25.0.1)(@vitest/ui@4.0.15)(jiti@2.6.1)(less@4.4.0)(lightningcss@1.30.2)(sass-embedded@1.90.0)(sass@1.90.0)(stylus@0.64.0)(terser@5.43.1)(yaml@2.8.1)
 
   apps/web:
     dependencies:
@@ -255,6 +255,9 @@ importers:
       '@clerk/backend':
         specifier: ^2.27.0
         version: 2.27.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@jigswap/domain':
+        specifier: workspace:^
+        version: link:../domain
       convex:
         specifier: ^1.31.0
         version: 1.31.0(@clerk/clerk-react@5.58.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
@@ -267,6 +270,13 @@ importers:
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
+    devDependencies:
+      '@edge-runtime/vm':
+        specifier: ^5.0.0
+        version: 5.0.0
+      convex-test:
+        specifier: ^0.0.38
+        version: 0.0.38(convex@1.31.0(@clerk/clerk-react@5.58.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3))
 
   packages/contracts:
     dependencies:
@@ -913,6 +923,14 @@ packages:
     resolution: {integrity: sha512-Ah6R65loy5Aq1jBpWo3x01IOlYJfgVn4LVAkSXKVQDtehn8w1bT2uJ7BTa2zH72A8F4K2HivkmMQa+v/37tLFA==}
     engines: {node: '>=18.17.0'}
     deprecated: 'This package is no longer supported. Please import types from @clerk/shared/types instead. See the upgrade guide for more info: https://clerk.com/docs/guides/development/upgrading/upgrade-guides/core-3'
+
+  '@edge-runtime/primitives@6.0.0':
+    resolution: {integrity: sha512-FqoxaBT+prPBHBwE1WXS1ocnu/VLTQyZ6NMUBAdbP7N2hsFTTxMC/jMu2D/8GAlMQfxeuppcPuCUk/HO3fpIvA==}
+    engines: {node: '>=18'}
+
+  '@edge-runtime/vm@5.0.0':
+    resolution: {integrity: sha512-NKBGBSIKUG584qrS1tyxVpX/AKJKQw5HgjYEnPLC0QsTw79JrGn+qUr8CXFb955Iy7GUdiiUv1rJ6JBGvaKb6w==}
+    engines: {node: '>=18'}
 
   '@emnapi/core@1.7.1':
     resolution: {integrity: sha512-o1uhUASyo921r2XtHYOHy7gdkGLge8ghBEQHMWmyJFoXlpU58kIrhhN3w26lpQb6dspetweapMn2CSNwQ8I4wg==}
@@ -4115,6 +4133,11 @@ packages:
         optional: true
       zod:
         optional: true
+
+  convex-test@0.0.38:
+    resolution: {integrity: sha512-1o/3GvUR9gMLjiqq7SxchI/0OYQaWwbQC4INmB1SNt1WLBjUgEM8+brgpqrZwJ+Vb1DdGZokCVeihwT5IPk49w==}
+    peerDependencies:
+      convex: ^1.16.4
 
   convex@1.31.0:
     resolution: {integrity: sha512-ht3dtpWQmxX62T8PT3p/5PDlRzSW5p2IDTP4exKjQ5dqmvhtn1wLFakJAX4CCeu1s0Ch0dKY5g2dk/wETTRAOw==}
@@ -9095,6 +9118,12 @@ snapshots:
       - react
       - react-dom
 
+  '@edge-runtime/primitives@6.0.0': {}
+
+  '@edge-runtime/vm@5.0.0':
+    dependencies:
+      '@edge-runtime/primitives': 6.0.0
+
   '@emnapi/core@1.7.1':
     dependencies:
       '@emnapi/wasi-threads': 1.1.0
@@ -10126,7 +10155,7 @@ snapshots:
       tsconfig-paths: 4.2.0
       tslib: 2.8.1
       vite: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(less@4.4.0)(lightningcss@1.30.2)(sass-embedded@1.90.0)(sass@1.90.0)(stylus@0.64.0)(terser@5.43.1)(yaml@2.8.1)
-      vitest: 4.0.15(@types/node@25.0.1)(@vitest/ui@4.0.15)(jiti@2.6.1)(less@4.4.0)(lightningcss@1.30.2)(sass-embedded@1.90.0)(sass@1.90.0)(stylus@0.64.0)(terser@5.43.1)(yaml@2.8.1)
+      vitest: 4.0.15(@edge-runtime/vm@5.0.0)(@types/node@25.0.1)(@vitest/ui@4.0.15)(jiti@2.6.1)(less@4.4.0)(lightningcss@1.30.2)(sass-embedded@1.90.0)(sass@1.90.0)(stylus@0.64.0)(terser@5.43.1)(yaml@2.8.1)
     transitivePeerDependencies:
       - '@babel/traverse'
       - '@swc-node/register'
@@ -10146,7 +10175,7 @@ snapshots:
       tslib: 2.8.1
     optionalDependencies:
       vite: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(less@4.4.0)(lightningcss@1.30.2)(sass-embedded@1.90.0)(sass@1.90.0)(stylus@0.64.0)(terser@5.43.1)(yaml@2.8.1)
-      vitest: 4.0.15(@types/node@25.0.1)(@vitest/ui@4.0.15)(jiti@2.6.1)(less@4.4.0)(lightningcss@1.30.2)(sass-embedded@1.90.0)(sass@1.90.0)(stylus@0.64.0)(terser@5.43.1)(yaml@2.8.1)
+      vitest: 4.0.15(@edge-runtime/vm@5.0.0)(@types/node@25.0.1)(@vitest/ui@4.0.15)(jiti@2.6.1)(less@4.4.0)(lightningcss@1.30.2)(sass-embedded@1.90.0)(sass@1.90.0)(stylus@0.64.0)(terser@5.43.1)(yaml@2.8.1)
     transitivePeerDependencies:
       - '@babel/traverse'
       - '@swc-node/register'
@@ -11685,7 +11714,7 @@ snapshots:
       obug: 2.1.1
       std-env: 3.10.0
       tinyrainbow: 3.0.3
-      vitest: 4.0.15(@types/node@25.0.1)(@vitest/ui@4.0.15)(jiti@2.6.1)(less@4.4.0)(lightningcss@1.30.2)(sass-embedded@1.90.0)(sass@1.90.0)(stylus@0.64.0)(terser@5.43.1)(yaml@2.8.1)
+      vitest: 4.0.15(@edge-runtime/vm@5.0.0)(@types/node@25.0.1)(@vitest/ui@4.0.15)(jiti@2.6.1)(less@4.4.0)(lightningcss@1.30.2)(sass-embedded@1.90.0)(sass@1.90.0)(stylus@0.64.0)(terser@5.43.1)(yaml@2.8.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -11732,7 +11761,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.15
       tinyrainbow: 3.0.3
-      vitest: 4.0.15(@types/node@25.0.1)(@vitest/ui@4.0.15)(jiti@2.6.1)(less@4.4.0)(lightningcss@1.30.2)(sass-embedded@1.90.0)(sass@1.90.0)(stylus@0.64.0)(terser@5.43.1)(yaml@2.8.1)
+      vitest: 4.0.15(@edge-runtime/vm@5.0.0)(@types/node@25.0.1)(@vitest/ui@4.0.15)(jiti@2.6.1)(less@4.4.0)(lightningcss@1.30.2)(sass-embedded@1.90.0)(sass@1.90.0)(stylus@0.64.0)(terser@5.43.1)(yaml@2.8.1)
 
   '@vitest/utils@4.0.15':
     dependencies:
@@ -12408,6 +12437,10 @@ snapshots:
       react: 19.2.3
       typescript: 5.9.3
       zod: 4.1.13
+
+  convex-test@0.0.38(convex@1.31.0(@clerk/clerk-react@5.58.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)):
+    dependencies:
+      convex: 1.31.0(@clerk/clerk-react@5.58.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
 
   convex@1.31.0(@clerk/clerk-react@5.58.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3):
     dependencies:
@@ -16820,7 +16853,7 @@ snapshots:
       terser: 5.43.1
       yaml: 2.8.1
 
-  vitest@4.0.15(@types/node@25.0.1)(@vitest/ui@4.0.15)(jiti@2.6.1)(less@4.4.0)(lightningcss@1.30.2)(sass-embedded@1.90.0)(sass@1.90.0)(stylus@0.64.0)(terser@5.43.1)(yaml@2.8.1):
+  vitest@4.0.15(@edge-runtime/vm@5.0.0)(@types/node@25.0.1)(@vitest/ui@4.0.15)(jiti@2.6.1)(less@4.4.0)(lightningcss@1.30.2)(sass-embedded@1.90.0)(sass@1.90.0)(stylus@0.64.0)(terser@5.43.1)(yaml@2.8.1):
     dependencies:
       '@vitest/expect': 4.0.15
       '@vitest/mocker': 4.0.15(vite@7.2.7(@types/node@25.0.1)(jiti@2.6.1)(less@4.4.0)(lightningcss@1.30.2)(sass-embedded@1.90.0)(sass@1.90.0)(stylus@0.64.0)(terser@5.43.1)(yaml@2.8.1))
@@ -16843,6 +16876,7 @@ snapshots:
       vite: 7.2.7(@types/node@25.0.1)(jiti@2.6.1)(less@4.4.0)(lightningcss@1.30.2)(sass-embedded@1.90.0)(sass@1.90.0)(stylus@0.64.0)(terser@5.43.1)(yaml@2.8.1)
       why-is-node-running: 2.3.0
     optionalDependencies:
+      '@edge-runtime/vm': 5.0.0
       '@types/node': 25.0.1
       '@vitest/ui': 4.0.15(vitest@4.0.15)
     transitivePeerDependencies:
