@@ -47,17 +47,19 @@ export const gateway = {
   },
 
   // Exchange (Trading): proposing, settling, and messaging on exchanges.
+  // Writes go through the domain-driven exchange module (file.export namespacing);
+  // these enforce party-auth and legal transitions in the aggregate.
   exchange: {
-    create: api.exchanges.createExchange,
+    create: api.exchange.propose.propose,
     byId: api.exchanges.getExchangeById,
     forUser: api.exchanges.getUserExchanges,
     incoming: api.exchanges.getExchangesByOwner,
     outgoing: api.exchanges.getExchangesByRequester,
-    updateStatus: api.exchanges.updateExchangeStatus,
-    accept: api.exchanges.acceptExchange,
-    decline: api.exchanges.declineExchange,
-    complete: api.exchanges.completeExchange,
-    cancel: api.exchanges.cancelExchange,
+    accept: api.exchange.accept.accept,
+    decline: api.exchange.decline.decline,
+    complete: api.exchange.confirmCompletion.confirmCompletion,
+    cancel: api.exchange.cancel.cancel,
+    dispute: api.exchange.raiseDispute.raiseDispute,
     stats: api.exchanges.getExchangeStats,
     sendMessage: api.exchanges.sendExchangeMessage,
     messages: api.exchanges.getExchangeMessages,
