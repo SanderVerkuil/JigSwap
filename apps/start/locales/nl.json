@@ -1,0 +1,1331 @@
+{
+  "common": {
+    "loading": "Laden...",
+    "saving": "Opslaan...",
+    "error": "Fout",
+    "success": "Succes",
+    "cancel": "Annuleren",
+    "save": "Opslaan",
+    "delete": "Verwijderen",
+    "edit": "Bewerken",
+    "view": "Bekijken",
+    "search": "Zoeken",
+    "filter": "Filter",
+    "sort": "Sorteren",
+    "next": "Volgende",
+    "previous": "Vorige",
+    "close": "Sluiten",
+    "back": "Terug",
+    "to": "naar",
+    "backToHome": "← Terug naar Home",
+    "removeOption": "Verwijder {option} optie",
+    "removeOptionButton": "knop om optie te verwijderen",
+    "inputTag": "invoertag"
+  },
+  "notFound": {
+    "title": "Pagina Niet Gevonden",
+    "description": "Oeps! De pagina die je zoekt bestaat niet.",
+    "message": "De pagina die je probeert te openen is mogelijk verplaatst, verwijderd, of je hebt een verkeerde URL ingevoerd.",
+    "backToHome": "Terug naar Home",
+    "browsePuzzles": "Puzzels Bladeren"
+  },
+  "navigation": {
+    "home": "Home",
+    "browse": "Puzzels Bladeren",
+    "myPuzzles": "Mijn Puzzels",
+    "trades": "Uitwisselingen",
+    "profile": "Profiel",
+    "signIn": "Inloggen",
+    "signUp": "Registreren",
+    "signOut": "Uitloggen",
+    "dashboard": "Dashboard"
+  },
+  "home": {
+    "title": "Ruil Legpuzzels met Mede-enthousiastelingen",
+    "subtitle": "Maak contact met puzzelliefhebbers wereldwijd. Ruil je voltooide puzzels, ontdek nieuwe uitdagingen en maak de hobby duurzamer.",
+    "startTrading": "Start met Ruilen",
+    "browsePuzzles": "Puzzels Bladeren",
+    "whyChoose": "Waarom JigSwap Kiezen?",
+    "howItWorks": "Hoe Het Werkt",
+    "readyToStart": "Klaar om te Starten met Ruilen?",
+    "joinThousands": "Doe mee met duizenden puzzelenthousiastelingen die al ruilen op JigSwap",
+    "createAccount": "Maak Je Account",
+    "trackProgress": "Volg Voortgang",
+    "exchangePuzzles": "Ruil Puzzels",
+    "connectCommunity": "Verbind Community",
+    "stats": {
+      "users": "Gebruikers",
+      "puzzles": "Puzzels",
+      "ownedPuzzles": "Puzzels in Bezit",
+      "exchangesComing": "Uitwisselingen (binnenkort)"
+    },
+    "recent": {
+      "title": "Recente Puzzels",
+      "viewAll": "Bekijk alles"
+    },
+    "comingSoon": {
+      "title": "Binnenkort",
+      "items": {
+        "completionTracking": "Voltooiingsregistratie met timing, beoordelingen en foto's",
+        "availabilityControls": "Beschikbaarheidscontroles voor ruil/uitwisseling/uitlenen",
+        "sharingRules": "Deelregels om te bepalen wie je puzzels kan aanvragen",
+        "friendCircles": "Vriendenkringen en privé delen",
+        "advancedDiscovery": "Geavanceerd zoeken, beoordelingen en aanbevelingen"
+      }
+    },
+    "actions": {
+      "uploadPuzzlesTitle": "Puzzels Uploaden",
+      "uploadPuzzlesDescription": "Upload nieuwe puzzels om toe te voegen aan de JigSwap catalogus.",
+      "collectionsTitle": "Jouw Collecties",
+      "collectionsDescription": "Voeg puzzels in bezit toe aan je collectie en organiseer ze."
+    }
+  },
+  "features": {
+    "vastCollection": {
+      "title": "Uitgebreide Collectie",
+      "description": "Toegang tot duizenden puzzels van mede-enthousiastelingen. Vind zeldzame stukken en ontdek nieuwe favorieten."
+    },
+    "communityDriven": {
+      "title": "Community-Gedreven",
+      "description": "Doe mee met een gepassioneerde community van puzzelliefhebbers. Deel ervaringen en bouw blijvende connecties."
+    },
+    "sustainable": {
+      "title": "Duurzaam",
+      "description": "Verminder afval door puzzels een tweede leven te geven. Maak je hobby milieuvriendelijker."
+    },
+    "core": {
+      "title": "Volledig Puzzelbeheer Platform",
+      "personalLibrary": {
+        "title": "Persoonlijke Bibliotheek",
+        "description": "Volg je collectie, voltooiingsgeschiedenis en persoonlijke analyses met gedetailleerde statistieken en voortgangsregistratie."
+      },
+      "smartExchange": {
+        "title": "Slimme Uitwisseling",
+        "description": "Leen, ruil of handel puzzels terwijl je voltooiingsgeschiedenis behouden blijft en eigendomsketens worden bijgehouden."
+      },
+      "community": {
+        "title": "Community",
+        "description": "Maak contact met mede-enthousiastelingen, deel beoordelingen en ontdek nieuwe puzzels via sociale functies."
+      },
+      "analytics": {
+        "title": "Analyses",
+        "description": "Krijg inzicht in je oplossingspatronen, stel doelen en vergelijk met community trends."
+      }
+    },
+    "detailed": {
+      "title": "Krachtige Functies voor Puzzelenthousiastelingen",
+      "personalLibrary": {
+        "title": "📚 Persoonlijke Puzzelbibliotheek",
+        "collectionManagement": {
+          "title": "Collectiebeheer",
+          "items": [
+            "Voeg puzzels toe met gedetailleerde informatie",
+            "Organiseer met aangepaste categorieën & tags",
+            "Stel zichtbaarheidsniveaus in (privé tot ruilbaar)",
+            "Zoek en filter je collectie"
+          ]
+        },
+        "completionTracking": {
+          "title": "Voltooiingsregistratie",
+          "items": [
+            "Registreer start- en voltooiingstijden",
+            "Beoordeel puzzels en voeg persoonlijke notities toe",
+            "Upload foto's van voltooide puzzels",
+            "Volg meerdere voltooiingen"
+          ]
+        },
+        "personalAnalytics": {
+          "title": "Persoonlijke Analyses",
+          "items": [
+            "Bekijk voltooiingsstatistieken",
+            "Analyseer oplossingstijd trends",
+            "Stel persoonlijke doelen in en volg ze",
+            "Exporteer je gegevens"
+          ]
+        }
+      },
+      "exchangeSystem": {
+        "title": "🔄 Geavanceerd Uitwisselingssysteem",
+        "multipleExchangeTypes": {
+          "title": "Meerdere Uitwisselingstypen",
+          "items": [
+            "Uitlenen met terugkeerafspraken",
+            "Permanente ruil tussen gebruikers",
+            "Directe verkoop en veilingen",
+            "Onderhandelbare voorwaarden"
+          ]
+        },
+        "historyPreservation": {
+          "title": "Geschiedenisbehoud",
+          "items": [
+            "Behoud je voltooiingsregistraties",
+            "Volledige eigendomsregistratie",
+            "Eigendomsketen voor alle puzzels",
+            "Conditieregistratie door uitwisselingen"
+          ]
+        },
+        "exchangeManagement": {
+          "title": "Uitwisselingsbeheer",
+          "items": [
+            "Real-time berichten tijdens uitwisselingen",
+            "Foto-documentatie van conditie",
+            "Geschillenbeslechting systeem",
+            "Uitwisselingsbeoordelingen en feedback"
+          ]
+        }
+      },
+      "community": {
+        "title": "👥 Community & Sociale Functies",
+        "userProfiles": {
+          "title": "Gebruikersprofielen",
+          "items": [
+            "Toon je collectie",
+            "Toon prestaties en statistieken",
+            "Volg andere enthousiastelingen",
+            "Locatiegebaseerde ontdekking"
+          ]
+        },
+        "reviewsRatings": {
+          "title": "Beoordelingen & Waarderingen",
+          "items": [
+            "Schrijf gedetailleerde puzzelbeoordelingen",
+            "Beoordeel op meerdere criteria",
+            "Stem op nuttige beoordelingen",
+            "Zie community meningen"
+          ]
+        },
+        "socialDiscovery": {
+          "title": "Sociale Ontdekking",
+          "items": [
+            "Vind gebruikers op locatie",
+            "Ontdek trending puzzels",
+            "Community discussies",
+            "Slimme aanbevelingen"
+          ]
+        }
+      },
+      "advanced": {
+        "title": "⚡ Geavanceerde Functies",
+        "conditionTracking": {
+          "title": "Conditieregistratie",
+          "items": [
+            "Documenteer puzzelconditie",
+            "Volg veranderingen in de tijd",
+            "Foto-documentatie",
+            "Conditiegebaseerde filtering"
+          ]
+        },
+        "smartRecommendations": {
+          "title": "Slimme Aanbevelingen",
+          "items": [
+            "AI-aangedreven puzzelvoorstellen",
+            "Vind vergelijkbare gebruikers",
+            "Optimale uitwisselingsmogelijkheden",
+            "Collaboratieve filtering"
+          ]
+        },
+        "notificationSystem": {
+          "title": "Notificatiesysteem",
+          "items": [
+            "Real-time uitwisselingsmeldingen",
+            "Doelbehaalmeldingen",
+            "Community activiteitsupdates",
+            "Aanpasbare voorkeuren"
+          ]
+        }
+      }
+    }
+  },
+  "steps": {
+    "listPuzzles": {
+      "title": "Lijst Je Puzzels",
+      "description": "Upload foto's en details van puzzels die je hebt voltooid en wilt ruilen."
+    },
+    "browseDiscover": {
+      "title": "Blader & Ontdek",
+      "description": "Verken puzzels van andere gebruikers en vind er die je graag zou willen proberen."
+    },
+    "makeExchange": {
+      "title": "Maak een Uitwisseling",
+      "description": "Stuur ruilverzoeken en onderhandel uitwisselingen met andere gebruikers."
+    },
+    "enjoyReview": {
+      "title": "Geniet & Beoordeel",
+      "description": "Voltooi je nieuwe puzzel en laat beoordelingen achter om vertrouwen in de community op te bouwen."
+    },
+    "howItWorks": {
+      "title": "Hoe JigSwap Werkt",
+      "buildLibrary": {
+        "title": "Bouw Je Bibliotheek",
+        "description": "Voeg je puzzels toe aan je persoonlijke bibliotheek met gedetailleerde informatie, foto's en voltooiingsregistratie."
+      },
+      "discoverConnect": {
+        "title": "Ontdek & Verbind",
+        "description": "Blader door puzzels van andere enthousiastelingen, lees beoordelingen en maak contact met de community."
+      },
+      "exchangeExchange": {
+        "title": "Ruil & Wissel",
+        "description": "Start uitwisselingen, onderhandel voorwaarden en volg het hele proces terwijl je geschiedenis behouden blijft."
+      },
+      "analyzeImprove": {
+        "title": "Analyseer & Verbeter",
+        "description": "Volg je voortgang, stel doelen en krijg inzicht uit uitgebreide analyses en community gegevens."
+      }
+    }
+  },
+  "auth": {
+    "welcomeBack": "Welkom terug bij de puzzelruil community",
+    "joinCommunity": "Doe mee met de puzzelruil community",
+    "signInToAccount": "Log in op je account",
+    "createNewAccount": "Maak een nieuw account"
+  },
+  "puzzles": {
+    "title": "Titel",
+    "description": "Beschrijving",
+    "brand": "Merk",
+    "pieceCount": "Aantal Stukken",
+    "pieces": "stukken",
+    "difficulty": "Moeilijkheidsgraad",
+    "condition": "Conditie",
+    "category": "Categorie",
+    "tags": "Tags",
+    "owner": "Eigenaar",
+    "available": "Beschikbaar",
+    "unavailable": "Niet Beschikbaar",
+    "completed": "Voltooid",
+    "addPuzzle": "Puzzel Toevoegen",
+    "editPuzzle": "Puzzel Bewerken",
+    "deletePuzzle": "Puzzel Verwijderen",
+    "requestExchange": "Uitwisseling Aanvragen",
+    "myPuzzles": "Mijn Puzzels",
+    "managePuzzles": "Beheer je puzzelcollectie",
+    "noPuzzles": "Nog geen puzzels",
+    "addFirstPuzzle": "Voeg je eerste puzzel toe om te beginnen met ruilen",
+    "noImage": "Geen Afbeelding",
+    "addPuzzleDescription": "Voeg een nieuwe puzzel toe aan je collectie",
+    "selectPuzzle": "Puzzel Selecteren",
+    "selectPuzzleDescription": "Zoek naar een bestaande puzzel of maak een nieuwe",
+    "searchPuzzle": "Zoek naar een puzzel",
+    "searchPlaceholder": "Zoek puzzels...",
+    "yourPendingSubmissions": "Jouw inzendingen (in afwachting van beoordeling)",
+    "pendingReview": "In afwachting van beoordeling",
+    "noPuzzlesFound": "Geen puzzels gevonden",
+    "createNewPuzzle": "Nieuwe Puzzel Maken",
+    "createNewPuzzleDescription": "Maak een nieuwe puzzel die nog niet bestaat",
+    "puzzleCreated": "Puzzel succesvol aangemaakt",
+    "puzzleSubmittedForReview": "Puzzel ingediend ter beoordeling",
+    "puzzleCreationFailed": "Puzzel aanmaken mislukt",
+    "noPuzzleSelected": "Selecteer eerst een puzzel",
+    "puzzleAdded": "Puzzel toegevoegd aan je collectie",
+    "puzzleAdditionFailed": "Puzzel toevoegen aan collectie mislukt",
+    "addToCollection": "Toevoegen aan Collectie",
+    "acquisitionDatePlaceholder": "Wanneer heb je deze puzzel verworven?",
+    "notesPlaceholder": "Eventuele aanvullende notities over deze puzzel",
+    "basicInformation": "Basisinformatie",
+    "basicInformationDescription": "Voer de essentiële details over je puzzel in",
+    "titlePlaceholder": "Voer puzzeltitel in",
+    "descriptionPlaceholder": "Beschrijf je puzzel (optioneel)",
+    "brandPlaceholder": "bijv. Ravensburger, Clementoni",
+    "categoryPlaceholder": "bijv. Landschap, Dieren, Kunst",
+    "tagsPlaceholder": "natuur, kleurrijk, uitdagend",
+    "tagsHelp": "Scheid tags met komma's",
+    "selectDifficulty": "Selecteer moeilijkheidsgraad",
+    "easy": "Gemakkelijk",
+    "medium": "Gemiddeld",
+    "hard": "Moeilijk",
+    "expert": "Expert",
+    "selectCondition": "Selecteer conditie",
+    "selectPieceCount": "Selecteer aantal stukken",
+    "customPieceCountPlaceholder": "Voer aangepast aantal stukken in",
+    "excellent": "Uitstekend",
+    "good": "Goed",
+    "fair": "Redelijk",
+    "poor": "Slecht",
+    "statusInformation": "Statusinformatie",
+    "statusInformationDescription": "Volg je puzzelvoltooiing en verwervingsdetails",
+    "puzzleCompleted": "Ik heb deze puzzel voltooid",
+    "completedDate": "Voltooiingsdatum",
+    "acquisitionDate": "Verwervingsdatum",
+    "acquisitionDateDescription": "Wanneer heb je deze puzzel verworven? (optioneel)",
+    "notes": "Notities",
+    "completions": {
+      "title": "Voltooiingsregistratie",
+      "description": "Volg je puzzelvoltooiingen met gedetailleerde timing en notities",
+      "statusDescription": "Markeer deze puzzel als voltooid om je voortgang bij te houden",
+      "completion": "Voltooiing",
+      "timeSpent": "Tijd Besteed",
+      "optional": "optioneel",
+      "timeDescription": "Hoe lang duurde het om deze puzzel te voltooien? (geschat)",
+      "minutes": "minuten",
+      "notes": "Voltooiingsnotities",
+      "notesPlaceholder": "Eventuele notities over deze voltooiing",
+      "addCompletion": "Nog een Voltooiing Toevoegen"
+    },
+    "suggestions": {
+      "title": "Puzzelvoorstellen",
+      "description": "Vergelijkbare puzzels gevonden in de database. Klik om details automatisch in te vullen.",
+      "searchExisting": "Zoek Bestaande Puzzels",
+      "searchDescription": "Zoek naar puzzels die al bestaan in de database om details automatisch in te vullen",
+      "searchPlaceholder": "Zoek op titel, merk of beschrijving...",
+      "placeholder": "Zoek naar puzzels...",
+      "found": "Gevonden Puzzels",
+      "useThis": "Gebruik Deze",
+      "noResults": "Geen overeenkomende puzzels gevonden",
+      "loading": "Voorstellen laden...",
+      "typeToSearch": "Type om naar puzzels te zoeken..."
+    },
+    "puzzleSelection": "Puzzelselectie",
+    "puzzleSelectionDescription": "Kies of je een nieuwe puzzel wilt maken of een bestaande wilt selecteren",
+    "selectExistingPuzzle": "Selecteer Bestaande Puzzel",
+    "searchExistingPuzzles": "Zoek Bestaande Puzzels",
+    "searchPuzzles": "Zoek Puzzels",
+    "searchPuzzlesPlaceholder": "Zoek op titel, merk of aantal stukken...",
+    "typeToSearch": "Type om naar puzzels te zoeken...",
+    "loading": "Laden...",
+    "noResults": "Geen overeenkomende puzzels gevonden",
+    "change": "Wijzigen",
+    "fillInPuzzleDetails": "Vul de details in voor je nieuwe puzzel",
+    "orFillInNewPuzzleDetails": "Of vul details in om een nieuwe puzzel te maken als er geen bestaat",
+    "notFound": "Puzzel niet gevonden",
+    "puzzles": {
+      "title": "Puzzels",
+      "subtitle": "Blader en ontdek puzzels van de community",
+      "addPuzzle": "Puzzel Toevoegen",
+      "searchPlaceholder": "Zoek puzzels op titel, merk of beschrijving...",
+      "filtersLabel": "Filters",
+      "clearFilters": "Filters Wissen",
+      "puzzlesFound": "{count} puzzels gevonden",
+      "noPuzzlesFound": "Geen puzzels gevonden",
+      "tryDifferentFilters": "Probeer je zoekcriteria of filters aan te passen",
+      "viewDetails": "Details Bekijken",
+      "ownPuzzle": "Ik Bezit Deze",
+      "noImage": "Geen Afbeelding",
+      "pieceCount": "Aantal Stukken",
+      "pieces": "stukken",
+      "difficulty": {
+        "easy": "Gemakkelijk",
+        "medium": "Gemiddeld",
+        "hard": "Moeilijk",
+        "expert": "Expert",
+        "unknown": "Onbekend"
+      },
+      "condition": {
+        "excellent": "Uitstekend",
+        "good": "Goed",
+        "fair": "Redelijk",
+        "poor": "Slecht"
+      },
+      "filters": {
+        "brand": "Merk",
+        "selectBrand": "Selecteer merk",
+        "allBrands": "Alle merken",
+        "minPieces": "Min Stukken",
+        "selectMinPieces": "Selecteer minimum stukken",
+        "noMinimum": "Geen minimum",
+        "maxPieces": "Max Stukken",
+        "selectMaxPieces": "Selecteer maximum stukken",
+        "noMaximum": "Geen maximum",
+        "difficulty": "Moeilijkheidsgraad",
+        "selectDifficulty": "Selecteer moeilijkheidsgraad",
+        "allDifficulties": "Alle moeilijkheidsgraden",
+        "category": "Categorie",
+        "selectCategory": "Selecteer categorie",
+        "allCategories": "Alle categorieën",
+        "tags": "Tags",
+        "customRange": "Aangepast Bereik",
+        "min": "Min",
+        "max": "Max"
+      },
+      "puzzleDetails": "Puzzeldetails",
+      "metadata": "Metadata",
+      "created": "Aangemaakt",
+      "updated": "Bijgewerkt",
+      "actions": "Acties",
+      "addToFavorites": "Toevoegen aan Favorieten",
+      "notFound": "Puzzel niet gevonden"
+    }
+  },
+  "trades": {
+    "title": "Uitwisselingen",
+    "subtitle": "Beheer je ruilverzoeken en uitwisselingen",
+    "pending": "In Afwachting",
+    "accepted": "Geaccepteerd",
+    "declined": "Afgewezen",
+    "completed": "Voltooid",
+    "cancelled": "Geannuleerd",
+    "newRequest": "Nieuw Uitwisselingsverzoek",
+    "acceptExchange": "Uitwisseling Accepteren",
+    "declineExchange": "Uitwisseling Afwijzen",
+    "completeExchange": "Uitwisseling Voltooien",
+    "cancelExchange": "Uitwisseling Annuleren",
+    "incoming": "Inkomend",
+    "outgoing": "Uitgaand",
+    "allStatuses": "Alle Statussen",
+    "noExchanges": "Nog geen uitwisselingen",
+    "noExchangesDescription": "Begin met het bladeren door puzzels om je eerste ruilverzoek te maken",
+    "tradeRequest": "Uitwisselingsverzoek",
+    "yourRequest": "Jouw Verzoek",
+    "theyWant": "Zij Willen",
+    "youWant": "Jij Wilt",
+    "theyOffer": "Zij Bieden",
+    "youOffer": "Jij Biedt",
+    "from": "Van",
+    "to": "Naar",
+    "accept": "Accepteren",
+    "decline": "Afwijzen",
+    "cancel": "Annuleren",
+    "markComplete": "Markeren als Voltooid",
+    "message": "Bericht"
+  },
+  "reputation": {
+    "title": "Reputatie",
+    "subtitle": "Vertrouwenssignalen uit voltooide uitwisselingen.",
+    "leaveReview": "Laat een review achter",
+    "reviewed": "Beoordeeld",
+    "reviewDialogTitle": "Beoordeel je ruilpartner",
+    "reviewDialogDescription": "Beoordeel hoe de uitwisseling verliep. Je feedback bouwt vertrouwen op in de community.",
+    "reviewDialogDescriptionNamed": "Beoordeel hoe je uitwisseling met {name} verliep. Je feedback bouwt vertrouwen op in de community.",
+    "overallRating": "Algemene beoordeling",
+    "commentLabel": "Opmerking (optioneel)",
+    "commentPlaceholder": "Deel een paar woorden over de uitwisseling…",
+    "submitReview": "Review versturen",
+    "submitting": "Versturen…",
+    "cancel": "Annuleren",
+    "reviewSubmitted": "Bedankt! Je review is verstuurd.",
+    "averageRating": "Gemiddelde beoordeling",
+    "reviewCount": "{count, plural, =0 {Geen reviews} one {# review} other {# reviews}}",
+    "noReviewsYet": "Nog geen reviews",
+    "credibility": "Geloofwaardigheid",
+    "credibilityLevel": {
+      "low": "In opbouw",
+      "medium": "Gevestigd",
+      "high": "Vertrouwd"
+    },
+    "scores": {
+      "communication": "Communicatie",
+      "packaging": "Verpakking",
+      "condition": "Conditie",
+      "timeliness": "Tijdigheid"
+    },
+    "errors": {
+      "exchangeNotCompleted": "Deze uitwisseling is nog niet voltooid en kan niet worden beoordeeld.",
+      "duplicate": "Je hebt deze uitwisseling al beoordeeld.",
+      "selfReview": "Je kunt jezelf niet beoordelen.",
+      "notParticipant": "Je was geen partij bij deze uitwisseling.",
+      "invalidRating": "Geef een beoordeling tussen 1 en 5 sterren.",
+      "generic": "Je review kon niet worden verstuurd. Probeer het opnieuw."
+    }
+  },
+  "messages": {
+    "sendMessage": "Bericht Versturen",
+    "typeMessage": "Type je bericht...",
+    "noMessages": "Nog geen berichten",
+    "newMessage": "Nieuw Bericht"
+  },
+  "profile": {
+    "title": "Profiel",
+    "subtitle": "Beheer je account en voorkeuren",
+    "loading": "Profiel laden...",
+    "edit": "Profiel Bewerken",
+    "cancel": "Annuleren",
+    "editProfile": "Profiel Bewerken",
+    "username": "Gebruikersnaam",
+    "bio": "Bio",
+    "location": "Locatie",
+    "locationNotSet": "Locatie niet ingesteld",
+    "language": "Taal",
+    "memberSince": "Lid sinds",
+    "interests": "Interesses",
+    "recentActivity": "Recente Activiteit",
+    "recentActivityDescription": "Je laatste acties op JigSwap",
+    "addedPuzzle": "Een nieuwe puzzel toegevoegd",
+    "completedExchange": "Een uitwisseling voltooid",
+    "receivedReview": "Een beoordeling ontvangen",
+    "daysAgo": "dagen geleden",
+    "weekAgo": "week geleden",
+    "weeksAgo": "weken geleden",
+    "stats": "Statistieken",
+    "totalPuzzles": "Totaal Puzzels",
+    "availablePuzzles": "Beschikbare Puzzels",
+    "puzzlesOwned": "Puzzels in Bezit",
+    "tradesCompleted": "Uitwisselingen Voltooid",
+    "completedExchanges": "Voltooide Uitwisselingen",
+    "averageRating": "Gemiddelde Beoordeling",
+    "reviews": "Beoordelingen",
+    "trustLevel": "Vertrouwensniveau",
+    "trustLevelDescription": "Gebaseerd op voltooide uitwisselingen en beoordelingen",
+    "notFound": "Gebruiker niet gevonden"
+  },
+  "dashboard": {
+    "welcome": "Welkom terug",
+    "subtitle": "Hier is wat er gebeurt met je puzzelcollectie",
+    "stats": {
+      "totalPuzzles": "Totaal Puzzels",
+      "availablePuzzles": "Beschikbaar voor Uitwisseling",
+      "activeExchanges": "Actieve Uitwisselingen",
+      "completedExchanges": "Voltooide Uitwisselingen"
+    },
+    "quickActions": {
+      "title": "Snelle Acties",
+      "addPuzzle": "Nieuwe Puzzel Toevoegen",
+      "browsePuzzles": "Puzzels Bladeren",
+      "viewExchanges": "Uitwisselingen Bekijken",
+      "editProfile": "Profiel Bewerken"
+    },
+    "recentActivity": {
+      "title": "Recente Activiteit",
+      "noActivity": "Geen recente activiteit"
+    }
+  },
+  "browse": {
+    "title": "Puzzels Bladeren",
+    "subtitle": "Ontdek geweldige puzzels van de community",
+    "puzzlesFound": "puzzels gevonden",
+    "searchPlaceholder": "Zoek puzzels op titel, merk of beschrijving...",
+    "allCategories": "Alle Categorieën",
+    "allDifficulties": "Alle Moeilijkheidsgraden",
+    "allConditions": "Alle Condities",
+    "minPieces": "Min Stukken",
+    "maxPieces": "Max Stukken",
+    "clearFilters": "Filters Wissen",
+    "noPuzzlesFound": "Geen puzzels gevonden",
+    "tryDifferentFilters": "Probeer je zoekcriteria of filters aan te passen"
+  },
+  "footer": {
+    "tagline": "Legpuzzelruil toegankelijk en duurzaam maken voor iedereen.",
+    "about": "Over",
+    "privacy": "Privacy",
+    "terms": "Voorwaarden",
+    "contact": "Contact",
+    "description": "Het complete platform voor legpuzzelenthousiastelingen - beheer, ruil, verbind en groei."
+  },
+  "privacy": {
+    "title": "Privacybeleid",
+    "lastUpdated": "Laatst Bijgewerkt",
+    "introduction": "Dit Privacybeleid beschrijft hoe JigSwap ('wij', 'ons' of 'onze') uw persoonlijke informatie verzamelt, gebruikt en beschermt wanneer u ons legpuzzelruilplatform gebruikt.",
+    "effectiveDate": "20 juli 2025",
+    "informationWeCollect": {
+      "title": "Informatie die We Verzamelen",
+      "description": "We verzamelen informatie die u rechtstreeks aan ons verstrekt en informatie die we automatisch verzamelen wanneer u onze dienst gebruikt.",
+      "personalInformation": {
+        "title": "Persoonlijke Informatie",
+        "items": [
+          "Accountinformatie (naam, e-mailadres, gebruikersnaam)",
+          "Profielinformatie (bio, locatie, interesses)",
+          "Puzzelcollectiegegevens en foto's",
+          "Uitwisselingsgeschiedenis en communicatie",
+          "Beoordelingen en waarderingen die u verstrekt"
+        ]
+      },
+      "automaticallyCollected": {
+        "title": "Automatisch Verzamelde Informatie",
+        "items": [
+          "Apparaatinformatie (IP-adres, browsertype, besturingssysteem)",
+          "Gebruiksgegevens (bezochte pagina's, gebruikte functies, bestede tijd)",
+          "Analyticsgegevens (interactiepatronen, voorkeuren)",
+          "Technische logs en foutrapporten"
+        ]
+      }
+    },
+    "howWeUseInformation": {
+      "title": "How We Use Your Information",
+      "description": "We use the information we collect to provide, improve, and secure our services.",
+      "purposes": [
+        "Provide and maintain our puzzle trading platform",
+        "Process trades and facilitate exchanges between users",
+        "Personalize your experience and show relevant content",
+        "Send important service updates and notifications",
+        "Analyze usage patterns to improve our service",
+        "Prevent fraud and ensure platform security",
+        "Respond to your questions and support requests"
+      ]
+    },
+    "dataStorage": {
+      "title": "Data Storage and Hosting",
+      "description": "Your data is securely stored and managed by trusted third-party services:",
+      "convex": {
+        "title": "Convex",
+        "description": "Our primary database and backend services are hosted by Convex. They handle data storage, user authentication, and real-time features."
+      },
+      "vercel": {
+        "title": "Vercel",
+        "description": "Our web application is hosted on Vercel's infrastructure, which provides fast, reliable, and secure hosting services."
+      }
+    },
+    "analytics": {
+      "title": "Analytics and Tracking",
+      "description": "We use analytics to understand how our service is used and improve user experience.",
+      "posthog": {
+        "title": "PostHog Analytics",
+        "description": "We use PostHog to collect anonymous usage analytics. This helps us understand user behavior and improve our platform. PostHog data is used solely for service improvement and is not sold to third parties."
+      },
+      "noAdvertising": "We do not use your data for advertising purposes. Your information will never be sold to advertisers or third parties for marketing purposes."
+    },
+    "dataSharing": {
+      "title": "Data Sharing and Third Parties",
+      "description": "We are committed to protecting your privacy and do not sell your personal information.",
+      "noSale": "We do not sell, rent, or trade your personal information to third parties for advertising or marketing purposes.",
+      "limitedSharing": "We may share your information only in these limited circumstances:",
+      "circumstances": [
+        "With your explicit consent",
+        "To comply with legal obligations",
+        "To protect our rights and prevent fraud",
+        "With service providers who assist in platform operations (under strict confidentiality agreements)"
+      ]
+    },
+    "dataSecurity": {
+      "title": "Data Security",
+      "description": "We implement appropriate security measures to protect your personal information:",
+      "measures": [
+        "Encryption of data in transit and at rest",
+        "Regular security audits and updates",
+        "Access controls and authentication",
+        "Secure hosting infrastructure"
+      ]
+    },
+    "yourRights": {
+      "title": "Your Rights and Choices",
+      "description": "You have control over your personal information:",
+      "rights": [
+        "Access and review your personal data",
+        "Update or correct your information",
+        "Delete your account and associated data",
+        "Opt out of certain data collection",
+        "Export your data in a portable format",
+        "Contact us with privacy concerns"
+      ]
+    },
+    "cookies": {
+      "title": "Cookies and Tracking",
+      "description": "We use cookies and similar technologies to enhance your experience:",
+      "types": [
+        "Essential cookies for platform functionality",
+        "Analytics cookies to understand usage patterns",
+        "Preference cookies to remember your settings"
+      ],
+      "control": "You can control cookie settings through your browser preferences."
+    },
+    "cookieConsent": {
+      "title": "We use cookies",
+      "description": "We use cookies to ensure you get the best experience on our website. For more information on how we use cookies, please see our cookie policy.",
+      "acceptText": "Accept",
+      "declineText": "Decline",
+      "learnMoreText": "Learn more",
+      "acceptanceText": "By clicking \"Accept\", you agree to our use of cookies."
+    },
+    "children": {
+      "title": "Children's Privacy",
+      "description": "Our service is not intended for children under 13. We do not knowingly collect personal information from children under 13."
+    },
+    "international": {
+      "title": "International Data Transfers",
+      "description": "Your data may be processed in countries other than your own. We ensure appropriate safeguards are in place to protect your information."
+    },
+    "changes": {
+      "title": "Changes to This Policy",
+      "description": "We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new policy on our website and updating the 'Last Updated' date."
+    },
+    "contact": {
+      "title": "Contact Us",
+      "description": "If you have any questions about this Privacy Policy or our data practices, please contact us:",
+      "email": "Email",
+      "emailAddress": "privacy@jigswap.site",
+      "questions": "We're committed to transparency and will respond to your privacy inquiries promptly."
+    }
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "lastUpdated": "Last Updated",
+    "introduction": "These Terms of Service ('Terms') govern your use of JigSwap, our jigsaw puzzle trading platform. By using our service, you agree to these terms.",
+    "effectiveDate": "July 20, 2025",
+    "acceptance": {
+      "title": "Acceptance of Terms",
+      "description": "By accessing or using JigSwap, you agree to be bound by these Terms. If you disagree with any part of these terms, you may not access our service."
+    },
+    "serviceDescription": {
+      "title": "Service Description",
+      "description": "JigSwap is a platform that enables users to trade, exchange, and manage jigsaw puzzles. Our service includes:",
+      "features": [
+        "Puzzle collection management and tracking",
+        "Trading and exchange functionality",
+        "Community features and reviews",
+        "Analytics and progress tracking"
+      ]
+    },
+    "userAccounts": {
+      "title": "User Accounts",
+      "description": "To use certain features of our service, you must create an account. You are responsible for:",
+      "responsibilities": [
+        "Maintaining the security of your account",
+        "Providing accurate and complete information",
+        "Notifying us of any unauthorized use",
+        "Being at least 13 years old to use the service"
+      ]
+    },
+    "userConduct": {
+      "title": "User Conduct",
+      "description": "You agree to use our service responsibly and in accordance with these terms:",
+      "prohibitedTitle": "Prohibited Activities:",
+      "expectedTitle": "Expected Behavior:",
+      "prohibited": [
+        "Violating any applicable laws or regulations",
+        "Infringing on intellectual property rights",
+        "Harassing or harming other users",
+        "Attempting to gain unauthorized access to our systems",
+        "Using the service for commercial purposes without permission"
+      ],
+      "expected": [
+        "Treating other users with respect",
+        "Providing accurate information about puzzles",
+        "Honoring trade agreements and commitments",
+        "Reporting suspicious or inappropriate behavior"
+      ]
+    },
+    "trading": {
+      "title": "Trading and Exchanges",
+      "description": "Our platform facilitates puzzle trading between users. By participating in trades, you agree to:",
+      "agreements": [
+        "Accurately describe puzzle condition and completeness",
+        "Honor agreed-upon trade terms",
+        "Communicate promptly and honestly",
+        "Resolve disputes amicably when possible"
+      ],
+      "disclaimer": "JigSwap acts as a facilitator for trades but is not responsible for the quality, condition, or completeness of traded puzzles. Users trade at their own risk."
+    },
+    "intellectualProperty": {
+      "title": "Intellectual Property",
+      "description": "Our service and its original content, features, and functionality are owned by JigSwap and are protected by international copyright, trademark, and other intellectual property laws."
+    },
+    "privacy": {
+      "title": "Privacy",
+      "description": "Your privacy is important to us. Please review our Privacy Policy, which also governs your use of the service."
+    },
+    "termination": {
+      "title": "Account Termination",
+      "description": "We may terminate or suspend your account immediately, without prior notice, for any reason, including breach of these Terms."
+    },
+    "disclaimer": {
+      "title": "Disclaimer of Warranties",
+      "description": "The service is provided 'as is' without warranties of any kind. We do not guarantee that the service will be uninterrupted or error-free."
+    },
+    "limitation": {
+      "title": "Limitation of Liability",
+      "description": "JigSwap shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of the service."
+    },
+    "changes": {
+      "title": "Changes to Terms",
+      "description": "We reserve the right to modify these terms at any time. We will notify users of any material changes by posting the new terms on our website."
+    },
+    "contact": {
+      "title": "Contact Information",
+      "description": "If you have any questions about these Terms of Service, please contact us:",
+      "email": "Email",
+      "emailAddress": "legal@jigswap.site",
+      "questions": "We're committed to transparency and will respond to your inquiries promptly."
+    }
+  },
+  "about": {
+    "title": "Over JigSwap",
+    "subtitle": "Het complete platform voor legpuzzelenthousiastelingen",
+    "introduction": "JigSwap is meer dan alleen een puzzelruilplatform. We bouwen een community waar puzzelenthousiastelingen kunnen verbinden, delen en hun passie voor legpuzzels op een duurzame manier kunnen laten groeien.",
+    "mission": {
+      "title": "Onze Missie",
+      "description": "We geloven dat puzzels meerdere levens zouden moeten hebben. Onze missie is om een duurzaam ecosysteem te creëren waar puzzelenthousiastelingen hun voltooide puzzels kunnen delen met anderen, nieuwe uitdagingen kunnen ontdekken en betekenisvolle connecties kunnen opbouwen binnen de community."
+    },
+    "vision": {
+      "title": "Onze Visie",
+      "description": "We voorzien een wereld waar elke puzzelenthousiasteling toegang heeft tot een eindeloze verscheidenheid aan puzzels zonder de milieueffecten van constante nieuwe aankopen. Een wereld waar de vreugde van puzzelen wordt gedeeld en gevierd over grenzen en culturen heen."
+    },
+    "values": {
+      "title": "Onze Waarden",
+      "sustainability": {
+        "title": "Duurzaamheid",
+        "description": "We zijn toegewijd aan het verminderen van afval in de puzzelindustrie door hergebruik en delen van voltooide puzzels te bevorderen."
+      },
+      "community": {
+        "title": "Community",
+        "description": "We geloven in de kracht van community en het bevorderen van connecties tussen puzzelenthousiastelingen wereldwijd."
+      },
+      "transparency": {
+        "title": "Transparantie",
+        "description": "We werken met volledige transparantie in onze gegevenspraktijken en platformoperaties."
+      },
+      "accessibility": {
+        "title": "Toegankelijkheid",
+        "description": "We streven ernaar puzzelruil toegankelijk te maken voor iedereen, ongeacht locatie of economische achtergrond."
+      }
+    },
+    "story": {
+      "title": "Ons Verhaal",
+      "description": "JigSwap is ontstaan uit een eenvoudige familienoodzaak: we wilden gemakkelijk kunnen zien welke puzzels onze vrienden en familie bezaten zodat we ze konden ruilen. Voltooide puzzels staan vaak op planken, nemen ruimte in terwijl anderen zoeken naar nieuwe uitdagingen. We zagen een kans om een platform te creëren dat niet alleen dit probleem oplost, maar ook een community bouwt rond de gedeelde liefde voor puzzelen.",
+      "founded": "Opgericht in 2025 als een familieproject, is JigSwap gegroeid van een eenvoudig idee naar een bloeiende community van puzzelenthousiastelingen. Ons platform combineert moderne technologie met de tijdloze vreugde van legpuzzels, wat een ervaring creëert die zowel nostalgisch als innovatief is."
+    },
+    "team": {
+      "title": "Het Team",
+      "description": "JigSwap is gebouwd door een familie van puzzelenthousiastelingen, voor puzzelenthousiastelingen. We begonnen dit als een project om onze eigen behoefte aan het delen van puzzels met vrienden en familie op te lossen.",
+      "passion": "We zijn gepassioneerd over het creëren van een platform dat de puzzelcommunity dient terwijl we duurzame praktijken bevorderen in de hobby die we allemaal liefhebben."
+    },
+    "technology": {
+      "title": "Technologie",
+      "description": "Gebouwd met moderne webtechnologieën, biedt JigSwap een naadloze ervaring voor het beheren van collecties, bijhouden van voltooiingen en faciliteren van ruil.",
+      "features": [
+        "Real-time updates en berichten",
+        "Geavanceerd zoeken en filteren",
+        "Veilige authenticatie en gegevensbescherming",
+        "Mobiel-responsief ontwerp",
+        "Internationalisatie ondersteuning"
+      ]
+    },
+    "community": {
+      "title": "Doe Mee met Onze Community",
+      "description": "Of je nu een casual puzzelaar bent of een toegewijde enthousiasteling, JigSwap heeft iets voor jou. Doe mee met duizenden gebruikers die al ruilen, verbinden en hun puzzelcollecties laten groeien.",
+      "getStarted": "Klaar om je puzzelreis te beginnen? Maak een account aan en begin met het verkennen van de wereld van duurzame puzzelruil."
+    }
+  },
+  "contact": {
+    "title": "Neem Contact Op",
+    "subtitle": "We horen graag van je",
+    "introduction": "Heb je vragen, suggesties of wil je gewoon hallo zeggen? We zijn hier om te helpen en horen graag van je. Ons team is toegewijd aan het leveren van uitstekende ondersteuning aan de JigSwap community.",
+    "waysToContact": {
+      "title": "Manieren om Contact Op te Nemen",
+      "description": "Kies de methode die het beste voor je werkt. We reageren meestal binnen 24 uur tijdens werkdagen."
+    },
+    "email": {
+      "title": "E-mail Ondersteuning",
+      "description": "Voor algemene vragen, ondersteuningsvragen of feedback:",
+      "address": "hello@jigswap.site",
+      "responseTime": "We reageren meestal binnen 24 uur"
+    },
+    "support": {
+      "title": "Technische Ondersteuning",
+      "description": "Voor technische problemen, bugrapporten of functieverzoeken:",
+      "address": "support@jigswap.site",
+      "responseTime": "We streven ernaar binnen 12 uur te reageren voor urgente problemen"
+    },
+    "privacy": {
+      "title": "Privacy & Juridisch",
+      "description": "Voor privacyzorgen of juridische zaken:",
+      "address": "privacy@jigswap.site",
+      "responseTime": "We reageren op alle privacyvragen binnen 48 uur"
+    },
+    "business": {
+      "title": "Zakelijke Vragen",
+      "description": "Voor partnerschappen, samenwerkingen of zakelijke kansen:",
+      "address": "business@jigswap.site",
+      "responseTime": "We nemen binnen 2-3 werkdagen contact met je op"
+    },
+    "faq": {
+      "title": "Veelgestelde Vragen",
+      "description": "Voordat je contact opneemt, vind je mogelijk antwoorden op veelgestelde vragen in onze FAQ sectie.",
+      "link": "Bekijk onze FAQ",
+      "topics": [
+        "Hoe te beginnen met JigSwap",
+        "Het ruilproces begrijpen",
+        "Account en profielbeheer",
+        "Privacy en gegevensbeveiliging",
+        "Community richtlijnen"
+      ]
+    },
+    "feedback": {
+      "title": "Feedback & Suggesties",
+      "description": "We zijn altijd op zoek naar manieren om JigSwap te verbeteren. Je feedback helpt ons het platform beter te maken voor iedereen.",
+      "types": [
+        "Functieverzoeken en ideeën",
+        "Gebruikerservaring feedback",
+        "Bugrapporten en technische problemen",
+        "Community suggesties",
+        "Algemene platform feedback"
+      ]
+    },
+    "response": {
+      "title": "Wat te Verwachten",
+      "description": "Wanneer je contact met ons opneemt, kun je het volgende verwachten:",
+      "expectations": [
+        "Bevestiging van je bericht binnen 24 uur",
+        "Gedetailleerd antwoord van ons team",
+        "Opvolging als aanvullende informatie nodig is",
+        "Escalatie naar de juiste teamleden indien nodig"
+      ]
+    }
+  },
+  "callToAction": {
+    "title": "Klaar om Je Puzzelervaring te Transformeren?",
+    "description": "Doe mee met duizenden puzzelenthousiastelingen die al hun collecties beheren, puzzels ruilen en verbinden met de community op JigSwap",
+    "startJourney": "Start Je Puzzelreis",
+    "goToDashboard": "Ga naar Dashboard"
+  },
+  "collections": {
+    "myCollections": "Mijn Collecties",
+    "organizePuzzles": "Organiseer je puzzels in collecties",
+    "createCollection": "Collectie Maken",
+    "createCollectionDescription": "Maak een nieuwe collectie om je puzzels te organiseren",
+    "editCollection": "Collectie Bewerken",
+    "editCollectionDescription": "Update je collectiedetails",
+    "noCollections": "Geen Collecties",
+    "createFirstCollection": "Maak je eerste collectie om te beginnen",
+    "collectionNamePlaceholder": "Voer collectienaam in",
+    "descriptionPlaceholder": "Voer collectiebeschrijving in",
+    "name": "Naam",
+    "description": "Beschrijving",
+    "visibility": "Zichtbaarheid",
+    "private": "Privé",
+    "public": "Openbaar",
+    "icon": "Pictogram",
+    "color": "Kleur",
+    "create": "Maken",
+    "save": "Opslaan",
+    "puzzles": "puzzels",
+    "default": "Standaard",
+    "addPuzzles": "Puzzels Toevoegen",
+    "addPuzzlesToCollection": "Puzzels Toevoegen aan Collectie",
+    "selectPuzzlesToAdd": "Selecteer puzzels om toe te voegen aan collectie",
+    "noAvailablePuzzles": "Geen beschikbare puzzels",
+    "allPuzzlesInCollection": "Al je puzzels zijn al in deze collectie of komen overeen met je zoekopdracht",
+    "backToCollection": "Terug naar Collectie",
+    "availablePuzzles": "beschikbare puzzels",
+    "addPuzzleToCollection": "Puzzel toevoegen aan collectie",
+    "removePuzzleFromCollection": "Puzzel verwijderen uit collectie",
+    "collectionNotFound": "Collectie niet gevonden",
+    "backToCollections": "Terug naar Collecties",
+    "manageCollections": "Collecties Beheren",
+    "notFound": "Collectie niet gevonden"
+  },
+  "notifications": {
+    "title": "Meldingen",
+    "subtitle": "Blijf op de hoogte van ruilen, beoordelingen en mijlpalen.",
+    "bell": "Meldingen",
+    "unreadCount": "{count, plural, =0 {Geen ongelezen meldingen} one {# ongelezen melding} other {# ongelezen meldingen}}",
+    "recent": "Recent",
+    "markAllRead": "Alles markeren als gelezen",
+    "markRead": "Markeren als gelezen",
+    "allRead": "Helemaal bij",
+    "markedAllRead": "{count, plural, =0 {Niets te markeren} one {# melding gemarkeerd als gelezen} other {# meldingen gemarkeerd als gelezen}}",
+    "markError": "Kon de melding niet bijwerken. Probeer het opnieuw.",
+    "seeAll": "Alle meldingen bekijken",
+    "empty": "Nog geen meldingen",
+    "emptyHint": "Ruilactiviteit, beoordelingen en doelmijlpalen verschijnen hier.",
+    "unread": "Ongelezen",
+    "preferences": "Meldingsvoorkeuren",
+    "preferencesTitle": "Meldingsvoorkeuren",
+    "preferencesSubtitle": "Kies hoe je over elk soort activiteit op de hoogte wilt blijven.",
+    "preferencesUpdated": "Voorkeuren bijgewerkt",
+    "preferencesError": "Kon de voorkeur niet bijwerken. Probeer het opnieuw.",
+    "backToNotifications": "Terug naar meldingen",
+    "channelInApp": "In-app",
+    "channelEmail": "E-mail",
+    "channelPush": "Push",
+    "channelComingSoon": "Binnenkort",
+    "channelsNote": "In-app meldingen worden nu bezorgd. E-mail en push worden bewaard voor wanneer die kanalen live gaan.",
+    "notificationType": "Melding",
+    "types": {
+      "trade_request": "Ruilverzoeken",
+      "trade_accepted": "Ruil geaccepteerd",
+      "trade_declined": "Ruil geweigerd",
+      "trade_completed": "Ruil voltooid",
+      "trade_cancelled": "Ruil geannuleerd",
+      "exchange_proposed": "Ruil voorgesteld",
+      "exchange_disputed": "Ruilgeschil",
+      "message_received": "Nieuwe berichten",
+      "review_received": "Ontvangen beoordelingen",
+      "puzzle_favorited": "Puzzel favoriet gemaakt",
+      "puzzle_approved": "Puzzel goedgekeurd",
+      "puzzle_rejected": "Puzzel afgewezen",
+      "goal_achieved": "Doel behaald"
+    }
+  },
+  "solving": {
+    "title": "Oplossen",
+    "completions": {
+      "title": "Voltooiingen",
+      "subtitle": "Je oplosgeschiedenis van al je puzzels.",
+      "empty": "Nog geen voltooiingen",
+      "emptyHint": "Leg een oplossing vast vanuit een van je puzzels om je geschiedenis bij te houden.",
+      "inProgress": "Bezig",
+      "completed": "Voltooid",
+      "started": "Gestart {date}",
+      "finished": "Voltooid {date}",
+      "time": "{hours} u {minutes} m",
+      "timeMinutes": "{minutes} m",
+      "noTime": "Geen tijd vastgelegd",
+      "finish": "Oplossing afronden",
+      "edit": "Bewerken",
+      "editWindowClosed": "Deze voltooiing kan niet meer worden bewerkt (het venster van 24 uur is gesloten).",
+      "yourReview": "Jouw review",
+      "addReview": "Review toevoegen",
+      "editReview": "Review bewerken"
+    },
+    "logSolve": {
+      "trigger": "Oplossing vastleggen",
+      "title": "Oplossing vastleggen",
+      "description": "Leg een voltooiing vast voor {puzzle}.",
+      "startDate": "Startdatum",
+      "endDate": "Einddatum",
+      "endDateHint": "Laat leeg om deze oplossing als bezig te markeren.",
+      "hours": "Uren",
+      "minutes": "Minuten",
+      "timeLabel": "Oplostijd",
+      "notes": "Notities",
+      "notesPlaceholder": "Iets memorabels over deze oplossing?",
+      "submit": "Oplossing opslaan",
+      "saved": "Oplossing vastgelegd",
+      "savedInProgress": "Oplossing gestart",
+      "finished": "Oplossing afgerond",
+      "saveError": "Kon de oplossing niet opslaan. Probeer het opnieuw."
+    },
+    "review": {
+      "title": "Beoordeel deze puzzel",
+      "description": "Beoordeel de puzzel zelf, 1 tot 5 sterren.",
+      "rating": "Beoordeling",
+      "text": "Review",
+      "textPlaceholder": "Wat vond je van deze puzzel?",
+      "submit": "Review opslaan",
+      "saved": "Review opgeslagen",
+      "saveError": "Kon de review niet opslaan. Probeer het opnieuw.",
+      "ratingRequired": "Kies eerst een beoordeling."
+    },
+    "goals": {
+      "title": "Doelen",
+      "subtitle": "Stel voltooiingsdoelen in en volg je voortgang.",
+      "empty": "Nog geen doelen",
+      "emptyHint": "Maak een doel aan om naar een voltooiingsdoel toe te werken.",
+      "create": "Nieuw doel",
+      "createTitle": "Doel aanmaken",
+      "createDescription": "Stel een doelaantal voltooiingen in om naartoe te werken.",
+      "goalTitle": "Titel",
+      "goalTitlePlaceholder": "bijv. Los dit jaar 10 puzzels op",
+      "goalDescription": "Beschrijving",
+      "goalDescriptionPlaceholder": "Optionele details over dit doel",
+      "targetCompletions": "Doelaantal voltooiingen",
+      "targetDate": "Streefdatum",
+      "submit": "Doel aanmaken",
+      "created": "Doel aangemaakt",
+      "createError": "Kon het doel niet aanmaken. Probeer het opnieuw.",
+      "progress": "{current} van {target} voltooiingen",
+      "achieved": "Behaald",
+      "dueBy": "Vóór {date}"
+    }
+  },
+  "insights": {
+    "title": "Inzichten",
+    "subtitle": "Je puzzel- en ruilactiviteit in één oogopslag.",
+    "nav": "Inzichten",
+    "loading": "Je inzichten laden...",
+    "empty": "Nog geen gegevens — leg een oplossing vast om inzichten te zien.",
+    "stats": {
+      "completions": "Voltooiingen",
+      "solveTime": "Totale oplostijd",
+      "puzzlesOwned": "Puzzels in bezit",
+      "distinctDefinitions": "Unieke titels",
+      "collections": "Collecties",
+      "exchangesCompleted": "Voltooide ruilen",
+      "goals": "Doelen behaald",
+      "goalsValue": "{achieved} van {active} actief",
+      "ratingGiven": "Gem. gegeven beoordeling",
+      "ratingReceived": "Gem. ontvangen beoordeling",
+      "time": "{hours}u {minutes}m",
+      "timeMinutes": "{minutes}m",
+      "ratingNone": "—"
+    },
+    "trends": {
+      "title": "Voltooiingstrends",
+      "description": "Voltooide oplossingen per maand over de laatste 12 maanden.",
+      "count": "Voltooiingen",
+      "minutes": "Oplosminuten",
+      "empty": "Nog geen voltooide oplossingen."
+    },
+    "breakdown": {
+      "title": "Collectie-uitsplitsing",
+      "pieceCount": "Op aantal stukjes",
+      "difficulty": "Op moeilijkheid",
+      "brands": "Topmerken",
+      "condition": "Op conditie",
+      "count": "Puzzels",
+      "empty": "Voeg een puzzel toe aan je bibliotheek om uitsplitsingen te zien."
+    },
+    "trades": {
+      "title": "Ruilactiviteit",
+      "description": "Je ruilen per status.",
+      "count": "Ruilen",
+      "empty": "Nog geen ruilen.",
+      "status": {
+        "proposed": "Voorgesteld",
+        "accepted": "Geaccepteerd",
+        "completed": "Voltooid",
+        "declined": "Afgewezen",
+        "cancelled": "Geannuleerd",
+        "disputed": "Betwist"
+      }
+    },
+    "export": {
+      "title": "Mijn gegevens exporteren",
+      "description": "Download een JSON-kopie van je puzzels, oplossingen, collecties, doelen en ruilen.",
+      "button": "Mijn gegevens exporteren",
+      "preparing": "Voorbereiden...",
+      "success": "Je gegevens zijn gedownload.",
+      "error": "Kon je gegevens niet exporteren. Probeer het opnieuw.",
+      "capped": "Sommige lijsten zijn beperkt tot {limit} rijen per categorie."
+    }
+  },
+  "forms": {
+    "owned-puzzle-form": {
+      "title": "Nieuwe Puzzel Toevoegen",
+      "step1": {
+        "title": "Puzzelselectie",
+        "searchLabel": "Zoek naar bestaande puzzels",
+        "searchPlaceholder": "Zoek op titel, merk of aantal stukken...",
+        "createNew": "Nieuwe Puzzel Maken",
+        "suggestions": "Gevonden Puzzels",
+        "pieces": "stukken",
+        "createNewTitle": "Nieuwe Puzzel Maken",
+        "titleLabel": "Titel",
+        "titlePlaceholder": "Voer puzzeltitel in",
+        "descriptionLabel": "Beschrijving",
+        "descriptionPlaceholder": "Beschrijf je puzzel (optioneel)",
+        "brandLabel": "Merk",
+        "brandPlaceholder": "bijv. Ravensburger, Clementoni",
+        "pieceCountLabel": "Aantal Stukken",
+        "pieceCountPlaceholder": "Voer aantal stukken in",
+        "difficultyLabel": "Moeilijkheidsgraad",
+        "difficultyPlaceholder": "Selecteer moeilijkheidsgraad",
+        "difficulty": {
+          "easy": "Gemakkelijk",
+          "medium": "Gemiddeld",
+          "hard": "Moeilijk",
+          "expert": "Expert"
+        },
+        "tagsLabel": "Tags",
+        "tagsPlaceholder": "natuur, kleurrijk, uitdagend",
+        "selectedPuzzle": "Geselecteerde Puzzel"
+      },
+      "step2": {
+        "title": "Instantiedetails",
+        "conditionLabel": "Conditie",
+        "conditionPlaceholder": "Selecteer conditie",
+        "condition": {
+          "excellent": "Uitstekend",
+          "good": "Goed",
+          "fair": "Redelijk",
+          "poor": "Slecht"
+        },
+        "availableLabel": "Beschikbaar voor Uitwisseling",
+        "availableDescription": "Is deze puzzel beschikbaar voor ruil?",
+        "acquisitionDateLabel": "Verwervingsdatum",
+        "acquisitionDatePlaceholder": "Selecteer verwervingsdatum",
+        "notesLabel": "Notities",
+        "notesPlaceholder": "Eventuele aanvullende notities over deze puzzel"
+      },
+      "navigation": {
+        "previous": "Vorige",
+        "next": "Volgende",
+        "submit": "Puzzel Maken"
+      },
+      "actions": {
+        "submit": "Puzzel Maken",
+        "submitting": "Maken...",
+        "cancel": "Annuleren"
+      }
+    },
+    "puzzle-form": {
+      "loading": "Formulier laden...",
+      "formTitle": "Puzzeldetails",
+      "image": {
+        "label": "Afbeelding",
+        "placeholder": "Upload een afbeelding van de puzzel"
+      },
+      "title": {
+        "label": "Titel",
+        "placeholder": "Voer puzzeltitel in"
+      },
+      "description": {
+        "label": "Beschrijving",
+        "placeholder": "Beschrijf de puzzel (optioneel)"
+      },
+      "brand": {
+        "label": "Merk",
+        "placeholder": "bijv. Ravensburger, Clementoni"
+      },
+      "artist": {
+        "label": "Kunstenaar",
+        "placeholder": "bijv. Jan Jansen"
+      },
+      "series": {
+        "label": "Serie",
+        "placeholder": "bijv. Natuur Collectie"
+      },
+      "pieceCount": {
+        "label": "Aantal Stukken",
+        "placeholder": "Voer aantal stukken in",
+        "custom": "Aangepast"
+      },
+      "difficulty": {
+        "label": "Moeilijkheidsgraad",
+        "placeholder": "Selecteer moeilijkheidsgraad",
+        "easy": "Gemakkelijk",
+        "medium": "Gemiddeld",
+        "hard": "Moeilijk",
+        "expert": "Expert"
+      },
+      "category": {
+        "label": "Categorie",
+        "placeholder": "bijv. Landschap, Dieren, Kunst"
+      },
+      "ean": {
+        "label": "EAN",
+        "placeholder": "Voer 13-cijferige EAN in"
+      },
+      "upc": {
+        "label": "UPC",
+        "placeholder": "Voer 12-cijferige UPC in"
+      },
+      "modelNumber": {
+        "label": "Modelnummer",
+        "placeholder": "Voer modelnummer in"
+      },
+      "dimensions": {
+        "width": {
+          "label": "Breedte",
+          "placeholder": "Voer breedte in"
+        },
+        "height": {
+          "label": "Hoogte",
+          "placeholder": "Voer hoogte in"
+        },
+        "unit": {
+          "label": "Eenheid",
+          "placeholder": "Selecteer eenheid",
+          "cm": "cm",
+          "in": "inch"
+        }
+      },
+      "shape": {
+        "label": "Vorm",
+        "placeholder": "Selecteer puzzelvorm",
+        "rectangular": "Rechthoekig",
+        "panoramic": "Panoramisch",
+        "round": "Rond",
+        "shaped": "Vormpuzzel"
+      },
+      "advanced": {
+        "show": "Geavanceerd weergeven",
+        "hide": "Geavanceerd verbergen"
+      },
+      "tags": {
+        "label": "Tags",
+        "placeholder": "natuur, kleurrijk, uitdagend"
+      },
+      "actions": {
+        "submit": "Puzzel Opslaan",
+        "submitting": "Opslaan...",
+        "cancel": "Annuleren"
+      },
+      "errors": {
+        "submissionFailed": "Puzzel opslaan mislukt. Probeer het opnieuw.",
+        "networkError": "Netwerkfout. Controleer je verbinding."
+      }
+    },
+    "file-upload": {
+      "error": "Fout bij comprimeren van afbeelding. Selecteer een ander bestand.",
+      "compressing": "Comprimeren..."
+    }
+  }
+}
