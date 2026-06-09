@@ -11,7 +11,7 @@ import { gateway } from "@/gateway";
 import type { Id } from "@/gateway";
 import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
-import { StarInput } from "./star-input";
+import { StarRating } from "@/components/ui/star-rating";
 
 // A member's public reputation on their profile: a summary (avg stars, count, credibility hint)
 // plus the reviews they have RECEIVED, newest first, each with reviewer, overall + sub-scores,
@@ -63,7 +63,7 @@ export function ReputationSection({ memberId }: ReputationSectionProps) {
             <span className="text-3xl font-bold text-yellow-600">
               {profile.averageRating.toFixed(1)}
             </span>
-            <StarInput value={Math.round(profile.averageRating)} size="sm" />
+            <StarRating value={Math.round(profile.averageRating)} size="sm" />
           </div>
           <div className="text-sm text-muted-foreground">
             {t("reviewCount", { count: profile.reviewCount })}
@@ -89,7 +89,7 @@ export function ReputationSection({ memberId }: ReputationSectionProps) {
                 className="rounded-lg border bg-muted/30 p-4 space-y-3"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <StarInput value={review.rating} size="sm" />
+                  <StarRating value={review.rating} size="sm" />
                   <span className="text-xs text-muted-foreground">
                     {new Date(review.createdAt).toLocaleDateString()}
                   </span>
@@ -104,7 +104,7 @@ export function ReputationSection({ memberId }: ReputationSectionProps) {
                       <span className="text-muted-foreground">
                         {t(`scores.${key}`)}
                       </span>
-                      <StarInput value={review.categories[key]} size="sm" />
+                      <StarRating value={review.categories[key]} size="sm" />
                     </div>
                   ))}
                 </div>

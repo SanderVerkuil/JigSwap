@@ -20,7 +20,7 @@ import { CheckCircle, Star } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
-import { StarInput } from "./star-input";
+import { StarRating } from "@/components/ui/star-rating";
 
 // Post-exchange partner review. Keyed by the Exchange aggregateId (a string) and the OTHER
 // party's user id (derived by the caller). Self-fetches the caller's existing review so a
@@ -169,7 +169,7 @@ export function LeaveReviewDialog({
         <div className="space-y-5 py-2">
           <div className="space-y-1.5">
             <Label>{t("overallRating")}</Label>
-            <StarInput value={rating} onChange={setRating} label={t("overallRating")} />
+            <StarRating value={rating} onChange={setRating} label={t("overallRating")} />
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -178,7 +178,7 @@ export function LeaveReviewDialog({
                 <Label className="text-sm font-normal text-muted-foreground">
                   {t(`scores.${key}`)}
                 </Label>
-                <StarInput
+                <StarRating
                   size="sm"
                   value={scores[key]}
                   onChange={(v) =>
