@@ -10,12 +10,22 @@ import type { Doc, Id } from "../../_generated/dataModel";
 // ACL between the persisted `puzzles` row and the PuzzleDefinition aggregate. Schema shape
 // stops here and never ripples into the domain.
 
-// The insert/patch payload (the row minus Convex-managed `_id`/`_creationTime`).
-export type PuzzleRow = Omit<Doc<"puzzles">, "_id" | "_creationTime">;
+// The insert/patch payload (the row minus Convex-managed `_id`/`_creationTime`). The `category`
+// FK is excluded here because the mapper is pure and cannot resolve the real `adminCategories._id`
+// from the Catalog CatalogCategoryId — the repository resolves and supplies it.
+export type PuzzleRow = Omit<
+  Doc<"puzzles">,
+  "_id" | "_creationTime" | "category"
+>;
 
 // Row -> aggregate. The row MUST carry an aggregateId (only domain-written rows do); callers
-// guard for it before mapping. searchableText is a derived column, never read back into state.
-export const toDomain = (row: Doc<"puzzles">): PuzzleDefinition =>
+// guard for it before mapping. The `category` column is an `adminCategories._id`, so the
+// repository resolves it back to the CatalogCategoryId and passes it in — the mapper never
+// re-brands the raw FK as an aggregate id. searchableText is derived, never read back into state.
+export const toDomain = (
+  row: Doc<"puzzles">,
+  categoryAggregateId: CatalogCategoryId | undefined,
+): PuzzleDefinition =>
   PuzzleDefinition.rehydrate({
     id: toId<"PuzzleDefinitionId">(row.aggregateId as string),
     title: row.title,
@@ -30,10 +40,7 @@ export const toDomain = (row: Doc<"puzzles">): PuzzleDefinition =>
     dimensions: row.dimensions,
     shape: row.shape,
     difficulty: row.difficulty,
-    // The category column carries the CatalogCategoryId aggregate id as a string.
-    category: row.category
-      ? (toId<"CatalogCategoryId">(row.category as unknown as string) as CatalogCategoryId)
-      : undefined,
+    category: categoryAggregateId,
     tags: row.tags,
     image: row.image as unknown as string | undefined,
     status: row.status,
@@ -42,8 +49,9 @@ export const toDomain = (row: Doc<"puzzles">): PuzzleDefinition =>
     updatedAt: new Date(row.updatedAt),
   });
 
-// Aggregate -> row payload. Domain PuzzleDefinitionId becomes `aggregateId`; foreign id
-// strings are re-branded to Convex Ids for their columns. CRITICAL: searchableText is NOT in
+// Aggregate -> row payload (without the `category` FK, which the repository fills with the
+// resolved real `adminCategories._id`). Domain PuzzleDefinitionId becomes `aggregateId`; foreign
+// id strings are re-branded to Convex Ids for their columns. CRITICAL: searchableText is NOT in
 // toState() — it is a derived projection, so we materialise definition.searchableText() here.
 export const toRow = (definition: PuzzleDefinition): PuzzleRow => {
   const state: PuzzleDefinitionState = definition.toState();
@@ -61,10 +69,6 @@ export const toRow = (definition: PuzzleDefinition): PuzzleRow => {
     dimensions: state.dimensions,
     shape: state.shape,
     difficulty: state.difficulty,
-    // The CatalogCategoryId is persisted into the (typed-as-id) category column.
-    category: state.category
-      ? (state.category as unknown as Id<"adminCategories">)
-      : undefined,
     tags: state.tags ? [...state.tags] : undefined,
     image: state.image ? (state.image as unknown as Id<"_storage">) : undefined,
     // Materialise the derived search projection into the column on every write.

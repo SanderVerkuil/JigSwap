@@ -140,6 +140,38 @@ describe("catalog.submitPuzzleDefinition", () => {
       "InvalidBarcode",
     );
   });
+
+  // Regression: the `category` column is typed `v.id("adminCategories")`, so passing a raw
+  // CatalogCategoryId aggregateId would make Convex reject the write. The repository must resolve
+  // the real document id on write and map it back on read.
+  test("submits with a category, persisting the real id and round-tripping the aggregateId", async () => {
+    const t = convexTest(schema, modules);
+    await seedMember(t);
+    const categoryId = (await asAlice(t).mutation(
+      api.catalog.createCatalogCategory.createCatalogCategory,
+      { name: { en: "Animals", nl: "Dieren" }, sortOrder: 1 },
+    )) as string;
+    const realCategoryId = (await categoryRow(t, categoryId))?._id;
+
+    // No validator error despite passing the aggregateId (not a document id).
+    const id = await asAlice(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "Lions", pieceCount: 1000, category: categoryId },
+    );
+
+    // The stored FK is the genuine `adminCategories._id`, not the aggregateId.
+    const row = await puzzleRow(t, id as string);
+    expect(row?.category).toBe(realCategoryId);
+    expect(row?.category).not.toBe(categoryId);
+
+    // Round-trip: a domain re-load+save (via update) keeps the same resolved FK — proving the
+    // read path maps the FK back to the aggregateId the aggregate carries.
+    await asAlice(t).mutation(api.catalog.updatePuzzleDefinition.updatePuzzleDefinition, {
+      puzzleDefinitionId: id as string,
+      title: "Lions Reworked",
+    });
+    expect((await puzzleRow(t, id as string))?.category).toBe(realCategoryId);
+  });
 });
 
 // Helper: Alice submits a pending definition, returning the aggregateId.
