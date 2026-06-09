@@ -339,6 +339,135 @@ describe("library.deleteCollection", () => {
   });
 });
 
+describe("library.deleteCopy", () => {
+  test("deletes the owner's copy and cascades its collection memberships", async () => {
+    const t = convexTest(schema, modules);
+    const { puzzleAggregateId } = await seed(t);
+    const copyId = await acquireForAlice(t, puzzleAggregateId);
+    const collectionId = (await asAlice(t).mutation(
+      api.library.createCollection.createCollection,
+      { name: "Favorites" },
+    )) as string;
+    await asAlice(t).mutation(
+      api.library.addCopyToCollection.addCopyToCollection,
+      { collectionId, copyId },
+    );
+
+    await asAlice(t).mutation(api.library.deleteCopy.deleteCopy, { copyId });
+
+    // The row is gone and the membership rows are cleaned up with it (no orphans).
+    expect(await copyRow(t, copyId)).toBeNull();
+    const members = await t.run(async (ctx) =>
+      ctx.db.query("collectionMembers").collect(),
+    );
+    expect(members).toHaveLength(0);
+  });
+
+  test("a non-owner cannot delete the copy => NotOwner", async () => {
+    const t = convexTest(schema, modules);
+    const { puzzleAggregateId } = await seed(t);
+    const copyId = await acquireForAlice(t, puzzleAggregateId);
+    await expectConvexCode(
+      asBob(t).mutation(api.library.deleteCopy.deleteCopy, { copyId }),
+      "NotOwner",
+    );
+    // The copy survives a rejected delete.
+    expect(await copyRow(t, copyId)).not.toBeNull();
+  });
+
+  test("a copy reserved by an active exchange cannot be deleted => CopyReserved", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, puzzleAggregateId } = await seed(t);
+    const copyId = await acquireForAlice(t, puzzleAggregateId);
+    const row = await copyRow(t, copyId);
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("exchanges", {
+        aggregateId: crypto.randomUUID(),
+        initiatorId: bob,
+        recipientId: alice,
+        type: "trade",
+        requestedPuzzleId: row!._id as Id<"ownedPuzzles">,
+        status: "proposed",
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+    await expectConvexCode(
+      asAlice(t).mutation(api.library.deleteCopy.deleteCopy, { copyId }),
+      "CopyReserved",
+    );
+    expect(await copyRow(t, copyId)).not.toBeNull();
+  });
+});
+
+describe("library.updateCollection", () => {
+  test("renames the owner's collection", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const collectionId = (await asAlice(t).mutation(
+      api.library.createCollection.createCollection,
+      { name: "Favorites" },
+    )) as string;
+    await asAlice(t).mutation(api.library.updateCollection.updateCollection, {
+      collectionId,
+      name: "Top Picks",
+      description: "My best puzzles",
+    });
+    const row = await collectionRow(t, collectionId);
+    expect(row?.name).toBe("Top Picks");
+    expect(row?.description).toBe("My best puzzles");
+  });
+
+  test("renaming to an existing name => DuplicateCollectionName", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await asAlice(t).mutation(api.library.createCollection.createCollection, {
+      name: "Favorites",
+    });
+    const second = (await asAlice(t).mutation(
+      api.library.createCollection.createCollection,
+      { name: "Wishlist" },
+    )) as string;
+    await expectConvexCode(
+      asAlice(t).mutation(api.library.updateCollection.updateCollection, {
+        collectionId: second,
+        name: "Favorites",
+      }),
+      "DuplicateCollectionName",
+    );
+  });
+});
+
+describe("library.updateCopyDetails", () => {
+  test("applies notes and missing-piece count to the owner's copy", async () => {
+    const t = convexTest(schema, modules);
+    const { puzzleAggregateId } = await seed(t);
+    const copyId = await acquireForAlice(t, puzzleAggregateId);
+    await asAlice(t).mutation(api.library.updateCopyDetails.updateCopyDetails, {
+      copyId,
+      notes: "Two pieces nibbled by the dog",
+      missingPiecesCount: 2,
+    });
+    const row = await copyRow(t, copyId);
+    expect(row?.notes).toBe("Two pieces nibbled by the dog");
+    expect(row?.missingPiecesCount).toBe(2);
+  });
+
+  test("a non-owner cannot patch the details => NotOwner", async () => {
+    const t = convexTest(schema, modules);
+    const { puzzleAggregateId } = await seed(t);
+    const copyId = await acquireForAlice(t, puzzleAggregateId);
+    await expectConvexCode(
+      asBob(t).mutation(api.library.updateCopyDetails.updateCopyDetails, {
+        copyId,
+        notes: "hijack",
+      }),
+      "NotOwner",
+    );
+  });
+});
+
 describe("library.createPersonalCategory", () => {
   test("creates a category and enforces (owner, name) uniqueness", async () => {
     const t = convexTest(schema, modules);
