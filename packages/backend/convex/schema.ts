@@ -99,8 +99,24 @@ export default defineSchema({
 
   // Puzzle instances - individual copies that people own
   ownedPuzzles: defineTable({
+    // Library CopyId. Optional so legacy rows still validate; the domain-driven library
+    // functions set+use it, legacy puzzles.ts ignores it.
+    aggregateId: v.optional(v.string()),
+
     // --- Core Links ---
     puzzleId: v.id("puzzles"), // Renamed from puzzleId for clarity
+    // The Catalog PuzzleDefinitionId (aggregateId) the Copy instantiates. Held alongside the
+    // legacy puzzleId so the domain path references Catalog by aggregate id, not Convex _id.
+    puzzleDefinitionId: v.optional(v.string()),
+    // The cached Catalog snapshot (ACL) the Copy carries; refreshed via the snapshot provider.
+    snapshot: v.optional(
+      v.object({
+        title: v.string(),
+        brand: v.optional(v.string()),
+        pieceCount: v.number(),
+        thumbnail: v.optional(v.string()),
+      }),
+    ),
     ownerId: v.id("users"),
 
     // --- Condition ---
@@ -120,6 +136,9 @@ export default defineSchema({
       forSale: v.boolean(),
       forLend: v.boolean(),
     }),
+    // The SharingSetting's visibility axis (who can SEE the copy), orthogonal to the
+    // availability flags (what it can be USED for). Optional; legacy rows are unset.
+    visibility: v.optional(v.union(v.literal("private"), v.literal("visible"))),
     salePrice: v.optional(
       v.object({
         amount: v.number(),
@@ -137,6 +156,13 @@ export default defineSchema({
         v.literal("gift"),
       ),
     ),
+    // The Acquisition price the domain models but the legacy column lacked.
+    acquisitionPrice: v.optional(
+      v.object({
+        amount: v.number(),
+        currency: v.string(),
+      }),
+    ),
 
     // --- Timestamps ---
     createdAt: v.number(),
@@ -145,7 +171,8 @@ export default defineSchema({
     .index("by_owner", ["ownerId"])
     .index("by_puzzle", ["puzzleId"])
     // You might want a more complex index for finding available puzzles
-    .index("by_owner_and_availability", ["ownerId", "availability"]),
+    .index("by_owner_and_availability", ["ownerId", "availability"])
+    .index("by_aggregate_id", ["aggregateId"]),
 
   // This is a table for storing images of owned puzzles
   ownedPuzzleImages: defineTable({
@@ -179,6 +206,10 @@ export default defineSchema({
 
   // Named collections for organizing puzzles
   collections: defineTable({
+    // Library CollectionId. Optional so legacy rows still validate; the domain-driven library
+    // functions set+use it, legacy collections.ts ignores it.
+    aggregateId: v.optional(v.string()),
+
     userId: v.id("users"),
     name: v.string(),
     description: v.optional(v.string()),
@@ -186,13 +217,19 @@ export default defineSchema({
     color: v.optional(v.string()), // hex color code
     icon: v.optional(v.string()), // emoji or icon name
     isDefault: v.boolean(), // true for system collections like "Favorites"
+    // Wishlist variant: a wishlist references desired PuzzleDefinitionIds, a regular collection
+    // its members' CopyIds. Optional; legacy rows are regular collections.
+    isWishlist: v.optional(v.boolean()),
+    // Desired Catalog PuzzleDefinitionIds (aggregateIds) for the wishlist variant.
+    wishedDefinitions: v.optional(v.array(v.string())),
     personalNotes: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_user", ["userId"])
     .index("by_user_name", ["userId", "name"])
-    .index("by_visibility", ["visibility"]),
+    .index("by_visibility", ["visibility"])
+    .index("by_aggregate_id", ["aggregateId"]),
 
   // Collection membership - many-to-many relationship (now references ownedPuzzles)
   collectionMembers: defineTable({
@@ -230,6 +267,10 @@ export default defineSchema({
 
   // User-defined categories for organizing collections
   categories: defineTable({
+    // Library PersonalCategoryId. Optional so legacy rows still validate; the domain-driven
+    // library functions set+use it, legacy code ignores it.
+    aggregateId: v.optional(v.string()),
+
     userId: v.id("users"),
     name: v.string(),
     color: v.optional(v.string()), // hex color code
@@ -239,7 +280,8 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_user_name", ["userId", "name"]),
+    .index("by_user_name", ["userId", "name"])
+    .index("by_aggregate_id", ["aggregateId"]),
 
   // Admin-managed global categories with localization support
   adminCategories: defineTable({
