@@ -414,6 +414,9 @@ export default defineSchema({
     .index("by_created_at", ["createdAt"]),
 
   reviews: defineTable({
+    // PartnerReview aggregate identity. Optional so pre-existing rows still validate; the new
+    // Reputation functions set+use it (backfill stamps legacy rows). Legacy code ignores it.
+    aggregateId: v.optional(v.string()),
     exchangeId: v.id("exchanges"),
     reviewerId: v.id("users"),
     revieweeId: v.id("users"),
@@ -430,7 +433,24 @@ export default defineSchema({
     .index("by_reviewer", ["reviewerId"])
     .index("by_reviewee", ["revieweeId"])
     .index("by_exchange", ["exchangeId"])
-    .index("by_rating", ["rating"]),
+    .index("by_rating", ["rating"])
+    .index("by_aggregate_id", ["aggregateId"])
+    // Backs the one-review-per-reviewer-per-exchange uniqueness lookup.
+    .index("by_exchange_reviewer", ["exchangeId", "reviewerId"]),
+
+  // The per-member ReputationProfile projection: a running aggregate folded from received
+  // PartnerReviews. Kept consistent with `reviews` by the in-process publisher (live writes) and
+  // the backfill (historical rebuild). `ratingSum`/`reviewCount` retain enough to recompute the
+  // average exactly; `credibility` is the 0-1 confidence curve.
+  reputationProfiles: defineTable({
+    aggregateId: v.optional(v.string()),
+    memberId: v.id("users"),
+    ratingSum: v.number(),
+    reviewCount: v.number(),
+    averageRating: v.number(),
+    credibility: v.number(),
+    updatedAt: v.number(),
+  }).index("by_member", ["memberId"]),
 
   favorites: defineTable({
     userId: v.id("users"),
