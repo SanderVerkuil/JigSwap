@@ -101,6 +101,37 @@ const eslintConfig = [
       ],
     },
   },
+  // The TanStack Start app shares the same seam: it reaches Convex via @jigswap/gateway,
+  // never the generated API directly.
+  {
+    files: ["apps/start/src/**/*.{ts,tsx}"],
+    ignores: ["apps/start/src/routeTree.gen.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "**/_generated/api",
+                "**/_generated/dataModel",
+                "@jigswap/backend/convex/_generated/*",
+              ],
+              message: "Import Convex through @jigswap/gateway, not the generated API directly.",
+            },
+          ],
+        },
+      ],
+      // The Start app is not Next.js: its full HTML document legitimately renders
+      // <head>, and it has no Next pages/ dir, so disable the Next-only rules here.
+      "@next/next/no-head-element": "off",
+      "@next/next/no-html-link-for-pages": "off",
+    },
+  },
+  // The generated TanStack route tree is machine-written; never lint it.
+  {
+    ignores: ["apps/start/src/routeTree.gen.ts"],
+  },
 ];
 
 export default eslintConfig;
