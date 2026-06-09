@@ -14,13 +14,27 @@ export interface AcquireCopyDeps {
   readonly clock: Clock;
 }
 
-// Transaction script: fetch the Catalog snapshot via the ACL provider, mint the Copy
-// aggregate (which sets a private default sharing setting), persist, publish.
+// Transaction script: fetch the acquisition context via the ACL provider, authorise the member
+// against the definition's moderation status, then mint the Copy aggregate (which sets a private
+// default sharing setting), persist, publish.
 export const makeAcquireCopy =
   (deps: AcquireCopyDeps): AcquireCopy =>
   async (cmd: AcquireCopyCommand) => {
-    const snapshot = await deps.snapshots.getSnapshot(cmd.puzzleDefinitionId);
-    if (!snapshot) return err(LibraryApplicationError.snapshotUnavailable());
+    const context = await deps.snapshots.getAcquisitionContext(
+      cmd.puzzleDefinitionId,
+    );
+    if (!context)
+      return err(LibraryApplicationError.puzzleNotFound(cmd.puzzleDefinitionId));
+
+    // A definition is acquirable by a member iff it is approved OR the member submitted it —
+    // so a contributor can log their own copy of a not-yet-approved (pending/rejected) puzzle.
+    const isOwnSubmission = context.submitterId === cmd.ownerId;
+    if (context.status !== "approved" && !isOwnSubmission)
+      return err(
+        LibraryApplicationError.puzzleNotAcquirable(cmd.puzzleDefinitionId),
+      );
+
+    const snapshot = context.snapshot;
 
     const acquisition = cmd.acquisition
       ? Acquisition.create(cmd.acquisition)

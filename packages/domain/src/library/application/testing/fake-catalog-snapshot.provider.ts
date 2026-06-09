@@ -1,19 +1,34 @@
-import { CatalogSnapshot, PuzzleDefinitionId } from "../../domain";
-import { CatalogSnapshotProvider } from "../ports/out/catalog-snapshot.provider";
+import { CatalogSnapshot, OwnerId, PuzzleDefinitionId } from "../../domain";
+import {
+  CatalogSnapshotProvider,
+  PuzzleAcquisitionContext,
+  PuzzleApprovalStatus,
+} from "../ports/out/catalog-snapshot.provider";
 
-// Seedable in-memory CatalogSnapshotProvider. Tests register snapshots via `seed`; unknown
-// definitions read as null (simulating a Catalog miss).
+// Seedable in-memory CatalogSnapshotProvider. Tests register definitions via `seed` (status
+// defaults to "approved" so existing happy-path tests keep working); unknown definitions read as
+// null (simulating a Catalog miss).
 export class FakeCatalogSnapshotProvider implements CatalogSnapshotProvider {
-  private readonly snapshots = new Map<PuzzleDefinitionId, CatalogSnapshot>();
+  private readonly contexts = new Map<
+    PuzzleDefinitionId,
+    PuzzleAcquisitionContext
+  >();
 
-  seed(snapshot: CatalogSnapshot): this {
-    this.snapshots.set(snapshot.puzzleDefinitionId, snapshot);
+  seed(
+    snapshot: CatalogSnapshot,
+    options?: { status?: PuzzleApprovalStatus; submitterId?: OwnerId },
+  ): this {
+    this.contexts.set(snapshot.puzzleDefinitionId, {
+      snapshot,
+      status: options?.status ?? "approved",
+      submitterId: options?.submitterId ?? (snapshot.puzzleDefinitionId as unknown as OwnerId),
+    });
     return this;
   }
 
-  async getSnapshot(
+  async getAcquisitionContext(
     puzzleDefinitionId: PuzzleDefinitionId,
-  ): Promise<CatalogSnapshot | null> {
-    return this.snapshots.get(puzzleDefinitionId) ?? null;
+  ): Promise<PuzzleAcquisitionContext | null> {
+    return this.contexts.get(puzzleDefinitionId) ?? null;
   }
 }

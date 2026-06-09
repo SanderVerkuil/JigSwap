@@ -56,7 +56,7 @@ describe("makeAcquireCopy", () => {
   });
 
   it("fetches the snapshot, saves the copy, and publishes CopyAcquired", async () => {
-    snapshots.seed(snapshot());
+    snapshots.seed(snapshot(), { status: "approved", submitterId: bob });
     const result = await acquire()({
       ownerId: alice,
       puzzleDefinitionId: definitionId,
@@ -68,7 +68,7 @@ describe("makeAcquireCopy", () => {
   });
 
   it("holds the fetched snapshot on the saved copy", async () => {
-    snapshots.seed(snapshot());
+    snapshots.seed(snapshot(), { status: "approved", submitterId: bob });
     const result = await acquire()({
       ownerId: alice,
       puzzleDefinitionId: definitionId,
@@ -81,15 +81,50 @@ describe("makeAcquireCopy", () => {
     }
   });
 
-  it("rejects when the Catalog has no snapshot for the definition", async () => {
+  it("rejects when the Catalog has no definition for the id (PuzzleNotFound)", async () => {
     const result = await acquire()({
       ownerId: alice,
       puzzleDefinitionId: definitionId,
       condition: "good",
     });
     expect(result.isErr).toBe(true);
-    if (result.isErr) expect(result.error.code).toBe("SnapshotUnavailable");
+    if (result.isErr) expect(result.error.code).toBe("PuzzleNotFound");
     expect(events.published).toHaveLength(0);
+  });
+
+  it("lets a member acquire their OWN pending submission", async () => {
+    snapshots.seed(snapshot(), { status: "pending", submitterId: alice });
+    const result = await acquire()({
+      ownerId: alice,
+      puzzleDefinitionId: definitionId,
+      condition: "good",
+    });
+    expect(result.isOk).toBe(true);
+    expect(events.names()).toEqual(["CopyAcquired"]);
+  });
+
+  it("lets a member acquire their OWN rejected submission", async () => {
+    snapshots.seed(snapshot(), { status: "rejected", submitterId: alice });
+    const result = await acquire()({
+      ownerId: alice,
+      puzzleDefinitionId: definitionId,
+      condition: "good",
+    });
+    expect(result.isOk).toBe(true);
+    expect(events.names()).toEqual(["CopyAcquired"]);
+  });
+
+  it("refuses to acquire someone else's pending submission (PuzzleNotAcquirable)", async () => {
+    snapshots.seed(snapshot(), { status: "pending", submitterId: bob });
+    const result = await acquire()({
+      ownerId: alice,
+      puzzleDefinitionId: definitionId,
+      condition: "good",
+    });
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("PuzzleNotAcquirable");
+    expect(events.published).toHaveLength(0);
+    expect(copies.size()).toBe(0);
   });
 });
 

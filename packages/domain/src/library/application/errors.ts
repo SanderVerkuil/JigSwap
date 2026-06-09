@@ -1,5 +1,10 @@
 import { DomainError } from "../../shared-kernel";
-import { CollectionId, CopyId, PersonalCategoryId } from "../domain";
+import {
+  CollectionId,
+  CopyId,
+  PersonalCategoryId,
+  PuzzleDefinitionId,
+} from "../domain";
 
 // Orchestration-level failures the aggregates cannot express because they depend on the world
 // (other aggregates' state, repository lookups) rather than their own data. Like LibraryError,
@@ -12,7 +17,9 @@ export type LibraryApplicationErrorCode =
   | "DuplicateCollectionName"
   | "NotCopyOwner"
   | "CopyReserved"
-  | "SnapshotUnavailable";
+  | "SnapshotUnavailable"
+  | "PuzzleNotFound"
+  | "PuzzleNotAcquirable";
 
 export class LibraryApplicationError extends DomainError {
   override readonly name = "LibraryApplicationError";
@@ -78,6 +85,27 @@ export class LibraryApplicationError extends DomainError {
     return new LibraryApplicationError(
       "SnapshotUnavailable",
       "A Catalog snapshot could not be obtained for the puzzle definition",
+    );
+  }
+
+  // The Catalog has no definition with this id (so it cannot be acquired).
+  static puzzleNotFound(
+    puzzleDefinitionId: PuzzleDefinitionId,
+  ): LibraryApplicationError {
+    return new LibraryApplicationError(
+      "PuzzleNotFound",
+      `Puzzle definition ${puzzleDefinitionId} could not be found`,
+    );
+  }
+
+  // The definition exists but the member may not acquire it: it is not approved and the member
+  // is not its submitter. (A member may always acquire their own pending/rejected contribution.)
+  static puzzleNotAcquirable(
+    puzzleDefinitionId: PuzzleDefinitionId,
+  ): LibraryApplicationError {
+    return new LibraryApplicationError(
+      "PuzzleNotAcquirable",
+      `Puzzle definition ${puzzleDefinitionId} is not available to acquire`,
     );
   }
 }
