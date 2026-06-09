@@ -17,8 +17,15 @@ linkWorkspacePackages: true
 # Pin zod: @hookform/resolvers (react-hook-form) is incompatible with zod 4.4's types,
 # and a non-frozen install otherwise drifts the ^4.1.13 caret forward. Keep the version
 # the whole workspace is built and tested against.
+# Pin less: it's an optional CSS-preprocessor peer of vite (unused here); 4.5.1 added a
+# postinstall script that makes `pnpm install` exit non-zero, breaking Nx's pre-install.
+# Pin eslint-plugin-react-hooks: 7.1.1 (pulled transitively by eslint-config-next) adds a
+# `set-state-in-effect` rule that flags pre-existing, intentional setState-in-effect code
+# (useIsMobile, my-puzzles/add). Keep 7.0.1 so `nx lint @jigswap/web` stays 0/0.
 overrides:
   zod: 4.1.13
+  less: 4.4.0
+  eslint-plugin-react-hooks: 7.0.1
 
 onlyBuiltDependencies:
   - "@clerk/shared"
