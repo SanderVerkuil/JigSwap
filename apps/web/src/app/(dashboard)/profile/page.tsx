@@ -1,5 +1,6 @@
 "use client";
 
+import { ReputationSection } from "@/components/reputation/reputation-section";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -158,6 +159,9 @@ export default function ProfilePage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Public reputation: summary + received reviews, folded from completed exchanges. */}
+          <ReputationSection memberId={convexUser?._id} />
         </div>
 
         {/* Stats Sidebar */}
