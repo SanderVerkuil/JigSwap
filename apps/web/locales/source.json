@@ -477,6 +477,45 @@
     "markComplete": "Mark Complete",
     "message": "Message"
   },
+  "reputation": {
+    "title": "Reputation",
+    "subtitle": "Trust signals from completed exchanges.",
+    "leaveReview": "Leave a review",
+    "reviewed": "Reviewed",
+    "reviewDialogTitle": "Review your exchange partner",
+    "reviewDialogDescription": "Rate how the exchange went. Your feedback builds trust in the community.",
+    "reviewDialogDescriptionNamed": "Rate how your exchange with {name} went. Your feedback builds trust in the community.",
+    "overallRating": "Overall rating",
+    "commentLabel": "Comment (optional)",
+    "commentPlaceholder": "Share a few words about the exchange…",
+    "submitReview": "Submit review",
+    "submitting": "Submitting…",
+    "cancel": "Cancel",
+    "reviewSubmitted": "Thanks! Your review was submitted.",
+    "averageRating": "Average rating",
+    "reviewCount": "{count, plural, =0 {No reviews} one {# review} other {# reviews}}",
+    "noReviewsYet": "No reviews yet",
+    "credibility": "Credibility",
+    "credibilityLevel": {
+      "low": "Building",
+      "medium": "Established",
+      "high": "Trusted"
+    },
+    "scores": {
+      "communication": "Communication",
+      "packaging": "Packaging",
+      "condition": "Condition",
+      "timeliness": "Timeliness"
+    },
+    "errors": {
+      "exchangeNotCompleted": "This exchange isn't completed yet, so it can't be reviewed.",
+      "duplicate": "You've already reviewed this exchange.",
+      "selfReview": "You can't review yourself.",
+      "notParticipant": "You weren't a party to this exchange.",
+      "invalidRating": "Please give a rating between 1 and 5 stars.",
+      "generic": "Couldn't submit your review. Please try again."
+    }
+  },
   "messages": {
     "sendMessage": "Send Message",
     "typeMessage": "Type your message...",

@@ -1,5 +1,7 @@
 "use client";
 
+import { LeaveReviewDialog } from "@/components/reputation/leave-review-dialog";
+import { ReputationBadge } from "@/components/reputation/reputation-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -343,6 +345,14 @@ export default function ExchangesPage() {
                           ? `${t("from")} ${exchange.requester?.name}`
                           : `${t("to")} ${exchange.owner?.name}`}
                       </span>
+                      {/* Counterparty trust signal: the OTHER party relative to the viewer. */}
+                      <ReputationBadge
+                        memberId={
+                          exchange.requester?._id === convexUser?._id
+                            ? exchange.owner?._id
+                            : exchange.requester?._id
+                        }
+                      />
                     </div>
                   </div>
 
@@ -405,6 +415,25 @@ export default function ExchangesPage() {
                         <CheckCircle className="h-4 w-4" />
                         {t("markComplete")}
                       </Button>
+                    )}
+
+                    {/* Review the partner once the exchange is completed. Reviewee is the
+                        OTHER party relative to the viewer; the dialog itself hides the action
+                        when the viewer has already reviewed this exchange. */}
+                    {exchange.status === "completed" && (
+                      <LeaveReviewDialog
+                        exchangeId={exchange.aggregateId}
+                        revieweeId={
+                          exchange.requester?._id === convexUser?._id
+                            ? exchange.owner?._id
+                            : exchange.requester?._id
+                        }
+                        revieweeName={
+                          exchange.requester?._id === convexUser?._id
+                            ? exchange.owner?.name
+                            : exchange.requester?.name
+                        }
+                      />
                     )}
 
                     <Button

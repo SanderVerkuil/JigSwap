@@ -477,6 +477,45 @@
     "markComplete": "Markeren als Voltooid",
     "message": "Bericht"
   },
+  "reputation": {
+    "title": "Reputatie",
+    "subtitle": "Vertrouwenssignalen uit voltooide uitwisselingen.",
+    "leaveReview": "Laat een review achter",
+    "reviewed": "Beoordeeld",
+    "reviewDialogTitle": "Beoordeel je ruilpartner",
+    "reviewDialogDescription": "Beoordeel hoe de uitwisseling verliep. Je feedback bouwt vertrouwen op in de community.",
+    "reviewDialogDescriptionNamed": "Beoordeel hoe je uitwisseling met {name} verliep. Je feedback bouwt vertrouwen op in de community.",
+    "overallRating": "Algemene beoordeling",
+    "commentLabel": "Opmerking (optioneel)",
+    "commentPlaceholder": "Deel een paar woorden over de uitwisseling…",
+    "submitReview": "Review versturen",
+    "submitting": "Versturen…",
+    "cancel": "Annuleren",
+    "reviewSubmitted": "Bedankt! Je review is verstuurd.",
+    "averageRating": "Gemiddelde beoordeling",
+    "reviewCount": "{count, plural, =0 {Geen reviews} one {# review} other {# reviews}}",
+    "noReviewsYet": "Nog geen reviews",
+    "credibility": "Geloofwaardigheid",
+    "credibilityLevel": {
+      "low": "In opbouw",
+      "medium": "Gevestigd",
+      "high": "Vertrouwd"
+    },
+    "scores": {
+      "communication": "Communicatie",
+      "packaging": "Verpakking",
+      "condition": "Conditie",
+      "timeliness": "Tijdigheid"
+    },
+    "errors": {
+      "exchangeNotCompleted": "Deze uitwisseling is nog niet voltooid en kan niet worden beoordeeld.",
+      "duplicate": "Je hebt deze uitwisseling al beoordeeld.",
+      "selfReview": "Je kunt jezelf niet beoordelen.",
+      "notParticipant": "Je was geen partij bij deze uitwisseling.",
+      "invalidRating": "Geef een beoordeling tussen 1 en 5 sterren.",
+      "generic": "Je review kon niet worden verstuurd. Probeer het opnieuw."
+    }
+  },
   "messages": {
     "sendMessage": "Bericht Versturen",
     "typeMessage": "Type je bericht...",
