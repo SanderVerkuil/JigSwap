@@ -121,120 +121,60 @@ declare const messages: {
         "title": "📚 Personal Puzzle Library",
         "collectionManagement": {
           "title": "Collection Management",
-          "items": [
-            "Add puzzles with detailed information",
-            "Organize with custom categories & tags",
-            "Set visibility levels (private to tradeable)",
-            "Search and filter your collection"
-          ]
+          "items": ["Add puzzles with detailed information","Organize with custom categories & tags","Set visibility levels (private to tradeable)","Search and filter your collection"]
         },
         "completionTracking": {
           "title": "Completion Tracking",
-          "items": [
-            "Record start and completion times",
-            "Rate puzzles and add personal notes",
-            "Upload photos of completed puzzles",
-            "Track multiple completions"
-          ]
+          "items": ["Record start and completion times","Rate puzzles and add personal notes","Upload photos of completed puzzles","Track multiple completions"]
         },
         "personalAnalytics": {
           "title": "Personal Analytics",
-          "items": [
-            "View completion statistics",
-            "Analyze solving time trends",
-            "Set and track personal goals",
-            "Export your data"
-          ]
+          "items": ["View completion statistics","Analyze solving time trends","Set and track personal goals","Export your data"]
         }
       },
       "exchangeSystem": {
         "title": "🔄 Advanced Exchange System",
         "multipleExchangeTypes": {
           "title": "Multiple Exchange Types",
-          "items": [
-            "Lending with return agreements",
-            "Permanent swaps between users",
-            "Direct sales and auctions",
-            "Negotiable terms and conditions"
-          ]
+          "items": ["Lending with return agreements","Permanent swaps between users","Direct sales and auctions","Negotiable terms and conditions"]
         },
         "historyPreservation": {
           "title": "History Preservation",
-          "items": [
-            "Keep your completion records",
-            "Complete ownership tracking",
-            "Chain of custody for all puzzles",
-            "Condition tracking through exchanges"
-          ]
+          "items": ["Keep your completion records","Complete ownership tracking","Chain of custody for all puzzles","Condition tracking through exchanges"]
         },
         "exchangeManagement": {
           "title": "Exchange Management",
-          "items": [
-            "Real-time messaging during exchanges",
-            "Photo documentation of condition",
-            "Dispute resolution system",
-            "Exchange ratings and feedback"
-          ]
+          "items": ["Real-time messaging during exchanges","Photo documentation of condition","Dispute resolution system","Exchange ratings and feedback"]
         }
       },
       "community": {
         "title": "👥 Community & Social Features",
         "userProfiles": {
           "title": "User Profiles",
-          "items": [
-            "Showcase your collection",
-            "Display achievements and statistics",
-            "Follow other enthusiasts",
-            "Location-based discovery"
-          ]
+          "items": ["Showcase your collection","Display achievements and statistics","Follow other enthusiasts","Location-based discovery"]
         },
         "reviewsRatings": {
           "title": "Reviews & Ratings",
-          "items": [
-            "Write detailed puzzle reviews",
-            "Rate on multiple criteria",
-            "Vote on helpful reviews",
-            "See community opinions"
-          ]
+          "items": ["Write detailed puzzle reviews","Rate on multiple criteria","Vote on helpful reviews","See community opinions"]
         },
         "socialDiscovery": {
           "title": "Social Discovery",
-          "items": [
-            "Find users by location",
-            "Discover trending puzzles",
-            "Community discussions",
-            "Smart recommendations"
-          ]
+          "items": ["Find users by location","Discover trending puzzles","Community discussions","Smart recommendations"]
         }
       },
       "advanced": {
         "title": "⚡ Advanced Features",
         "conditionTracking": {
           "title": "Condition Tracking",
-          "items": [
-            "Document puzzle condition",
-            "Track changes over time",
-            "Photo documentation",
-            "Condition-based filtering"
-          ]
+          "items": ["Document puzzle condition","Track changes over time","Photo documentation","Condition-based filtering"]
         },
         "smartRecommendations": {
           "title": "Smart Recommendations",
-          "items": [
-            "AI-powered puzzle suggestions",
-            "Find similar users",
-            "Optimal exchange opportunities",
-            "Collaborative filtering"
-          ]
+          "items": ["AI-powered puzzle suggestions","Find similar users","Optimal exchange opportunities","Collaborative filtering"]
         },
         "notificationSystem": {
           "title": "Notification System",
-          "items": [
-            "Real-time exchange alerts",
-            "Goal achievement notifications",
-            "Community activity updates",
-            "Customizable preferences"
-          ]
+          "items": ["Real-time exchange alerts","Goal achievement notifications","Community activity updates","Customizable preferences"]
         }
       }
     }
@@ -612,36 +552,17 @@ declare const messages: {
       "description": "We collect information you provide directly to us and information we collect automatically when you use our service.",
       "personalInformation": {
         "title": "Personal Information",
-        "items": [
-          "Account information (name, email address, username)",
-          "Profile information (bio, location, interests)",
-          "Puzzle collection data and photos",
-          "Exchange history and communications",
-          "Reviews and ratings you provide"
-        ]
+        "items": ["Account information (name, email address, username)","Profile information (bio, location, interests)","Puzzle collection data and photos","Exchange history and communications","Reviews and ratings you provide"]
       },
       "automaticallyCollected": {
         "title": "Automatically Collected Information",
-        "items": [
-          "Device information (IP address, browser type, operating system)",
-          "Usage data (pages visited, features used, time spent)",
-          "Analytics data (interaction patterns, preferences)",
-          "Technical logs and error reports"
-        ]
+        "items": ["Device information (IP address, browser type, operating system)","Usage data (pages visited, features used, time spent)","Analytics data (interaction patterns, preferences)","Technical logs and error reports"]
       }
     },
     "howWeUseInformation": {
       "title": "How We Use Your Information",
       "description": "We use the information we collect to provide, improve, and secure our services.",
-      "purposes": [
-        "Provide and maintain our puzzle trading platform",
-        "Process trades and facilitate exchanges between users",
-        "Personalize your experience and show relevant content",
-        "Send important service updates and notifications",
-        "Analyze usage patterns to improve our service",
-        "Prevent fraud and ensure platform security",
-        "Respond to your questions and support requests"
-      ]
+      "purposes": ["Provide and maintain our puzzle trading platform","Process trades and facilitate exchanges between users","Personalize your experience and show relevant content","Send important service updates and notifications","Analyze usage patterns to improve our service","Prevent fraud and ensure platform security","Respond to your questions and support requests"]
     },
     "dataStorage": {
       "title": "Data Storage and Hosting",
@@ -669,43 +590,22 @@ declare const messages: {
       "description": "We are committed to protecting your privacy and do not sell your personal information.",
       "noSale": "We do not sell, rent, or trade your personal information to third parties for advertising or marketing purposes.",
       "limitedSharing": "We may share your information only in these limited circumstances:",
-      "circumstances": [
-        "With your explicit consent",
-        "To comply with legal obligations",
-        "To protect our rights and prevent fraud",
-        "With service providers who assist in platform operations (under strict confidentiality agreements)"
-      ]
+      "circumstances": ["With your explicit consent","To comply with legal obligations","To protect our rights and prevent fraud","With service providers who assist in platform operations (under strict confidentiality agreements)"]
     },
     "dataSecurity": {
       "title": "Data Security",
       "description": "We implement appropriate security measures to protect your personal information:",
-      "measures": [
-        "Encryption of data in transit and at rest",
-        "Regular security audits and updates",
-        "Access controls and authentication",
-        "Secure hosting infrastructure"
-      ]
+      "measures": ["Encryption of data in transit and at rest","Regular security audits and updates","Access controls and authentication","Secure hosting infrastructure"]
     },
     "yourRights": {
       "title": "Your Rights and Choices",
       "description": "You have control over your personal information:",
-      "rights": [
-        "Access and review your personal data",
-        "Update or correct your information",
-        "Delete your account and associated data",
-        "Opt out of certain data collection",
-        "Export your data in a portable format",
-        "Contact us with privacy concerns"
-      ]
+      "rights": ["Access and review your personal data","Update or correct your information","Delete your account and associated data","Opt out of certain data collection","Export your data in a portable format","Contact us with privacy concerns"]
     },
     "cookies": {
       "title": "Cookies and Tracking",
       "description": "We use cookies and similar technologies to enhance your experience:",
-      "types": [
-        "Essential cookies for platform functionality",
-        "Analytics cookies to understand usage patterns",
-        "Preference cookies to remember your settings"
-      ],
+      "types": ["Essential cookies for platform functionality","Analytics cookies to understand usage patterns","Preference cookies to remember your settings"],
       "control": "You can control cookie settings through your browser preferences."
     },
     "cookieConsent": {
@@ -748,51 +648,25 @@ declare const messages: {
     "serviceDescription": {
       "title": "Service Description",
       "description": "JigSwap is a platform that enables users to trade, exchange, and manage jigsaw puzzles. Our service includes:",
-      "features": [
-        "Puzzle collection management and tracking",
-        "Trading and exchange functionality",
-        "Community features and reviews",
-        "Analytics and progress tracking"
-      ]
+      "features": ["Puzzle collection management and tracking","Trading and exchange functionality","Community features and reviews","Analytics and progress tracking"]
     },
     "userAccounts": {
       "title": "User Accounts",
       "description": "To use certain features of our service, you must create an account. You are responsible for:",
-      "responsibilities": [
-        "Maintaining the security of your account",
-        "Providing accurate and complete information",
-        "Notifying us of any unauthorized use",
-        "Being at least 13 years old to use the service"
-      ]
+      "responsibilities": ["Maintaining the security of your account","Providing accurate and complete information","Notifying us of any unauthorized use","Being at least 13 years old to use the service"]
     },
     "userConduct": {
       "title": "User Conduct",
       "description": "You agree to use our service responsibly and in accordance with these terms:",
       "prohibitedTitle": "Prohibited Activities:",
       "expectedTitle": "Expected Behavior:",
-      "prohibited": [
-        "Violating any applicable laws or regulations",
-        "Infringing on intellectual property rights",
-        "Harassing or harming other users",
-        "Attempting to gain unauthorized access to our systems",
-        "Using the service for commercial purposes without permission"
-      ],
-      "expected": [
-        "Treating other users with respect",
-        "Providing accurate information about puzzles",
-        "Honoring trade agreements and commitments",
-        "Reporting suspicious or inappropriate behavior"
-      ]
+      "prohibited": ["Violating any applicable laws or regulations","Infringing on intellectual property rights","Harassing or harming other users","Attempting to gain unauthorized access to our systems","Using the service for commercial purposes without permission"],
+      "expected": ["Treating other users with respect","Providing accurate information about puzzles","Honoring trade agreements and commitments","Reporting suspicious or inappropriate behavior"]
     },
     "trading": {
       "title": "Trading and Exchanges",
       "description": "Our platform facilitates puzzle trading between users. By participating in trades, you agree to:",
-      "agreements": [
-        "Accurately describe puzzle condition and completeness",
-        "Honor agreed-upon trade terms",
-        "Communicate promptly and honestly",
-        "Resolve disputes amicably when possible"
-      ],
+      "agreements": ["Accurately describe puzzle condition and completeness","Honor agreed-upon trade terms","Communicate promptly and honestly","Resolve disputes amicably when possible"],
       "disclaimer": "JigSwap acts as a facilitator for trades but is not responsible for the quality, condition, or completeness of traded puzzles. Users trade at their own risk."
     },
     "intellectualProperty": {
@@ -871,13 +745,7 @@ declare const messages: {
     "technology": {
       "title": "Technology",
       "description": "Built with modern web technologies, JigSwap provides a seamless experience for managing collections, tracking completions, and facilitating trades.",
-      "features": [
-        "Real-time updates and messaging",
-        "Advanced search and filtering",
-        "Secure authentication and data protection",
-        "Mobile-responsive design",
-        "Internationalization support"
-      ]
+      "features": ["Real-time updates and messaging","Advanced search and filtering","Secure authentication and data protection","Mobile-responsive design","Internationalization support"]
     },
     "community": {
       "title": "Join Our Community",
@@ -921,34 +789,17 @@ declare const messages: {
       "title": "Frequently Asked Questions",
       "description": "Before reaching out, you might find answers to common questions in our FAQ section.",
       "link": "Check our FAQ",
-      "topics": [
-        "How to get started with JigSwap",
-        "Understanding the trading process",
-        "Account and profile management",
-        "Privacy and data security",
-        "Community guidelines"
-      ]
+      "topics": ["How to get started with JigSwap","Understanding the trading process","Account and profile management","Privacy and data security","Community guidelines"]
     },
     "feedback": {
       "title": "Feedback & Suggestions",
       "description": "We're always looking to improve JigSwap. Your feedback helps us make the platform better for everyone.",
-      "types": [
-        "Feature requests and ideas",
-        "User experience feedback",
-        "Bug reports and technical issues",
-        "Community suggestions",
-        "General platform feedback"
-      ]
+      "types": ["Feature requests and ideas","User experience feedback","Bug reports and technical issues","Community suggestions","General platform feedback"]
     },
     "response": {
       "title": "What to Expect",
       "description": "When you contact us, here's what you can expect:",
-      "expectations": [
-        "Acknowledgment of your message within 24 hours",
-        "Detailed response from our team",
-        "Follow-up if additional information is needed",
-        "Escalation to appropriate team members when necessary"
-      ]
+      "expectations": ["Acknowledgment of your message within 24 hours","Detailed response from our team","Follow-up if additional information is needed","Escalation to appropriate team members when necessary"]
     }
   },
   "callToAction": {
@@ -992,6 +843,49 @@ declare const messages: {
     "backToCollections": "Back to Collections",
     "manageCollections": "Manage Collections",
     "notFound": "Collection not found"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "Stay on top of trades, reviews, and milestones.",
+    "bell": "Notifications",
+    "unreadCount": "{count, plural, =0 {No unread notifications} one {# unread notification} other {# unread notifications}}",
+    "recent": "Recent",
+    "markAllRead": "Mark all as read",
+    "markRead": "Mark as read",
+    "allRead": "All caught up",
+    "markedAllRead": "{count, plural, =0 {Nothing to mark} one {# notification marked as read} other {# notifications marked as read}}",
+    "markError": "Could not update the notification. Please try again.",
+    "seeAll": "See all notifications",
+    "empty": "No notifications yet",
+    "emptyHint": "Trade activity, reviews, and goal milestones will show up here.",
+    "unread": "Unread",
+    "preferences": "Notification preferences",
+    "preferencesTitle": "Notification preferences",
+    "preferencesSubtitle": "Choose how you want to hear about each kind of activity.",
+    "preferencesUpdated": "Preferences updated",
+    "preferencesError": "Could not update the preference. Please try again.",
+    "backToNotifications": "Back to notifications",
+    "channelInApp": "In-app",
+    "channelEmail": "Email",
+    "channelPush": "Push",
+    "channelComingSoon": "Coming soon",
+    "channelsNote": "In-app notifications are delivered now. Email and push are stored for when those channels go live.",
+    "notificationType": "Notification",
+    "types": {
+      "trade_request": "Trade requests",
+      "trade_accepted": "Trade accepted",
+      "trade_declined": "Trade declined",
+      "trade_completed": "Trade completed",
+      "trade_cancelled": "Trade cancelled",
+      "exchange_proposed": "Exchange proposed",
+      "exchange_disputed": "Exchange disputed",
+      "message_received": "New messages",
+      "review_received": "Reviews received",
+      "puzzle_favorited": "Puzzle favorited",
+      "puzzle_approved": "Puzzle approved",
+      "puzzle_rejected": "Puzzle rejected",
+      "goal_achieved": "Goal achieved"
+    }
   },
   "solving": {
     "title": "Solving",

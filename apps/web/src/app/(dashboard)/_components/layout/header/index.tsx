@@ -1,6 +1,7 @@
 "use client";
 
 import { HeaderLogo } from "@/components/common/header-logo";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/ui/theme-toggle";
@@ -27,7 +28,8 @@ export function Header() {
             </Link>
           </div>
           {/* Top Navigation */}
-          <div className="flex-1 justify-end flex items-center space-x-4">
+          <div className="flex-1 justify-end flex items-center space-x-2">
+            <NotificationBell />
             <ModeToggle />
             <LanguageSwitcher />
           </div>
@@ -50,7 +52,8 @@ export function Header() {
           </Link>
         </div>
         {/* Top Navigation */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2">
+          <NotificationBell />
           <ModeToggle />
           <LanguageSwitcher />
         </div>
