@@ -35,6 +35,23 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle>Puzzle Moderation</CardTitle>
+            <CardDescription>
+              Review and approve or reject pending puzzle submissions
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link
+              href="/admin/moderation"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Review Submissions
+            </Link>
+          </CardContent>
+        </Card>
+
         {/* Add more admin cards here as needed */}
       </div>
     </div>
