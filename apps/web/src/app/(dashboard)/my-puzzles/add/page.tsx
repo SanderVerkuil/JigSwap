@@ -437,9 +437,11 @@ export default function AddPuzzlePage() {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-4">
                     {selectedPuzzle.image && (
-                      <img
+                      <Image
                         src={selectedPuzzle.image}
                         alt={selectedPuzzle.title}
+                        width={64}
+                        height={64}
                         className="w-16 h-16 rounded object-cover"
                       />
                     )}
