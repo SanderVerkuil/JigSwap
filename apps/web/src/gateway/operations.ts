@@ -140,6 +140,8 @@ export const gateway = {
     collectionBreakdown:
       api.insights.getCollectionBreakdown.getCollectionBreakdown,
     tradeActivity: api.insights.getTradeActivity.getTradeActivity,
+    // Downstream read-model: ranks approved catalog puzzles the member doesn't own from their taste.
+    recommendations: api.insights.getRecommendations.getRecommendations,
     exportUserData: api.insights.exportUserData.exportUserData,
   },
 
