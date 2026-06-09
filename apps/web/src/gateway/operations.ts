@@ -118,6 +118,19 @@ export const gateway = {
     myReviewForExchange: api.reputation.getMyReviewForExchange.getMyReviewForExchange,
   },
 
+  // Notifications: the per-member in-app inbox + delivery preferences. A pure subscriber context
+  // (events from other contexts produce rows); the UI only reads its own and toggles read/prefs.
+  // `markRead` takes the notification aggregateId, not the Convex _id.
+  notifications: {
+    list: api.notifications.listMyNotifications.listMyNotifications,
+    unreadCount: api.notifications.unreadCount.unreadCount,
+    markRead: api.notifications.markNotificationRead.markNotificationRead,
+    markAllRead: api.notifications.markAllRead.markAllRead,
+    preferences: api.notifications.getMyPreferences.getMyPreferences,
+    updatePreference:
+      api.notifications.updateNotificationPreference.updateNotificationPreference,
+  },
+
   // Insights: read-side aggregate stats across the platform.
   insights: {
     globalStats: api.users.getGlobalStats,
