@@ -10,6 +10,7 @@ import {
 import { CheckRole } from "@/components/utils/check-role/server";
 import {
   ArrowLeftRight,
+  BarChart3,
   Bell,
   CircleCheck,
   FolderOpen,
@@ -73,6 +74,11 @@ const getItems: () => Item[] = () => {
       title: "Goals",
       url: "/goals",
       icon: Target,
+    },
+    {
+      title: "Insights",
+      url: "/insights",
+      icon: BarChart3,
     },
     {
       title: "Exchanges",
