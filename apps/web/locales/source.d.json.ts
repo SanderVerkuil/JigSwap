@@ -959,6 +959,67 @@ declare const messages: {
       "dueBy": "Due by {date}"
     }
   },
+  "insights": {
+    "title": "Insights",
+    "subtitle": "Your puzzling and trading activity at a glance.",
+    "nav": "Insights",
+    "loading": "Loading your insights...",
+    "empty": "No data yet — log a solve to see your insights.",
+    "stats": {
+      "completions": "Completions",
+      "solveTime": "Total solve time",
+      "puzzlesOwned": "Puzzles owned",
+      "distinctDefinitions": "Distinct titles",
+      "collections": "Collections",
+      "exchangesCompleted": "Exchanges completed",
+      "goals": "Goals achieved",
+      "goalsValue": "{achieved} of {active} active",
+      "ratingGiven": "Avg rating given",
+      "ratingReceived": "Avg rating received",
+      "time": "{hours}h {minutes}m",
+      "timeMinutes": "{minutes}m",
+      "ratingNone": "—"
+    },
+    "trends": {
+      "title": "Completion trends",
+      "description": "Solves finished per month over the last 12 months.",
+      "count": "Completions",
+      "minutes": "Solve minutes",
+      "empty": "No finished solves yet."
+    },
+    "breakdown": {
+      "title": "Collection breakdown",
+      "pieceCount": "By piece count",
+      "difficulty": "By difficulty",
+      "brands": "Top brands",
+      "condition": "By condition",
+      "count": "Puzzles",
+      "empty": "Add a puzzle to your library to see breakdowns."
+    },
+    "trades": {
+      "title": "Trade activity",
+      "description": "Your exchanges by status.",
+      "count": "Exchanges",
+      "empty": "No exchanges yet.",
+      "status": {
+        "proposed": "Proposed",
+        "accepted": "Accepted",
+        "completed": "Completed",
+        "declined": "Declined",
+        "cancelled": "Cancelled",
+        "disputed": "Disputed"
+      }
+    },
+    "export": {
+      "title": "Export my data",
+      "description": "Download a JSON copy of your puzzles, solves, collections, goals and exchanges.",
+      "button": "Export my data",
+      "preparing": "Preparing...",
+      "success": "Your data has been downloaded.",
+      "error": "Could not export your data. Please try again.",
+      "capped": "Some lists were capped at {limit} rows per category."
+    }
+  },
   "forms": {
     "owned-puzzle-form": {
       "title": "Add New Puzzle",

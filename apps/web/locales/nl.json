@@ -1105,6 +1105,67 @@
       "dueBy": "Vóór {date}"
     }
   },
+  "insights": {
+    "title": "Inzichten",
+    "subtitle": "Je puzzel- en ruilactiviteit in één oogopslag.",
+    "nav": "Inzichten",
+    "loading": "Je inzichten laden...",
+    "empty": "Nog geen gegevens — leg een oplossing vast om inzichten te zien.",
+    "stats": {
+      "completions": "Voltooiingen",
+      "solveTime": "Totale oplostijd",
+      "puzzlesOwned": "Puzzels in bezit",
+      "distinctDefinitions": "Unieke titels",
+      "collections": "Collecties",
+      "exchangesCompleted": "Voltooide ruilen",
+      "goals": "Doelen behaald",
+      "goalsValue": "{achieved} van {active} actief",
+      "ratingGiven": "Gem. gegeven beoordeling",
+      "ratingReceived": "Gem. ontvangen beoordeling",
+      "time": "{hours}u {minutes}m",
+      "timeMinutes": "{minutes}m",
+      "ratingNone": "—"
+    },
+    "trends": {
+      "title": "Voltooiingstrends",
+      "description": "Voltooide oplossingen per maand over de laatste 12 maanden.",
+      "count": "Voltooiingen",
+      "minutes": "Oplosminuten",
+      "empty": "Nog geen voltooide oplossingen."
+    },
+    "breakdown": {
+      "title": "Collectie-uitsplitsing",
+      "pieceCount": "Op aantal stukjes",
+      "difficulty": "Op moeilijkheid",
+      "brands": "Topmerken",
+      "condition": "Op conditie",
+      "count": "Puzzels",
+      "empty": "Voeg een puzzel toe aan je bibliotheek om uitsplitsingen te zien."
+    },
+    "trades": {
+      "title": "Ruilactiviteit",
+      "description": "Je ruilen per status.",
+      "count": "Ruilen",
+      "empty": "Nog geen ruilen.",
+      "status": {
+        "proposed": "Voorgesteld",
+        "accepted": "Geaccepteerd",
+        "completed": "Voltooid",
+        "declined": "Afgewezen",
+        "cancelled": "Geannuleerd",
+        "disputed": "Betwist"
+      }
+    },
+    "export": {
+      "title": "Mijn gegevens exporteren",
+      "description": "Download een JSON-kopie van je puzzels, oplossingen, collecties, doelen en ruilen.",
+      "button": "Mijn gegevens exporteren",
+      "preparing": "Voorbereiden...",
+      "success": "Je gegevens zijn gedownload.",
+      "error": "Kon je gegevens niet exporteren. Probeer het opnieuw.",
+      "capped": "Sommige lijsten zijn beperkt tot {limit} rijen per categorie."
+    }
+  },
   "forms": {
     "owned-puzzle-form": {
       "title": "Nieuwe Puzzel Toevoegen",
