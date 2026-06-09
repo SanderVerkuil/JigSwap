@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DomainEvent, toId } from "../../shared-kernel";
 import { PuzzleDefinitionSubmitted } from "./events";
-import { PuzzleDefinitionId, SubmitterId } from "./ids";
+import { CatalogCategoryId, PuzzleDefinitionId, SubmitterId } from "./ids";
 import { PuzzleDefinition, SubmitPuzzleDefinitionProps } from "./puzzle-definition";
 
 const id = toId<"PuzzleDefinitionId">("pd1") as PuzzleDefinitionId;
@@ -142,6 +142,95 @@ describe("update", () => {
     expect(def.update({ barcodes: { upc: "bad" } }, LATER).isErr).toBe(true);
   });
 
+  it("trims and applies a valid title change", () => {
+    const def = submit({ title: "Old" });
+    const r = def.update({ title: "  New Title  " }, LATER);
+    expect(r.isOk).toBe(true);
+    expect(def.toState().title).toBe("New Title");
+  });
+
+  it("re-flattens validated barcodes into the state columns on update", () => {
+    const def = submit();
+    const r = def.update(
+      { barcodes: { ean: "4006381333931", modelNumber: "  RV-9  " } },
+      LATER,
+    );
+    expect(r.isOk).toBe(true);
+    const state = def.toState();
+    expect(state.ean).toBe("4006381333931");
+    expect(state.modelNumber).toBe("RV-9");
+    expect(state.upc).toBeUndefined();
+  });
+
+  // Updating with ONLY a UPC must clear ean/modelNumber to undefined via optional chaining
+  // (`validated.value.ean?.value`): replacing the whole barcode grouping, not merging it.
+  it("replaces the whole barcode grouping, clearing absent identifiers to undefined", () => {
+    const def = submit({
+      barcodes: { ean: "4006381333931", modelNumber: "RV-1" },
+    });
+    const r = def.update({ barcodes: { upc: "036000291452" } }, LATER);
+    expect(r.isOk).toBe(true);
+    const state = def.toState();
+    expect(state.upc).toBe("036000291452");
+    expect(state.ean).toBeUndefined();
+    expect(state.modelNumber).toBeUndefined();
+  });
+
+  // Omitting `barcodes` entirely must preserve the previously stored identifiers
+  // (the `barcodeFields` default object), not wipe them.
+  it("preserves stored barcodes when an update omits the barcodes field", () => {
+    const def = submit({ barcodes: { ean: "4006381333931" } });
+    def.update({ brand: "Anything" }, LATER);
+    expect(def.toState().ean).toBe("4006381333931");
+  });
+
+  it("applies a valid pieceCount change", () => {
+    const def = submit({ pieceCount: 100 });
+    expect(def.update({ pieceCount: 2000 }, LATER).isOk).toBe(true);
+    expect(def.toState().pieceCount).toBe(2000);
+  });
+
+  // Each descriptive field patches independently via `changes.X ?? state.X`; setting one from
+  // an UNSET baseline distinguishes `??` (keeps the new value) from `&&` (would drop it).
+  it("sets each previously-unset descriptive field from its change", () => {
+    const def = submit({
+      title: "Base",
+      tags: [],
+      // description / artist / series / dimensions / shape / difficulty / category / image
+      // are all left undefined so the ?? coalescing is exercised on an unset baseline.
+    });
+    def.update(
+      {
+        description: "A scene",
+        artist: "An Artist",
+        series: "A Series",
+        image: "ref://img",
+        dimensions: { width: 50, height: 70, unit: "cm" },
+        shape: "round",
+        difficulty: "hard",
+        category: toId<"CatalogCategoryId">("cat1"),
+      },
+      LATER,
+    );
+    const state = def.toState();
+    expect(state.description).toBe("A scene");
+    expect(state.artist).toBe("An Artist");
+    expect(state.series).toBe("A Series");
+    expect(state.image).toBe("ref://img");
+    expect(state.dimensions).toEqual({ width: 50, height: 70, unit: "cm" });
+    expect(state.shape).toBe("round");
+    expect(state.difficulty).toBe("hard");
+    expect(state.category).toBe("cat1");
+  });
+
+  it("preserves existing fields when a change omits them", () => {
+    const def = submit({ brand: "Keep", artist: "Keep Artist" });
+    def.update({ description: "added" }, LATER);
+    const state = def.toState();
+    expect(state.brand).toBe("Keep");
+    expect(state.artist).toBe("Keep Artist");
+  });
+
   it("leaves approval status untouched", () => {
     const def = submit();
     def.approve(NOW);
@@ -162,6 +251,24 @@ describe("searchableText (derived projection)", () => {
     expect(def.searchableText()).toBe(
       "Starry Night Ravensburger Van Gogh Masterpieces art night",
     );
+  });
+
+  it("omits the tags segment entirely when no tags are set", () => {
+    // tags left undefined exercises the `this.state.tags ?? []` fallback in searchableText.
+    const def = submit({ title: "Solo", brand: "Brand" });
+    expect(def.searchableText()).toBe("Solo Brand");
+  });
+
+  // An empty-string field is filtered out (length > 0, not >= 0): no stray separators appear.
+  it("excludes present-but-empty fields rather than emitting blank gaps", () => {
+    const def = submit({
+      title: "Title",
+      brand: "",
+      artist: "Artist",
+      series: "",
+      tags: ["", "tag"],
+    });
+    expect(def.searchableText()).toBe("Title Artist tag");
   });
 
   it("reflects updates and is never part of persisted state", () => {

@@ -54,6 +54,28 @@ describe("update", () => {
     expect(names(category.pullEvents())).toEqual(["CatalogCategoryUpdated"]);
   });
 
+  // The `??` coalescing keeps a provided value; setting name + description (the latter from an
+  // unset baseline) distinguishes `??` from `&&` (which would drop them).
+  it("applies a complete replacement name and a new description", () => {
+    const category = create(); // no description initially
+    const r = category.update(
+      {
+        name: { en: "Mountains", nl: "Bergen" },
+        description: { en: "Peaks", nl: "Toppen" },
+      },
+      LATER,
+    );
+    expect(r.isOk).toBe(true);
+    expect(category.toState().name).toEqual({ en: "Mountains", nl: "Bergen" });
+    expect(category.toState().description).toEqual({ en: "Peaks", nl: "Toppen" });
+  });
+
+  it("leaves the name unchanged when the patch omits it", () => {
+    const category = create();
+    category.update({ color: "#123456" }, LATER);
+    expect(category.toState().name).toEqual(name);
+  });
+
   it("rejects a replacement name that is incomplete", () => {
     const category = create();
     const r = category.update({ name: { en: "Only EN", nl: " " } }, LATER);
