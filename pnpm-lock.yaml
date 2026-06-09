@@ -74,8 +74,8 @@ importers:
         specifier: 2.7.0
         version: 2.7.0
       jsonc-eslint-parser:
-        specifier: ^2.4.2
-        version: 2.4.2
+        specifier: ^3.1.0
+        version: 3.1.0
       nx:
         specifier: 22.7.5
         version: 22.7.5(@swc-node/register@1.11.1(@swc/core@1.15.40(@swc/helpers@0.5.23))(@swc/types@0.1.26)(typescript@5.9.3))(@swc/core@1.15.40(@swc/helpers@0.5.23))
@@ -219,11 +219,11 @@ importers:
         specifier: ^1.2.9
         version: 1.2.9(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@vercel/analytics':
-        specifier: ^1.6.1
-        version: 1.6.1(next@16.2.7(@babel/core@7.29.7)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.100.0))(react@19.2.7)
+        specifier: ^2.0.1
+        version: 2.0.1(next@16.2.7(@babel/core@7.29.7)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.100.0))(react@19.2.7)
       '@vercel/speed-insights':
-        specifier: ^1.3.1
-        version: 1.3.1(next@16.2.7(@babel/core@7.29.7)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.100.0))(react@19.2.7)
+        specifier: ^2.0.0
+        version: 2.0.0(next@16.2.7(@babel/core@7.29.7)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.100.0))(react@19.2.7)
       badge:
         specifier: ^1.0.3
         version: 1.0.3
@@ -249,8 +249,8 @@ importers:
         specifier: ^0.3.0
         version: 0.3.0(react@19.2.7)(typescript@5.9.3)
       lucide-react:
-        specifier: ^0.577.0
-        version: 0.577.0(react@19.2.7)
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.7)
       negotiator:
         specifier: ^1.0.0
         version: 1.0.0
@@ -4229,12 +4229,13 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@vercel/analytics@1.6.1':
-    resolution: {integrity: sha512-oH9He/bEM+6oKlv3chWuOOcp8Y6fo6/PSro8hEkgCW3pu9/OiCXiUpRUogDh3Fs3LH2sosDrx8CxeOLBEE+afg==}
+  '@vercel/analytics@2.0.1':
+    resolution: {integrity: sha512-MTQG6V9qQrt1tsDeF+2Uoo5aPjqbVPys1xvnIftXSJYG2SrwXRHnqEvVoYID7BTruDz4lCd2Z7rM1BdkUehk2g==}
     peerDependencies:
       '@remix-run/react': ^2
       '@sveltejs/kit': ^1 || ^2
       next: '>= 13'
+      nuxt: '>= 3'
       react: ^18 || ^19 || ^19.0.0-rc
       svelte: '>= 4'
       vue: ^3
@@ -4246,6 +4247,8 @@ packages:
         optional: true
       next:
         optional: true
+      nuxt:
+        optional: true
       react:
         optional: true
       svelte:
@@ -4255,11 +4258,12 @@ packages:
       vue-router:
         optional: true
 
-  '@vercel/speed-insights@1.3.1':
-    resolution: {integrity: sha512-PbEr7FrMkUrGYvlcLHGkXdCkxnylCWePx7lPxxq36DNdfo9mcUjLOmqOyPDHAOgnfqgGGdmE3XI9L/4+5fr+vQ==}
+  '@vercel/speed-insights@2.0.0':
+    resolution: {integrity: sha512-jwkNcrTeafWxjmWq4AHBaptSqZiJkYU5adLC9QBSqeim0GcqDMgN5Ievh8OG1rJ6W3A4l1oiP7qr9CWxGuzu3w==}
     peerDependencies:
       '@sveltejs/kit': ^1 || ^2
       next: '>= 13'
+      nuxt: '>= 3'
       react: ^18 || ^19 || ^19.0.0-rc
       svelte: '>= 4'
       vue: ^3
@@ -4268,6 +4272,8 @@ packages:
       '@sveltejs/kit':
         optional: true
       next:
+        optional: true
+      nuxt:
         optional: true
       react:
         optional: true
@@ -6547,6 +6553,10 @@ packages:
     resolution: {integrity: sha512-1e4qoRgnn448pRuMvKGsFFymUCquZV0mpGgOyIKNgD3JVDTsVJyRBGH/Fm0tBb8WsWGgmB1mDe6/yJMQM37DUA==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
 
+  jsonc-eslint-parser@3.1.0:
+    resolution: {integrity: sha512-75EA7EWZExL/j+MDKQrRbdzcRI2HOkRlmUw8fZJc1ioqFEOvBsq7Rt+A6yCxOt9w/TYNpkt52gC6nm/g5tFIng==}
+    engines: {node: ^20.19.0 || ^22.13.0 || >=24}
+
   jsonc-parser@3.2.0:
     resolution: {integrity: sha512-gfFQZrcTc8CnKXp6Y4/CBT3fTc0OVuDofpre4aEeEpSBPV5X5v4+Vmx+8snU7RLPrNHPKSgLxGo9YuQzz20o+w==}
 
@@ -6767,8 +6777,8 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
-  lucide-react@0.577.0:
-    resolution: {integrity: sha512-4LjoFv2eEPwYDPg/CUdBJQSDfPyzXCRrVW1X7jrx/trgxnxkHFjnVZINbzvzxjN70dxychOfg+FTYwBiS3pQ5A==}
+  lucide-react@1.17.0:
+    resolution: {integrity: sha512-9FA9evdox/JQL5PT57fdA1x/yg8T7knJ98+zjTL3UfKza6pflQUUh3XtaQIHKvnsJw1lmsEyHVlt5jchYxOQ5w==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
@@ -13383,12 +13393,12 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.12.2':
     optional: true
 
-  '@vercel/analytics@1.6.1(next@16.2.7(@babel/core@7.29.7)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.100.0))(react@19.2.7)':
+  '@vercel/analytics@2.0.1(next@16.2.7(@babel/core@7.29.7)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.100.0))(react@19.2.7)':
     optionalDependencies:
       next: 16.2.7(@babel/core@7.29.7)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.100.0)
       react: 19.2.7
 
-  '@vercel/speed-insights@1.3.1(next@16.2.7(@babel/core@7.29.7)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.100.0))(react@19.2.7)':
+  '@vercel/speed-insights@2.0.0(next@16.2.7(@babel/core@7.29.7)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.100.0))(react@19.2.7)':
     optionalDependencies:
       next: 16.2.7(@babel/core@7.29.7)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.100.0)
       react: 19.2.7
@@ -15930,6 +15940,12 @@ snapshots:
       espree: 9.6.1
       semver: 7.8.3
 
+  jsonc-eslint-parser@3.1.0:
+    dependencies:
+      acorn: 8.16.0
+      eslint-visitor-keys: 5.0.1
+      semver: 7.8.3
+
   jsonc-parser@3.2.0: {}
 
   jsonfile@6.2.1:
@@ -16114,7 +16130,7 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
-  lucide-react@0.577.0(react@19.2.7):
+  lucide-react@1.17.0(react@19.2.7):
     dependencies:
       react: 19.2.7
 
