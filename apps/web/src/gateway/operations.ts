@@ -96,6 +96,26 @@ export const gateway = {
     search: api.users.searchUsers,
   },
 
+  // Solving: a member's solve tracking (completions), puzzle reviews, and goals. Writes go
+  // through the domain-driven solving module (file.export namespacing) and enforce ownership,
+  // the 24h completion edit window, and the 1–5 review rating in the aggregate. Reads are
+  // auth-gated and surface server-derived state (photo URLs, goal `isAchieved`) so the UI never
+  // recomputes it.
+  solving: {
+    // No endDate => an in-progress solve is started; with endDate => a finished solve is logged.
+    recordCompletion: api.solving.recordCompletion.recordCompletion,
+    finishCompletion: api.solving.finishCompletion.finishCompletion,
+    // Mutable-field edit, gated server-side to a 24h window after creation.
+    editCompletion: api.solving.editCompletion.editCompletion,
+    // Attach a 1–5 PuzzleReview (opinion of the puzzle) to one of the member's completions.
+    reviewPuzzle: api.solving.reviewPuzzle.reviewPuzzle,
+    createGoal: api.solving.createGoal.createGoal,
+    myCompletions: api.solving.listMyCompletions.listMyCompletions,
+    completionHistory: api.solving.getCompletionHistory.getCompletionHistory,
+    // Rows carry the server-derived `isAchieved` (current >= target).
+    myGoals: api.solving.listMyGoals.listMyGoals,
+  },
+
   // Insights: read-side aggregate stats across the platform.
   insights: {
     globalStats: api.users.getGlobalStats,
