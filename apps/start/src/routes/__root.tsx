@@ -4,7 +4,6 @@ import { ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient } from "@tanstack/react-query";
 import {
   HeadContent,
-  Link,
   Outlet,
   Scripts,
   createRootRouteWithContext,
@@ -104,13 +103,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body className="font-sans antialiased bg-background text-foreground">
-        <nav className="flex gap-4 p-3 border-b border-border">
-          <Link to="/" activeOptions={{ exact: true }}>
-            Home
-          </Link>
-          <Link to="/insights">Insights</Link>
-          <Link to="/me">Me</Link>
-        </nav>
         {children}
         <Scripts />
       </body>
