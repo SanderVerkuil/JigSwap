@@ -18,6 +18,7 @@ import type * as catalog_adapters_systemClock from "../catalog/adapters/systemCl
 import type * as catalog_approvePuzzleDefinition from "../catalog/approvePuzzleDefinition.js";
 import type * as catalog_createCatalogCategory from "../catalog/createCatalogCategory.js";
 import type * as catalog_errors from "../catalog/errors.js";
+import type * as catalog_listPendingPuzzleDefinitions from "../catalog/listPendingPuzzleDefinitions.js";
 import type * as catalog_rejectPuzzleDefinition from "../catalog/rejectPuzzleDefinition.js";
 import type * as catalog_reorderCatalogCategories from "../catalog/reorderCatalogCategories.js";
 import type * as catalog_runDefinitionAction from "../catalog/runDefinitionAction.js";
@@ -85,6 +86,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/approvePuzzleDefinition": typeof catalog_approvePuzzleDefinition;
   "catalog/createCatalogCategory": typeof catalog_createCatalogCategory;
   "catalog/errors": typeof catalog_errors;
+  "catalog/listPendingPuzzleDefinitions": typeof catalog_listPendingPuzzleDefinitions;
   "catalog/rejectPuzzleDefinition": typeof catalog_rejectPuzzleDefinition;
   "catalog/reorderCatalogCategories": typeof catalog_reorderCatalogCategories;
   "catalog/runDefinitionAction": typeof catalog_runDefinitionAction;
