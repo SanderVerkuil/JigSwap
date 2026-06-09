@@ -19,56 +19,6 @@ export const generateUploadUrl = mutation({
   },
 });
 
-// Create a new owned puzzle
-export const createOwnedPuzzle = mutation({
-  args: {
-    puzzleId: v.id("puzzles"),
-    condition: v.union(
-      v.literal("new_sealed"),
-      v.literal("like_new"),
-      v.literal("good"),
-      v.literal("fair"),
-      v.literal("poor"),
-    ),
-    availability: v.object({
-      forTrade: v.boolean(),
-      forSale: v.boolean(),
-      forLend: v.boolean(),
-    }),
-    acquisitionDate: v.optional(v.number()),
-    notes: v.optional(v.string()),
-    missingPieceCount: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const now = Date.now();
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .unique();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    const ownedPuzzleId = await ctx.db.insert("ownedPuzzles", {
-      ...args,
-      ownerId: user._id,
-      puzzleId: args.puzzleId,
-      missingPiecesCount: args.missingPieceCount,
-      availability: args.availability,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    return ownedPuzzleId;
-  },
-});
-
 // Get owned puzzles by owner
 export const getOwnedPuzzlesByOwner = query({
   args: {
@@ -353,69 +303,6 @@ export const browseOwnedPuzzles = query({
       total: filteredInstances.length,
       hasMore: offset + limit < filteredInstances.length,
     };
-  },
-});
-
-// Update owned puzzle
-export const updateOwnedPuzzle = mutation({
-  args: {
-    ownedPuzzleId: v.id("ownedPuzzles"),
-    condition: v.optional(
-      v.union(
-        v.literal("new_sealed"),
-        v.literal("like_new"),
-        v.literal("good"),
-        v.literal("fair"),
-        v.literal("poor"),
-      ),
-    ),
-    isAvailable: v.optional(v.boolean()),
-    acquisitionDate: v.optional(v.number()),
-    notes: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const { ownedPuzzleId, ...updates } = args;
-
-    await ctx.db.patch(ownedPuzzleId, {
-      ...updates,
-      updatedAt: Date.now(),
-    });
-  },
-});
-
-// Delete owned puzzle
-export const deleteOwnedPuzzle = mutation({
-  args: { ownedPuzzleId: v.id("ownedPuzzles") },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .unique();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-    // Check if owned puzzle has any active trade requests
-    const activeTradeRequests = await ctx.db
-      .query("exchanges")
-      .withIndex("by_initiator", (q) =>
-        q.eq("initiatorId", user._id).eq("offeredPuzzleId", args.ownedPuzzleId),
-      )
-      .filter((q) => q.neq(q.field("status"), "completed"))
-      .filter((q) => q.neq(q.field("status"), "cancelled"))
-      .filter((q) => q.neq(q.field("status"), "declined"))
-      .collect();
-
-    if (activeTradeRequests.length > 0) {
-      throw new Error("Cannot delete owned puzzle with active trade requests");
-    }
-
-    await ctx.db.delete(args.ownedPuzzleId);
   },
 });
 
