@@ -34,6 +34,54 @@ describe("Collection.create", () => {
     expect(collection.copyMembers).toEqual([]);
     expect(names(collection.pullEvents())).toEqual(["CollectionCreated"]);
   });
+
+  it("defaults isDefault and isWishlist to false, honouring explicit flags", () => {
+    const plain = create();
+    expect(plain.isDefault).toBe(false);
+    expect(plain.isWishlist).toBe(false);
+
+    const flagged = create({ isDefault: true, isWishlist: true });
+    expect(flagged.isDefault).toBe(true);
+    expect(flagged.isWishlist).toBe(true);
+  });
+});
+
+describe("update", () => {
+  // Each field patches via `props.X ?? state.X`; setting one from an unset/default baseline
+  // distinguishes `??` from `&&` (which would drop the new value).
+  it("applies provided fields and records CollectionUpdated", () => {
+    const collection = create();
+    collection.pullEvents();
+    const r = collection.update(
+      {
+        name: "Renamed",
+        description: "A description",
+        visibility: "public",
+        color: "#fff",
+        icon: "star",
+        personalNotes: "mine",
+      },
+      NOW,
+    );
+    expect(r.isOk).toBe(true);
+    const state = collection.toState();
+    expect(state.name).toBe("Renamed");
+    expect(state.description).toBe("A description");
+    expect(state.visibility).toBe("public");
+    expect(state.color).toBe("#fff");
+    expect(state.icon).toBe("star");
+    expect(state.personalNotes).toBe("mine");
+    expect(names(collection.pullEvents())).toEqual(["CollectionUpdated"]);
+  });
+
+  it("leaves omitted fields unchanged", () => {
+    const collection = create({ name: "Keep", visibility: "public" });
+    collection.update({ description: "only this" }, NOW);
+    const state = collection.toState();
+    expect(state.name).toBe("Keep");
+    expect(state.visibility).toBe("public");
+    expect(state.description).toBe("only this");
+  });
 });
 
 describe("addCopy / removeCopy", () => {
@@ -78,7 +126,12 @@ describe("addCopy / removeCopy", () => {
     const wishlist = create({ isWishlist: true });
     const r = wishlist.addCopy(copyA, NOW);
     expect(r.isErr).toBe(true);
-    if (r.isErr) expect(r.error.code).toBe("WrongMemberType");
+    if (r.isErr) {
+      expect(r.error.code).toBe("WrongMemberType");
+      expect(r.error.message).toBe(
+        "A wishlist holds desired definitions, not copies",
+      );
+    }
   });
 });
 
@@ -96,17 +149,41 @@ describe("wishlist behavior", () => {
     const collection = create();
     const r = collection.wishFor(definitionId, NOW);
     expect(r.isErr).toBe(true);
-    if (r.isErr) expect(r.error.code).toBe("WrongMemberType");
+    if (r.isErr) {
+      expect(r.error.code).toBe("WrongMemberType");
+      expect(r.error.message).toBe(
+        "Only a wishlist can reference desired definitions",
+      );
+    }
   });
 
-  it("unwishes a desired definition and emits PuzzleUnwished", () => {
+  it("de-duplicates a repeated wish (no second event)", () => {
     const wishlist = create({ isWishlist: true });
     wishlist.wishFor(definitionId, NOW);
     wishlist.pullEvents();
+    const r = wishlist.wishFor(definitionId, NOW);
+    expect(r.isOk).toBe(true);
+    expect(wishlist.wishedDefinitions).toEqual([definitionId]);
+    expect(wishlist.pullEvents()).toHaveLength(0);
+  });
+
+  it("unwishes a desired definition while keeping the others", () => {
+    const other = toId<"PuzzleDefinitionId">("def2") as PuzzleDefinitionId;
+    const wishlist = create({ isWishlist: true });
+    wishlist.wishFor(definitionId, NOW);
+    wishlist.wishFor(other, NOW);
+    wishlist.pullEvents();
     const r = wishlist.unwish(definitionId, NOW);
     expect(r.isOk).toBe(true);
-    expect(wishlist.wishedDefinitions).toEqual([]);
+    expect(wishlist.wishedDefinitions).toEqual([other]);
     expect(names(wishlist.pullEvents())).toEqual(["PuzzleUnwished"]);
+  });
+
+  it("rejects unwishing a definition that is not wished", () => {
+    const wishlist = create({ isWishlist: true });
+    const r = wishlist.unwish(definitionId, NOW);
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("CopyNotInCollection");
   });
 });
 

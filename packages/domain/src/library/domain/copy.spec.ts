@@ -52,6 +52,21 @@ describe("Copy.acquire", () => {
     expect(state.snapshot.pieceCount).toBe(1000);
   });
 
+  it("exposes id, ownerId and condition through its getters", () => {
+    const copy = acquire();
+    expect(copy.id).toBe(copyId);
+    expect(copy.ownerId).toBe(owner);
+    expect(copy.condition).toBe("good");
+  });
+
+  it("defaults to an empty (unknown) acquisition when none is supplied", () => {
+    const copy = acquire();
+    const acquisition = copy.toState().acquisition;
+    expect(acquisition.date).toBeUndefined();
+    expect(acquisition.source).toBeUndefined();
+    expect(acquisition.price).toBeUndefined();
+  });
+
   it("defaults to a private sharing setting (not available for any exchange)", () => {
     const copy = acquire();
     expect(copy.sharing.visibility).toBe("private");
