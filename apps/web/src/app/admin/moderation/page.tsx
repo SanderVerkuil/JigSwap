@@ -37,7 +37,7 @@ export default function ModerationPage() {
       toast.success(
         action === "approve" ? "Puzzle approved" : "Puzzle rejected",
       );
-    } catch (error) {
+    } catch {
       toast.error("Failed to update submission");
     } finally {
       setBusyId(null);

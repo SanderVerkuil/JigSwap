@@ -111,7 +111,7 @@ export default function CategoriesPage() {
         isActive: true,
         sortOrder: 0,
       });
-    } catch (error) {
+    } catch {
       toast.error("Failed to save category");
     }
   };
@@ -135,7 +135,7 @@ export default function CategoriesPage() {
       try {
         await setCategoryActive({ catalogCategoryId: aggregateId, isActive: false });
         toast.success("Category deactivated successfully");
-      } catch (error) {
+      } catch {
         toast.error("Failed to deactivate category");
       }
     }
