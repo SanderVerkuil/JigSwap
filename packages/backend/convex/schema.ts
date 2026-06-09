@@ -95,6 +95,8 @@ export default defineSchema({
     .index("by_aggregate_id", ["aggregateId"])
     .searchIndex("by_searchable_text", {
       searchField: "searchableText",
+      // Lets public suggestions exclude pending/rejected submissions at the index level.
+      filterFields: ["status"],
     }),
 
   // Puzzle instances - individual copies that people own

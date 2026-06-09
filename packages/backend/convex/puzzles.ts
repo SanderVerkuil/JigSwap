@@ -192,7 +192,11 @@ export const listAllpuzzles = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    const puzzles = await ctx.db.query("puzzles").paginate(args.paginationOpts);
+    // Public catalog: pending/rejected submissions must not leak into the browsable list.
+    const puzzles = await ctx.db
+      .query("puzzles")
+      .filter((q) => q.eq(q.field("status"), "approved"))
+      .paginate(args.paginationOpts);
     const page = await Promise.all(
       puzzles.page.map(async (puzzle) => ({
         ...puzzle,
@@ -265,9 +269,11 @@ export const getRecentPuzzles = query({
   },
   handler: async (ctx, args) => {
     const limit = args.limit ?? 8;
+    // Public catalog: only show approved submissions in the "recent" rail.
     const puzzles = await ctx.db
       .query("puzzles")
       .order("desc")
+      .filter((q) => q.eq(q.field("status"), "approved"))
       .take(limit);
 
     const puzzlesWithImages = await Promise.all(
@@ -611,7 +617,8 @@ export const getPuzzleSuggestions = query({
     const puzzles = await ctx.db
       .query("puzzles")
       .withSearchIndex("by_searchable_text", (q) =>
-        q.search("searchableText", searchTerm),
+        // Public catalog: form auto-fill only suggests approved definitions.
+        q.search("searchableText", searchTerm).eq("status", "approved"),
       )
       .take(limit);
 
