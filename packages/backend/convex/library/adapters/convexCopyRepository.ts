@@ -79,6 +79,24 @@ export const convexCopyRepository = (ctx: MutationCtx): CopyRepository => {
       }
     },
 
+    async remove(id: CopyId): Promise<void> {
+      // Resolve the real `ownedPuzzles._id` from the aggregateId, then cascade-delete the row and
+      // its owned rows (collection memberships + images) so no orphans survive the Copy.
+      const row = await rowById(id);
+      if (!row) return;
+
+      const memberships = await ctx.db
+        .query("collectionMembers")
+        .withIndex("by_owned_puzzle", (q) => q.eq("ownedPuzzleId", row._id))
+        .collect();
+      for (const membership of memberships) await ctx.db.delete(membership._id);
+
+      const images = await loadImages(row._id);
+      for (const image of images) await ctx.db.delete(image._id);
+
+      await ctx.db.delete(row._id);
+    },
+
     async listByOwner(ownerId: OwnerId): Promise<readonly Copy[]> {
       const rows = await ctx.db
         .query("ownedPuzzles")
