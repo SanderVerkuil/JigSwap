@@ -14,6 +14,12 @@ allowBuilds:
 
 linkWorkspacePackages: true
 
+# Pin zod: @hookform/resolvers (react-hook-form) is incompatible with zod 4.4's types,
+# and a non-frozen install otherwise drifts the ^4.1.13 caret forward. Keep the version
+# the whole workspace is built and tested against.
+overrides:
+  zod: 4.1.13
+
 onlyBuiltDependencies:
   - "@clerk/shared"
   - "@parcel/watcher"
