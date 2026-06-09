@@ -38,7 +38,7 @@ export function CollectionDropdown({
 
   const collections = useQuery(
     gateway.collections.listForUser,
-    convexUser?._id ? { userId: convexUser._id } : "skip",
+    convexUser?._id ? { userId: convexUser._id as Id<"users"> } : "skip",
   );
 
   const puzzleCollections = useQuery(
@@ -71,7 +71,8 @@ export function CollectionDropdown({
     }
   };
 
-  const isInCollection = (collectionId: Id<"collections">) => {
+  // DTO membership rows carry collection ids as opaque strings, so compare on string.
+  const isInCollection = (collectionId: string) => {
     return puzzleCollections?.some((c) => c?._id === collectionId) || false;
   };
 

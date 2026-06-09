@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { useUser } from "@clerk/nextjs";
-import { gateway } from "@/gateway";
+import { gateway, Id } from "@/gateway";
 import { useQuery } from "convex/react";
 import {
   ArrowRightLeft,
@@ -36,7 +36,7 @@ export default function ProfilePage() {
   );
   const userStats = useQuery(
     gateway.identity.userStats,
-    convexUser?._id ? { userId: convexUser._id } : "skip",
+    convexUser?._id ? { userId: convexUser._id as Id<"users"> } : "skip",
   );
 
   if (
@@ -161,7 +161,7 @@ export default function ProfilePage() {
           </Card>
 
           {/* Public reputation: summary + received reviews, folded from completed exchanges. */}
-          <ReputationSection memberId={convexUser?._id} />
+          <ReputationSection memberId={convexUser?._id as Id<"users"> | undefined} />
         </div>
 
         {/* Stats Sidebar */}

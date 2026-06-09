@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { LoadingState } from "@/components/ui/loading";
-import { gateway } from "@/gateway";
+import { gateway, Id } from "@/gateway";
 import { useConvexAuth, useQuery } from "convex/react";
 import { ArrowLeftRight } from "lucide-react";
 import Link from "next/link";
@@ -26,7 +26,7 @@ export function RecentExchangesCard() {
   // Get recent trades
   const recentExchanges = useQuery(
     gateway.exchange.forUser,
-    convexUser?._id ? { userId: convexUser._id } : "skip",
+    convexUser?._id ? { userId: convexUser._id as Id<"users"> } : "skip",
   );
 
   // Show loading state while data is being fetched

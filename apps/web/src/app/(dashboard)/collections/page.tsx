@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useUser } from "@clerk/nextjs";
-import { gateway } from "@/gateway";
+import { gateway, Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { FolderOpen, Globe, Lock, Plus, Settings } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -72,7 +72,7 @@ export default function CollectionsPage() {
 
   const collections = useQuery(
     gateway.collections.listForUser,
-    convexUser?._id ? { userId: convexUser._id } : "skip",
+    convexUser?._id ? { userId: convexUser._id as Id<"users"> } : "skip",
   );
 
   const createCollection = useMutation(gateway.collections.create);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { gateway } from "@/gateway";
+import { gateway, Id } from "@/gateway";
 import { useConvexAuth, useQuery } from "convex/react";
 import { ArrowLeftRight, MessageSquare, Package, Star } from "lucide-react";
 import { StatsCard } from "./cards/stats-card";
@@ -19,13 +19,13 @@ export function WelcomeHeader() {
   // Get user stats
   const userStats = useQuery(
     gateway.identity.userStats,
-    convexUser?._id ? { userId: convexUser._id } : "skip",
+    convexUser?._id ? { userId: convexUser._id as Id<"users"> } : "skip",
   );
 
   // Get recent trades for active count
   const recentExchanges = useQuery(
     gateway.exchange.forUser,
-    convexUser?._id ? { userId: convexUser._id } : "skip",
+    convexUser?._id ? { userId: convexUser._id as Id<"users"> } : "skip",
   );
 
   // Show loading state while data is being fetched

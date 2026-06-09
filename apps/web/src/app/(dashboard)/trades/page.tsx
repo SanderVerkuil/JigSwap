@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { useUser } from "@clerk/nextjs";
-import { gateway } from "@/gateway";
+import { gateway, Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import {
   ArrowRightLeft,
@@ -348,9 +348,11 @@ export default function ExchangesPage() {
                       {/* Counterparty trust signal: the OTHER party relative to the viewer. */}
                       <ReputationBadge
                         memberId={
-                          exchange.requester?._id === convexUser?._id
+                          (exchange.requester?._id === convexUser?._id
                             ? exchange.owner?._id
-                            : exchange.requester?._id
+                            : exchange.requester?._id) as
+                            | Id<"users">
+                            | undefined
                         }
                       />
                     </div>
@@ -424,9 +426,11 @@ export default function ExchangesPage() {
                       <LeaveReviewDialog
                         exchangeId={exchange.aggregateId}
                         revieweeId={
-                          exchange.requester?._id === convexUser?._id
+                          (exchange.requester?._id === convexUser?._id
                             ? exchange.owner?._id
-                            : exchange.requester?._id
+                            : exchange.requester?._id) as
+                            | Id<"users">
+                            | undefined
                         }
                         revieweeName={
                           exchange.requester?._id === convexUser?._id

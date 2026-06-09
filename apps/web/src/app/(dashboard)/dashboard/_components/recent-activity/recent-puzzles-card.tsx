@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { LoadingState } from "@/components/ui/loading";
-import { gateway } from "@/gateway";
+import { gateway, Id } from "@/gateway";
 import { useConvexAuth, useQuery } from "convex/react";
 import { Package } from "lucide-react";
 import Link from "next/link";
@@ -27,7 +27,7 @@ export function RecentPuzzlesCard() {
   const recentownedPuzzles = useQuery(
     gateway.library.ownedByOwner,
     convexUser?._id
-      ? { ownerId: convexUser._id, includeUnavailable: false }
+      ? { ownerId: convexUser._id as Id<"users">, includeUnavailable: false }
       : "skip",
   );
 

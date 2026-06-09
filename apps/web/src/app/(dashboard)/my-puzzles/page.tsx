@@ -35,7 +35,7 @@ export default function PuzzlesPage() {
   const userownedPuzzles = useQuery(
     gateway.library.ownedByOwner,
     convexUser?._id
-      ? { ownerId: convexUser._id, includeUnavailable: true }
+      ? { ownerId: convexUser._id as Id<"users">, includeUnavailable: true }
       : "skip",
   );
 

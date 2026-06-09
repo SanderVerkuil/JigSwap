@@ -36,7 +36,7 @@ export default function AddPuzzlesToCollectionPage() {
   const availablePuzzles = useQuery(
     gateway.library.ownedByOwner,
     convexUser?._id
-      ? { ownerId: convexUser._id, includeUnavailable: false }
+      ? { ownerId: convexUser._id as Id<"users">, includeUnavailable: false }
       : "skip",
   );
 
@@ -175,7 +175,7 @@ export default function AddPuzzlesToCollectionPage() {
               key={puzzle._id}
               puzzle={puzzle}
               variant="selection"
-              isSelected={selectedPuzzles.has(puzzle._id)}
+              isSelected={selectedPuzzles.has(puzzle._id as Id<"ownedPuzzles">)}
               onSelect={togglePuzzleSelection}
             />
           ))}
