@@ -1,6 +1,7 @@
 "use client";
 
 import { PuzzleForm, PuzzleFormData } from "@/components/forms/puzzle-form";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -109,6 +110,19 @@ export default function AddPuzzlePage() {
     gateway.catalog.puzzleSuggestions,
     searchValue.length > 0 ? { searchTerm: searchValue, limit: 10 } : "skip",
   );
+
+  // The member's own not-yet-approved submissions. Public search only returns approved
+  // definitions, but a contributor may acquire a copy of a puzzle they submitted before it is
+  // approved — so offer those here too (filtered to the current search term client-side).
+  const myPending = useQuery(gateway.catalog.myContributedPuzzles, {});
+  const myPendingMatches = (myPending ?? []).filter((puzzle) => {
+    const term = searchValue.trim().toLowerCase();
+    if (!term) return true;
+    return (
+      puzzle.title.toLowerCase().includes(term) ||
+      (puzzle.brand?.toLowerCase().includes(term) ?? false)
+    );
+  });
 
   // Check if there's a puzzleId in URL params
   const puzzleIdFromUrl = searchParams.get("puzzleId") as Id<"puzzles"> | null;
@@ -366,6 +380,51 @@ export default function AddPuzzlePage() {
                           </CommandItem>
                         ))}
                       </CommandGroup>
+                      {/* A contributor's own not-yet-approved submissions: not in public search,
+                          but acquirable by their submitter. */}
+                      {myPendingMatches.length > 0 && (
+                        <CommandGroup heading={t("yourPendingSubmissions")}>
+                          {myPendingMatches.map((puzzle) => (
+                            <CommandItem
+                              key={puzzle._id}
+                              value={`mine-${puzzle._id}`}
+                              onSelect={() => handlePuzzleSelect(puzzle)}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  selectedPuzzle?._id === puzzle._id
+                                    ? "opacity-100"
+                                    : "opacity-0",
+                                )}
+                              />
+                              <div className="flex items-center gap-2">
+                                {puzzle.image && (
+                                  <Image
+                                    src={puzzle.image}
+                                    alt={puzzle.title}
+                                    width={32}
+                                    height={32}
+                                    className="w-8 h-8 rounded object-cover"
+                                  />
+                                )}
+                                <div>
+                                  <div className="flex items-center gap-2 font-medium">
+                                    {puzzle.title}
+                                    <Badge variant="secondary">
+                                      {t("pendingReview")}
+                                    </Badge>
+                                  </div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {puzzle.brand && `${puzzle.brand} • `}
+                                    {puzzle.pieceCount} {t("pieces")}
+                                  </div>
+                                </div>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      )}
                     </CommandList>
                   </Command>
                 </PopoverContent>

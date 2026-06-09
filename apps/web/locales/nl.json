@@ -307,6 +307,8 @@
     "selectPuzzleDescription": "Zoek naar een bestaande puzzel of maak een nieuwe",
     "searchPuzzle": "Zoek naar een puzzel",
     "searchPlaceholder": "Zoek puzzels...",
+    "yourPendingSubmissions": "Jouw inzendingen (in afwachting van beoordeling)",
+    "pendingReview": "In afwachting van beoordeling",
     "noPuzzlesFound": "Geen puzzels gevonden",
     "createNewPuzzle": "Nieuwe Puzzel Maken",
     "createNewPuzzleDescription": "Maak een nieuwe puzzel die nog niet bestaat",

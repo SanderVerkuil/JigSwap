@@ -310,6 +310,8 @@ declare const messages: {
     "selectPuzzleDescription": "Search for an existing puzzle or create a new one",
     "searchPuzzle": "Search for a puzzle",
     "searchPlaceholder": "Search puzzles...",
+    "yourPendingSubmissions": "Your submissions (pending review)",
+    "pendingReview": "Pending review",
     "noPuzzlesFound": "No puzzles found",
     "createNewPuzzle": "Create New Puzzle",
     "createNewPuzzleDescription": "Create a new puzzle that doesn't exist yet",
