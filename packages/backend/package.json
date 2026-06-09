@@ -5,7 +5,7 @@
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
-    "@clerk/backend": "^2.33.5",
+    "@clerk/backend": "^3.5.0",
     "@jigswap/contracts": "workspace:^",
     "@jigswap/domain": "workspace:^",
     "convex": "^1.31.0",
