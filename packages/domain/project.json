@@ -24,6 +24,14 @@
       "options": {
         "command": "depcruise --config .dependency-cruiser.cjs packages/domain/src"
       }
+    },
+    "mutation": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "pnpm run mutation",
+        "cwd": "packages/domain"
+      }
     }
   }
 }

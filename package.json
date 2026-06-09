@@ -23,7 +23,8 @@
     "format:check": "prettier --check . || true",
     "graph": "nx graph",
     "affected": "nx affected",
-    "arch:check": "depcruise --config .dependency-cruiser.cjs packages/domain/src"
+    "arch:check": "depcruise --config .dependency-cruiser.cjs packages/domain/src",
+    "mutation:domain": "nx run @jigswap/domain:mutation"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",
