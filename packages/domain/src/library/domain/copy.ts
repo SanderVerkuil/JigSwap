@@ -7,6 +7,7 @@ import { LibraryError } from "./errors";
 import {
   CopyAcquired,
   CopyConditionChanged,
+  CopyDeleted,
   CopyImageAdded,
   CopyMadeAvailable,
   CopyMadeUnavailable,
@@ -132,6 +133,13 @@ export class Copy {
     } else {
       this.record(new CopyMadeUnavailable(this.id, now));
     }
+    return ok(undefined);
+  }
+
+  // Mark the copy for removal. Deletion is the repository dropping the row; this records a
+  // CopyDeleted event the use case publishes afterwards so subscribers can react.
+  delete(now: Date): Result<void, LibraryError> {
+    this.record(new CopyDeleted(this.id, now));
     return ok(undefined);
   }
 

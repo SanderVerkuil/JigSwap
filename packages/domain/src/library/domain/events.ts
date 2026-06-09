@@ -65,6 +65,16 @@ export class CopyImageAdded implements DomainEvent {
   ) {}
 }
 
+// The copy was removed from the owner's library. Carries no payload beyond identity so future
+// subscribers (read models, Exchange reconciliation) can react to the removal.
+export class CopyDeleted implements DomainEvent {
+  readonly name = "CopyDeleted";
+  constructor(
+    readonly copyId: CopyId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
 export class CollectionCreated implements DomainEvent {
   readonly name = "CollectionCreated";
   constructor(
@@ -137,6 +147,7 @@ export type LibraryDomainEvent =
   | CopyMadeAvailable
   | CopyMadeUnavailable
   | CopyImageAdded
+  | CopyDeleted
   | CollectionCreated
   | CopyAddedToCollection
   | CopyRemovedFromCollection

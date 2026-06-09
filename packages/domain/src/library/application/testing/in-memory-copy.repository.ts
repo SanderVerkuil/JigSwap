@@ -15,6 +15,10 @@ export class InMemoryCopyRepository implements CopyRepository {
     this.store.set(copy.id, copy.toState());
   }
 
+  async remove(id: CopyId): Promise<void> {
+    this.store.delete(id);
+  }
+
   async listByOwner(ownerId: OwnerId): Promise<readonly Copy[]> {
     return [...this.store.values()]
       .filter((state) => state.ownerId === ownerId)

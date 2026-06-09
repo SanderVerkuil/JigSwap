@@ -5,4 +5,5 @@ export * from "./collection-membership.port";
 export * from "./create-collection.port";
 export * from "./create-personal-category.port";
 export * from "./delete-collection.port";
+export * from "./delete-copy.port";
 export * from "./update-copy-sharing.port";
