@@ -131,9 +131,16 @@ export const gateway = {
       api.notifications.updateNotificationPreference.updateNotificationPreference,
   },
 
-  // Insights: read-side aggregate stats across the platform.
+  // Insights: read-side aggregate stats. globalStats is platform-wide; the rest are the signed-in
+  // member's own analytics (personal stats, trends, breakdowns) plus a self-service data export.
   insights: {
     globalStats: api.users.getGlobalStats,
+    personalStats: api.insights.getPersonalStats.getPersonalStats,
+    completionTrends: api.insights.getCompletionTrends.getCompletionTrends,
+    collectionBreakdown:
+      api.insights.getCollectionBreakdown.getCollectionBreakdown,
+    tradeActivity: api.insights.getTradeActivity.getTradeActivity,
+    exportUserData: api.insights.exportUserData.exportUserData,
   },
 
   // Catalog moderation: the global, moderated category taxonomy (admin). Writes go through the
