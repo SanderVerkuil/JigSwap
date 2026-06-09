@@ -22,6 +22,10 @@ export const gateway = {
     listAll: api.puzzles.listAllpuzzles,
     recentPuzzles: api.puzzles.getRecentPuzzles,
     pending: api.catalog.listPendingPuzzleDefinitions.listPendingPuzzleDefinitions,
+    // The current member's own not-yet-approved submissions, so the add-copy picker can offer
+    // a copy of a puzzle they contributed before it is approved.
+    myContributedPuzzles:
+      api.catalog.listMyContributedPuzzles.listMyContributedPuzzles,
     allBrands: api.puzzles.getAllBrands,
     allTags: api.puzzles.getAllTags,
     puzzleCategories: api.puzzles.getPuzzleCategories,

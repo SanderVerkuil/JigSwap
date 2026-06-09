@@ -93,6 +93,8 @@ export default defineSchema({
     .index("by_brand", ["brand"])
     .index("by_tags", ["tags"])
     .index("by_aggregate_id", ["aggregateId"])
+    // Lets a contributor list their own submissions (e.g. own not-yet-approved puzzles).
+    .index("by_submitted_by", ["submittedBy"])
     .searchIndex("by_searchable_text", {
       searchField: "searchableText",
       // Lets public suggestions exclude pending/rejected submissions at the index level.
