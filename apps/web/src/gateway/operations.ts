@@ -28,28 +28,38 @@ export const gateway = {
     puzzleSuggestions: api.puzzles.getPuzzleSuggestions,
   },
 
-  // Personal Library: a member's owned copies and their organisation.
+  // Personal Library: a member's owned copies and their organisation. Writes go through the
+  // domain-driven library module (file.export namespacing); a copy is acquired against an
+  // approved Catalog definition and re-graded/re-shared/re-detailed via granular mutations.
   library: {
-    createOwned: api.puzzles.createOwnedPuzzle,
-    updateOwned: api.puzzles.updateOwnedPuzzle,
-    deleteOwned: api.puzzles.deleteOwnedPuzzle,
+    createOwned: api.library.acquireCopy.acquireCopy,
+    // The legacy single updateOwned is split into granular Copy mutations; callers invoke only
+    // those whose fields changed.
+    changeCondition: api.library.changeCopyCondition.changeCopyCondition,
+    updateSharing: api.library.updateCopySharing.updateCopySharing,
+    updateDetails: api.library.updateCopyDetails.updateCopyDetails,
+    addImage: api.library.addCopyImage.addCopyImage,
+    deleteOwned: api.library.deleteCopy.deleteCopy,
     ownedByOwner: api.puzzles.getOwnedPuzzlesByOwner,
     // Browse reads from the Library inventory (owned copies), not the Catalog.
     browseOwned: api.puzzles.browseOwnedPuzzles,
     ownedWithCollectionStatus: api.puzzles.getOwnedPuzzleWithCollectionStatus,
-    // Image upload is a Library (Copy) concern; the URL is used for copy photos.
+    // Image upload is storage infra, not a domain op; keep it on the legacy function. The URL is
+    // used for copy photos.
     generateUploadUrl: api.puzzles.generateUploadUrl,
   },
 
-  // Personal Library: collections (a member's private organisation of copies).
+  // Personal Library: collections (a member's private organisation of copies). Writes go through
+  // the domain-driven library module; identifiers are CollectionId/CopyId aggregateIds.
   collections: {
-    create: api.collections.createCollection,
-    update: api.collections.updateCollection,
-    delete: api.collections.deleteCollection,
+    create: api.library.createCollection.createCollection,
+    update: api.library.updateCollection.updateCollection,
+    delete: api.library.deleteCollection.deleteCollection,
     listForUser: api.collections.getUserCollections,
     byId: api.collections.getCollectionById,
-    addOwnedPuzzle: api.collections.addOwnedPuzzleToCollection,
-    removeOwnedPuzzle: api.collections.removeOwnedPuzzleFromCollection,
+    addOwnedPuzzle: api.library.addCopyToCollection.addCopyToCollection,
+    removeOwnedPuzzle:
+      api.library.removeCopyFromCollection.removeCopyFromCollection,
     forOwnedPuzzle: api.collections.getCollectionsForOwnedPuzzle,
   },
 
