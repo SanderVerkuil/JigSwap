@@ -16,7 +16,6 @@ import { PageLoading } from "@/components/ui/loading";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
-import { Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { Edit, Plus, Save, Trash2, X } from "lucide-react";
 import { useState } from "react";
@@ -38,6 +37,9 @@ interface CategoryFormData {
 
 interface Category {
   _id: string;
+  // The domain keys categories by aggregateId; legacy rows lack one until the backfill runs, so it
+  // is optional and edit/deactivate are disabled when missing.
+  aggregateId?: string;
   name: { en: string; nl: string };
   description?: { en: string; nl: string };
   color?: string;
@@ -45,14 +47,23 @@ interface Category {
   sortOrder: number;
 }
 
+// Only forward a localized description when at least one locale is filled in.
+const nonEmptyDescription = (description?: { en: string; nl: string }) =>
+  description && (description.en.trim() || description.nl.trim())
+    ? description
+    : undefined;
+
 export default function CategoriesPage() {
   const categories = useQuery(gateway.adminCatalog.listAll);
   const createCategory = useMutation(gateway.adminCatalog.create);
   const updateCategory = useMutation(gateway.adminCatalog.update);
-  const deleteCategory = useMutation(gateway.adminCatalog.delete);
+  // The domain soft-deactivates; there is no hard delete, so "delete" hides a node via setActive.
+  const setCategoryActive = useMutation(gateway.adminCatalog.delete);
 
   const [isCreating, setIsCreating] = useState(false);
+  // The aggregateId of the category being edited (the domain's stable identifier).
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingWasActive, setEditingWasActive] = useState(true);
   const [formData, setFormData] = useState<CategoryFormData>({
     name: { en: "", nl: "" },
     description: { en: "", nl: "" },
@@ -67,12 +78,27 @@ export default function CategoriesPage() {
     try {
       if (editingId) {
         await updateCategory({
-          id: editingId as Id<"adminCategories">,
-          ...formData,
+          catalogCategoryId: editingId,
+          name: formData.name,
+          description: nonEmptyDescription(formData.description),
+          color: formData.color,
         });
+        // Active state is a separate domain transition (not a patchable field); only toggle on change.
+        if (formData.isActive !== editingWasActive) {
+          await setCategoryActive({
+            catalogCategoryId: editingId,
+            isActive: formData.isActive,
+          });
+        }
         toast.success("Category updated successfully");
       } else {
-        await createCategory(formData);
+        // The domain creates a category active; the isActive toggle is ignored on create.
+        await createCategory({
+          name: formData.name,
+          sortOrder: formData.sortOrder,
+          description: nonEmptyDescription(formData.description),
+          color: formData.color,
+        });
         toast.success("Category created successfully");
       }
 
@@ -91,7 +117,9 @@ export default function CategoriesPage() {
   };
 
   const handleEdit = (category: Category) => {
-    setEditingId(category._id);
+    if (!category.aggregateId) return; // un-backfilled legacy row: not editable via the domain API
+    setEditingId(category.aggregateId);
+    setEditingWasActive(category.isActive);
     setFormData({
       name: category.name,
       description: category.description || { en: "", nl: "" },
@@ -101,13 +129,14 @@ export default function CategoriesPage() {
     });
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this category?")) {
+  // Soft-deactivate (the domain has no hard delete); a deactivated node is hidden, not removed.
+  const handleDeactivate = async (aggregateId: string) => {
+    if (confirm("Deactivate this category? It will be hidden but not deleted.")) {
       try {
-        await deleteCategory({ id: id as Id<"adminCategories"> });
-        toast.success("Category deleted successfully");
+        await setCategoryActive({ catalogCategoryId: aggregateId, isActive: false });
+        toast.success("Category deactivated successfully");
       } catch (error) {
-        toast.error("Failed to delete category");
+        toast.error("Failed to deactivate category");
       }
     }
   };
@@ -323,6 +352,7 @@ export default function CategoriesPage() {
                     size="sm"
                     variant="outline"
                     onClick={() => handleEdit(category)}
+                    disabled={!category.aggregateId}
                     className="flex items-center gap-1"
                   >
                     <Edit className="h-3 w-3" />
@@ -331,11 +361,15 @@ export default function CategoriesPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleDelete(category._id)}
+                    onClick={() =>
+                      category.aggregateId &&
+                      handleDeactivate(category.aggregateId)
+                    }
+                    disabled={!category.aggregateId || !category.isActive}
                     className="flex items-center gap-1 text-red-600 hover:text-red-700"
                   >
                     <Trash2 className="h-3 w-3" />
-                    Delete
+                    Deactivate
                   </Button>
                 </div>
               </div>

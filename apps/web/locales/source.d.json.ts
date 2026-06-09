@@ -314,6 +314,7 @@ declare const messages: {
     "createNewPuzzle": "Create New Puzzle",
     "createNewPuzzleDescription": "Create a new puzzle that doesn't exist yet",
     "puzzleCreated": "Puzzle created successfully",
+    "puzzleSubmittedForReview": "Puzzle submitted for review",
     "puzzleCreationFailed": "Failed to create puzzle",
     "noPuzzleSelected": "Please select a puzzle first",
     "puzzleAdded": "Puzzle added to your collection",

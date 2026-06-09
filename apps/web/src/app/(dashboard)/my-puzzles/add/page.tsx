@@ -169,28 +169,21 @@ export default function AddPuzzlePage() {
         imageId = await uploadResult.json();
       }
 
-      const puzzleId = await createPuzzle({
+      // Submission returns a CatalogCategoryId aggregateId; the definition lands as `pending` and
+      // must be approved before it is searchable, so we cannot auto-select it for a copy yet.
+      await createPuzzle({
         title: data.title,
         description: data.description,
         brand: data.brand,
         pieceCount: data.pieceCount,
         difficulty: data.difficulty,
-        category: data.category as Id<"adminCategories"> | undefined,
+        category: data.category,
         tags: data.tags,
         image: imageId,
       });
 
-      // Set the newly created puzzle as selected
-      setSelectedPuzzle({
-        _id: puzzleId,
-        title: data.title,
-        brand: data.brand,
-        pieceCount: data.pieceCount,
-        image: imageId,
-      });
-      setSearchValue(data.title);
       setCreatePuzzleOpen(false);
-      toast.success(t("puzzleCreated"));
+      toast.success(t("puzzleSubmittedForReview"));
     } catch (error) {
       console.error("Failed to create puzzle:", error);
       toast.error(t("puzzleCreationFailed"));

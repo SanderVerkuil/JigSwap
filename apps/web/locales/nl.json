@@ -311,6 +311,7 @@
     "createNewPuzzle": "Nieuwe Puzzel Maken",
     "createNewPuzzleDescription": "Maak een nieuwe puzzel die nog niet bestaat",
     "puzzleCreated": "Puzzel succesvol aangemaakt",
+    "puzzleSubmittedForReview": "Puzzel ingediend ter beoordeling",
     "puzzleCreationFailed": "Puzzel aanmaken mislukt",
     "noPuzzleSelected": "Selecteer eerst een puzzel",
     "puzzleAdded": "Puzzel toegevoegd aan je collectie",

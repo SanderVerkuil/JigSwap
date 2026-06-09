@@ -278,7 +278,13 @@ export const PuzzleFormContent = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {categories?.map((category) => (
-                          <SelectItem key={category._id} value={category._id}>
+                          // The catalog keys puzzles by CatalogCategoryId aggregateId now; a
+                          // not-yet-backfilled legacy row has none, so it can't be selected.
+                          <SelectItem
+                            key={category._id}
+                            value={category.aggregateId ?? ""}
+                            disabled={!category.aggregateId}
+                          >
                             {category.name.en}
                           </SelectItem>
                         ))}

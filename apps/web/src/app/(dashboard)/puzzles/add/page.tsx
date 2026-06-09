@@ -2,7 +2,6 @@
 
 import { PuzzleForm, PuzzleFormData } from "@/components/forms/puzzle-form";
 import { gateway } from "@/gateway";
-import { Id } from "@/gateway";
 import { useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -41,7 +40,8 @@ export default function AddPuzzlePage() {
           series: data.series,
           pieceCount: data.pieceCount,
           difficulty: data.difficulty,
-          category: data.category as Id<"adminCategories">,
+          // The category is now a CatalogCategoryId aggregateId (string), not an adminCategories _id.
+          category: data.category,
           tags: data.tags,
           ean: data.ean,
           upc: data.upc,
