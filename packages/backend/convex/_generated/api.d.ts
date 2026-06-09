@@ -63,8 +63,11 @@ import type * as library_changeCopyCondition from "../library/changeCopyConditio
 import type * as library_createCollection from "../library/createCollection.js";
 import type * as library_createPersonalCategory from "../library/createPersonalCategory.js";
 import type * as library_deleteCollection from "../library/deleteCollection.js";
+import type * as library_deleteCopy from "../library/deleteCopy.js";
 import type * as library_errors from "../library/errors.js";
 import type * as library_removeCopyFromCollection from "../library/removeCopyFromCollection.js";
+import type * as library_updateCollection from "../library/updateCollection.js";
+import type * as library_updateCopyDetails from "../library/updateCopyDetails.js";
 import type * as library_updateCopySharing from "../library/updateCopySharing.js";
 import type * as puzzles from "../puzzles.js";
 import type * as users from "../users.js";
@@ -131,8 +134,11 @@ declare const fullApi: ApiFromModules<{
   "library/createCollection": typeof library_createCollection;
   "library/createPersonalCategory": typeof library_createPersonalCategory;
   "library/deleteCollection": typeof library_deleteCollection;
+  "library/deleteCopy": typeof library_deleteCopy;
   "library/errors": typeof library_errors;
   "library/removeCopyFromCollection": typeof library_removeCopyFromCollection;
+  "library/updateCollection": typeof library_updateCollection;
+  "library/updateCopyDetails": typeof library_updateCopyDetails;
   "library/updateCopySharing": typeof library_updateCopySharing;
   puzzles: typeof puzzles;
   users: typeof users;
