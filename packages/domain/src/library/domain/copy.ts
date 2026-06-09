@@ -8,6 +8,7 @@ import {
   CopyAcquired,
   CopyConditionChanged,
   CopyDeleted,
+  CopyDetailsUpdated,
   CopyImageAdded,
   CopyMadeAvailable,
   CopyMadeUnavailable,
@@ -133,6 +134,33 @@ export class Copy {
     } else {
       this.record(new CopyMadeUnavailable(this.id, now));
     }
+    return ok(undefined);
+  }
+
+  // Patch the descriptive fields the condition/sharing methods don't cover. An undefined field
+  // in `changes` leaves the current value untouched; only the supplied fields are overwritten.
+  updateDetails(
+    changes: {
+      readonly missingPiecesCount?: number;
+      readonly notes?: string;
+    },
+    now: Date,
+  ): Result<void, LibraryError> {
+    this.state = {
+      ...this.state,
+      missingPiecesCount:
+        changes.missingPiecesCount ?? this.state.missingPiecesCount,
+      notes: changes.notes ?? this.state.notes,
+      updatedAt: now,
+    };
+    this.record(
+      new CopyDetailsUpdated(
+        this.id,
+        this.state.missingPiecesCount,
+        this.state.notes,
+        now,
+      ),
+    );
     return ok(undefined);
   }
 

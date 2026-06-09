@@ -65,6 +65,18 @@ export class CopyImageAdded implements DomainEvent {
   ) {}
 }
 
+// Descriptive fields (missing-piece count, free-text notes) changed. Distinct from
+// CopyConditionChanged so subscribers can treat grade changes and note edits differently.
+export class CopyDetailsUpdated implements DomainEvent {
+  readonly name = "CopyDetailsUpdated";
+  constructor(
+    readonly copyId: CopyId,
+    readonly missingPiecesCount: number | undefined,
+    readonly notes: string | undefined,
+    readonly occurredAt: Date,
+  ) {}
+}
+
 // The copy was removed from the owner's library. Carries no payload beyond identity so future
 // subscribers (read models, Exchange reconciliation) can react to the removal.
 export class CopyDeleted implements DomainEvent {
@@ -157,6 +169,7 @@ export type LibraryDomainEvent =
   | CopyMadeAvailable
   | CopyMadeUnavailable
   | CopyImageAdded
+  | CopyDetailsUpdated
   | CopyDeleted
   | CollectionUpdated
   | CollectionCreated
