@@ -11,6 +11,7 @@ import {
   InMemoryNotificationPreferenceRepository,
   InMemoryNotificationRepository,
   RecordingEventPublisher,
+  RecordingNotificationDelivery,
   SequentialNotificationIdGenerator,
   SequentialPreferenceIdGenerator,
 } from "../testing";
@@ -22,6 +23,7 @@ const NOW = new Date("2026-06-08T10:00:00Z");
 let notifications: InMemoryNotificationRepository;
 let preferences: InMemoryNotificationPreferenceRepository;
 let events: RecordingEventPublisher;
+let delivery: RecordingNotificationDelivery;
 let deps: NotifyMemberDeps;
 
 const prefId = () => toId<"NotificationPreferenceId">("seed");
@@ -30,8 +32,11 @@ beforeEach(() => {
   notifications = new InMemoryNotificationRepository();
   preferences = new InMemoryNotificationPreferenceRepository();
   events = new RecordingEventPublisher();
+  // In-app deliveries persist through the fake into `notifications`, so the read-based assertions
+  // below stay valid even though the use case no longer touches the repository directly.
+  delivery = new RecordingNotificationDelivery(notifications);
   deps = {
-    notifications,
+    delivery,
     preferences,
     notificationIds: new SequentialNotificationIdGenerator(),
     preferenceIds: new SequentialPreferenceIdGenerator(),
@@ -56,6 +61,8 @@ describe("makeNotifyMember", () => {
     expect(result.isOk).toBe(true);
     if (result.isOk) expect(result.value).toHaveLength(1);
     expect(notifications.size()).toBe(1);
+    // In-app delivery is recorded AND persisted (the real in-app channel saves a row).
+    expect(delivery.channels()).toEqual(["inApp"]);
 
     const [stored] = await notifications.listByUser(alice);
     expect(stored.channel).toBe("inApp");
@@ -87,9 +94,29 @@ describe("makeNotifyMember", () => {
     if (result.isOk) expect(result.value).toEqual([]);
     expect(notifications.size()).toBe(0);
     expect(events.published).toEqual([]);
+    // A fully-suppressed type delivers nothing to any channel.
+    expect(delivery.delivered).toEqual([]);
   });
 
-  it("creates one notification per allowed channel", async () => {
+  it("delivers email when the member opts into the email channel", async () => {
+    const pref = NotificationPreference.createDefault(prefId(), alice, NOW);
+    pref.enable("trade_request", "email", NOW);
+    pref.pullEvents();
+    await preferences.save(pref);
+
+    const notifyMember = makeNotifyMember(deps);
+    const result = await notifyMember(cmd());
+
+    expect(result.isOk).toBe(true);
+    if (result.isOk) expect(result.value).toHaveLength(2);
+    // Both channels are delivered, but only the in-app one persists a row.
+    expect(delivery.channels().sort()).toEqual(["email", "inApp"]);
+    expect(notifications.size()).toBe(1);
+    const [stored] = await notifications.listByUser(alice);
+    expect(stored.channel).toBe("inApp");
+  });
+
+  it("delivers one notification per allowed channel", async () => {
     const pref = NotificationPreference.createDefault(prefId(), alice, NOW);
     pref.enable("trade_request", "email", NOW);
     pref.enable("trade_request", "push", NOW);
@@ -102,9 +129,10 @@ describe("makeNotifyMember", () => {
     expect(result.isOk).toBe(true);
     if (result.isOk) expect(result.value).toHaveLength(3);
 
+    // Every allowed channel gets a delivery; only the in-app one persists a row.
+    expect(delivery.channels().sort()).toEqual(["email", "inApp", "push"]);
     const stored = await notifications.listByUser(alice);
-    const channels = stored.map((n) => n.channel).sort();
-    expect(channels).toEqual(["email", "inApp", "push"]);
+    expect(stored.map((n) => n.channel)).toEqual(["inApp"]);
     expect(events.names()).toEqual([
       "NotificationCreated",
       "NotificationCreated",

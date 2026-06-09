@@ -8,13 +8,13 @@ import {
   NotificationPreference,
 } from "../../domain";
 import { NotifyMember, NotifyMemberCommand } from "../ports/in/notify-member.port";
+import { NotificationDelivery } from "../ports/out/notification-delivery.port";
 import { NotificationIdGenerator } from "../ports/out/notification-id-generator";
 import { NotificationPreferenceIdGenerator } from "../ports/out/notification-preference-id-generator";
 import { NotificationPreferenceRepository } from "../ports/out/notification-preference.repository";
-import { NotificationRepository } from "../ports/out/notification.repository";
 
 export interface NotifyMemberDeps {
-  readonly notifications: NotificationRepository;
+  readonly delivery: NotificationDelivery;
   readonly preferences: NotificationPreferenceRepository;
   readonly notificationIds: NotificationIdGenerator;
   readonly preferenceIds: NotificationPreferenceIdGenerator;
@@ -52,7 +52,9 @@ export const makeNotifyMember =
         channel,
         now,
       });
-      await deps.notifications.save(notification);
+      // Delivery owns the medium: in-app persists, email/push dispatch out-of-band. The use case
+      // stays oblivious to which, and must NOT also persist or in-app rows would double-write.
+      await deps.delivery.deliver(channel, notification);
       created.push(notification.id);
       pending.push(...notification.pullEvents());
     }
