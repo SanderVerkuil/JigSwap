@@ -45,10 +45,17 @@ export function CollectionDetail({
   );
 
   const handleRemovePuzzle = async (ownedPuzzleId: Id<"ownedPuzzles">) => {
+    // The domain remove takes the Collection + Copy aggregateIds; resolve them from the loaded
+    // collection and its member rows, and guard rows that predate the backfill.
+    const copy = collection?.puzzles?.find((p) => p && p._id === ownedPuzzleId);
+    if (!collection?.aggregateId || !copy?.aggregateId) {
+      console.error("Cannot remove: collection or copy is missing aggregateId.");
+      return;
+    }
     try {
       await removeFromCollection({
-        collectionId,
-        ownedPuzzleId,
+        collectionId: collection.aggregateId,
+        copyId: copy.aggregateId,
       });
     } catch (error) {
       console.error("Failed to remove puzzle from collection:", error);

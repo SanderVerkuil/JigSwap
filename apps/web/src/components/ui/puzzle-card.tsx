@@ -64,6 +64,8 @@ export function PuzzleViewProvider({
 // Puzzle instance data type with puzzle information
 interface OwnedPuzzleData {
   _id: Id<"ownedPuzzles">;
+  // The Copy aggregateId backing domain writes (add-to-collection); legacy rows may lack it.
+  aggregateId?: string;
   puzzleId: Id<"puzzles">;
   ownerId: Id<"users">;
   condition: "new_sealed" | "like_new" | "good" | "fair" | "poor";
@@ -289,7 +291,10 @@ export function PuzzleCard({
             </div>
           </div>
           {showCollectionDropdown && (
-            <CollectionDropdown ownedPuzzleId={puzzle._id} />
+            <CollectionDropdown
+              ownedPuzzleId={puzzle._id}
+              copyAggregateId={puzzle.aggregateId}
+            />
           )}
         </div>
 

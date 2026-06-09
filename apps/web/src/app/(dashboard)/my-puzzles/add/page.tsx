@@ -88,6 +88,8 @@ export default function AddPuzzlePage() {
   const [searchValue, setSearchValue] = useState("");
   const [selectedPuzzle, setSelectedPuzzle] = useState<{
     _id: Id<"puzzles">;
+    // The Catalog PuzzleDefinitionId the domain acquire takes; legacy rows may lack it.
+    aggregateId?: string;
     title: string;
     brand?: string;
     pieceCount: number;
@@ -98,6 +100,7 @@ export default function AddPuzzlePage() {
   const [isCreatingOwnedPuzzle, setIsCreatingOwnedPuzzle] = useState(false);
 
   const createInstance = useMutation(gateway.library.createOwned);
+  const updateSharing = useMutation(gateway.library.updateSharing);
   const createPuzzle = useMutation(gateway.catalog.createPuzzle);
   const generateUploadUrl = useMutation(gateway.library.generateUploadUrl);
 
@@ -121,6 +124,7 @@ export default function AddPuzzlePage() {
     if (puzzleIdFromUrl && specificPuzzle && !selectedPuzzle) {
       setSelectedPuzzle({
         _id: specificPuzzle._id,
+        aggregateId: specificPuzzle.aggregateId,
         title: specificPuzzle.title,
         brand: specificPuzzle.brand,
         pieceCount: specificPuzzle.pieceCount,
@@ -143,12 +147,20 @@ export default function AddPuzzlePage() {
 
   const handlePuzzleSelect = (puzzle: {
     _id: Id<"puzzles">;
+    aggregateId?: string;
     title: string;
     brand?: string;
     pieceCount: number;
     image?: string | null;
   }) => {
-    setSelectedPuzzle(puzzle);
+    setSelectedPuzzle({
+      _id: puzzle._id,
+      aggregateId: puzzle.aggregateId,
+      title: puzzle.title,
+      brand: puzzle.brand,
+      pieceCount: puzzle.pieceCount,
+      image: puzzle.image,
+    });
     setSearchOpen(false);
     setSearchValue(puzzle.title);
   };
@@ -197,22 +209,37 @@ export default function AddPuzzlePage() {
       toast.error(t("noPuzzleSelected"));
       return;
     }
+    // The domain acquires a copy against the Catalog PuzzleDefinitionId (aggregateId), not the
+    // Convex _id. Guard puzzles that predate the backfill and so cannot be acquired against.
+    if (!selectedPuzzle.aggregateId) {
+      toast.error(t("puzzleCreationFailed"));
+      return;
+    }
 
     setIsCreatingOwnedPuzzle(true);
     try {
-      const ownedPuzzleId = await createInstance({
-        puzzleId: selectedPuzzle._id,
+      // Acquire the copy first; it returns the new CopyId (aggregateId). Sharing is no longer
+      // part of acquisition, so apply the chosen availability via the granular sharing mutation
+      // when anything is enabled (visibility flips to "visible" once a copy is offered).
+      const copyId = await createInstance({
+        puzzleDefinitionId: selectedPuzzle.aggregateId,
         condition: data.condition,
-        availability: {
-          forTrade: data.availability.forTrade,
-          forSale: data.availability.forSale,
-          forLend: data.availability.forLend,
-        },
-        acquisitionDate: data.acquisitionDate
-          ? new Date(data.acquisitionDate).getTime()
-          : undefined,
         notes: data.notes,
+        acquisition: data.acquisitionDate
+          ? { date: new Date(data.acquisitionDate).getTime() }
+          : undefined,
       });
+
+      const { forTrade, forSale, forLend } = data.availability;
+      if (forTrade || forSale || forLend) {
+        await updateSharing({
+          copyId,
+          visibility: "visible",
+          forTrade,
+          forSale,
+          forLend,
+        });
+      }
 
       toast.success(t("puzzleAdded"));
       router.push("/puzzles");

@@ -31,7 +31,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useUser } from "@clerk/nextjs";
 import { gateway } from "@/gateway";
-import { Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { FolderOpen, Globe, Lock, Plus, Settings } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -50,6 +49,8 @@ export default function CollectionsPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingCollection, setEditingCollection] = useState<{
     _id: string;
+    // The domain CollectionId the update/delete mutations take; legacy rows may lack it.
+    aggregateId?: string;
     name: string;
     description?: string;
     visibility: "private" | "public";
@@ -103,10 +104,15 @@ export default function CollectionsPage() {
 
   const handleEditCollection = async () => {
     if (!editingCollection) return;
+    // The domain update takes the CollectionId (aggregateId); guard rows missing it.
+    if (!editingCollection.aggregateId) {
+      console.error("Cannot update: collection is missing its aggregateId.");
+      return;
+    }
 
     try {
       await updateCollection({
-        collectionId: editingCollection._id as Id<"collections">,
+        collectionId: editingCollection.aggregateId,
         name: formData.name,
         description: formData.description,
         visibility: formData.visibility,
@@ -127,11 +133,16 @@ export default function CollectionsPage() {
     }
   };
 
-  const handleDeleteCollection = async (collectionId: Id<"collections">) => {
+  const handleDeleteCollection = async (collectionAggregateId?: string) => {
+    // The domain delete takes the CollectionId (aggregateId); guard rows missing it.
+    if (!collectionAggregateId) {
+      console.error("Cannot delete: collection is missing its aggregateId.");
+      return;
+    }
     if (confirm("Are you sure you want to delete this collection?")) {
       try {
         await deleteCollection({
-          collectionId,
+          collectionId: collectionAggregateId,
         });
       } catch (error) {
         console.error("Failed to delete collection:", error);
@@ -141,6 +152,7 @@ export default function CollectionsPage() {
 
   const openEditDialog = (collection: {
     _id: string;
+    aggregateId?: string;
     name: string;
     description?: string;
     visibility: "private" | "public";

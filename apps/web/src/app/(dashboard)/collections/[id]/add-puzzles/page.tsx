@@ -55,11 +55,22 @@ export default function AddPuzzlesToCollectionPage() {
   };
 
   const handleAddSelectedPuzzles = async () => {
+    // The domain add takes the Collection + Copy aggregateIds; resolve them from the loaded
+    // collection and the selected copy rows, skipping any that predate the backfill.
+    if (!collection?.aggregateId) {
+      console.error("Cannot add: collection is missing its aggregateId.");
+      return;
+    }
     try {
       for (const puzzleId of selectedPuzzles) {
+        const copy = availablePuzzles?.find((p) => p._id === puzzleId);
+        if (!copy?.aggregateId) {
+          console.error("Skipping copy missing its aggregateId:", puzzleId);
+          continue;
+        }
         await addPuzzleToCollection({
-          collectionId: id as Id<"collections">,
-          ownedPuzzleId: puzzleId,
+          collectionId: collection.aggregateId,
+          copyId: copy.aggregateId,
         });
       }
       router.push(`/collections/${id}`);

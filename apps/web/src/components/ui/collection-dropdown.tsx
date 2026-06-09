@@ -19,11 +19,14 @@ import { useState } from "react";
 
 interface CollectionDropdownProps {
   ownedPuzzleId: Id<"ownedPuzzles">;
+  // The Copy aggregateId the domain add takes; the `forOwnedPuzzle` read still keys on the _id.
+  copyAggregateId?: string;
   className?: string;
 }
 
 export function CollectionDropdown({
   ownedPuzzleId,
+  copyAggregateId,
   className,
 }: CollectionDropdownProps) {
   const { user } = useUser();
@@ -51,12 +54,17 @@ export function CollectionDropdown({
     gateway.collections.addOwnedPuzzle,
   );
 
-  const handleAddToCollection = async (collectionId: Id<"collections">) => {
+  const handleAddToCollection = async (collectionAggregateId?: string) => {
+    // The domain add takes the Collection + Copy aggregateIds; guard either missing.
+    if (!collectionAggregateId || !copyAggregateId) {
+      console.error("Cannot add: collection or copy is missing aggregateId.");
+      return;
+    }
     setIsAdding(true);
     try {
       await addPuzzleToCollection({
-        collectionId,
-        ownedPuzzleId,
+        collectionId: collectionAggregateId,
+        copyId: copyAggregateId,
       });
     } catch (error) {
       console.error("Failed to add puzzle to collection:", error);
@@ -105,7 +113,7 @@ export function CollectionDropdown({
         {collections.map((collection) => (
           <DropdownMenuItem
             key={collection._id}
-            onClick={() => handleAddToCollection(collection._id)}
+            onClick={() => handleAddToCollection(collection.aggregateId)}
             disabled={isInCollection(collection._id)}
             className={isInCollection(collection._id) ? "opacity-50" : ""}
           >

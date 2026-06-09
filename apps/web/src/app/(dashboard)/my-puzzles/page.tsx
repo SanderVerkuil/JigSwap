@@ -36,10 +36,17 @@ export default function PuzzlesPage() {
   const deletePuzzle = useMutation(gateway.library.deleteOwned);
 
   const handleDeletePuzzle = async (ownedPuzzleId: Id<"ownedPuzzles">) => {
+    // The domain delete takes the Copy aggregateId; resolve it from the loaded row. Guard rows
+    // that predate the backfill (no aggregateId) rather than send an unresolvable id.
+    const copy = userownedPuzzles?.find((p) => p._id === ownedPuzzleId);
+    if (!copy?.aggregateId) {
+      console.error("Cannot delete: copy is missing its aggregateId.");
+      return;
+    }
     if (confirm("Are you sure you want to delete this puzzle?")) {
       try {
         await deletePuzzle({
-          ownedPuzzleId,
+          copyId: copy.aggregateId,
         });
       } catch (error) {
         console.error("Failed to delete puzzle:", error);
