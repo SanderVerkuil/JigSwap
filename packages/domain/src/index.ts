@@ -1,7 +1,7 @@
-// CopyId is owned by the Personal Library (the Copy aggregate); the Exchange context only
-// borrows it as a foreign reference. Both contexts declare the identical branded type, so we
-// resolve the barrel ambiguity by sourcing CopyId from its owning context.
+// Cross-context branded ids are declared in each context that references them; source each from
+// its OWNING context to resolve the barrel ambiguity (CopyId→Library, PuzzleDefinitionId→Catalog).
 export type { CopyId } from "./library";
+export type { PuzzleDefinitionId } from "./catalog";
 
 export * from "./catalog";
 export * from "./exchange";
