@@ -13,7 +13,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "types": ["vite/client", "node"],
-    "baseUrl": ".",
+    // baseUrl removed: deprecated in TS 6; relative `paths` resolve from this config's dir.
     "paths": {
       "@/*": ["./src/*"]
     }
