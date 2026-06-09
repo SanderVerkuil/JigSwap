@@ -10,6 +10,7 @@ import {
 import { CheckRole } from "@/components/utils/check-role/server";
 import {
   ArrowLeftRight,
+  CircleCheck,
   FolderOpen,
   Home,
   MessageSquare,
@@ -18,6 +19,7 @@ import {
   Puzzle,
   Search,
   Settings,
+  Target,
 } from "lucide-react";
 import Link from "next/link";
 import { UserProfile } from "../../../../../components/common/user-profile";
@@ -60,6 +62,16 @@ const getItems: () => Item[] = () => {
       title: "Collections",
       url: "/collections",
       icon: FolderOpen,
+    },
+    {
+      title: "Completions",
+      url: "/completions",
+      icon: CircleCheck,
+    },
+    {
+      title: "Goals",
+      url: "/goals",
+      icon: Target,
     },
     {
       title: "Exchanges",
