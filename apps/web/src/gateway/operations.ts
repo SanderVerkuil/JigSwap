@@ -80,28 +80,35 @@ export const gateway = {
   // these enforce party-auth and legal transitions in the aggregate.
   exchange: {
     create: api.exchange.propose.propose,
-    byId: api.exchanges.getExchangeById,
-    forUser: api.exchanges.getUserExchanges,
-    incoming: api.exchanges.getExchangesByOwner,
-    outgoing: api.exchanges.getExchangesByRequester,
+    // Reads go through thin Convex adapters that return typed view DTOs from @jigswap/contracts
+    // (ExchangeView / ExchangeSummaryView / ExchangeStatsView / ExchangeMessageView) rather than
+    // raw rows; party-visibility, ordering and the joins are preserved so the UI is unchanged.
+    byId: api.exchange.getExchangeById.getExchangeById,
+    forUser: api.exchange.getUserExchanges.getUserExchanges,
+    incoming: api.exchange.getExchangesByOwner.getExchangesByOwner,
+    outgoing: api.exchange.getExchangesByRequester.getExchangesByRequester,
     accept: api.exchange.accept.accept,
     decline: api.exchange.decline.decline,
     complete: api.exchange.confirmCompletion.confirmCompletion,
     cancel: api.exchange.cancel.cancel,
     dispute: api.exchange.raiseDispute.raiseDispute,
-    stats: api.exchanges.getExchangeStats,
+    stats: api.exchange.getExchangeStats.getExchangeStats,
+    // The write mutation stays on the legacy module (only reads are being cut over).
     sendMessage: api.exchanges.sendExchangeMessage,
-    messages: api.exchanges.getExchangeMessages,
+    messages: api.exchange.getExchangeMessages.getExchangeMessages,
   },
 
   // Identity & Access: the wrapper over Clerk members and their profiles.
   identity: {
-    currentUser: api.users.getCurrentUser,
-    byClerkId: api.users.getUserByClerkId,
-    byId: api.users.getUserById,
+    // Reads go through thin Convex adapters returning typed view DTOs (MemberView / MemberStatsView)
+    // from @jigswap/contracts; auth gating and lookups are preserved so the UI is unchanged.
+    currentUser: api.identity.getCurrentUser.getCurrentUser,
+    byClerkId: api.identity.getUserByClerkId.getUserByClerkId,
+    byId: api.identity.getUserById.getUserById,
+    // The write mutation stays on the legacy module (only reads are being cut over).
     updateProfile: api.users.updateUserProfile,
-    userStats: api.users.getUserStats,
-    search: api.users.searchUsers,
+    userStats: api.identity.getUserStats.getUserStats,
+    search: api.identity.searchUsers.searchUsers,
   },
 
   // Solving: solve tracking, puzzle reviews, goals. Ownership / 24h edit window / rating are
@@ -142,7 +149,8 @@ export const gateway = {
   // Insights: read-side aggregate stats. globalStats is platform-wide; the rest are the signed-in
   // member's own analytics (personal stats, trends, breakdowns) plus a self-service data export.
   insights: {
-    globalStats: api.users.getGlobalStats,
+    // Thin adapter returning the GlobalStatsView DTO; counts are identical to the legacy query.
+    globalStats: api.insights.getGlobalStats.getGlobalStats,
     personalStats: api.insights.getPersonalStats.getPersonalStats,
     completionTrends: api.insights.getCompletionTrends.getCompletionTrends,
     collectionBreakdown:

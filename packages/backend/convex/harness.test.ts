@@ -9,7 +9,7 @@ export const modules = import.meta.glob("./**/!(*.test).*s");
 describe("convex-test harness", () => {
   test("runs an existing query against an in-memory deployment", async () => {
     const t = convexTest(schema, modules);
-    const stats = await t.query(api.users.getGlobalStats, {});
+    const stats = await t.query(api.insights.getGlobalStats.getGlobalStats, {});
     expect(stats).toEqual({
       totalUsers: 0,
       totalPuzzles: 0,

@@ -5,7 +5,6 @@ import {
   internalMutation,
   internalQuery,
   mutation,
-  query,
   QueryCtx,
 } from "./_generated/server";
 
@@ -56,58 +55,9 @@ export const createOrUpdateUser = mutation({
   },
 });
 
-// Get user by Clerk ID
-export const getUserByClerkId = query({
-  args: { clerkId: v.string() },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
-      .unique();
-  },
-});
-
-// Get current user (authenticated user)
-export const getCurrentUser = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return null;
-    }
-
-    return await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .unique();
-  },
-});
-
-// Get global site statistics
-export const getGlobalStats = query({
-  args: {},
-  handler: async (ctx) => {
-    const [users, puzzles, ownedPuzzles] = await Promise.all([
-      ctx.db.query("users").collect(),
-      ctx.db.query("puzzles").collect(),
-      ctx.db.query("ownedPuzzles").collect(),
-    ]);
-
-    return {
-      totalUsers: users.length,
-      totalPuzzles: puzzles.length,
-      totalOwnedPuzzles: ownedPuzzles.length,
-    } as const;
-  },
-});
-
-// Get user by ID
-export const getUserById = query({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.userId);
-  },
-});
+// Reads (getUserByClerkId, getCurrentUser, getGlobalStats, getUserById, getUserStats, searchUsers)
+// were cut over to thin driving adapters under convex/identity/* and convex/insights/getGlobalStats
+// (returning typed view DTOs from @jigswap/contracts). Only writes + internal helpers remain here.
 
 // Update user profile
 export const updateUserProfile = mutation({
@@ -137,71 +87,6 @@ export const updateUserProfile = mutation({
       ...updates,
       updatedAt: Date.now(),
     });
-  },
-});
-
-// Get user stats (puzzles owned, trades completed, etc.)
-export const getUserStats = query({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
-    const puzzlesOwned = await ctx.db
-      .query("ownedPuzzles")
-      .withIndex("by_owner", (q) => q.eq("ownerId", args.userId))
-      .collect();
-
-    const tradesAsRequester = await ctx.db
-      .query("exchanges")
-      .withIndex("by_initiator", (q) => q.eq("initiatorId", args.userId))
-      .filter((q) => q.eq(q.field("status"), "completed"))
-      .collect();
-
-    const tradesAsOwner = await ctx.db
-      .query("exchanges")
-      .withIndex("by_recipient", (q) => q.eq("recipientId", args.userId))
-      .filter((q) => q.eq(q.field("status"), "completed"))
-      .collect();
-
-    const reviews = await ctx.db
-      .query("reviews")
-      .withIndex("by_reviewee", (q) => q.eq("revieweeId", args.userId))
-      .collect();
-
-    const averageRating =
-      reviews.length > 0
-        ? reviews.reduce((sum, review) => sum + review.rating, 0) /
-          reviews.length
-        : 0;
-
-    return {
-      puzzlesOwned: puzzlesOwned.length,
-      puzzlesAvailable: puzzlesOwned.length,
-      tradesCompleted: tradesAsRequester.length + tradesAsOwner.length,
-      averageRating: Math.round(averageRating * 10) / 10,
-      totalReviews: reviews.length,
-    };
-  },
-});
-
-// Search users
-export const searchUsers = query({
-  args: {
-    searchTerm: v.string(),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const limit = args.limit ?? 20;
-    const searchTerm = args.searchTerm.toLowerCase();
-
-    const users = await ctx.db.query("users").collect();
-
-    return users
-      .filter(
-        (user) =>
-          user.name.toLowerCase().includes(searchTerm) ||
-          (user.username && user.username.toLowerCase().includes(searchTerm)) ||
-          (user.location && user.location.toLowerCase().includes(searchTerm)),
-      )
-      .slice(0, limit);
   },
 });
 
