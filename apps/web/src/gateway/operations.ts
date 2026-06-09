@@ -45,10 +45,14 @@ export const gateway = {
     updateDetails: api.library.updateCopyDetails.updateCopyDetails,
     addImage: api.library.addCopyImage.addCopyImage,
     deleteOwned: api.library.deleteCopy.deleteCopy,
-    ownedByOwner: api.puzzles.getOwnedPuzzlesByOwner,
+    // Reads go through the domain-driven library module (file.export namespacing); each is a thin
+    // Convex query returning a typed @jigswap/contracts view DTO, not a raw row.
+    ownedByOwner: api.library.getOwnedPuzzlesByOwner.getOwnedPuzzlesByOwner,
     // Browse reads from the Library inventory (owned copies), not the Catalog.
-    browseOwned: api.puzzles.browseOwnedPuzzles,
-    ownedWithCollectionStatus: api.puzzles.getOwnedPuzzleWithCollectionStatus,
+    browseOwned: api.library.browseOwnedPuzzles.browseOwnedPuzzles,
+    ownedWithCollectionStatus:
+      api.library.getOwnedPuzzleWithCollectionStatus
+        .getOwnedPuzzleWithCollectionStatus,
     // Image upload is storage infra, not a domain op; keep it on the legacy function. The URL is
     // used for copy photos.
     generateUploadUrl: api.puzzles.generateUploadUrl,
@@ -60,12 +64,15 @@ export const gateway = {
     create: api.library.createCollection.createCollection,
     update: api.library.updateCollection.updateCollection,
     delete: api.library.deleteCollection.deleteCollection,
-    listForUser: api.collections.getUserCollections,
-    byId: api.collections.getCollectionById,
+    // Reads go through the domain-driven library module (collections are a Personal Library
+    // concern); each is a thin Convex query returning a typed @jigswap/contracts view DTO.
+    listForUser: api.library.getUserCollections.getUserCollections,
+    byId: api.library.getCollectionById.getCollectionById,
     addOwnedPuzzle: api.library.addCopyToCollection.addCopyToCollection,
     removeOwnedPuzzle:
       api.library.removeCopyFromCollection.removeCopyFromCollection,
-    forOwnedPuzzle: api.collections.getCollectionsForOwnedPuzzle,
+    forOwnedPuzzle:
+      api.library.getCollectionsForOwnedPuzzle.getCollectionsForOwnedPuzzle,
   },
 
   // Exchange (Trading): proposing, settling, and messaging on exchanges.
