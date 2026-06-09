@@ -35,7 +35,39 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
       createdAt: now,
       updatedAt: now,
     });
-    return { alice, bob, puzzleAggregateId };
+    // A pending submission contributed by Alice (not yet approved by a moderator).
+    const alicePendingAggregateId = crypto.randomUUID();
+    await ctx.db.insert("puzzles", {
+      aggregateId: alicePendingAggregateId,
+      title: "Hidden Cove",
+      brand: "Clementoni",
+      pieceCount: 500,
+      searchableText: "Hidden Cove Clementoni",
+      status: "pending",
+      submittedBy: alice,
+      createdAt: now,
+      updatedAt: now,
+    });
+    // A pending submission contributed by Bob — Alice must NOT be able to acquire it.
+    const bobPendingAggregateId = crypto.randomUUID();
+    await ctx.db.insert("puzzles", {
+      aggregateId: bobPendingAggregateId,
+      title: "Northern Lights",
+      brand: "Heye",
+      pieceCount: 2000,
+      searchableText: "Northern Lights Heye",
+      status: "pending",
+      submittedBy: bob,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return {
+      alice,
+      bob,
+      puzzleAggregateId,
+      alicePendingAggregateId,
+      bobPendingAggregateId,
+    };
   });
 
 const asAlice = (t: ReturnType<typeof convexTest>) =>
@@ -128,7 +160,7 @@ describe("library.acquireCopy", () => {
     });
   });
 
-  test("an unknown puzzle definition => SnapshotUnavailable", async () => {
+  test("an unknown puzzle definition => PuzzleNotFound", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
     await expectConvexCode(
@@ -136,8 +168,75 @@ describe("library.acquireCopy", () => {
         puzzleDefinitionId: crypto.randomUUID(),
         condition: "good",
       }),
-      "SnapshotUnavailable",
+      "PuzzleNotFound",
     );
+  });
+
+  test("a member may acquire a copy of their OWN not-yet-approved submission", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, alicePendingAggregateId } = await seed(t);
+    const copyId = (await asAlice(t).mutation(
+      api.library.acquireCopy.acquireCopy,
+      { puzzleDefinitionId: alicePendingAggregateId, condition: "good" },
+    )) as string;
+
+    const row = await copyRow(t, copyId);
+    expect(row?.ownerId).toBe(alice);
+    expect(row?.puzzleDefinitionId).toBe(alicePendingAggregateId);
+    // The cached snapshot is taken from the pending definition, display-only (no moderation state).
+    expect(row?.snapshot).toEqual({
+      title: "Hidden Cove",
+      brand: "Clementoni",
+      pieceCount: 500,
+      thumbnail: undefined,
+    });
+  });
+
+  test("a member cannot acquire someone else's pending submission => PuzzleNotAcquirable", async () => {
+    const t = convexTest(schema, modules);
+    const { bobPendingAggregateId } = await seed(t);
+    await expectConvexCode(
+      asAlice(t).mutation(api.library.acquireCopy.acquireCopy, {
+        puzzleDefinitionId: bobPendingAggregateId,
+        condition: "good",
+      }),
+      "PuzzleNotAcquirable",
+    );
+  });
+});
+
+describe("catalog.listMyContributedPuzzles", () => {
+  test("returns the member's own not-yet-approved submissions only", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const mine = await asAlice(t).query(
+      api.catalog.listMyContributedPuzzles.listMyContributedPuzzles,
+      {},
+    );
+    // Alice's approved puzzle is excluded (it already shows in public search); her pending one is in.
+    expect(mine.map((p) => p.title)).toEqual(["Hidden Cove"]);
+    expect(mine[0]?.status).toBe("pending");
+  });
+
+  test("does not surface another member's pending submission", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const bobs = await asBob(t).query(
+      api.catalog.listMyContributedPuzzles.listMyContributedPuzzles,
+      {},
+    );
+    expect(bobs.map((p) => p.title)).toEqual(["Northern Lights"]);
+  });
+
+  test("requires authentication", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await expect(
+      t.query(
+        api.catalog.listMyContributedPuzzles.listMyContributedPuzzles,
+        {},
+      ),
+    ).rejects.toThrow("Unauthenticated");
   });
 });
 
