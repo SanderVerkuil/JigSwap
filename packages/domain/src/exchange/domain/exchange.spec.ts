@@ -85,6 +85,7 @@ describe("Exchange.propose", () => {
   it("starts proposed and records ExchangeProposed carrying parties and kind", () => {
     const ex = propose(swapTerms);
     expect(ex.status).toBe("proposed");
+    expect(ex.kind).toBe("swap");
     const events = ex.pullEvents();
     expect(names(events)).toEqual(["ExchangeProposed"]);
     const proposed = events[0] as ExchangeProposed;
@@ -94,10 +95,18 @@ describe("Exchange.propose", () => {
     expect(proposed.occurredAt).toBe(NOW);
   });
 
-  it("captures kind-specific terms into state", () => {
-    expect(propose(swapTerms).toState().offeredCopyId).toBe(offered);
-    expect(propose(saleTerms()).toState().price?.amountCents).toBe(2500);
-    expect(propose(lendTerms).toState().returnDate).toBe(LATER);
+  it("captures kind-specific terms into state, tagged with the matching kind", () => {
+    const swap = propose(swapTerms).toState();
+    expect(swap.kind).toBe("swap");
+    expect(swap.offeredCopyId).toBe(offered);
+
+    const sale = propose(saleTerms()).toState();
+    expect(sale.kind).toBe("sale");
+    expect(sale.price?.amountCents).toBe(2500);
+
+    const lend = propose(lendTerms).toState();
+    expect(lend.kind).toBe("lend");
+    expect(lend.returnDate).toBe(LATER);
   });
 });
 
@@ -115,7 +124,12 @@ describe("accept", () => {
     const ex = propose(swapTerms);
     const r = ex.accept(alice, NOW);
     expect(r.isErr).toBe(true);
-    if (r.isErr) expect(r.error.code).toBe("WrongParty");
+    if (r.isErr) {
+      expect(r.error.code).toBe("WrongParty");
+      // The action name is interpolated into the message; assert it so the per-action
+      // string passed to requireParty is pinned (each guard names its own action).
+      expect(r.error.message).toBe("Acting member may not accept");
+    }
     expect(ex.status).toBe("proposed");
   });
 
@@ -148,7 +162,10 @@ describe("decline", () => {
     const ex = propose(swapTerms);
     const r = ex.decline(alice, NOW);
     expect(r.isErr).toBe(true);
-    if (r.isErr) expect(r.error.code).toBe("WrongParty");
+    if (r.isErr) {
+      expect(r.error.code).toBe("WrongParty");
+      expect(r.error.message).toBe("Acting member may not decline");
+    }
   });
 
   it("cannot decline an already accepted exchange", () => {
@@ -180,7 +197,10 @@ describe("cancel", () => {
     const ex = propose(swapTerms);
     const r = ex.cancel(bob, NOW);
     expect(r.isErr).toBe(true);
-    if (r.isErr) expect(r.error.code).toBe("WrongParty");
+    if (r.isErr) {
+      expect(r.error.code).toBe("WrongParty");
+      expect(r.error.message).toBe("Acting member may not cancel");
+    }
   });
 
   it("cannot cancel a completed exchange", () => {
@@ -225,14 +245,20 @@ describe("confirmCompletion (dual confirmation)", () => {
     const ex = accepted();
     const r = ex.confirmCompletion(toId<"MemberId">("eve") as MemberId, NOW);
     expect(r.isErr).toBe(true);
-    if (r.isErr) expect(r.error.code).toBe("WrongParty");
+    if (r.isErr) {
+      expect(r.error.code).toBe("WrongParty");
+      expect(r.error.message).toBe("Acting member may not confirm completion");
+    }
   });
 
   it("cannot confirm completion from a proposed exchange (illegal transition)", () => {
     const ex = propose(swapTerms);
     const r = ex.confirmCompletion(alice, NOW);
     expect(r.isErr).toBe(true);
-    if (r.isErr) expect(r.error.code).toBe("IllegalTransition");
+    if (r.isErr) {
+      expect(r.error.code).toBe("IllegalTransition");
+      expect(r.error.message).toBe("Cannot transition from proposed to completed");
+    }
   });
 });
 
@@ -277,6 +303,39 @@ describe("settlement events", () => {
     expect(transfers[0]).toMatchObject({ copyId: requested, newOwner: alice });
   });
 
+  // The second transfer is guarded by `kind === "swap" && offeredCopyId`. Rehydrating
+  // hand-crafted states isolates each half of that guard (states unreachable via propose()).
+  const settle = (ex: Exchange): readonly OwnershipTransferred[] => {
+    ex.confirmCompletion(alice, NOW);
+    ex.confirmCompletion(bob, LATER);
+    return ex
+      .pullEvents()
+      .filter((e): e is OwnershipTransferred => e.name === "OwnershipTransferred");
+  };
+
+  const acceptedState = (
+    over: Partial<ReturnType<Exchange["toState"]>>,
+  ): Exchange => {
+    const base = accepted(swapTerms).toState();
+    return Exchange.rehydrate({ ...base, ...over });
+  };
+
+  it("does NOT transfer an offered copy when the kind is not swap, even if one is present", () => {
+    // kind=sale but offeredCopyId set: the `kind === \"swap\"` half must gate it out, so the
+    // `&&`→`||` and `if (true)` mutants (which would emit a second transfer) die here.
+    const ex = acceptedState({ kind: "sale", offeredCopyId: offered, price: price() });
+    const transfers = settle(ex);
+    expect(transfers).toHaveLength(1);
+    expect(transfers[0]).toMatchObject({ copyId: requested, newOwner: alice });
+  });
+
+  it("does NOT transfer a second copy for a swap missing its offered copy", () => {
+    // kind=swap but no offeredCopyId: the `offeredCopyId` half must gate it out, so the
+    // `if (true)` mutant dies here.
+    const ex = acceptedState({ kind: "swap", offeredCopyId: undefined });
+    expect(settle(ex)).toHaveLength(1);
+  });
+
   it("records ExchangeCompleted exactly once on settlement", () => {
     const ex = accepted(saleTerms());
     ex.confirmCompletion(alice, NOW);
@@ -313,7 +372,10 @@ describe("raiseDispute", () => {
     const ex = accepted();
     const r = ex.raiseDispute(toId<"MemberId">("eve") as MemberId, NOW);
     expect(r.isErr).toBe(true);
-    if (r.isErr) expect(r.error.code).toBe("WrongParty");
+    if (r.isErr) {
+      expect(r.error.code).toBe("WrongParty");
+      expect(r.error.message).toBe("Acting member may not raise a dispute");
+    }
   });
 
   it("cannot dispute a proposed exchange (illegal transition)", () => {

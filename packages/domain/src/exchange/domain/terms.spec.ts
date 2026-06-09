@@ -15,21 +15,38 @@ describe("Money", () => {
     }
   });
 
+  // Zero is the boundary distinguishing `<= 0` from `< 0`; fractional fails the integer half.
   it.each([0, -100, 12.5])("rejects non-positive or fractional amount %s", (amount) => {
     const result = Money.create(amount, "EUR");
     expect(result.isErr).toBe(true);
-    if (result.isErr) expect(result.error.code).toBe("MissingTerms");
+    if (result.isErr) {
+      expect(result.error.code).toBe("MissingTerms");
+      expect(result.error.message).toBe(
+        "Invalid terms for sale: price must be a positive integer (cents)",
+      );
+    }
   });
 
-  it("rejects a currency that is not a 3-letter code", () => {
-    const result = Money.create(100, "EURO");
+  it.each(["EU", "EURO", ""])("rejects a currency that is not a 3-letter code (%j)", (currency) => {
+    const result = Money.create(100, currency);
     expect(result.isErr).toBe(true);
+    if (result.isErr) {
+      expect(result.error.message).toBe(
+        "Invalid terms for sale: currency must be a 3-letter ISO code",
+      );
+    }
   });
 });
 
 describe("validateTerms", () => {
   it("swap requires an offered copy", () => {
-    expect(validateTerms({ kind: "swap" }).isErr).toBe(true);
+    const missing = validateTerms({ kind: "swap" });
+    expect(missing.isErr).toBe(true);
+    if (missing.isErr) {
+      expect(missing.error.message).toBe(
+        "Invalid terms for swap: an offered copy is required",
+      );
+    }
     const ok = validateTerms({ kind: "swap", offeredCopyId: copy("c1") });
     expect(ok.isOk).toBe(true);
     if (ok.isOk && ok.value.kind === "swap") {
@@ -38,17 +55,34 @@ describe("validateTerms", () => {
   });
 
   it("sale requires a price", () => {
-    expect(validateTerms({ kind: "sale" }).isErr).toBe(true);
+    const missing = validateTerms({ kind: "sale" });
+    expect(missing.isErr).toBe(true);
+    if (missing.isErr) {
+      expect(missing.error.message).toBe("Invalid terms for sale: a price is required");
+    }
     const price = Money.create(500, "EUR");
     if (!price.isOk) throw new Error("setup");
     const ok = validateTerms({ kind: "sale", price: price.value });
     expect(ok.isOk).toBe(true);
+    if (ok.isOk && ok.value.kind === "sale") {
+      expect(ok.value.price).toBe(price.value);
+    }
   });
 
   it("lend requires a return date", () => {
-    expect(validateTerms({ kind: "lend" }).isErr).toBe(true);
-    const ok = validateTerms({ kind: "lend", returnDate: new Date("2026-07-01") });
+    const missing = validateTerms({ kind: "lend" });
+    expect(missing.isErr).toBe(true);
+    if (missing.isErr) {
+      expect(missing.error.message).toBe(
+        "Invalid terms for lend: a return date is required",
+      );
+    }
+    const date = new Date("2026-07-01");
+    const ok = validateTerms({ kind: "lend", returnDate: date });
     expect(ok.isOk).toBe(true);
+    if (ok.isOk && ok.value.kind === "lend") {
+      expect(ok.value.returnDate).toBe(date);
+    }
   });
 
   it("missing-terms errors carry the MissingTerms code", () => {
