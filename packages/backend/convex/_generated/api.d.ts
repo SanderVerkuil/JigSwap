@@ -9,6 +9,22 @@
  */
 
 import type * as adminCategories from "../adminCategories.js";
+import type * as catalog_adapters_catalogIdGenerator from "../catalog/adapters/catalogIdGenerator.js";
+import type * as catalog_adapters_convexCatalogCategoryRepository from "../catalog/adapters/convexCatalogCategoryRepository.js";
+import type * as catalog_adapters_convexPuzzleDefinitionRepository from "../catalog/adapters/convexPuzzleDefinitionRepository.js";
+import type * as catalog_adapters_eventPublisher from "../catalog/adapters/eventPublisher.js";
+import type * as catalog_adapters_mapper from "../catalog/adapters/mapper.js";
+import type * as catalog_adapters_systemClock from "../catalog/adapters/systemClock.js";
+import type * as catalog_approvePuzzleDefinition from "../catalog/approvePuzzleDefinition.js";
+import type * as catalog_createCatalogCategory from "../catalog/createCatalogCategory.js";
+import type * as catalog_errors from "../catalog/errors.js";
+import type * as catalog_rejectPuzzleDefinition from "../catalog/rejectPuzzleDefinition.js";
+import type * as catalog_reorderCatalogCategories from "../catalog/reorderCatalogCategories.js";
+import type * as catalog_runDefinitionAction from "../catalog/runDefinitionAction.js";
+import type * as catalog_setCatalogCategoryActive from "../catalog/setCatalogCategoryActive.js";
+import type * as catalog_submitPuzzleDefinition from "../catalog/submitPuzzleDefinition.js";
+import type * as catalog_updateCatalogCategory from "../catalog/updateCatalogCategory.js";
+import type * as catalog_updatePuzzleDefinition from "../catalog/updatePuzzleDefinition.js";
 import type * as collections from "../collections.js";
 import type * as exchange_accept from "../exchange/accept.js";
 import type * as exchange_adapters_convexCopyPort from "../exchange/adapters/convexCopyPort.js";
@@ -39,6 +55,22 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   adminCategories: typeof adminCategories;
+  "catalog/adapters/catalogIdGenerator": typeof catalog_adapters_catalogIdGenerator;
+  "catalog/adapters/convexCatalogCategoryRepository": typeof catalog_adapters_convexCatalogCategoryRepository;
+  "catalog/adapters/convexPuzzleDefinitionRepository": typeof catalog_adapters_convexPuzzleDefinitionRepository;
+  "catalog/adapters/eventPublisher": typeof catalog_adapters_eventPublisher;
+  "catalog/adapters/mapper": typeof catalog_adapters_mapper;
+  "catalog/adapters/systemClock": typeof catalog_adapters_systemClock;
+  "catalog/approvePuzzleDefinition": typeof catalog_approvePuzzleDefinition;
+  "catalog/createCatalogCategory": typeof catalog_createCatalogCategory;
+  "catalog/errors": typeof catalog_errors;
+  "catalog/rejectPuzzleDefinition": typeof catalog_rejectPuzzleDefinition;
+  "catalog/reorderCatalogCategories": typeof catalog_reorderCatalogCategories;
+  "catalog/runDefinitionAction": typeof catalog_runDefinitionAction;
+  "catalog/setCatalogCategoryActive": typeof catalog_setCatalogCategoryActive;
+  "catalog/submitPuzzleDefinition": typeof catalog_submitPuzzleDefinition;
+  "catalog/updateCatalogCategory": typeof catalog_updateCatalogCategory;
+  "catalog/updatePuzzleDefinition": typeof catalog_updatePuzzleDefinition;
   collections: typeof collections;
   "exchange/accept": typeof exchange_accept;
   "exchange/adapters/convexCopyPort": typeof exchange_adapters_convexCopyPort;
