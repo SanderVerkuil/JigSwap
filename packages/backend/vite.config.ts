@@ -15,6 +15,9 @@ export default defineConfig(() => ({
     globals: true,
     // convex-test runs the Convex JS runtime; edge-runtime provides the matching globals.
     environment: "edge-runtime",
+    // Drain scheduled (event-dispatch) functions after each test so fire-and-forget jobs don't
+    // leak past teardown. See test-setup.ts.
+    setupFiles: ["./test-setup.ts"],
     server: { deps: { inline: ["convex-test"] } },
     include: [
       "convex/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",

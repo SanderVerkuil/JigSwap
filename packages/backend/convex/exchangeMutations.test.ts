@@ -78,6 +78,16 @@ const exchangeRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
 const asAlice = (t: ReturnType<typeof convexTest>) => t.withIdentity({ subject: "clerk_alice" });
 const asBob = (t: ReturnType<typeof convexTest>) => t.withIdentity({ subject: "clerk_bob" });
 
+// Notifications are produced asynchronously by the event dispatcher (scheduled via runAfter(0)).
+// finishInProgressScheduledFunctions only awaits jobs ALREADY in-progress, so we first yield a
+// macrotask to let the pending dispatch fire, then drain — looping a few times to settle the chain.
+const flushScheduled = async (t: ReturnType<typeof convexTest>) => {
+  for (let i = 0; i < 10; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await t.finishInProgressScheduledFunctions();
+  }
+};
+
 // convex-test serializes ConvexError.data to a JSON string when it crosses the function
 // boundary, so normalise before asserting on the stable `code`.
 const dataOf = (e: unknown): { code?: string } => {
@@ -229,6 +239,9 @@ describe("exchange.propose", () => {
       requestedPuzzleId: copy,
       salePrice: 1000,
     });
+    // Notifications are now produced asynchronously by the Notifications subscriber off the
+    // recorded ExchangeProposed event; flush the scheduled dispatcher before asserting.
+    await flushScheduled(t);
     const notes = await notificationsFor(t, bob);
     expect(notes).toHaveLength(1);
     expect(notes[0].type).toBe("trade_request");
@@ -265,6 +278,7 @@ describe("exchange.accept / decline / cancel", () => {
     const t = convexTest(schema, modules);
     const { id, alice } = await proposeSale(t);
     await asBob(t).mutation(api.exchange.accept.accept, { exchangeId: id });
+    await flushScheduled(t); // async Notifications subscriber
     const notes = await notificationsFor(t, alice);
     expect(notes.map((n) => n.type)).toContain("trade_accepted");
   });
@@ -276,6 +290,7 @@ describe("exchange.accept / decline / cancel", () => {
     await asBob(t).mutation(api.exchange.decline.decline, { exchangeId: id });
     const row = await exchangeRow(t, id);
     expect(row?.status).toBe("rejected");
+    await flushScheduled(t); // async Notifications subscriber
     const notes = await notificationsFor(t, alice);
     expect(notes.map((n) => n.type)).toContain("trade_declined");
   });
@@ -287,6 +302,7 @@ describe("exchange.accept / decline / cancel", () => {
     await asAlice(t).mutation(api.exchange.cancel.cancel, { exchangeId: id });
     const row = await exchangeRow(t, id);
     expect(row?.status).toBe("cancelled");
+    await flushScheduled(t); // async Notifications subscriber
     const notes = await notificationsFor(t, bob);
     expect(notes.map((n) => n.type)).toContain("trade_cancelled");
   });
@@ -321,6 +337,7 @@ describe("exchange.confirmCompletion", () => {
     expect(row?.status).toBe("completed");
     const c = await getCopy(t, copy);
     expect(c?.availability).toEqual(ALL_FALSE);
+    await flushScheduled(t); // async Notifications subscriber
     const aliceNotes = await notificationsFor(t, alice);
     const bobNotes = await notificationsFor(t, bob);
     expect(aliceNotes.map((n) => n.type)).toContain("trade_completed");
