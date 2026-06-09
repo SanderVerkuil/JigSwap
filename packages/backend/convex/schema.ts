@@ -21,6 +21,10 @@ export default defineSchema({
 
   // Puzzles  - the actual puzzle designs that exist in the world
   puzzles: defineTable({
+    // Catalog PuzzleDefinitionId. Optional so legacy rows still validate; the domain-driven
+    // catalog functions set+use it, legacy puzzles.ts ignores it.
+    aggregateId: v.optional(v.string()),
+
     // --- Core Info ---
     title: v.string(),
     description: v.optional(v.string()),
@@ -88,6 +92,7 @@ export default defineSchema({
     .index("by_difficulty", ["difficulty"])
     .index("by_brand", ["brand"])
     .index("by_tags", ["tags"])
+    .index("by_aggregate_id", ["aggregateId"])
     .searchIndex("by_searchable_text", {
       searchField: "searchableText",
     }),
@@ -238,6 +243,10 @@ export default defineSchema({
 
   // Admin-managed global categories with localization support
   adminCategories: defineTable({
+    // Catalog CatalogCategoryId. Optional so legacy rows still validate; the domain-driven
+    // catalog functions set+use it, legacy adminCategories.ts ignores it.
+    aggregateId: v.optional(v.string()),
+
     name: v.object({
       en: v.string(),
       nl: v.string(),
@@ -255,7 +264,8 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_active", ["isActive"])
-    .index("by_sort_order", ["sortOrder"]),
+    .index("by_sort_order", ["sortOrder"])
+    .index("by_aggregate_id", ["aggregateId"]),
 
   // User goals for puzzle completion
   goals: defineTable({
