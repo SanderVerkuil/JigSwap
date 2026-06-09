@@ -24,7 +24,7 @@ export const deleteCopy = mutation({
     const remove = makeDeleteCopy({
       copies: convexCopyRepository(ctx),
       reservations: convexCopyReservationPort(ctx),
-      events: noopEventPublisher(),
+      events: noopEventPublisher(ctx),
       clock: systemClock,
     });
 

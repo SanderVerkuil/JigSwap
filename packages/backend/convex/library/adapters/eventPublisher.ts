@@ -1,13 +1,10 @@
 import type { DomainEventPublisher } from "@jigswap/domain";
+import type { MutationCtx } from "../../_generated/server";
+import { makeEventPublisher } from "../../events/makeEventPublisher";
 
-// Driven adapter for the DomainEventPublisher port. NO-OP for this slice: the Library context
-// has no cross-context side effects to dispatch yet. Its events (CopyAcquired, CopyMadeAvailable,
-// CollectionCreated, ...) are consumed by Social/Insights/Notifications in later phases; until
-// then there is nothing to react to in-process, so events are recorded by the aggregates and
-// dropped here. Durable/async fan-out (an events table + scheduler dispatch) is a deliberate
-// later enhancement, mirroring the Catalog no-op publisher.
-export const noopEventPublisher = (): DomainEventPublisher => ({
-  async publish(): Promise<void> {
-    // intentionally empty — persist + dispatch later.
-  },
-});
+// Driven adapter for the DomainEventPublisher port, built per-mutation with `ctx`. Library has no
+// CRITICAL in-transaction reaction (no sync handlers); it durably records + schedules its events
+// (CopyAcquired, CollectionCreated, ...) for the async subscribers. None map to a member-facing
+// notification yet, but recording keeps the log complete + the seam ready for Social/Insights.
+export const noopEventPublisher = (ctx: MutationCtx): DomainEventPublisher =>
+  makeEventPublisher(ctx, "library");

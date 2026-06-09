@@ -56,7 +56,7 @@ export const acquireCopy = mutation({
       copies: convexCopyRepository(ctx),
       snapshots: convexCatalogSnapshotProvider(ctx),
       ids: copyIdGenerator,
-      events: noopEventPublisher(),
+      events: noopEventPublisher(ctx),
       clock: systemClock,
     });
 

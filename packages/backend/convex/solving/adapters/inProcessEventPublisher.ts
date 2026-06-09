@@ -1,45 +1,37 @@
 import {
-  type DomainEvent,
+  type DomainEventPublisher,
   type MemberId,
   makeRecomputeGoalProgress,
   type SolvingDomainEvent,
 } from "@jigswap/domain";
 import type { MutationCtx } from "../../_generated/server";
+import { makeEventPublisher } from "../../events/makeEventPublisher";
 import { convexCompletionRepository } from "./convexCompletionRepository";
 import { convexGoalRepository } from "./convexGoalRepository";
 import { systemClock } from "./systemClock";
 
-// Driven adapter for the DomainEventPublisher port, built per-mutation with `ctx`. Handlers run
-// SYNCHRONOUSLY inside the same Convex transaction, preserving atomicity. WHY in-process: durable
-// /async fan-out (an events table + scheduler dispatch) is a deliberate later enhancement.
+// Driven adapter for the DomainEventPublisher port, built per-mutation with `ctx`. It now durably
+// records + schedules ALL solving events (so e.g. GoalAchieved reaches the async Notifications
+// subscriber) while KEEPING the one CRITICAL reaction inline.
 //
-// WHY the goal-progress reaction lives here: a Goal's progress is DERIVED from the member's
-// completion count, so recording a completion must immediately recompute their goals — wiring it
-// to CompletionRecorded keeps that recompute in the SAME transaction (no stale progress, no extra
-// round-trip). It reacts ONLY to CompletionRecorded, so the GoalProgressed/GoalAchieved events
-// the recompute itself publishes can never re-trigger it (no recursion).
-export const inProcessEventPublisher = (
-  ctx: MutationCtx,
-): { publish(events: readonly DomainEvent[]): Promise<void> } => ({
-  async publish(events: readonly DomainEvent[]): Promise<void> {
+// WHY the goal-progress reaction stays SYNC: a Goal's progress is DERIVED from the member's
+// completion count, so recording a completion must immediately recompute their goals in the SAME
+// transaction (no stale progress, no extra round-trip). It reacts ONLY to CompletionRecorded, so
+// the GoalProgressed/GoalAchieved events the recompute itself publishes never re-trigger it (no
+// recursion) — and because those events flow through this same publisher, they are recorded +
+// scheduled too, finally landing the goal-achievement notification.
+export const inProcessEventPublisher = (ctx: MutationCtx): DomainEventPublisher =>
+  makeEventPublisher(ctx, "solving", async (events) => {
     for (const event of events as readonly SolvingDomainEvent[]) {
-      switch (event.name) {
-        case "CompletionRecorded":
-          await recomputeGoals(ctx, event.userId);
-          break;
-        // CompletionStarted/CompletionEdited/PuzzleReviewed/GoalCreated/GoalProgressed/
-        // GoalAchieved are consumed by Insights/Social/Notifications in later phases; no
-        // in-process side effect in this slice, so they are intentionally dropped here.
-        default:
-          break;
+      if (event.name === "CompletionRecorded") {
+        await recomputeGoals(ctx, event.userId);
       }
     }
-  },
-});
+  });
 
-// Recompute the member's derived goal progress from their authoritative completion count. Uses a
-// publisher that ignores CompletionRecorded (only the goal repos/clock are wired here), so the
-// recompute can never recurse back into itself.
+// Recompute the member's derived goal progress from their authoritative completion count. Reuses
+// THIS publisher so the recompute's own events (GoalProgressed/GoalAchieved) are durably recorded
+// + scheduled; the sync handler ignores those names, so the recompute can never recurse.
 const recomputeGoals = async (
   ctx: MutationCtx,
   userId: MemberId,

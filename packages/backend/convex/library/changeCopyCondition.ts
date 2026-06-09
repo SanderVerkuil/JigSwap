@@ -30,7 +30,7 @@ export const changeCopyCondition = mutation({
 
     const change = makeChangeCopyCondition({
       copies: convexCopyRepository(ctx),
-      events: noopEventPublisher(),
+      events: noopEventPublisher(ctx),
       clock: systemClock,
     });
 

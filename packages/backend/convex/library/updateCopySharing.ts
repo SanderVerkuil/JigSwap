@@ -45,7 +45,7 @@ export const updateCopySharing = mutation({
     const update = makeUpdateCopySharing({
       copies: convexCopyRepository(ctx),
       reservations: convexCopyReservationPort(ctx),
-      events: noopEventPublisher(),
+      events: noopEventPublisher(ctx),
       clock: systemClock,
     });
 

@@ -22,7 +22,7 @@ export const createPersonalCategory = mutation({
     const create = makeCreatePersonalCategory({
       categories: convexPersonalCategoryRepository(ctx),
       ids: personalCategoryIdGenerator,
-      events: noopEventPublisher(),
+      events: noopEventPublisher(ctx),
       clock: systemClock,
     });
 

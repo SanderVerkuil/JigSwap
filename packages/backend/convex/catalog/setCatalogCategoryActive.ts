@@ -20,7 +20,7 @@ export const setCatalogCategoryActive = mutation({
 
     const setActive = makeSetCatalogCategoryActive({
       categories: convexCatalogCategoryRepository(ctx),
-      events: noopEventPublisher(),
+      events: noopEventPublisher(ctx),
       clock: systemClock,
     });
 

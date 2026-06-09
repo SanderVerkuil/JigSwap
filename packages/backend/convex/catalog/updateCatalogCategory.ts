@@ -27,7 +27,7 @@ export const updateCatalogCategory = mutation({
 
     const update = makeUpdateCatalogCategory({
       categories: convexCatalogCategoryRepository(ctx),
-      events: noopEventPublisher(),
+      events: noopEventPublisher(ctx),
       clock: systemClock,
     });
 

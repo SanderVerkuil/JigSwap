@@ -26,7 +26,7 @@ export const runDefinitionAction = async (
 ): Promise<void> => {
   const action = make({
     definitions: convexPuzzleDefinitionRepository(ctx),
-    events: noopEventPublisher(),
+    events: noopEventPublisher(ctx),
     clock: systemClock,
   });
   const result = await action({

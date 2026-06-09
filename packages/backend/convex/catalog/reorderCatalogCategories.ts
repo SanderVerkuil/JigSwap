@@ -24,7 +24,7 @@ export const reorderCatalogCategories = mutation({
 
     const reorder = makeReorderCatalogCategories({
       categories: convexCatalogCategoryRepository(ctx),
-      events: noopEventPublisher(),
+      events: noopEventPublisher(ctx),
       clock: systemClock,
     });
 

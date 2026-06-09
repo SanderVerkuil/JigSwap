@@ -24,7 +24,7 @@ export const removeCopyFromCollection = mutation({
 
     const remove = makeRemoveCopyFromCollection({
       collections: convexCollectionRepository(ctx),
-      events: noopEventPublisher(),
+      events: noopEventPublisher(ctx),
       clock: systemClock,
     });
 

@@ -25,7 +25,7 @@ export const updateCopyDetails = mutation({
 
     const update = makeUpdateCopyDetails({
       copies: convexCopyRepository(ctx),
-      events: noopEventPublisher(),
+      events: noopEventPublisher(ctx),
       clock: systemClock,
     });
 

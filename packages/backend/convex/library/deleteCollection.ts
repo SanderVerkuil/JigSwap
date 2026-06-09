@@ -21,7 +21,7 @@ export const deleteCollection = mutation({
 
     const remove = makeDeleteCollection({
       collections: convexCollectionRepository(ctx),
-      events: noopEventPublisher(),
+      events: noopEventPublisher(ctx),
       clock: systemClock,
     });
 

@@ -63,7 +63,7 @@ export const submitPuzzleDefinition = mutation({
     const submit = makeSubmitPuzzleDefinition({
       definitions: convexPuzzleDefinitionRepository(ctx),
       ids: catalogIdGenerator,
-      events: noopEventPublisher(),
+      events: noopEventPublisher(ctx),
       clock: systemClock,
     });
 

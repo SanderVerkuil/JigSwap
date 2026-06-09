@@ -1,11 +1,10 @@
 import type { DomainEventPublisher } from "@jigswap/domain";
+import type { MutationCtx } from "../../_generated/server";
+import { makeEventPublisher } from "../../events/makeEventPublisher";
 
-// Driven adapter for the DomainEventPublisher port. NO-OP for this slice: Catalog has no
-// cross-context side effects yet (unlike Exchange, which notifies + flips availability).
-// Durable/async fan-out (an events table + scheduler dispatch to Library/Social/Insights/
-// Notifications) is a deliberate later enhancement, so events are recorded then dropped.
-export const noopEventPublisher = (): DomainEventPublisher => ({
-  async publish(): Promise<void> {
-    // intentionally empty — persist + dispatch later.
-  },
-});
+// Driven adapter for the DomainEventPublisher port, built per-mutation with `ctx`. Catalog has no
+// CRITICAL in-transaction reaction (no sync handlers); it durably records + schedules its events
+// for the async subscribers. Notifications maps PuzzleDefinitionApproved/Rejected -> the
+// submitter's "puzzle_approved"/"puzzle_rejected".
+export const noopEventPublisher = (ctx: MutationCtx): DomainEventPublisher =>
+  makeEventPublisher(ctx, "catalog");

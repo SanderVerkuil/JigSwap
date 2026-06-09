@@ -38,7 +38,7 @@ export const addCopyImage = mutation({
 
     const add = makeAddCopyImage({
       copies: convexCopyRepository(ctx),
-      events: noopEventPublisher(),
+      events: noopEventPublisher(ctx),
       clock: systemClock,
     });
 

@@ -27,7 +27,7 @@ export const addCopyToCollection = mutation({
     const add = makeAddCopyToCollection({
       collections: convexCollectionRepository(ctx),
       copies: convexCopyRepository(ctx),
-      events: noopEventPublisher(),
+      events: noopEventPublisher(ctx),
       clock: systemClock,
     });
 

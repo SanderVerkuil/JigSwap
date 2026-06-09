@@ -60,7 +60,7 @@ export const updatePuzzleDefinition = mutation({
 
     const update = makeUpdatePuzzleDefinition({
       definitions: convexPuzzleDefinitionRepository(ctx),
-      events: noopEventPublisher(),
+      events: noopEventPublisher(ctx),
       clock: systemClock,
     });
 

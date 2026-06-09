@@ -31,7 +31,7 @@ export const updateCollection = mutation({
 
     const update = makeUpdateCollection({
       collections: convexCollectionRepository(ctx),
-      events: noopEventPublisher(),
+      events: noopEventPublisher(ctx),
       clock: systemClock,
     });
 

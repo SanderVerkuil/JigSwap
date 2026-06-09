@@ -30,7 +30,7 @@ export const createCollection = mutation({
     const create = makeCreateCollection({
       collections: convexCollectionRepository(ctx),
       ids: collectionIdGenerator,
-      events: noopEventPublisher(),
+      events: noopEventPublisher(ctx),
       clock: systemClock,
     });
 
