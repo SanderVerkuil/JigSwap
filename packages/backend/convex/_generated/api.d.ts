@@ -71,6 +71,22 @@ import type * as library_updateCollection from "../library/updateCollection.js";
 import type * as library_updateCopyDetails from "../library/updateCopyDetails.js";
 import type * as library_updateCopySharing from "../library/updateCopySharing.js";
 import type * as puzzles from "../puzzles.js";
+import type * as solving_adapters_completionMapper from "../solving/adapters/completionMapper.js";
+import type * as solving_adapters_convexCompletionRepository from "../solving/adapters/convexCompletionRepository.js";
+import type * as solving_adapters_convexGoalRepository from "../solving/adapters/convexGoalRepository.js";
+import type * as solving_adapters_idGenerators from "../solving/adapters/idGenerators.js";
+import type * as solving_adapters_inProcessEventPublisher from "../solving/adapters/inProcessEventPublisher.js";
+import type * as solving_adapters_systemClock from "../solving/adapters/systemClock.js";
+import type * as solving_backfill from "../solving/backfill.js";
+import type * as solving_createGoal from "../solving/createGoal.js";
+import type * as solving_editCompletion from "../solving/editCompletion.js";
+import type * as solving_errors from "../solving/errors.js";
+import type * as solving_finishCompletion from "../solving/finishCompletion.js";
+import type * as solving_getCompletionHistory from "../solving/getCompletionHistory.js";
+import type * as solving_listMyCompletions from "../solving/listMyCompletions.js";
+import type * as solving_listMyGoals from "../solving/listMyGoals.js";
+import type * as solving_recordCompletion from "../solving/recordCompletion.js";
+import type * as solving_reviewPuzzle from "../solving/reviewPuzzle.js";
 import type * as users from "../users.js";
 
 import type {
@@ -143,6 +159,22 @@ declare const fullApi: ApiFromModules<{
   "library/updateCopyDetails": typeof library_updateCopyDetails;
   "library/updateCopySharing": typeof library_updateCopySharing;
   puzzles: typeof puzzles;
+  "solving/adapters/completionMapper": typeof solving_adapters_completionMapper;
+  "solving/adapters/convexCompletionRepository": typeof solving_adapters_convexCompletionRepository;
+  "solving/adapters/convexGoalRepository": typeof solving_adapters_convexGoalRepository;
+  "solving/adapters/idGenerators": typeof solving_adapters_idGenerators;
+  "solving/adapters/inProcessEventPublisher": typeof solving_adapters_inProcessEventPublisher;
+  "solving/adapters/systemClock": typeof solving_adapters_systemClock;
+  "solving/backfill": typeof solving_backfill;
+  "solving/createGoal": typeof solving_createGoal;
+  "solving/editCompletion": typeof solving_editCompletion;
+  "solving/errors": typeof solving_errors;
+  "solving/finishCompletion": typeof solving_finishCompletion;
+  "solving/getCompletionHistory": typeof solving_getCompletionHistory;
+  "solving/listMyCompletions": typeof solving_listMyCompletions;
+  "solving/listMyGoals": typeof solving_listMyGoals;
+  "solving/recordCompletion": typeof solving_recordCompletion;
+  "solving/reviewPuzzle": typeof solving_reviewPuzzle;
   users: typeof users;
 }>;
 
