@@ -16,20 +16,21 @@ export const gateway = {
     updatePuzzle: api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
     approve: api.catalog.approvePuzzleDefinition.approvePuzzleDefinition,
     reject: api.catalog.rejectPuzzleDefinition.rejectPuzzleDefinition,
-    // Reads remain on the legacy queries (read cutover is a later phase); public lists/suggestions
-    // already filter to approved definitions only.
-    puzzleById: api.puzzles.getPuzzleById,
-    listAll: api.puzzles.listAllpuzzles,
-    recentPuzzles: api.puzzles.getRecentPuzzles,
+    // Reads go through the domain-driven catalog module (file.export namespacing); each is a thin
+    // Convex query returning a typed @jigswap/contracts view DTO, not a raw row. Public
+    // lists/suggestions already filter to approved definitions only.
+    puzzleById: api.catalog.getPuzzleById.getPuzzleById,
+    listAll: api.catalog.listAllPuzzles.listAllPuzzles,
+    recentPuzzles: api.catalog.getRecentPuzzles.getRecentPuzzles,
     pending: api.catalog.listPendingPuzzleDefinitions.listPendingPuzzleDefinitions,
     // The current member's own not-yet-approved submissions, so the add-copy picker can offer
     // a copy of a puzzle they contributed before it is approved.
     myContributedPuzzles:
       api.catalog.listMyContributedPuzzles.listMyContributedPuzzles,
-    allBrands: api.puzzles.getAllBrands,
-    allTags: api.puzzles.getAllTags,
-    puzzleCategories: api.puzzles.getPuzzleCategories,
-    puzzleSuggestions: api.puzzles.getPuzzleSuggestions,
+    allBrands: api.catalog.getAllBrands.getAllBrands,
+    allTags: api.catalog.getAllTags.getAllTags,
+    puzzleCategories: api.catalog.getPuzzleCategories.getPuzzleCategories,
+    puzzleSuggestions: api.catalog.getPuzzleSuggestions.getPuzzleSuggestions,
   },
 
   // Personal Library: a member's owned copies and their organisation. Writes go through the

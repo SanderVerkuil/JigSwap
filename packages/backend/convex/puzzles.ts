@@ -1,15 +1,5 @@
-import { stream } from "convex-helpers/server/stream";
-import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import schema from "./schema";
-
-export type PuzzleSuggestion = {
-  title: string;
-  description?: string;
-  brand?: string;
-  tags?: string[];
-};
 
 export const generateUploadUrl = mutation({
   args: {},
@@ -52,106 +42,6 @@ export const getOwnedPuzzlesByOwner = query({
     );
 
     return ownedPuzzlesWithPuzzles.sort((a, b) => b.createdAt - a.createdAt);
-  },
-});
-
-export const listAllpuzzles = query({
-  args: {
-    paginationOpts: paginationOptsValidator,
-  },
-  handler: async (ctx, args) => {
-    // Public catalog: pending/rejected submissions must not leak into the browsable list.
-    const puzzles = await ctx.db
-      .query("puzzles")
-      .filter((q) => q.eq(q.field("status"), "approved"))
-      .paginate(args.paginationOpts);
-    const page = await Promise.all(
-      puzzles.page.map(async (puzzle) => ({
-        ...puzzle,
-        image: puzzle.image
-          ? await ctx.storage.getUrl(puzzle.image)
-          : undefined,
-      })),
-    );
-    return {
-      ...puzzles,
-      page,
-    };
-  },
-});
-
-// Get a single puzzle by ID
-export const getPuzzleById = query({
-  args: {
-    puzzleId: v.id("puzzles"),
-  },
-  handler: async (ctx, args) => {
-    const puzzle = await ctx.db.get(args.puzzleId);
-    if (!puzzle) {
-      return null;
-    }
-    return {
-      ...puzzle,
-      image: puzzle.image ? await ctx.storage.getUrl(puzzle.image) : undefined,
-    };
-  },
-});
-
-export const getAllBrands = query({
-  args: {},
-  handler: async (ctx) => {
-    const brands = await stream(ctx.db, schema)
-      .query("puzzles")
-      .withIndex("by_brand", (q) => q)
-      .distinct(["brand"])
-      .collect();
-    return brands.map((brand) => brand.brand);
-  },
-});
-
-export const getAllTags = query({
-  args: {},
-  handler: async (ctx) => {
-    const tags = await stream(ctx.db, schema)
-      .query("puzzles")
-      .withIndex("by_tags", (q) => q)
-      .distinct(["tags"])
-      .collect();
-    return tags
-      .map((tag) => tag.tags)
-      .flat()
-      .filter((tags) => tags !== undefined)
-      .reduce((acc, tag) => {
-        if (tag && !acc.includes(tag)) {
-          acc.push(tag);
-        }
-        return acc;
-      }, [] as string[]);
-  },
-});
-
-// Get the most recently created puzzles (global catalogue)
-export const getRecentPuzzles = query({
-  args: {
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const limit = args.limit ?? 8;
-    // Public catalog: only show approved submissions in the "recent" rail.
-    const puzzles = await ctx.db
-      .query("puzzles")
-      .order("desc")
-      .filter((q) => q.eq(q.field("status"), "approved"))
-      .take(limit);
-
-    const puzzlesWithImages = await Promise.all(
-      puzzles.map(async (puzzle) => ({
-        ...puzzle,
-        image: puzzle.image ? await ctx.storage.getUrl(puzzle.image) : undefined,
-      })),
-    );
-
-    return puzzlesWithImages;
   },
 });
 
@@ -303,56 +193,6 @@ export const browseOwnedPuzzles = query({
       total: filteredInstances.length,
       hasMore: offset + limit < filteredInstances.length,
     };
-  },
-});
-
-// Get puzzle categories (for filters)
-export const getPuzzleCategories = query({
-  args: {},
-  handler: async (ctx) => {
-    // Get all active admin categories
-    const adminCategories = await ctx.db
-      .query("adminCategories")
-      .withIndex("by_active", (q) => q.eq("isActive", true))
-      .order("asc")
-      .collect();
-
-    return adminCategories;
-  },
-});
-
-// Get puzzle suggestions for form auto-fill
-export const getPuzzleSuggestions = query({
-  args: {
-    searchTerm: v.string(),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const limit = args.limit ?? 5;
-    const searchTerm = args.searchTerm.toLowerCase().trim();
-
-    if (searchTerm.length < 1) {
-      return [];
-    }
-
-    const puzzles = await ctx.db
-      .query("puzzles")
-      .withSearchIndex("by_searchable_text", (q) =>
-        // Public catalog: form auto-fill only suggests approved definitions.
-        q.search("searchableText", searchTerm).eq("status", "approved"),
-      )
-      .take(limit);
-
-    const puzzlesWithImages = await Promise.all(
-      puzzles.map(async (puzzle) => ({
-        ...puzzle,
-        image: puzzle.image
-          ? await ctx.storage.getUrl(puzzle.image)
-          : undefined,
-      })),
-    );
-
-    return puzzlesWithImages;
   },
 });
 
