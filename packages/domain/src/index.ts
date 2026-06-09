@@ -12,6 +12,7 @@ export type { StarRating } from "./solving";
 
 export * from "./catalog";
 export * from "./exchange";
+export * from "./insights";
 export * from "./library";
 export * from "./notifications";
 export * from "./reputation";
