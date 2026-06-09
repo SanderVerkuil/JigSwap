@@ -29,7 +29,6 @@ interface CollectionDetailActionsProps {
 }
 
 export function CollectionDetailActions({
-  collection,
   onEdit,
   onAddPuzzles,
 }: CollectionDetailActionsProps) {

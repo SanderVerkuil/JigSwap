@@ -133,6 +133,8 @@ export default function CollectionsPage() {
     }
   };
 
+  // Wired to a delete affordance in a follow-up; kept to preserve the intended flow.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleDeleteCollection = async (collectionAggregateId?: string) => {
     // The domain delete takes the CollectionId (aggregateId); guard rows missing it.
     if (!collectionAggregateId) {
