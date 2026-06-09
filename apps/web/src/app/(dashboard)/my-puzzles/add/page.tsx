@@ -88,7 +88,8 @@ export default function AddPuzzlePage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [selectedPuzzle, setSelectedPuzzle] = useState<{
-    _id: Id<"puzzles">;
+    // Catalog view ids surface as opaque strings; the acquire keys on `aggregateId`, not `_id`.
+    _id: string;
     // The Catalog PuzzleDefinitionId the domain acquire takes; legacy rows may lack it.
     aggregateId?: string;
     title: string;
@@ -160,7 +161,7 @@ export default function AddPuzzlePage() {
   });
 
   const handlePuzzleSelect = (puzzle: {
-    _id: Id<"puzzles">;
+    _id: string;
     aggregateId?: string;
     title: string;
     brand?: string;

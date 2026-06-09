@@ -2,46 +2,15 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Id } from "@/gateway";
+import { gateway } from "@/gateway";
+import type { FunctionReturnType } from "convex/server";
 import { Calendar, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-interface PuzzleData {
-  _id: Id<"ownedPuzzles">;
-  puzzleId: Id<"puzzles">;
-  ownerId: Id<"users">;
-  condition: "new_sealed" | "like_new" | "good" | "fair" | "poor";
-  availability: {
-    forTrade: boolean;
-    forSale: boolean;
-    forLend: boolean;
-  };
-  acquisitionDate?: number;
-  notes?: string;
-  createdAt: number;
-  updatedAt: number;
-  _creationTime?: number;
-  puzzle: {
-    _id: Id<"puzzles">;
-    title: string;
-    description?: string;
-    brand?: string;
-    pieceCount: number;
-    difficulty?: "easy" | "medium" | "hard" | "expert";
-    category?: Id<"adminCategories">;
-    tags?: string[];
-    images?: string[];
-    createdAt: number;
-    updatedAt: number;
-    _creationTime?: number;
-  } | null;
-  owner?: {
-    _id: Id<"users">;
-    name: string;
-    username?: string;
-    avatar?: string;
-  } | null;
-}
+// Owned-copy detail view DTO this panel renders, derived from the read it is fed by.
+type PuzzleData = NonNullable<
+  FunctionReturnType<typeof gateway.library.ownedWithCollectionStatus>
+>;
 
 interface PuzzleDetailInfoProps {
   puzzle: PuzzleData;

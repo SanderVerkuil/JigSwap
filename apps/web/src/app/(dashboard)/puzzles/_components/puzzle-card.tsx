@@ -3,26 +3,17 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Id } from "@/gateway";
+import { gateway } from "@/gateway";
+import type { FunctionReturnType } from "convex/server";
 import { Eye, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { usePuzzleView } from "./puzzle-view-provider";
 
-interface Puzzle {
-  _id: Id<"puzzles">;
-  title: string;
-  description?: string;
-  brand?: string;
-  pieceCount: number;
-  difficulty?: "easy" | "medium" | "hard" | "expert";
-  category?: Id<"adminCategories">;
-  tags?: string[];
-  image?: string | null;
-  createdAt: number;
-  updatedAt: number;
-}
+// Catalog summary view DTO this card renders, derived from the recent-puzzles read it is fed by
+// (the same shape `catalog.listAll` paginates). Ids surface as opaque strings.
+type Puzzle = FunctionReturnType<typeof gateway.catalog.recentPuzzles>[number];
 
 interface PuzzleCardProps {
   puzzle: Puzzle;

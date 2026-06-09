@@ -1,26 +1,15 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Id } from "@/gateway";
+import { gateway } from "@/gateway";
+import type { FunctionReturnType } from "convex/server";
 import { Edit, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-interface CollectionData {
-  _id: string;
-  name: string;
-  description?: string;
-  color?: string;
-  icon?: string;
-  puzzles?: Array<{
-    _id: Id<"ownedPuzzles">;
-    puzzleId: Id<"puzzles">;
-    puzzle: {
-      _id: Id<"puzzles">;
-      title: string;
-      brand?: string;
-    } | null;
-  }>;
-}
+// Collection detail view DTO this header renders, derived from the read it is fed by.
+type CollectionData = NonNullable<
+  FunctionReturnType<typeof gateway.collections.byId>
+>;
 
 interface CollectionDetailHeaderProps {
   collection: CollectionData;

@@ -3,7 +3,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Id } from "@/gateway";
+import { gateway, Id } from "@/gateway";
+import type { FunctionReturnType } from "convex/server";
 import {
   Check,
   CircleCheck,
@@ -62,46 +63,11 @@ export function PuzzleViewProvider({
   );
 }
 
-// Puzzle instance data type with puzzle information
-interface OwnedPuzzleData {
-  _id: Id<"ownedPuzzles">;
-  // The Copy aggregateId backing domain writes (add-to-collection); legacy rows may lack it.
-  aggregateId?: string;
-  puzzleId: Id<"puzzles">;
-  ownerId: Id<"users">;
-  condition: "new_sealed" | "like_new" | "good" | "fair" | "poor";
-  availability: {
-    forTrade: boolean;
-    forSale: boolean;
-    forLend: boolean;
-  };
-  acquisitionDate?: number;
-  notes?: string;
-  createdAt: number;
-  updatedAt: number;
-  _creationTime?: number;
-  addedAt?: number; // For collection members
-  puzzle: {
-    _id: Id<"puzzles">;
-    title: string;
-    description?: string;
-    brand?: string;
-    pieceCount: number;
-    difficulty?: "easy" | "medium" | "hard" | "expert";
-    category?: Id<"adminCategories">;
-    tags?: string[];
-    images?: string[]; // Make optional to match backend schema
-    createdAt: number;
-    updatedAt: number;
-    _creationTime?: number;
-  } | null;
-  owner?: {
-    _id: Id<"users">;
-    name: string;
-    username?: string;
-    avatar?: string;
-  } | null;
-}
+// Owned-copy view DTO this card renders, derived from the library read it is fed by (ids surface as
+// opaque strings; the card re-casts `_id` to `Id<"ownedPuzzles">` once at the callback boundary).
+type OwnedPuzzleData = FunctionReturnType<
+  typeof gateway.library.ownedByOwner
+>[number];
 
 interface PuzzleCardProps {
   puzzle: OwnedPuzzleData;
@@ -151,6 +117,9 @@ export function PuzzleCard({
     return null;
   }
 
+  // DTO surfaces the copy id as a string; callbacks/CollectionDropdown take a branded Convex id.
+  const ownedId = puzzle._id as Id<"ownedPuzzles">;
+
   const renderImage = () => {
     const imageUrl = puzzle.puzzle?.images?.[0] || "/placeholder-puzzle.jpg";
     return (
@@ -171,7 +140,7 @@ export function PuzzleCard({
             <input
               type="checkbox"
               checked={isSelected}
-              onChange={() => onSelect?.(puzzle._id)}
+              onChange={() => onSelect?.(ownedId)}
               className="h-4 w-4"
             />
           </div>
@@ -189,7 +158,7 @@ export function PuzzleCard({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onView(puzzle._id)}
+            onClick={() => onView(ownedId)}
             className="h-8 w-8 p-0"
           >
             <Eye className="h-4 w-4" />
@@ -199,7 +168,7 @@ export function PuzzleCard({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onLogSolve(puzzle._id)}
+            onClick={() => onLogSolve(ownedId)}
             className="h-8 w-8 p-0"
             title={tSolving("trigger")}
             aria-label={tSolving("trigger")}
@@ -211,7 +180,7 @@ export function PuzzleCard({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onEdit(puzzle._id)}
+            onClick={() => onEdit(ownedId)}
             className="h-8 w-8 p-0"
           >
             <Edit className="h-4 w-4" />
@@ -221,7 +190,7 @@ export function PuzzleCard({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onDelete(puzzle._id)}
+            onClick={() => onDelete(ownedId)}
             className="h-8 w-8 p-0 text-destructive hover:text-destructive"
           >
             <Trash2 className="h-4 w-4" />
@@ -231,7 +200,7 @@ export function PuzzleCard({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onRemove(puzzle._id)}
+            onClick={() => onRemove(ownedId)}
             className="h-8 w-8 p-0 text-destructive hover:text-destructive"
           >
             <Trash2 className="h-4 w-4" />
@@ -241,7 +210,7 @@ export function PuzzleCard({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onRequestExchange(puzzle._id)}
+            onClick={() => onRequestExchange(ownedId)}
             className="h-8 w-8 p-0"
           >
             <MessageCircle className="h-4 w-4" />
@@ -251,7 +220,7 @@ export function PuzzleCard({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onMessage(puzzle._id)}
+            onClick={() => onMessage(ownedId)}
             className="h-8 w-8 p-0"
           >
             <MessageCircle className="h-4 w-4" />
@@ -261,7 +230,7 @@ export function PuzzleCard({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onFavorite(puzzle._id)}
+            onClick={() => onFavorite(ownedId)}
             className="h-8 w-8 p-0"
           >
             <Heart className="h-4 w-4" />
@@ -308,7 +277,7 @@ export function PuzzleCard({
           </div>
           {showCollectionDropdown && (
             <CollectionDropdown
-              ownedPuzzleId={puzzle._id}
+              ownedPuzzleId={ownedId}
               copyAggregateId={puzzle.aggregateId}
             />
           )}
