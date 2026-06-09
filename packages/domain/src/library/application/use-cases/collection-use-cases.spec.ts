@@ -20,6 +20,7 @@ import { makeAddCopyToCollection } from "./add-copy-to-collection";
 import { makeCreateCollection } from "./create-collection";
 import { makeDeleteCollection } from "./delete-collection";
 import { makeRemoveCopyFromCollection } from "./remove-copy-from-collection";
+import { makeUpdateCollection } from "./update-collection";
 
 const alice = toId<"OwnerId">("alice") as OwnerId;
 const bob = toId<"OwnerId">("bob") as OwnerId;
@@ -192,6 +193,71 @@ describe("collection membership use cases", () => {
       });
       expect(result.isOk).toBe(true);
       expect(events.names()).toEqual(["CopyRemovedFromCollection"]);
+    });
+  });
+
+  describe("makeUpdateCollection", () => {
+    const run = () =>
+      makeUpdateCollection({ collections, events, clock: new FixedClock(NOW) });
+
+    it("patches the owner's collection and publishes CollectionUpdated", async () => {
+      const result = await run()({
+        actingMemberId: alice,
+        collectionId,
+        name: "Renamed Shelf",
+        description: "now with a description",
+      });
+      expect(result.isOk).toBe(true);
+      expect(events.names()).toEqual(["CollectionUpdated"]);
+      const saved = await collections.findById(collectionId);
+      expect(saved?.name).toBe("Renamed Shelf");
+    });
+
+    it("rejects when the acting member does not own the collection", async () => {
+      const result = await run()({
+        actingMemberId: bob,
+        collectionId,
+        name: "Hijacked",
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("NotOwner");
+    });
+
+    it("rejects an unknown collection", async () => {
+      const result = await run()({
+        actingMemberId: alice,
+        collectionId: toId<"CollectionId">("ghost") as CollectionId,
+        name: "Nope",
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("CollectionNotFound");
+    });
+
+    it("rejects renaming to a name the owner already uses", async () => {
+      await seedCollection(alice, {
+        id: toId<"CollectionId">("col-other") as CollectionId,
+        name: "Taken",
+      });
+      const result = await run()({
+        actingMemberId: alice,
+        collectionId,
+        name: "Taken",
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr)
+        expect(result.error.code).toBe("DuplicateCollectionName");
+    });
+
+    it("allows a no-op rename to the collection's current name", async () => {
+      const result = await run()({
+        actingMemberId: alice,
+        collectionId,
+        name: "My Shelf",
+        color: "#abc",
+      });
+      expect(result.isOk).toBe(true);
+      const saved = await collections.findById(collectionId);
+      expect(saved?.toState().color).toBe("#abc");
     });
   });
 

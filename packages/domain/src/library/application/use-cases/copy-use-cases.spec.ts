@@ -19,6 +19,8 @@ import {
 import { makeAcquireCopy } from "./acquire-copy";
 import { makeAddCopyImage } from "./add-copy-image";
 import { makeChangeCopyCondition } from "./change-copy-condition";
+import { makeDeleteCopy } from "./delete-copy";
+import { makeUpdateCopyDetails } from "./update-copy-details";
 import { makeUpdateCopySharing } from "./update-copy-sharing";
 
 const alice = toId<"OwnerId">("alice") as OwnerId;
@@ -216,6 +218,87 @@ describe("copy mutation use cases", () => {
       });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("NotOwner");
+    });
+  });
+
+  describe("makeUpdateCopyDetails", () => {
+    const run = () =>
+      makeUpdateCopyDetails({ copies, events, clock: new FixedClock(NOW) });
+
+    it("applies the fields to the owner's copy and publishes CopyDetailsUpdated", async () => {
+      const result = await run()({
+        actingMemberId: alice,
+        copyId,
+        missingPiecesCount: 3,
+        notes: "corner piece missing",
+      });
+      expect(result.isOk).toBe(true);
+      expect(events.names()).toEqual(["CopyDetailsUpdated"]);
+      const saved = await copies.findById(copyId);
+      expect(saved?.toState().missingPiecesCount).toBe(3);
+      expect(saved?.toState().notes).toBe("corner piece missing");
+    });
+
+    it("rejects a non-owner", async () => {
+      const result = await run()({
+        actingMemberId: bob,
+        copyId,
+        notes: "hi",
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("NotOwner");
+    });
+
+    it("rejects an unknown copy", async () => {
+      const result = await run()({
+        actingMemberId: alice,
+        copyId: toId<"CopyId">("ghost") as CopyId,
+        notes: "hi",
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("CopyNotFound");
+    });
+  });
+
+  describe("makeDeleteCopy", () => {
+    const run = () =>
+      makeDeleteCopy({
+        copies,
+        reservations,
+        events,
+        clock: new FixedClock(NOW),
+      });
+
+    it("removes the owner's copy and publishes CopyDeleted", async () => {
+      const result = await run()({ actingMemberId: alice, copyId });
+      expect(result.isOk).toBe(true);
+      expect(copies.size()).toBe(0);
+      expect(events.names()).toEqual(["CopyDeleted"]);
+    });
+
+    it("rejects a non-owner", async () => {
+      const result = await run()({ actingMemberId: bob, copyId });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("NotOwner");
+      expect(copies.size()).toBe(1);
+    });
+
+    it("rejects an unknown copy", async () => {
+      const result = await run()({
+        actingMemberId: alice,
+        copyId: toId<"CopyId">("ghost") as CopyId,
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("CopyNotFound");
+    });
+
+    it("refuses to delete a copy reserved by an active exchange (Exchange seam)", async () => {
+      reservations.reserve(copyId);
+      const result = await run()({ actingMemberId: alice, copyId });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("CopyReserved");
+      expect(copies.size()).toBe(1);
+      expect(events.published).toHaveLength(0);
     });
   });
 });
