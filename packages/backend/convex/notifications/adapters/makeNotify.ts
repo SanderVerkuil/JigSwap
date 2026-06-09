@@ -5,7 +5,7 @@ import {
 } from "@jigswap/domain";
 import type { MutationCtx } from "../../_generated/server";
 import { convexNotificationPreferenceRepository } from "./convexNotificationPreferenceRepository";
-import { convexNotificationRepository } from "./convexNotificationRepository";
+import { convexNotificationDelivery } from "./notificationDelivery";
 import {
   notificationIdGenerator,
   notificationPreferenceIdGenerator,
@@ -25,7 +25,7 @@ const noopEventPublisher: DomainEventPublisher = {
 // consults the member's preference per channel, so this is the one place that enforces suppression.
 export const makeNotify = (ctx: MutationCtx): NotifyMember =>
   makeNotifyMember({
-    notifications: convexNotificationRepository(ctx),
+    delivery: convexNotificationDelivery(ctx),
     preferences: convexNotificationPreferenceRepository(ctx),
     notificationIds: notificationIdGenerator,
     preferenceIds: notificationPreferenceIdGenerator,
