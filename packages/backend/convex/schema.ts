@@ -247,12 +247,18 @@ export default defineSchema({
 
   // Completion records for puzzles (can reference either puzzles or ownedPuzzles)
   completions: defineTable({
+    // Solving CompletionId. Optional so legacy rows still validate; the domain-driven solving
+    // functions set+use it, legacy code ignores it.
+    aggregateId: v.optional(v.string()),
+
     userId: v.id("users"),
     puzzleId: v.optional(v.id("puzzles")), // Reference to puzzle (for general completions)
     ownedPuzzleId: v.optional(v.id("ownedPuzzles")), // Reference to specific instance (for specific completions)
     startDate: v.number(),
-    endDate: v.number(),
-    completionTimeMinutes: v.number(),
+    // Optional so an in-progress completion (started, not yet finished) can be persisted; a
+    // finished completion always carries both. Existing rows already hold values.
+    endDate: v.optional(v.number()),
+    completionTimeMinutes: v.optional(v.number()),
     rating: v.optional(v.number()), // 1-5 stars
     review: v.optional(v.string()),
     notes: v.optional(v.string()),
@@ -267,7 +273,8 @@ export default defineSchema({
     .index("by_user_puzzle", ["userId", "puzzleId"])
     .index("by_user_owned_puzzle", ["userId", "ownedPuzzleId"])
     .index("by_completion_date", ["endDate"])
-    .index("by_rating", ["rating"]),
+    .index("by_rating", ["rating"])
+    .index("by_aggregate_id", ["aggregateId"]),
 
   // User-defined categories for organizing collections
   categories: defineTable({
@@ -315,6 +322,10 @@ export default defineSchema({
 
   // User goals for puzzle completion
   goals: defineTable({
+    // Solving GoalId. Optional so legacy rows still validate; the domain-driven solving
+    // functions set+use it, legacy code ignores it.
+    aggregateId: v.optional(v.string()),
+
     userId: v.id("users"),
     title: v.string(),
     description: v.optional(v.string()),
@@ -326,7 +337,8 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_user_active", ["userId", "isActive"]),
+    .index("by_user_active", ["userId", "isActive"])
+    .index("by_aggregate_id", ["aggregateId"]),
 
   // Exchanges are the core of the app. They are the way users can trade, buy, and sell puzzles.
   exchanges: defineTable({
