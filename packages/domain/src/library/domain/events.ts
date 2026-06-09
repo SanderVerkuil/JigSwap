@@ -75,6 +75,16 @@ export class CopyDeleted implements DomainEvent {
   ) {}
 }
 
+// Mutable fields of a collection (name/description/visibility/style/notes) were patched. Name
+// uniqueness across the owner is an application concern, so this event makes no uniqueness claim.
+export class CollectionUpdated implements DomainEvent {
+  readonly name = "CollectionUpdated";
+  constructor(
+    readonly collectionId: CollectionId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
 export class CollectionCreated implements DomainEvent {
   readonly name = "CollectionCreated";
   constructor(
@@ -148,6 +158,7 @@ export type LibraryDomainEvent =
   | CopyMadeUnavailable
   | CopyImageAdded
   | CopyDeleted
+  | CollectionUpdated
   | CollectionCreated
   | CopyAddedToCollection
   | CopyRemovedFromCollection

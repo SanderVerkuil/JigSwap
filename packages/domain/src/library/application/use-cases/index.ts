@@ -7,4 +7,5 @@ export * from "./create-personal-category";
 export * from "./delete-collection";
 export * from "./delete-copy";
 export * from "./remove-copy-from-collection";
+export * from "./update-collection";
 export * from "./update-copy-sharing";

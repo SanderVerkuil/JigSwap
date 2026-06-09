@@ -3,6 +3,7 @@ import { LibraryError } from "./errors";
 import {
   CollectionCreated,
   CollectionDeleted,
+  CollectionUpdated,
   CopyAddedToCollection,
   CopyRemovedFromCollection,
   PuzzleUnwished,
@@ -142,6 +143,7 @@ export class Collection {
       personalNotes: props.personalNotes ?? this.state.personalNotes,
       updatedAt: now,
     };
+    this.record(new CollectionUpdated(this.id, now));
     return ok(undefined);
   }
 
