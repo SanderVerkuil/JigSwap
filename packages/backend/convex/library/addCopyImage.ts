@@ -1,0 +1,56 @@
+import {
+  type CopyId,
+  type CopyImageTag,
+  type FileId,
+  makeAddCopyImage,
+  type OwnerId,
+  toId,
+} from "@jigswap/domain";
+import { v } from "convex/values";
+import { mutation } from "../_generated/server";
+import { requireMember } from "../identity/requireMember";
+import { convexCopyRepository } from "./adapters/convexCopyRepository";
+import { noopEventPublisher } from "./adapters/eventPublisher";
+import { systemClock } from "./adapters/systemClock";
+import { toConvexError } from "./errors";
+
+// Composition root for attaching a photo to a copy. `copyId` is the domain aggregateId; `fileId`
+// is a `_storage` ref the domain carries as an opaque handle.
+export const addCopyImage = mutation({
+  args: {
+    copyId: v.string(),
+    fileId: v.string(),
+    title: v.optional(v.string()),
+    description: v.optional(v.string()),
+    tag: v.optional(
+      v.union(
+        v.literal("box_front"),
+        v.literal("box_back"),
+        v.literal("pieces"),
+        v.literal("completed"),
+        v.literal("damage_detail"),
+      ),
+    ),
+    takenAt: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const actingMemberId = (await requireMember(ctx)) as unknown as OwnerId;
+
+    const add = makeAddCopyImage({
+      copies: convexCopyRepository(ctx),
+      events: noopEventPublisher(),
+      clock: systemClock,
+    });
+
+    const result = await add({
+      actingMemberId,
+      copyId: toId<"CopyId">(args.copyId) as CopyId,
+      fileId: toId<"FileId">(args.fileId) as FileId,
+      title: args.title,
+      description: args.description,
+      tag: args.tag as CopyImageTag | undefined,
+      takenAt: args.takenAt === undefined ? undefined : new Date(args.takenAt),
+    });
+    if (result.isErr) throw toConvexError(result.error);
+  },
+});
