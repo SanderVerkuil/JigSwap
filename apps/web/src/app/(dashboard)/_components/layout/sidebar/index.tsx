@@ -10,6 +10,7 @@ import {
 import { CheckRole } from "@/components/utils/check-role/server";
 import {
   ArrowLeftRight,
+  Bell,
   CircleCheck,
   FolderOpen,
   Home,
@@ -82,6 +83,11 @@ const getItems: () => Item[] = () => {
       title: "Messages",
       url: "/messages",
       icon: MessageSquare,
+    },
+    {
+      title: "Notifications",
+      url: "/notifications",
+      icon: Bell,
     },
   ];
 };
