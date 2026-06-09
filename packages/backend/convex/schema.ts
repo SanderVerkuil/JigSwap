@@ -462,6 +462,9 @@ export default defineSchema({
     .index("by_user_puzzle", ["userId", "puzzleId"]),
 
   notifications: defineTable({
+    // Notification aggregate identity. Optional so pre-existing rows still validate; the domain
+    // path sets+uses it (backfill stamps legacy rows). The repository keys saves on it.
+    aggregateId: v.optional(v.string()),
     userId: v.id("users"),
     type: v.union(
       v.literal("trade_request"),
@@ -472,15 +475,46 @@ export default defineSchema({
       v.literal("message_received"),
       v.literal("review_received"),
       v.literal("puzzle_favorited"),
+      // New literals the other contexts now emit (see domain NotificationType).
+      v.literal("goal_achieved"),
+      v.literal("puzzle_approved"),
+      v.literal("puzzle_rejected"),
+      v.literal("exchange_proposed"),
+      v.literal("exchange_disputed"),
     ),
     title: v.string(),
     message: v.string(),
     relatedId: v.optional(v.string()), // ID of related entity (trade, puzzle, etc.)
+    // Delivery channel. Optional so legacy rows validate; defaults to "inApp" (backfill stamps it).
+    channel: v.optional(v.string()),
     isRead: v.boolean(),
     createdAt: v.number(),
   })
     .index("by_user", ["userId"])
     .index("by_type", ["type"])
     .index("by_read_status", ["isRead"])
-    .index("by_created_at", ["createdAt"]),
+    .index("by_created_at", ["createdAt"])
+    .index("by_aggregate_id", ["aggregateId"]),
+
+  // Per-member NotificationPreference: which (type, channel) deliveries the member accepts. One
+  // row per member; `toggles` is the resolved type->channel->enabled map (stored as JSON via
+  // v.any so the domain shape maps field-for-field without enumerating literals here).
+  notificationPreferences: defineTable({
+    aggregateId: v.optional(v.string()),
+    memberId: v.id("users"),
+    toggles: v.any(),
+    updatedAt: v.number(),
+  }).index("by_member", ["memberId"]),
+
+  // The durable domain-event log: every context's events are appended here, then an async
+  // dispatcher (scheduled per insert) routes each to its subscribers and stamps processedAt.
+  // WHY durable: decouples subscribers (Notifications, future Insights/Social) from the emitting
+  // transaction while keeping critical reactions (availability, goal recompute) inline.
+  domainEvents: defineTable({
+    name: v.string(),
+    payload: v.any(),
+    occurredAt: v.number(),
+    context: v.string(),
+    processedAt: v.optional(v.number()),
+  }).index("by_processed", ["processedAt"]),
 });
