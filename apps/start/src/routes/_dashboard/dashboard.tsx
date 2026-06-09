@@ -1,14 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// Placeholder anchor child for the _dashboard pathless layout (URL: /dashboard).
-// A childless pathless layout resolves to "/" and collides with the landing route,
-// so the shell needs at least one child. Part 2 replaces this with the real
-// dashboard landing (welcome / quick-actions / feature-sections / recent-activity),
-// once those (dashboard) leaf components are ported.
+import { AdvancedFeaturesSection } from "@/components/dashboard-home/feature-sections/advanced-features-section";
+import { FeatureSections } from "@/components/dashboard-home/feature-sections/feature-sections";
+import { QuickActionsSection } from "@/components/dashboard-home/quick-actions/quick-actions-section";
+import { RecentActivitySection } from "@/components/dashboard-home/recent-activity/recent-activity-section";
+import { WelcomeHeader } from "@/components/dashboard-home/welcome-section/welcome-header";
+
+// The (dashboard) landing (URL: /dashboard). Replaces the part-1 placeholder anchor child of the
+// _dashboard pathless layout with the real welcome / quick-actions / feature-sections /
+// recent-activity composition ported from the Next dashboard page.
 export const Route = createFileRoute("/_dashboard/dashboard")({
   component: DashboardPage,
 });
 
 function DashboardPage() {
-  return <div className="space-y-6" />;
+  return (
+    <div className="space-y-6">
+      <WelcomeHeader />
+      <QuickActionsSection />
+      <FeatureSections />
+      <AdvancedFeaturesSection />
+      <RecentActivitySection />
+    </div>
+  );
 }
