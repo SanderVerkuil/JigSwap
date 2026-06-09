@@ -13,6 +13,7 @@ export type { StarRating } from "./solving";
 export * from "./catalog";
 export * from "./exchange";
 export * from "./library";
+export * from "./notifications";
 export * from "./reputation";
 export * from "./shared-kernel";
 export * from "./solving";
