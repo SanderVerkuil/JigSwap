@@ -79,6 +79,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             Home
           </Link>
           <Link to="/insights">Insights</Link>
+          <Link to="/me">Me</Link>
         </nav>
         <hr />
         {children}
