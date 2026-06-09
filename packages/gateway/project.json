@@ -1,0 +1,16 @@
+{
+  "name": "@jigswap/gateway",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/gateway/src",
+  "projectType": "library",
+  "tags": ["type:gateway", "scope:shared"],
+  "targets": {
+    "type-check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm run type-check",
+        "cwd": "packages/gateway"
+      }
+    }
+  }
+}

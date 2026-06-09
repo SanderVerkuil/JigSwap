@@ -51,13 +51,24 @@ const eslintConfig = [
                 "type:backend-adapter",
               ],
             },
-            // App (BFF + UI) speaks contracts; type:backend-adapter allowed transitionally
-            // because the gateway still imports the Convex generated API (removed in a later phase).
+            // The gateway is the shared transport seam: it alone reaches the Convex generated API,
+            // so every web tier depends on it instead of _generated directly.
+            {
+              sourceTag: "type:gateway",
+              onlyDependOnLibsWithTags: [
+                "type:contracts",
+                "type:backend-adapter",
+                "type:gateway",
+              ],
+            },
+            // App (BFF + UI) speaks contracts and reaches the backend through the gateway;
+            // type:backend-adapter stays allowed transitionally (removed in a later phase).
             {
               sourceTag: "type:app",
               onlyDependOnLibsWithTags: [
                 "type:contracts",
                 "type:backend-adapter",
+                "type:gateway",
                 "type:app",
               ],
             },
