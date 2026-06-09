@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Id } from "@/gateway";
 import {
   Check,
+  CircleCheck,
   Edit,
   Eye,
   Heart,
@@ -113,6 +114,7 @@ interface PuzzleCardProps {
   onRequestExchange?: (puzzleId: Id<"ownedPuzzles">) => void;
   onMessage?: (puzzleId: Id<"ownedPuzzles">) => void;
   onFavorite?: (puzzleId: Id<"ownedPuzzles">) => void;
+  onLogSolve?: (puzzleId: Id<"ownedPuzzles">) => void;
   isSelected?: boolean;
   showOwner?: boolean;
   showActions?: boolean;
@@ -132,6 +134,7 @@ export function PuzzleCard({
   onRequestExchange,
   onMessage,
   onFavorite,
+  onLogSolve,
   isSelected = false,
   showOwner = false,
   showActions = true,
@@ -140,6 +143,7 @@ export function PuzzleCard({
   className = "",
 }: PuzzleCardProps) {
   const t = useTranslations("puzzles");
+  const tSolving = useTranslations("solving.logSolve");
   const { viewMode } = usePuzzleView();
 
   // Early return if no puzzle data
@@ -189,6 +193,18 @@ export function PuzzleCard({
             className="h-8 w-8 p-0"
           >
             <Eye className="h-4 w-4" />
+          </Button>
+        )}
+        {onLogSolve && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onLogSolve(puzzle._id)}
+            className="h-8 w-8 p-0"
+            title={tSolving("trigger")}
+            aria-label={tSolving("trigger")}
+          >
+            <CircleCheck className="h-4 w-4" />
           </Button>
         )}
         {onEdit && (

@@ -1,5 +1,6 @@
 "use client";
 
+import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
@@ -20,6 +21,11 @@ export default function PuzzlesPage() {
   const tCommon = useTranslations("common");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = useState("");
+  // The copy a solve is being logged against; null when the dialog is closed.
+  const [solveTarget, setSolveTarget] = useState<{
+    copyId: string;
+    title: string;
+  } | null>(null);
 
   const convexUser = useQuery(
     gateway.identity.byClerkId,
@@ -60,6 +66,20 @@ export default function PuzzlesPage() {
 
   const handleViewPuzzle = (ownedPuzzleId: Id<"ownedPuzzles">) => {
     router.push(`/my-puzzles/${ownedPuzzleId}`);
+  };
+
+  const handleLogSolve = (ownedPuzzleId: Id<"ownedPuzzles">) => {
+    // Solves are logged against the Copy aggregateId; guard rows predating the backfill rather
+    // than open a dialog that can't persist.
+    const copy = userownedPuzzles?.find((p) => p._id === ownedPuzzleId);
+    if (!copy?.aggregateId) {
+      console.error("Cannot log a solve: copy is missing its aggregateId.");
+      return;
+    }
+    setSolveTarget({
+      copyId: copy.aggregateId,
+      title: copy.puzzle?.title ?? "",
+    });
   };
 
   // Filter puzzle instances based on search term
@@ -169,9 +189,21 @@ export default function PuzzlesPage() {
               onEdit={handleEditPuzzle}
               onView={handleViewPuzzle}
               onDelete={handleDeletePuzzle}
+              onLogSolve={handleLogSolve}
             />
           ))}
         </PuzzleViewProvider>
+      )}
+
+      {solveTarget && (
+        <LogSolveDialog
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setSolveTarget(null);
+          }}
+          copyId={solveTarget.copyId}
+          puzzleTitle={solveTarget.title}
+        />
       )}
     </div>
   );
