@@ -10,11 +10,18 @@ import { api } from "@jigswap/backend/convex/_generated/api";
 export const gateway = {
   // Catalog: shared puzzle definitions, brands, tags, taxonomy, favorites.
   catalog: {
-    createPuzzle: api.puzzles.createPuzzle,
-    updatePuzzle: api.puzzles.updatePuzzle,
+    // Writes go through the domain-driven catalog module (file.export namespacing); submissions
+    // land as `pending` and must be approved (moderation) before appearing publicly.
+    createPuzzle: api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+    updatePuzzle: api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+    approve: api.catalog.approvePuzzleDefinition.approvePuzzleDefinition,
+    reject: api.catalog.rejectPuzzleDefinition.rejectPuzzleDefinition,
+    // Reads remain on the legacy queries (read cutover is a later phase); public lists/suggestions
+    // already filter to approved definitions only.
     puzzleById: api.puzzles.getPuzzleById,
     listAll: api.puzzles.listAllpuzzles,
     recentPuzzles: api.puzzles.getRecentPuzzles,
+    pending: api.catalog.listPendingPuzzleDefinitions.listPendingPuzzleDefinitions,
     allBrands: api.puzzles.getAllBrands,
     allTags: api.puzzles.getAllTags,
     puzzleCategories: api.puzzles.getPuzzleCategories,
@@ -80,14 +87,16 @@ export const gateway = {
     globalStats: api.users.getGlobalStats,
   },
 
-  // Catalog moderation: the global, moderated category taxonomy (admin).
+  // Catalog moderation: the global, moderated category taxonomy (admin). Writes go through the
+  // domain-driven catalog module; identifiers are CatalogCategoryId aggregateIds.
   adminCatalog: {
     listAll: api.adminCategories.getAllAdminCategories,
     listActive: api.adminCategories.getActiveAdminCategories,
     byId: api.adminCategories.getAdminCategoryById,
-    create: api.adminCategories.createAdminCategory,
-    update: api.adminCategories.updateAdminCategory,
-    delete: api.adminCategories.deleteAdminCategory,
-    reorder: api.adminCategories.reorderAdminCategories,
+    create: api.catalog.createCatalogCategory.createCatalogCategory,
+    update: api.catalog.updateCatalogCategory.updateCatalogCategory,
+    reorder: api.catalog.reorderCatalogCategories.reorderCatalogCategories,
+    // The domain soft-deactivates (no hard delete); "delete" hides a node via setActive(false).
+    delete: api.catalog.setCatalogCategoryActive.setCatalogCategoryActive,
   },
 } as const;
