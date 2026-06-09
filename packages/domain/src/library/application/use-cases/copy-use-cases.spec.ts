@@ -171,7 +171,10 @@ describe("copy mutation use cases", () => {
         condition: "fair",
       });
       expect(result.isErr).toBe(true);
-      if (result.isErr) expect(result.error.code).toBe("NotOwner");
+      if (result.isErr) {
+        expect(result.error.code).toBe("NotOwner");
+        expect(result.error.message).toBe("Acting member may not change this copy's condition");
+      }
     });
 
     it("rejects an unknown copy", async () => {
@@ -203,6 +206,43 @@ describe("copy mutation use cases", () => {
       });
       expect(result.isOk).toBe(true);
       expect(events.names()).toEqual(["CopyMadeAvailable"]);
+    });
+
+    it("rejects a non-owner", async () => {
+      const result = await run()({
+        actingMemberId: bob,
+        copyId,
+        visibility: "visible",
+        forTrade: true,
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) {
+        expect(result.error.code).toBe("NotOwner");
+        expect(result.error.message).toBe("Acting member may not update this copy's sharing");
+      }
+    });
+
+    it("rejects an unknown copy", async () => {
+      const result = await run()({
+        actingMemberId: alice,
+        copyId: toId<"CopyId">("ghost") as CopyId,
+        visibility: "visible",
+        forTrade: true,
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("CopyNotFound");
+    });
+
+    it("does not consult the reservation seam when withdrawing availability", async () => {
+      // A private (not-for-exchange) setting must short-circuit before isReserved(), so the
+      // `&&` guard's first operand genuinely gates the reservation lookup.
+      reservations.reserve(copyId);
+      const result = await run()({
+        actingMemberId: alice,
+        copyId,
+        visibility: "private",
+      });
+      expect(result.isOk).toBe(true);
     });
 
     it("refuses to make a reserved copy available (Exchange seam)", async () => {
@@ -252,7 +292,44 @@ describe("copy mutation use cases", () => {
         fileId: toId<"FileId">("file1") as FileId,
       });
       expect(result.isErr).toBe(true);
-      if (result.isErr) expect(result.error.code).toBe("NotOwner");
+      if (result.isErr) {
+        expect(result.error.code).toBe("NotOwner");
+        expect(result.error.message).toBe("Acting member may not add an image to this copy");
+      }
+    });
+
+    it("rejects an unknown copy", async () => {
+      const result = await run()({
+        actingMemberId: alice,
+        copyId: toId<"CopyId">("ghost") as CopyId,
+        fileId: toId<"FileId">("file1") as FileId,
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("CopyNotFound");
+      expect(events.published).toHaveLength(0);
+    });
+
+    it("forwards the image metadata fields onto the copy", async () => {
+      const takenAt = new Date("2026-01-01T00:00:00Z");
+      const result = await run()({
+        actingMemberId: alice,
+        copyId,
+        fileId: toId<"FileId">("file2") as FileId,
+        title: "Front of box",
+        description: "Pristine",
+        tag: "box_front",
+        takenAt,
+      });
+      expect(result.isOk).toBe(true);
+      const saved = await copies.findById(copyId);
+      const images = saved?.toState().images ?? [];
+      expect(images).toHaveLength(1);
+      expect(images[0]).toMatchObject({
+        title: "Front of box",
+        description: "Pristine",
+        tag: "box_front",
+        takenAt,
+      });
     });
   });
 
@@ -281,7 +358,10 @@ describe("copy mutation use cases", () => {
         notes: "hi",
       });
       expect(result.isErr).toBe(true);
-      if (result.isErr) expect(result.error.code).toBe("NotOwner");
+      if (result.isErr) {
+        expect(result.error.code).toBe("NotOwner");
+        expect(result.error.message).toBe("Acting member may not update this copy's details");
+      }
     });
 
     it("rejects an unknown copy", async () => {
@@ -314,7 +394,10 @@ describe("copy mutation use cases", () => {
     it("rejects a non-owner", async () => {
       const result = await run()({ actingMemberId: bob, copyId });
       expect(result.isErr).toBe(true);
-      if (result.isErr) expect(result.error.code).toBe("NotOwner");
+      if (result.isErr) {
+        expect(result.error.code).toBe("NotOwner");
+        expect(result.error.message).toBe("Acting member may not delete this copy");
+      }
       expect(copies.size()).toBe(1);
     });
 

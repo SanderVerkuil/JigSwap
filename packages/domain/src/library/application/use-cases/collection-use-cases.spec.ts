@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { toId } from "../../../shared-kernel";
 import {
   CatalogSnapshot,
@@ -155,7 +155,21 @@ describe("collection membership use cases", () => {
       const copyId = await seedCopy(copies, bob, "copy-c");
       const result = await run()({ actingMemberId: bob, collectionId, copyId });
       expect(result.isErr).toBe(true);
-      if (result.isErr) expect(result.error.code).toBe("NotOwner");
+      if (result.isErr) {
+        expect(result.error.code).toBe("NotOwner");
+        expect(result.error.message).toBe("Acting member may not modify this collection");
+      }
+    });
+
+    it("rejects an unknown collection", async () => {
+      const copyId = await seedCopy(copies, alice, "copy-c2");
+      const result = await run()({
+        actingMemberId: alice,
+        collectionId: toId<"CollectionId">("ghost") as CollectionId,
+        copyId,
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("CollectionNotFound");
     });
 
     it("rejects an unknown copy", async () => {
@@ -166,6 +180,22 @@ describe("collection membership use cases", () => {
       });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("CopyNotFound");
+    });
+
+    it("surfaces the aggregate's WrongMemberType when adding a copy to a wishlist", async () => {
+      const wishlistId = await seedCollection(alice, {
+        id: toId<"CollectionId">("col-wish") as CollectionId,
+        name: "Wishlist",
+        isWishlist: true,
+      });
+      const copyId = await seedCopy(copies, alice, "copy-w");
+      const result = await run()({
+        actingMemberId: alice,
+        collectionId: wishlistId,
+        copyId,
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("WrongMemberType");
     });
   });
 
@@ -194,6 +224,33 @@ describe("collection membership use cases", () => {
       expect(result.isOk).toBe(true);
       expect(events.names()).toEqual(["CopyRemovedFromCollection"]);
     });
+
+    it("rejects an unknown collection", async () => {
+      const result = await run()({
+        actingMemberId: alice,
+        collectionId: toId<"CollectionId">("ghost") as CollectionId,
+        copyId: toId<"CopyId">("any") as CopyId,
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("CollectionNotFound");
+    });
+
+    it("rejects when the acting member does not own the collection", async () => {
+      const copyId = await seedCopy(copies, alice, "copy-e");
+      const result = await run()({ actingMemberId: bob, collectionId, copyId });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) {
+        expect(result.error.code).toBe("NotOwner");
+        expect(result.error.message).toBe("Acting member may not modify this collection");
+      }
+    });
+
+    it("surfaces the aggregate's CopyNotInCollection for a non-member copy", async () => {
+      const copyId = await seedCopy(copies, alice, "copy-f");
+      const result = await run()({ actingMemberId: alice, collectionId, copyId });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("CopyNotInCollection");
+    });
   });
 
   describe("makeUpdateCollection", () => {
@@ -220,7 +277,58 @@ describe("collection membership use cases", () => {
         name: "Hijacked",
       });
       expect(result.isErr).toBe(true);
-      if (result.isErr) expect(result.error.code).toBe("NotOwner");
+      if (result.isErr) {
+        expect(result.error.code).toBe("NotOwner");
+        expect(result.error.message).toBe("Acting member may not update this collection");
+      }
+    });
+
+    // The uniqueness lookup runs ONLY when the name actually CHANGES, guarded by
+    // `cmd.name !== undefined && cmd.name !== collection.name`. Spying on the repository call
+    // pins both halves: it must be invoked on a real rename and skipped otherwise — directly
+    // killing the `if (true)` and `&&`→`||` mutants regardless of the duplicate outcome.
+    it("queries (owner, name) uniqueness when the name actually changes", async () => {
+      const lookup = vi.spyOn(collections, "findByOwnerAndName");
+      await run()({ actingMemberId: alice, collectionId, name: "A Brand New Name" });
+      expect(lookup).toHaveBeenCalledTimes(1);
+      expect(lookup).toHaveBeenCalledWith(alice, "A Brand New Name");
+    });
+
+    it("skips the uniqueness query on a no-op rename to the current name", async () => {
+      const lookup = vi.spyOn(collections, "findByOwnerAndName");
+      const result = await run()({
+        actingMemberId: alice,
+        collectionId,
+        name: "My Shelf", // identical to the seeded name
+      });
+      expect(result.isOk).toBe(true);
+      expect(lookup).not.toHaveBeenCalled();
+    });
+
+    it("skips the uniqueness query when the name is omitted entirely", async () => {
+      const lookup = vi.spyOn(collections, "findByOwnerAndName");
+      const result = await run()({
+        actingMemberId: alice,
+        collectionId,
+        description: "no name supplied",
+      });
+      expect(result.isOk).toBe(true);
+      expect(lookup).not.toHaveBeenCalled();
+    });
+
+    // `existing && existing.id !== collection.id`: a lookup that returns the collection ITSELF
+    // (same id) must not be treated as a duplicate. Forcing the repo to echo back this very
+    // collection kills the `if (true)` mutant on the inner guard.
+    it("does not flag a duplicate when the only match is the collection itself", async () => {
+      vi.spyOn(collections, "findByOwnerAndName").mockResolvedValue(
+        await collections.findById(collectionId),
+      );
+      const result = await run()({
+        actingMemberId: alice,
+        collectionId,
+        name: "Changed Name",
+      });
+      expect(result.isOk).toBe(true);
     });
 
     it("rejects an unknown collection", async () => {
@@ -286,6 +394,26 @@ describe("collection membership use cases", () => {
       if (result.isErr)
         expect(result.error.code).toBe("CannotDeleteDefaultCollection");
       expect(collections.size()).toBe(2);
+    });
+
+    it("rejects an unknown collection", async () => {
+      const result = await run()({
+        actingMemberId: alice,
+        collectionId: toId<"CollectionId">("ghost") as CollectionId,
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("CollectionNotFound");
+      expect(collections.size()).toBe(1);
+    });
+
+    it("rejects when the acting member does not own the collection", async () => {
+      const result = await run()({ actingMemberId: bob, collectionId });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) {
+        expect(result.error.code).toBe("NotOwner");
+        expect(result.error.message).toBe("Acting member may not delete this collection");
+      }
+      expect(collections.size()).toBe(1);
     });
   });
 });

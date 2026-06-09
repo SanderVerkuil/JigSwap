@@ -76,6 +76,21 @@ describe("Catalog category use cases", () => {
     if (r.isErr) expect(r.error.code).toBe("CatalogCategoryNotFound");
   });
 
+  // The aggregate re-checks name completeness; the use case must surface that error rather
+  // than save (kills the `if (outcome.isErr)` → false mutant).
+  it("surfaces the aggregate's EmptyCategoryName on an incomplete replacement name", async () => {
+    const id = await createOk("Landscapes", 0);
+    events.published.length = 0;
+    const update = makeUpdateCatalogCategory(deps);
+    const r = await update({
+      catalogCategoryId: id,
+      changes: { name: name("EN only", "") },
+    });
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("EmptyCategoryName");
+    expect(events.published).toHaveLength(0); // nothing persisted/published
+  });
+
   it("soft-deactivates so the node drops out of listActive but is not deleted", async () => {
     const id = await createOk("Landscapes", 0);
     const setActive = makeSetCatalogCategoryActive(deps);
@@ -84,6 +99,29 @@ describe("Catalog category use cases", () => {
     expect(await repo.findById(id)).not.toBeNull(); // still stored
     expect(await repo.listActive()).toHaveLength(0);
     expect(repo.size()).toBe(1);
+  });
+
+  // The use case branches on cmd.isActive: reactivating a deactivated node must restore it to
+  // listActive, proving the activate path is taken (kills `if (cmd.isActive)` → false).
+  it("reactivates a previously deactivated category", async () => {
+    const id = await createOk("Landscapes", 0);
+    const setActive = makeSetCatalogCategoryActive(deps);
+    await setActive({ catalogCategoryId: id, isActive: false });
+    expect(await repo.listActive()).toHaveLength(0);
+
+    const r = await setActive({ catalogCategoryId: id, isActive: true });
+    expect(r.isOk).toBe(true);
+    expect(await repo.listActive()).toHaveLength(1);
+  });
+
+  it("rejects (de)activating an unknown category", async () => {
+    const setActive = makeSetCatalogCategoryActive(deps);
+    const r = await setActive({
+      catalogCategoryId: toId<"CatalogCategoryId">("ghost") as CatalogCategoryId,
+      isActive: true,
+    });
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("CatalogCategoryNotFound");
   });
 
   it("reorders categories and reflects the new order in listActive", async () => {

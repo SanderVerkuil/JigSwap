@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { toId } from "../../../shared-kernel";
 import { PuzzleDefinitionId, SubmitterId } from "../../domain";
 import {
@@ -68,6 +68,37 @@ describe("Catalog PuzzleDefinition use cases", () => {
     expect(second.isErr).toBe(true);
     if (second.isErr) expect(second.error.code).toBe("DuplicateBarcode");
     expect(repo.size()).toBe(1); // no second definition written
+  });
+
+  // Only PRESENT barcodes are checked for uniqueness: absent (undefined) identifiers are
+  // filtered out of the candidate list, so the repository is queried solely with the EAN —
+  // never with `undefined` (kills the dropped `.filter`).
+  it("queries uniqueness only for the supplied barcodes, never for absent ones", async () => {
+    const lookup = vi.spyOn(repo, "findByBarcode");
+    const submit = makeSubmitPuzzleDefinition(deps);
+    const r = await submit({
+      title: "Filtered",
+      pieceCount: 1000,
+      submittedBy: submitter,
+      barcodes: { ean: "4006381333931" }, // upc / modelNumber absent
+    });
+    expect(r.isOk).toBe(true);
+    expect(lookup).toHaveBeenCalledTimes(1);
+    expect(lookup).toHaveBeenCalledWith("4006381333931");
+  });
+
+  it("checks every distinct supplied barcode for a duplicate (UPC clash too)", async () => {
+    await submitOk({ ean: "4006381333931" });
+    const submit = makeSubmitPuzzleDefinition(deps);
+    // Reuse the same EAN under a different title: the EAN candidate must trigger the clash.
+    const dup = await submit({
+      title: "UPC clash",
+      pieceCount: 500,
+      submittedBy: submitter,
+      barcodes: { upc: "036000291452", ean: "4006381333931" },
+    });
+    expect(dup.isErr).toBe(true);
+    if (dup.isErr) expect(dup.error.code).toBe("DuplicateBarcode");
   });
 
   it("delegates barcode-format validation to the aggregate", async () => {
