@@ -61,6 +61,10 @@ export const toDomain = (
   const state: CopyState = {
     id: toId<"CopyId">(row.aggregateId as string),
     ownerId: toId<"OwnerId">(row.ownerId as unknown as string) as OwnerId,
+    // Legacy/unset heldBy means the owner holds it.
+    heldBy: toId<"OwnerId">(
+      (row.heldBy ?? row.ownerId) as unknown as string,
+    ) as OwnerId,
     puzzleDefinitionId,
     snapshot,
     condition: row.condition,
@@ -98,6 +102,7 @@ export const toRow = (copy: Copy): OwnedPuzzleRow => {
       thumbnail: state.snapshot.thumbnail,
     },
     ownerId: state.ownerId as unknown as Id<"users">,
+    heldBy: state.heldBy as unknown as Id<"users">,
     condition: state.condition,
     missingPiecesCount: state.missingPiecesCount,
     notes: state.notes,

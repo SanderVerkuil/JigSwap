@@ -6,22 +6,20 @@ import {
 } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
-import { loadExchangeType } from "../exchange/settlementType";
 import { convexCopyRepository } from "./adapters/convexCopyRepository";
 import { noopEventPublisher } from "./adapters/eventPublisher";
 import { systemClock } from "./adapters/systemClock";
 
-// Library's reaction to a settled exchange: for a swap/sale the SAME copy changes hands — the
-// aggregate reassigns the owner and resets owner-scoped fields, keeping the physical record. A loan
-// moves possession only, so ownership is untouched (today's availability-only behaviour stands).
-// Runs AFTER the custody subscriber in dispatch so custody records the pre-transfer owner.
+// Library's reaction to a settled swap/sale (Exchange's OwnershipTransferred): the SAME copy changes
+// hands — the aggregate reassigns the owner and resets owner-scoped fields, keeping the physical
+// record. A lend emits PossessionTransferred instead (handled by openLoanOnSettlement), so it never
+// reaches here. Runs AFTER the custody subscriber in dispatch so custody records the pre-transfer owner.
 export const handleDomainEvent = async (
   ctx: MutationCtx,
   event: Doc<"domainEvents">,
 ): Promise<void> => {
   if (event.name !== "OwnershipTransferred") return;
   const p = event.payload as Record<string, unknown>;
-  if ((await loadExchangeType(ctx, p.exchangeId as string)) === "loan") return;
 
   const copy = await ctx.db.get(p.copyId as Id<"ownedPuzzles">);
   if (!copy?.aggregateId) return; // only domain-written copies carry a CopyId to transfer.

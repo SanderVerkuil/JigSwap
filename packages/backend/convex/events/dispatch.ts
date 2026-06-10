@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation } from "../_generated/server";
 import { handleDomainEvent as handleCustodyEvent } from "../custody/subscriber";
+import { handleDomainEvent as handleOpenLoanEvent } from "../library/openLoanOnSettlement";
 import { handleDomainEvent as handleLibraryTransferEvent } from "../library/transferOnSettlement";
 import { handleDomainEvent as handleNotificationEvent } from "../notifications/subscriber";
 
@@ -24,6 +25,8 @@ export const dispatch = internalMutation({
     // Custody records the pre-transfer owner, so it MUST run before the library transfer reassigns it.
     await handleCustodyEvent(ctx, event);
     await handleLibraryTransferEvent(ctx, event);
+    // A settled lend opens a loan (reacts to PossessionTransferred, not OwnershipTransferred).
+    await handleOpenLoanEvent(ctx, event);
 
     await ctx.db.patch(eventId, { processedAt: Date.now() });
   },

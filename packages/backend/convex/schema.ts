@@ -122,6 +122,9 @@ export default defineSchema({
       }),
     ),
     ownerId: v.id("users"),
+    // Who physically holds the copy now. Equals ownerId unless it is currently lent out, when it
+    // is the borrower. Optional: legacy/unset rows are held by their owner.
+    heldBy: v.optional(v.id("users")),
 
     // --- Condition ---
     condition: v.union(
@@ -604,4 +607,27 @@ export default defineSchema({
     newOwner: v.string(), // the member the Copy moved to (a users _id)
     occurredAt: v.number(),
   }).index("by_copy", ["copyId", "occurredAt"]),
+
+  // Open-ended loans: possession of a Copy held by a borrower while ownership stays with the
+  // lender. Closed when the borrower returns it or the owner recalls it. aggregateId = LoanId;
+  // copyId is the Library CopyId (ownedPuzzles.aggregateId). Status indexes back the borrowed/lent
+  // queries; by_copy backs the loan-history read.
+  loans: defineTable({
+    aggregateId: v.optional(v.string()),
+    copyId: v.string(),
+    lenderId: v.id("users"),
+    borrowerId: v.id("users"),
+    status: v.union(
+      v.literal("open"),
+      v.literal("returned"),
+      v.literal("recalled"),
+    ),
+    openedAt: v.number(),
+    expectedReturn: v.optional(v.number()),
+    closedAt: v.optional(v.number()),
+  })
+    .index("by_aggregate_id", ["aggregateId"])
+    .index("by_copy", ["copyId", "openedAt"])
+    .index("by_borrower", ["borrowerId", "status"])
+    .index("by_lender", ["lenderId", "status"]),
 });

@@ -3,6 +3,8 @@ import {
   type CollectionIdGenerator,
   type CopyId,
   type CopyIdGenerator,
+  type LoanId,
+  type LoanIdGenerator,
   type PersonalCategoryId,
   type PersonalCategoryIdGenerator,
   toId,
@@ -21,4 +23,8 @@ export const collectionIdGenerator: CollectionIdGenerator = {
 export const personalCategoryIdGenerator: PersonalCategoryIdGenerator = {
   next: (): PersonalCategoryId =>
     toId<"PersonalCategoryId">(crypto.randomUUID()),
+};
+
+export const loanIdGenerator: LoanIdGenerator = {
+  next: (): LoanId => toId<"LoanId">(crypto.randomUUID()),
 };
