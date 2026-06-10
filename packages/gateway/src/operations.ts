@@ -161,6 +161,20 @@ export const gateway = {
     exportUserData: api.insights.exportUserData.exportUserData,
   },
 
+  // Friend Circles (Sharing): private groups whose members share circle-scoped visibility. Writes
+  // go through the domain-driven sharing module (file.export namespacing); membership ops are
+  // admin-gated in the Circle aggregate. `circleId` is the CircleId aggregateId; `copyId` is the
+  // Library CopyId. Reads return typed @jigswap/contracts circle view DTOs.
+  sharing: {
+    createCircle: api.sharing.createCircle.createCircle,
+    addMember: api.sharing.addMember.addMember,
+    removeMember: api.sharing.removeMember.removeMember,
+    changePermission: api.sharing.changePermission.changePermission,
+    shareCopyToCircle: api.sharing.shareCopyToCircle.shareCopyToCircle,
+    myCircles: api.sharing.listMyCircles.listMyCircles,
+    circle: api.sharing.getCircle.getCircle,
+  },
+
   // Catalog moderation: the global, moderated category taxonomy (admin). Writes go through the
   // domain-driven catalog module; identifiers are CatalogCategoryId aggregateIds.
   adminCatalog: {
