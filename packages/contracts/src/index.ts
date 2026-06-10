@@ -4,3 +4,4 @@ export * from "./shared";
 export * from "./catalog";
 export * from "./library";
 export * from "./sharing";
+export * from "./social";
