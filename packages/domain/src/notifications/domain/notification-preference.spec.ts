@@ -28,6 +28,7 @@ describe("NotificationPreference.createDefault", () => {
       expect(pref.allows(type, "email")).toBe(false);
       expect(pref.allows(type, "push")).toBe(false);
     }
+    expect(pref.id).toBe(id);
     expect(pref.memberId).toBe(alice);
   });
 
@@ -78,6 +79,37 @@ describe("NotificationPreference.enable / disable", () => {
     pref.pullEvents();
     expect(pref.allows("trade_accepted", "inApp")).toBe(true);
     expect(pref.allows("trade_request", "email")).toBe(false);
+  });
+});
+
+describe("NotificationPreference with a sparse (rehydrated) toggle map", () => {
+  const sparse = (): NotificationPreference =>
+    NotificationPreference.rehydrate({
+      id,
+      memberId: alice,
+      toggles: {}, // no entry for any type
+      updatedAt: NOW,
+    });
+
+  it("treats an absent type as disabled without throwing (allows reads safely)", () => {
+    const pref = sparse();
+    expect(pref.allows("trade_request", "inApp")).toBe(false);
+    expect(pref.allows("trade_request", "email")).toBe(false);
+  });
+
+  it("seeds an all-off channel map when first toggling an absent type", () => {
+    const pref = sparse();
+    pref.enable("trade_request", "email", LATER);
+    expect(pref.allows("trade_request", "email")).toBe(true);
+    // The freshly-seeded type's other channels stay off by default.
+    expect(pref.allows("trade_request", "inApp")).toBe(false);
+    expect(pref.allows("trade_request", "push")).toBe(false);
+    // The persisted shape is the FULL resolved map (explicit falses), not just the toggled channel.
+    expect(pref.toState().toggles.trade_request).toEqual({
+      inApp: false,
+      email: true,
+      push: false,
+    });
   });
 });
 

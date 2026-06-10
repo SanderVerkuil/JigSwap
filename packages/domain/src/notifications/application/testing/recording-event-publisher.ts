@@ -3,8 +3,11 @@ import { DomainEvent, DomainEventPublisher } from "../../../shared-kernel";
 // Captures every published event so tests can assert on the published language (not internals).
 export class RecordingEventPublisher implements DomainEventPublisher {
   readonly published: DomainEvent[] = [];
+  // One entry per publish() call, so tests can distinguish "never published" from "published []".
+  readonly batches: (readonly DomainEvent[])[] = [];
 
   async publish(events: readonly DomainEvent[]): Promise<void> {
+    this.batches.push(events);
     this.published.push(...events);
   }
 

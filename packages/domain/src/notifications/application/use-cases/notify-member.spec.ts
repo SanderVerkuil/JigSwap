@@ -92,6 +92,7 @@ describe("makeNotifyMember", () => {
     if (result.isOk) expect(result.value).toEqual([]);
     expect(notifications.size()).toBe(0);
     expect(events.published).toEqual([]);
+    expect(events.batches).toEqual([]); // nothing delivered ⇒ publish is never called
     // A fully-suppressed type delivers nothing to any channel.
     expect(delivery.delivered).toEqual([]);
   });

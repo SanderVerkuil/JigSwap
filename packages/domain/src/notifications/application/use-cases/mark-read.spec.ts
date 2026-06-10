@@ -127,5 +127,6 @@ describe("makeMarkAllRead", () => {
     expect(result.isOk).toBe(true);
     if (result.isOk) expect(result.value).toBe(0);
     expect(events.published).toEqual([]);
+    expect(events.batches).toEqual([]); // never calls publish at all when nothing is pending
   });
 });
