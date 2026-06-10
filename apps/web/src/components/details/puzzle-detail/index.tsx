@@ -10,6 +10,7 @@ import { Image } from "@/compat/image";
 
 import { PageLoading } from "@/components/ui/loading";
 import { CustodyTimeline } from "./custody-timeline";
+import { LoanHistory } from "./loan-history";
 import { PuzzleDetailActions } from "./puzzle-detail-actions";
 import { PuzzleDetailHeader } from "./puzzle-detail-header";
 import { PuzzleDetailInfo } from "./puzzle-detail-info";
@@ -109,6 +110,9 @@ export function PuzzleDetail({
 
       {/* Chain-of-Custody provenance for this copy. */}
       <CustodyTimeline copyId={ownedPuzzle._id as Id<"ownedPuzzles">} />
+
+      {/* Open-ended loan history for this copy (who held it, when). */}
+      <LoanHistory copyId={ownedPuzzle._id as Id<"ownedPuzzles">} />
     </div>
   );
 }
