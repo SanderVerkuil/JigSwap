@@ -2,6 +2,7 @@ import { DomainError } from "../../shared-kernel";
 import {
   CollectionId,
   CopyId,
+  LoanId,
   PersonalCategoryId,
   PuzzleDefinitionId,
 } from "../domain";
@@ -19,7 +20,8 @@ export type LibraryApplicationErrorCode =
   | "CopyReserved"
   | "SnapshotUnavailable"
   | "PuzzleNotFound"
-  | "PuzzleNotAcquirable";
+  | "PuzzleNotAcquirable"
+  | "LoanNotFound";
 
 export class LibraryApplicationError extends DomainError {
   override readonly name = "LibraryApplicationError";
@@ -106,6 +108,13 @@ export class LibraryApplicationError extends DomainError {
     return new LibraryApplicationError(
       "PuzzleNotAcquirable",
       `Puzzle definition ${puzzleDefinitionId} is not available to acquire`,
+    );
+  }
+
+  static loanNotFound(loanId: LoanId): LibraryApplicationError {
+    return new LibraryApplicationError(
+      "LoanNotFound",
+      `Loan ${loanId} could not be found`,
     );
   }
 }

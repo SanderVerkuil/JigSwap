@@ -11,7 +11,11 @@ export type LibraryErrorCode =
   | "DuplicateCollectionName"
   | "CannotDeleteDefaultCollection"
   | "CopyNotInCollection"
-  | "WrongMemberType";
+  | "WrongMemberType"
+  | "CannotLendToSelf"
+  | "LoanNotOpen"
+  | "NotBorrower"
+  | "NotLender";
 
 export class LibraryError extends DomainError {
   override readonly name = "LibraryError";
@@ -67,5 +71,25 @@ export class LibraryError extends DomainError {
   // regular collection).
   static wrongMemberType(detail: string): LibraryError {
     return new LibraryError("WrongMemberType", detail);
+  }
+
+  // A member cannot lend a copy to themselves.
+  static cannotLendToSelf(): LibraryError {
+    return new LibraryError("CannotLendToSelf", "A copy cannot be lent to its owner");
+  }
+
+  // An action requiring an open loan was attempted on one already returned/recalled.
+  static loanNotOpen(): LibraryError {
+    return new LibraryError("LoanNotOpen", "The loan is not open");
+  }
+
+  // Only the borrower may return a loan.
+  static notBorrower(): LibraryError {
+    return new LibraryError("NotBorrower", "Only the borrower may return this loan");
+  }
+
+  // Only the lender (owner) may recall a loan.
+  static notLender(): LibraryError {
+    return new LibraryError("NotLender", "Only the owner may recall this loan");
   }
 }

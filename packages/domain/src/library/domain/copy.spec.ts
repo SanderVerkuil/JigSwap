@@ -222,6 +222,47 @@ describe("Copy.transferTo", () => {
   });
 });
 
+describe("Copy possession (lend / return)", () => {
+  const borrower = toId<"OwnerId">("bob") as OwnerId;
+
+  it("a freshly acquired copy is held by its owner", () => {
+    expect(acquire().toState().heldBy).toBe(owner);
+  });
+
+  it("lendOut hands possession to the borrower and takes it off the market", () => {
+    const copy = acquire();
+    copy.updateSharing(
+      SharingSetting.create({ forTrade: true, visibility: "visible" }),
+      NOW,
+    );
+    copy.pullEvents();
+    const result = copy.lendOut(borrower, LATER);
+    expect(result.isOk).toBe(true);
+    const state = copy.toState();
+    expect(state.heldBy).toBe(borrower);
+    expect(state.ownerId).toBe(owner); // ownership is unchanged by a lend
+    expect(state.sharing.isAvailableForAnyExchange()).toBe(false);
+    expect(names(copy.pullEvents())).toEqual(["CopyLentOut"]);
+  });
+
+  it("returnToOwner restores possession to the owner", () => {
+    const copy = acquire();
+    copy.lendOut(borrower, NOW);
+    copy.pullEvents();
+    const result = copy.returnToOwner(LATER);
+    expect(result.isOk).toBe(true);
+    expect(copy.toState().heldBy).toBe(owner);
+    expect(names(copy.pullEvents())).toEqual(["CopyReturnedToOwner"]);
+  });
+
+  it("transferTo moves possession to the new owner too", () => {
+    const copy = acquire();
+    copy.pullEvents();
+    copy.transferTo(borrower, LATER);
+    expect(copy.toState().heldBy).toBe(borrower);
+  });
+});
+
 describe("rehydrate / toState round-trip", () => {
   it("rehydrates without re-recording events", () => {
     const original = acquire();

@@ -4,6 +4,7 @@ import { CopyImageTag, FileId } from "./copy-image";
 import {
   CollectionId,
   CopyId,
+  LoanId,
   OwnerId,
   PersonalCategoryId,
   PuzzleDefinitionId,
@@ -85,6 +86,53 @@ export class CopyOwnershipTransferred implements DomainEvent {
     readonly copyId: CopyId,
     readonly previousOwner: OwnerId,
     readonly newOwner: OwnerId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+// Possession (not ownership) of a copy moved to a borrower for the duration of a loan. The owner
+// is unchanged; a subscriber flips availability and surfaces the "borrowed/lent" state.
+export class CopyLentOut implements DomainEvent {
+  readonly name = "CopyLentOut";
+  constructor(
+    readonly copyId: CopyId,
+    readonly borrowerId: OwnerId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+// Possession returned to the owner (loan ended by return or recall).
+export class CopyReturnedToOwner implements DomainEvent {
+  readonly name = "CopyReturnedToOwner";
+  constructor(
+    readonly copyId: CopyId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+// A Loan was opened: possession of the copy passes to the borrower, open-ended (an expectedReturn
+// is advisory, not enforced). The loan history read model folds these.
+export class LoanOpened implements DomainEvent {
+  readonly name = "LoanOpened";
+  constructor(
+    readonly loanId: LoanId,
+    readonly copyId: CopyId,
+    readonly lenderId: OwnerId,
+    readonly borrowerId: OwnerId,
+    readonly expectedReturn: Date | undefined,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+// A Loan ended — `returned` by the borrower or `recalled` by the owner. Possession is the owner's.
+export class LoanClosed implements DomainEvent {
+  readonly name = "LoanClosed";
+  constructor(
+    readonly loanId: LoanId,
+    readonly copyId: CopyId,
+    readonly lenderId: OwnerId,
+    readonly borrowerId: OwnerId,
+    readonly reason: "returned" | "recalled",
     readonly occurredAt: Date,
   ) {}
 }
@@ -183,6 +231,10 @@ export type LibraryDomainEvent =
   | CopyImageAdded
   | CopyDetailsUpdated
   | CopyOwnershipTransferred
+  | CopyLentOut
+  | CopyReturnedToOwner
+  | LoanOpened
+  | LoanClosed
   | CopyDeleted
   | CollectionUpdated
   | CollectionCreated

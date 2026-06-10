@@ -1,8 +1,9 @@
 import { toId } from "../../../shared-kernel";
-import { CollectionId, CopyId, PersonalCategoryId } from "../../domain";
+import { CollectionId, CopyId, LoanId, PersonalCategoryId } from "../../domain";
 import {
   CollectionIdGenerator,
   CopyIdGenerator,
+  LoanIdGenerator,
   PersonalCategoryIdGenerator,
 } from "../ports/out/id-generators";
 
@@ -31,5 +32,14 @@ export class SequentialPersonalCategoryIdGenerator implements PersonalCategoryId
   next(): PersonalCategoryId {
     this.counter += 1;
     return toId<"PersonalCategoryId">(`category-${this.counter}`);
+  }
+}
+
+export class SequentialLoanIdGenerator implements LoanIdGenerator {
+  private counter = 0;
+
+  next(): LoanId {
+    this.counter += 1;
+    return toId<"LoanId">(`loan-${this.counter}`);
   }
 }

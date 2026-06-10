@@ -4,6 +4,7 @@ import { Id } from "../../shared-kernel";
 export type CopyId = Id<"CopyId">;
 export type CollectionId = Id<"CollectionId">;
 export type PersonalCategoryId = Id<"PersonalCategoryId">;
+export type LoanId = Id<"LoanId">;
 
 // Foreign-aggregate references held as branded strings. The Library context never loads
 // these aggregates; it only carries their ids. OwnerId is a Member, owned by Identity &
