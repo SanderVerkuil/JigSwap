@@ -92,6 +92,11 @@ const getItems: () => Item[] = () => {
       icon: ArrowLeftRight,
     },
     {
+      title: "Community",
+      url: "/community",
+      icon: Users,
+    },
+    {
       title: "Messages",
       url: "/messages",
       icon: MessageSquare,
