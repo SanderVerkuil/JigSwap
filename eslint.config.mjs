@@ -81,8 +81,8 @@ const eslintConfig = [
   },
   // The app reaches Convex via @jigswap/gateway, never the generated API directly.
   {
-    files: ["apps/start/src/**/*.{ts,tsx}"],
-    ignores: ["apps/start/src/routeTree.gen.ts"],
+    files: ["apps/web/src/**/*.{ts,tsx}"],
+    ignores: ["apps/web/src/routeTree.gen.ts"],
     rules: {
       "no-restricted-imports": [
         "error",
@@ -107,7 +107,7 @@ const eslintConfig = [
   },
   // The generated TanStack route tree is machine-written; never lint it.
   {
-    ignores: ["apps/start/src/routeTree.gen.ts"],
+    ignores: ["apps/web/src/routeTree.gen.ts"],
   },
 ];
 

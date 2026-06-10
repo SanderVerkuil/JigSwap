@@ -1,50 +1,50 @@
 {
-  "name": "@jigswap/start",
+  "name": "@jigswap/web",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
-  "sourceRoot": "apps/start/src",
+  "sourceRoot": "apps/web/src",
   "targets": {
     "build": {
       "executor": "nx:run-commands",
       "outputs": ["{projectRoot}/.output", "{projectRoot}/dist"],
       "options": {
         "command": "vite build",
-        "cwd": "apps/start"
+        "cwd": "apps/web"
       }
     },
     "dev": {
       "executor": "nx:run-commands",
       "options": {
         "command": "vite dev",
-        "cwd": "apps/start"
+        "cwd": "apps/web"
       }
     },
     "serve": {
       "executor": "nx:run-commands",
       "options": {
         "command": "vite dev",
-        "cwd": "apps/start"
+        "cwd": "apps/web"
       }
     },
     "start": {
       "executor": "nx:run-commands",
       "options": {
         "command": "node .output/server/index.mjs",
-        "cwd": "apps/start"
+        "cwd": "apps/web"
       }
     },
     "type-check": {
       "executor": "nx:run-commands",
       "options": {
         "command": "pnpm run type-check",
-        "cwd": "apps/start"
+        "cwd": "apps/web"
       }
     },
     "lint": {
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": ["apps/start/src/**/*.{ts,tsx,js,jsx}"]
+        "lintFilePatterns": ["apps/web/src/**/*.{ts,tsx,js,jsx}"]
       }
     }
   },
