@@ -15,6 +15,15 @@ export default defineConfig({
     tailwindcss(),
     tanstackStart({ srcDirectory: "src" }),
     viteReact(),
-    nitro(),
+    // Reverse-proxy PostHog through /ingest (the paths posthog-provider.tsx targets),
+    // replacing the next.config rewrites; static assets first as the more specific rule.
+    nitro({
+      routeRules: {
+        "/ingest/static/**": {
+          proxy: { to: "https://eu-assets.i.posthog.com/static/**" },
+        },
+        "/ingest/**": { proxy: { to: "https://eu.i.posthog.com/**" } },
+      },
+    }),
   ],
 });
