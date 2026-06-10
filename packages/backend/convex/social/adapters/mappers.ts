@@ -19,14 +19,15 @@ export type FollowRow = Omit<Doc<"follows">, "_id" | "_creationTime">;
 // Row -> Profile aggregate. The row MUST carry an aggregateId (only domain-written rows do).
 // DisplayName re-validation here is total: a persisted name was already valid, so `create` succeeds.
 export const profileToDomain = (row: Doc<"profiles">): Profile => {
+  // A persisted name was valid when written, so a failure here means row corruption, not user input.
   const displayName = DisplayName.create(row.displayName);
+  if (!displayName.isOk) {
+    throw new Error(`Corrupt profile row: invalid displayName "${row.displayName}"`);
+  }
   const state: ProfileState = {
     id: toId<"ProfileId">(row.aggregateId as string),
     memberId: toId<"MemberId">(row.memberId) as MemberId,
-    // A persisted row is always valid; fall back to the raw string only to stay total.
-    displayName: displayName.isOk
-      ? displayName.value
-      : DisplayName.create("Member").value,
+    displayName: displayName.value,
     bio: row.bio,
     updatedAt: new Date(row.updatedAt),
   };
