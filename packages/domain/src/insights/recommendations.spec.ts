@@ -224,4 +224,93 @@ describe("recommendPuzzles", () => {
       expect(recommendPuzzles({ signals: signals([]), candidates: cands })).toHaveLength(2);
     });
   });
+
+  // Two piece counts share a band iff a candidate at one earns the +1 similarPieceCount point from a
+  // sole owner-signal at the other (no other facet in play), so this probes the band partition.
+  const sameBand = (ownedPieces: number, candidatePieces: number): boolean => {
+    const result = recommendPuzzles({
+      signals: signals([{ pieceCount: ownedPieces }]),
+      candidates: [candidate({ key: "c", pieceCount: candidatePieces })],
+    });
+    return result[0]?.reason === "similarPieceCount" && result[0]?.score === 1;
+  };
+
+  describe("piece-count band boundaries (inclusive-lower / exclusive-upper)", () => {
+    it("partitions piece counts into the right band at every boundary", () => {
+      expect(sameBand(50, 99)).toBe(true);
+      expect(sameBand(50, 100)).toBe(false);
+      expect(sameBand(100, 299)).toBe(true);
+      expect(sameBand(100, 300)).toBe(false);
+      expect(sameBand(300, 499)).toBe(true);
+      expect(sameBand(300, 500)).toBe(false);
+      expect(sameBand(500, 999)).toBe(true);
+      expect(sameBand(500, 1000)).toBe(false);
+      expect(sameBand(1000, 1999)).toBe(true);
+      expect(sameBand(1000, 2000)).toBe(false);
+      expect(sameBand(2000, 5000)).toBe(true);
+    });
+
+    it("never bands a non-finite piece count (NaN/Infinity contribute none)", () => {
+      expect(sameBand(Number.NaN, Number.NaN)).toBe(false);
+      expect(sameBand(1000, Number.POSITIVE_INFINITY)).toBe(false);
+      expect(sameBand(Number.NaN, 1000)).toBe(false);
+    });
+  });
+
+  describe("category key normalisation", () => {
+    it("matches keys after trimming and lower-casing both sides", () => {
+      const result = recommendPuzzles({
+        signals: signals([{ categoryKeys: ["  Nature  ", "LANDSCAPE"] }]),
+        candidates: [candidate({ key: "c", categoryKeys: ["nature"] })],
+      });
+      expect(result[0]).toEqual({ key: "c", score: 2, reason: "sharedCategory" });
+    });
+
+    it("drops blank category keys (an empty key is not a shared category)", () => {
+      const result = recommendPuzzles({
+        signals: signals([{ categoryKeys: ["nature", "  "] }]),
+        candidates: [candidate({ key: "blank", categoryKeys: ["  "] })],
+      });
+      expect(result[0]?.score).toBe(0);
+      expect(result[0]?.reason).toBe("popular");
+    });
+  });
+
+  it("reports popular when signals exist but a candidate shares no facet", () => {
+    const result = recommendPuzzles({
+      signals: signals([{ brand: "Ravensburger" }]),
+      candidates: [candidate({ key: "nomatch", brand: "Clementoni", popularity: 3 })],
+    });
+    expect(result[0]?.reason).toBe("popular");
+  });
+
+  describe("popularity tiebreak scoring", () => {
+    it("adds a sub-1 tiebreak; the most-popular candidate scores ~0.999", () => {
+      const result = recommendPuzzles({
+        signals: signals([]),
+        candidates: [candidate({ key: "p", popularity: 10 })],
+      });
+      expect(result[0]?.score).toBeCloseTo(0.999, 6);
+    });
+
+    it("ignores non-positive popularity (a negative count adds no tiebreak)", () => {
+      const result = recommendPuzzles({
+        signals: signals([]),
+        candidates: [
+          candidate({ key: "pos", popularity: 10 }),
+          candidate({ key: "neg", popularity: -5 }),
+        ],
+      });
+      expect(result.find((r) => r.key === "neg")?.score).toBe(0);
+    });
+  });
+
+  it("excludes an owned candidate even when its key has surrounding whitespace", () => {
+    const result = recommendPuzzles({
+      signals: signals([]),
+      candidates: [candidate({ key: "  abc  ", popularity: 5 })],
+      ownedKeys: ["abc"],
+    });
+    expect(result).toEqual([]);
+  });
 });

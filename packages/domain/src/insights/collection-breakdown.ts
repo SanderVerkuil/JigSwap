@@ -21,18 +21,16 @@ export interface CollectionBreakdown {
   readonly byCondition: DistributionEntry[];
 }
 
-// Piece-count buckets, ordered. Each entry is a label + a predicate on the (defined) piece count.
-// Boundaries are inclusive-lower / exclusive-upper so e.g. exactly 500 lands in "500-999".
-const PIECE_BUCKETS: ReadonlyArray<{
-  label: string;
-  contains: (n: number) => boolean;
-}> = [
-  { label: "< 100", contains: (n) => n < 100 },
-  { label: "100-299", contains: (n) => n >= 100 && n < 300 },
-  { label: "300-499", contains: (n) => n >= 300 && n < 500 },
-  { label: "500-999", contains: (n) => n >= 500 && n < 1000 },
-  { label: "1000-1999", contains: (n) => n >= 1000 && n < 2000 },
-  { label: "2000+", contains: (n) => n >= 2000 },
+// Piece-count buckets, ordered low→high. Each carries only its exclusive upper bound: a count lands
+// in the first bucket it falls below, so the lower edge is implied by the previous bucket and every
+// boundary is single-sourced (e.g. 300 appears once). The final Infinity bound catches 2000+.
+const PIECE_BUCKETS: ReadonlyArray<{ label: string; below: number }> = [
+  { label: "< 100", below: 100 },
+  { label: "100-299", below: 300 },
+  { label: "300-499", below: 500 },
+  { label: "500-999", below: 1000 },
+  { label: "1000-1999", below: 2000 },
+  { label: "2000+", below: Number.POSITIVE_INFINITY },
 ];
 
 const UNKNOWN_LABEL = "Unknown";
@@ -48,7 +46,7 @@ const pieceCountDistribution = (
     const n = copy.pieceCount;
     const label =
       typeof n === "number" && Number.isFinite(n)
-        ? (PIECE_BUCKETS.find((b) => b.contains(n))?.label ?? UNKNOWN_LABEL)
+        ? (PIECE_BUCKETS.find((b) => n < b.below)?.label ?? UNKNOWN_LABEL)
         : UNKNOWN_LABEL;
     counts.set(label, (counts.get(label) ?? 0) + 1);
   }
