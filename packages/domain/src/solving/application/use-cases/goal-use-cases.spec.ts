@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toId } from "../../../shared-kernel";
-import { MemberId } from "../../domain";
+import { toGoalId, toMemberId } from "../../../shared-kernel";
+import { Goal } from "../../domain";
+import type { CompletionRepository } from "../ports/out/completion.repository";
+
 import {
   FixedClock,
   InMemoryCompletionRepository,
@@ -13,7 +15,7 @@ import { makeCreateGoal } from "./create-goal";
 import { makeRecomputeGoalProgress } from "./recompute-goal-progress";
 import { makeRecordCompletion } from "./record-completion";
 
-const ALICE = toId<"MemberId">("alice") as MemberId;
+const ALICE = toMemberId("alice");
 const START = new Date("2026-06-01T10:00:00Z");
 const END = new Date("2026-06-01T11:30:00Z");
 const NOW = new Date("2026-06-01T12:00:00Z");
@@ -150,7 +152,7 @@ describe("Goal use cases", () => {
       expect(events.countOf("GoalAchieved")).toBe(0);
     });
 
-    it("is a no-op (no events) when the count is unchanged", async () => {
+    it("is a no-op (no events, no publish) when the count is unchanged", async () => {
       await seedGoal(2);
       await recordCompletion();
       const recompute = makeRecomputeGoalProgress({
@@ -161,8 +163,59 @@ describe("Goal use cases", () => {
       });
       await recompute({ userId: ALICE });
       events.published.length = 0;
+      events.batches.length = 0;
       await recompute({ userId: ALICE }); // still 1
       expect(events.published).toHaveLength(0);
+      // publish is not even called when a goal records no events.
+      expect(events.batches).toHaveLength(0);
+    });
+
+    it("skips inactive goals (no progress derived for them)", async () => {
+      // Only reachable by rehydrating an already-inactive goal; completions exist for the member.
+      const inactiveId = toGoalId("inactive-1");
+      await goals.save(
+        Goal.rehydrate({
+          id: inactiveId,
+          userId: ALICE,
+          title: "retired",
+          targetCompletions: 2,
+          currentCompletions: 0,
+          isActive: false,
+          createdAt: START,
+          updatedAt: START,
+        }),
+      );
+      await recordCompletion();
+      events.published.length = 0;
+
+      const recompute = makeRecomputeGoalProgress({
+        goals,
+        completions,
+        events,
+        clock,
+      });
+      await recompute({ userId: ALICE });
+
+      const stored = await goals.findById(inactiveId);
+      expect(stored?.currentCompletions).toBe(0); // untouched
+      expect(events.published).toHaveLength(0);
+    });
+
+    it("propagates a progressTo error (defensive: a negative authoritative count)", async () => {
+      await seedGoal(2);
+      const brokenCompletions = {
+        countCompletedByUser: async () => -1,
+      } as unknown as CompletionRepository;
+
+      const recompute = makeRecomputeGoalProgress({
+        goals,
+        completions: brokenCompletions,
+        events,
+        clock,
+      });
+      const result = await recompute({ userId: ALICE });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("InvalidGoalTarget");
     });
   });
 });

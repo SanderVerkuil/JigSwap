@@ -1,4 +1,4 @@
-import { toId } from "../../../shared-kernel";
+import { toCompletionId, toGoalId } from "../../../shared-kernel";
 import { CompletionId, GoalId } from "../../domain";
 import {
   CompletionIdGenerator,
@@ -11,7 +11,7 @@ export class SequentialCompletionIdGenerator implements CompletionIdGenerator {
 
   next(): CompletionId {
     this.counter += 1;
-    return toId<"CompletionId">(`completion-${this.counter}`);
+    return toCompletionId(`completion-${this.counter}`);
   }
 }
 
@@ -20,6 +20,6 @@ export class SequentialGoalIdGenerator implements GoalIdGenerator {
 
   next(): GoalId {
     this.counter += 1;
-    return toId<"GoalId">(`goal-${this.counter}`);
+    return toGoalId(`goal-${this.counter}`);
   }
 }

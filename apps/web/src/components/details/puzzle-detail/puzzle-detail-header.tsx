@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { gateway } from "@/gateway";
 import type { FunctionReturnType } from "convex/server";
-import { useTranslations } from "next-intl";
+import { useTranslations } from "use-intl";
 
 // Owned-copy detail view DTO this header renders, derived from the read it is fed by.
 type OwnedPuzzleData = NonNullable<

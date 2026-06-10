@@ -1,9 +1,8 @@
 import {
-  type CatalogCategoryId,
   makeUpdatePuzzleDefinition,
   type PuzzleDefinitionChanges,
-  type PuzzleDefinitionId,
-  toId,
+  toCatalogCategoryId,
+  toPuzzleDefinitionId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
@@ -65,7 +64,9 @@ export const updatePuzzleDefinition = mutation({
     });
 
     const hasBarcode =
-      args.ean !== undefined || args.upc !== undefined || args.modelNumber !== undefined;
+      args.ean !== undefined ||
+      args.upc !== undefined ||
+      args.modelNumber !== undefined;
     const changes: PuzzleDefinitionChanges = {
       title: args.title,
       description: args.description,
@@ -79,15 +80,13 @@ export const updatePuzzleDefinition = mutation({
       dimensions: args.dimensions,
       shape: args.shape,
       difficulty: args.difficulty,
-      category: args.category
-        ? (toId<"CatalogCategoryId">(args.category) as CatalogCategoryId)
-        : undefined,
+      category: args.category ? toCatalogCategoryId(args.category) : undefined,
       tags: args.tags,
       image: args.image,
     };
 
     const result = await update({
-      puzzleDefinitionId: toId<"PuzzleDefinitionId">(args.puzzleDefinitionId),
+      puzzleDefinitionId: toPuzzleDefinitionId(args.puzzleDefinitionId),
       changes,
     });
     if (result.isErr) throw toConvexError(result.error);

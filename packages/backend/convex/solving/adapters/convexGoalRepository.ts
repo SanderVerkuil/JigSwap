@@ -4,7 +4,8 @@ import {
   type GoalRepository,
   type GoalState,
   type MemberId,
-  toId,
+  toGoalId,
+  toMemberId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
@@ -21,8 +22,8 @@ export const convexGoalRepository = (ctx: MutationCtx): GoalRepository => {
 
   const toDomain = (row: Doc<"goals">): Goal => {
     const state: GoalState = {
-      id: toId<"GoalId">(row.aggregateId as string),
-      userId: toId<"MemberId">(row.userId as unknown as string) as MemberId,
+      id: toGoalId(row.aggregateId as string),
+      userId: toMemberId(row.userId as unknown as string),
       title: row.title,
       description: row.description,
       targetCompletions: row.targetCompletions,

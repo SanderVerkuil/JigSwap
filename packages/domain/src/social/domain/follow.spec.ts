@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { toId } from "../../shared-kernel";
+import { toFollowId, toMemberId } from "../../shared-kernel";
 import { Follow } from "./follow";
-import { FollowId, MemberId } from "./ids";
+import { MemberId } from "./ids";
 
-const follower = toId<"MemberId">("alice") as MemberId;
-const followee = toId<"MemberId">("bob") as MemberId;
-const followId = toId<"FollowId">("follow-1") as FollowId;
+const follower = toMemberId("alice");
+const followee = toMemberId("bob");
+const followId = toFollowId("follow-1");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 describe("Follow.establish", () => {

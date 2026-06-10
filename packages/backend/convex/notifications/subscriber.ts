@@ -1,4 +1,8 @@
-import { type MemberId, type NotifyMemberCommand, toId } from "@jigswap/domain";
+import {
+  type MemberId,
+  type NotifyMemberCommand,
+  toMemberId,
+} from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { makeNotify } from "./adapters/makeNotify";
@@ -21,7 +25,7 @@ export const handleDomainEvent = async (
   }
 };
 
-const asMember = (id: string): MemberId => toId<"MemberId">(id) as MemberId;
+const asMember = (id: string): MemberId => toMemberId(id);
 
 // Resolve the persisted exchange row from its ExchangeId aggregateId so we can address the real
 // parties and use the Convex `_id` as the notification's relatedId (matching the old inline wording
@@ -70,28 +74,52 @@ const translate = async (
       const row = await loadExchange(ctx, p.exchangeId as string);
       if (!row) return [];
       return [
-        cmd(row.recipientId, "trade_request", "New Exchange Request", "Someone wants to trade for one of your puzzles", row._id),
+        cmd(
+          row.recipientId,
+          "trade_request",
+          "New Exchange Request",
+          "Someone wants to trade for one of your puzzles",
+          row._id,
+        ),
       ];
     }
     case "ExchangeAccepted": {
       const row = await loadExchange(ctx, p.exchangeId as string);
       if (!row) return [];
       return [
-        cmd(row.initiatorId, "trade_accepted", "Exchange Accepted", "Your trade request has been accepted!", row._id),
+        cmd(
+          row.initiatorId,
+          "trade_accepted",
+          "Exchange Accepted",
+          "Your trade request has been accepted!",
+          row._id,
+        ),
       ];
     }
     case "ExchangeRejected": {
       const row = await loadExchange(ctx, p.exchangeId as string);
       if (!row) return [];
       return [
-        cmd(row.initiatorId, "trade_declined", "Exchange Declined", "Your trade request has been declined", row._id),
+        cmd(
+          row.initiatorId,
+          "trade_declined",
+          "Exchange Declined",
+          "Your trade request has been declined",
+          row._id,
+        ),
       ];
     }
     case "ExchangeCancelled": {
       const row = await loadExchange(ctx, p.exchangeId as string);
       if (!row) return [];
       return [
-        cmd(row.recipientId, "trade_cancelled", "Exchange Cancelled", "Exchange request has been cancelled", row._id),
+        cmd(
+          row.recipientId,
+          "trade_cancelled",
+          "Exchange Cancelled",
+          "Exchange request has been cancelled",
+          row._id,
+        ),
       ];
     }
     case "ExchangeCompleted": {
@@ -99,8 +127,20 @@ const translate = async (
       if (!row) return [];
       // The event carries no actor; notify both parties (each gets "the other party" signal).
       return [
-        cmd(row.initiatorId, "trade_completed", "Exchange Completed", "Exchange has been marked as completed", row._id),
-        cmd(row.recipientId, "trade_completed", "Exchange Completed", "Exchange has been marked as completed", row._id),
+        cmd(
+          row.initiatorId,
+          "trade_completed",
+          "Exchange Completed",
+          "Exchange has been marked as completed",
+          row._id,
+        ),
+        cmd(
+          row.recipientId,
+          "trade_completed",
+          "Exchange Completed",
+          "Exchange has been marked as completed",
+          row._id,
+        ),
       ];
     }
     case "DisputeRaised": {
@@ -113,7 +153,13 @@ const translate = async (
           ? row.recipientId
           : row.initiatorId;
       return [
-        cmd(counterparty, "exchange_disputed", "Exchange Disputed", "The other party has flagged an issue with your exchange", row._id),
+        cmd(
+          counterparty,
+          "exchange_disputed",
+          "Exchange Disputed",
+          "The other party has flagged an issue with your exchange",
+          row._id,
+        ),
       ];
     }
 
@@ -122,14 +168,26 @@ const translate = async (
       const goal = await loadGoal(ctx, p.goalId as string);
       if (!goal) return [];
       return [
-        cmd(goal.userId, "goal_achieved", "Goal Achieved", `You reached your goal "${goal.title}"!`, goal._id),
+        cmd(
+          goal.userId,
+          "goal_achieved",
+          "Goal Achieved",
+          `You reached your goal "${goal.title}"!`,
+          goal._id,
+        ),
       ];
     }
 
     // --- Reputation ---
     case "PartnerReviewSubmitted": {
       return [
-        cmd(p.revieweeId as string, "review_received", "New Review", "You received a new partner review", p.reviewId as string),
+        cmd(
+          p.revieweeId as string,
+          "review_received",
+          "New Review",
+          "You received a new partner review",
+          p.reviewId as string,
+        ),
       ];
     }
 
@@ -138,14 +196,26 @@ const translate = async (
       const puzzle = await loadPuzzle(ctx, p.puzzleDefinitionId as string);
       if (!puzzle) return [];
       return [
-        cmd(puzzle.submittedBy, "puzzle_approved", "Puzzle Approved", `Your submission "${puzzle.title}" was approved`, puzzle._id),
+        cmd(
+          puzzle.submittedBy,
+          "puzzle_approved",
+          "Puzzle Approved",
+          `Your submission "${puzzle.title}" was approved`,
+          puzzle._id,
+        ),
       ];
     }
     case "PuzzleDefinitionRejected": {
       const puzzle = await loadPuzzle(ctx, p.puzzleDefinitionId as string);
       if (!puzzle) return [];
       return [
-        cmd(puzzle.submittedBy, "puzzle_rejected", "Puzzle Rejected", `Your submission "${puzzle.title}" was rejected`, puzzle._id),
+        cmd(
+          puzzle.submittedBy,
+          "puzzle_rejected",
+          "Puzzle Rejected",
+          `Your submission "${puzzle.title}" was rejected`,
+          puzzle._id,
+        ),
       ];
     }
 

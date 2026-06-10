@@ -4,7 +4,8 @@ import {
   type PersonalCategoryId,
   type PersonalCategoryRepository,
   type PersonalCategoryState,
-  toId,
+  toOwnerId,
+  toPersonalCategoryId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
@@ -14,8 +15,8 @@ type CategoryRow = Omit<Doc<"categories">, "_id" | "_creationTime">;
 
 const toDomain = (row: Doc<"categories">): PersonalCategory =>
   PersonalCategory.rehydrate({
-    id: toId<"PersonalCategoryId">(row.aggregateId as string),
-    ownerId: toId<"OwnerId">(row.userId as unknown as string) as OwnerId,
+    id: toPersonalCategoryId(row.aggregateId as string),
+    ownerId: toOwnerId(row.userId as unknown as string),
     name: row.name,
     color: row.color,
     description: row.description,
@@ -54,9 +55,7 @@ export const convexPersonalCategoryRepository = (
     const row = toRow(category);
     const existing = await ctx.db
       .query("categories")
-      .withIndex("by_aggregate_id", (q) =>
-        q.eq("aggregateId", row.aggregateId),
-      )
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", row.aggregateId))
       .unique();
     if (existing) await ctx.db.patch(existing._id, row);
     else await ctx.db.insert("categories", row);

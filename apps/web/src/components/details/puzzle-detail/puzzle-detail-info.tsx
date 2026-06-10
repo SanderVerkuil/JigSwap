@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { gateway } from "@/gateway";
 import type { FunctionReturnType } from "convex/server";
 import { Calendar, User } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations } from "use-intl";
 
 // Owned-copy detail view DTO this panel renders, derived from the read it is fed by.
 type PuzzleData = NonNullable<

@@ -1,8 +1,7 @@
 import {
-  type CompletionId,
   makeReviewPuzzle,
   type MemberId,
-  toId,
+  toCompletionId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
@@ -31,7 +30,7 @@ export const reviewPuzzle = mutation({
     });
     const result = await review({
       actingMemberId: actingMemberId as unknown as MemberId,
-      completionId: toId<"CompletionId">(args.completionId) as CompletionId,
+      completionId: toCompletionId(args.completionId),
       rating: args.rating,
       text: args.text,
     });

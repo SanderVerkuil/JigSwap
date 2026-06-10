@@ -3,7 +3,8 @@ import {
   ReputationProfile,
   type ReputationProfileRepository,
   type ReputationProfileState,
-  toId,
+  toMemberId,
+  toReputationProfileId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
@@ -27,10 +28,10 @@ export const convexReputationProfileRepository = (
 
   const toDomain = (row: Doc<"reputationProfiles">): ReputationProfile => {
     const state: ReputationProfileState = {
-      id: toId<"ReputationProfileId">(
+      id: toReputationProfileId(
         (row.aggregateId ?? (row._id as unknown as string)) as string,
       ),
-      memberId: toId<"MemberId">(row.memberId as unknown as string) as MemberId,
+      memberId: toMemberId(row.memberId as unknown as string),
       ratingSum: row.ratingSum,
       reviewCount: row.reviewCount,
       averageRating: row.averageRating,

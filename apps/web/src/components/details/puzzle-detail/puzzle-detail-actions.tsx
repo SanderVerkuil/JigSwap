@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { gateway, Id } from "@/gateway";
 import type { FunctionReturnType } from "convex/server";
 import { Edit, Eye, Heart, MessageCircle, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations } from "use-intl";
 
 // Owned-copy detail view DTO this component renders, derived from the read it is fed by. Its `_id`
 // surfaces as an opaque string; the action callbacks take a branded Convex id, re-cast once below.

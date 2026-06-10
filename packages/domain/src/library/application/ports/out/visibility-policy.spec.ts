@@ -1,23 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { toId } from "../../../../shared-kernel";
 import {
-  CatalogSnapshot,
-  Copy,
-  CopyId,
-  OwnerId,
-  PuzzleDefinitionId,
-  SharingSetting,
-} from "../../../domain";
+  toCopyId,
+  toOwnerId,
+  toPuzzleDefinitionId,
+} from "../../../../shared-kernel";
+import { CatalogSnapshot, Copy, SharingSetting } from "../../../domain";
 import { DefaultVisibilityPolicy } from "./visibility-policy";
 
-const owner = toId<"OwnerId">("alice") as OwnerId;
-const viewer = toId<"OwnerId">("bob") as OwnerId;
-const definitionId = toId<"PuzzleDefinitionId">("def1") as PuzzleDefinitionId;
+const owner = toOwnerId("alice");
+const viewer = toOwnerId("bob");
+const definitionId = toPuzzleDefinitionId("def1");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 const copyWith = (sharing: SharingSetting): Copy => {
   const acquired = Copy.acquire({
-    id: toId<"CopyId">("copy1") as CopyId,
+    id: toCopyId("copy1"),
     ownerId: owner,
     snapshot: CatalogSnapshot.create({
       puzzleDefinitionId: definitionId,

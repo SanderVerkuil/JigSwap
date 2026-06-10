@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toId } from "../../../shared-kernel";
+import { toMemberId } from "../../../shared-kernel";
 import { Member, MemberId } from "../../domain";
 import {
   FixedClock,
@@ -9,11 +9,11 @@ import {
 import { makeAssignRole } from "./assign-role";
 
 const NOW = new Date("2026-06-08T10:00:00Z");
-const unknownId = toId<"MemberId">("ghost") as MemberId;
+const unknownId = toMemberId("ghost");
 
 const seedMember = (members: InMemoryMemberRepository): MemberId => {
   const result = Member.register({
-    id: toId<"MemberId">("member-1") as MemberId,
+    id: toMemberId("member-1"),
     clerkId: "clerk_abc",
     email: "alice@example.com",
     name: "Alice",

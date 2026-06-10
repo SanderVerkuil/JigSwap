@@ -1,15 +1,25 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { DomainEvent, toId } from "../../shared-kernel";
-import { ExchangeCompleted, ExchangeProposed, OwnershipTransferred } from "./events";
+import {
+  DomainEvent,
+  toCopyId,
+  toExchangeId,
+  toMemberId,
+} from "../../shared-kernel";
+import {
+  ExchangeCompleted,
+  ExchangeProposed,
+  OwnershipTransferred,
+  PossessionTransferred,
+} from "./events";
 import { Exchange, ProposeProps } from "./exchange";
-import { CopyId, ExchangeId, MemberId } from "./ids";
+
 import { ExchangeTermsInput, Money } from "./terms";
 
-const exchangeId = toId<"ExchangeId">("ex1") as ExchangeId;
-const alice = toId<"MemberId">("alice") as MemberId; // initiator
-const bob = toId<"MemberId">("bob") as MemberId; // recipient
-const requested = toId<"CopyId">("requested") as CopyId;
-const offered = toId<"CopyId">("offered") as CopyId;
+const exchangeId = toExchangeId("ex1");
+const alice = toMemberId("alice"); // initiator
+const bob = toMemberId("bob"); // recipient
+const requested = toCopyId("requested");
+const offered = toCopyId("offered");
 const NOW = new Date("2026-06-08T10:00:00Z");
 const LATER = new Date("2026-06-09T10:00:00Z");
 
@@ -40,7 +50,8 @@ const swapTerms: ExchangeTermsInput = { kind: "swap", offeredCopyId: offered };
 const saleTerms = (): ExchangeTermsInput => ({ kind: "sale", price: price() });
 const lendTerms: ExchangeTermsInput = { kind: "lend", returnDate: LATER };
 
-const names = (events: readonly DomainEvent[]): string[] => events.map((e) => e.name);
+const names = (events: readonly DomainEvent[]): string[] =>
+  events.map((e) => e.name);
 
 // Drive an exchange to `accepted` and clear the proposal/accept events.
 const accepted = (terms: ExchangeTermsInput = swapTerms): Exchange => {
@@ -68,7 +79,6 @@ describe("Exchange.propose", () => {
   it.each<[string, ExchangeTermsInput]>([
     ["swap without offered copy", { kind: "swap" }],
     ["sale without price", { kind: "sale" }],
-    ["lend without return date", { kind: "lend" }],
   ])("rejects %s with MissingTerms", (_label, terms) => {
     const result = Exchange.propose({
       id: exchangeId,
@@ -135,7 +145,7 @@ describe("accept", () => {
 
   it("rejects acceptance by an unrelated member", () => {
     const ex = propose(swapTerms);
-    const r = ex.accept(toId<"MemberId">("eve") as MemberId, NOW);
+    const r = ex.accept(toMemberId("eve"), NOW);
     expect(r.isErr).toBe(true);
     if (r.isErr) expect(r.error.code).toBe("WrongParty");
   });
@@ -243,7 +253,7 @@ describe("confirmCompletion (dual confirmation)", () => {
 
   it("rejects confirmation by an unrelated member", () => {
     const ex = accepted();
-    const r = ex.confirmCompletion(toId<"MemberId">("eve") as MemberId, NOW);
+    const r = ex.confirmCompletion(toMemberId("eve"), NOW);
     expect(r.isErr).toBe(true);
     if (r.isErr) {
       expect(r.error.code).toBe("WrongParty");
@@ -257,7 +267,9 @@ describe("confirmCompletion (dual confirmation)", () => {
     expect(r.isErr).toBe(true);
     if (r.isErr) {
       expect(r.error.code).toBe("IllegalTransition");
-      expect(r.error.message).toBe("Cannot transition from proposed to completed");
+      expect(r.error.message).toBe(
+        "Cannot transition from proposed to completed",
+      );
     }
   });
 });
@@ -287,20 +299,26 @@ describe("settlement events", () => {
     ex.confirmCompletion(bob, LATER);
     const transfers = ex
       .pullEvents()
-      .filter((e): e is OwnershipTransferred => e.name === "OwnershipTransferred");
+      .filter(
+        (e): e is OwnershipTransferred => e.name === "OwnershipTransferred",
+      );
     expect(transfers).toHaveLength(1);
     expect(transfers[0]).toMatchObject({ copyId: requested, newOwner: alice });
   });
 
-  it("a lend transfers ONLY the requested copy to the initiator", () => {
+  it("a lend hands POSSESSION (not ownership) of the requested copy to the initiator", () => {
     const ex = accepted(lendTerms);
     ex.confirmCompletion(alice, NOW);
     ex.confirmCompletion(bob, LATER);
-    const transfers = ex
-      .pullEvents()
-      .filter((e): e is OwnershipTransferred => e.name === "OwnershipTransferred");
-    expect(transfers).toHaveLength(1);
-    expect(transfers[0]).toMatchObject({ copyId: requested, newOwner: alice });
+    const events = ex.pullEvents();
+    expect(
+      events.filter((e) => e.name === "OwnershipTransferred"),
+    ).toHaveLength(0);
+    const possession = events.filter(
+      (e): e is PossessionTransferred => e.name === "PossessionTransferred",
+    );
+    expect(possession).toHaveLength(1);
+    expect(possession[0]).toMatchObject({ copyId: requested, borrower: alice });
   });
 
   // The second transfer is guarded by `kind === "swap" && offeredCopyId`. Rehydrating
@@ -310,7 +328,9 @@ describe("settlement events", () => {
     ex.confirmCompletion(bob, LATER);
     return ex
       .pullEvents()
-      .filter((e): e is OwnershipTransferred => e.name === "OwnershipTransferred");
+      .filter(
+        (e): e is OwnershipTransferred => e.name === "OwnershipTransferred",
+      );
   };
 
   const acceptedState = (
@@ -323,7 +343,11 @@ describe("settlement events", () => {
   it("does NOT transfer an offered copy when the kind is not swap, even if one is present", () => {
     // kind=sale but offeredCopyId set: the `kind === \"swap\"` half must gate it out, so the
     // `&&`→`||` and `if (true)` mutants (which would emit a second transfer) die here.
-    const ex = acceptedState({ kind: "sale", offeredCopyId: offered, price: price() });
+    const ex = acceptedState({
+      kind: "sale",
+      offeredCopyId: offered,
+      price: price(),
+    });
     const transfers = settle(ex);
     expect(transfers).toHaveLength(1);
     expect(transfers[0]).toMatchObject({ copyId: requested, newOwner: alice });
@@ -340,7 +364,9 @@ describe("settlement events", () => {
     const ex = accepted(saleTerms());
     ex.confirmCompletion(alice, NOW);
     ex.confirmCompletion(bob, LATER);
-    const completed = ex.pullEvents().filter((e) => e.name === "ExchangeCompleted");
+    const completed = ex
+      .pullEvents()
+      .filter((e) => e.name === "ExchangeCompleted");
     expect(completed).toHaveLength(1);
     expect(completed[0]).toBeInstanceOf(ExchangeCompleted);
   });
@@ -370,7 +396,7 @@ describe("raiseDispute", () => {
 
   it("rejects a dispute from an unrelated member", () => {
     const ex = accepted();
-    const r = ex.raiseDispute(toId<"MemberId">("eve") as MemberId, NOW);
+    const r = ex.raiseDispute(toMemberId("eve"), NOW);
     expect(r.isErr).toBe(true);
     if (r.isErr) {
       expect(r.error.code).toBe("WrongParty");

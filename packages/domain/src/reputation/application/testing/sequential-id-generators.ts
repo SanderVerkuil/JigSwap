@@ -1,4 +1,7 @@
-import { toId } from "../../../shared-kernel";
+import {
+  toPartnerReviewId,
+  toReputationProfileId,
+} from "../../../shared-kernel";
 import { PartnerReviewId, ReputationProfileId } from "../../domain";
 import {
   PartnerReviewIdGenerator,
@@ -11,18 +14,16 @@ export class SequentialPartnerReviewIdGenerator implements PartnerReviewIdGenera
 
   next(): PartnerReviewId {
     this.counter += 1;
-    return toId<"PartnerReviewId">(`review-${this.counter}`) as PartnerReviewId;
+    return toPartnerReviewId(`review-${this.counter}`);
   }
 }
 
 // Deterministic ReputationProfileIdGenerator for tests: profile-1, profile-2, ...
-export class SequentialReputationProfileIdGenerator
-  implements ReputationProfileIdGenerator
-{
+export class SequentialReputationProfileIdGenerator implements ReputationProfileIdGenerator {
   private counter = 0;
 
   next(): ReputationProfileId {
     this.counter += 1;
-    return toId<"ReputationProfileId">(`profile-${this.counter}`) as ReputationProfileId;
+    return toReputationProfileId(`profile-${this.counter}`);
   }
 }

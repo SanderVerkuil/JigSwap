@@ -82,13 +82,12 @@ const normaliseKeys = (keys: readonly string[] | undefined): string[] =>
     .map((k) => k.trim().toLowerCase())
     .filter((k) => k.length > 0);
 
-// The member's taste reduced to affinity sets/counts across the facets of all their puzzles.
+// The member's taste reduced to affinity sets/counts across the facets of all their puzzles. With
+// no signals every set is empty, so scoring naturally degrades to a pure popularity ordering.
 interface Affinity {
   readonly brands: ReadonlySet<string>;
   readonly bands: ReadonlySet<number>;
   readonly categories: ReadonlySet<string>;
-  // True when the member has any owned/completed signal at all; drives the cold-start fallback.
-  readonly hasSignal: boolean;
 }
 
 const buildAffinity = (signals: MemberSignals): Affinity => {
@@ -102,12 +101,7 @@ const buildAffinity = (signals: MemberSignals): Affinity => {
     if (band !== undefined) bands.add(band);
     for (const key of normaliseKeys(facet.categoryKeys)) categories.add(key);
   }
-  return {
-    brands,
-    bands,
-    categories,
-    hasSignal: signals.facets.length > 0,
-  };
+  return { brands, bands, categories };
 };
 
 // A candidate's facet score plus the reason for its single strongest contribution. Reasons are
@@ -122,17 +116,14 @@ const scoreFacets = (
   affinity: Affinity,
 ): Scored => {
   let facetScore = 0;
+  // Facets are evaluated strongest-weighted first, so the first match names the dominant reason;
+  // later matches still add to the score but never overwrite a stronger facet's reason.
   let reason: RecommendationReason = "popular";
-  let bestWeight = 0;
 
-  // Evaluate strongest-weighted facets first so ties on score still report the dominant reason.
   const brand = normaliseBrand(candidate.brand);
   if (brand && affinity.brands.has(brand)) {
     facetScore += WEIGHT_BRAND;
-    if (WEIGHT_BRAND > bestWeight) {
-      bestWeight = WEIGHT_BRAND;
-      reason = "sameBrand";
-    }
+    reason = "sameBrand";
   }
 
   const sharesCategory = normaliseKeys(candidate.categoryKeys).some((k) =>
@@ -140,19 +131,13 @@ const scoreFacets = (
   );
   if (sharesCategory) {
     facetScore += WEIGHT_CATEGORY;
-    if (WEIGHT_CATEGORY > bestWeight) {
-      bestWeight = WEIGHT_CATEGORY;
-      reason = "sharedCategory";
-    }
+    if (reason === "popular") reason = "sharedCategory";
   }
 
   const band = pieceBand(candidate.pieceCount);
   if (band !== undefined && affinity.bands.has(band)) {
     facetScore += WEIGHT_PIECE_BAND;
-    if (WEIGHT_PIECE_BAND > bestWeight) {
-      bestWeight = WEIGHT_PIECE_BAND;
-      reason = "similarPieceCount";
-    }
+    if (reason === "popular") reason = "similarPieceCount";
   }
 
   return { facetScore, reason };
@@ -190,9 +175,7 @@ export const recommendPuzzles = (
 
   const ranked = eligible
     .map((candidate) => {
-      const { facetScore, reason } = affinity.hasSignal
-        ? scoreFacets(candidate, affinity)
-        : { facetScore: 0, reason: "popular" as RecommendationReason };
+      const { facetScore, reason } = scoreFacets(candidate, affinity);
       const score =
         facetScore + popularityTiebreak(candidate.popularity, maxPopularity);
       return { candidate, score, reason };

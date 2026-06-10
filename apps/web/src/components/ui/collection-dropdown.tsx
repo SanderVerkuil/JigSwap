@@ -8,12 +8,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useUser } from "@clerk/nextjs";
+import { useUser } from "@/compat/clerk";
 import { gateway } from "@/gateway";
 import { Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { FolderOpen, Plus } from "lucide-react";
-import Link from "next/link";
+import Link from "@/compat/link";
 import { useState } from "react";
 
 interface CollectionDropdownProps {

@@ -1,9 +1,8 @@
 import {
-  type CopyId,
   makeUpdateCopySharing,
   type OwnerId,
   Price,
-  toId,
+  toCopyId,
   type Visibility,
 } from "@jigswap/domain";
 import { v } from "convex/values";
@@ -51,7 +50,7 @@ export const updateCopySharing = mutation({
 
     const result = await update({
       actingMemberId,
-      copyId: toId<"CopyId">(args.copyId) as CopyId,
+      copyId: toCopyId(args.copyId),
       visibility: args.visibility as Visibility,
       forTrade: args.forTrade,
       forSale: args.forSale,

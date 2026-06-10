@@ -3,15 +3,16 @@ import {
   type PartnerReviewIdGenerator,
   type ReputationProfileId,
   type ReputationProfileIdGenerator,
-  toId,
+  toPartnerReviewId,
+  toReputationProfileId,
 } from "@jigswap/domain";
 
 // Driven adapters for the Reputation id-generator ports. crypto.randomUUID is available in the
 // Convex runtime; the values are branded and persisted as each aggregate's `aggregateId`.
 export const partnerReviewIdGenerator: PartnerReviewIdGenerator = {
-  next: (): PartnerReviewId => toId<"PartnerReviewId">(crypto.randomUUID()),
+  next: (): PartnerReviewId => toPartnerReviewId(crypto.randomUUID()),
 };
 
 export const reputationProfileIdGenerator: ReputationProfileIdGenerator = {
-  next: (): ReputationProfileId => toId<"ReputationProfileId">(crypto.randomUUID()),
+  next: (): ReputationProfileId => toReputationProfileId(crypto.randomUUID()),
 };

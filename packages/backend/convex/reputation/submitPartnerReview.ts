@@ -1,8 +1,8 @@
 import {
-  type ExchangeId,
   makeSubmitPartnerReview,
   type MemberId,
-  toId,
+  toExchangeId,
+  toMemberId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
@@ -52,9 +52,9 @@ export const submitPartnerReview = mutation({
     });
 
     const result = await submit({
-      exchangeId: toId<"ExchangeId">(args.exchangeId) as ExchangeId,
+      exchangeId: toExchangeId(args.exchangeId),
       reviewerId: reviewerId as unknown as MemberId,
-      revieweeId: toId<"MemberId">(args.revieweeId) as MemberId,
+      revieweeId: toMemberId(args.revieweeId),
       rating: args.rating,
       comment: args.comment,
       scores: args.scores,

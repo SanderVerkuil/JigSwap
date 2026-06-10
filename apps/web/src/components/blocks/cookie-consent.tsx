@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Cookie } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations } from "use-intl";
 import * as React from "react";
 
 // Define prop types

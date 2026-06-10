@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { toId } from "../../shared-kernel";
-import { MemberId } from "./ids";
+import { toMemberId } from "../../shared-kernel";
+
 import { Member, RegisterProps } from "./member";
 
-const memberId = toId<"MemberId">("member-1") as MemberId;
+const memberId = toMemberId("member-1");
 const NOW = new Date("2026-06-08T10:00:00Z");
 const LATER = new Date("2026-06-09T10:00:00Z");
 
@@ -35,7 +35,10 @@ describe("Member.register", () => {
 
     const events = member.pullEvents();
     expect(events.map((e) => e.name)).toEqual(["MemberRegistered"]);
-    const registered = events[0] as unknown as { clerkId: string; email: string };
+    const registered = events[0] as unknown as {
+      clerkId: string;
+      email: string;
+    };
     expect(registered.clerkId).toBe("clerk_abc");
     expect(registered.email).toBe("alice@example.com");
   });
@@ -75,7 +78,9 @@ describe("Member.deactivate", () => {
 
     member.deactivate(LATER);
     expect(member.isActive).toBe(false);
-    expect(member.pullEvents().map((e) => e.name)).toEqual(["MemberDeactivated"]);
+    expect(member.pullEvents().map((e) => e.name)).toEqual([
+      "MemberDeactivated",
+    ]);
   });
 
   it("is idempotent: a second deactivate emits nothing", () => {
@@ -97,7 +102,10 @@ describe("Member roles", () => {
 
     member.assignRole("admin", LATER);
     expect(member.hasRole("admin")).toBe(true);
-    const events = member.pullEvents() as unknown as Array<{ name: string; role: string }>;
+    const events = member.pullEvents() as unknown as Array<{
+      name: string;
+      role: string;
+    }>;
     expect(events.map((e) => e.name)).toEqual(["RoleAssigned"]);
     expect(events[0].role).toBe("admin");
   });
@@ -140,9 +148,29 @@ describe("Member.updateProfile", () => {
     expect(state.bio).toBe("Puzzler");
     expect(state.location).toBe("NL");
     expect(state.name).toBe("Alice"); // untouched
+    expect(state.username?.value).toBe("alice"); // untouched when omitted
     expect(state.updatedAt).toBe(LATER);
     // Profile edits are not audited.
     expect(member.pullEvents()).toHaveLength(0);
+  });
+
+  it("sets avatar and preferred language when supplied", () => {
+    const member = register();
+    const result = member.updateProfile(
+      { avatar: "https://img/x.png", preferredLanguage: "nl" },
+      LATER,
+    );
+    expect(result.isOk).toBe(true);
+    const state = member.toState();
+    expect(state.avatar).toBe("https://img/x.png");
+    expect(state.preferredLanguage).toBe("nl");
+  });
+
+  it("clears the username when edited to an empty string", () => {
+    const member = register();
+    const result = member.updateProfile({ username: "" }, LATER);
+    expect(result.isOk).toBe(true);
+    expect(member.toState().username).toBeUndefined();
   });
 
   it("rejects an invalid new username", () => {

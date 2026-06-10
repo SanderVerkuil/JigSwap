@@ -1,4 +1,7 @@
-import { toId } from "../../../shared-kernel";
+import {
+  toCatalogCategoryId,
+  toPuzzleDefinitionId,
+} from "../../../shared-kernel";
 import { CatalogCategoryId, PuzzleDefinitionId } from "../../domain";
 import { CatalogIdGenerator } from "../ports/out/catalog-id-generator";
 
@@ -9,11 +12,11 @@ export class SequentialIdGenerator implements CatalogIdGenerator {
 
   nextPuzzleDefinitionId(): PuzzleDefinitionId {
     this.definitionCounter += 1;
-    return toId<"PuzzleDefinitionId">(`pd-${this.definitionCounter}`);
+    return toPuzzleDefinitionId(`pd-${this.definitionCounter}`);
   }
 
   nextCatalogCategoryId(): CatalogCategoryId {
     this.categoryCounter += 1;
-    return toId<"CatalogCategoryId">(`cc-${this.categoryCounter}`);
+    return toCatalogCategoryId(`cc-${this.categoryCounter}`);
   }
 }

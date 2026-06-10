@@ -5,10 +5,12 @@ import { gateway } from "@/gateway";
 import { Id } from "@/gateway";
 import { useQuery } from "convex/react";
 import { Grid } from "lucide-react";
-import { useTranslations } from "next-intl";
-import Image from "next/image";
+import { useTranslations } from "use-intl";
+import { Image } from "@/compat/image";
 
 import { PageLoading } from "@/components/ui/loading";
+import { CustodyTimeline } from "./custody-timeline";
+import { LoanHistory } from "./loan-history";
 import { PuzzleDetailActions } from "./puzzle-detail-actions";
 import { PuzzleDetailHeader } from "./puzzle-detail-header";
 import { PuzzleDetailInfo } from "./puzzle-detail-info";
@@ -105,6 +107,12 @@ export function PuzzleDetail({
           )}
         </div>
       </div>
+
+      {/* Chain-of-Custody provenance for this copy. */}
+      <CustodyTimeline copyId={ownedPuzzle._id as Id<"ownedPuzzles">} />
+
+      {/* Open-ended loan history for this copy (who held it, when). */}
+      <LoanHistory copyId={ownedPuzzle._id as Id<"ownedPuzzles">} />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toId } from "../../../shared-kernel";
+import { toCatalogCategoryId } from "../../../shared-kernel";
 import { CatalogCategoryId, LocalizedText } from "../../domain";
 import {
   FixedClock,
@@ -36,7 +36,10 @@ describe("Catalog category use cases", () => {
     };
   });
 
-  const createOk = async (en: string, sortOrder: number): Promise<CatalogCategoryId> => {
+  const createOk = async (
+    en: string,
+    sortOrder: number,
+  ): Promise<CatalogCategoryId> => {
     const create = makeCreateCatalogCategory(deps);
     const r = await create({ name: name(en, en), sortOrder });
     if (!r.isOk) throw new Error(`create failed: ${r.error.code}`);
@@ -47,7 +50,7 @@ describe("Catalog category use cases", () => {
     const id = await createOk("Landscapes", 0);
     expect(repo.size()).toBe(1);
     expect(events.names()).toEqual(["CatalogCategoryCreated"]);
-    expect(id).toBe(toId<"CatalogCategoryId">("cc-1") as CatalogCategoryId);
+    expect(id).toBe(toCatalogCategoryId("cc-1"));
   });
 
   it("rejects creation with an incomplete name (EmptyCategoryName)", async () => {
@@ -61,7 +64,10 @@ describe("Catalog category use cases", () => {
     const id = await createOk("Landscapes", 0);
     events.published.length = 0;
     const update = makeUpdateCatalogCategory(deps);
-    const r = await update({ catalogCategoryId: id, changes: { color: "#123456" } });
+    const r = await update({
+      catalogCategoryId: id,
+      changes: { color: "#123456" },
+    });
     expect(r.isOk).toBe(true);
     expect(events.names()).toEqual(["CatalogCategoryUpdated"]);
   });
@@ -69,7 +75,7 @@ describe("Catalog category use cases", () => {
   it("rejects updating an unknown category (CatalogCategoryNotFound)", async () => {
     const update = makeUpdateCatalogCategory(deps);
     const r = await update({
-      catalogCategoryId: toId<"CatalogCategoryId">("missing") as CatalogCategoryId,
+      catalogCategoryId: toCatalogCategoryId("missing"),
       changes: { color: "#000" },
     });
     expect(r.isErr).toBe(true);
@@ -117,7 +123,7 @@ describe("Catalog category use cases", () => {
   it("rejects (de)activating an unknown category", async () => {
     const setActive = makeSetCatalogCategoryActive(deps);
     const r = await setActive({
-      catalogCategoryId: toId<"CatalogCategoryId">("ghost") as CatalogCategoryId,
+      catalogCategoryId: toCatalogCategoryId("ghost"),
       isActive: true,
     });
     expect(r.isErr).toBe(true);
@@ -137,7 +143,10 @@ describe("Catalog category use cases", () => {
       ],
     });
     expect(r.isOk).toBe(true);
-    expect(events.names()).toEqual(["CatalogCategoryReordered", "CatalogCategoryReordered"]);
+    expect(events.names()).toEqual([
+      "CatalogCategoryReordered",
+      "CatalogCategoryReordered",
+    ]);
 
     const ordered = (await repo.listActive()).map((c) => c.id);
     expect(ordered).toEqual([b, a]); // b now sorts before a
@@ -150,7 +159,7 @@ describe("Catalog category use cases", () => {
       order: [
         { catalogCategoryId: a, sortOrder: 9 },
         {
-          catalogCategoryId: toId<"CatalogCategoryId">("missing") as CatalogCategoryId,
+          catalogCategoryId: toCatalogCategoryId("missing"),
           sortOrder: 1,
         },
       ],

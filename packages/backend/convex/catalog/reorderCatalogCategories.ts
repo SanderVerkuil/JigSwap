@@ -1,7 +1,6 @@
 import {
-  type CatalogCategoryId,
   makeReorderCatalogCategories,
-  toId,
+  toCatalogCategoryId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
@@ -30,9 +29,7 @@ export const reorderCatalogCategories = mutation({
 
     const result = await reorder({
       order: args.order.map((entry) => ({
-        catalogCategoryId: toId<"CatalogCategoryId">(
-          entry.catalogCategoryId,
-        ) as CatalogCategoryId,
+        catalogCategoryId: toCatalogCategoryId(entry.catalogCategoryId),
         sortOrder: entry.sortOrder,
       })),
     });

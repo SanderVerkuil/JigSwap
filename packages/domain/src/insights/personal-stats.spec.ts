@@ -83,11 +83,13 @@ describe("computePersonalStats", () => {
   it("counts only completed exchanges", () => {
     const stats = computePersonalStats({
       ...empty,
+      // Asymmetric on purpose: 2 completed vs 3 non-completed, so a flipped predicate diverges.
       exchanges: [
         { status: "completed" },
         { status: "completed" },
         { status: "proposed" },
         { status: "disputed" },
+        { status: "accepted" },
       ],
     });
     expect(stats.exchangesCompleted).toBe(2);
@@ -110,15 +112,17 @@ describe("computePersonalStats", () => {
   it("counts active goals and achieved goals (achieved is derived, current >= target)", () => {
     const stats = computePersonalStats({
       ...empty,
+      // Asymmetric: 3 achieved vs 2 not, so flipping >= to < changes the count.
       goals: [
         { isActive: true, targetCompletions: 10, currentCompletions: 3 },
-        { isActive: true, targetCompletions: 5, currentCompletions: 5 }, // achieved + active
+        { isActive: true, targetCompletions: 5, currentCompletions: 5 }, // achieved (exactly at target) + active
         { isActive: false, targetCompletions: 2, currentCompletions: 9 }, // achieved, inactive
         { isActive: false, targetCompletions: 4, currentCompletions: 1 },
+        { isActive: true, targetCompletions: 3, currentCompletions: 8 }, // achieved + active
       ],
     });
-    expect(stats.goalsActive).toBe(2);
-    expect(stats.goalsAchieved).toBe(2);
+    expect(stats.goalsActive).toBe(3);
+    expect(stats.goalsAchieved).toBe(3);
   });
 
   it("passes through collectionsCount verbatim", () => {

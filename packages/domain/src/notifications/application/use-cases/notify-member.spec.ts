@@ -1,10 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toId } from "../../../shared-kernel";
-import {
-  MemberId,
-  NotificationCreated,
-  NotificationPreference,
-} from "../../domain";
+import { toMemberId, toNotificationPreferenceId } from "../../../shared-kernel";
+import { NotificationCreated, NotificationPreference } from "../../domain";
 import { NotificationApplicationError } from "../errors";
 import {
   FixedClock,
@@ -17,7 +13,7 @@ import {
 } from "../testing";
 import { makeNotifyMember, NotifyMemberDeps } from "./notify-member";
 
-const alice = toId<"MemberId">("alice") as MemberId;
+const alice = toMemberId("alice");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 let notifications: InMemoryNotificationRepository;
@@ -26,7 +22,7 @@ let events: RecordingEventPublisher;
 let delivery: RecordingNotificationDelivery;
 let deps: NotifyMemberDeps;
 
-const prefId = () => toId<"NotificationPreferenceId">("seed");
+const prefId = () => toNotificationPreferenceId("seed");
 
 beforeEach(() => {
   notifications = new InMemoryNotificationRepository();
@@ -45,7 +41,9 @@ beforeEach(() => {
   };
 });
 
-const cmd = (overrides: Partial<Parameters<ReturnType<typeof makeNotifyMember>>[0]> = {}) => ({
+const cmd = (
+  overrides: Partial<Parameters<ReturnType<typeof makeNotifyMember>>[0]> = {},
+) => ({
   memberId: alice,
   type: "trade_request" as const,
   title: "New trade request",
@@ -94,6 +92,7 @@ describe("makeNotifyMember", () => {
     if (result.isOk) expect(result.value).toEqual([]);
     expect(notifications.size()).toBe(0);
     expect(events.published).toEqual([]);
+    expect(events.batches).toEqual([]); // nothing delivered ⇒ publish is never called
     // A fully-suppressed type delivers nothing to any channel.
     expect(delivery.delivered).toEqual([]);
   });
@@ -162,6 +161,8 @@ describe("makeNotifyMember", () => {
 // that swaps the error contract is caught by the suite compiling + the assertions above.
 describe("NotifyMember error contract", () => {
   it("does not produce a NotificationApplicationError", () => {
-    expect(NotificationApplicationError.notificationNotFound).toBeTypeOf("function");
+    expect(NotificationApplicationError.notificationNotFound).toBeTypeOf(
+      "function",
+    );
   });
 });

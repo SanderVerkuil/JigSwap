@@ -8,8 +8,8 @@ import { gateway } from "@/gateway";
 import { Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { Grid, List, Plus, Search } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "use-intl";
+import { useRouter } from "@/compat/navigation";
 import { useState } from "react";
 
 import { CollectionDetailActions } from "./collection-detail-actions";

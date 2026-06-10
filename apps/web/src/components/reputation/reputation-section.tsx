@@ -10,7 +10,7 @@ import {
 import { gateway } from "@/gateway";
 import type { Id } from "@/gateway";
 import { useQuery } from "convex/react";
-import { useTranslations } from "next-intl";
+import { useTranslations } from "use-intl";
 import { StarRating } from "@/components/ui/star-rating";
 
 // A member's public reputation on their profile: a summary (avg stars, count, credibility hint)

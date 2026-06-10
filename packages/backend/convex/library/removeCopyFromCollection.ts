@@ -1,9 +1,8 @@
 import {
-  type CollectionId,
-  type CopyId,
   makeRemoveCopyFromCollection,
   type OwnerId,
-  toId,
+  toCollectionId,
+  toCopyId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
@@ -30,8 +29,8 @@ export const removeCopyFromCollection = mutation({
 
     const result = await remove({
       actingMemberId,
-      collectionId: toId<"CollectionId">(args.collectionId) as CollectionId,
-      copyId: toId<"CopyId">(args.copyId) as CopyId,
+      collectionId: toCollectionId(args.collectionId),
+      copyId: toCopyId(args.copyId),
     });
     if (result.isErr) throw toConvexError(result.error);
   },

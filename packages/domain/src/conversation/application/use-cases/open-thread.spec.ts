@@ -1,12 +1,15 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toId } from "../../../shared-kernel";
-import { ExchangeId, MemberId } from "../../domain";
-import { InMemoryThreadRepository, SequentialThreadIdGenerator } from "../testing";
+import { toExchangeId, toMemberId } from "../../../shared-kernel";
+
+import {
+  InMemoryThreadRepository,
+  SequentialThreadIdGenerator,
+} from "../testing";
 import { makeOpenThread } from "./open-thread";
 
-const alice = toId<"MemberId">("alice") as MemberId;
-const bob = toId<"MemberId">("bob") as MemberId;
-const exchangeId = toId<"ExchangeId">("ex-1") as ExchangeId;
+const alice = toMemberId("alice");
+const bob = toMemberId("bob");
+const exchangeId = toExchangeId("ex-1");
 
 describe("makeOpenThread", () => {
   let threads: InMemoryThreadRepository;
@@ -14,7 +17,10 @@ describe("makeOpenThread", () => {
 
   beforeEach(() => {
     threads = new InMemoryThreadRepository();
-    open = makeOpenThread({ threads, threadIds: new SequentialThreadIdGenerator() });
+    open = makeOpenThread({
+      threads,
+      threadIds: new SequentialThreadIdGenerator(),
+    });
   });
 
   it("opens a fresh thread for an exchange and persists it", async () => {

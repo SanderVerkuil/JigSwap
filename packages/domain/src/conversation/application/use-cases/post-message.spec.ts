@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toId } from "../../../shared-kernel";
-import { ExchangeId, MemberId, Thread, ThreadId } from "../../domain";
+import { toExchangeId, toMemberId, toThreadId } from "../../../shared-kernel";
+import { MemberId, Thread } from "../../domain";
 import {
   FixedClock,
   InMemoryThreadRepository,
@@ -9,12 +9,12 @@ import {
 } from "../testing";
 import { makePostMessage } from "./post-message";
 
-const alice = toId<"MemberId">("alice") as MemberId;
-const bob = toId<"MemberId">("bob") as MemberId;
-const carol = toId<"MemberId">("carol") as MemberId; // outsider
-const exchangeId = toId<"ExchangeId">("ex-1") as ExchangeId;
-const threadId = toId<"ThreadId">("thread-1") as ThreadId;
-const missingThread = toId<"ThreadId">("thread-404") as ThreadId;
+const alice = toMemberId("alice");
+const bob = toMemberId("bob");
+const carol = toMemberId("carol"); // outsider
+const exchangeId = toExchangeId("ex-1");
+const threadId = toThreadId("thread-1");
+const missingThread = toThreadId("thread-404");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 describe("makePostMessage", () => {
@@ -49,7 +49,10 @@ describe("makePostMessage", () => {
     const reloaded = await threads.findById(threadId);
     expect(reloaded?.messages).toHaveLength(1);
     expect(events.names()).toEqual(["MessagePosted"]);
-    const posted = events.published[0] as unknown as { authorId: MemberId | null; kind: string };
+    const posted = events.published[0] as unknown as {
+      authorId: MemberId | null;
+      kind: string;
+    };
     expect(posted.authorId).toBe(alice);
     expect(posted.kind).toBe("text");
   });

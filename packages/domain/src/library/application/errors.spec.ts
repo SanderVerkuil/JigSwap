@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { toId } from "../../shared-kernel";
 import {
-  CollectionId,
-  CopyId,
-  PersonalCategoryId,
-  PuzzleDefinitionId,
-} from "../domain";
+  toCollectionId,
+  toCopyId,
+  toPersonalCategoryId,
+  toPuzzleDefinitionId,
+} from "../../shared-kernel";
+
 import { LibraryApplicationError } from "./errors";
 
-const copy = toId<"CopyId">("copy1") as CopyId;
+const copy = toCopyId("copy1");
 
 describe("LibraryApplicationError factories", () => {
   it("copyNotFound", () => {
@@ -19,14 +19,14 @@ describe("LibraryApplicationError factories", () => {
   });
 
   it("collectionNotFound", () => {
-    const id = toId<"CollectionId">("col1") as CollectionId;
+    const id = toCollectionId("col1");
     const e = LibraryApplicationError.collectionNotFound(id);
     expect(e.code).toBe("CollectionNotFound");
     expect(e.message).toBe("Collection col1 could not be found");
   });
 
   it("personalCategoryNotFound", () => {
-    const id = toId<"PersonalCategoryId">("cat1") as PersonalCategoryId;
+    const id = toPersonalCategoryId("cat1");
     const e = LibraryApplicationError.personalCategoryNotFound(id);
     expect(e.code).toBe("PersonalCategoryNotFound");
     expect(e.message).toBe("Personal category cat1 could not be found");
@@ -61,14 +61,14 @@ describe("LibraryApplicationError factories", () => {
   });
 
   it("puzzleNotFound", () => {
-    const id = toId<"PuzzleDefinitionId">("pd1") as PuzzleDefinitionId;
+    const id = toPuzzleDefinitionId("pd1");
     const e = LibraryApplicationError.puzzleNotFound(id);
     expect(e.code).toBe("PuzzleNotFound");
     expect(e.message).toBe("Puzzle definition pd1 could not be found");
   });
 
   it("puzzleNotAcquirable", () => {
-    const id = toId<"PuzzleDefinitionId">("pd1") as PuzzleDefinitionId;
+    const id = toPuzzleDefinitionId("pd1");
     const e = LibraryApplicationError.puzzleNotAcquirable(id);
     expect(e.code).toBe("PuzzleNotAcquirable");
     expect(e.message).toBe("Puzzle definition pd1 is not available to acquire");

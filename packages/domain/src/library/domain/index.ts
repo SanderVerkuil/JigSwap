@@ -7,6 +7,7 @@ export * from "./copy-image";
 export * from "./errors";
 export * from "./events";
 export * from "./ids";
+export * from "./loan";
 export * from "./personal-category";
 export * from "./price";
 export * from "./sharing-setting";

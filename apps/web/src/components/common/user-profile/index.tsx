@@ -5,7 +5,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { UserButton, useUser } from "@clerk/nextjs";
+import { UserButton, useUser } from "@/compat/clerk";
 
 export function UserProfile() {
   const { user } = useUser();

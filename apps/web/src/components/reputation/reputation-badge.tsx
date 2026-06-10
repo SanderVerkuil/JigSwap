@@ -5,7 +5,7 @@ import type { Id } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
 import { Star } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations } from "use-intl";
 
 // A compact, droppable trust signal (avg stars + review count) shown next to a member's name.
 // Self-fetches its own reputation profile so callers only need to pass a memberId; renders

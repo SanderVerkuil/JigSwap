@@ -15,8 +15,8 @@ import {
   Trash2,
   User,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
-import Image from "next/image";
+import { useTranslations } from "use-intl";
+import Image from "@/compat/image";
 import { createContext, ReactNode, useContext } from "react";
 import { CollectionDropdown } from "./collection-dropdown";
 
@@ -86,6 +86,9 @@ interface PuzzleCardProps {
   showActions?: boolean;
   showAvailability?: boolean;
   showCollectionDropdown?: boolean;
+  // Optional lending slot (e.g. an "on loan to X" badge + Recall action). The page owns the loan
+  // data so the card stays generic; rendered above the action row when provided.
+  loanBadge?: ReactNode;
   className?: string;
 }
 
@@ -106,6 +109,7 @@ export function PuzzleCard({
   showActions = true,
   showAvailability = true,
   showCollectionDropdown = false,
+  loanBadge,
   className = "",
 }: PuzzleCardProps) {
   const t = useTranslations("puzzles");
@@ -332,6 +336,8 @@ export function PuzzleCard({
             )}
           </div>
         )}
+
+        {loanBadge && <div className="mb-2">{loanBadge}</div>}
 
         {renderActions()}
       </div>

@@ -3,7 +3,7 @@ import {
   type CatalogCategoryId,
   type CatalogCategoryRepository,
   type CatalogCategoryState,
-  toId,
+  toCatalogCategoryId,
 } from "@jigswap/domain";
 import type { Doc } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
@@ -13,7 +13,7 @@ type CategoryRow = Omit<Doc<"adminCategories">, "_id" | "_creationTime">;
 
 const toDomain = (row: Doc<"adminCategories">): CatalogCategory =>
   CatalogCategory.rehydrate({
-    id: toId<"CatalogCategoryId">(row.aggregateId as string),
+    id: toCatalogCategoryId(row.aggregateId as string),
     name: row.name,
     description: row.description,
     color: row.color,

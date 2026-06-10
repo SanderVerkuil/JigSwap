@@ -61,6 +61,19 @@ export class OwnershipTransferred implements DomainEvent {
   ) {}
 }
 
+// Settlement of a LEND: possession (not ownership) of the copy passes to the borrower. The owner
+// is unchanged. Library opens an open-ended Loan in reaction; expectedReturn is advisory.
+export class PossessionTransferred implements DomainEvent {
+  readonly name = "PossessionTransferred";
+  constructor(
+    readonly exchangeId: ExchangeId,
+    readonly copyId: CopyId,
+    readonly borrower: MemberId,
+    readonly expectedReturn: Date | undefined,
+    readonly occurredAt: Date,
+  ) {}
+}
+
 export class DisputeRaised implements DomainEvent {
   readonly name = "DisputeRaised";
   constructor(
@@ -77,4 +90,5 @@ export type ExchangeDomainEvent =
   | ExchangeCancelled
   | ExchangeCompleted
   | OwnershipTransferred
+  | PossessionTransferred
   | DisputeRaised;

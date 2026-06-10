@@ -1,5 +1,3 @@
-"use client";
-
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,10 +6,11 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Locale, setLocaleCookie } from "@/lib/intl-cookies";
+import { type Locale, setLocale } from "@/lib/i18n";
+import { useRouter } from "@tanstack/react-router";
 import { Globe } from "lucide-react";
-import { useLocale } from "next-intl";
 import { toast } from "sonner";
+import { useLocale } from "use-intl";
 
 const languages = [
   { code: "en", name: "English", flag: "🇺🇸" },
@@ -20,9 +19,12 @@ const languages = [
 
 export function LanguageSwitcher() {
   const currentLocale = useLocale();
+  const router = useRouter();
 
   const handleLanguageChange = async (locale: string) => {
-    await setLocaleCookie(locale as Locale);
+    await setLocale({ data: locale as Locale });
+    // Re-run the root loader so the IntlProvider picks up the new catalog.
+    await router.invalidate();
     toast.success("Language changed successfully");
   };
 

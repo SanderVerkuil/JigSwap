@@ -1,4 +1,4 @@
-import { type MemberId, toId } from "@jigswap/domain";
+import { type MemberId, toMemberId } from "@jigswap/domain";
 import { ConvexError } from "convex/values";
 import type { QueryCtx } from "../_generated/server";
 
@@ -14,5 +14,5 @@ export const requireMember = async (ctx: QueryCtx): Promise<MemberId> => {
     .unique();
   if (!user) throw new ConvexError("Member not found");
 
-  return toId<"MemberId">(user._id) as MemberId;
+  return toMemberId(user._id);
 };

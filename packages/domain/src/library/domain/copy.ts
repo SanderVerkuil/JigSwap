@@ -10,8 +10,11 @@ import {
   CopyDeleted,
   CopyDetailsUpdated,
   CopyImageAdded,
+  CopyLentOut,
   CopyMadeAvailable,
   CopyMadeUnavailable,
+  CopyOwnershipTransferred,
+  CopyReturnedToOwner,
 } from "./events";
 import { CopyId, OwnerId, PuzzleDefinitionId } from "./ids";
 import { SharingSetting } from "./sharing-setting";
@@ -34,6 +37,9 @@ export interface AcquireCopyProps {
 export interface CopyState {
   readonly id: CopyId;
   readonly ownerId: OwnerId;
+  // Who physically holds the copy now — the owner, unless it is currently lent out to a borrower.
+  // Ownership (ownerId) and possession (heldBy) diverge only for the duration of a loan.
+  readonly heldBy: OwnerId;
   readonly puzzleDefinitionId: PuzzleDefinitionId;
   readonly snapshot: CatalogSnapshot;
   readonly condition: Condition;
@@ -66,6 +72,10 @@ export class Copy {
     return this.state.ownerId;
   }
 
+  get heldBy(): OwnerId {
+    return this.state.heldBy;
+  }
+
   get condition(): Condition {
     return this.state.condition;
   }
@@ -80,6 +90,7 @@ export class Copy {
     const state: CopyState = {
       id: props.id,
       ownerId: props.ownerId,
+      heldBy: props.ownerId,
       puzzleDefinitionId: props.snapshot.puzzleDefinitionId,
       snapshot: props.snapshot,
       condition: props.condition,
@@ -134,6 +145,51 @@ export class Copy {
     } else {
       this.record(new CopyMadeUnavailable(this.id, now));
     }
+    return ok(undefined);
+  }
+
+  // Settle an exchange: the SAME physical copy changes hands. Owner-scoped facts reset (sharing
+  // back to private so the new owner decides availability; acquisition becomes a trade; personal
+  // notes drop), while the physical record (condition, snapshot, missing pieces, images) carries
+  // over. The stable copy id keeps the chain-of-custody coherent across successive owners.
+  transferTo(newOwner: OwnerId, now: Date): Result<void, LibraryError> {
+    const previousOwner = this.state.ownerId;
+    this.state = {
+      ...this.state,
+      ownerId: newOwner,
+      heldBy: newOwner,
+      sharing: SharingSetting.private(),
+      acquisition: Acquisition.create({ source: "trade", date: now }),
+      notes: undefined,
+      updatedAt: now,
+    };
+    this.record(
+      new CopyOwnershipTransferred(this.id, previousOwner, newOwner, now),
+    );
+    return ok(undefined);
+  }
+
+  // Lend the copy out: possession passes to the borrower (ownership unchanged) and it leaves the
+  // market for the loan's duration. Driven by the loan use case; the owner stays this.state.ownerId.
+  lendOut(borrower: OwnerId, now: Date): Result<void, LibraryError> {
+    this.state = {
+      ...this.state,
+      heldBy: borrower,
+      sharing: SharingSetting.private(),
+      updatedAt: now,
+    };
+    this.record(new CopyLentOut(this.id, borrower, now));
+    return ok(undefined);
+  }
+
+  // End a loan: possession returns to the owner (it stays off the market until re-shared).
+  returnToOwner(now: Date): Result<void, LibraryError> {
+    this.state = {
+      ...this.state,
+      heldBy: this.state.ownerId,
+      updatedAt: now,
+    };
+    this.record(new CopyReturnedToOwner(this.id, now));
     return ok(undefined);
   }
 

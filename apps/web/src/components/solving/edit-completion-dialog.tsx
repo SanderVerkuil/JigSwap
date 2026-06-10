@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
 import { useMutation } from "convex/react";
-import { useTranslations } from "next-intl";
+import { useTranslations } from "use-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { solvingErrorCode } from "./solving-error";

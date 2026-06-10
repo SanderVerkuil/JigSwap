@@ -26,7 +26,7 @@ export class Money {
 export type ExchangeTerms =
   | { readonly kind: "swap"; readonly offeredCopyId: CopyId }
   | { readonly kind: "sale"; readonly price: Money }
-  | { readonly kind: "lend"; readonly returnDate: Date };
+  | { readonly kind: "lend"; readonly returnDate?: Date };
 
 // Raw, kind-tagged input as it arrives from the boundary; validated into ExchangeTerms.
 export type ExchangeTermsInput =
@@ -34,8 +34,8 @@ export type ExchangeTermsInput =
   | { readonly kind: "sale"; readonly price?: Money }
   | { readonly kind: "lend"; readonly returnDate?: Date };
 
-// Enforce term validity per kind: swap needs an offered copy, sale a price, lend a
-// future-or-present return date.
+// Enforce term validity per kind: swap needs an offered copy, sale a price. A lend is open-ended —
+// returnDate is an optional, advisory expected-return, never required.
 export const validateTerms = (
   input: ExchangeTermsInput,
 ): Result<ExchangeTerms, ExchangeError> => {
@@ -51,9 +51,6 @@ export const validateTerms = (
       }
       return ok({ kind: "sale", price: input.price });
     case "lend":
-      if (!input.returnDate) {
-        return err(ExchangeError.missingTerms("lend", "a return date is required"));
-      }
       return ok({ kind: "lend", returnDate: input.returnDate });
   }
 };

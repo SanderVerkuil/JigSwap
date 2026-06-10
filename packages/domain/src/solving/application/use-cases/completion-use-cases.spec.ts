@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toId } from "../../../shared-kernel";
-import { CompletionId, FileId, MemberId } from "../../domain";
+import { toCompletionId, toFileId, toMemberId } from "../../../shared-kernel";
+
 import { EDIT_WINDOW_MS } from "../../domain/completion";
 import {
   FixedClock,
@@ -14,8 +14,8 @@ import { makeRecordCompletion } from "./record-completion";
 import { makeReviewPuzzle } from "./review-puzzle";
 import { makeStartCompletion } from "./start-completion";
 
-const ALICE = toId<"MemberId">("alice") as MemberId;
-const BOB = toId<"MemberId">("bob") as MemberId;
+const ALICE = toMemberId("alice");
+const BOB = toMemberId("bob");
 const START = new Date("2026-06-01T10:00:00Z");
 const END = new Date("2026-06-01T11:30:00Z");
 const NOW = new Date("2026-06-01T11:30:00Z");
@@ -47,14 +47,27 @@ describe("Completion use cases", () => {
       const result = await start({
         userId: ALICE,
         startDate: START,
-        photoFileIds: Array.from(
-          { length: 6 },
-          (_, i) => toId<"FileId">(`f-${i}`) as FileId,
-        ),
+        photoFileIds: Array.from({ length: 6 }, (_, i) => toFileId(`f-${i}`)),
       });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("TooManyPhotos");
       expect(events.published).toHaveLength(0);
+    });
+
+    it("maps photo file ids onto the started completion", async () => {
+      const start = makeStartCompletion({ completions, ids, events, clock });
+      const result = await start({
+        userId: ALICE,
+        startDate: START,
+        photoFileIds: [toFileId("p-1"), toFileId("p-2")],
+      });
+      expect(result.isOk).toBe(true);
+      if (!result.isOk) return;
+      const stored = await completions.findById(result.value);
+      expect(stored?.photos.map((p) => p.fileId)).toEqual([
+        toFileId("p-1"),
+        toFileId("p-2"),
+      ]);
     });
   });
 
@@ -105,6 +118,20 @@ describe("Completion use cases", () => {
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("InvalidTimeRange");
     });
+
+    it("maps photo file ids onto the recorded completion", async () => {
+      const record = makeRecordCompletion({ completions, ids, events, clock });
+      const result = await record({
+        userId: ALICE,
+        startDate: START,
+        endDate: END,
+        photoFileIds: [toFileId("p-1")],
+      });
+      expect(result.isOk).toBe(true);
+      if (!result.isOk) return;
+      const stored = await completions.findById(result.value);
+      expect(stored?.photos.map((p) => p.fileId)).toEqual([toFileId("p-1")]);
+    });
   });
 
   describe("finishCompletion", () => {
@@ -127,7 +154,7 @@ describe("Completion use cases", () => {
       const finish = makeFinishCompletion({ completions, events, clock });
       const result = await finish({
         actingMemberId: ALICE,
-        completionId: toId<"CompletionId">("nope") as CompletionId,
+        completionId: toCompletionId("nope"),
         endDate: END,
       });
       expect(result.isErr).toBe(true);
@@ -147,6 +174,21 @@ describe("Completion use cases", () => {
       });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("NotCompletionOwner");
+    });
+
+    it("propagates an invalid-time-range error from finish", async () => {
+      const start = makeStartCompletion({ completions, ids, events, clock });
+      const started = await start({ userId: ALICE, startDate: START });
+      if (!started.isOk) throw new Error("setup failed");
+
+      const finish = makeFinishCompletion({ completions, events, clock });
+      const result = await finish({
+        actingMemberId: ALICE,
+        completionId: started.value,
+        endDate: new Date("2026-06-01T09:00:00Z"), // before start
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("InvalidTimeRange");
     });
   });
 
@@ -174,6 +216,36 @@ describe("Completion use cases", () => {
       });
       expect(result.isOk).toBe(true);
       expect(events.names()).toEqual(["CompletionEdited"]);
+      const stored = await completions.findById(id);
+      expect(stored?.toState().notes).toBe("tweaked"); // the change actually lands
+    });
+
+    it("returns CompletionNotFound for an unknown id", async () => {
+      const edit = makeEditCompletion({ completions, events, clock });
+      const result = await edit({
+        actingMemberId: ALICE,
+        completionId: toCompletionId("nope"),
+        notes: "x",
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("CompletionNotFound");
+    });
+
+    it("maps edited photo file ids onto the completion", async () => {
+      const id = await seedRecorded();
+      clock.set(new Date(END.getTime() + EDIT_WINDOW_MS - 1));
+      const edit = makeEditCompletion({ completions, events, clock });
+      const result = await edit({
+        actingMemberId: ALICE,
+        completionId: id,
+        photoFileIds: [toFileId("e-1"), toFileId("e-2")],
+      });
+      expect(result.isOk).toBe(true);
+      const stored = await completions.findById(id);
+      expect(stored?.photos.map((p) => p.fileId)).toEqual([
+        toFileId("e-1"),
+        toFileId("e-2"),
+      ]);
     });
 
     it("rejects an edit after the window with EditWindowClosed", async () => {
@@ -245,6 +317,36 @@ describe("Completion use cases", () => {
       });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("InvalidRating");
+    });
+
+    it("returns CompletionNotFound for an unknown id", async () => {
+      const review = makeReviewPuzzle({ completions, events, clock });
+      const result = await review({
+        actingMemberId: ALICE,
+        completionId: toCompletionId("nope"),
+        rating: 4,
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("CompletionNotFound");
+    });
+
+    it("rejects a non-owner with NotCompletionOwner", async () => {
+      const record = makeRecordCompletion({ completions, ids, events, clock });
+      const recorded = await record({
+        userId: ALICE,
+        startDate: START,
+        endDate: END,
+      });
+      if (!recorded.isOk) throw new Error("setup failed");
+
+      const review = makeReviewPuzzle({ completions, events, clock });
+      const result = await review({
+        actingMemberId: BOB,
+        completionId: recorded.value,
+        rating: 4,
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("NotCompletionOwner");
     });
   });
 });

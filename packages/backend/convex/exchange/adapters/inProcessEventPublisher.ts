@@ -14,7 +14,12 @@ import { makeEventPublisher } from "../../events/makeEventPublisher";
 export const inProcessEventPublisher = (ctx: MutationCtx): DomainEventPublisher =>
   makeEventPublisher(ctx, "exchange", async (events) => {
     for (const event of events as readonly ExchangeDomainEvent[]) {
-      if (event.name === "OwnershipTransferred") {
+      // A settled copy leaves the market immediately — whether ownership moved (swap/sale) or only
+      // possession did (lend). The async loan/transfer reactions then update owner/holder.
+      if (
+        event.name === "OwnershipTransferred" ||
+        event.name === "PossessionTransferred"
+      ) {
         await markCopyUnavailable(ctx, event.copyId as unknown as Id<"ownedPuzzles">);
       }
     }

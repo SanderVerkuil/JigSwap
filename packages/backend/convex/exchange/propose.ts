@@ -1,11 +1,10 @@
 import {
-  type CopyId,
   type ExchangeKind,
   type ExchangeTermsInput,
   makeProposeExchange,
-  type MemberId,
   Money,
-  toId,
+  toCopyId,
+  toMemberId,
 } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";
@@ -48,9 +47,9 @@ export const propose = mutation({
 
     const result = await proposeExchange({
       initiatorId,
-      recipientId: toId<"MemberId">(args.recipientId) as MemberId,
+      recipientId: toMemberId(args.recipientId),
       kind,
-      requestedCopyId: toId<"CopyId">(args.requestedPuzzleId) as CopyId,
+      requestedCopyId: toCopyId(args.requestedPuzzleId),
       terms,
     });
     if (result.isErr) throw toConvexError(result.error);
@@ -73,11 +72,12 @@ const buildTerms = (
       return {
         kind: "swap",
         offeredCopyId: args.offeredPuzzleId
-          ? (toId<"CopyId">(args.offeredPuzzleId) as CopyId)
+          ? toCopyId(args.offeredPuzzleId)
           : undefined,
       };
     case "sale": {
-      if (args.salePrice === undefined) return { kind: "sale", price: undefined };
+      if (args.salePrice === undefined)
+        return { kind: "sale", price: undefined };
       const money = Money.create(args.salePrice, DEFAULT_CURRENCY);
       if (money.isErr) return toConvexError(money.error);
       return { kind: "sale", price: money.value };
@@ -85,7 +85,9 @@ const buildTerms = (
     case "lend":
       return {
         kind: "lend",
-        returnDate: args.loanReturnDate ? new Date(args.loanReturnDate) : undefined,
+        returnDate: args.loanReturnDate
+          ? new Date(args.loanReturnDate)
+          : undefined,
       };
   }
 };

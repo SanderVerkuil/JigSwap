@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toId } from "../../../shared-kernel";
-import { MemberId } from "../../domain";
+import { toMemberId } from "../../../shared-kernel";
+
 import {
   FixedClock,
   InMemoryFollowRepository,
@@ -10,8 +10,8 @@ import {
 import { makeFollowMember } from "./follow-member";
 import { makeUnfollowMember } from "./unfollow-member";
 
-const alice = toId<"MemberId">("alice") as MemberId;
-const bob = toId<"MemberId">("bob") as MemberId;
+const alice = toMemberId("alice");
+const bob = toMemberId("bob");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 describe("makeUnfollowMember", () => {
@@ -34,7 +34,9 @@ describe("makeUnfollowMember", () => {
   });
 
   it("unfollows an existing edge: removes it and publishes MemberUnfollowed", async () => {
-    expect((await follow({ followerId: alice, followeeId: bob })).isOk).toBe(true);
+    expect((await follow({ followerId: alice, followeeId: bob })).isOk).toBe(
+      true,
+    );
     expect(follows.size()).toBe(1);
 
     const result = await unfollow({ followerId: alice, followeeId: bob });
@@ -53,8 +55,12 @@ describe("makeUnfollowMember", () => {
   });
 
   it("allows re-following after an unfollow", async () => {
-    expect((await follow({ followerId: alice, followeeId: bob })).isOk).toBe(true);
-    expect((await unfollow({ followerId: alice, followeeId: bob })).isOk).toBe(true);
+    expect((await follow({ followerId: alice, followeeId: bob })).isOk).toBe(
+      true,
+    );
+    expect((await unfollow({ followerId: alice, followeeId: bob })).isOk).toBe(
+      true,
+    );
 
     const again = await follow({ followerId: alice, followeeId: bob });
     expect(again.isOk).toBe(true);

@@ -1,4 +1,10 @@
-import { type CopyId, type CopyPort, type CopyView, type MemberId, toId } from "@jigswap/domain";
+import {
+  type CopyId,
+  type CopyPort,
+  type CopyView,
+  toCopyId,
+  toMemberId,
+} from "@jigswap/domain";
 import type { Id } from "../../_generated/dataModel";
 import type { QueryCtx } from "../../_generated/server";
 
@@ -9,8 +15,8 @@ export const convexCopyPort = (ctx: QueryCtx): CopyPort => ({
     const row = await ctx.db.get(copyId as unknown as Id<"ownedPuzzles">);
     if (!row) return null;
     return {
-      id: toId<"CopyId">(row._id),
-      ownerId: toId<"MemberId">(row.ownerId) as MemberId,
+      id: toCopyId(row._id),
+      ownerId: toMemberId(row.ownerId),
       availability: {
         forTrade: row.availability.forTrade,
         forSale: row.availability.forSale,

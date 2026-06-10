@@ -3,7 +3,7 @@ import {
   type MemberId,
   type PartnerReview,
   type PartnerReviewRepository,
-  toId,
+  toExchangeId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
@@ -45,7 +45,7 @@ export const convexPartnerReviewRepository = (
     exchangeId: Id<"exchanges">,
   ): Promise<ExchangeId> => {
     const row = await ctx.db.get(exchangeId);
-    return toId<"ExchangeId">(
+    return toExchangeId(
       (row?.aggregateId ?? (exchangeId as unknown as string)) as string,
     ) as ExchangeId;
   };

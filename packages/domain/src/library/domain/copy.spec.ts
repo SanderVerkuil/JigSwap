@@ -1,22 +1,28 @@
 import { describe, expect, it } from "vitest";
-import { DomainEvent, toId } from "../../shared-kernel";
+import {
+  DomainEvent,
+  toCopyId,
+  toFileId,
+  toOwnerId,
+  toPuzzleDefinitionId,
+} from "../../shared-kernel";
 import { Acquisition } from "./acquisition";
 import { CatalogSnapshot } from "./catalog-snapshot";
 import { Copy } from "./copy";
-import { CopyImage, FileId } from "./copy-image";
+import { CopyImage } from "./copy-image";
 import {
   CopyAcquired,
   CopyConditionChanged,
   CopyMadeAvailable,
   CopyMadeUnavailable,
 } from "./events";
-import { CopyId, OwnerId, PuzzleDefinitionId } from "./ids";
+
 import { Price } from "./price";
 import { SharingSetting } from "./sharing-setting";
 
-const copyId = toId<"CopyId">("copy1") as CopyId;
-const owner = toId<"OwnerId">("alice") as OwnerId;
-const definitionId = toId<"PuzzleDefinitionId">("def1") as PuzzleDefinitionId;
+const copyId = toCopyId("copy1");
+const owner = toOwnerId("alice");
+const definitionId = toPuzzleDefinitionId("def1");
 const NOW = new Date("2026-06-08T10:00:00Z");
 const LATER = new Date("2026-06-09T10:00:00Z");
 
@@ -161,13 +167,105 @@ describe("addImage", () => {
     const copy = acquire();
     copy.pullEvents();
     const image = CopyImage.create({
-      fileId: toId<"FileId">("file1") as FileId,
+      fileId: toFileId("file1"),
       tag: "box_front",
     });
     copy.addImage(image, LATER);
     expect(copy.toState().images).toHaveLength(1);
     const events = copy.pullEvents();
     expect(names(events)).toEqual(["CopyImageAdded"]);
+  });
+});
+
+describe("Copy.transferTo", () => {
+  const newOwner = toOwnerId("bob");
+
+  // A copy carrying owner-specific state, so the transfer's resets are observable.
+  const owned = (): Copy => {
+    const copy = acquire();
+    copy.updateSharing(
+      SharingSetting.create({ forTrade: true, visibility: "visible" }),
+      NOW,
+    );
+    copy.updateDetails({ missingPiecesCount: 2, notes: "corner bent" }, NOW);
+    copy.pullEvents();
+    return copy;
+  };
+
+  it("reassigns ownership and records CopyOwnershipTransferred with both owners", () => {
+    const copy = owned();
+    const result = copy.transferTo(newOwner, LATER);
+    expect(result.isOk).toBe(true);
+    expect(copy.ownerId).toBe(newOwner);
+    const events = copy.pullEvents();
+    expect(names(events)).toEqual(["CopyOwnershipTransferred"]);
+    expect(events[0]).toMatchObject({
+      copyId,
+      previousOwner: owner,
+      newOwner,
+      occurredAt: LATER,
+    });
+  });
+
+  it("resets owner-specific fields: sharing private, acquisition trade, notes cleared", () => {
+    const copy = owned();
+    copy.transferTo(newOwner, LATER);
+    const state = copy.toState();
+    expect(state.sharing.isAvailableForAnyExchange()).toBe(false);
+    expect(state.acquisition.source).toBe("trade");
+    expect(state.acquisition.date).toBe(LATER);
+    expect(state.notes).toBeUndefined();
+    expect(state.updatedAt).toBe(LATER);
+  });
+
+  it("keeps the physical facts: condition, snapshot, missing pieces", () => {
+    const copy = owned();
+    copy.transferTo(newOwner, LATER);
+    const state = copy.toState();
+    expect(state.condition).toBe("good");
+    expect(state.snapshot.title).toBe("Starry Night");
+    expect(state.missingPiecesCount).toBe(2);
+  });
+});
+
+describe("Copy possession (lend / return)", () => {
+  const borrower = toOwnerId("bob");
+
+  it("a freshly acquired copy is held by its owner", () => {
+    expect(acquire().toState().heldBy).toBe(owner);
+  });
+
+  it("lendOut hands possession to the borrower and takes it off the market", () => {
+    const copy = acquire();
+    copy.updateSharing(
+      SharingSetting.create({ forTrade: true, visibility: "visible" }),
+      NOW,
+    );
+    copy.pullEvents();
+    const result = copy.lendOut(borrower, LATER);
+    expect(result.isOk).toBe(true);
+    const state = copy.toState();
+    expect(state.heldBy).toBe(borrower);
+    expect(state.ownerId).toBe(owner); // ownership is unchanged by a lend
+    expect(state.sharing.isAvailableForAnyExchange()).toBe(false);
+    expect(names(copy.pullEvents())).toEqual(["CopyLentOut"]);
+  });
+
+  it("returnToOwner restores possession to the owner", () => {
+    const copy = acquire();
+    copy.lendOut(borrower, NOW);
+    copy.pullEvents();
+    const result = copy.returnToOwner(LATER);
+    expect(result.isOk).toBe(true);
+    expect(copy.toState().heldBy).toBe(owner);
+    expect(names(copy.pullEvents())).toEqual(["CopyReturnedToOwner"]);
+  });
+
+  it("transferTo moves possession to the new owner too", () => {
+    const copy = acquire();
+    copy.pullEvents();
+    copy.transferTo(borrower, LATER);
+    expect(copy.toState().heldBy).toBe(borrower);
   });
 });
 

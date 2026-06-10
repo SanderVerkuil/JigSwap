@@ -1,16 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { DomainEvent, toId } from "../../shared-kernel";
+import { DomainEvent, toMemberId, toNotificationId } from "../../shared-kernel";
 import { NotificationCreated, NotificationRead } from "./events";
-import { MemberId, NotificationId } from "./ids";
+
 import { Notification } from "./notification";
 
-const id = toId<"NotificationId">("ntf1") as NotificationId;
-const alice = toId<"MemberId">("alice") as MemberId;
-const bob = toId<"MemberId">("bob") as MemberId;
+const id = toNotificationId("ntf1");
+const alice = toMemberId("alice");
+const bob = toMemberId("bob");
 const NOW = new Date("2026-06-08T10:00:00Z");
 const LATER = new Date("2026-06-09T10:00:00Z");
 
-const names = (events: readonly DomainEvent[]): string[] => events.map((e) => e.name);
+const names = (events: readonly DomainEvent[]): string[] =>
+  events.map((e) => e.name);
 
 const create = (): Notification =>
   Notification.create({

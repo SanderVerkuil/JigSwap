@@ -1,5 +1,5 @@
+import { Image } from "@/compat/image";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
 import HeaderIcon from "./logo-horizontal.png";
 
 export function HeaderLogo({ className }: { className?: string }) {

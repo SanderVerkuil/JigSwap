@@ -17,7 +17,7 @@ import type { Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { ConvexError } from "convex/values";
 import { CheckCircle, Star } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations } from "use-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { StarRating } from "@/components/ui/star-rating";

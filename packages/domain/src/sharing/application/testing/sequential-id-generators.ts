@@ -1,6 +1,9 @@
-import { toId } from "../../../shared-kernel";
+import { toCircleId, toMembershipId } from "../../../shared-kernel";
 import { CircleId, MembershipId } from "../../domain";
-import { CircleIdGenerator, MembershipIdGenerator } from "../ports/out/id-generators";
+import {
+  CircleIdGenerator,
+  MembershipIdGenerator,
+} from "../ports/out/id-generators";
 
 // Deterministic CircleIdGenerator for tests: circle-1, circle-2, ...
 export class SequentialCircleIdGenerator implements CircleIdGenerator {
@@ -8,7 +11,7 @@ export class SequentialCircleIdGenerator implements CircleIdGenerator {
 
   next(): CircleId {
     this.counter += 1;
-    return toId<"CircleId">(`circle-${this.counter}`) as CircleId;
+    return toCircleId(`circle-${this.counter}`);
   }
 }
 
@@ -18,6 +21,6 @@ export class SequentialMembershipIdGenerator implements MembershipIdGenerator {
 
   next(): MembershipId {
     this.counter += 1;
-    return toId<"MembershipId">(`membership-${this.counter}`) as MembershipId;
+    return toMembershipId(`membership-${this.counter}`);
   }
 }

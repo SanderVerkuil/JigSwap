@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
 import type { FunctionReturnType } from "convex/server";
 import { Edit, Plus } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations } from "use-intl";
 
 // Collection detail view DTO this component renders, derived from the read it is fed by.
 type CollectionData = NonNullable<

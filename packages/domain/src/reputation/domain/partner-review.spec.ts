@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { toId } from "../../shared-kernel";
-import { ExchangeId, MemberId, PartnerReviewId } from "./ids";
+import {
+  toExchangeId,
+  toMemberId,
+  toPartnerReviewId,
+} from "../../shared-kernel";
+import { MemberId } from "./ids";
 import { PartnerReview, SubmitProps } from "./partner-review";
 
-const reviewer = toId<"MemberId">("alice") as MemberId;
-const reviewee = toId<"MemberId">("bob") as MemberId;
-const exchangeId = toId<"ExchangeId">("ex-1") as ExchangeId;
-const reviewId = toId<"PartnerReviewId">("review-1") as PartnerReviewId;
+const reviewer = toMemberId("alice");
+const reviewee = toMemberId("bob");
+const exchangeId = toExchangeId("ex-1");
+const reviewId = toPartnerReviewId("review-1");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 const props = (over: Partial<SubmitProps> = {}): SubmitProps => ({
@@ -62,7 +66,9 @@ describe("PartnerReview.submit", () => {
 
   it("rejects an out-of-bounds category sub-score", () => {
     const result = PartnerReview.submit(
-      props({ scores: { communication: 0, packaging: 4, condition: 4, timeliness: 3 } }),
+      props({
+        scores: { communication: 0, packaging: 4, condition: 4, timeliness: 3 },
+      }),
     );
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("InvalidRating");
@@ -75,6 +81,9 @@ describe("PartnerReview.submit", () => {
     expect(state.comment).toBe("Smooth trade");
     const rehydrated = PartnerReview.rehydrate(state);
     expect(rehydrated.id).toBe(reviewId);
+    expect(rehydrated.reviewerId).toBe(reviewer);
+    expect(rehydrated.revieweeId).toBe(reviewee);
+    expect(rehydrated.exchangeId).toBe(exchangeId);
     expect(rehydrated.rating.value).toBe(4);
     // Rehydration does not re-emit creation events.
     expect(rehydrated.pullEvents()).toHaveLength(0);

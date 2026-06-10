@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toId } from "../../../shared-kernel";
-import { MemberId, Profile, ProfileId } from "../../domain";
+import { toMemberId, toProfileId } from "../../../shared-kernel";
+import { Profile } from "../../domain";
 import {
   FixedClock,
   InMemoryProfileRepository,
@@ -8,9 +8,9 @@ import {
 } from "../testing";
 import { makeEditProfile } from "./edit-profile";
 
-const alice = toId<"MemberId">("alice") as MemberId;
-const bob = toId<"MemberId">("bob") as MemberId;
-const profileId = toId<"ProfileId">("profile-1") as ProfileId;
+const alice = toMemberId("alice");
+const bob = toMemberId("bob");
+const profileId = toProfileId("profile-1");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 describe("makeEditProfile", () => {
@@ -38,7 +38,11 @@ describe("makeEditProfile", () => {
   it("edits an existing profile: saves it and publishes ProfileUpdated", async () => {
     await seedProfile();
 
-    const result = await edit({ memberId: alice, displayName: "Alice B.", bio: "Updated" });
+    const result = await edit({
+      memberId: alice,
+      displayName: "Alice B.",
+      bio: "Updated",
+    });
 
     expect(result.isOk).toBe(true);
     const stored = await profiles.findByMember(alice);

@@ -1,8 +1,7 @@
 import {
-  type CompletionId,
   makeFinishCompletion,
   type MemberId,
-  toId,
+  toCompletionId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
@@ -31,7 +30,7 @@ export const finishCompletion = mutation({
     });
     const result = await finish({
       actingMemberId: actingMemberId as unknown as MemberId,
-      completionId: toId<"CompletionId">(args.completionId) as CompletionId,
+      completionId: toCompletionId(args.completionId),
       endDate: new Date(args.endDate),
       completionTimeMinutes: args.completionTimeMinutes,
     });

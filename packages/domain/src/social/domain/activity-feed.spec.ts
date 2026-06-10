@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { toId } from "../../shared-kernel";
+import { toMemberId } from "../../shared-kernel";
 import { ActivityEntry, buildActivityFeed } from "./activity-feed";
 import { MemberId } from "./ids";
 
-const member = (id: string): MemberId => toId<"MemberId">(id) as MemberId;
+const member = (id: string): MemberId => toMemberId(id);
 
 const entry = (over: Partial<ActivityEntry> = {}): ActivityEntry => ({
   memberId: member("alice"),
@@ -39,9 +39,21 @@ describe("buildActivityFeed", () => {
 
   it("interleaves mixed kinds purely by recency", () => {
     const feed = buildActivityFeed([
-      entry({ kind: "acquisition", ref: "a", occurredAt: new Date("2026-02-01T00:00:00Z") }),
-      entry({ kind: "exchange", ref: "x", occurredAt: new Date("2026-04-01T00:00:00Z") }),
-      entry({ kind: "completion", ref: "c", occurredAt: new Date("2026-03-01T00:00:00Z") }),
+      entry({
+        kind: "acquisition",
+        ref: "a",
+        occurredAt: new Date("2026-02-01T00:00:00Z"),
+      }),
+      entry({
+        kind: "exchange",
+        ref: "x",
+        occurredAt: new Date("2026-04-01T00:00:00Z"),
+      }),
+      entry({
+        kind: "completion",
+        ref: "c",
+        occurredAt: new Date("2026-03-01T00:00:00Z"),
+      }),
     ]);
     expect(feed.map((e) => [e.kind, e.ref])).toEqual([
       ["exchange", "x"],
@@ -63,7 +75,10 @@ describe("buildActivityFeed", () => {
   });
 
   it("returns the full feed when no limit is given", () => {
-    const entries = [entry({ ref: "a" }), entry({ ref: "b", occurredAt: new Date("2026-05-01T00:00:00Z") })];
+    const entries = [
+      entry({ ref: "a" }),
+      entry({ ref: "b", occurredAt: new Date("2026-05-01T00:00:00Z") }),
+    ];
     expect(buildActivityFeed(entries)).toHaveLength(2);
   });
 

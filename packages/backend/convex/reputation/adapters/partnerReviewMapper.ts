@@ -1,9 +1,9 @@
 import {
   type ExchangeId,
-  type MemberId,
   PartnerReview,
   type PartnerReviewState,
-  toId,
+  toMemberId,
+  toPartnerReviewId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 
@@ -15,17 +15,23 @@ import type { Doc, Id } from "../../_generated/dataModel";
 // `exchanges._id` from the ExchangeId aggregateId — the repository resolves and supplies it.
 // `reviewerId`/`revieweeId` ARE included: they are user `_id`s, which the domain carries directly
 // as MemberIds, so no lookup is needed.
-export type ReviewRow = Omit<Doc<"reviews">, "_id" | "_creationTime" | "exchangeId">;
+export type ReviewRow = Omit<
+  Doc<"reviews">,
+  "_id" | "_creationTime" | "exchangeId"
+>;
 
 // Row -> aggregate. The row MUST carry an aggregateId (only domain-written/backfilled rows do);
 // callers guard for it before mapping. `exchangeId` is the OUTBOUND ExchangeId aggregateId,
 // supplied by the repository after mapping the stored FK `_id` back to it.
-export const toDomain = (row: Doc<"reviews">, exchangeId: ExchangeId): PartnerReview => {
+export const toDomain = (
+  row: Doc<"reviews">,
+  exchangeId: ExchangeId,
+): PartnerReview => {
   const state: PartnerReviewState = {
-    id: toId<"PartnerReviewId">(row.aggregateId as string),
+    id: toPartnerReviewId(row.aggregateId as string),
     exchangeId,
-    reviewerId: toId<"MemberId">(row.reviewerId as unknown as string) as MemberId,
-    revieweeId: toId<"MemberId">(row.revieweeId as unknown as string) as MemberId,
+    reviewerId: toMemberId(row.reviewerId as unknown as string),
+    revieweeId: toMemberId(row.revieweeId as unknown as string),
     // StarRating is structurally a `{ value }`; rehydrate skips re-validation by design.
     rating: { value: row.rating } as PartnerReviewState["rating"],
     comment: row.comment,

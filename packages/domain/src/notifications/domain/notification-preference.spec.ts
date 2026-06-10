@@ -1,16 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { DomainEvent, toId } from "../../shared-kernel";
+import {
+  DomainEvent,
+  toMemberId,
+  toNotificationPreferenceId,
+} from "../../shared-kernel";
 import { PreferenceChanged } from "./events";
-import { MemberId, NotificationPreferenceId } from "./ids";
+
 import { NotificationPreference } from "./notification-preference";
 import { NOTIFICATION_TYPES } from "./notification-type";
 
-const id = toId<"NotificationPreferenceId">("pref1") as NotificationPreferenceId;
-const alice = toId<"MemberId">("alice") as MemberId;
+const id = toNotificationPreferenceId("pref1");
+const alice = toMemberId("alice");
 const NOW = new Date("2026-06-08T10:00:00Z");
 const LATER = new Date("2026-06-09T10:00:00Z");
 
-const names = (events: readonly DomainEvent[]): string[] => events.map((e) => e.name);
+const names = (events: readonly DomainEvent[]): string[] =>
+  events.map((e) => e.name);
 
 const def = (): NotificationPreference =>
   NotificationPreference.createDefault(id, alice, NOW);
@@ -23,6 +28,7 @@ describe("NotificationPreference.createDefault", () => {
       expect(pref.allows(type, "email")).toBe(false);
       expect(pref.allows(type, "push")).toBe(false);
     }
+    expect(pref.id).toBe(id);
     expect(pref.memberId).toBe(alice);
   });
 
@@ -73,6 +79,37 @@ describe("NotificationPreference.enable / disable", () => {
     pref.pullEvents();
     expect(pref.allows("trade_accepted", "inApp")).toBe(true);
     expect(pref.allows("trade_request", "email")).toBe(false);
+  });
+});
+
+describe("NotificationPreference with a sparse (rehydrated) toggle map", () => {
+  const sparse = (): NotificationPreference =>
+    NotificationPreference.rehydrate({
+      id,
+      memberId: alice,
+      toggles: {}, // no entry for any type
+      updatedAt: NOW,
+    });
+
+  it("treats an absent type as disabled without throwing (allows reads safely)", () => {
+    const pref = sparse();
+    expect(pref.allows("trade_request", "inApp")).toBe(false);
+    expect(pref.allows("trade_request", "email")).toBe(false);
+  });
+
+  it("seeds an all-off channel map when first toggling an absent type", () => {
+    const pref = sparse();
+    pref.enable("trade_request", "email", LATER);
+    expect(pref.allows("trade_request", "email")).toBe(true);
+    // The freshly-seeded type's other channels stay off by default.
+    expect(pref.allows("trade_request", "inApp")).toBe(false);
+    expect(pref.allows("trade_request", "push")).toBe(false);
+    // The persisted shape is the FULL resolved map (explicit falses), not just the toggled channel.
+    expect(pref.toState().toggles.trade_request).toEqual({
+      inApp: false,
+      email: true,
+      push: false,
+    });
   });
 });
 

@@ -1,15 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { toId } from "../../shared-kernel";
+import {
+  toExchangeId,
+  toMemberId,
+  toMessageId,
+  toThreadId,
+} from "../../shared-kernel";
 import { ExchangeId, MemberId, MessageId, ThreadId } from "./ids";
 import { Thread } from "./thread";
 
-const alice = toId<"MemberId">("alice") as MemberId;
-const bob = toId<"MemberId">("bob") as MemberId;
-const carol = toId<"MemberId">("carol") as MemberId; // outsider
-const exchangeId = toId<"ExchangeId">("ex-1") as ExchangeId;
-const threadId = toId<"ThreadId">("thread-1") as ThreadId;
-const msg1 = toId<"MessageId">("message-1") as MessageId;
-const msg2 = toId<"MessageId">("message-2") as MessageId;
+const alice = toMemberId("alice");
+const bob = toMemberId("bob");
+const carol = toMemberId("carol"); // outsider
+const exchangeId = toExchangeId("ex-1");
+const threadId = toThreadId("thread-1");
+const msg1 = toMessageId("message-1");
+const msg2 = toMessageId("message-2");
 const NOW = new Date("2026-06-08T10:00:00Z");
 const LATER = new Date("2026-06-08T11:00:00Z");
 
@@ -99,15 +104,33 @@ describe("Thread.postMessage", () => {
 
   it("keeps messages in send order", () => {
     const thread = openThread();
-    thread.postMessage({ id: msg1, authorId: alice, kind: "text", body: "first", sentAt: NOW });
-    thread.postMessage({ id: msg2, authorId: bob, kind: "text", body: "second", sentAt: LATER });
+    thread.postMessage({
+      id: msg1,
+      authorId: alice,
+      kind: "text",
+      body: "first",
+      sentAt: NOW,
+    });
+    thread.postMessage({
+      id: msg2,
+      authorId: bob,
+      kind: "text",
+      body: "second",
+      sentAt: LATER,
+    });
 
     expect(thread.messages.map((m) => m.id)).toEqual([msg1, msg2]);
   });
 
   it("drains events only once", () => {
     const thread = openThread();
-    thread.postMessage({ id: msg1, authorId: alice, kind: "text", body: "hi", sentAt: NOW });
+    thread.postMessage({
+      id: msg1,
+      authorId: alice,
+      kind: "text",
+      body: "hi",
+      sentAt: NOW,
+    });
     expect(thread.pullEvents()).toHaveLength(1);
     expect(thread.pullEvents()).toHaveLength(0);
   });
@@ -138,7 +161,11 @@ describe("Thread.postSystemMessage", () => {
 
   it("rejects an empty system body", () => {
     const thread = openThread();
-    const result = thread.postSystemMessage({ id: msg1, body: "", sentAt: NOW });
+    const result = thread.postSystemMessage({
+      id: msg1,
+      body: "",
+      sentAt: NOW,
+    });
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("EmptyMessage");
   });
@@ -180,7 +207,13 @@ describe("Thread.markRead", () => {
 describe("Thread persistence", () => {
   it("round-trips messages and receipts through toState/rehydrate", () => {
     const thread = openThread();
-    thread.postMessage({ id: msg1, authorId: alice, kind: "text", body: "hi", sentAt: NOW });
+    thread.postMessage({
+      id: msg1,
+      authorId: alice,
+      kind: "text",
+      body: "hi",
+      sentAt: NOW,
+    });
     thread.markRead(bob, NOW);
 
     const rehydrated = Thread.rehydrate(thread.toState());

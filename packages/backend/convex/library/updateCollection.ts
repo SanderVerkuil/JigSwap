@@ -1,9 +1,8 @@
 import {
-  type CollectionId,
   type CollectionVisibility,
   makeUpdateCollection,
   type OwnerId,
-  toId,
+  toCollectionId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
@@ -37,7 +36,7 @@ export const updateCollection = mutation({
 
     const result = await update({
       actingMemberId,
-      collectionId: toId<"CollectionId">(args.collectionId) as CollectionId,
+      collectionId: toCollectionId(args.collectionId),
       name: args.name,
       description: args.description,
       visibility: args.visibility as CollectionVisibility | undefined,

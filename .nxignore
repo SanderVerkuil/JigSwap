@@ -4,6 +4,10 @@ node_modules
 .nx
 dist
 out
+
+# Agent worktrees live under .claude/worktrees and would otherwise register every
+# project a second time, breaking the project graph (MultipleProjectsWithSameName).
+.claude/worktrees
 coverage
 .env*
 .DS_Store

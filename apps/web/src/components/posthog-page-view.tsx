@@ -1,11 +1,11 @@
-"use client";
-
-import { useUser } from "@clerk/nextjs";
+import { useUser } from "@/compat/clerk";
+import { usePathname, useSearchParams } from "@/compat/navigation";
 import { useConvexAuth } from "convex/react";
-import { usePathname, useSearchParams } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 import { useEffect } from "react";
 
+// Ported from apps/web/src/components/posthog-page-view.tsx: next/navigation
+// hooks swapped for the compat layer; behavior (pageview capture + identify) kept.
 export function PostHogPageView(): null {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -17,8 +17,9 @@ export function PostHogPageView(): null {
   useEffect(() => {
     if (pathname && posthog) {
       let url = window.origin + pathname;
-      if (searchParams) {
-        url += "?" + searchParams.toString();
+      const query = searchParams.toString();
+      if (query) {
+        url += "?" + query;
       }
 
       posthog.capture("$pageview", {

@@ -1,11 +1,10 @@
 import {
-  type CopyId,
-  type FileId,
   makeRecordCompletion,
   makeStartCompletion,
   type MemberId,
-  type PuzzleDefinitionId,
-  toId,
+  toCopyId,
+  toFileId,
+  toPuzzleDefinitionId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
@@ -35,14 +34,10 @@ export const recordCompletion = mutation({
     const userId = await requireMember(ctx);
 
     const puzzleDefinitionId = args.puzzleDefinitionId
-      ? (toId<"PuzzleDefinitionId">(args.puzzleDefinitionId) as PuzzleDefinitionId)
+      ? toPuzzleDefinitionId(args.puzzleDefinitionId)
       : undefined;
-    const copyId = args.copyId
-      ? (toId<"CopyId">(args.copyId) as CopyId)
-      : undefined;
-    const photoFileIds = args.photos?.map(
-      (id) => toId<"FileId">(id) as FileId,
-    );
+    const copyId = args.copyId ? toCopyId(args.copyId) : undefined;
+    const photoFileIds = args.photos?.map((id) => toFileId(id));
 
     // No end instant => start an in-progress solve; an end instant => log a finished one.
     if (args.endDate === undefined) {

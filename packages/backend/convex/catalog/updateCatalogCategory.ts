@@ -1,7 +1,6 @@
 import {
-  type CatalogCategoryId,
   makeUpdateCatalogCategory,
-  toId,
+  toCatalogCategoryId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
@@ -32,7 +31,7 @@ export const updateCatalogCategory = mutation({
     });
 
     const result = await update({
-      catalogCategoryId: toId<"CatalogCategoryId">(args.catalogCategoryId) as CatalogCategoryId,
+      catalogCategoryId: toCatalogCategoryId(args.catalogCategoryId),
       changes: {
         name: args.name,
         description: args.description,

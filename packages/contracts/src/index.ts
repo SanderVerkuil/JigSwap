@@ -3,3 +3,7 @@ export * from "./identity";
 export * from "./shared";
 export * from "./catalog";
 export * from "./library";
+export * from "./sharing";
+export * from "./social";
+export * from "./custody";
+export * from "./lending";

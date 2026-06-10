@@ -51,10 +51,12 @@ describe("computeCollectionBreakdown", () => {
         copy({ pieceCount: 500 }),
         copy({ pieceCount: undefined }),
         copy({ pieceCount: Number.NaN }),
+        // Infinity satisfies `>= 2000`, so only the finite guard keeps it out of the 2000+ bucket.
+        copy({ pieceCount: Number.POSITIVE_INFINITY }),
       ]);
       expect(byPieceCount).toEqual([
         { label: "500-999", value: 1 },
-        { label: "Unknown", value: 2 },
+        { label: "Unknown", value: 3 },
       ]);
     });
   });
