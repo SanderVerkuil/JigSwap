@@ -1327,5 +1327,14 @@
       "error": "Error compressing image. Please select a different file.",
       "compressing": "Compressing..."
     }
+  },
+  "custody": {
+    "title": "Chain of Custody",
+    "description": "How this copy has changed hands over time.",
+    "originalOwner": "Original owner",
+    "currentOwner": "Current owner",
+    "transferredVia": "Transferred via exchange {exchangeId}",
+    "noTransfers": "This copy has never been transferred.",
+    "loading": "Loading custody timeline..."
   }
 }

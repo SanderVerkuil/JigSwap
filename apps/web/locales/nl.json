@@ -1327,5 +1327,14 @@
       "error": "Fout bij comprimeren van afbeelding. Selecteer een ander bestand.",
       "compressing": "Comprimeren..."
     }
+  },
+  "custody": {
+    "title": "Eigendomsketen",
+    "description": "Hoe dit exemplaar in de loop van de tijd van eigenaar is gewisseld.",
+    "originalOwner": "Oorspronkelijke eigenaar",
+    "currentOwner": "Huidige eigenaar",
+    "transferredVia": "Overgedragen via ruil {exchangeId}",
+    "noTransfers": "Dit exemplaar is nooit overgedragen.",
+    "loading": "Eigendomsketen laden..."
   }
 }
