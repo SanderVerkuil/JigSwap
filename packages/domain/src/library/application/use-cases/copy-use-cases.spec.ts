@@ -1,13 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toId } from "../../../shared-kernel";
 import {
-  CatalogSnapshot,
-  Copy,
-  CopyId,
-  FileId,
-  OwnerId,
-  PuzzleDefinitionId,
-} from "../../domain";
+  toCopyId,
+  toFileId,
+  toOwnerId,
+  toPuzzleDefinitionId,
+} from "../../../shared-kernel";
+import { CatalogSnapshot, Copy, CopyId } from "../../domain";
 import {
   FakeCatalogSnapshotProvider,
   FakeCopyReservationPort,
@@ -24,9 +22,9 @@ import { makeTransferCopyOwnership } from "./transfer-copy-ownership";
 import { makeUpdateCopyDetails } from "./update-copy-details";
 import { makeUpdateCopySharing } from "./update-copy-sharing";
 
-const alice = toId<"OwnerId">("alice") as OwnerId;
-const bob = toId<"OwnerId">("bob") as OwnerId;
-const definitionId = toId<"PuzzleDefinitionId">("def1") as PuzzleDefinitionId;
+const alice = toOwnerId("alice");
+const bob = toOwnerId("bob");
+const definitionId = toPuzzleDefinitionId("def1");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 const snapshot = (): CatalogSnapshot =>
@@ -140,7 +138,7 @@ describe("copy mutation use cases", () => {
     reservations = new FakeCopyReservationPort();
     events = new RecordingEventPublisher();
     const acquired = Copy.acquire({
-      id: toId<"CopyId">("copy-seed") as CopyId,
+      id: toCopyId("copy-seed"),
       ownerId: alice,
       snapshot: snapshot(),
       condition: "good",
@@ -174,14 +172,16 @@ describe("copy mutation use cases", () => {
       expect(result.isErr).toBe(true);
       if (result.isErr) {
         expect(result.error.code).toBe("NotOwner");
-        expect(result.error.message).toBe("Acting member may not change this copy's condition");
+        expect(result.error.message).toBe(
+          "Acting member may not change this copy's condition",
+        );
       }
     });
 
     it("rejects an unknown copy", async () => {
       const result = await run()({
         actingMemberId: alice,
-        copyId: toId<"CopyId">("ghost") as CopyId,
+        copyId: toCopyId("ghost"),
         condition: "fair",
       });
       expect(result.isErr).toBe(true);
@@ -219,14 +219,16 @@ describe("copy mutation use cases", () => {
       expect(result.isErr).toBe(true);
       if (result.isErr) {
         expect(result.error.code).toBe("NotOwner");
-        expect(result.error.message).toBe("Acting member may not update this copy's sharing");
+        expect(result.error.message).toBe(
+          "Acting member may not update this copy's sharing",
+        );
       }
     });
 
     it("rejects an unknown copy", async () => {
       const result = await run()({
         actingMemberId: alice,
-        copyId: toId<"CopyId">("ghost") as CopyId,
+        copyId: toCopyId("ghost"),
         visibility: "visible",
         forTrade: true,
       });
@@ -279,7 +281,7 @@ describe("copy mutation use cases", () => {
       const result = await run()({
         actingMemberId: alice,
         copyId,
-        fileId: toId<"FileId">("file1") as FileId,
+        fileId: toFileId("file1"),
         tag: "box_front",
       });
       expect(result.isOk).toBe(true);
@@ -290,20 +292,22 @@ describe("copy mutation use cases", () => {
       const result = await run()({
         actingMemberId: bob,
         copyId,
-        fileId: toId<"FileId">("file1") as FileId,
+        fileId: toFileId("file1"),
       });
       expect(result.isErr).toBe(true);
       if (result.isErr) {
         expect(result.error.code).toBe("NotOwner");
-        expect(result.error.message).toBe("Acting member may not add an image to this copy");
+        expect(result.error.message).toBe(
+          "Acting member may not add an image to this copy",
+        );
       }
     });
 
     it("rejects an unknown copy", async () => {
       const result = await run()({
         actingMemberId: alice,
-        copyId: toId<"CopyId">("ghost") as CopyId,
-        fileId: toId<"FileId">("file1") as FileId,
+        copyId: toCopyId("ghost"),
+        fileId: toFileId("file1"),
       });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("CopyNotFound");
@@ -315,7 +319,7 @@ describe("copy mutation use cases", () => {
       const result = await run()({
         actingMemberId: alice,
         copyId,
-        fileId: toId<"FileId">("file2") as FileId,
+        fileId: toFileId("file2"),
         title: "Front of box",
         description: "Pristine",
         tag: "box_front",
@@ -361,14 +365,16 @@ describe("copy mutation use cases", () => {
       expect(result.isErr).toBe(true);
       if (result.isErr) {
         expect(result.error.code).toBe("NotOwner");
-        expect(result.error.message).toBe("Acting member may not update this copy's details");
+        expect(result.error.message).toBe(
+          "Acting member may not update this copy's details",
+        );
       }
     });
 
     it("rejects an unknown copy", async () => {
       const result = await run()({
         actingMemberId: alice,
-        copyId: toId<"CopyId">("ghost") as CopyId,
+        copyId: toCopyId("ghost"),
         notes: "hi",
       });
       expect(result.isErr).toBe(true);
@@ -397,7 +403,9 @@ describe("copy mutation use cases", () => {
       expect(result.isErr).toBe(true);
       if (result.isErr) {
         expect(result.error.code).toBe("NotOwner");
-        expect(result.error.message).toBe("Acting member may not delete this copy");
+        expect(result.error.message).toBe(
+          "Acting member may not delete this copy",
+        );
       }
       expect(copies.size()).toBe(1);
     });
@@ -405,7 +413,7 @@ describe("copy mutation use cases", () => {
     it("rejects an unknown copy", async () => {
       const result = await run()({
         actingMemberId: alice,
-        copyId: toId<"CopyId">("ghost") as CopyId,
+        copyId: toCopyId("ghost"),
       });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("CopyNotFound");
@@ -435,7 +443,7 @@ describe("copy mutation use cases", () => {
 
     it("rejects an unknown copy", async () => {
       const result = await run()({
-        copyId: toId<"CopyId">("ghost") as CopyId,
+        copyId: toCopyId("ghost"),
         newOwner: bob,
       });
       expect(result.isErr).toBe(true);

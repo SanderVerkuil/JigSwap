@@ -1,4 +1,4 @@
-import { type CopyId, Loan, type OwnerId, toId } from "@jigswap/domain";
+import { Loan, toCopyId, toLoanId, toOwnerId } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 
 // ACL between the persisted `loans` row and the Loan aggregate. copyId is the Library CopyId
@@ -7,14 +7,16 @@ export type LoanRow = Omit<Doc<"loans">, "_id" | "_creationTime">;
 
 export const toDomain = (row: Doc<"loans">): Loan =>
   Loan.rehydrate({
-    id: toId<"LoanId">(row.aggregateId as string),
-    copyId: toId<"CopyId">(row.copyId) as CopyId,
-    lenderId: toId<"OwnerId">(row.lenderId as unknown as string) as OwnerId,
-    borrowerId: toId<"OwnerId">(row.borrowerId as unknown as string) as OwnerId,
+    id: toLoanId(row.aggregateId as string),
+    copyId: toCopyId(row.copyId),
+    lenderId: toOwnerId(row.lenderId as unknown as string),
+    borrowerId: toOwnerId(row.borrowerId as unknown as string),
     status: row.status,
     openedAt: new Date(row.openedAt),
     expectedReturn:
-      row.expectedReturn === undefined ? undefined : new Date(row.expectedReturn),
+      row.expectedReturn === undefined
+        ? undefined
+        : new Date(row.expectedReturn),
     closedAt: row.closedAt === undefined ? undefined : new Date(row.closedAt),
   });
 

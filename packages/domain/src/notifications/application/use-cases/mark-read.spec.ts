@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toId } from "../../../shared-kernel";
+import { toMemberId, toNotificationId } from "../../../shared-kernel";
 import { MemberId, Notification, NotificationId } from "../../domain";
 import {
   FixedClock,
@@ -12,8 +12,8 @@ import {
   MarkNotificationReadDeps,
 } from "./mark-notification-read";
 
-const alice = toId<"MemberId">("alice") as MemberId;
-const bob = toId<"MemberId">("bob") as MemberId;
+const alice = toMemberId("alice");
+const bob = toMemberId("bob");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 let notifications: InMemoryNotificationRepository;
@@ -25,7 +25,7 @@ beforeEach(() => {
 });
 
 const seed = async (id: string, owner: MemberId): Promise<NotificationId> => {
-  const nid = toId<"NotificationId">(id) as NotificationId;
+  const nid = toNotificationId(id);
   const n = Notification.create({
     id: nid,
     userId: owner,
@@ -62,7 +62,7 @@ describe("makeMarkNotificationRead", () => {
     const markRead = makeMarkNotificationRead(deps());
     const result = await markRead({
       memberId: alice,
-      notificationId: toId<"NotificationId">("missing") as NotificationId,
+      notificationId: toNotificationId("missing"),
     });
 
     expect(result.isOk).toBe(false);
@@ -114,9 +114,9 @@ describe("makeMarkAllRead", () => {
 
     expect((await notifications.findById(a))?.isRead).toBe(true);
     expect((await notifications.findById(b))?.isRead).toBe(true);
-    expect(
-      (await notifications.findById(toId<"NotificationId">("c") as NotificationId))?.isRead,
-    ).toBe(false);
+    expect((await notifications.findById(toNotificationId("c")))?.isRead).toBe(
+      false,
+    );
 
     expect(events.names()).toEqual(["NotificationRead", "NotificationRead"]);
   });

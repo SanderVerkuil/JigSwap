@@ -1,4 +1,9 @@
-import { toId } from "../../../shared-kernel";
+import {
+  toCollectionId,
+  toCopyId,
+  toLoanId,
+  toPersonalCategoryId,
+} from "../../../shared-kernel";
 import { CollectionId, CopyId, LoanId, PersonalCategoryId } from "../../domain";
 import {
   CollectionIdGenerator,
@@ -13,7 +18,7 @@ export class SequentialCopyIdGenerator implements CopyIdGenerator {
 
   next(): CopyId {
     this.counter += 1;
-    return toId<"CopyId">(`copy-${this.counter}`);
+    return toCopyId(`copy-${this.counter}`);
   }
 }
 
@@ -22,7 +27,7 @@ export class SequentialCollectionIdGenerator implements CollectionIdGenerator {
 
   next(): CollectionId {
     this.counter += 1;
-    return toId<"CollectionId">(`collection-${this.counter}`);
+    return toCollectionId(`collection-${this.counter}`);
   }
 }
 
@@ -31,7 +36,7 @@ export class SequentialPersonalCategoryIdGenerator implements PersonalCategoryId
 
   next(): PersonalCategoryId {
     this.counter += 1;
-    return toId<"PersonalCategoryId">(`category-${this.counter}`);
+    return toPersonalCategoryId(`category-${this.counter}`);
   }
 }
 
@@ -40,6 +45,6 @@ export class SequentialLoanIdGenerator implements LoanIdGenerator {
 
   next(): LoanId {
     this.counter += 1;
-    return toId<"LoanId">(`loan-${this.counter}`);
+    return toLoanId(`loan-${this.counter}`);
   }
 }

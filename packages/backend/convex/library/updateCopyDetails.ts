@@ -1,9 +1,4 @@
-import {
-  type CopyId,
-  makeUpdateCopyDetails,
-  type OwnerId,
-  toId,
-} from "@jigswap/domain";
+import { makeUpdateCopyDetails, type OwnerId, toCopyId } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
@@ -31,7 +26,7 @@ export const updateCopyDetails = mutation({
 
     const result = await update({
       actingMemberId,
-      copyId: toId<"CopyId">(args.copyId) as CopyId,
+      copyId: toCopyId(args.copyId),
       missingPiecesCount: args.missingPiecesCount,
       notes: args.notes,
     });

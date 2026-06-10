@@ -3,7 +3,8 @@ import {
   NotificationPreference,
   type NotificationPreferenceRepository,
   type NotificationPreferenceState,
-  toId,
+  toMemberId,
+  toNotificationPreferenceId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
@@ -12,12 +13,14 @@ import type { MutationCtx } from "../../_generated/server";
 // (`notificationPreferences`). One row per member, keyed by `memberId`. `toggles` is the resolved
 // type->channel->enabled map, plain JSON, stored as-is (v.any) so the mapping is a direct copy.
 
-const toDomain = (row: Doc<"notificationPreferences">): NotificationPreference => {
+const toDomain = (
+  row: Doc<"notificationPreferences">,
+): NotificationPreference => {
   const state: NotificationPreferenceState = {
-    id: toId<"NotificationPreferenceId">(
+    id: toNotificationPreferenceId(
       (row.aggregateId ?? (row._id as unknown as string)) as string,
     ),
-    memberId: toId<"MemberId">(row.memberId as unknown as string) as MemberId,
+    memberId: toMemberId(row.memberId as unknown as string),
     toggles: row.toggles as NotificationPreferenceState["toggles"],
     updatedAt: new Date(row.updatedAt),
   };
@@ -27,7 +30,9 @@ const toDomain = (row: Doc<"notificationPreferences">): NotificationPreference =
 export const convexNotificationPreferenceRepository = (
   ctx: MutationCtx,
 ): NotificationPreferenceRepository => ({
-  async findByMember(memberId: MemberId): Promise<NotificationPreference | null> {
+  async findByMember(
+    memberId: MemberId,
+  ): Promise<NotificationPreference | null> {
     const row = await ctx.db
       .query("notificationPreferences")
       .withIndex("by_member", (q) =>

@@ -1,4 +1,4 @@
-import { type MemberId, makeFollowMember, toId } from "@jigswap/domain";
+import { makeFollowMember, toMemberId } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
@@ -24,7 +24,7 @@ export const followMember = mutation({
 
     const result = await followMemberUseCase({
       followerId,
-      followeeId: toId<"MemberId">(args.followeeId) as MemberId,
+      followeeId: toMemberId(args.followeeId),
     });
     if (result.isErr) throw toConvexError(result.error);
     return result.value as string;

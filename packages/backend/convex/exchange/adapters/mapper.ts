@@ -1,13 +1,13 @@
 import {
-  type CopyId,
   Exchange,
   type ExchangeKind,
   type ExchangeState,
   type ExchangeStatus,
   type LegacyExchangeKind,
-  type MemberId,
   Money,
-  toId,
+  toCopyId,
+  toExchangeId,
+  toMemberId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 
@@ -34,10 +34,10 @@ export type ExchangeRow = Omit<Doc<"exchanges">, "_id" | "_creationTime">;
 export const toDomain = (row: Doc<"exchanges">): Exchange => {
   const kind = TYPE_TO_KIND[row.type];
   const base = {
-    id: toId<"ExchangeId">(row.aggregateId as string),
-    initiatorId: toId<"MemberId">(row.initiatorId) as MemberId,
-    recipientId: toId<"MemberId">(row.recipientId) as MemberId,
-    requestedCopyId: toId<"CopyId">(row.requestedPuzzleId) as CopyId,
+    id: toExchangeId(row.aggregateId as string),
+    initiatorId: toMemberId(row.initiatorId),
+    recipientId: toMemberId(row.recipientId),
+    requestedCopyId: toCopyId(row.requestedPuzzleId),
     status: row.status as ExchangeStatus,
     initiatorConfirmationTimestamp: toDate(row.initiatorConfirmationTimestamp),
     recipientConfirmationTimestamp: toDate(row.recipientConfirmationTimestamp),
@@ -52,7 +52,7 @@ export const toDomain = (row: Doc<"exchanges">): Exchange => {
         ...base,
         kind: "swap",
         offeredCopyId: row.offeredPuzzleId
-          ? (toId<"CopyId">(row.offeredPuzzleId) as CopyId)
+          ? toCopyId(row.offeredPuzzleId)
           : undefined,
       };
       break;
@@ -98,8 +98,10 @@ export const toRow = (exchange: Exchange): ExchangeRow => {
       : undefined,
     loanReturnDate: state.returnDate ? state.returnDate.getTime() : undefined,
     status: state.status,
-    initiatorConfirmationTimestamp: state.initiatorConfirmationTimestamp?.getTime(),
-    recipientConfirmationTimestamp: state.recipientConfirmationTimestamp?.getTime(),
+    initiatorConfirmationTimestamp:
+      state.initiatorConfirmationTimestamp?.getTime(),
+    recipientConfirmationTimestamp:
+      state.recipientConfirmationTimestamp?.getTime(),
     createdAt: state.createdAt.getTime(),
     updatedAt: state.updatedAt.getTime(),
   };

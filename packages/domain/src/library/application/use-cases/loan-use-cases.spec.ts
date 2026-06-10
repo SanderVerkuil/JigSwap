@@ -1,13 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toId } from "../../../shared-kernel";
 import {
-  CatalogSnapshot,
-  Copy,
-  CopyId,
-  LoanId,
-  OwnerId,
-  PuzzleDefinitionId,
-} from "../../domain";
+  toCopyId,
+  toLoanId,
+  toOwnerId,
+  toPuzzleDefinitionId,
+} from "../../../shared-kernel";
+import { CatalogSnapshot, Copy, CopyId, LoanId } from "../../domain";
 import {
   FixedClock,
   InMemoryCopyRepository,
@@ -19,9 +17,9 @@ import { makeOpenLoan } from "./open-loan";
 import { makeRecallLoan } from "./recall-loan";
 import { makeReturnLoan } from "./return-loan";
 
-const owner = toId<"OwnerId">("alice") as OwnerId;
-const borrower = toId<"OwnerId">("bob") as OwnerId;
-const definitionId = toId<"PuzzleDefinitionId">("def1") as PuzzleDefinitionId;
+const owner = toOwnerId("alice");
+const borrower = toOwnerId("bob");
+const definitionId = toPuzzleDefinitionId("def1");
 const NOW = new Date("2026-06-08T10:00:00Z");
 const LATER = new Date("2026-06-20T10:00:00Z");
 
@@ -43,7 +41,7 @@ describe("loan use cases", () => {
     loans = new InMemoryLoanRepository();
     events = new RecordingEventPublisher();
     const acquired = Copy.acquire({
-      id: toId<"CopyId">("copy-seed") as CopyId,
+      id: toCopyId("copy-seed"),
       ownerId: owner,
       snapshot: snapshot(),
       condition: "good",
@@ -75,7 +73,7 @@ describe("loan use cases", () => {
 
     it("rejects an unknown copy", async () => {
       const result = await open()({
-        copyId: toId<"CopyId">("ghost") as CopyId,
+        copyId: toCopyId("ghost"),
         borrowerId: borrower,
       });
       expect(result.isErr).toBe(true);
@@ -141,7 +139,7 @@ describe("loan use cases", () => {
         copies,
         events,
         clock: new FixedClock(LATER),
-      })({ loanId: toId<"LoanId">("ghost") as LoanId, actingMemberId: borrower });
+      })({ loanId: toLoanId("ghost"), actingMemberId: borrower });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("LoanNotFound");
     });

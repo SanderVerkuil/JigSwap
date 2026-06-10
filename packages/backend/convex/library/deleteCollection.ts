@@ -1,8 +1,7 @@
 import {
-  type CollectionId,
   makeDeleteCollection,
   type OwnerId,
-  toId,
+  toCollectionId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
@@ -27,7 +26,7 @@ export const deleteCollection = mutation({
 
     const result = await remove({
       actingMemberId,
-      collectionId: toId<"CollectionId">(args.collectionId) as CollectionId,
+      collectionId: toCollectionId(args.collectionId),
     });
     if (result.isErr) throw toConvexError(result.error);
   },

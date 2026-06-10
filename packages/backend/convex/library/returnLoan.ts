@@ -1,9 +1,4 @@
-import {
-  type LoanId,
-  makeReturnLoan,
-  type OwnerId,
-  toId,
-} from "@jigswap/domain";
+import { makeReturnLoan, type OwnerId, toLoanId } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
@@ -25,7 +20,7 @@ export const returnLoan = mutation({
       events: noopEventPublisher(ctx),
       clock: systemClock,
     })({
-      loanId: toId<"LoanId">(args.loanId) as LoanId,
+      loanId: toLoanId(args.loanId),
       actingMemberId,
     });
     if (result.isErr) throw toConvexError(result.error);

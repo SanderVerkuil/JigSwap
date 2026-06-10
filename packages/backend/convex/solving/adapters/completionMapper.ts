@@ -2,12 +2,12 @@ import {
   Completion,
   type CompletionState,
   type CopyId,
-  type FileId,
-  type MemberId,
   Photo,
   type PuzzleDefinitionId,
   PuzzleReview,
-  toId,
+  toCompletionId,
+  toFileId,
+  toMemberId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 
@@ -37,8 +37,8 @@ export const toDomain = (
       : PuzzleReview.fromState({ rating: row.rating, text: row.review });
 
   const state: CompletionState = {
-    id: toId<"CompletionId">(row.aggregateId as string),
-    userId: toId<"MemberId">(row.userId as unknown as string) as MemberId,
+    id: toCompletionId(row.aggregateId as string),
+    userId: toMemberId(row.userId as unknown as string),
     puzzleDefinitionId,
     copyId,
     startDate: new Date(row.startDate),
@@ -46,7 +46,7 @@ export const toDomain = (
     completionTimeMinutes: row.completionTimeMinutes,
     notes: row.notes,
     photos: row.photos.map((fileId) =>
-      Photo.of(toId<"FileId">(fileId as unknown as string) as FileId),
+      Photo.of(toFileId(fileId as unknown as string)),
     ),
     review,
     isCompleted: row.isCompleted,

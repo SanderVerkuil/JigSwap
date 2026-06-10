@@ -2,7 +2,7 @@ import {
   type Follow,
   type FollowRepository,
   type MemberId,
-  toId,
+  toMemberId,
 } from "@jigswap/domain";
 import type { Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
@@ -54,6 +54,6 @@ export const convexFollowRepository = (ctx: MutationCtx): FollowRepository => ({
         q.eq("followerId", memberId as unknown as Id<"users">),
       )
       .collect();
-    return rows.map((r) => toId<"MemberId">(r.followeeId) as MemberId);
+    return rows.map((r) => toMemberId(r.followeeId));
   },
 });

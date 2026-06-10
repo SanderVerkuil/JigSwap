@@ -1,6 +1,9 @@
-import { toId } from "../../../shared-kernel";
+import { toFollowId, toProfileId } from "../../../shared-kernel";
 import { FollowId, ProfileId } from "../../domain";
-import { FollowIdGenerator, ProfileIdGenerator } from "../ports/out/id-generators";
+import {
+  FollowIdGenerator,
+  ProfileIdGenerator,
+} from "../ports/out/id-generators";
 
 // Deterministic FollowIdGenerator for tests: follow-1, follow-2, ...
 export class SequentialFollowIdGenerator implements FollowIdGenerator {
@@ -8,7 +11,7 @@ export class SequentialFollowIdGenerator implements FollowIdGenerator {
 
   next(): FollowId {
     this.counter += 1;
-    return toId<"FollowId">(`follow-${this.counter}`) as FollowId;
+    return toFollowId(`follow-${this.counter}`);
   }
 }
 
@@ -18,6 +21,6 @@ export class SequentialProfileIdGenerator implements ProfileIdGenerator {
 
   next(): ProfileId {
     this.counter += 1;
-    return toId<"ProfileId">(`profile-${this.counter}`) as ProfileId;
+    return toProfileId(`profile-${this.counter}`);
   }
 }

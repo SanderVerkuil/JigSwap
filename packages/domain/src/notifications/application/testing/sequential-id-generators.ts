@@ -1,4 +1,7 @@
-import { toId } from "../../../shared-kernel";
+import {
+  toNotificationId,
+  toNotificationPreferenceId,
+} from "../../../shared-kernel";
 import { NotificationId, NotificationPreferenceId } from "../../domain";
 import { NotificationIdGenerator } from "../ports/out/notification-id-generator";
 import { NotificationPreferenceIdGenerator } from "../ports/out/notification-preference-id-generator";
@@ -9,7 +12,7 @@ export class SequentialNotificationIdGenerator implements NotificationIdGenerato
 
   next(): NotificationId {
     this.counter += 1;
-    return toId<"NotificationId">(`ntf-${this.counter}`) as NotificationId;
+    return toNotificationId(`ntf-${this.counter}`);
   }
 }
 
@@ -19,6 +22,6 @@ export class SequentialPreferenceIdGenerator implements NotificationPreferenceId
 
   next(): NotificationPreferenceId {
     this.counter += 1;
-    return toId<"NotificationPreferenceId">(`pref-${this.counter}`) as NotificationPreferenceId;
+    return toNotificationPreferenceId(`pref-${this.counter}`);
   }
 }

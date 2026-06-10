@@ -1,4 +1,4 @@
-import { makeMarkNotificationRead, type NotificationId, toId } from "@jigswap/domain";
+import { makeMarkNotificationRead, toNotificationId } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
@@ -24,7 +24,7 @@ export const markNotificationRead = mutation({
     });
     const result = await markRead({
       memberId,
-      notificationId: toId<"NotificationId">(args.notificationId) as NotificationId,
+      notificationId: toNotificationId(args.notificationId),
     });
     if (result.isErr) throw toConvexError(result.error);
   },

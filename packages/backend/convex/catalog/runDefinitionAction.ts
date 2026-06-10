@@ -4,7 +4,7 @@ import {
   type DefinitionActionDeps,
   type PuzzleDefinitionId,
   type Result,
-  toId,
+  toPuzzleDefinitionId,
 } from "@jigswap/domain";
 import type { MutationCtx } from "../_generated/server";
 import { convexPuzzleDefinitionRepository } from "./adapters/convexPuzzleDefinitionRepository";
@@ -30,7 +30,7 @@ export const runDefinitionAction = async (
     clock: systemClock,
   });
   const result = await action({
-    puzzleDefinitionId: toId<"PuzzleDefinitionId">(puzzleDefinitionId),
+    puzzleDefinitionId: toPuzzleDefinitionId(puzzleDefinitionId),
   });
   if (result.isErr) throw toConvexError(result.error);
 };

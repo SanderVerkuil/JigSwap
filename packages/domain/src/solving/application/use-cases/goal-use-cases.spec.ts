@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toId } from "../../../shared-kernel";
-import { MemberId } from "../../domain";
+import { toMemberId } from "../../../shared-kernel";
+
 import {
   FixedClock,
   InMemoryCompletionRepository,
@@ -13,7 +13,7 @@ import { makeCreateGoal } from "./create-goal";
 import { makeRecomputeGoalProgress } from "./recompute-goal-progress";
 import { makeRecordCompletion } from "./record-completion";
 
-const ALICE = toId<"MemberId">("alice") as MemberId;
+const ALICE = toMemberId("alice");
 const START = new Date("2026-06-01T10:00:00Z");
 const END = new Date("2026-06-01T11:30:00Z");
 const NOW = new Date("2026-06-01T12:00:00Z");

@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toId } from "../../../shared-kernel";
+import { toMemberId } from "../../../shared-kernel";
 import { Member, MemberId } from "../../domain";
 import { FixedClock, InMemoryMemberRepository } from "../testing";
 import { makeUpdateProfile } from "./update-profile";
 
 const NOW = new Date("2026-06-08T10:00:00Z");
-const unknownId = toId<"MemberId">("ghost") as MemberId;
+const unknownId = toMemberId("ghost");
 
 const seedMember = (members: InMemoryMemberRepository): MemberId => {
   const result = Member.register({
-    id: toId<"MemberId">("member-1") as MemberId,
+    id: toMemberId("member-1"),
     clerkId: "clerk_abc",
     email: "alice@example.com",
     name: "Alice",
@@ -33,7 +33,11 @@ describe("makeUpdateProfile", () => {
   it("applies the edit and persists it", async () => {
     const id = seedMember(members);
 
-    const result = await update({ memberId: id, bio: "Puzzler", username: "alice99" });
+    const result = await update({
+      memberId: id,
+      bio: "Puzzler",
+      username: "alice99",
+    });
     expect(result.isOk).toBe(true);
 
     const saved = await members.findById(id);

@@ -4,8 +4,7 @@ import {
   makeAcquireCopy,
   type OwnerId,
   Price,
-  type PuzzleDefinitionId,
-  toId,
+  toPuzzleDefinitionId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
@@ -62,9 +61,7 @@ export const acquireCopy = mutation({
 
     const result = await acquire({
       ownerId,
-      puzzleDefinitionId: toId<"PuzzleDefinitionId">(
-        args.puzzleDefinitionId,
-      ) as PuzzleDefinitionId,
+      puzzleDefinitionId: toPuzzleDefinitionId(args.puzzleDefinitionId),
       condition: args.condition as Condition,
       missingPiecesCount: args.missingPiecesCount,
       notes: args.notes,

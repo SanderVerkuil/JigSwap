@@ -3,7 +3,7 @@ import {
   type PuzzleDefinition,
   type PuzzleDefinitionId,
   type PuzzleDefinitionRepository,
-  toId,
+  toCatalogCategoryId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
@@ -38,7 +38,7 @@ export const convexPuzzleDefinitionRepository = (
     if (!category) return undefined;
     const row = await ctx.db.get(category);
     // A backfilled category carries its aggregateId; a legacy row falls back to its raw `_id`.
-    return toId<"CatalogCategoryId">(
+    return toCatalogCategoryId(
       (row?.aggregateId ?? (category as unknown as string)) as string,
     ) as CatalogCategoryId;
   };

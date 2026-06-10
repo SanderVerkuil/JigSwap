@@ -1,4 +1,8 @@
-import { NotificationPreference, toId } from "@jigswap/domain";
+import {
+  NotificationPreference,
+  toMemberId,
+  toNotificationPreferenceId,
+} from "@jigswap/domain";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
@@ -22,8 +26,8 @@ export const getMyPreferences = query({
 
     // No stored preference: derive the defaults in the domain so this query and NotifyMember agree.
     const fresh = NotificationPreference.createDefault(
-      toId<"NotificationPreferenceId">("default"),
-      toId<"MemberId">(memberId as string),
+      toNotificationPreferenceId("default"),
+      toMemberId(memberId as string),
       new Date(),
     );
     return fresh.toState().toggles;

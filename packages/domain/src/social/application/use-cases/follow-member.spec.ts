@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toId } from "../../../shared-kernel";
+import { toMemberId } from "../../../shared-kernel";
 import { MemberId } from "../../domain";
 import {
   FixedClock,
@@ -9,8 +9,8 @@ import {
 } from "../testing";
 import { makeFollowMember } from "./follow-member";
 
-const alice = toId<"MemberId">("alice") as MemberId;
-const bob = toId<"MemberId">("bob") as MemberId;
+const alice = toMemberId("alice");
+const bob = toMemberId("bob");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 describe("makeFollowMember", () => {
@@ -53,7 +53,9 @@ describe("makeFollowMember", () => {
   });
 
   it("rejects a duplicate follow (pair-uniqueness) without writing a second edge", async () => {
-    expect((await follow({ followerId: alice, followeeId: bob })).isOk).toBe(true);
+    expect((await follow({ followerId: alice, followeeId: bob })).isOk).toBe(
+      true,
+    );
 
     const second = await follow({ followerId: alice, followeeId: bob });
     expect(second.isErr).toBe(true);
@@ -63,7 +65,9 @@ describe("makeFollowMember", () => {
   });
 
   it("allows a reciprocal follow (distinct direction is a different edge)", async () => {
-    expect((await follow({ followerId: alice, followeeId: bob })).isOk).toBe(true);
+    expect((await follow({ followerId: alice, followeeId: bob })).isOk).toBe(
+      true,
+    );
 
     const back = await follow({ followerId: bob, followeeId: alice });
     expect(back.isOk).toBe(true);

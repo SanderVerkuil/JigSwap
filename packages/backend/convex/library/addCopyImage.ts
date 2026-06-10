@@ -1,10 +1,9 @@
 import {
-  type CopyId,
   type CopyImageTag,
-  type FileId,
   makeAddCopyImage,
   type OwnerId,
-  toId,
+  toCopyId,
+  toFileId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
@@ -44,8 +43,8 @@ export const addCopyImage = mutation({
 
     const result = await add({
       actingMemberId,
-      copyId: toId<"CopyId">(args.copyId) as CopyId,
-      fileId: toId<"FileId">(args.fileId) as FileId,
+      copyId: toCopyId(args.copyId),
+      fileId: toFileId(args.fileId),
       title: args.title,
       description: args.description,
       tag: args.tag as CopyImageTag | undefined,

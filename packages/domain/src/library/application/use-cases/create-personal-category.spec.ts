@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toId } from "../../../shared-kernel";
-import { OwnerId } from "../../domain";
+import { toOwnerId } from "../../../shared-kernel";
+
 import {
   FixedClock,
   InMemoryPersonalCategoryRepository,
@@ -9,7 +9,7 @@ import {
 } from "../testing";
 import { makeCreatePersonalCategory } from "./create-personal-category";
 
-const alice = toId<"OwnerId">("alice") as OwnerId;
+const alice = toOwnerId("alice");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 describe("makeCreatePersonalCategory", () => {

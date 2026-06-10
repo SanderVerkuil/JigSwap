@@ -1,10 +1,10 @@
 import {
   type Channel,
-  type MemberId,
   Notification,
   type NotificationState,
   type NotificationType,
-  toId,
+  toMemberId,
+  toNotificationId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 
@@ -12,14 +12,17 @@ import type { Doc, Id } from "../../_generated/dataModel";
 // here and never ripples into the domain.
 
 // Insert/patch payload for the notification row (minus Convex-managed `_id`/`_creationTime`).
-export type NotificationRow = Omit<Doc<"notifications">, "_id" | "_creationTime">;
+export type NotificationRow = Omit<
+  Doc<"notifications">,
+  "_id" | "_creationTime"
+>;
 
 // Row -> aggregate. Only domain-written/backfilled rows (carrying an aggregateId) are mappable;
 // callers guard for it. `channel` defaults to inApp for legacy rows missing it.
 export const toDomain = (row: Doc<"notifications">): Notification => {
   const state: NotificationState = {
-    id: toId<"NotificationId">(row.aggregateId as string),
-    userId: toId<"MemberId">(row.userId as unknown as string) as MemberId,
+    id: toNotificationId(row.aggregateId as string),
+    userId: toMemberId(row.userId as unknown as string),
     type: row.type as NotificationType,
     title: row.title,
     message: row.message,

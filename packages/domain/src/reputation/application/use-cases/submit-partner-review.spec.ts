@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toId } from "../../../shared-kernel";
-import { ExchangeId, MemberId, PartnerReviewScoresInput } from "../../domain";
+import { toExchangeId, toMemberId } from "../../../shared-kernel";
+import { PartnerReviewScoresInput } from "../../domain";
 import {
   FakeExchangeCompletionPort,
   FixedClock,
@@ -12,11 +12,11 @@ import {
 } from "../testing";
 import { makeSubmitPartnerReview } from "./submit-partner-review";
 
-const alice = toId<"MemberId">("alice") as MemberId; // reviewer
-const bob = toId<"MemberId">("bob") as MemberId; // reviewee
-const carol = toId<"MemberId">("carol") as MemberId; // outsider
-const exchangeId = toId<"ExchangeId">("ex-1") as ExchangeId;
-const otherExchange = toId<"ExchangeId">("ex-2") as ExchangeId;
+const alice = toMemberId("alice"); // reviewer
+const bob = toMemberId("bob"); // reviewee
+const carol = toMemberId("carol"); // outsider
+const exchangeId = toExchangeId("ex-1");
+const otherExchange = toExchangeId("ex-2");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 const goodScores: PartnerReviewScoresInput = {
@@ -72,8 +72,13 @@ describe("makeSubmitPartnerReview", () => {
     expect(profile?.reviewCount).toBe(1);
     expect(profile?.averageRating).toBe(4);
 
-    expect(events.names()).toEqual(["PartnerReviewSubmitted", "ReputationChanged"]);
-    const changed = events.published.find((e) => e.name === "ReputationChanged") as unknown as {
+    expect(events.names()).toEqual([
+      "PartnerReviewSubmitted",
+      "ReputationChanged",
+    ]);
+    const changed = events.published.find(
+      (e) => e.name === "ReputationChanged",
+    ) as unknown as {
       averageRating: number;
       reviewCount: number;
     };
@@ -124,18 +129,23 @@ describe("makeSubmitPartnerReview", () => {
     expect(reviews.size()).toBe(1); // no second review written
   });
 
-  it.each([0, 6])("rejects an out-of-bounds rating %s without writing", async (rating) => {
-    exchanges.seedCompleted(exchangeId, alice, bob);
+  it.each([0, 6])(
+    "rejects an out-of-bounds rating %s without writing",
+    async (rating) => {
+      exchanges.seedCompleted(exchangeId, alice, bob);
 
-    const result = await submit(cmd({ rating }));
-    expect(result.isErr).toBe(true);
-    if (result.isErr) expect(result.error.code).toBe("InvalidRating");
-    expect(reviews.size()).toBe(0);
-    expect(events.published).toHaveLength(0);
-  });
+      const result = await submit(cmd({ rating }));
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("InvalidRating");
+      expect(reviews.size()).toBe(0);
+      expect(events.published).toHaveLength(0);
+    },
+  );
 
   it("accumulates multiple reviews into one reviewee profile and recomputes the average", async () => {
-    exchanges.seedCompleted(exchangeId, alice, bob).seedCompleted(otherExchange, carol, bob);
+    exchanges
+      .seedCompleted(exchangeId, alice, bob)
+      .seedCompleted(otherExchange, carol, bob);
 
     const first = await submit(cmd({ rating: 5 }));
     expect(first.isOk).toBe(true);

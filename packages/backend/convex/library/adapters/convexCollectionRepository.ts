@@ -5,8 +5,10 @@ import {
   type CollectionState,
   type CopyId,
   type OwnerId,
-  type PuzzleDefinitionId,
-  toId,
+  toCollectionId,
+  toCopyId,
+  toOwnerId,
+  toPuzzleDefinitionId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
@@ -35,9 +37,7 @@ export const convexCollectionRepository = (
     ownedPuzzleId: Id<"ownedPuzzles">,
   ): Promise<CopyId | null> => {
     const copy = await ctx.db.get(ownedPuzzleId);
-    return copy?.aggregateId
-      ? (toId<"CopyId">(copy.aggregateId) as CopyId)
-      : null;
+    return copy?.aggregateId ? toCopyId(copy.aggregateId) : null;
   };
 
   // Resolve a domain CopyId (aggregateId) to the copy row's Convex _id for membership writes.
@@ -61,8 +61,8 @@ export const convexCollectionRepository = (
       if (copyId) copyMembers.push(copyId);
     }
     const state: CollectionState = {
-      id: toId<"CollectionId">(row.aggregateId as string),
-      ownerId: toId<"OwnerId">(row.userId as unknown as string) as OwnerId,
+      id: toCollectionId(row.aggregateId as string),
+      ownerId: toOwnerId(row.userId as unknown as string),
       name: row.name,
       description: row.description,
       visibility: row.visibility,
@@ -72,8 +72,8 @@ export const convexCollectionRepository = (
       isWishlist: row.isWishlist ?? false,
       personalNotes: row.personalNotes,
       copyMembers,
-      wishedDefinitions: (row.wishedDefinitions ?? []).map(
-        (id) => toId<"PuzzleDefinitionId">(id) as PuzzleDefinitionId,
+      wishedDefinitions: (row.wishedDefinitions ?? []).map((id) =>
+        toPuzzleDefinitionId(id),
       ),
       createdAt: new Date(row.createdAt),
       updatedAt: new Date(row.updatedAt),

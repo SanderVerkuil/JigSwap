@@ -1,8 +1,7 @@
 import {
-  type CopyId,
   makeTransferCopyOwnership,
-  type OwnerId,
-  toId,
+  toCopyId,
+  toOwnerId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
@@ -31,7 +30,7 @@ export const handleDomainEvent = async (
   });
   // The new owner is the event's member id, which is the resolved users _id the copy row stores.
   await transfer({
-    copyId: toId<"CopyId">(copy.aggregateId) as CopyId,
-    newOwner: toId<"OwnerId">(p.newOwner as string) as OwnerId,
+    copyId: toCopyId(copy.aggregateId),
+    newOwner: toOwnerId(p.newOwner as string),
   });
 };

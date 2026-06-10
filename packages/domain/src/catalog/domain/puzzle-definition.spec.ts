@@ -1,15 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { DomainEvent, toId } from "../../shared-kernel";
+import {
+  DomainEvent,
+  toCatalogCategoryId,
+  toPuzzleDefinitionId,
+  toSubmitterId,
+} from "../../shared-kernel";
 import { PuzzleDefinitionSubmitted } from "./events";
-import { PuzzleDefinitionId, SubmitterId } from "./ids";
-import { PuzzleDefinition, SubmitPuzzleDefinitionProps } from "./puzzle-definition";
 
-const id = toId<"PuzzleDefinitionId">("pd1") as PuzzleDefinitionId;
-const submitter = toId<"SubmitterId">("alice") as SubmitterId;
+import {
+  PuzzleDefinition,
+  SubmitPuzzleDefinitionProps,
+} from "./puzzle-definition";
+
+const id = toPuzzleDefinitionId("pd1");
+const submitter = toSubmitterId("alice");
 const NOW = new Date("2026-06-08T10:00:00Z");
 const LATER = new Date("2026-06-09T10:00:00Z");
 
-const names = (events: readonly DomainEvent[]): string[] => events.map((e) => e.name);
+const names = (events: readonly DomainEvent[]): string[] =>
+  events.map((e) => e.name);
 
 const submit = (
   overrides: Partial<SubmitPuzzleDefinitionProps> = {},
@@ -50,17 +59,20 @@ describe("PuzzleDefinition.submit", () => {
     if (r.isErr) expect(r.error.code).toBe("EmptyTitle");
   });
 
-  it.each([0, -5, 3.5])("rejects a non-positive-integer piece count (%s)", (value) => {
-    const r = PuzzleDefinition.submit({
-      id,
-      title: "Ok",
-      pieceCount: value,
-      submittedBy: submitter,
-      now: NOW,
-    });
-    expect(r.isErr).toBe(true);
-    if (r.isErr) expect(r.error.code).toBe("InvalidPieceCount");
-  });
+  it.each([0, -5, 3.5])(
+    "rejects a non-positive-integer piece count (%s)",
+    (value) => {
+      const r = PuzzleDefinition.submit({
+        id,
+        title: "Ok",
+        pieceCount: value,
+        submittedBy: submitter,
+        now: NOW,
+      });
+      expect(r.isErr).toBe(true);
+      if (r.isErr) expect(r.error.code).toBe("InvalidPieceCount");
+    },
+  );
 
   it("rejects a malformed barcode", () => {
     const r = PuzzleDefinition.submit({
@@ -128,7 +140,10 @@ describe("update", () => {
   it("patches descriptive fields and records PuzzleDefinitionUpdated", () => {
     const def = submit();
     def.pullEvents();
-    const r = def.update({ brand: "Ravensburger", tags: ["art", "van-gogh"] }, LATER);
+    const r = def.update(
+      { brand: "Ravensburger", tags: ["art", "van-gogh"] },
+      LATER,
+    );
     expect(r.isOk).toBe(true);
     expect(def.toState().brand).toBe("Ravensburger");
     expect(def.toState().tags).toEqual(["art", "van-gogh"]);
@@ -208,7 +223,7 @@ describe("update", () => {
         dimensions: { width: 50, height: 70, unit: "cm" },
         shape: "round",
         difficulty: "hard",
-        category: toId<"CatalogCategoryId">("cat1"),
+        category: toCatalogCategoryId("cat1"),
       },
       LATER,
     );

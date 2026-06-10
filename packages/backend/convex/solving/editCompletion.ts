@@ -1,9 +1,8 @@
 import {
-  type CompletionId,
-  type FileId,
   makeEditCompletion,
   type MemberId,
-  toId,
+  toCompletionId,
+  toFileId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
@@ -35,9 +34,9 @@ export const editCompletion = mutation({
     });
     const result = await edit({
       actingMemberId: actingMemberId as unknown as MemberId,
-      completionId: toId<"CompletionId">(args.completionId) as CompletionId,
+      completionId: toCompletionId(args.completionId),
       notes: args.notes,
-      photoFileIds: args.photos?.map((id) => toId<"FileId">(id) as FileId),
+      photoFileIds: args.photos?.map((id) => toFileId(id)),
       startDate:
         args.startDate === undefined ? undefined : new Date(args.startDate),
       endDate: args.endDate === undefined ? undefined : new Date(args.endDate),

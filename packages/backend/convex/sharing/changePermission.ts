@@ -1,9 +1,9 @@
 import {
-  type CircleId,
   makeChangePermission,
   type MemberId,
   type PermissionLevel,
-  toId,
+  toCircleId,
+  toMemberId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
@@ -33,9 +33,9 @@ export const changePermission = mutation({
     });
 
     const result = await changePermission({
-      circleId: toId<"CircleId">(args.circleId) as CircleId,
+      circleId: toCircleId(args.circleId),
       actorId: actorId as MemberId,
-      memberId: toId<"MemberId">(args.memberId) as MemberId,
+      memberId: toMemberId(args.memberId),
       permission: args.permission as PermissionLevel,
     });
     if (result.isErr) throw toConvexError(result.error);

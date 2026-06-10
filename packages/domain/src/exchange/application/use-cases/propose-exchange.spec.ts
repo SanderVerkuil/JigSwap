@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toId } from "../../../shared-kernel";
-import { CopyId, ExchangeTermsInput, MemberId, Money } from "../../domain";
+import { toCopyId, toMemberId } from "../../../shared-kernel";
+import { ExchangeTermsInput, Money } from "../../domain";
 import { CopyView } from "../ports/out/copy.port";
 import {
   FakeCopyPort,
@@ -11,10 +11,10 @@ import {
 } from "../testing";
 import { makeProposeExchange } from "./propose-exchange";
 
-const alice = toId<"MemberId">("alice") as MemberId; // initiator
-const bob = toId<"MemberId">("bob") as MemberId; // recipient
-const requestedId = toId<"CopyId">("requested") as CopyId;
-const offeredId = toId<"CopyId">("offered") as CopyId;
+const alice = toMemberId("alice"); // initiator
+const bob = toMemberId("bob"); // recipient
+const requestedId = toCopyId("requested");
+const offeredId = toCopyId("offered");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 const price = (): Money => {
@@ -24,7 +24,9 @@ const price = (): Money => {
 };
 
 // A copy with all availability flags off; tests turn on exactly what they need.
-const copy = (over: Partial<CopyView> & Pick<CopyView, "id" | "ownerId">): CopyView => ({
+const copy = (
+  over: Partial<CopyView> & Pick<CopyView, "id" | "ownerId">,
+): CopyView => ({
   availability: { forTrade: false, forSale: false, forLend: false },
   ...over,
 });
@@ -48,8 +50,14 @@ describe("makeProposeExchange", () => {
     });
   });
 
-  const swapTerms: ExchangeTermsInput = { kind: "swap", offeredCopyId: offeredId };
-  const saleTerms = (): ExchangeTermsInput => ({ kind: "sale", price: price() });
+  const swapTerms: ExchangeTermsInput = {
+    kind: "swap",
+    offeredCopyId: offeredId,
+  };
+  const saleTerms = (): ExchangeTermsInput => ({
+    kind: "sale",
+    price: price(),
+  });
   const lendTerms: ExchangeTermsInput = {
     kind: "lend",
     returnDate: new Date("2026-06-20T10:00:00Z"),
@@ -57,7 +65,13 @@ describe("makeProposeExchange", () => {
 
   it("proposes a swap, saving state and publishing ExchangeProposed", async () => {
     copies
-      .seed(copy({ id: requestedId, ownerId: bob, availability: { forTrade: true, forSale: false, forLend: false } }))
+      .seed(
+        copy({
+          id: requestedId,
+          ownerId: bob,
+          availability: { forTrade: true, forSale: false, forLend: false },
+        }),
+      )
       .seed(copy({ id: offeredId, ownerId: alice }));
 
     const result = await propose({
@@ -75,7 +89,13 @@ describe("makeProposeExchange", () => {
 
   it("rejects a duplicate active proposal for the same requested copy", async () => {
     copies
-      .seed(copy({ id: requestedId, ownerId: bob, availability: { forTrade: true, forSale: false, forLend: false } }))
+      .seed(
+        copy({
+          id: requestedId,
+          ownerId: bob,
+          availability: { forTrade: true, forSale: false, forLend: false },
+        }),
+      )
       .seed(copy({ id: offeredId, ownerId: alice }));
     const cmd = {
       initiatorId: alice,
@@ -117,7 +137,18 @@ describe("makeProposeExchange", () => {
 
       // available ⇒ ok
       const available = new FakeCopyPort()
-        .seed(copy({ id: requestedId, ownerId: bob, availability: { forTrade: false, forSale: false, forLend: false, [flag]: true } }))
+        .seed(
+          copy({
+            id: requestedId,
+            ownerId: bob,
+            availability: {
+              forTrade: false,
+              forSale: false,
+              forLend: false,
+              [flag]: true,
+            },
+          }),
+        )
         .seed(copy({ id: offeredId, ownerId: alice }));
       const okEvents = new RecordingEventPublisher();
       const proposeOk = makeProposeExchange({
@@ -127,7 +158,13 @@ describe("makeProposeExchange", () => {
         events: okEvents,
         clock: new FixedClock(NOW),
       });
-      const okRes = await proposeOk({ initiatorId: alice, recipientId: bob, kind, requestedCopyId: requestedId, terms });
+      const okRes = await proposeOk({
+        initiatorId: alice,
+        recipientId: bob,
+        kind,
+        requestedCopyId: requestedId,
+        terms,
+      });
       expect(okRes.isOk).toBe(true);
       expect(okEvents.names()).toEqual(["ExchangeProposed"]);
 
@@ -142,15 +179,28 @@ describe("makeProposeExchange", () => {
         events: new RecordingEventPublisher(),
         clock: new FixedClock(NOW),
       });
-      const rejectRes = await proposeReject({ initiatorId: alice, recipientId: bob, kind, requestedCopyId: requestedId, terms });
+      const rejectRes = await proposeReject({
+        initiatorId: alice,
+        recipientId: bob,
+        kind,
+        requestedCopyId: requestedId,
+        terms,
+      });
       expect(rejectRes.isErr).toBe(true);
-      if (rejectRes.isErr) expect(rejectRes.error.code).toBe("CopyNotAvailable");
+      if (rejectRes.isErr)
+        expect(rejectRes.error.code).toBe("CopyNotAvailable");
     });
   });
 
   it("rejects a swap whose offered copy is not owned by the initiator", async () => {
     copies
-      .seed(copy({ id: requestedId, ownerId: bob, availability: { forTrade: true, forSale: false, forLend: false } }))
+      .seed(
+        copy({
+          id: requestedId,
+          ownerId: bob,
+          availability: { forTrade: true, forSale: false, forLend: false },
+        }),
+      )
       .seed(copy({ id: offeredId, ownerId: bob })); // offered owned by recipient, not initiator
 
     const result = await propose({
@@ -165,7 +215,13 @@ describe("makeProposeExchange", () => {
   });
 
   it("rejects a swap whose offered copy does not exist", async () => {
-    copies.seed(copy({ id: requestedId, ownerId: bob, availability: { forTrade: true, forSale: false, forLend: false } }));
+    copies.seed(
+      copy({
+        id: requestedId,
+        ownerId: bob,
+        availability: { forTrade: true, forSale: false, forLend: false },
+      }),
+    );
 
     const result = await propose({
       initiatorId: alice,
@@ -179,7 +235,13 @@ describe("makeProposeExchange", () => {
   });
 
   it("delegates self-exchange rejection to the aggregate", async () => {
-    copies.seed(copy({ id: requestedId, ownerId: alice, availability: { forTrade: false, forSale: true, forLend: false } }));
+    copies.seed(
+      copy({
+        id: requestedId,
+        ownerId: alice,
+        availability: { forTrade: false, forSale: true, forLend: false },
+      }),
+    );
 
     const result = await propose({
       initiatorId: alice,

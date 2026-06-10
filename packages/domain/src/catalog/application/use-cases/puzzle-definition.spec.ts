@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { toId } from "../../../shared-kernel";
-import { PuzzleDefinitionId, SubmitterId } from "../../domain";
+import { toPuzzleDefinitionId, toSubmitterId } from "../../../shared-kernel";
+
 import {
   FixedClock,
   InMemoryPuzzleDefinitionRepository,
@@ -12,7 +12,7 @@ import { makeRejectPuzzleDefinition } from "./reject-puzzle-definition";
 import { makeSubmitPuzzleDefinition } from "./submit-puzzle-definition";
 import { makeUpdatePuzzleDefinition } from "./update-puzzle-definition";
 
-const submitter = toId<"SubmitterId">("alice") as SubmitterId;
+const submitter = toSubmitterId("alice");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 describe("Catalog PuzzleDefinition use cases", () => {
@@ -52,7 +52,7 @@ describe("Catalog PuzzleDefinition use cases", () => {
     const id = await submitOk();
     expect(repo.size()).toBe(1);
     expect(events.names()).toEqual(["PuzzleDefinitionSubmitted"]);
-    expect(id).toBe(toId<"PuzzleDefinitionId">("pd-1") as PuzzleDefinitionId);
+    expect(id).toBe(toPuzzleDefinitionId("pd-1"));
   });
 
   it("rejects a duplicate barcode via the repository (DuplicateBarcode)", async () => {
@@ -126,7 +126,7 @@ describe("Catalog PuzzleDefinition use cases", () => {
   it("rejects approval of an unknown definition (PuzzleDefinitionNotFound)", async () => {
     const approve = makeApprovePuzzleDefinition(deps);
     const r = await approve({
-      puzzleDefinitionId: toId<"PuzzleDefinitionId">("missing") as PuzzleDefinitionId,
+      puzzleDefinitionId: toPuzzleDefinitionId("missing"),
     });
     expect(r.isErr).toBe(true);
     if (r.isErr) expect(r.error.code).toBe("PuzzleDefinitionNotFound");
@@ -154,7 +154,10 @@ describe("Catalog PuzzleDefinition use cases", () => {
     const id = await submitOk();
     events.published.length = 0;
     const update = makeUpdatePuzzleDefinition(deps);
-    const r = await update({ puzzleDefinitionId: id, changes: { brand: "Ravensburger" } });
+    const r = await update({
+      puzzleDefinitionId: id,
+      changes: { brand: "Ravensburger" },
+    });
     expect(r.isOk).toBe(true);
     expect(events.names()).toEqual(["PuzzleDefinitionUpdated"]);
     const stored = await repo.findById(id);

@@ -1,4 +1,9 @@
-import { type CircleId, makeRemoveMember, type MemberId, toId } from "@jigswap/domain";
+import {
+  makeRemoveMember,
+  type MemberId,
+  toCircleId,
+  toMemberId,
+} from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
@@ -22,9 +27,9 @@ export const removeMember = mutation({
     });
 
     const result = await removeMember({
-      circleId: toId<"CircleId">(args.circleId) as CircleId,
+      circleId: toCircleId(args.circleId),
       actorId: actorId as MemberId,
-      memberId: toId<"MemberId">(args.memberId) as MemberId,
+      memberId: toMemberId(args.memberId),
     });
     if (result.isErr) throw toConvexError(result.error);
   },

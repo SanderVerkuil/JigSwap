@@ -2,14 +2,15 @@ import {
   type CatalogCategoryId,
   type CatalogIdGenerator,
   type PuzzleDefinitionId,
-  toId,
+  toCatalogCategoryId,
+  toPuzzleDefinitionId,
 } from "@jigswap/domain";
 
 // Driven adapter for the CatalogIdGenerator port. crypto.randomUUID is available in the Convex
 // runtime; the values are branded and persisted as each aggregate's `aggregateId`.
 export const catalogIdGenerator: CatalogIdGenerator = {
   nextPuzzleDefinitionId: (): PuzzleDefinitionId =>
-    toId<"PuzzleDefinitionId">(crypto.randomUUID()),
+    toPuzzleDefinitionId(crypto.randomUUID()),
   nextCatalogCategoryId: (): CatalogCategoryId =>
-    toId<"CatalogCategoryId">(crypto.randomUUID()),
+    toCatalogCategoryId(crypto.randomUUID()),
 };

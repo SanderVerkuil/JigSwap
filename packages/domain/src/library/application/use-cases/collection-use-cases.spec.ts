@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { toId } from "../../../shared-kernel";
+import {
+  toCollectionId,
+  toCopyId,
+  toOwnerId,
+  toPuzzleDefinitionId,
+} from "../../../shared-kernel";
 import {
   CatalogSnapshot,
   Collection,
@@ -7,7 +12,6 @@ import {
   Copy,
   CopyId,
   OwnerId,
-  PuzzleDefinitionId,
 } from "../../domain";
 import {
   FixedClock,
@@ -22,9 +26,9 @@ import { makeDeleteCollection } from "./delete-collection";
 import { makeRemoveCopyFromCollection } from "./remove-copy-from-collection";
 import { makeUpdateCollection } from "./update-collection";
 
-const alice = toId<"OwnerId">("alice") as OwnerId;
-const bob = toId<"OwnerId">("bob") as OwnerId;
-const definitionId = toId<"PuzzleDefinitionId">("def1") as PuzzleDefinitionId;
+const alice = toOwnerId("alice");
+const bob = toOwnerId("bob");
+const definitionId = toPuzzleDefinitionId("def1");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 const snapshot = (): CatalogSnapshot =>
@@ -41,7 +45,7 @@ const seedCopy = async (
   id: string,
 ): Promise<CopyId> => {
   const acquired = Copy.acquire({
-    id: toId<"CopyId">(id) as CopyId,
+    id: toCopyId(id),
     ownerId: owner,
     snapshot: snapshot(),
     condition: "good",
@@ -102,7 +106,7 @@ describe("collection membership use cases", () => {
 
   const seedCollection = async (owner: OwnerId, over = {}) => {
     const created = Collection.create({
-      id: toId<"CollectionId">("col-seed") as CollectionId,
+      id: toCollectionId("col-seed"),
       ownerId: owner,
       name: "My Shelf",
       now: NOW,
@@ -157,7 +161,9 @@ describe("collection membership use cases", () => {
       expect(result.isErr).toBe(true);
       if (result.isErr) {
         expect(result.error.code).toBe("NotOwner");
-        expect(result.error.message).toBe("Acting member may not modify this collection");
+        expect(result.error.message).toBe(
+          "Acting member may not modify this collection",
+        );
       }
     });
 
@@ -165,7 +171,7 @@ describe("collection membership use cases", () => {
       const copyId = await seedCopy(copies, alice, "copy-c2");
       const result = await run()({
         actingMemberId: alice,
-        collectionId: toId<"CollectionId">("ghost") as CollectionId,
+        collectionId: toCollectionId("ghost"),
         copyId,
       });
       expect(result.isErr).toBe(true);
@@ -176,7 +182,7 @@ describe("collection membership use cases", () => {
       const result = await run()({
         actingMemberId: alice,
         collectionId,
-        copyId: toId<"CopyId">("ghost") as CopyId,
+        copyId: toCopyId("ghost"),
       });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("CopyNotFound");
@@ -184,7 +190,7 @@ describe("collection membership use cases", () => {
 
     it("surfaces the aggregate's WrongMemberType when adding a copy to a wishlist", async () => {
       const wishlistId = await seedCollection(alice, {
-        id: toId<"CollectionId">("col-wish") as CollectionId,
+        id: toCollectionId("col-wish"),
         name: "Wishlist",
         isWishlist: true,
       });
@@ -228,8 +234,8 @@ describe("collection membership use cases", () => {
     it("rejects an unknown collection", async () => {
       const result = await run()({
         actingMemberId: alice,
-        collectionId: toId<"CollectionId">("ghost") as CollectionId,
-        copyId: toId<"CopyId">("any") as CopyId,
+        collectionId: toCollectionId("ghost"),
+        copyId: toCopyId("any"),
       });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("CollectionNotFound");
@@ -241,13 +247,19 @@ describe("collection membership use cases", () => {
       expect(result.isErr).toBe(true);
       if (result.isErr) {
         expect(result.error.code).toBe("NotOwner");
-        expect(result.error.message).toBe("Acting member may not modify this collection");
+        expect(result.error.message).toBe(
+          "Acting member may not modify this collection",
+        );
       }
     });
 
     it("surfaces the aggregate's CopyNotInCollection for a non-member copy", async () => {
       const copyId = await seedCopy(copies, alice, "copy-f");
-      const result = await run()({ actingMemberId: alice, collectionId, copyId });
+      const result = await run()({
+        actingMemberId: alice,
+        collectionId,
+        copyId,
+      });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("CopyNotInCollection");
     });
@@ -279,7 +291,9 @@ describe("collection membership use cases", () => {
       expect(result.isErr).toBe(true);
       if (result.isErr) {
         expect(result.error.code).toBe("NotOwner");
-        expect(result.error.message).toBe("Acting member may not update this collection");
+        expect(result.error.message).toBe(
+          "Acting member may not update this collection",
+        );
       }
     });
 
@@ -289,7 +303,11 @@ describe("collection membership use cases", () => {
     // killing the `if (true)` and `&&`→`||` mutants regardless of the duplicate outcome.
     it("queries (owner, name) uniqueness when the name actually changes", async () => {
       const lookup = vi.spyOn(collections, "findByOwnerAndName");
-      await run()({ actingMemberId: alice, collectionId, name: "A Brand New Name" });
+      await run()({
+        actingMemberId: alice,
+        collectionId,
+        name: "A Brand New Name",
+      });
       expect(lookup).toHaveBeenCalledTimes(1);
       expect(lookup).toHaveBeenCalledWith(alice, "A Brand New Name");
     });
@@ -334,7 +352,7 @@ describe("collection membership use cases", () => {
     it("rejects an unknown collection", async () => {
       const result = await run()({
         actingMemberId: alice,
-        collectionId: toId<"CollectionId">("ghost") as CollectionId,
+        collectionId: toCollectionId("ghost"),
         name: "Nope",
       });
       expect(result.isErr).toBe(true);
@@ -343,7 +361,7 @@ describe("collection membership use cases", () => {
 
     it("rejects renaming to a name the owner already uses", async () => {
       await seedCollection(alice, {
-        id: toId<"CollectionId">("col-other") as CollectionId,
+        id: toCollectionId("col-other"),
         name: "Taken",
       });
       const result = await run()({
@@ -382,7 +400,7 @@ describe("collection membership use cases", () => {
 
     it("refuses to delete a default collection", async () => {
       const defaultId = await seedCollection(alice, {
-        id: toId<"CollectionId">("col-default") as CollectionId,
+        id: toCollectionId("col-default"),
         name: "All",
         isDefault: true,
       });
@@ -399,7 +417,7 @@ describe("collection membership use cases", () => {
     it("rejects an unknown collection", async () => {
       const result = await run()({
         actingMemberId: alice,
-        collectionId: toId<"CollectionId">("ghost") as CollectionId,
+        collectionId: toCollectionId("ghost"),
       });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("CollectionNotFound");
@@ -411,7 +429,9 @@ describe("collection membership use cases", () => {
       expect(result.isErr).toBe(true);
       if (result.isErr) {
         expect(result.error.code).toBe("NotOwner");
-        expect(result.error.message).toBe("Acting member may not delete this collection");
+        expect(result.error.message).toBe(
+          "Acting member may not delete this collection",
+        );
       }
       expect(collections.size()).toBe(1);
     });

@@ -2,8 +2,8 @@ import {
   type CatalogCategoryId,
   PuzzleDefinition,
   type PuzzleDefinitionState,
-  type SubmitterId,
-  toId,
+  toPuzzleDefinitionId,
+  toSubmitterId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 
@@ -27,7 +27,7 @@ export const toDomain = (
   categoryAggregateId: CatalogCategoryId | undefined,
 ): PuzzleDefinition =>
   PuzzleDefinition.rehydrate({
-    id: toId<"PuzzleDefinitionId">(row.aggregateId as string),
+    id: toPuzzleDefinitionId(row.aggregateId as string),
     title: row.title,
     description: row.description,
     brand: row.brand,
@@ -44,7 +44,7 @@ export const toDomain = (
     tags: row.tags,
     image: row.image as unknown as string | undefined,
     status: row.status,
-    submittedBy: toId<"SubmitterId">(row.submittedBy as unknown as string) as SubmitterId,
+    submittedBy: toSubmitterId(row.submittedBy as unknown as string),
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
   });

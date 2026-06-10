@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { toId } from "../../shared-kernel";
+import { toMemberId, toProfileId } from "../../shared-kernel";
 import { MemberId, ProfileId } from "./ids";
 import { EditProps, Profile } from "./profile";
 
-const member = toId<"MemberId">("alice") as MemberId;
-const profileId = toId<"ProfileId">("profile-1") as ProfileId;
+const member = toMemberId("alice");
+const profileId = toProfileId("profile-1");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 const editProps = (over: Partial<EditProps> = {}): EditProps => ({
@@ -16,7 +16,11 @@ const editProps = (over: Partial<EditProps> = {}): EditProps => ({
 
 describe("Profile.create", () => {
   it("opens a profile and records ProfileUpdated with the trimmed display name", () => {
-    const result = Profile.create(profileId, member, editProps({ displayName: "  Alice  " }));
+    const result = Profile.create(
+      profileId,
+      member,
+      editProps({ displayName: "  Alice  " }),
+    );
     expect(result.isOk).toBe(true);
     if (!result.isOk) return;
 
@@ -37,7 +41,11 @@ describe("Profile.create", () => {
   });
 
   it("rejects an empty/whitespace display name", () => {
-    const result = Profile.create(profileId, member, editProps({ displayName: "   " }));
+    const result = Profile.create(
+      profileId,
+      member,
+      editProps({ displayName: "   " }),
+    );
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("InvalidDisplayName");
   });
@@ -53,7 +61,9 @@ describe("Profile.edit", () => {
 
   it("updates fields and emits ProfileUpdated with the new display name", () => {
     const profile = open();
-    const edited = profile.edit(editProps({ displayName: "Alice B.", bio: "Updated" }));
+    const edited = profile.edit(
+      editProps({ displayName: "Alice B.", bio: "Updated" }),
+    );
     expect(edited.isOk).toBe(true);
     expect(profile.displayName.value).toBe("Alice B.");
     expect(profile.bio).toBe("Updated");

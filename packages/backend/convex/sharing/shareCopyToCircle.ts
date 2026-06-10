@@ -1,9 +1,8 @@
 import {
-  type CircleId,
-  type CopyId,
   makeShareCopyToCircle,
   type MemberId,
-  toId,
+  toCircleId,
+  toCopyId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
@@ -31,9 +30,9 @@ export const shareCopyToCircle = mutation({
     });
 
     const result = await shareCopyToCircle({
-      circleId: toId<"CircleId">(args.circleId) as CircleId,
+      circleId: toCircleId(args.circleId),
       actorId: actorId as MemberId,
-      copyId: toId<"CopyId">(args.copyId) as CopyId,
+      copyId: toCopyId(args.copyId),
     });
     if (result.isErr) throw toConvexError(result.error);
   },

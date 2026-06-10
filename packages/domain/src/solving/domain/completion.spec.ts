@@ -1,24 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { toId } from "../../shared-kernel";
+import { toCompletionId, toFileId, toMemberId } from "../../shared-kernel";
 import { Completion, EDIT_WINDOW_MS } from "./completion";
-import { CompletionId, MemberId } from "./ids";
-import { FileId, Photo } from "./photo";
+
+import { Photo } from "./photo";
 import { PuzzleReview } from "./puzzle-review";
 import { StarRating } from "./star-rating";
 
-const ID = toId<"CompletionId">("completion-1") as CompletionId;
-const ALICE = toId<"MemberId">("alice") as MemberId;
-const BOB = toId<"MemberId">("bob") as MemberId;
+const ID = toCompletionId("completion-1");
+const ALICE = toMemberId("alice");
+const BOB = toMemberId("bob");
 const START = new Date("2026-06-01T10:00:00Z");
 const END = new Date("2026-06-01T11:30:00Z");
 const NOW = new Date("2026-06-01T11:30:00Z");
 
 const photos = (n: number): Photo[] =>
-  Array.from({ length: n }, (_, i) =>
-    Photo.of(toId<"FileId">(`file-${i}`) as FileId),
-  );
+  Array.from({ length: n }, (_, i) => Photo.of(toFileId(`file-${i}`)));
 
-const recordValid = (overrides: Partial<Parameters<typeof Completion.record>[0]> = {}) =>
+const recordValid = (
+  overrides: Partial<Parameters<typeof Completion.record>[0]> = {},
+) =>
   Completion.record({
     id: ID,
     userId: ALICE,
@@ -197,7 +197,11 @@ describe("Completion.edit", () => {
     if (!started.isOk) throw new Error("setup failed");
     started.value.pullEvents();
     const muchLater = new Date(START.getTime() + EDIT_WINDOW_MS * 10);
-    const outcome = started.value.edit(ALICE, { notes: "still going" }, muchLater);
+    const outcome = started.value.edit(
+      ALICE,
+      { notes: "still going" },
+      muchLater,
+    );
     expect(outcome.isOk).toBe(true);
   });
 
@@ -239,7 +243,11 @@ describe("Completion.review", () => {
     const recorded = recordValid();
     if (!recorded.isOk) throw new Error("setup failed");
     recorded.value.pullEvents();
-    const outcome = recorded.value.review(StarRating.fromState(4), END, "solid");
+    const outcome = recorded.value.review(
+      StarRating.fromState(4),
+      END,
+      "solid",
+    );
     expect(outcome.isOk).toBe(true);
     expect(recorded.value.puzzleReview?.rating.value).toBe(4);
     expect(recorded.value.puzzleReview?.text).toBe("solid");

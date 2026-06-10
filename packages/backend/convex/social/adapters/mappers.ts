@@ -2,10 +2,11 @@ import {
   DisplayName,
   Follow,
   type FollowState,
-  type MemberId,
   Profile,
   type ProfileState,
-  toId,
+  toFollowId,
+  toMemberId,
+  toProfileId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 
@@ -22,11 +23,13 @@ export const profileToDomain = (row: Doc<"profiles">): Profile => {
   // A persisted name was valid when written, so a failure here means row corruption, not user input.
   const displayName = DisplayName.create(row.displayName);
   if (!displayName.isOk) {
-    throw new Error(`Corrupt profile row: invalid displayName "${row.displayName}"`);
+    throw new Error(
+      `Corrupt profile row: invalid displayName "${row.displayName}"`,
+    );
   }
   const state: ProfileState = {
-    id: toId<"ProfileId">(row.aggregateId as string),
-    memberId: toId<"MemberId">(row.memberId) as MemberId,
+    id: toProfileId(row.aggregateId as string),
+    memberId: toMemberId(row.memberId),
     displayName: displayName.value,
     bio: row.bio,
     updatedAt: new Date(row.updatedAt),
@@ -51,9 +54,9 @@ export const profileToRow = (profile: Profile): ProfileRow => {
 // holds a self-follow, so it succeeds; we fall back to rehydrate to stay defensive.
 export const followToDomain = (row: Doc<"follows">): Follow => {
   const state: FollowState = {
-    id: toId<"FollowId">(row.aggregateId as string),
-    followerId: toId<"MemberId">(row.followerId) as MemberId,
-    followeeId: toId<"MemberId">(row.followeeId) as MemberId,
+    id: toFollowId(row.aggregateId as string),
+    followerId: toMemberId(row.followerId),
+    followeeId: toMemberId(row.followeeId),
     createdAt: new Date(row.createdAt),
   };
   return Follow.rehydrate(state);

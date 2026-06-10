@@ -1,12 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { DomainEvent, toId } from "../../shared-kernel";
-import { CopyId, LoanId, OwnerId } from "./ids";
+import {
+  DomainEvent,
+  toCopyId,
+  toLoanId,
+  toOwnerId,
+} from "../../shared-kernel";
+
 import { Loan } from "./loan";
 
-const loanId = toId<"LoanId">("loan1") as LoanId;
-const copyId = toId<"CopyId">("copy1") as CopyId;
-const lender = toId<"OwnerId">("alice") as OwnerId;
-const borrower = toId<"OwnerId">("bob") as OwnerId;
+const loanId = toLoanId("loan1");
+const copyId = toCopyId("copy1");
+const lender = toOwnerId("alice");
+const borrower = toOwnerId("bob");
 const NOW = new Date("2026-06-08T10:00:00Z");
 const LATER = new Date("2026-06-20T10:00:00Z");
 

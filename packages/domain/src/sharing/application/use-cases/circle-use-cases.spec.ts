@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toId } from "../../../shared-kernel";
-import { CircleId, CopyId, MemberId } from "../../domain";
+import { toCircleId, toCopyId, toMemberId } from "../../../shared-kernel";
+import { CircleId } from "../../domain";
 import {
   FixedClock,
   InMemoryCircleRepository,
@@ -14,11 +14,11 @@ import { makeCreateCircle } from "./create-circle";
 import { makeRemoveMember } from "./remove-member";
 import { makeShareCopyToCircle } from "./share-copy-to-circle";
 
-const owner = toId<"MemberId">("owner") as MemberId;
-const alice = toId<"MemberId">("alice") as MemberId;
-const bob = toId<"MemberId">("bob") as MemberId;
-const missingCircle = toId<"CircleId">("nope") as CircleId;
-const copyId = toId<"CopyId">("copy-1") as CopyId;
+const owner = toMemberId("owner");
+const alice = toMemberId("alice");
+const bob = toMemberId("bob");
+const missingCircle = toCircleId("nope");
+const copyId = toCopyId("copy-1");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 describe("Sharing circle use cases", () => {
@@ -105,7 +105,12 @@ describe("Sharing circle use cases", () => {
 
     it("rejects a non-admin actor and writes nothing", async () => {
       const circleId = await openCircle();
-      await addMember({ circleId, actorId: owner, memberId: alice, permission: "ViewOnly" });
+      await addMember({
+        circleId,
+        actorId: owner,
+        memberId: alice,
+        permission: "ViewOnly",
+      });
       events.published.length = 0;
 
       const result = await addMember({
@@ -123,7 +128,12 @@ describe("Sharing circle use cases", () => {
 
     it("rejects adding an existing member", async () => {
       const circleId = await openCircle();
-      await addMember({ circleId, actorId: owner, memberId: alice, permission: "ViewOnly" });
+      await addMember({
+        circleId,
+        actorId: owner,
+        memberId: alice,
+        permission: "ViewOnly",
+      });
 
       const result = await addMember({
         circleId,
@@ -140,9 +150,18 @@ describe("Sharing circle use cases", () => {
   describe("makeRemoveMember", () => {
     it("removes a member by an admin", async () => {
       const circleId = await openCircle();
-      await addMember({ circleId, actorId: owner, memberId: alice, permission: "ViewOnly" });
+      await addMember({
+        circleId,
+        actorId: owner,
+        memberId: alice,
+        permission: "ViewOnly",
+      });
 
-      const result = await removeMember({ circleId, actorId: owner, memberId: alice });
+      const result = await removeMember({
+        circleId,
+        actorId: owner,
+        memberId: alice,
+      });
 
       expect(result.isOk).toBe(true);
       expect((await circles.findById(circleId))?.isMember(alice)).toBe(false);
@@ -151,7 +170,11 @@ describe("Sharing circle use cases", () => {
     it("refuses to remove the owner", async () => {
       const circleId = await openCircle();
 
-      const result = await removeMember({ circleId, actorId: owner, memberId: owner });
+      const result = await removeMember({
+        circleId,
+        actorId: owner,
+        memberId: owner,
+      });
 
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("CannotRemoveOwner");
@@ -171,7 +194,12 @@ describe("Sharing circle use cases", () => {
   describe("makeChangePermission", () => {
     it("changes a member's permission by an admin", async () => {
       const circleId = await openCircle();
-      await addMember({ circleId, actorId: owner, memberId: alice, permission: "ViewOnly" });
+      await addMember({
+        circleId,
+        actorId: owner,
+        memberId: alice,
+        permission: "ViewOnly",
+      });
 
       const result = await changePermission({
         circleId,
@@ -182,14 +210,19 @@ describe("Sharing circle use cases", () => {
 
       expect(result.isOk).toBe(true);
       const circle = await circles.findById(circleId);
-      expect(circle?.members.find((m) => m.memberId === alice)?.permission).toBe(
-        "Exchange",
-      );
+      expect(
+        circle?.members.find((m) => m.memberId === alice)?.permission,
+      ).toBe("Exchange");
     });
 
     it("rejects a no-op permission change", async () => {
       const circleId = await openCircle();
-      await addMember({ circleId, actorId: owner, memberId: alice, permission: "ViewOnly" });
+      await addMember({
+        circleId,
+        actorId: owner,
+        memberId: alice,
+        permission: "ViewOnly",
+      });
 
       const result = await changePermission({
         circleId,
@@ -227,7 +260,12 @@ describe("Sharing circle use cases", () => {
 
     it("rejects a non-admin actor", async () => {
       const circleId = await openCircle();
-      await addMember({ circleId, actorId: owner, memberId: alice, permission: "Exchange" });
+      await addMember({
+        circleId,
+        actorId: owner,
+        memberId: alice,
+        permission: "Exchange",
+      });
       events.published.length = 0;
 
       const result = await shareCopy({ circleId, actorId: alice, copyId });
@@ -238,7 +276,11 @@ describe("Sharing circle use cases", () => {
     });
 
     it("returns CircleNotFound for an unknown circle", async () => {
-      const result = await shareCopy({ circleId: missingCircle, actorId: owner, copyId });
+      const result = await shareCopy({
+        circleId: missingCircle,
+        actorId: owner,
+        copyId,
+      });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("CircleNotFound");
     });
@@ -248,12 +290,19 @@ describe("Sharing circle use cases", () => {
     it("returns every circle a member belongs to (the VisibilityPolicy wiring seam)", async () => {
       const first = await openCircle();
       const second = await openCircle();
-      await addMember({ circleId: first, actorId: owner, memberId: alice, permission: "ViewOnly" });
+      await addMember({
+        circleId: first,
+        actorId: owner,
+        memberId: alice,
+        permission: "ViewOnly",
+      });
 
       const ownerCircles = await circles.listForMember(owner);
       const aliceCircles = await circles.listForMember(alice);
 
-      expect(ownerCircles.map((c) => c.id).sort()).toEqual([first, second].sort());
+      expect(ownerCircles.map((c) => c.id).sort()).toEqual(
+        [first, second].sort(),
+      );
       expect(aliceCircles.map((c) => c.id)).toEqual([first]);
     });
   });

@@ -1,4 +1,4 @@
-import { toId } from "../../../shared-kernel";
+import { toExchangeId } from "../../../shared-kernel";
 import { ExchangeId } from "../../domain";
 import { ExchangeIdGenerator } from "../ports/out/exchange-id-generator";
 
@@ -8,6 +8,6 @@ export class SequentialIdGenerator implements ExchangeIdGenerator {
 
   next(): ExchangeId {
     this.counter += 1;
-    return toId<"ExchangeId">(`ex-${this.counter}`) as ExchangeId;
+    return toExchangeId(`ex-${this.counter}`);
   }
 }

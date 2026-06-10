@@ -5,7 +5,8 @@ import {
   type CopyId,
   type MemberId,
   type PuzzleDefinitionId,
-  toId,
+  toCopyId,
+  toPuzzleDefinitionId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
@@ -60,7 +61,7 @@ export const convexCompletionRepository = (
   ): Promise<PuzzleDefinitionId | undefined> => {
     if (!puzzleId) return undefined;
     const row = await ctx.db.get(puzzleId);
-    return toId<"PuzzleDefinitionId">(
+    return toPuzzleDefinitionId(
       (row?.aggregateId ?? (puzzleId as unknown as string)) as string,
     ) as PuzzleDefinitionId;
   };
@@ -71,7 +72,7 @@ export const convexCompletionRepository = (
   ): Promise<CopyId | undefined> => {
     if (!ownedPuzzleId) return undefined;
     const row = await ctx.db.get(ownedPuzzleId);
-    return toId<"CopyId">(
+    return toCopyId(
       (row?.aggregateId ?? (ownedPuzzleId as unknown as string)) as string,
     ) as CopyId;
   };

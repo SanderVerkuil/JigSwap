@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DomainEvent, toId } from "../../shared-kernel";
+import { DomainEvent, toCatalogCategoryId } from "../../shared-kernel";
 import {
   CatalogCategory,
   CreateCatalogCategoryProps,
@@ -9,19 +9,25 @@ import {
   CatalogCategoryActiveChanged,
   CatalogCategoryReordered,
 } from "./events";
-import { CatalogCategoryId } from "./ids";
 
-const id = toId<"CatalogCategoryId">("cc1") as CatalogCategoryId;
+const id = toCatalogCategoryId("cc1");
 const NOW = new Date("2026-06-08T10:00:00Z");
 const LATER = new Date("2026-06-09T10:00:00Z");
 const name: LocalizedText = { en: "Landscapes", nl: "Landschappen" };
 
-const names = (events: readonly DomainEvent[]): string[] => events.map((e) => e.name);
+const names = (events: readonly DomainEvent[]): string[] =>
+  events.map((e) => e.name);
 
 const create = (
   overrides: Partial<CreateCatalogCategoryProps> = {},
 ): CatalogCategory => {
-  const r = CatalogCategory.create({ id, name, sortOrder: 0, now: NOW, ...overrides });
+  const r = CatalogCategory.create({
+    id,
+    name,
+    sortOrder: 0,
+    now: NOW,
+    ...overrides,
+  });
   if (!r.isOk) throw new Error(`setup failed: ${r.error.message}`);
   return r.value;
 };
@@ -38,7 +44,12 @@ describe("CatalogCategory.create", () => {
     ["blank en", { en: "  ", nl: "Landschappen" }],
     ["blank nl", { en: "Landscapes", nl: "" }],
   ])("rejects an incomplete name (%s)", (_label, badName) => {
-    const r = CatalogCategory.create({ id, name: badName, sortOrder: 0, now: NOW });
+    const r = CatalogCategory.create({
+      id,
+      name: badName,
+      sortOrder: 0,
+      now: NOW,
+    });
     expect(r.isErr).toBe(true);
     if (r.isErr) expect(r.error.code).toBe("EmptyCategoryName");
   });
@@ -67,7 +78,10 @@ describe("update", () => {
     );
     expect(r.isOk).toBe(true);
     expect(category.toState().name).toEqual({ en: "Mountains", nl: "Bergen" });
-    expect(category.toState().description).toEqual({ en: "Peaks", nl: "Toppen" });
+    expect(category.toState().description).toEqual({
+      en: "Peaks",
+      nl: "Toppen",
+    });
   });
 
   it("leaves the name unchanged when the patch omits it", () => {
@@ -109,7 +123,9 @@ describe("activate / deactivate (soft, idempotent)", () => {
     category.pullEvents();
     category.activate(LATER);
     expect(category.isActive).toBe(true);
-    expect(names(category.pullEvents())).toEqual(["CatalogCategoryActiveChanged"]);
+    expect(names(category.pullEvents())).toEqual([
+      "CatalogCategoryActiveChanged",
+    ]);
   });
 });
 

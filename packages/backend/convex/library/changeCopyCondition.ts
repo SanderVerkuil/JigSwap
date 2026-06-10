@@ -1,9 +1,8 @@
 import {
   type Condition,
-  type CopyId,
   makeChangeCopyCondition,
   type OwnerId,
-  toId,
+  toCopyId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
@@ -36,7 +35,7 @@ export const changeCopyCondition = mutation({
 
     const result = await change({
       actingMemberId,
-      copyId: toId<"CopyId">(args.copyId) as CopyId,
+      copyId: toCopyId(args.copyId),
       condition: args.condition as Condition,
     });
     if (result.isErr) throw toConvexError(result.error);

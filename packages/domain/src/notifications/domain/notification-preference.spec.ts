@@ -1,16 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { DomainEvent, toId } from "../../shared-kernel";
+import {
+  DomainEvent,
+  toMemberId,
+  toNotificationPreferenceId,
+} from "../../shared-kernel";
 import { PreferenceChanged } from "./events";
-import { MemberId, NotificationPreferenceId } from "./ids";
+
 import { NotificationPreference } from "./notification-preference";
 import { NOTIFICATION_TYPES } from "./notification-type";
 
-const id = toId<"NotificationPreferenceId">("pref1") as NotificationPreferenceId;
-const alice = toId<"MemberId">("alice") as MemberId;
+const id = toNotificationPreferenceId("pref1");
+const alice = toMemberId("alice");
 const NOW = new Date("2026-06-08T10:00:00Z");
 const LATER = new Date("2026-06-09T10:00:00Z");
 
-const names = (events: readonly DomainEvent[]): string[] => events.map((e) => e.name);
+const names = (events: readonly DomainEvent[]): string[] =>
+  events.map((e) => e.name);
 
 const def = (): NotificationPreference =>
   NotificationPreference.createDefault(id, alice, NOW);

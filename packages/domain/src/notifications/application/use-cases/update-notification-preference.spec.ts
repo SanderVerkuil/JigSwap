@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toId } from "../../../shared-kernel";
-import { MemberId } from "../../domain";
+import { toMemberId } from "../../../shared-kernel";
+
 import {
   FixedClock,
   InMemoryNotificationPreferenceRepository,
@@ -12,7 +12,7 @@ import {
   UpdateNotificationPreferenceDeps,
 } from "./update-notification-preference";
 
-const alice = toId<"MemberId">("alice") as MemberId;
+const alice = toMemberId("alice");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 let preferences: InMemoryNotificationPreferenceRepository;
@@ -77,8 +77,18 @@ describe("makeUpdateNotificationPreference", () => {
 
   it("persists across calls (reuses the stored preference, not a fresh default each time)", async () => {
     const update = makeUpdateNotificationPreference(deps);
-    await update({ memberId: alice, type: "trade_request", channel: "email", enabled: true });
-    await update({ memberId: alice, type: "trade_accepted", channel: "push", enabled: true });
+    await update({
+      memberId: alice,
+      type: "trade_request",
+      channel: "email",
+      enabled: true,
+    });
+    await update({
+      memberId: alice,
+      type: "trade_accepted",
+      channel: "push",
+      enabled: true,
+    });
 
     expect(preferences.size()).toBe(1);
     const pref = await preferences.findByMember(alice);

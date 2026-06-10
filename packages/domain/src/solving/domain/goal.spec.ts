@@ -1,10 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { toId } from "../../shared-kernel";
+import { toGoalId, toMemberId } from "../../shared-kernel";
 import { Goal } from "./goal";
-import { GoalId, MemberId } from "./ids";
 
-const ID = toId<"GoalId">("goal-1") as GoalId;
-const ALICE = toId<"MemberId">("alice") as MemberId;
+const ID = toGoalId("goal-1");
+const ALICE = toMemberId("alice");
 const NOW = new Date("2026-06-01T10:00:00Z");
 
 const create = (target: number) =>
@@ -29,11 +28,14 @@ describe("Goal.create", () => {
     expect(names(result.value)).toEqual(["GoalCreated"]);
   });
 
-  it.each([0, -1, 2.5])("rejects target %p with InvalidGoalTarget", (target) => {
-    const result = create(target);
-    expect(result.isErr).toBe(true);
-    if (result.isErr) expect(result.error.code).toBe("InvalidGoalTarget");
-  });
+  it.each([0, -1, 2.5])(
+    "rejects target %p with InvalidGoalTarget",
+    (target) => {
+      const result = create(target);
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("InvalidGoalTarget");
+    },
+  );
 });
 
 describe("Goal.progressTo", () => {

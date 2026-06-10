@@ -4,10 +4,12 @@ import {
   Copy,
   CopyImage,
   type CopyState,
-  type OwnerId,
   Price,
   SharingSetting,
-  toId,
+  toCopyId,
+  toFileId,
+  toOwnerId,
+  toPuzzleDefinitionId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 
@@ -25,7 +27,7 @@ export type OwnedPuzzleRow = Omit<
 // An image VO -> the `ownedPuzzleImages` insert payload (the repository owns uploaderId/timestamps).
 export const imageToVo = (row: Doc<"ownedPuzzleImages">): CopyImage =>
   CopyImage.create({
-    fileId: toId<"FileId">(row.fileId as unknown as string),
+    fileId: toFileId(row.fileId as unknown as string),
     title: row.title,
     description: row.description,
     tag: row.tag,
@@ -40,7 +42,7 @@ export const toDomain = (
 ): Copy => {
   // The Catalog reference: prefer the new puzzleDefinitionId column, falling back to the legacy
   // puzzleId so a backfilled-then-acquired round-trip stays consistent.
-  const puzzleDefinitionId = toId<"PuzzleDefinitionId">(
+  const puzzleDefinitionId = toPuzzleDefinitionId(
     (row.puzzleDefinitionId ?? (row.puzzleId as unknown as string)) as string,
   );
   const snapshot = CatalogSnapshot.create({
@@ -55,16 +57,17 @@ export const toDomain = (
     ? Price.fromState(row.salePrice.amount, row.salePrice.currency)
     : undefined;
   const acquisitionPrice = row.acquisitionPrice
-    ? Price.fromState(row.acquisitionPrice.amount, row.acquisitionPrice.currency)
+    ? Price.fromState(
+        row.acquisitionPrice.amount,
+        row.acquisitionPrice.currency,
+      )
     : undefined;
 
   const state: CopyState = {
-    id: toId<"CopyId">(row.aggregateId as string),
-    ownerId: toId<"OwnerId">(row.ownerId as unknown as string) as OwnerId,
+    id: toCopyId(row.aggregateId as string),
+    ownerId: toOwnerId(row.ownerId as unknown as string),
     // Legacy/unset heldBy means the owner holds it.
-    heldBy: toId<"OwnerId">(
-      (row.heldBy ?? row.ownerId) as unknown as string,
-    ) as OwnerId,
+    heldBy: toOwnerId((row.heldBy ?? row.ownerId) as unknown as string),
     puzzleDefinitionId,
     snapshot,
     condition: row.condition,
@@ -113,7 +116,10 @@ export const toRow = (copy: Copy): OwnedPuzzleRow => {
     },
     visibility: sharing.visibility,
     salePrice: sharing.salePrice
-      ? { amount: sharing.salePrice.amountCents, currency: sharing.salePrice.currency }
+      ? {
+          amount: sharing.salePrice.amountCents,
+          currency: sharing.salePrice.currency,
+        }
       : undefined,
     acquisitionDate: state.acquisition.date?.getTime(),
     acquisitionSource: state.acquisition.source,

@@ -1,9 +1,4 @@
-import {
-  type CopyId,
-  makeOpenLoan,
-  type OwnerId,
-  toId,
-} from "@jigswap/domain";
+import { makeOpenLoan, toCopyId, toOwnerId } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { convexCopyRepository } from "./adapters/convexCopyRepository";
@@ -32,8 +27,8 @@ export const handleDomainEvent = async (
     clock: systemClock,
   });
   await openLoan({
-    copyId: toId<"CopyId">(copyRow.aggregateId) as CopyId,
-    borrowerId: toId<"OwnerId">(p.borrower as string) as OwnerId,
+    copyId: toCopyId(copyRow.aggregateId),
+    borrowerId: toOwnerId(p.borrower as string),
     expectedReturn:
       p.expectedReturn === undefined
         ? undefined

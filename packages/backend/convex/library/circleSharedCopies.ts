@@ -1,5 +1,5 @@
 import type { OwnerId } from "@jigswap/domain";
-import { toId } from "@jigswap/domain";
+import { toCopyId, toMemberId, toOwnerId } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import { convexCircleRepository } from "../sharing/adapters/convexCircleRepository";
@@ -15,7 +15,7 @@ export const collectCircleSharedCopies = async (
   viewerId: Id<"users">,
 ): Promise<Doc<"ownedPuzzles">[]> => {
   const circles = convexCircleRepository(ctx);
-  const viewer = toId<"MemberId">(viewerId);
+  const viewer = toMemberId(viewerId);
   const myCircles = await circles.listForMember(viewer);
   if (myCircles.length === 0) return [];
 
@@ -40,7 +40,7 @@ export const collectCircleSharedCopies = async (
         .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", copyId))
         .unique();
       if (!row) return null;
-      const copy = await copyRepo.findById(toId<"CopyId">(copyId));
+      const copy = await copyRepo.findById(toCopyId(copyId));
       return copy ? { row, copy } : null;
     }),
   );
@@ -48,7 +48,7 @@ export const collectCircleSharedCopies = async (
   if (candidates.length === 0) return [];
 
   // Build the circle-aware policy once for the viewer against the distinct owners in play.
-  const owner = (id: Id<"users">): OwnerId => toId<"OwnerId">(id);
+  const owner = (id: Id<"users">): OwnerId => toOwnerId(id);
   const policy = await makeCircleAwareVisibilityPolicy(
     ctx,
     owner(viewerId),

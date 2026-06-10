@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { DomainEvent, toId } from "../../shared-kernel";
+import {
+  DomainEvent,
+  toOwnerId,
+  toPersonalCategoryId,
+} from "../../shared-kernel";
 import { PersonalCategoryCreated } from "./events";
-import { OwnerId, PersonalCategoryId } from "./ids";
+
 import { PersonalCategory } from "./personal-category";
 
-const id = toId<"PersonalCategoryId">("pc1") as PersonalCategoryId;
-const owner = toId<"OwnerId">("alice") as OwnerId;
+const id = toPersonalCategoryId("pc1");
+const owner = toOwnerId("alice");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 const names = (events: readonly DomainEvent[]): string[] =>

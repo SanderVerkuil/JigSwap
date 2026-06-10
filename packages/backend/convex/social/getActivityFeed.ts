@@ -4,11 +4,11 @@ import {
   type ActivityKind,
   buildActivityFeed,
   type MemberId,
-  toId,
+  toMemberId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
-import { query, type QueryCtx } from "../_generated/server";
 import type { Doc, Id } from "../_generated/dataModel";
+import { query, type QueryCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 
 // The activity-feed read: the acting member's own activity plus the activity of everyone they
@@ -68,7 +68,7 @@ export const getActivityFeed = query({
   },
 });
 
-const asMember = (id: string): MemberId => toId<"MemberId">(id) as MemberId;
+const asMember = (id: string): MemberId => toMemberId(id);
 
 // Translate one recorded foreign event into zero-or-more Social ActivityEntries, keeping only those
 // whose member is in the audience. The ACL lives entirely here; the domain stays foreign-free.
@@ -80,7 +80,11 @@ const toActivityEntries = async (
   const p = event.payload as Record<string, unknown>;
   const occurredAt = new Date(event.occurredAt);
 
-  const make = (memberId: string, kind: ActivityKind, ref: string): ActivityEntry[] =>
+  const make = (
+    memberId: string,
+    kind: ActivityKind,
+    ref: string,
+  ): ActivityEntry[] =>
     audience.has(memberId)
       ? [{ memberId: asMember(memberId), kind, occurredAt, ref }]
       : [];

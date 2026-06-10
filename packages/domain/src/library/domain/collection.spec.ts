@@ -1,13 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { DomainEvent, toId } from "../../shared-kernel";
+import {
+  DomainEvent,
+  toCollectionId,
+  toCopyId,
+  toOwnerId,
+  toPuzzleDefinitionId,
+} from "../../shared-kernel";
 import { Collection } from "./collection";
-import { CollectionId, CopyId, OwnerId, PuzzleDefinitionId } from "./ids";
 
-const collectionId = toId<"CollectionId">("col1") as CollectionId;
-const owner = toId<"OwnerId">("alice") as OwnerId;
-const copyA = toId<"CopyId">("copyA") as CopyId;
-const copyB = toId<"CopyId">("copyB") as CopyId;
-const definitionId = toId<"PuzzleDefinitionId">("def1") as PuzzleDefinitionId;
+const collectionId = toCollectionId("col1");
+const owner = toOwnerId("alice");
+const copyA = toCopyId("copyA");
+const copyB = toCopyId("copyB");
+const definitionId = toPuzzleDefinitionId("def1");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 const create = (
@@ -168,7 +173,7 @@ describe("wishlist behavior", () => {
   });
 
   it("unwishes a desired definition while keeping the others", () => {
-    const other = toId<"PuzzleDefinitionId">("def2") as PuzzleDefinitionId;
+    const other = toPuzzleDefinitionId("def2");
     const wishlist = create({ isWishlist: true });
     wishlist.wishFor(definitionId, NOW);
     wishlist.wishFor(other, NOW);

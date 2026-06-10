@@ -1,19 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { toId } from "../../shared-kernel";
+import {
+  toCircleId,
+  toCopyId,
+  toMemberId,
+  toMembershipId,
+} from "../../shared-kernel";
 import { Circle } from "./circle";
-import { CircleId, CopyId, MemberId, MembershipId } from "./ids";
+import { MembershipId } from "./ids";
 
-const owner = toId<"MemberId">("owner") as MemberId;
-const alice = toId<"MemberId">("alice") as MemberId;
-const bob = toId<"MemberId">("bob") as MemberId;
-const stranger = toId<"MemberId">("stranger") as MemberId;
-const circleId = toId<"CircleId">("circle-1") as CircleId;
+const owner = toMemberId("owner");
+const alice = toMemberId("alice");
+const bob = toMemberId("bob");
+const stranger = toMemberId("stranger");
+const circleId = toCircleId("circle-1");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 let seq = 0;
 const membershipId = (): MembershipId => {
   seq += 1;
-  return toId<"MembershipId">(`membership-${seq}`) as MembershipId;
+  return toMembershipId(`membership-${seq}`);
 };
 
 const newCircle = (): Circle =>
@@ -44,11 +49,19 @@ describe("Circle", () => {
       const circle = newCircle();
       circle.pullEvents();
 
-      const result = circle.addMember(owner, membershipId(), alice, "ViewOnly", NOW);
+      const result = circle.addMember(
+        owner,
+        membershipId(),
+        alice,
+        "ViewOnly",
+        NOW,
+      );
 
       expect(result.isOk).toBe(true);
       expect(circle.isMember(alice)).toBe(true);
-      expect(circle.pullEvents().map((e) => e.name)).toEqual(["MemberJoinedCircle"]);
+      expect(circle.pullEvents().map((e) => e.name)).toEqual([
+        "MemberJoinedCircle",
+      ]);
     });
 
     it("rejects a non-admin actor", () => {
@@ -56,7 +69,13 @@ describe("Circle", () => {
       circle.addMember(owner, membershipId(), alice, "ViewOnly", NOW); // alice is ViewOnly
       circle.pullEvents();
 
-      const result = circle.addMember(alice, membershipId(), bob, "ViewOnly", NOW);
+      const result = circle.addMember(
+        alice,
+        membershipId(),
+        bob,
+        "ViewOnly",
+        NOW,
+      );
 
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("NotCircleAdmin");
@@ -66,7 +85,13 @@ describe("Circle", () => {
 
     it("rejects an actor who is not a member at all", () => {
       const circle = newCircle();
-      const result = circle.addMember(stranger, membershipId(), alice, "Admin", NOW);
+      const result = circle.addMember(
+        stranger,
+        membershipId(),
+        alice,
+        "Admin",
+        NOW,
+      );
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("NotCircleAdmin");
     });
@@ -76,7 +101,13 @@ describe("Circle", () => {
       circle.addMember(owner, membershipId(), alice, "ViewOnly", NOW);
       circle.pullEvents();
 
-      const result = circle.addMember(owner, membershipId(), alice, "Admin", NOW);
+      const result = circle.addMember(
+        owner,
+        membershipId(),
+        alice,
+        "Admin",
+        NOW,
+      );
 
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("AlreadyMember");
@@ -87,7 +118,13 @@ describe("Circle", () => {
       const circle = newCircle();
       circle.addMember(owner, membershipId(), alice, "Admin", NOW);
 
-      const result = circle.addMember(alice, membershipId(), bob, "ViewOnly", NOW);
+      const result = circle.addMember(
+        alice,
+        membershipId(),
+        bob,
+        "ViewOnly",
+        NOW,
+      );
       expect(result.isOk).toBe(true);
       expect(circle.isMember(bob)).toBe(true);
     });
@@ -178,7 +215,7 @@ describe("Circle", () => {
   });
 
   describe("shareCopy", () => {
-    const copyId = toId<"CopyId">("copy-1") as CopyId;
+    const copyId = toCopyId("copy-1");
 
     it("lets an admin share a copy and records CopySharedToCircle", () => {
       const circle = newCircle();
@@ -209,8 +246,8 @@ describe("Circle", () => {
     const rehydrated = Circle.rehydrate(circle.toState());
     expect(rehydrated.members).toHaveLength(2);
     expect(rehydrated.isMember(alice)).toBe(true);
-    expect(rehydrated.members.find((m) => m.memberId === alice)?.permission).toBe(
-      "Exchange",
-    );
+    expect(
+      rehydrated.members.find((m) => m.memberId === alice)?.permission,
+    ).toBe("Exchange");
   });
 });

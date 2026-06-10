@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { toId } from "../../shared-kernel";
-import { CopyId, ExchangeId } from "../domain";
+import { toCopyId, toExchangeId } from "../../shared-kernel";
+
 import { ApplicationError } from "./errors";
 
-const copy = toId<"CopyId">("copy1") as CopyId;
+const copy = toCopyId("copy1");
 
 describe("ApplicationError factories", () => {
   it("copyNotFound interpolates the copy id", () => {
@@ -32,7 +32,7 @@ describe("ApplicationError factories", () => {
   });
 
   it("exchangeNotFound interpolates the exchange id", () => {
-    const id = toId<"ExchangeId">("ex1") as ExchangeId;
+    const id = toExchangeId("ex1");
     const e = ApplicationError.exchangeNotFound(id);
     expect(e.code).toBe("ExchangeNotFound");
     expect(e.message).toBe("Exchange ex1 could not be found");

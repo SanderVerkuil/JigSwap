@@ -1,4 +1,4 @@
-import { toId } from "../../../shared-kernel";
+import { toMemberId } from "../../../shared-kernel";
 import { MemberId } from "../../domain";
 import { MemberIdGenerator } from "../ports/out/id-generator";
 
@@ -8,6 +8,6 @@ export class SequentialMemberIdGenerator implements MemberIdGenerator {
 
   next(): MemberId {
     this.counter += 1;
-    return toId<"MemberId">(`member-${this.counter}`) as MemberId;
+    return toMemberId(`member-${this.counter}`);
   }
 }

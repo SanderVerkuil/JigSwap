@@ -1,6 +1,9 @@
-import { toId } from "../../../shared-kernel";
+import { toMessageId, toThreadId } from "../../../shared-kernel";
 import { MessageId, ThreadId } from "../../domain";
-import { MessageIdGenerator, ThreadIdGenerator } from "../ports/out/id-generators";
+import {
+  MessageIdGenerator,
+  ThreadIdGenerator,
+} from "../ports/out/id-generators";
 
 // Deterministic ThreadIdGenerator for tests: thread-1, thread-2, ...
 export class SequentialThreadIdGenerator implements ThreadIdGenerator {
@@ -8,7 +11,7 @@ export class SequentialThreadIdGenerator implements ThreadIdGenerator {
 
   next(): ThreadId {
     this.counter += 1;
-    return toId<"ThreadId">(`thread-${this.counter}`) as ThreadId;
+    return toThreadId(`thread-${this.counter}`);
   }
 }
 
@@ -18,6 +21,6 @@ export class SequentialMessageIdGenerator implements MessageIdGenerator {
 
   next(): MessageId {
     this.counter += 1;
-    return toId<"MessageId">(`message-${this.counter}`) as MessageId;
+    return toMessageId(`message-${this.counter}`);
   }
 }

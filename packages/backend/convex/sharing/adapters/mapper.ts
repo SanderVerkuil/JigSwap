@@ -1,10 +1,11 @@
 import {
   Circle,
   type CircleState,
-  type MemberId,
   type MembershipState,
   type PermissionLevel,
-  toId,
+  toCircleId,
+  toMemberId,
+  toMembershipId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 
@@ -18,15 +19,15 @@ export type CircleRow = Omit<Doc<"circles">, "_id" | "_creationTime">;
 // guards for it before mapping.
 export const toDomain = (row: Doc<"circles">): Circle => {
   const memberships: MembershipState[] = row.memberships.map((m) => ({
-    id: toId<"MembershipId">(m.id),
-    memberId: toId<"MemberId">(m.memberId) as MemberId,
+    id: toMembershipId(m.id),
+    memberId: toMemberId(m.memberId),
     permission: m.permission as PermissionLevel,
     joinedAt: new Date(m.joinedAt),
   }));
 
   const state: CircleState = {
-    id: toId<"CircleId">(row.aggregateId as string),
-    ownerId: toId<"MemberId">(row.ownerId) as MemberId,
+    id: toCircleId(row.aggregateId as string),
+    ownerId: toMemberId(row.ownerId),
     name: row.name,
     memberships,
     createdAt: new Date(row.createdAt),

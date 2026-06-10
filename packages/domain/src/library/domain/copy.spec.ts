@@ -1,22 +1,28 @@
 import { describe, expect, it } from "vitest";
-import { DomainEvent, toId } from "../../shared-kernel";
+import {
+  DomainEvent,
+  toCopyId,
+  toFileId,
+  toOwnerId,
+  toPuzzleDefinitionId,
+} from "../../shared-kernel";
 import { Acquisition } from "./acquisition";
 import { CatalogSnapshot } from "./catalog-snapshot";
 import { Copy } from "./copy";
-import { CopyImage, FileId } from "./copy-image";
+import { CopyImage } from "./copy-image";
 import {
   CopyAcquired,
   CopyConditionChanged,
   CopyMadeAvailable,
   CopyMadeUnavailable,
 } from "./events";
-import { CopyId, OwnerId, PuzzleDefinitionId } from "./ids";
+
 import { Price } from "./price";
 import { SharingSetting } from "./sharing-setting";
 
-const copyId = toId<"CopyId">("copy1") as CopyId;
-const owner = toId<"OwnerId">("alice") as OwnerId;
-const definitionId = toId<"PuzzleDefinitionId">("def1") as PuzzleDefinitionId;
+const copyId = toCopyId("copy1");
+const owner = toOwnerId("alice");
+const definitionId = toPuzzleDefinitionId("def1");
 const NOW = new Date("2026-06-08T10:00:00Z");
 const LATER = new Date("2026-06-09T10:00:00Z");
 
@@ -161,7 +167,7 @@ describe("addImage", () => {
     const copy = acquire();
     copy.pullEvents();
     const image = CopyImage.create({
-      fileId: toId<"FileId">("file1") as FileId,
+      fileId: toFileId("file1"),
       tag: "box_front",
     });
     copy.addImage(image, LATER);
@@ -172,7 +178,7 @@ describe("addImage", () => {
 });
 
 describe("Copy.transferTo", () => {
-  const newOwner = toId<"OwnerId">("bob") as OwnerId;
+  const newOwner = toOwnerId("bob");
 
   // A copy carrying owner-specific state, so the transfer's resets are observable.
   const owned = (): Copy => {
@@ -223,7 +229,7 @@ describe("Copy.transferTo", () => {
 });
 
 describe("Copy possession (lend / return)", () => {
-  const borrower = toId<"OwnerId">("bob") as OwnerId;
+  const borrower = toOwnerId("bob");
 
   it("a freshly acquired copy is held by its owner", () => {
     expect(acquire().toState().heldBy).toBe(owner);

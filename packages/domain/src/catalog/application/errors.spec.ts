@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { toId } from "../../shared-kernel";
-import { CatalogCategoryId, PuzzleDefinitionId } from "../domain";
+import { toCatalogCategoryId, toPuzzleDefinitionId } from "../../shared-kernel";
+
 import { CatalogApplicationError } from "./errors";
 
 describe("CatalogApplicationError factories", () => {
@@ -14,14 +14,14 @@ describe("CatalogApplicationError factories", () => {
   });
 
   it("puzzleDefinitionNotFound interpolates the id", () => {
-    const id = toId<"PuzzleDefinitionId">("pd1") as PuzzleDefinitionId;
+    const id = toPuzzleDefinitionId("pd1");
     const e = CatalogApplicationError.puzzleDefinitionNotFound(id);
     expect(e.code).toBe("PuzzleDefinitionNotFound");
     expect(e.message).toBe("Puzzle definition pd1 could not be found");
   });
 
   it("catalogCategoryNotFound interpolates the id", () => {
-    const id = toId<"CatalogCategoryId">("cat1") as CatalogCategoryId;
+    const id = toCatalogCategoryId("cat1");
     const e = CatalogApplicationError.catalogCategoryNotFound(id);
     expect(e.code).toBe("CatalogCategoryNotFound");
     expect(e.message).toBe("Catalog category cat1 could not be found");

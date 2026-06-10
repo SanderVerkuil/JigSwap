@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toId } from "../../../shared-kernel";
-import { CompletionId, FileId, MemberId } from "../../domain";
+import { toCompletionId, toFileId, toMemberId } from "../../../shared-kernel";
+
 import { EDIT_WINDOW_MS } from "../../domain/completion";
 import {
   FixedClock,
@@ -14,8 +14,8 @@ import { makeRecordCompletion } from "./record-completion";
 import { makeReviewPuzzle } from "./review-puzzle";
 import { makeStartCompletion } from "./start-completion";
 
-const ALICE = toId<"MemberId">("alice") as MemberId;
-const BOB = toId<"MemberId">("bob") as MemberId;
+const ALICE = toMemberId("alice");
+const BOB = toMemberId("bob");
 const START = new Date("2026-06-01T10:00:00Z");
 const END = new Date("2026-06-01T11:30:00Z");
 const NOW = new Date("2026-06-01T11:30:00Z");
@@ -47,10 +47,7 @@ describe("Completion use cases", () => {
       const result = await start({
         userId: ALICE,
         startDate: START,
-        photoFileIds: Array.from(
-          { length: 6 },
-          (_, i) => toId<"FileId">(`f-${i}`) as FileId,
-        ),
+        photoFileIds: Array.from({ length: 6 }, (_, i) => toFileId(`f-${i}`)),
       });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("TooManyPhotos");
@@ -127,7 +124,7 @@ describe("Completion use cases", () => {
       const finish = makeFinishCompletion({ completions, events, clock });
       const result = await finish({
         actingMemberId: ALICE,
-        completionId: toId<"CompletionId">("nope") as CompletionId,
+        completionId: toCompletionId("nope"),
         endDate: END,
       });
       expect(result.isErr).toBe(true);

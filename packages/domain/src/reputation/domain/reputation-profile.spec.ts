@@ -1,23 +1,33 @@
 import { describe, expect, it } from "vitest";
-import { toId } from "../../shared-kernel";
-import { ExchangeId, MemberId, PartnerReviewId, ReputationProfileId } from "./ids";
+import {
+  toExchangeId,
+  toMemberId,
+  toPartnerReviewId,
+  toReputationProfileId,
+} from "../../shared-kernel";
+import { MemberId } from "./ids";
 import { PartnerReview } from "./partner-review";
 import { ReputationProfile } from "./reputation-profile";
 
-const member = toId<"MemberId">("bob") as MemberId;
-const profileId = toId<"ReputationProfileId">("profile-1") as ReputationProfileId;
+const member = toMemberId("bob");
+const profileId = toReputationProfileId("profile-1");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 let reviewSeq = 0;
 const reviewWithRating = (rating: number): PartnerReview => {
   reviewSeq += 1;
   const result = PartnerReview.submit({
-    id: toId<"PartnerReviewId">(`review-${reviewSeq}`) as PartnerReviewId,
-    exchangeId: toId<"ExchangeId">(`ex-${reviewSeq}`) as ExchangeId,
-    reviewerId: toId<"MemberId">(`reviewer-${reviewSeq}`) as MemberId,
+    id: toPartnerReviewId(`review-${reviewSeq}`),
+    exchangeId: toExchangeId(`ex-${reviewSeq}`),
+    reviewerId: toMemberId(`reviewer-${reviewSeq}`),
     revieweeId: member,
     rating,
-    scores: { communication: rating, packaging: rating, condition: rating, timeliness: rating },
+    scores: {
+      communication: rating,
+      packaging: rating,
+      condition: rating,
+      timeliness: rating,
+    },
     now: NOW,
   });
   if (!result.isOk) throw new Error("setup");
@@ -61,7 +71,10 @@ describe("ReputationProfile", () => {
       reviewCount: number;
       memberId: MemberId;
     }>;
-    expect(events.map((e) => e.name)).toEqual(["ReputationChanged", "ReputationChanged"]);
+    expect(events.map((e) => e.name)).toEqual([
+      "ReputationChanged",
+      "ReputationChanged",
+    ]);
     expect(events[0].averageRating).toBe(4);
     expect(events[0].reviewCount).toBe(1);
     expect(events[1].averageRating).toBe(3); // (4 + 2) / 2
@@ -74,7 +87,8 @@ describe("ReputationProfile", () => {
     profile.applyReview(reviewWithRating(5), NOW);
     expect(profile.credibility).toBeCloseTo(0.1, 10); // 1 / 10
 
-    for (let i = 0; i < 20; i += 1) profile.applyReview(reviewWithRating(5), NOW);
+    for (let i = 0; i < 20; i += 1)
+      profile.applyReview(reviewWithRating(5), NOW);
     expect(profile.credibility).toBe(1);
   });
 
