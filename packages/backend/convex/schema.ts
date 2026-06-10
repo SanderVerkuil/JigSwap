@@ -506,6 +506,57 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_member", ["memberId"]),
 
+  // Friend Circles: a private group whose members share circle-scoped visibility. The Circle
+  // aggregate persists as ONE unit (root + its embedded memberships) so every invariant is enforced
+  // against the whole set. Member lookup goes through the `circleMembers` junction (below) because
+  // Convex can't index into the embedded `memberships` objects.
+  circles: defineTable({
+    // Domain aggregate identity (CircleId). Keyed on by the repository; never an FK target.
+    aggregateId: v.optional(v.string()),
+    ownerId: v.id("users"),
+    name: v.string(),
+    // The aggregate's membership rows, embedded (loaded/saved with the root). `memberId` is the
+    // resolved user _id; `id` is the domain MembershipId string.
+    memberships: v.array(
+      v.object({
+        id: v.string(),
+        memberId: v.id("users"),
+        permission: v.union(
+          v.literal("ViewOnly"),
+          v.literal("Exchange"),
+          v.literal("Admin"),
+        ),
+        joinedAt: v.number(),
+      }),
+    ),
+    createdAt: v.number(),
+  })
+    .index("by_owner", ["ownerId"])
+    .index("by_aggregate_id", ["aggregateId"]),
+
+  // Member-lookup projection of `circles.memberships`, kept in sync by the repository on every save.
+  // Lets "every circle a member belongs to" be an indexed read (Convex can't index embedded arrays).
+  // `circleAggregateId` is the domain CircleId string; `memberId` is the resolved user _id.
+  circleMembers: defineTable({
+    circleAggregateId: v.string(),
+    memberId: v.id("users"),
+  })
+    .index("by_member", ["memberId"])
+    .index("by_circle", ["circleAggregateId"])
+    .index("by_circle_member", ["circleAggregateId", "memberId"]),
+
+  // Read model of copies shared into a circle, projected from the CopySharedToCircle event. Sharing
+  // owns no copy state; this link makes a friend-circle copy discoverable to the circle's members.
+  // `copyId` is the Library CopyId aggregateId (string), not a resolved owned-puzzle _id.
+  circleCopyShares: defineTable({
+    circleId: v.string(),
+    copyId: v.string(),
+    sharedAt: v.number(),
+  })
+    .index("by_circle", ["circleId"])
+    .index("by_copy", ["copyId"])
+    .index("by_circle_copy", ["circleId", "copyId"]),
+
   // The durable domain-event log: every context's events are appended here, then an async
   // dispatcher (scheduled per insert) routes each to its subscribers and stamps processedAt.
   // WHY durable: decouples subscribers (Notifications, future Insights/Social) from the emitting
