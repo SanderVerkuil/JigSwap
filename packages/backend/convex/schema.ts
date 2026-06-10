@@ -557,6 +557,30 @@ export default defineSchema({
     .index("by_copy", ["copyId"])
     .index("by_circle_copy", ["circleId", "copyId"]),
 
+  // Social: a member's public profile (display name + bio). One row per member; the aggregate
+  // is keyed by member, so `by_member` backs findByMember and aggregateId is the ProfileId.
+  profiles: defineTable({
+    aggregateId: v.optional(v.string()),
+    memberId: v.id("users"),
+    displayName: v.string(),
+    bio: v.optional(v.string()),
+    updatedAt: v.number(),
+  })
+    .index("by_member", ["memberId"])
+    .index("by_aggregate_id", ["aggregateId"]),
+
+  // Social: a directed follow edge (followerId -> followeeId). Indexed both ways so the read side
+  // can list a member's followers and the people they follow; aggregateId is the FollowId.
+  follows: defineTable({
+    aggregateId: v.optional(v.string()),
+    followerId: v.id("users"),
+    followeeId: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_follower", ["followerId"])
+    .index("by_followee", ["followeeId"])
+    .index("by_aggregate_id", ["aggregateId"]),
+
   // The durable domain-event log: every context's events are appended here, then an async
   // dispatcher (scheduled per insert) routes each to its subscribers and stamps processedAt.
   // WHY durable: decouples subscribers (Notifications, future Insights/Social) from the emitting
