@@ -146,6 +146,21 @@ export const gateway = {
       api.notifications.updateNotificationPreference.updateNotificationPreference,
   },
 
+  // Community / Social: public profiles, follow relationships, and the activity feed. Writes go
+  // through the domain-driven social module (file.export namespacing); the follower/member is
+  // derived from auth, never the client. Reads return typed @jigswap/contracts view DTOs.
+  social: {
+    editProfile: api.social.editProfile.editProfile,
+    follow: api.social.followMember.followMember,
+    unfollow: api.social.unfollowMember.unfollowMember,
+    profile: api.social.getProfile.getProfile,
+    followers: api.social.listFollowers.listFollowers,
+    following: api.social.listFollowees.listFollowees,
+    isFollowing: api.social.isFollowing.isFollowing,
+    // The feed is scoped server-side to the acting member + the people they follow.
+    activityFeed: api.social.getActivityFeed.getActivityFeed,
+  },
+
   // Insights: read-side aggregate stats. globalStats is platform-wide; the rest are the signed-in
   // member's own analytics (personal stats, trends, breakdowns) plus a self-service data export.
   insights: {
