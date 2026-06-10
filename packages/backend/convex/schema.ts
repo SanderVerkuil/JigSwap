@@ -592,4 +592,15 @@ export default defineSchema({
     context: v.string(),
     processedAt: v.optional(v.number()),
   }).index("by_processed", ["processedAt"]),
+
+  // Chain-of-Custody projection: one row per OwnershipTransferred event, folded by the custody
+  // subscriber off the durable event log. WHY a dedicated table: domainEvents.payload is v.any()
+  // with no per-copy index, so transfer history is not queryable by copyId; this read-model makes
+  // a Copy's provenance a single indexed scan. Pure projection — keyed by copyId, no aggregateId.
+  copyCustodyEntries: defineTable({
+    copyId: v.string(), // the transferred Copy (an ownedPuzzles _id, the domain CopyId)
+    exchangeId: v.string(), // the settling Exchange aggregateId
+    newOwner: v.string(), // the member the Copy moved to (a users _id)
+    occurredAt: v.number(),
+  }).index("by_copy", ["copyId", "occurredAt"]),
 });
