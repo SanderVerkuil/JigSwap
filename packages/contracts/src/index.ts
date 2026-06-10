@@ -6,3 +6,4 @@ export * from "./library";
 export * from "./sharing";
 export * from "./social";
 export * from "./custody";
+export * from "./lending";
