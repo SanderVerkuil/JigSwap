@@ -171,6 +171,57 @@ describe("addImage", () => {
   });
 });
 
+describe("Copy.transferTo", () => {
+  const newOwner = toId<"OwnerId">("bob") as OwnerId;
+
+  // A copy carrying owner-specific state, so the transfer's resets are observable.
+  const owned = (): Copy => {
+    const copy = acquire();
+    copy.updateSharing(
+      SharingSetting.create({ forTrade: true, visibility: "visible" }),
+      NOW,
+    );
+    copy.updateDetails({ missingPiecesCount: 2, notes: "corner bent" }, NOW);
+    copy.pullEvents();
+    return copy;
+  };
+
+  it("reassigns ownership and records CopyOwnershipTransferred with both owners", () => {
+    const copy = owned();
+    const result = copy.transferTo(newOwner, LATER);
+    expect(result.isOk).toBe(true);
+    expect(copy.ownerId).toBe(newOwner);
+    const events = copy.pullEvents();
+    expect(names(events)).toEqual(["CopyOwnershipTransferred"]);
+    expect(events[0]).toMatchObject({
+      copyId,
+      previousOwner: owner,
+      newOwner,
+      occurredAt: LATER,
+    });
+  });
+
+  it("resets owner-specific fields: sharing private, acquisition trade, notes cleared", () => {
+    const copy = owned();
+    copy.transferTo(newOwner, LATER);
+    const state = copy.toState();
+    expect(state.sharing.isAvailableForAnyExchange()).toBe(false);
+    expect(state.acquisition.source).toBe("trade");
+    expect(state.acquisition.date).toBe(LATER);
+    expect(state.notes).toBeUndefined();
+    expect(state.updatedAt).toBe(LATER);
+  });
+
+  it("keeps the physical facts: condition, snapshot, missing pieces", () => {
+    const copy = owned();
+    copy.transferTo(newOwner, LATER);
+    const state = copy.toState();
+    expect(state.condition).toBe("good");
+    expect(state.snapshot.title).toBe("Starry Night");
+    expect(state.missingPiecesCount).toBe(2);
+  });
+});
+
 describe("rehydrate / toState round-trip", () => {
   it("rehydrates without re-recording events", () => {
     const original = acquire();

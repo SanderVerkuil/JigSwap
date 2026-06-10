@@ -12,6 +12,7 @@ import {
   CopyImageAdded,
   CopyMadeAvailable,
   CopyMadeUnavailable,
+  CopyOwnershipTransferred,
 } from "./events";
 import { CopyId, OwnerId, PuzzleDefinitionId } from "./ids";
 import { SharingSetting } from "./sharing-setting";
@@ -134,6 +135,26 @@ export class Copy {
     } else {
       this.record(new CopyMadeUnavailable(this.id, now));
     }
+    return ok(undefined);
+  }
+
+  // Settle an exchange: the SAME physical copy changes hands. Owner-scoped facts reset (sharing
+  // back to private so the new owner decides availability; acquisition becomes a trade; personal
+  // notes drop), while the physical record (condition, snapshot, missing pieces, images) carries
+  // over. The stable copy id keeps the chain-of-custody coherent across successive owners.
+  transferTo(newOwner: OwnerId, now: Date): Result<void, LibraryError> {
+    const previousOwner = this.state.ownerId;
+    this.state = {
+      ...this.state,
+      ownerId: newOwner,
+      sharing: SharingSetting.private(),
+      acquisition: Acquisition.create({ source: "trade", date: now }),
+      notes: undefined,
+      updatedAt: now,
+    };
+    this.record(
+      new CopyOwnershipTransferred(this.id, previousOwner, newOwner, now),
+    );
     return ok(undefined);
   }
 

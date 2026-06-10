@@ -77,6 +77,18 @@ export class CopyDetailsUpdated implements DomainEvent {
   ) {}
 }
 
+// Ownership of the (same) copy moved between members on exchange settlement. Carries both ends
+// so a provenance/chain-of-custody read model can record the link without re-reading prior state.
+export class CopyOwnershipTransferred implements DomainEvent {
+  readonly name = "CopyOwnershipTransferred";
+  constructor(
+    readonly copyId: CopyId,
+    readonly previousOwner: OwnerId,
+    readonly newOwner: OwnerId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
 // The copy was removed from the owner's library. Carries no payload beyond identity so future
 // subscribers (read models, Exchange reconciliation) can react to the removal.
 export class CopyDeleted implements DomainEvent {
@@ -170,6 +182,7 @@ export type LibraryDomainEvent =
   | CopyMadeUnavailable
   | CopyImageAdded
   | CopyDetailsUpdated
+  | CopyOwnershipTransferred
   | CopyDeleted
   | CollectionUpdated
   | CollectionCreated

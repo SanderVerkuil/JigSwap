@@ -20,6 +20,7 @@ import { makeAcquireCopy } from "./acquire-copy";
 import { makeAddCopyImage } from "./add-copy-image";
 import { makeChangeCopyCondition } from "./change-copy-condition";
 import { makeDeleteCopy } from "./delete-copy";
+import { makeTransferCopyOwnership } from "./transfer-copy-ownership";
 import { makeUpdateCopyDetails } from "./update-copy-details";
 import { makeUpdateCopySharing } from "./update-copy-sharing";
 
@@ -416,6 +417,29 @@ describe("copy mutation use cases", () => {
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("CopyReserved");
       expect(copies.size()).toBe(1);
+      expect(events.published).toHaveLength(0);
+    });
+  });
+
+  describe("makeTransferCopyOwnership", () => {
+    const run = () =>
+      makeTransferCopyOwnership({ copies, events, clock: new FixedClock(NOW) });
+
+    it("reassigns the copy to the new owner and publishes CopyOwnershipTransferred", async () => {
+      const result = await run()({ copyId, newOwner: bob });
+      expect(result.isOk).toBe(true);
+      expect(events.names()).toEqual(["CopyOwnershipTransferred"]);
+      const saved = await copies.findById(copyId);
+      expect(saved?.ownerId).toBe(bob);
+    });
+
+    it("rejects an unknown copy", async () => {
+      const result = await run()({
+        copyId: toId<"CopyId">("ghost") as CopyId,
+        newOwner: bob,
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("CopyNotFound");
       expect(events.published).toHaveLength(0);
     });
   });
