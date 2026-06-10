@@ -5,9 +5,6 @@
   "exclude": ["node_modules", "dist", ".next", "out"],
   "references": [
     {
-      "path": "./apps/web"
-    },
-    {
       "path": "./apps/start"
     }
   ]
