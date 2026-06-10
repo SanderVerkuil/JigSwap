@@ -79,6 +79,13 @@ describe("loan use cases", () => {
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("CopyNotFound");
     });
+
+    it("rejects lending a copy to its own owner (CannotLendToSelf)", async () => {
+      const result = await open()({ copyId, borrowerId: owner });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("CannotLendToSelf");
+      expect(events.published).toHaveLength(0);
+    });
   });
 
   describe("closing a loan (return / recall)", () => {
@@ -98,6 +105,42 @@ describe("loan use cases", () => {
       })({ loanId, actingMemberId: borrower });
       expect(result.isOk).toBe(true);
       expect((await copies.findById(copyId))?.heldBy).toBe(owner);
+      expect(events.names()).toEqual(
+        expect.arrayContaining(["LoanClosed", "CopyReturnedToOwner"]),
+      );
+    });
+
+    it("still closes the loan when the copy no longer exists", async () => {
+      await copies.remove(copyId);
+      const result = await makeReturnLoan({
+        loans,
+        copies,
+        events,
+        clock: new FixedClock(LATER),
+      })({ loanId, actingMemberId: borrower });
+      expect(result.isOk).toBe(true);
+      // Exactly the loan close is published — no copy events when the copy is gone.
+      expect(events.names()).toEqual([
+        "LoanOpened",
+        "CopyLentOut",
+        "LoanClosed",
+      ]);
+    });
+
+    it("recall still closes the loan when the copy no longer exists", async () => {
+      await copies.remove(copyId);
+      const result = await makeRecallLoan({
+        loans,
+        copies,
+        events,
+        clock: new FixedClock(LATER),
+      })({ loanId, actingMemberId: owner });
+      expect(result.isOk).toBe(true);
+      expect(events.names()).toEqual([
+        "LoanOpened",
+        "CopyLentOut",
+        "LoanClosed",
+      ]);
     });
 
     it("a non-borrower cannot return", async () => {
@@ -120,6 +163,9 @@ describe("loan use cases", () => {
       })({ loanId, actingMemberId: owner });
       expect(result.isOk).toBe(true);
       expect((await copies.findById(copyId))?.heldBy).toBe(owner);
+      expect(events.names()).toEqual(
+        expect.arrayContaining(["LoanClosed", "CopyReturnedToOwner"]),
+      );
     });
 
     it("a non-owner cannot recall", async () => {
@@ -140,6 +186,17 @@ describe("loan use cases", () => {
         events,
         clock: new FixedClock(LATER),
       })({ loanId: toLoanId("ghost"), actingMemberId: borrower });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("LoanNotFound");
+    });
+
+    it("rejects recalling an unknown loan", async () => {
+      const result = await makeRecallLoan({
+        loans,
+        copies,
+        events,
+        clock: new FixedClock(LATER),
+      })({ loanId: toLoanId("ghost"), actingMemberId: owner });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("LoanNotFound");
     });

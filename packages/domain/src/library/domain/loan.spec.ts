@@ -69,6 +69,14 @@ describe("Loan.open", () => {
     expect(result.isOk).toBe(true);
     if (result.isOk) expect(result.value.toState().expectedReturn).toBe(LATER);
   });
+
+  it("exposes id, copyId, lenderId and borrowerId through getters", () => {
+    const loan = open();
+    expect(loan.id).toBe(loanId);
+    expect(loan.copyId).toBe(copyId);
+    expect(loan.lenderId).toBe(lender);
+    expect(loan.borrowerId).toBe(borrower);
+  });
 });
 
 describe("Loan.returnByBorrower", () => {
@@ -115,6 +123,14 @@ describe("Loan.recallByOwner", () => {
     const result = loan.recallByOwner(borrower, LATER);
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("NotLender");
+  });
+
+  it("rejects recalling an already-closed loan", () => {
+    const loan = open();
+    loan.recallByOwner(lender, LATER);
+    const result = loan.recallByOwner(lender, LATER);
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("LoanNotOpen");
   });
 });
 
