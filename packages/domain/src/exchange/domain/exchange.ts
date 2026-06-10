@@ -10,6 +10,7 @@ import {
   ExchangeProposed,
   ExchangeRejected,
   OwnershipTransferred,
+  PossessionTransferred,
 } from "./events";
 import { CopyId, ExchangeId, MemberId } from "./ids";
 import { ExchangeTerms, ExchangeTermsInput, Money, validateTerms } from "./terms";
@@ -188,17 +189,29 @@ export class Exchange {
     return ok(undefined);
   }
 
-  // Settlement: complete and emit one OwnershipTransferred per transferred copy.
-  // Requested copy always goes to the initiator; for a swap the offered copy goes to the
-  // recipient. (Cross-aggregate "a copy is reserved by at most one active exchange" is an
-  // APPLICATION-layer rule via the CopyAvailability port, not enforced here.)
+  // Settlement: complete, then hand over the requested copy. A swap/sale moves OWNERSHIP; a lend
+  // moves only POSSESSION (the borrower holds it open-endedly, the owner keeps ownership). For a
+  // swap the offered copy's ownership also moves to the recipient. (Cross-aggregate "a copy is
+  // reserved by at most one active exchange" is an APPLICATION-layer rule, not enforced here.)
   private settle(now: Date): Result<void, ExchangeError> {
     const moved = this.transition("completed", now);
     if (moved.isErr) return moved;
     this.record(new ExchangeCompleted(this.id, now));
-    this.record(
-      new OwnershipTransferred(this.id, this.state.requestedCopyId, this.state.initiatorId, now),
-    );
+    if (this.state.kind === "lend") {
+      this.record(
+        new PossessionTransferred(
+          this.id,
+          this.state.requestedCopyId,
+          this.state.initiatorId,
+          this.state.returnDate,
+          now,
+        ),
+      );
+    } else {
+      this.record(
+        new OwnershipTransferred(this.id, this.state.requestedCopyId, this.state.initiatorId, now),
+      );
+    }
     if (this.state.kind === "swap" && this.state.offeredCopyId) {
       this.record(
         new OwnershipTransferred(this.id, this.state.offeredCopyId, this.state.recipientId, now),

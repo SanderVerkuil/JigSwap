@@ -69,24 +69,22 @@ describe("validateTerms", () => {
     }
   });
 
-  it("lend requires a return date", () => {
-    const missing = validateTerms({ kind: "lend" });
-    expect(missing.isErr).toBe(true);
-    if (missing.isErr) {
-      expect(missing.error.message).toBe(
-        "Invalid terms for lend: a return date is required",
-      );
+  it("lend is open-ended: returnDate is optional and only advisory", () => {
+    const openEnded = validateTerms({ kind: "lend" });
+    expect(openEnded.isOk).toBe(true);
+    if (openEnded.isOk && openEnded.value.kind === "lend") {
+      expect(openEnded.value.returnDate).toBeUndefined();
     }
     const date = new Date("2026-07-01");
-    const ok = validateTerms({ kind: "lend", returnDate: date });
-    expect(ok.isOk).toBe(true);
-    if (ok.isOk && ok.value.kind === "lend") {
-      expect(ok.value.returnDate).toBe(date);
+    const withDate = validateTerms({ kind: "lend", returnDate: date });
+    expect(withDate.isOk).toBe(true);
+    if (withDate.isOk && withDate.value.kind === "lend") {
+      expect(withDate.value.returnDate).toBe(date);
     }
   });
 
   it("missing-terms errors carry the MissingTerms code", () => {
-    const result = validateTerms({ kind: "lend" });
+    const result = validateTerms({ kind: "sale" });
     if (result.isErr) expect(result.error.code).toBe("MissingTerms");
     else throw new Error("expected err");
   });

@@ -156,7 +156,7 @@ describe("makeConfirmCompletion (dual confirmation)", () => {
     expect(h.events.published).toHaveLength(0);
   });
 
-  it("second confirmation completes and publishes ExchangeCompleted + OwnershipTransferred", async () => {
+  it("second confirmation completes and publishes ExchangeCompleted + PossessionTransferred", async () => {
     await seedAccepted(h.repo);
     const confirm = makeConfirmCompletion(h);
 
@@ -166,8 +166,8 @@ describe("makeConfirmCompletion (dual confirmation)", () => {
 
     expect(result.isOk).toBe(true);
     expect((await h.repo.findById(exId))?.status).toBe("completed");
-    // lend transfers only the requested copy to the initiator
-    expect(h.events.names()).toEqual(["ExchangeCompleted", "OwnershipTransferred"]);
+    // the seeded exchange is a lend → possession (not ownership) of the requested copy moves
+    expect(h.events.names()).toEqual(["ExchangeCompleted", "PossessionTransferred"]);
   });
 
   it("returns ExchangeNotFound when no exchange exists", async () => {

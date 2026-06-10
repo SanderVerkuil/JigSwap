@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { DomainEvent, toId } from "../../shared-kernel";
-import { ExchangeCompleted, ExchangeProposed, OwnershipTransferred } from "./events";
+import {
+  ExchangeCompleted,
+  ExchangeProposed,
+  OwnershipTransferred,
+  PossessionTransferred,
+} from "./events";
 import { Exchange, ProposeProps } from "./exchange";
 import { CopyId, ExchangeId, MemberId } from "./ids";
 import { ExchangeTermsInput, Money } from "./terms";
@@ -68,7 +73,6 @@ describe("Exchange.propose", () => {
   it.each<[string, ExchangeTermsInput]>([
     ["swap without offered copy", { kind: "swap" }],
     ["sale without price", { kind: "sale" }],
-    ["lend without return date", { kind: "lend" }],
   ])("rejects %s with MissingTerms", (_label, terms) => {
     const result = Exchange.propose({
       id: exchangeId,
@@ -292,15 +296,19 @@ describe("settlement events", () => {
     expect(transfers[0]).toMatchObject({ copyId: requested, newOwner: alice });
   });
 
-  it("a lend transfers ONLY the requested copy to the initiator", () => {
+  it("a lend hands POSSESSION (not ownership) of the requested copy to the initiator", () => {
     const ex = accepted(lendTerms);
     ex.confirmCompletion(alice, NOW);
     ex.confirmCompletion(bob, LATER);
-    const transfers = ex
-      .pullEvents()
-      .filter((e): e is OwnershipTransferred => e.name === "OwnershipTransferred");
-    expect(transfers).toHaveLength(1);
-    expect(transfers[0]).toMatchObject({ copyId: requested, newOwner: alice });
+    const events = ex.pullEvents();
+    expect(
+      events.filter((e) => e.name === "OwnershipTransferred"),
+    ).toHaveLength(0);
+    const possession = events.filter(
+      (e): e is PossessionTransferred => e.name === "PossessionTransferred",
+    );
+    expect(possession).toHaveLength(1);
+    expect(possession[0]).toMatchObject({ copyId: requested, borrower: alice });
   });
 
   // The second transfer is guarded by `kind === "swap" && offeredCopyId`. Rehydrating
