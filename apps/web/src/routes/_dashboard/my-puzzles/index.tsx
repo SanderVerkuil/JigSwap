@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
@@ -10,9 +11,9 @@ import { useRouter } from "@/compat/navigation";
 import { useUser } from "@/compat/clerk";
 import { gateway, Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
-import { Filter, Grid, List, Plus, Search } from "lucide-react";
+import { Filter, Grid, List, Plus, Search, Undo2 } from "lucide-react";
 import { useTranslations } from "use-intl";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/_dashboard/my-puzzles/")({
   pendingComponent: () => <PageLoading message="Loading puzzles..." />,
@@ -24,8 +25,11 @@ function PuzzlesPage() {
   const router = useRouter();
   const t = useTranslations("puzzles");
   const tCommon = useTranslations("common");
+  const tLending = useTranslations("lending");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = useState("");
+  // The loan currently being recalled, so we disable only that copy's Recall button.
+  const [recallingId, setRecallingId] = useState<string | null>(null);
   // The copy a solve is being logged against; null when the dialog is closed.
   const [solveTarget, setSolveTarget] = useState<{
     copyId: string;
@@ -45,6 +49,28 @@ function PuzzlesPage() {
   );
 
   const deletePuzzle = useMutation(gateway.library.deleteOwned);
+
+  // Open loans where the caller is the lender; the source of truth for "which of my copies are out".
+  const lentOut = useQuery(gateway.lending.lentOut);
+  const recallLoan = useMutation(gateway.lending.recallLoan);
+
+  // Lookup of open loans keyed by the copy's ownedPuzzles _id (LoanView.copyDocId), so each card can
+  // tell whether it is currently lent out without an extra per-row query.
+  const loanByCopyDocId = useMemo(
+    () => new Map((lentOut ?? []).map((loan) => [loan.copyDocId, loan])),
+    [lentOut],
+  );
+
+  const handleRecallLoan = async (loanId: string) => {
+    setRecallingId(loanId);
+    try {
+      await recallLoan({ loanId });
+    } catch (error) {
+      console.error("Failed to recall loan:", error);
+    } finally {
+      setRecallingId(null);
+    }
+  };
 
   const handleDeletePuzzle = async (ownedPuzzleId: Id<"ownedPuzzles">) => {
     // The domain delete takes the Copy aggregateId; resolve it from the loaded row. Guard rows
@@ -185,18 +211,45 @@ function PuzzlesPage() {
         </Card>
       ) : (
         <PuzzleViewProvider viewMode={viewMode}>
-          {filteredownedPuzzles.map((puzzle) => (
-            <PuzzleCard
-              key={puzzle._id}
-              puzzle={puzzle}
-              variant="default"
-              showCollectionDropdown={true}
-              onEdit={handleEditPuzzle}
-              onView={handleViewPuzzle}
-              onDelete={handleDeletePuzzle}
-              onLogSolve={handleLogSolve}
-            />
-          ))}
+          {filteredownedPuzzles.map((puzzle) => {
+            const loan = loanByCopyDocId.get(puzzle._id);
+            return (
+              <PuzzleCard
+                key={puzzle._id}
+                puzzle={puzzle}
+                variant="default"
+                showCollectionDropdown={true}
+                onEdit={handleEditPuzzle}
+                onView={handleViewPuzzle}
+                onDelete={handleDeletePuzzle}
+                onLogSolve={handleLogSolve}
+                loanBadge={
+                  loan && (
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-xs">
+                        {tLending("onLoanTo", {
+                          name:
+                            loan.borrower?.name ?? tLending("unknownMember"),
+                        })}
+                      </Badge>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2"
+                        disabled={recallingId === loan.loanId}
+                        onClick={() => handleRecallLoan(loan.loanId)}
+                      >
+                        <Undo2 className="h-3 w-3 mr-1" />
+                        {recallingId === loan.loanId
+                          ? tLending("recalling")
+                          : tLending("recallAction")}
+                      </Button>
+                    </div>
+                  )
+                }
+              />
+            );
+          })}
         </PuzzleViewProvider>
       )}
 
