@@ -16,6 +16,7 @@ import {
   Bell,
   CircleCheck,
   FolderOpen,
+  HandHelping,
   Home,
   MessageSquare,
   Package,
@@ -60,6 +61,11 @@ const getItems: () => Item[] = () => {
         url: "/my-puzzles/add",
         icon: PlusCircle,
       },
+    },
+    {
+      title: "Borrowed",
+      url: "/borrowed",
+      icon: HandHelping,
     },
     {
       title: "Collections",
