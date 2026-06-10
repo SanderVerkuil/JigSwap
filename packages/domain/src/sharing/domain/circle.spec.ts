@@ -32,11 +32,21 @@ const newCircle = (): Circle =>
 
 describe("Circle", () => {
   it("opens with the owner as its only member, implicitly Admin", () => {
-    const circle = newCircle();
+    const ownerMembershipId = membershipId();
+    const circle = Circle.create({
+      id: circleId,
+      ownerId: owner,
+      ownerMembershipId,
+      name: "Family",
+      now: NOW,
+    });
+    expect(circle.name).toBe("Family");
     expect(circle.ownerId).toBe(owner);
     expect(circle.isMember(owner)).toBe(true);
     expect(circle.members).toHaveLength(1);
     expect(circle.members[0].permission).toBe("Admin");
+    expect(circle.members[0].id).toBe(ownerMembershipId);
+    expect(circle.members[0].joinedAt).toBe(NOW);
   });
 
   it("records CircleCreated on open", () => {
@@ -138,6 +148,7 @@ describe("Circle", () => {
       const result = circle.removeMember(owner, alice);
       expect(result.isOk).toBe(true);
       expect(circle.isMember(alice)).toBe(false);
+      expect(circle.isMember(owner)).toBe(true); // only the target is dropped
     });
 
     it("rejects a non-admin actor", () => {
@@ -176,6 +187,10 @@ describe("Circle", () => {
       expect(result.isOk).toBe(true);
       expect(circle.members.find((m) => m.memberId === alice)?.permission).toBe(
         "Exchange",
+      );
+      // Only the named member changes; the owner's seat is untouched.
+      expect(circle.members.find((m) => m.memberId === owner)?.permission).toBe(
+        "Admin",
       );
     });
 
