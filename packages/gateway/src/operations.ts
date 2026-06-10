@@ -58,6 +58,16 @@ export const gateway = {
     generateUploadUrl: api.puzzles.generateUploadUrl,
   },
 
+  // Lending: open-ended loans of a copy's POSSESSION (ownership stays with the lender). A lend
+  // exchange opens a loan on settlement; the borrower returns or the owner recalls.
+  lending: {
+    returnLoan: api.library.returnLoan.returnLoan,
+    recallLoan: api.library.recallLoan.recallLoan,
+    borrowed: api.library.getBorrowedLoans.getBorrowedLoans,
+    lentOut: api.library.getLentOutLoans.getLentOutLoans,
+    copyHistory: api.library.getCopyLoanHistory.getCopyLoanHistory,
+  },
+
   // Personal Library: collections (a member's private organisation of copies). Writes go through
   // the domain-driven library module; identifiers are CollectionId/CopyId aggregateIds.
   collections: {
