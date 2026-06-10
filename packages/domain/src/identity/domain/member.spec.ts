@@ -148,9 +148,29 @@ describe("Member.updateProfile", () => {
     expect(state.bio).toBe("Puzzler");
     expect(state.location).toBe("NL");
     expect(state.name).toBe("Alice"); // untouched
+    expect(state.username?.value).toBe("alice"); // untouched when omitted
     expect(state.updatedAt).toBe(LATER);
     // Profile edits are not audited.
     expect(member.pullEvents()).toHaveLength(0);
+  });
+
+  it("sets avatar and preferred language when supplied", () => {
+    const member = register();
+    const result = member.updateProfile(
+      { avatar: "https://img/x.png", preferredLanguage: "nl" },
+      LATER,
+    );
+    expect(result.isOk).toBe(true);
+    const state = member.toState();
+    expect(state.avatar).toBe("https://img/x.png");
+    expect(state.preferredLanguage).toBe("nl");
+  });
+
+  it("clears the username when edited to an empty string", () => {
+    const member = register();
+    const result = member.updateProfile({ username: "" }, LATER);
+    expect(result.isOk).toBe(true);
+    expect(member.toState().username).toBeUndefined();
   });
 
   it("rejects an invalid new username", () => {

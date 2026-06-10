@@ -38,10 +38,12 @@ const reviewWithRating = (rating: number): PartnerReview => {
 describe("ReputationProfile", () => {
   it("opens empty with a zero average, count, and credibility", () => {
     const profile = ReputationProfile.open(profileId, member, NOW);
+    expect(profile.id).toBe(profileId);
     expect(profile.reviewCount).toBe(0);
     expect(profile.averageRating).toBe(0);
     expect(profile.credibility).toBe(0);
     expect(profile.pullEvents()).toHaveLength(0);
+    expect(profile.pullEvents()).toHaveLength(0); // pullEvents clears its buffer
   });
 
   it("recomputes the average across multiple applied reviews", () => {

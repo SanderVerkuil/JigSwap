@@ -81,6 +81,9 @@ describe("PartnerReview.submit", () => {
     expect(state.comment).toBe("Smooth trade");
     const rehydrated = PartnerReview.rehydrate(state);
     expect(rehydrated.id).toBe(reviewId);
+    expect(rehydrated.reviewerId).toBe(reviewer);
+    expect(rehydrated.revieweeId).toBe(reviewee);
+    expect(rehydrated.exchangeId).toBe(exchangeId);
     expect(rehydrated.rating.value).toBe(4);
     // Rehydration does not re-emit creation events.
     expect(rehydrated.pullEvents()).toHaveLength(0);

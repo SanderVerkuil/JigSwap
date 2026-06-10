@@ -17,7 +17,15 @@ describe("EmailAddress", () => {
     if (result.isOk) expect(result.value.value).toBe("alice@example.com");
   });
 
-  it.each(["", "no-at-sign", "missing@dot", "@example.com", "a@b@c.com", "spa ce@x.com"])(
+  it.each([
+    "",
+    "no-at-sign",
+    "missing@dot",
+    "@example.com",
+    "a@b@c.com",
+    "spa ce@x.com",
+    "alice@example.com\nevil@b.co", // trailing content after a valid prefix (regex is end-anchored)
+  ])(
     "rejects the malformed address %s",
     (value) => {
       const result = EmailAddress.create(value);

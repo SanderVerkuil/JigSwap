@@ -93,6 +93,7 @@ describe("Profile.edit", () => {
   it("round-trips through toState/rehydrate without re-emitting events", () => {
     const profile = open();
     const rehydrated = Profile.rehydrate(profile.toState());
+    expect(rehydrated.id).toBe(profileId);
     expect(rehydrated.displayName.value).toBe("Alice");
     expect(rehydrated.memberId).toBe(member);
     expect(rehydrated.pullEvents()).toHaveLength(0);

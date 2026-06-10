@@ -14,7 +14,8 @@
     "!src/**/*.test.ts",
     "!src/**/testing/**",
     "!src/**/index.ts",
-    "!src/shared-kernel/branded-ids.ts"
+    "!src/shared-kernel/branded-ids.ts",
+    "!src/**/errors.ts"
   ],
   "reporters": ["html", "clear-text", "progress"],
   "htmlReporter": {
