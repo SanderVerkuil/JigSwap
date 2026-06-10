@@ -1,8 +1,9 @@
 import type { BrowseOwnedCopiesView } from "@jigswap/contracts";
 import { v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { collectCircleSharedCopies } from "./circleSharedCopies";
 import { toOwnedCopyView } from "./mappers";
 
 // Library read: browse OTHER members' available owned copies with filters. Auth gating, the
@@ -55,6 +56,19 @@ export const browseOwnedPuzzles = query({
         ),
       )
       .collect();
+
+    // Friend-Circle visibility (cross-context): also surface copies shared into a circle the viewer
+    // belongs to, even when those copies are otherwise private/unavailable. The public/no-circle
+    // case is untouched — this is a pure UNION on top of the existing availability prefilter,
+    // de-duplicated by copy id.
+    const circleShared = await collectCircleSharedCopies(ctx, memberId);
+    const seen = new Set(ownedPuzzles.map((c) => c._id as unknown as string));
+    for (const copy of circleShared) {
+      if (!seen.has(copy._id as unknown as string)) {
+        ownedPuzzles.push(copy as Doc<"ownedPuzzles">);
+        seen.add(copy._id as unknown as string);
+      }
+    }
 
     if (args.condition) {
       ownedPuzzles = ownedPuzzles.filter((i) => i.condition === args.condition);
