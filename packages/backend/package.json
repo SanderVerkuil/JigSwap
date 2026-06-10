@@ -15,7 +15,8 @@
   },
   "devDependencies": {
     "@edge-runtime/vm": "^5.0.0",
-    "convex-test": "^0.0.38"
+    "convex-test": "^0.0.38",
+    "vitest": "^4.1.8"
   },
   "scripts": {
     "convex:dev": "convex dev",

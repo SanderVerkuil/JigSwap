@@ -13,10 +13,13 @@ export default [
           ignoredFiles: [
             "{projectRoot}/eslint.config.{js,cjs,mjs,ts,cts,mts}",
             "{projectRoot}/vite.config.{js,ts,mjs,mts}",
+            // Vitest setup file (wired via vite.config setupFiles); test-only, not a *.test.ts,
+            // so the check would otherwise demand its vitest import be a runtime dependency.
+            "{projectRoot}/test-setup.ts",
           ],
-          // @jigswap/domain is consumed by the Convex source (convex/**), which sits outside
-          // the nx build `src` root the check scans, so it cannot see the usage.
-          ignoredDependencies: ["@jigswap/domain"],
+          // @jigswap/domain and @jigswap/contracts are consumed by the Convex source (convex/**),
+          // which sits outside the nx build `src` root the check scans, so it cannot see the usage.
+          ignoredDependencies: ["@jigswap/domain", "@jigswap/contracts"],
         },
       ],
     },
