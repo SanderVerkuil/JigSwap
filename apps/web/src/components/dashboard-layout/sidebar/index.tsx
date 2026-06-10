@@ -24,6 +24,7 @@ import {
   Search,
   Settings,
   Target,
+  Users,
 } from "lucide-react";
 import { Item, Navigation } from "./navigation";
 import { SidebarContent as SidebarContentComponent } from "./sidebar-content";
@@ -64,6 +65,11 @@ const getItems: () => Item[] = () => {
       title: "Collections",
       url: "/collections",
       icon: FolderOpen,
+    },
+    {
+      title: "Circles",
+      url: "/circles",
+      icon: Users,
     },
     {
       title: "Completions",
