@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/_dashboard/browse")({
 });
 
 function BrowsePage() {
+  const navigate = useNavigate();
   const { user } = useUser();
   const t = useTranslations("puzzles");
   const tCommon = useTranslations("common");
@@ -246,18 +248,9 @@ function BrowsePage() {
               puzzle={puzzle}
               variant="browse"
               showOwner={true}
-              onRequestExchange={(puzzleId) => {
-                // Handle trade request
-                console.log("Request trade for puzzle:", puzzleId);
-              }}
-              onMessage={(puzzleId) => {
-                // Handle message
-                console.log("Message for puzzle:", puzzleId);
-              }}
-              onFavorite={(puzzleId) => {
-                // Handle favorite
-                console.log("Favorite puzzle:", puzzleId);
-              }}
+              onRequestExchange={() => navigate({ to: "/trades" })}
+              onMessage={() => navigate({ to: "/messages" })}
+              onFavorite={() => toast("Favorites are coming soon")}
             />
           ))}
         </PuzzleViewProvider>
