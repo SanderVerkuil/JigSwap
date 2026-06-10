@@ -98,6 +98,12 @@ export const gateway = {
     messages: api.exchange.getExchangeMessages.getExchangeMessages,
   },
 
+  // Chain-of-Custody: a Copy's provenance (original owner -> each settled transfer -> current
+  // owner), read from the custody projection folded off Exchange's OwnershipTransferred events.
+  custody: {
+    timeline: api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline,
+  },
+
   // Identity & Access: the wrapper over Clerk members and their profiles.
   identity: {
     // Reads go through thin Convex adapters returning typed view DTOs (MemberView / MemberStatsView)
