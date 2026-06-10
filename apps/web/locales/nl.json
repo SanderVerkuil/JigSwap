@@ -1336,5 +1336,27 @@
     "transferredVia": "Overgedragen via ruil {exchangeId}",
     "noTransfers": "Dit exemplaar is nooit overgedragen.",
     "loading": "Eigendomsketen laden..."
+  },
+  "lending": {
+    "borrowedTitle": "Geleend",
+    "borrowedSubtitle": "Exemplaren die je momenteel in bruikleen hebt.",
+    "borrowedFrom": "Geleend van {name}",
+    "openedRelative": "Geleend {when}",
+    "returnAction": "Teruggeven",
+    "returning": "Teruggeven...",
+    "noBorrowed": "Niets geleend",
+    "noBorrowedDescription": "Exemplaren die aan jou zijn uitgeleend verschijnen hier tot je ze teruggeeft.",
+    "loading": "Leningen laden...",
+    "onLoanTo": "Uitgeleend aan {name}",
+    "recallAction": "Terugvragen",
+    "recalling": "Terugvragen...",
+    "historyTitle": "Leengeschiedenis",
+    "historyDescription": "Elke keer dat dit exemplaar is uitgeleend.",
+    "noHistory": "Dit exemplaar is nooit uitgeleend.",
+    "statusOpen": "Open",
+    "statusReturned": "Teruggegeven",
+    "statusRecalled": "Teruggevraagd",
+    "borrowedBy": "Geleend door {name}",
+    "unknownMember": "Onbekend lid"
   }
 }

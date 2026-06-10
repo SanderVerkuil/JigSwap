@@ -1336,5 +1336,27 @@
     "transferredVia": "Transferred via exchange {exchangeId}",
     "noTransfers": "This copy has never been transferred.",
     "loading": "Loading custody timeline..."
+  },
+  "lending": {
+    "borrowedTitle": "Borrowed",
+    "borrowedSubtitle": "Copies you are currently holding on loan.",
+    "borrowedFrom": "Borrowed from {name}",
+    "openedRelative": "Borrowed {when}",
+    "returnAction": "Return",
+    "returning": "Returning...",
+    "noBorrowed": "Nothing borrowed",
+    "noBorrowedDescription": "Copies lent to you will appear here until you return them.",
+    "loading": "Loading loans...",
+    "onLoanTo": "On loan to {name}",
+    "recallAction": "Recall",
+    "recalling": "Recalling...",
+    "historyTitle": "Loan history",
+    "historyDescription": "Every time this copy has been lent out.",
+    "noHistory": "This copy has never been lent out.",
+    "statusOpen": "Open",
+    "statusReturned": "Returned",
+    "statusRecalled": "Recalled",
+    "borrowedBy": "Borrowed by {name}",
+    "unknownMember": "Unknown member"
   }
 }
