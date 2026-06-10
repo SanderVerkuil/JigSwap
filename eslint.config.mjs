@@ -109,6 +109,26 @@ const eslintConfig = [
   {
     ignores: ["apps/web/src/routeTree.gen.ts"],
   },
+  // Convex's _generated sources are machine-written; never lint them (their eslint-disable
+  // headers otherwise report as unused once the surrounding rules go quiet).
+  {
+    ignores: ["**/_generated/**"],
+  },
+  // Honor the leading-underscore "intentionally unused" convention (dormant stub-adapter params,
+  // ignored catch bindings) instead of forcing dead-looking renames.
+  {
+    files: ["**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
+    },
+  },
 ];
 
 export default eslintConfig;

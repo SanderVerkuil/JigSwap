@@ -4,10 +4,8 @@ import {
   Copy,
   CopyImage,
   type CopyState,
-  type FileId,
   type OwnerId,
   Price,
-  type PuzzleDefinitionId,
   SharingSetting,
   toId,
 } from "@jigswap/domain";

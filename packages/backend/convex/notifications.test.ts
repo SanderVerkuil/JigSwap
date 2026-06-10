@@ -168,7 +168,7 @@ describe("preference suppression", () => {
 describe("read flows + queries", () => {
   test("markRead flips a single notification and unreadCount drops", async () => {
     const t = convexTest(schema, modules);
-    const { bob } = await proposeSale(t);
+    await proposeSale(t);
     await flushScheduled(t);
 
     expect(await asBob(t).query(api.notifications.unreadCount.unreadCount, {})).toBe(1);
@@ -184,7 +184,7 @@ describe("read flows + queries", () => {
 
   test("markAllRead clears every unread notification for the caller", async () => {
     const t = convexTest(schema, modules);
-    const { id, bob } = await proposeSale(t);
+    const { id } = await proposeSale(t);
     // Cancelling also notifies the recipient (Bob), so Bob ends with two unread notifications.
     await asAlice(t).mutation(api.exchange.cancel.cancel, { exchangeId: id });
     await flushScheduled(t);
@@ -198,7 +198,7 @@ describe("read flows + queries", () => {
 
   test("only the addressee may mark a notification read", async () => {
     const t = convexTest(schema, modules);
-    const { bob } = await proposeSale(t);
+    await proposeSale(t);
     await flushScheduled(t);
     const list = await asBob(t).query(api.notifications.listMyNotifications.listMyNotifications, {});
 

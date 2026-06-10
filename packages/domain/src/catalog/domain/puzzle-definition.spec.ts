@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DomainEvent, toId } from "../../shared-kernel";
 import { PuzzleDefinitionSubmitted } from "./events";
-import { CatalogCategoryId, PuzzleDefinitionId, SubmitterId } from "./ids";
+import { PuzzleDefinitionId, SubmitterId } from "./ids";
 import { PuzzleDefinition, SubmitPuzzleDefinitionProps } from "./puzzle-definition";
 
 const id = toId<"PuzzleDefinitionId">("pd1") as PuzzleDefinitionId;

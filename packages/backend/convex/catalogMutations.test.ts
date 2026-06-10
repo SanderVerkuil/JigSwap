@@ -2,15 +2,13 @@ import { convexTest } from "convex-test";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob("./**/!(*.test).*s");
 
-// A valid EAN-13 / UPC-A (correct GS1 check digits) the barcode VO will accept.
+// A valid EAN-13 (correct GS1 check digits) the barcode VO will accept.
 const VALID_EAN = "4006381333931";
-const VALID_UPC = "036000291452";
 
 // Seed a single member; the Clerk subject maps to the user via by_clerk_id.
 const seedMember = async (t: ReturnType<typeof convexTest>) =>

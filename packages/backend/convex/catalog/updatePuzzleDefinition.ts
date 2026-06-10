@@ -2,7 +2,6 @@ import {
   type CatalogCategoryId,
   makeUpdatePuzzleDefinition,
   type PuzzleDefinitionChanges,
-  type PuzzleDefinitionId,
   toId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
