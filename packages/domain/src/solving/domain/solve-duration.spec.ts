@@ -45,4 +45,14 @@ describe("SolveDuration", () => {
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("InvalidDuration");
   });
+
+  it("rehydrates a stored value via fromState", () => {
+    expect(SolveDuration.fromState(42).minutes).toBe(42);
+  });
+
+  it("compares by minutes", () => {
+    const thirty = SolveDuration.fromState(30);
+    expect(thirty.equals(SolveDuration.fromState(30))).toBe(true);
+    expect(thirty.equals(SolveDuration.fromState(31))).toBe(false);
+  });
 });

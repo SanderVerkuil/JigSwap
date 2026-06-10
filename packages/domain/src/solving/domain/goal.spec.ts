@@ -22,6 +22,9 @@ describe("Goal.create", () => {
     const result = create(3);
     expect(result.isOk).toBe(true);
     if (!result.isOk) return;
+    expect(result.value.id).toBe(ID);
+    expect(result.value.userId).toBe(ALICE);
+    expect(result.value.targetCompletions).toBe(3);
     expect(result.value.currentCompletions).toBe(0);
     expect(result.value.isActive).toBe(true);
     expect(result.value.isAchieved).toBe(false);

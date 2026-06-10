@@ -41,6 +41,7 @@ describe("Completion.start", () => {
     expect(result.isOk).toBe(true);
     if (!result.isOk) return;
     expect(result.value.isCompleted).toBe(false);
+    expect(result.value.photos).toEqual([]); // defaults to no photos
     expect(names(result.value)).toEqual(["CompletionStarted"]);
   });
 
@@ -74,8 +75,15 @@ describe("Completion.record", () => {
     expect(result.isOk).toBe(true);
     if (!result.isOk) return;
     expect(result.value.isCompleted).toBe(true);
+    expect(result.value.photos).toEqual([]); // defaults to no photos
     expect(result.value.toState().completionTimeMinutes).toBe(90);
     expect(names(result.value)).toEqual(["CompletionRecorded"]);
+  });
+
+  it("allows exactly five photos", () => {
+    const result = recordValid({ photos: photos(5) });
+    expect(result.isOk).toBe(true);
+    if (result.isOk) expect(result.value.photos).toHaveLength(5);
   });
 
   it("rejects an end before start with InvalidTimeRange", () => {
@@ -156,6 +164,32 @@ describe("Completion.finish", () => {
     expect(outcome.isErr).toBe(true);
     if (outcome.isErr) expect(outcome.error.code).toBe("InvalidTimeRange");
   });
+
+  it("accepts an equal end/start when an explicit duration is supplied", () => {
+    const started = Completion.start({
+      id: ID,
+      userId: ALICE,
+      startDate: START,
+      now: NOW,
+    });
+    if (!started.isOk) throw new Error("setup failed");
+    const outcome = started.value.finish(START, NOW, 15);
+    expect(outcome.isOk).toBe(true);
+    expect(started.value.toState().completionTimeMinutes).toBe(15);
+  });
+
+  it("rejects finishing with an invalid explicit duration", () => {
+    const started = Completion.start({
+      id: ID,
+      userId: ALICE,
+      startDate: START,
+      now: NOW,
+    });
+    if (!started.isOk) throw new Error("setup failed");
+    const outcome = started.value.finish(END, NOW, -5);
+    expect(outcome.isErr).toBe(true);
+    if (outcome.isErr) expect(outcome.error.code).toBe("InvalidDuration");
+  });
 });
 
 describe("Completion.edit", () => {
@@ -235,6 +269,144 @@ describe("Completion.edit", () => {
     );
     expect(outcome.isOk).toBe(true);
     expect(recorded.value.toState().completionTimeMinutes).toBe(30);
+  });
+
+  it("treats the edit window as exactly 24 hours from the end (inclusive)", () => {
+    const DAY_MS = 86_400_000; // hardcoded so the EDIT_WINDOW_MS arithmetic is actually pinned
+    const onEdge = recordValid();
+    if (!onEdge.isOk) throw new Error("setup failed");
+    expect(
+      onEdge.value.edit(ALICE, { notes: "edge" }, new Date(END.getTime() + DAY_MS))
+        .isOk,
+    ).toBe(true);
+
+    const justPast = recordValid();
+    if (!justPast.isOk) throw new Error("setup failed");
+    const outcome = justPast.value.edit(
+      ALICE,
+      { notes: "late" },
+      new Date(END.getTime() + DAY_MS + 1),
+    );
+    expect(outcome.isErr).toBe(true);
+    if (outcome.isErr) expect(outcome.error.code).toBe("EditWindowClosed");
+  });
+
+  it("anchors the edit window on the completion's end, not its updatedAt", () => {
+    // Recorded two hours after the solve actually ended.
+    const recorded = recordValid({
+      now: new Date(END.getTime() + 2 * 60 * 60 * 1000),
+    });
+    if (!recorded.isOk) throw new Error("setup failed");
+    // 25h after the end (closed) but only 23h after updatedAt — must be closed.
+    const outcome = recorded.value.edit(
+      ALICE,
+      { notes: "late" },
+      new Date(END.getTime() + 25 * 60 * 60 * 1000),
+    );
+    expect(outcome.isErr).toBe(true);
+    if (outcome.isErr) expect(outcome.error.code).toBe("EditWindowClosed");
+  });
+
+  it("leaves the end and duration untouched when neither is edited", () => {
+    const recorded = recordValid({ completionTimeMinutes: 45 }); // span is 90, stored 45
+    if (!recorded.isOk) throw new Error("setup failed");
+    const outcome = recorded.value.edit(ALICE, { notes: "only notes" }, END);
+    expect(outcome.isOk).toBe(true);
+    expect(recorded.value.toState().endDate).toEqual(END);
+    expect(recorded.value.toState().completionTimeMinutes).toBe(45);
+  });
+
+  it("allows an edit with exactly five photos", () => {
+    const recorded = recordValid();
+    if (!recorded.isOk) throw new Error("setup failed");
+    const outcome = recorded.value.edit(ALICE, { photos: photos(5) }, END);
+    expect(outcome.isOk).toBe(true);
+    expect(recorded.value.photos).toHaveLength(5);
+  });
+
+  it("accepts an equal end/start edit with an explicit duration", () => {
+    const recorded = recordValid();
+    if (!recorded.isOk) throw new Error("setup failed");
+    const outcome = recorded.value.edit(
+      ALICE,
+      { endDate: START, completionTimeMinutes: 15 },
+      END,
+    );
+    expect(outcome.isOk).toBe(true);
+    expect(recorded.value.toState().completionTimeMinutes).toBe(15);
+  });
+
+  it("recomputes duration when only the explicit minutes change", () => {
+    const recorded = recordValid(); // span 90
+    if (!recorded.isOk) throw new Error("setup failed");
+    const outcome = recorded.value.edit(
+      ALICE,
+      { completionTimeMinutes: 20 },
+      END,
+    );
+    expect(outcome.isOk).toBe(true);
+    expect(recorded.value.toState().completionTimeMinutes).toBe(20);
+  });
+
+  it("recomputes duration when only the start date changes", () => {
+    const recorded = recordValid(); // 10:00–11:30 = 90
+    if (!recorded.isOk) throw new Error("setup failed");
+    const outcome = recorded.value.edit(
+      ALICE,
+      { startDate: new Date("2026-06-01T10:30:00Z") },
+      END,
+    );
+    expect(outcome.isOk).toBe(true);
+    expect(recorded.value.toState().completionTimeMinutes).toBe(60);
+  });
+
+  it("rejects an edit whose explicit duration is invalid", () => {
+    const recorded = recordValid();
+    if (!recorded.isOk) throw new Error("setup failed");
+    const outcome = recorded.value.edit(
+      ALICE,
+      { completionTimeMinutes: -5 },
+      END,
+    );
+    expect(outcome.isErr).toBe(true);
+    if (outcome.isErr) expect(outcome.error.code).toBe("InvalidDuration");
+  });
+
+  describe("editing an in-progress completion", () => {
+    const inProgress = () => {
+      const started = Completion.start({
+        id: ID,
+        userId: ALICE,
+        startDate: START,
+        now: NOW,
+      });
+      if (!started.isOk) throw new Error("setup failed");
+      started.value.pullEvents();
+      return started.value;
+    };
+
+    it("moves the start date without deriving a duration from a missing end", () => {
+      const completion = inProgress();
+      const newStart = new Date("2026-06-01T10:15:00Z");
+      const outcome = completion.edit(ALICE, { startDate: newStart }, NOW);
+      expect(outcome.isOk).toBe(true);
+      expect(completion.toState().startDate).toEqual(newStart);
+      expect(completion.toState().completionTimeMinutes).toBeUndefined();
+    });
+
+    it("sets the duration directly from explicit minutes (no end yet)", () => {
+      const completion = inProgress();
+      const outcome = completion.edit(ALICE, { completionTimeMinutes: 30 }, NOW);
+      expect(outcome.isOk).toBe(true);
+      expect(completion.toState().completionTimeMinutes).toBe(30);
+    });
+
+    it("rejects invalid explicit minutes (no end yet)", () => {
+      const completion = inProgress();
+      const outcome = completion.edit(ALICE, { completionTimeMinutes: -5 }, NOW);
+      expect(outcome.isErr).toBe(true);
+      if (outcome.isErr) expect(outcome.error.code).toBe("InvalidDuration");
+    });
   });
 });
 
