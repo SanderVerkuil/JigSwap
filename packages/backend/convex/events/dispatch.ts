@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation } from "../_generated/server";
 import { handleDomainEvent as handleCustodyEvent } from "../custody/subscriber";
+import { handleDomainEvent as handleLibraryTransferEvent } from "../library/transferOnSettlement";
 import { handleDomainEvent as handleNotificationEvent } from "../notifications/subscriber";
 
 // The central async dispatcher. Scheduled once per recorded domain event; it loads the row, routes
@@ -20,7 +21,9 @@ export const dispatch = internalMutation({
     // Fan out to every async subscriber. A throw in any propagates so the scheduler retries the
     // whole mutation (see module comment); both run in this transaction.
     await handleNotificationEvent(ctx, event);
+    // Custody records the pre-transfer owner, so it MUST run before the library transfer reassigns it.
     await handleCustodyEvent(ctx, event);
+    await handleLibraryTransferEvent(ctx, event);
 
     await ctx.db.patch(eventId, { processedAt: Date.now() });
   },

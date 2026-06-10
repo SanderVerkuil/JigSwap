@@ -51,8 +51,10 @@ const seed = (t: ReturnType<typeof convexTest>) =>
       createdAt: now,
       updatedAt: now,
     });
-    // One copy held by `owner`; both exchanges below transfer THIS copy.
+    // One copy held by `owner`; both exchanges below transfer THIS copy. aggregateId marks it a
+    // domain-written copy so the Library transfer subscriber can move it through the Copy aggregate.
     const copy = await ctx.db.insert("ownedPuzzles", {
+      aggregateId: "copy-agg-1",
       puzzleId,
       ownerId: owner,
       condition: "good",
@@ -79,6 +81,29 @@ const settleSaleToAlice = async (
     type: "sale",
     requestedPuzzleId: copy,
     salePrice: 1000,
+  });
+  await t.withIdentity({ subject: "clerk_owner" }).mutation(api.exchange.accept.accept, { exchangeId: id });
+  await asAlice(t).mutation(api.exchange.confirmCompletion.confirmCompletion, { exchangeId: id });
+  await t.withIdentity({ subject: "clerk_owner" }).mutation(api.exchange.confirmCompletion.confirmCompletion, { exchangeId: id });
+  return id;
+};
+
+// Drive a full loan of `copy` from `owner` to Alice. The copy must be lendable for the proposal.
+const settleLoanToAlice = async (
+  t: ReturnType<typeof convexTest>,
+  copy: Id<"ownedPuzzles">,
+  owner: Id<"users">,
+) => {
+  await t.run(async (ctx) =>
+    ctx.db.patch(copy, {
+      availability: { forTrade: false, forSale: false, forLend: true },
+    }),
+  );
+  const id = await asAlice(t).mutation(api.exchange.propose.propose, {
+    recipientId: owner,
+    type: "loan",
+    requestedPuzzleId: copy,
+    loanReturnDate: Date.now() + 86_400_000,
   });
   await t.withIdentity({ subject: "clerk_owner" }).mutation(api.exchange.accept.accept, { exchangeId: id });
   await asAlice(t).mutation(api.exchange.confirmCompletion.confirmCompletion, { exchangeId: id });
@@ -161,5 +186,41 @@ describe("custody.getCopyCustodyTimeline", () => {
     expect(timeline!.transfers[0].occurredAt).toBeLessThanOrEqual(
       timeline!.transfers[1].occurredAt,
     );
+  });
+});
+
+describe("ownership move on settlement", () => {
+  test("a settled sale reassigns the copy to the buyer and resets it to private", async () => {
+    const t = convexTest(schema, modules);
+    const { copy, owner, alice } = await seed(t);
+
+    await settleSaleToAlice(t, copy, owner);
+    await flushScheduled(t);
+
+    const row = await t.run(async (ctx) => ctx.db.get(copy));
+    expect(row?.ownerId).toBe(alice); // gap closed: ownership actually moved to the buyer
+    expect(row?.availability).toEqual({
+      forTrade: false,
+      forSale: false,
+      forLend: false,
+    });
+  });
+
+  test("a settled loan does not move ownership and records no custody entry", async () => {
+    const t = convexTest(schema, modules);
+    const { copy, owner } = await seed(t);
+
+    await settleLoanToAlice(t, copy, owner);
+    await flushScheduled(t);
+
+    const row = await t.run(async (ctx) => ctx.db.get(copy));
+    expect(row?.ownerId).toBe(owner); // a loan is possession only — ownership stays with the lender
+
+    const timeline = await asAlice(t).query(
+      api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline,
+      { copyId: copy },
+    );
+    expect(timeline!.transfers).toEqual([]);
+    expect(timeline!.currentOwner?.name).toBe("clerk_owner");
   });
 });

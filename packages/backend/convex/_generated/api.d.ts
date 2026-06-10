@@ -62,6 +62,7 @@ import type * as exchange_propose from "../exchange/propose.js";
 import type * as exchange_raiseDispute from "../exchange/raiseDispute.js";
 import type * as exchange_readViews from "../exchange/readViews.js";
 import type * as exchange_runAction from "../exchange/runAction.js";
+import type * as exchange_settlementType from "../exchange/settlementType.js";
 import type * as exchanges from "../exchanges.js";
 import type * as http from "../http.js";
 import type * as identity_getCurrentUser from "../identity/getCurrentUser.js";
@@ -108,6 +109,7 @@ import type * as library_getOwnedPuzzlesByOwner from "../library/getOwnedPuzzles
 import type * as library_getUserCollections from "../library/getUserCollections.js";
 import type * as library_mappers from "../library/mappers.js";
 import type * as library_removeCopyFromCollection from "../library/removeCopyFromCollection.js";
+import type * as library_transferOnSettlement from "../library/transferOnSettlement.js";
 import type * as library_updateCollection from "../library/updateCollection.js";
 import type * as library_updateCopyDetails from "../library/updateCopyDetails.js";
 import type * as library_updateCopySharing from "../library/updateCopySharing.js";
@@ -253,6 +255,7 @@ declare const fullApi: ApiFromModules<{
   "exchange/raiseDispute": typeof exchange_raiseDispute;
   "exchange/readViews": typeof exchange_readViews;
   "exchange/runAction": typeof exchange_runAction;
+  "exchange/settlementType": typeof exchange_settlementType;
   exchanges: typeof exchanges;
   http: typeof http;
   "identity/getCurrentUser": typeof identity_getCurrentUser;
@@ -299,6 +302,7 @@ declare const fullApi: ApiFromModules<{
   "library/getUserCollections": typeof library_getUserCollections;
   "library/mappers": typeof library_mappers;
   "library/removeCopyFromCollection": typeof library_removeCopyFromCollection;
+  "library/transferOnSettlement": typeof library_transferOnSettlement;
   "library/updateCollection": typeof library_updateCollection;
   "library/updateCopyDetails": typeof library_updateCopyDetails;
   "library/updateCopySharing": typeof library_updateCopySharing;

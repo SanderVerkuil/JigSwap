@@ -600,6 +600,7 @@ export default defineSchema({
   copyCustodyEntries: defineTable({
     copyId: v.string(), // the transferred Copy (an ownedPuzzles _id, the domain CopyId)
     exchangeId: v.string(), // the settling Exchange aggregateId
+    previousOwner: v.string(), // the member the Copy moved FROM (a users _id)
     newOwner: v.string(), // the member the Copy moved to (a users _id)
     occurredAt: v.number(),
   }).index("by_copy", ["copyId", "occurredAt"]),
