@@ -1531,6 +1531,36 @@
       "g4i3Body": "Volg andere puzzelaars, zie hun activiteit en deel je openbare profiel.",
       "ctaTitle": "Klaar om te beginnen?",
       "ctaAbout": "Leer ons kennen"
+    },
+    "aboutPage": {
+      "heroEyebrow": "Over ons",
+      "heroTitle": "Begonnen aan de keukentafel",
+      "heroLead": "JigSwap groeide uit een familie-bijproject: we wilden gewoon makkelijk puzzels kunnen zien en ruilen met vrienden en familie. Daar werd een platform voor de hele puzzelgemeenschap uit geboren.",
+      "missionEyebrow": "Onze missie",
+      "missionTitle": "Puzzels delen toegankelijk en duurzaam maken — voor iedereen",
+      "missionBody": "We geloven dat een afgeronde puzzel niet het einde is, maar een nieuw begin voor iemand anders. JigSwap verbindt puzzelaars zodat elke doos vaker open mag.",
+      "valuesEyebrow": "Waar we voor staan",
+      "valuesTitle": "Onze waarden",
+      "value1Title": "Hobby, geen handel",
+      "value1Body": "Puzzelen is ontspanning. Bij ons draait het om delen en plezier, niet om winst.",
+      "value2Title": "Delen boven bezitten",
+      "value2Body": "Eén puzzel die je uitleent en die door vele handen gaat, is meer waard dan tien die stof verzamelen.",
+      "value3Title": "Community eerst",
+      "value3Body": "We bouwen voor de mensen die puzzelen even leuk vinden als wij.",
+      "value4Title": "Vertrouwen",
+      "value4Body": "Eerlijke beoordelingen en transparante tracking houden elke uitwisseling veilig.",
+      "storyEyebrow": "Ons verhaal",
+      "storyTitle": "Van keukentafel tot community",
+      "tl1Year": "2025",
+      "tl1Title": "Een familieproject",
+      "tl1Body": "Begonnen als een simpele manier om puzzels te ruilen met vrienden en familie.",
+      "tl2Year": "2025",
+      "tl2Title": "De eerste plank",
+      "tl2Body": "De tastbare puzzelplank werd geboren — een digitale kast die als thuis voelt.",
+      "tl3Year": "2026",
+      "tl3Title": "Een groeiende community",
+      "tl3Body": "Puzzelaars delen, lenen en ruilen nu door heel Nederland.",
+      "cta": "Kom in contact"
     }
   }
 }

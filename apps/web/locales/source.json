@@ -1531,6 +1531,36 @@
       "g4i3Body": "Follow fellow puzzlers, see their activity and share your public profile.",
       "ctaTitle": "Ready to begin?",
       "ctaAbout": "Get to know us"
+    },
+    "aboutPage": {
+      "heroEyebrow": "About us",
+      "heroTitle": "Started at the kitchen table",
+      "heroLead": "JigSwap grew out of a family side project: we just wanted an easy way to see and swap puzzles with friends and family. From there, a platform for the whole puzzle community was born.",
+      "missionEyebrow": "Our mission",
+      "missionTitle": "Making puzzle sharing accessible and sustainable — for everyone",
+      "missionBody": "We believe a finished puzzle isn't the end, but a new beginning for someone else. JigSwap connects puzzlers so every box gets opened more often.",
+      "valuesEyebrow": "What we stand for",
+      "valuesTitle": "Our values",
+      "value1Title": "Hobby, not hustle",
+      "value1Body": "Puzzling is relaxation. We're about sharing and joy, not profit.",
+      "value2Title": "Sharing over owning",
+      "value2Body": "One puzzle you lend out and that passes through many hands is worth more than ten gathering dust.",
+      "value3Title": "Community first",
+      "value3Body": "We build for the people who love puzzling as much as we do.",
+      "value4Title": "Trust",
+      "value4Body": "Honest reviews and transparent tracking keep every exchange safe.",
+      "storyEyebrow": "Our story",
+      "storyTitle": "From kitchen table to community",
+      "tl1Year": "2025",
+      "tl1Title": "A family project",
+      "tl1Body": "Started as a simple way to swap puzzles with friends and family.",
+      "tl2Year": "2025",
+      "tl2Title": "The first shelf",
+      "tl2Body": "The tactile puzzle plank was born — a digital shelf that feels like home.",
+      "tl3Year": "2026",
+      "tl3Title": "A growing community",
+      "tl3Body": "Puzzlers now share, lend and swap across the country.",
+      "cta": "Get in touch"
     }
   }
 }
