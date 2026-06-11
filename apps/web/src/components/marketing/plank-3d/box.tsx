@@ -69,6 +69,7 @@ export function PuzzleBox({
     [box, slot.c1, slot.c2, headingFont],
   );
   React.useEffect(() => () => texture.dispose(), [texture]);
+  React.useEffect(() => () => { document.body.style.cursor = ""; }, []);
 
   const home = React.useMemo(() => new THREE.Vector3(slot.x, h / 2, 0), [slot.x, h]);
   const lean = (index % 2 === 0 ? 1 : -1) * 0.015 + index * 0.002;

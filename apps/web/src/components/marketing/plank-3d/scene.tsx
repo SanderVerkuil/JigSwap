@@ -22,6 +22,7 @@ export interface SceneProps {
   reducedMotion: boolean;
   visible: boolean;
   onFirstFrame: () => void;
+  eventSource: React.RefObject<HTMLDivElement | null>;
 }
 
 function layoutSlots(
@@ -152,8 +153,10 @@ export default function PlankScene(props: SceneProps) {
       dpr={[1, 2]}
       frameloop={props.visible ? "always" : "never"}
       gl={{ alpha: true, antialias: true }}
-      style={{ pointerEvents: "auto", background: "transparent" }}
+      style={{ pointerEvents: "none", background: "transparent" }}
       camera={{ fov: 35 }}
+      eventSource={props.eventSource as unknown as React.RefObject<HTMLElement>}
+      eventPrefix="client"
     >
       <FirstFrame onFirstFrame={props.onFirstFrame} />
       <FitCamera worldWidth={worldWidth} />
