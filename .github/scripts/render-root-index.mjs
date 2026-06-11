@@ -29,7 +29,8 @@ const open = new Set(
 
 // Everything else at the top level (legacy layouts, closed PRs) is pruned.
 // .git is the checkout's own metadata (a file in worktrees, a dir in CI).
-const KEEP = new Set([".git", ".nojekyll", "index.html", "main"]);
+// vercel.json keeps Vercel from deploying the gh-pages branch.
+const KEEP = new Set([".git", ".nojekyll", "index.html", "main", "vercel.json"]);
 
 const kept = [];
 for (const entry of readdirSync(pagesDir, { withFileTypes: true })) {
