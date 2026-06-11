@@ -44,13 +44,7 @@ class SceneBoundary extends React.Component<
   }
 }
 
-export function JigPlank3D({
-  boxes = [],
-  preset = "side",
-}: {
-  boxes?: PlankBox[];
-  preset?: SceneProps["preset"];
-}) {
+export function JigPlank3D({ boxes = [] }: { boxes?: PlankBox[] }) {
   const container = React.useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = React.useState(false);
   const [sceneReady, setSceneReady] = React.useState(false);
@@ -97,28 +91,17 @@ export function JigPlank3D({
   return (
     <div
       ref={container}
-      style={{ position: "relative", touchAction: "pan-y" }}
+      style={{ position: "absolute", inset: 0, touchAction: "pan-y" }}
       aria-hidden="true"
     >
-      {/* static ambient shadow so the plank pops off the page; CSS-only, no per-frame cost */}
+      {/* CSS plank: fallback shown pre-crossfade or when WebGL is unavailable.
+          Positioned right-of-center, vertically centered. */}
       <div
-        aria-hidden="true"
         style={{
           position: "absolute",
-          left: "-12%",
-          right: "-12%",
-          bottom: -26,
-          height: 64,
-          background:
-            "radial-gradient(50% 100% at 50% 0%, rgb(40 30 80 / 0.28), transparent 70%)",
-          filter: "blur(6px)",
-          pointerEvents: "none",
-        }}
-      />
-      {/* CSS plank: defines layout size; stays as fallback until the scene
-          has rendered a frame, then fades out (kept for layout). */}
-      <div
-        style={{
+          right: "6%",
+          top: "50%",
+          transform: "translateY(-50%) scale(.9)",
           transition: "opacity .45s ease",
           opacity: sceneReady ? 0 : 1,
           filter: "drop-shadow(0 30px 40px rgb(40 30 80 / .16))",
@@ -129,16 +112,11 @@ export function JigPlank3D({
       {showScene && (
         <SceneBoundary onError={() => setSceneReady(false)}>
           <React.Suspense fallback={null}>
-            {/* Bleed past the plank so lifted/dragged boxes aren't clipped.
-                pointer-events: none on the canvas; interaction routes via
-                eventSource={container}. */}
+            {/* Canvas fills the full container (the hero backdrop). */}
             <div
               style={{
                 position: "absolute",
-                top: -130,
-                left: -70,
-                right: -70,
-                bottom: -40,
+                inset: 0,
                 pointerEvents: "none",
                 transition: "opacity .45s ease",
                 opacity: sceneReady ? 1 : 0,
@@ -151,7 +129,6 @@ export function JigPlank3D({
                 theme={theme}
                 reducedMotion={reducedMotion}
                 visible={visible}
-                preset={preset}
                 onFirstFrame={() => setSceneReady(true)}
                 eventSource={container}
               />
