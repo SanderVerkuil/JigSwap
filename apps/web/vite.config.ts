@@ -2,6 +2,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
+import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig } from "vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 
@@ -25,5 +26,21 @@ export default defineConfig({
         "/ingest/**": { proxy: { to: "https://eu.i.posthog.com/**" } },
       },
     }),
+    // Bundle treemap for CI reports, opt-in via ANALYZE=1 so dev/prod builds
+    // are untouched. TanStack Start runs one Rollup build per environment;
+    // applyToEnvironment keeps the report scoped to the client bundle instead
+    // of letting the last (SSR/server) build overwrite it.
+    // NOTE: an ANALYZE build must bypass the Nx cache (Nx doesn't key on this
+    // env var) — CI runs `vite build` directly instead of `nx build web`.
+    !!process.env.ANALYZE && {
+      ...visualizer({
+        filename: "stats.html",
+        template: "treemap",
+        gzipSize: true,
+        brotliSize: true,
+      }),
+      applyToEnvironment: (environment: { name: string }) =>
+        environment.name === "client",
+    },
   ],
 });

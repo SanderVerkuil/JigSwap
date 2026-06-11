@@ -19,6 +19,14 @@
         "cwd": "packages/domain"
       }
     },
+    "coverage": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/coverage/packages/domain"],
+      "options": {
+        "command": "vitest run --coverage",
+        "cwd": "packages/domain"
+      }
+    },
     "arch-check": {
       "executor": "nx:run-commands",
       "options": {

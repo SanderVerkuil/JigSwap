@@ -8,6 +8,9 @@
 .tanstack/
 dist/
 
+# bundle treemap from ANALYZE=1 builds (published to Pages by CI)
+stats.html
+
 # generated route tree (machine-written by the TanStack Start plugin)
 src/routeTree.gen.ts
 

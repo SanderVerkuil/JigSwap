@@ -37,6 +37,14 @@
         "cwd": "packages/backend"
       }
     },
+    "coverage": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/coverage/packages/backend"],
+      "options": {
+        "command": "vitest run --coverage",
+        "cwd": "packages/backend"
+      }
+    },
     "deploy": {
       "executor": "nx:run-commands",
       "options": {

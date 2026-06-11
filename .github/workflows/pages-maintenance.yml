@@ -1,0 +1,59 @@
+name: Pages Maintenance
+
+# Weekly sweep of the gh-pages report site: prunes directories of closed PRs
+# (and legacy layouts) and regenerates the root index. Runs from the default
+# branch in a trusted context — deliberately NOT pull_request(_target)-driven:
+# close events have read-only tokens for forks, and pull_request_target is a
+# footgun this repo avoids entirely. A cron sweep is simpler and self-healing.
+on:
+  schedule:
+    - cron: "17 4 * * 1" # Mondays 04:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Serialize gh-pages pushes across all workflows that deploy reports.
+concurrency:
+  group: gh-pages-publish
+  cancel-in-progress: false
+
+jobs:
+  maintain:
+    name: Prune closed PRs + root index
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # Default branch for the scripts, gh-pages as a subdirectory to edit.
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Prune and render root index
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          OPEN_PRS=$(gh pr list --repo "$REPO" --state open --limit 200 --json number --jq 'map(.number) | join(",")')
+          export OPEN_PRS
+          node .github/scripts/render-root-index.mjs gh-pages
+
+      - name: Commit and push if changed
+        working-directory: gh-pages
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "nothing to update"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "pages maintenance: prune closed PRs, refresh root index"
+          git push origin gh-pages

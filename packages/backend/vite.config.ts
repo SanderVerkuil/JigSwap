@@ -32,6 +32,8 @@ export default defineConfig(() => ({
     coverage: {
       reportsDirectory: "../../coverage/packages/backend",
       provider: "v8" as const,
+      // json-summary feeds the totals shown in the CI reports PR comment.
+      reporter: ["text", "html", "json-summary"],
     },
   },
 }));
