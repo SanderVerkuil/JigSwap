@@ -6,7 +6,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { type Locale, setLocale } from "@/lib/i18n";
+import { clearIntlCache, type Locale, setLocale } from "@/lib/i18n";
 import { useRouter } from "@tanstack/react-router";
 import { Globe } from "lucide-react";
 import { toast } from "sonner";
@@ -23,7 +23,9 @@ export function LanguageSwitcher() {
 
   const handleLanguageChange = async (locale: string) => {
     await setLocale({ data: locale as Locale });
-    // Re-run the root loader so the IntlProvider picks up the new catalog.
+    // Drop the client-side catalog cache, then re-run the root beforeLoad so
+    // the IntlProvider picks up the new catalog.
+    clearIntlCache();
     await router.invalidate();
     toast.success("Language changed successfully");
   };

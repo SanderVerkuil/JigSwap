@@ -7,8 +7,8 @@ import {
   Outlet,
   Scripts,
   createRootRouteWithContext,
-  useLoaderData,
   useRouteContext,
+  useRouter,
 } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import type { ConvexReactClient } from "convex/react";
@@ -18,7 +18,7 @@ import { DefaultCatchBoundary } from "../components/DefaultCatchBoundary";
 import { NotFound } from "../components/NotFound";
 import { Providers } from "../components/providers";
 import { ErrorBoundary } from "../components/ui/error-boundary";
-import { getIntl } from "../lib/i18n";
+import { getIntlCached, seedIntlCache } from "../lib/i18n";
 // Tailwind 4 entry + theme tokens; CSS-based config travels with this import.
 import appCss from "../styles/globals.css?url";
 
@@ -29,6 +29,17 @@ const fetchClerkAuth = createServerFn({ method: "GET" }).handler(async () => {
   const token = await getToken({ template: "convex" });
   return { userId, token };
 });
+
+// beforeLoad re-runs on EVERY navigation (root always matches), which used to
+// fire a fetchClerkAuth round-trip per click. The SSR token only matters for
+// server loaders; on the client, Clerk's SDK owns live session state and
+// ConvexProviderWithClerk refreshes tokens itself. So fetch once per page
+// load and reuse across client-side navigations — sign-in/out flows end in a
+// full-page redirect, which naturally resets this cache. The cache is seeded
+// at hydration from the SSR-dehydrated beforeLoad context (see RootComponent),
+// so the first client navigation is request-free too.
+type AuthPayload = { userId: string | null; token: string | null };
+let clientAuthCache: AuthPayload | null = null;
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -58,17 +69,24 @@ export const Route = createRootRouteWithContext<{
       },
     ],
   }),
+  // Resolves auth + intl into the root context. beforeLoad context is
+  // dehydrated to the client by Start's SSR, and child head() functions can
+  // read it for localized titles (loaderData is NOT reliably resolved by the
+  // time a child head runs, so this must live in context, not a loader).
   beforeLoad: async (ctx) => {
-    const { userId, token } = await fetchClerkAuth();
-    if (token) {
-      // Hand the Clerk token to the server HTTP client so SSR loaders see the auth.
-      ctx.context.convexQueryClient.serverHttpClient?.setAuth(token);
+    const isBrowser = typeof window !== "undefined";
+    const [auth, intl] = await Promise.all([
+      (isBrowser && clientAuthCache) || fetchClerkAuth(),
+      getIntlCached(),
+    ]);
+    if (isBrowser) {
+      clientAuthCache = { userId: auth.userId, token: auth.token };
     }
-    return { userId, token };
-  },
-  // Resolve locale + messages on the server so IntlProvider has them at first paint.
-  loader: async () => {
-    return await getIntl();
+    if (auth.token) {
+      // Hand the Clerk token to the server HTTP client so SSR loaders see the auth.
+      ctx.context.convexQueryClient.serverHttpClient?.setAuth(auth.token);
+    }
+    return { userId: auth.userId, token: auth.token, intl };
   },
   errorComponent: (props) => (
     <RootDocument>
@@ -81,12 +99,23 @@ export const Route = createRootRouteWithContext<{
 
 function RootComponent() {
   const context = useRouteContext({ from: Route.id });
-  const { locale, messages } = useLoaderData({ from: Route.id });
+  const { intl, userId, token } = context;
+
+  // Seed the client caches from the SSR-dehydrated context so the first
+  // client-side navigation re-runs beforeLoad without any server round-trip.
+  React.useEffect(() => {
+    clientAuthCache ??= { userId, token };
+    seedIntlCache(intl);
+    // Seeding only — initial values are by definition the SSR ones.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <ClerkProvider>
       <ConvexProviderWithClerk client={context.convexClient} useAuth={useAuth}>
+        <AuthCacheSync />
         <RootDocument>
-          <Providers locale={locale} messages={messages}>
+          <Providers locale={intl.locale} messages={intl.messages}>
             <ErrorBoundary>
               <Outlet />
             </ErrorBoundary>
@@ -95,6 +124,22 @@ function RootComponent() {
       </ConvexProviderWithClerk>
     </ClerkProvider>
   );
+}
+
+// If Clerk's client-side session diverges from the cached beforeLoad auth
+// (e.g. a sign-out that doesn't hard-reload), drop the cache and re-run the
+// root beforeLoad so route guards see the new state.
+function AuthCacheSync() {
+  const { isSignedIn } = useAuth();
+  const router = useRouter();
+  React.useEffect(() => {
+    if (isSignedIn === undefined || !clientAuthCache) return;
+    if (isSignedIn !== !!clientAuthCache.userId) {
+      clientAuthCache = null;
+      void router.invalidate();
+    }
+  }, [isSignedIn, router]);
+  return null;
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {

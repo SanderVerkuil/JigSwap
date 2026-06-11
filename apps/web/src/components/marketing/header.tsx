@@ -1,7 +1,7 @@
 import { Link } from "@/compat/link";
 import { Wordmark } from "@/components/marketing/wordmark";
 import { Button } from "@/components/ui/button";
-import { type Locale, setLocale } from "@/lib/i18n";
+import { clearIntlCache, type Locale, setLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { useLocation, useRouter } from "@tanstack/react-router";
 import { Authenticated, Unauthenticated } from "convex/react";
@@ -142,6 +142,9 @@ function LangToggle() {
   const change = async (next: Locale) => {
     if (next === locale) return;
     await setLocale({ data: next });
+    // Drop the client-side catalog cache so the invalidated root beforeLoad
+    // fetches the newly selected locale.
+    clearIntlCache();
     await router.invalidate();
   };
   return (
