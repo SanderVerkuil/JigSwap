@@ -211,16 +211,15 @@ export function Hero() {
         style={{ zIndex: 2 }}
       >
         <div className="min-h-[520px] pt-[clamp(48px,7vw,100px)] pb-[clamp(64px,8vw,112px)]">
-          {/* Frosted-glass callout — provides local contrast behind the hero text */}
+          {/* Frosted-glass callout — provides local contrast behind the hero
+              text. Borderless and shadowless so it reads as part of the page
+              rather than a floating card. */}
           <div
             className="max-w-[640px] rounded-3xl"
             style={{
               background: "color-mix(in oklab, var(--mk-bg) 58%, transparent)",
               backdropFilter: "blur(9px)",
               WebkitBackdropFilter: "blur(9px)",
-              border:
-                "1px solid color-mix(in oklab, var(--mk-border) 60%, transparent)",
-              boxShadow: "0 18px 50px -24px rgb(20 12 50 / .25)",
               padding: "clamp(24px, 3.5vw, 44px)",
             }}
           >
