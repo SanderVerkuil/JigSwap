@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { pageTitle } from "@/lib/page-title";
+
 import { Link } from "@/compat/link";
 import { Container } from "@/components/marketing/container";
 import { FaqItem } from "@/components/marketing/faq-item";
@@ -11,8 +13,8 @@ import { ArrowRight } from "lucide-react";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_public/how-it-works")({
-  head: () => ({
-    meta: [{ title: "How it works — JigSwap" }],
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "howItWorks") }],
   }),
   component: HowItWorksPage,
 });

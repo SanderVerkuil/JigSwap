@@ -1,12 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { pageTitle } from "@/lib/page-title";
+
 import { LegalDoc, type LegalSection } from "@/components/marketing/legal-doc";
 import { PageHero } from "@/components/marketing/page-hero";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_public/terms")({
-  head: () => ({
-    meta: [{ title: "Terms of Service — JigSwap" }],
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "terms") }],
   }),
   component: TermsOfServicePage,
 });

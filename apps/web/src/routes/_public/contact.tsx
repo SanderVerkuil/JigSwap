@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { pageTitle } from "@/lib/page-title";
+
 import { Container } from "@/components/marketing/container";
 import { PageHero } from "@/components/marketing/page-hero";
 import { Reveal } from "@/components/marketing/reveal";
@@ -14,8 +16,8 @@ import * as React from "react";
 import { useLocale, useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_public/contact")({
-  head: () => ({
-    meta: [{ title: "Contact — JigSwap" }],
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "contact") }],
   }),
   component: ContactPage,
 });

@@ -1602,6 +1602,15 @@
       "contents": "Inhoud",
       "privacyLead": "Jouw vertrouwen is alles. Zo gaan we zorgvuldig en transparant om met je gegevens.",
       "termsLead": "De spelregels die het ruilen voor iedereen eerlijk en prettig houden."
+    },
+    "titles": {
+      "home": "JigSwap — Deel jigsaw puzzels met andere liefhebbers",
+      "howItWorks": "Hoe het werkt — JigSwap",
+      "features": "Functies — JigSwap",
+      "about": "Over ons — JigSwap",
+      "contact": "Contact — JigSwap",
+      "privacy": "Privacybeleid — JigSwap",
+      "terms": "Algemene voorwaarden — JigSwap"
     }
   }
 }

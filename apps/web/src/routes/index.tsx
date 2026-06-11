@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { pageTitle } from "@/lib/page-title";
+
 import { MarketingFooter } from "@/components/marketing/footer";
 import { MarketingHeader } from "@/components/marketing/header";
 import { FeatureRows } from "@/components/marketing/home/feature-rows";
@@ -11,8 +13,8 @@ import { Sustain } from "@/components/marketing/home/sustain";
 import { Testimonial } from "@/components/marketing/home/testimonial";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [{ title: "JigSwap" }],
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "home") }],
   }),
   component: Home,
 });

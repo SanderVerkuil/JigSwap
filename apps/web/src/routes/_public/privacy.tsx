@@ -1,12 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { pageTitle } from "@/lib/page-title";
+
 import { LegalDoc, type LegalSection } from "@/components/marketing/legal-doc";
 import { PageHero } from "@/components/marketing/page-hero";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_public/privacy")({
-  head: () => ({
-    meta: [{ title: "Privacy Policy — JigSwap" }],
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "privacy") }],
   }),
   component: PrivacyPolicyPage,
 });

@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { pageTitle } from "@/lib/page-title";
+
 import { Link } from "@/compat/link";
 import { Container } from "@/components/marketing/container";
 import { PageHero } from "@/components/marketing/page-hero";
@@ -9,8 +11,8 @@ import { Button } from "@/components/ui/button";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_public/features")({
-  head: () => ({
-    meta: [{ title: "Features — JigSwap" }],
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "features") }],
   }),
   component: FeaturesPage,
 });
