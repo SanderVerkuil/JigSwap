@@ -23,7 +23,30 @@ const CAMERA_Y = 1.5;
 const LOOK_AT_Y = 0.62;
 
 // Vertical content range to frame: boxes ~1.44–1.7 tall + shelf + headroom.
-const CONTENT_H = 2.1;
+// Bumped from 2.1 → 2.4 to give near-right boxes more breathing room.
+const CONTENT_H = 2.4;
+
+// ——— yaw / perspective constants ———
+// Negative yaw rotates the shelf so its right end swings toward +z (toward the
+// camera). Math: (1,0,0) → (cos θ, 0, −sin θ). With θ = −27° that becomes
+// (cos −27°, 0, +sin 27°) — right end moves forward. ✓
+const SHELF_YAW = -(27 * Math.PI) / 180;
+
+// The yawed shelf covers only cos(27°) ≈ 0.891 of its length on screen, so we
+// distribute slots over a wider span; SPAN_PERSPECTIVE_ALLOWANCE adds extra
+// room for the near end which projects larger due to perspective.
+const SPAN_PERSPECTIVE_ALLOWANCE = 1.2;
+
+// Group offset: pull composition slightly left and back so the near-right box
+// doesn't overwhelm the frame after the yaw.
+const GROUP_OFFSET_X = -0.3;
+const GROUP_OFFSET_Z = -0.2;
+
+// ——— fog constants ———
+// FOG_NEAR ≈ camera distance; FOG_FAR adds ~5 units of haze window so the
+// far-left end dissolves toward the page background color.
+const FOG_NEAR_OFFSET = 0; // added to computed dist
+const FOG_FAR_OFFSET = 5; // additional depth beyond near
 
 /** Damps all light parameters toward the active theme preset. */
 function Lights({
@@ -217,6 +240,27 @@ function BoxSpot({
   );
 }
 
+/** Damps the scene fog color toward the active preset's fogColor token. */
+function Haze({
+  preset,
+  reducedMotion,
+}: {
+  preset: LightingPreset;
+  reducedMotion: boolean;
+}) {
+  const scene = useThree((s) => s.scene);
+  useFrame((_, delta) => {
+    const fog = scene.fog as THREE.Fog | null;
+    if (!fog || !(fog instanceof THREE.Fog)) return;
+    if (reducedMotion) {
+      fog.color.set(preset.fogColor);
+      return;
+    }
+    easing.dampC(fog.color, preset.fogColor, 0.3, delta);
+  });
+  return null;
+}
+
 // Inner component that reads live canvas size via useThree, computes camera
 // distance and visible world width, distributes box slots, and positions the
 // camera — all in one place so the math stays consistent.
@@ -256,11 +300,19 @@ function Arrangement({
     camera.updateProjectionMatrix();
   }, [camera, size, dist]);
 
+  // ——— fog distance bounds ———
+  const fogNear = dist + FOG_NEAR_OFFSET;
+  const fogFar = dist + FOG_FAR_OFFSET;
+
   // ——— box slot distribution across visW + overshoot ———
+  // The yawed shelf covers only cos(SHELF_YAW) of its length on screen, so we
+  // distribute slots over a wider span; SPAN_PERSPECTIVE_ALLOWANCE adds extra
+  // room for the near end which projects larger due to perspective.
   const widths = boxes.map((b) => (b.width ?? 116) * PX);
   const n = boxes.length;
   const totalBoxWidths = widths.reduce((a, b) => a + b, 0);
-  const span = visW + 0.6; // slight overshoot so outermost boxes bleed off edges
+  const span =
+    ((visW + 0.6) / Math.cos(-SHELF_YAW)) * SPAN_PERSPECTIVE_ALLOWANCE;
   const rawGap = n > 1 ? (span - totalBoxWidths) / (n - 1) : 0;
   const gap = Math.max(0.25, Math.min(1.15, rawGap));
 
@@ -277,42 +329,52 @@ function Arrangement({
   }
 
   // Shelf extends past both edges, never shows end-caps.
-  const shelfWidth = visW + 2;
+  const shelfWidth = span + 2;
 
   return (
     <>
       <FirstFrame onFirstFrame={onFirstFrame} />
+      <fog attach="fog" args={[lightingPreset.fogColor, fogNear, fogFar]} />
+      <Haze preset={lightingPreset} reducedMotion={reducedMotion} />
       <Parallax enabled={!reducedMotion}>
-        <Shelf
-          worldWidth={shelfWidth}
-          color={lightingPreset.shelfColor}
-          reducedMotion={reducedMotion}
-        />
-        {boxes.map((box, i) => (
-          <PuzzleBox
-            key={i}
-            box={box}
-            slot={slots[i]}
-            index={i}
-            headingFont={headingFont}
-          />
-        ))}
-        {slots.map((slot, i) => (
-          <BoxSpot
-            key={i}
-            x={slot.x}
-            preset={lightingPreset}
+        {/* Yaw group: rotates shelf + boxes + lights as a unit.
+            SHELF_YAW is negative so (1,0,0) → (cos θ, 0, −sin θ) with θ < 0
+            gives −sin θ > 0, i.e. the right end moves toward +z (the camera). */}
+        <group
+          position={[GROUP_OFFSET_X, 0, GROUP_OFFSET_Z]}
+          rotation={[0, SHELF_YAW, 0]}
+        >
+          <Shelf
+            worldWidth={shelfWidth}
+            color={lightingPreset.shelfColor}
             reducedMotion={reducedMotion}
           />
-        ))}
-        <ContactShadows
-          position={[0, 0.001, 0]}
-          opacity={lightingPreset.shadowOpacity}
-          scale={shelfWidth}
-          blur={2.2}
-          far={1.2}
-          resolution={256}
-        />
+          {boxes.map((box, i) => (
+            <PuzzleBox
+              key={i}
+              box={box}
+              slot={slots[i]}
+              index={i}
+              headingFont={headingFont}
+            />
+          ))}
+          {slots.map((slot, i) => (
+            <BoxSpot
+              key={i}
+              x={slot.x}
+              preset={lightingPreset}
+              reducedMotion={reducedMotion}
+            />
+          ))}
+          <ContactShadows
+            position={[0, 0.001, 0]}
+            opacity={lightingPreset.shadowOpacity}
+            scale={shelfWidth}
+            blur={2.2}
+            far={1.2}
+            resolution={256}
+          />
+        </group>
       </Parallax>
     </>
   );

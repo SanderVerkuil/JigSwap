@@ -58,6 +58,9 @@ export interface LightingPreset {
   spotIntensity: number;
   /** Gallery spotlight color (warm pool). */
   spotColor: string;
+  /** Atmospheric fog color — should match the page background so far-end boxes
+   *  haze into the page rather than toward black. */
+  fogColor: string;
 }
 
 export const LIGHTING: Record<"light" | "dark", LightingPreset> = {
@@ -72,6 +75,7 @@ export const LIGHTING: Record<"light" | "dark", LightingPreset> = {
     shelfColor: "#c98f4d",
     spotIntensity: 0.9,
     spotColor: "#fff1d8",
+    fogColor: "#efedf7", // near the light page background
   },
   dark: {
     keyIntensity: 0.65,
@@ -84,5 +88,6 @@ export const LIGHTING: Record<"light" | "dark", LightingPreset> = {
     shelfColor: "#8a5f33",
     spotIntensity: 2.6,
     spotColor: "#ffe3b3",
+    fogColor: "#16142a", // near the dark page background
   },
 };
