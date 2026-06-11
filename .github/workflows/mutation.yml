@@ -17,8 +17,9 @@ concurrency:
   group: mutation-${{ github.ref }}
   cancel-in-progress: true
 
+# contents: write is needed to push the HTML report to the gh-pages branch.
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
 
 jobs:
@@ -56,11 +57,28 @@ jobs:
           path: packages/domain/reports/mutation/
           if-no-files-found: ignore
 
+      # Browsable copy of the report: GitHub artifacts are zip-only, so the HTML
+      # report is also published to GitHub Pages under a per-PR directory.
+      # keep_files preserves other PRs' reports; continue-on-error keeps the
+      # comment flowing when the push fails (e.g. fork PRs have read-only tokens).
+      - name: Publish report to GitHub Pages
+        id: pages-deploy
+        if: ${{ !cancelled() && hashFiles('packages/domain/reports/mutation/mutation-report.html') != '' }}
+        continue-on-error: true
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: packages/domain/reports/mutation
+          destination_dir: mutation/pr-${{ github.event.pull_request.number }}
+          keep_files: true
+          commit_message: "mutation report for PR #${{ github.event.pull_request.number }}"
+
       - name: Render comment markdown
         if: ${{ !cancelled() }}
         env:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           ARTIFACT_URL: ${{ steps.report-artifact.outputs.artifact-url }}
+          PAGES_URL: ${{ steps.pages-deploy.outcome == 'success' && format('https://{0}.github.io/{1}/mutation/pr-{2}/mutation-report.html', github.repository_owner, github.event.repository.name, github.event.pull_request.number) || '' }}
         run: |
           node .github/scripts/mutation-comment.mjs \
             packages/domain/reports/mutation/mutation.json > mutation-comment.md

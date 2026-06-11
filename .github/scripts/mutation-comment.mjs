@@ -6,7 +6,8 @@
  * Usage: node mutation-comment.mjs <path-to-mutation.json>
  * Optional env (passed via env: in the workflow, never inlined into run:):
  *   HEAD_SHA     — PR head commit, shown in the headline
- *   ARTIFACT_URL — upload-artifact URL for the HTML report, linked in footer
+ *   PAGES_URL    — browsable GitHub Pages URL of the HTML report
+ *   ARTIFACT_URL — upload-artifact URL (zip download) as fallback
  * Writes markdown to stdout. Exits 0 even when the report is missing so the
  * workflow can still post a "run failed" comment.
  */
@@ -16,10 +17,14 @@ export const MARKER = "<!-- stryker-mutation-report -->";
 const CONTEXT_GOAL = 95; // per-bounded-context score goal (see MUTATION-TESTING.md)
 
 const [, , reportPath] = process.argv;
-const { HEAD_SHA, ARTIFACT_URL } = process.env;
+const { HEAD_SHA, PAGES_URL, ARTIFACT_URL } = process.env;
 const shaNote = HEAD_SHA ? ` for \`${HEAD_SHA.slice(0, 7)}\`` : "";
-const reportLink = ARTIFACT_URL
-  ? `Full HTML report: [download artifact](${ARTIFACT_URL}).`
+const links = [
+  PAGES_URL && `[📊 View HTML report](${PAGES_URL})`,
+  ARTIFACT_URL && `[download artifact](${ARTIFACT_URL})`,
+].filter(Boolean);
+const reportLink = links.length
+  ? `Full HTML report: ${links.join(" · ")}.`
   : "Full HTML report in the workflow artifacts.";
 
 function render() {
