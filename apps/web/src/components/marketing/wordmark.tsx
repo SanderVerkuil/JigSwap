@@ -1,10 +1,11 @@
+import { Image } from "@/compat/image";
 import logoIcon from "@/components/common/header-icon/logo.png";
 
 // Logo mark + two-tone wordmark: violet "Jig", green "Swap" (Fredoka 700).
 export function Wordmark({ size = 22 }: { size?: number }) {
   return (
     <span className="inline-flex items-center gap-[9px]">
-      <img
+      <Image
         src={logoIcon}
         alt=""
         width={size + 8}

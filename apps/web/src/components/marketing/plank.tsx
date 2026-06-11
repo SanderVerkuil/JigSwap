@@ -1,3 +1,4 @@
+import { Image } from "@/compat/image";
 import * as React from "react";
 
 // The signature "puzzle plank" motif: 3D puzzle boxes on a wooden shelf with a
@@ -199,18 +200,12 @@ function JigBox({
         }}
       >
         {isArt ? (
-          <img
-            src={cover}
+          <Image
+            src={cover ?? ""}
             alt={title || ""}
+            fill
             onLoad={onImg}
             onError={(e) => e.currentTarget.remove()}
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
           />
         ) : (
           <>
