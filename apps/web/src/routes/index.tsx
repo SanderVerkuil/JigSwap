@@ -1,15 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { CallToAction } from "@/components/landing/call-to-action";
-import { ComingSoon } from "@/components/landing/coming-soon";
-import { CoreFeatures } from "@/components/landing/core-features";
-import { Footer } from "@/components/landing/footer";
-import { Header } from "@/components/landing/header";
-import { Hero } from "@/components/landing/hero";
-import { HomeActions } from "@/components/landing/home-actions";
-import { HomeRecent } from "@/components/landing/home-recent";
-import { HomeStats } from "@/components/landing/home-stats";
-import { HowItWorks } from "@/components/landing/how-it-works";
+import { MarketingFooter } from "@/components/marketing/footer";
+import { MarketingHeader } from "@/components/marketing/header";
+import { FeatureRows } from "@/components/marketing/home/feature-rows";
+import { FinalCTA } from "@/components/marketing/home/final-cta";
+import { Hero } from "@/components/marketing/home/hero";
+import { HowPreview } from "@/components/marketing/home/how-preview";
+import { Stats } from "@/components/marketing/home/stats";
+import { Sustain } from "@/components/marketing/home/sustain";
+import { Testimonial } from "@/components/marketing/home/testimonial";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -18,24 +17,23 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-// Next used next/dynamic + Suspense to defer HomeStats/HomeRecent out of the SSR
-// bundle. Start has no RSC and both are "use client" islands gated on client-side
-// useQuery, so they render directly here.
+// Marketing landing — the design handoff's "plank" hero variant followed by
+// stats (real platform numbers), how-it-works teaser, feature rows,
+// sustainability band, founders' quote and the closing CTA.
 function Home() {
   return (
-    <div className="bg-background">
-      <Header />
-      <Hero />
-      <div className="[&>*:nth-child(odd)]:bg-muted/50">
-        <HomeActions />
-        <HomeStats />
-        <HomeRecent />
-        <CoreFeatures />
-        <HowItWorks />
-        <ComingSoon />
-      </div>
-      <CallToAction />
-      <Footer />
+    <div className="mk-root font-mk-sans min-h-screen">
+      <MarketingHeader />
+      <main>
+        <Hero />
+        <Stats />
+        <HowPreview />
+        <FeatureRows />
+        <Sustain />
+        <Testimonial />
+        <FinalCTA />
+      </main>
+      <MarketingFooter />
     </div>
   );
 }

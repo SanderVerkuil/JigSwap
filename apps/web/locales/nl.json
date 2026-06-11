@@ -1382,6 +1382,79 @@
       "cookies": "Cookiebeleid",
       "madeBy": "Met 🧩 gemaakt door een familie van puzzelaars.",
       "country": "Nederland"
+    },
+    "home": {
+      "eyebrow": "Lenen • Ruilen • Delen",
+      "heroTitle": "Deel jigsaw puzzels met andere liefhebbers",
+      "heroLead": "Bouw je eigen puzzelbibliotheek, leen puzzels uit of ruil ze, en zie altijd bij wie je uitgeleende dozen zijn. Verbind met puzzelaars in heel Nederland.",
+      "seeFeatures": "Bekijk de functies",
+      "trustRow": "{count} puzzelaars ruilen al mee",
+      "stats": {
+        "puzzlers": "Aangemelde puzzelaars",
+        "catalog": "Puzzels in de catalogus",
+        "shelves": "Puzzels op de plank"
+      },
+      "how": {
+        "eyebrow": "Hoe het werkt",
+        "title": "In drie stappen aan de slag",
+        "lead": "Geen gedoe, geen kosten om te beginnen. Zo simpel is samen puzzelen.",
+        "step1Title": "Vul je plank",
+        "step1Body": "Voeg je puzzels toe met merk, stukjes en conditie — in een paar tikken klaar.",
+        "step2Title": "Ontdek & vraag aan",
+        "step2Body": "Blader door de community, filter op moeilijkheid en stukjes, en vraag een puzzel te leen of in ruil.",
+        "step3Title": "Leen uit & volg",
+        "step3Body": "Leen uit voor even of voor onbepaalde tijd, en zie altijd bij wie je puzzel is.",
+        "link": "Lees hoe het werkt"
+      },
+      "rows": {
+        "libraryEyebrow": "Jouw bibliotheek",
+        "libraryTitle": "Een plank die aanvoelt als thuis",
+        "libraryBody": "Je verzameling als echte 3D-dozen op een houten plank. Houd voltooiingen, conditie en notities bij — net zo tastbaar als je echte boekenkast.",
+        "libraryPoint1": "Onbeperkt puzzels toevoegen",
+        "libraryPoint2": "Voltooiingen & conditie bijhouden",
+        "libraryPoint3": "Privé of openbaar delen",
+        "lendEyebrow": "Uitlenen & volgen",
+        "lendTitle": "Leen uit — en weet altijd bij wie je puzzels zijn",
+        "lendBody": "Wil iemand jouw puzzel? Leen 'm uit voor even of voor onbepaalde tijd. JigSwap houdt bij wie welke doos heeft — zodat lenen net zo zorgeloos is als puzzelen.",
+        "lendPoint1": "Leen uit voor even of voor altijd",
+        "lendPoint2": "Zie bij wie je puzzel is",
+        "lendPoint3": "Vraag 'm terug wanneer je wilt",
+        "discoverEyebrow": "Ontdekken",
+        "discoverTitle": "Vind je volgende uitdaging",
+        "discoverBody": "Filter op stukjes, moeilijkheid, conditie en categorie. Ontdek wat andere puzzelaars op de plank hebben en vraag een ruil of leen aan.",
+        "discoverPoint1": "Filters op maat",
+        "discoverPoint2": "Verse vondsten uit de community",
+        "discoverPoint3": "Lenen, ruilen of delen in je kring"
+      },
+      "visual": {
+        "myPuzzles": "Mijn puzzels",
+        "puzzlesCount": "{count} puzzels",
+        "onYourShelf": "Op je plank",
+        "withName": "bij {name}",
+        "notificationSent": "melding verstuurd",
+        "available": "Beschikbaar",
+        "lentOut": "Uitgeleend",
+        "recalled": "Teruggevraagd",
+        "chipPieces": "1000 stukjes",
+        "chipMedium": "Gemiddeld",
+        "chipLikeNew": "Als nieuw",
+        "chipAvailable": "Beschikbaar",
+        "chipHard": "Moeilijk"
+      },
+      "sustain": {
+        "eyebrow": "Duurzaamheid",
+        "title": "Eén puzzel, vele handen",
+        "body": "Een afgeronde puzzel hoeft niet op zolder te belanden. Door te delen, lenen en ruilen geeft de community puzzels telkens een tweede, derde en vierde leven — en haalt iedereen er meer plezier uit."
+      },
+      "quote": {
+        "text": "“We bouwden JigSwap omdat onze afgeronde puzzels meer verdienden dan de zolder — en omdat puzzelen leuker is als je het deelt.”",
+        "name": "De familie achter JigSwap",
+        "sub": "Puzzelt aan de keukentafel sinds 2025"
+      },
+      "cta": {
+        "title": "Klaar om je eerste puzzel te delen?",
+        "body": "Het is gratis om te beginnen. Bouw je plank en ontmoet de community."
+      }
     }
   }
 }

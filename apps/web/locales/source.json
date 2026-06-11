@@ -1382,6 +1382,79 @@
       "cookies": "Cookie policy",
       "madeBy": "Made with 🧩 by a family of puzzlers.",
       "country": "The Netherlands"
+    },
+    "home": {
+      "eyebrow": "Lend • Swap • Share",
+      "heroTitle": "Share jigsaw puzzles with fellow enthusiasts",
+      "heroLead": "Build your own puzzle library, lend or swap puzzles, and always see who has your lent-out boxes. Connect with puzzlers across the country.",
+      "seeFeatures": "See the features",
+      "trustRow": "{count} puzzlers are already swapping",
+      "stats": {
+        "puzzlers": "Puzzlers signed up",
+        "catalog": "Puzzles in the catalog",
+        "shelves": "Puzzles on shelves"
+      },
+      "how": {
+        "eyebrow": "How it works",
+        "title": "Up and running in three steps",
+        "lead": "No fuss, no cost to begin. That's how simple shared puzzling is.",
+        "step1Title": "Fill your shelf",
+        "step1Body": "Add your puzzles with brand, piece count and condition — ready in a few taps.",
+        "step2Title": "Discover & request",
+        "step2Body": "Browse the community, filter by difficulty and piece count, and request a puzzle to borrow or swap.",
+        "step3Title": "Lend & track",
+        "step3Body": "Lend out for a while or indefinitely, and always see who has your puzzle.",
+        "link": "See how it works"
+      },
+      "rows": {
+        "libraryEyebrow": "Your library",
+        "libraryTitle": "A shelf that feels like home",
+        "libraryBody": "Your collection as real 3D boxes on a wooden plank. Track completions, condition and notes — as tactile as your real bookshelf.",
+        "libraryPoint1": "Add unlimited puzzles",
+        "libraryPoint2": "Track completions & condition",
+        "libraryPoint3": "Share privately or publicly",
+        "lendEyebrow": "Lend & track",
+        "lendTitle": "Lend out — and always know who has your puzzles",
+        "lendBody": "Someone wants your puzzle? Lend it out for a while or indefinitely. JigSwap keeps track of who has which box — so lending is as carefree as puzzling.",
+        "lendPoint1": "Lend for a while or forever",
+        "lendPoint2": "See who has your puzzle",
+        "lendPoint3": "Ask for it back whenever you like",
+        "discoverEyebrow": "Discover",
+        "discoverTitle": "Find your next challenge",
+        "discoverBody": "Filter by piece count, difficulty, condition and category. Discover what fellow puzzlers have on their shelves and request a swap or a loan.",
+        "discoverPoint1": "Tailored filters",
+        "discoverPoint2": "Fresh finds from the community",
+        "discoverPoint3": "Lend, swap or share in your circle"
+      },
+      "visual": {
+        "myPuzzles": "My puzzles",
+        "puzzlesCount": "{count} puzzles",
+        "onYourShelf": "On your shelf",
+        "withName": "with {name}",
+        "notificationSent": "notification sent",
+        "available": "Available",
+        "lentOut": "Lent out",
+        "recalled": "Recalled",
+        "chipPieces": "1000 pieces",
+        "chipMedium": "Medium",
+        "chipLikeNew": "Like new",
+        "chipAvailable": "Available",
+        "chipHard": "Hard"
+      },
+      "sustain": {
+        "eyebrow": "Sustainability",
+        "title": "One puzzle, many hands",
+        "body": "A finished puzzle doesn't need to gather dust in the attic. By sharing, lending and swapping, the community gives puzzles a second, third and fourth life — and everyone gets more joy from them."
+      },
+      "quote": {
+        "text": "“We built JigSwap because our finished puzzles deserved better than the attic — and because puzzling is more fun when you share it.”",
+        "name": "The family behind JigSwap",
+        "sub": "Puzzling at the kitchen table since 2025"
+      },
+      "cta": {
+        "title": "Ready to share your first puzzle?",
+        "body": "It's free to begin. Build your shelf and meet the community."
+      }
     }
   }
 }
