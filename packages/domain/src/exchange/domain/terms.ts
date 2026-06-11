@@ -10,12 +10,25 @@ export class Money {
     readonly currency: string,
   ) {}
 
-  static create(amountCents: number, currency: string): Result<Money, ExchangeError> {
+  static create(
+    amountCents: number,
+    currency: string,
+  ): Result<Money, ExchangeError> {
     if (!Number.isInteger(amountCents) || amountCents <= 0) {
-      return err(ExchangeError.missingTerms("sale", "price must be a positive integer (cents)"));
+      return err(
+        ExchangeError.missingTerms(
+          "sale",
+          "price must be a positive integer (cents)",
+        ),
+      );
     }
     if (currency.length !== 3) {
-      return err(ExchangeError.missingTerms("sale", "currency must be a 3-letter ISO code"));
+      return err(
+        ExchangeError.missingTerms(
+          "sale",
+          "currency must be a 3-letter ISO code",
+        ),
+      );
     }
     return ok(new Money(amountCents, currency.toUpperCase()));
   }
@@ -42,7 +55,9 @@ export const validateTerms = (
   switch (input.kind) {
     case "swap":
       if (!input.offeredCopyId) {
-        return err(ExchangeError.missingTerms("swap", "an offered copy is required"));
+        return err(
+          ExchangeError.missingTerms("swap", "an offered copy is required"),
+        );
       }
       return ok({ kind: "swap", offeredCopyId: input.offeredCopyId });
     case "sale":

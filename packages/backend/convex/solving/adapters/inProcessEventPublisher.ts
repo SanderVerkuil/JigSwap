@@ -1,7 +1,7 @@
 import {
+  makeRecomputeGoalProgress,
   type DomainEventPublisher,
   type MemberId,
-  makeRecomputeGoalProgress,
   type SolvingDomainEvent,
 } from "@jigswap/domain";
 import type { MutationCtx } from "../../_generated/server";
@@ -20,7 +20,9 @@ import { systemClock } from "./systemClock";
 // the GoalProgressed/GoalAchieved events the recompute itself publishes never re-trigger it (no
 // recursion) — and because those events flow through this same publisher, they are recorded +
 // scheduled too, finally landing the goal-achievement notification.
-export const inProcessEventPublisher = (ctx: MutationCtx): DomainEventPublisher =>
+export const inProcessEventPublisher = (
+  ctx: MutationCtx,
+): DomainEventPublisher =>
   makeEventPublisher(ctx, "solving", async (events) => {
     for (const event of events as readonly SolvingDomainEvent[]) {
       if (event.name === "CompletionRecorded") {

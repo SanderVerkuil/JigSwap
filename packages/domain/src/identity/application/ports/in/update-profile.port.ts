@@ -17,5 +17,7 @@ export interface UpdateProfileCommand {
 // Inbound port: the update-profile use case. Fails with MemberNotFound for an unknown member or
 // InvalidUsername for a malformed handle.
 export interface UpdateProfile {
-  (cmd: UpdateProfileCommand): Promise<Result<void, IdentityError | IdentityApplicationError>>;
+  (
+    cmd: UpdateProfileCommand,
+  ): Promise<Result<void, IdentityError | IdentityApplicationError>>;
 }

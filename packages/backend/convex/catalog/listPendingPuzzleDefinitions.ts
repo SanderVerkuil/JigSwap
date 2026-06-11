@@ -17,7 +17,9 @@ export const listPendingPuzzleDefinitions = query({
     return Promise.all(
       pending.map(async (puzzle) => ({
         ...puzzle,
-        image: puzzle.image ? await ctx.storage.getUrl(puzzle.image) : undefined,
+        image: puzzle.image
+          ? await ctx.storage.getUrl(puzzle.image)
+          : undefined,
       })),
     );
   },

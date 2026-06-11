@@ -1,4 +1,10 @@
-import { Clock, DomainEventPublisher, err, ok, Result } from "../../../shared-kernel";
+import {
+  Clock,
+  DomainEventPublisher,
+  err,
+  ok,
+  Result,
+} from "../../../shared-kernel";
 import { CatalogCategory, CatalogCategoryId, CatalogError } from "../../domain";
 import { CatalogApplicationError } from "../errors";
 import {
@@ -20,7 +26,9 @@ export const makeCreateCatalogCategory =
   (deps: CreateCatalogCategoryDeps): CreateCatalogCategory =>
   async (
     cmd: CreateCatalogCategoryCommand,
-  ): Promise<Result<CatalogCategoryId, CatalogError | CatalogApplicationError>> => {
+  ): Promise<
+    Result<CatalogCategoryId, CatalogError | CatalogApplicationError>
+  > => {
     const category = CatalogCategory.create({
       id: deps.ids.nextCatalogCategoryId(),
       name: cmd.name,

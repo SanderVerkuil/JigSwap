@@ -1,6 +1,6 @@
+import nx from "@nx/eslint-plugin";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import typescript from "eslint-config-next/typescript";
-import nx from "@nx/eslint-plugin";
 
 // Flat-config plugins are block-scoped; reuse next's "import" plugin so the
 // rule below resolves even when the Nx graph parser reads this block in isolation.
@@ -39,9 +39,15 @@ const eslintConfig = [
           enforceBuildableLibDependency: true,
           depConstraints: [
             // The domain core is pure: it may only depend on other domain code.
-            { sourceTag: "type:domain", onlyDependOnLibsWithTags: ["type:domain"] },
+            {
+              sourceTag: "type:domain",
+              onlyDependOnLibsWithTags: ["type:domain"],
+            },
             // Contracts are the published language: self-contained.
-            { sourceTag: "type:contracts", onlyDependOnLibsWithTags: ["type:contracts"] },
+            {
+              sourceTag: "type:contracts",
+              onlyDependOnLibsWithTags: ["type:contracts"],
+            },
             // Backend adapters wire domain + contracts behind ports.
             {
               sourceTag: "type:backend-adapter",
@@ -94,7 +100,8 @@ const eslintConfig = [
                 "**/_generated/dataModel",
                 "@jigswap/backend/convex/_generated/*",
               ],
-              message: "Import Convex through @jigswap/gateway, not the generated API directly.",
+              message:
+                "Import Convex through @jigswap/gateway, not the generated API directly.",
             },
           ],
         },

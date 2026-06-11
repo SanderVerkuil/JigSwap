@@ -1,7 +1,7 @@
 "use client";
 
-import { HeaderLogo } from "@/components/common/header-logo";
 import { Link } from "@/compat/link";
+import { HeaderLogo } from "@/components/common/header-logo";
 import { useTranslations } from "use-intl";
 
 export function Footer() {

@@ -1,5 +1,8 @@
 "use client";
 
+import { useUser } from "@/compat/clerk";
+import { Link } from "@/compat/link";
+import { useRouter } from "@/compat/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,15 +12,12 @@ import {
 } from "@/components/ui/popover";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { useUser } from "@/compat/clerk";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import { Bell, CheckCheck } from "lucide-react";
-import { useTranslations } from "use-intl";
-import { Link } from "@/compat/link";
-import { useRouter } from "@/compat/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "use-intl";
 import {
   type NotificationRow,
   notificationAccent,

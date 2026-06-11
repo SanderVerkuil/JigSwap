@@ -14,9 +14,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
 import { useMutation } from "convex/react";
-import { useTranslations } from "use-intl";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "use-intl";
 
 // Today as a `yyyy-mm-dd` string for the native date inputs (the dialog defaults the start date
 // to today so the common "I just finished" case is one fewer field).
@@ -124,7 +124,9 @@ export function LogSolveDialog({
                 min={startDate}
                 onChange={(e) => setEndDate(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">{t("endDateHint")}</p>
+              <p className="text-xs text-muted-foreground">
+                {t("endDateHint")}
+              </p>
             </div>
           </div>
 
@@ -169,10 +171,7 @@ export function LogSolveDialog({
         </div>
 
         <DialogFooter>
-          <Button
-            onClick={handleSubmit}
-            disabled={submitting || !startDate}
-          >
+          <Button onClick={handleSubmit} disabled={submitting || !startDate}>
             {t("submit")}
           </Button>
         </DialogFooter>

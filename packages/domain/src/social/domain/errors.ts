@@ -19,10 +19,7 @@ export class SocialError extends DomainError {
 
   // A member cannot follow themselves: follower and followee must differ.
   static selfFollow(): SocialError {
-    return new SocialError(
-      "SelfFollow",
-      "A member cannot follow themselves",
-    );
+    return new SocialError("SelfFollow", "A member cannot follow themselves");
   }
 
   // A profile display name was empty or whitespace-only after trimming.

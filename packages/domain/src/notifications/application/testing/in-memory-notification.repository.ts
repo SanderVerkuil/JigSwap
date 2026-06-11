@@ -4,7 +4,10 @@ import { NotificationRepository } from "../ports/out/notification.repository";
 // In-memory NotificationRepository for use-case tests. Stores persisted state and rehydrates a
 // fresh aggregate on read, mirroring the round-trip a real adapter performs.
 export class InMemoryNotificationRepository implements NotificationRepository {
-  private readonly store = new Map<NotificationId, ReturnType<Notification["toState"]>>();
+  private readonly store = new Map<
+    NotificationId,
+    ReturnType<Notification["toState"]>
+  >();
 
   async findById(id: NotificationId): Promise<Notification | null> {
     const state = this.store.get(id);
@@ -25,7 +28,10 @@ export class InMemoryNotificationRepository implements NotificationRepository {
     return result;
   }
 
-  async markAllReadForUser(userId: MemberId, now: Date): Promise<Notification[]> {
+  async markAllReadForUser(
+    userId: MemberId,
+    now: Date,
+  ): Promise<Notification[]> {
     const affected: Notification[] = [];
     for (const state of this.store.values()) {
       if (state.userId === userId && !state.isRead) {

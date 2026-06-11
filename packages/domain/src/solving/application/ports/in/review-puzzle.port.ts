@@ -1,9 +1,5 @@
 import { Result } from "../../../../shared-kernel";
-import {
-  CompletionId,
-  MemberId,
-  SolvingError,
-} from "../../../domain";
+import { CompletionId, MemberId, SolvingError } from "../../../domain";
 import { SolvingApplicationError } from "../../errors";
 
 // Attach a PuzzleReview (opinion of the puzzle) to a completion. `rating` is validated 1–5.

@@ -1,7 +1,4 @@
-import {
-  computeTradeActivity,
-  type ExchangeStatStatus,
-} from "@jigswap/domain";
+import { computeTradeActivity, type ExchangeStatStatus } from "@jigswap/domain";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";

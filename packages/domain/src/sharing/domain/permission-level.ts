@@ -12,7 +12,8 @@ const RANK: Readonly<Record<PermissionLevel, number>> = {
 };
 
 // Admin is the only level that may manage membership/permissions (owner is implicitly Admin).
-export const canManageMembers = (level: PermissionLevel): boolean => level === "Admin";
+export const canManageMembers = (level: PermissionLevel): boolean =>
+  level === "Admin";
 
 // Exchange and Admin may transact within the circle; ViewOnly may not.
 export const canExchangeWithin = (level: PermissionLevel): boolean =>

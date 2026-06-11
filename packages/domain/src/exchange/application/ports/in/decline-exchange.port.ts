@@ -1,4 +1,7 @@
-import { ExchangeActionCommand, ExchangeActionResult } from "./exchange-action.command";
+import {
+  ExchangeActionCommand,
+  ExchangeActionResult,
+} from "./exchange-action.command";
 
 // Inbound port: the recipient declines a proposed exchange.
 export interface DeclineExchange {

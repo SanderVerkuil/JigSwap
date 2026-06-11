@@ -1,8 +1,8 @@
 import type { CircleSummaryView } from "@jigswap/contracts";
+import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { toCircleSummary } from "./readViews";
-import type { Id } from "../_generated/dataModel";
 
 // Sharing read: the signed-in member's circles (every circle they belong to), newest first. Member
 // lookup goes through the `circleMembers` projection so it's an indexed read.

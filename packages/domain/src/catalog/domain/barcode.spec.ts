@@ -18,7 +18,11 @@ describe("Ean", () => {
     ["leading non-digit", "X006381333931", "must be 13 digits"],
     ["trailing non-digit", "400638133393X", "must be 13 digits"],
     ["non-digit in the middle", "40063A1333931", "must be 13 digits"],
-    ["right length but bad check digit", "4006381333930", "check digit does not match"],
+    [
+      "right length but bad check digit",
+      "4006381333930",
+      "check digit does not match",
+    ],
   ])("rejects %s with InvalidBarcode (%s)", (_label, value, detail) => {
     const r = Ean.create(value);
     expect(r.isErr).toBe(true);
@@ -51,7 +55,11 @@ describe("Upc", () => {
     ["too long (13 digits)", "0360002914520", "must be 12 digits"],
     ["leading non-digit", "X36000291452", "must be 12 digits"],
     ["trailing non-digit", "03600029145X", "must be 12 digits"],
-    ["right length but bad check digit", "036000291451", "check digit does not match"],
+    [
+      "right length but bad check digit",
+      "036000291451",
+      "check digit does not match",
+    ],
   ])("rejects %s with InvalidBarcode (%s)", (_label, value, detail) => {
     const r = Upc.create(value);
     expect(r.isErr).toBe(true);
@@ -105,13 +113,15 @@ describe("validateBarcodes", () => {
   it("rejects a malformed UPC even when the EAN is valid", () => {
     const r = validateBarcodes({ ean: "4006381333931", upc: "036000291451" });
     expect(r.isErr).toBe(true);
-    if (r.isErr) expect(r.error.message).toBe("Invalid UPC: check digit does not match");
+    if (r.isErr)
+      expect(r.error.message).toBe("Invalid UPC: check digit does not match");
   });
 
   it("rejects a blank model number even when other identifiers are valid", () => {
     const r = validateBarcodes({ ean: "4006381333931", modelNumber: "   " });
     expect(r.isErr).toBe(true);
-    if (r.isErr) expect(r.error.message).toBe("Invalid model number: must not be blank");
+    if (r.isErr)
+      expect(r.error.message).toBe("Invalid model number: must not be blank");
   });
 
   it("short-circuits on the first malformed identifier", () => {

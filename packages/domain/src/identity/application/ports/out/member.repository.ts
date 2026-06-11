@@ -1,4 +1,4 @@
-import { MemberId, Member } from "../../../domain";
+import { Member, MemberId } from "../../../domain";
 
 // Outbound port: persistence for the Member aggregate. The convex adapter implements this over
 // `ctx.db` (the `users` table) behind a mapper; the domain never sees a row. `findByClerkId`

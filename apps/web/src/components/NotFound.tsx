@@ -1,3 +1,5 @@
+import { Link } from "@/compat/link";
+import { Header } from "@/components/landing/header";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -6,8 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Header } from "@/components/landing/header";
-import { Link } from "@/compat/link";
 import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "use-intl";
 

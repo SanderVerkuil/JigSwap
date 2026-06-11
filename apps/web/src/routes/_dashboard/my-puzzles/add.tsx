@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { Image } from "@/compat/image";
+import { useRouter, useSearchParams } from "@/compat/navigation";
 import { PuzzleForm, PuzzleFormData } from "@/components/forms/puzzle-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,17 +50,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { gateway, Id } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { gateway, Id } from "@/gateway";
-import { Image } from "@/compat/image";
-import { useRouter, useSearchParams } from "@/compat/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
-import { useTranslations } from "use-intl";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { useTranslations } from "use-intl";
 import { z } from "zod";
 
 // Schema for the instance form
@@ -83,8 +83,7 @@ export const Route = createFileRoute("/_dashboard/my-puzzles/add")({
   // (useSearchParams -> useSearch({ strict: false })); validate it so the
   // typed search carries it through.
   validateSearch: (search: Record<string, unknown>) => ({
-    puzzleId:
-      typeof search.puzzleId === "string" ? search.puzzleId : undefined,
+    puzzleId: typeof search.puzzleId === "string" ? search.puzzleId : undefined,
   }),
   component: AddPuzzlePage,
 });

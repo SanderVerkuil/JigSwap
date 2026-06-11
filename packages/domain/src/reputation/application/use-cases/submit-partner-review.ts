@@ -1,4 +1,11 @@
-import { Clock, DomainEvent, DomainEventPublisher, err, ok, Result } from "../../../shared-kernel";
+import {
+  Clock,
+  DomainEvent,
+  DomainEventPublisher,
+  err,
+  ok,
+  Result,
+} from "../../../shared-kernel";
 import {
   PartnerReview,
   PartnerReviewId,
@@ -37,7 +44,9 @@ export const makeSubmitPartnerReview =
   (deps: SubmitPartnerReviewDeps): SubmitPartnerReview =>
   async (
     cmd: SubmitPartnerReviewCommand,
-  ): Promise<Result<PartnerReviewId, ReputationError | ReputationApplicationError>> => {
+  ): Promise<
+    Result<PartnerReviewId, ReputationError | ReputationApplicationError>
+  > => {
     // Seam to Exchange: only a completed exchange between exactly these two parties opens a
     // review window. The port collapses not-completed and party-mismatch into one predicate;
     // a false result here means no window is open.
@@ -47,7 +56,9 @@ export const makeSubmitPartnerReview =
       cmd.revieweeId,
     );
     if (!completed) {
-      return err(ReputationApplicationError.exchangeNotCompleted(cmd.exchangeId));
+      return err(
+        ReputationApplicationError.exchangeNotCompleted(cmd.exchangeId),
+      );
     }
 
     // One review per reviewer per exchange.
@@ -56,7 +67,9 @@ export const makeSubmitPartnerReview =
       cmd.reviewerId,
     );
     if (existing) {
-      return err(ReputationApplicationError.duplicatePartnerReview(cmd.exchangeId));
+      return err(
+        ReputationApplicationError.duplicatePartnerReview(cmd.exchangeId),
+      );
     }
 
     // Entity rules: self-review and rating bounds (overall + per-category).
@@ -78,12 +91,19 @@ export const makeSubmitPartnerReview =
     const existingProfile = await deps.profiles.findByMember(cmd.revieweeId);
     const profile =
       existingProfile ??
-      ReputationProfile.open(deps.profileIds.next(), cmd.revieweeId, deps.clock.now());
+      ReputationProfile.open(
+        deps.profileIds.next(),
+        cmd.revieweeId,
+        deps.clock.now(),
+      );
     profile.applyReview(review.value, deps.clock.now());
     await deps.profiles.save(profile);
 
     // Publish both aggregates' events together: PartnerReviewSubmitted then ReputationChanged.
-    const events: DomainEvent[] = [...review.value.pullEvents(), ...profile.pullEvents()];
+    const events: DomainEvent[] = [
+      ...review.value.pullEvents(),
+      ...profile.pullEvents(),
+    ];
     await deps.events.publish(events);
 
     return ok(review.value.id);

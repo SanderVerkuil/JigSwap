@@ -2,7 +2,7 @@
 
 ## What it is
 
-[Mutation testing](https://stryker-mutator.io/docs/) measures the *quality* of the
+[Mutation testing](https://stryker-mutator.io/docs/) measures the _quality_ of the
 test suite rather than just line coverage. [StrykerJS](https://stryker-mutator.io/)
 makes thousands of small, semantics-changing edits ("mutants") to the source — e.g.
 flipping `>` to `>=`, replacing a boolean with `true`, removing a method call — then
@@ -69,15 +69,15 @@ See [`stryker.config.json`](./stryker.config.json). Key choices:
 
 ## Baseline (measured 2026-06-09, StrykerJS 9.6.1)
 
-| Metric            | Value  |
-| ----------------- | ------ |
-| **Mutation score**| **80.30%** |
-| Total mutants     | 1071   |
-| Killed            | 859    |
-| Survived          | 175    |
-| Timed out         | 1      |
-| No coverage       | 36     |
-| Errors            | 0      |
+| Metric             | Value      |
+| ------------------ | ---------- |
+| **Mutation score** | **80.30%** |
+| Total mutants      | 1071       |
+| Killed             | 859        |
+| Survived           | 175        |
+| Timed out          | 1          |
+| No coverage        | 36         |
+| Errors             | 0          |
 
 ### Thresholds
 

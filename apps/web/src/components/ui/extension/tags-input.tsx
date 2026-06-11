@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { X as RemoveIcon } from "lucide-react";
-import { useTranslations } from "use-intl";
 import React from "react";
+import { useTranslations } from "use-intl";
 
 /**
  * used for identifying the split char and use will pasting
@@ -132,9 +132,7 @@ export const TagsInput = React.forwardRef<HTMLDivElement, TagsInputProps>(
       onValueChange([...value, ...defaultOptions]);
     }, []); */
 
-    const handleKeyDown = async (
-      e: React.KeyboardEvent<HTMLInputElement>,
-    ) => {
+    const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
       e.stopPropagation();
 
       const moveNext = () => {

@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { useUser } from "@/compat/clerk";
 import {
   CollectionBreakdown,
   CollectionBreakdownData,
 } from "@/components/insights/collection-breakdown";
 import {
-  CompletionTrendsChart,
   CompletionTrendPoint,
+  CompletionTrendsChart,
 } from "@/components/insights/completion-trends-chart";
 import { ExportButton } from "@/components/insights/export-button";
 import { PersonalStats, StatCards } from "@/components/insights/stat-cards";
@@ -15,7 +16,6 @@ import {
   TradeActivityData,
 } from "@/components/insights/trade-activity-chart";
 import { PageLoading } from "@/components/ui/loading";
-import { useUser } from "@/compat/clerk";
 import { gateway } from "@/gateway";
 import { useQuery } from "convex/react";
 import { useTranslations } from "use-intl";

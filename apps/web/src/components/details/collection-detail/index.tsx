@@ -1,16 +1,15 @@
 "use client";
 
+import { useRouter } from "@/compat/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
-import { gateway } from "@/gateway";
-import { Id } from "@/gateway";
+import { gateway, Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { Grid, List, Plus, Search } from "lucide-react";
-import { useTranslations } from "use-intl";
-import { useRouter } from "@/compat/navigation";
 import { useState } from "react";
+import { useTranslations } from "use-intl";
 
 import { CollectionDetailActions } from "./collection-detail-actions";
 import { CollectionDetailHeader } from "./collection-detail-header";
@@ -49,7 +48,9 @@ export function CollectionDetail({
     // collection and its member rows, and guard rows that predate the backfill.
     const copy = collection?.puzzles?.find((p) => p && p._id === ownedPuzzleId);
     if (!collection?.aggregateId || !copy?.aggregateId) {
-      console.error("Cannot remove: collection or copy is missing aggregateId.");
+      console.error(
+        "Cannot remove: collection or copy is missing aggregateId.",
+      );
       return;
     }
     try {

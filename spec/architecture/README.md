@@ -13,7 +13,7 @@ Today (see the inventory in [`appendix-current-state.md`](./appendix-current-sta
 
 - The Convex backend is organised **per database table** (`users.ts`, `puzzles.ts`, `exchanges.ts`, …).
   Business capabilities are smeared across these files; there is no explicit domain model. This is
-  *entity-driven design*: the database schema **is** the architecture.
+  _entity-driven design_: the database schema **is** the architecture.
 - The React UI calls Convex's **generated API directly** (`useQuery(api.puzzles.createPuzzle, …)`),
   so every component is coupled to backend transport shapes and to Convex itself.
 - **Business rules live in two uncontrolled places**: inside Convex mutations (the exchange state
@@ -30,7 +30,7 @@ becomes explicit, testable, and independent of any framework.
 ## The four decisions that shape this proposal
 
 1. **Domain execution host: Convex-hosted core.** The domain + application layer is a pure-TypeScript
-   package imported *by* Convex functions. Convex functions become thin **adapters** that hydrate
+   package imported _by_ Convex functions. Convex functions become thin **adapters** that hydrate
    aggregates through repository ports (`ctx.db` is hidden behind interfaces), run domain logic, and
    persist. This preserves Convex's ACID transactions and reactivity. See
    [`02-hexagonal-architecture.md`](./02-hexagonal-architecture.md).
@@ -48,13 +48,13 @@ becomes explicit, testable, and independent of any framework.
 
 ## Reading order
 
-| # | Document | What it answers |
-|---|----------|-----------------|
-| 0 | [`appendix-current-state.md`](./appendix-current-state.md) | What exists today (inventory) |
-| 1 | [`01-bounded-contexts.md`](./01-bounded-contexts.md) | What are the contexts, their language, aggregates, and the context map |
-| 2 | [`02-hexagonal-architecture.md`](./02-hexagonal-architecture.md) | How the hexagon is laid out; ports, adapters, folders, DI, events — with Convex as adapters |
-| 3 | [`03-bff-tanstack-start.md`](./03-bff-tanstack-start.md) | The TanStack Start BFF and the gateway seam |
-| 4 | [`04-migration-roadmap.md`](./04-migration-roadmap.md) | Phased, low-risk path from here to there |
+| #   | Document                                                         | What it answers                                                                             |
+| --- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| 0   | [`appendix-current-state.md`](./appendix-current-state.md)       | What exists today (inventory)                                                               |
+| 1   | [`01-bounded-contexts.md`](./01-bounded-contexts.md)             | What are the contexts, their language, aggregates, and the context map                      |
+| 2   | [`02-hexagonal-architecture.md`](./02-hexagonal-architecture.md) | How the hexagon is laid out; ports, adapters, folders, DI, events — with Convex as adapters |
+| 3   | [`03-bff-tanstack-start.md`](./03-bff-tanstack-start.md)         | The TanStack Start BFF and the gateway seam                                                 |
+| 4   | [`04-migration-roadmap.md`](./04-migration-roadmap.md)           | Phased, low-risk path from here to there                                                    |
 
 ## Non-goals
 

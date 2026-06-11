@@ -3,9 +3,7 @@ import { ReputationProfileRepository } from "../ports/out/reputation-profile.rep
 
 // In-memory ReputationProfileRepository for use-case tests, keyed by member. Stores persisted
 // state and rehydrates a fresh aggregate on read.
-export class InMemoryReputationProfileRepository
-  implements ReputationProfileRepository
-{
+export class InMemoryReputationProfileRepository implements ReputationProfileRepository {
   private readonly store = new Map<
     MemberId,
     ReturnType<ReputationProfile["toState"]>

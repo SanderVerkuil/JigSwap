@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Image } from "@/compat/image";
 import { Link } from "@/compat/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { gateway } from "@/gateway";
 import { useQuery } from "convex/react";
 

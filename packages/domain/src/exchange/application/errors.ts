@@ -1,6 +1,5 @@
 import { DomainError } from "../../shared-kernel";
-import { CopyId, ExchangeId } from "../domain";
-import { ExchangeKind } from "../domain";
+import { CopyId, ExchangeId, ExchangeKind } from "../domain";
 
 // Orchestration-level failures the aggregate cannot express because they depend on the
 // world (other aggregates' state) rather than the Exchange's own data. Like ExchangeError,
@@ -25,11 +24,17 @@ export class ApplicationError extends DomainError {
 
   // A referenced copy does not exist in the Library.
   static copyNotFound(copyId: CopyId): ApplicationError {
-    return new ApplicationError("CopyNotFound", `Copy ${copyId} could not be found`);
+    return new ApplicationError(
+      "CopyNotFound",
+      `Copy ${copyId} could not be found`,
+    );
   }
 
   // The requested copy is not offered for the proposed kind (swap/sale/lend).
-  static copyNotAvailable(copyId: CopyId, kind: ExchangeKind): ApplicationError {
+  static copyNotAvailable(
+    copyId: CopyId,
+    kind: ExchangeKind,
+  ): ApplicationError {
     return new ApplicationError(
       "CopyNotAvailable",
       `Copy ${copyId} is not available for ${kind}`,

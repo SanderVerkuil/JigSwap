@@ -36,4 +36,7 @@ export class ProfileUpdated implements DomainEvent {
   ) {}
 }
 
-export type SocialDomainEvent = MemberFollowed | MemberUnfollowed | ProfileUpdated;
+export type SocialDomainEvent =
+  | MemberFollowed
+  | MemberUnfollowed
+  | ProfileUpdated;

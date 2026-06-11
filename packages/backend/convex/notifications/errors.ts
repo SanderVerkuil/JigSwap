@@ -1,4 +1,7 @@
-import type { NotificationApplicationError, NotificationError } from "@jigswap/domain";
+import type {
+  NotificationApplicationError,
+  NotificationError,
+} from "@jigswap/domain";
 import { ConvexError } from "convex/values";
 
 // Map a domain/application error to a transport error. The stable `code` is preserved so the

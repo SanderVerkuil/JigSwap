@@ -25,7 +25,9 @@ export const makePostMessage =
   (deps: PostMessageDeps): PostMessage =>
   async (
     cmd: PostMessageCommand,
-  ): Promise<Result<MessageId, ConversationError | ConversationApplicationError>> => {
+  ): Promise<
+    Result<MessageId, ConversationError | ConversationApplicationError>
+  > => {
     const thread = await deps.threads.findById(cmd.threadId);
     if (!thread) {
       return err(ConversationApplicationError.threadNotFound(cmd.threadId));

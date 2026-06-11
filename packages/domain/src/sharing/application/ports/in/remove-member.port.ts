@@ -10,5 +10,7 @@ export interface RemoveMemberCommand {
 }
 
 export interface RemoveMember {
-  (cmd: RemoveMemberCommand): Promise<Result<void, SharingError | SharingApplicationError>>;
+  (
+    cmd: RemoveMemberCommand,
+  ): Promise<Result<void, SharingError | SharingApplicationError>>;
 }

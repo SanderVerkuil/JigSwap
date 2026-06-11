@@ -1,12 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { useUser } from "@/compat/clerk";
 import { LeaveReviewDialog } from "@/components/reputation/leave-review-dialog";
 import { ReputationBadge } from "@/components/reputation/reputation-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
-import { useUser } from "@/compat/clerk";
 import { gateway, Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import {
@@ -19,8 +19,8 @@ import {
   User,
   XCircle,
 } from "lucide-react";
-import { useTranslations } from "use-intl";
 import { useState } from "react";
+import { useTranslations } from "use-intl";
 
 type ExchangeStatus =
   | "proposed"

@@ -126,7 +126,9 @@ export class PuzzleDefinition {
       updatedAt: props.now,
     };
     const definition = new PuzzleDefinition(state);
-    definition.record(new PuzzleDefinitionSubmitted(state.id, state.submittedBy, props.now));
+    definition.record(
+      new PuzzleDefinitionSubmitted(state.id, state.submittedBy, props.now),
+    );
     return ok(definition);
   }
 
@@ -148,10 +150,14 @@ export class PuzzleDefinition {
 
   // Patch descriptive fields. Re-validates any field with an invariant (title, pieceCount,
   // barcodes). Approval status is untouched. Records one PuzzleDefinitionUpdated.
-  update(changes: PuzzleDefinitionChanges, now: Date): Result<void, CatalogError> {
+  update(
+    changes: PuzzleDefinitionChanges,
+    now: Date,
+  ): Result<void, CatalogError> {
     let title = this.state.title;
     if (changes.title !== undefined) {
-      if (changes.title.trim().length === 0) return err(CatalogError.emptyTitle());
+      if (changes.title.trim().length === 0)
+        return err(CatalogError.emptyTitle());
       title = changes.title.trim();
     }
 
@@ -162,7 +168,10 @@ export class PuzzleDefinition {
       pieceCount = validated.value.value;
     }
 
-    let barcodeFields: Pick<PuzzleDefinitionState, "ean" | "upc" | "modelNumber"> = {
+    let barcodeFields: Pick<
+      PuzzleDefinitionState,
+      "ean" | "upc" | "modelNumber"
+    > = {
       ean: this.state.ean,
       upc: this.state.upc,
       modelNumber: this.state.modelNumber,
@@ -232,7 +241,10 @@ export class PuzzleDefinition {
   // --- internals ---
 
   // The ONLY place approval status changes. Rejects any move not in the allow-list.
-  private transition(to: ApprovalStatus, now: Date): Result<void, CatalogError> {
+  private transition(
+    to: ApprovalStatus,
+    now: Date,
+  ): Result<void, CatalogError> {
     if (!ALLOWED_APPROVAL_TRANSITIONS[this.state.status].includes(to)) {
       return err(CatalogError.illegalApprovalTransition(this.state.status, to));
     }

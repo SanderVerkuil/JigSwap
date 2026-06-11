@@ -19,7 +19,9 @@ export const makeMarkThreadRead =
   (deps: MarkThreadReadDeps): MarkThreadRead =>
   async (
     cmd: MarkThreadReadCommand,
-  ): Promise<Result<void, ConversationError | ConversationApplicationError>> => {
+  ): Promise<
+    Result<void, ConversationError | ConversationApplicationError>
+  > => {
     const thread = await deps.threads.findById(cmd.threadId);
     if (!thread) {
       return err(ConversationApplicationError.threadNotFound(cmd.threadId));

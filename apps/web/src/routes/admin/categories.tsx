@@ -136,9 +136,14 @@ function CategoriesPage() {
 
   // Soft-deactivate (the domain has no hard delete); a deactivated node is hidden, not removed.
   const handleDeactivate = async (aggregateId: string) => {
-    if (confirm("Deactivate this category? It will be hidden but not deleted.")) {
+    if (
+      confirm("Deactivate this category? It will be hidden but not deleted.")
+    ) {
       try {
-        await setCategoryActive({ catalogCategoryId: aggregateId, isActive: false });
+        await setCategoryActive({
+          catalogCategoryId: aggregateId,
+          isActive: false,
+        });
         toast.success("Category deactivated successfully");
       } catch {
         toast.error("Failed to deactivate category");

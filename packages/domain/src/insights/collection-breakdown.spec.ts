@@ -4,7 +4,9 @@ import {
   computeCollectionBreakdown,
 } from "./collection-breakdown";
 
-const copy = (over: Partial<CopyBreakdownInput>): CopyBreakdownInput => ({ ...over });
+const copy = (over: Partial<CopyBreakdownInput>): CopyBreakdownInput => ({
+  ...over,
+});
 
 describe("computeCollectionBreakdown", () => {
   it("returns empty distributions for no copies", () => {
@@ -90,7 +92,9 @@ describe("computeCollectionBreakdown", () => {
   });
 
   describe("brand top-N with Other collapse", () => {
-    const brandCopies = (counts: Record<string, number>): CopyBreakdownInput[] =>
+    const brandCopies = (
+      counts: Record<string, number>,
+    ): CopyBreakdownInput[] =>
       Object.entries(counts).flatMap(([brand, n]) =>
         Array.from({ length: n }, () => copy({ brand })),
       );

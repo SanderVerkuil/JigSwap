@@ -11,5 +11,7 @@ export interface ShareCopyToCircleCommand {
 }
 
 export interface ShareCopyToCircle {
-  (cmd: ShareCopyToCircleCommand): Promise<Result<void, SharingError | SharingApplicationError>>;
+  (
+    cmd: ShareCopyToCircleCommand,
+  ): Promise<Result<void, SharingError | SharingApplicationError>>;
 }

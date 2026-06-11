@@ -1,12 +1,12 @@
 "use client";
 
+import { Image } from "@/compat/image";
+import { Link } from "@/compat/link";
+import { useRouter } from "@/compat/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
-import { Image } from "@/compat/image";
-import { Link } from "@/compat/link";
-import { useRouter } from "@/compat/navigation";
 import { gateway, Id } from "@/gateway";
 import { useQuery } from "convex/react";
 import { ArrowLeft, Calendar, Plus, Star, Tag } from "lucide-react";

@@ -26,12 +26,16 @@ describe("CatalogError factories", () => {
   it("illegalApprovalTransition names both states", () => {
     const e = CatalogError.illegalApprovalTransition("approved", "pending");
     expect(e.code).toBe("IllegalApprovalTransition");
-    expect(e.message).toBe("Cannot transition approval from approved to pending");
+    expect(e.message).toBe(
+      "Cannot transition approval from approved to pending",
+    );
   });
 
   it("emptyCategoryName", () => {
     const e = CatalogError.emptyCategoryName();
     expect(e.code).toBe("EmptyCategoryName");
-    expect(e.message).toBe("A catalog category requires a non-empty name in each locale");
+    expect(e.message).toBe(
+      "A catalog category requires a non-empty name in each locale",
+    );
   });
 });

@@ -1,12 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { PuzzleForm, PuzzleFormData } from "@/components/forms/puzzle-form";
 import { useRouter } from "@/compat/navigation";
+import { PuzzleForm, PuzzleFormData } from "@/components/forms/puzzle-form";
 import { gateway } from "@/gateway";
 import { useMutation } from "convex/react";
-import { useTranslations } from "use-intl";
 import { useTransition } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/puzzles/add")({
   component: AddPuzzlePage,

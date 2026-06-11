@@ -1,6 +1,11 @@
-import { Clock, DomainEventPublisher, err, ok } from "../../../shared-kernel";
+import {
+  Clock,
+  DomainEventPublisher,
+  err,
+  ok,
+  Result,
+} from "../../../shared-kernel";
 import { Exchange, ExchangeError, MemberId } from "../../domain";
-import { Result } from "../../../shared-kernel";
 import { ApplicationError } from "../errors";
 import { ExchangeActionCommand } from "../ports/in/exchange-action.command";
 import { ExchangeRepository } from "../ports/out/exchange.repository";
@@ -27,7 +32,8 @@ export const runExchangeAction =
     cmd: ExchangeActionCommand,
   ): Promise<Result<void, ExchangeError | ApplicationError>> => {
     const exchange = await deps.exchanges.findById(cmd.exchangeId);
-    if (!exchange) return err(ApplicationError.exchangeNotFound(cmd.exchangeId));
+    if (!exchange)
+      return err(ApplicationError.exchangeNotFound(cmd.exchangeId));
 
     const outcome = action(exchange, cmd.actingMemberId, deps.clock.now());
     if (outcome.isErr) return err(outcome.error);

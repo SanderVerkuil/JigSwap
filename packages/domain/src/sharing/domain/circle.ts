@@ -1,6 +1,10 @@
 import { DomainEvent, err, ok, Result } from "../../shared-kernel";
 import { SharingError } from "./errors";
-import { CircleCreated, CopySharedToCircle, MemberJoinedCircle } from "./events";
+import {
+  CircleCreated,
+  CopySharedToCircle,
+  MemberJoinedCircle,
+} from "./events";
 import { CircleId, CopyId, MemberId, MembershipId } from "./ids";
 import { Membership } from "./membership";
 import { canManageMembers, PermissionLevel } from "./permission-level";
@@ -95,17 +99,23 @@ export class Circle {
     if (gate.isErr) return err(gate.error);
     if (this.isMember(memberId)) return err(SharingError.alreadyMember());
 
-    this.memberships.push(Membership.create(membershipId, memberId, permission, now));
+    this.memberships.push(
+      Membership.create(membershipId, memberId, permission, now),
+    );
     this.record(new MemberJoinedCircle(this.state.id, memberId, now));
     return ok(undefined);
   }
 
   // Remove a member. Only an Admin actor may do so; the target must be a member and must not be the
   // owner (the owner's seat is permanent).
-  removeMember(actor: MemberId, memberId: MemberId): Result<void, SharingError> {
+  removeMember(
+    actor: MemberId,
+    memberId: MemberId,
+  ): Result<void, SharingError> {
     const gate = this.requireAdmin(actor);
     if (gate.isErr) return err(gate.error);
-    if (memberId === this.state.ownerId) return err(SharingError.cannotRemoveOwner());
+    if (memberId === this.state.ownerId)
+      return err(SharingError.cannotRemoveOwner());
     if (!this.isMember(memberId)) return err(SharingError.notAMember());
 
     this.memberships = this.memberships.filter((m) => m.memberId !== memberId);
@@ -121,7 +131,8 @@ export class Circle {
   ): Result<void, SharingError> {
     const gate = this.requireAdmin(actor);
     if (gate.isErr) return err(gate.error);
-    if (memberId === this.state.ownerId) return err(SharingError.cannotRemoveOwner());
+    if (memberId === this.state.ownerId)
+      return err(SharingError.cannotRemoveOwner());
 
     const current = this.memberships.find((m) => m.memberId === memberId);
     if (!current) return err(SharingError.notAMember());
@@ -138,7 +149,11 @@ export class Circle {
   // Share a copy into this circle, making it visible to the circle's members. Only an Admin actor
   // may share. Emits CopySharedToCircle; the aggregate holds no copy state (the link lives in a
   // read model fed by the event), so this is a pure authorisation + announcement.
-  shareCopy(actor: MemberId, copyId: CopyId, now: Date): Result<void, SharingError> {
+  shareCopy(
+    actor: MemberId,
+    copyId: CopyId,
+    now: Date,
+  ): Result<void, SharingError> {
     const gate = this.requireAdmin(actor);
     if (gate.isErr) return err(gate.error);
 
@@ -157,7 +172,10 @@ export class Circle {
   }
 
   toState(): CircleState {
-    return { ...this.state, memberships: this.memberships.map((m) => m.toState()) };
+    return {
+      ...this.state,
+      memberships: this.memberships.map((m) => m.toState()),
+    };
   }
 
   // --- internals ---

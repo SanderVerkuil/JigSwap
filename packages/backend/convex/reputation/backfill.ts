@@ -1,5 +1,5 @@
-import { internalMutation } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
+import { internalMutation } from "../_generated/server";
 
 // Number of reviews at which credibility is considered fully established — mirrors the domain's
 // ReputationProfile.CREDIBILITY_SATURATION so the rebuilt projection matches live writes exactly.
@@ -34,9 +34,11 @@ export const backfillReputation = internalMutation({
     >();
     for (const review of reviews) {
       const key = review.revieweeId as unknown as string;
-      const acc =
-        byMember.get(key) ??
-        { memberId: review.revieweeId, ratingSum: 0, reviewCount: 0 };
+      const acc = byMember.get(key) ?? {
+        memberId: review.revieweeId,
+        ratingSum: 0,
+        reviewCount: 0,
+      };
       acc.ratingSum += review.rating;
       acc.reviewCount += 1;
       byMember.set(key, acc);

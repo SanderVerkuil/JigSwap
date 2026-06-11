@@ -11,16 +11,16 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { StarRating } from "@/components/ui/star-rating";
 import { Textarea } from "@/components/ui/textarea";
-import { gateway } from "@/gateway";
 import type { Id } from "@/gateway";
+import { gateway } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { ConvexError } from "convex/values";
 import { CheckCircle, Star } from "lucide-react";
-import { useTranslations } from "use-intl";
 import { useState } from "react";
 import { toast } from "sonner";
-import { StarRating } from "@/components/ui/star-rating";
+import { useTranslations } from "use-intl";
 
 // Post-exchange partner review. Keyed by the Exchange aggregateId (a string) and the OTHER
 // party's user id (derived by the caller). Self-fetches the caller's existing review so a
@@ -82,8 +82,7 @@ export function LeaveReviewDialog({
     );
   }
 
-  const allFilled =
-    rating >= 1 && SUB_SCORE_KEYS.every((k) => scores[k] >= 1);
+  const allFilled = rating >= 1 && SUB_SCORE_KEYS.every((k) => scores[k] >= 1);
 
   const reset = () => {
     setRating(0);
@@ -169,7 +168,11 @@ export function LeaveReviewDialog({
         <div className="space-y-5 py-2">
           <div className="space-y-1.5">
             <Label>{t("overallRating")}</Label>
-            <StarRating value={rating} onChange={setRating} label={t("overallRating")} />
+            <StarRating
+              value={rating}
+              onChange={setRating}
+              label={t("overallRating")}
+            />
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -181,9 +184,7 @@ export function LeaveReviewDialog({
                 <StarRating
                   size="sm"
                   value={scores[key]}
-                  onChange={(v) =>
-                    setScores((prev) => ({ ...prev, [key]: v }))
-                  }
+                  onChange={(v) => setScores((prev) => ({ ...prev, [key]: v }))}
                   label={t(`scores.${key}`)}
                 />
               </div>

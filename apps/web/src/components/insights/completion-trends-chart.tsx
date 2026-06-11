@@ -15,9 +15,9 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { useTranslations } from "use-intl";
 import { useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { useTranslations } from "use-intl";
 
 export interface CompletionTrendPoint {
   month: string;

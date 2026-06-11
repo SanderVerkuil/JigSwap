@@ -1,7 +1,16 @@
-import { Clock, DomainEventPublisher, err, ok, Result } from "../../../shared-kernel";
+import {
+  Clock,
+  DomainEventPublisher,
+  err,
+  ok,
+  Result,
+} from "../../../shared-kernel";
 import { Follow, FollowId, SocialError } from "../../domain";
 import { SocialApplicationError } from "../errors";
-import { FollowMember, FollowMemberCommand } from "../ports/in/follow-member.port";
+import {
+  FollowMember,
+  FollowMemberCommand,
+} from "../ports/in/follow-member.port";
 import { FollowRepository } from "../ports/out/follow.repository";
 import { FollowIdGenerator } from "../ports/out/id-generators";
 

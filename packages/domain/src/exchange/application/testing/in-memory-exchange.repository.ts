@@ -4,7 +4,10 @@ import { ExchangeRepository } from "../ports/out/exchange.repository";
 // In-memory ExchangeRepository for use-case tests. Stores persisted state and rehydrates a
 // fresh aggregate on read, mirroring the round-trip a real adapter performs.
 export class InMemoryExchangeRepository implements ExchangeRepository {
-  private readonly store = new Map<ExchangeId, ReturnType<Exchange["toState"]>>();
+  private readonly store = new Map<
+    ExchangeId,
+    ReturnType<Exchange["toState"]>
+  >();
 
   async findById(id: ExchangeId): Promise<Exchange | null> {
     const state = this.store.get(id);

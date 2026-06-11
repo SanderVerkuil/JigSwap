@@ -1,18 +1,12 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { useTranslations } from "use-intl";
 import { useMemo } from "react";
 import {
   Bar,
@@ -24,6 +18,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useTranslations } from "use-intl";
 
 interface DistributionEntry {
   label: string;

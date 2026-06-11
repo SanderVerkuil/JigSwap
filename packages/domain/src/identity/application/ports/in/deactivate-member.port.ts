@@ -10,5 +10,7 @@ export interface DeactivateMemberCommand {
 // Inbound port: the deactivate-member use case. Idempotent (re-deactivating succeeds, emitting
 // nothing). Fails with MemberNotFound for an unknown member.
 export interface DeactivateMember {
-  (cmd: DeactivateMemberCommand): Promise<Result<void, IdentityApplicationError>>;
+  (
+    cmd: DeactivateMemberCommand,
+  ): Promise<Result<void, IdentityApplicationError>>;
 }

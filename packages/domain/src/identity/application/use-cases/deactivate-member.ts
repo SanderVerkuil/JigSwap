@@ -1,4 +1,10 @@
-import { Clock, DomainEventPublisher, err, ok, Result } from "../../../shared-kernel";
+import {
+  Clock,
+  DomainEventPublisher,
+  err,
+  ok,
+  Result,
+} from "../../../shared-kernel";
 import { IdentityApplicationError } from "../errors";
 import {
   DeactivateMember,
@@ -21,7 +27,8 @@ export const makeDeactivateMember =
     cmd: DeactivateMemberCommand,
   ): Promise<Result<void, IdentityApplicationError>> => {
     const member = await deps.members.findById(cmd.memberId);
-    if (!member) return err(IdentityApplicationError.memberNotFound(cmd.memberId));
+    if (!member)
+      return err(IdentityApplicationError.memberNotFound(cmd.memberId));
 
     member.deactivate(deps.clock.now());
 

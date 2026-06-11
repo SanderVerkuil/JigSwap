@@ -60,29 +60,17 @@ export function PuzzleDetailActions({
       {/* Secondary Actions */}
       <div className="flex items-center gap-2">
         {onFavorite && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onFavorite(ownedId)}
-          >
+          <Button variant="ghost" size="sm" onClick={() => onFavorite(ownedId)}>
             <Heart className="h-4 w-4" />
           </Button>
         )}
         {onMessage && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onMessage(ownedId)}
-          >
+          <Button variant="ghost" size="sm" onClick={() => onMessage(ownedId)}>
             <MessageCircle className="h-4 w-4" />
           </Button>
         )}
         {onDelete && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onDelete(ownedId)}
-          >
+          <Button variant="ghost" size="sm" onClick={() => onDelete(ownedId)}>
             <Trash2 className="h-4 w-4" />
           </Button>
         )}

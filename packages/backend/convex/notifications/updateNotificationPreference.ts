@@ -31,7 +31,11 @@ const notificationType = v.union(
   v.literal("exchange_disputed"),
 );
 
-const channel = v.union(v.literal("inApp"), v.literal("email"), v.literal("push"));
+const channel = v.union(
+  v.literal("inApp"),
+  v.literal("email"),
+  v.literal("push"),
+);
 
 // Toggle a single (type, channel) delivery for the caller. A member with no stored preference yet
 // has a default one materialised before the toggle is applied (handled in the use case).

@@ -1,10 +1,5 @@
 import { Result } from "../../../../shared-kernel";
-import {
-  CompletionId,
-  FileId,
-  MemberId,
-  SolvingError,
-} from "../../../domain";
+import { CompletionId, FileId, MemberId, SolvingError } from "../../../domain";
 import { SolvingApplicationError } from "../../errors";
 
 // Edit a completion's mutable fields. Enforces the 24h edit window and ownership in the aggregate.

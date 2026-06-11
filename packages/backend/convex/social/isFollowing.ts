@@ -1,7 +1,7 @@
 import { v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import type { Id } from "../_generated/dataModel";
 
 // Read side: whether the acting member already follows `followeeId`. Drives the follow/unfollow
 // button state. Auth-gated; the follower is the acting member.

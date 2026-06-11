@@ -67,8 +67,10 @@ const seed = (t: ReturnType<typeof convexTest>) =>
 
 // Re-open the copy for sale so a second exchange can be proposed against it (settlement flips it
 // all-false). A test-only fixup; the projection only cares that another transfer is recorded.
-const reopenForSale = (t: ReturnType<typeof convexTest>, copy: Id<"ownedPuzzles">) =>
-  t.run(async (ctx) => ctx.db.patch(copy, { availability: FOR_SALE }));
+const reopenForSale = (
+  t: ReturnType<typeof convexTest>,
+  copy: Id<"ownedPuzzles">,
+) => t.run(async (ctx) => ctx.db.patch(copy, { availability: FOR_SALE }));
 
 // Drive a full sale of `copy` from `owner` to `buyerAuth`, settling it (both parties confirm).
 const settleSaleToAlice = async (
@@ -82,9 +84,17 @@ const settleSaleToAlice = async (
     requestedPuzzleId: copy,
     salePrice: 1000,
   });
-  await t.withIdentity({ subject: "clerk_owner" }).mutation(api.exchange.accept.accept, { exchangeId: id });
-  await asAlice(t).mutation(api.exchange.confirmCompletion.confirmCompletion, { exchangeId: id });
-  await t.withIdentity({ subject: "clerk_owner" }).mutation(api.exchange.confirmCompletion.confirmCompletion, { exchangeId: id });
+  await t
+    .withIdentity({ subject: "clerk_owner" })
+    .mutation(api.exchange.accept.accept, { exchangeId: id });
+  await asAlice(t).mutation(api.exchange.confirmCompletion.confirmCompletion, {
+    exchangeId: id,
+  });
+  await t
+    .withIdentity({ subject: "clerk_owner" })
+    .mutation(api.exchange.confirmCompletion.confirmCompletion, {
+      exchangeId: id,
+    });
   return id;
 };
 
@@ -105,9 +115,17 @@ const settleLoanToAlice = async (
     requestedPuzzleId: copy,
     loanReturnDate: Date.now() + 86_400_000,
   });
-  await t.withIdentity({ subject: "clerk_owner" }).mutation(api.exchange.accept.accept, { exchangeId: id });
-  await asAlice(t).mutation(api.exchange.confirmCompletion.confirmCompletion, { exchangeId: id });
-  await t.withIdentity({ subject: "clerk_owner" }).mutation(api.exchange.confirmCompletion.confirmCompletion, { exchangeId: id });
+  await t
+    .withIdentity({ subject: "clerk_owner" })
+    .mutation(api.exchange.accept.accept, { exchangeId: id });
+  await asAlice(t).mutation(api.exchange.confirmCompletion.confirmCompletion, {
+    exchangeId: id,
+  });
+  await t
+    .withIdentity({ subject: "clerk_owner" })
+    .mutation(api.exchange.confirmCompletion.confirmCompletion, {
+      exchangeId: id,
+    });
   return id;
 };
 
@@ -122,9 +140,17 @@ const settleSaleToBob = async (
     requestedPuzzleId: copy,
     salePrice: 1200,
   });
-  await t.withIdentity({ subject: "clerk_owner" }).mutation(api.exchange.accept.accept, { exchangeId: id });
-  await asBob(t).mutation(api.exchange.confirmCompletion.confirmCompletion, { exchangeId: id });
-  await t.withIdentity({ subject: "clerk_owner" }).mutation(api.exchange.confirmCompletion.confirmCompletion, { exchangeId: id });
+  await t
+    .withIdentity({ subject: "clerk_owner" })
+    .mutation(api.exchange.accept.accept, { exchangeId: id });
+  await asBob(t).mutation(api.exchange.confirmCompletion.confirmCompletion, {
+    exchangeId: id,
+  });
+  await t
+    .withIdentity({ subject: "clerk_owner" })
+    .mutation(api.exchange.confirmCompletion.confirmCompletion, {
+      exchangeId: id,
+    });
   return id;
 };
 

@@ -10,7 +10,9 @@ describe("computeCompletionTrends", () => {
   it("returns a zero-filled 12-month window for empty input, sorted oldest->newest", () => {
     const points = computeCompletionTrends([], NOW);
     expect(points).toHaveLength(12);
-    expect(points.every((p) => p.count === 0 && p.totalMinutes === 0)).toBe(true);
+    expect(points.every((p) => p.count === 0 && p.totalMinutes === 0)).toBe(
+      true,
+    );
     // Window ends at the current month and spans back 11 months.
     expect(points[0]?.month).toBe("2025-07");
     expect(points[11]?.month).toBe("2026-06");
@@ -69,11 +71,19 @@ describe("computeCompletionTrends", () => {
   it("handles the January->December year wrap when seeding the window", () => {
     const jan = Date.UTC(2026, 0, 15);
     const points = computeCompletionTrends([], jan, 3);
-    expect(points.map((p) => p.month)).toEqual(["2025-11", "2025-12", "2026-01"]);
+    expect(points.map((p) => p.month)).toEqual([
+      "2025-11",
+      "2025-12",
+      "2026-01",
+    ]);
   });
 
   it("honours a custom window length", () => {
     const points = computeCompletionTrends([], NOW, 3);
-    expect(points.map((p) => p.month)).toEqual(["2026-04", "2026-05", "2026-06"]);
+    expect(points.map((p) => p.month)).toEqual([
+      "2026-04",
+      "2026-05",
+      "2026-06",
+    ]);
   });
 });

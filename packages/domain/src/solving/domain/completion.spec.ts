@@ -276,8 +276,11 @@ describe("Completion.edit", () => {
     const onEdge = recordValid();
     if (!onEdge.isOk) throw new Error("setup failed");
     expect(
-      onEdge.value.edit(ALICE, { notes: "edge" }, new Date(END.getTime() + DAY_MS))
-        .isOk,
+      onEdge.value.edit(
+        ALICE,
+        { notes: "edge" },
+        new Date(END.getTime() + DAY_MS),
+      ).isOk,
     ).toBe(true);
 
     const justPast = recordValid();
@@ -396,14 +399,22 @@ describe("Completion.edit", () => {
 
     it("sets the duration directly from explicit minutes (no end yet)", () => {
       const completion = inProgress();
-      const outcome = completion.edit(ALICE, { completionTimeMinutes: 30 }, NOW);
+      const outcome = completion.edit(
+        ALICE,
+        { completionTimeMinutes: 30 },
+        NOW,
+      );
       expect(outcome.isOk).toBe(true);
       expect(completion.toState().completionTimeMinutes).toBe(30);
     });
 
     it("rejects invalid explicit minutes (no end yet)", () => {
       const completion = inProgress();
-      const outcome = completion.edit(ALICE, { completionTimeMinutes: -5 }, NOW);
+      const outcome = completion.edit(
+        ALICE,
+        { completionTimeMinutes: -5 },
+        NOW,
+      );
       expect(outcome.isErr).toBe(true);
       if (outcome.isErr) expect(outcome.error.code).toBe("InvalidDuration");
     });

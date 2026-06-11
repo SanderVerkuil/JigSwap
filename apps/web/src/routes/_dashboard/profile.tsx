@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { useUser } from "@/compat/clerk";
 import { ReputationSection } from "@/components/reputation/reputation-section";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
-import { useUser } from "@/compat/clerk";
 import { gateway, Id } from "@/gateway";
 import { useQuery } from "convex/react";
 import {
@@ -21,8 +21,8 @@ import {
   Pencil,
   Star,
 } from "lucide-react";
-import { useTranslations } from "use-intl";
 import { useState } from "react";
+import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/profile")({
   pendingComponent: () => <PageLoading message="Loading profile..." />,

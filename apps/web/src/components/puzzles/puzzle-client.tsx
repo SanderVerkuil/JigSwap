@@ -1,14 +1,14 @@
 "use client";
 
+import { Link } from "@/compat/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
-import { Link } from "@/compat/link";
 import { gateway } from "@/gateway";
 import { usePaginatedQuery } from "convex/react";
 import { Filter, Grid, List, Plus, Search, X } from "lucide-react";
-import { useTranslations } from "use-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "use-intl";
 import { PuzzleCard } from "./puzzle-card";
 import { PuzzleFilters } from "./puzzle-filters";
 import { PuzzleViewProvider } from "./puzzle-view-provider";

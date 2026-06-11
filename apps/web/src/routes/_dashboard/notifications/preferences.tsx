@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { useUser } from "@/compat/clerk";
+import { Link } from "@/compat/link";
 import {
   type NotificationChannel,
   NOTIFICATION_CHANNELS,
@@ -19,14 +21,12 @@ import {
 import { Label } from "@/components/ui/label";
 import { PageLoading } from "@/components/ui/loading";
 import { Switch } from "@/components/ui/switch";
-import { Link } from "@/compat/link";
-import { useUser } from "@/compat/clerk";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "convex/react";
 import { ArrowLeft } from "lucide-react";
-import { useTranslations } from "use-intl";
 import { toast } from "sonner";
+import { useTranslations } from "use-intl";
 
 // The toggle map the backend returns: type -> channel -> enabled. Absent resolves to off.
 type Toggles = Record<string, Partial<Record<NotificationChannel, boolean>>>;

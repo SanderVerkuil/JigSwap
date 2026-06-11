@@ -49,7 +49,9 @@ export const getCopyCustodyTimeline = query({
     return {
       copyId: args.copyId,
       originalOwner:
-        (first ? members.get(first.previousOwner) : members.get(copy.ownerId)) ?? null,
+        (first
+          ? members.get(first.previousOwner)
+          : members.get(copy.ownerId)) ?? null,
       transfers,
       currentOwner:
         (last ? members.get(last.newOwner) : members.get(copy.ownerId)) ?? null,

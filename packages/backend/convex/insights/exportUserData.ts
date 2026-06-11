@@ -17,44 +17,53 @@ export const exportUserData = query({
 
     const user = await ctx.db.get(userId);
 
-    const [completions, copies, collections, goals, reviewsGiven, exchangesA, exchangesB] =
-      await Promise.all([
-        ctx.db
-          .query("completions")
-          .withIndex("by_user", (q) => q.eq("userId", userId))
-          .order("desc")
-          .take(EXPORT_LIMIT),
-        ctx.db
-          .query("ownedPuzzles")
-          .withIndex("by_owner", (q) => q.eq("ownerId", userId))
-          .take(EXPORT_LIMIT),
-        ctx.db
-          .query("collections")
-          .withIndex("by_user", (q) => q.eq("userId", userId))
-          .take(EXPORT_LIMIT),
-        ctx.db
-          .query("goals")
-          .withIndex("by_user", (q) => q.eq("userId", userId))
-          .take(EXPORT_LIMIT),
-        ctx.db
-          .query("reviews")
-          .withIndex("by_reviewer", (q) => q.eq("reviewerId", userId))
-          .take(EXPORT_LIMIT),
-        ctx.db
-          .query("exchanges")
-          .withIndex("by_initiator", (q) => q.eq("initiatorId", userId))
-          .take(EXPORT_LIMIT),
-        ctx.db
-          .query("exchanges")
-          .withIndex("by_recipient", (q) => q.eq("recipientId", userId))
-          .take(EXPORT_LIMIT),
-      ]);
+    const [
+      completions,
+      copies,
+      collections,
+      goals,
+      reviewsGiven,
+      exchangesA,
+      exchangesB,
+    ] = await Promise.all([
+      ctx.db
+        .query("completions")
+        .withIndex("by_user", (q) => q.eq("userId", userId))
+        .order("desc")
+        .take(EXPORT_LIMIT),
+      ctx.db
+        .query("ownedPuzzles")
+        .withIndex("by_owner", (q) => q.eq("ownerId", userId))
+        .take(EXPORT_LIMIT),
+      ctx.db
+        .query("collections")
+        .withIndex("by_user", (q) => q.eq("userId", userId))
+        .take(EXPORT_LIMIT),
+      ctx.db
+        .query("goals")
+        .withIndex("by_user", (q) => q.eq("userId", userId))
+        .take(EXPORT_LIMIT),
+      ctx.db
+        .query("reviews")
+        .withIndex("by_reviewer", (q) => q.eq("reviewerId", userId))
+        .take(EXPORT_LIMIT),
+      ctx.db
+        .query("exchanges")
+        .withIndex("by_initiator", (q) => q.eq("initiatorId", userId))
+        .take(EXPORT_LIMIT),
+      ctx.db
+        .query("exchanges")
+        .withIndex("by_recipient", (q) => q.eq("recipientId", userId))
+        .take(EXPORT_LIMIT),
+    ]);
 
     // Resolve puzzle titles for the completions and copies (de-duplicated) so the export reads
     // without opaque ids. Cheap: one get per distinct puzzle.
     const puzzleIds = [
       ...new Set([
-        ...completions.map((c) => c.puzzleId).filter((id): id is Id<"puzzles"> => !!id),
+        ...completions
+          .map((c) => c.puzzleId)
+          .filter((id): id is Id<"puzzles"> => !!id),
         ...copies.map((c) => c.puzzleId),
       ]),
     ];

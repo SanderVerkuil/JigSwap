@@ -1,5 +1,7 @@
 "use client";
 
+import { useUser } from "@/compat/clerk";
+import Link from "@/compat/link";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,12 +10,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useUser } from "@/compat/clerk";
-import { gateway } from "@/gateway";
-import { Id } from "@/gateway";
+import { gateway, Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { FolderOpen, Plus } from "lucide-react";
-import Link from "@/compat/link";
 import { useState } from "react";
 
 interface CollectionDropdownProps {
@@ -41,16 +40,11 @@ export function CollectionDropdown({
     convexUser?._id ? { userId: convexUser._id as Id<"users"> } : "skip",
   );
 
-  const puzzleCollections = useQuery(
-    gateway.collections.forOwnedPuzzle,
-    {
-      ownedPuzzleId,
-    },
-  );
+  const puzzleCollections = useQuery(gateway.collections.forOwnedPuzzle, {
+    ownedPuzzleId,
+  });
 
-  const addPuzzleToCollection = useMutation(
-    gateway.collections.addOwnedPuzzle,
-  );
+  const addPuzzleToCollection = useMutation(gateway.collections.addOwnedPuzzle);
 
   const handleAddToCollection = async (collectionAggregateId?: string) => {
     // The domain add takes the Collection + Copy aggregateIds; guard either missing.

@@ -40,7 +40,10 @@ export class SharingError extends DomainError {
 
   // The target member is not in the circle, so it cannot be removed or re-permissioned.
   static notAMember(): SharingError {
-    return new SharingError("NotAMember", "That member does not belong to this circle");
+    return new SharingError(
+      "NotAMember",
+      "That member does not belong to this circle",
+    );
   }
 
   // The owner's membership is permanent: it can never be removed from the circle.

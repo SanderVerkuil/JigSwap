@@ -1,7 +1,7 @@
 "use client";
 
-import { Roles } from "@/types/globals";
 import { useUser } from "@/compat/clerk";
+import { Roles } from "@/types/globals";
 
 // RSC->client adaptation: the Next source was a server component using `auth()` server-side.
 // TanStack Start has no RSC, so this mirrors `client.tsx`, gating on the Clerk session's

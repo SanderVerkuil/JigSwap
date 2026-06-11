@@ -1,8 +1,8 @@
 import type { FollowEdgeView } from "@jigswap/contracts";
 import { v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import type { Id } from "../_generated/dataModel";
 import { toFollowEdgeView } from "./readViews";
 
 // Read side: the members who follow the target (defaults to the acting member). Each entry resolves
@@ -11,7 +11,7 @@ export const listFollowers = query({
   args: { memberId: v.optional(v.id("users")) },
   handler: async (ctx, args): Promise<FollowEdgeView[]> => {
     const target =
-      args.memberId ?? (await requireMember(ctx) as unknown as Id<"users">);
+      args.memberId ?? ((await requireMember(ctx)) as unknown as Id<"users">);
     const rows = await ctx.db
       .query("follows")
       .withIndex("by_followee", (q) => q.eq("followeeId", target))

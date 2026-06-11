@@ -7,7 +7,8 @@ import { InMemoryNotificationRepository } from "./in-memory-notification.reposit
 // persisting in-app deliveries into the in-memory repository — so read-based assertions (size,
 // listByUser) keep working exactly as when the use case owned persistence.
 export class RecordingNotificationDelivery implements NotificationDelivery {
-  readonly delivered: Array<{ channel: Channel; notification: Notification }> = [];
+  readonly delivered: Array<{ channel: Channel; notification: Notification }> =
+    [];
 
   constructor(private readonly notifications: InMemoryNotificationRepository) {}
 

@@ -46,7 +46,9 @@ describe("makeRegisterMember", () => {
     expect(first.isOk).toBe(true);
     const firstId = first.isOk ? first.value : undefined;
 
-    const second = await register(cmd({ name: "Alice Again", email: "alice2@example.com" }));
+    const second = await register(
+      cmd({ name: "Alice Again", email: "alice2@example.com" }),
+    );
     expect(second.isOk).toBe(true);
     expect(second.isOk ? second.value : undefined).toBe(firstId);
 

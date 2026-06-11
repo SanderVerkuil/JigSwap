@@ -1,4 +1,7 @@
-import type { DomainEventPublisher, ExchangeDomainEvent } from "@jigswap/domain";
+import type {
+  DomainEventPublisher,
+  ExchangeDomainEvent,
+} from "@jigswap/domain";
 import type { Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
 import { makeEventPublisher } from "../../events/makeEventPublisher";
@@ -11,7 +14,9 @@ import { makeEventPublisher } from "../../events/makeEventPublisher";
 // WHY notifications moved out: trade_request/accepted/declined/cancelled/completed are no longer
 // created inline here — they are produced by the async Notifications subscriber off these same
 // events, decoupling Exchange from Notifications.
-export const inProcessEventPublisher = (ctx: MutationCtx): DomainEventPublisher =>
+export const inProcessEventPublisher = (
+  ctx: MutationCtx,
+): DomainEventPublisher =>
   makeEventPublisher(ctx, "exchange", async (events) => {
     for (const event of events as readonly ExchangeDomainEvent[]) {
       // A settled copy leaves the market immediately — whether ownership moved (swap/sale) or only
@@ -20,7 +25,10 @@ export const inProcessEventPublisher = (ctx: MutationCtx): DomainEventPublisher 
         event.name === "OwnershipTransferred" ||
         event.name === "PossessionTransferred"
       ) {
-        await markCopyUnavailable(ctx, event.copyId as unknown as Id<"ownedPuzzles">);
+        await markCopyUnavailable(
+          ctx,
+          event.copyId as unknown as Id<"ownedPuzzles">,
+        );
       }
     }
   });

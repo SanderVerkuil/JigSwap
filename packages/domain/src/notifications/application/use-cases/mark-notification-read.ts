@@ -1,4 +1,10 @@
-import { Clock, DomainEventPublisher, err, ok, Result } from "../../../shared-kernel";
+import {
+  Clock,
+  DomainEventPublisher,
+  err,
+  ok,
+  Result,
+} from "../../../shared-kernel";
 import { NotificationError } from "../../domain";
 import { NotificationApplicationError } from "../errors";
 import {
@@ -19,10 +25,14 @@ export const makeMarkNotificationRead =
   (deps: MarkNotificationReadDeps): MarkNotificationRead =>
   async (
     cmd: MarkNotificationReadCommand,
-  ): Promise<Result<void, NotificationError | NotificationApplicationError>> => {
+  ): Promise<
+    Result<void, NotificationError | NotificationApplicationError>
+  > => {
     const notification = await deps.notifications.findById(cmd.notificationId);
     if (!notification) {
-      return err(NotificationApplicationError.notificationNotFound(cmd.notificationId));
+      return err(
+        NotificationApplicationError.notificationNotFound(cmd.notificationId),
+      );
     }
 
     const marked = notification.markRead(cmd.memberId, deps.clock.now());

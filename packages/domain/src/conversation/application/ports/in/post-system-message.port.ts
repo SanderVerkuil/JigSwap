@@ -13,5 +13,7 @@ export interface PostSystemMessageCommand {
 export interface PostSystemMessage {
   (
     cmd: PostSystemMessageCommand,
-  ): Promise<Result<MessageId, ConversationError | ConversationApplicationError>>;
+  ): Promise<
+    Result<MessageId, ConversationError | ConversationApplicationError>
+  >;
 }

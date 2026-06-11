@@ -1,19 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { useUser } from "@/compat/clerk";
+import { Link } from "@/compat/link";
+import { useRouter } from "@/compat/navigation";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
-import { Link } from "@/compat/link";
-import { useRouter } from "@/compat/navigation";
-import { useUser } from "@/compat/clerk";
 import { gateway, Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { Filter, Grid, List, Plus, Search, Undo2 } from "lucide-react";
-import { useTranslations } from "use-intl";
 import { useMemo, useState } from "react";
+import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/my-puzzles/")({
   pendingComponent: () => <PageLoading message="Loading puzzles..." />,

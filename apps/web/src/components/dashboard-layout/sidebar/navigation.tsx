@@ -1,3 +1,4 @@
+import { Link } from "@/compat/link";
 import {
   Collapsible,
   CollapsibleContent,
@@ -19,7 +20,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Link } from "@/compat/link";
 import { ChevronRight, LucideIcon } from "lucide-react";
 
 export type Item = {

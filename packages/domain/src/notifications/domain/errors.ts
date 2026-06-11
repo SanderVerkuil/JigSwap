@@ -17,7 +17,10 @@ export class NotificationError extends DomainError {
   }
 
   // A member tried to act on (e.g. read) a notification that is not addressed to them.
-  static notOwner(notificationId: NotificationId, member: MemberId): NotificationError {
+  static notOwner(
+    notificationId: NotificationId,
+    member: MemberId,
+  ): NotificationError {
     return new NotificationError(
       "NotNotificationOwner",
       `Member ${member} does not own notification ${notificationId}`,

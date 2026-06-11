@@ -88,7 +88,12 @@ export class Goal {
       updatedAt: props.now,
     });
     goal.record(
-      new GoalCreated(props.id, props.userId, props.targetCompletions, props.now),
+      new GoalCreated(
+        props.id,
+        props.userId,
+        props.targetCompletions,
+        props.now,
+      ),
     );
     return ok(goal);
   }

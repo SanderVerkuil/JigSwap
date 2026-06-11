@@ -10,6 +10,10 @@ export const approvePuzzleDefinition = mutation({
   args: { puzzleDefinitionId: v.string() },
   handler: async (ctx, args) => {
     await requireMember(ctx);
-    await runDefinitionAction(ctx, args.puzzleDefinitionId, makeApprovePuzzleDefinition);
+    await runDefinitionAction(
+      ctx,
+      args.puzzleDefinitionId,
+      makeApprovePuzzleDefinition,
+    );
   },
 });

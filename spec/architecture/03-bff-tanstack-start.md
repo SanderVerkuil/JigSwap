@@ -35,7 +35,9 @@ Proposed: the UI and BFF depend on an **`ApplicationGateway` port**; a Convex ad
 ```ts
 // apps/web/src/gateway/application-gateway.ts  (a PORT — an interface)
 import type {
-  ProposeExchangeInput, ExchangeSummaryDTO, CopyDetailDTO,
+  ProposeExchangeInput,
+  ExchangeSummaryDTO,
+  CopyDetailDTO,
 } from "@jigswap/contracts";
 
 export interface ApplicationGateway {
@@ -54,11 +56,13 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "@jigswap/backend/convex/_generated/api"; // ← the ONLY place this import is allowed
 import type { ApplicationGateway } from "./application-gateway";
 
-export const convexApplicationGateway = (client: ConvexHttpClient): ApplicationGateway => ({
+export const convexApplicationGateway = (
+  client: ConvexHttpClient,
+): ApplicationGateway => ({
   proposeExchange: (i) => client.mutation(api.exchange.propose, i),
-  acceptExchange:  (i) => client.mutation(api.exchange.accept, i),
-  myExchanges:     ()  => client.query(api.exchange.myExchanges, {}),
-  copyDetail:      (id)=> client.query(api.exchange.copyDetail, { copyId: id }),
+  acceptExchange: (i) => client.mutation(api.exchange.accept, i),
+  myExchanges: () => client.query(api.exchange.myExchanges, {}),
+  copyDetail: (id) => client.query(api.exchange.copyDetail, { copyId: id }),
 });
 ```
 
@@ -70,16 +74,16 @@ contexts across deployments) is a one-file change. The UI imports `ApplicationGa
 ```ts
 // apps/web/src/server/exchange.server.ts
 import { createServerFn } from "@tanstack/react-start";
-import { proposeExchangeInput } from "@jigswap/contracts";   // zod schema (SHAPE validation only)
-import { getGateway } from "./gateway-context";              // builds Convex gateway w/ session token
-import { requireSession } from "./auth";                     // Clerk
+import { proposeExchangeInput } from "@jigswap/contracts"; // zod schema (SHAPE validation only)
+import { getGateway } from "./gateway-context"; // builds Convex gateway w/ session token
+import { requireSession } from "./auth"; // Clerk
 
 export const proposeExchange = createServerFn({ method: "POST" })
-  .validator(proposeExchangeInput)                            // shape validation
+  .validator(proposeExchangeInput) // shape validation
   .handler(async ({ data }) => {
-    await requireSession();                                   // authn/z gate (not a domain rule)
+    await requireSession(); // authn/z gate (not a domain rule)
     const gateway = await getGateway();
-    return gateway.proposeExchange(data);                     // delegate — NO decision made here
+    return gateway.proposeExchange(data); // delegate — NO decision made here
   });
 ```
 
@@ -130,13 +134,13 @@ routes them through a gateway-friendly layer:
 
 ## 3.6 Auth, i18n, analytics on TanStack Start
 
-| Concern | Today (Next.js) | Proposed (TanStack Start) |
-|---------|-----------------|---------------------------|
-| Auth | `@clerk/nextjs`, `ConvexProviderWithClerk`, `auth()` in layouts | `@clerk/tanstack-react-start`: `<ClerkProvider>`, `getAuth()` in server fns, Convex token via the gateway's session-aware client |
-| Convex client | `ConvexReactClient` + `convex/react-clerk` | `@convex-dev/react-query` for live reads; `ConvexHttpClient` (with Clerk JWT) for server-fn one-shots |
-| i18n | `next-intl` (Next-coupled) | `use-intl` (next-intl's framework-agnostic core) or `lingui`/`i18next`; **keep** Crowdin OTA + cookie-based locale, no URL routing |
-| Analytics | `posthog-js`/`posthog-node`, `@vercel/*` | unchanged client libs; PostHog reverse-proxy rewrites move from `next.config.ts` to the TanStack/Nitro server config |
-| Hosting | Next on Vercel | TanStack Start (Vinxi/Nitro) Vercel preset |
+| Concern       | Today (Next.js)                                                 | Proposed (TanStack Start)                                                                                                          |
+| ------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Auth          | `@clerk/nextjs`, `ConvexProviderWithClerk`, `auth()` in layouts | `@clerk/tanstack-react-start`: `<ClerkProvider>`, `getAuth()` in server fns, Convex token via the gateway's session-aware client   |
+| Convex client | `ConvexReactClient` + `convex/react-clerk`                      | `@convex-dev/react-query` for live reads; `ConvexHttpClient` (with Clerk JWT) for server-fn one-shots                              |
+| i18n          | `next-intl` (Next-coupled)                                      | `use-intl` (next-intl's framework-agnostic core) or `lingui`/`i18next`; **keep** Crowdin OTA + cookie-based locale, no URL routing |
+| Analytics     | `posthog-js`/`posthog-node`, `@vercel/*`                        | unchanged client libs; PostHog reverse-proxy rewrites move from `next.config.ts` to the TanStack/Nitro server config               |
+| Hosting       | Next on Vercel                                                  | TanStack Start (Vinxi/Nitro) Vercel preset                                                                                         |
 
 > **Migration risk note:** `next-intl` is the most Next-coupled dependency. Its `use-intl` core
 > (messages, formatting, `useTranslations`) is framework-agnostic and is the lowest-friction path;
@@ -145,12 +149,12 @@ routes them through a gateway-friendly layer:
 
 ## 3.7 Where the old "UI logic" goes
 
-| Today, in the Next UI | Lands in |
-|-----------------------|----------|
-| Client-side puzzle/search filtering on fetched data | A **read-model query** (Convex query adapter) returning already-filtered DTOs; BFF passes params through |
-| Image-upload orchestration (get URL → POST → pass storageId) | A BFF server fn coordinating a `StoragePort` adapter; the *association* of an image to a `Copy` is a domain use case |
-| Inline role checks / admin gating | BFF `beforeLoad` guard + Identity context roles (real check, replacing the `TODO`) |
-| Mock data in `messages/page.tsx` | Conversation context read model via the gateway |
+| Today, in the Next UI                                        | Lands in                                                                                                             |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| Client-side puzzle/search filtering on fetched data          | A **read-model query** (Convex query adapter) returning already-filtered DTOs; BFF passes params through             |
+| Image-upload orchestration (get URL → POST → pass storageId) | A BFF server fn coordinating a `StoragePort` adapter; the _association_ of an image to a `Copy` is a domain use case |
+| Inline role checks / admin gating                            | BFF `beforeLoad` guard + Identity context roles (real check, replacing the `TODO`)                                   |
+| Mock data in `messages/page.tsx`                             | Conversation context read model via the gateway                                                                      |
 
 The net effect: the web tier becomes **presentation + orchestration only**, which is exactly what a BFF
 is supposed to be.

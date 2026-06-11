@@ -29,7 +29,9 @@ export class CatalogApplicationError extends DomainError {
   }
 
   // No definition exists for the given id.
-  static puzzleDefinitionNotFound(id: PuzzleDefinitionId): CatalogApplicationError {
+  static puzzleDefinitionNotFound(
+    id: PuzzleDefinitionId,
+  ): CatalogApplicationError {
     return new CatalogApplicationError(
       "PuzzleDefinitionNotFound",
       `Puzzle definition ${id} could not be found`,
@@ -37,7 +39,9 @@ export class CatalogApplicationError extends DomainError {
   }
 
   // No catalog category exists for the given id.
-  static catalogCategoryNotFound(id: CatalogCategoryId): CatalogApplicationError {
+  static catalogCategoryNotFound(
+    id: CatalogCategoryId,
+  ): CatalogApplicationError {
     return new CatalogApplicationError(
       "CatalogCategoryNotFound",
       `Catalog category ${id} could not be found`,

@@ -31,6 +31,8 @@ export const recordAndSchedule = async (
       occurredAt: event.occurredAt.getTime(),
       context,
     });
-    await ctx.scheduler.runAfter(0, internal.events.dispatch.dispatch, { eventId });
+    await ctx.scheduler.runAfter(0, internal.events.dispatch.dispatch, {
+      eventId,
+    });
   }
 };

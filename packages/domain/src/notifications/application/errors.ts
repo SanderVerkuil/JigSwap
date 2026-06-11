@@ -5,7 +5,9 @@ import { MemberId, NotificationId } from "../domain";
 // (whether a row exists) rather than the aggregate's own data. Like NotificationError, the `code`
 // is the stable, machine-readable discriminant a transport adapter maps to; the message is for
 // logs/tests only.
-export type NotificationApplicationErrorCode = "NotificationNotFound" | "PreferenceNotFound";
+export type NotificationApplicationErrorCode =
+  | "NotificationNotFound"
+  | "PreferenceNotFound";
 
 export class NotificationApplicationError extends DomainError {
   override readonly name = "NotificationApplicationError";
@@ -18,7 +20,9 @@ export class NotificationApplicationError extends DomainError {
   }
 
   // No notification exists for the given id.
-  static notificationNotFound(id: NotificationId): NotificationApplicationError {
+  static notificationNotFound(
+    id: NotificationId,
+  ): NotificationApplicationError {
     return new NotificationApplicationError(
       "NotificationNotFound",
       `Notification ${id} could not be found`,

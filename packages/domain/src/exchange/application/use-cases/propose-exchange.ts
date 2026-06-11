@@ -1,7 +1,22 @@
-import { Clock, DomainEventPublisher, err, ok, Result } from "../../../shared-kernel";
-import { CopyId, Exchange, ExchangeError, ExchangeId, ExchangeKind } from "../../domain";
+import {
+  Clock,
+  DomainEventPublisher,
+  err,
+  ok,
+  Result,
+} from "../../../shared-kernel";
+import {
+  CopyId,
+  Exchange,
+  ExchangeError,
+  ExchangeId,
+  ExchangeKind,
+} from "../../domain";
 import { ApplicationError } from "../errors";
-import { ProposeExchange, ProposeExchangeCommand } from "../ports/in/propose-exchange.port";
+import {
+  ProposeExchange,
+  ProposeExchangeCommand,
+} from "../ports/in/propose-exchange.port";
 import { CopyPort, CopyView } from "../ports/out/copy.port";
 import { ExchangeIdGenerator } from "../ports/out/exchange-id-generator";
 import { ExchangeRepository } from "../ports/out/exchange.repository";
@@ -31,17 +46,23 @@ const availableFor = (copy: CopyView, kind: ExchangeKind): boolean => {
 // Copy reservation/locking is a Phase-2 (Library) concern and is intentionally not done here.
 export const makeProposeExchange =
   (deps: ProposeExchangeDeps): ProposeExchange =>
-  async (cmd: ProposeExchangeCommand): Promise<Result<ExchangeId, ExchangeError | ApplicationError>> => {
+  async (
+    cmd: ProposeExchangeCommand,
+  ): Promise<Result<ExchangeId, ExchangeError | ApplicationError>> => {
     const duplicate = await deps.exchanges.findActiveProposal(
       cmd.initiatorId,
       cmd.requestedCopyId,
     );
-    if (duplicate) return err(ApplicationError.duplicateProposal(cmd.requestedCopyId));
+    if (duplicate)
+      return err(ApplicationError.duplicateProposal(cmd.requestedCopyId));
 
     const requested = await deps.copies.getCopy(cmd.requestedCopyId);
-    if (!requested) return err(ApplicationError.copyNotFound(cmd.requestedCopyId));
+    if (!requested)
+      return err(ApplicationError.copyNotFound(cmd.requestedCopyId));
     if (!availableFor(requested, cmd.kind)) {
-      return err(ApplicationError.copyNotAvailable(cmd.requestedCopyId, cmd.kind));
+      return err(
+        ApplicationError.copyNotAvailable(cmd.requestedCopyId, cmd.kind),
+      );
     }
 
     if (cmd.kind === "swap") {

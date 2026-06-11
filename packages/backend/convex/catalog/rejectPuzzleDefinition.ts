@@ -9,6 +9,10 @@ export const rejectPuzzleDefinition = mutation({
   args: { puzzleDefinitionId: v.string() },
   handler: async (ctx, args) => {
     await requireMember(ctx);
-    await runDefinitionAction(ctx, args.puzzleDefinitionId, makeRejectPuzzleDefinition);
+    await runDefinitionAction(
+      ctx,
+      args.puzzleDefinitionId,
+      makeRejectPuzzleDefinition,
+    );
   },
 });

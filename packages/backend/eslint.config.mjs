@@ -40,15 +40,29 @@ export default [
           allow: [],
           enforceBuildableLibDependency: false,
           depConstraints: [
-            { sourceTag: "type:domain", onlyDependOnLibsWithTags: ["type:domain"] },
-            { sourceTag: "type:contracts", onlyDependOnLibsWithTags: ["type:contracts"] },
+            {
+              sourceTag: "type:domain",
+              onlyDependOnLibsWithTags: ["type:domain"],
+            },
+            {
+              sourceTag: "type:contracts",
+              onlyDependOnLibsWithTags: ["type:contracts"],
+            },
             {
               sourceTag: "type:backend-adapter",
-              onlyDependOnLibsWithTags: ["type:domain", "type:contracts", "type:backend-adapter"],
+              onlyDependOnLibsWithTags: [
+                "type:domain",
+                "type:contracts",
+                "type:backend-adapter",
+              ],
             },
             {
               sourceTag: "type:app",
-              onlyDependOnLibsWithTags: ["type:contracts", "type:backend-adapter", "type:app"],
+              onlyDependOnLibsWithTags: [
+                "type:contracts",
+                "type:backend-adapter",
+                "type:app",
+              ],
             },
             { sourceTag: "scope:*", onlyDependOnLibsWithTags: ["scope:*"] },
           ],

@@ -40,7 +40,9 @@ describe("LibraryError factories", () => {
   });
 
   it("wrongMemberType carries the supplied detail as the message", () => {
-    const e = LibraryError.wrongMemberType("A wishlist holds desired definitions, not copies");
+    const e = LibraryError.wrongMemberType(
+      "A wishlist holds desired definitions, not copies",
+    );
     expect(e.code).toBe("WrongMemberType");
     expect(e.message).toBe("A wishlist holds desired definitions, not copies");
   });

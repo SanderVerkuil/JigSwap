@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Link } from "@/compat/link";
+import { Button } from "@/components/ui/button";
 import { Authenticated, Unauthenticated } from "convex/react";
 import { ArrowRight } from "lucide-react";
 import { useTranslations } from "use-intl";

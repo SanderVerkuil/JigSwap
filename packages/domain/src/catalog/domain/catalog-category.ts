@@ -69,7 +69,8 @@ export class CatalogCategory {
   static create(
     props: CreateCatalogCategoryProps,
   ): Result<CatalogCategory, CatalogError> {
-    if (!isNameComplete(props.name)) return err(CatalogError.emptyCategoryName());
+    if (!isNameComplete(props.name))
+      return err(CatalogError.emptyCategoryName());
 
     const state: CatalogCategoryState = {
       id: props.id,
@@ -87,7 +88,10 @@ export class CatalogCategory {
   }
 
   // Patch presentation fields; a replacement name must still be complete in every locale.
-  update(changes: CatalogCategoryChanges, now: Date): Result<void, CatalogError> {
+  update(
+    changes: CatalogCategoryChanges,
+    now: Date,
+  ): Result<void, CatalogError> {
     if (changes.name !== undefined && !isNameComplete(changes.name)) {
       return err(CatalogError.emptyCategoryName());
     }

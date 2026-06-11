@@ -5,15 +5,21 @@ import {
   recommendPuzzles,
 } from "./recommendations";
 
-const signals = (facets: MemberSignals["facets"]): MemberSignals => ({ facets });
+const signals = (facets: MemberSignals["facets"]): MemberSignals => ({
+  facets,
+});
 
-const candidate = (over: Partial<CandidatePuzzle> & { key: string }): CandidatePuzzle => ({
+const candidate = (
+  over: Partial<CandidatePuzzle> & { key: string },
+): CandidatePuzzle => ({
   ...over,
 });
 
 describe("recommendPuzzles", () => {
   it("returns empty for no candidates", () => {
-    expect(recommendPuzzles({ signals: signals([]), candidates: [] })).toEqual([]);
+    expect(recommendPuzzles({ signals: signals([]), candidates: [] })).toEqual(
+      [],
+    );
   });
 
   describe("facet affinity", () => {
@@ -21,11 +27,23 @@ describe("recommendPuzzles", () => {
       const result = recommendPuzzles({
         signals: signals([{ brand: "Ravensburger", pieceCount: 1000 }]),
         candidates: [
-          candidate({ key: "same-brand", brand: "Ravensburger", pieceCount: 50 }),
-          candidate({ key: "same-band", brand: "Clementoni", pieceCount: 1500 }),
+          candidate({
+            key: "same-brand",
+            brand: "Ravensburger",
+            pieceCount: 50,
+          }),
+          candidate({
+            key: "same-band",
+            brand: "Clementoni",
+            pieceCount: 1500,
+          }),
         ],
       });
-      expect(result[0]).toEqual({ key: "same-brand", score: 3, reason: "sameBrand" });
+      expect(result[0]).toEqual({
+        key: "same-brand",
+        score: 3,
+        reason: "sameBrand",
+      });
       expect(result[1]).toEqual({
         key: "same-band",
         score: 1,
@@ -42,7 +60,11 @@ describe("recommendPuzzles", () => {
           candidate({ key: "far", pieceCount: 1000 }),
         ],
       });
-      expect(result[0]).toEqual({ key: "near", score: 1, reason: "similarPieceCount" });
+      expect(result[0]).toEqual({
+        key: "near",
+        score: 1,
+        reason: "similarPieceCount",
+      });
       expect(result[1]?.key).toBe("far");
       expect(result[1]?.score).toBe(0);
     });
@@ -55,7 +77,11 @@ describe("recommendPuzzles", () => {
           candidate({ key: "disjoint", categoryKeys: ["abstract"] }),
         ],
       });
-      expect(result[0]).toEqual({ key: "overlap", score: 2, reason: "sharedCategory" });
+      expect(result[0]).toEqual({
+        key: "overlap",
+        score: 2,
+        reason: "sharedCategory",
+      });
       expect(result[1]?.score).toBe(0);
     });
 
@@ -74,17 +100,31 @@ describe("recommendPuzzles", () => {
         ],
       });
       // brand 3 + category 2 + piece band 1 = 6, dominant facet is brand.
-      expect(result[0]).toEqual({ key: "triple", score: 6, reason: "sameBrand" });
+      expect(result[0]).toEqual({
+        key: "triple",
+        score: 6,
+        reason: "sameBrand",
+      });
     });
 
     it("normalises brand and category casing/whitespace", () => {
       const result = recommendPuzzles({
-        signals: signals([{ brand: " Ravensburger ", categoryKeys: ["Nature"] }]),
+        signals: signals([
+          { brand: " Ravensburger ", categoryKeys: ["Nature"] },
+        ]),
         candidates: [
-          candidate({ key: "match", brand: "ravensburger", categoryKeys: ["nature"] }),
+          candidate({
+            key: "match",
+            brand: "ravensburger",
+            categoryKeys: ["nature"],
+          }),
         ],
       });
-      expect(result[0]).toEqual({ key: "match", score: 5, reason: "sameBrand" });
+      expect(result[0]).toEqual({
+        key: "match",
+        score: 5,
+        reason: "sameBrand",
+      });
     });
 
     it("weights affinity by presence, not multiplicity (a recurring brand still matches)", () => {
@@ -126,7 +166,10 @@ describe("recommendPuzzles", () => {
     it("drops candidates with an empty key", () => {
       const result = recommendPuzzles({
         signals: signals([]),
-        candidates: [candidate({ key: "", popularity: 9 }), candidate({ key: "ok" })],
+        candidates: [
+          candidate({ key: "", popularity: 9 }),
+          candidate({ key: "ok" }),
+        ],
       });
       expect(result.map((r) => r.key)).toEqual(["ok"]);
     });
@@ -153,7 +196,11 @@ describe("recommendPuzzles", () => {
           // No facet match but very popular...
           candidate({ key: "popular-nomatch", popularity: 1000 }),
           // ...still ranks below a weakest-tier facet match with zero popularity.
-          candidate({ key: "weak-facet", pieceCount: undefined, brand: "Ravensburger" }),
+          candidate({
+            key: "weak-facet",
+            pieceCount: undefined,
+            brand: "Ravensburger",
+          }),
         ],
       });
       expect(result[0]?.key).toBe("weak-facet");
@@ -196,7 +243,10 @@ describe("recommendPuzzles", () => {
       ];
       const s = signals([{ brand: "X" }]);
       const forward = recommendPuzzles({ signals: s, candidates: cands });
-      const reversed = recommendPuzzles({ signals: s, candidates: [...cands].reverse() });
+      const reversed = recommendPuzzles({
+        signals: s,
+        candidates: [...cands].reverse(),
+      });
       expect(forward).toEqual(reversed);
     });
   });
@@ -220,8 +270,12 @@ describe("recommendPuzzles", () => {
         candidate({ key: "a", popularity: 2 }),
         candidate({ key: "b", popularity: 1 }),
       ];
-      expect(recommendPuzzles({ signals: signals([]), candidates: cands, limit: 0 })).toHaveLength(2);
-      expect(recommendPuzzles({ signals: signals([]), candidates: cands })).toHaveLength(2);
+      expect(
+        recommendPuzzles({ signals: signals([]), candidates: cands, limit: 0 }),
+      ).toHaveLength(2);
+      expect(
+        recommendPuzzles({ signals: signals([]), candidates: cands }),
+      ).toHaveLength(2);
     });
   });
 
@@ -263,7 +317,11 @@ describe("recommendPuzzles", () => {
         signals: signals([{ categoryKeys: ["  Nature  ", "LANDSCAPE"] }]),
         candidates: [candidate({ key: "c", categoryKeys: ["nature"] })],
       });
-      expect(result[0]).toEqual({ key: "c", score: 2, reason: "sharedCategory" });
+      expect(result[0]).toEqual({
+        key: "c",
+        score: 2,
+        reason: "sharedCategory",
+      });
     });
 
     it("drops blank category keys (an empty key is not a shared category)", () => {
@@ -279,7 +337,9 @@ describe("recommendPuzzles", () => {
   it("reports popular when signals exist but a candidate shares no facet", () => {
     const result = recommendPuzzles({
       signals: signals([{ brand: "Ravensburger" }]),
-      candidates: [candidate({ key: "nomatch", brand: "Clementoni", popularity: 3 })],
+      candidates: [
+        candidate({ key: "nomatch", brand: "Clementoni", popularity: 3 }),
+      ],
     });
     expect(result[0]?.reason).toBe("popular");
   });

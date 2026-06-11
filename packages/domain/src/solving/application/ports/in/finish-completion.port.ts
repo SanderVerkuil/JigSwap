@@ -1,9 +1,5 @@
 import { Result } from "../../../../shared-kernel";
-import {
-  CompletionId,
-  MemberId,
-  SolvingError,
-} from "../../../domain";
+import { CompletionId, MemberId, SolvingError } from "../../../domain";
 import { SolvingApplicationError } from "../../errors";
 
 // Finish an in-progress completion. `actingMemberId` must own the completion.

@@ -67,6 +67,9 @@ out
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
 
+# TanStack Start dev-server scratch dir
+.tanstack/
+
 # Secrets live only on disk; commit .env.example templates, never real env files.
 .env
 .env.*

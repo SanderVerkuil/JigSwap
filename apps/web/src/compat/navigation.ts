@@ -1,11 +1,11 @@
 import {
-  redirect as routerRedirect,
   notFound as routerNotFound,
+  redirect as routerRedirect,
   useLocation,
   useNavigate,
   useParams as useRouterParams,
-  useRouter as useTanstackRouter,
   useSearch,
+  useRouter as useTanstackRouter,
 } from "@tanstack/react-router";
 
 // next/navigation compat: maps the Next router/navigation hooks to TanStack

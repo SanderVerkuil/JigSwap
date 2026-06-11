@@ -61,7 +61,10 @@ const addCopy = (
     }),
   );
 
-const notificationsFor = (t: ReturnType<typeof convexTest>, userId: Id<"users">) =>
+const notificationsFor = (
+  t: ReturnType<typeof convexTest>,
+  userId: Id<"users">,
+) =>
   t.run(async (ctx) =>
     ctx.db
       .query("notifications")
@@ -69,8 +72,10 @@ const notificationsFor = (t: ReturnType<typeof convexTest>, userId: Id<"users">)
       .collect(),
   );
 
-const asAlice = (t: ReturnType<typeof convexTest>) => t.withIdentity({ subject: "clerk_alice" });
-const asBob = (t: ReturnType<typeof convexTest>) => t.withIdentity({ subject: "clerk_bob" });
+const asAlice = (t: ReturnType<typeof convexTest>) =>
+  t.withIdentity({ subject: "clerk_alice" });
+const asBob = (t: ReturnType<typeof convexTest>) =>
+  t.withIdentity({ subject: "clerk_bob" });
 
 // Alice proposes a sale to Bob; returns the exchange aggregateId + the seeded ids.
 const proposeSale = async (t: ReturnType<typeof convexTest>) => {
@@ -91,7 +96,9 @@ describe("end-to-end async dispatch", () => {
     const { bob } = await proposeSale(t);
 
     // The event row is recorded synchronously with the proposing mutation.
-    const eventsBefore = await t.run((ctx) => ctx.db.query("domainEvents").collect());
+    const eventsBefore = await t.run((ctx) =>
+      ctx.db.query("domainEvents").collect(),
+    );
     expect(eventsBefore.map((e) => e.name)).toContain("ExchangeProposed");
 
     // Before the dispatcher runs, no notification exists yet (it is async).
@@ -106,7 +113,9 @@ describe("end-to-end async dispatch", () => {
     expect(notes[0].aggregateId).toBeDefined();
 
     // The dispatched event row is stamped processed.
-    const eventsAfter = await t.run((ctx) => ctx.db.query("domainEvents").collect());
+    const eventsAfter = await t.run((ctx) =>
+      ctx.db.query("domainEvents").collect(),
+    );
     const proposed = eventsAfter.find((e) => e.name === "ExchangeProposed");
     expect(proposed?.processedAt).toBeDefined();
   });
@@ -117,9 +126,7 @@ describe("end-to-end async dispatch", () => {
     await flushScheduled(t); // settle the auto-scheduled dispatch first
 
     // Re-insert a fresh (unprocessed) ExchangeProposed row and dispatch it directly.
-    const exchange = await t.run((ctx) =>
-      ctx.db.query("exchanges").first(),
-    );
+    const exchange = await t.run((ctx) => ctx.db.query("exchanges").first());
     const eventId = await t.run((ctx) =>
       ctx.db.insert("domainEvents", {
         name: "ExchangeProposed",
@@ -144,14 +151,21 @@ describe("preference suppression", () => {
     const { bob, puzzleId } = await seed(t);
 
     // Bob turns off in-app trade_request notifications.
-    await asBob(t).mutation(api.notifications.updateNotificationPreference.updateNotificationPreference, {
-      type: "trade_request",
-      channel: "inApp",
-      enabled: false,
-    });
+    await asBob(t).mutation(
+      api.notifications.updateNotificationPreference
+        .updateNotificationPreference,
+      {
+        type: "trade_request",
+        channel: "inApp",
+        enabled: false,
+      },
+    );
 
     // Alice proposes; flush the dispatcher.
-    const copy = await addCopy(t, puzzleId, bob, { ...ALL_FALSE, forSale: true });
+    const copy = await addCopy(t, puzzleId, bob, {
+      ...ALL_FALSE,
+      forSale: true,
+    });
     await asAlice(t).mutation(api.exchange.propose.propose, {
       recipientId: bob,
       type: "sale",
@@ -171,15 +185,25 @@ describe("read flows + queries", () => {
     await proposeSale(t);
     await flushScheduled(t);
 
-    expect(await asBob(t).query(api.notifications.unreadCount.unreadCount, {})).toBe(1);
+    expect(
+      await asBob(t).query(api.notifications.unreadCount.unreadCount, {}),
+    ).toBe(1);
 
-    const list = await asBob(t).query(api.notifications.listMyNotifications.listMyNotifications, {});
+    const list = await asBob(t).query(
+      api.notifications.listMyNotifications.listMyNotifications,
+      {},
+    );
     expect(list).toHaveLength(1);
-    await asBob(t).mutation(api.notifications.markNotificationRead.markNotificationRead, {
-      notificationId: list[0].aggregateId!,
-    });
+    await asBob(t).mutation(
+      api.notifications.markNotificationRead.markNotificationRead,
+      {
+        notificationId: list[0].aggregateId!,
+      },
+    );
 
-    expect(await asBob(t).query(api.notifications.unreadCount.unreadCount, {})).toBe(0);
+    expect(
+      await asBob(t).query(api.notifications.unreadCount.unreadCount, {}),
+    ).toBe(0);
   });
 
   test("markAllRead clears every unread notification for the caller", async () => {
@@ -189,31 +213,45 @@ describe("read flows + queries", () => {
     await asAlice(t).mutation(api.exchange.cancel.cancel, { exchangeId: id });
     await flushScheduled(t);
 
-    const before = await asBob(t).query(api.notifications.unreadCount.unreadCount, {});
+    const before = await asBob(t).query(
+      api.notifications.unreadCount.unreadCount,
+      {},
+    );
     expect(before).toBe(2);
 
     await asBob(t).mutation(api.notifications.markAllRead.markAllRead, {});
-    expect(await asBob(t).query(api.notifications.unreadCount.unreadCount, {})).toBe(0);
+    expect(
+      await asBob(t).query(api.notifications.unreadCount.unreadCount, {}),
+    ).toBe(0);
   });
 
   test("only the addressee may mark a notification read", async () => {
     const t = convexTest(schema, modules);
     await proposeSale(t);
     await flushScheduled(t);
-    const list = await asBob(t).query(api.notifications.listMyNotifications.listMyNotifications, {});
+    const list = await asBob(t).query(
+      api.notifications.listMyNotifications.listMyNotifications,
+      {},
+    );
 
     // Alice (not the addressee) cannot mark Bob's notification read.
     await expect(
-      asAlice(t).mutation(api.notifications.markNotificationRead.markNotificationRead, {
-        notificationId: list[0].aggregateId!,
-      }),
+      asAlice(t).mutation(
+        api.notifications.markNotificationRead.markNotificationRead,
+        {
+          notificationId: list[0].aggregateId!,
+        },
+      ),
     ).rejects.toThrow();
   });
 
   test("getMyPreferences returns sensible defaults when none stored", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
-    const prefs = await asBob(t).query(api.notifications.getMyPreferences.getMyPreferences, {});
+    const prefs = await asBob(t).query(
+      api.notifications.getMyPreferences.getMyPreferences,
+      {},
+    );
     expect(prefs.trade_request.inApp).toBe(true);
     expect(prefs.trade_request.email).toBe(false);
   });
@@ -235,14 +273,20 @@ describe("backfill", () => {
       }),
     );
 
-    const first = await t.mutation(internal.notifications.backfill.backfillNotificationFields, {});
+    const first = await t.mutation(
+      internal.notifications.backfill.backfillNotificationFields,
+      {},
+    );
     expect(first.patched).toBe(1);
     const row = await t.run((ctx) => ctx.db.get(legacy));
     expect(row?.aggregateId).toBeDefined();
     expect(row?.channel).toBe("inApp");
 
     // Idempotent: a second run patches nothing.
-    const second = await t.mutation(internal.notifications.backfill.backfillNotificationFields, {});
+    const second = await t.mutation(
+      internal.notifications.backfill.backfillNotificationFields,
+      {},
+    );
     expect(second.patched).toBe(0);
   });
 });

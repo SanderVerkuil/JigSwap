@@ -25,7 +25,9 @@ export class Ean {
       return err(CatalogError.invalidBarcode("EAN", "must be 13 digits"));
     }
     if (!hasValidCheckDigit(value)) {
-      return err(CatalogError.invalidBarcode("EAN", "check digit does not match"));
+      return err(
+        CatalogError.invalidBarcode("EAN", "check digit does not match"),
+      );
     }
     return ok(new Ean(value));
   }
@@ -40,7 +42,9 @@ export class Upc {
       return err(CatalogError.invalidBarcode("UPC", "must be 12 digits"));
     }
     if (!hasValidCheckDigit(value)) {
-      return err(CatalogError.invalidBarcode("UPC", "check digit does not match"));
+      return err(
+        CatalogError.invalidBarcode("UPC", "check digit does not match"),
+      );
     }
     return ok(new Upc(value));
   }
@@ -53,7 +57,9 @@ export class ModelNumber {
   static create(value: string): Result<ModelNumber, CatalogError> {
     const trimmed = value.trim();
     if (trimmed.length === 0) {
-      return err(CatalogError.invalidBarcode("model number", "must not be blank"));
+      return err(
+        CatalogError.invalidBarcode("model number", "must not be blank"),
+      );
     }
     return ok(new ModelNumber(trimmed));
   }

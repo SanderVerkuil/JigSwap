@@ -5,7 +5,12 @@
 
 import type { DocId, PuzzleDifficulty } from "../catalog/views";
 
-export type CopyCondition = "new_sealed" | "like_new" | "good" | "fair" | "poor";
+export type CopyCondition =
+  | "new_sealed"
+  | "like_new"
+  | "good"
+  | "fair"
+  | "poor";
 
 export interface CopyAvailability {
   forTrade: boolean;

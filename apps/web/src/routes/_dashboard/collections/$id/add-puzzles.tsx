@@ -1,21 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { useUser } from "@/compat/clerk";
+import { useRouter } from "@/compat/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
-import { useUser } from "@/compat/clerk";
-import { useRouter } from "@/compat/navigation";
 import { gateway, Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { Grid, Plus, Search } from "lucide-react";
-import { useTranslations } from "use-intl";
 import { useState } from "react";
+import { useTranslations } from "use-intl";
 
-export const Route = createFileRoute("/_dashboard/collections/$id/add-puzzles")({
-  pendingComponent: () => <PageLoading message="Loading..." />,
-  component: AddPuzzlesToCollectionPage,
-});
+export const Route = createFileRoute("/_dashboard/collections/$id/add-puzzles")(
+  {
+    pendingComponent: () => <PageLoading message="Loading..." />,
+    component: AddPuzzlesToCollectionPage,
+  },
+);
 
 function AddPuzzlesToCollectionPage() {
   const { id } = Route.useParams();
@@ -85,7 +87,8 @@ function AddPuzzlesToCollectionPage() {
   const filteredPuzzles =
     availablePuzzles
       ?.filter(
-        (puzzle) => !collection?.puzzles.map((p) => p?._id).includes(puzzle._id),
+        (puzzle) =>
+          !collection?.puzzles.map((p) => p?._id).includes(puzzle._id),
       )
       ?.filter(
         (puzzle) =>

@@ -5,7 +5,7 @@ seams. No big-bang rewrite. At every phase the app ships and stays green.
 
 ## 4.1 Principles
 
-- **Seams before slices.** Introduce the two indirection seams (UI→gateway, mutation→use case) *first*,
+- **Seams before slices.** Introduce the two indirection seams (UI→gateway, mutation→use case) _first_,
   so later work happens behind them without touching callers.
 - **One context at a time, richest-first.** Prove the pattern on Exchange (most invariants, clearest
   payoff), then roll the template across contexts.
@@ -16,19 +16,19 @@ seams. No big-bang rewrite. At every phase the app ships and stays green.
 
 ## 4.2 Phases
 
-### Phase 0 — Foundations & guardrails *(no behaviour change)*
+### Phase 0 — Foundations & guardrails _(no behaviour change)_
 
 - Create `@jigswap/domain` (pure TS), `@jigswap/contracts` (DTOs + zod), empty per-context folders.
 - Add architecture guardrails (§2.9): Nx tags + boundaries, `dependency-cruiser`, ESLint
   `no-restricted-imports` banning `_generated/api` in `apps/web`.
-- Introduce the **client gateway seam**: an `ApplicationGateway` whose adapter wraps the *current*
+- Introduce the **client gateway seam**: an `ApplicationGateway` whose adapter wraps the _current_
   Convex API 1:1. Migrate UI components to import the gateway/typed hooks instead of `_generated/api`.
   Pure indirection — zero logic change, fully shippable.
 - Stand up the domain unit-test harness (Vitest, no Convex).
 
 **Exit:** the UI no longer imports `_generated/api`; guardrails are red on violation; CI green.
 
-### Phase 1 — Exchange vertical slice *(proves the whole pattern)*
+### Phase 1 — Exchange vertical slice _(proves the whole pattern)_
 
 - Model the `Exchange` aggregate + state machine + terms rules in `@jigswap/domain/exchange`. Unit-test
   exhaustively (no Convex).
@@ -43,7 +43,7 @@ seams. No big-bang rewrite. At every phase the app ships and stays green.
 **Exit:** exchange behaviour identical to today, but logic is Convex-free and unit-tested; notifications
 are event-driven; the pattern is documented for reuse.
 
-### Phase 2 — Split Catalog vs Personal Library *(the core entity→DDD fix)*
+### Phase 2 — Split Catalog vs Personal Library _(the core entity→DDD fix)_
 
 - Carve `puzzles.ts` into a **Catalog** context (`PuzzleDefinition`, taxonomy, approval, barcodes) and a
   **Personal Library** context (`Copy`, `Collection`, `Wishlist`, condition, acquisition, images).
@@ -55,9 +55,9 @@ are event-driven; the pattern is documented for reuse.
 - Schema evolution is **additive + backfill**; keep old columns until cutover, then drop.
 
 **Exit:** product vs copy are distinct contexts; availability is a policy seam; chain-of-custody is now
-*possible* because `OwnershipTransferred` (Phase 1) can create new `Copy` records.
+_possible_ because `OwnershipTransferred` (Phase 1) can create new `Copy` records.
 
-### Phase 3 — Solving & Reputation *(resolve the "review" homonym)*
+### Phase 3 — Solving & Reputation _(resolve the "review" homonym)_
 
 - Move `completions.review/rating` into **Solving** as `PuzzleReview`; move exchange `reviews` into
   **Reputation** as `PartnerReview`. Rename in code + DTOs to kill the homonym.
@@ -76,7 +76,7 @@ are event-driven; the pattern is documented for reuse.
 
 **Exit:** cross-cutting generic contexts are event-driven and additive; producers know nothing of them.
 
-### Phase 5 — Re-platform web to TanStack Start *(can start once Phase 0 seam exists)*
+### Phase 5 — Re-platform web to TanStack Start _(can start once Phase 0 seam exists)_
 
 - Scaffold the TanStack Start app; port routes group-by-group using the **same gateway** the Next UI
   already uses (the seam means components move without touching domain).
@@ -111,15 +111,15 @@ their owning context being modelled.
 
 ## 4.4 Risk register
 
-| Risk | Likelihood | Mitigation |
-|------|-----------|------------|
-| Refactor changes behaviour subtly | Med | Characterization tests **before** each slice; identical request/response contracts |
-| Convex transaction semantics misunderstood inside use cases | Med | Keep each use case = one mutation; repository contract tests; no cross-mutation "transactions" |
-| `next-intl` → TanStack i18n friction | Med | Dedicated spike in P5; `use-intl` core keeps message catalogs + Crowdin intact |
-| Reactivity regressions on TanStack | Med | `@convex-dev/react-query` proven for live queries; port a read-heavy screen first |
-| Architecture erosion over time | High (without guards) | Nx boundaries + dependency-cruiser + ESLint enforced in CI from P0 |
-| Scope creep (rewriting while refactoring) | High | Strangler discipline: move logic *as-is* first; redesign features only in their own phase |
-| Schema migrations on a live DB | Med | Additive columns + backfill + dual-write window, drop old columns post-cutover |
+| Risk                                                        | Likelihood            | Mitigation                                                                                     |
+| ----------------------------------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------- |
+| Refactor changes behaviour subtly                           | Med                   | Characterization tests **before** each slice; identical request/response contracts             |
+| Convex transaction semantics misunderstood inside use cases | Med                   | Keep each use case = one mutation; repository contract tests; no cross-mutation "transactions" |
+| `next-intl` → TanStack i18n friction                        | Med                   | Dedicated spike in P5; `use-intl` core keeps message catalogs + Crowdin intact                 |
+| Reactivity regressions on TanStack                          | Med                   | `@convex-dev/react-query` proven for live queries; port a read-heavy screen first              |
+| Architecture erosion over time                              | High (without guards) | Nx boundaries + dependency-cruiser + ESLint enforced in CI from P0                             |
+| Scope creep (rewriting while refactoring)                   | High                  | Strangler discipline: move logic _as-is_ first; redesign features only in their own phase      |
+| Schema migrations on a live DB                              | Med                   | Additive columns + backfill + dual-write window, drop old columns post-cutover                 |
 
 ## 4.5 Definition of done (per slice)
 

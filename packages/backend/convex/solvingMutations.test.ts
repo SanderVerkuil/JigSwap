@@ -378,7 +378,8 @@ describe("solving read queries", () => {
       { copyId: copyAggregateId },
     );
     expect(history).toHaveLength(1);
-    expect((history[0] as { ownedPuzzleId?: Id<"ownedPuzzles"> }).ownedPuzzleId)
-      .toBeDefined();
+    expect(
+      (history[0] as { ownedPuzzleId?: Id<"ownedPuzzles"> }).ownedPuzzleId,
+    ).toBeDefined();
   });
 });

@@ -1,5 +1,11 @@
 import { DomainEvent } from "../../shared-kernel";
-import { CompletionId, CopyId, GoalId, MemberId, PuzzleDefinitionId } from "./ids";
+import {
+  CompletionId,
+  CopyId,
+  GoalId,
+  MemberId,
+  PuzzleDefinitionId,
+} from "./ids";
 
 // All Solving domain events implement DomainEvent (name + occurredAt). They are plain immutable
 // records: an aggregate records them; an outbound publisher (2c) serialises and dispatches them

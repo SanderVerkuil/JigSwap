@@ -1,5 +1,10 @@
 import { Result } from "../../../../shared-kernel";
-import { CircleId, MemberId, PermissionLevel, SharingError } from "../../../domain";
+import {
+  CircleId,
+  MemberId,
+  PermissionLevel,
+  SharingError,
+} from "../../../domain";
 import { SharingApplicationError } from "../../errors";
 
 // Change a member's permission within a circle. The actor must hold Admin; the owner's Admin
@@ -12,5 +17,7 @@ export interface ChangePermissionCommand {
 }
 
 export interface ChangePermission {
-  (cmd: ChangePermissionCommand): Promise<Result<void, SharingError | SharingApplicationError>>;
+  (
+    cmd: ChangePermissionCommand,
+  ): Promise<Result<void, SharingError | SharingApplicationError>>;
 }

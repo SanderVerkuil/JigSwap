@@ -29,7 +29,14 @@ module.exports = {
         "packages/domain must not depend on contracts or backend; dependencies point inward only.",
       severity: "error",
       from: { path: "^packages/domain" },
-      to: { path: ["^packages/contracts", "^packages/backend", "@jigswap/contracts", "@jigswap/backend"] },
+      to: {
+        path: [
+          "^packages/contracts",
+          "^packages/backend",
+          "@jigswap/contracts",
+          "@jigswap/backend",
+        ],
+      },
     },
   ],
   options: {

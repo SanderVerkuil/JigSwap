@@ -149,9 +149,7 @@ describe("editProfile", () => {
     await asAlice(t).mutation(api.social.editProfile.editProfile, {
       displayName: "Alice A.",
     });
-    const events = await t.run((ctx) =>
-      ctx.db.query("domainEvents").collect(),
-    );
+    const events = await t.run((ctx) => ctx.db.query("domainEvents").collect());
     expect(events.map((e) => e.name)).toContain("ProfileUpdated");
   });
 });

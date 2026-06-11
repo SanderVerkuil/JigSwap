@@ -2,7 +2,7 @@ import { DomainEvent } from "../../shared-kernel";
 import { Channel, CHANNELS } from "./channel";
 import { PreferenceChanged } from "./events";
 import { MemberId, NotificationPreferenceId } from "./ids";
-import { NotificationType, NOTIFICATION_TYPES } from "./notification-type";
+import { NOTIFICATION_TYPES, NotificationType } from "./notification-type";
 
 // The set of channels enabled for a single notification type. A missing channel means disabled.
 export type ChannelToggles = Readonly<Partial<Record<Channel, boolean>>>;
@@ -93,7 +93,12 @@ export class NotificationPreference {
 
   // The ONLY place toggles change. No-ops (and records nothing) if the value already matches, so a
   // redundant toggle never emits a spurious PreferenceChanged.
-  private set(type: NotificationType, channel: Channel, enabled: boolean, now: Date): void {
+  private set(
+    type: NotificationType,
+    channel: Channel,
+    enabled: boolean,
+    now: Date,
+  ): void {
     if (this.allows(type, channel) === enabled) {
       return;
     }
@@ -104,7 +109,9 @@ export class NotificationPreference {
       toggles: { ...this.state.toggles, [type]: nextForType },
       updatedAt: now,
     };
-    this.record(new PreferenceChanged(this.state.memberId, type, channel, enabled, now));
+    this.record(
+      new PreferenceChanged(this.state.memberId, type, channel, enabled, now),
+    );
   }
 
   private emptyChannelToggles(): ChannelToggles {

@@ -174,10 +174,7 @@ describe("insights.getGlobalStats", () => {
   test("counts members, catalog definitions and owned copies", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
-    const stats = await t.query(
-      api.insights.getGlobalStats.getGlobalStats,
-      {},
-    );
+    const stats = await t.query(api.insights.getGlobalStats.getGlobalStats, {});
     expect(stats).toEqual({
       totalUsers: 2,
       totalPuzzles: 1,

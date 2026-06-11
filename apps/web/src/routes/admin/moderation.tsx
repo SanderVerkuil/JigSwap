@@ -101,7 +101,9 @@ function ModerationPage() {
                   <Button
                     size="sm"
                     onClick={() => moderate(puzzle.aggregateId, "approve")}
-                    disabled={!puzzle.aggregateId || busyId === puzzle.aggregateId}
+                    disabled={
+                      !puzzle.aggregateId || busyId === puzzle.aggregateId
+                    }
                     className="flex items-center gap-1"
                   >
                     <Check className="h-3 w-3" />
@@ -111,7 +113,9 @@ function ModerationPage() {
                     size="sm"
                     variant="outline"
                     onClick={() => moderate(puzzle.aggregateId, "reject")}
-                    disabled={!puzzle.aggregateId || busyId === puzzle.aggregateId}
+                    disabled={
+                      !puzzle.aggregateId || busyId === puzzle.aggregateId
+                    }
                     className="flex items-center gap-1 text-red-600 hover:text-red-700"
                   >
                     <X className="h-3 w-3" />

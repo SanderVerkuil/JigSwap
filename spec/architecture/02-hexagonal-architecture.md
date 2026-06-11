@@ -9,7 +9,7 @@ The domain + application layer is a **pure-TypeScript package** (`@jigswap/domai
 imports of `convex`, `convex/values`, `@clerk/*`, React, or TanStack. Convex functions in
 `@jigswap/backend` **import** the domain and act as adapters.
 
-Why host the core *inside* Convex rather than in the BFF:
+Why host the core _inside_ Convex rather than in the BFF:
 
 - Convex mutations are **ACID transactions**. A use case that loads an aggregate, enforces invariants,
   and persists must run in one transaction — that is exactly a Convex mutation. Hosting the core in the
@@ -54,7 +54,7 @@ leaks past a repository adapter, and the UI never imports the generated API.** T
 
 **Dependency rule:** dependencies point **inward**. Domain knows nothing. Application knows Domain and
 defines Ports. Adapters know Application/Domain and implement Ports. Convex, Clerk, PostHog, TanStack
-are all *outside* — replaceable.
+are all _outside_ — replaceable.
 
 ## 2.3 Ports — the two kinds
 
@@ -90,38 +90,48 @@ export interface DomainEventPublisher {
 }
 
 // @jigswap/domain/shared-kernel/ports/out/clock.ts
-export interface Clock { now(): Date; }
+export interface Clock {
+  now(): Date;
+}
 ```
 
 ## 2.4 A use case (application layer) — pure orchestration
 
 ```ts
 // @jigswap/domain/exchange/application/use-cases/propose-exchange.ts
-export const makeProposeExchange = (deps: {
-  exchanges: ExchangeRepository;
-  copies: CopyAvailabilityPort;
-  visibility: VisibilityPolicyPort;
-  events: DomainEventPublisher;
-  clock: Clock;
-}): ProposeExchange => async (cmd) => {
-  if (!(await deps.visibility.canTransact(cmd.recipientId, cmd.requestedCopyId)))
-    return err(ExchangeError.NotVisibleToRecipient);
+export const makeProposeExchange =
+  (deps: {
+    exchanges: ExchangeRepository;
+    copies: CopyAvailabilityPort;
+    visibility: VisibilityPolicyPort;
+    events: DomainEventPublisher;
+    clock: Clock;
+  }): ProposeExchange =>
+  async (cmd) => {
+    if (
+      !(await deps.visibility.canTransact(cmd.recipientId, cmd.requestedCopyId))
+    )
+      return err(ExchangeError.NotVisibleToRecipient);
 
-  if (!(await deps.copies.isAvailable(cmd.requestedCopyId)))
-    return err(ExchangeError.CopyUnavailable);
+    if (!(await deps.copies.isAvailable(cmd.requestedCopyId)))
+      return err(ExchangeError.CopyUnavailable);
 
-  // ── all the RULES live in the aggregate, not here ──
-  const exchange = Exchange.propose({
-    kind: cmd.kind, initiator: cmd.initiatorId, recipient: cmd.recipientId,
-    offeredCopyId: cmd.offeredCopyId, requestedCopyId: cmd.requestedCopyId,
-    terms: cmd.terms, now: deps.clock.now(),
-  }); // throws/returns Result on invalid terms (e.g. loan without returnDate)
+    // ── all the RULES live in the aggregate, not here ──
+    const exchange = Exchange.propose({
+      kind: cmd.kind,
+      initiator: cmd.initiatorId,
+      recipient: cmd.recipientId,
+      offeredCopyId: cmd.offeredCopyId,
+      requestedCopyId: cmd.requestedCopyId,
+      terms: cmd.terms,
+      now: deps.clock.now(),
+    }); // throws/returns Result on invalid terms (e.g. loan without returnDate)
 
-  await deps.copies.reserve(cmd.requestedCopyId, exchange.id);
-  await deps.exchanges.save(exchange);
-  await deps.events.publish(exchange.pullEvents()); // ExchangeProposed
-  return ok(exchange.id);
-};
+    await deps.copies.reserve(cmd.requestedCopyId, exchange.id);
+    await deps.exchanges.save(exchange);
+    await deps.events.publish(exchange.pullEvents()); // ExchangeProposed
+    return ok(exchange.id);
+  };
 ```
 
 Note: the use case is a **transaction script** — it sequences ports and the aggregate. It contains
@@ -136,15 +146,17 @@ export class Exchange {
   private constructor(private state: ExchangeState) {}
 
   static propose(p: ProposeProps): Exchange {
-    if (p.kind === "lend" && !p.terms.returnDate) throw new DomainError("loan needs return date");
-    if (p.kind === "trade" && p.terms.price == null) throw new DomainError("sale needs price");
+    if (p.kind === "lend" && !p.terms.returnDate)
+      throw new DomainError("loan needs return date");
+    if (p.kind === "trade" && p.terms.price == null)
+      throw new DomainError("sale needs price");
     const e = new Exchange({ status: "proposed", ...p, createdAt: p.now });
     e.record(new ExchangeProposed(e.id, p.initiator, p.recipient));
     return e;
   }
 
   accept(by: MemberId, now: Date) {
-    this.assertTransition("accepted");          // state-machine invariant
+    this.assertTransition("accepted"); // state-machine invariant
     this.assertParty(by, "recipient");
     this.state = { ...this.state, status: "accepted", acceptedAt: now };
     this.record(new ExchangeAccepted(this.id));
@@ -153,10 +165,13 @@ export class Exchange {
   confirmCompletion(by: MemberId, now: Date) {
     this.assertTransition("completed");
     this.markConfirmed(by, now);
-    if (this.bothConfirmed()) {                 // dual-confirmation invariant
+    if (this.bothConfirmed()) {
+      // dual-confirmation invariant
       this.state = { ...this.state, status: "completed", completedAt: now };
       this.record(new ExchangeCompleted(this.id));
-      this.record(new OwnershipTransferred(this.requestedCopyId, this.recipient)); // → Library reacts
+      this.record(
+        new OwnershipTransferred(this.requestedCopyId, this.recipient),
+      ); // → Library reacts
     }
   }
   // assertTransition / assertParty / pullEvents / record …
@@ -176,7 +191,9 @@ import type { MutationCtx } from "../../_generated/server";
 import type { ExchangeRepository } from "@jigswap/domain/exchange/application/ports/out/exchange.repository";
 import { toDomain, toRow } from "./exchange.mapper";
 
-export const convexExchangeRepository = (ctx: MutationCtx): ExchangeRepository => ({
+export const convexExchangeRepository = (
+  ctx: MutationCtx,
+): ExchangeRepository => ({
   async findById(id) {
     const row = await ctx.db.get(id as Id<"exchanges">);
     return row ? toDomain(row) : null;
@@ -197,11 +214,15 @@ row shape and the aggregate — schema changes don't ripple into the domain.
 
 ```ts
 // @jigswap/backend/convex/_shared/convex-event-publisher.ts
-export const convexEventPublisher = (ctx: MutationCtx): DomainEventPublisher => ({
+export const convexEventPublisher = (
+  ctx: MutationCtx,
+): DomainEventPublisher => ({
   async publish(events) {
     for (const e of events) {
-      await ctx.db.insert("domainEvents", serialize(e));          // durable log (optional)
-      await ctx.scheduler.runAfter(0, internal.dispatch.handle, { event: serialize(e) });
+      await ctx.db.insert("domainEvents", serialize(e)); // durable log (optional)
+      await ctx.scheduler.runAfter(0, internal.dispatch.handle, {
+        event: serialize(e),
+      });
     }
   },
 });
@@ -226,11 +247,16 @@ import { systemClock } from "../_shared/clock";
 import { requireMember } from "../identity/require-member"; // ACL over ctx.auth → MemberId
 
 export const propose = mutation({
-  args: { kind: v.string(), offeredCopyId: v.optional(v.id("ownedPuzzles")),
-          requestedCopyId: v.id("ownedPuzzles"), terms: v.any() /* zod-validated in BFF */ },
+  args: {
+    kind: v.string(),
+    offeredCopyId: v.optional(v.id("ownedPuzzles")),
+    requestedCopyId: v.id("ownedPuzzles"),
+    terms: v.any() /* zod-validated in BFF */,
+  },
   handler: async (ctx, args) => {
-    const me = await requireMember(ctx);                 // identity ACL
-    const proposeExchange = makeProposeExchange({        // ← wire ports to Convex adapters (DI)
+    const me = await requireMember(ctx); // identity ACL
+    const proposeExchange = makeProposeExchange({
+      // ← wire ports to Convex adapters (DI)
       exchanges: convexExchangeRepository(ctx),
       copies: convexCopyAvailability(ctx),
       visibility: convexVisibilityPolicy(ctx),
@@ -238,14 +264,14 @@ export const propose = mutation({
       clock: systemClock,
     });
     const result = await proposeExchange({ initiatorId: me.id, ...args });
-    if (result.isErr) throw new ConvexError(result.error);  // map domain error → transport
+    if (result.isErr) throw new ConvexError(result.error); // map domain error → transport
     return { exchangeId: result.value };
   },
 });
 ```
 
 The Convex function is now **thin**: authenticate → wire adapters → call use case → map result. All
-behaviour is in the (testable, Convex-free) domain/application layers. This *is* "Convex as ports and
+behaviour is in the (testable, Convex-free) domain/application layers. This _is_ "Convex as ports and
 adapters."
 
 ### Cross-context port wiring (in-process)

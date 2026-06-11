@@ -13,5 +13,7 @@ export interface RevokeRoleCommand {
 // emitting nothing). Fails with InvalidRole for an unknown role or MemberNotFound for an unknown
 // member.
 export interface RevokeRole {
-  (cmd: RevokeRoleCommand): Promise<Result<void, IdentityError | IdentityApplicationError>>;
+  (
+    cmd: RevokeRoleCommand,
+  ): Promise<Result<void, IdentityError | IdentityApplicationError>>;
 }

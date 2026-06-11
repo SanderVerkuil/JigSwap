@@ -15,11 +15,14 @@ describe("StarRating", () => {
     if (result.isErr) expect(result.error.code).toBe("InvalidRating");
   });
 
-  it.each([2.5, 3.1, Number.NaN])("rejects the non-integer value %s", (value) => {
-    const result = StarRating.create(value);
-    expect(result.isErr).toBe(true);
-    if (result.isErr) expect(result.error.code).toBe("InvalidRating");
-  });
+  it.each([2.5, 3.1, Number.NaN])(
+    "rejects the non-integer value %s",
+    (value) => {
+      const result = StarRating.create(value);
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("InvalidRating");
+    },
+  );
 });
 
 describe("PartnerReviewScores", () => {

@@ -1,8 +1,8 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";
+import { cn } from "@/lib/utils";
 
 const navItems = [
   {

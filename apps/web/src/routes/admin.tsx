@@ -1,7 +1,9 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 
+import { Link } from "@/compat/link";
 import { HeaderLogo } from "@/components/common/header-logo";
 import { UserProfile } from "@/components/common/user-profile";
+import { PageLoading } from "@/components/ui/loading";
 import {
   Sidebar,
   SidebarContent,
@@ -13,8 +15,6 @@ import {
   SidebarMenuItem,
   SidebarProvider,
 } from "@/components/ui/sidebar";
-import { PageLoading } from "@/components/ui/loading";
-import { Link } from "@/compat/link";
 import { requireAdmin } from "@/lib/require-admin";
 import { Home } from "lucide-react";
 

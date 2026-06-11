@@ -1,12 +1,11 @@
 "use client";
 
+import { Image } from "@/compat/image";
 import { Card, CardContent } from "@/components/ui/card";
-import { gateway } from "@/gateway";
-import { Id } from "@/gateway";
+import { gateway, Id } from "@/gateway";
 import { useQuery } from "convex/react";
 import { Grid } from "lucide-react";
 import { useTranslations } from "use-intl";
-import { Image } from "@/compat/image";
 
 import { PageLoading } from "@/components/ui/loading";
 import { CustodyTimeline } from "./custody-timeline";

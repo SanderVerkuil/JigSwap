@@ -14,15 +14,15 @@ opinions here — see the numbered documents for analysis and proposals.
 
 Functions are organised **per table**:
 
-| File | Owns |
-|------|------|
-| `users.ts` | user upsert, profile, stats, search, Clerk-webhook internal mutations |
-| `puzzles.ts` | **both** canonical `puzzles` **and** physical `ownedPuzzles` + images + browse |
-| `exchanges.ts` | exchange state machine, messages, accept/decline/complete/cancel, inline notifications |
-| `collections.ts` | collections + members |
-| `adminCategories.ts` | global localized (en/nl) puzzle taxonomy |
-| `http.ts` | `POST /clerk-users-webhook` (Svix-verified) |
-| `auth.config.ts` | Clerk JWT trust |
+| File                 | Owns                                                                                   |
+| -------------------- | -------------------------------------------------------------------------------------- |
+| `users.ts`           | user upsert, profile, stats, search, Clerk-webhook internal mutations                  |
+| `puzzles.ts`         | **both** canonical `puzzles` **and** physical `ownedPuzzles` + images + browse         |
+| `exchanges.ts`       | exchange state machine, messages, accept/decline/complete/cancel, inline notifications |
+| `collections.ts`     | collections + members                                                                  |
+| `adminCategories.ts` | global localized (en/nl) puzzle taxonomy                                               |
+| `http.ts`            | `POST /clerk-users-webhook` (Svix-verified)                                            |
+| `auth.config.ts`     | Clerk JWT trust                                                                        |
 
 ### Schema tables
 
@@ -42,7 +42,7 @@ Notable facts that drive the proposal:
   `collections.visibility {private,public}`. The spec documents a richer 6-level model
   (private / friend-circle / visible / lendable / swappable / tradeable) that is **not** implemented.
 - **Notifications are inserted inline** inside exchange/collection mutations (tight coupling).
-- **Chain-of-custody / "exchange instances"** is documented as a *core* requirement but there is **no**
+- **Chain-of-custody / "exchange instances"** is documented as a _core_ requirement but there is **no**
   ownership-history table; completing an exchange only flips availability flags.
 - `categories` (personal) and `goals` tables exist with **no UI**.
 

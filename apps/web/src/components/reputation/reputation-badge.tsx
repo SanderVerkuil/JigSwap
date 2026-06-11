@@ -1,7 +1,7 @@
 "use client";
 
-import { gateway } from "@/gateway";
 import type { Id } from "@/gateway";
+import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
 import { Star } from "lucide-react";

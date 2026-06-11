@@ -1,7 +1,5 @@
 import { DomainEvent, err, ok, Result } from "../../shared-kernel";
 import { ExchangeError } from "./errors";
-import { ExchangeKind } from "./exchange-kind";
-import { ExchangeStatus } from "./exchange-status";
 import {
   DisputeRaised,
   ExchangeAccepted,
@@ -12,12 +10,21 @@ import {
   OwnershipTransferred,
   PossessionTransferred,
 } from "./events";
+import { ExchangeKind } from "./exchange-kind";
+import { ExchangeStatus } from "./exchange-status";
 import { CopyId, ExchangeId, MemberId } from "./ids";
-import { ExchangeTerms, ExchangeTermsInput, Money, validateTerms } from "./terms";
+import {
+  ExchangeTerms,
+  ExchangeTermsInput,
+  Money,
+  validateTerms,
+} from "./terms";
 
 // Legal status moves. The aggregate's single source of truth for the state machine;
 // any move not listed here is an IllegalTransition. (proposal §1.4)
-const ALLOWED_TRANSITIONS: Readonly<Record<ExchangeStatus, readonly ExchangeStatus[]>> = {
+const ALLOWED_TRANSITIONS: Readonly<
+  Record<ExchangeStatus, readonly ExchangeStatus[]>
+> = {
   proposed: ["accepted", "rejected", "cancelled"],
   accepted: ["completed", "cancelled", "disputed"],
   completed: ["disputed"], // a problem can surface after settlement
@@ -98,23 +105,38 @@ export class Exchange {
 
   // Recipient agrees to the proposal.
   accept(by: MemberId, now: Date): Result<void, ExchangeError> {
-    return this.guarded("accepted", () => this.requireParty(by, "recipient", "accept"), now, () => {
-      this.record(new ExchangeAccepted(this.id, now));
-    });
+    return this.guarded(
+      "accepted",
+      () => this.requireParty(by, "recipient", "accept"),
+      now,
+      () => {
+        this.record(new ExchangeAccepted(this.id, now));
+      },
+    );
   }
 
   // Recipient declines the proposal.
   decline(by: MemberId, now: Date): Result<void, ExchangeError> {
-    return this.guarded("rejected", () => this.requireParty(by, "recipient", "decline"), now, () => {
-      this.record(new ExchangeRejected(this.id, now));
-    });
+    return this.guarded(
+      "rejected",
+      () => this.requireParty(by, "recipient", "decline"),
+      now,
+      () => {
+        this.record(new ExchangeRejected(this.id, now));
+      },
+    );
   }
 
   // Initiator withdraws a proposed or accepted deal.
   cancel(by: MemberId, now: Date): Result<void, ExchangeError> {
-    return this.guarded("cancelled", () => this.requireParty(by, "initiator", "cancel"), now, () => {
-      this.record(new ExchangeCancelled(this.id, now));
-    });
+    return this.guarded(
+      "cancelled",
+      () => this.requireParty(by, "initiator", "cancel"),
+      now,
+      () => {
+        this.record(new ExchangeCancelled(this.id, now));
+      },
+    );
   }
 
   // Dual confirmation: record the acting party's timestamp; only settle to `completed`
@@ -140,10 +162,16 @@ export class Exchange {
 
   // Either party flags a problem (from accepted or after completion).
   raiseDispute(by: MemberId, now: Date): Result<void, ExchangeError> {
-    if (!this.partyOf(by)) return err(ExchangeError.wrongParty("raise a dispute"));
-    return this.guarded("disputed", () => ok(undefined), now, () => {
-      this.record(new DisputeRaised(this.id, by, now));
-    });
+    if (!this.partyOf(by))
+      return err(ExchangeError.wrongParty("raise a dispute"));
+    return this.guarded(
+      "disputed",
+      () => ok(undefined),
+      now,
+      () => {
+        this.record(new DisputeRaised(this.id, by, now));
+      },
+    );
   }
 
   // Drain recorded events for the publisher; clears the buffer so a save can't double-emit.
@@ -181,7 +209,10 @@ export class Exchange {
   }
 
   // The ONLY place status changes. Rejects any move not in ALLOWED_TRANSITIONS.
-  private transition(to: ExchangeStatus, now: Date): Result<void, ExchangeError> {
+  private transition(
+    to: ExchangeStatus,
+    now: Date,
+  ): Result<void, ExchangeError> {
     if (!ALLOWED_TRANSITIONS[this.state.status].includes(to)) {
       return err(ExchangeError.illegalTransition(this.state.status, to));
     }
@@ -209,12 +240,22 @@ export class Exchange {
       );
     } else {
       this.record(
-        new OwnershipTransferred(this.id, this.state.requestedCopyId, this.state.initiatorId, now),
+        new OwnershipTransferred(
+          this.id,
+          this.state.requestedCopyId,
+          this.state.initiatorId,
+          now,
+        ),
       );
     }
     if (this.state.kind === "swap" && this.state.offeredCopyId) {
       this.record(
-        new OwnershipTransferred(this.id, this.state.offeredCopyId, this.state.recipientId, now),
+        new OwnershipTransferred(
+          this.id,
+          this.state.offeredCopyId,
+          this.state.recipientId,
+          now,
+        ),
       );
     }
     return ok(undefined);
@@ -238,16 +279,27 @@ export class Exchange {
     expected: "initiator" | "recipient",
     action: string,
   ): Result<void, ExchangeError> {
-    const required = expected === "initiator" ? this.state.initiatorId : this.state.recipientId;
-    return member === required ? ok(undefined) : err(ExchangeError.wrongParty(action));
+    const required =
+      expected === "initiator"
+        ? this.state.initiatorId
+        : this.state.recipientId;
+    return member === required
+      ? ok(undefined)
+      : err(ExchangeError.wrongParty(action));
   }
 
   private record(event: DomainEvent): void {
     this.events.push(event);
   }
 
-  private static stateFromTerms(props: ProposeProps, terms: ExchangeTerms): ExchangeState {
-    const base: Omit<ExchangeState, "kind" | "offeredCopyId" | "price" | "returnDate"> = {
+  private static stateFromTerms(
+    props: ProposeProps,
+    terms: ExchangeTerms,
+  ): ExchangeState {
+    const base: Omit<
+      ExchangeState,
+      "kind" | "offeredCopyId" | "price" | "returnDate"
+    > = {
       id: props.id,
       initiatorId: props.initiator,
       recipientId: props.recipient,

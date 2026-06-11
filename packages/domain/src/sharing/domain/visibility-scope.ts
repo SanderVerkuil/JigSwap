@@ -32,7 +32,9 @@ const PUBLICLY_VIEWABLE: ReadonlySet<VisibilityScope> = new Set([
 
 // Which transaction kind each transactable scope permits. `visible` permits viewing but no
 // transaction, so it (and the non-public scopes) are absent.
-const TRANSACTABLE: Readonly<Partial<Record<VisibilityScope, TransactionKind>>> = {
+const TRANSACTABLE: Readonly<
+  Partial<Record<VisibilityScope, TransactionKind>>
+> = {
   lendable: "lend",
   swappable: "swap",
   tradeable: "trade",

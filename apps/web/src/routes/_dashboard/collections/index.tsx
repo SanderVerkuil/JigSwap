@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { useUser } from "@/compat/clerk";
+import { useRouter } from "@/compat/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,13 +33,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useUser } from "@/compat/clerk";
-import { useRouter } from "@/compat/navigation";
 import { gateway, Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { FolderOpen, Globe, Lock, Plus, Settings } from "lucide-react";
-import { useTranslations } from "use-intl";
 import { useState } from "react";
+import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/collections/")({
   pendingComponent: () => <PageLoading message="Loading collections..." />,
@@ -451,7 +451,10 @@ function CollectionsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(false)}
+            >
               {tCommon("cancel")}
             </Button>
             <Button onClick={handleEditCollection}>{t("save")}</Button>

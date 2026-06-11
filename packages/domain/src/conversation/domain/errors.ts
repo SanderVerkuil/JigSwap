@@ -31,7 +31,10 @@ export class ConversationError extends DomainError {
 
   // A message body (text, or an image's storage reference) must be non-empty.
   static emptyMessage(): ConversationError {
-    return new ConversationError("EmptyMessage", "A message body must be non-empty");
+    return new ConversationError(
+      "EmptyMessage",
+      "A message body must be non-empty",
+    );
   }
 
   // System messages are service-authored: a member may not author one. They are created only

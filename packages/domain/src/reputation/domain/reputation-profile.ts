@@ -49,7 +49,11 @@ export class ReputationProfile {
   }
 
   // A fresh, empty profile for a member who has not yet been reviewed.
-  static open(id: ReputationProfileId, memberId: MemberId, now: Date): ReputationProfile {
+  static open(
+    id: ReputationProfileId,
+    memberId: MemberId,
+    now: Date,
+  ): ReputationProfile {
     return new ReputationProfile({
       id,
       memberId,
@@ -80,7 +84,14 @@ export class ReputationProfile {
       updatedAt: now,
     };
 
-    this.record(new ReputationChanged(this.state.memberId, averageRating, reviewCount, now));
+    this.record(
+      new ReputationChanged(
+        this.state.memberId,
+        averageRating,
+        reviewCount,
+        now,
+      ),
+    );
   }
 
   // Drain recorded events for the publisher; clears the buffer so a save can't double-emit.

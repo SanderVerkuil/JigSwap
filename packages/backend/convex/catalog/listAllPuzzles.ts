@@ -8,10 +8,7 @@ import { toPuzzleSummaryView } from "./mappers";
 // mapped to a typed summary DTO (box-art URL resolved) rather than the raw Convex row.
 export const listAllPuzzles = query({
   args: { paginationOpts: paginationOptsValidator },
-  handler: async (
-    ctx,
-    args,
-  ): Promise<PaginationResult<PuzzleSummaryView>> => {
+  handler: async (ctx, args): Promise<PaginationResult<PuzzleSummaryView>> => {
     const puzzles = await ctx.db
       .query("puzzles")
       .filter((q) => q.eq(q.field("status"), "approved"))

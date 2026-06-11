@@ -3,8 +3,8 @@ import { Outlet, createFileRoute } from "@tanstack/react-router";
 import { Header } from "@/components/dashboard-layout/header";
 import { MainContent } from "@/components/dashboard-layout/main-content";
 import { Sidebar } from "@/components/dashboard-layout/sidebar";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { PageLoading } from "@/components/ui/loading";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { requireAuth } from "@/lib/require-auth";
 
 // Pathless layout for the (dashboard) shell. The Next layout was an async server

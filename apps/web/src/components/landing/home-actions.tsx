@@ -1,8 +1,8 @@
 "use client";
 
+import { Link } from "@/compat/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link } from "@/compat/link";
 import { useTranslations } from "use-intl";
 
 export function HomeActions() {

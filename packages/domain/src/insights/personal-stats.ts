@@ -75,7 +75,9 @@ const mean = (values: readonly number[]): number => {
 // Roll the member's rows into the personal stats card. Only *completed* solves count toward the
 // completion totals and the average solve time; in-progress rows are ignored. Averages divide by
 // the number of present samples, never by the total row count.
-export const computePersonalStats = (input: PersonalStatsInput): PersonalStats => {
+export const computePersonalStats = (
+  input: PersonalStatsInput,
+): PersonalStats => {
   const completed = input.completions.filter((c) => c.isCompleted);
 
   const solveMinutes = completed

@@ -59,7 +59,10 @@ const addCopy = (
 const getCopy = (t: ReturnType<typeof convexTest>, id: Id<"ownedPuzzles">) =>
   t.run(async (ctx) => ctx.db.get(id));
 
-const notificationsFor = (t: ReturnType<typeof convexTest>, userId: Id<"users">) =>
+const notificationsFor = (
+  t: ReturnType<typeof convexTest>,
+  userId: Id<"users">,
+) =>
   t.run(async (ctx) =>
     ctx.db
       .query("notifications")
@@ -75,8 +78,10 @@ const exchangeRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
       .unique(),
   );
 
-const asAlice = (t: ReturnType<typeof convexTest>) => t.withIdentity({ subject: "clerk_alice" });
-const asBob = (t: ReturnType<typeof convexTest>) => t.withIdentity({ subject: "clerk_bob" });
+const asAlice = (t: ReturnType<typeof convexTest>) =>
+  t.withIdentity({ subject: "clerk_alice" });
+const asBob = (t: ReturnType<typeof convexTest>) =>
+  t.withIdentity({ subject: "clerk_bob" });
 
 // Notifications are produced asynchronously by the event dispatcher (scheduled via runAfter(0)).
 // finishInProgressScheduledFunctions only awaits jobs ALREADY in-progress, so we first yield a
@@ -92,7 +97,9 @@ const flushScheduled = async (t: ReturnType<typeof convexTest>) => {
 // boundary, so normalise before asserting on the stable `code`.
 const dataOf = (e: unknown): { code?: string } => {
   const data = (e as ConvexError<unknown>).data;
-  return typeof data === "string" ? JSON.parse(data) : (data as { code?: string });
+  return typeof data === "string"
+    ? JSON.parse(data)
+    : (data as { code?: string });
 };
 
 const expectConvexCode = async (p: Promise<unknown>, code: string) => {
@@ -106,7 +113,10 @@ describe("exchange.propose", () => {
   test("requires authentication", async () => {
     const t = convexTest(schema, modules);
     const { bob, puzzleId } = await seed(t);
-    const copy = await addCopy(t, puzzleId, bob, { ...ALL_FALSE, forSale: true });
+    const copy = await addCopy(t, puzzleId, bob, {
+      ...ALL_FALSE,
+      forSale: true,
+    });
     await expect(
       t.mutation(api.exchange.propose.propose, {
         recipientId: bob,
@@ -120,7 +130,10 @@ describe("exchange.propose", () => {
   test("availability TRUE for the kind => ok (fixed vs the old inverted check)", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob, puzzleId } = await seed(t);
-    const copy = await addCopy(t, puzzleId, bob, { ...ALL_FALSE, forSale: true });
+    const copy = await addCopy(t, puzzleId, bob, {
+      ...ALL_FALSE,
+      forSale: true,
+    });
     const id = await asAlice(t).mutation(api.exchange.propose.propose, {
       recipientId: bob,
       type: "sale",
@@ -153,8 +166,14 @@ describe("exchange.propose", () => {
   test("swap requires the offered copy to be owned by the initiator", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob, puzzleId } = await seed(t);
-    const requested = await addCopy(t, puzzleId, bob, { ...ALL_FALSE, forTrade: true });
-    const notMine = await addCopy(t, puzzleId, bob, { ...ALL_FALSE, forTrade: true });
+    const requested = await addCopy(t, puzzleId, bob, {
+      ...ALL_FALSE,
+      forTrade: true,
+    });
+    const notMine = await addCopy(t, puzzleId, bob, {
+      ...ALL_FALSE,
+      forTrade: true,
+    });
     await expectConvexCode(
       asAlice(t).mutation(api.exchange.propose.propose, {
         recipientId: bob,
@@ -164,7 +183,10 @@ describe("exchange.propose", () => {
       }),
       "OfferedCopyNotOwned",
     );
-    const mine = await addCopy(t, puzzleId, alice, { ...ALL_FALSE, forTrade: true });
+    const mine = await addCopy(t, puzzleId, alice, {
+      ...ALL_FALSE,
+      forTrade: true,
+    });
     const id = await asAlice(t).mutation(api.exchange.propose.propose, {
       recipientId: bob,
       type: "trade",
@@ -179,7 +201,10 @@ describe("exchange.propose", () => {
     const t = convexTest(schema, modules);
     const { alice, bob, puzzleId } = await seed(t);
     // Insert then delete a copy to obtain a valid-but-missing id.
-    const ghost = await addCopy(t, puzzleId, bob, { ...ALL_FALSE, forSale: true });
+    const ghost = await addCopy(t, puzzleId, bob, {
+      ...ALL_FALSE,
+      forSale: true,
+    });
     await t.run(async (ctx) => ctx.db.delete(ghost));
     void alice;
     await expectConvexCode(
@@ -196,7 +221,10 @@ describe("exchange.propose", () => {
   test("dedups a second proposed request for the same copy", async () => {
     const t = convexTest(schema, modules);
     const { bob, puzzleId } = await seed(t);
-    const copy = await addCopy(t, puzzleId, bob, { ...ALL_FALSE, forSale: true });
+    const copy = await addCopy(t, puzzleId, bob, {
+      ...ALL_FALSE,
+      forSale: true,
+    });
     await asAlice(t).mutation(api.exchange.propose.propose, {
       recipientId: bob,
       type: "sale",
@@ -217,7 +245,10 @@ describe("exchange.propose", () => {
   test("rejects a self-exchange (recipient resolves to the authed initiator)", async () => {
     const t = convexTest(schema, modules);
     const { alice, puzzleId } = await seed(t);
-    const copy = await addCopy(t, puzzleId, alice, { ...ALL_FALSE, forSale: true });
+    const copy = await addCopy(t, puzzleId, alice, {
+      ...ALL_FALSE,
+      forSale: true,
+    });
     await expectConvexCode(
       asAlice(t).mutation(api.exchange.propose.propose, {
         recipientId: alice,
@@ -232,7 +263,10 @@ describe("exchange.propose", () => {
   test("creates a trade_request notification for the recipient", async () => {
     const t = convexTest(schema, modules);
     const { bob, puzzleId } = await seed(t);
-    const copy = await addCopy(t, puzzleId, bob, { ...ALL_FALSE, forSale: true });
+    const copy = await addCopy(t, puzzleId, bob, {
+      ...ALL_FALSE,
+      forSale: true,
+    });
     const id = await asAlice(t).mutation(api.exchange.propose.propose, {
       recipientId: bob,
       type: "sale",
@@ -268,7 +302,10 @@ describe("exchange.accept / decline / cancel", () => {
   test("only the recipient may accept; wrong caller => WrongParty", async () => {
     const t = convexTest(schema, modules);
     const { id } = await proposeSale(t);
-    await expectConvexCode(asAlice(t).mutation(api.exchange.accept.accept, { exchangeId: id }), "WrongParty");
+    await expectConvexCode(
+      asAlice(t).mutation(api.exchange.accept.accept, { exchangeId: id }),
+      "WrongParty",
+    );
     await asBob(t).mutation(api.exchange.accept.accept, { exchangeId: id });
     const row = await exchangeRow(t, id);
     expect(row?.status).toBe("accepted");
@@ -286,7 +323,10 @@ describe("exchange.accept / decline / cancel", () => {
   test("only the recipient may decline", async () => {
     const t = convexTest(schema, modules);
     const { id, alice } = await proposeSale(t);
-    await expectConvexCode(asAlice(t).mutation(api.exchange.decline.decline, { exchangeId: id }), "WrongParty");
+    await expectConvexCode(
+      asAlice(t).mutation(api.exchange.decline.decline, { exchangeId: id }),
+      "WrongParty",
+    );
     await asBob(t).mutation(api.exchange.decline.decline, { exchangeId: id });
     const row = await exchangeRow(t, id);
     expect(row?.status).toBe("rejected");
@@ -298,7 +338,10 @@ describe("exchange.accept / decline / cancel", () => {
   test("only the initiator may cancel; recipient gets notified", async () => {
     const t = convexTest(schema, modules);
     const { id, bob } = await proposeSale(t);
-    await expectConvexCode(asBob(t).mutation(api.exchange.cancel.cancel, { exchangeId: id }), "WrongParty");
+    await expectConvexCode(
+      asBob(t).mutation(api.exchange.cancel.cancel, { exchangeId: id }),
+      "WrongParty",
+    );
     await asAlice(t).mutation(api.exchange.cancel.cancel, { exchangeId: id });
     const row = await exchangeRow(t, id);
     expect(row?.status).toBe("cancelled");
@@ -311,7 +354,10 @@ describe("exchange.accept / decline / cancel", () => {
     const t = convexTest(schema, modules);
     const { id } = await proposeSale(t);
     await asAlice(t).mutation(api.exchange.cancel.cancel, { exchangeId: id });
-    await expectConvexCode(asBob(t).mutation(api.exchange.accept.accept, { exchangeId: id }), "IllegalTransition");
+    await expectConvexCode(
+      asBob(t).mutation(api.exchange.accept.accept, { exchangeId: id }),
+      "IllegalTransition",
+    );
   });
 });
 
@@ -320,7 +366,9 @@ describe("exchange.confirmCompletion", () => {
     const t = convexTest(schema, modules);
     const { id, copy } = await proposeSale(t);
     await asBob(t).mutation(api.exchange.accept.accept, { exchangeId: id });
-    await asBob(t).mutation(api.exchange.confirmCompletion.confirmCompletion, { exchangeId: id });
+    await asBob(t).mutation(api.exchange.confirmCompletion.confirmCompletion, {
+      exchangeId: id,
+    });
     const row = await exchangeRow(t, id);
     expect(row?.status).toBe("accepted");
     const c = await getCopy(t, copy);
@@ -331,8 +379,13 @@ describe("exchange.confirmCompletion", () => {
     const t = convexTest(schema, modules);
     const { id, alice, bob, copy } = await proposeSale(t);
     await asBob(t).mutation(api.exchange.accept.accept, { exchangeId: id });
-    await asAlice(t).mutation(api.exchange.confirmCompletion.confirmCompletion, { exchangeId: id });
-    await asBob(t).mutation(api.exchange.confirmCompletion.confirmCompletion, { exchangeId: id });
+    await asAlice(t).mutation(
+      api.exchange.confirmCompletion.confirmCompletion,
+      { exchangeId: id },
+    );
+    await asBob(t).mutation(api.exchange.confirmCompletion.confirmCompletion, {
+      exchangeId: id,
+    });
     const row = await exchangeRow(t, id);
     expect(row?.status).toBe("completed");
     const c = await getCopy(t, copy);
@@ -347,8 +400,14 @@ describe("exchange.confirmCompletion", () => {
   test("a swap completion flips BOTH the requested and offered copies", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob, puzzleId } = await seed(t);
-    const requested = await addCopy(t, puzzleId, bob, { ...ALL_FALSE, forTrade: true });
-    const offered = await addCopy(t, puzzleId, alice, { ...ALL_FALSE, forTrade: true });
+    const requested = await addCopy(t, puzzleId, bob, {
+      ...ALL_FALSE,
+      forTrade: true,
+    });
+    const offered = await addCopy(t, puzzleId, alice, {
+      ...ALL_FALSE,
+      forTrade: true,
+    });
     const id = await asAlice(t).mutation(api.exchange.propose.propose, {
       recipientId: bob,
       type: "trade",
@@ -356,8 +415,13 @@ describe("exchange.confirmCompletion", () => {
       offeredPuzzleId: offered,
     });
     await asBob(t).mutation(api.exchange.accept.accept, { exchangeId: id });
-    await asAlice(t).mutation(api.exchange.confirmCompletion.confirmCompletion, { exchangeId: id });
-    await asBob(t).mutation(api.exchange.confirmCompletion.confirmCompletion, { exchangeId: id });
+    await asAlice(t).mutation(
+      api.exchange.confirmCompletion.confirmCompletion,
+      { exchangeId: id },
+    );
+    await asBob(t).mutation(api.exchange.confirmCompletion.confirmCompletion, {
+      exchangeId: id,
+    });
     expect((await getCopy(t, requested))?.availability).toEqual(ALL_FALSE);
     expect((await getCopy(t, offered))?.availability).toEqual(ALL_FALSE);
   });
@@ -368,7 +432,9 @@ describe("exchange.raiseDispute", () => {
     const t = convexTest(schema, modules);
     const { id } = await proposeSale(t);
     await asBob(t).mutation(api.exchange.accept.accept, { exchangeId: id });
-    await asAlice(t).mutation(api.exchange.raiseDispute.raiseDispute, { exchangeId: id });
+    await asAlice(t).mutation(api.exchange.raiseDispute.raiseDispute, {
+      exchangeId: id,
+    });
     expect((await exchangeRow(t, id))?.status).toBe("disputed");
   });
 
@@ -376,9 +442,16 @@ describe("exchange.raiseDispute", () => {
     const t = convexTest(schema, modules);
     const { id } = await proposeSale(t);
     await asBob(t).mutation(api.exchange.accept.accept, { exchangeId: id });
-    await asAlice(t).mutation(api.exchange.confirmCompletion.confirmCompletion, { exchangeId: id });
-    await asBob(t).mutation(api.exchange.confirmCompletion.confirmCompletion, { exchangeId: id });
-    await asBob(t).mutation(api.exchange.raiseDispute.raiseDispute, { exchangeId: id });
+    await asAlice(t).mutation(
+      api.exchange.confirmCompletion.confirmCompletion,
+      { exchangeId: id },
+    );
+    await asBob(t).mutation(api.exchange.confirmCompletion.confirmCompletion, {
+      exchangeId: id,
+    });
+    await asBob(t).mutation(api.exchange.raiseDispute.raiseDispute, {
+      exchangeId: id,
+    });
     expect((await exchangeRow(t, id))?.status).toBe("disputed");
   });
 });

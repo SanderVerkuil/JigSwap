@@ -17,7 +17,8 @@ export const makeAddMember =
   (deps: AddMemberDeps): AddMember =>
   async (cmd: AddMemberCommand) => {
     const circle = await deps.circles.findById(cmd.circleId);
-    if (!circle) return err(SharingApplicationError.circleNotFound(cmd.circleId));
+    if (!circle)
+      return err(SharingApplicationError.circleNotFound(cmd.circleId));
 
     const result = circle.addMember(
       cmd.actorId,

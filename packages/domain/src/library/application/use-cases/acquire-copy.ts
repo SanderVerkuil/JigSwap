@@ -24,7 +24,9 @@ export const makeAcquireCopy =
       cmd.puzzleDefinitionId,
     );
     if (!context)
-      return err(LibraryApplicationError.puzzleNotFound(cmd.puzzleDefinitionId));
+      return err(
+        LibraryApplicationError.puzzleNotFound(cmd.puzzleDefinitionId),
+      );
 
     // A definition is acquirable by a member iff it is approved OR the member submitted it —
     // so a contributor can log their own copy of a not-yet-approved (pending/rejected) puzzle.

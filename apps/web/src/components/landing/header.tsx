@@ -1,10 +1,10 @@
 "use client";
 
+import { Link } from "@/compat/link";
 import { HeaderLogo } from "@/components/common/header-logo";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { ModeToggle } from "@/components/ui/theme-toggle";
-import { Link } from "@/compat/link";
 import { Authenticated, Unauthenticated } from "convex/react";
 import { useTranslations } from "use-intl";
 

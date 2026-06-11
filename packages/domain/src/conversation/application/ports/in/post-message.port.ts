@@ -1,5 +1,10 @@
 import { Result } from "../../../../shared-kernel";
-import { ConversationError, MemberId, MessageId, ThreadId } from "../../../domain";
+import {
+  ConversationError,
+  MemberId,
+  MessageId,
+  ThreadId,
+} from "../../../domain";
 import { ConversationApplicationError } from "../../errors";
 
 // The command to post a member-authored message to a thread. `authorId` is resolved from auth by
@@ -16,5 +21,7 @@ export interface PostMessageCommand {
 export interface PostMessage {
   (
     cmd: PostMessageCommand,
-  ): Promise<Result<MessageId, ConversationError | ConversationApplicationError>>;
+  ): Promise<
+    Result<MessageId, ConversationError | ConversationApplicationError>
+  >;
 }

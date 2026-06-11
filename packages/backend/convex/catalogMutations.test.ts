@@ -46,7 +46,9 @@ const categoryRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
 // convex-test serializes ConvexError.data to a JSON string at the function boundary; normalise.
 const dataOf = (e: unknown): { code?: string } => {
   const data = (e as ConvexError<unknown>).data;
-  return typeof data === "string" ? JSON.parse(data) : (data as { code?: string });
+  return typeof data === "string"
+    ? JSON.parse(data)
+    : (data as { code?: string });
 };
 
 const expectConvexCode = async (p: Promise<unknown>, code: string) => {
@@ -117,11 +119,14 @@ describe("catalog.submitPuzzleDefinition", () => {
     });
 
     await expectConvexCode(
-      asAlice(t).mutation(api.catalog.submitPuzzleDefinition.submitPuzzleDefinition, {
-        title: "Duplicate",
-        pieceCount: 1000,
-        ean: VALID_EAN,
-      }),
+      asAlice(t).mutation(
+        api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+        {
+          title: "Duplicate",
+          pieceCount: 1000,
+          ean: VALID_EAN,
+        },
+      ),
       "DuplicateBarcode",
     );
   });
@@ -130,11 +135,14 @@ describe("catalog.submitPuzzleDefinition", () => {
     const t = convexTest(schema, modules);
     await seedMember(t);
     await expectConvexCode(
-      asAlice(t).mutation(api.catalog.submitPuzzleDefinition.submitPuzzleDefinition, {
-        title: "Bad Barcode",
-        pieceCount: 1000,
-        ean: "123",
-      }),
+      asAlice(t).mutation(
+        api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+        {
+          title: "Bad Barcode",
+          pieceCount: 1000,
+          ean: "123",
+        },
+      ),
       "InvalidBarcode",
     );
   });
@@ -164,10 +172,13 @@ describe("catalog.submitPuzzleDefinition", () => {
 
     // Round-trip: a domain re-load+save (via update) keeps the same resolved FK — proving the
     // read path maps the FK back to the aggregateId the aggregate carries.
-    await asAlice(t).mutation(api.catalog.updatePuzzleDefinition.updatePuzzleDefinition, {
-      puzzleDefinitionId: id as string,
-      title: "Lions Reworked",
-    });
+    await asAlice(t).mutation(
+      api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+      {
+        puzzleDefinitionId: id as string,
+        title: "Lions Reworked",
+      },
+    );
     expect((await puzzleRow(t, id as string))?.category).toBe(realCategoryId);
   });
 });
@@ -186,31 +197,43 @@ describe("catalog moderation lifecycle", () => {
   test("approve moves pending -> approved", async () => {
     const t = convexTest(schema, modules);
     const id = await submitPending(t);
-    await asAlice(t).mutation(api.catalog.approvePuzzleDefinition.approvePuzzleDefinition, {
-      puzzleDefinitionId: id,
-    });
+    await asAlice(t).mutation(
+      api.catalog.approvePuzzleDefinition.approvePuzzleDefinition,
+      {
+        puzzleDefinitionId: id,
+      },
+    );
     expect((await puzzleRow(t, id))?.status).toBe("approved");
   });
 
   test("reject moves pending -> rejected", async () => {
     const t = convexTest(schema, modules);
     const id = await submitPending(t);
-    await asAlice(t).mutation(api.catalog.rejectPuzzleDefinition.rejectPuzzleDefinition, {
-      puzzleDefinitionId: id,
-    });
+    await asAlice(t).mutation(
+      api.catalog.rejectPuzzleDefinition.rejectPuzzleDefinition,
+      {
+        puzzleDefinitionId: id,
+      },
+    );
     expect((await puzzleRow(t, id))?.status).toBe("rejected");
   });
 
   test("illegal transition rejected (approve an already-rejected definition)", async () => {
     const t = convexTest(schema, modules);
     const id = await submitPending(t);
-    await asAlice(t).mutation(api.catalog.rejectPuzzleDefinition.rejectPuzzleDefinition, {
-      puzzleDefinitionId: id,
-    });
-    await expectConvexCode(
-      asAlice(t).mutation(api.catalog.approvePuzzleDefinition.approvePuzzleDefinition, {
+    await asAlice(t).mutation(
+      api.catalog.rejectPuzzleDefinition.rejectPuzzleDefinition,
+      {
         puzzleDefinitionId: id,
-      }),
+      },
+    );
+    await expectConvexCode(
+      asAlice(t).mutation(
+        api.catalog.approvePuzzleDefinition.approvePuzzleDefinition,
+        {
+          puzzleDefinitionId: id,
+        },
+      ),
       "IllegalApprovalTransition",
     );
   });
@@ -219,9 +242,12 @@ describe("catalog moderation lifecycle", () => {
     const t = convexTest(schema, modules);
     await seedMember(t);
     await expectConvexCode(
-      asAlice(t).mutation(api.catalog.approvePuzzleDefinition.approvePuzzleDefinition, {
-        puzzleDefinitionId: crypto.randomUUID(),
-      }),
+      asAlice(t).mutation(
+        api.catalog.approvePuzzleDefinition.approvePuzzleDefinition,
+        {
+          puzzleDefinitionId: crypto.randomUUID(),
+        },
+      ),
       "PuzzleDefinitionNotFound",
     );
   });
@@ -231,11 +257,14 @@ describe("catalog.updatePuzzleDefinition", () => {
   test("patches fields and re-materialises searchableText", async () => {
     const t = convexTest(schema, modules);
     const id = await submitPending(t);
-    await asAlice(t).mutation(api.catalog.updatePuzzleDefinition.updatePuzzleDefinition, {
-      puzzleDefinitionId: id,
-      title: "Renamed Vista",
-      brand: "Clementoni",
-    });
+    await asAlice(t).mutation(
+      api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+      {
+        puzzleDefinitionId: id,
+        title: "Renamed Vista",
+        brand: "Clementoni",
+      },
+    );
     const row = await puzzleRow(t, id);
     expect(row?.title).toBe("Renamed Vista");
     expect(row?.brand).toBe("Clementoni");
@@ -246,10 +275,13 @@ describe("catalog.updatePuzzleDefinition", () => {
     const t = convexTest(schema, modules);
     const id = await submitPending(t);
     await expectConvexCode(
-      asAlice(t).mutation(api.catalog.updatePuzzleDefinition.updatePuzzleDefinition, {
-        puzzleDefinitionId: id,
-        title: "   ",
-      }),
+      asAlice(t).mutation(
+        api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+        {
+          puzzleDefinitionId: id,
+          title: "   ",
+        },
+      ),
       "EmptyTitle",
     );
   });
@@ -282,10 +314,13 @@ describe("catalog category management", () => {
     const t = convexTest(schema, modules);
     await seedMember(t);
     await expectConvexCode(
-      asAlice(t).mutation(api.catalog.createCatalogCategory.createCatalogCategory, {
-        name: { en: "Animals", nl: "  " },
-        sortOrder: 1,
-      }),
+      asAlice(t).mutation(
+        api.catalog.createCatalogCategory.createCatalogCategory,
+        {
+          name: { en: "Animals", nl: "  " },
+          sortOrder: 1,
+        },
+      ),
       "EmptyCategoryName",
     );
   });
@@ -297,7 +332,12 @@ describe("catalog category management", () => {
     const b = await createCategory(t, 2, { en: "B", nl: "B" });
     await asAlice(t).mutation(
       api.catalog.reorderCatalogCategories.reorderCatalogCategories,
-      { order: [{ catalogCategoryId: a, sortOrder: 5 }, { catalogCategoryId: b, sortOrder: 4 }] },
+      {
+        order: [
+          { catalogCategoryId: a, sortOrder: 5 },
+          { catalogCategoryId: b, sortOrder: 4 },
+        ],
+      },
     );
     expect((await categoryRow(t, a))?.sortOrder).toBe(5);
     expect((await categoryRow(t, b))?.sortOrder).toBe(4);

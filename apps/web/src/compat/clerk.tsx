@@ -30,9 +30,9 @@ export {
   SignOutButton,
   SignUp,
   SignUpButton,
-  UserButton,
-  UserProfile,
   useAuth,
   useClerk,
+  UserButton,
+  UserProfile,
   useUser,
 } from "@clerk/tanstack-react-start";

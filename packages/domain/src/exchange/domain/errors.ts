@@ -32,11 +32,17 @@ export class ExchangeError extends DomainError {
 
   // Kind-specific terms were absent or invalid at construction.
   static missingTerms(kind: ExchangeKind, detail: string): ExchangeError {
-    return new ExchangeError("MissingTerms", `Invalid terms for ${kind}: ${detail}`);
+    return new ExchangeError(
+      "MissingTerms",
+      `Invalid terms for ${kind}: ${detail}`,
+    );
   }
 
   // The requested status move is not allowed from the current status.
-  static illegalTransition(from: ExchangeStatus, to: ExchangeStatus): ExchangeError {
+  static illegalTransition(
+    from: ExchangeStatus,
+    to: ExchangeStatus,
+  ): ExchangeError {
     return new ExchangeError(
       "IllegalTransition",
       `Cannot transition from ${from} to ${to}`,

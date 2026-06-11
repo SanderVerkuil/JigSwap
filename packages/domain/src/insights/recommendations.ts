@@ -78,9 +78,7 @@ const normaliseBrand = (brand: string | undefined): string | undefined => {
 };
 
 const normaliseKeys = (keys: readonly string[] | undefined): string[] =>
-  (keys ?? [])
-    .map((k) => k.trim().toLowerCase())
-    .filter((k) => k.length > 0);
+  (keys ?? []).map((k) => k.trim().toLowerCase()).filter((k) => k.length > 0);
 
 // The member's taste reduced to affinity sets/counts across the facets of all their puzzles. With
 // no signals every set is empty, so scoring naturally degrades to a pure popularity ordering.
@@ -197,5 +195,7 @@ export const recommendPuzzles = (
     );
 
   const limit = input.limit;
-  return typeof limit === "number" && limit > 0 ? ranked.slice(0, limit) : ranked;
+  return typeof limit === "number" && limit > 0
+    ? ranked.slice(0, limit)
+    : ranked;
 };

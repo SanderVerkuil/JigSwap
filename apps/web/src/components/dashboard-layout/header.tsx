@@ -1,11 +1,11 @@
 "use client";
 
+import { Link } from "@/compat/link";
 import { HeaderLogo } from "@/components/common/header-logo";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/ui/theme-toggle";
-import { Link } from "@/compat/link";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export function Header() {

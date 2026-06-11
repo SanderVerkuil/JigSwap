@@ -20,7 +20,11 @@ export class InMemoryPuzzleDefinitionRepository implements PuzzleDefinitionRepos
 
   async findByBarcode(barcode: string): Promise<PuzzleDefinition | null> {
     for (const state of this.store.values()) {
-      if (state.ean === barcode || state.upc === barcode || state.modelNumber === barcode) {
+      if (
+        state.ean === barcode ||
+        state.upc === barcode ||
+        state.modelNumber === barcode
+      ) {
         return PuzzleDefinition.rehydrate(state);
       }
     }

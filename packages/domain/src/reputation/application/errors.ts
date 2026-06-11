@@ -24,7 +24,9 @@ export class ReputationApplicationError extends DomainError {
   // ExchangeCompletionPort returns false both for not-yet-completed and for unknown exchanges,
   // and also when the parties don't match; the use case maps a party mismatch separately when
   // it can distinguish it. This code covers the completed-state failure.
-  static exchangeNotCompleted(exchangeId: ExchangeId): ReputationApplicationError {
+  static exchangeNotCompleted(
+    exchangeId: ExchangeId,
+  ): ReputationApplicationError {
     return new ReputationApplicationError(
       "ExchangeNotCompleted",
       `Exchange ${exchangeId} is not completed; no review window is open`,
@@ -43,7 +45,9 @@ export class ReputationApplicationError extends DomainError {
   }
 
   // This reviewer already submitted a review for this exchange (one per party per exchange).
-  static duplicatePartnerReview(exchangeId: ExchangeId): ReputationApplicationError {
+  static duplicatePartnerReview(
+    exchangeId: ExchangeId,
+  ): ReputationApplicationError {
     return new ReputationApplicationError(
       "DuplicatePartnerReview",
       `A review already exists for this reviewer on exchange ${exchangeId}`,

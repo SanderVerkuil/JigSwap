@@ -11,9 +11,9 @@ import {
 import { gateway } from "@/gateway";
 import { useConvex } from "convex/react";
 import { Download } from "lucide-react";
-import { useTranslations } from "use-intl";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "use-intl";
 
 export function ExportButton() {
   const t = useTranslations("insights.export");

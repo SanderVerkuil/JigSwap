@@ -1,6 +1,15 @@
-import { Clock, DomainEventPublisher, err, ok, Result } from "../../../shared-kernel";
+import {
+  Clock,
+  DomainEventPublisher,
+  err,
+  ok,
+  Result,
+} from "../../../shared-kernel";
 import { SocialApplicationError } from "../errors";
-import { UnfollowMember, UnfollowMemberCommand } from "../ports/in/unfollow-member.port";
+import {
+  UnfollowMember,
+  UnfollowMemberCommand,
+} from "../ports/in/unfollow-member.port";
 import { FollowRepository } from "../ports/out/follow.repository";
 
 export interface UnfollowMemberDeps {

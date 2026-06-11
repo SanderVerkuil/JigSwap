@@ -18,7 +18,9 @@ export class ConversationApplicationError extends DomainError {
   }
 
   // No thread exists for the referenced thread or exchange (nothing to post to / mark read).
-  static threadNotFound(ref: ThreadId | ExchangeId): ConversationApplicationError {
+  static threadNotFound(
+    ref: ThreadId | ExchangeId,
+  ): ConversationApplicationError {
     return new ConversationApplicationError(
       "ThreadNotFound",
       `No thread found for ${ref}`,

@@ -3,15 +3,15 @@ import { NotificationPreferenceRepository } from "../ports/out/notification-pref
 
 // In-memory NotificationPreferenceRepository for use-case tests. Keyed by member, mirroring the
 // per-member row the real adapter maps to; rehydrates a fresh aggregate on read.
-export class InMemoryNotificationPreferenceRepository
-  implements NotificationPreferenceRepository
-{
+export class InMemoryNotificationPreferenceRepository implements NotificationPreferenceRepository {
   private readonly store = new Map<
     MemberId,
     ReturnType<NotificationPreference["toState"]>
   >();
 
-  async findByMember(memberId: MemberId): Promise<NotificationPreference | null> {
+  async findByMember(
+    memberId: MemberId,
+  ): Promise<NotificationPreference | null> {
     const state = this.store.get(memberId);
     return state ? NotificationPreference.rehydrate(state) : null;
   }

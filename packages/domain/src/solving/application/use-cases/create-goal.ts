@@ -1,8 +1,8 @@
 import { Clock, DomainEventPublisher, err, ok } from "../../../shared-kernel";
 import { Goal } from "../../domain";
 import { CreateGoal, CreateGoalCommand } from "../ports/in/create-goal.port";
-import { GoalIdGenerator } from "../ports/out/id-generators";
 import { GoalRepository } from "../ports/out/goal.repository";
+import { GoalIdGenerator } from "../ports/out/id-generators";
 
 export interface CreateGoalDeps {
   readonly goals: GoalRepository;

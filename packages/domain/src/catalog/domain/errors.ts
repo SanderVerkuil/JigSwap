@@ -24,7 +24,10 @@ export class CatalogError extends DomainError {
 
   // A puzzle definition must carry a non-blank title.
   static emptyTitle(): CatalogError {
-    return new CatalogError("EmptyTitle", "A puzzle definition requires a non-empty title");
+    return new CatalogError(
+      "EmptyTitle",
+      "A puzzle definition requires a non-empty title",
+    );
   }
 
   // Piece count must be a positive integer.
@@ -41,7 +44,10 @@ export class CatalogError extends DomainError {
   }
 
   // The requested approval move is not allowed from the current status.
-  static illegalApprovalTransition(from: ApprovalStatus, to: ApprovalStatus): CatalogError {
+  static illegalApprovalTransition(
+    from: ApprovalStatus,
+    to: ApprovalStatus,
+  ): CatalogError {
     return new CatalogError(
       "IllegalApprovalTransition",
       `Cannot transition approval from ${from} to ${to}`,

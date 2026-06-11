@@ -23,7 +23,10 @@ export class IdentityError extends DomainError {
 
   // The supplied string is not a syntactically valid email address.
   static invalidEmail(value: string): IdentityError {
-    return new IdentityError("InvalidEmail", `Email "${value}" is not a valid address`);
+    return new IdentityError(
+      "InvalidEmail",
+      `Email "${value}" is not a valid address`,
+    );
   }
 
   // The supplied username violates the length/charset rules.
@@ -36,7 +39,10 @@ export class IdentityError extends DomainError {
 
   // The supplied string is not one of the known elevated roles.
   static invalidRole(value: string): IdentityError {
-    return new IdentityError("InvalidRole", `Role "${value}" is not a known role`);
+    return new IdentityError(
+      "InvalidRole",
+      `Role "${value}" is not a known role`,
+    );
   }
 
   // A Member's clerkId is fixed at registration and can never be reassigned.

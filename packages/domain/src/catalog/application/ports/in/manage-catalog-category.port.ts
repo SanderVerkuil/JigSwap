@@ -47,7 +47,10 @@ export interface SetCatalogCategoryActive {
 
 // Reorder several nodes at once (each id mapped to its new stable position).
 export interface ReorderCatalogCategoriesCommand {
-  readonly order: readonly { readonly catalogCategoryId: CatalogCategoryId; readonly sortOrder: number }[];
+  readonly order: readonly {
+    readonly catalogCategoryId: CatalogCategoryId;
+    readonly sortOrder: number;
+  }[];
 }
 
 export interface ReorderCatalogCategories {

@@ -17,9 +17,14 @@ export const makeChangePermission =
   (deps: ChangePermissionDeps): ChangePermission =>
   async (cmd: ChangePermissionCommand) => {
     const circle = await deps.circles.findById(cmd.circleId);
-    if (!circle) return err(SharingApplicationError.circleNotFound(cmd.circleId));
+    if (!circle)
+      return err(SharingApplicationError.circleNotFound(cmd.circleId));
 
-    const result = circle.changePermission(cmd.actorId, cmd.memberId, cmd.permission);
+    const result = circle.changePermission(
+      cmd.actorId,
+      cmd.memberId,
+      cmd.permission,
+    );
     if (result.isErr) return err(result.error);
 
     await deps.circles.save(circle);

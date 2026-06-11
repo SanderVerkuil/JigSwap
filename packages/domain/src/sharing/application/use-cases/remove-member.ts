@@ -1,6 +1,9 @@
 import { DomainEventPublisher, err, ok } from "../../../shared-kernel";
 import { SharingApplicationError } from "../errors";
-import { RemoveMember, RemoveMemberCommand } from "../ports/in/remove-member.port";
+import {
+  RemoveMember,
+  RemoveMemberCommand,
+} from "../ports/in/remove-member.port";
 import { CircleRepository } from "../ports/out/circle.repository";
 
 export interface RemoveMemberDeps {
@@ -14,7 +17,8 @@ export const makeRemoveMember =
   (deps: RemoveMemberDeps): RemoveMember =>
   async (cmd: RemoveMemberCommand) => {
     const circle = await deps.circles.findById(cmd.circleId);
-    if (!circle) return err(SharingApplicationError.circleNotFound(cmd.circleId));
+    if (!circle)
+      return err(SharingApplicationError.circleNotFound(cmd.circleId));
 
     const result = circle.removeMember(cmd.actorId, cmd.memberId);
     if (result.isErr) return err(result.error);

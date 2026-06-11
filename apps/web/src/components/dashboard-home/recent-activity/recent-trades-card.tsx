@@ -1,5 +1,6 @@
 "use client";
 
+import { Link } from "@/compat/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,7 +10,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { LoadingState } from "@/components/ui/loading";
-import { Link } from "@/compat/link";
 import { gateway, Id } from "@/gateway";
 import { useConvexAuth, useQuery } from "convex/react";
 import { ArrowLeftRight } from "lucide-react";

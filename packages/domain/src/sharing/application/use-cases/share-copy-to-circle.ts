@@ -19,7 +19,8 @@ export const makeShareCopyToCircle =
   (deps: ShareCopyToCircleDeps): ShareCopyToCircle =>
   async (cmd: ShareCopyToCircleCommand) => {
     const circle = await deps.circles.findById(cmd.circleId);
-    if (!circle) return err(SharingApplicationError.circleNotFound(cmd.circleId));
+    if (!circle)
+      return err(SharingApplicationError.circleNotFound(cmd.circleId));
 
     const result = circle.shareCopy(cmd.actorId, cmd.copyId, deps.clock.now());
     if (result.isErr) return err(result.error);

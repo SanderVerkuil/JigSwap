@@ -1,16 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
+import { useUser } from "@/compat/clerk";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
-import { useUser } from "@/compat/clerk";
 import { gateway, Id } from "@/gateway";
 import { useQuery } from "convex/react";
 import { Grid, List, Search } from "lucide-react";
-import { useTranslations } from "use-intl";
 import { useState } from "react";
+import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/browse")({
   pendingComponent: () => <PageLoading message="Loading browse..." />,

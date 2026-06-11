@@ -1,3 +1,4 @@
+import { Link } from "@/compat/link";
 import { UserProfile } from "@/components/common/user-profile";
 import {
   Sidebar as AppSidebar,
@@ -9,7 +10,6 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { CheckRole } from "@/components/utils/check-role/server";
-import { Link } from "@/compat/link";
 import {
   ArrowLeftRight,
   BarChart3,

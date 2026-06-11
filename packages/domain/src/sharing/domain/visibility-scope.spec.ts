@@ -36,7 +36,8 @@ describe("permitsTransaction", () => {
   it.each<VisibilityScope>(["private", "friendCircle", "visible"])(
     "%s permits no transaction",
     (scope) => {
-      for (const kind of KINDS) expect(permitsTransaction(scope, kind)).toBe(false);
+      for (const kind of KINDS)
+        expect(permitsTransaction(scope, kind)).toBe(false);
     },
   );
 });

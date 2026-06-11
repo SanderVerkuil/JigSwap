@@ -1,5 +1,10 @@
 import { Result } from "../../../../shared-kernel";
-import { Channel, MemberId, NotificationId, NotificationType } from "../../../domain";
+import {
+  Channel,
+  MemberId,
+  NotificationId,
+  NotificationType,
+} from "../../../domain";
 
 // The command the backend subscriber calls after translating an upstream domain event into a
 // notification request. The subscriber pre-renders `title`/`message` (Notifications owns delivery

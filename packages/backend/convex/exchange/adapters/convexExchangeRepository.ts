@@ -1,11 +1,19 @@
-import type { CopyId, Exchange, ExchangeId, ExchangeRepository, MemberId } from "@jigswap/domain";
+import type {
+  CopyId,
+  Exchange,
+  ExchangeId,
+  ExchangeRepository,
+  MemberId,
+} from "@jigswap/domain";
 import type { Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
 import { toDomain, toRow } from "./mapper";
 
 // Driven adapter for the ExchangeRepository port over `ctx.db`. The only place the
 // `exchanges` table is read/written for the domain path; the mapper is the ACL.
-export const convexExchangeRepository = (ctx: MutationCtx): ExchangeRepository => ({
+export const convexExchangeRepository = (
+  ctx: MutationCtx,
+): ExchangeRepository => ({
   async findById(id: ExchangeId): Promise<Exchange | null> {
     const row = await ctx.db
       .query("exchanges")
@@ -35,7 +43,10 @@ export const convexExchangeRepository = (ctx: MutationCtx): ExchangeRepository =
       )
       .filter((q) =>
         q.and(
-          q.eq(q.field("requestedPuzzleId"), requestedCopyId as unknown as Id<"ownedPuzzles">),
+          q.eq(
+            q.field("requestedPuzzleId"),
+            requestedCopyId as unknown as Id<"ownedPuzzles">,
+          ),
           q.eq(q.field("status"), "proposed"),
           // only domain-written rows participate in the new dedup
           q.neq(q.field("aggregateId"), undefined),

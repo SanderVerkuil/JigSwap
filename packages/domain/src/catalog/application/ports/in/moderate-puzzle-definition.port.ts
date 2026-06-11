@@ -16,9 +16,13 @@ export type ModeratePuzzleDefinitionResult = Result<
 >;
 
 export interface ApprovePuzzleDefinition {
-  (cmd: ModeratePuzzleDefinitionCommand): Promise<ModeratePuzzleDefinitionResult>;
+  (
+    cmd: ModeratePuzzleDefinitionCommand,
+  ): Promise<ModeratePuzzleDefinitionResult>;
 }
 
 export interface RejectPuzzleDefinition {
-  (cmd: ModeratePuzzleDefinitionCommand): Promise<ModeratePuzzleDefinitionResult>;
+  (
+    cmd: ModeratePuzzleDefinitionCommand,
+  ): Promise<ModeratePuzzleDefinitionResult>;
 }

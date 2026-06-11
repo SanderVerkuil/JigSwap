@@ -1,4 +1,10 @@
-import { Clock, DomainEventPublisher, err, ok, Result } from "../../../shared-kernel";
+import {
+  Clock,
+  DomainEventPublisher,
+  err,
+  ok,
+  Result,
+} from "../../../shared-kernel";
 import { createRole, IdentityError } from "../../domain";
 import { IdentityApplicationError } from "../errors";
 import { RevokeRole, RevokeRoleCommand } from "../ports/in/revoke-role.port";
@@ -22,7 +28,8 @@ export const makeRevokeRole =
     if (role.isErr) return err(role.error);
 
     const member = await deps.members.findById(cmd.memberId);
-    if (!member) return err(IdentityApplicationError.memberNotFound(cmd.memberId));
+    if (!member)
+      return err(IdentityApplicationError.memberNotFound(cmd.memberId));
 
     member.revokeRole(role.value, deps.clock.now());
 

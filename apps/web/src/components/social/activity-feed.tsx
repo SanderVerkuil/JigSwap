@@ -4,17 +4,32 @@ import { Card, CardContent } from "@/components/ui/card";
 import { gateway } from "@/gateway";
 import { useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
-import { ArrowRightLeft, CircleCheck, Package } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { ArrowRightLeft, CircleCheck, Package } from "lucide-react";
 
 // The acting member's activity feed: their own activity plus everyone they follow, newest-first.
 // Scoping + the foreign-event mapping happen server-side; here we only render the ActivityEntryView.
 type ActivityKind = "completion" | "acquisition" | "exchange";
 
-const META: Record<ActivityKind, { icon: LucideIcon; label: string; accent: string }> = {
-  completion: { icon: CircleCheck, label: "completed a puzzle", accent: "text-green-500" },
-  acquisition: { icon: Package, label: "added a puzzle", accent: "text-blue-500" },
-  exchange: { icon: ArrowRightLeft, label: "settled an exchange", accent: "text-amber-500" },
+const META: Record<
+  ActivityKind,
+  { icon: LucideIcon; label: string; accent: string }
+> = {
+  completion: {
+    icon: CircleCheck,
+    label: "completed a puzzle",
+    accent: "text-green-500",
+  },
+  acquisition: {
+    icon: Package,
+    label: "added a puzzle",
+    accent: "text-blue-500",
+  },
+  exchange: {
+    icon: ArrowRightLeft,
+    label: "settled an exchange",
+    accent: "text-amber-500",
+  },
 };
 
 export function ActivityFeed() {
@@ -34,7 +49,8 @@ export function ActivityFeed() {
     return (
       <Card>
         <CardContent className="p-12 text-center text-sm text-muted-foreground">
-          No recent activity yet. Follow other members to see what they are up to.
+          No recent activity yet. Follow other members to see what they are up
+          to.
         </CardContent>
       </Card>
     );

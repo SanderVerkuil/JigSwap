@@ -21,5 +21,7 @@ export interface ProposeExchangeCommand {
 
 // Inbound port: the propose-exchange use case.
 export interface ProposeExchange {
-  (cmd: ProposeExchangeCommand): Promise<Result<ExchangeId, ExchangeError | ApplicationError>>;
+  (
+    cmd: ProposeExchangeCommand,
+  ): Promise<Result<ExchangeId, ExchangeError | ApplicationError>>;
 }

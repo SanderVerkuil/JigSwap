@@ -22,7 +22,8 @@ export const gateway = {
     puzzleById: api.catalog.getPuzzleById.getPuzzleById,
     listAll: api.catalog.listAllPuzzles.listAllPuzzles,
     recentPuzzles: api.catalog.getRecentPuzzles.getRecentPuzzles,
-    pending: api.catalog.listPendingPuzzleDefinitions.listPendingPuzzleDefinitions,
+    pending:
+      api.catalog.listPendingPuzzleDefinitions.listPendingPuzzleDefinitions,
     // The current member's own not-yet-approved submissions, so the add-copy picker can offer
     // a copy of a puzzle they contributed before it is approved.
     myContributedPuzzles:
@@ -146,7 +147,8 @@ export const gateway = {
     submitReview: api.reputation.submitPartnerReview.submitPartnerReview,
     profile: api.reputation.getReputationProfile.getReputationProfile,
     reviewsForMember: api.reputation.listReviewsForMember.listReviewsForMember,
-    myReviewForExchange: api.reputation.getMyReviewForExchange.getMyReviewForExchange,
+    myReviewForExchange:
+      api.reputation.getMyReviewForExchange.getMyReviewForExchange,
   },
 
   // Notifications: the per-member in-app inbox + delivery preferences. A pure subscriber context
@@ -159,7 +161,8 @@ export const gateway = {
     markAllRead: api.notifications.markAllRead.markAllRead,
     preferences: api.notifications.getMyPreferences.getMyPreferences,
     updatePreference:
-      api.notifications.updateNotificationPreference.updateNotificationPreference,
+      api.notifications.updateNotificationPreference
+        .updateNotificationPreference,
   },
 
   // Community / Social: public profiles, follow relationships, and the activity feed. Writes go

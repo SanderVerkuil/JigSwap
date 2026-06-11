@@ -135,9 +135,9 @@ describe("sharing.addMember", () => {
 
     const row = await circleRow(t, circleId);
     expect(row?.memberships).toHaveLength(2);
-    expect(
-      row?.memberships.find((m) => m.memberId === bob)?.permission,
-    ).toBe("Exchange");
+    expect(row?.memberships.find((m) => m.memberId === bob)?.permission).toBe(
+      "Exchange",
+    );
 
     // Bob now sees the circle (member lookup goes through the projection).
     const bobsCircles = await asBob(t).query(
@@ -291,10 +291,10 @@ describe("library.browseOwnedPuzzles circle-aware visibility", () => {
       memberId: bob,
       permission: "ViewOnly",
     });
-    await asAlice(t).mutation(
-      api.sharing.shareCopyToCircle.shareCopyToCircle,
-      { circleId, copyId },
-    );
+    await asAlice(t).mutation(api.sharing.shareCopyToCircle.shareCopyToCircle, {
+      circleId,
+      copyId,
+    });
 
     // Bob browses: the private-but-circle-shared copy surfaces for him.
     const view = await asBob(t).query(
@@ -309,10 +309,10 @@ describe("library.browseOwnedPuzzles circle-aware visibility", () => {
     const { puzzleAggregateId } = await seed(t);
     const copyId = await acquirePrivateForAlice(t, puzzleAggregateId);
     const circleId = await createCircleForAlice(t);
-    await asAlice(t).mutation(
-      api.sharing.shareCopyToCircle.shareCopyToCircle,
-      { circleId, copyId },
-    );
+    await asAlice(t).mutation(api.sharing.shareCopyToCircle.shareCopyToCircle, {
+      circleId,
+      copyId,
+    });
 
     // Carol is in no circle: she sees no circle-shared private copies.
     const view = await asCarol(t).query(

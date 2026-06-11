@@ -7,13 +7,11 @@
 // cross). VisibilityPolicy is the Library outbound port the backend depends on; Sharing's circle-
 // aware policy of the same name stays intra-context (relative imports) until it implements the port.
 // TODO: hoist StarRating to the shared kernel; reconcile Sharing's policy with the Library port.
-export type { CopyId } from "./library";
 export type { PuzzleDefinitionId } from "./catalog";
 export type { ExchangeId } from "./exchange";
 export type { MemberId } from "./identity";
-export type { FileId } from "./library";
+export type { CopyId, FileId, VisibilityPolicy } from "./library";
 export type { StarRating } from "./solving";
-export type { VisibilityPolicy } from "./library";
 
 export * from "./catalog";
 export * from "./conversation";

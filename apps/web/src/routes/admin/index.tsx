@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { Link } from "@/compat/link";
 import {
   Card,
   CardContent,
@@ -7,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Link } from "@/compat/link";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminDashboardPage,

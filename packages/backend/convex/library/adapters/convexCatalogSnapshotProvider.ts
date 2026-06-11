@@ -29,9 +29,7 @@ export const convexCatalogSnapshotProvider = (
 
     // Fallback for legacy puzzles that predate aggregateId: the id may be a raw Convex _id.
     if (!row) {
-      row = await ctx.db.get(
-        puzzleDefinitionId as unknown as Id<"puzzles">,
-      );
+      row = await ctx.db.get(puzzleDefinitionId as unknown as Id<"puzzles">);
     }
     if (!row) return null;
 

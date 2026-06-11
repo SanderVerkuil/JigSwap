@@ -1,8 +1,8 @@
 "use client";
 
+import { Link } from "@/compat/link";
 import { HeaderIcon } from "@/components/common/header-icon";
 import { Button } from "@/components/ui/button";
-import { Link } from "@/compat/link";
 import { Unauthenticated } from "convex/react";
 import { ArrowRight, Puzzle } from "lucide-react";
 import { useTranslations } from "use-intl";

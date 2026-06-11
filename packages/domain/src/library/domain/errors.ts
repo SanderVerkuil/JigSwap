@@ -75,7 +75,10 @@ export class LibraryError extends DomainError {
 
   // A member cannot lend a copy to themselves.
   static cannotLendToSelf(): LibraryError {
-    return new LibraryError("CannotLendToSelf", "A copy cannot be lent to its owner");
+    return new LibraryError(
+      "CannotLendToSelf",
+      "A copy cannot be lent to its owner",
+    );
   }
 
   // An action requiring an open loan was attempted on one already returned/recalled.
@@ -85,7 +88,10 @@ export class LibraryError extends DomainError {
 
   // Only the borrower may return a loan.
   static notBorrower(): LibraryError {
-    return new LibraryError("NotBorrower", "Only the borrower may return this loan");
+    return new LibraryError(
+      "NotBorrower",
+      "Only the borrower may return this loan",
+    );
   }
 
   // Only the lender (owner) may recall a loan.

@@ -21,7 +21,9 @@ export class FakeCatalogSnapshotProvider implements CatalogSnapshotProvider {
     this.contexts.set(snapshot.puzzleDefinitionId, {
       snapshot,
       status: options?.status ?? "approved",
-      submitterId: options?.submitterId ?? (snapshot.puzzleDefinitionId as unknown as OwnerId),
+      submitterId:
+        options?.submitterId ??
+        (snapshot.puzzleDefinitionId as unknown as OwnerId),
     });
     return this;
   }

@@ -7,5 +7,6 @@ import { runAction } from "./runAction";
 // parties have confirmed — the dual-confirmation invariant lives in the aggregate.
 export const confirmCompletion = mutation({
   args: { exchangeId: v.string() },
-  handler: (ctx, args) => runAction(ctx, args.exchangeId, makeConfirmCompletion),
+  handler: (ctx, args) =>
+    runAction(ctx, args.exchangeId, makeConfirmCompletion),
 });

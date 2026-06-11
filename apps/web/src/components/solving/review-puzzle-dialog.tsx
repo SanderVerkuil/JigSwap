@@ -14,9 +14,9 @@ import { StarRating } from "@/components/ui/star-rating";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
 import { useMutation } from "convex/react";
-import { useTranslations } from "use-intl";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "use-intl";
 
 interface ReviewPuzzleDialogProps {
   open: boolean;

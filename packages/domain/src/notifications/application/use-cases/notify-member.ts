@@ -1,4 +1,10 @@
-import { Clock, DomainEvent, DomainEventPublisher, ok, Result } from "../../../shared-kernel";
+import {
+  Clock,
+  DomainEvent,
+  DomainEventPublisher,
+  ok,
+  Result,
+} from "../../../shared-kernel";
 import {
   Channel,
   CHANNELS,
@@ -7,7 +13,10 @@ import {
   NotificationId,
   NotificationPreference,
 } from "../../domain";
-import { NotifyMember, NotifyMemberCommand } from "../ports/in/notify-member.port";
+import {
+  NotifyMember,
+  NotifyMemberCommand,
+} from "../ports/in/notify-member.port";
 import { NotificationDelivery } from "../ports/out/notification-delivery.port";
 import { NotificationIdGenerator } from "../ports/out/notification-id-generator";
 import { NotificationPreferenceIdGenerator } from "../ports/out/notification-preference-id-generator";
@@ -31,11 +40,15 @@ export interface NotifyMemberDeps {
 // simply not materialised. Hence the `never` error channel.
 export const makeNotifyMember =
   (deps: NotifyMemberDeps): NotifyMember =>
-  async (cmd: NotifyMemberCommand): Promise<Result<readonly NotificationId[], never>> => {
+  async (
+    cmd: NotifyMemberCommand,
+  ): Promise<Result<readonly NotificationId[], never>> => {
     const preference = await loadPreference(deps, cmd.memberId);
 
     const candidates: readonly Channel[] = cmd.channels ?? CHANNELS;
-    const allowed = candidates.filter((channel) => preference.allows(cmd.type, channel));
+    const allowed = candidates.filter((channel) =>
+      preference.allows(cmd.type, channel),
+    );
 
     const created: NotificationId[] = [];
     const pending: DomainEvent[] = [];

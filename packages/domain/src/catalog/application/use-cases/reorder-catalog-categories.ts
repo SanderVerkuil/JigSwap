@@ -1,4 +1,10 @@
-import { Clock, DomainEventPublisher, err, ok, Result } from "../../../shared-kernel";
+import {
+  Clock,
+  DomainEventPublisher,
+  err,
+  ok,
+  Result,
+} from "../../../shared-kernel";
 import { CatalogCategory } from "../../domain";
 import { CatalogApplicationError } from "../errors";
 import {
@@ -24,7 +30,11 @@ export const makeReorderCatalogCategories =
     for (const entry of cmd.order) {
       const category = await deps.categories.findById(entry.catalogCategoryId);
       if (!category) {
-        return err(CatalogApplicationError.catalogCategoryNotFound(entry.catalogCategoryId));
+        return err(
+          CatalogApplicationError.catalogCategoryNotFound(
+            entry.catalogCategoryId,
+          ),
+        );
       }
       loaded.push(category);
     }

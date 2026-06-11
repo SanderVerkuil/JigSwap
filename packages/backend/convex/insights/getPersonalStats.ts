@@ -1,7 +1,4 @@
-import {
-  computePersonalStats,
-  type ExchangeStatStatus,
-} from "@jigswap/domain";
+import { computePersonalStats, type ExchangeStatStatus } from "@jigswap/domain";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
@@ -29,8 +26,9 @@ export const getPersonalStats = query({
       .query("collections")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
-    const collectionsCount = collections.filter((c) => c.isWishlist !== true)
-      .length;
+    const collectionsCount = collections.filter(
+      (c) => c.isWishlist !== true,
+    ).length;
 
     // The member participates in exchanges either as initiator or recipient.
     const asInitiator = await ctx.db

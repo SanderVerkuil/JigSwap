@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "@/compat/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,9 +16,8 @@ import {
   Trash2,
   User,
 } from "lucide-react";
-import { useTranslations } from "use-intl";
-import Image from "@/compat/image";
 import { createContext, ReactNode, useContext } from "react";
+import { useTranslations } from "use-intl";
 import { CollectionDropdown } from "./collection-dropdown";
 
 // Context for view mode

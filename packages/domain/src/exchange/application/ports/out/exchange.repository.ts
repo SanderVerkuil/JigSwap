@@ -1,5 +1,4 @@
-import { Exchange } from "../../../domain";
-import { CopyId, ExchangeId, MemberId } from "../../../domain";
+import { CopyId, Exchange, ExchangeId, MemberId } from "../../../domain";
 
 // Outbound port: persistence for the Exchange aggregate. The 1b-convex adapter implements
 // this over `ctx.db` (the `exchanges` table) behind a mapper; the domain never sees a row.

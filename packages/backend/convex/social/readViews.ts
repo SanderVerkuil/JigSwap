@@ -1,7 +1,4 @@
-import type {
-  FollowEdgeView,
-  ProfileView,
-} from "@jigswap/contracts";
+import type { FollowEdgeView, ProfileView } from "@jigswap/contracts";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 

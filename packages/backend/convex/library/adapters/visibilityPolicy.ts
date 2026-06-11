@@ -1,4 +1,7 @@
-import { DefaultVisibilityPolicy, type VisibilityPolicy } from "@jigswap/domain";
+import {
+  DefaultVisibilityPolicy,
+  type VisibilityPolicy,
+} from "@jigswap/domain";
 
 // The default VisibilityPolicy instance (public/private + exchange-availability, no friend
 // circles). The friend-circle-aware implementation now lives in `circleAwareVisibilityPolicy.ts`

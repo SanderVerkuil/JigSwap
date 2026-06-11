@@ -1,5 +1,14 @@
-import { Clock, DomainEvent, DomainEventPublisher, ok, Result } from "../../../shared-kernel";
-import { MarkAllRead, MarkAllReadCommand } from "../ports/in/mark-all-read.port";
+import {
+  Clock,
+  DomainEvent,
+  DomainEventPublisher,
+  ok,
+  Result,
+} from "../../../shared-kernel";
+import {
+  MarkAllRead,
+  MarkAllReadCommand,
+} from "../ports/in/mark-all-read.port";
 import { NotificationRepository } from "../ports/out/notification.repository";
 
 export interface MarkAllReadDeps {
@@ -15,7 +24,10 @@ export interface MarkAllReadDeps {
 export const makeMarkAllRead =
   (deps: MarkAllReadDeps): MarkAllRead =>
   async (cmd: MarkAllReadCommand): Promise<Result<number, never>> => {
-    const affected = await deps.notifications.markAllReadForUser(cmd.memberId, deps.clock.now());
+    const affected = await deps.notifications.markAllReadForUser(
+      cmd.memberId,
+      deps.clock.now(),
+    );
 
     const pending: DomainEvent[] = [];
     for (const notification of affected) {

@@ -73,12 +73,14 @@ const facetDistribution = (
     const label = raw && raw.trim().length > 0 ? raw : UNKNOWN_LABEL;
     counts.set(label, (counts.get(label) ?? 0) + 1);
   }
-  return sortEntries([...counts.entries()].map(([label, value]) => ({ label, value })));
+  return sortEntries(
+    [...counts.entries()].map(([label, value]) => ({ label, value })),
+  );
 };
 
 const sortEntries = (entries: DistributionEntry[]): DistributionEntry[] =>
-  [...entries].sort((a, b) =>
-    b.value - a.value || a.label.localeCompare(b.label),
+  [...entries].sort(
+    (a, b) => b.value - a.value || a.label.localeCompare(b.label),
   );
 
 // Like a facet distribution but collapse the long tail: keep the top `topN` brands, sum the rest

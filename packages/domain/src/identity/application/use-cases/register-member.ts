@@ -1,4 +1,10 @@
-import { Clock, DomainEventPublisher, err, ok, Result } from "../../../shared-kernel";
+import {
+  Clock,
+  DomainEventPublisher,
+  err,
+  ok,
+  Result,
+} from "../../../shared-kernel";
 import { IdentityError, Member, MemberId } from "../../domain";
 import {
   RegisterMember,
@@ -20,7 +26,9 @@ export interface RegisterMemberDeps {
 // new id, no event) rather than erroring or duplicating the identity.
 export const makeRegisterMember =
   (deps: RegisterMemberDeps): RegisterMember =>
-  async (cmd: RegisterMemberCommand): Promise<Result<MemberId, IdentityError>> => {
+  async (
+    cmd: RegisterMemberCommand,
+  ): Promise<Result<MemberId, IdentityError>> => {
     const existing = await deps.members.findByClerkId(cmd.clerkId);
     if (existing) return ok(existing.id);
 

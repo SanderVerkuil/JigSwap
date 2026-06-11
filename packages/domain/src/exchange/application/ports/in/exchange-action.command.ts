@@ -1,6 +1,5 @@
 import { Result } from "../../../../shared-kernel";
-import { ExchangeError } from "../../../domain";
-import { ExchangeId, MemberId } from "../../../domain";
+import { ExchangeError, ExchangeId, MemberId } from "../../../domain";
 import { ApplicationError } from "../../errors";
 
 // Every state-transition use case (accept/decline/cancel/confirm/dispute) acts on an existing
@@ -13,4 +12,7 @@ export interface ExchangeActionCommand {
 
 // Shared inbound-port signature for the lifecycle use cases: succeed with nothing, or fail
 // with an aggregate error (wrong party, illegal transition) or ExchangeNotFound.
-export type ExchangeActionResult = Result<void, ExchangeError | ApplicationError>;
+export type ExchangeActionResult = Result<
+  void,
+  ExchangeError | ApplicationError
+>;

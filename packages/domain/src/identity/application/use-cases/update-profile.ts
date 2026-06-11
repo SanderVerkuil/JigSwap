@@ -21,7 +21,8 @@ export const makeUpdateProfile =
     cmd: UpdateProfileCommand,
   ): Promise<Result<void, IdentityError | IdentityApplicationError>> => {
     const member = await deps.members.findById(cmd.memberId);
-    if (!member) return err(IdentityApplicationError.memberNotFound(cmd.memberId));
+    if (!member)
+      return err(IdentityApplicationError.memberNotFound(cmd.memberId));
 
     const updated = member.updateProfile(
       {

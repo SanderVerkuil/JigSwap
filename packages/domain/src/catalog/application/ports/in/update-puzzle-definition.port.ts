@@ -1,5 +1,9 @@
 import { Result } from "../../../../shared-kernel";
-import { CatalogError, PuzzleDefinitionChanges, PuzzleDefinitionId } from "../../../domain";
+import {
+  CatalogError,
+  PuzzleDefinitionChanges,
+  PuzzleDefinitionId,
+} from "../../../domain";
 import { CatalogApplicationError } from "../../errors";
 
 // The command to patch a definition's descriptive fields.

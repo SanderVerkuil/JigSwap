@@ -24,7 +24,10 @@ const monthKey = (epochMs: number): string => {
 };
 
 // Step a {year, month} cursor back one month, normalising the January→December wrap.
-const previousMonth = (year: number, month: number): { year: number; month: number } => {
+const previousMonth = (
+  year: number,
+  month: number,
+): { year: number; month: number } => {
   if (month === 1) return { year: year - 1, month: 12 };
   return { year, month: month - 1 };
 };
@@ -44,7 +47,10 @@ export const computeCompletionTrends = (
 
   // Seed the window so every month in range is present even with no completions.
   const nowDate = new Date(now);
-  let cursor = { year: nowDate.getUTCFullYear(), month: nowDate.getUTCMonth() + 1 };
+  let cursor = {
+    year: nowDate.getUTCFullYear(),
+    month: nowDate.getUTCMonth() + 1,
+  };
   for (let i = 0; i < windowMonths; i++) {
     const key = `${cursor.year}-${`${cursor.month}`.padStart(2, "0")}`;
     buckets.set(key, { count: 0, totalMinutes: 0 });
@@ -56,9 +62,8 @@ export const computeCompletionTrends = (
     const bucket = buckets.get(key);
     if (!bucket) continue; // outside the window
     bucket.count += 1;
-    bucket.totalMinutes += typeof c.completionTimeMinutes === "number"
-      ? c.completionTimeMinutes
-      : 0;
+    bucket.totalMinutes +=
+      typeof c.completionTimeMinutes === "number" ? c.completionTimeMinutes : 0;
   }
 
   return [...buckets.entries()]

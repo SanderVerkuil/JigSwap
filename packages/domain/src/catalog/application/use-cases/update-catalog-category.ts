@@ -1,4 +1,10 @@
-import { Clock, DomainEventPublisher, err, ok, Result } from "../../../shared-kernel";
+import {
+  Clock,
+  DomainEventPublisher,
+  err,
+  ok,
+  Result,
+} from "../../../shared-kernel";
 import { CatalogError } from "../../domain";
 import { CatalogApplicationError } from "../errors";
 import {
@@ -22,7 +28,9 @@ export const makeUpdateCatalogCategory =
   ): Promise<Result<void, CatalogError | CatalogApplicationError>> => {
     const category = await deps.categories.findById(cmd.catalogCategoryId);
     if (!category) {
-      return err(CatalogApplicationError.catalogCategoryNotFound(cmd.catalogCategoryId));
+      return err(
+        CatalogApplicationError.catalogCategoryNotFound(cmd.catalogCategoryId),
+      );
     }
 
     const outcome = category.update(cmd.changes, deps.clock.now());

@@ -14,9 +14,7 @@ export const getMyReviewForExchange = query({
 
     const byAggregateId = await ctx.db
       .query("exchanges")
-      .withIndex("by_aggregate_id", (q) =>
-        q.eq("aggregateId", args.exchangeId),
-      )
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", args.exchangeId))
       .unique();
     const exchangeId =
       byAggregateId?._id ?? (args.exchangeId as unknown as Id<"exchanges">);

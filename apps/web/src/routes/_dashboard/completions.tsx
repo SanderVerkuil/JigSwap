@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { useUser } from "@/compat/clerk";
 import { EditCompletionDialog } from "@/components/solving/edit-completion-dialog";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { ReviewPuzzleDialog } from "@/components/solving/review-puzzle-dialog";
@@ -8,12 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { StarRating } from "@/components/ui/star-rating";
-import { useUser } from "@/compat/clerk";
 import { gateway, Id } from "@/gateway";
 import { useQuery } from "convex/react";
 import { CircleCheck, Clock, Pencil, Star } from "lucide-react";
-import { useTranslations } from "use-intl";
 import { useMemo, useState } from "react";
+import { useTranslations } from "use-intl";
 
 type DialogState =
   | { kind: "finish"; completionId: string }

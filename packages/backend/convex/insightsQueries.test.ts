@@ -231,7 +231,9 @@ describe("insights.getCompletionTrends / getTradeActivity", () => {
       {},
     );
     expect(activity.total).toBe(1);
-    expect(activity.byStatus.find((s) => s.status === "completed")?.count).toBe(1);
+    expect(activity.byStatus.find((s) => s.status === "completed")?.count).toBe(
+      1,
+    );
     expect(activity.byMonth).toHaveLength(1);
   });
 });
@@ -251,8 +253,9 @@ describe("insights.exportUserData", () => {
     expect(data.goals).toHaveLength(1);
     expect(data.exchanges).toHaveLength(1);
     expect(data.limitPerCollection).toBeGreaterThan(0);
-    expect(
-      data.ownedPuzzles.map((c) => c.puzzleTitle).sort(),
-    ).toEqual(["Mountain Vista", "Ocean Calm"]);
+    expect(data.ownedPuzzles.map((c) => c.puzzleTitle).sort()).toEqual([
+      "Mountain Vista",
+      "Ocean Calm",
+    ]);
   });
 });

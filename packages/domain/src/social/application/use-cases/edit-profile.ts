@@ -1,4 +1,10 @@
-import { Clock, DomainEventPublisher, err, ok, Result } from "../../../shared-kernel";
+import {
+  Clock,
+  DomainEventPublisher,
+  err,
+  ok,
+  Result,
+} from "../../../shared-kernel";
 import { SocialError } from "../../domain";
 import { SocialApplicationError } from "../errors";
 import { EditProfile, EditProfileCommand } from "../ports/in/edit-profile.port";

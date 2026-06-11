@@ -24,5 +24,7 @@ export interface SubmitPartnerReviewCommand {
 export interface SubmitPartnerReview {
   (
     cmd: SubmitPartnerReviewCommand,
-  ): Promise<Result<PartnerReviewId, ReputationError | ReputationApplicationError>>;
+  ): Promise<
+    Result<PartnerReviewId, ReputationError | ReputationApplicationError>
+  >;
 }

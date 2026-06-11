@@ -110,7 +110,12 @@ export class Member {
       updatedAt: props.now,
     });
     member.record(
-      new MemberRegistered(member.id, props.clerkId, email.value.value, props.now),
+      new MemberRegistered(
+        member.id,
+        props.clerkId,
+        email.value.value,
+        props.now,
+      ),
     );
     return ok(member);
   }
@@ -132,7 +137,8 @@ export class Member {
       avatar: update.avatar ?? this.state.avatar,
       bio: update.bio ?? this.state.bio,
       location: update.location ?? this.state.location,
-      preferredLanguage: update.preferredLanguage ?? this.state.preferredLanguage,
+      preferredLanguage:
+        update.preferredLanguage ?? this.state.preferredLanguage,
       updatedAt: now,
     };
     return ok(undefined);

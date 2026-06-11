@@ -7,11 +7,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { gateway } from "@/gateway";
+import { StarRating } from "@/components/ui/star-rating";
 import type { Id } from "@/gateway";
+import { gateway } from "@/gateway";
 import { useQuery } from "convex/react";
 import { useTranslations } from "use-intl";
-import { StarRating } from "@/components/ui/star-rating";
 
 // A member's public reputation on their profile: a summary (avg stars, count, credibility hint)
 // plus the reviews they have RECEIVED, newest first, each with reviewer, overall + sub-scores,

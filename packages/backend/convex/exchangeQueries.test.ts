@@ -142,10 +142,9 @@ describe("exchange.getUserExchanges", () => {
   test("tags roles, joins puzzles and sorts newest-first", async () => {
     const t = convexTest(schema, modules);
     const { alice } = await seed(t);
-    const list = await t.query(
-      api.exchange.getUserExchanges.getUserExchanges,
-      { userId: alice },
-    );
+    const list = await t.query(api.exchange.getUserExchanges.getUserExchanges, {
+      userId: alice,
+    });
     // Alice is initiator on both (asRequester + asOwner default true; she is recipient on neither).
     expect(list).toHaveLength(2);
     expect(list[0].createdAt).toBeGreaterThanOrEqual(list[1].createdAt);

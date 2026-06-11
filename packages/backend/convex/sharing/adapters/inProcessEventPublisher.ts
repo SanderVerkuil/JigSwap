@@ -6,7 +6,9 @@ import { makeEventPublisher } from "../../events/makeEventPublisher";
 // records + schedules ALL sharing events (for async subscribers like Notifications) while KEEPING
 // the one CRITICAL projection inline: CopySharedToCircle must materialise the circle-copy link in
 // the SAME transaction so a freshly shared copy is immediately discoverable to circle members.
-export const inProcessEventPublisher = (ctx: MutationCtx): DomainEventPublisher =>
+export const inProcessEventPublisher = (
+  ctx: MutationCtx,
+): DomainEventPublisher =>
   makeEventPublisher(ctx, "sharing", async (events) => {
     for (const event of events as readonly SharingDomainEvent[]) {
       if (event.name === "CopySharedToCircle") {

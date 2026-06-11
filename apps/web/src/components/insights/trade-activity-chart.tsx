@@ -13,9 +13,9 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { useTranslations } from "use-intl";
 import { useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { useTranslations } from "use-intl";
 
 interface StatusCount {
   status: string;

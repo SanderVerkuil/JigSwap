@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { useUser } from "@/compat/clerk";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useUser } from "@/compat/clerk";
 import { gateway, Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { Plus, Settings, Trash2, Users } from "lucide-react";

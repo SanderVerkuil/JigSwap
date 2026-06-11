@@ -34,5 +34,7 @@ export interface SubmitPuzzleDefinitionCommand {
 export interface SubmitPuzzleDefinition {
   (
     cmd: SubmitPuzzleDefinitionCommand,
-  ): Promise<Result<PuzzleDefinitionId, CatalogError | CatalogApplicationError>>;
+  ): Promise<
+    Result<PuzzleDefinitionId, CatalogError | CatalogApplicationError>
+  >;
 }

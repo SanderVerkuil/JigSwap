@@ -85,7 +85,9 @@ export const browseOwnedPuzzles = query({
 
     if (args.category) {
       filtered = filtered.filter(
-        (i) => i.puzzle?.category === args.category && i.puzzle?.category !== undefined,
+        (i) =>
+          i.puzzle?.category === args.category &&
+          i.puzzle?.category !== undefined,
       );
     }
     if (args.minPieceCount !== undefined) {
@@ -99,7 +101,9 @@ export const browseOwnedPuzzles = query({
       );
     }
     if (args.difficulty) {
-      filtered = filtered.filter((i) => i.puzzle?.difficulty === args.difficulty);
+      filtered = filtered.filter(
+        (i) => i.puzzle?.difficulty === args.difficulty,
+      );
     }
     if (args.searchTerm) {
       const searchTerm = args.searchTerm.toLowerCase();
@@ -112,7 +116,9 @@ export const browseOwnedPuzzles = query({
             (i.puzzle.brand &&
               i.puzzle.brand.toLowerCase().includes(searchTerm)) ||
             (i.puzzle.tags &&
-              i.puzzle.tags.some((tag) => tag.toLowerCase().includes(searchTerm)))),
+              i.puzzle.tags.some((tag) =>
+                tag.toLowerCase().includes(searchTerm),
+              ))),
       );
     }
 

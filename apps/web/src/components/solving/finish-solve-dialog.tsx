@@ -13,9 +13,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { gateway } from "@/gateway";
 import { useMutation } from "convex/react";
-import { useTranslations } from "use-intl";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "use-intl";
 
 function todayInputValue(): string {
   return new Date().toISOString().slice(0, 10);

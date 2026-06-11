@@ -5,11 +5,11 @@ import {
 } from "@jigswap/domain";
 import type { MutationCtx } from "../../_generated/server";
 import { convexNotificationPreferenceRepository } from "./convexNotificationPreferenceRepository";
-import { convexNotificationDelivery } from "./notificationDelivery";
 import {
   notificationIdGenerator,
   notificationPreferenceIdGenerator,
 } from "./idGenerators";
+import { convexNotificationDelivery } from "./notificationDelivery";
 import { systemClock } from "./systemClock";
 
 // Notifications' OWN events (NotificationCreated/Read, PreferenceChanged) have no further

@@ -14,9 +14,15 @@ export const puzzleFormSchema = z.object({
 
   brand: z.string().max(50, "Brand must be less than 50 characters").optional(),
 
-  artist: z.string().max(100, "Artist must be less than 100 characters").optional(),
+  artist: z
+    .string()
+    .max(100, "Artist must be less than 100 characters")
+    .optional(),
 
-  series: z.string().max(100, "Series must be less than 100 characters").optional(),
+  series: z
+    .string()
+    .max(100, "Series must be less than 100 characters")
+    .optional(),
 
   pieceCount: z
     .number()
@@ -30,9 +36,21 @@ export const puzzleFormSchema = z.object({
   tags: z.array(z.string()),
 
   // Identifiers
-  ean: z.string().regex(/^[0-9]{13}$/ , "EAN must be a 13-digit number").or(z.literal("")).optional(),
-  upc: z.string().regex(/^[0-9]{12}$/ , "UPC must be a 12-digit number").or(z.literal("")).optional(),
-  modelNumber: z.string().max(100, "Model number must be less than 100 characters").or(z.literal("")).optional(),
+  ean: z
+    .string()
+    .regex(/^[0-9]{13}$/, "EAN must be a 13-digit number")
+    .or(z.literal(""))
+    .optional(),
+  upc: z
+    .string()
+    .regex(/^[0-9]{12}$/, "UPC must be a 12-digit number")
+    .or(z.literal(""))
+    .optional(),
+  modelNumber: z
+    .string()
+    .max(100, "Model number must be less than 100 characters")
+    .or(z.literal(""))
+    .optional(),
 
   // Physical details
   dimensions: z

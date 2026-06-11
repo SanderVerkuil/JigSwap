@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { useUser } from "@/compat/clerk";
+import { Link } from "@/compat/link";
+import { useRouter } from "@/compat/navigation";
 import {
   type NotificationRow,
   type NotificationType,
@@ -12,16 +15,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
-import { Link } from "@/compat/link";
-import { useRouter } from "@/compat/navigation";
-import { useUser } from "@/compat/clerk";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import { Bell, Check, CheckCheck, Settings2 } from "lucide-react";
-import { useTranslations } from "use-intl";
 import { toast } from "sonner";
+import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/notifications/")({
   component: NotificationsPage,

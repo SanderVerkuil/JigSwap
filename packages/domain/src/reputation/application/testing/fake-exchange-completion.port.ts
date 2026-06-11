@@ -5,7 +5,10 @@ import { ExchangeCompletionPort } from "../ports/out/exchange-completion.port";
 // parties via `seedCompleted`; `isCompletedBetween` returns true only when the exchange is
 // known-completed AND the {reviewer, reviewee} pair matches its parties (order-independent).
 export class FakeExchangeCompletionPort implements ExchangeCompletionPort {
-  private readonly completed = new Map<ExchangeId, readonly [MemberId, MemberId]>();
+  private readonly completed = new Map<
+    ExchangeId,
+    readonly [MemberId, MemberId]
+  >();
 
   seedCompleted(exchangeId: ExchangeId, a: MemberId, b: MemberId): this {
     this.completed.set(exchangeId, [a, b]);

@@ -8,8 +8,8 @@ import { gateway } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import { HandHelping, Package, User } from "lucide-react";
-import { useTranslations } from "use-intl";
 import { useState } from "react";
+import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/borrowed")({
   pendingComponent: () => <PageLoading message="Loading loans..." />,
@@ -64,7 +64,10 @@ function BorrowedPage() {
       ) : (
         <div className="space-y-4">
           {borrowed.map((loan) => (
-            <Card key={loan.loanId} className="hover:shadow-md transition-shadow">
+            <Card
+              key={loan.loanId}
+              className="hover:shadow-md transition-shadow"
+            >
               <CardContent className="p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3 flex-1">
@@ -74,7 +77,8 @@ function BorrowedPage() {
                     <div className="space-y-1">
                       <h3 className="font-semibold">{loan.puzzleTitle}</h3>
                       <Badge variant="secondary" className="text-xs">
-                        {loan.pieceCount} {loan.pieceCount === 1 ? "piece" : "pieces"}
+                        {loan.pieceCount}{" "}
+                        {loan.pieceCount === 1 ? "piece" : "pieces"}
                       </Badge>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <User className="h-4 w-4" />

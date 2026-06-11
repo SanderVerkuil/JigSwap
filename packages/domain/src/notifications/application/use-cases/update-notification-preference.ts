@@ -1,4 +1,9 @@
-import { Clock, DomainEventPublisher, ok, Result } from "../../../shared-kernel";
+import {
+  Clock,
+  DomainEventPublisher,
+  ok,
+  Result,
+} from "../../../shared-kernel";
 import { NotificationPreference } from "../../domain";
 import {
   UpdateNotificationPreference,
@@ -19,11 +24,17 @@ export interface UpdateNotificationPreferenceDeps {
 // aggregate, then saves and publishes any PreferenceChanged event.
 export const makeUpdateNotificationPreference =
   (deps: UpdateNotificationPreferenceDeps): UpdateNotificationPreference =>
-  async (cmd: UpdateNotificationPreferenceCommand): Promise<Result<void, never>> => {
+  async (
+    cmd: UpdateNotificationPreferenceCommand,
+  ): Promise<Result<void, never>> => {
     const now = deps.clock.now();
     const preference =
       (await deps.preferences.findByMember(cmd.memberId)) ??
-      NotificationPreference.createDefault(deps.preferenceIds.next(), cmd.memberId, now);
+      NotificationPreference.createDefault(
+        deps.preferenceIds.next(),
+        cmd.memberId,
+        now,
+      );
 
     if (cmd.enabled) {
       preference.enable(cmd.type, cmd.channel, now);

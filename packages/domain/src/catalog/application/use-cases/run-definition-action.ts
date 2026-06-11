@@ -1,5 +1,15 @@
-import { Clock, DomainEventPublisher, err, ok, Result } from "../../../shared-kernel";
-import { CatalogError, PuzzleDefinition, PuzzleDefinitionId } from "../../domain";
+import {
+  Clock,
+  DomainEventPublisher,
+  err,
+  ok,
+  Result,
+} from "../../../shared-kernel";
+import {
+  CatalogError,
+  PuzzleDefinition,
+  PuzzleDefinitionId,
+} from "../../domain";
 import { CatalogApplicationError } from "../errors";
 import { PuzzleDefinitionRepository } from "../ports/out/puzzle-definition.repository";
 
@@ -25,7 +35,9 @@ export const runDefinitionAction =
   ): Promise<Result<void, CatalogError | CatalogApplicationError>> => {
     const definition = await deps.definitions.findById(puzzleDefinitionId);
     if (!definition) {
-      return err(CatalogApplicationError.puzzleDefinitionNotFound(puzzleDefinitionId));
+      return err(
+        CatalogApplicationError.puzzleDefinitionNotFound(puzzleDefinitionId),
+      );
     }
 
     const outcome = action(definition, deps.clock.now());

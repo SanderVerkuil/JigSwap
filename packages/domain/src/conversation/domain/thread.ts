@@ -120,7 +120,9 @@ export class Thread {
   // Append a service-authored system message. There is no member author and no participant check
   // (the service is trusted); only the non-empty-body rule applies. This is the ONLY path that
   // creates a `system` message — a member can never author one (see postMessage's kind type).
-  postSystemMessage(props: PostSystemMessageProps): Result<Message, ConversationError> {
+  postSystemMessage(
+    props: PostSystemMessageProps,
+  ): Result<Message, ConversationError> {
     if (props.body.length === 0) {
       return err(ConversationError.emptyMessage());
     }
@@ -146,14 +148,19 @@ export class Thread {
       return err(ConversationError.notParticipant());
     }
 
-    const others = this.state.readReceipts.filter((r) => r.memberId !== memberId);
+    const others = this.state.readReceipts.filter(
+      (r) => r.memberId !== memberId,
+    );
     this.state.readReceipts = [...others, { memberId, lastReadAt: now }];
     return ok(undefined);
   }
 
   // The last instant `memberId` read the thread, or null if they have not read it yet.
   lastReadAt(memberId: MemberId): Date | null {
-    return this.state.readReceipts.find((r) => r.memberId === memberId)?.lastReadAt ?? null;
+    return (
+      this.state.readReceipts.find((r) => r.memberId === memberId)
+        ?.lastReadAt ?? null
+    );
   }
 
   // Drain recorded events for the publisher; clears the buffer so a save can't double-emit.

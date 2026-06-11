@@ -1,4 +1,10 @@
-import { Clock, DomainEventPublisher, err, ok, Result } from "../../../shared-kernel";
+import {
+  Clock,
+  DomainEventPublisher,
+  err,
+  ok,
+  Result,
+} from "../../../shared-kernel";
 import {
   CatalogError,
   PuzzleDefinition,
@@ -25,9 +31,12 @@ export const makeSubmitPuzzleDefinition =
   (deps: SubmitPuzzleDefinitionDeps): SubmitPuzzleDefinition =>
   async (
     cmd: SubmitPuzzleDefinitionCommand,
-  ): Promise<Result<PuzzleDefinitionId, CatalogError | CatalogApplicationError>> => {
+  ): Promise<
+    Result<PuzzleDefinitionId, CatalogError | CatalogApplicationError>
+  > => {
     const duplicate = await firstDuplicateBarcode(deps.definitions, cmd);
-    if (duplicate) return err(CatalogApplicationError.duplicateBarcode(duplicate));
+    if (duplicate)
+      return err(CatalogApplicationError.duplicateBarcode(duplicate));
 
     const definition = PuzzleDefinition.submit({
       id: deps.ids.nextPuzzleDefinitionId(),

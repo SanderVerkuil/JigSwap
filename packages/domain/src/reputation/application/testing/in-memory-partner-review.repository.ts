@@ -1,4 +1,9 @@
-import { ExchangeId, MemberId, PartnerReview, PartnerReviewId } from "../../domain";
+import {
+  ExchangeId,
+  MemberId,
+  PartnerReview,
+  PartnerReviewId,
+} from "../../domain";
 import { PartnerReviewRepository } from "../ports/out/partner-review.repository";
 
 // In-memory PartnerReviewRepository for use-case tests. Stores persisted state and rehydrates
@@ -25,7 +30,9 @@ export class InMemoryPartnerReviewRepository implements PartnerReviewRepository 
     this.store.set(review.id, review.toState());
   }
 
-  async listForReviewee(revieweeId: MemberId): Promise<readonly PartnerReview[]> {
+  async listForReviewee(
+    revieweeId: MemberId,
+  ): Promise<readonly PartnerReview[]> {
     const result: PartnerReview[] = [];
     for (const state of this.store.values()) {
       if (state.revieweeId === revieweeId) {

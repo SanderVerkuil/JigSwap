@@ -34,9 +34,7 @@ export function CustodyTimeline({ copyId }: CustodyTimelineProps) {
 
   if (timeline === null) return null;
 
-  const ownerName = (
-    name: string | undefined | null,
-  ): string => name ?? "—";
+  const ownerName = (name: string | undefined | null): string => name ?? "—";
 
   return (
     <Card>
