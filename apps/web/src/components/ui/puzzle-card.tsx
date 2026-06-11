@@ -1,11 +1,14 @@
 "use client";
 
+import Image from "@/compat/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Id } from "@jigswap/backend/convex/_generated/dataModel";
+import { gateway, Id } from "@/gateway";
+import type { FunctionReturnType } from "convex/server";
 import {
   Check,
+  CircleCheck,
   Edit,
   Eye,
   Heart,
@@ -13,9 +16,8 @@ import {
   Trash2,
   User,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
-import Image from "next/image";
 import { createContext, ReactNode, useContext } from "react";
+import { useTranslations } from "use-intl";
 import { CollectionDropdown } from "./collection-dropdown";
 
 // Context for view mode
@@ -61,44 +63,11 @@ export function PuzzleViewProvider({
   );
 }
 
-// Puzzle instance data type with puzzle information
-interface OwnedPuzzleData {
-  _id: Id<"ownedPuzzles">;
-  puzzleId: Id<"puzzles">;
-  ownerId: Id<"users">;
-  condition: "new_sealed" | "like_new" | "good" | "fair" | "poor";
-  availability: {
-    forTrade: boolean;
-    forSale: boolean;
-    forLend: boolean;
-  };
-  acquisitionDate?: number;
-  notes?: string;
-  createdAt: number;
-  updatedAt: number;
-  _creationTime?: number;
-  addedAt?: number; // For collection members
-  puzzle: {
-    _id: Id<"puzzles">;
-    title: string;
-    description?: string;
-    brand?: string;
-    pieceCount: number;
-    difficulty?: "easy" | "medium" | "hard" | "expert";
-    category?: Id<"adminCategories">;
-    tags?: string[];
-    images?: string[]; // Make optional to match backend schema
-    createdAt: number;
-    updatedAt: number;
-    _creationTime?: number;
-  } | null;
-  owner?: {
-    _id: Id<"users">;
-    name: string;
-    username?: string;
-    avatar?: string;
-  } | null;
-}
+// Owned-copy view DTO this card renders, derived from the library read it is fed by (ids surface as
+// opaque strings; the card re-casts `_id` to `Id<"ownedPuzzles">` once at the callback boundary).
+type OwnedPuzzleData = FunctionReturnType<
+  typeof gateway.library.ownedByOwner
+>[number];
 
 interface PuzzleCardProps {
   puzzle: OwnedPuzzleData;
@@ -111,11 +80,15 @@ interface PuzzleCardProps {
   onRequestExchange?: (puzzleId: Id<"ownedPuzzles">) => void;
   onMessage?: (puzzleId: Id<"ownedPuzzles">) => void;
   onFavorite?: (puzzleId: Id<"ownedPuzzles">) => void;
+  onLogSolve?: (puzzleId: Id<"ownedPuzzles">) => void;
   isSelected?: boolean;
   showOwner?: boolean;
   showActions?: boolean;
   showAvailability?: boolean;
   showCollectionDropdown?: boolean;
+  // Optional lending slot (e.g. an "on loan to X" badge + Recall action). The page owns the loan
+  // data so the card stays generic; rendered above the action row when provided.
+  loanBadge?: ReactNode;
   className?: string;
 }
 
@@ -130,20 +103,26 @@ export function PuzzleCard({
   onRequestExchange,
   onMessage,
   onFavorite,
+  onLogSolve,
   isSelected = false,
   showOwner = false,
   showActions = true,
   showAvailability = true,
   showCollectionDropdown = false,
+  loanBadge,
   className = "",
 }: PuzzleCardProps) {
   const t = useTranslations("puzzles");
+  const tSolving = useTranslations("solving.logSolve");
   const { viewMode } = usePuzzleView();
 
   // Early return if no puzzle data
   if (!puzzle.puzzle) {
     return null;
   }
+
+  // DTO surfaces the copy id as a string; callbacks/CollectionDropdown take a branded Convex id.
+  const ownedId = puzzle._id as Id<"ownedPuzzles">;
 
   const renderImage = () => {
     const imageUrl = puzzle.puzzle?.images?.[0] || "/placeholder-puzzle.jpg";
@@ -165,7 +144,7 @@ export function PuzzleCard({
             <input
               type="checkbox"
               checked={isSelected}
-              onChange={() => onSelect?.(puzzle._id)}
+              onChange={() => onSelect?.(ownedId)}
               className="h-4 w-4"
             />
           </div>
@@ -183,17 +162,29 @@ export function PuzzleCard({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onView(puzzle._id)}
+            onClick={() => onView(ownedId)}
             className="h-8 w-8 p-0"
           >
             <Eye className="h-4 w-4" />
+          </Button>
+        )}
+        {onLogSolve && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onLogSolve(ownedId)}
+            className="h-8 w-8 p-0"
+            title={tSolving("trigger")}
+            aria-label={tSolving("trigger")}
+          >
+            <CircleCheck className="h-4 w-4" />
           </Button>
         )}
         {onEdit && (
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onEdit(puzzle._id)}
+            onClick={() => onEdit(ownedId)}
             className="h-8 w-8 p-0"
           >
             <Edit className="h-4 w-4" />
@@ -203,7 +194,7 @@ export function PuzzleCard({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onDelete(puzzle._id)}
+            onClick={() => onDelete(ownedId)}
             className="h-8 w-8 p-0 text-destructive hover:text-destructive"
           >
             <Trash2 className="h-4 w-4" />
@@ -213,7 +204,7 @@ export function PuzzleCard({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onRemove(puzzle._id)}
+            onClick={() => onRemove(ownedId)}
             className="h-8 w-8 p-0 text-destructive hover:text-destructive"
           >
             <Trash2 className="h-4 w-4" />
@@ -223,7 +214,7 @@ export function PuzzleCard({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onRequestExchange(puzzle._id)}
+            onClick={() => onRequestExchange(ownedId)}
             className="h-8 w-8 p-0"
           >
             <MessageCircle className="h-4 w-4" />
@@ -233,7 +224,7 @@ export function PuzzleCard({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onMessage(puzzle._id)}
+            onClick={() => onMessage(ownedId)}
             className="h-8 w-8 p-0"
           >
             <MessageCircle className="h-4 w-4" />
@@ -243,7 +234,7 @@ export function PuzzleCard({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onFavorite(puzzle._id)}
+            onClick={() => onFavorite(ownedId)}
             className="h-8 w-8 p-0"
           >
             <Heart className="h-4 w-4" />
@@ -289,7 +280,10 @@ export function PuzzleCard({
             </div>
           </div>
           {showCollectionDropdown && (
-            <CollectionDropdown ownedPuzzleId={puzzle._id} />
+            <CollectionDropdown
+              ownedPuzzleId={ownedId}
+              copyAggregateId={puzzle.aggregateId}
+            />
           )}
         </div>
 
@@ -342,6 +336,8 @@ export function PuzzleCard({
             )}
           </div>
         )}
+
+        {loanBadge && <div className="mb-2">{loanBadge}</div>}
 
         {renderActions()}
       </div>

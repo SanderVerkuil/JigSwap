@@ -18,11 +18,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { api } from "@jigswap/backend/convex/_generated/api";
+import { gateway } from "@/gateway";
 import { useQuery } from "convex/react";
-import { useTranslations } from "next-intl";
 import { useFeatureFlagEnabled } from "posthog-js/react";
 import { useState } from "react";
+import { useTranslations } from "use-intl";
 import { FileUpload } from "../file-upload";
 import { usePuzzleFormContext } from "./puzzle-form-context";
 
@@ -40,7 +40,7 @@ export const PuzzleFormContent = () => {
   );
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const categories = useQuery(api.adminCategories.getAllAdminCategories);
+  const categories = useQuery(gateway.adminCatalog.listAll);
 
   const t = useTranslations("forms.puzzle-form");
 
@@ -278,7 +278,13 @@ export const PuzzleFormContent = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {categories?.map((category) => (
-                          <SelectItem key={category._id} value={category._id}>
+                          // The catalog keys puzzles by CatalogCategoryId aggregateId now; a
+                          // not-yet-backfilled legacy row has none, so it can't be selected.
+                          <SelectItem
+                            key={category._id}
+                            value={category.aggregateId ?? ""}
+                            disabled={!category.aggregateId}
+                          >
                             {category.name.en}
                           </SelectItem>
                         ))}

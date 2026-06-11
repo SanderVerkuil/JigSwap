@@ -1,0 +1,141 @@
+name: PR Reports
+
+# Generates browsable HTML reports (coverage, bundle treemap, dependency
+# graph) for every PR and publishes them to GitHub Pages under pr-<number>/,
+# with an index page and an upserted PR comment. Mutation testing publishes
+# into the same per-PR directory from its own workflow.
+# NOTE: keep this OUT of required status checks — it is reporting, not a gate.
+on:
+  pull_request:
+
+concurrency:
+  group: reports-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Read-only: also runs for fork PRs, whose results land in the artifact.
+  generate:
+    name: Generate reports
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    outputs:
+      artifact-url: ${{ steps.reports-artifact.outputs.artifact-url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install graphviz (dependency graph rendering)
+        run: sudo apt-get update -q && sudo apt-get install -y -q graphviz
+
+      - name: Test coverage (domain + backend)
+        run: pnpm exec nx run-many -t coverage --parallel=2
+
+      # vite build is invoked directly (not `nx build web`): Nx doesn't key its
+      # cache on ANALYZE, so a cached replay would silently skip stats.html.
+      - name: Build with bundle analysis
+        env:
+          ANALYZE: "1"
+        run: pnpm exec vite build
+        working-directory: apps/web
+
+      - name: Render dependency graph
+        run: |
+          pnpm exec depcruise --config .dependency-cruiser.cjs --output-type dot packages/domain/src \
+            | dot -Tsvg \
+            | pnpm exec depcruise-wrap-stream-in-html > domain-deps.html
+
+      - name: Assemble report site
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          CLIENT_ASSETS_DIR: apps/web/.output/public
+        run: |
+          mkdir -p site/coverage site/bundle site/deps
+          cp -r coverage/packages/domain site/coverage/domain
+          cp -r coverage/packages/backend site/coverage/backend
+          cp apps/web/stats.html site/bundle/stats.html
+          cp domain-deps.html site/deps/domain-deps.html
+          node .github/scripts/render-pr-index.mjs site
+
+      - name: Upload reports artifact
+        id: reports-artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-reports
+          path: site/
+          retention-days: 14
+
+  # Write-permissioned work is isolated here and never runs for fork PRs:
+  # their GITHUB_TOKEN is read-only anyway, so the guard makes the intent
+  # explicit instead of letting pushes fail at runtime.
+  publish:
+    name: Publish reports + comment
+    needs: generate
+    if: ${{ !cancelled() && needs.generate.result == 'success' && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    # Serialize gh-pages pushes across all workflows that deploy reports.
+    concurrency:
+      group: gh-pages-publish
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download reports artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pr-reports
+          path: site/
+
+      # Third-party action pinned to an immutable commit (tag = v4 / v4.1.0):
+      # it receives a contents:write token, so a mutable tag would be a
+      # supply-chain risk. keep_files preserves the mutation report deployed
+      # into the same pr dir by mutation.yml.
+      - name: Publish to GitHub Pages
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: site
+          destination_dir: pr-${{ github.event.pull_request.number }}
+          keep_files: true
+          commit_message: "CI reports for PR #${{ github.event.pull_request.number }}"
+
+      - name: Render comment markdown
+        env:
+          PAGES_BASE: ${{ format('https://{0}.github.io/{1}/pr-{2}', github.repository_owner, github.event.repository.name, github.event.pull_request.number) }}
+        run: |
+          node .github/scripts/render-reports-comment.mjs site/summary.json > reports-comment.md
+
+      - name: Upsert PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- pr-reports -->';
+            const body = fs.readFileSync('reports-comment.md', 'utf8');
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number, per_page: 100,
+            });
+            const existing = comments.find((c) => c.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { useTranslations } from "next-intl";
+import { useTranslations } from "use-intl";
 import { usePuzzleFormContext } from "./puzzle-form-context";
 
 export const PuzzleFormActions = () => {

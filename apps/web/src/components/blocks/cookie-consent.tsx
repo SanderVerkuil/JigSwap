@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Cookie } from "lucide-react";
-import { useTranslations } from "next-intl";
 import * as React from "react";
+import { useTranslations } from "use-intl";
 
 // Define prop types
 interface CookieConsentProps extends React.HTMLAttributes<HTMLDivElement> {

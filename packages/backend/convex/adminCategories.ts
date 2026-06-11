@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { query } from "./_generated/server";
 
 // Get all admin categories (for admin panel)
 export const getAllAdminCategories = query({
@@ -29,95 +29,5 @@ export const getAdminCategoryById = query({
   },
 });
 
-// Create new admin category
-export const createAdminCategory = mutation({
-  args: {
-    name: v.object({
-      en: v.string(),
-      nl: v.string(),
-    }),
-    description: v.optional(
-      v.object({
-        en: v.string(),
-        nl: v.string(),
-      }),
-    ),
-    color: v.optional(v.string()),
-    isActive: v.boolean(),
-    sortOrder: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const now = Date.now();
-
-    return await ctx.db.insert("adminCategories", {
-      name: args.name,
-      description: args.description,
-      color: args.color,
-      isActive: args.isActive,
-      sortOrder: args.sortOrder,
-      createdAt: now,
-      updatedAt: now,
-    });
-  },
-});
-
-// Update admin category
-export const updateAdminCategory = mutation({
-  args: {
-    id: v.id("adminCategories"),
-    name: v.optional(
-      v.object({
-        en: v.string(),
-        nl: v.string(),
-      }),
-    ),
-    description: v.optional(
-      v.object({
-        en: v.string(),
-        nl: v.string(),
-      }),
-    ),
-    color: v.optional(v.string()),
-    isActive: v.optional(v.boolean()),
-    sortOrder: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const { id, ...updates } = args;
-    const now = Date.now();
-
-    await ctx.db.patch(id, {
-      ...updates,
-      updatedAt: now,
-    });
-
-    return id;
-  },
-});
-
-// Delete admin category
-export const deleteAdminCategory = mutation({
-  args: { id: v.id("adminCategories") },
-  handler: async (ctx, args) => {
-    await ctx.db.delete(args.id);
-    return args.id;
-  },
-});
-
-// Reorder admin categories
-export const reorderAdminCategories = mutation({
-  args: {
-    categoryIds: v.array(v.id("adminCategories")),
-  },
-  handler: async (ctx, args) => {
-    const now = Date.now();
-
-    for (let i = 0; i < args.categoryIds.length; i++) {
-      await ctx.db.patch(args.categoryIds[i], {
-        sortOrder: i,
-        updatedAt: now,
-      });
-    }
-
-    return args.categoryIds;
-  },
-});
+// Category writes now live in the domain-driven catalog module (catalog/*CatalogCategory). The
+// legacy create/update/delete/reorder mutations were retired in the 2d catalog cutover.

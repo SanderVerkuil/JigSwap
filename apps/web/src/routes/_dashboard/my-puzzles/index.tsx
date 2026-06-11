@@ -1,0 +1,268 @@
+import { createFileRoute } from "@tanstack/react-router";
+
+import { useUser } from "@/compat/clerk";
+import { Link } from "@/compat/link";
+import { useRouter } from "@/compat/navigation";
+import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { PageLoading } from "@/components/ui/loading";
+import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
+import { gateway, Id } from "@/gateway";
+import { useMutation, useQuery } from "convex/react";
+import { Filter, Grid, List, Plus, Search, Undo2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useTranslations } from "use-intl";
+
+export const Route = createFileRoute("/_dashboard/my-puzzles/")({
+  pendingComponent: () => <PageLoading message="Loading puzzles..." />,
+  component: PuzzlesPage,
+});
+
+function PuzzlesPage() {
+  const { user } = useUser();
+  const router = useRouter();
+  const t = useTranslations("puzzles");
+  const tCommon = useTranslations("common");
+  const tLending = useTranslations("lending");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [searchTerm, setSearchTerm] = useState("");
+  // The loan currently being recalled, so we disable only that copy's Recall button.
+  const [recallingId, setRecallingId] = useState<string | null>(null);
+  // The copy a solve is being logged against; null when the dialog is closed.
+  const [solveTarget, setSolveTarget] = useState<{
+    copyId: string;
+    title: string;
+  } | null>(null);
+
+  const convexUser = useQuery(
+    gateway.identity.byClerkId,
+    user?.id ? { clerkId: user.id } : "skip",
+  );
+
+  const userownedPuzzles = useQuery(
+    gateway.library.ownedByOwner,
+    convexUser?._id
+      ? { ownerId: convexUser._id as Id<"users">, includeUnavailable: true }
+      : "skip",
+  );
+
+  const deletePuzzle = useMutation(gateway.library.deleteOwned);
+
+  // Open loans where the caller is the lender; the source of truth for "which of my copies are out".
+  const lentOut = useQuery(gateway.lending.lentOut);
+  const recallLoan = useMutation(gateway.lending.recallLoan);
+
+  // Lookup of open loans keyed by the copy's ownedPuzzles _id (LoanView.copyDocId), so each card can
+  // tell whether it is currently lent out without an extra per-row query.
+  const loanByCopyDocId = useMemo(
+    () => new Map((lentOut ?? []).map((loan) => [loan.copyDocId, loan])),
+    [lentOut],
+  );
+
+  const handleRecallLoan = async (loanId: string) => {
+    setRecallingId(loanId);
+    try {
+      await recallLoan({ loanId });
+    } catch (error) {
+      console.error("Failed to recall loan:", error);
+    } finally {
+      setRecallingId(null);
+    }
+  };
+
+  const handleDeletePuzzle = async (ownedPuzzleId: Id<"ownedPuzzles">) => {
+    // The domain delete takes the Copy aggregateId; resolve it from the loaded row. Guard rows
+    // that predate the backfill (no aggregateId) rather than send an unresolvable id.
+    const copy = userownedPuzzles?.find((p) => p._id === ownedPuzzleId);
+    if (!copy?.aggregateId) {
+      console.error("Cannot delete: copy is missing its aggregateId.");
+      return;
+    }
+    if (confirm("Are you sure you want to delete this puzzle?")) {
+      try {
+        await deletePuzzle({
+          copyId: copy.aggregateId,
+        });
+      } catch (error) {
+        console.error("Failed to delete puzzle:", error);
+      }
+    }
+  };
+
+  const handleEditPuzzle = (ownedPuzzleId: Id<"ownedPuzzles">) => {
+    router.push(`/my-puzzles/${ownedPuzzleId}/edit`);
+  };
+
+  const handleViewPuzzle = (ownedPuzzleId: Id<"ownedPuzzles">) => {
+    router.push(`/my-puzzles/${ownedPuzzleId}`);
+  };
+
+  const handleLogSolve = (ownedPuzzleId: Id<"ownedPuzzles">) => {
+    // Solves are logged against the Copy aggregateId; guard rows predating the backfill rather
+    // than open a dialog that can't persist.
+    const copy = userownedPuzzles?.find((p) => p._id === ownedPuzzleId);
+    if (!copy?.aggregateId) {
+      console.error("Cannot log a solve: copy is missing its aggregateId.");
+      return;
+    }
+    setSolveTarget({
+      copyId: copy.aggregateId,
+      title: copy.puzzle?.title ?? "",
+    });
+  };
+
+  // Filter puzzle instances based on search term
+  const filteredownedPuzzles =
+    userownedPuzzles?.filter(
+      (puzzle) =>
+        puzzle.puzzle?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (puzzle.puzzle?.brand &&
+          puzzle.puzzle.brand.toLowerCase().includes(searchTerm.toLowerCase())),
+    ) || [];
+
+  if (!user || !convexUser || userownedPuzzles === undefined) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">{tCommon("loading")}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">{t("myPuzzles")}</h1>
+          <p className="text-muted-foreground">{t("managePuzzles")}</p>
+        </div>
+        <Button asChild>
+          <Link href="/my-puzzles/add">
+            <Plus className="h-4 w-4 mr-2" />
+            {t("addPuzzle")}
+          </Link>
+        </Button>
+      </div>
+
+      {/* Search and Filters */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="flex-1 flex items-center gap-2">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder={tCommon("search")}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <Button variant="outline" size="sm">
+                <Filter className="h-4 w-4 mr-2" />
+                {tCommon("filter")}
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant={viewMode === "grid" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode("grid")}
+              >
+                <Grid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode("list")}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Puzzles Grid/List */}
+      {filteredownedPuzzles.length === 0 ? (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <div className="text-muted-foreground mb-4">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                <Plus className="h-8 w-8" />
+              </div>
+              <h3 className="text-lg font-medium mb-2">{t("noPuzzles")}</h3>
+              <p className="text-sm">{t("addFirstPuzzle")}</p>
+            </div>
+            <Button asChild>
+              <Link href="/my-puzzles/add">
+                <Plus className="h-4 w-4 mr-2" />
+                {t("addPuzzle")}
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <PuzzleViewProvider viewMode={viewMode}>
+          {filteredownedPuzzles.map((puzzle) => {
+            const loan = loanByCopyDocId.get(puzzle._id);
+            return (
+              <PuzzleCard
+                key={puzzle._id}
+                puzzle={puzzle}
+                variant="default"
+                showCollectionDropdown={true}
+                onEdit={handleEditPuzzle}
+                onView={handleViewPuzzle}
+                onDelete={handleDeletePuzzle}
+                onLogSolve={handleLogSolve}
+                loanBadge={
+                  loan && (
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-xs">
+                        {tLending("onLoanTo", {
+                          name:
+                            loan.borrower?.name ?? tLending("unknownMember"),
+                        })}
+                      </Badge>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2"
+                        disabled={recallingId === loan.loanId}
+                        onClick={() => handleRecallLoan(loan.loanId)}
+                      >
+                        <Undo2 className="h-3 w-3 mr-1" />
+                        {recallingId === loan.loanId
+                          ? tLending("recalling")
+                          : tLending("recallAction")}
+                      </Button>
+                    </div>
+                  )
+                }
+              />
+            );
+          })}
+        </PuzzleViewProvider>
+      )}
+
+      {solveTarget && (
+        <LogSolveDialog
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setSolveTarget(null);
+          }}
+          copyId={solveTarget.copyId}
+          puzzleTitle={solveTarget.title}
+        />
+      )}
+    </div>
+  );
+}

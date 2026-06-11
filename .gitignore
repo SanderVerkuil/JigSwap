@@ -1,5 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Agent-created git worktrees (transient; never commit)
+.claude/worktrees/
+
 # dependencies
 /node_modules
 /**/node_modules
@@ -13,6 +16,13 @@
 
 # testing
 /coverage
+
+# stryker mutation testing (temp dirs, reports, logs)
+.stryker-tmp
+**/.stryker-tmp
+**/reports/mutation
+stryker.log
+**/stryker.log
 
 # next.js
 /.next/
@@ -51,6 +61,16 @@ next-env.d.ts
 # Next.js
 .next
 out
+# ...but `out` is also a hexagonal-architecture source dir (outbound ports), not build output.
+!packages/**/out/
 
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
+
+# TanStack Start dev-server scratch dir
+.tanstack/
+
+# Secrets live only on disk; commit .env.example templates, never real env files.
+.env
+.env.*
+!.env.example

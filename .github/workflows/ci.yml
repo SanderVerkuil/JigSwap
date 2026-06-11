@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same PR branch supersedes in-flight runs; pushes to main
+# always run to completion so every main commit has a CI result.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verify:
+    name: Lint · Type-check · Test · Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # pnpm before setup-node so its pnpm cache can resolve the store. Version is
+      # read from the root package.json "packageManager" field (pnpm@11.5.2).
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Persist Nx's computation cache between runs so unchanged projects are replayed.
+      - name: Restore Nx cache
+        uses: actions/cache@v4
+        with:
+          path: .nx/cache
+          key: nx-${{ runner.os }}-${{ github.sha }}
+          restore-keys: nx-${{ runner.os }}-
+
+      - name: Check formatting
+        run: pnpm run format:check
+
+      # Convex _generated/* is committed, so no deployment or secrets are needed here.
+      # arch-check enforces the DDD/hexagonal boundaries via dependency-cruiser.
+      - name: Verify (lint, type-check, test, build, arch-check)
+        run: pnpm exec nx run-many -t lint type-check test build arch-check --parallel=4

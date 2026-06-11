@@ -5,4 +5,7 @@
 /.nx/workspace-data
 /pnpm-lock.yaml
 /apps/web/locales/source.d.json.ts
+/apps/web/src/routeTree.gen.ts
+/apps/web/.output
+/apps/web/stats.html
 /packages/backend/convex/_generated/*

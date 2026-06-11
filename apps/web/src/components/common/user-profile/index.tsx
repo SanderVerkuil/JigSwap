@@ -1,11 +1,11 @@
 "use client";
 
+import { UserButton, useUser } from "@/compat/clerk";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { UserButton, useUser } from "@clerk/nextjs";
 
 export function UserProfile() {
   const { user } = useUser();

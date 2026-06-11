@@ -1,46 +1,16 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Id } from "@jigswap/backend/convex/_generated/dataModel";
+import { gateway, Id } from "@/gateway";
+import type { FunctionReturnType } from "convex/server";
 import { Edit, Eye, Heart, MessageCircle, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations } from "use-intl";
 
-interface PuzzleData {
-  _id: Id<"ownedPuzzles">;
-  puzzleId: Id<"puzzles">;
-  ownerId: Id<"users">;
-  condition: "new_sealed" | "like_new" | "good" | "fair" | "poor";
-  availability: {
-    forTrade: boolean;
-    forSale: boolean;
-    forLend: boolean;
-  };
-  acquisitionDate?: number;
-  notes?: string;
-  createdAt: number;
-  updatedAt: number;
-  _creationTime?: number;
-  puzzle: {
-    _id: Id<"puzzles">;
-    title: string;
-    description?: string;
-    brand?: string;
-    pieceCount: number;
-    difficulty?: "easy" | "medium" | "hard" | "expert";
-    category?: Id<"adminCategories">;
-    tags?: string[];
-    images?: string[];
-    createdAt: number;
-    updatedAt: number;
-    _creationTime?: number;
-  } | null;
-  owner?: {
-    _id: Id<"users">;
-    name: string;
-    username?: string;
-    avatar?: string;
-  } | null;
-}
+// Owned-copy detail view DTO this component renders, derived from the read it is fed by. Its `_id`
+// surfaces as an opaque string; the action callbacks take a branded Convex id, re-cast once below.
+type PuzzleData = NonNullable<
+  FunctionReturnType<typeof gateway.library.ownedWithCollectionStatus>
+>;
 
 interface PuzzleDetailActionsProps {
   puzzle: PuzzleData;
@@ -63,6 +33,9 @@ export function PuzzleDetailActions({
 }: PuzzleDetailActionsProps) {
   const t = useTranslations("puzzles");
 
+  // DTO surfaces the copy id as a string; the callbacks take a branded Convex id.
+  const ownedId = puzzle._id as Id<"ownedPuzzles">;
+
   return (
     <div className="space-y-4">
       {/* Primary Actions */}
@@ -71,13 +44,13 @@ export function PuzzleDetailActions({
           <Button className="flex-1">{t("requestExchange")}</Button>
         )}
         {onEdit && (
-          <Button variant="outline" onClick={() => onEdit(puzzle._id)}>
+          <Button variant="outline" onClick={() => onEdit(ownedId)}>
             <Edit className="h-4 w-4 mr-2" />
             Edit
           </Button>
         )}
         {onView && (
-          <Button variant="outline" onClick={() => onView(puzzle._id)}>
+          <Button variant="outline" onClick={() => onView(ownedId)}>
             <Eye className="h-4 w-4 mr-2" />
             View
           </Button>
@@ -87,29 +60,17 @@ export function PuzzleDetailActions({
       {/* Secondary Actions */}
       <div className="flex items-center gap-2">
         {onFavorite && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onFavorite(puzzle._id)}
-          >
+          <Button variant="ghost" size="sm" onClick={() => onFavorite(ownedId)}>
             <Heart className="h-4 w-4" />
           </Button>
         )}
         {onMessage && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onMessage(puzzle._id)}
-          >
+          <Button variant="ghost" size="sm" onClick={() => onMessage(ownedId)}>
             <MessageCircle className="h-4 w-4" />
           </Button>
         )}
         {onDelete && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onDelete(puzzle._id)}
-          >
+          <Button variant="ghost" size="sm" onClick={() => onDelete(ownedId)}>
             <Trash2 className="h-4 w-4" />
           </Button>
         )}

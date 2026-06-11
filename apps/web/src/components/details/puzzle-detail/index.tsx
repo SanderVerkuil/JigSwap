@@ -1,14 +1,15 @@
 "use client";
 
+import { Image } from "@/compat/image";
 import { Card, CardContent } from "@/components/ui/card";
-import { api } from "@jigswap/backend/convex/_generated/api";
-import { Id } from "@jigswap/backend/convex/_generated/dataModel";
+import { gateway, Id } from "@/gateway";
 import { useQuery } from "convex/react";
 import { Grid } from "lucide-react";
-import { useTranslations } from "next-intl";
-import Image from "next/image";
+import { useTranslations } from "use-intl";
 
 import { PageLoading } from "@/components/ui/loading";
+import { CustodyTimeline } from "./custody-timeline";
+import { LoanHistory } from "./loan-history";
 import { PuzzleDetailActions } from "./puzzle-detail-actions";
 import { PuzzleDetailHeader } from "./puzzle-detail-header";
 import { PuzzleDetailInfo } from "./puzzle-detail-info";
@@ -40,7 +41,7 @@ export function PuzzleDetail({
 }: PuzzleDetailProps) {
   const t = useTranslations("puzzles");
 
-  const ownedPuzzle = useQuery(api.puzzles.getOwnedPuzzleWithCollectionStatus, {
+  const ownedPuzzle = useQuery(gateway.library.ownedWithCollectionStatus, {
     ownedPuzzleId,
   });
 
@@ -105,6 +106,12 @@ export function PuzzleDetail({
           )}
         </div>
       </div>
+
+      {/* Chain-of-Custody provenance for this copy. */}
+      <CustodyTimeline copyId={ownedPuzzle._id as Id<"ownedPuzzles">} />
+
+      {/* Open-ended loan history for this copy (who held it, when). */}
+      <LoanHistory copyId={ownedPuzzle._id as Id<"ownedPuzzles">} />
     </div>
   );
 }

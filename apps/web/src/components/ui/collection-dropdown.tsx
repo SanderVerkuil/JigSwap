@@ -1,5 +1,7 @@
 "use client";
 
+import { useUser } from "@/compat/clerk";
+import Link from "@/compat/link";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,55 +10,53 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useUser } from "@clerk/nextjs";
-import { api } from "@jigswap/backend/convex/_generated/api";
-import { Id } from "@jigswap/backend/convex/_generated/dataModel";
+import { gateway, Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { FolderOpen, Plus } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface CollectionDropdownProps {
   ownedPuzzleId: Id<"ownedPuzzles">;
+  // The Copy aggregateId the domain add takes; the `forOwnedPuzzle` read still keys on the _id.
+  copyAggregateId?: string;
   className?: string;
 }
 
 export function CollectionDropdown({
   ownedPuzzleId,
+  copyAggregateId,
   className,
 }: CollectionDropdownProps) {
   const { user } = useUser();
-  const router = useRouter();
   const [isAdding, setIsAdding] = useState(false);
 
   const convexUser = useQuery(
-    api.users.getUserByClerkId,
+    gateway.identity.byClerkId,
     user?.id ? { clerkId: user.id } : "skip",
   );
 
   const collections = useQuery(
-    api.collections.getUserCollections,
-    convexUser?._id ? { userId: convexUser._id } : "skip",
+    gateway.collections.listForUser,
+    convexUser?._id ? { userId: convexUser._id as Id<"users"> } : "skip",
   );
 
-  const puzzleCollections = useQuery(
-    api.collections.getCollectionsForOwnedPuzzle,
-    {
-      ownedPuzzleId,
-    },
-  );
+  const puzzleCollections = useQuery(gateway.collections.forOwnedPuzzle, {
+    ownedPuzzleId,
+  });
 
-  const addPuzzleToCollection = useMutation(
-    api.collections.addOwnedPuzzleToCollection,
-  );
+  const addPuzzleToCollection = useMutation(gateway.collections.addOwnedPuzzle);
 
-  const handleAddToCollection = async (collectionId: Id<"collections">) => {
+  const handleAddToCollection = async (collectionAggregateId?: string) => {
+    // The domain add takes the Collection + Copy aggregateIds; guard either missing.
+    if (!collectionAggregateId || !copyAggregateId) {
+      console.error("Cannot add: collection or copy is missing aggregateId.");
+      return;
+    }
     setIsAdding(true);
     try {
       await addPuzzleToCollection({
-        collectionId,
-        ownedPuzzleId,
+        collectionId: collectionAggregateId,
+        copyId: copyAggregateId,
       });
     } catch (error) {
       console.error("Failed to add puzzle to collection:", error);
@@ -65,7 +65,8 @@ export function CollectionDropdown({
     }
   };
 
-  const isInCollection = (collectionId: Id<"collections">) => {
+  // DTO membership rows carry collection ids as opaque strings, so compare on string.
+  const isInCollection = (collectionId: string) => {
     return puzzleCollections?.some((c) => c?._id === collectionId) || false;
   };
 
@@ -105,7 +106,7 @@ export function CollectionDropdown({
         {collections.map((collection) => (
           <DropdownMenuItem
             key={collection._id}
-            onClick={() => handleAddToCollection(collection._id)}
+            onClick={() => handleAddToCollection(collection.aggregateId)}
             disabled={isInCollection(collection._id)}
             className={isInCollection(collection._id) ? "opacity-50" : ""}
           >

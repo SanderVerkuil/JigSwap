@@ -21,6 +21,10 @@ export default defineSchema({
 
   // Puzzles  - the actual puzzle designs that exist in the world
   puzzles: defineTable({
+    // Catalog PuzzleDefinitionId. Optional so legacy rows still validate; the domain-driven
+    // catalog functions set+use it, legacy puzzles.ts ignores it.
+    aggregateId: v.optional(v.string()),
+
     // --- Core Info ---
     title: v.string(),
     description: v.optional(v.string()),
@@ -88,15 +92,39 @@ export default defineSchema({
     .index("by_difficulty", ["difficulty"])
     .index("by_brand", ["brand"])
     .index("by_tags", ["tags"])
+    .index("by_aggregate_id", ["aggregateId"])
+    // Lets a contributor list their own submissions (e.g. own not-yet-approved puzzles).
+    .index("by_submitted_by", ["submittedBy"])
     .searchIndex("by_searchable_text", {
       searchField: "searchableText",
+      // Lets public suggestions exclude pending/rejected submissions at the index level.
+      filterFields: ["status"],
     }),
 
   // Puzzle instances - individual copies that people own
   ownedPuzzles: defineTable({
+    // Library CopyId. Optional so legacy rows still validate; the domain-driven library
+    // functions set+use it, legacy puzzles.ts ignores it.
+    aggregateId: v.optional(v.string()),
+
     // --- Core Links ---
     puzzleId: v.id("puzzles"), // Renamed from puzzleId for clarity
+    // The Catalog PuzzleDefinitionId (aggregateId) the Copy instantiates. Held alongside the
+    // legacy puzzleId so the domain path references Catalog by aggregate id, not Convex _id.
+    puzzleDefinitionId: v.optional(v.string()),
+    // The cached Catalog snapshot (ACL) the Copy carries; refreshed via the snapshot provider.
+    snapshot: v.optional(
+      v.object({
+        title: v.string(),
+        brand: v.optional(v.string()),
+        pieceCount: v.number(),
+        thumbnail: v.optional(v.string()),
+      }),
+    ),
     ownerId: v.id("users"),
+    // Who physically holds the copy now. Equals ownerId unless it is currently lent out, when it
+    // is the borrower. Optional: legacy/unset rows are held by their owner.
+    heldBy: v.optional(v.id("users")),
 
     // --- Condition ---
     condition: v.union(
@@ -115,6 +143,9 @@ export default defineSchema({
       forSale: v.boolean(),
       forLend: v.boolean(),
     }),
+    // The SharingSetting's visibility axis (who can SEE the copy), orthogonal to the
+    // availability flags (what it can be USED for). Optional; legacy rows are unset.
+    visibility: v.optional(v.union(v.literal("private"), v.literal("visible"))),
     salePrice: v.optional(
       v.object({
         amount: v.number(),
@@ -132,6 +163,13 @@ export default defineSchema({
         v.literal("gift"),
       ),
     ),
+    // The Acquisition price the domain models but the legacy column lacked.
+    acquisitionPrice: v.optional(
+      v.object({
+        amount: v.number(),
+        currency: v.string(),
+      }),
+    ),
 
     // --- Timestamps ---
     createdAt: v.number(),
@@ -140,7 +178,8 @@ export default defineSchema({
     .index("by_owner", ["ownerId"])
     .index("by_puzzle", ["puzzleId"])
     // You might want a more complex index for finding available puzzles
-    .index("by_owner_and_availability", ["ownerId", "availability"]),
+    .index("by_owner_and_availability", ["ownerId", "availability"])
+    .index("by_aggregate_id", ["aggregateId"]),
 
   // This is a table for storing images of owned puzzles
   ownedPuzzleImages: defineTable({
@@ -174,6 +213,10 @@ export default defineSchema({
 
   // Named collections for organizing puzzles
   collections: defineTable({
+    // Library CollectionId. Optional so legacy rows still validate; the domain-driven library
+    // functions set+use it, legacy collections.ts ignores it.
+    aggregateId: v.optional(v.string()),
+
     userId: v.id("users"),
     name: v.string(),
     description: v.optional(v.string()),
@@ -181,13 +224,19 @@ export default defineSchema({
     color: v.optional(v.string()), // hex color code
     icon: v.optional(v.string()), // emoji or icon name
     isDefault: v.boolean(), // true for system collections like "Favorites"
+    // Wishlist variant: a wishlist references desired PuzzleDefinitionIds, a regular collection
+    // its members' CopyIds. Optional; legacy rows are regular collections.
+    isWishlist: v.optional(v.boolean()),
+    // Desired Catalog PuzzleDefinitionIds (aggregateIds) for the wishlist variant.
+    wishedDefinitions: v.optional(v.array(v.string())),
     personalNotes: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_user", ["userId"])
     .index("by_user_name", ["userId", "name"])
-    .index("by_visibility", ["visibility"]),
+    .index("by_visibility", ["visibility"])
+    .index("by_aggregate_id", ["aggregateId"]),
 
   // Collection membership - many-to-many relationship (now references ownedPuzzles)
   collectionMembers: defineTable({
@@ -201,12 +250,18 @@ export default defineSchema({
 
   // Completion records for puzzles (can reference either puzzles or ownedPuzzles)
   completions: defineTable({
+    // Solving CompletionId. Optional so legacy rows still validate; the domain-driven solving
+    // functions set+use it, legacy code ignores it.
+    aggregateId: v.optional(v.string()),
+
     userId: v.id("users"),
     puzzleId: v.optional(v.id("puzzles")), // Reference to puzzle (for general completions)
     ownedPuzzleId: v.optional(v.id("ownedPuzzles")), // Reference to specific instance (for specific completions)
     startDate: v.number(),
-    endDate: v.number(),
-    completionTimeMinutes: v.number(),
+    // Optional so an in-progress completion (started, not yet finished) can be persisted; a
+    // finished completion always carries both. Existing rows already hold values.
+    endDate: v.optional(v.number()),
+    completionTimeMinutes: v.optional(v.number()),
     rating: v.optional(v.number()), // 1-5 stars
     review: v.optional(v.string()),
     notes: v.optional(v.string()),
@@ -221,10 +276,15 @@ export default defineSchema({
     .index("by_user_puzzle", ["userId", "puzzleId"])
     .index("by_user_owned_puzzle", ["userId", "ownedPuzzleId"])
     .index("by_completion_date", ["endDate"])
-    .index("by_rating", ["rating"]),
+    .index("by_rating", ["rating"])
+    .index("by_aggregate_id", ["aggregateId"]),
 
   // User-defined categories for organizing collections
   categories: defineTable({
+    // Library PersonalCategoryId. Optional so legacy rows still validate; the domain-driven
+    // library functions set+use it, legacy code ignores it.
+    aggregateId: v.optional(v.string()),
+
     userId: v.id("users"),
     name: v.string(),
     color: v.optional(v.string()), // hex color code
@@ -234,10 +294,15 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_user_name", ["userId", "name"]),
+    .index("by_user_name", ["userId", "name"])
+    .index("by_aggregate_id", ["aggregateId"]),
 
   // Admin-managed global categories with localization support
   adminCategories: defineTable({
+    // Catalog CatalogCategoryId. Optional so legacy rows still validate; the domain-driven
+    // catalog functions set+use it, legacy adminCategories.ts ignores it.
+    aggregateId: v.optional(v.string()),
+
     name: v.object({
       en: v.string(),
       nl: v.string(),
@@ -255,10 +320,15 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_active", ["isActive"])
-    .index("by_sort_order", ["sortOrder"]),
+    .index("by_sort_order", ["sortOrder"])
+    .index("by_aggregate_id", ["aggregateId"]),
 
   // User goals for puzzle completion
   goals: defineTable({
+    // Solving GoalId. Optional so legacy rows still validate; the domain-driven solving
+    // functions set+use it, legacy code ignores it.
+    aggregateId: v.optional(v.string()),
+
     userId: v.id("users"),
     title: v.string(),
     description: v.optional(v.string()),
@@ -270,10 +340,15 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_user_active", ["userId", "isActive"]),
+    .index("by_user_active", ["userId", "isActive"])
+    .index("by_aggregate_id", ["aggregateId"]),
 
   // Exchanges are the core of the app. They are the way users can trade, buy, and sell puzzles.
   exchanges: defineTable({
+    // Domain aggregate identity (ExchangeId). Optional so pre-existing rows still validate;
+    // the new domain-driven functions set+use it. Legacy functions ignore it.
+    aggregateId: v.optional(v.string()),
+
     // --- Participants ---
     initiatorId: v.id("users"),
     recipientId: v.id("users"),
@@ -320,7 +395,8 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_initiator", ["initiatorId", "offeredPuzzleId"])
-    .index("by_recipient", ["recipientId", "offeredPuzzleId"]),
+    .index("by_recipient", ["recipientId", "offeredPuzzleId"])
+    .index("by_aggregate_id", ["aggregateId"]),
 
   messages: defineTable({
     exchangeId: v.id("exchanges"),
@@ -341,6 +417,9 @@ export default defineSchema({
     .index("by_created_at", ["createdAt"]),
 
   reviews: defineTable({
+    // PartnerReview aggregate identity. Optional so pre-existing rows still validate; the new
+    // Reputation functions set+use it (backfill stamps legacy rows). Legacy code ignores it.
+    aggregateId: v.optional(v.string()),
     exchangeId: v.id("exchanges"),
     reviewerId: v.id("users"),
     revieweeId: v.id("users"),
@@ -357,7 +436,24 @@ export default defineSchema({
     .index("by_reviewer", ["reviewerId"])
     .index("by_reviewee", ["revieweeId"])
     .index("by_exchange", ["exchangeId"])
-    .index("by_rating", ["rating"]),
+    .index("by_rating", ["rating"])
+    .index("by_aggregate_id", ["aggregateId"])
+    // Backs the one-review-per-reviewer-per-exchange uniqueness lookup.
+    .index("by_exchange_reviewer", ["exchangeId", "reviewerId"]),
+
+  // The per-member ReputationProfile projection: a running aggregate folded from received
+  // PartnerReviews. Kept consistent with `reviews` by the in-process publisher (live writes) and
+  // the backfill (historical rebuild). `ratingSum`/`reviewCount` retain enough to recompute the
+  // average exactly; `credibility` is the 0-1 confidence curve.
+  reputationProfiles: defineTable({
+    aggregateId: v.optional(v.string()),
+    memberId: v.id("users"),
+    ratingSum: v.number(),
+    reviewCount: v.number(),
+    averageRating: v.number(),
+    credibility: v.number(),
+    updatedAt: v.number(),
+  }).index("by_member", ["memberId"]),
 
   favorites: defineTable({
     userId: v.id("users"),
@@ -369,6 +465,9 @@ export default defineSchema({
     .index("by_user_puzzle", ["userId", "puzzleId"]),
 
   notifications: defineTable({
+    // Notification aggregate identity. Optional so pre-existing rows still validate; the domain
+    // path sets+uses it (backfill stamps legacy rows). The repository keys saves on it.
+    aggregateId: v.optional(v.string()),
     userId: v.id("users"),
     type: v.union(
       v.literal("trade_request"),
@@ -379,15 +478,156 @@ export default defineSchema({
       v.literal("message_received"),
       v.literal("review_received"),
       v.literal("puzzle_favorited"),
+      // New literals the other contexts now emit (see domain NotificationType).
+      v.literal("goal_achieved"),
+      v.literal("puzzle_approved"),
+      v.literal("puzzle_rejected"),
+      v.literal("exchange_proposed"),
+      v.literal("exchange_disputed"),
     ),
     title: v.string(),
     message: v.string(),
     relatedId: v.optional(v.string()), // ID of related entity (trade, puzzle, etc.)
+    // Delivery channel. Optional so legacy rows validate; defaults to "inApp" (backfill stamps it).
+    channel: v.optional(v.string()),
     isRead: v.boolean(),
     createdAt: v.number(),
   })
     .index("by_user", ["userId"])
     .index("by_type", ["type"])
     .index("by_read_status", ["isRead"])
-    .index("by_created_at", ["createdAt"]),
+    .index("by_created_at", ["createdAt"])
+    .index("by_aggregate_id", ["aggregateId"]),
+
+  // Per-member NotificationPreference: which (type, channel) deliveries the member accepts. One
+  // row per member; `toggles` is the resolved type->channel->enabled map (stored as JSON via
+  // v.any so the domain shape maps field-for-field without enumerating literals here).
+  notificationPreferences: defineTable({
+    aggregateId: v.optional(v.string()),
+    memberId: v.id("users"),
+    toggles: v.any(),
+    updatedAt: v.number(),
+  }).index("by_member", ["memberId"]),
+
+  // Friend Circles: a private group whose members share circle-scoped visibility. The Circle
+  // aggregate persists as ONE unit (root + its embedded memberships) so every invariant is enforced
+  // against the whole set. Member lookup goes through the `circleMembers` junction (below) because
+  // Convex can't index into the embedded `memberships` objects.
+  circles: defineTable({
+    // Domain aggregate identity (CircleId). Keyed on by the repository; never an FK target.
+    aggregateId: v.optional(v.string()),
+    ownerId: v.id("users"),
+    name: v.string(),
+    // The aggregate's membership rows, embedded (loaded/saved with the root). `memberId` is the
+    // resolved user _id; `id` is the domain MembershipId string.
+    memberships: v.array(
+      v.object({
+        id: v.string(),
+        memberId: v.id("users"),
+        permission: v.union(
+          v.literal("ViewOnly"),
+          v.literal("Exchange"),
+          v.literal("Admin"),
+        ),
+        joinedAt: v.number(),
+      }),
+    ),
+    createdAt: v.number(),
+  })
+    .index("by_owner", ["ownerId"])
+    .index("by_aggregate_id", ["aggregateId"]),
+
+  // Member-lookup projection of `circles.memberships`, kept in sync by the repository on every save.
+  // Lets "every circle a member belongs to" be an indexed read (Convex can't index embedded arrays).
+  // `circleAggregateId` is the domain CircleId string; `memberId` is the resolved user _id.
+  circleMembers: defineTable({
+    circleAggregateId: v.string(),
+    memberId: v.id("users"),
+  })
+    .index("by_member", ["memberId"])
+    .index("by_circle", ["circleAggregateId"])
+    .index("by_circle_member", ["circleAggregateId", "memberId"]),
+
+  // Read model of copies shared into a circle, projected from the CopySharedToCircle event. Sharing
+  // owns no copy state; this link makes a friend-circle copy discoverable to the circle's members.
+  // `copyId` is the Library CopyId aggregateId (string), not a resolved owned-puzzle _id.
+  circleCopyShares: defineTable({
+    circleId: v.string(),
+    copyId: v.string(),
+    sharedAt: v.number(),
+  })
+    .index("by_circle", ["circleId"])
+    .index("by_copy", ["copyId"])
+    .index("by_circle_copy", ["circleId", "copyId"]),
+
+  // Social: a member's public profile (display name + bio). One row per member; the aggregate
+  // is keyed by member, so `by_member` backs findByMember and aggregateId is the ProfileId.
+  profiles: defineTable({
+    aggregateId: v.optional(v.string()),
+    memberId: v.id("users"),
+    displayName: v.string(),
+    bio: v.optional(v.string()),
+    updatedAt: v.number(),
+  })
+    .index("by_member", ["memberId"])
+    .index("by_aggregate_id", ["aggregateId"]),
+
+  // Social: a directed follow edge (followerId -> followeeId). Indexed both ways so the read side
+  // can list a member's followers and the people they follow; aggregateId is the FollowId.
+  follows: defineTable({
+    aggregateId: v.optional(v.string()),
+    followerId: v.id("users"),
+    followeeId: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_follower", ["followerId"])
+    .index("by_followee", ["followeeId"])
+    .index("by_aggregate_id", ["aggregateId"]),
+
+  // The durable domain-event log: every context's events are appended here, then an async
+  // dispatcher (scheduled per insert) routes each to its subscribers and stamps processedAt.
+  // WHY durable: decouples subscribers (Notifications, future Insights/Social) from the emitting
+  // transaction while keeping critical reactions (availability, goal recompute) inline.
+  domainEvents: defineTable({
+    name: v.string(),
+    payload: v.any(),
+    occurredAt: v.number(),
+    context: v.string(),
+    processedAt: v.optional(v.number()),
+  }).index("by_processed", ["processedAt"]),
+
+  // Chain-of-Custody projection: one row per OwnershipTransferred event, folded by the custody
+  // subscriber off the durable event log. WHY a dedicated table: domainEvents.payload is v.any()
+  // with no per-copy index, so transfer history is not queryable by copyId; this read-model makes
+  // a Copy's provenance a single indexed scan. Pure projection — keyed by copyId, no aggregateId.
+  copyCustodyEntries: defineTable({
+    copyId: v.string(), // the transferred Copy (an ownedPuzzles _id, the domain CopyId)
+    exchangeId: v.string(), // the settling Exchange aggregateId
+    previousOwner: v.string(), // the member the Copy moved FROM (a users _id)
+    newOwner: v.string(), // the member the Copy moved to (a users _id)
+    occurredAt: v.number(),
+  }).index("by_copy", ["copyId", "occurredAt"]),
+
+  // Open-ended loans: possession of a Copy held by a borrower while ownership stays with the
+  // lender. Closed when the borrower returns it or the owner recalls it. aggregateId = LoanId;
+  // copyId is the Library CopyId (ownedPuzzles.aggregateId). Status indexes back the borrowed/lent
+  // queries; by_copy backs the loan-history read.
+  loans: defineTable({
+    aggregateId: v.optional(v.string()),
+    copyId: v.string(),
+    lenderId: v.id("users"),
+    borrowerId: v.id("users"),
+    status: v.union(
+      v.literal("open"),
+      v.literal("returned"),
+      v.literal("recalled"),
+    ),
+    openedAt: v.number(),
+    expectedReturn: v.optional(v.number()),
+    closedAt: v.optional(v.number()),
+  })
+    .index("by_aggregate_id", ["aggregateId"])
+    .index("by_copy", ["copyId", "openedAt"])
+    .index("by_borrower", ["borrowerId", "status"])
+    .index("by_lender", ["lenderId", "status"]),
 });

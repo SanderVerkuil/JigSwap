@@ -1,4 +1,18 @@
+# env (never commit real secrets; .env.example is tracked)
+.env
 .env.local
-crowdin.yml
+
+# build + framework output
+.output/
+.nitro/
+.tanstack/
+dist/
+
+# bundle treemap from ANALYZE=1 builds (published to Pages by CI)
+stats.html
+
+# generated route tree (machine-written by the TanStack Start plugin)
+src/routeTree.gen.ts
+
 # clerk configuration (can include secrets)
 /.clerk/

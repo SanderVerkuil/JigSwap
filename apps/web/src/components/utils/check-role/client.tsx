@@ -1,7 +1,7 @@
 "use client";
 
+import { useUser } from "@/compat/clerk";
 import { Roles } from "@/types/globals";
-import { useUser } from "@clerk/nextjs";
 
 export function CheckRole({
   role,

@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { Image } from "@/compat/image";
 import HeaderIconImage from "./logo.png";
 
 interface HeaderIconProps {
