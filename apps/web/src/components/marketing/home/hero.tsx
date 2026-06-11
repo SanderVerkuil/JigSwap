@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
 import { useQuery } from "convex/react";
 import { ArrowRight } from "lucide-react";
+import * as React from "react";
 import { useFormatter, useTranslations } from "use-intl";
 
 import coverSand from "@/components/marketing/assets/cover-sand.jpg";
 
-// Boxes for the signature PuzzlePlank — themed brand colours + one real cover.
+// Fallback boxes for the signature PuzzlePlank — used during loading and when
+// the catalog has fewer than 3 puzzles. Themed brand colours + one real cover.
 // Decorative props (puzzle titles stay the same across locales, per the design).
 const PLANK_WIDE: PlankBox[] = [
   {
@@ -65,6 +67,36 @@ const PLANK_WIDE: PlankBox[] = [
     width: 98,
   },
 ];
+
+const WIDTHS = [100, 134, 96, 108, 90, 104, 98] as const;
+const COLOR_PAIRS: Array<[string, string]> = [
+  ["var(--mk-violet-400)", "var(--mk-violet-600)"],
+  ["var(--mk-green-400)", "var(--mk-green-600)"],
+  ["var(--mk-pink-400)", "var(--mk-pink-500)"],
+  ["var(--mk-violet-300)", "var(--mk-violet-700)"],
+];
+
+type PlankPuzzleView = {
+  title: string;
+  pieceCount: number;
+  brand?: string;
+  image: string | null;
+};
+
+function toPlankBox(p: PlankPuzzleView, i: number): PlankBox {
+  const [c1, c2] = COLOR_PAIRS[i % COLOR_PAIRS.length];
+  return {
+    title: p.title,
+    pieceCount: p.pieceCount,
+    series: p.brand,
+    cover: p.image ?? undefined,
+    width: WIDTHS[i % WIDTHS.length],
+    // Only set colors when there is no cover; cover mode ignores them but we
+    // pass them for the gradient fallback while the image is loading.
+    c1,
+    c2,
+  };
+}
 
 const AVATARS: Array<[string, string]> = [
   ["MI", "var(--mk-violet-400)"],
@@ -130,25 +162,44 @@ function HeroCTAs() {
 
 export function Hero() {
   const t = useTranslations("marketing.home");
+
+  // Stable per-visit seed: generated client-side after mount (SSR-safe).
+  // The query is skipped until the seed is ready; PLANK_WIDE fills the plank
+  // meanwhile as a loading fallback.
+  const [seed, setSeed] = React.useState<number | null>(null);
+  React.useEffect(() => setSeed(Math.floor(Math.random() * 0xffffffff)), []);
+  const livePuzzles = useQuery(
+    gateway.insights.plankPuzzles,
+    seed === null ? "skip" : { limit: 7, seed },
+  );
+  const boxes = React.useMemo(
+    () =>
+      livePuzzles && livePuzzles.length >= 3
+        ? livePuzzles.map(toPlankBox)
+        : PLANK_WIDE,
+    [livePuzzles],
+  );
+
   return (
     <div className="relative overflow-hidden">
       <div className="mk-hero-glow" />
 
       {/* Full-bleed 3D backdrop layer */}
       <div className="absolute inset-0" aria-hidden="true">
-        <JigPlank3D boxes={PLANK_WIDE} />
+        <JigPlank3D boxes={boxes} />
       </div>
 
       {/* Readability scrim: horizontal fade for the text side + bottom fade so
           the scene melts into the next section. Works in light and dark modes
-          via color-mix over the bg token. */}
+          via color-mix over the bg token. Softened first stop so the frosted
+          panel behind the text provides its own local contrast. */}
       <div
         aria-hidden="true"
         style={{
           position: "absolute",
           inset: 0,
           background:
-            "linear-gradient(90deg, var(--mk-bg) 25%, color-mix(in oklab, var(--mk-bg) 55%, transparent) 55%, transparent 78%), linear-gradient(180deg, transparent 55%, color-mix(in oklab, var(--mk-bg) 70%, transparent) 100%)",
+            "linear-gradient(90deg, color-mix(in oklab, var(--mk-bg) 78%, transparent) 22%, color-mix(in oklab, var(--mk-bg) 55%, transparent) 55%, transparent 78%), linear-gradient(180deg, transparent 55%, color-mix(in oklab, var(--mk-bg) 70%, transparent) 100%)",
           pointerEvents: "none",
           zIndex: 1,
         }}
@@ -159,18 +210,32 @@ export function Hero() {
         className="relative w-full max-w-[1200px] mx-auto px-6"
         style={{ zIndex: 2 }}
       >
-        <div className="max-w-[560px] min-h-[520px] pt-[clamp(48px,7vw,100px)] pb-[clamp(64px,8vw,112px)]">
-          <Reveal>
-            <Eyebrow>{t("eyebrow")}</Eyebrow>
-            <h1 className="font-mk-heading font-bold tracking-tight text-mk-text-strong text-[clamp(38px,6vw,62px)] leading-[1.04] mt-[18px]">
-              {t("heroTitle")}
-            </h1>
-            <p className="text-[clamp(17px,1.4vw,20px)] leading-relaxed text-mk-text-muted mt-[22px] max-w-[520px] text-pretty">
-              {t("heroLead")}
-            </p>
-            <HeroCTAs />
-            <TrustRow />
-          </Reveal>
+        <div className="min-h-[520px] pt-[clamp(48px,7vw,100px)] pb-[clamp(64px,8vw,112px)]">
+          {/* Frosted-glass callout — provides local contrast behind the hero text */}
+          <div
+            className="max-w-[640px] rounded-3xl"
+            style={{
+              background: "color-mix(in oklab, var(--mk-bg) 58%, transparent)",
+              backdropFilter: "blur(9px)",
+              WebkitBackdropFilter: "blur(9px)",
+              border:
+                "1px solid color-mix(in oklab, var(--mk-border) 60%, transparent)",
+              boxShadow: "0 18px 50px -24px rgb(20 12 50 / .25)",
+              padding: "clamp(24px, 3.5vw, 44px)",
+            }}
+          >
+            <Reveal>
+              <Eyebrow>{t("eyebrow")}</Eyebrow>
+              <h1 className="font-mk-heading font-bold tracking-tight text-mk-text-strong text-[clamp(38px,6vw,62px)] leading-[1.04] mt-[18px]">
+                {t("heroTitle")}
+              </h1>
+              <p className="text-[clamp(17px,1.4vw,20px)] leading-relaxed text-mk-text-muted mt-[22px] max-w-[520px] text-pretty">
+                {t("heroLead")}
+              </p>
+              <HeroCTAs />
+              <TrustRow />
+            </Reveal>
+          </div>
         </div>
       </div>
     </div>

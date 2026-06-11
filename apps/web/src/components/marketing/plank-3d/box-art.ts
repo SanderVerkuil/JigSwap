@@ -236,6 +236,10 @@ export function createBoxArtTexture(
 
   if (spec.mode === "cover" && spec.coverSrc) {
     const img = new Image();
+    // Must be set before src to avoid CORS tainting the canvas on cross-origin
+    // URLs (Convex storage). drawImage succeeds either way; only getImageData
+    // (used in extractCoverEdges) throws on a tainted canvas.
+    img.crossOrigin = "anonymous";
     img.onload = () => {
       if (disposed) return;
       const aspect = img.naturalWidth / img.naturalHeight;
@@ -244,7 +248,15 @@ export function createBoxArtTexture(
       drawBoxArt(corrected, canvas, fonts, img);
       texture.needsUpdate = true;
       onCoverAspect?.(aspect);
-      onCoverEdges?.(extractCoverEdges(img));
+      // extractCoverEdges calls getImageData which throws a SecurityError when
+      // the canvas is tainted (e.g. CORS headers missing on the server). Degrade
+      // gracefully: keep the cover texture (drawImage already succeeded), skip
+      // the edge-bleed effect.
+      try {
+        onCoverEdges?.(extractCoverEdges(img));
+      } catch {
+        // Tainted canvas or other SecurityError — skip edge bleed, keep cover.
+      }
     };
     img.src = spec.coverSrc;
   }

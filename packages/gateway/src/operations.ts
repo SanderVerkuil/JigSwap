@@ -193,6 +193,9 @@ export const gateway = {
     // Downstream read-model: ranks approved catalog puzzles the member doesn't own from their taste.
     recommendations: api.insights.getRecommendations.getRecommendations,
     exportUserData: api.insights.exportUserData.exportUserData,
+    // Public query — returns a random seed-stable sample of catalog puzzles for
+    // the marketing hero plank. Args: { limit: number; seed: number }.
+    plankPuzzles: api.insights.getPlankPuzzles.getPlankPuzzles,
   },
 
   // Public marketing contact form: operational/support write, not a bounded context. The thin
