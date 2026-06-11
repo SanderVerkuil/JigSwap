@@ -1,5 +1,28 @@
 import * as React from "react";
 
+// A proper jigsaw piece: 56×56 body (22..78) with rounded corners, a knob on
+// the top and right edges, a socket cut into the bottom edge, and a flat left
+// edge — knobs/sockets are >180° arcs (r=11, neck 16) so they read as real
+// tabs-and-blanks.
+const PIECE_PATH = [
+  "M 28 22",
+  "H 42",
+  "A 11 11 0 1 1 58 22", // top knob (bulges up)
+  "H 72",
+  "Q 78 22 78 28",
+  "V 42",
+  "A 11 11 0 1 1 78 58", // right knob (bulges out)
+  "V 72",
+  "Q 78 78 72 78",
+  "H 58",
+  "A 11 11 0 1 0 42 78", // bottom socket (cuts into the body)
+  "H 28",
+  "Q 22 78 22 72",
+  "V 28",
+  "Q 22 22 28 22",
+  "Z",
+].join(" ");
+
 // Decorative floating jigsaw-piece silhouette used behind heros and bands.
 export function PieceMotif({
   size = 64,
@@ -23,10 +46,7 @@ export function PieceMotif({
       className={className}
       style={{ transform: `rotate(${rotate}deg)`, ...style }}
     >
-      <path
-        fill={color}
-        d="M37 8a8 8 0 0116 0c0 2-1 4-1 6 0 3 3 5 6 5s5-3 6-5 4-3 6-2a8 8 0 010 16c-2 0-4-1-6-1-3 0-5 2-5 5s2 5 5 6c2 0 4 0 5 1a8 8 0 01-2 15 8 8 0 01-9-6c0-2 1-4 1-6 0-3-3-5-6-5h-1c-3 0-5 3-5 6 0 2 1 4 1 6a8 8 0 01-16 0c0-2 1-4 1-6 0-3-2-5-5-5s-5 2-6 5-4 3-6 2A8 8 0 016 53c2 0 4 1 6 1 3 0 5-2 5-5s-2-5-5-6c-2 0-4 0-6-1A8 8 0 0114 27a8 8 0 019 6c0 2-1 4-1 6 0 3 3 5 6 5s5-3 5-6c0-2-1-4-1-6 0-3 2-5 5-5z"
-      />
+      <path fill={color} d={PIECE_PATH} />
     </svg>
   );
 }

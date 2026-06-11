@@ -1,5 +1,7 @@
 import { Image } from "@/compat/image";
-import logoIcon from "@/components/common/header-icon/logo.png";
+// Icon-only mark (hands-in-puzzle-piece) — the header-icon asset is the
+// stacked lockup with the wordmark text baked in underneath.
+import logoIcon from "@/components/marketing/assets/icon.png";
 
 // Logo mark + two-tone wordmark: violet "Jig", green "Swap" (Fredoka 700).
 export function Wordmark({ size = 22 }: { size?: number }) {
