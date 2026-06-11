@@ -19,7 +19,9 @@ describe("contact/submitContactMessage", () => {
       locale: "nl",
     });
 
-    const rows = await t.run((ctx) => ctx.db.query("contactMessages").collect());
+    const rows = await t.run((ctx) =>
+      ctx.db.query("contactMessages").collect(),
+    );
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({
       name: "Mara",
@@ -50,7 +52,9 @@ describe("contact/submitContactMessage", () => {
       }),
     ).rejects.toThrow(ConvexError);
 
-    const rows = await t.run((ctx) => ctx.db.query("contactMessages").collect());
+    const rows = await t.run((ctx) =>
+      ctx.db.query("contactMessages").collect(),
+    );
     expect(rows).toHaveLength(0);
   });
 });

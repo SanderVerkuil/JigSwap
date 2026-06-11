@@ -1,9 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import {
-  LegalDoc,
-  type LegalSection,
-} from "@/components/marketing/legal-doc";
+import { LegalDoc, type LegalSection } from "@/components/marketing/legal-doc";
 import { PageHero } from "@/components/marketing/page-hero";
 import { useTranslations } from "use-intl";
 

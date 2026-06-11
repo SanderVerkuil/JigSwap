@@ -42,9 +42,7 @@ export function MarketingHeader() {
           ? "text-[17px] font-semibold text-mk-text-strong py-3 px-1 border-b border-mk-border"
           : "text-[15px] font-medium py-1.5 hover:text-mk-violet-600 transition-colors",
         !mobile &&
-          (pathname === item.href
-            ? "text-mk-violet-600"
-            : "text-mk-text-body"),
+          (pathname === item.href ? "text-mk-violet-600" : "text-mk-text-body"),
       )}
     >
       {t(item.key)}
@@ -78,12 +76,20 @@ export function MarketingHeader() {
             >
               {t("login")}
             </Link>
-            <Button variant="brand" className="hidden min-[861px]:inline-flex" asChild>
+            <Button
+              variant="brand"
+              className="hidden min-[861px]:inline-flex"
+              asChild
+            >
               <Link href="/sign-up">{t("startTrading")}</Link>
             </Button>
           </Unauthenticated>
           <Authenticated>
-            <Button variant="brand" className="hidden min-[861px]:inline-flex" asChild>
+            <Button
+              variant="brand"
+              className="hidden min-[861px]:inline-flex"
+              asChild
+            >
               <Link href="/dashboard">{t("dashboard")}</Link>
             </Button>
           </Authenticated>

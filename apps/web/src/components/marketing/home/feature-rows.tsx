@@ -59,7 +59,9 @@ export function FeatureRows() {
           {rows.map((r) => (
             <Reveal key={r.key}>
               <div className="grid grid-cols-2 max-[860px]:grid-cols-1 gap-[clamp(32px,5vw,72px)] items-center">
-                <div className={r.reverse ? "order-2 max-[860px]:order-none" : ""}>
+                <div
+                  className={r.reverse ? "order-2 max-[860px]:order-none" : ""}
+                >
                   <Eyebrow>{t(`${r.key}Eyebrow`)}</Eyebrow>
                   <h3 className="font-mk-heading font-bold tracking-tight text-[clamp(26px,3.4vw,36px)] mt-3.5 leading-[1.12] text-mk-text-strong">
                     {t(`${r.key}Title`)}

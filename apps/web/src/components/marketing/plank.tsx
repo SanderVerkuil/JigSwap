@@ -142,7 +142,9 @@ function JigBox({
       setBoxH(Math.round(width / (im.naturalWidth / im.naturalHeight)));
   };
   return (
-    <div style={{ position: "relative", width, height: boxH, marginTop: depth }}>
+    <div
+      style={{ position: "relative", width, height: boxH, marginTop: depth }}
+    >
       {/* box top face */}
       <div
         style={{

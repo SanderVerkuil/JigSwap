@@ -152,7 +152,8 @@ function ContactForm() {
     }
   };
 
-  const labelCls = "block text-[13.5px] font-semibold text-mk-text-strong mb-[7px]";
+  const labelCls =
+    "block text-[13.5px] font-semibold text-mk-text-strong mb-[7px]";
   const errCls = "text-[12.5px] text-mk-danger mt-1.5";
 
   if (sent) {

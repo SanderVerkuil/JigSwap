@@ -36,7 +36,10 @@ function FeaturesPage() {
         <Section key={g} tint={gi % 2 === 1}>
           <Container>
             <Reveal>
-              <SectionHead eyebrow={t(`g${g}Eyebrow`)} title={t(`g${g}Title`)} />
+              <SectionHead
+                eyebrow={t(`g${g}Eyebrow`)}
+                title={t(`g${g}Title`)}
+              />
             </Reveal>
             <div className="grid grid-cols-3 max-[860px]:grid-cols-1 gap-9 mt-11">
               {items.map((i, ii) => (

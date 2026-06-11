@@ -26,25 +26,89 @@
   --mk-card-base: #ffffff;
 
   /* ---- Brand ramps derived from the seeds ---- */
-  --mk-violet-50: color-mix(in oklab, var(--mk-seed-primary) 12%, var(--mk-soft));
-  --mk-violet-100: color-mix(in oklab, var(--mk-seed-primary) 22%, var(--mk-soft));
-  --mk-violet-200: color-mix(in oklab, var(--mk-seed-primary) 44%, var(--mk-soft));
-  --mk-violet-300: color-mix(in oklab, var(--mk-seed-primary) 68%, var(--mk-soft));
+  --mk-violet-50: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 12%,
+    var(--mk-soft)
+  );
+  --mk-violet-100: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 22%,
+    var(--mk-soft)
+  );
+  --mk-violet-200: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 44%,
+    var(--mk-soft)
+  );
+  --mk-violet-300: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 68%,
+    var(--mk-soft)
+  );
   --mk-violet-400: var(--mk-seed-primary);
-  --mk-violet-500: color-mix(in oklab, var(--mk-seed-primary) 90%, var(--mk-deep));
-  --mk-violet-600: color-mix(in oklab, var(--mk-seed-primary) 76%, var(--mk-deep));
-  --mk-violet-700: color-mix(in oklab, var(--mk-seed-primary) 60%, var(--mk-deep));
-  --mk-violet-800: color-mix(in oklab, var(--mk-seed-primary) 48%, var(--mk-deep));
-  --mk-violet-900: color-mix(in oklab, var(--mk-seed-primary) 36%, var(--mk-deep));
+  --mk-violet-500: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 90%,
+    var(--mk-deep)
+  );
+  --mk-violet-600: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 76%,
+    var(--mk-deep)
+  );
+  --mk-violet-700: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 60%,
+    var(--mk-deep)
+  );
+  --mk-violet-800: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 48%,
+    var(--mk-deep)
+  );
+  --mk-violet-900: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 36%,
+    var(--mk-deep)
+  );
 
-  --mk-green-50: color-mix(in oklab, var(--mk-seed-secondary) 12%, var(--mk-soft));
-  --mk-green-100: color-mix(in oklab, var(--mk-seed-secondary) 22%, var(--mk-soft));
-  --mk-green-200: color-mix(in oklab, var(--mk-seed-secondary) 44%, var(--mk-soft));
-  --mk-green-300: color-mix(in oklab, var(--mk-seed-secondary) 68%, var(--mk-soft));
+  --mk-green-50: color-mix(
+    in oklab,
+    var(--mk-seed-secondary) 12%,
+    var(--mk-soft)
+  );
+  --mk-green-100: color-mix(
+    in oklab,
+    var(--mk-seed-secondary) 22%,
+    var(--mk-soft)
+  );
+  --mk-green-200: color-mix(
+    in oklab,
+    var(--mk-seed-secondary) 44%,
+    var(--mk-soft)
+  );
+  --mk-green-300: color-mix(
+    in oklab,
+    var(--mk-seed-secondary) 68%,
+    var(--mk-soft)
+  );
   --mk-green-400: var(--mk-seed-secondary);
-  --mk-green-500: color-mix(in oklab, var(--mk-seed-secondary) 90%, var(--mk-deep));
-  --mk-green-600: color-mix(in oklab, var(--mk-seed-secondary) 76%, var(--mk-deep));
-  --mk-green-700: color-mix(in oklab, var(--mk-seed-secondary) 60%, var(--mk-deep));
+  --mk-green-500: color-mix(
+    in oklab,
+    var(--mk-seed-secondary) 90%,
+    var(--mk-deep)
+  );
+  --mk-green-600: color-mix(
+    in oklab,
+    var(--mk-seed-secondary) 76%,
+    var(--mk-deep)
+  );
+  --mk-green-700: color-mix(
+    in oklab,
+    var(--mk-seed-secondary) 60%,
+    var(--mk-deep)
+  );
 
   --mk-pink-300: color-mix(in oklab, var(--mk-seed-accent) 68%, var(--mk-soft));
   --mk-pink-400: var(--mk-seed-accent);
@@ -52,7 +116,11 @@
 
   /* ---- Surfaces (gently tinted by the PRIMARY hue only) ---- */
   --mk-bg: color-mix(in oklab, var(--mk-seed-primary) 6%, var(--mk-ground));
-  --mk-card: color-mix(in oklab, var(--mk-seed-primary) 3%, var(--mk-card-base));
+  --mk-card: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 3%,
+    var(--mk-card-base)
+  );
   --mk-muted: color-mix(in oklab, var(--mk-seed-primary) 9%, var(--mk-ground));
 
   /* ---- Text ---- */
@@ -95,7 +163,11 @@
   --mk-card-base: #1b1d24;
 
   --mk-bg: color-mix(in oklab, var(--mk-seed-primary) 9%, var(--mk-ground));
-  --mk-card: color-mix(in oklab, var(--mk-seed-primary) 7%, var(--mk-card-base));
+  --mk-card: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 7%,
+    var(--mk-card-base)
+  );
   --mk-muted: color-mix(in oklab, var(--mk-seed-primary) 12%, #23252e);
 
   --mk-text-strong: #f6f2ed;
@@ -106,8 +178,16 @@
   --mk-input-border: color-mix(in oklab, var(--mk-seed-primary) 16%, #2c2f39);
 
   /* Status: soft fills go dark-tinted, strong text goes bright. */
-  --mk-success-soft: color-mix(in oklab, var(--mk-success) 24%, var(--mk-ground));
-  --mk-warning-soft: color-mix(in oklab, var(--mk-warning) 24%, var(--mk-ground));
+  --mk-success-soft: color-mix(
+    in oklab,
+    var(--mk-success) 24%,
+    var(--mk-ground)
+  );
+  --mk-warning-soft: color-mix(
+    in oklab,
+    var(--mk-warning) 24%,
+    var(--mk-ground)
+  );
   --mk-danger-soft: color-mix(in oklab, var(--mk-danger) 24%, var(--mk-ground));
   --mk-success-strong: #7fdca0;
   --mk-warning-strong: #f1c25a;

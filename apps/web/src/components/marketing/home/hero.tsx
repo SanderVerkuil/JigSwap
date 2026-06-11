@@ -1,11 +1,11 @@
 import { Link } from "@/compat/link";
-import { Eyebrow } from "@/components/marketing/section";
 import { JigPlank, type PlankBox } from "@/components/marketing/plank";
 import { Reveal } from "@/components/marketing/reveal";
+import { Eyebrow } from "@/components/marketing/section";
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
-import { ArrowRight } from "lucide-react";
 import { useQuery } from "convex/react";
+import { ArrowRight } from "lucide-react";
 import { useFormatter, useTranslations } from "use-intl";
 
 import coverSand from "@/components/marketing/assets/cover-sand.jpg";
