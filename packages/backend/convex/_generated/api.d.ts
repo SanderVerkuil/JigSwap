@@ -74,6 +74,7 @@ import type * as identity_searchUsers from "../identity/searchUsers.js";
 import type * as identity_toMemberView from "../identity/toMemberView.js";
 import type * as insights_exportUserData from "../insights/exportUserData.js";
 import type * as insights_getCollectionBreakdown from "../insights/getCollectionBreakdown.js";
+import type * as insights_getCommunitiyAvatars from "../insights/getCommunityAvatars.js";
 import type * as insights_getCompletionTrends from "../insights/getCompletionTrends.js";
 import type * as insights_getGlobalStats from "../insights/getGlobalStats.js";
 import type * as insights_getPersonalStats from "../insights/getPersonalStats.js";
@@ -277,6 +278,7 @@ declare const fullApi: ApiFromModules<{
   "identity/toMemberView": typeof identity_toMemberView;
   "insights/exportUserData": typeof insights_exportUserData;
   "insights/getCollectionBreakdown": typeof insights_getCollectionBreakdown;
+  "insights/getCommunityAvatars": typeof insights_getCommunitiyAvatars;
   "insights/getCompletionTrends": typeof insights_getCompletionTrends;
   "insights/getGlobalStats": typeof insights_getGlobalStats;
   "insights/getPersonalStats": typeof insights_getPersonalStats;

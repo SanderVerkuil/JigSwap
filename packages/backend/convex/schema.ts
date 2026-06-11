@@ -12,6 +12,9 @@ export default defineSchema({
     location: v.optional(v.string()),
     preferredLanguage: v.optional(v.string()),
     isActive: v.boolean(),
+    // Absent or false means the user's avatar image must never appear on public
+    // marketing surfaces — initials only. Opt-in; defaults to NOT consented.
+    shareAvatarPublicly: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

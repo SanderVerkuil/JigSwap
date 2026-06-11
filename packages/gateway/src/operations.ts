@@ -196,6 +196,9 @@ export const gateway = {
     // Public query — returns a random seed-stable sample of catalog puzzles for
     // the marketing hero plank. Args: { limit: number; seed: number }.
     plankPuzzles: api.insights.getPlankPuzzles.getPlankPuzzles,
+    // Public query — returns a seed-stable sample of active members (initials +
+    // opt-in avatar URL) for the marketing trust-row avatar cluster.
+    communityAvatars: api.insights.getCommunityAvatars.getCommunityAvatars,
   },
 
   // Public marketing contact form: operational/support write, not a bounded context. The thin

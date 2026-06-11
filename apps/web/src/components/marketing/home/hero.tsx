@@ -98,31 +98,86 @@ function toPlankBox(p: PlankPuzzleView, i: number): PlankBox {
   };
 }
 
-const AVATARS: Array<[string, string]> = [
+// Minimal local type for the community avatar view — mirrors CommunityAvatarView
+// from @jigswap/contracts without importing the package directly.
+type CommunityAvatar = { initials: string; image: string | null };
+
+// Decorative placeholders shown during loading and when the community query
+// returns no results. These are not real members.
+const FALLBACK_AVATARS: Array<[string, string]> = [
   ["MI", "var(--mk-violet-400)"],
   ["TK", "var(--mk-green-500)"],
   ["LV", "var(--mk-pink-400)"],
   ["RJ", "var(--mk-violet-600)"],
 ];
 
+const AVATAR_COLORS = [
+  "var(--mk-violet-400)",
+  "var(--mk-green-500)",
+  "var(--mk-pink-400)",
+  "var(--mk-violet-600)",
+] as const;
+
 // Real member count instead of the prototype's invented "4.200+".
 function TrustRow() {
   const t = useTranslations("marketing.home");
   const format = useFormatter();
   const stats = useQuery(gateway.insights.globalStats, {});
+
+  // Stable per-visit seed: generated client-side after mount (SSR-safe).
+  // The query is skipped until the seed is ready; FALLBACK_AVATARS fills the
+  // cluster meanwhile as a decorative placeholder.
+  const [seed, setSeed] = React.useState<number | null>(null);
+  React.useEffect(() => setSeed(Math.floor(Math.random() * 0xffffffff)), []);
+  const communityAvatars: CommunityAvatar[] | undefined = useQuery(
+    gateway.insights.communityAvatars,
+    seed === null ? "skip" : { limit: 4, seed },
+  );
+
+  // Use live community data when at least one member is returned; otherwise
+  // keep the decorative fallback placeholders visible.
+  const hasLiveAvatars =
+    communityAvatars != null && communityAvatars.length >= 1;
+
   return (
     <div className="flex items-center gap-3.5 mt-[30px] flex-wrap">
-      <div className="flex">
-        {AVATARS.map(([txt, bg], i) => (
-          <span
-            key={txt}
-            aria-hidden="true"
-            className="w-[38px] h-[38px] rounded-full text-white font-mk-heading font-semibold text-[13px] inline-flex items-center justify-center border-2 border-mk-card"
-            style={{ background: bg, marginLeft: i ? -11 : 0 }}
-          >
-            {txt}
-          </span>
-        ))}
+      <div aria-hidden="true" className="flex">
+        {hasLiveAvatars
+          ? communityAvatars.map((member, i) =>
+              member.image != null ? (
+                <span
+                  key={i}
+                  className="w-[38px] h-[38px] rounded-full inline-flex items-center justify-center border-2 border-mk-card overflow-hidden"
+                  style={{ marginLeft: i ? -11 : 0 }}
+                >
+                  <img
+                    src={member.image}
+                    alt=""
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                </span>
+              ) : (
+                <span
+                  key={i}
+                  className="w-[38px] h-[38px] rounded-full text-white font-mk-heading font-semibold text-[13px] inline-flex items-center justify-center border-2 border-mk-card"
+                  style={{
+                    background: AVATAR_COLORS[i % AVATAR_COLORS.length],
+                    marginLeft: i ? -11 : 0,
+                  }}
+                >
+                  {member.initials}
+                </span>
+              ),
+            )
+          : FALLBACK_AVATARS.map(([txt, bg], i) => (
+              <span
+                key={txt}
+                className="w-[38px] h-[38px] rounded-full text-white font-mk-heading font-semibold text-[13px] inline-flex items-center justify-center border-2 border-mk-card"
+                style={{ background: bg, marginLeft: i ? -11 : 0 }}
+              >
+                {txt}
+              </span>
+            ))}
       </div>
       {stats != null && (
         <div className="text-[14.5px] text-mk-text-muted leading-snug">
