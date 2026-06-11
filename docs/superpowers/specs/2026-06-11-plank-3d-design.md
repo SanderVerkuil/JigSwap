@@ -57,8 +57,9 @@ The canvas mounts inside the same fixed-size container the CSS plank occupies.
 
 - Perspective camera, ~35° FOV, gentle ¾ view matching the current
   illustration's reading direction (front-left).
-- Lighting: one soft directional key light + low-intensity drei `Environment`
-  preset for fill/reflections.
+- Lighting: one soft directional key light + hemisphere/ambient fill lights.
+  (No drei `Environment` HDRI presets — those fetch from a third-party CDN at
+  runtime, which a marketing page must not depend on.)
 - Wooden shelf: box mesh with rounded front edge, warm wood-toned
   `meshStandardMaterial` (subtle procedural grain via the existing palette —
   no texture downloads).
