@@ -1358,5 +1358,30 @@
     "statusRecalled": "Recalled",
     "borrowedBy": "Borrowed by {name}",
     "unknownMember": "Unknown member"
+  },
+  "marketing": {
+    "nav": {
+      "howItWorks": "How it works",
+      "features": "Features",
+      "about": "About",
+      "contact": "Contact",
+      "login": "Log in",
+      "startTrading": "Start trading",
+      "dashboard": "Dashboard",
+      "openMenu": "Open menu",
+      "closeMenu": "Close menu"
+    },
+    "footer": {
+      "tagline": "Swap, lend and share jigsaw puzzles — accessible and sustainable, for the whole community.",
+      "product": "Product",
+      "community": "Community",
+      "legal": "Legal",
+      "sustainability": "Sustainability",
+      "privacy": "Privacy policy",
+      "terms": "Terms of service",
+      "cookies": "Cookie policy",
+      "madeBy": "Made with 🧩 by a family of puzzlers.",
+      "country": "The Netherlands"
+    }
   }
 }

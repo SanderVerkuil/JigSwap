@@ -1358,5 +1358,30 @@
     "statusRecalled": "Teruggevraagd",
     "borrowedBy": "Geleend door {name}",
     "unknownMember": "Onbekend lid"
+  },
+  "marketing": {
+    "nav": {
+      "howItWorks": "Hoe het werkt",
+      "features": "Functies",
+      "about": "Over ons",
+      "contact": "Contact",
+      "login": "Inloggen",
+      "startTrading": "Begin met ruilen",
+      "dashboard": "Dashboard",
+      "openMenu": "Menu openen",
+      "closeMenu": "Menu sluiten"
+    },
+    "footer": {
+      "tagline": "Jigsaw puzzels ruilen, lenen en delen — toegankelijk en duurzaam, voor de hele gemeenschap.",
+      "product": "Product",
+      "community": "Community",
+      "legal": "Juridisch",
+      "sustainability": "Duurzaamheid",
+      "privacy": "Privacybeleid",
+      "terms": "Algemene voorwaarden",
+      "cookies": "Cookiebeleid",
+      "madeBy": "Met 🧩 gemaakt door een familie van puzzelaars.",
+      "country": "Nederland"
+    }
   }
 }
