@@ -16,7 +16,62 @@ import { LIGHTING, type LightingPreset } from "./palette";
 const GAP = 0.34;
 const SHELF_THICKNESS = 0.14;
 const SHELF_DEPTH = 0.7;
-const CAMERA_X = 0.35;
+
+// ——— layout preset config ———
+
+interface PresetConfig {
+  fov: number;
+  cameraX: number;
+  cameraY: number;
+  lookAtY: number;
+  fitMargin: number;
+  shelf: boolean;
+  parallax: number;
+  bob: boolean;
+}
+
+const PRESETS: Record<string, PresetConfig> = {
+  side: {
+    fov: 35,
+    cameraX: 0.35,
+    cameraY: 1.4,
+    lookAtY: 0.55,
+    fitMargin: 0.5,
+    shelf: true,
+    parallax: 1,
+    bob: false,
+  },
+  stage: {
+    fov: 30,
+    cameraX: 0,
+    cameraY: 1.0,
+    lookAtY: 0.6,
+    fitMargin: 0.3,
+    shelf: true,
+    parallax: 0.6,
+    bob: false,
+  },
+  backdrop: {
+    fov: 42,
+    cameraX: 0.8,
+    cameraY: 1.6,
+    lookAtY: 0.6,
+    fitMargin: 0.7,
+    shelf: true,
+    parallax: 1.4,
+    bob: false,
+  },
+  float: {
+    fov: 35,
+    cameraX: 0.2,
+    cameraY: 0.9,
+    lookAtY: 0.7,
+    fitMargin: 0.6,
+    shelf: false,
+    parallax: 1.8,
+    bob: true,
+  },
+};
 
 export interface SceneProps {
   boxes: PlankBox[];
@@ -27,6 +82,7 @@ export interface SceneProps {
   theme: "light" | "dark";
   reducedMotion: boolean;
   visible: boolean;
+  preset: "side" | "stage" | "backdrop" | "float";
   onFirstFrame: () => void;
   eventSource: React.RefObject<HTMLDivElement | null>;
 }
@@ -34,30 +90,48 @@ export interface SceneProps {
 function layoutSlots(
   boxes: PlankBox[],
   resolved: SceneProps["resolved"],
+  preset: SceneProps["preset"],
 ): { slots: BoxSlot[]; worldWidth: number } {
   const widths = boxes.map((b) => (b.width ?? 116) * PX);
   const total =
     widths.reduce((a, b) => a + b, 0) + GAP * Math.max(boxes.length - 1, 0);
   let cursor = -total / 2;
-  const slots = widths.map((w, i) => {
-    const slot = { x: cursor + w / 2, ...resolved[i] };
+  const isFloat = preset === "float";
+  const slots: BoxSlot[] = widths.map((w, i) => {
+    const x = cursor + w / 2;
     cursor += w + GAP;
-    return slot;
+    const base = { x, ...resolved[i] };
+    if (isFloat) {
+      return {
+        ...base,
+        y: 0.18 + (i % 3) * 0.16,
+        z: i % 2 === 0 ? -0.12 : 0.1,
+      };
+    }
+    return base;
   });
   return { slots, worldWidth: total };
 }
 
-function FitCamera({ worldWidth }: { worldWidth: number }) {
+function FitCamera({
+  worldWidth,
+  config,
+}: {
+  worldWidth: number;
+  config: PresetConfig;
+}) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const size = useThree((s) => s.size);
   React.useLayoutEffect(() => {
-    const vFov = (camera.fov * Math.PI) / 180;
+    // fov is set from the Canvas camera prop; read it here for the fit math
+    const vFov = (config.fov * Math.PI) / 180;
     const hFov = 2 * Math.atan(Math.tan(vFov / 2) * (size.width / size.height));
-    const dist = (worldWidth / 2 + 0.5 + CAMERA_X) / Math.tan(hFov / 2);
-    camera.position.set(CAMERA_X, 1.4, dist);
-    camera.lookAt(0, 0.55, 0);
+    const dist =
+      (worldWidth / 2 + config.fitMargin + config.cameraX) / Math.tan(hFov / 2);
+    camera.position.set(config.cameraX, config.cameraY, dist);
+    camera.lookAt(0, config.lookAtY, 0);
     camera.updateProjectionMatrix();
-  }, [camera, size, worldWidth]);
+  }, [camera, size, worldWidth, config]);
   return null;
 }
 
@@ -171,15 +245,21 @@ function FirstFrame({ onFirstFrame }: { onFirstFrame: () => void }) {
 function Parallax({
   children,
   enabled,
+  amplitude,
 }: {
   children: React.ReactNode;
   enabled: boolean;
+  amplitude: number;
 }) {
   const group = React.useRef<THREE.Group>(null);
   useFrame((state, delta) => {
     if (!group.current) return;
     const target = enabled
-      ? [state.pointer.y * 0.04, state.pointer.x * 0.07, 0]
+      ? [
+          state.pointer.y * 0.04 * amplitude,
+          state.pointer.x * 0.07 * amplitude,
+          0,
+        ]
       : [0, 0, 0];
     easing.dampE(
       group.current.rotation,
@@ -208,28 +288,36 @@ function transformSafeEvents(store: RootStore): EventManager<HTMLElement> {
 }
 
 export default function PlankScene(props: SceneProps) {
-  const { slots, worldWidth } = layoutSlots(props.boxes, props.resolved);
-  const preset = LIGHTING[props.theme];
+  const config = PRESETS[props.preset] ?? PRESETS.side;
+  const { slots, worldWidth } = layoutSlots(
+    props.boxes,
+    props.resolved,
+    props.preset,
+  );
+  const lightingPreset = LIGHTING[props.theme];
+  const leanMultiplier = props.preset === "float" ? 3 : 1;
   return (
     <Canvas
       dpr={[1, 2]}
       frameloop={props.visible ? "always" : "never"}
       gl={{ alpha: true, antialias: true }}
       style={{ pointerEvents: "none", background: "transparent" }}
-      camera={{ fov: 35 }}
+      camera={{ fov: config.fov }}
       eventSource={props.eventSource as unknown as React.RefObject<HTMLElement>}
       events={transformSafeEvents}
       resize={{ offsetSize: true }}
     >
       <FirstFrame onFirstFrame={props.onFirstFrame} />
-      <FitCamera worldWidth={worldWidth} />
-      <Lights preset={preset} reducedMotion={props.reducedMotion} />
-      <Parallax enabled={!props.reducedMotion}>
-        <Shelf
-          worldWidth={worldWidth}
-          color={preset.shelfColor}
-          reducedMotion={props.reducedMotion}
-        />
+      <FitCamera worldWidth={worldWidth} config={config} />
+      <Lights preset={lightingPreset} reducedMotion={props.reducedMotion} />
+      <Parallax enabled={!props.reducedMotion} amplitude={config.parallax}>
+        {config.shelf && (
+          <Shelf
+            worldWidth={worldWidth}
+            color={lightingPreset.shelfColor}
+            reducedMotion={props.reducedMotion}
+          />
+        )}
         {props.boxes.map((box, i) => (
           <PuzzleBox
             key={i}
@@ -238,13 +326,15 @@ export default function PlankScene(props: SceneProps) {
             index={i}
             headingFont={props.headingFont}
             reducedMotion={props.reducedMotion}
+            bob={config.bob}
+            leanMultiplier={leanMultiplier}
           />
         ))}
         <ContactShadows
           position={[0, 0.001, 0]}
-          opacity={preset.shadowOpacity}
+          opacity={lightingPreset.shadowOpacity}
           scale={worldWidth + 2}
-          blur={2.2}
+          blur={props.preset === "float" ? 2.8 : 2.2}
           far={1.2}
           resolution={256}
         />

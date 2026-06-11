@@ -44,7 +44,13 @@ class SceneBoundary extends React.Component<
   }
 }
 
-export function JigPlank3D({ boxes = [] }: { boxes?: PlankBox[] }) {
+export function JigPlank3D({
+  boxes = [],
+  preset = "side",
+}: {
+  boxes?: PlankBox[];
+  preset?: SceneProps["preset"];
+}) {
   const container = React.useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = React.useState(false);
   const [sceneReady, setSceneReady] = React.useState(false);
@@ -94,6 +100,21 @@ export function JigPlank3D({ boxes = [] }: { boxes?: PlankBox[] }) {
       style={{ position: "relative", touchAction: "pan-y" }}
       aria-hidden="true"
     >
+      {/* static ambient shadow so the plank pops off the page; CSS-only, no per-frame cost */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          left: "-12%",
+          right: "-12%",
+          bottom: -26,
+          height: 64,
+          background:
+            "radial-gradient(50% 100% at 50% 0%, rgb(40 30 80 / 0.28), transparent 70%)",
+          filter: "blur(6px)",
+          pointerEvents: "none",
+        }}
+      />
       {/* CSS plank: defines layout size; stays as fallback until the scene
           has rendered a frame, then fades out (kept for layout). */}
       <div
@@ -130,6 +151,7 @@ export function JigPlank3D({ boxes = [] }: { boxes?: PlankBox[] }) {
                 theme={theme}
                 reducedMotion={reducedMotion}
                 visible={visible}
+                preset={preset}
                 onFirstFrame={() => setSceneReady(true)}
                 eventSource={container}
               />
