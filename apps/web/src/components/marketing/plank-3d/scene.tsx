@@ -132,6 +132,18 @@ function FirstFrame({ onFirstFrame }: { onFirstFrame: () => void }) {
   return null;
 }
 
+function Parallax({ children, enabled }: { children: React.ReactNode; enabled: boolean }) {
+  const group = React.useRef<THREE.Group>(null);
+  useFrame((state, delta) => {
+    if (!group.current) return;
+    const target = enabled
+      ? [state.pointer.y * 0.04, state.pointer.x * 0.07, 0]
+      : [0, 0, 0];
+    easing.dampE(group.current.rotation, target as [number, number, number], 0.4, delta);
+  });
+  return <group ref={group}>{children}</group>;
+}
+
 export default function PlankScene(props: SceneProps) {
   const { slots, worldWidth } = layoutSlots(props.boxes, props.resolved);
   const preset = LIGHTING[props.theme];
@@ -140,30 +152,33 @@ export default function PlankScene(props: SceneProps) {
       dpr={[1, 2]}
       frameloop={props.visible ? "always" : "never"}
       gl={{ alpha: true, antialias: true }}
-      style={{ pointerEvents: "none", background: "transparent" }}
+      style={{ pointerEvents: "auto", background: "transparent" }}
       camera={{ fov: 35 }}
     >
       <FirstFrame onFirstFrame={props.onFirstFrame} />
       <FitCamera worldWidth={worldWidth} />
       <Lights preset={preset} reducedMotion={props.reducedMotion} />
-      <Shelf worldWidth={worldWidth} color={preset.shelfColor} reducedMotion={props.reducedMotion} />
-      {props.boxes.map((box, i) => (
-        <PuzzleBox
-          key={i}
-          box={box}
-          slot={slots[i]}
-          index={i}
-          headingFont={props.headingFont}
+      <Parallax enabled={!props.reducedMotion}>
+        <Shelf worldWidth={worldWidth} color={preset.shelfColor} reducedMotion={props.reducedMotion} />
+        {props.boxes.map((box, i) => (
+          <PuzzleBox
+            key={i}
+            box={box}
+            slot={slots[i]}
+            index={i}
+            headingFont={props.headingFont}
+            reducedMotion={props.reducedMotion}
+          />
+        ))}
+        <ContactShadows
+          position={[0, 0.001, 0]}
+          opacity={preset.shadowOpacity}
+          scale={worldWidth + 2}
+          blur={2.2}
+          far={1.2}
+          resolution={256}
         />
-      ))}
-      <ContactShadows
-        position={[0, 0.001, 0]}
-        opacity={preset.shadowOpacity}
-        scale={worldWidth + 2}
-        blur={2.2}
-        far={1.2}
-        resolution={256}
-      />
+      </Parallax>
     </Canvas>
   );
 }
