@@ -54,6 +54,10 @@ export interface LightingPreset {
   rimIntensity: number;
   shadowOpacity: number;
   shelfColor: string;
+  /** Gallery spotlight intensity per box. */
+  spotIntensity: number;
+  /** Gallery spotlight color (warm pool). */
+  spotColor: string;
 }
 
 export const LIGHTING: Record<"light" | "dark", LightingPreset> = {
@@ -66,6 +70,8 @@ export const LIGHTING: Record<"light" | "dark", LightingPreset> = {
     rimIntensity: 0,
     shadowOpacity: 0.45,
     shelfColor: "#c98f4d",
+    spotIntensity: 0.9,
+    spotColor: "#fff1d8",
   },
   dark: {
     keyIntensity: 0.65,
@@ -76,5 +82,7 @@ export const LIGHTING: Record<"light" | "dark", LightingPreset> = {
     rimIntensity: 0.9, // violet rim so silhouettes read on dark bg
     shadowOpacity: 0.28, // strong shadows read as holes on dark pages
     shelfColor: "#8a5f33",
+    spotIntensity: 2.6,
+    spotColor: "#ffe3b3",
   },
 };

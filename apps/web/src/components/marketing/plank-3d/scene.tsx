@@ -176,6 +176,47 @@ function transformSafeEvents(store: RootStore): EventManager<HTMLElement> {
   };
 }
 
+function BoxSpot({
+  x,
+  preset,
+  reducedMotion,
+}: {
+  x: number;
+  preset: LightingPreset;
+  reducedMotion: boolean;
+}) {
+  const light = React.useRef<THREE.SpotLight>(null);
+  const target = React.useMemo(() => {
+    const o = new THREE.Object3D();
+    o.position.set(x, 0.7, 0);
+    return o;
+  }, [x]);
+  useFrame((_, delta) => {
+    if (!light.current) return;
+    if (reducedMotion) {
+      light.current.intensity = preset.spotIntensity;
+      light.current.color.set(preset.spotColor);
+      return;
+    }
+    easing.damp(light.current, "intensity", preset.spotIntensity, 0.3, delta);
+    easing.dampC(light.current.color, preset.spotColor, 0.3, delta);
+  });
+  return (
+    <>
+      <primitive object={target} />
+      <spotLight
+        ref={light}
+        position={[x + 0.15, 2.6, 1.1]}
+        target={target}
+        angle={0.5}
+        penumbra={0.85}
+        decay={1.2}
+        intensity={preset.spotIntensity}
+      />
+    </>
+  );
+}
+
 // Inner component that reads live canvas size via useThree, computes camera
 // distance and visible world width, distributes box slots, and positions the
 // camera — all in one place so the math stays consistent.
@@ -197,12 +238,15 @@ function Arrangement({
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const size = useThree((s) => s.size);
 
-  // ——— cover-fit by height ———
+  // ——— cover-fit by height, with minimum visible width for narrow canvases ———
   const vFov = (FOV * Math.PI) / 180;
-  const dist = CONTENT_H / 2 / Math.tan(vFov / 2);
+  const aspect = size.width / size.height;
+  const MIN_VIS_W = 3.2; // never show less than ~3 boxes worth of shelf
+  const contentH = Math.max(CONTENT_H, MIN_VIS_W / aspect);
+  const dist = contentH / 2 / Math.tan(vFov / 2);
 
   // ——— visible world width at z = 0 ———
-  const hFov = 2 * Math.atan(Math.tan(vFov / 2) * (size.width / size.height));
+  const hFov = 2 * Math.atan(Math.tan(vFov / 2) * aspect);
   const visW = 2 * dist * Math.tan(hFov / 2);
 
   // ——— position camera ———
@@ -251,6 +295,14 @@ function Arrangement({
             slot={slots[i]}
             index={i}
             headingFont={headingFont}
+          />
+        ))}
+        {slots.map((slot, i) => (
+          <BoxSpot
+            key={i}
+            x={slot.x}
+            preset={lightingPreset}
+            reducedMotion={reducedMotion}
           />
         ))}
         <ContactShadows

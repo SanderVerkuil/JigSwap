@@ -38,6 +38,97 @@ export function buildBoxArtSpec(
   };
 }
 
+// ——— pure helpers (node-testable) ———
+
+/**
+ * Average an RGBA pixel buffer to a #rrggbb hex (alpha ignored). Pure.
+ */
+export function averagePixelColor(data: Uint8ClampedArray): string {
+  let r = 0,
+    g = 0,
+    b = 0;
+  const n = data.length / 4;
+  if (n === 0) return "#888888";
+  for (let i = 0; i < data.length; i += 4) {
+    r += data[i];
+    g += data[i + 1];
+    b += data[i + 2];
+  }
+  return `#${[r, g, b]
+    .map((v) =>
+      Math.round(v / n)
+        .toString(16)
+        .padStart(2, "0"),
+    )
+    .join("")}`;
+}
+
+export interface CoverEdges {
+  /** Stretched 1-edge-strip canvases for wrapping art around the box. */
+  leftStrip: HTMLCanvasElement;
+  rightStrip: HTMLCanvasElement;
+  topStrip: HTMLCanvasElement;
+  /** Average color of the image border — tint for bevels/back/bottom. */
+  body: string;
+}
+
+/**
+ * Extract cover-edge data from a loaded image.
+ * - Draws the image onto a 64×64 probe canvas.
+ * - Computes `body` from the 1-px border ring of the probe.
+ * - Builds three strip canvases by drawing the outermost ~3% slice of each edge.
+ */
+export function extractCoverEdges(img: HTMLImageElement): CoverEdges {
+  const PROBE = 64;
+  const probe = document.createElement("canvas");
+  probe.width = PROBE;
+  probe.height = PROBE;
+  const pCtx = probe.getContext("2d", { willReadFrequently: true })!;
+  pCtx.drawImage(img, 0, 0, PROBE, PROBE);
+
+  // Collect the 1-px border ring into one flat RGBA buffer.
+  const top = pCtx.getImageData(0, 0, PROBE, 1).data;
+  const bottom = pCtx.getImageData(0, PROBE - 1, PROBE, 1).data;
+  const left = pCtx.getImageData(0, 0, 1, PROBE).data;
+  const right = pCtx.getImageData(PROBE - 1, 0, 1, PROBE).data;
+  const ring = new Uint8ClampedArray(
+    top.length + bottom.length + left.length + right.length,
+  );
+  ring.set(top, 0);
+  ring.set(bottom, top.length);
+  ring.set(left, top.length + bottom.length);
+  ring.set(right, top.length + bottom.length + left.length);
+  const body = averagePixelColor(ring);
+
+  const sw = img.naturalWidth;
+  const sh = img.naturalHeight;
+  // Outermost ~3% slice width/height in source pixels (min 1).
+  const sliceW = Math.max(1, Math.round(sw * 0.03));
+  const sliceH = Math.max(1, Math.round(sh * 0.03));
+
+  // Left strip: draw the leftmost sliceW columns, stretched to 16×256.
+  const leftStrip = document.createElement("canvas");
+  leftStrip.width = 16;
+  leftStrip.height = 256;
+  leftStrip.getContext("2d")!.drawImage(img, 0, 0, sliceW, sh, 0, 0, 16, 256);
+
+  // Right strip: draw the rightmost sliceW columns, stretched to 16×256.
+  const rightStrip = document.createElement("canvas");
+  rightStrip.width = 16;
+  rightStrip.height = 256;
+  rightStrip
+    .getContext("2d")!
+    .drawImage(img, sw - sliceW, 0, sliceW, sh, 0, 0, 16, 256);
+
+  // Top strip: draw the topmost sliceH rows, stretched to 256×16.
+  const topStrip = document.createElement("canvas");
+  topStrip.width = 256;
+  topStrip.height = 16;
+  topStrip.getContext("2d")!.drawImage(img, 0, 0, sw, sliceH, 0, 0, 256, 16);
+
+  return { leftStrip, rightStrip, topStrip, body };
+}
+
 // ——— impure, browser-only half ———
 
 /** Font stack for box art; resolved from --font-mk-heading at the call site. */
@@ -130,6 +221,7 @@ export function createBoxArtTexture(
   spec: BoxArtSpec,
   fonts: ArtFonts,
   onCoverAspect?: (aspect: number) => void,
+  onCoverEdges?: (edges: CoverEdges) => void,
 ): CanvasTexture {
   const canvas = document.createElement("canvas");
   drawBoxArt(spec, canvas, fonts);
@@ -152,6 +244,7 @@ export function createBoxArtTexture(
       drawBoxArt(corrected, canvas, fonts, img);
       texture.needsUpdate = true;
       onCoverAspect?.(aspect);
+      onCoverEdges?.(extractCoverEdges(img));
     };
     img.src = spec.coverSrc;
   }

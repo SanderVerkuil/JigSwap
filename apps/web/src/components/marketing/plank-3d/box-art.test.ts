@@ -1,7 +1,39 @@
 import { describe, expect, it } from "vitest";
-import { ART_SCALE, buildBoxArtSpec } from "./box-art";
+import { ART_SCALE, averagePixelColor, buildBoxArtSpec } from "./box-art";
 
 const colors = { c1: "#8b5cf6", c2: "#6d28d9" };
+
+describe("averagePixelColor", () => {
+  it("returns exact hex for a uniform buffer", () => {
+    // 4 pixels, all (255, 128, 0, 255)
+    const data = new Uint8ClampedArray(4 * 4);
+    for (let i = 0; i < 4; i++) {
+      data[i * 4] = 255;
+      data[i * 4 + 1] = 128;
+      data[i * 4 + 2] = 0;
+      data[i * 4 + 3] = 255;
+    }
+    expect(averagePixelColor(data)).toBe("#ff8000");
+  });
+
+  it("averages mixed pixel colors correctly", () => {
+    // 2 pixels: (100, 200, 0) and (200, 100, 0) → average (150, 150, 0)
+    const data = new Uint8ClampedArray(2 * 4);
+    data[0] = 100;
+    data[1] = 200;
+    data[2] = 0;
+    data[3] = 255;
+    data[4] = 200;
+    data[5] = 100;
+    data[6] = 0;
+    data[7] = 255;
+    expect(averagePixelColor(data)).toBe("#969600");
+  });
+
+  it("returns fallback for an empty buffer", () => {
+    expect(averagePixelColor(new Uint8ClampedArray(0))).toBe("#888888");
+  });
+});
 
 describe("buildBoxArtSpec", () => {
   it("uses cover mode when a cover is present", () => {
