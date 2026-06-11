@@ -59,6 +59,7 @@ export function drawBoxArt(
 
   if (spec.mode === "cover" && coverImage) {
     // cover-fit the image
+    if (!coverImage.naturalWidth || !coverImage.naturalHeight) return;
     const scale = Math.max(w / coverImage.naturalWidth, h / coverImage.naturalHeight);
     const dw = coverImage.naturalWidth * scale;
     const dh = coverImage.naturalHeight * scale;
@@ -79,6 +80,7 @@ export function drawBoxArt(
     ctx.font = `700 ${9.5 * s}px ${fonts.heading}`;
     ctx.textBaseline = "top";
     ctx.fillText(spec.series.toUpperCase(), 8 * s, 6 * s);
+    ctx.textBaseline = "alphabetic";
   }
 
   // piece-count badge, top-right white circle
@@ -132,9 +134,15 @@ export function createBoxArtTexture(
   texture.colorSpace = SRGBColorSpace;
   texture.anisotropy = 4;
 
+  let disposed = false;
+  texture.addEventListener("dispose", () => {
+    disposed = true;
+  });
+
   if (spec.mode === "cover" && spec.coverSrc) {
     const img = new Image();
     img.onload = () => {
+      if (disposed) return;
       drawBoxArt(spec, canvas, fonts, img);
       texture.needsUpdate = true;
       onCoverAspect?.(img.naturalWidth / img.naturalHeight);
@@ -144,6 +152,7 @@ export function createBoxArtTexture(
 
   // brand font may not be loaded yet on first draw; redraw when ready
   document.fonts?.ready.then(() => {
+    if (disposed) return;
     if (spec.mode === "gradient") {
       drawBoxArt(spec, canvas, fonts);
       texture.needsUpdate = true;
