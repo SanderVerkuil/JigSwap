@@ -195,6 +195,12 @@ export const gateway = {
     exportUserData: api.insights.exportUserData.exportUserData,
   },
 
+  // Public marketing contact form: operational/support write, not a bounded context. The thin
+  // mutation is unauthenticated and persists the message for admin triage.
+  contact: {
+    submit: api.contact.submitContactMessage.submitContactMessage,
+  },
+
   // Friend Circles (Sharing): private groups whose members share circle-scoped visibility. Writes
   // go through the domain-driven sharing module (file.export namespacing); membership ops are
   // admin-gated in the Circle aggregate. `circleId` is the CircleId aggregateId; `copyId` is the

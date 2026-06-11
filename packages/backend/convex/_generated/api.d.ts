@@ -35,6 +35,7 @@ import type * as catalog_setCatalogCategoryActive from "../catalog/setCatalogCat
 import type * as catalog_submitPuzzleDefinition from "../catalog/submitPuzzleDefinition.js";
 import type * as catalog_updateCatalogCategory from "../catalog/updateCatalogCategory.js";
 import type * as catalog_updatePuzzleDefinition from "../catalog/updatePuzzleDefinition.js";
+import type * as contact_submitContactMessage from "../contact/submitContactMessage.js";
 import type * as custody_getCopyCustodyTimeline from "../custody/getCopyCustodyTimeline.js";
 import type * as custody_subscriber from "../custody/subscriber.js";
 import type * as events_dispatch from "../events/dispatch.js";
@@ -236,6 +237,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/submitPuzzleDefinition": typeof catalog_submitPuzzleDefinition;
   "catalog/updateCatalogCategory": typeof catalog_updateCatalogCategory;
   "catalog/updatePuzzleDefinition": typeof catalog_updatePuzzleDefinition;
+  "contact/submitContactMessage": typeof contact_submitContactMessage;
   "custody/getCopyCustodyTimeline": typeof custody_getCopyCustodyTimeline;
   "custody/subscriber": typeof custody_subscriber;
   "events/dispatch": typeof events_dispatch;

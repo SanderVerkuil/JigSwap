@@ -630,4 +630,22 @@ export default defineSchema({
     .index("by_copy", ["copyId", "openedAt"])
     .index("by_borrower", ["borrowerId", "status"])
     .index("by_lender", ["lenderId", "status"]),
+
+  // Messages from the public marketing contact form. Operational/support data, not a bounded
+  // context: written by an unauthenticated thin mutation, read (later) by admin tooling. Status
+  // tracks triage.
+  contactMessages: defineTable({
+    name: v.string(),
+    email: v.string(),
+    subject: v.union(
+      v.literal("swap"),
+      v.literal("account"),
+      v.literal("idea"),
+      v.literal("other"),
+    ),
+    message: v.string(),
+    locale: v.optional(v.string()),
+    status: v.union(v.literal("new"), v.literal("handled")),
+    createdAt: v.number(),
+  }).index("by_status", ["status", "createdAt"]),
 });
