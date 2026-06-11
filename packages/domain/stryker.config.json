@@ -17,9 +17,12 @@
     "!src/shared-kernel/branded-ids.ts",
     "!src/**/errors.ts"
   ],
-  "reporters": ["html", "clear-text", "progress"],
+  "reporters": ["html", "json", "clear-text", "progress"],
   "htmlReporter": {
     "fileName": "reports/mutation/mutation-report.html"
+  },
+  "jsonReporter": {
+    "fileName": "reports/mutation/mutation.json"
   },
   "clearTextReporter": {
     "allowColor": true,

@@ -1,0 +1,86 @@
+name: Mutation Testing
+
+# Runs Stryker over @jigswap/domain on PRs that touch the domain package and
+# upserts a single results comment on the PR (identified by a hidden marker,
+# updated in place on subsequent pushes). Path-filtered because mutation
+# testing is the slowest suite and domain-untouched PRs cannot change scores.
+# NOTE: keep this workflow OUT of required status checks — path-filtered
+# workflows report no status on PRs that skip them, which would block merges.
+on:
+  pull_request:
+    paths:
+      - "packages/domain/**"
+      - ".github/workflows/mutation.yml"
+      - ".github/scripts/mutation-comment.mjs"
+
+concurrency:
+  group: mutation-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  mutation:
+    name: Stryker (@jigswap/domain)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Nx caching is intentionally skipped: the mutation target is uncacheable
+      # (project.json sets cache: false) and nothing else runs here.
+      - name: Run mutation tests
+        run: pnpm exec nx run @jigswap/domain:mutation
+
+      # The remaining steps run on failure too: a broken threshold should still
+      # update the PR comment, and the HTML report helps diagnose survivors.
+      # Uploaded before rendering so the artifact URL can be linked in the comment.
+      - name: Upload mutation report (HTML + JSON)
+        id: report-artifact
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-report
+          path: packages/domain/reports/mutation/
+          if-no-files-found: ignore
+
+      - name: Render comment markdown
+        if: ${{ !cancelled() }}
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          ARTIFACT_URL: ${{ steps.report-artifact.outputs.artifact-url }}
+        run: |
+          node .github/scripts/mutation-comment.mjs \
+            packages/domain/reports/mutation/mutation.json > mutation-comment.md
+
+      - name: Upsert PR comment
+        if: ${{ !cancelled() }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- stryker-mutation-report -->';
+            const body = fs.readFileSync('mutation-comment.md', 'utf8');
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number, per_page: 100,
+            });
+            const existing = comments.find((c) => c.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }

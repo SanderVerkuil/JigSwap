@@ -5,15 +5,17 @@ on:
     branches: [main]
   pull_request:
 
-# A newer push to the same branch supersedes in-flight runs.
+# A newer push to the same PR branch supersedes in-flight runs; pushes to main
+# always run to completion so every main commit has a CI result.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   verify:
     name: Lint · Type-check · Test · Build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -37,6 +39,10 @@ jobs:
           key: nx-${{ runner.os }}-${{ github.sha }}
           restore-keys: nx-${{ runner.os }}-
 
+      - name: Check formatting
+        run: pnpm run format:check
+
       # Convex _generated/* is committed, so no deployment or secrets are needed here.
-      - name: Verify (lint, type-check, test, build)
-        run: pnpm exec nx run-many -t lint type-check test build
+      # arch-check enforces the DDD/hexagonal boundaries via dependency-cruiser.
+      - name: Verify (lint, type-check, test, build, arch-check)
+        run: pnpm exec nx run-many -t lint type-check test build arch-check --parallel=4
