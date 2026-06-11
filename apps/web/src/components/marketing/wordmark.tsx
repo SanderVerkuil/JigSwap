@@ -3,7 +3,7 @@ import { Image } from "@/compat/image";
 // stacked lockup with the wordmark text baked in underneath.
 import logoIcon from "@/components/marketing/assets/icon.png";
 
-// Logo mark + two-tone wordmark: violet "Jig", green "Swap" (Fredoka 700).
+// Logo mark + two-tone wordmark: violet "Jig", green "Swap" (Fraunces 700).
 export function Wordmark({ size = 22 }: { size?: number }) {
   return (
     <span className="inline-flex items-center gap-[9px]">
