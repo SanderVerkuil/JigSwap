@@ -28,7 +28,8 @@ const open = new Set(
 );
 
 // Everything else at the top level (legacy layouts, closed PRs) is pruned.
-const KEEP = new Set([".nojekyll", "index.html", "main"]);
+// .git is the checkout's own metadata (a file in worktrees, a dir in CI).
+const KEEP = new Set([".git", ".nojekyll", "index.html", "main"]);
 
 const kept = [];
 for (const entry of readdirSync(pagesDir, { withFileTypes: true })) {
