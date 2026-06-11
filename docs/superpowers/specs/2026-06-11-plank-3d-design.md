@@ -67,6 +67,27 @@ The canvas mounts inside the same fixed-size container the CSS plank occupies.
 - Render loop pauses when the hero scrolls offscreen (IntersectionObserver)
   or the tab is hidden. DPR clamped to `[1, 2]`.
 
+#### Dark-mode lighting
+
+The marketing palette flips its entire `--mk-*` ramp via the next-themes
+`.dark` class, so the scene must follow `useTheme().resolvedTheme` reactively:
+
+- **Lighting presets.** Light mode: warm key light (slightly warm white,
+  intensity ~1.2), soft ambient/environment fill — daylight product-shot
+  feel. Dark mode: dimmer, cooler key light (~0.7, cool white), lower
+  environment intensity, plus a subtle violet rim/fill light (from the brand
+  primary) so box silhouettes read against the dark hero background instead
+  of disappearing into it.
+- **Shadows.** `ContactShadows` opacity drops in dark mode (shadows on a dark
+  page read as holes if too strong).
+- **Materials.** The shelf wood tone darkens a step in dark mode; box
+  materials inherit their colors from the (theme-resolved) CSS variables.
+- **Reactivity.** CSS-var resolution for box art and materials re-runs when
+  `resolvedTheme` changes — the violet ramp flips, so `CanvasTexture`s are
+  re-rendered and material colors updated. Light values transition with the
+  same spring damping as the interactions, so toggling the theme fades the
+  lighting rather than snapping it.
+
 ### `box.tsx`
 
 - Geometry: drei `RoundedBox`, slight bevel (real cardboard has soft edges).
@@ -122,11 +143,12 @@ separate chunk; verified with `rollup-plugin-visualizer` (already a devDep).
   only pure-logic piece.
 - Type-check + lint as usual.
 - Manual/visual verification in the running app: hero render quality, drag
-  feel, fallback path (WebGL blocked), reduced-motion, mobile touch scroll.
+  feel, fallback path (WebGL blocked), reduced-motion, mobile touch scroll,
+  and both themes — including toggling dark mode live (lighting fades, box
+  art re-renders with the flipped ramp).
 - Bundle check: 3D chunk is code-split and not in the entry bundle.
 
 ## Out of scope
 
 - Feature row and about page visuals (keep CSS plank).
 - Physics engine (possible later layer).
-- Dark-mode-specific scene lighting beyond what the palette provides.
