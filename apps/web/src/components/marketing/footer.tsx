@@ -44,7 +44,6 @@ export function MarketingFooter() {
           {col(t("footer.community"), [
             { href: "/about", label: t("nav.about") },
             { href: "/contact", label: t("nav.contact") },
-            { href: "/about", label: t("footer.sustainability") },
           ])}
           {col(t("footer.legal"), [
             { href: "/privacy", label: t("footer.privacy") },
