@@ -60,7 +60,10 @@ export function drawBoxArt(
   if (spec.mode === "cover" && coverImage) {
     // cover-fit the image
     if (!coverImage.naturalWidth || !coverImage.naturalHeight) return;
-    const scale = Math.max(w / coverImage.naturalWidth, h / coverImage.naturalHeight);
+    const scale = Math.max(
+      w / coverImage.naturalWidth,
+      h / coverImage.naturalHeight,
+    );
     const dw = coverImage.naturalWidth * scale;
     const dh = coverImage.naturalHeight * scale;
     ctx.drawImage(coverImage, (w - dw) / 2, (h - dh) / 2, dw, dh);

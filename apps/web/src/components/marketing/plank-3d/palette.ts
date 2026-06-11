@@ -36,7 +36,9 @@ export function resolveCssColor(input: string, scope: HTMLElement): string {
 
 /** Resolve the marketing heading font stack for canvas text. */
 export function resolveHeadingFont(scope: HTMLElement): string {
-  const v = getComputedStyle(scope).getPropertyValue("--font-mk-heading").trim();
+  const v = getComputedStyle(scope)
+    .getPropertyValue("--font-mk-heading")
+    .trim();
   return v || "system-ui, sans-serif";
 }
 

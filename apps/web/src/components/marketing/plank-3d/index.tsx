@@ -49,7 +49,9 @@ export function JigPlank3D({ boxes = [] }: { boxes?: PlankBox[] }) {
   const [mounted, setMounted] = React.useState(false);
   const [sceneReady, setSceneReady] = React.useState(false);
   const [visible, setVisible] = React.useState(true);
-  const [resolved, setResolved] = React.useState<SceneProps["resolved"] | null>(null);
+  const [resolved, setResolved] = React.useState<SceneProps["resolved"] | null>(
+    null,
+  );
   const [headingFont, setHeadingFont] = React.useState("system-ui, sans-serif");
   const reducedMotion = usePrefersReducedMotion();
   const { resolvedTheme } = useTheme();
@@ -77,7 +79,9 @@ export function JigPlank3D({ boxes = [] }: { boxes?: PlankBox[] }) {
   React.useEffect(() => {
     const el = container.current;
     if (!el || !mounted) return;
-    const io = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting));
+    const io = new IntersectionObserver(([entry]) =>
+      setVisible(entry.isIntersecting),
+    );
     io.observe(el);
     return () => io.disconnect();
   }, [mounted]);

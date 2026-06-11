@@ -1,7 +1,12 @@
 import type { PlankBox } from "@/components/marketing/plank";
 import { ContactShadows } from "@react-three/drei";
+import type {
+  DomEvent,
+  EventManager,
+  RootState,
+  RootStore,
+} from "@react-three/fiber";
 import { Canvas, events, useFrame, useThree } from "@react-three/fiber";
-import type { DomEvent, EventManager, RootState, RootStore } from "@react-three/fiber";
 import { easing } from "maath";
 import * as React from "react";
 import * as THREE from "three";
@@ -31,7 +36,8 @@ function layoutSlots(
   resolved: SceneProps["resolved"],
 ): { slots: BoxSlot[]; worldWidth: number } {
   const widths = boxes.map((b) => (b.width ?? 116) * PX);
-  const total = widths.reduce((a, b) => a + b, 0) + GAP * Math.max(boxes.length - 1, 0);
+  const total =
+    widths.reduce((a, b) => a + b, 0) + GAP * Math.max(boxes.length - 1, 0);
   let cursor = -total / 2;
   const slots = widths.map((w, i) => {
     const slot = { x: cursor + w / 2, ...resolved[i] };
@@ -56,14 +62,21 @@ function FitCamera({ worldWidth }: { worldWidth: number }) {
 }
 
 /** Damps all light parameters toward the active theme preset. */
-function Lights({ preset, reducedMotion }: { preset: LightingPreset; reducedMotion: boolean }) {
+function Lights({
+  preset,
+  reducedMotion,
+}: {
+  preset: LightingPreset;
+  reducedMotion: boolean;
+}) {
   const key = React.useRef<THREE.DirectionalLight>(null);
   const ambient = React.useRef<THREE.AmbientLight>(null);
   const hemi = React.useRef<THREE.HemisphereLight>(null);
   const rim = React.useRef<THREE.DirectionalLight>(null);
 
   useFrame((_, delta) => {
-    if (!key.current || !ambient.current || !hemi.current || !rim.current) return;
+    if (!key.current || !ambient.current || !hemi.current || !rim.current)
+      return;
     if (reducedMotion) {
       // snap instead of fading
       key.current.intensity = preset.keyIntensity;
@@ -76,7 +89,13 @@ function Lights({ preset, reducedMotion }: { preset: LightingPreset; reducedMoti
     }
     easing.damp(key.current, "intensity", preset.keyIntensity, 0.3, delta);
     easing.dampC(key.current.color, preset.keyColor, 0.3, delta);
-    easing.damp(ambient.current, "intensity", preset.ambientIntensity, 0.3, delta);
+    easing.damp(
+      ambient.current,
+      "intensity",
+      preset.ambientIntensity,
+      0.3,
+      delta,
+    );
     easing.dampC(ambient.current.color, preset.ambientColor, 0.3, delta);
     easing.damp(hemi.current, "intensity", preset.hemiIntensity, 0.3, delta);
     easing.damp(rim.current, "intensity", preset.rimIntensity, 0.3, delta);
@@ -84,9 +103,18 @@ function Lights({ preset, reducedMotion }: { preset: LightingPreset; reducedMoti
 
   return (
     <>
-      <directionalLight ref={key} position={[2.5, 4, 3]} intensity={preset.keyIntensity} />
+      <directionalLight
+        ref={key}
+        position={[2.5, 4, 3]}
+        intensity={preset.keyIntensity}
+      />
       <ambientLight ref={ambient} intensity={preset.ambientIntensity} />
-      <hemisphereLight ref={hemi} color="#ffffff" groundColor="#d9c4a8" intensity={preset.hemiIntensity} />
+      <hemisphereLight
+        ref={hemi}
+        color="#ffffff"
+        groundColor="#d9c4a8"
+        intensity={preset.hemiIntensity}
+      />
       <directionalLight
         ref={rim}
         position={[-3, 2.5, -2]}
@@ -116,7 +144,13 @@ function Shelf({
     }
   });
   return (
-    <mesh position={[0, -SHELF_THICKNESS / 2, SHELF_DEPTH / 2 - BOX_DEPTH / 2 - 0.1]}>
+    <mesh
+      position={[
+        0,
+        -SHELF_THICKNESS / 2,
+        SHELF_DEPTH / 2 - BOX_DEPTH / 2 - 0.1,
+      ]}
+    >
       <boxGeometry args={[worldWidth + 0.8, SHELF_THICKNESS, SHELF_DEPTH]} />
       <meshStandardMaterial ref={mat} color={color} roughness={0.7} />
     </mesh>
@@ -134,14 +168,25 @@ function FirstFrame({ onFirstFrame }: { onFirstFrame: () => void }) {
   return null;
 }
 
-function Parallax({ children, enabled }: { children: React.ReactNode; enabled: boolean }) {
+function Parallax({
+  children,
+  enabled,
+}: {
+  children: React.ReactNode;
+  enabled: boolean;
+}) {
   const group = React.useRef<THREE.Group>(null);
   useFrame((state, delta) => {
     if (!group.current) return;
     const target = enabled
       ? [state.pointer.y * 0.04, state.pointer.x * 0.07, 0]
       : [0, 0, 0];
-    easing.dampE(group.current.rotation, target as [number, number, number], 0.4, delta);
+    easing.dampE(
+      group.current.rotation,
+      target as [number, number, number],
+      0.4,
+      delta,
+    );
   });
   return <group ref={group}>{children}</group>;
 }
@@ -180,7 +225,11 @@ export default function PlankScene(props: SceneProps) {
       <FitCamera worldWidth={worldWidth} />
       <Lights preset={preset} reducedMotion={props.reducedMotion} />
       <Parallax enabled={!props.reducedMotion}>
-        <Shelf worldWidth={worldWidth} color={preset.shelfColor} reducedMotion={props.reducedMotion} />
+        <Shelf
+          worldWidth={worldWidth}
+          color={preset.shelfColor}
+          reducedMotion={props.reducedMotion}
+        />
         {props.boxes.map((box, i) => (
           <PuzzleBox
             key={i}

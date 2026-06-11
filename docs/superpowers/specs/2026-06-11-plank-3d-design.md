@@ -14,13 +14,13 @@ shadows, believable cardboard — and to be playfully interactive.
 
 ## Decisions
 
-| Decision | Choice |
-| --- | --- |
-| Motion level | Playful interactive (hover lift, drag with spring settle) |
-| Placement | Hero only; CSS plank stays elsewhere and as fallback |
-| Art style | Stylized-real: brand violet palette, product-render lighting, not photoreal |
-| 3D stack | `three` + `@react-three/fiber` v9 + `@react-three/drei` + `maath` springs — no physics engine |
-| Perf budget | Lazy-loaded code-split chunk (~170 kB gzip) acceptable; must not block first paint |
+| Decision     | Choice                                                                                        |
+| ------------ | --------------------------------------------------------------------------------------------- |
+| Motion level | Playful interactive (hover lift, drag with spring settle)                                     |
+| Placement    | Hero only; CSS plank stays elsewhere and as fallback                                          |
+| Art style    | Stylized-real: brand violet palette, product-render lighting, not photoreal                   |
+| 3D stack     | `three` + `@react-three/fiber` v9 + `@react-three/drei` + `maath` springs — no physics engine |
+| Perf budget  | Lazy-loaded code-split chunk (~170 kB gzip) acceptable; must not block first paint            |
 
 Rejected alternatives:
 
@@ -49,7 +49,7 @@ plank-3d/
 2. After mount, dynamically imports the scene chunk (`React.lazy`).
 3. When the scene has rendered its first frame, crossfades CSS → canvas.
 4. If WebGL is unavailable or the import fails, the CSS plank simply stays.
-   No error UI — the fallback *is* the current production visual.
+   No error UI — the fallback _is_ the current production visual.
 
 The canvas mounts inside the same fixed-size container the CSS plank occupies.
 
@@ -131,12 +131,12 @@ separate chunk; verified with `rollup-plugin-visualizer` (already a devDep).
 
 ## Error handling
 
-| Failure | Behavior |
-| --- | --- |
+| Failure                          | Behavior                               |
+| -------------------------------- | -------------------------------------- |
 | WebGL context unavailable / lost | CSS plank stays / returns; no error UI |
-| Lazy chunk fails to load | CSS plank stays |
-| Cover image fails | Gradient box-art fallback |
-| JS disabled / SSR | CSS plank (already the rendered HTML) |
+| Lazy chunk fails to load         | CSS plank stays                        |
+| Cover image fails                | Gradient box-art fallback              |
+| JS disabled / SSR                | CSS plank (already the rendered HTML)  |
 
 ## Testing & verification
 

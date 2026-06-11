@@ -69,9 +69,17 @@ export function PuzzleBox({
     [box, slot.c1, slot.c2, headingFont],
   );
   React.useEffect(() => () => texture.dispose(), [texture]);
-  React.useEffect(() => () => { document.body.style.cursor = ""; }, []);
+  React.useEffect(
+    () => () => {
+      document.body.style.cursor = "";
+    },
+    [],
+  );
 
-  const home = React.useMemo(() => new THREE.Vector3(slot.x, h / 2, 0), [slot.x, h]);
+  const home = React.useMemo(
+    () => new THREE.Vector3(slot.x, h / 2, 0),
+    [slot.x, h],
+  );
   const lean = (index % 2 === 0 ? 1 : -1) * 0.015 + index * 0.002;
   const baseYaw = 0.06 * (index % 3 === 2 ? -1 : 1);
 
@@ -131,12 +139,18 @@ export function PuzzleBox({
     d.velocity.copy(g.position).sub(d.prev).divideScalar(Math.max(delta, 1e-4));
     d.prev.copy(g.position);
     const t = tilt.current;
-    const targetZ = d.active ? THREE.MathUtils.clamp(-d.velocity.x * 0.12, -0.3, 0.3) : 0;
-    const targetX = d.active ? THREE.MathUtils.clamp(d.velocity.y * 0.1, -0.25, 0.25) : 0;
+    const targetZ = d.active
+      ? THREE.MathUtils.clamp(-d.velocity.x * 0.12, -0.3, 0.3)
+      : 0;
+    const targetX = d.active
+      ? THREE.MathUtils.clamp(d.velocity.y * 0.1, -0.25, 0.25)
+      : 0;
     // underdamped spring → wobble on release
-    t.vz += (-SPRING_STIFFNESS * (t.z - targetZ) - SPRING_DAMPING * t.vz) * delta;
+    t.vz +=
+      (-SPRING_STIFFNESS * (t.z - targetZ) - SPRING_DAMPING * t.vz) * delta;
     t.z += t.vz * delta;
-    t.vx += (-SPRING_STIFFNESS * (t.x - targetX) - SPRING_DAMPING * t.vx) * delta;
+    t.vx +=
+      (-SPRING_STIFFNESS * (t.x - targetX) - SPRING_DAMPING * t.vx) * delta;
     t.x += t.vx * delta;
     g.rotation.set(t.x, baseYaw, lean + t.z);
   });
