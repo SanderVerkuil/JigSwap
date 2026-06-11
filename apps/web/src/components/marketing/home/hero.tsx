@@ -1,5 +1,6 @@
 import { Link } from "@/compat/link";
-import { JigPlank, type PlankBox } from "@/components/marketing/plank";
+import { type PlankBox } from "@/components/marketing/plank";
+import { JigPlank3D } from "@/components/marketing/plank-3d";
 import { Reveal } from "@/components/marketing/reveal";
 import { Eyebrow } from "@/components/marketing/section";
 import { Button } from "@/components/ui/button";
@@ -117,8 +118,8 @@ export function Hero() {
           </Reveal>
           <Reveal delay={120} className="flex justify-center">
             <div className="max-w-full max-[860px]:scale-[.84] max-[540px]:scale-[.66]">
-              <div className="scale-[.74] origin-center [filter:drop-shadow(0_30px_40px_rgb(40_30_80_/_.16))]">
-                <JigPlank boxes={PLANK} depth={18} />
+              <div className="scale-[.74] origin-center">
+                <JigPlank3D boxes={PLANK} />
               </div>
             </div>
           </Reveal>
