@@ -143,21 +143,24 @@ export function createBoxArtTexture(
     const img = new Image();
     img.onload = () => {
       if (disposed) return;
-      drawBoxArt(spec, canvas, fonts, img);
+      const aspect = img.naturalWidth / img.naturalHeight;
+      if (!Number.isFinite(aspect) || aspect <= 0) return;
+      const corrected = { ...spec, height: Math.round(spec.width / aspect) };
+      drawBoxArt(corrected, canvas, fonts, img);
       texture.needsUpdate = true;
-      onCoverAspect?.(img.naturalWidth / img.naturalHeight);
+      onCoverAspect?.(aspect);
     };
     img.src = spec.coverSrc;
   }
 
   // brand font may not be loaded yet on first draw; redraw when ready
-  document.fonts?.ready.then(() => {
-    if (disposed) return;
-    if (spec.mode === "gradient") {
+  if (spec.mode === "gradient") {
+    document.fonts?.ready.then(() => {
+      if (disposed) return;
       drawBoxArt(spec, canvas, fonts);
       texture.needsUpdate = true;
-    }
-  });
+    });
+  }
 
   return texture;
 }

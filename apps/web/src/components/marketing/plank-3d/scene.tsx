@@ -31,7 +31,7 @@ function layoutSlots(
   resolved: SceneProps["resolved"],
 ): { slots: BoxSlot[]; worldWidth: number } {
   const widths = boxes.map((b) => (b.width ?? 116) * PX);
-  const total = widths.reduce((a, b) => a + b, 0) + GAP * (boxes.length - 1);
+  const total = widths.reduce((a, b) => a + b, 0) + GAP * Math.max(boxes.length - 1, 0);
   let cursor = -total / 2;
   const slots = widths.map((w, i) => {
     const slot = { x: cursor + w / 2, ...resolved[i] };

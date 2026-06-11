@@ -29,12 +29,15 @@ function usePrefersReducedMotion(): boolean {
 
 /** Render-nothing error boundary: any 3D failure leaves the CSS plank. */
 class SceneBoundary extends React.Component<
-  { children: React.ReactNode },
+  { children: React.ReactNode; onError?: () => void },
   { failed: boolean }
 > {
   state = { failed: false };
   static getDerivedStateFromError() {
     return { failed: true };
+  }
+  componentDidCatch() {
+    this.props.onError?.();
   }
   render() {
     return this.state.failed ? null : this.props.children;
@@ -99,7 +102,7 @@ export function JigPlank3D({ boxes = [] }: { boxes?: PlankBox[] }) {
         <JigPlank boxes={boxes} depth={18} />
       </div>
       {showScene && (
-        <SceneBoundary>
+        <SceneBoundary onError={() => setSceneReady(false)}>
           <React.Suspense fallback={null}>
             {/* Bleed past the plank so lifted/dragged boxes aren't clipped.
                 pointer-events: none on the canvas; interaction routes via
