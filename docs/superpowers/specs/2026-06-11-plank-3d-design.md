@@ -153,3 +153,25 @@ separate chunk; verified with `rollup-plugin-visualizer` (already a devDep).
 
 - Feature row and about page visuals (keep CSS plank).
 - Physics engine (possible later layer).
+
+## Addendum — final design (2026-06-11, after owner review)
+
+The implementation above shipped, then evolved through live comparison of four
+hero composition drafts (classic / stage / backdrop / float). Decisions that
+supersede sections above:
+
+- **No box interactivity.** Drag/hover was removed: box-level interaction
+  without a real physics simulation felt wrong. Ambient scene parallax stays.
+- **Full-bleed backdrop hero.** The winning composition: the scene covers the
+  entire hero background (`absolute inset-0`), text overlays it behind a
+  theme-aware scrim. The camera cover-fits by height (min visible width
+  ~3.2 world units guards mobile), box slots redistribute across the visible
+  width, and the shelf always extends past both viewport edges — no visible
+  end caps.
+- **Spotlights.** One warm spotlight per box (no shadow maps), theme-damped:
+  subtle in light mode, dramatic pools in dark mode.
+- **Cover-edge art bleed.** Cover images are analyzed on load
+  (`extractCoverEdges`): the box body is tinted with the artwork's border
+  average, and stretched edge strips wrap the left/right/top faces so the box
+  sides extend the artwork instead of using a brand color.
+- The draft toggle and non-winning variants were removed after selection.

@@ -22,7 +22,6 @@ const PLANK_WIDE: PlankBox[] = [
     c2: "var(--mk-violet-600)",
     width: 100,
   },
-  { cover: coverSand, title: "Zandsculpturen", width: 134 },
   {
     series: "Steden",
     title: "Amsterdam",
@@ -39,6 +38,8 @@ const PLANK_WIDE: PlankBox[] = [
     c2: "var(--mk-pink-500)",
     width: 108,
   },
+  // The real-cover box sits right-of-center where the scrim doesn't dim it.
+  { cover: coverSand, title: "Zandsculpturen", width: 134 },
   {
     series: "Natuur",
     title: "Waddenzee",
