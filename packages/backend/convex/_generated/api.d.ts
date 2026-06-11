@@ -77,6 +77,7 @@ import type * as insights_getCollectionBreakdown from "../insights/getCollection
 import type * as insights_getCompletionTrends from "../insights/getCompletionTrends.js";
 import type * as insights_getGlobalStats from "../insights/getGlobalStats.js";
 import type * as insights_getPersonalStats from "../insights/getPersonalStats.js";
+import type * as insights_getPlankPuzzles from "../insights/getPlankPuzzles.js";
 import type * as insights_getRecommendations from "../insights/getRecommendations.js";
 import type * as insights_getTradeActivity from "../insights/getTradeActivity.js";
 import type * as library_acquireCopy from "../library/acquireCopy.js";
@@ -279,6 +280,7 @@ declare const fullApi: ApiFromModules<{
   "insights/getCompletionTrends": typeof insights_getCompletionTrends;
   "insights/getGlobalStats": typeof insights_getGlobalStats;
   "insights/getPersonalStats": typeof insights_getPersonalStats;
+  "insights/getPlankPuzzles": typeof insights_getPlankPuzzles;
   "insights/getRecommendations": typeof insights_getRecommendations;
   "insights/getTradeActivity": typeof insights_getTradeActivity;
   "library/acquireCopy": typeof library_acquireCopy;
