@@ -1,279 +1,153 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { Link } from "@/compat/link";
+import {
+  LegalDoc,
+  type LegalSection,
+} from "@/components/marketing/legal-doc";
+import { PageHero } from "@/components/marketing/page-hero";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_public/privacy")({
+  head: () => ({
+    meta: [{ title: "Privacy Policy — JigSwap" }],
+  }),
   component: PrivacyPolicyPage,
 });
 
+// Privacy policy in the marketing LegalDoc layout (sticky TOC + reading
+// column). Content keeps the existing, substantive `privacy` catalog —
+// the design bundle shipped placeholder legal text.
 function PrivacyPolicyPage() {
   const t = useTranslations("privacy");
-  const tCommon = useTranslations("common");
+  const tm = useTranslations("marketing.legal");
+
+  const list = (key: string): string[] => t.raw(key) as string[];
+
+  const sections: LegalSection[] = [
+    {
+      id: "p-collect",
+      heading: t("informationWeCollect.title"),
+      blocks: [
+        { type: "p", text: t("informationWeCollect.description") },
+        {
+          type: "sub",
+          text: t("informationWeCollect.personalInformation.title"),
+        },
+        {
+          type: "list",
+          items: list("informationWeCollect.personalInformation.items"),
+        },
+        {
+          type: "sub",
+          text: t("informationWeCollect.automaticallyCollected.title"),
+        },
+        {
+          type: "list",
+          items: list("informationWeCollect.automaticallyCollected.items"),
+        },
+      ],
+    },
+    {
+      id: "p-use",
+      heading: t("howWeUseInformation.title"),
+      blocks: [
+        { type: "p", text: t("howWeUseInformation.description") },
+        { type: "list", items: list("howWeUseInformation.purposes") },
+      ],
+    },
+    {
+      id: "p-storage",
+      heading: t("dataStorage.title"),
+      blocks: [
+        { type: "p", text: t("dataStorage.description") },
+        { type: "sub", text: t("dataStorage.convex.title") },
+        { type: "p", text: t("dataStorage.convex.description") },
+        { type: "sub", text: t("dataStorage.vercel.title") },
+        { type: "p", text: t("dataStorage.vercel.description") },
+      ],
+    },
+    {
+      id: "p-analytics",
+      heading: t("analytics.title"),
+      blocks: [
+        { type: "p", text: t("analytics.description") },
+        { type: "sub", text: t("analytics.posthog.title") },
+        { type: "p", text: t("analytics.posthog.description") },
+        { type: "strong", text: t("analytics.noAdvertising") },
+      ],
+    },
+    {
+      id: "p-sharing",
+      heading: t("dataSharing.title"),
+      blocks: [
+        { type: "p", text: t("dataSharing.description") },
+        { type: "strong", text: t("dataSharing.noSale") },
+        { type: "p", text: t("dataSharing.limitedSharing") },
+        { type: "list", items: list("dataSharing.circumstances") },
+      ],
+    },
+    {
+      id: "p-security",
+      heading: t("dataSecurity.title"),
+      blocks: [
+        { type: "p", text: t("dataSecurity.description") },
+        { type: "list", items: list("dataSecurity.measures") },
+      ],
+    },
+    {
+      id: "p-rights",
+      heading: t("yourRights.title"),
+      blocks: [
+        { type: "p", text: t("yourRights.description") },
+        { type: "list", items: list("yourRights.rights") },
+      ],
+    },
+    {
+      id: "p-cookies",
+      heading: t("cookies.title"),
+      blocks: [
+        { type: "p", text: t("cookies.description") },
+        { type: "list", items: list("cookies.types") },
+        { type: "p", text: t("cookies.control") },
+      ],
+    },
+    {
+      id: "p-children",
+      heading: t("children.title"),
+      blocks: [{ type: "p", text: t("children.description") }],
+    },
+    {
+      id: "p-international",
+      heading: t("international.title"),
+      blocks: [{ type: "p", text: t("international.description") }],
+    },
+    {
+      id: "p-changes",
+      heading: t("changes.title"),
+      blocks: [{ type: "p", text: t("changes.description") }],
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto max-w-4xl">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-4">
-            {t("title")}
-          </h1>
-          <div className="flex items-center gap-4 text-muted-foreground text-sm">
-            <span>
-              {t("lastUpdated")}: {t("effectiveDate")}
-            </span>
-            <span>•</span>
-            <Link href="/" className="hover:text-foreground">
-              {tCommon("backToHome")}
-            </Link>
-          </div>
-        </div>
-
-        {/* Introduction */}
-        <section className="mb-8">
-          <p className="text-lg text-muted-foreground leading-relaxed">
-            {t("introduction")}
-          </p>
-        </section>
-
-        {/* Information We Collect */}
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold text-foreground mb-4">
-            {t("informationWeCollect.title")}
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            {t("informationWeCollect.description")}
-          </p>
-
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-xl font-medium text-foreground mb-3">
-                {t("informationWeCollect.personalInformation.title")}
-              </h3>
-              <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-                {t
-                  .raw("informationWeCollect.personalInformation.items")
-                  .map((item: string, index: number) => (
-                    <li key={index}>{item}</li>
-                  ))}
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-medium text-foreground mb-3">
-                {t("informationWeCollect.automaticallyCollected.title")}
-              </h3>
-              <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-                {t
-                  .raw("informationWeCollect.automaticallyCollected.items")
-                  .map((item: string, index: number) => (
-                    <li key={index}>{item}</li>
-                  ))}
-              </ul>
-            </div>
-          </div>
-        </section>
-
-        {/* How We Use Information */}
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold text-foreground mb-4">
-            {t("howWeUseInformation.title")}
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            {t("howWeUseInformation.description")}
-          </p>
-          <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-            {t
-              .raw("howWeUseInformation.purposes")
-              .map((purpose: string, index: number) => (
-                <li key={index}>{purpose}</li>
-              ))}
-          </ul>
-        </section>
-
-        {/* Data Storage */}
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold text-foreground mb-4">
-            {t("dataStorage.title")}
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            {t("dataStorage.description")}
-          </p>
-
-          <div className="space-y-6">
-            <div className="bg-muted/50 p-6 rounded-lg">
-              <h3 className="text-xl font-medium text-foreground mb-3">
-                {t("dataStorage.convex.title")}
-              </h3>
-              <p className="text-muted-foreground">
-                {t("dataStorage.convex.description")}
-              </p>
-            </div>
-
-            <div className="bg-muted/50 p-6 rounded-lg">
-              <h3 className="text-xl font-medium text-foreground mb-3">
-                {t("dataStorage.vercel.title")}
-              </h3>
-              <p className="text-muted-foreground">
-                {t("dataStorage.vercel.description")}
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Analytics */}
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold text-foreground mb-4">
-            {t("analytics.title")}
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            {t("analytics.description")}
-          </p>
-
-          <div className="bg-muted/50 p-6 rounded-lg mb-6">
-            <h3 className="text-xl font-medium text-foreground mb-3">
-              {t("analytics.posthog.title")}
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              {t("analytics.posthog.description")}
-            </p>
-            <p className="text-muted-foreground font-medium">
-              {t("analytics.noAdvertising")}
-            </p>
-          </div>
-        </section>
-
-        {/* Data Sharing */}
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold text-foreground mb-4">
-            {t("dataSharing.title")}
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            {t("dataSharing.description")}
-          </p>
-          <p className="text-muted-foreground mb-6 font-medium">
-            {t("dataSharing.noSale")}
-          </p>
-          <p className="text-muted-foreground mb-4">
-            {t("dataSharing.limitedSharing")}
-          </p>
-          <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-            {t
-              .raw("dataSharing.circumstances")
-              .map((circumstance: string, index: number) => (
-                <li key={index}>{circumstance}</li>
-              ))}
-          </ul>
-        </section>
-
-        {/* Data Security */}
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold text-foreground mb-4">
-            {t("dataSecurity.title")}
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            {t("dataSecurity.description")}
-          </p>
-          <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-            {t
-              .raw("dataSecurity.measures")
-              .map((measure: string, index: number) => (
-                <li key={index}>{measure}</li>
-              ))}
-          </ul>
-        </section>
-
-        {/* Your Rights */}
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold text-foreground mb-4">
-            {t("yourRights.title")}
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            {t("yourRights.description")}
-          </p>
-          <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-            {t.raw("yourRights.rights").map((right: string, index: number) => (
-              <li key={index}>{right}</li>
-            ))}
-          </ul>
-        </section>
-
-        {/* Cookies */}
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold text-foreground mb-4">
-            {t("cookies.title")}
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            {t("cookies.description")}
-          </p>
-          <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4 mb-4">
-            {t.raw("cookies.types").map((type: string, index: number) => (
-              <li key={index}>{type}</li>
-            ))}
-          </ul>
-          <p className="text-muted-foreground">{t("cookies.control")}</p>
-        </section>
-
-        {/* Children's Privacy */}
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold text-foreground mb-4">
-            {t("children.title")}
-          </h2>
-          <p className="text-muted-foreground">{t("children.description")}</p>
-        </section>
-
-        {/* International Transfers */}
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold text-foreground mb-4">
-            {t("international.title")}
-          </h2>
-          <p className="text-muted-foreground">
-            {t("international.description")}
-          </p>
-        </section>
-
-        {/* Changes to Policy */}
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold text-foreground mb-4">
-            {t("changes.title")}
-          </h2>
-          <p className="text-muted-foreground">{t("changes.description")}</p>
-        </section>
-
-        {/* Contact */}
-        <section className="mb-8">
-          <h2 className="text-2xl font-semibold text-foreground mb-4">
-            {t("contact.title")}
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            {t("contact.description")}
-          </p>
-          <div className="bg-muted/50 p-6 rounded-lg">
-            <p className="text-muted-foreground mb-2">
-              <span className="font-medium">{t("contact.email")}:</span>{" "}
-              <a
-                href={`mailto:${t("contact.emailAddress")}`}
-                className="text-primary hover:underline"
-              >
-                {t("contact.emailAddress")}
-              </a>
-            </p>
-            <p className="text-muted-foreground">{t("contact.questions")}</p>
-          </div>
-        </section>
-
-        {/* Footer */}
-        <div className="border-t pt-8 mt-12">
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <Link href="/" className="hover:text-foreground">
-              {tCommon("backToHome")}
-            </Link>
-            <span>
-              {t("lastUpdated")}: {t("effectiveDate")}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
+    <main>
+      <PageHero
+        eyebrow={tm("eyebrow")}
+        title={t("title")}
+        lead={tm("privacyLead")}
+      />
+      <LegalDoc
+        updated={`${t("lastUpdated")}: ${t("effectiveDate")}`}
+        intro={t("introduction")}
+        sections={sections}
+      >
+        {t("contact.description")}{" "}
+        <a
+          href={`mailto:${t("contact.emailAddress")}`}
+          className="text-mk-violet-600 font-medium hover:underline"
+        >
+          {t("contact.emailAddress")}
+        </a>
+      </LegalDoc>
+    </main>
   );
 }

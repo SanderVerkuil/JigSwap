@@ -1597,6 +1597,12 @@
       "sentTitle": "Message sent!",
       "sentBody": "Thanks for reaching out. We'll get back to you as soon as we can.",
       "sentAgain": "Send another message"
+    },
+    "legal": {
+      "eyebrow": "Legal",
+      "contents": "Contents",
+      "privacyLead": "Your trust is everything. Here's how we handle your data carefully and transparently.",
+      "termsLead": "The ground rules that keep swapping fair and pleasant for everyone."
     }
   }
 }

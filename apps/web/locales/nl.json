@@ -1597,6 +1597,12 @@
       "sentTitle": "Bericht verstuurd!",
       "sentBody": "Bedankt voor je bericht. We nemen zo snel mogelijk contact met je op.",
       "sentAgain": "Nog een bericht sturen"
+    },
+    "legal": {
+      "eyebrow": "Juridisch",
+      "contents": "Inhoud",
+      "privacyLead": "Jouw vertrouwen is alles. Zo gaan we zorgvuldig en transparant om met je gegevens.",
+      "termsLead": "De spelregels die het ruilen voor iedereen eerlijk en prettig houden."
     }
   }
 }
