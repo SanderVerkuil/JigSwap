@@ -601,227 +601,227 @@
   },
   "privacy": {
     "title": "Privacybeleid",
-    "lastUpdated": "Laatst Bijgewerkt",
-    "introduction": "Dit Privacybeleid beschrijft hoe JigSwap ('wij', 'ons' of 'onze') uw persoonlijke informatie verzamelt, gebruikt en beschermt wanneer u ons legpuzzelruilplatform gebruikt.",
+    "lastUpdated": "Laatst bijgewerkt",
+    "introduction": "Dit privacybeleid beschrijft hoe JigSwap ('we', 'ons' of 'onze') je persoonsgegevens verzamelt, gebruikt en beschermt wanneer je ons platform voor het ruilen van legpuzzels gebruikt.",
     "effectiveDate": "20 juli 2025",
     "informationWeCollect": {
-      "title": "Informatie die We Verzamelen",
-      "description": "We verzamelen informatie die u rechtstreeks aan ons verstrekt en informatie die we automatisch verzamelen wanneer u onze dienst gebruikt.",
+      "title": "Welke gegevens we verzamelen",
+      "description": "We verzamelen gegevens die je rechtstreeks aan ons verstrekt en gegevens die we automatisch verzamelen wanneer je onze dienst gebruikt.",
       "personalInformation": {
-        "title": "Persoonlijke Informatie",
+        "title": "Persoonsgegevens",
         "items": [
-          "Accountinformatie (naam, e-mailadres, gebruikersnaam)",
-          "Profielinformatie (bio, locatie, interesses)",
-          "Puzzelcollectiegegevens en foto's",
-          "Uitwisselingsgeschiedenis en communicatie",
-          "Beoordelingen en waarderingen die u verstrekt"
+          "Accountgegevens (naam, e-mailadres, gebruikersnaam)",
+          "Profielgegevens (bio, woonplaats, interesses)",
+          "Gegevens en foto's van je puzzelcollectie",
+          "Ruilgeschiedenis en communicatie",
+          "Beoordelingen en waarderingen die je geeft"
         ]
       },
       "automaticallyCollected": {
-        "title": "Automatisch Verzamelde Informatie",
+        "title": "Automatisch verzamelde gegevens",
         "items": [
-          "Apparaatinformatie (IP-adres, browsertype, besturingssysteem)",
+          "Apparaatgegevens (IP-adres, browsertype, besturingssysteem)",
           "Gebruiksgegevens (bezochte pagina's, gebruikte functies, bestede tijd)",
-          "Analyticsgegevens (interactiepatronen, voorkeuren)",
-          "Technische logs en foutrapporten"
+          "Analytische gegevens (interactiepatronen, voorkeuren)",
+          "Technische logbestanden en foutrapporten"
         ]
       }
     },
     "howWeUseInformation": {
-      "title": "How We Use Your Information",
-      "description": "We use the information we collect to provide, improve, and secure our services.",
+      "title": "Hoe we je gegevens gebruiken",
+      "description": "We gebruiken de verzamelde gegevens om onze diensten te leveren, te verbeteren en te beveiligen.",
       "purposes": [
-        "Provide and maintain our puzzle trading platform",
-        "Process trades and facilitate exchanges between users",
-        "Personalize your experience and show relevant content",
-        "Send important service updates and notifications",
-        "Analyze usage patterns to improve our service",
-        "Prevent fraud and ensure platform security",
-        "Respond to your questions and support requests"
+        "Ons puzzelruilplatform leveren en onderhouden",
+        "Ruilen verwerken en uitwisselingen tussen gebruikers mogelijk maken",
+        "Je ervaring personaliseren en relevante inhoud tonen",
+        "Belangrijke service-updates en meldingen versturen",
+        "Gebruikspatronen analyseren om onze dienst te verbeteren",
+        "Fraude voorkomen en de veiligheid van het platform waarborgen",
+        "Je vragen en supportverzoeken beantwoorden"
       ]
     },
     "dataStorage": {
-      "title": "Data Storage and Hosting",
-      "description": "Your data is securely stored and managed by trusted third-party services:",
+      "title": "Gegevensopslag en hosting",
+      "description": "Je gegevens worden veilig opgeslagen en beheerd door vertrouwde externe diensten:",
       "convex": {
         "title": "Convex",
-        "description": "Our primary database and backend services are hosted by Convex. They handle data storage, user authentication, and real-time features."
+        "description": "Onze primaire database en backenddiensten worden gehost door Convex. Zij verzorgen gegevensopslag, gebruikersauthenticatie en realtime-functies."
       },
       "vercel": {
         "title": "Vercel",
-        "description": "Our web application is hosted on Vercel's infrastructure, which provides fast, reliable, and secure hosting services."
+        "description": "Onze webapplicatie wordt gehost op de infrastructuur van Vercel, die snelle, betrouwbare en veilige hosting biedt."
       }
     },
     "analytics": {
-      "title": "Analytics and Tracking",
-      "description": "We use analytics to understand how our service is used and improve user experience.",
+      "title": "Analyse en tracking",
+      "description": "We gebruiken analyses om te begrijpen hoe onze dienst wordt gebruikt en om de gebruikerservaring te verbeteren.",
       "posthog": {
         "title": "PostHog Analytics",
-        "description": "We use PostHog to collect anonymous usage analytics. This helps us understand user behavior and improve our platform. PostHog data is used solely for service improvement and is not sold to third parties."
+        "description": "We gebruiken PostHog om anonieme gebruiksstatistieken te verzamelen. Dit helpt ons gebruikersgedrag te begrijpen en ons platform te verbeteren. PostHog-gegevens worden uitsluitend gebruikt voor verbetering van de dienst en worden niet verkocht aan derden."
       },
-      "noAdvertising": "We do not use your data for advertising purposes. Your information will never be sold to advertisers or third parties for marketing purposes."
+      "noAdvertising": "We gebruiken je gegevens niet voor advertentiedoeleinden. Je gegevens worden nooit verkocht aan adverteerders of derden voor marketingdoeleinden."
     },
     "dataSharing": {
-      "title": "Data Sharing and Third Parties",
-      "description": "We are committed to protecting your privacy and do not sell your personal information.",
-      "noSale": "We do not sell, rent, or trade your personal information to third parties for advertising or marketing purposes.",
-      "limitedSharing": "We may share your information only in these limited circumstances:",
+      "title": "Gegevens delen en derden",
+      "description": "We beschermen je privacy en verkopen je persoonsgegevens niet.",
+      "noSale": "We verkopen, verhuren of verhandelen je persoonsgegevens niet aan derden voor advertentie- of marketingdoeleinden.",
+      "limitedSharing": "We delen je gegevens alleen in deze beperkte gevallen:",
       "circumstances": [
-        "With your explicit consent",
-        "To comply with legal obligations",
-        "To protect our rights and prevent fraud",
-        "With service providers who assist in platform operations (under strict confidentiality agreements)"
+        "Met jouw uitdrukkelijke toestemming",
+        "Om aan wettelijke verplichtingen te voldoen",
+        "Om onze rechten te beschermen en fraude te voorkomen",
+        "Met dienstverleners die helpen bij het beheer van het platform (onder strikte geheimhoudingsafspraken)"
       ]
     },
     "dataSecurity": {
-      "title": "Data Security",
-      "description": "We implement appropriate security measures to protect your personal information:",
+      "title": "Gegevensbeveiliging",
+      "description": "We nemen passende beveiligingsmaatregelen om je persoonsgegevens te beschermen:",
       "measures": [
-        "Encryption of data in transit and at rest",
-        "Regular security audits and updates",
-        "Access controls and authentication",
-        "Secure hosting infrastructure"
+        "Versleuteling van gegevens tijdens verzending en opslag",
+        "Regelmatige beveiligingsaudits en updates",
+        "Toegangscontrole en authenticatie",
+        "Veilige hostinginfrastructuur"
       ]
     },
     "yourRights": {
-      "title": "Your Rights and Choices",
-      "description": "You have control over your personal information:",
+      "title": "Jouw rechten en keuzes",
+      "description": "Jij houdt de controle over je persoonsgegevens:",
       "rights": [
-        "Access and review your personal data",
-        "Update or correct your information",
-        "Delete your account and associated data",
-        "Opt out of certain data collection",
-        "Export your data in a portable format",
-        "Contact us with privacy concerns"
+        "Je persoonsgegevens inzien en controleren",
+        "Je gegevens bijwerken of corrigeren",
+        "Je account en bijbehorende gegevens verwijderen",
+        "Je afmelden voor bepaalde gegevensverzameling",
+        "Je gegevens exporteren in een overdraagbaar formaat",
+        "Contact met ons opnemen bij privacyvragen"
       ]
     },
     "cookies": {
-      "title": "Cookies and Tracking",
-      "description": "We use cookies and similar technologies to enhance your experience:",
+      "title": "Cookies en tracking",
+      "description": "We gebruiken cookies en vergelijkbare technieken om je ervaring te verbeteren:",
       "types": [
-        "Essential cookies for platform functionality",
-        "Analytics cookies to understand usage patterns",
-        "Preference cookies to remember your settings"
+        "Essentiële cookies voor de werking van het platform",
+        "Analytische cookies om gebruikspatronen te begrijpen",
+        "Voorkeurscookies om je instellingen te onthouden"
       ],
-      "control": "You can control cookie settings through your browser preferences."
+      "control": "Je kunt cookie-instellingen beheren via de voorkeuren van je browser."
     },
     "cookieConsent": {
-      "title": "We use cookies",
-      "description": "We use cookies to ensure you get the best experience on our website. For more information on how we use cookies, please see our cookie policy.",
-      "acceptText": "Accept",
-      "declineText": "Decline",
-      "learnMoreText": "Learn more",
-      "acceptanceText": "By clicking \"Accept\", you agree to our use of cookies."
+      "title": "We gebruiken cookies",
+      "description": "We gebruiken cookies om je de beste ervaring op onze website te geven. Lees ons cookiebeleid voor meer informatie over hoe we cookies gebruiken.",
+      "acceptText": "Accepteren",
+      "declineText": "Weigeren",
+      "learnMoreText": "Meer informatie",
+      "acceptanceText": "Door op \"Accepteren\" te klikken ga je akkoord met ons gebruik van cookies."
     },
     "children": {
-      "title": "Children's Privacy",
-      "description": "Our service is not intended for children under 13. We do not knowingly collect personal information from children under 13."
+      "title": "Privacy van kinderen",
+      "description": "Onze dienst is niet bedoeld voor kinderen onder de 13 jaar. We verzamelen niet bewust persoonsgegevens van kinderen onder de 13."
     },
     "international": {
-      "title": "International Data Transfers",
-      "description": "Your data may be processed in countries other than your own. We ensure appropriate safeguards are in place to protect your information."
+      "title": "Internationale gegevensoverdracht",
+      "description": "Je gegevens kunnen worden verwerkt in andere landen dan het jouwe. We zorgen voor passende waarborgen om je gegevens te beschermen."
     },
     "changes": {
-      "title": "Changes to This Policy",
-      "description": "We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new policy on our website and updating the 'Last Updated' date."
+      "title": "Wijzigingen in dit beleid",
+      "description": "We kunnen dit privacybeleid van tijd tot tijd bijwerken. Bij belangrijke wijzigingen informeren we je door het nieuwe beleid op onze website te plaatsen en de datum bij 'Laatst bijgewerkt' aan te passen."
     },
     "contact": {
-      "title": "Contact Us",
-      "description": "If you have any questions about this Privacy Policy or our data practices, please contact us:",
-      "email": "Email",
+      "title": "Contact",
+      "description": "Heb je vragen over dit privacybeleid of over hoe we met gegevens omgaan? Neem dan contact met ons op:",
+      "email": "E-mail",
       "emailAddress": "privacy@jigswap.site",
-      "questions": "We're committed to transparency and will respond to your privacy inquiries promptly."
+      "questions": "We hechten aan transparantie en beantwoorden je privacyvragen zo snel mogelijk."
     }
   },
   "terms": {
-    "title": "Terms of Service",
-    "lastUpdated": "Last Updated",
-    "introduction": "These Terms of Service ('Terms') govern your use of JigSwap, our jigsaw puzzle trading platform. By using our service, you agree to these terms.",
-    "effectiveDate": "July 20, 2025",
+    "title": "Algemene voorwaarden",
+    "lastUpdated": "Laatst bijgewerkt",
+    "introduction": "Deze algemene voorwaarden ('Voorwaarden') zijn van toepassing op je gebruik van JigSwap, ons platform voor het ruilen van legpuzzels. Door onze dienst te gebruiken ga je akkoord met deze voorwaarden.",
+    "effectiveDate": "20 juli 2025",
     "acceptance": {
-      "title": "Acceptance of Terms",
-      "description": "By accessing or using JigSwap, you agree to be bound by these Terms. If you disagree with any part of these terms, you may not access our service."
+      "title": "Akkoord met de voorwaarden",
+      "description": "Door JigSwap te bezoeken of te gebruiken ga je akkoord met deze Voorwaarden. Ben je het met een deel van deze voorwaarden oneens, dan mag je onze dienst niet gebruiken."
     },
     "serviceDescription": {
-      "title": "Service Description",
-      "description": "JigSwap is a platform that enables users to trade, exchange, and manage jigsaw puzzles. Our service includes:",
+      "title": "Beschrijving van de dienst",
+      "description": "JigSwap is een platform waarmee gebruikers legpuzzels kunnen ruilen, uitwisselen en beheren. Onze dienst omvat:",
       "features": [
-        "Puzzle collection management and tracking",
-        "Trading and exchange functionality",
-        "Community features and reviews",
-        "Analytics and progress tracking"
+        "Beheer en registratie van je puzzelcollectie",
+        "Ruil- en uitwisselfunctionaliteit",
+        "Communityfuncties en beoordelingen",
+        "Statistieken en voortgangsregistratie"
       ]
     },
     "userAccounts": {
-      "title": "User Accounts",
-      "description": "To use certain features of our service, you must create an account. You are responsible for:",
+      "title": "Gebruikersaccounts",
+      "description": "Voor bepaalde functies van onze dienst moet je een account aanmaken. Je bent verantwoordelijk voor:",
       "responsibilities": [
-        "Maintaining the security of your account",
-        "Providing accurate and complete information",
-        "Notifying us of any unauthorized use",
-        "Being at least 13 years old to use the service"
+        "Het beveiligen van je account",
+        "Het verstrekken van juiste en volledige gegevens",
+        "Het melden van ongeoorloofd gebruik",
+        "Minimaal 13 jaar oud zijn om de dienst te gebruiken"
       ]
     },
     "userConduct": {
-      "title": "User Conduct",
-      "description": "You agree to use our service responsibly and in accordance with these terms:",
-      "prohibitedTitle": "Prohibited Activities:",
-      "expectedTitle": "Expected Behavior:",
+      "title": "Gedragsregels",
+      "description": "Je gaat ermee akkoord onze dienst verantwoord en volgens deze voorwaarden te gebruiken:",
+      "prohibitedTitle": "Niet toegestaan:",
+      "expectedTitle": "Verwacht gedrag:",
       "prohibited": [
-        "Violating any applicable laws or regulations",
-        "Infringing on intellectual property rights",
-        "Harassing or harming other users",
-        "Attempting to gain unauthorized access to our systems",
-        "Using the service for commercial purposes without permission"
+        "Het overtreden van toepasselijke wet- en regelgeving",
+        "Inbreuk maken op intellectuele-eigendomsrechten",
+        "Het lastigvallen of benadelen van andere gebruikers",
+        "Proberen ongeoorloofd toegang te krijgen tot onze systemen",
+        "De dienst zonder toestemming commercieel gebruiken"
       ],
       "expected": [
-        "Treating other users with respect",
-        "Providing accurate information about puzzles",
-        "Honoring trade agreements and commitments",
-        "Reporting suspicious or inappropriate behavior"
+        "Andere gebruikers met respect behandelen",
+        "Juiste informatie over puzzels verstrekken",
+        "Ruilafspraken en toezeggingen nakomen",
+        "Verdacht of ongepast gedrag melden"
       ]
     },
     "trading": {
-      "title": "Trading and Exchanges",
-      "description": "Our platform facilitates puzzle trading between users. By participating in trades, you agree to:",
+      "title": "Ruilen en uitwisselingen",
+      "description": "Ons platform maakt het ruilen van puzzels tussen gebruikers mogelijk. Door deel te nemen aan ruilen ga je ermee akkoord om:",
       "agreements": [
-        "Accurately describe puzzle condition and completeness",
-        "Honor agreed-upon trade terms",
-        "Communicate promptly and honestly",
-        "Resolve disputes amicably when possible"
+        "De conditie en volledigheid van puzzels eerlijk te omschrijven",
+        "Afgesproken ruilvoorwaarden na te komen",
+        "Vlot en eerlijk te communiceren",
+        "Geschillen waar mogelijk onderling op te lossen"
       ],
-      "disclaimer": "JigSwap acts as a facilitator for trades but is not responsible for the quality, condition, or completeness of traded puzzles. Users trade at their own risk."
+      "disclaimer": "JigSwap faciliteert ruilen, maar is niet verantwoordelijk voor de kwaliteit, conditie of volledigheid van geruilde puzzels. Ruilen gebeurt op eigen risico."
     },
     "intellectualProperty": {
-      "title": "Intellectual Property",
-      "description": "Our service and its original content, features, and functionality are owned by JigSwap and are protected by international copyright, trademark, and other intellectual property laws."
+      "title": "Intellectueel eigendom",
+      "description": "Onze dienst en de oorspronkelijke inhoud, functies en functionaliteit zijn eigendom van JigSwap en worden beschermd door internationale auteursrechten, merkenrechten en andere intellectuele-eigendomswetten."
     },
     "privacy": {
       "title": "Privacy",
-      "description": "Your privacy is important to us. Please review our Privacy Policy, which also governs your use of the service."
+      "description": "Je privacy is belangrijk voor ons. Lees ook ons privacybeleid, dat eveneens van toepassing is op je gebruik van de dienst."
     },
     "termination": {
-      "title": "Account Termination",
-      "description": "We may terminate or suspend your account immediately, without prior notice, for any reason, including breach of these Terms."
+      "title": "Beëindiging van je account",
+      "description": "We kunnen je account per direct en zonder voorafgaande kennisgeving beëindigen of schorsen, om welke reden dan ook, waaronder schending van deze Voorwaarden."
     },
     "disclaimer": {
-      "title": "Disclaimer of Warranties",
-      "description": "The service is provided 'as is' without warranties of any kind. We do not guarantee that the service will be uninterrupted or error-free."
+      "title": "Uitsluiting van garanties",
+      "description": "De dienst wordt geleverd 'zoals die is', zonder enige vorm van garantie. We garanderen niet dat de dienst ononderbroken of foutloos werkt."
     },
     "limitation": {
-      "title": "Limitation of Liability",
-      "description": "JigSwap shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of the service."
+      "title": "Beperking van aansprakelijkheid",
+      "description": "JigSwap is niet aansprakelijk voor indirecte, incidentele, bijzondere of gevolgschade, of voor schadevergoedingen met een bestraffend karakter, voortvloeiend uit je gebruik van de dienst."
     },
     "changes": {
-      "title": "Changes to Terms",
-      "description": "We reserve the right to modify these terms at any time. We will notify users of any material changes by posting the new terms on our website."
+      "title": "Wijzigingen in de voorwaarden",
+      "description": "We behouden ons het recht voor deze voorwaarden op elk moment te wijzigen. Bij belangrijke wijzigingen informeren we gebruikers door de nieuwe voorwaarden op onze website te plaatsen."
     },
     "contact": {
-      "title": "Contact Information",
-      "description": "If you have any questions about these Terms of Service, please contact us:",
-      "email": "Email",
+      "title": "Contactgegevens",
+      "description": "Heb je vragen over deze algemene voorwaarden? Neem dan contact met ons op:",
+      "email": "E-mail",
       "emailAddress": "legal@jigswap.site",
-      "questions": "We're committed to transparency and will respond to your inquiries promptly."
+      "questions": "We hechten aan transparantie en beantwoorden je vragen zo snel mogelijk."
     }
   },
   "about": {
