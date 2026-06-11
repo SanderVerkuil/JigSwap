@@ -65,7 +65,10 @@ jobs:
         id: pages-deploy
         if: ${{ !cancelled() && hashFiles('packages/domain/reports/mutation/mutation-report.html') != '' }}
         continue-on-error: true
-        uses: peaceiris/actions-gh-pages@v4
+        # Third-party action pinned to an immutable commit (tag = v4 / v4.1.0):
+        # it receives a contents:write token, so a mutable tag would be a
+        # supply-chain risk.
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: packages/domain/reports/mutation
