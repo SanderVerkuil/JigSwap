@@ -40,7 +40,7 @@ const SPAN_PERSPECTIVE_ALLOWANCE = 1.2;
 // Group offset: pull composition slightly left and back so the near-right box
 // doesn't overwhelm the frame after the yaw.
 const GROUP_OFFSET_X = -0.3;
-const GROUP_OFFSET_Z = -0.2;
+const GROUP_OFFSET_Z = -0.55;
 
 // ——— fog constants ———
 // FOG_NEAR ≈ camera distance; FOG_FAR adds ~5 units of haze window so the
