@@ -341,10 +341,10 @@ function DraftToggle({
     <div
       style={{
         position: "fixed",
+        // sits above the cookie-consent banner (fixed bottom, z-50)
         bottom: 18,
-        left: "50%",
-        translate: "-50%",
-        zIndex: 50,
+        right: 18,
+        zIndex: 60,
         display: "flex",
         alignItems: "center",
         gap: 4,
