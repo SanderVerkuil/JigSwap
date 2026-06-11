@@ -1,6 +1,7 @@
 import type { PlankBox } from "@/components/marketing/plank";
 import { ContactShadows } from "@react-three/drei";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas, events, useFrame, useThree } from "@react-three/fiber";
+import type { DomEvent, EventManager, RootState, RootStore } from "@react-three/fiber";
 import { easing } from "maath";
 import * as React from "react";
 import * as THREE from "three";
@@ -145,6 +146,22 @@ function Parallax({ children, enabled }: { children: React.ReactNode; enabled: b
   return <group ref={group}>{children}</group>;
 }
 
+// Pointer NDC from the canvas's live client rect so picking survives the
+// CSS scale transforms the hero applies around the canvas.
+function transformSafeEvents(store: RootStore): EventManager<HTMLElement> {
+  return {
+    ...events(store),
+    compute(event: DomEvent, state: RootState) {
+      const rect = state.gl.domElement.getBoundingClientRect();
+      state.pointer.set(
+        ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        (-(event.clientY - rect.top) / rect.height) * 2 + 1,
+      );
+      state.raycaster.setFromCamera(state.pointer, state.camera);
+    },
+  };
+}
+
 export default function PlankScene(props: SceneProps) {
   const { slots, worldWidth } = layoutSlots(props.boxes, props.resolved);
   const preset = LIGHTING[props.theme];
@@ -156,7 +173,8 @@ export default function PlankScene(props: SceneProps) {
       style={{ pointerEvents: "none", background: "transparent" }}
       camera={{ fov: 35 }}
       eventSource={props.eventSource as unknown as React.RefObject<HTMLElement>}
-      eventPrefix="client"
+      events={transformSafeEvents}
+      resize={{ offsetSize: true }}
     >
       <FirstFrame onFirstFrame={props.onFirstFrame} />
       <FitCamera worldWidth={worldWidth} />
