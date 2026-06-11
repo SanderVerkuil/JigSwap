@@ -53,7 +53,8 @@ export const Route = createRootRouteWithContext<{
       },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Baloo+2:wght@400..800&family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap",
+        // Fredoka is the marketing heading face (see styles/marketing.css).
+        href: "https://fonts.googleapis.com/css2?family=Baloo+2:wght@400..800&family=Fredoka:wght@400;500;600;700&family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap",
       },
     ],
   }),
