@@ -10,6 +10,7 @@ import { LIGHTING, type LightingPreset } from "./palette";
 const GAP = 0.34;
 const SHELF_THICKNESS = 0.14;
 const SHELF_DEPTH = 0.7;
+const CAMERA_X = 0.35;
 
 export interface SceneProps {
   boxes: PlankBox[];
@@ -44,8 +45,8 @@ function FitCamera({ worldWidth }: { worldWidth: number }) {
   React.useLayoutEffect(() => {
     const vFov = (camera.fov * Math.PI) / 180;
     const hFov = 2 * Math.atan(Math.tan(vFov / 2) * (size.width / size.height));
-    const dist = (worldWidth / 2 + 0.5) / Math.tan(hFov / 2);
-    camera.position.set(0.35, 1.4, dist);
+    const dist = (worldWidth / 2 + 0.5 + CAMERA_X) / Math.tan(hFov / 2);
+    camera.position.set(CAMERA_X, 1.4, dist);
     camera.lookAt(0, 0.55, 0);
     camera.updateProjectionMatrix();
   }, [camera, size, worldWidth]);
@@ -83,7 +84,7 @@ function Lights({ preset, reducedMotion }: { preset: LightingPreset; reducedMoti
     <>
       <directionalLight ref={key} position={[2.5, 4, 3]} intensity={preset.keyIntensity} />
       <ambientLight ref={ambient} intensity={preset.ambientIntensity} />
-      <hemisphereLight ref={hemi} args={["#ffffff", "#d9c4a8", preset.hemiIntensity]} />
+      <hemisphereLight ref={hemi} color="#ffffff" groundColor="#d9c4a8" intensity={preset.hemiIntensity} />
       <directionalLight
         ref={rim}
         position={[-3, 2.5, -2]}
@@ -94,10 +95,23 @@ function Lights({ preset, reducedMotion }: { preset: LightingPreset; reducedMoti
   );
 }
 
-function Shelf({ worldWidth, color }: { worldWidth: number; color: string }) {
+function Shelf({
+  worldWidth,
+  color,
+  reducedMotion,
+}: {
+  worldWidth: number;
+  color: string;
+  reducedMotion: boolean;
+}) {
   const mat = React.useRef<THREE.MeshStandardMaterial>(null);
   useFrame((_, delta) => {
-    if (mat.current) easing.dampC(mat.current.color, color, 0.3, delta);
+    if (!mat.current) return;
+    if (reducedMotion) {
+      mat.current.color.set(color);
+    } else {
+      easing.dampC(mat.current.color, color, 0.3, delta);
+    }
   });
   return (
     <mesh position={[0, -SHELF_THICKNESS / 2, SHELF_DEPTH / 2 - BOX_DEPTH / 2 - 0.1]}>
@@ -132,7 +146,7 @@ export default function PlankScene(props: SceneProps) {
       <FirstFrame onFirstFrame={props.onFirstFrame} />
       <FitCamera worldWidth={worldWidth} />
       <Lights preset={preset} reducedMotion={props.reducedMotion} />
-      <Shelf worldWidth={worldWidth} color={preset.shelfColor} />
+      <Shelf worldWidth={worldWidth} color={preset.shelfColor} reducedMotion={props.reducedMotion} />
       {props.boxes.map((box, i) => (
         <PuzzleBox
           key={i}
