@@ -450,9 +450,7 @@ function PuzzleSummary({
         <div>
           <p className="text-sm font-medium">{title}</p>
           {pieceCount != null && (
-            <p className="text-muted-foreground text-xs">
-              {pieceCount} pieces
-            </p>
+            <p className="text-muted-foreground text-xs">{pieceCount} pieces</p>
           )}
         </div>
       </div>

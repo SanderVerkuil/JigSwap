@@ -4,7 +4,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { EmptyState } from "@/components/community/primitives";
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import { ActivityFeed } from "@/components/social/activity-feed";
-import { MemberTile, MemberTileSkeleton } from "@/components/social/member-tile";
+import {
+  MemberTile,
+  MemberTileSkeleton,
+} from "@/components/social/member-tile";
 import { ProfileEditor } from "@/components/social/profile-editor";
 import { gateway, Id } from "@/gateway";
 import { useQuery } from "convex/react";
@@ -50,7 +53,9 @@ function PeoplePage() {
         <SectionHead
           title={t("yourNetwork")}
           icon={Globe}
-          meta={loading ? undefined : t("memberCount", { count: members.length })}
+          meta={
+            loading ? undefined : t("memberCount", { count: members.length })
+          }
         />
         {loading ? (
           <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">

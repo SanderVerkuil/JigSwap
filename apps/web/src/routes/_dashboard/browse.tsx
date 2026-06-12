@@ -3,10 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 import { useUser } from "@/compat/clerk";
-import {
-  EmptyState,
-  FilterBar,
-} from "@/components/community/primitives";
+import { EmptyState, FilterBar } from "@/components/community/primitives";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";

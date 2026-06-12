@@ -2,6 +2,12 @@ import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useUser } from "@/compat/clerk";
+import {
+  CoverChip,
+  EmptyState,
+  MiniStat,
+} from "@/components/community/primitives";
+import { SectionHead } from "@/components/dashboard-home/section-head";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,12 +31,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  CoverChip,
-  EmptyState,
-  MiniStat,
-} from "@/components/community/primitives";
-import { SectionHead } from "@/components/dashboard-home/section-head";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
