@@ -1146,7 +1146,16 @@
       "editWindowClosed": "This completion can no longer be edited (the 24-hour window has closed).",
       "yourReview": "Your review",
       "addReview": "Add a review",
-      "editReview": "Edit review"
+      "editReview": "Edit review",
+      "stats": {
+        "completed": "Puzzles completed",
+        "pieces": "Pieces placed",
+        "thisYear": "This year"
+      },
+      "log": "Completion Log",
+      "logAction": "Log Completion",
+      "mostRecent": "Most recent first",
+      "piecesFinished": "{pieces, number} pieces · finished in {days, plural, one {# day} other {# days}}"
     },
     "logSolve": {
       "trigger": "Log a solve",

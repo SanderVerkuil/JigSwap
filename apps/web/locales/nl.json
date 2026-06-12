@@ -1146,7 +1146,16 @@
       "editWindowClosed": "Deze voltooiing kan niet meer worden bewerkt (het venster van 24 uur is gesloten).",
       "yourReview": "Jouw review",
       "addReview": "Review toevoegen",
-      "editReview": "Review bewerken"
+      "editReview": "Review bewerken",
+      "stats": {
+        "completed": "Puzzels voltooid",
+        "pieces": "Stukjes gelegd",
+        "thisYear": "Dit jaar"
+      },
+      "log": "Voltooiingslog",
+      "logAction": "Voltooiing Loggen",
+      "mostRecent": "Meest recente eerst",
+      "piecesFinished": "{pieces, number} stukjes · voltooid in {days, plural, one {# dag} other {# dagen}}"
     },
     "logSolve": {
       "trigger": "Oplossing vastleggen",
