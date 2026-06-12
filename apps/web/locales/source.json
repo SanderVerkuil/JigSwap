@@ -1081,7 +1081,9 @@
     "collectionNotFound": "Collection not found",
     "backToCollections": "Back to Collections",
     "manageCollections": "Manage Collections",
-    "notFound": "Collection not found"
+    "notFound": "Collection not found",
+    "meta": "{shelves, plural, one {# shelf} other {# shelves}} · {puzzles, plural, one {# puzzle} other {# puzzles}}",
+    "newCollection": "New Collection"
   },
   "notifications": {
     "title": "Notifications",

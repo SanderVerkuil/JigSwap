@@ -1081,7 +1081,9 @@
     "collectionNotFound": "Collectie niet gevonden",
     "backToCollections": "Terug naar Collecties",
     "manageCollections": "Collecties Beheren",
-    "notFound": "Collectie niet gevonden"
+    "notFound": "Collectie niet gevonden",
+    "meta": "{shelves, plural, one {# plank} other {# planken}} · {puzzles, plural, one {# puzzel} other {# puzzels}}",
+    "newCollection": "Nieuwe Collectie"
   },
   "notifications": {
     "title": "Meldingen",
