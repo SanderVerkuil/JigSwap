@@ -1077,6 +1077,18 @@
     "manageCollections": "Collecties Beheren",
     "notFound": "Collectie niet gevonden"
   },
+  "circles": {
+    "yourCircles": "Jouw Kringen",
+    "meta": "Besloten groepen om binnen te ruilen",
+    "createCircle": "Kring Aanmaken",
+    "roleOwner": "Eigenaar",
+    "roleMember": "Lid",
+    "ownedByYou": "Van jou",
+    "sharedWithYou": "Met jou gedeeld",
+    "membersLabel": "{count, plural, one {lid} other {leden}}",
+    "emptyTitle": "Nog geen kringen",
+    "emptySub": "Maak een kring aan om puzzels te ruilen met vrienden en familie."
+  },
   "notifications": {
     "title": "Meldingen",
     "subtitle": "Blijf op de hoogte van ruilen, beoordelingen en mijlpalen.",

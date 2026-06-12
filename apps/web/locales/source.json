@@ -1077,6 +1077,18 @@
     "manageCollections": "Manage Collections",
     "notFound": "Collection not found"
   },
+  "circles": {
+    "yourCircles": "Your Circles",
+    "meta": "Private groups to swap within",
+    "createCircle": "Create Circle",
+    "roleOwner": "Owner",
+    "roleMember": "Member",
+    "ownedByYou": "Owned by you",
+    "sharedWithYou": "Shared with you",
+    "membersLabel": "{count, plural, one {member} other {members}}",
+    "emptyTitle": "No circles yet",
+    "emptySub": "Create a circle to swap puzzles with friends and family."
+  },
   "notifications": {
     "title": "Notifications",
     "subtitle": "Stay on top of trades, reviews, and milestones.",
