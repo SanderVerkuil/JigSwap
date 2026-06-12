@@ -1936,6 +1936,24 @@
       "fullWidth": "Full Width",
       "hideEmail": "Hide Email Address",
       "admin": "Admin"
+    },
+    "mobile": {
+      "tabsLabel": "Primary",
+      "tabs": {
+        "home": "Home",
+        "library": "Library",
+        "swaps": "Swaps",
+        "community": "Community"
+      },
+      "back": "Back to {section}",
+      "openQuickActions": "Quick Actions",
+      "quick": {
+        "addPuzzleSub": "Put a new box on your shelf",
+        "logCompletionSub": "Finished one? Record it",
+        "proposeSwap": "Propose a Swap",
+        "proposeSwapSub": "Trade with a fellow puzzler",
+        "browseCommunitySub": "Discover puzzles near you"
+      }
     }
   }
 }

@@ -174,7 +174,9 @@ export function ShelfSection() {
         </div>
       ) : (
         <div className="grid items-center gap-10 lg:grid-cols-[1fr_252px]">
-          <div className="overflow-x-auto px-2 pt-6 pb-5">
+          {/* min-w-0 lets the grid column shrink so the plank swipes
+              horizontally on narrow screens instead of blowing out. */}
+          <div className="min-w-0 overflow-x-auto px-2 pt-6 pb-5">
             <PuzzlePlank boxes={owned.slice(0, 5).map(toPlankBox)} />
           </div>
           <div className="flex flex-col">

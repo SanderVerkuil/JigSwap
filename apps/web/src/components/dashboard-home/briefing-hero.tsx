@@ -81,7 +81,7 @@ function Headline({
         : null;
 
   return (
-    <p className="font-heading max-w-[860px] text-3xl leading-[1.4] font-semibold tracking-tight text-pretty">
+    <p className="font-heading max-w-[860px] text-2xl leading-[1.4] font-semibold tracking-tight text-pretty md:text-3xl">
       {variant === null
         ? t("empty")
         : t.rich(variant, {

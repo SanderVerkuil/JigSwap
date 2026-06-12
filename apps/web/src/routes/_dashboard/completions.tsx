@@ -50,7 +50,7 @@ export const Route = createFileRoute("/_dashboard/completions")({
 function CompletionsSkeleton() {
   return (
     <div className="flex flex-col gap-[26px]">
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
           <Skeleton key={i} className="h-16" />
         ))}

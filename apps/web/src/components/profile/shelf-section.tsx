@@ -84,7 +84,7 @@ export function ProfileShelfSection({ member }: { member: Member }) {
           </Button>
         </div>
       ) : (
-        <div className="overflow-x-auto px-2 pt-6 pb-6">
+        <div className="min-w-0 overflow-x-auto px-2 pt-6 pb-6">
           <PuzzlePlank boxes={boxes} />
         </div>
       )}

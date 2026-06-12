@@ -1936,6 +1936,24 @@
       "fullWidth": "Volledige Breedte",
       "hideEmail": "E-mailadres Verbergen",
       "admin": "Beheer"
+    },
+    "mobile": {
+      "tabsLabel": "Hoofdnavigatie",
+      "tabs": {
+        "home": "Home",
+        "library": "Bibliotheek",
+        "swaps": "Ruilen",
+        "community": "Community"
+      },
+      "back": "Terug naar {section}",
+      "openQuickActions": "Snelle Acties",
+      "quick": {
+        "addPuzzleSub": "Zet een nieuwe doos op je plank",
+        "logCompletionSub": "Eentje af? Leg het vast",
+        "proposeSwap": "Een Ruil Voorstellen",
+        "proposeSwapSub": "Ruil met een mede-puzzelaar",
+        "browseCommunitySub": "Ontdek puzzels bij jou in de buurt"
+      }
     }
   }
 }
