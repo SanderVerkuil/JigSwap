@@ -1,15 +1,16 @@
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { AdvancedFeaturesSection } from "@/components/dashboard-home/feature-sections/advanced-features-section";
-import { FeatureSections } from "@/components/dashboard-home/feature-sections/feature-sections";
-import { QuickActionsSection } from "@/components/dashboard-home/quick-actions/quick-actions-section";
-import { RecentActivitySection } from "@/components/dashboard-home/recent-activity/recent-activity-section";
-import { WelcomeHeader } from "@/components/dashboard-home/welcome-section/welcome-header";
+import { BriefingHero } from "@/components/dashboard-home/briefing-hero";
+import { FreshSection } from "@/components/dashboard-home/fresh-section";
+import { PulseSection } from "@/components/dashboard-home/pulse-section";
+import { ShelfSection } from "@/components/dashboard-home/shelf-section";
 
-// The (dashboard) landing (URL: /dashboard). Replaces the part-1 placeholder anchor child of the
-// _dashboard pathless layout with the real welcome / quick-actions / feature-sections /
-// recent-activity composition ported from the Next dashboard page.
+// The (dashboard) landing (URL: /dashboard): the editorial "morning briefing".
+// Narrative headline → pending-request banner + quick actions → the shelf with
+// its numbers rail → the three-column pulse (In Motion / Goals / Latest) →
+// the fresh-puzzles scroller. Card-free, whitespace-separated blocks; the
+// shell chrome owns the page title, so there is no h1 here.
 export const Route = createFileRoute("/_dashboard/dashboard")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "dashboard") }],
@@ -19,12 +20,11 @@ export const Route = createFileRoute("/_dashboard/dashboard")({
 
 function DashboardPage() {
   return (
-    <div className="space-y-6">
-      <WelcomeHeader />
-      <QuickActionsSection />
-      <FeatureSections />
-      <AdvancedFeaturesSection />
-      <RecentActivitySection />
+    <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-10">
+      <BriefingHero />
+      <ShelfSection />
+      <PulseSection />
+      <FreshSection />
     </div>
   );
 }
