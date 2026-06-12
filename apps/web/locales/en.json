@@ -299,8 +299,8 @@
     "requestExchange": "Request Exchange",
     "myPuzzles": "My Puzzles",
     "managePuzzles": "Manage your puzzle collection",
-    "noPuzzles": "No puzzles yet",
-    "addFirstPuzzle": "Add your first puzzle to start trading",
+    "noPuzzles": "No puzzles here yet",
+    "addFirstPuzzle": "Add your first puzzle to start trading.",
     "noImage": "No Image",
     "addPuzzleDescription": "Add a new puzzle to your collection",
     "selectPuzzle": "Select Puzzle",
@@ -443,7 +443,16 @@
       "actions": "Actions",
       "addToFavorites": "Add to Favorites",
       "notFound": "Puzzle not found"
-    }
+    },
+    "filters": {
+      "all": "All",
+      "available": "Available",
+      "forTrade": "For Trade",
+      "forLend": "For Lend",
+      "inProgress": "In Progress",
+      "completed": "Completed"
+    },
+    "resultCount": "{count} of {total} puzzles"
   },
   "trades": {
     "title": "Exchanges",

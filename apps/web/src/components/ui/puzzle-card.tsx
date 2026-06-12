@@ -53,7 +53,9 @@ export function PuzzleViewProvider({
       <div
         className={
           viewMode === "grid"
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            ? // Design-language puzzle grid: compact covers that auto-fill the
+              // row at a 212px minimum, instead of fixed breakpoint columns.
+              "grid grid-cols-[repeat(auto-fill,minmax(212px,1fr))] gap-[18px]"
             : "space-y-4"
         }
       >

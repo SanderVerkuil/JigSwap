@@ -299,8 +299,8 @@
     "requestExchange": "Uitwisseling Aanvragen",
     "myPuzzles": "Mijn Puzzels",
     "managePuzzles": "Beheer je puzzelcollectie",
-    "noPuzzles": "Nog geen puzzels",
-    "addFirstPuzzle": "Voeg je eerste puzzel toe om te beginnen met ruilen",
+    "noPuzzles": "Nog geen puzzels hier",
+    "addFirstPuzzle": "Voeg je eerste puzzel toe om te beginnen met ruilen.",
     "noImage": "Geen Afbeelding",
     "addPuzzleDescription": "Voeg een nieuwe puzzel toe aan je collectie",
     "selectPuzzle": "Puzzel Selecteren",
@@ -443,7 +443,16 @@
       "actions": "Acties",
       "addToFavorites": "Toevoegen aan Favorieten",
       "notFound": "Puzzel niet gevonden"
-    }
+    },
+    "filters": {
+      "all": "Alles",
+      "available": "Beschikbaar",
+      "forTrade": "Te Ruilen",
+      "forLend": "Te Leen",
+      "inProgress": "Bezig",
+      "completed": "Voltooid"
+    },
+    "resultCount": "{count} van {total} puzzels"
   },
   "trades": {
     "title": "Uitwisselingen",
