@@ -40,7 +40,8 @@ const PLANK_WIDE: PlankBox[] = [
     c2: "var(--mk-pink-500)",
     width: 108,
   },
-  // The real-cover box sits right-of-center where the scrim doesn't dim it.
+  // The real-cover box: index 3 deals onto the bottom row (3 % SHELF_ROWS),
+  // where the gallery spots and contact shadows keep it prominent.
   { cover: coverSand, title: "Zandsculpturen", width: 134 },
   {
     series: "Natuur",
@@ -65,6 +66,62 @@ const PLANK_WIDE: PlankBox[] = [
     c1: "var(--mk-pink-300)",
     c2: "var(--mk-pink-500)",
     width: 98,
+  },
+  {
+    series: "Natuur",
+    title: "Keukenhof",
+    pieceCount: 1000,
+    c1: "var(--mk-green-400)",
+    c2: "var(--mk-green-600)",
+    width: 112,
+  },
+  {
+    series: "Steden",
+    title: "Utrecht",
+    pieceCount: 750,
+    c1: "var(--mk-violet-400)",
+    c2: "var(--mk-violet-600)",
+    width: 94,
+  },
+  {
+    series: "Kunst",
+    title: "De Nachtwacht",
+    pieceCount: 2000,
+    c1: "var(--mk-pink-400)",
+    c2: "var(--mk-pink-500)",
+    width: 118,
+  },
+  {
+    series: "Natuur",
+    title: "Hoge Veluwe",
+    pieceCount: 1500,
+    c1: "var(--mk-green-300)",
+    c2: "var(--mk-green-600)",
+    width: 102,
+  },
+  {
+    series: "Steden",
+    title: "Giethoorn",
+    pieceCount: 500,
+    c1: "var(--mk-violet-300)",
+    c2: "var(--mk-violet-700)",
+    width: 88,
+  },
+  {
+    series: "Kunst",
+    title: "Delfts Blauw",
+    pieceCount: 1000,
+    c1: "var(--mk-pink-300)",
+    c2: "var(--mk-pink-500)",
+    width: 106,
+  },
+  {
+    series: "Natuur",
+    title: "Kinderdijk",
+    pieceCount: 1500,
+    c1: "var(--mk-green-400)",
+    c2: "var(--mk-green-600)",
+    width: 96,
   },
 ];
 
@@ -237,7 +294,9 @@ export function Hero() {
   React.useEffect(() => setSeed(Math.floor(Math.random() * 0xffffffff)), []);
   const livePuzzles = useQuery(
     gateway.insights.plankPuzzles,
-    seed === null ? "skip" : { limit: 7, seed },
+    // 12 is the backend's clamp ceiling — enough for ~4 unique boxes per
+    // shelf row before the scene starts cycling them.
+    seed === null ? "skip" : { limit: 12, seed },
   );
   const rows = React.useMemo(
     () =>
