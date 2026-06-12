@@ -1,17 +1,16 @@
 "use client";
 
 // Lightweight, localStorage-persisted shell preferences. There is no backend
-// preferences API, so this deliberately stays client-local: SSR and the first
-// client render use the defaults, and the stored values are applied after
-// hydration so server and client markup always match.
+// preferences API, so this deliberately stays client-local. The store is a
+// tiny module-level external store consumed via useSyncExternalStore: the
+// server snapshot is the defaults (so SSR/hydration markup always match) and
+// React swaps in the stored values right after hydration.
 
 import {
   createContext,
-  useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
+  useSyncExternalStore,
 } from "react";
 
 export type ShellPreferences = {
@@ -26,11 +25,70 @@ const DEFAULTS: ShellPreferences = { fullWidth: true, hideEmail: true };
 
 const STORAGE_KEY = "jigswap-shell-preferences";
 
+// ---- Module-level store -----------------------------------------------
+
+let snapshot: ShellPreferences = DEFAULTS;
+const listeners = new Set<() => void>();
+
+function loadSnapshot() {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    snapshot = raw
+      ? { ...DEFAULTS, ...(JSON.parse(raw) as Partial<ShellPreferences>) }
+      : DEFAULTS;
+  } catch {
+    // Corrupt/inaccessible storage: keep the defaults.
+    snapshot = DEFAULTS;
+  }
+}
+
+if (typeof window !== "undefined") {
+  loadSnapshot();
+}
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  // Stay in sync when another tab changes the stored preferences.
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === STORAGE_KEY) {
+      loadSnapshot();
+      listener();
+    }
+  };
+  window.addEventListener("storage", onStorage);
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+
+function getSnapshot(): ShellPreferences {
+  return snapshot;
+}
+
+function getServerSnapshot(): ShellPreferences {
+  return DEFAULTS;
+}
+
+function setPreference<K extends keyof ShellPreferences>(
+  key: K,
+  value: ShellPreferences[K],
+) {
+  snapshot = { ...snapshot, [key]: value };
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+  } catch {
+    // Persisting is best-effort; the in-memory value still applies.
+  }
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
+// ---- React context ------------------------------------------------------
+
 type ShellPreferencesContextValue = ShellPreferences & {
-  setPreference: <K extends keyof ShellPreferences>(
-    key: K,
-    value: ShellPreferences[K],
-  ) => void;
+  setPreference: typeof setPreference;
 };
 
 const ShellPreferencesContext =
@@ -41,41 +99,15 @@ export function ShellPreferencesProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [preferences, setPreferences] = useState<ShellPreferences>(DEFAULTS);
-
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const stored = JSON.parse(raw) as Partial<ShellPreferences>;
-        setPreferences({ ...DEFAULTS, ...stored });
-      }
-    } catch {
-      // Corrupt/inaccessible storage: keep the defaults.
-    }
-  }, []);
-
-  const setPreference = useCallback(
-    <K extends keyof ShellPreferences>(
-      key: K,
-      value: ShellPreferences[K],
-    ) => {
-      setPreferences((previous) => {
-        const next = { ...previous, [key]: value };
-        try {
-          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        } catch {
-          // Persisting is best-effort; the in-memory value still applies.
-        }
-        return next;
-      });
-    },
-    [],
+  const preferences = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
   );
 
   const value = useMemo(
     () => ({ ...preferences, setPreference }),
-    [preferences, setPreference],
+    [preferences],
   );
 
   return (
