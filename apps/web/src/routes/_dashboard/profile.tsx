@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useUser } from "@/compat/clerk";
@@ -25,6 +26,9 @@ import { useState } from "react";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/profile")({
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "profile") }],
+  }),
   pendingComponent: () => <PageLoading message="Loading profile..." />,
   component: ProfilePage,
 });

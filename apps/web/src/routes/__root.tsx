@@ -50,7 +50,7 @@ export const Route = createRootRouteWithContext<{
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "JigSwap (Start)" },
+      { title: "JigSwap" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

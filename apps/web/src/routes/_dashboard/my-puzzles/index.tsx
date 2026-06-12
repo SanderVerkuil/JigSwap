@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useUser } from "@/compat/clerk";
@@ -16,6 +17,9 @@ import { useMemo, useState } from "react";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/my-puzzles/")({
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "myPuzzles") }],
+  }),
   pendingComponent: () => <PageLoading message="Loading puzzles..." />,
   component: PuzzlesPage,
 });

@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +18,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/moderation")({
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "adminModeration") }],
+  }),
   component: ModerationPage,
 });
 

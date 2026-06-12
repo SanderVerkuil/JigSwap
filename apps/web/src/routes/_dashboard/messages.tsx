@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,6 +10,9 @@ import { MoreVertical, Search, Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 export const Route = createFileRoute("/_dashboard/messages")({
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "messages") }],
+  }),
   component: MessagesPage,
 });
 

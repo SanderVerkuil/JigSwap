@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/categories")({
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "adminCategories") }],
+  }),
   pendingComponent: () => <PageLoading message="Loading categories..." />,
   component: CategoriesPage,
 });

@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
@@ -13,6 +14,9 @@ import { useState } from "react";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/browse")({
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "browse") }],
+  }),
   pendingComponent: () => <PageLoading message="Loading browse..." />,
   component: BrowsePage,
 });

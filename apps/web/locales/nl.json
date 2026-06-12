@@ -1014,8 +1014,7 @@
     "channelInApp": "In-app",
     "channelEmail": "E-mail",
     "channelPush": "Push",
-    "channelComingSoon": "Binnenkort",
-    "channelsNote": "In-app meldingen worden nu bezorgd. E-mail en push worden bewaard voor wanneer die kanalen live gaan.",
+    "channelsNote": "In-app meldingen worden direct bezorgd. E-mail en push worden bezorgd via Knock.",
     "notificationType": "Melding",
     "types": {
       "trade_request": "Ruilverzoeken",
@@ -1613,5 +1612,32 @@
       "privacy": "Privacybeleid — JigSwap",
       "terms": "Algemene voorwaarden — JigSwap"
     }
+  },
+  "titles": {
+    "dashboard": "Dashboard — JigSwap",
+    "browse": "Puzzels bladeren — JigSwap",
+    "myPuzzles": "Mijn puzzels — JigSwap",
+    "addPuzzle": "Puzzel toevoegen — JigSwap",
+    "puzzles": "Puzzels — JigSwap",
+    "puzzle": "Puzzeldetails — JigSwap",
+    "collections": "Collecties — JigSwap",
+    "collection": "Collectie — JigSwap",
+    "collectionAddPuzzles": "Puzzels toevoegen aan collectie — JigSwap",
+    "trades": "Uitwisselingen — JigSwap",
+    "messages": "Berichten — JigSwap",
+    "notifications": "Meldingen — JigSwap",
+    "notificationPreferences": "Meldingsvoorkeuren — JigSwap",
+    "profile": "Profiel — JigSwap",
+    "goals": "Doelen — JigSwap",
+    "insights": "Inzichten — JigSwap",
+    "completions": "Voltooiingen — JigSwap",
+    "community": "Community — JigSwap",
+    "circles": "Kringen — JigSwap",
+    "borrowed": "Geleend — JigSwap",
+    "admin": "Beheer — JigSwap",
+    "adminCategories": "Categoriebeheer — JigSwap",
+    "adminModeration": "Moderatie — JigSwap",
+    "signIn": "Inloggen — JigSwap",
+    "signUp": "Registreren — JigSwap"
   }
 }

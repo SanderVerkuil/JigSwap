@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useUser } from "@/compat/clerk";
@@ -24,6 +25,9 @@ import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/notifications/")({
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "notifications") }],
+  }),
   component: NotificationsPage,
 });
 

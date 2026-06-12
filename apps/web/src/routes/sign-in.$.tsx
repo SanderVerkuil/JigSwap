@@ -1,9 +1,13 @@
 import { SignIn } from "@/compat/clerk";
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 // Catch-all so Clerk's multi-step sign-in sub-routes (/sign-in/factor-one, ...)
 // resolve here, mirroring web's (auth)/sign-in/[[...sign-in]].
 export const Route = createFileRoute("/sign-in/$")({
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "signIn") }],
+  }),
   component: SignInPage,
 });
 

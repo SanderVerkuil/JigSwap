@@ -1014,8 +1014,7 @@
     "channelInApp": "In-app",
     "channelEmail": "Email",
     "channelPush": "Push",
-    "channelComingSoon": "Coming soon",
-    "channelsNote": "In-app notifications are delivered now. Email and push are stored for when those channels go live.",
+    "channelsNote": "In-app notifications are delivered instantly. Email and push are delivered through Knock.",
     "notificationType": "Notification",
     "types": {
       "trade_request": "Trade requests",
@@ -1613,5 +1612,32 @@
       "privacy": "Privacy Policy — JigSwap",
       "terms": "Terms of Service — JigSwap"
     }
+  },
+  "titles": {
+    "dashboard": "Dashboard — JigSwap",
+    "browse": "Browse puzzles — JigSwap",
+    "myPuzzles": "My puzzles — JigSwap",
+    "addPuzzle": "Add puzzle — JigSwap",
+    "puzzles": "Puzzles — JigSwap",
+    "puzzle": "Puzzle details — JigSwap",
+    "collections": "Collections — JigSwap",
+    "collection": "Collection — JigSwap",
+    "collectionAddPuzzles": "Add puzzles to collection — JigSwap",
+    "trades": "Trades — JigSwap",
+    "messages": "Messages — JigSwap",
+    "notifications": "Notifications — JigSwap",
+    "notificationPreferences": "Notification preferences — JigSwap",
+    "profile": "Profile — JigSwap",
+    "goals": "Goals — JigSwap",
+    "insights": "Insights — JigSwap",
+    "completions": "Completions — JigSwap",
+    "community": "Community — JigSwap",
+    "circles": "Circles — JigSwap",
+    "borrowed": "Borrowed — JigSwap",
+    "admin": "Admin — JigSwap",
+    "adminCategories": "Category management — JigSwap",
+    "adminModeration": "Moderation — JigSwap",
+    "signIn": "Sign in — JigSwap",
+    "signUp": "Sign up — JigSwap"
   }
 }

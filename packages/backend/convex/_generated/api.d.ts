@@ -126,6 +126,7 @@ import type * as library_updateCopyDetails from "../library/updateCopyDetails.js
 import type * as library_updateCopySharing from "../library/updateCopySharing.js";
 import type * as notifications_adapters_channels_emailChannel from "../notifications/adapters/channels/emailChannel.js";
 import type * as notifications_adapters_channels_inAppChannel from "../notifications/adapters/channels/inAppChannel.js";
+import type * as notifications_adapters_channels_knockChannel from "../notifications/adapters/channels/knockChannel.js";
 import type * as notifications_adapters_channels_pushChannel from "../notifications/adapters/channels/pushChannel.js";
 import type * as notifications_adapters_convexNotificationPreferenceRepository from "../notifications/adapters/convexNotificationPreferenceRepository.js";
 import type * as notifications_adapters_convexNotificationRepository from "../notifications/adapters/convexNotificationRepository.js";
@@ -137,6 +138,7 @@ import type * as notifications_adapters_systemClock from "../notifications/adapt
 import type * as notifications_backfill from "../notifications/backfill.js";
 import type * as notifications_errors from "../notifications/errors.js";
 import type * as notifications_getMyPreferences from "../notifications/getMyPreferences.js";
+import type * as notifications_knock from "../notifications/knock.js";
 import type * as notifications_listMyNotifications from "../notifications/listMyNotifications.js";
 import type * as notifications_markAllRead from "../notifications/markAllRead.js";
 import type * as notifications_markNotificationRead from "../notifications/markNotificationRead.js";
@@ -330,6 +332,7 @@ declare const fullApi: ApiFromModules<{
   "library/updateCopySharing": typeof library_updateCopySharing;
   "notifications/adapters/channels/emailChannel": typeof notifications_adapters_channels_emailChannel;
   "notifications/adapters/channels/inAppChannel": typeof notifications_adapters_channels_inAppChannel;
+  "notifications/adapters/channels/knockChannel": typeof notifications_adapters_channels_knockChannel;
   "notifications/adapters/channels/pushChannel": typeof notifications_adapters_channels_pushChannel;
   "notifications/adapters/convexNotificationPreferenceRepository": typeof notifications_adapters_convexNotificationPreferenceRepository;
   "notifications/adapters/convexNotificationRepository": typeof notifications_adapters_convexNotificationRepository;
@@ -341,6 +344,7 @@ declare const fullApi: ApiFromModules<{
   "notifications/backfill": typeof notifications_backfill;
   "notifications/errors": typeof notifications_errors;
   "notifications/getMyPreferences": typeof notifications_getMyPreferences;
+  "notifications/knock": typeof notifications_knock;
   "notifications/listMyNotifications": typeof notifications_listMyNotifications;
   "notifications/markAllRead": typeof notifications_markAllRead;
   "notifications/markNotificationRead": typeof notifications_markNotificationRead;

@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { ActivityFeed } from "@/components/social/activity-feed";
@@ -5,6 +6,9 @@ import { FollowList } from "@/components/social/follow-list";
 import { ProfileEditor } from "@/components/social/profile-editor";
 
 export const Route = createFileRoute("/_dashboard/community")({
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "community") }],
+  }),
   component: CommunityPage,
 });
 
