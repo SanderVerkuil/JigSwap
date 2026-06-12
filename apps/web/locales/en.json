@@ -1109,6 +1109,16 @@
     "emptyTitle": "No circles yet",
     "emptySub": "Create a circle to swap puzzles with friends and family."
   },
+  "people": {
+    "yourNetwork": "Your Network",
+    "memberCount": "{count, plural, one {# member} other {# members}}",
+    "followsYou": "Follows you",
+    "ownedLabel": "owned",
+    "swapsLabel": "swaps",
+    "activity": "Activity",
+    "emptyTitle": "No members in your network yet",
+    "emptySub": "Follow fellow puzzlers to build your network."
+  },
   "notifications": {
     "title": "Notifications",
     "subtitle": "Stay on top of trades, reviews, and milestones.",
