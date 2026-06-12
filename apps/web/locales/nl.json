@@ -299,8 +299,8 @@
     "requestExchange": "Uitwisseling Aanvragen",
     "myPuzzles": "Mijn Puzzels",
     "managePuzzles": "Beheer je puzzelcollectie",
-    "noPuzzles": "Nog geen puzzels",
-    "addFirstPuzzle": "Voeg je eerste puzzel toe om te beginnen met ruilen",
+    "noPuzzles": "Nog geen puzzels hier",
+    "addFirstPuzzle": "Voeg je eerste puzzel toe om te beginnen met ruilen.",
     "noImage": "Geen Afbeelding",
     "addPuzzleDescription": "Voeg een nieuwe puzzel toe aan je collectie",
     "selectPuzzle": "Puzzel Selecteren",
@@ -443,7 +443,16 @@
       "actions": "Acties",
       "addToFavorites": "Toevoegen aan Favorieten",
       "notFound": "Puzzel niet gevonden"
-    }
+    },
+    "filters": {
+      "all": "Alles",
+      "available": "Beschikbaar",
+      "forTrade": "Te Ruilen",
+      "forLend": "Te Leen",
+      "inProgress": "Bezig",
+      "completed": "Voltooid"
+    },
+    "resultCount": "{count} van {total} puzzels"
   },
   "trades": {
     "title": "Uitwisselingen",
@@ -1072,7 +1081,9 @@
     "collectionNotFound": "Collectie niet gevonden",
     "backToCollections": "Terug naar Collecties",
     "manageCollections": "Collecties Beheren",
-    "notFound": "Collectie niet gevonden"
+    "notFound": "Collectie niet gevonden",
+    "meta": "{shelves, plural, one {# plank} other {# planken}} · {puzzles, plural, one {# puzzel} other {# puzzels}}",
+    "newCollection": "Nieuwe Collectie"
   },
   "notifications": {
     "title": "Meldingen",
@@ -1135,7 +1146,16 @@
       "editWindowClosed": "Deze voltooiing kan niet meer worden bewerkt (het venster van 24 uur is gesloten).",
       "yourReview": "Jouw review",
       "addReview": "Review toevoegen",
-      "editReview": "Review bewerken"
+      "editReview": "Review bewerken",
+      "stats": {
+        "completed": "Puzzels voltooid",
+        "pieces": "Stukjes gelegd",
+        "thisYear": "Dit jaar"
+      },
+      "log": "Voltooiingslog",
+      "logAction": "Voltooiing Loggen",
+      "mostRecent": "Meest recente eerst",
+      "piecesFinished": "{pieces, number} stukjes · voltooid in {days, plural, one {# dag} other {# dagen}}"
     },
     "logSolve": {
       "trigger": "Oplossing vastleggen",
@@ -1171,7 +1191,7 @@
       "subtitle": "Stel voltooiingsdoelen in en volg je voortgang.",
       "empty": "Nog geen doelen",
       "emptyHint": "Maak een doel aan om naar een voltooiingsdoel toe te werken.",
-      "create": "Nieuw doel",
+      "create": "Nieuw Doel",
       "createTitle": "Doel aanmaken",
       "createDescription": "Stel een doelaantal voltooiingen in om naartoe te werken.",
       "goalTitle": "Titel",
@@ -1185,7 +1205,9 @@
       "createError": "Kon het doel niet aanmaken. Probeer het opnieuw.",
       "progress": "{current} van {target} voltooiingen",
       "achieved": "Behaald",
-      "dueBy": "Vóór {date}"
+      "dueBy": "Vóór {date}",
+      "activeCount": "{count} actief",
+      "progressShort": "{current}/{target} voltooid"
     }
   },
   "insights": {
@@ -1247,6 +1269,10 @@
       "success": "Je gegevens zijn gedownload.",
       "error": "Kon je gegevens niet exporteren. Probeer het opnieuw.",
       "capped": "Sommige lijsten zijn beperkt tot {limit} rijen per categorie."
+    },
+    "charts": {
+      "completionsPerMonth": "Voltooiingen / maand",
+      "swapsPerMonth": "Ruilacties / maand"
     }
   },
   "forms": {

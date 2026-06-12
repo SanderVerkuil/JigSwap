@@ -1,21 +1,9 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import { useMemo } from "react";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { SectionHead } from "@/components/dashboard-home/section-head";
+import { ArrowLeftRight } from "lucide-react";
 import { useTranslations } from "use-intl";
+import { monthLabel, Sparkbars } from "./sparkbars";
 
 interface StatusCount {
   status: string;
@@ -28,59 +16,42 @@ export interface TradeActivityData {
   byMonth: { month: string; count: number }[];
 }
 
+// "Swaps / month" as a minimal sparkbar chart, with the per-status counts the
+// old bar chart carried kept as a muted summary line underneath.
 export function TradeActivityChart({ data }: { data: TradeActivityData }) {
-  const t = useTranslations("insights.trades");
+  const t = useTranslations("insights");
 
-  // The domain returns the full status set (zeros included); translate each status label and keep
-  // the server-defined order. Tooltip reads the localized label via `nameKey`.
-  const chartData = useMemo(
-    () =>
-      data.byStatus.map((s) => ({
-        status: s.status,
-        label: t(`status.${s.status}` as never),
-        count: s.count,
-      })),
-    [data.byStatus, t],
-  );
+  const values = data.byMonth.map((m) => m.count);
+  const labels = data.byMonth.map((m) => monthLabel(m.month));
 
-  const config = {
-    count: { label: t("count"), color: "var(--chart-3)" },
-  } satisfies ChartConfig;
+  // Localized "2 Completed · 1 Proposed" summary of the non-empty statuses,
+  // preserving the server-defined order.
+  const statusSummary = data.byStatus
+    .filter((s) => s.count > 0)
+    .map((s) => `${s.count} ${t(`trades.status.${s.status}` as never)}`)
+    .join(" · ");
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("title")}</CardTitle>
-        <CardDescription>{t("description")}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {data.total > 0 ? (
-          <ChartContainer config={config} className="h-[240px] w-full">
-            <BarChart data={chartData} margin={{ left: 4, right: 8 }}>
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="label"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                interval={0}
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                width={28}
-                allowDecimals={false}
-              />
-              <ChartTooltip content={<ChartTooltipContent nameKey="label" />} />
-              <Bar dataKey="count" fill="var(--color-count)" radius={4} />
-            </BarChart>
-          </ChartContainer>
-        ) : (
-          <p className="py-12 text-center text-sm text-muted-foreground">
-            {t("empty")}
-          </p>
-        )}
-      </CardContent>
-    </Card>
+    <section className="min-w-0">
+      <SectionHead title={t("charts.swapsPerMonth")} icon={ArrowLeftRight} />
+      {data.total > 0 ? (
+        <>
+          <Sparkbars
+            data={values}
+            labels={labels}
+            color="var(--jigsaw-secondary)"
+          />
+          {statusSummary && (
+            <p className="text-muted-foreground mt-3 text-xs">
+              {statusSummary}
+            </p>
+          )}
+        </>
+      ) : (
+        <p className="text-muted-foreground py-12 text-center text-sm">
+          {t("trades.empty")}
+        </p>
+      )}
+    </section>
   );
 }

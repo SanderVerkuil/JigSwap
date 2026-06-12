@@ -1,13 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { gateway } from "@/gateway";
 import { useConvex } from "convex/react";
 import { Download } from "lucide-react";
@@ -60,18 +53,20 @@ export function ExportButton() {
     }
   };
 
+  // Card-free closing row: a quiet hairline-topped footer with the snapshot
+  // download as a plain outline action.
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">{t("title")}</CardTitle>
-        <CardDescription>{t("description")}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Button onClick={handleExport} disabled={busy}>
-          <Download className="mr-2 h-4 w-4" />
-          {busy ? t("preparing") : t("button")}
-        </Button>
-      </CardContent>
-    </Card>
+    <div className="flex flex-wrap items-center justify-between gap-4 border-t pt-5">
+      <div className="min-w-0">
+        <h2 className="text-sm font-semibold">{t("title")}</h2>
+        <p className="text-muted-foreground mt-0.5 text-sm">
+          {t("description")}
+        </p>
+      </div>
+      <Button variant="outline" onClick={handleExport} disabled={busy}>
+        <Download className="h-4 w-4" />
+        {busy ? t("preparing") : t("button")}
+      </Button>
+    </div>
   );
 }

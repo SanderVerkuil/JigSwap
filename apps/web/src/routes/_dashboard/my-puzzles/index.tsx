@@ -4,15 +4,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
+import { EmptyState } from "@/components/library/empty-state";
+import { FilterBar, FilterOption } from "@/components/library/filter-bar";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
-import { Filter, Grid, List, Plus, Search, Undo2 } from "lucide-react";
+import { Grid, List, Plus, Search, Undo2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslations } from "use-intl";
 
@@ -24,6 +26,34 @@ export const Route = createFileRoute("/_dashboard/my-puzzles/")({
   component: PuzzlesPage,
 });
 
+// Status pills mapped onto what the data actually carries: the availability
+// flags on each owned copy, and the member's solve log for progress states.
+type StatusFilter =
+  | "all"
+  | "available"
+  | "forTrade"
+  | "forLend"
+  | "inProgress"
+  | "completed";
+
+function PuzzlesGridSkeleton() {
+  return (
+    <div className="flex flex-col gap-[18px]">
+      <Skeleton className="h-10 w-full max-w-md" />
+      <div className="flex flex-wrap gap-2">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-9 w-24 rounded-full" />
+        ))}
+      </div>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(212px,1fr))] gap-[18px]">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Skeleton key={i} className="aspect-[3/4] w-full rounded-xl" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function PuzzlesPage() {
   const { user } = useUser();
   const router = useRouter();
@@ -32,6 +62,7 @@ function PuzzlesPage() {
   const tLending = useTranslations("lending");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   // The loan currently being recalled, so we disable only that copy's Recall button.
   const [recallingId, setRecallingId] = useState<string | null>(null);
   // The copy a solve is being logged against; null when the dialog is closed.
@@ -57,6 +88,27 @@ function PuzzlesPage() {
   // Open loans where the caller is the lender; the source of truth for "which of my copies are out".
   const lentOut = useQuery(gateway.lending.lentOut);
   const recallLoan = useMutation(gateway.lending.recallLoan);
+
+  // The member's solve log powers the In Progress / Completed pills; keyed by
+  // the copy's ownedPuzzles _id so each card resolves its state in O(1).
+  const completions = useQuery(
+    gateway.solving.myCompletions,
+    convexUser?._id ? {} : "skip",
+  );
+  const solveStateByCopyId = useMemo(() => {
+    const map = new Map<string, { inProgress: boolean; completed: boolean }>();
+    for (const completion of completions ?? []) {
+      if (!completion.ownedPuzzleId) continue;
+      const state = map.get(completion.ownedPuzzleId) ?? {
+        inProgress: false,
+        completed: false,
+      };
+      if (completion.isCompleted) state.completed = true;
+      else state.inProgress = true;
+      map.set(completion.ownedPuzzleId, state);
+    }
+    return map;
+  }, [completions]);
 
   // Lookup of open loans keyed by the copy's ownedPuzzles _id (LoanView.copyDocId), so each card can
   // tell whether it is currently lent out without an extra per-row query.
@@ -117,102 +169,108 @@ function PuzzlesPage() {
     });
   };
 
-  // Filter puzzle instances based on search term
-  const filteredownedPuzzles =
-    userownedPuzzles?.filter(
-      (puzzle) =>
-        puzzle.puzzle?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filterOptions: FilterOption<StatusFilter>[] = [
+    { value: "all", label: t("filters.all") },
+    { value: "available", label: t("filters.available") },
+    { value: "forTrade", label: t("filters.forTrade") },
+    { value: "forLend", label: t("filters.forLend") },
+    { value: "inProgress", label: t("filters.inProgress") },
+    { value: "completed", label: t("filters.completed") },
+  ];
+
+  // Search narrows by title/brand; the status pill then maps onto the copy's
+  // availability flags or its solve state.
+  const filteredownedPuzzles = (userownedPuzzles ?? []).filter((puzzle) => {
+    const term = searchTerm.trim().toLowerCase();
+    if (
+      term &&
+      !(
+        puzzle.puzzle?.title.toLowerCase().includes(term) ||
         (puzzle.puzzle?.brand &&
-          puzzle.puzzle.brand.toLowerCase().includes(searchTerm.toLowerCase())),
-    ) || [];
+          puzzle.puzzle.brand.toLowerCase().includes(term))
+      )
+    ) {
+      return false;
+    }
+    if (statusFilter === "all") return true;
+    const { forTrade, forLend, forSale } = puzzle.availability;
+    if (statusFilter === "available") return forTrade || forLend || forSale;
+    if (statusFilter === "forTrade") return forTrade;
+    if (statusFilter === "forLend") return forLend;
+    const solveState = solveStateByCopyId.get(puzzle._id);
+    if (statusFilter === "inProgress") return solveState?.inProgress ?? false;
+    return solveState?.completed ?? false;
+  });
 
   if (!user || !convexUser || userownedPuzzles === undefined) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">{tCommon("loading")}</p>
-        </div>
-      </div>
-    );
+    return <PuzzlesGridSkeleton />;
   }
 
   return (
-    <div className="container mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{t("myPuzzles")}</h1>
-          <p className="text-muted-foreground">{t("managePuzzles")}</p>
+    <div className="flex flex-col gap-[18px]">
+      {/* Toolbar: search on the left, view toggle + Add Puzzle on the right */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative min-w-52 flex-1 md:max-w-md">
+          <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder={tCommon("search")}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="focus:ring-primary h-10 w-full rounded-md border bg-transparent pr-4 pl-10 text-sm focus:ring-2 focus:outline-none"
+          />
         </div>
-        <Button asChild>
-          <Link href="/my-puzzles/add">
-            <Plus className="h-4 w-4 mr-2" />
-            {t("addPuzzle")}
-          </Link>
-        </Button>
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant={viewMode === "grid" ? "secondary" : "ghost"}
+            size="icon"
+            aria-label="Grid view"
+            onClick={() => setViewMode("grid")}
+          >
+            <Grid className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewMode === "list" ? "secondary" : "ghost"}
+            size="icon"
+            aria-label="List view"
+            onClick={() => setViewMode("list")}
+          >
+            <List className="h-4 w-4" />
+          </Button>
+          <Button variant="brand" asChild>
+            <Link href="/my-puzzles/add">
+              <Plus className="h-4 w-4" />
+              {t("addPuzzle")}
+            </Link>
+          </Button>
+        </div>
       </div>
 
-      {/* Search and Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="flex-1 flex items-center gap-2">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder={tCommon("search")}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
-                {tCommon("filter")}
-              </Button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant={viewMode === "grid" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("grid")}
-              >
-                <Grid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("list")}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Status pills + result count */}
+      <FilterBar
+        options={filterOptions}
+        value={statusFilter}
+        onChange={setStatusFilter}
+        count={t("resultCount", {
+          count: filteredownedPuzzles.length,
+          total: userownedPuzzles.length,
+        })}
+      />
 
       {/* Puzzles Grid/List */}
       {filteredownedPuzzles.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <div className="text-muted-foreground mb-4">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                <Plus className="h-8 w-8" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">{t("noPuzzles")}</h3>
-              <p className="text-sm">{t("addFirstPuzzle")}</p>
-            </div>
-            <Button asChild>
+        <EmptyState
+          title={t("noPuzzles")}
+          sub={t("addFirstPuzzle")}
+          action={
+            <Button variant="brand" asChild>
               <Link href="/my-puzzles/add">
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4" />
                 {t("addPuzzle")}
               </Link>
             </Button>
-          </CardContent>
-        </Card>
+          }
+        />
       ) : (
         <PuzzleViewProvider viewMode={viewMode}>
           {filteredownedPuzzles.map((puzzle) => {

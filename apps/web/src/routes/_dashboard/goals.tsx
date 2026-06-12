@@ -2,9 +2,10 @@ import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useUser } from "@/compat/clerk";
+import { SectionHead } from "@/components/dashboard-home/section-head";
+import { EmptyState } from "@/components/library/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -12,13 +13,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PageLoading } from "@/components/ui/loading";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
+import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "convex/react";
 import { Plus, Target, Trophy } from "lucide-react";
 import { useState } from "react";
@@ -35,7 +36,6 @@ export const Route = createFileRoute("/_dashboard/goals")({
 function GoalsPage() {
   const { user } = useUser();
   const t = useTranslations("solving.goals");
-  const tCommon = useTranslations("common");
 
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -95,97 +95,106 @@ function GoalsPage() {
   };
 
   if (!user || convexUser === undefined || goals === undefined) {
-    return <PageLoading message={tCommon("loading")} />;
+    return (
+      <div className="mx-auto flex w-full max-w-[860px] flex-col gap-[26px]">
+        <Skeleton className="h-10 w-full" />
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-16" />
+        ))}
+      </div>
+    );
   }
 
+  const activeCount = goals.filter((goal) => goal.isActive).length;
+
   return (
-    <div className="container mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{t("title")}</h1>
-          <p className="text-muted-foreground">{t("subtitle")}</p>
-        </div>
+    <div className="mx-auto flex w-full max-w-[860px] flex-col gap-[26px]">
+      <SectionHead
+        title={t("title")}
+        icon={Target}
+        meta={t("activeCount", { count: activeCount })}
+        action={
+          <Button variant="brand" size="sm" onClick={() => setOpen(true)}>
+            <Plus className="h-4 w-4" />
+            {t("create")}
+          </Button>
+        }
+      />
 
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              {t("create")}
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t("createTitle")}</DialogTitle>
-              <DialogDescription>{t("createDescription")}</DialogDescription>
-            </DialogHeader>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("createTitle")}</DialogTitle>
+            <DialogDescription>{t("createDescription")}</DialogDescription>
+          </DialogHeader>
 
-            <div className="space-y-4">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="goal-title">{t("goalTitle")}</Label>
+              <Input
+                id="goal-title"
+                value={title}
+                placeholder={t("goalTitlePlaceholder")}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="goal-description">{t("goalDescription")}</Label>
+              <Textarea
+                id="goal-description"
+                value={description}
+                placeholder={t("goalDescriptionPlaceholder")}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="goal-title">{t("goalTitle")}</Label>
+                <Label htmlFor="goal-target">{t("targetCompletions")}</Label>
                 <Input
-                  id="goal-title"
-                  value={title}
-                  placeholder={t("goalTitlePlaceholder")}
-                  onChange={(e) => setTitle(e.target.value)}
+                  id="goal-target"
+                  type="number"
+                  min={1}
+                  inputMode="numeric"
+                  value={target}
+                  onChange={(e) => setTarget(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="goal-description">{t("goalDescription")}</Label>
-                <Textarea
-                  id="goal-description"
-                  value={description}
-                  placeholder={t("goalDescriptionPlaceholder")}
-                  onChange={(e) => setDescription(e.target.value)}
+                <Label htmlFor="goal-date">{t("targetDate")}</Label>
+                <Input
+                  id="goal-date"
+                  type="date"
+                  value={targetDate}
+                  onChange={(e) => setTargetDate(e.target.value)}
                 />
-              </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="goal-target">{t("targetCompletions")}</Label>
-                  <Input
-                    id="goal-target"
-                    type="number"
-                    min={1}
-                    inputMode="numeric"
-                    value={target}
-                    onChange={(e) => setTarget(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="goal-date">{t("targetDate")}</Label>
-                  <Input
-                    id="goal-date"
-                    type="date"
-                    value={targetDate}
-                    onChange={(e) => setTargetDate(e.target.value)}
-                  />
-                </div>
               </div>
             </div>
+          </div>
 
-            <DialogFooter>
-              <Button
-                onClick={handleCreate}
-                disabled={submitting || !title.trim() || !target}
-              >
-                {t("submit")}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+          <DialogFooter>
+            <Button
+              onClick={handleCreate}
+              disabled={submitting || !title.trim() || !target}
+            >
+              {t("submit")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {goals.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-              <Target className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <h3 className="mb-2 text-lg font-medium">{t("empty")}</h3>
-            <p className="text-sm text-muted-foreground">{t("emptyHint")}</p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          title={t("empty")}
+          sub={t("emptyHint")}
+          action={
+            <Button variant="brand" onClick={() => setOpen(true)}>
+              <Plus className="h-4 w-4" />
+              {t("create")}
+            </Button>
+          }
+        />
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="flex flex-col gap-[26px]">
           {goals.map((goal) => {
             // Progress is derived from the server-maintained counts; never recomputed beyond a
             // clamped percentage for the bar width.
@@ -198,48 +207,71 @@ function GoalsPage() {
                     ),
                   )
                 : 0;
+            const GoalIcon = goal.isAchieved ? Trophy : Target;
             return (
-              <Card key={goal._id}>
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-base">{goal.title}</CardTitle>
-                    {goal.isAchieved && (
-                      <Badge className="shrink-0">
-                        <Trophy className="mr-1 h-3 w-3" />
-                        {t("achieved")}
-                      </Badge>
+              <div key={goal._id}>
+                <div className="mb-2.5 flex items-center gap-3">
+                  <span
+                    className={cn(
+                      "inline-flex size-9 shrink-0 items-center justify-center rounded-full",
+                      goal.isAchieved
+                        ? "bg-jigsaw-secondary/15 text-jigsaw-secondary"
+                        : "bg-jigsaw-primary/10 text-jigsaw-primary",
                     )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {goal.description && (
-                    <p className="text-sm text-muted-foreground">
-                      {goal.description}
-                    </p>
-                  )}
-                  <div className="space-y-1">
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="h-full rounded-full bg-primary transition-all"
-                        style={{ width: `${pct}%` }}
-                      />
+                  >
+                    <GoalIcon className="size-[17px]" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-base font-semibold">
+                        {goal.title}
+                      </span>
+                      {goal.isAchieved && (
+                        <Badge className="shrink-0">
+                          <Trophy className="mr-1 h-3 w-3" />
+                          {t("achieved")}
+                        </Badge>
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {t("progress", {
+                    <div className="text-muted-foreground mt-px text-xs">
+                      {goal.targetDate !== undefined
+                        ? t("dueBy", {
+                            date: new Date(
+                              goal.targetDate,
+                            ).toLocaleDateString(),
+                          })
+                        : goal.description}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-heading text-xl leading-none font-bold">
+                      {pct}%
+                    </div>
+                    <div className="text-muted-foreground font-mono text-xs">
+                      {t("progressShort", {
                         current: goal.currentCompletions,
                         target: goal.targetCompletions,
                       })}
-                    </p>
+                    </div>
                   </div>
-                  {goal.targetDate !== undefined && (
-                    <p className="text-xs text-muted-foreground">
-                      {t("dueBy", {
-                        date: new Date(goal.targetDate).toLocaleDateString(),
-                      })}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
+                </div>
+                <div className="bg-muted h-2.5 w-full overflow-hidden rounded-full">
+                  <div
+                    className={cn(
+                      "h-full rounded-full transition-all",
+                      goal.isAchieved
+                        ? "bg-jigsaw-secondary"
+                        : "bg-jigsaw-primary",
+                    )}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                {goal.targetDate !== undefined && goal.description && (
+                  <p className="text-muted-foreground mt-1.5 text-xs">
+                    {goal.description}
+                  </p>
+                )}
+              </div>
             );
           })}
         </div>

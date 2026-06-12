@@ -280,13 +280,9 @@ function AddPuzzlePage() {
   };
 
   return (
-    <div className="container mx-auto max-w-2xl py-8">
+    <div className="mx-auto max-w-2xl">
+      {/* The shell PageHead owns the page title; the form starts right away. */}
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">{t("addPuzzle")}</h1>
-          <p className="text-muted-foreground">{t("addPuzzleDescription")}</p>
-        </div>
-
         <Card>
           <CardHeader>
             <CardTitle>{t("selectPuzzle")}</CardTitle>
