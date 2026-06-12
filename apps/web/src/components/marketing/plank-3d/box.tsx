@@ -12,9 +12,10 @@ import {
 
 // World scale: 1 unit = 100 CSS-plank pixels.
 export const PX = 1 / 100;
-// Boxes render at full CSS-plank footprint for now.
-export const BOX_SCALE = 1;
-export const BOX_DEPTH = 0.24;
+// Multi-row shelf: boxes render at ~74% of their CSS-plank footprint so
+// stacked rows fit the hero without any single box dominating the frame.
+export const BOX_SCALE = 0.74;
+export const BOX_DEPTH = 0.18;
 
 export interface BoxSlot {
   x: number;

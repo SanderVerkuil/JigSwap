@@ -76,6 +76,18 @@ const COLOR_PAIRS: Array<[string, string]> = [
   ["var(--mk-violet-300)", "var(--mk-violet-700)"],
 ];
 
+// Number of stacked shelf rows in the 3D backdrop (and the CSS fallback).
+const SHELF_ROWS = 3;
+
+// Deal boxes round-robin across the shelf rows so each row gets its own mix
+// of colours and covers; the 3D scene cycles each row's list to fill the
+// visible span, so a handful of unique boxes per row is enough.
+function toRows(boxes: PlankBox[]): PlankBox[][] {
+  const rows: PlankBox[][] = Array.from({ length: SHELF_ROWS }, () => []);
+  boxes.forEach((box, i) => rows[i % SHELF_ROWS].push(box));
+  return rows;
+}
+
 type PlankPuzzleView = {
   title: string;
   pieceCount: number;
@@ -227,11 +239,13 @@ export function Hero() {
     gateway.insights.plankPuzzles,
     seed === null ? "skip" : { limit: 7, seed },
   );
-  const boxes = React.useMemo(
+  const rows = React.useMemo(
     () =>
-      livePuzzles && livePuzzles.length >= 3
-        ? livePuzzles.map(toPlankBox)
-        : PLANK_WIDE,
+      toRows(
+        livePuzzles && livePuzzles.length >= 3
+          ? livePuzzles.map(toPlankBox)
+          : PLANK_WIDE,
+      ),
     [livePuzzles],
   );
 
@@ -241,7 +255,7 @@ export function Hero() {
 
       {/* Full-bleed 3D backdrop layer */}
       <div className="absolute inset-0" aria-hidden="true">
-        <JigPlank3D boxes={boxes} />
+        <JigPlank3D rows={rows} />
       </div>
 
       {/* Readability scrim: horizontal fade for the text side + bottom fade so
