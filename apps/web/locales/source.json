@@ -575,6 +575,90 @@
     "recentActivity": {
       "title": "Recent Activity",
       "noActivity": "No recent activity"
+    },
+    "brief": {
+      "swapsPendingGoal": "You have <swapsLink>{swapsCount, plural, one {# swap in motion} other {# swaps in motion}}</swapsLink>, {pendingCount, plural, one {one request waiting for your reply} other {# requests waiting for your reply}}, and you're <goalLink>{pct}% of the way</goalLink> to your goal of {target, plural, one {# puzzle} other {# puzzles}}.",
+      "swapsPending": "You have <swapsLink>{swapsCount, plural, one {# swap in motion} other {# swaps in motion}}</swapsLink> and {pendingCount, plural, one {one request waiting for your reply} other {# requests waiting for your reply}}.",
+      "swapsGoal": "You have <swapsLink>{swapsCount, plural, one {# swap in motion} other {# swaps in motion}}</swapsLink>, and you're <goalLink>{pct}% of the way</goalLink> to your goal of {target, plural, one {# puzzle} other {# puzzles}}.",
+      "pendingGoal": "You have {pendingCount, plural, one {one request waiting for your reply} other {# requests waiting for your reply}}, and you're <goalLink>{pct}% of the way</goalLink> to your goal of {target, plural, one {# puzzle} other {# puzzles}}.",
+      "swapsOnly": "You have <swapsLink>{swapsCount, plural, one {# swap in motion} other {# swaps in motion}}</swapsLink> — keep those pieces moving.",
+      "pendingOnly": "You have {pendingCount, plural, one {one request waiting for your reply} other {# requests waiting for your reply}}.",
+      "goalOnly": "All quiet on the swap front — and you're <goalLink>{pct}% of the way</goalLink> to your goal of {target, plural, one {# puzzle} other {# puzzles}}.",
+      "empty": "Your shelf is ready when you are — add a puzzle or browse the community to get things moving. 🧩"
+    },
+    "pendingBanner": {
+      "swap": "<strong>{name}</strong> wants to swap <strong>{theirs}</strong> for your <mineStrong>{mine}</mineStrong>",
+      "want": "<strong>{name}</strong> would love your <mineStrong>{mine}</mineStrong>",
+      "borrow": "<strong>{name}</strong> would like to borrow your <mineStrong>{mine}</mineStrong>",
+      "buy": "<strong>{name}</strong> would like to buy your <mineStrong>{mine}</mineStrong>",
+      "accept": "Accept Swap",
+      "reply": "Reply"
+    },
+    "actions": {
+      "addPuzzle": "Add a Puzzle",
+      "browse": "Browse Community",
+      "logCompletion": "Log a Completion"
+    },
+    "shelf": {
+      "title": "Your Shelf",
+      "meta": "{owned, plural, one {# on the shelf} other {# on the shelf}} · {forTrade, plural, =0 {none up for trade} one {# up for trade} other {# up for trade}}",
+      "viewCollections": "View Collections",
+      "empty": "Your shelf is waiting for its first puzzle — add one and it'll sit right here, ready to be admired (and swapped). 🧩",
+      "addFirst": "Add Your First Puzzle",
+      "stats": {
+        "ownedLabel": "Puzzles Owned",
+        "ownedSub": "{count, plural, =0 {None up for trade yet} one {# up for trade} other {# up for trade}}",
+        "completedLabel": "Exchanges Completed",
+        "completedSub": "Swaps settled all-time",
+        "ratingLabel": "Average Rating",
+        "ratingSub": "{count, plural, =0 {No reviews yet} one {from # review} other {from # reviews}}",
+        "activeLabel": "Active Exchanges",
+        "activeSub": "In motion right now"
+      }
+    },
+    "pulse": {
+      "inMotion": {
+        "title": "In Motion",
+        "all": "All",
+        "meta": "{kind} · {direction} · {who}",
+        "kind": {
+          "trade": "Trade",
+          "sale": "Sale",
+          "loan": "Loan"
+        },
+        "direction": {
+          "incoming": "incoming",
+          "outgoing": "outgoing"
+        },
+        "status": {
+          "proposed": "Pending",
+          "accepted": "Accepted",
+          "completed": "Completed",
+          "disputed": "Disputed",
+          "rejected": "Declined",
+          "cancelled": "Cancelled"
+        },
+        "empty": "Nothing in motion right now — browse the community to line up your next swap. 🧩"
+      },
+      "goals": {
+        "title": "Goals",
+        "all": "All",
+        "done": "{current}/{target} done",
+        "empty": "No goals yet — set yourself a target and watch the ring fill up. 🧩",
+        "setGoal": "Set a Goal"
+      },
+      "latest": {
+        "title": "Latest",
+        "completion": "<strong>{name}</strong> finished a puzzle",
+        "acquisition": "<strong>{name}</strong> added a puzzle to their shelf",
+        "exchange": "<strong>{name}</strong> completed a swap",
+        "empty": "All quiet for now — follow fellow puzzlers and their latest moves will show up here. 🧩"
+      }
+    },
+    "fresh": {
+      "title": "Fresh on the Shelf",
+      "meta": "Recently added",
+      "myPuzzles": "My Puzzles"
     }
   },
   "browse": {
