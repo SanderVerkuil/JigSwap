@@ -3,14 +3,19 @@ import { RoundedBox } from "@react-three/drei";
 import * as React from "react";
 import * as THREE from "three";
 import {
+  boxArtCacheKey,
   buildBoxArtSpec,
   createBoxArtTexture,
+  type ArtFonts,
   type CoverEdges,
 } from "./box-art";
 
 // World scale: 1 unit = 100 CSS-plank pixels.
 export const PX = 1 / 100;
-export const BOX_DEPTH = 0.24;
+// Multi-row shelf: boxes render at ~74% of their CSS-plank footprint so
+// stacked rows fit the hero without any single box dominating the frame.
+export const BOX_SCALE = 0.74;
+export const BOX_DEPTH = 0.18;
 
 export interface BoxSlot {
   x: number;
@@ -19,36 +24,130 @@ export interface BoxSlot {
   c2: string;
 }
 
+// ——— shared box-art texture cache ———
+// Shelf rows repeat the incoming box list to look endless, so the same art is
+// needed by several PuzzleBox instances at once. Cache CanvasTextures by art
+// identity and refcount them; cover-load callbacks (aspect correction,
+// edge-bleed strips) fan out to every subscribed instance.
+
+interface ArtEntry {
+  texture: THREE.CanvasTexture;
+  refs: number;
+  aspect: number | null;
+  edges: CoverEdges | null;
+  aspectSubs: Set<(aspect: number) => void>;
+  edgeSubs: Set<(edges: CoverEdges) => void>;
+}
+
+const artCache = new Map<string, ArtEntry>();
+
+function acquireArt(
+  box: PlankBox,
+  colors: { c1: string; c2: string },
+  fonts: ArtFonts,
+  defaultHPx: number,
+): { key: string; entry: ArtEntry } {
+  const spec = buildBoxArtSpec(box, colors, defaultHPx);
+  const key = boxArtCacheKey(spec, fonts);
+  let entry = artCache.get(key);
+  if (!entry) {
+    const next: ArtEntry = {
+      texture: null as unknown as THREE.CanvasTexture,
+      refs: 0,
+      aspect: null,
+      edges: null,
+      aspectSubs: new Set(),
+      edgeSubs: new Set(),
+    };
+    next.texture = createBoxArtTexture(
+      spec,
+      fonts,
+      (aspect) => {
+        next.aspect = aspect;
+        next.aspectSubs.forEach((fn) => fn(aspect));
+      },
+      box.cover
+        ? (edges) => {
+            next.edges = edges;
+            next.edgeSubs.forEach((fn) => fn(edges));
+          }
+        : undefined,
+    );
+    artCache.set(key, next);
+    entry = next;
+  }
+  entry.refs++;
+  return { key, entry };
+}
+
+function releaseArt(key: string) {
+  const entry = artCache.get(key);
+  if (!entry) return;
+  entry.refs--;
+  if (entry.refs <= 0) {
+    entry.texture.dispose();
+    artCache.delete(key);
+  }
+}
+
 export function PuzzleBox({
   box,
   slot,
   index,
   headingFont,
+  sizeScale = 1,
 }: {
   box: PlankBox;
   slot: BoxSlot;
   index: number;
   headingFont: string;
+  /** Deterministic per-instance footprint variation (texture is shared). */
+  sizeScale?: number;
 }) {
-  const w = (box.width ?? 116) * PX;
-  const defaultH = box.cover ? (box.width ?? 116) / 1.4 : (box.height ?? 144);
-  const [h, setH] = React.useState(defaultH * PX);
-  const [edges, setEdges] = React.useState<CoverEdges | null>(null);
+  const widthPx = box.width ?? 116;
+  const worldScale = PX * BOX_SCALE * sizeScale;
+  const w = widthPx * worldScale;
+  const defaultHPx = box.cover ? widthPx / 1.4 : (box.height ?? 144);
 
-  const texture = React.useMemo(
+  const { key, entry } = React.useMemo(
     () =>
-      createBoxArtTexture(
-        buildBoxArtSpec(box, { c1: slot.c1, c2: slot.c2 }, defaultH),
+      acquireArt(
+        box,
+        { c1: slot.c1, c2: slot.c2 },
         { heading: headingFont },
-        (aspect) => setH(((box.width ?? 116) / aspect) * PX),
-        box.cover ? (e) => setEdges(e) : undefined,
+        defaultHPx,
       ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- texture keyed by art inputs only
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- art keyed by box identity + colors + font only
     [box, slot.c1, slot.c2, headingFont],
   );
-  React.useEffect(() => () => texture.dispose(), [texture]);
+  React.useEffect(() => () => releaseArt(key), [key]);
 
-  // Build CanvasTextures from the strip canvases when edges arrive.
+  // Height in CSS-plank pixels; corrected to the cover's real aspect when the
+  // image loads (possibly long ago, on the cached entry).
+  const [hPx, setHPx] = React.useState(() =>
+    entry.aspect != null ? widthPx / entry.aspect : defaultHPx,
+  );
+  const [edges, setEdges] = React.useState<CoverEdges | null>(entry.edges);
+
+  React.useEffect(() => {
+    setHPx(entry.aspect != null ? widthPx / entry.aspect : defaultHPx);
+    setEdges(entry.edges);
+    const onAspect = (aspect: number) => setHPx(widthPx / aspect);
+    const onEdges = (e: CoverEdges) => setEdges(e);
+    entry.aspectSubs.add(onAspect);
+    entry.edgeSubs.add(onEdges);
+    return () => {
+      entry.aspectSubs.delete(onAspect);
+      entry.edgeSubs.delete(onEdges);
+    };
+  }, [entry, widthPx, defaultHPx]);
+
+  const texture = entry.texture;
+  const h = hPx * worldScale;
+
+  // Build CanvasTextures from the strip canvases when edges arrive. The strip
+  // canvases are shared via the cache; the textures themselves are tiny
+  // (16×256 / 256×16), so per-instance uploads are negligible.
   const stripTextures = React.useMemo(() => {
     if (!edges) return null;
     const make = (canvas: HTMLCanvasElement) => {
@@ -73,7 +172,7 @@ export function PuzzleBox({
     [stripTextures],
   );
 
-  const lean = (index % 2 === 0 ? 1 : -1) * 0.015 + index * 0.002;
+  const lean = (index % 2 === 0 ? 1 : -1) * 0.015 + (index % 9) * 0.002;
   const baseYaw = 0.06 * (index % 3 === 2 ? -1 : 1);
   const baseY = h / 2;
 

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { ART_SCALE, averagePixelColor, buildBoxArtSpec } from "./box-art";
+import {
+  ART_SCALE,
+  averagePixelColor,
+  boxArtCacheKey,
+  buildBoxArtSpec,
+} from "./box-art";
 
 const colors = { c1: "#8b5cf6", c2: "#6d28d9" };
 
@@ -69,5 +74,66 @@ describe("buildBoxArtSpec", () => {
   it("falls back to a 116px width like the CSS plank when width is unset", () => {
     const spec = buildBoxArtSpec({}, colors, 144);
     expect(spec.width).toBe(116 * ART_SCALE);
+  });
+});
+
+describe("boxArtCacheKey", () => {
+  const fonts = { heading: "Sora, sans-serif" };
+
+  it("is identical for two specs built from the same box", () => {
+    const box = { series: "Natuur", title: "Boslicht", pieceCount: 1000 };
+    const a = boxArtCacheKey(buildBoxArtSpec(box, colors, 144), fonts);
+    const b = boxArtCacheKey(buildBoxArtSpec({ ...box }, colors, 144), fonts);
+    expect(a).toBe(b);
+  });
+
+  it("differs when any art-affecting input differs", () => {
+    const base = buildBoxArtSpec({ title: "Boslicht", width: 100 }, colors, 144);
+    const key = boxArtCacheKey(base, fonts);
+    expect(
+      boxArtCacheKey(
+        buildBoxArtSpec({ title: "Waddenzee", width: 100 }, colors, 144),
+        fonts,
+      ),
+    ).not.toBe(key);
+    expect(
+      boxArtCacheKey(
+        buildBoxArtSpec(
+          { title: "Boslicht", width: 100 },
+          { c1: "#22c55e", c2: colors.c2 },
+          144,
+        ),
+        fonts,
+      ),
+    ).not.toBe(key);
+    expect(
+      boxArtCacheKey(base, { heading: "system-ui, sans-serif" }),
+    ).not.toBe(key);
+  });
+
+  it("distinguishes cover mode from gradient mode for the same dimensions", () => {
+    const gradient = buildBoxArtSpec({ width: 134 }, colors, 96);
+    const cover = buildBoxArtSpec(
+      { cover: "/img/sand.jpg", width: 134 },
+      colors,
+      96,
+    );
+    expect(boxArtCacheKey(gradient, fonts)).not.toBe(
+      boxArtCacheKey(cover, fonts),
+    );
+  });
+
+  it("does not collide when adjacent fields could concatenate ambiguously", () => {
+    const a = buildBoxArtSpec(
+      { series: "Natuur", title: "Boslicht" },
+      colors,
+      144,
+    );
+    const b = buildBoxArtSpec(
+      { series: "NatuurBos", title: "licht" },
+      colors,
+      144,
+    );
+    expect(boxArtCacheKey(a, fonts)).not.toBe(boxArtCacheKey(b, fonts));
   });
 });

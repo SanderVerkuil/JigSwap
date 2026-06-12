@@ -41,6 +41,27 @@ export function buildBoxArtSpec(
 // ——— pure helpers (node-testable) ———
 
 /**
+ * Stable identity key for a box-art spec + fonts. Two boxes producing the same
+ * key render pixel-identical art, so their CanvasTextures can be shared. Used
+ * by the plank-3d texture cache now that shelf rows repeat the incoming box
+ * list to look endless. Pure.
+ */
+export function boxArtCacheKey(spec: BoxArtSpec, fonts: ArtFonts): string {
+  return [
+    spec.mode,
+    spec.coverSrc ?? "",
+    spec.width,
+    spec.height,
+    spec.c1,
+    spec.c2,
+    spec.series ?? "",
+    spec.title ?? "",
+    spec.pieceCount ?? "",
+    fonts.heading,
+  ].join("|");
+}
+
+/**
  * Average an RGBA pixel buffer to a #rrggbb hex (alpha ignored). Pure.
  */
 export function averagePixelColor(data: Uint8ClampedArray): string {

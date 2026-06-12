@@ -44,7 +44,7 @@ class SceneBoundary extends React.Component<
   }
 }
 
-export function JigPlank3D({ boxes = [] }: { boxes?: PlankBox[] }) {
+export function JigPlank3D({ rows = [] }: { rows?: PlankBox[][] }) {
   const container = React.useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = React.useState(false);
   const [sceneReady, setSceneReady] = React.useState(false);
@@ -67,13 +67,15 @@ export function JigPlank3D({ boxes = [] }: { boxes?: PlankBox[] }) {
     const el = container.current;
     if (!el || !mounted) return;
     setResolved(
-      boxes.map((b) => ({
-        c1: resolveCssColor(b.c1 ?? "var(--mk-violet-400)", el),
-        c2: resolveCssColor(b.c2 ?? "var(--mk-violet-600)", el),
-      })),
+      rows.map((row) =>
+        row.map((b) => ({
+          c1: resolveCssColor(b.c1 ?? "var(--mk-violet-400)", el),
+          c2: resolveCssColor(b.c2 ?? "var(--mk-violet-600)", el),
+        })),
+      ),
     );
     setHeadingFont(resolveHeadingFont(el));
-  }, [boxes, mounted, theme]);
+  }, [rows, mounted, theme]);
 
   // Pause the render loop when the hero is offscreen.
   React.useEffect(() => {
@@ -94,20 +96,37 @@ export function JigPlank3D({ boxes = [] }: { boxes?: PlankBox[] }) {
       style={{ position: "absolute", inset: 0, touchAction: "pan-y" }}
       aria-hidden="true"
     >
-      {/* CSS plank: fallback shown pre-crossfade or when WebGL is unavailable.
+      {/* CSS planks: fallback shown pre-crossfade or when WebGL is
+          unavailable. Two stacked boards echo the 3D multi-row shelf; the
+          whole stack is scaled down so the boxes read smaller, matching the
+          scene. Other JigPlank call sites (features/about) are untouched —
+          the stacking lives here, not in JigPlank itself.
           Positioned right-of-center, vertically centered. */}
       <div
         style={{
           position: "absolute",
           right: "6%",
           top: "50%",
-          transform: "translateY(-50%) scale(.9)",
+          transform: "translateY(-50%) scale(.68)",
           transition: "opacity .45s ease",
           opacity: sceneReady ? 0 : 1,
           filter: "drop-shadow(0 30px 40px rgb(40 30 80 / .16))",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 46,
         }}
       >
-        <JigPlank boxes={boxes} depth={18} />
+        {rows.length > 1 && (
+          // Top board: slight x-shift so columns don't grid-align with the
+          // bottom board, mirroring the 3D rows' per-row offsets.
+          <JigPlank
+            boxes={rows[1]}
+            depth={14}
+            style={{ transform: "translateX(-26px)" }}
+          />
+        )}
+        <JigPlank boxes={rows[0] ?? []} depth={14} />
       </div>
       {showScene && (
         <SceneBoundary onError={() => setSceneReady(false)}>
@@ -123,7 +142,7 @@ export function JigPlank3D({ boxes = [] }: { boxes?: PlankBox[] }) {
               }}
             >
               <PlankScene
-                boxes={boxes}
+                rows={rows}
                 resolved={resolved}
                 headingFont={headingFont}
                 theme={theme}
