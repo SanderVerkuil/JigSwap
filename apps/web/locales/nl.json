@@ -1369,10 +1369,11 @@
       "startTrading": "Begin met ruilen",
       "dashboard": "Dashboard",
       "openMenu": "Menu openen",
-      "closeMenu": "Menu sluiten"
+      "closeMenu": "Menu sluiten",
+      "switchLanguage": "Taal wijzigen"
     },
     "footer": {
-      "tagline": "Jigsaw puzzels ruilen, lenen en delen — toegankelijk en duurzaam, voor de hele gemeenschap.",
+      "tagline": "Legpuzzels ruilen, lenen en delen — toegankelijk en duurzaam, voor de hele gemeenschap.",
       "product": "Product",
       "community": "Community",
       "legal": "Juridisch",
@@ -1384,7 +1385,7 @@
     },
     "home": {
       "eyebrow": "Lenen • Ruilen • Delen",
-      "heroTitle": "Deel jigsaw puzzels met andere liefhebbers",
+      "heroTitle": "Deel legpuzzels met andere liefhebbers",
       "heroLead": "Bouw je eigen puzzelbibliotheek, leen puzzels uit of ruil ze, en zie altijd bij wie je uitgeleende dozen zijn. Verbind met puzzelaars in heel Nederland.",
       "seeFeatures": "Bekijk de functies",
       "trustRow": "{count} puzzelaars ruilen al mee",
@@ -1604,7 +1605,7 @@
       "termsLead": "De spelregels die het ruilen voor iedereen eerlijk en prettig houden."
     },
     "titles": {
-      "home": "JigSwap — Deel jigsaw puzzels met andere liefhebbers",
+      "home": "JigSwap — Deel legpuzzels met andere liefhebbers",
       "howItWorks": "Hoe het werkt — JigSwap",
       "features": "Functies — JigSwap",
       "about": "Over ons — JigSwap",

@@ -1369,7 +1369,8 @@
       "startTrading": "Start trading",
       "dashboard": "Dashboard",
       "openMenu": "Open menu",
-      "closeMenu": "Close menu"
+      "closeMenu": "Close menu",
+      "switchLanguage": "Switch language"
     },
     "footer": {
       "tagline": "Swap, lend and share jigsaw puzzles — accessible and sustainable, for the whole community.",

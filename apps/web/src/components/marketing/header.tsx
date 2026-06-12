@@ -1,6 +1,12 @@
 import { Link } from "@/compat/link";
 import { Wordmark } from "@/components/marketing/wordmark";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { clearIntlCache, type Locale, setLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { useLocation, useRouter } from "@tanstack/react-router";
@@ -135,8 +141,16 @@ export function MarketingHeader() {
   );
 }
 
-// NL/EN segmented pill — switches the use-intl catalog via the locale cookie.
+const LANGUAGES = [
+  { code: "en", name: "English", flag: "🇺🇸" },
+  { code: "nl", name: "Nederlands", flag: "🇳🇱" },
+] as const satisfies readonly { code: Locale; name: string; flag: string }[];
+
+// Flag + dropdown — switches the use-intl catalog via the locale cookie. With
+// no cookie set the trigger shows the system language (Accept-Language
+// negotiation in detectLocale).
 function LangToggle() {
+  const t = useTranslations("marketing.nav");
   const locale = useLocale();
   const router = useRouter();
   const change = async (next: Locale) => {
@@ -147,29 +161,32 @@ function LangToggle() {
     clearIntlCache();
     await router.invalidate();
   };
+  const current =
+    LANGUAGES.find((lang) => lang.code === locale) ?? LANGUAGES[0];
   return (
-    <div className="inline-flex p-[3px] rounded-full bg-mk-muted border border-mk-border">
-      {(
-        [
-          ["nl", "NL"],
-          ["en", "EN"],
-        ] as const
-      ).map(([code, label]) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
         <button
-          key={code}
           type="button"
-          onClick={() => change(code)}
-          className={cn(
-            "rounded-full px-[11px] py-1 font-mono text-[12.5px] font-bold tracking-[.04em] transition-colors",
-            locale === code
-              ? "bg-mk-violet-400 text-white"
-              : "text-mk-text-muted hover:text-mk-text-body",
-          )}
+          aria-label={t("switchLanguage")}
+          className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-mk-border bg-mk-card text-[18px] leading-none"
         >
-          {label}
+          {current.flag}
         </button>
-      ))}
-    </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {LANGUAGES.map((language) => (
+          <DropdownMenuItem
+            key={language.code}
+            onClick={() => change(language.code)}
+            className={cn(locale === language.code && "bg-accent")}
+          >
+            <span className="mr-2">{language.flag}</span>
+            {language.name}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
