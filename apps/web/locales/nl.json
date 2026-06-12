@@ -598,6 +598,23 @@
       "addPuzzle": "Puzzel Toevoegen",
       "browse": "Community Verkennen",
       "logCompletion": "Voltooiing Vastleggen"
+    },
+    "shelf": {
+      "title": "Jouw Plank",
+      "meta": "{owned, plural, one {# op de plank} other {# op de plank}} · {forTrade, plural, =0 {geen te ruil} one {# te ruil} other {# te ruil}}",
+      "viewCollections": "Collecties Bekijken",
+      "empty": "Je plank wacht op zijn eerste puzzel — voeg er een toe en hij staat hier te pronken (en te ruilen). 🧩",
+      "addFirst": "Voeg Je Eerste Puzzel Toe",
+      "stats": {
+        "ownedLabel": "Puzzels in Bezit",
+        "ownedSub": "{count, plural, =0 {Nog geen te ruil} one {# te ruil} other {# te ruil}}",
+        "completedLabel": "Ruilen Afgerond",
+        "completedSub": "Alle afgeronde ruilen",
+        "ratingLabel": "Gemiddelde Beoordeling",
+        "ratingSub": "{count, plural, =0 {Nog geen reviews} one {op basis van # review} other {op basis van # reviews}}",
+        "activeLabel": "Lopende Ruilen",
+        "activeSub": "Op dit moment in beweging"
+      }
     }
   },
   "browse": {

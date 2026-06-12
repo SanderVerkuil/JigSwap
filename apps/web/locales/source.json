@@ -598,6 +598,23 @@
       "addPuzzle": "Add a Puzzle",
       "browse": "Browse Community",
       "logCompletion": "Log a Completion"
+    },
+    "shelf": {
+      "title": "Your Shelf",
+      "meta": "{owned, plural, one {# on the shelf} other {# on the shelf}} · {forTrade, plural, =0 {none up for trade} one {# up for trade} other {# up for trade}}",
+      "viewCollections": "View Collections",
+      "empty": "Your shelf is waiting for its first puzzle — add one and it'll sit right here, ready to be admired (and swapped). 🧩",
+      "addFirst": "Add Your First Puzzle",
+      "stats": {
+        "ownedLabel": "Puzzles Owned",
+        "ownedSub": "{count, plural, =0 {None up for trade yet} one {# up for trade} other {# up for trade}}",
+        "completedLabel": "Exchanges Completed",
+        "completedSub": "Swaps settled all-time",
+        "ratingLabel": "Average Rating",
+        "ratingSub": "{count, plural, =0 {No reviews yet} one {from # review} other {from # reviews}}",
+        "activeLabel": "Active Exchanges",
+        "activeSub": "In motion right now"
+      }
     }
   },
   "browse": {
