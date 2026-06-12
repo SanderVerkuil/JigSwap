@@ -1269,6 +1269,10 @@
       "success": "Your data has been downloaded.",
       "error": "Could not export your data. Please try again.",
       "capped": "Some lists were capped at {limit} rows per category."
+    },
+    "charts": {
+      "completionsPerMonth": "Completions / month",
+      "swapsPerMonth": "Swaps / month"
     }
   },
   "forms": {

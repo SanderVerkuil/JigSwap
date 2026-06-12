@@ -17,6 +17,7 @@ import {
   TradeActivityData,
 } from "@/components/insights/trade-activity-chart";
 import { PageLoading } from "@/components/ui/loading";
+import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
 import { useQuery } from "convex/react";
 import { useTranslations } from "use-intl";
@@ -62,21 +63,27 @@ function InsightsPage() {
     breakdown === undefined ||
     trades === undefined
   ) {
-    return <PageLoading message={t("loading")} />;
+    return (
+      <div className="flex flex-col gap-10" aria-label={t("loading")}>
+        <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-16" />
+          ))}
+        </div>
+        <div className="grid gap-10 lg:grid-cols-2">
+          <Skeleton className="h-48" />
+          <Skeleton className="h-48" />
+        </div>
+        <Skeleton className="h-56" />
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto space-y-8">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">{t("title")}</h1>
-          <p className="text-muted-foreground">{t("subtitle")}</p>
-        </div>
-      </div>
-
+    <div className="flex flex-col gap-10">
       <StatCards stats={stats} />
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-10 lg:grid-cols-2">
         <CompletionTrendsChart data={trends} />
         <TradeActivityChart data={trades} />
       </div>

@@ -1269,6 +1269,10 @@
       "success": "Je gegevens zijn gedownload.",
       "error": "Kon je gegevens niet exporteren. Probeer het opnieuw.",
       "capped": "Sommige lijsten zijn beperkt tot {limit} rijen per categorie."
+    },
+    "charts": {
+      "completionsPerMonth": "Voltooiingen / maand",
+      "swapsPerMonth": "Ruilacties / maand"
     }
   },
   "forms": {

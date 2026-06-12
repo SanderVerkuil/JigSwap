@@ -1,12 +1,13 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionHead } from "@/components/dashboard-home/section-head";
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { FolderOpen } from "lucide-react";
 import { useMemo } from "react";
 import {
   Bar,
@@ -136,7 +137,9 @@ function DifficultyChart({ data }: { data: DistributionEntry[] }) {
   );
 }
 
-function BreakdownCard({
+// Open (card-free) breakdown block: a muted sub-heading over a thin rule, the
+// chart breathing directly on the page ground.
+function BreakdownBlock({
   title,
   data,
   children,
@@ -147,20 +150,18 @@ function BreakdownCard({
 }) {
   const t = useTranslations("insights.breakdown");
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {hasValues(data) ? (
-          children
-        ) : (
-          <p className="py-12 text-center text-sm text-muted-foreground">
-            {t("empty")}
-          </p>
-        )}
-      </CardContent>
-    </Card>
+    <div className="min-w-0">
+      <h3 className="text-muted-foreground mb-4 border-b pb-2 text-sm font-semibold">
+        {title}
+      </h3>
+      {hasValues(data) ? (
+        children
+      ) : (
+        <p className="py-12 text-center text-sm text-muted-foreground">
+          {t("empty")}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -171,19 +172,19 @@ export function CollectionBreakdown({
 }) {
   const t = useTranslations("insights.breakdown");
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold">{t("title")}</h2>
-      <div className="grid gap-4 lg:grid-cols-3">
-        <BreakdownCard title={t("pieceCount")} data={data.byPieceCount}>
+    <section>
+      <SectionHead title={t("title")} icon={FolderOpen} />
+      <div className="grid gap-8 lg:grid-cols-3">
+        <BreakdownBlock title={t("pieceCount")} data={data.byPieceCount}>
           <PieceCountChart data={data.byPieceCount} />
-        </BreakdownCard>
-        <BreakdownCard title={t("difficulty")} data={data.byDifficulty}>
+        </BreakdownBlock>
+        <BreakdownBlock title={t("difficulty")} data={data.byDifficulty}>
           <DifficultyChart data={data.byDifficulty} />
-        </BreakdownCard>
-        <BreakdownCard title={t("brands")} data={data.byBrand}>
+        </BreakdownBlock>
+        <BreakdownBlock title={t("brands")} data={data.byBrand}>
           <BrandChart data={data.byBrand} />
-        </BreakdownCard>
+        </BreakdownBlock>
       </div>
-    </div>
+    </section>
   );
 }
