@@ -136,7 +136,7 @@ export function ShelfSection() {
       sub: t("stats.completedSub"),
     },
     {
-      href: "/community",
+      href: "/people",
       value: stats?.averageRating ? stats.averageRating.toFixed(1) : "—",
       label: t("stats.ratingLabel"),
       sub: t("stats.ratingSub", { count: stats?.totalReviews ?? 0 }),
