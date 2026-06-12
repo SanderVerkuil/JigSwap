@@ -554,7 +554,24 @@
     "reviews": "Beoordelingen",
     "trustLevel": "Vertrouwensniveau",
     "trustLevelDescription": "Gebaseerd op voltooide uitwisselingen en beoordelingen",
-    "notFound": "Gebruiker niet gevonden"
+    "notFound": "Gebruiker niet gevonden",
+    "trustBadge": "{rating} Vertrouwen",
+    "save": "Opslaan",
+    "saving": "Opslaan…",
+    "saved": "Profiel opgeslagen",
+    "saveError": "Je profiel kon niet worden opgeslagen. Probeer het opnieuw.",
+    "usernamePlaceholder": "jouw-gebruikersnaam",
+    "locationPlaceholder": "Plaats, Land",
+    "bioPlaceholder": "Vertel andere leden iets over jezelf…",
+    "shelf": {
+      "title": "De Plank van {name}",
+      "meta": "{count, plural, one {# uitgestald} other {# uitgestald}}"
+    },
+    "trustLevels": {
+      "beginner": "Beginner",
+      "intermediate": "Gevorderd",
+      "experienced": "Ervaren"
+    }
   },
   "dashboard": {
     "welcome": "Welkom terug",

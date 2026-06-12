@@ -554,7 +554,24 @@
     "reviews": "Reviews",
     "trustLevel": "Trust Level",
     "trustLevelDescription": "Based on completed trades and reviews",
-    "notFound": "User not found"
+    "notFound": "User not found",
+    "trustBadge": "{rating} Trust",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Profile saved",
+    "saveError": "Could not save your profile. Please try again.",
+    "usernamePlaceholder": "your-username",
+    "locationPlaceholder": "City, Country",
+    "bioPlaceholder": "Tell other members about yourself…",
+    "shelf": {
+      "title": "{name}'s Shelf",
+      "meta": "{count, plural, one {# on display} other {# on display}}"
+    },
+    "trustLevels": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "experienced": "Experienced"
+    }
   },
   "dashboard": {
     "welcome": "Welcome back",
