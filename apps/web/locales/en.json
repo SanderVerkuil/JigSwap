@@ -475,7 +475,27 @@
     "decline": "Decline",
     "cancel": "Cancel",
     "markComplete": "Mark Complete",
-    "message": "Message"
+    "message": "Message",
+    "all": "All",
+    "exchangesCount": "{count, plural, one {# exchange} other {# exchanges}}",
+    "rowMeta": "{direction} · with {who} · {when}",
+    "kind": {
+      "trade": "Trade",
+      "sale": "Sale",
+      "loan": "Lend"
+    },
+    "direction": {
+      "incoming": "incoming",
+      "outgoing": "outgoing"
+    },
+    "status": {
+      "proposed": "Pending",
+      "accepted": "Accepted",
+      "rejected": "Declined",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "disputed": "Disputed"
+    }
   },
   "reputation": {
     "title": "Reputation",
@@ -1455,7 +1475,8 @@
     "statusReturned": "Returned",
     "statusRecalled": "Recalled",
     "borrowedBy": "Borrowed by {name}",
-    "unknownMember": "Unknown member"
+    "unknownMember": "Unknown member",
+    "borrowedCount": "{count, plural, one {# borrowed puzzle} other {# borrowed puzzles}}"
   },
   "marketing": {
     "nav": {

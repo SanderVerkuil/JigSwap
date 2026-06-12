@@ -475,7 +475,27 @@
     "decline": "Afwijzen",
     "cancel": "Annuleren",
     "markComplete": "Markeren als Voltooid",
-    "message": "Bericht"
+    "message": "Bericht",
+    "all": "Alle",
+    "exchangesCount": "{count, plural, one {# uitwisseling} other {# uitwisselingen}}",
+    "rowMeta": "{direction} · met {who} · {when}",
+    "kind": {
+      "trade": "Ruil",
+      "sale": "Verkoop",
+      "loan": "Uitleen"
+    },
+    "direction": {
+      "incoming": "inkomend",
+      "outgoing": "uitgaand"
+    },
+    "status": {
+      "proposed": "In afwachting",
+      "accepted": "Geaccepteerd",
+      "rejected": "Afgewezen",
+      "completed": "Afgerond",
+      "cancelled": "Geannuleerd",
+      "disputed": "In geschil"
+    }
   },
   "reputation": {
     "title": "Reputatie",
@@ -1455,7 +1475,8 @@
     "statusReturned": "Teruggegeven",
     "statusRecalled": "Teruggevraagd",
     "borrowedBy": "Geleend door {name}",
-    "unknownMember": "Onbekend lid"
+    "unknownMember": "Onbekend lid",
+    "borrowedCount": "{count, plural, one {# geleende puzzel} other {# geleende puzzels}}"
   },
   "marketing": {
     "nav": {
