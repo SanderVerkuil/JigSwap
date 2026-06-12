@@ -42,21 +42,25 @@ export function usePuzzleView() {
 interface PuzzleViewProviderProps {
   children: ReactNode;
   viewMode: ViewMode;
+  /** Optional override of the wrapper layout classes (e.g. an auto-fill grid). */
+  className?: string;
 }
 
 export function PuzzleViewProvider({
   children,
   viewMode,
+  className,
 }: PuzzleViewProviderProps) {
   return (
     <PuzzleViewContext.Provider value={{ viewMode }}>
       <div
         className={
-          viewMode === "grid"
+          className ??
+          (viewMode === "grid"
             ? // Design-language puzzle grid: compact covers that auto-fill the
               // row at a 212px minimum, instead of fixed breakpoint columns.
               "grid grid-cols-[repeat(auto-fill,minmax(212px,1fr))] gap-[18px]"
-            : "space-y-4"
+            : "space-y-4")
         }
       >
         {children}

@@ -484,7 +484,27 @@
     "decline": "Afwijzen",
     "cancel": "Annuleren",
     "markComplete": "Markeren als Voltooid",
-    "message": "Bericht"
+    "message": "Bericht",
+    "all": "Alle",
+    "exchangesCount": "{count, plural, one {# uitwisseling} other {# uitwisselingen}}",
+    "rowMeta": "{direction} · met {who} · {when}",
+    "kind": {
+      "trade": "Ruil",
+      "sale": "Verkoop",
+      "loan": "Uitleen"
+    },
+    "direction": {
+      "incoming": "inkomend",
+      "outgoing": "uitgaand"
+    },
+    "status": {
+      "proposed": "In afwachting",
+      "accepted": "Geaccepteerd",
+      "rejected": "Afgewezen",
+      "completed": "Afgerond",
+      "cancelled": "Geannuleerd",
+      "disputed": "In geschil"
+    }
   },
   "reputation": {
     "title": "Reputatie",
@@ -674,7 +694,7 @@
     "title": "Puzzels Bladeren",
     "subtitle": "Ontdek geweldige puzzels van de community",
     "puzzlesFound": "puzzels gevonden",
-    "searchPlaceholder": "Zoek puzzels op titel, merk of beschrijving...",
+    "searchPlaceholder": "Zoek puzzels op titel, merk of thema…",
     "allCategories": "Alle Categorieën",
     "allDifficulties": "Alle Moeilijkheidsgraden",
     "allConditions": "Alle Condities",
@@ -682,7 +702,10 @@
     "maxPieces": "Max Stukken",
     "clearFilters": "Filters Wissen",
     "noPuzzlesFound": "Geen puzzels gevonden",
-    "tryDifferentFilters": "Probeer je zoekcriteria of filters aan te passen"
+    "tryDifferentFilters": "Pas je zoekopdracht of filters aan.",
+    "filterAll": "Alle",
+    "available": "Beschikbaar",
+    "resultsCount": "{count, plural, one {# puzzel gevonden} other {# puzzels gevonden}}"
   },
   "footer": {
     "tagline": "Legpuzzelruil toegankelijk en duurzaam maken voor iedereen.",
@@ -1085,6 +1108,28 @@
     "meta": "{shelves, plural, one {# plank} other {# planken}} · {puzzles, plural, one {# puzzel} other {# puzzels}}",
     "newCollection": "Nieuwe Collectie"
   },
+  "circles": {
+    "yourCircles": "Jouw Kringen",
+    "meta": "Besloten groepen om binnen te ruilen",
+    "createCircle": "Kring Aanmaken",
+    "roleOwner": "Eigenaar",
+    "roleMember": "Lid",
+    "ownedByYou": "Van jou",
+    "sharedWithYou": "Met jou gedeeld",
+    "membersLabel": "{count, plural, one {lid} other {leden}}",
+    "emptyTitle": "Nog geen kringen",
+    "emptySub": "Maak een kring aan om puzzels te ruilen met vrienden en familie."
+  },
+  "people": {
+    "yourNetwork": "Jouw Netwerk",
+    "memberCount": "{count, plural, one {# lid} other {# leden}}",
+    "followsYou": "Volgt jou",
+    "ownedLabel": "in bezit",
+    "swapsLabel": "ruilen",
+    "activity": "Activiteit",
+    "emptyTitle": "Nog geen leden in je netwerk",
+    "emptySub": "Volg medepuzzelaars om je netwerk op te bouwen."
+  },
   "notifications": {
     "title": "Meldingen",
     "subtitle": "Blijf op de hoogte van ruilen, beoordelingen en mijlpalen.",
@@ -1466,7 +1511,8 @@
     "statusReturned": "Teruggegeven",
     "statusRecalled": "Teruggevraagd",
     "borrowedBy": "Geleend door {name}",
-    "unknownMember": "Onbekend lid"
+    "unknownMember": "Onbekend lid",
+    "borrowedCount": "{count, plural, one {# geleende puzzel} other {# geleende puzzels}}"
   },
   "marketing": {
     "nav": {

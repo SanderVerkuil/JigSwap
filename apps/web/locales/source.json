@@ -484,7 +484,27 @@
     "decline": "Decline",
     "cancel": "Cancel",
     "markComplete": "Mark Complete",
-    "message": "Message"
+    "message": "Message",
+    "all": "All",
+    "exchangesCount": "{count, plural, one {# exchange} other {# exchanges}}",
+    "rowMeta": "{direction} · with {who} · {when}",
+    "kind": {
+      "trade": "Trade",
+      "sale": "Sale",
+      "loan": "Lend"
+    },
+    "direction": {
+      "incoming": "incoming",
+      "outgoing": "outgoing"
+    },
+    "status": {
+      "proposed": "Pending",
+      "accepted": "Accepted",
+      "rejected": "Declined",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "disputed": "Disputed"
+    }
   },
   "reputation": {
     "title": "Reputation",
@@ -674,7 +694,7 @@
     "title": "Browse Puzzles",
     "subtitle": "Discover amazing puzzles from the community",
     "puzzlesFound": "puzzles found",
-    "searchPlaceholder": "Search puzzles by title, brand, or description...",
+    "searchPlaceholder": "Search puzzles by title, brand, or theme…",
     "allCategories": "All Categories",
     "allDifficulties": "All Difficulties",
     "allConditions": "All Conditions",
@@ -682,7 +702,10 @@
     "maxPieces": "Max Pieces",
     "clearFilters": "Clear Filters",
     "noPuzzlesFound": "No puzzles found",
-    "tryDifferentFilters": "Try adjusting your search criteria or filters"
+    "tryDifferentFilters": "Try adjusting your search or filters.",
+    "filterAll": "All",
+    "available": "Available",
+    "resultsCount": "{count, plural, one {# puzzle found} other {# puzzles found}}"
   },
   "footer": {
     "tagline": "Making jigsaw puzzle trading accessible and sustainable for everyone.",
@@ -1085,6 +1108,28 @@
     "meta": "{shelves, plural, one {# shelf} other {# shelves}} · {puzzles, plural, one {# puzzle} other {# puzzles}}",
     "newCollection": "New Collection"
   },
+  "circles": {
+    "yourCircles": "Your Circles",
+    "meta": "Private groups to swap within",
+    "createCircle": "Create Circle",
+    "roleOwner": "Owner",
+    "roleMember": "Member",
+    "ownedByYou": "Owned by you",
+    "sharedWithYou": "Shared with you",
+    "membersLabel": "{count, plural, one {member} other {members}}",
+    "emptyTitle": "No circles yet",
+    "emptySub": "Create a circle to swap puzzles with friends and family."
+  },
+  "people": {
+    "yourNetwork": "Your Network",
+    "memberCount": "{count, plural, one {# member} other {# members}}",
+    "followsYou": "Follows you",
+    "ownedLabel": "owned",
+    "swapsLabel": "swaps",
+    "activity": "Activity",
+    "emptyTitle": "No members in your network yet",
+    "emptySub": "Follow fellow puzzlers to build your network."
+  },
   "notifications": {
     "title": "Notifications",
     "subtitle": "Stay on top of trades, reviews, and milestones.",
@@ -1466,7 +1511,8 @@
     "statusReturned": "Returned",
     "statusRecalled": "Recalled",
     "borrowedBy": "Borrowed by {name}",
-    "unknownMember": "Unknown member"
+    "unknownMember": "Unknown member",
+    "borrowedCount": "{count, plural, one {# borrowed puzzle} other {# borrowed puzzles}}"
   },
   "marketing": {
     "nav": {
