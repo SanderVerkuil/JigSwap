@@ -615,6 +615,45 @@
         "activeLabel": "Active Exchanges",
         "activeSub": "In motion right now"
       }
+    },
+    "pulse": {
+      "inMotion": {
+        "title": "In Motion",
+        "all": "All",
+        "meta": "{kind} · {direction} · {who}",
+        "kind": {
+          "trade": "Trade",
+          "sale": "Sale",
+          "loan": "Loan"
+        },
+        "direction": {
+          "incoming": "incoming",
+          "outgoing": "outgoing"
+        },
+        "status": {
+          "proposed": "Pending",
+          "accepted": "Accepted",
+          "completed": "Completed",
+          "disputed": "Disputed",
+          "rejected": "Declined",
+          "cancelled": "Cancelled"
+        },
+        "empty": "Nothing in motion right now — browse the community to line up your next swap. 🧩"
+      },
+      "goals": {
+        "title": "Goals",
+        "all": "All",
+        "done": "{current}/{target} done",
+        "empty": "No goals yet — set yourself a target and watch the ring fill up. 🧩",
+        "setGoal": "Set a Goal"
+      },
+      "latest": {
+        "title": "Latest",
+        "completion": "<strong>{name}</strong> finished a puzzle",
+        "acquisition": "<strong>{name}</strong> added a puzzle to their shelf",
+        "exchange": "<strong>{name}</strong> completed a swap",
+        "empty": "All quiet for now — follow fellow puzzlers and their latest moves will show up here. 🧩"
+      }
     }
   },
   "browse": {
