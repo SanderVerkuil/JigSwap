@@ -47,9 +47,7 @@ export function FilterBar<T extends string>({
           </button>
         ))}
       </div>
-      {count && (
-        <span className="text-muted-foreground text-sm">{count}</span>
-      )}
+      {count && <span className="text-muted-foreground text-sm">{count}</span>}
     </div>
   );
 }

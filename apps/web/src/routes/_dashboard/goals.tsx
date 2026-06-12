@@ -122,64 +122,64 @@ function GoalsPage() {
       />
 
       <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t("createTitle")}</DialogTitle>
-              <DialogDescription>{t("createDescription")}</DialogDescription>
-            </DialogHeader>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("createTitle")}</DialogTitle>
+            <DialogDescription>{t("createDescription")}</DialogDescription>
+          </DialogHeader>
 
-            <div className="space-y-4">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="goal-title">{t("goalTitle")}</Label>
+              <Input
+                id="goal-title"
+                value={title}
+                placeholder={t("goalTitlePlaceholder")}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="goal-description">{t("goalDescription")}</Label>
+              <Textarea
+                id="goal-description"
+                value={description}
+                placeholder={t("goalDescriptionPlaceholder")}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="goal-title">{t("goalTitle")}</Label>
+                <Label htmlFor="goal-target">{t("targetCompletions")}</Label>
                 <Input
-                  id="goal-title"
-                  value={title}
-                  placeholder={t("goalTitlePlaceholder")}
-                  onChange={(e) => setTitle(e.target.value)}
+                  id="goal-target"
+                  type="number"
+                  min={1}
+                  inputMode="numeric"
+                  value={target}
+                  onChange={(e) => setTarget(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="goal-description">{t("goalDescription")}</Label>
-                <Textarea
-                  id="goal-description"
-                  value={description}
-                  placeholder={t("goalDescriptionPlaceholder")}
-                  onChange={(e) => setDescription(e.target.value)}
+                <Label htmlFor="goal-date">{t("targetDate")}</Label>
+                <Input
+                  id="goal-date"
+                  type="date"
+                  value={targetDate}
+                  onChange={(e) => setTargetDate(e.target.value)}
                 />
-              </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="goal-target">{t("targetCompletions")}</Label>
-                  <Input
-                    id="goal-target"
-                    type="number"
-                    min={1}
-                    inputMode="numeric"
-                    value={target}
-                    onChange={(e) => setTarget(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="goal-date">{t("targetDate")}</Label>
-                  <Input
-                    id="goal-date"
-                    type="date"
-                    value={targetDate}
-                    onChange={(e) => setTargetDate(e.target.value)}
-                  />
-                </div>
               </div>
             </div>
+          </div>
 
-            <DialogFooter>
-              <Button
-                onClick={handleCreate}
-                disabled={submitting || !title.trim() || !target}
-              >
-                {t("submit")}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
+          <DialogFooter>
+            <Button
+              onClick={handleCreate}
+              disabled={submitting || !title.trim() || !target}
+            >
+              {t("submit")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
 
       {goals.length === 0 ? (
