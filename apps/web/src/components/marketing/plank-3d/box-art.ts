@@ -230,8 +230,9 @@ export function createBoxArtTexture(
   texture.anisotropy = 4;
 
   let disposed = false;
+  let reallocating = false;
   texture.addEventListener("dispose", () => {
-    disposed = true;
+    if (!reallocating) disposed = true;
   });
 
   if (spec.mode === "cover" && spec.coverSrc) {
@@ -245,7 +246,21 @@ export function createBoxArtTexture(
       const aspect = img.naturalWidth / img.naturalHeight;
       if (!Number.isFinite(aspect) || aspect <= 0) return;
       const corrected = { ...spec, height: Math.round(spec.width / aspect) };
+      const resized =
+        corrected.width !== canvas.width || corrected.height !== canvas.height;
       drawBoxArt(corrected, canvas, fonts, img);
+      // The first GPU upload allocates immutable storage (texStorage2D) at the
+      // pre-load guesstimate size; a resized canvas cannot go through the
+      // texSubImage2D update path (silent GL_INVALID_VALUE when larger, so the
+      // front face would stay stuck on the fallback art). Dispose the GL-side
+      // texture so the next bind re-allocates at the corrected size — the
+      // CanvasTexture itself stays usable. `reallocating` keeps this internal
+      // dispose from being mistaken for the owner discarding the texture.
+      if (resized) {
+        reallocating = true;
+        texture.dispose();
+        reallocating = false;
+      }
       texture.needsUpdate = true;
       onCoverAspect?.(aspect);
       // extractCoverEdges calls getImageData which throws a SecurityError when

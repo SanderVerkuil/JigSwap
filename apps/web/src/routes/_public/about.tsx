@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useTranslations } from "use-intl";
 
-import coverSand from "@/components/marketing/assets/cover-sand.jpg";
+import coverSand from "@/components/marketing/assets/cover-sand.webp";
 
 export const Route = createFileRoute("/_public/about")({
   head: ({ match }) => ({
