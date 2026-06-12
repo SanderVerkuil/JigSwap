@@ -5,7 +5,7 @@ import { toCommunityAvatarView } from "./insights/getCommunityAvatars";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
-const modules = import.meta.glob("./**/!(*.test).*s");
+const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 // Insert a set of active users and optionally a few inactive ones.
 const seedUsers = async (

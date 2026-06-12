@@ -4,7 +4,7 @@ import { api } from "./_generated/api";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory test runtime, excluding test files.
-export const modules = import.meta.glob("./**/!(*.test).*s");
+export const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 describe("convex-test harness", () => {
   test("runs an existing query against an in-memory deployment", async () => {

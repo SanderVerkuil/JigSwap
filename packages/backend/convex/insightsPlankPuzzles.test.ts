@@ -4,7 +4,7 @@ import { api } from "./_generated/api";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
-const modules = import.meta.glob("./**/!(*.test).*s");
+const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 // Seed a mix of approved and non-approved puzzles.
 const seed = async (t: ReturnType<typeof convexTest>, count = 5) =>

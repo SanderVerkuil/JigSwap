@@ -6,7 +6,7 @@ import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
-const modules = import.meta.glob("./**/!(*.test).*s");
+const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 type Avail = { forTrade: boolean; forSale: boolean; forLend: boolean };
 

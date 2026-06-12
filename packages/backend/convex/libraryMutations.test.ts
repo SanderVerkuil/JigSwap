@@ -6,7 +6,7 @@ import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
-const modules = import.meta.glob("./**/!(*.test).*s");
+const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 // Seed two members + a catalog puzzle (with aggregateId) the snapshot provider can resolve.
 const seed = async (t: ReturnType<typeof convexTest>) =>
