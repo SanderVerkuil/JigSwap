@@ -665,7 +665,7 @@
     "title": "Browse Puzzles",
     "subtitle": "Discover amazing puzzles from the community",
     "puzzlesFound": "puzzles found",
-    "searchPlaceholder": "Search puzzles by title, brand, or description...",
+    "searchPlaceholder": "Search puzzles by title, brand, or theme…",
     "allCategories": "All Categories",
     "allDifficulties": "All Difficulties",
     "allConditions": "All Conditions",
@@ -673,7 +673,10 @@
     "maxPieces": "Max Pieces",
     "clearFilters": "Clear Filters",
     "noPuzzlesFound": "No puzzles found",
-    "tryDifferentFilters": "Try adjusting your search criteria or filters"
+    "tryDifferentFilters": "Try adjusting your search or filters.",
+    "filterAll": "All",
+    "available": "Available",
+    "resultsCount": "{count, plural, one {# puzzle found} other {# puzzles found}}"
   },
   "footer": {
     "tagline": "Making jigsaw puzzle trading accessible and sustainable for everyone.",

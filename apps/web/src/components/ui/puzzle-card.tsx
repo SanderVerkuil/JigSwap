@@ -42,19 +42,23 @@ export function usePuzzleView() {
 interface PuzzleViewProviderProps {
   children: ReactNode;
   viewMode: ViewMode;
+  /** Optional override of the wrapper layout classes (e.g. an auto-fill grid). */
+  className?: string;
 }
 
 export function PuzzleViewProvider({
   children,
   viewMode,
+  className,
 }: PuzzleViewProviderProps) {
   return (
     <PuzzleViewContext.Provider value={{ viewMode }}>
       <div
         className={
-          viewMode === "grid"
+          className ??
+          (viewMode === "grid"
             ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-            : "space-y-4"
+            : "space-y-4")
         }
       >
         {children}

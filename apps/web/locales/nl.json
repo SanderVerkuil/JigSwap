@@ -665,7 +665,7 @@
     "title": "Puzzels Bladeren",
     "subtitle": "Ontdek geweldige puzzels van de community",
     "puzzlesFound": "puzzels gevonden",
-    "searchPlaceholder": "Zoek puzzels op titel, merk of beschrijving...",
+    "searchPlaceholder": "Zoek puzzels op titel, merk of thema…",
     "allCategories": "Alle Categorieën",
     "allDifficulties": "Alle Moeilijkheidsgraden",
     "allConditions": "Alle Condities",
@@ -673,7 +673,10 @@
     "maxPieces": "Max Stukken",
     "clearFilters": "Filters Wissen",
     "noPuzzlesFound": "Geen puzzels gevonden",
-    "tryDifferentFilters": "Probeer je zoekcriteria of filters aan te passen"
+    "tryDifferentFilters": "Pas je zoekopdracht of filters aan.",
+    "filterAll": "Alle",
+    "available": "Beschikbaar",
+    "resultsCount": "{count, plural, one {# puzzel gevonden} other {# puzzels gevonden}}"
   },
   "footer": {
     "tagline": "Legpuzzelruil toegankelijk en duurzaam maken voor iedereen.",
