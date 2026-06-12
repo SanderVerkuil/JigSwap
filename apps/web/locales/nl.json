@@ -654,6 +654,11 @@
         "exchange": "<strong>{name}</strong> heeft een ruil afgerond",
         "empty": "Voorlopig alles rustig — volg medepuzzelaars en hun nieuwste stappen verschijnen hier. 🧩"
       }
+    },
+    "fresh": {
+      "title": "Vers op de Plank",
+      "meta": "Onlangs toegevoegd",
+      "myPuzzles": "Mijn Puzzels"
     }
   },
   "browse": {

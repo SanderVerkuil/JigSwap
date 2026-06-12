@@ -654,6 +654,11 @@
         "exchange": "<strong>{name}</strong> completed a swap",
         "empty": "All quiet for now — follow fellow puzzlers and their latest moves will show up here. 🧩"
       }
+    },
+    "fresh": {
+      "title": "Fresh on the Shelf",
+      "meta": "Recently added",
+      "myPuzzles": "My Puzzles"
     }
   },
   "browse": {
