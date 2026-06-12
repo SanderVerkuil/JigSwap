@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useUser } from "@/compat/clerk";
@@ -40,6 +41,9 @@ import { useState } from "react";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/collections/")({
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "collections") }],
+  }),
   pendingComponent: () => <PageLoading message="Loading collections..." />,
   component: CollectionsPage,
 });

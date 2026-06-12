@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useUser } from "@/compat/clerk";
@@ -21,6 +22,9 @@ import { useQuery } from "convex/react";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/insights")({
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "insights") }],
+  }),
   pendingComponent: () => <PageLoading message="Loading insights..." />,
   component: InsightsPage,
 });

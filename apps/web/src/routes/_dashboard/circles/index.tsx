@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useUser } from "@/compat/clerk";
@@ -61,6 +62,9 @@ interface CircleMemberView {
 }
 
 export const Route = createFileRoute("/_dashboard/circles/")({
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "circles") }],
+  }),
   pendingComponent: () => <PageLoading message="Loading circles..." />,
   component: CirclesPage,
 });

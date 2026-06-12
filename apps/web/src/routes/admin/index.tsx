@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { Link } from "@/compat/link";
@@ -10,6 +11,9 @@ import {
 } from "@/components/ui/card";
 
 export const Route = createFileRoute("/admin/")({
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "admin") }],
+  }),
   component: AdminDashboardPage,
 });
 

@@ -4,7 +4,7 @@ import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
-const modules = import.meta.glob("./**/!(*.test).*s");
+const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 const asOwner = (t: ReturnType<typeof convexTest>) =>
   t.withIdentity({ subject: "clerk_owner" });

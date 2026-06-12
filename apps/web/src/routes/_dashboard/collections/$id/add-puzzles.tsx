@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { gateway, Id } from "@/gateway";
+import { pageTitle } from "@/lib/page-title";
 import { useMutation, useQuery } from "convex/react";
 import { Grid, Plus, Search } from "lucide-react";
 import { useState } from "react";
@@ -14,6 +15,9 @@ import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/collections/$id/add-puzzles")(
   {
+    head: ({ match }) => ({
+      meta: [{ title: pageTitle(match.context, "collectionAddPuzzles") }],
+    }),
     pendingComponent: () => <PageLoading message="Loading..." />,
     component: AddPuzzlesToCollectionPage,
   },

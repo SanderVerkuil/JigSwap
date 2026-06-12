@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useUser } from "@/compat/clerk";
@@ -31,6 +32,9 @@ type ExchangeStatus =
   | "disputed";
 
 export const Route = createFileRoute("/_dashboard/trades")({
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "trades") }],
+  }),
   pendingComponent: () => <PageLoading message="Loading trades..." />,
   component: ExchangesPage,
 });

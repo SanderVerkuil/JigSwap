@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,9 @@ import { useState } from "react";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/borrowed")({
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "borrowed") }],
+  }),
   pendingComponent: () => <PageLoading message="Loading loans..." />,
   component: BorrowedPage,
 });

@@ -1,0 +1,318 @@
+/* ============================================================================
+   JigSwap marketing — design token layer
+   ----------------------------------------------------------------------------
+   Ported from the Claude Design handoff bundle (jigswap-design-system tokens/
+   themes.css). The design system derives every surface, ramp and status token
+   from THREE seed colors; this file runs that engine with the "Current Violet"
+   palette (#6048e8 / #19c316 / #ec4899) so a future palette swap stays a
+   three-line change.
+
+   All tokens are `--mk-*` prefixed to avoid colliding with the app's shadcn
+   tokens. Dark mode rides the existing next-themes `.dark` class: the ramp
+   mix directions (--mk-soft / --mk-deep) invert, exactly like the design's
+   [data-mode="dark"] engine.
+   ============================================================================ */
+
+:root {
+  /* ---- Palette seeds (Current Violet) ---- */
+  --mk-seed-primary: #6048e8; /* logo "Jig" — signature brand hue */
+  --mk-seed-secondary: #19c316; /* logo "Swap" — exchange / go */
+  --mk-seed-accent: #ec4899; /* playful pink — puzzle highlights */
+
+  /* ---- Ramp mix directions + grounds (light) ---- */
+  --mk-soft: #ffffff; /* tint direction for the -50…-300 steps */
+  --mk-deep: #0b0d11; /* tint direction for the -500…-900 steps */
+  --mk-ground: #f7f6fb; /* faint cool base so the brand tint reads clean */
+  --mk-card-base: #ffffff;
+
+  /* ---- Brand ramps derived from the seeds ---- */
+  --mk-violet-50: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 12%,
+    var(--mk-soft)
+  );
+  --mk-violet-100: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 22%,
+    var(--mk-soft)
+  );
+  --mk-violet-200: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 44%,
+    var(--mk-soft)
+  );
+  --mk-violet-300: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 68%,
+    var(--mk-soft)
+  );
+  --mk-violet-400: var(--mk-seed-primary);
+  --mk-violet-500: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 90%,
+    var(--mk-deep)
+  );
+  --mk-violet-600: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 76%,
+    var(--mk-deep)
+  );
+  --mk-violet-700: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 60%,
+    var(--mk-deep)
+  );
+  --mk-violet-800: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 48%,
+    var(--mk-deep)
+  );
+  --mk-violet-900: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 36%,
+    var(--mk-deep)
+  );
+
+  --mk-green-50: color-mix(
+    in oklab,
+    var(--mk-seed-secondary) 12%,
+    var(--mk-soft)
+  );
+  --mk-green-100: color-mix(
+    in oklab,
+    var(--mk-seed-secondary) 22%,
+    var(--mk-soft)
+  );
+  --mk-green-200: color-mix(
+    in oklab,
+    var(--mk-seed-secondary) 44%,
+    var(--mk-soft)
+  );
+  --mk-green-300: color-mix(
+    in oklab,
+    var(--mk-seed-secondary) 68%,
+    var(--mk-soft)
+  );
+  --mk-green-400: var(--mk-seed-secondary);
+  --mk-green-500: color-mix(
+    in oklab,
+    var(--mk-seed-secondary) 90%,
+    var(--mk-deep)
+  );
+  --mk-green-600: color-mix(
+    in oklab,
+    var(--mk-seed-secondary) 76%,
+    var(--mk-deep)
+  );
+  --mk-green-700: color-mix(
+    in oklab,
+    var(--mk-seed-secondary) 60%,
+    var(--mk-deep)
+  );
+
+  --mk-pink-300: color-mix(in oklab, var(--mk-seed-accent) 68%, var(--mk-soft));
+  --mk-pink-400: var(--mk-seed-accent);
+  --mk-pink-500: color-mix(in oklab, var(--mk-seed-accent) 84%, var(--mk-deep));
+
+  /* ---- Surfaces (gently tinted by the PRIMARY hue only) ---- */
+  --mk-bg: color-mix(in oklab, var(--mk-seed-primary) 6%, var(--mk-ground));
+  --mk-card: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 3%,
+    var(--mk-card-base)
+  );
+  --mk-muted: color-mix(in oklab, var(--mk-seed-primary) 9%, var(--mk-ground));
+
+  /* ---- Text ---- */
+  --mk-text-strong: #1f1b2e;
+  --mk-text-body: #3a3548;
+  --mk-text-muted: #7c7689;
+
+  /* ---- Lines & focus ---- */
+  --mk-border: color-mix(in oklab, var(--mk-seed-primary) 16%, #e7e3f0);
+  --mk-input-border: color-mix(in oklab, var(--mk-seed-primary) 13%, #e7e3f0);
+  --mk-ring: var(--mk-seed-primary);
+
+  /* ---- Status ---- */
+  --mk-success: #10b981;
+  --mk-success-soft: #d1fae5;
+  --mk-success-strong: #166534;
+  --mk-warning: #f59e0b;
+  --mk-warning-soft: #fef3c7;
+  --mk-warning-strong: #854d0e;
+  --mk-danger: #ef4444;
+  --mk-danger-soft: #fee2e2;
+  --mk-danger-strong: #991b1b;
+
+  /* ---- Difficulty badge scale ---- */
+  --mk-diff-easy-fg: #166534;
+  --mk-diff-easy-bg: #dcfce7;
+  --mk-diff-medium-fg: #854d0e;
+  --mk-diff-medium-bg: #fef9c3;
+  --mk-diff-hard-fg: #9a3412;
+  --mk-diff-hard-bg: #ffedd5;
+  --mk-diff-expert-fg: #991b1b;
+  --mk-diff-expert-bg: #fee2e2;
+}
+
+.dark {
+  /* Ramp lightness inverts: "soft" steps go dark, "deep" steps go bright. */
+  --mk-soft: #0b0d11;
+  --mk-deep: #ffffff;
+  --mk-ground: #14151a;
+  --mk-card-base: #1b1d24;
+
+  --mk-bg: color-mix(in oklab, var(--mk-seed-primary) 9%, var(--mk-ground));
+  --mk-card: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 7%,
+    var(--mk-card-base)
+  );
+  --mk-muted: color-mix(in oklab, var(--mk-seed-primary) 12%, #23252e);
+
+  --mk-text-strong: #f6f2ed;
+  --mk-text-body: #e6e1da;
+  --mk-text-muted: #a59d94;
+
+  --mk-border: color-mix(in oklab, var(--mk-seed-primary) 16%, #2c2f39);
+  --mk-input-border: color-mix(in oklab, var(--mk-seed-primary) 16%, #2c2f39);
+
+  /* Status: soft fills go dark-tinted, strong text goes bright. */
+  --mk-success-soft: color-mix(
+    in oklab,
+    var(--mk-success) 24%,
+    var(--mk-ground)
+  );
+  --mk-warning-soft: color-mix(
+    in oklab,
+    var(--mk-warning) 24%,
+    var(--mk-ground)
+  );
+  --mk-danger-soft: color-mix(in oklab, var(--mk-danger) 24%, var(--mk-ground));
+  --mk-success-strong: #7fdca0;
+  --mk-warning-strong: #f1c25a;
+  --mk-danger-strong: #f3a0a0;
+
+  --mk-diff-easy-bg: color-mix(in oklab, #19c316 20%, var(--mk-ground));
+  --mk-diff-easy-fg: #86e6a0;
+  --mk-diff-medium-bg: color-mix(in oklab, #f59e0b 20%, var(--mk-ground));
+  --mk-diff-medium-fg: #f3c969;
+  --mk-diff-hard-bg: color-mix(in oklab, #f97316 20%, var(--mk-ground));
+  --mk-diff-hard-fg: #f6a866;
+  --mk-diff-expert-bg: color-mix(in oklab, #ef4444 20%, var(--mk-ground));
+  --mk-diff-expert-fg: #f49a9a;
+}
+
+/* Expose the tokens as Tailwind utilities (text-mk-*, bg-mk-*, border-mk-*,
+   font-mk-*, shadow-mk-*, ease-mk-*). `inline` keeps the var() indirection so
+   the .dark cascade flips them at runtime. */
+@theme inline {
+  --color-mk-bg: var(--mk-bg);
+  --color-mk-card: var(--mk-card);
+  --color-mk-muted: var(--mk-muted);
+  --color-mk-text-strong: var(--mk-text-strong);
+  --color-mk-text-body: var(--mk-text-body);
+  --color-mk-text-muted: var(--mk-text-muted);
+  --color-mk-border: var(--mk-border);
+  --color-mk-input-border: var(--mk-input-border);
+  --color-mk-ring: var(--mk-ring);
+
+  --color-mk-violet-50: var(--mk-violet-50);
+  --color-mk-violet-100: var(--mk-violet-100);
+  --color-mk-violet-200: var(--mk-violet-200);
+  --color-mk-violet-300: var(--mk-violet-300);
+  --color-mk-violet-400: var(--mk-violet-400);
+  --color-mk-violet-500: var(--mk-violet-500);
+  --color-mk-violet-600: var(--mk-violet-600);
+  --color-mk-violet-700: var(--mk-violet-700);
+  --color-mk-violet-800: var(--mk-violet-800);
+  --color-mk-violet-900: var(--mk-violet-900);
+
+  --color-mk-green-50: var(--mk-green-50);
+  --color-mk-green-100: var(--mk-green-100);
+  --color-mk-green-200: var(--mk-green-200);
+  --color-mk-green-300: var(--mk-green-300);
+  --color-mk-green-400: var(--mk-green-400);
+  --color-mk-green-500: var(--mk-green-500);
+  --color-mk-green-600: var(--mk-green-600);
+  --color-mk-green-700: var(--mk-green-700);
+
+  --color-mk-pink-300: var(--mk-pink-300);
+  --color-mk-pink-400: var(--mk-pink-400);
+  --color-mk-pink-500: var(--mk-pink-500);
+
+  --color-mk-success: var(--mk-success);
+  --color-mk-success-soft: var(--mk-success-soft);
+  --color-mk-success-strong: var(--mk-success-strong);
+  --color-mk-warning: var(--mk-warning);
+  --color-mk-warning-soft: var(--mk-warning-soft);
+  --color-mk-warning-strong: var(--mk-warning-strong);
+  --color-mk-danger: var(--mk-danger);
+  --color-mk-danger-soft: var(--mk-danger-soft);
+  --color-mk-danger-strong: var(--mk-danger-strong);
+
+  --color-mk-diff-easy-fg: var(--mk-diff-easy-fg);
+  --color-mk-diff-easy-bg: var(--mk-diff-easy-bg);
+  --color-mk-diff-medium-fg: var(--mk-diff-medium-fg);
+  --color-mk-diff-medium-bg: var(--mk-diff-medium-bg);
+  --color-mk-diff-hard-fg: var(--mk-diff-hard-fg);
+  --color-mk-diff-hard-bg: var(--mk-diff-hard-bg);
+  --color-mk-diff-expert-fg: var(--mk-diff-expert-fg);
+  --color-mk-diff-expert-bg: var(--mk-diff-expert-bg);
+
+  /* Marketing type: Fraunces display-serif headings, crisp system-sans body. */
+  --font-mk-heading: "Fraunces", ui-serif, Georgia, "Times New Roman", serif;
+  --font-mk-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+
+  /* Soft, cool-neutral shadows + the violet glow reserved for the hero CTA. */
+  --shadow-mk-xs: 0 1px 2px 0 rgb(16 24 40 / 0.05);
+  --shadow-mk-sm:
+    0 1px 3px 0 rgb(16 24 40 / 0.08), 0 1px 2px -1px rgb(16 24 40 / 0.06);
+  --shadow-mk-md:
+    0 4px 12px -2px rgb(16 24 40 / 0.1), 0 2px 6px -2px rgb(16 24 40 / 0.06);
+  --shadow-mk-lg:
+    0 12px 28px -6px rgb(16 24 40 / 0.14), 0 6px 12px -6px rgb(16 24 40 / 0.08);
+  --shadow-mk-brand: 0 8px 24px -6px rgb(96 72 232 / 0.35);
+
+  /* Friendly-but-quick motion. */
+  --ease-mk-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-mk-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ---- Marketing page ground ------------------------------------------------ */
+.mk-root {
+  background: var(--mk-bg);
+  color: var(--mk-text-body);
+}
+
+.mk-root ::selection {
+  background: color-mix(in oklab, var(--mk-violet-400) 26%, transparent);
+}
+
+/* Soft brand glow used behind hero sections. */
+.mk-hero-glow {
+  position: absolute;
+  inset: -10% -10% auto -10%;
+  height: 540px;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(
+      60% 70% at 18% 8%,
+      color-mix(in oklab, var(--mk-violet-400) 22%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      50% 60% at 88% 0%,
+      color-mix(in oklab, var(--mk-pink-400) 16%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      60% 80% at 60% 30%,
+      color-mix(in oklab, var(--mk-green-400) 12%, transparent),
+      transparent 75%
+    );
+  filter: blur(6px);
+}

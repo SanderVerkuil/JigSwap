@@ -4,7 +4,7 @@ import { api } from "./_generated/api";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
-const modules = import.meta.glob("./**/!(*.test).*s");
+const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 // Alice (initiator) proposes a trade to Bob (recipient): she offers her copy of "Ocean Calm" for
 // his copy of "Mountain Vista". A second, newer exchange exercises ordering. Plus two messages.

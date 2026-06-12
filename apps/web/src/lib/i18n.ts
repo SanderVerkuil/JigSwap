@@ -71,12 +71,39 @@ async function loadMessages(locale: Locale): Promise<Messages> {
   }
 }
 
-// Root loader calls this so SSR has locale + messages before first paint.
+// Root beforeLoad calls this so SSR has locale + messages before first paint.
 export const getIntl = createServerFn({ method: "GET" }).handler(async () => {
   const locale = detectLocale();
   const messages = await loadMessages(locale);
   return { locale, messages, timeZone };
 });
+
+export type IntlPayload = Awaited<ReturnType<typeof getIntl>>;
+
+// The catalog only changes via setLocale, so client-side navigations reuse the
+// payload instead of re-fetching it from the root beforeLoad on every click.
+// Module state is only used in the browser — on the server it would leak
+// between concurrent requests.
+let intlCache: IntlPayload | null = null;
+
+export async function getIntlCached(): Promise<IntlPayload> {
+  if (typeof window !== "undefined" && intlCache) return intlCache;
+  const result = await getIntl();
+  if (typeof window !== "undefined") intlCache = result;
+  return result;
+}
+
+// Seeds the cache from the SSR-dehydrated root context at hydration, so the
+// first client-side navigation doesn't refetch the catalog.
+export function seedIntlCache(value: IntlPayload) {
+  if (typeof window !== "undefined") intlCache ??= value;
+}
+
+// Language switchers call this before router.invalidate() so the re-run
+// beforeLoad fetches the freshly selected catalog.
+export function clearIntlCache() {
+  intlCache = null;
+}
 
 // Persists the chosen locale; the language switcher invalidates the router after
 // calling this so the new catalog is re-fetched.

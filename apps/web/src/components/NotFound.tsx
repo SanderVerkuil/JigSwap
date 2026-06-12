@@ -1,5 +1,5 @@
 import { Link } from "@/compat/link";
-import { Header } from "@/components/landing/header";
+import { MarketingHeader } from "@/components/marketing/header";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,8 +18,8 @@ export function NotFound() {
   const t = useTranslations("notFound");
 
   return (
-    <>
-      <Header />
+    <div className="mk-root font-mk-sans">
+      <MarketingHeader />
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <Card className="w-full max-w-md text-center">
           <CardHeader className="space-y-4">
@@ -44,6 +44,6 @@ export function NotFound() {
           </CardContent>
         </Card>
       </div>
-    </>
+    </div>
   );
 }

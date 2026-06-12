@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { Image } from "@/compat/image";
@@ -79,6 +80,9 @@ const instanceFormSchema = z.object({
 type InstanceFormData = z.infer<typeof instanceFormSchema>;
 
 export const Route = createFileRoute("/_dashboard/my-puzzles/add")({
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "addPuzzle") }],
+  }),
   // The page reads ?puzzleId off the URL via the next/navigation compat
   // (useSearchParams -> useSearch({ strict: false })); validate it so the
   // typed search carries it through.

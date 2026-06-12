@@ -193,6 +193,18 @@ export const gateway = {
     // Downstream read-model: ranks approved catalog puzzles the member doesn't own from their taste.
     recommendations: api.insights.getRecommendations.getRecommendations,
     exportUserData: api.insights.exportUserData.exportUserData,
+    // Public query — returns a random seed-stable sample of catalog puzzles for
+    // the marketing hero plank. Args: { limit: number; seed: number }.
+    plankPuzzles: api.insights.getPlankPuzzles.getPlankPuzzles,
+    // Public query — returns a seed-stable sample of active members (initials +
+    // opt-in avatar URL) for the marketing trust-row avatar cluster.
+    communityAvatars: api.insights.getCommunityAvatars.getCommunityAvatars,
+  },
+
+  // Public marketing contact form: operational/support write, not a bounded context. The thin
+  // mutation is unauthenticated and persists the message for admin triage.
+  contact: {
+    submit: api.contact.submitContactMessage.submitContactMessage,
   },
 
   // Friend Circles (Sharing): private groups whose members share circle-scoped visibility. Writes

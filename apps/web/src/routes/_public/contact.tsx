@@ -1,196 +1,275 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { Link } from "@/compat/link";
-import { Building, Mail, MessageSquare, Shield } from "lucide-react";
-import { useTranslations } from "use-intl";
+import { pageTitle } from "@/lib/page-title";
+
+import { Container } from "@/components/marketing/container";
+import { PageHero } from "@/components/marketing/page-hero";
+import { Reveal } from "@/components/marketing/reveal";
+import { Section } from "@/components/marketing/section";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { gateway } from "@/gateway";
+import { cn } from "@/lib/utils";
+import { useMutation } from "convex/react";
+import { LifeBuoy, Mail, MapPin, Shield } from "lucide-react";
+import * as React from "react";
+import { useLocale, useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_public/contact")({
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "contact") }],
+  }),
   component: ContactPage,
 });
 
+const CHANNELS = [
+  { icon: Mail, key: "email" },
+  { icon: LifeBuoy, key: "support" },
+  { icon: Shield, key: "privacy" },
+] as const;
+
+// Contact: channel list + the form. Submissions persist via the public
+// gateway.contact.submit mutation (admin triage), not a fake success state.
 function ContactPage() {
-  const tCommon = useTranslations("common");
-  const t = useTranslations("contact");
+  const t = useTranslations("marketing.contactPage");
+  return (
+    <main>
+      <PageHero
+        eyebrow={t("heroEyebrow")}
+        title={t("heroTitle")}
+        lead={t("heroLead")}
+      />
+
+      <Section>
+        <Container>
+          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] max-[860px]:grid-cols-1 gap-[clamp(32px,5vw,64px)] items-start">
+            <Reveal>
+              <div className="flex flex-col gap-2">
+                {CHANNELS.map(({ icon: Icon, key }, i) => (
+                  <div
+                    key={key}
+                    className={cn(
+                      "py-[18px]",
+                      i < CHANNELS.length - 1 && "border-b border-mk-border",
+                    )}
+                  >
+                    <div className="flex items-center gap-[9px]">
+                      <Icon size={17} className="text-mk-violet-600" />
+                      <span className="font-mk-heading font-semibold text-base text-mk-text-strong whitespace-nowrap">
+                        {t(`${key}Title`)}
+                      </span>
+                    </div>
+                    <a
+                      href={`mailto:${t(`${key}Value`)}`}
+                      className="block text-[15.5px] text-mk-violet-600 mt-1.5 font-medium hover:underline"
+                    >
+                      {t(`${key}Value`)}
+                    </a>
+                    <div className="text-sm text-mk-text-muted mt-1">
+                      {t(`${key}Sub`)}
+                    </div>
+                  </div>
+                ))}
+                <div className="mt-4 px-[22px] py-5 rounded-[20px] bg-mk-muted border border-mk-border">
+                  <div className="flex items-center gap-2.5 font-semibold text-mk-text-strong text-[15px]">
+                    <MapPin size={18} className="text-mk-violet-600" />
+                    {t("basedTitle")}
+                  </div>
+                  <p className="text-sm text-mk-text-muted mt-2 leading-relaxed">
+                    {t("basedBody")}
+                  </p>
+                </div>
+              </div>
+            </Reveal>
+            <Reveal delay={120}>
+              <ContactForm />
+            </Reveal>
+          </div>
+        </Container>
+      </Section>
+    </main>
+  );
+}
+
+type Subject = "swap" | "account" | "idea" | "other";
+const SUBJECTS: Subject[] = ["swap", "account", "idea", "other"];
+const SUBJECT_KEY: Record<Subject, string> = {
+  swap: "subjectSwap",
+  account: "subjectAccount",
+  idea: "subjectIdea",
+  other: "subjectOther",
+};
+
+function ContactForm() {
+  const t = useTranslations("marketing.contactPage");
+  const locale = useLocale();
+  const submitMessage = useMutation(gateway.contact.submit);
+
+  const [form, setForm] = React.useState({
+    name: "",
+    email: "",
+    subject: "swap" as Subject,
+    message: "",
+  });
+  const [errors, setErrors] = React.useState<{
+    name?: string;
+    email?: string;
+    message?: string;
+    submit?: string;
+  }>({});
+  const [sending, setSending] = React.useState(false);
+  const [sent, setSent] = React.useState(false);
+
+  const set =
+    (k: "name" | "email" | "message") =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setForm((f) => ({ ...f, [k]: e.target.value }));
+      setErrors((er) => ({ ...er, [k]: undefined, submit: undefined }));
+    };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const er: typeof errors = {};
+    if (!form.name.trim()) er.name = t("errorName");
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email))
+      er.email = t("errorEmail");
+    if (form.message.trim().length < 10) er.message = t("errorMessage");
+    setErrors(er);
+    if (Object.keys(er).length > 0) return;
+
+    setSending(true);
+    try {
+      await submitMessage({
+        name: form.name,
+        email: form.email,
+        subject: form.subject,
+        message: form.message,
+        locale,
+      });
+      setSent(true);
+    } catch {
+      setErrors({ submit: t("errorSubmit") });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const labelCls =
+    "block text-[13.5px] font-semibold text-mk-text-strong mb-[7px]";
+  const errCls = "text-[12.5px] text-mk-danger mt-1.5";
+
+  if (sent) {
+    return (
+      <div className="px-9 py-11 rounded-[20px] bg-mk-card border border-mk-border text-center shadow-mk-sm">
+        <div className="text-[44px]">🧩</div>
+        <h3 className="font-mk-heading font-bold tracking-tight text-2xl text-mk-text-strong mt-3">
+          {t("sentTitle")}
+        </h3>
+        <p className="text-[15.5px] text-mk-text-muted mt-2.5 leading-relaxed">
+          {t("sentBody")}
+        </p>
+        <Button
+          variant="outline"
+          className="mt-[22px] bg-mk-card border-mk-border text-mk-text-strong hover:bg-mk-muted"
+          onClick={() => {
+            setSent(false);
+            setForm({ name: "", email: "", subject: "swap", message: "" });
+          }}
+        >
+          {t("sentAgain")}
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto max-w-4xl">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">
-            {t("title")}
-          </h1>
-          <p className="text-xl text-muted-foreground mb-4">{t("subtitle")}</p>
-          <div className="flex items-center gap-4 text-muted-foreground text-sm">
-            <Link href="/" className="hover:text-foreground">
-              {tCommon("backToHome")}
-            </Link>
-          </div>
+    <form
+      onSubmit={submit}
+      noValidate
+      className="px-8 pt-8 pb-[34px] rounded-[20px] bg-mk-card border border-mk-border shadow-mk-sm"
+    >
+      <div className="grid grid-cols-2 max-[860px]:grid-cols-1 gap-[18px]">
+        <div>
+          <label htmlFor="contact-name" className={labelCls}>
+            {t("formName")}
+          </label>
+          <Input
+            id="contact-name"
+            placeholder={t("formNamePlaceholder")}
+            value={form.name}
+            onChange={set("name")}
+            aria-invalid={!!errors.name}
+            className={errors.name ? "border-mk-danger" : ""}
+          />
+          {errors.name && <div className={errCls}>{errors.name}</div>}
         </div>
-
-        {/* Introduction */}
-        <section className="mb-12">
-          <p className="text-lg text-muted-foreground leading-relaxed">
-            {t("introduction")}
-          </p>
-        </section>
-
-        {/* Ways to Contact */}
-        <section className="mb-12">
-          <h2 className="text-3xl font-semibold text-foreground mb-6">
-            {t("waysToContact.title")}
-          </h2>
-          <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-            {t("waysToContact.description")}
-          </p>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Email Support */}
-            <div className="bg-muted/50 p-6 rounded-lg">
-              <div className="flex items-center gap-3 mb-4">
-                <Mail className="h-6 w-6 text-primary" />
-                <h3 className="text-xl font-medium text-foreground">
-                  {t("email.title")}
-                </h3>
-              </div>
-              <p className="text-muted-foreground mb-4">
-                {t("email.description")}
-              </p>
-              <a
-                href={`mailto:${t("email.address")}`}
-                className="text-primary hover:text-primary/80 font-medium"
-              >
-                {t("email.address")}
-              </a>
-              <p className="text-sm text-muted-foreground mt-2">
-                {t("email.responseTime")}
-              </p>
-            </div>
-
-            {/* Technical Support */}
-            <div className="bg-muted/50 p-6 rounded-lg">
-              <div className="flex items-center gap-3 mb-4">
-                <MessageSquare className="h-6 w-6 text-primary" />
-                <h3 className="text-xl font-medium text-foreground">
-                  {t("support.title")}
-                </h3>
-              </div>
-              <p className="text-muted-foreground mb-4">
-                {t("support.description")}
-              </p>
-              <a
-                href={`mailto:${t("support.address")}`}
-                className="text-primary hover:text-primary/80 font-medium"
-              >
-                {t("support.address")}
-              </a>
-              <p className="text-sm text-muted-foreground mt-2">
-                {t("support.responseTime")}
-              </p>
-            </div>
-
-            {/* Privacy & Legal */}
-            <div className="bg-muted/50 p-6 rounded-lg">
-              <div className="flex items-center gap-3 mb-4">
-                <Shield className="h-6 w-6 text-primary" />
-                <h3 className="text-xl font-medium text-foreground">
-                  {t("privacy.title")}
-                </h3>
-              </div>
-              <p className="text-muted-foreground mb-4">
-                {t("privacy.description")}
-              </p>
-              <a
-                href={`mailto:${t("privacy.address")}`}
-                className="text-primary hover:text-primary/80 font-medium"
-              >
-                {t("privacy.address")}
-              </a>
-              <p className="text-sm text-muted-foreground mt-2">
-                {t("privacy.responseTime")}
-              </p>
-            </div>
-
-            {/* Business Inquiries */}
-            <div className="bg-muted/50 p-6 rounded-lg">
-              <div className="flex items-center gap-3 mb-4">
-                <Building className="h-6 w-6 text-primary" />
-                <h3 className="text-xl font-medium text-foreground">
-                  {t("business.title")}
-                </h3>
-              </div>
-              <p className="text-muted-foreground mb-4">
-                {t("business.description")}
-              </p>
-              <a
-                href={`mailto:${t("business.address")}`}
-                className="text-primary hover:text-primary/80 font-medium"
-              >
-                {t("business.address")}
-              </a>
-              <p className="text-sm text-muted-foreground mt-2">
-                {t("business.responseTime")}
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* FAQ */}
-        <section className="mb-12">
-          <h2 className="text-3xl font-semibold text-foreground mb-6">
-            {t("faq.title")}
-          </h2>
-          <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-            {t("faq.description")}
-          </p>
-          <div className="bg-muted/50 p-6 rounded-lg">
-            <p className="text-muted-foreground mb-4">
-              {t("faq.link")} - Coming soon!
-            </p>
-            <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-              {t.raw("faq.topics").map((topic: string, index: number) => (
-                <li key={index}>{topic}</li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
-        {/* Feedback */}
-        <section className="mb-12">
-          <h2 className="text-3xl font-semibold text-foreground mb-6">
-            {t("feedback.title")}
-          </h2>
-          <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-            {t("feedback.description")}
-          </p>
-          <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-            {t.raw("feedback.types").map((type: string, index: number) => (
-              <li key={index} className="text-lg">
-                {type}
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {/* Response Expectations */}
-        <section className="mb-12">
-          <h2 className="text-3xl font-semibold text-foreground mb-6">
-            {t("response.title")}
-          </h2>
-          <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-            {t("response.description")}
-          </p>
-          <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-            {t
-              .raw("response.expectations")
-              .map((expectation: string, index: number) => (
-                <li key={index} className="text-lg">
-                  {expectation}
-                </li>
-              ))}
-          </ul>
-        </section>
+        <div>
+          <label htmlFor="contact-email" className={labelCls}>
+            {t("formEmail")}
+          </label>
+          <Input
+            id="contact-email"
+            type="email"
+            placeholder={t("formEmailPlaceholder")}
+            value={form.email}
+            onChange={set("email")}
+            aria-invalid={!!errors.email}
+            className={errors.email ? "border-mk-danger" : ""}
+          />
+          {errors.email && <div className={errCls}>{errors.email}</div>}
+        </div>
       </div>
-    </div>
+      <div className="mt-[18px]">
+        <span className={labelCls}>{t("formSubject")}</span>
+        <div className="flex flex-wrap gap-2">
+          {SUBJECTS.map((k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setForm((f) => ({ ...f, subject: k }))}
+              className={cn(
+                "cursor-pointer px-3.5 py-2 rounded-full text-[13.5px] font-medium border transition-colors",
+                form.subject === k
+                  ? "border-mk-violet-400 bg-mk-violet-50 text-mk-violet-600"
+                  : "border-mk-border bg-mk-card text-mk-text-body hover:bg-mk-muted",
+              )}
+            >
+              {t(SUBJECT_KEY[k])}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="mt-[18px]">
+        <label htmlFor="contact-message" className={labelCls}>
+          {t("formMessage")}
+        </label>
+        <textarea
+          id="contact-message"
+          rows={5}
+          value={form.message}
+          onChange={set("message")}
+          placeholder={t("formMessagePlaceholder")}
+          aria-invalid={!!errors.message}
+          className={cn(
+            "w-full resize-y text-[15px] px-[13px] py-[11px] rounded-[10px] border bg-mk-card text-mk-text-body outline-none",
+            "focus:[box-shadow:0_0_0_3px_rgb(96_72_232_/_.18)]",
+            errors.message ? "border-mk-danger" : "border-mk-input-border",
+          )}
+        />
+        {errors.message && <div className={errCls}>{errors.message}</div>}
+      </div>
+      {errors.submit && <div className={errCls}>{errors.submit}</div>}
+      <Button
+        type="submit"
+        variant="brand"
+        disabled={sending}
+        className="mt-[22px] w-full h-11 text-[15px]"
+      >
+        {t("submit")}
+      </Button>
+      <p className="text-[12.5px] text-mk-text-muted mt-3.5 text-center leading-normal">
+        {t("privacyNote")}
+      </p>
+    </form>
   );
 }

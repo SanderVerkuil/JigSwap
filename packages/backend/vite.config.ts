@@ -23,6 +23,10 @@ export default defineConfig(() => ({
     // _scheduled_functions status write. That rejection is unhandled (the job is never awaited), so
     // vitest would fail an otherwise all-green run. Assertions are what matter here; ignore it.
     dangerouslyIgnoreUnhandledErrors: true,
+    // CI runs `nx run-many --parallel=4`, so vitest shares the runner with other projects'
+    // lint/build; convex-test's per-test module bundling then pushes tests that take ~500ms
+    // locally past the 5s default timeout.
+    testTimeout: 20_000,
     server: { deps: { inline: ["convex-test"] } },
     include: [
       "convex/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",

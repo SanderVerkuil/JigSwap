@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { AdvancedFeaturesSection } from "@/components/dashboard-home/feature-sections/advanced-features-section";
@@ -10,6 +11,9 @@ import { WelcomeHeader } from "@/components/dashboard-home/welcome-section/welco
 // _dashboard pathless layout with the real welcome / quick-actions / feature-sections /
 // recent-activity composition ported from the Next dashboard page.
 export const Route = createFileRoute("/_dashboard/dashboard")({
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "dashboard") }],
+  }),
   component: DashboardPage,
 });
 

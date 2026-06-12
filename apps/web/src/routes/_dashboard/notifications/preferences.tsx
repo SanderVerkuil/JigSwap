@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useUser } from "@/compat/clerk";
@@ -9,7 +10,6 @@ import {
   notificationAccent,
   notificationIcon,
 } from "@/components/notifications/notification-meta";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -32,6 +32,9 @@ import { useTranslations } from "use-intl";
 type Toggles = Record<string, Partial<Record<NotificationChannel, boolean>>>;
 
 export const Route = createFileRoute("/_dashboard/notifications/preferences")({
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "notificationPreferences") }],
+  }),
   component: NotificationPreferencesPage,
 });
 
@@ -116,7 +119,6 @@ function NotificationPreferencesPage() {
                 <div className="flex flex-wrap gap-4 sm:gap-6">
                   {NOTIFICATION_CHANNELS.map((channel) => {
                     const id = `${type}-${channel}`;
-                    const comingSoon = channel !== "inApp";
                     return (
                       <div key={channel} className="flex items-center gap-2">
                         <Switch
@@ -126,22 +128,9 @@ function NotificationPreferencesPage() {
                             handleToggle(type, channel, checked)
                           }
                         />
-                        <div className="flex flex-col">
-                          <Label
-                            htmlFor={id}
-                            className="cursor-pointer text-xs"
-                          >
-                            {channelLabel[channel]}
-                          </Label>
-                          {comingSoon && (
-                            <Badge
-                              variant="outline"
-                              className="mt-0.5 px-1 py-0 text-[9px] font-normal text-muted-foreground"
-                            >
-                              {t("channelComingSoon")}
-                            </Badge>
-                          )}
-                        </div>
+                        <Label htmlFor={id} className="cursor-pointer text-xs">
+                          {channelLabel[channel]}
+                        </Label>
                       </div>
                     );
                   })}

@@ -35,6 +35,7 @@ import type * as catalog_setCatalogCategoryActive from "../catalog/setCatalogCat
 import type * as catalog_submitPuzzleDefinition from "../catalog/submitPuzzleDefinition.js";
 import type * as catalog_updateCatalogCategory from "../catalog/updateCatalogCategory.js";
 import type * as catalog_updatePuzzleDefinition from "../catalog/updatePuzzleDefinition.js";
+import type * as contact_submitContactMessage from "../contact/submitContactMessage.js";
 import type * as custody_getCopyCustodyTimeline from "../custody/getCopyCustodyTimeline.js";
 import type * as custody_subscriber from "../custody/subscriber.js";
 import type * as events_dispatch from "../events/dispatch.js";
@@ -73,9 +74,11 @@ import type * as identity_searchUsers from "../identity/searchUsers.js";
 import type * as identity_toMemberView from "../identity/toMemberView.js";
 import type * as insights_exportUserData from "../insights/exportUserData.js";
 import type * as insights_getCollectionBreakdown from "../insights/getCollectionBreakdown.js";
+import type * as insights_getCommunitiyAvatars from "../insights/getCommunityAvatars.js";
 import type * as insights_getCompletionTrends from "../insights/getCompletionTrends.js";
 import type * as insights_getGlobalStats from "../insights/getGlobalStats.js";
 import type * as insights_getPersonalStats from "../insights/getPersonalStats.js";
+import type * as insights_getPlankPuzzles from "../insights/getPlankPuzzles.js";
 import type * as insights_getRecommendations from "../insights/getRecommendations.js";
 import type * as insights_getTradeActivity from "../insights/getTradeActivity.js";
 import type * as library_acquireCopy from "../library/acquireCopy.js";
@@ -123,6 +126,7 @@ import type * as library_updateCopyDetails from "../library/updateCopyDetails.js
 import type * as library_updateCopySharing from "../library/updateCopySharing.js";
 import type * as notifications_adapters_channels_emailChannel from "../notifications/adapters/channels/emailChannel.js";
 import type * as notifications_adapters_channels_inAppChannel from "../notifications/adapters/channels/inAppChannel.js";
+import type * as notifications_adapters_channels_knockChannel from "../notifications/adapters/channels/knockChannel.js";
 import type * as notifications_adapters_channels_pushChannel from "../notifications/adapters/channels/pushChannel.js";
 import type * as notifications_adapters_convexNotificationPreferenceRepository from "../notifications/adapters/convexNotificationPreferenceRepository.js";
 import type * as notifications_adapters_convexNotificationRepository from "../notifications/adapters/convexNotificationRepository.js";
@@ -134,6 +138,7 @@ import type * as notifications_adapters_systemClock from "../notifications/adapt
 import type * as notifications_backfill from "../notifications/backfill.js";
 import type * as notifications_errors from "../notifications/errors.js";
 import type * as notifications_getMyPreferences from "../notifications/getMyPreferences.js";
+import type * as notifications_knock from "../notifications/knock.js";
 import type * as notifications_listMyNotifications from "../notifications/listMyNotifications.js";
 import type * as notifications_markAllRead from "../notifications/markAllRead.js";
 import type * as notifications_markNotificationRead from "../notifications/markNotificationRead.js";
@@ -236,6 +241,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/submitPuzzleDefinition": typeof catalog_submitPuzzleDefinition;
   "catalog/updateCatalogCategory": typeof catalog_updateCatalogCategory;
   "catalog/updatePuzzleDefinition": typeof catalog_updatePuzzleDefinition;
+  "contact/submitContactMessage": typeof contact_submitContactMessage;
   "custody/getCopyCustodyTimeline": typeof custody_getCopyCustodyTimeline;
   "custody/subscriber": typeof custody_subscriber;
   "events/dispatch": typeof events_dispatch;
@@ -274,9 +280,11 @@ declare const fullApi: ApiFromModules<{
   "identity/toMemberView": typeof identity_toMemberView;
   "insights/exportUserData": typeof insights_exportUserData;
   "insights/getCollectionBreakdown": typeof insights_getCollectionBreakdown;
+  "insights/getCommunityAvatars": typeof insights_getCommunitiyAvatars;
   "insights/getCompletionTrends": typeof insights_getCompletionTrends;
   "insights/getGlobalStats": typeof insights_getGlobalStats;
   "insights/getPersonalStats": typeof insights_getPersonalStats;
+  "insights/getPlankPuzzles": typeof insights_getPlankPuzzles;
   "insights/getRecommendations": typeof insights_getRecommendations;
   "insights/getTradeActivity": typeof insights_getTradeActivity;
   "library/acquireCopy": typeof library_acquireCopy;
@@ -324,6 +332,7 @@ declare const fullApi: ApiFromModules<{
   "library/updateCopySharing": typeof library_updateCopySharing;
   "notifications/adapters/channels/emailChannel": typeof notifications_adapters_channels_emailChannel;
   "notifications/adapters/channels/inAppChannel": typeof notifications_adapters_channels_inAppChannel;
+  "notifications/adapters/channels/knockChannel": typeof notifications_adapters_channels_knockChannel;
   "notifications/adapters/channels/pushChannel": typeof notifications_adapters_channels_pushChannel;
   "notifications/adapters/convexNotificationPreferenceRepository": typeof notifications_adapters_convexNotificationPreferenceRepository;
   "notifications/adapters/convexNotificationRepository": typeof notifications_adapters_convexNotificationRepository;
@@ -335,6 +344,7 @@ declare const fullApi: ApiFromModules<{
   "notifications/backfill": typeof notifications_backfill;
   "notifications/errors": typeof notifications_errors;
   "notifications/getMyPreferences": typeof notifications_getMyPreferences;
+  "notifications/knock": typeof notifications_knock;
   "notifications/listMyNotifications": typeof notifications_listMyNotifications;
   "notifications/markAllRead": typeof notifications_markAllRead;
   "notifications/markNotificationRead": typeof notifications_markNotificationRead;

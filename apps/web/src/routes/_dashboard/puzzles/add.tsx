@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useRouter } from "@/compat/navigation";
@@ -9,6 +10,9 @@ import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/puzzles/add")({
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "addPuzzle") }],
+  }),
   component: AddPuzzlePage,
 });
 

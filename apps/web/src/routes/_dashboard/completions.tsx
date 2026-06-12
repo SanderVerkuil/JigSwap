@@ -1,3 +1,4 @@
+import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useUser } from "@/compat/clerk";
@@ -34,6 +35,9 @@ type DialogState =
   | null;
 
 export const Route = createFileRoute("/_dashboard/completions")({
+  head: ({ match }) => ({
+    meta: [{ title: pageTitle(match.context, "completions") }],
+  }),
   component: CompletionsPage,
 });
 
