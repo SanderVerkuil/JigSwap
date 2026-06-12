@@ -1638,6 +1638,131 @@
     "adminCategories": "Categoriebeheer — JigSwap",
     "adminModeration": "Moderatie — JigSwap",
     "signIn": "Inloggen — JigSwap",
-    "signUp": "Registreren — JigSwap"
+    "signUp": "Registreren — JigSwap",
+    "library": "Mijn Bibliotheek — JigSwap",
+    "people": "Mensen — JigSwap"
+  },
+  "shell": {
+    "search": {
+      "placeholder": "Zoek puzzels, mensen, kringen…",
+      "label": "Zoeken",
+      "inputPlaceholder": "Zoek of spring naar…",
+      "empty": "Geen resultaten gevonden.",
+      "goTo": "Ga Naar",
+      "quickActions": "Snelle Acties"
+    },
+    "actions": {
+      "addPuzzle": "Puzzel Toevoegen",
+      "addAPuzzle": "Een Puzzel Toevoegen",
+      "logCompletion": "Een Voltooiing Vastleggen",
+      "createCircle": "Een Kring Aanmaken",
+      "browseCommunity": "Community Verkennen"
+    },
+    "welcome": "Welkom terug, {name}! 🧩",
+    "welcomeAnonymous": "Welkom terug! 🧩",
+    "groups": {
+      "library": {
+        "label": "Mijn Bibliotheek",
+        "blurb": "Alles wat je bezit en bijhoudt."
+      },
+      "community": {
+        "label": "Community",
+        "blurb": "Ontdek, ruil en maak contact."
+      }
+    },
+    "pages": {
+      "dashboard": {
+        "title": "Dashboard",
+        "subtitle": "Dit is wat er speelt rond je puzzels.",
+        "description": "Je puzzelwereld in één oogopslag"
+      },
+      "library": {
+        "title": "Mijn Bibliotheek",
+        "subtitle": "Alles wat je bezit en bijhoudt."
+      },
+      "community": {
+        "title": "Community",
+        "subtitle": "Ontdek, ruil en maak contact."
+      },
+      "myPuzzles": {
+        "title": "Mijn Puzzels",
+        "subtitle": "Elk exemplaar dat je bezit en hoe het ervoor staat.",
+        "description": "Exemplaren die je bezit en hun status"
+      },
+      "collections": {
+        "title": "Collecties",
+        "subtitle": "Samengestelde planken met je favorieten.",
+        "description": "Samengestelde sets en planken"
+      },
+      "completions": {
+        "title": "Voltooiingen",
+        "subtitle": "Een logboek van elke puzzel die je hebt afgemaakt.",
+        "description": "Je logboek van afgemaakte puzzels"
+      },
+      "goals": {
+        "title": "Doelen",
+        "subtitle": "Persoonlijke doelen voor dit jaar.",
+        "description": "Persoonlijke doelen voor dit jaar"
+      },
+      "insights": {
+        "title": "Inzichten",
+        "subtitle": "Statistieken en trends in je hobby.",
+        "description": "Statistieken en trends"
+      },
+      "browse": {
+        "title": "Puzzels Ontdekken",
+        "subtitle": "Ontdek puzzels uit de community.",
+        "description": "Ontdek puzzels uit de community"
+      },
+      "circles": {
+        "title": "Kringen",
+        "subtitle": "Besloten groepen om binnen te ruilen.",
+        "description": "Ruilgroepen voor vrienden en familie"
+      },
+      "exchanges": {
+        "title": "Uitwisselingen",
+        "subtitle": "Ruilen, lenen en handelen in beweging.",
+        "description": "Ruilen, lenen en handelen"
+      },
+      "messages": {
+        "title": "Berichten",
+        "subtitle": "Gesprekken met medepuzzelaars.",
+        "description": "Gesprekken met medepuzzelaars"
+      },
+      "people": {
+        "title": "Mensen",
+        "subtitle": "Leden en profielen bij jou in de buurt.",
+        "description": "Leden en profielen"
+      },
+      "profile": {
+        "title": "Profiel",
+        "subtitle": "Je plank, statistieken en vertrouwen in één oogopslag."
+      },
+      "addPuzzle": {
+        "title": "Puzzel Toevoegen",
+        "subtitle": "Voeg een nieuwe puzzel toe aan je plank."
+      },
+      "puzzles": {
+        "title": "Puzzels",
+        "subtitle": "De gedeelde puzzelcatalogus."
+      },
+      "borrowed": {
+        "title": "Geleend",
+        "subtitle": "Puzzels die je van anderen hebt geleend."
+      },
+      "notifications": {
+        "title": "Meldingen",
+        "subtitle": "Alles wat je aandacht vraagt."
+      }
+    },
+    "user": {
+      "preferences": "Voorkeuren",
+      "openPreferences": "Voorkeuren Openen",
+      "contentWidth": "Contentbreedte",
+      "centered": "Gecentreerd",
+      "fullWidth": "Volledige Breedte",
+      "hideEmail": "E-mailadres Verbergen",
+      "admin": "Beheer"
+    }
   }
 }
