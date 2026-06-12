@@ -319,6 +319,14 @@ function buildRowInstances(
     });
     cursor += w + GAP_PATTERN[(i * 2 + rowIndex) % GAP_PATTERN.length];
   }
+  // If MAX_PER_ROW capped the fill before the span was covered (ultra-wide
+  // viewports), slide the whole row right so it stays flush with the near
+  // (camera-side) end; the bare stretch of board lands at the far end, deep
+  // in the fog, instead of in plain view.
+  const shortfall = span / 2 - cursor;
+  if (shortfall > 0) {
+    for (const inst of out) inst.slot.x += shortfall;
+  }
   return out;
 }
 
