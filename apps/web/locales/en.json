@@ -1191,7 +1191,7 @@
       "subtitle": "Set completion targets and track your progress.",
       "empty": "No goals yet",
       "emptyHint": "Create a goal to start working toward a completion target.",
-      "create": "New goal",
+      "create": "New Goal",
       "createTitle": "Create a goal",
       "createDescription": "Set a target number of completions to work toward.",
       "goalTitle": "Title",
@@ -1205,7 +1205,9 @@
       "createError": "Could not create the goal. Please try again.",
       "progress": "{current} of {target} completions",
       "achieved": "Achieved",
-      "dueBy": "Due by {date}"
+      "dueBy": "Due by {date}",
+      "activeCount": "{count} active",
+      "progressShort": "{current}/{target} completions"
     }
   },
   "insights": {

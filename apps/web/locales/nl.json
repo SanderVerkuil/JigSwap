@@ -1191,7 +1191,7 @@
       "subtitle": "Stel voltooiingsdoelen in en volg je voortgang.",
       "empty": "Nog geen doelen",
       "emptyHint": "Maak een doel aan om naar een voltooiingsdoel toe te werken.",
-      "create": "Nieuw doel",
+      "create": "Nieuw Doel",
       "createTitle": "Doel aanmaken",
       "createDescription": "Stel een doelaantal voltooiingen in om naartoe te werken.",
       "goalTitle": "Titel",
@@ -1205,7 +1205,9 @@
       "createError": "Kon het doel niet aanmaken. Probeer het opnieuw.",
       "progress": "{current} van {target} voltooiingen",
       "achieved": "Behaald",
-      "dueBy": "Vóór {date}"
+      "dueBy": "Vóór {date}",
+      "activeCount": "{count} actief",
+      "progressShort": "{current}/{target} voltooid"
     }
   },
   "insights": {
