@@ -575,6 +575,29 @@
     "recentActivity": {
       "title": "Recente Activiteit",
       "noActivity": "Geen recente activiteit"
+    },
+    "brief": {
+      "swapsPendingGoal": "Je hebt <swapsLink>{swapsCount, plural, one {# lopende ruil} other {# lopende ruilen}}</swapsLink>, {pendingCount, plural, one {één verzoek dat op je antwoord wacht} other {# verzoeken die op je antwoord wachten}}, en je bent <goalLink>{pct}% op weg</goalLink> naar je doel van {target, plural, one {# puzzel} other {# puzzels}}.",
+      "swapsPending": "Je hebt <swapsLink>{swapsCount, plural, one {# lopende ruil} other {# lopende ruilen}}</swapsLink> en {pendingCount, plural, one {één verzoek dat op je antwoord wacht} other {# verzoeken die op je antwoord wachten}}.",
+      "swapsGoal": "Je hebt <swapsLink>{swapsCount, plural, one {# lopende ruil} other {# lopende ruilen}}</swapsLink>, en je bent <goalLink>{pct}% op weg</goalLink> naar je doel van {target, plural, one {# puzzel} other {# puzzels}}.",
+      "pendingGoal": "Je hebt {pendingCount, plural, one {één verzoek dat op je antwoord wacht} other {# verzoeken die op je antwoord wachten}}, en je bent <goalLink>{pct}% op weg</goalLink> naar je doel van {target, plural, one {# puzzel} other {# puzzels}}.",
+      "swapsOnly": "Je hebt <swapsLink>{swapsCount, plural, one {# lopende ruil} other {# lopende ruilen}}</swapsLink> — houd die stukjes in beweging.",
+      "pendingOnly": "Je hebt {pendingCount, plural, one {één verzoek dat op je antwoord wacht} other {# verzoeken die op je antwoord wachten}}.",
+      "goalOnly": "Alles rustig aan het ruilfront — en je bent <goalLink>{pct}% op weg</goalLink> naar je doel van {target, plural, one {# puzzel} other {# puzzels}}.",
+      "empty": "Je plank is er klaar voor — voeg een puzzel toe of neus rond in de community om de boel in beweging te krijgen. 🧩"
+    },
+    "pendingBanner": {
+      "swap": "<strong>{name}</strong> wil <strong>{theirs}</strong> ruilen voor jouw <mineStrong>{mine}</mineStrong>",
+      "want": "<strong>{name}</strong> wil jouw <mineStrong>{mine}</mineStrong> graag hebben",
+      "borrow": "<strong>{name}</strong> wil jouw <mineStrong>{mine}</mineStrong> graag lenen",
+      "buy": "<strong>{name}</strong> wil jouw <mineStrong>{mine}</mineStrong> graag kopen",
+      "accept": "Ruil Accepteren",
+      "reply": "Reageren"
+    },
+    "actions": {
+      "addPuzzle": "Puzzel Toevoegen",
+      "browse": "Community Verkennen",
+      "logCompletion": "Voltooiing Vastleggen"
     }
   },
   "browse": {

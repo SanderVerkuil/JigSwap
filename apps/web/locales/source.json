@@ -575,6 +575,29 @@
     "recentActivity": {
       "title": "Recent Activity",
       "noActivity": "No recent activity"
+    },
+    "brief": {
+      "swapsPendingGoal": "You have <swapsLink>{swapsCount, plural, one {# swap in motion} other {# swaps in motion}}</swapsLink>, {pendingCount, plural, one {one request waiting for your reply} other {# requests waiting for your reply}}, and you're <goalLink>{pct}% of the way</goalLink> to your goal of {target, plural, one {# puzzle} other {# puzzles}}.",
+      "swapsPending": "You have <swapsLink>{swapsCount, plural, one {# swap in motion} other {# swaps in motion}}</swapsLink> and {pendingCount, plural, one {one request waiting for your reply} other {# requests waiting for your reply}}.",
+      "swapsGoal": "You have <swapsLink>{swapsCount, plural, one {# swap in motion} other {# swaps in motion}}</swapsLink>, and you're <goalLink>{pct}% of the way</goalLink> to your goal of {target, plural, one {# puzzle} other {# puzzles}}.",
+      "pendingGoal": "You have {pendingCount, plural, one {one request waiting for your reply} other {# requests waiting for your reply}}, and you're <goalLink>{pct}% of the way</goalLink> to your goal of {target, plural, one {# puzzle} other {# puzzles}}.",
+      "swapsOnly": "You have <swapsLink>{swapsCount, plural, one {# swap in motion} other {# swaps in motion}}</swapsLink> — keep those pieces moving.",
+      "pendingOnly": "You have {pendingCount, plural, one {one request waiting for your reply} other {# requests waiting for your reply}}.",
+      "goalOnly": "All quiet on the swap front — and you're <goalLink>{pct}% of the way</goalLink> to your goal of {target, plural, one {# puzzle} other {# puzzles}}.",
+      "empty": "Your shelf is ready when you are — add a puzzle or browse the community to get things moving. 🧩"
+    },
+    "pendingBanner": {
+      "swap": "<strong>{name}</strong> wants to swap <strong>{theirs}</strong> for your <mineStrong>{mine}</mineStrong>",
+      "want": "<strong>{name}</strong> would love your <mineStrong>{mine}</mineStrong>",
+      "borrow": "<strong>{name}</strong> would like to borrow your <mineStrong>{mine}</mineStrong>",
+      "buy": "<strong>{name}</strong> would like to buy your <mineStrong>{mine}</mineStrong>",
+      "accept": "Accept Swap",
+      "reply": "Reply"
+    },
+    "actions": {
+      "addPuzzle": "Add a Puzzle",
+      "browse": "Browse Community",
+      "logCompletion": "Log a Completion"
     }
   },
   "browse": {
