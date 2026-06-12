@@ -1638,6 +1638,131 @@
     "adminCategories": "Category management — JigSwap",
     "adminModeration": "Moderation — JigSwap",
     "signIn": "Sign in — JigSwap",
-    "signUp": "Sign up — JigSwap"
+    "signUp": "Sign up — JigSwap",
+    "library": "My Library — JigSwap",
+    "people": "People — JigSwap"
+  },
+  "shell": {
+    "search": {
+      "placeholder": "Search puzzles, people, circles…",
+      "label": "Search",
+      "inputPlaceholder": "Search or jump to…",
+      "empty": "No results found.",
+      "goTo": "Go To",
+      "quickActions": "Quick Actions"
+    },
+    "actions": {
+      "addPuzzle": "Add Puzzle",
+      "addAPuzzle": "Add a Puzzle",
+      "logCompletion": "Log a Completion",
+      "createCircle": "Create a Circle",
+      "browseCommunity": "Browse Community"
+    },
+    "welcome": "Welcome back, {name}! 🧩",
+    "welcomeAnonymous": "Welcome back! 🧩",
+    "groups": {
+      "library": {
+        "label": "My Library",
+        "blurb": "Everything you own and track."
+      },
+      "community": {
+        "label": "Community",
+        "blurb": "Discover, swap and connect."
+      }
+    },
+    "pages": {
+      "dashboard": {
+        "title": "Dashboard",
+        "subtitle": "Here's what's happening with your puzzles.",
+        "description": "Your puzzle world at a glance"
+      },
+      "library": {
+        "title": "My Library",
+        "subtitle": "Everything you own and track."
+      },
+      "community": {
+        "title": "Community",
+        "subtitle": "Discover, swap and connect."
+      },
+      "myPuzzles": {
+        "title": "My Puzzles",
+        "subtitle": "Every copy you own and where it stands.",
+        "description": "Copies you own and their status"
+      },
+      "collections": {
+        "title": "Collections",
+        "subtitle": "Curated shelves of your favourites.",
+        "description": "Curated sets and shelves"
+      },
+      "completions": {
+        "title": "Completions",
+        "subtitle": "A log of every puzzle you've finished.",
+        "description": "Your finished-puzzle log"
+      },
+      "goals": {
+        "title": "Goals",
+        "subtitle": "Personal targets for the year.",
+        "description": "Personal targets for the year"
+      },
+      "insights": {
+        "title": "Insights",
+        "subtitle": "Stats and trends across your hobby.",
+        "description": "Stats and trends"
+      },
+      "browse": {
+        "title": "Browse Puzzles",
+        "subtitle": "Discover puzzles from the community.",
+        "description": "Discover from the community"
+      },
+      "circles": {
+        "title": "Circles",
+        "subtitle": "Private groups to swap within.",
+        "description": "Friend and family swap groups"
+      },
+      "exchanges": {
+        "title": "Exchanges",
+        "subtitle": "Swaps, lends and trades in motion.",
+        "description": "Swaps, lends and trades"
+      },
+      "messages": {
+        "title": "Messages",
+        "subtitle": "Conversations with fellow puzzlers.",
+        "description": "Conversations with fellow puzzlers"
+      },
+      "people": {
+        "title": "People",
+        "subtitle": "Members and profiles near you.",
+        "description": "Members and profiles"
+      },
+      "profile": {
+        "title": "Profile",
+        "subtitle": "Your shelf, stats and trust at a glance."
+      },
+      "addPuzzle": {
+        "title": "Add Puzzle",
+        "subtitle": "Add a new puzzle to your shelf."
+      },
+      "puzzles": {
+        "title": "Puzzles",
+        "subtitle": "The shared puzzle catalogue."
+      },
+      "borrowed": {
+        "title": "Borrowed",
+        "subtitle": "Puzzles you've borrowed from others."
+      },
+      "notifications": {
+        "title": "Notifications",
+        "subtitle": "Everything that needs your attention."
+      }
+    },
+    "user": {
+      "preferences": "Preferences",
+      "openPreferences": "Open Preferences",
+      "contentWidth": "Content Width",
+      "centered": "Centered",
+      "fullWidth": "Full Width",
+      "hideEmail": "Hide Email Address",
+      "admin": "Admin"
+    }
   }
 }
