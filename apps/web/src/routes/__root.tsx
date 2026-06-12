@@ -49,7 +49,12 @@ export const Route = createRootRouteWithContext<{
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      // viewport-fit=cover lets the mobile shell extend under the notch /
+      // home indicator and pad itself with env(safe-area-inset-*).
+      {
+        name: "viewport",
+        content: "width=device-width, initial-scale=1, viewport-fit=cover",
+      },
       { title: "JigSwap" },
     ],
     links: [

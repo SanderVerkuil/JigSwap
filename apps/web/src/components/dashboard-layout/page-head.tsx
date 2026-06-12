@@ -3,7 +3,8 @@
 // Page head at the top of the inset content card: an optional breadcrumb row
 // (`Group > Page` only — the group crumb links to its landing page; no crumbs
 // on Dashboard, Profile or the landings themselves) above the page title and
-// its muted one-line subtitle on the same baseline row.
+// its muted one-line subtitle on the same baseline row. Desktop-only: below
+// md the mobile top bar owns the title and the back affordance.
 
 import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
@@ -36,7 +37,7 @@ export function PageHead() {
       : undefined;
 
   return (
-    <div className="shrink-0 border-b bg-background px-4 pt-3.5 pb-3 md:px-7">
+    <div className="hidden shrink-0 border-b bg-background px-4 pt-3.5 pb-3 md:block md:px-7">
       {group ? (
         <nav
           aria-label="Breadcrumb"

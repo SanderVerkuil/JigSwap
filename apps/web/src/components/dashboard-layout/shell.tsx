@@ -5,12 +5,21 @@
 // transparent sidebar; the page content floats on it as a rounded, bordered,
 // soft-shadowed card with the page head fixed at its top and the content
 // scrolling inside it.
+//
+// Below the md breakpoint (the single mobile source of truth, = useIsMobile's
+// 768px) that desktop chrome is CSS-swapped for a dedicated mobile shell: a
+// slim safe-area-aware top bar and a bottom tab bar with a quick-action
+// sheet; the content sits on the plain background with no inset card or page
+// head. The shadcn sidebar's mobile offcanvas becomes unreachable by design —
+// its trigger lives in the (hidden) desktop top bar.
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { AppSidebar } from "./app-sidebar";
 import { CommandPalette } from "./command-palette";
+import { MobileTabBar } from "./mobile-tab-bar";
+import { MobileTopBar } from "./mobile-top-bar";
 import { PageHead } from "./page-head";
 import { ShellPreferencesProvider, useShellPreferences } from "./preferences";
 import { TopBar } from "./top-bar";
@@ -22,6 +31,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     <ShellPreferencesProvider>
       <SidebarProvider className="h-svh flex-col overflow-hidden">
         <TopBar onOpenPalette={() => setPaletteOpen(true)} />
+        <MobileTopBar onOpenPalette={() => setPaletteOpen(true)} />
         <div className="flex min-h-0 flex-1">
           <AppSidebar />
           <SidebarInset className="min-h-0 overflow-hidden md:peer-data-[variant=inset]:mt-0 md:peer-data-[variant=inset]:mr-3 md:peer-data-[variant=inset]:mb-3 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:border md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-0">
@@ -29,6 +39,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <ContentArea>{children}</ContentArea>
           </SidebarInset>
         </div>
+        <MobileTabBar />
         <CommandPalette open={paletteOpen} setOpen={setPaletteOpen} />
       </SidebarProvider>
     </ShellPreferencesProvider>
@@ -41,10 +52,12 @@ function ContentArea({ children }: { children: React.ReactNode }) {
   const { fullWidth } = useShellPreferences();
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto">
+    <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
       <div
         className={cn(
-          "w-full p-4 md:p-6",
+          // Mobile: 18px top / 16px sides per the mobile spec, with extra
+          // bottom clearance for the tab bar's raised center button.
+          "w-full px-4 pt-[18px] pb-8 md:p-6",
           !fullWidth && "mx-auto max-w-[1180px]",
         )}
       >
