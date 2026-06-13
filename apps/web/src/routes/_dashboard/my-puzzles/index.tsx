@@ -14,7 +14,7 @@ import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
-import { Grid, List, Plus, Search, Undo2 } from "lucide-react";
+import { Grid, List, Plus, Undo2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslations } from "use-intl";
 
@@ -58,10 +58,8 @@ function PuzzlesPage() {
   const { user } = useUser();
   const router = useRouter();
   const t = useTranslations("puzzles");
-  const tCommon = useTranslations("common");
   const tLending = useTranslations("lending");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   // The loan currently being recalled, so we disable only that copy's Recall button.
   const [recallingId, setRecallingId] = useState<string | null>(null);
@@ -178,20 +176,9 @@ function PuzzlesPage() {
     { value: "completed", label: t("filters.completed") },
   ];
 
-  // Search narrows by title/brand; the status pill then maps onto the copy's
-  // availability flags or its solve state.
+  // Free-text search now lives in the global ⌘K palette; this page narrows only by status. The
+  // status pill maps onto the copy's availability flags or its solve state.
   const filteredownedPuzzles = (userownedPuzzles ?? []).filter((puzzle) => {
-    const term = searchTerm.trim().toLowerCase();
-    if (
-      term &&
-      !(
-        puzzle.puzzle?.title.toLowerCase().includes(term) ||
-        (puzzle.puzzle?.brand &&
-          puzzle.puzzle.brand.toLowerCase().includes(term))
-      )
-    ) {
-      return false;
-    }
     if (statusFilter === "all") return true;
     const { forTrade, forLend, forSale } = puzzle.availability;
     if (statusFilter === "available") return forTrade || forLend || forSale;
@@ -208,18 +195,12 @@ function PuzzlesPage() {
 
   return (
     <div className="flex flex-col gap-[18px]">
-      {/* Toolbar: search on the left, view toggle + Add Puzzle on the right */}
+      {/* Toolbar: a muted search hint on the left, view toggle + Add Puzzle on the right. Free-text
+          search moved to the global ⌘K palette. */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="relative min-w-52 flex-1 md:max-w-md">
-          <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder={tCommon("search")}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="focus:ring-primary h-10 w-full rounded-md border bg-transparent pr-4 pl-10 text-sm focus:ring-2 focus:outline-none"
-          />
-        </div>
+        <p className="text-muted-foreground hidden text-sm sm:block">
+          {t("searchHint")}
+        </p>
         <div className="ml-auto flex items-center gap-2">
           <Button
             variant={viewMode === "grid" ? "secondary" : "ghost"}

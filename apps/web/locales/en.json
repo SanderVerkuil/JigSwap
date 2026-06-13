@@ -452,7 +452,8 @@
       "inProgress": "In Progress",
       "completed": "Completed"
     },
-    "resultCount": "{count} of {total} puzzles"
+    "resultCount": "{count} of {total} puzzles",
+    "searchHint": "Press ⌘K to search puzzles, people and more"
   },
   "trades": {
     "title": "Exchanges",
@@ -1822,7 +1823,13 @@
       "inputPlaceholder": "Search or jump to…",
       "empty": "No results found.",
       "goTo": "Go To",
-      "quickActions": "Quick Actions"
+      "quickActions": "Quick Actions",
+      "groupPuzzles": "Puzzles",
+      "groupPeople": "People",
+      "groupCircles": "Circles",
+      "groupCollections": "Collections",
+      "searching": "Searching…",
+      "noResultsFor": "No results for “{term}”"
     },
     "actions": {
       "addPuzzle": "Add Puzzle",

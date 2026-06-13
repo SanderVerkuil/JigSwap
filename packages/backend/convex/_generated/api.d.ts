@@ -160,6 +160,7 @@ import type * as reputation_getMyReviewForExchange from "../reputation/getMyRevi
 import type * as reputation_getReputationProfile from "../reputation/getReputationProfile.js";
 import type * as reputation_listReviewsForMember from "../reputation/listReviewsForMember.js";
 import type * as reputation_submitPartnerReview from "../reputation/submitPartnerReview.js";
+import type * as search_globalSearch from "../search/globalSearch.js";
 import type * as sharing_adapters_convexCircleRepository from "../sharing/adapters/convexCircleRepository.js";
 import type * as sharing_adapters_idGenerators from "../sharing/adapters/idGenerators.js";
 import type * as sharing_adapters_inProcessEventPublisher from "../sharing/adapters/inProcessEventPublisher.js";
@@ -367,6 +368,7 @@ declare const fullApi: ApiFromModules<{
   "reputation/getReputationProfile": typeof reputation_getReputationProfile;
   "reputation/listReviewsForMember": typeof reputation_listReviewsForMember;
   "reputation/submitPartnerReview": typeof reputation_submitPartnerReview;
+  "search/globalSearch": typeof search_globalSearch;
   "sharing/adapters/convexCircleRepository": typeof sharing_adapters_convexCircleRepository;
   "sharing/adapters/idGenerators": typeof sharing_adapters_idGenerators;
   "sharing/adapters/inProcessEventPublisher": typeof sharing_adapters_inProcessEventPublisher;
