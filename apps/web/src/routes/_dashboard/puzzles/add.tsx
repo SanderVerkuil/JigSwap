@@ -46,7 +46,6 @@ function AddPuzzlePage() {
   const handleSubmit = async (data: PuzzleFormData) => {
     startTransition(async () => {
       try {
-        console.log("Creating puzzle");
         const storageId = await (async () => {
           if (data.image instanceof File) {
             const imageUrl = await generateUploadUrl();
@@ -86,6 +85,8 @@ function AddPuzzlePage() {
           image: storageId,
         });
 
+        setImportedImageUrl(undefined);
+        setDefaults(undefined);
         toast.success("Puzzle created successfully!");
         router.push("/puzzles");
       } catch (error) {

@@ -227,7 +227,8 @@ function AddPuzzlePage() {
           body: data.image,
         });
         if (!uploadResult.ok) throw new Error("Failed to upload image");
-        imageId = await uploadResult.json();
+        const { storageId } = await uploadResult.json();
+        imageId = storageId;
       } else if (importedImageUrl) {
         try {
           imageId = await importImage({ url: importedImageUrl });
@@ -250,6 +251,8 @@ function AddPuzzlePage() {
       });
 
       setCreatePuzzleOpen(false);
+      setImportedImageUrl(undefined);
+      setCreateDefaults(undefined);
       toast.success(t("puzzleSubmittedForReview"));
     } catch (error) {
       console.error("Failed to create puzzle:", error);
