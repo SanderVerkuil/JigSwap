@@ -272,6 +272,15 @@ function AddPuzzlePage() {
   const isReady =
     !!form.title.trim() && !!form.brand.trim() && !!form.pieceCount;
 
+  const difficultyOptions = DIFFICULTY_OPTIONS.map((o) => ({
+    ...o,
+    label: t(`difficulty_${o.value}`),
+  }));
+  const conditionOptions = CONDITION_OPTIONS.map((o) => ({
+    value: o.value,
+    label: t(`condition_${o.value}`),
+  }));
+
   const formColumn = (
     <>
       {/* URL import zone */}
@@ -301,13 +310,13 @@ function AddPuzzlePage() {
         />
       )}
 
-      <SectionDivider label="or enter the details yourself" />
+      <SectionDivider label={t("dividerManual")} />
 
       {/* Core details */}
       <div className="flex flex-col gap-5">
         {/* Title */}
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="ap-title">Puzzle Title</Label>
+          <Label htmlFor="ap-title">{t("fieldTitle")}</Label>
           <Input
             id="ap-title"
             value={form.title}
@@ -315,14 +324,14 @@ function AddPuzzlePage() {
               setSelectedDefinitionId(null);
               setForm((f) => ({ ...f, title: e.target.value }));
             }}
-            placeholder="e.g. Starry Night"
+            placeholder={t("fieldTitlePlaceholder")}
           />
         </div>
 
         {/* Brand + Piece Count */}
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="ap-brand">Brand</Label>
+            <Label htmlFor="ap-brand">{t("fieldBrand")}</Label>
             <Input
               id="ap-brand"
               value={form.brand}
@@ -330,11 +339,11 @@ function AddPuzzlePage() {
                 setSelectedDefinitionId(null);
                 setForm((f) => ({ ...f, brand: e.target.value }));
               }}
-              placeholder="e.g. Ravensburger"
+              placeholder={t("fieldBrandPlaceholder")}
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="ap-pieces">Piece Count</Label>
+            <Label htmlFor="ap-pieces">{t("fieldPieceCount")}</Label>
             <PieceCountField
               id="ap-pieces"
               value={form.pieceCount}
@@ -348,9 +357,9 @@ function AddPuzzlePage() {
 
         {/* Difficulty */}
         <div className="flex flex-col gap-1.5">
-          <Label>Difficulty</Label>
+          <Label>{t("fieldDifficulty")}</Label>
           <SegmentedPills
-            options={DIFFICULTY_OPTIONS}
+            options={difficultyOptions}
             value={form.difficulty}
             onChange={(v) =>
               setForm((f) => ({
@@ -358,18 +367,15 @@ function AddPuzzlePage() {
                 difficulty: v as FormState["difficulty"],
               }))
             }
-            ariaLabel="Difficulty"
+            ariaLabel={t("fieldDifficulty")}
           />
         </div>
 
         {/* Condition */}
         <div className="flex flex-col gap-1.5">
-          <Label>Condition</Label>
+          <Label>{t("fieldCondition")}</Label>
           <SegmentedPills
-            options={CONDITION_OPTIONS.map((o) => ({
-              value: o.value,
-              label: o.label,
-            }))}
+            options={conditionOptions}
             value={form.condition}
             onChange={(v) =>
               setForm((f) => ({
@@ -377,15 +383,15 @@ function AddPuzzlePage() {
                 condition: v as FormState["condition"],
               }))
             }
-            ariaLabel="Condition"
+            ariaLabel={t("fieldCondition")}
           />
         </div>
 
         {/* Availability */}
         <div className="flex flex-col gap-1.5">
-          <Label>Availability</Label>
+          <Label>{t("fieldAvailability")}</Label>
           <p className="text-xs text-muted-foreground">
-            How you&apos;d like to share this puzzle. Pick any that apply.
+            {t("availabilityHint")}
           </p>
           <AvailabilityChips
             value={form.availability}
@@ -394,7 +400,7 @@ function AddPuzzlePage() {
         </div>
       </div>
 
-      <SectionDivider label="cover & extras" />
+      <SectionDivider label={t("dividerCover")} />
 
       <div className="flex flex-col gap-5">
         {/* Cover colour / photo */}
@@ -421,33 +427,32 @@ function AddPuzzlePage() {
         {/* Tags */}
         <div className="flex flex-col gap-1.5">
           <Label>
-            Tags{" "}
+            {t("fieldTags")}{" "}
             <span className="text-xs font-normal text-muted-foreground">
-              Optional
+              {t("optional")}
             </span>
           </Label>
-          <p className="text-xs text-muted-foreground">
-            Press Enter to add. Helps people discover your puzzle.
-          </p>
+          <p className="text-xs text-muted-foreground">{t("tagsHint")}</p>
           <TagInput
             value={form.tags}
             onChange={(tags) => setForm((f) => ({ ...f, tags }))}
+            placeholder={t("tagsPlaceholder")}
           />
         </div>
 
         {/* Notes */}
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="ap-notes">
-            Notes{" "}
+            {t("fieldNotes")}{" "}
             <span className="text-xs font-normal text-muted-foreground">
-              Optional
+              {t("optional")}
             </span>
           </Label>
           <Textarea
             id="ap-notes"
             value={form.notes}
             onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-            placeholder="Anything worth mentioning — missing pieces, special edition, where you got it…"
+            placeholder={t("notesPlaceholderLong")}
             rows={3}
           />
         </div>
@@ -475,7 +480,7 @@ function AddPuzzlePage() {
           variant="ghost"
           onClick={() => router.push("/puzzles")}
         >
-          Cancel
+          {t("cancel")}
         </Button>
         {!isReady && (
           <span className="ml-auto text-xs text-muted-foreground">
@@ -519,12 +524,6 @@ function AddPuzzlePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Add a Puzzle</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Import from a shop link or fill in the details yourself.
-        </p>
-      </div>
       <AddPuzzleLayout form={formColumn} preview={previewColumn} />
     </div>
   );

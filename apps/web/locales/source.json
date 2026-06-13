@@ -496,7 +496,40 @@
     "checkBrand": "Brand filled in",
     "checkPieces": "Piece count filled in",
     "checkAvailability": "Availability set",
-    "contributePuzzle": "Contribute a Puzzle"
+    "contributePuzzle": "Contribute a Puzzle",
+    "fieldTitle": "Puzzle Title",
+    "fieldTitlePlaceholder": "e.g. Starry Night",
+    "fieldBrand": "Brand",
+    "fieldBrandPlaceholder": "e.g. Ravensburger",
+    "fieldPieceCount": "Piece Count",
+    "fieldDifficulty": "Difficulty",
+    "fieldCondition": "Condition",
+    "fieldAvailability": "Availability",
+    "availabilityHint": "How you'd like to share this puzzle. Pick any that apply.",
+    "fieldTags": "Tags",
+    "tagsHint": "Press Enter to add. Helps people discover your puzzle.",
+    "tagsPlaceholder": "landscape, ocean, calm…",
+    "fieldNotes": "Notes",
+    "notesPlaceholderLong": "Anything worth mentioning — missing pieces, special edition, where you got it…",
+    "optional": "Optional",
+    "dividerManual": "or enter the details yourself",
+    "dividerCover": "cover & extras",
+    "difficulty_easy": "Easy",
+    "difficulty_medium": "Medium",
+    "difficulty_hard": "Hard",
+    "difficulty_expert": "Expert",
+    "condition_like_new": "Excellent",
+    "condition_good": "Good",
+    "condition_fair": "Fair",
+    "condition_poor": "Poor",
+    "availTrade": "For Trade",
+    "availLend": "For Lend",
+    "availSale": "For Sale",
+    "previewAvailable": "Available",
+    "previewView": "View",
+    "previewAdd": "Add",
+    "uploadPhoto": "Upload photo",
+    "cancel": "Cancel"
   },
   "trades": {
     "title": "Exchanges",
@@ -2048,6 +2081,10 @@
       "addPuzzle": {
         "title": "Add Puzzle",
         "subtitle": "Add a new puzzle to your shelf."
+      },
+      "contributePuzzle": {
+        "title": "Contribute a Puzzle",
+        "subtitle": "Add a puzzle to the shared catalogue for everyone."
       },
       "puzzles": {
         "title": "Puzzles",

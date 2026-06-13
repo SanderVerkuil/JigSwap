@@ -1,5 +1,6 @@
 // apps/web/src/components/add-puzzle/cover-colour-field.tsx
 import { Upload } from "lucide-react";
+import { useTranslations } from "use-intl";
 import { COVER_SWATCHES } from "./add-puzzle-schema";
 
 export function CoverColourField({
@@ -13,6 +14,7 @@ export function CoverColourField({
   onColor: (c: string) => void;
   onPhoto: (file: File) => void;
 }) {
+  const t = useTranslations("puzzles");
   return (
     <div className="flex flex-wrap gap-2.5">
       {COVER_SWATCHES.map((c, i) => {
@@ -35,7 +37,7 @@ export function CoverColourField({
         );
       })}
       <label className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-md border border-dashed border-border px-3.5 text-sm font-semibold text-muted-foreground hover:bg-accent">
-        <Upload className="size-3.5" /> Upload photo
+        <Upload className="size-3.5" /> {t("uploadPhoto")}
         <input
           type="file"
           accept="image/*"

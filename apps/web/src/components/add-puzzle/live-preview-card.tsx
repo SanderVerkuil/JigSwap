@@ -2,7 +2,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
-import { DIFFICULTY_OPTIONS } from "./add-puzzle-schema";
+import { useTranslations } from "use-intl";
 
 export interface LivePreviewProps {
   title: string;
@@ -15,6 +15,7 @@ export interface LivePreviewProps {
 }
 
 export function LivePreviewCard(props: LivePreviewProps) {
+  const t = useTranslations("puzzles");
   const cover = props.coverPhotoUrl
     ? {
         backgroundImage: `url(${props.coverPhotoUrl})`,
@@ -28,7 +29,8 @@ export function LivePreviewCard(props: LivePreviewProps) {
       <div className="relative aspect-square w-full" style={cover}>
         {props.available && (
           <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-jigsaw-secondary px-2.5 py-1 text-xs font-semibold text-white">
-            <span className="size-1.5 rounded-full bg-white" /> Available
+            <span className="size-1.5 rounded-full bg-white" />{" "}
+            {t("previewAvailable")}
           </span>
         )}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent p-4">
@@ -42,25 +44,23 @@ export function LivePreviewCard(props: LivePreviewProps) {
         <span className="text-sm">
           {props.pieceCount != null ? (
             <>
-              <span className="font-semibold">{props.pieceCount}</span> pieces
+              <span className="font-semibold">{props.pieceCount}</span>{" "}
+              {t("pieces")}
             </>
           ) : (
-            "— pieces"
+            `— ${t("pieces")}`
           )}
         </span>
         {props.difficulty && (
-          <Badge variant="outline">
-            {DIFFICULTY_OPTIONS.find((o) => o.value === props.difficulty)
-              ?.label ?? props.difficulty}
-          </Badge>
+          <Badge variant="outline">{t(`difficulty_${props.difficulty}`)}</Badge>
         )}
       </div>
       <div className="grid grid-cols-2 gap-2 px-3 pb-3">
         <Button variant="outline" size="sm" type="button" disabled>
-          View
+          {t("previewView")}
         </Button>
         <Button size="sm" type="button" disabled>
-          Add
+          {t("previewAdd")}
         </Button>
       </div>
     </div>

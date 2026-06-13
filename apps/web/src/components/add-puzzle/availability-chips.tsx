@@ -1,11 +1,14 @@
 // apps/web/src/components/add-puzzle/availability-chips.tsx
 import { Check, Plus } from "lucide-react";
+import { useTranslations } from "use-intl";
 import type { Availability } from "./add-puzzle-mappers";
 
-const CHIPS: ReadonlyArray<{ key: keyof Availability; label: string }> = [
-  { key: "forTrade", label: "For Trade" },
-  { key: "forLend", label: "For Lend" },
-  { key: "forSale", label: "For Sale" },
+type ChipKey = keyof Availability;
+
+const CHIP_KEYS: ReadonlyArray<{ key: ChipKey; tKey: string }> = [
+  { key: "forTrade", tKey: "availTrade" },
+  { key: "forLend", tKey: "availLend" },
+  { key: "forSale", tKey: "availSale" },
 ];
 
 export function AvailabilityChips({
@@ -15,9 +18,10 @@ export function AvailabilityChips({
   value: Availability;
   onChange: (v: Availability) => void;
 }) {
+  const t = useTranslations("puzzles");
   return (
     <div className="flex flex-wrap gap-2">
-      {CHIPS.map(({ key, label }) => {
+      {CHIP_KEYS.map(({ key, tKey }) => {
         const on = value[key];
         return (
           <button
@@ -37,7 +41,7 @@ export function AvailabilityChips({
             ) : (
               <Plus className="size-3.5" />
             )}
-            {label}
+            {t(tKey)}
           </button>
         );
       })}

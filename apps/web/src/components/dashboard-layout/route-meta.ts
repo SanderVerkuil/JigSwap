@@ -122,7 +122,7 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
 
   // Routes removed from the nav but still alive.
   "/puzzles": { pageKey: "puzzles", group: "library" },
-  "/puzzles/add": { pageKey: "addPuzzle", group: "library" },
+  "/puzzles/add": { pageKey: "contributePuzzle", group: "library" },
   "/borrowed": { pageKey: "borrowed", group: "library" },
   "/notifications": { pageKey: "notifications" },
 };

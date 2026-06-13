@@ -496,7 +496,40 @@
     "checkBrand": "Merk ingevuld",
     "checkPieces": "Aantal stukken ingevuld",
     "checkAvailability": "Beschikbaarheid ingesteld",
-    "contributePuzzle": "Een puzzel bijdragen"
+    "contributePuzzle": "Een puzzel bijdragen",
+    "fieldTitle": "Puzzeltitel",
+    "fieldTitlePlaceholder": "bijv. Sterrennacht",
+    "fieldBrand": "Merk",
+    "fieldBrandPlaceholder": "bijv. Ravensburger",
+    "fieldPieceCount": "Aantal stukjes",
+    "fieldDifficulty": "Moeilijkheid",
+    "fieldCondition": "Conditie",
+    "fieldAvailability": "Beschikbaarheid",
+    "availabilityHint": "Hoe je deze puzzel wilt delen. Kies wat van toepassing is.",
+    "fieldTags": "Tags",
+    "tagsHint": "Druk op Enter om toe te voegen — zo vinden anderen je puzzel.",
+    "tagsPlaceholder": "landschap, oceaan, rustig…",
+    "fieldNotes": "Notities",
+    "notesPlaceholderLong": "Iets vermeldenswaards — ontbrekende stukjes, speciale editie, waar je hem vandaan hebt…",
+    "optional": "Optioneel",
+    "dividerManual": "of vul de gegevens zelf in",
+    "dividerCover": "omslag & extra's",
+    "difficulty_easy": "Makkelijk",
+    "difficulty_medium": "Gemiddeld",
+    "difficulty_hard": "Moeilijk",
+    "difficulty_expert": "Expert",
+    "condition_like_new": "Uitstekend",
+    "condition_good": "Goed",
+    "condition_fair": "Redelijk",
+    "condition_poor": "Slecht",
+    "availTrade": "Voor ruil",
+    "availLend": "Voor uitlenen",
+    "availSale": "Te koop",
+    "previewAvailable": "Beschikbaar",
+    "previewView": "Bekijken",
+    "previewAdd": "Toevoegen",
+    "uploadPhoto": "Foto uploaden",
+    "cancel": "Annuleren"
   },
   "trades": {
     "title": "Uitwisselingen",
@@ -2048,6 +2081,10 @@
       "addPuzzle": {
         "title": "Puzzel Toevoegen",
         "subtitle": "Voeg een nieuwe puzzel toe aan je plank."
+      },
+      "contributePuzzle": {
+        "title": "Een puzzel bijdragen",
+        "subtitle": "Voeg een puzzel toe aan de gedeelde catalogus voor iedereen."
       },
       "puzzles": {
         "title": "Puzzels",

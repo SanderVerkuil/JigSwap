@@ -5,9 +5,11 @@ import { useState } from "react";
 export function TagInput({
   value,
   onChange,
+  placeholder = "landscape, ocean, calm…",
 }: {
   value: string[];
   onChange: (tags: string[]) => void;
+  placeholder?: string;
 }) {
   const [draft, setDraft] = useState("");
   const add = (raw: string) => {
@@ -53,7 +55,7 @@ export function TagInput({
             onChange(value.slice(0, -1));
           }
         }}
-        placeholder={value.length ? "" : "landscape, ocean, calm…"}
+        placeholder={value.length ? "" : placeholder}
         className="min-w-[120px] flex-1 border-none bg-transparent px-0.5 py-0.5 text-sm text-foreground outline-none"
       />
     </div>

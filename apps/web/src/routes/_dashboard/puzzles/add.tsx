@@ -151,6 +151,11 @@ function ContributePuzzlePage() {
   const isReady =
     !!form.title.trim() && !!form.brand.trim() && !!form.pieceCount;
 
+  const difficultyOptions = DIFFICULTY_OPTIONS.map((o) => ({
+    ...o,
+    label: t(`difficulty_${o.value}`),
+  }));
+
   const formColumn = (
     <>
       {/* URL import zone */}
@@ -169,36 +174,36 @@ function ContributePuzzlePage() {
         />
       )}
 
-      <SectionDivider label="or enter the details yourself" />
+      <SectionDivider label={t("dividerManual")} />
 
       {/* Core catalog details */}
       <div className="flex flex-col gap-5">
         {/* Title */}
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="cp-title">Puzzle Title</Label>
+          <Label htmlFor="cp-title">{t("fieldTitle")}</Label>
           <Input
             id="cp-title"
             value={form.title}
             onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-            placeholder="e.g. Starry Night"
+            placeholder={t("fieldTitlePlaceholder")}
           />
         </div>
 
         {/* Brand + Piece Count */}
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="cp-brand">Brand</Label>
+            <Label htmlFor="cp-brand">{t("fieldBrand")}</Label>
             <Input
               id="cp-brand"
               value={form.brand}
               onChange={(e) =>
                 setForm((f) => ({ ...f, brand: e.target.value }))
               }
-              placeholder="e.g. Ravensburger"
+              placeholder={t("fieldBrandPlaceholder")}
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="cp-pieces">Piece Count</Label>
+            <Label htmlFor="cp-pieces">{t("fieldPieceCount")}</Label>
             <PieceCountField
               id="cp-pieces"
               value={form.pieceCount}
@@ -209,9 +214,9 @@ function ContributePuzzlePage() {
 
         {/* Difficulty */}
         <div className="flex flex-col gap-1.5">
-          <Label>Difficulty</Label>
+          <Label>{t("fieldDifficulty")}</Label>
           <SegmentedPills
-            options={DIFFICULTY_OPTIONS}
+            options={difficultyOptions}
             value={form.difficulty}
             onChange={(v) =>
               setForm((f) => ({
@@ -219,12 +224,12 @@ function ContributePuzzlePage() {
                 difficulty: v as FormState["difficulty"],
               }))
             }
-            ariaLabel="Difficulty"
+            ariaLabel={t("fieldDifficulty")}
           />
         </div>
       </div>
 
-      <SectionDivider label="cover & extras" />
+      <SectionDivider label={t("dividerCover")} />
 
       <div className="flex flex-col gap-5">
         {/* Cover colour / photo */}
@@ -251,17 +256,16 @@ function ContributePuzzlePage() {
         {/* Tags */}
         <div className="flex flex-col gap-1.5">
           <Label>
-            Tags{" "}
+            {t("fieldTags")}{" "}
             <span className="text-xs font-normal text-muted-foreground">
-              Optional
+              {t("optional")}
             </span>
           </Label>
-          <p className="text-xs text-muted-foreground">
-            Press Enter to add. Helps people discover your puzzle.
-          </p>
+          <p className="text-xs text-muted-foreground">{t("tagsHint")}</p>
           <TagInput
             value={form.tags}
             onChange={(tags) => setForm((f) => ({ ...f, tags }))}
+            placeholder={t("tagsPlaceholder")}
           />
         </div>
       </div>
@@ -280,7 +284,7 @@ function ContributePuzzlePage() {
           variant="ghost"
           onClick={() => router.push("/puzzles")}
         >
-          Cancel
+          {t("cancel")}
         </Button>
         {!isReady && (
           <span className="ml-auto text-xs text-muted-foreground">
@@ -320,15 +324,6 @@ function ContributePuzzlePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          {t("contributePuzzle")}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Help grow the catalog — import from a shop link or fill in the details
-          yourself.
-        </p>
-      </div>
       <AddPuzzleLayout form={formColumn} preview={previewColumn} />
     </div>
   );
