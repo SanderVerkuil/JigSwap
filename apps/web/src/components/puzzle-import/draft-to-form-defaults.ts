@@ -5,6 +5,7 @@ export interface ImportedDraft {
   title: string;
   brand?: string;
   imageUrl?: string;
+  images?: readonly string[];
   description?: string;
   ean?: string;
   upc?: string;

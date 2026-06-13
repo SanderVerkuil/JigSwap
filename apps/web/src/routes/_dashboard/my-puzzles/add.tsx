@@ -68,7 +68,8 @@ interface FormState {
   coverColor: string;
   coverMode: "color" | "photo";
   coverFile: File | undefined;
-  importedImageUrl: string | undefined;
+  importedImages: string[];
+  selectedImageUrl: string | undefined;
   tags: string[];
   notes: string;
   ean: string;
@@ -90,7 +91,8 @@ const DEFAULT_FORM: FormState = {
   coverColor: COVER_SWATCHES[0],
   coverMode: "color",
   coverFile: undefined,
-  importedImageUrl: undefined,
+  importedImages: [],
+  selectedImageUrl: undefined,
   tags: [],
   notes: "",
   ean: "",
@@ -157,15 +159,21 @@ function AddPuzzlePage() {
     return () => URL.revokeObjectURL(url);
   }, [form.coverFile]);
 
-  // The photo URL used for both the thumbnail in CoverColourField and the live preview
-  const photoUrl = coverFileUrl ?? form.importedImageUrl;
-  // The preview shows the photo only when mode is "photo"
-  const previewPhotoUrl = form.coverMode === "photo" ? photoUrl : undefined;
+  // The photo URL used for the live preview: uploaded file takes priority, else selected import
+  const previewPhotoUrl =
+    form.coverMode === "photo"
+      ? (coverFileUrl ?? form.selectedImageUrl)
+      : undefined;
 
   // Apply a scraped draft onto the form fields
   const applyDraft = (draft: ImportedDraft) => {
     setSelectedDefinitionId(null);
     setPendingMatch(null);
+    const imgs: string[] = draft.images?.length
+      ? [...draft.images]
+      : draft.imageUrl
+        ? [draft.imageUrl]
+        : [];
     setForm((f) => ({
       ...f,
       title: draft.title ?? "",
@@ -173,9 +181,10 @@ function AddPuzzlePage() {
       pieceCount: draft.pieceCount,
       ean: draft.ean ?? "",
       upc: draft.upc ?? "",
-      importedImageUrl: draft.imageUrl,
+      importedImages: imgs,
+      selectedImageUrl: imgs[0],
       coverFile: undefined,
-      coverMode: draft.imageUrl ? "photo" : f.coverMode,
+      coverMode: imgs.length ? "photo" : "color",
     }));
   };
 
@@ -197,9 +206,9 @@ function AddPuzzlePage() {
       if (!res.ok) throw new Error("Image upload failed");
       const { storageId } = (await res.json()) as { storageId: string };
       return storageId as Id<"_storage">;
-    } else if (form.importedImageUrl) {
+    } else if (form.selectedImageUrl) {
       try {
-        return await importImage({ url: form.importedImageUrl });
+        return await importImage({ url: form.selectedImageUrl });
       } catch {
         // Non-fatal: proceed without the remote image
         return undefined;
@@ -441,11 +450,28 @@ function AddPuzzlePage() {
           <CoverColourField
             color={form.coverColor}
             mode={form.coverMode}
-            photoUrl={photoUrl}
+            photoOptions={[
+              ...form.importedImages.map((url) => ({ url })),
+              ...(coverFileUrl ? [{ url: coverFileUrl, uploaded: true }] : []),
+            ]}
+            selectedPhotoUrl={
+              form.coverFile ? coverFileUrl : form.selectedImageUrl
+            }
             onSelectColor={(c) =>
               setForm((f) => ({ ...f, coverColor: c, coverMode: "color" }))
             }
-            onSelectPhoto={() => setForm((f) => ({ ...f, coverMode: "photo" }))}
+            onSelectPhoto={(url) =>
+              setForm((f) =>
+                url === coverFileUrl
+                  ? { ...f, coverMode: "photo" }
+                  : {
+                      ...f,
+                      coverMode: "photo",
+                      coverFile: undefined,
+                      selectedImageUrl: url,
+                    },
+              )
+            }
             onUploadPhoto={(file) =>
               setForm((f) => ({ ...f, coverFile: file, coverMode: "photo" }))
             }

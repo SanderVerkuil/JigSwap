@@ -55,7 +55,8 @@ interface FormState {
   coverColor: string;
   coverMode: "color" | "photo";
   coverFile: File | undefined;
-  importedImageUrl: string | undefined;
+  importedImages: string[];
+  selectedImageUrl: string | undefined;
   tags: string[];
   ean: string;
   upc: string;
@@ -74,7 +75,8 @@ const DEFAULT_FORM: FormState = {
   coverColor: COVER_SWATCHES[0],
   coverMode: "color",
   coverFile: undefined,
-  importedImageUrl: undefined,
+  importedImages: [],
+  selectedImageUrl: undefined,
   tags: [],
   ean: "",
   upc: "",
@@ -114,14 +116,20 @@ function ContributePuzzlePage() {
     return () => URL.revokeObjectURL(url);
   }, [form.coverFile]);
 
-  // The photo URL used for the thumbnail in CoverColourField
-  const photoUrl = coverFileUrl ?? form.importedImageUrl;
   // The preview shows the photo only when mode is "photo"
-  const previewPhotoUrl = form.coverMode === "photo" ? photoUrl : undefined;
+  const previewPhotoUrl =
+    form.coverMode === "photo"
+      ? (coverFileUrl ?? form.selectedImageUrl)
+      : undefined;
 
   // Apply a scraped draft onto the form fields
   const applyDraft = (draft: ImportedDraft) => {
     setPendingMatch(null);
+    const imgs: string[] = draft.images?.length
+      ? [...draft.images]
+      : draft.imageUrl
+        ? [draft.imageUrl]
+        : [];
     setForm((f) => ({
       ...f,
       title: draft.title ?? "",
@@ -129,9 +137,10 @@ function ContributePuzzlePage() {
       pieceCount: draft.pieceCount,
       ean: draft.ean ?? "",
       upc: draft.upc ?? "",
-      importedImageUrl: draft.imageUrl,
+      importedImages: imgs,
+      selectedImageUrl: imgs[0],
       coverFile: undefined,
-      coverMode: draft.imageUrl ? "photo" : f.coverMode,
+      coverMode: imgs.length ? "photo" : "color",
     }));
   };
 
@@ -151,9 +160,9 @@ function ContributePuzzlePage() {
           if (!res.ok) throw new Error("Image upload failed");
           const { storageId } = (await res.json()) as { storageId: string };
           imageId = storageId as Id<"_storage">;
-        } else if (form.importedImageUrl) {
+        } else if (form.selectedImageUrl) {
           try {
-            imageId = await importImage({ url: form.importedImageUrl });
+            imageId = await importImage({ url: form.selectedImageUrl });
           } catch {
             // Non-fatal: proceed without the remote image
             imageId = undefined;
@@ -287,11 +296,28 @@ function ContributePuzzlePage() {
           <CoverColourField
             color={form.coverColor}
             mode={form.coverMode}
-            photoUrl={photoUrl}
+            photoOptions={[
+              ...form.importedImages.map((url) => ({ url })),
+              ...(coverFileUrl ? [{ url: coverFileUrl, uploaded: true }] : []),
+            ]}
+            selectedPhotoUrl={
+              form.coverFile ? coverFileUrl : form.selectedImageUrl
+            }
             onSelectColor={(c) =>
               setForm((f) => ({ ...f, coverColor: c, coverMode: "color" }))
             }
-            onSelectPhoto={() => setForm((f) => ({ ...f, coverMode: "photo" }))}
+            onSelectPhoto={(url) =>
+              setForm((f) =>
+                url === coverFileUrl
+                  ? { ...f, coverMode: "photo" }
+                  : {
+                      ...f,
+                      coverMode: "photo",
+                      coverFile: undefined,
+                      selectedImageUrl: url,
+                    },
+              )
+            }
             onUploadPhoto={(file) =>
               setForm((f) => ({ ...f, coverFile: file, coverMode: "photo" }))
             }

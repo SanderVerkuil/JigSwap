@@ -6,38 +6,42 @@ import { COVER_SWATCHES } from "./add-puzzle-schema";
 export function CoverColourField({
   color,
   mode,
-  photoUrl,
+  photoOptions,
+  selectedPhotoUrl,
   onSelectColor,
   onSelectPhoto,
   onUploadPhoto,
 }: {
   color: string;
   mode: "color" | "photo";
-  photoUrl?: string;
+  photoOptions: ReadonlyArray<{ url: string; uploaded?: boolean }>;
+  selectedPhotoUrl?: string;
   onSelectColor: (c: string) => void;
-  onSelectPhoto: () => void;
+  onSelectPhoto: (url: string) => void;
   onUploadPhoto: (file: File) => void;
 }) {
   const t = useTranslations("puzzles");
   return (
     <div className="flex flex-wrap gap-2.5">
-      {/* Photo thumbnail — shown only when a photo exists */}
-      {photoUrl && (
-        <button
-          type="button"
-          aria-label={t("coverPhoto")}
-          aria-pressed={mode === "photo"}
-          onClick={onSelectPhoto}
-          className={[
-            "size-9 overflow-hidden rounded-md cursor-pointer shadow-[0_0_0_1px_var(--border)]",
-            mode === "photo"
-              ? "ring-2 ring-foreground"
-              : "ring-2 ring-transparent",
-          ].join(" ")}
-        >
-          <img src={photoUrl} alt="" className="size-full object-cover" />
-        </button>
-      )}
+      {/* Photo thumbnails — one per option */}
+      {photoOptions.map((opt) => {
+        const selected = mode === "photo" && selectedPhotoUrl === opt.url;
+        return (
+          <button
+            key={opt.url}
+            type="button"
+            aria-label={t("coverPhoto") + (opt.uploaded ? " (uploaded)" : "")}
+            aria-pressed={selected}
+            onClick={() => onSelectPhoto(opt.url)}
+            className={[
+              "size-9 overflow-hidden rounded-md cursor-pointer shadow-[0_0_0_1px_var(--border)]",
+              selected ? "ring-2 ring-foreground" : "ring-2 ring-transparent",
+            ].join(" ")}
+          >
+            <img src={opt.url} alt="" className="size-full object-cover" />
+          </button>
+        );
+      })}
 
       {/* Colour swatches */}
       {COVER_SWATCHES.map((c, i) => {
