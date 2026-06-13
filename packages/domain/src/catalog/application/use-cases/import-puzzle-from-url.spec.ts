@@ -42,6 +42,7 @@ describe("makeImportPuzzleFromUrl", () => {
     if (!isOk(result)) return;
     expect(result.value.draft.title).toBe("Puzzle 1000 pieces");
     expect(result.value.match).toBeNull();
+    expect(result.value.cached).toBe(false);
     expect(fetcher.calls).toEqual([URL_IN]);
     expect(lookup.calls).toEqual([{ ean: "4005556150007", upc: undefined }]);
     expect(await cache.get(NORMALIZED)).not.toBeNull();
@@ -55,6 +56,7 @@ describe("makeImportPuzzleFromUrl", () => {
     );
     const result = await run()({ url: URL_IN });
     expect(isOk(result) && result.value.draft.title).toBe("Cached");
+    expect(isOk(result) && result.value.cached).toBe(true);
     expect(fetcher.calls).toEqual([]);
   });
 

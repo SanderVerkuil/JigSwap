@@ -9,6 +9,9 @@ export interface ImportPuzzleFromUrlCommand {
 export interface PuzzleImportResult {
   readonly draft: PuzzleImportDraft;
   readonly match: PuzzleMatch | null;
+  // True when the draft was served from the scrape cache rather than a fresh fetch. Diagnostic
+  // only (e.g. for wide-event logging); callers that just want the draft can ignore it.
+  readonly cached: boolean;
 }
 
 export interface ImportPuzzleFromUrl {

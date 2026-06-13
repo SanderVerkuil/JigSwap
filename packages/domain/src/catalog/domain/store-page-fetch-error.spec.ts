@@ -17,4 +17,17 @@ describe("StorePageFetchError", () => {
     expect(StorePageFetchError.timeout("x")).toBeInstanceOf(Error);
     expect(StorePageFetchError.timeout("x")).toBeInstanceOf(DomainError);
   });
+
+  it("carries an optional diagnostic detail (the underlying cause)", () => {
+    expect(
+      StorePageFetchError.fetchFailed("boom", "FETCH_ERROR: dns fail").detail,
+    ).toBe("FETCH_ERROR: dns fail");
+    expect(StorePageFetchError.timeout("x", "took 11s").detail).toBe(
+      "took 11s",
+    );
+    // fetchFailed defaults detail to its message when no explicit detail is given
+    expect(StorePageFetchError.fetchFailed("boom").detail).toBe("boom");
+    // other factories leave detail undefined when not provided
+    expect(StorePageFetchError.invalidUrl("x").detail).toBeUndefined();
+  });
 });

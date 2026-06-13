@@ -81,23 +81,28 @@ const toJsonLdProducts = (jsonLd: unknown): JsonLdProduct[] => {
     }));
 };
 
-// Map ogie ErrorCode to domain StorePageFetchError.
+// Map ogie ErrorCode to domain StorePageFetchError, preserving the raw ogie code+message as
+// `detail` so a failed extraction can be diagnosed from the logs (the UI only ever sees `code`).
 // ogie codes: FETCH_ERROR | TIMEOUT | PARSE_ERROR | INVALID_URL | NO_HTML | REDIRECT_LIMIT
 // result.error is always defined on ExtractFailure (non-optional in ogie types), so no ?. needed.
-const mapError = (code: string, url: string): StorePageFetchError => {
-  switch (code) {
+const mapError = (
+  error: { code: string; message?: string },
+  url: string,
+): StorePageFetchError => {
+  const detail = error.message ? `${error.code}: ${error.message}` : error.code;
+  switch (error.code) {
     case "INVALID_URL":
-      return StorePageFetchError.invalidUrl(url);
+      return StorePageFetchError.invalidUrl(url, detail);
     case "TIMEOUT":
-      return StorePageFetchError.timeout(url);
+      return StorePageFetchError.timeout(url, detail);
     case "PARSE_ERROR":
     case "NO_HTML":
-      return StorePageFetchError.unparseable(url);
+      return StorePageFetchError.unparseable(url, detail);
     case "REDIRECT_LIMIT":
-      return StorePageFetchError.fetchFailed("Too many redirects");
+      return StorePageFetchError.fetchFailed("Too many redirects", detail);
     case "FETCH_ERROR":
     default:
-      return StorePageFetchError.fetchFailed(code);
+      return StorePageFetchError.fetchFailed(error.code, detail);
   }
 };
 
@@ -111,15 +116,13 @@ export const ogieStorePageFetcher: StorePageFetcher = {
         maxRedirects: 5,
       });
     } catch (e) {
-      return err(
-        StorePageFetchError.fetchFailed(
-          e instanceof Error ? e.message : String(e),
-        ),
-      );
+      const message = e instanceof Error ? e.message : String(e);
+      const detail = e instanceof Error && e.stack ? e.stack : message;
+      return err(StorePageFetchError.fetchFailed(message, detail));
     }
 
     if (!result.success) {
-      return err(mapError(result.error.code, url));
+      return err(mapError(result.error, url));
     }
 
     const data = result.data;

@@ -36,11 +36,13 @@ export const makeImportPuzzleFromUrl =
     const cached = await deps.cache.get(normalized);
 
     let draft: PuzzleImportDraft;
+    let servedFromCache = false;
     if (
       cached &&
       deps.clock.now().getTime() - cached.fetchedAt.getTime() < ttl
     ) {
       draft = cached.draft;
+      servedFromCache = true;
     } else {
       const fetched = await deps.fetcher.fetch(cmd.url);
       if (fetched.isErr) return err(fetched.error);
@@ -52,5 +54,5 @@ export const makeImportPuzzleFromUrl =
       draft.ean || draft.upc
         ? await deps.lookup.findByBarcode({ ean: draft.ean, upc: draft.upc })
         : null;
-    return ok({ draft, match });
+    return ok({ draft, match, cached: servedFromCache });
   };
