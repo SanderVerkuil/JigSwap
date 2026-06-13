@@ -56,23 +56,28 @@ export function CommandPalette({
   const [value, setValue] = useState("");
   const [term, setTerm] = useState("");
 
+  // Single close path: clears a stale query so it doesn't flash on reopen. Used
+  // by the dialog, the keyboard toggle and navigation, so the reset never has
+  // to live in an effect body.
+  const handleOpenChange = (next: boolean) => {
+    if (!next) {
+      setValue("");
+      setTerm("");
+    }
+    setOpen(next);
+  };
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        setOpen((previous) => !previous);
+        handleOpenChange(!open);
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [setOpen]);
-
-  // Reset the query when the palette closes so a stale term doesn't flash on reopen.
-  useEffect(() => {
-    if (!open) {
-      setValue("");
-      setTerm("");
-    }
+    // handleOpenChange is recreated each render; re-bind only when `open` flips.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   // Debounce the input into the searched term.
@@ -95,7 +100,7 @@ export function CommandPalette({
     : 0;
 
   const go = (href: string) => {
-    setOpen(false);
+    handleOpenChange(false);
     router.push(href);
   };
 
@@ -115,7 +120,7 @@ export function CommandPalette({
   return (
     <CommandDialog
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={handleOpenChange}
       title={t("search.label")}
       description={t("search.inputPlaceholder")}
     >
