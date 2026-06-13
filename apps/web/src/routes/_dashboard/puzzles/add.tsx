@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { gateway, Id } from "@/gateway";
 import { useAction, useMutation } from "convex/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
@@ -38,7 +38,7 @@ interface FormState {
   title: string;
   brand: string;
   pieceCount: number | undefined;
-  difficulty: "easy" | "medium" | "hard" | "expert" | undefined;
+  difficulty: "easy" | "medium" | "hard" | "expert";
   coverColor: string;
   coverFile: File | undefined;
   importedImageUrl: string | undefined;
@@ -51,7 +51,7 @@ const DEFAULT_FORM: FormState = {
   title: "",
   brand: "",
   pieceCount: undefined,
-  difficulty: undefined,
+  difficulty: "medium",
   coverColor: COVER_SWATCHES[0],
   coverFile: undefined,
   importedImageUrl: undefined,
@@ -73,23 +73,24 @@ function ContributePuzzlePage() {
   const generateUploadUrl = useMutation(gateway.library.generateUploadUrl);
   const importImage = useAction(gateway.catalog.importPuzzleImage);
 
-  // Object URL for the cover file preview
-  const previewUrl = useMemo(() => {
-    if (form.coverFile) return URL.createObjectURL(form.coverFile);
-    return form.importedImageUrl;
-  }, [form.coverFile, form.importedImageUrl]);
-
-  // Revoke object URLs to avoid memory leaks.
+  // Object URL for the cover file preview — create and revoke in one effect
+  const [coverFileUrl, setCoverFileUrl] = useState<string | undefined>(
+    undefined,
+  );
   useEffect(() => {
-    if (!form.coverFile) return;
-    const url = previewUrl;
-    return () => {
-      if (url) URL.revokeObjectURL(url);
-    };
-  }, [previewUrl, form.coverFile]);
+    if (!form.coverFile) {
+      setCoverFileUrl(undefined);
+      return;
+    }
+    const url = URL.createObjectURL(form.coverFile);
+    setCoverFileUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [form.coverFile]);
+  const previewUrl = coverFileUrl ?? form.importedImageUrl;
 
   // Apply a scraped draft onto the form fields
   const applyDraft = (draft: ImportedDraft) => {
+    setPendingMatch(null);
     setForm((f) => ({
       ...f,
       title: draft.title ?? "",
@@ -103,6 +104,7 @@ function ContributePuzzlePage() {
   };
 
   const handleContribute = async () => {
+    if (!form.title.trim() || !form.brand.trim() || !form.pieceCount) return;
     setSubmitting(true);
     try {
       let imageId: Id<"_storage"> | undefined;
@@ -159,9 +161,10 @@ function ContributePuzzlePage() {
       {pendingMatch && (
         <MatchConfirm
           match={pendingMatch}
-          onUse={() =>
-            router.push(`/my-puzzles/add?puzzleId=${pendingMatch.puzzleId}`)
-          }
+          onUse={() => {
+            setPendingMatch(null);
+            router.push(`/my-puzzles/add?puzzleId=${pendingMatch.puzzleId}`);
+          }}
           onIgnore={() => setPendingMatch(null)}
         />
       )}
@@ -209,7 +212,7 @@ function ContributePuzzlePage() {
           <Label>Difficulty</Label>
           <SegmentedPills
             options={DIFFICULTY_OPTIONS}
-            value={form.difficulty ?? "medium"}
+            value={form.difficulty}
             onChange={(v) =>
               setForm((f) => ({
                 ...f,

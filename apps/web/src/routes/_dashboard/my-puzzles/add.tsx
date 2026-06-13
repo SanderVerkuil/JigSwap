@@ -28,7 +28,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, Id } from "@/gateway";
 import { useAction, useMutation, useQuery } from "convex/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
@@ -49,7 +49,7 @@ interface FormState {
   title: string;
   brand: string;
   pieceCount: number | undefined;
-  difficulty: "easy" | "medium" | "hard" | "expert" | undefined;
+  difficulty: "easy" | "medium" | "hard" | "expert";
   condition: "new_sealed" | "like_new" | "good" | "fair" | "poor";
   availability: { forTrade: boolean; forLend: boolean; forSale: boolean };
   coverColor: string;
@@ -65,7 +65,7 @@ const DEFAULT_FORM: FormState = {
   title: "",
   brand: "",
   pieceCount: undefined,
-  difficulty: undefined,
+  difficulty: "medium",
   condition: "good",
   availability: { forTrade: true, forLend: false, forSale: false },
   coverColor: COVER_SWATCHES[0],
@@ -116,27 +116,25 @@ function AddPuzzlePage() {
     }));
   }, [puzzleIdFromUrl, specificPuzzle, selectedDefinitionId]);
 
-  // Object URL for the cover file preview
-  const previewUrl = useMemo(() => {
-    if (form.coverFile) return URL.createObjectURL(form.coverFile);
-    return form.importedImageUrl;
-  }, [form.coverFile, form.importedImageUrl]);
-
-  // Revoke object URLs to avoid memory leaks.
-  // Capture the URL generated this render — reading form.coverFile inside the
-  // cleanup closure would see the *new* state (already undefined when the user
-  // switches to a colour swatch), causing the old blob to leak.
+  // Object URL for the cover file preview — create and revoke in one effect
+  const [coverFileUrl, setCoverFileUrl] = useState<string | undefined>(
+    undefined,
+  );
   useEffect(() => {
-    if (!form.coverFile) return; // only blob URLs need revocation
-    const url = previewUrl;
-    return () => {
-      if (url) URL.revokeObjectURL(url);
-    };
-  }, [previewUrl, form.coverFile]);
+    if (!form.coverFile) {
+      setCoverFileUrl(undefined);
+      return;
+    }
+    const url = URL.createObjectURL(form.coverFile);
+    setCoverFileUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [form.coverFile]);
+  const previewUrl = coverFileUrl ?? form.importedImageUrl;
 
   // Apply a scraped draft onto the form fields
   const applyDraft = (draft: ImportedDraft) => {
     setSelectedDefinitionId(null);
+    setPendingMatch(null);
     setForm((f) => ({
       ...f,
       title: draft.title ?? "",
@@ -156,6 +154,7 @@ function AddPuzzlePage() {
   };
 
   const handleAdd = async () => {
+    if (!form.title.trim() || !form.brand.trim() || !form.pieceCount) return;
     setSubmitting(true);
     try {
       // 1. Resolve the catalog definition id (existing match or create new).
@@ -215,6 +214,7 @@ function AddPuzzlePage() {
   };
 
   const handleSaveAndAddAnother = async () => {
+    if (!form.title.trim() || !form.brand.trim() || !form.pieceCount) return;
     setSubmitting(true);
     try {
       let definitionId = selectedDefinitionId;
@@ -345,7 +345,7 @@ function AddPuzzlePage() {
           <Label>Difficulty</Label>
           <SegmentedPills
             options={DIFFICULTY_OPTIONS}
-            value={form.difficulty ?? "medium"}
+            value={form.difficulty}
             onChange={(v) =>
               setForm((f) => ({
                 ...f,
