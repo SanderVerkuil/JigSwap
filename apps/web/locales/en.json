@@ -482,7 +482,20 @@
     "matchFoundLead": "We found",
     "matchFoundTail": "already — is this the same puzzle?",
     "matchUseThis": "Use this one",
-    "matchDifferent": "No, it's different"
+    "matchDifferent": "No, it's different",
+    "importUrlBlurb": "Paste a link from any puzzle shop and we'll fill in the details for you.",
+    "importImported": "Details imported",
+    "coverColour": "Cover colour",
+    "coverColourHint": "Pick a colour or upload a photo — this is how your puzzle appears on the shelf.",
+    "addToLibrary": "Add to Library",
+    "saveAndAddAnother": "Save & Add Another",
+    "addReadyHint": "Fill in title, brand, and piece count to continue.",
+    "livePreview": "Live preview",
+    "livePreviewCaption": "This is how your puzzle card will look to others on your shelf.",
+    "checkTitle": "Title filled in",
+    "checkBrand": "Brand filled in",
+    "checkPieces": "Piece count filled in",
+    "checkAvailability": "Availability set"
   },
   "trades": {
     "title": "Exchanges",

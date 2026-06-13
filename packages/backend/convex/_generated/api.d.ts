@@ -87,6 +87,7 @@ import type * as insights_getPlankPuzzles from "../insights/getPlankPuzzles.js";
 import type * as insights_getRecommendations from "../insights/getRecommendations.js";
 import type * as insights_getTradeActivity from "../insights/getTradeActivity.js";
 import type * as insights_sampling from "../insights/sampling.js";
+import type * as lib_logEvent from "../lib/logEvent.js";
 import type * as library_acquireCopy from "../library/acquireCopy.js";
 import type * as library_adapters_circleAwareVisibilityPolicy from "../library/adapters/circleAwareVisibilityPolicy.js";
 import type * as library_adapters_convexCatalogSnapshotProvider from "../library/adapters/convexCatalogSnapshotProvider.js";
@@ -300,6 +301,7 @@ declare const fullApi: ApiFromModules<{
   "insights/getRecommendations": typeof insights_getRecommendations;
   "insights/getTradeActivity": typeof insights_getTradeActivity;
   "insights/sampling": typeof insights_sampling;
+  "lib/logEvent": typeof lib_logEvent;
   "library/acquireCopy": typeof library_acquireCopy;
   "library/adapters/circleAwareVisibilityPolicy": typeof library_adapters_circleAwareVisibilityPolicy;
   "library/adapters/convexCatalogSnapshotProvider": typeof library_adapters_convexCatalogSnapshotProvider;

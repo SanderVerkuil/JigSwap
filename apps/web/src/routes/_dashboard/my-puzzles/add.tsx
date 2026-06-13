@@ -122,13 +122,17 @@ function AddPuzzlePage() {
     return form.importedImageUrl;
   }, [form.coverFile, form.importedImageUrl]);
 
-  // Revoke object URLs to avoid memory leaks
+  // Revoke object URLs to avoid memory leaks.
+  // Capture the URL generated this render — reading form.coverFile inside the
+  // cleanup closure would see the *new* state (already undefined when the user
+  // switches to a colour swatch), causing the old blob to leak.
   useEffect(() => {
+    if (!form.coverFile) return; // only blob URLs need revocation
+    const url = previewUrl;
     return () => {
-      if (previewUrl && form.coverFile) URL.revokeObjectURL(previewUrl);
+      if (url) URL.revokeObjectURL(url);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [previewUrl]);
+  }, [previewUrl, form.coverFile]);
 
   // Apply a scraped draft onto the form fields
   const applyDraft = (draft: ImportedDraft) => {
@@ -301,7 +305,10 @@ function AddPuzzlePage() {
           <Input
             id="ap-title"
             value={form.title}
-            onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+            onChange={(e) => {
+              setSelectedDefinitionId(null);
+              setForm((f) => ({ ...f, title: e.target.value }));
+            }}
             placeholder="e.g. Starry Night"
           />
         </div>
@@ -313,9 +320,10 @@ function AddPuzzlePage() {
             <Input
               id="ap-brand"
               value={form.brand}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, brand: e.target.value }))
-              }
+              onChange={(e) => {
+                setSelectedDefinitionId(null);
+                setForm((f) => ({ ...f, brand: e.target.value }));
+              }}
               placeholder="e.g. Ravensburger"
             />
           </div>
@@ -324,7 +332,10 @@ function AddPuzzlePage() {
             <PieceCountField
               id="ap-pieces"
               value={form.pieceCount}
-              onChange={(n) => setForm((f) => ({ ...f, pieceCount: n }))}
+              onChange={(n) => {
+                setSelectedDefinitionId(null);
+                setForm((f) => ({ ...f, pieceCount: n }));
+              }}
             />
           </div>
         </div>

@@ -482,7 +482,20 @@
     "matchFoundLead": "We vonden",
     "matchFoundTail": "al — is dit dezelfde puzzel?",
     "matchUseThis": "Gebruik deze",
-    "matchDifferent": "Nee, het is een andere"
+    "matchDifferent": "Nee, het is een andere",
+    "importUrlBlurb": "Plak een link van een puzzelwinkel en wij vullen de details voor je in.",
+    "importImported": "Details geïmporteerd",
+    "coverColour": "Omslagkleur",
+    "coverColourHint": "Kies een kleur of upload een foto — zo verschijnt je puzzel op de plank.",
+    "addToLibrary": "Toevoegen aan bibliotheek",
+    "saveAndAddAnother": "Opslaan & nog een toevoegen",
+    "addReadyHint": "Vul titel, merk en aantal stukken in om door te gaan.",
+    "livePreview": "Live voorbeeld",
+    "livePreviewCaption": "Zo ziet je puzzelkaart eruit voor anderen op je plank.",
+    "checkTitle": "Titel ingevuld",
+    "checkBrand": "Merk ingevuld",
+    "checkPieces": "Aantal stukken ingevuld",
+    "checkAvailability": "Beschikbaarheid ingesteld"
   },
   "trades": {
     "title": "Uitwisselingen",
