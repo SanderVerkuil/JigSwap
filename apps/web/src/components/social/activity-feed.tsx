@@ -5,37 +5,26 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
-import { formatDistanceToNow } from "date-fns";
 import type { LucideIcon } from "lucide-react";
 import { ArrowRightLeft, CircleCheck, Package } from "lucide-react";
+import { useFormatter, useTranslations } from "use-intl";
 
 // The acting member's activity feed: their own activity plus everyone they follow, newest-first.
 // Scoping + the foreign-event mapping happen server-side; here we only render the ActivityEntryView
 // as open, thin-divider rows on the ground (no boxed card).
 type ActivityKind = "completion" | "acquisition" | "exchange";
 
-const META: Record<
-  ActivityKind,
-  { icon: LucideIcon; label: string; accent: string }
-> = {
-  completion: {
-    icon: CircleCheck,
-    label: "completed a puzzle",
-    accent: "text-green-500",
-  },
-  acquisition: {
-    icon: Package,
-    label: "added a puzzle",
-    accent: "text-blue-500",
-  },
-  exchange: {
-    icon: ArrowRightLeft,
-    label: "settled an exchange",
-    accent: "text-amber-500",
-  },
+// Icon + accent per kind; the human-readable label is translated at render time
+// (key `activity.<kind>`), and the timestamp uses the locale-aware formatter.
+const META: Record<ActivityKind, { icon: LucideIcon; accent: string }> = {
+  completion: { icon: CircleCheck, accent: "text-green-500" },
+  acquisition: { icon: Package, accent: "text-blue-500" },
+  exchange: { icon: ArrowRightLeft, accent: "text-amber-500" },
 };
 
 export function ActivityFeed() {
+  const t = useTranslations("activity");
+  const format = useFormatter();
   const feed = useQuery(gateway.social.activityFeed, {});
 
   if (feed === undefined) {
@@ -49,12 +38,7 @@ export function ActivityFeed() {
   }
 
   if (feed.length === 0) {
-    return (
-      <EmptyState
-        title="No recent activity yet"
-        sub="Follow other members to see what they are up to."
-      />
-    );
+    return <EmptyState title={t("empty")} sub={t("emptyHint")} />;
   }
 
   return (
@@ -74,11 +58,11 @@ export function ActivityFeed() {
               <Icon className={`h-4 w-4 ${meta.accent}`} />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium">A member {meta.label}</p>
+              <p className="text-sm font-medium">
+                {t(entry.kind as ActivityKind)}
+              </p>
               <p className="text-muted-foreground text-xs">
-                {formatDistanceToNow(new Date(entry.occurredAt), {
-                  addSuffix: true,
-                })}
+                {format.relativeTime(new Date(entry.occurredAt))}
               </p>
             </div>
           </div>

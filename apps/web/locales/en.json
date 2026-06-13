@@ -279,6 +279,13 @@
     "signInToAccount": "Sign in to your account",
     "createNewAccount": "Create a new account"
   },
+  "activity": {
+    "completion": "A member completed a puzzle",
+    "acquisition": "A member added a puzzle",
+    "exchange": "A member settled an exchange",
+    "empty": "No recent activity yet",
+    "emptyHint": "Follow other members to see what they are up to."
+  },
   "puzzles": {
     "title": "Title",
     "description": "Description",
@@ -292,6 +299,9 @@
     "owner": "Owner",
     "available": "Available",
     "unavailable": "Unavailable",
+    "lend": "For Lend",
+    "trade": "For Trade",
+    "sale": "For Sale",
     "completed": "Completed",
     "addPuzzle": "Add Puzzle",
     "editPuzzle": "Edit Puzzle",

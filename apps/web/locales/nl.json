@@ -279,6 +279,13 @@
     "signInToAccount": "Log in op je account",
     "createNewAccount": "Maak een nieuw account"
   },
+  "activity": {
+    "completion": "Een lid heeft een puzzel voltooid",
+    "acquisition": "Een lid heeft een puzzel toegevoegd",
+    "exchange": "Een lid heeft een ruil afgerond",
+    "empty": "Nog geen recente activiteit",
+    "emptyHint": "Volg andere leden om te zien wat zij doen."
+  },
   "puzzles": {
     "title": "Titel",
     "description": "Beschrijving",
@@ -292,6 +299,9 @@
     "owner": "Eigenaar",
     "available": "Beschikbaar",
     "unavailable": "Niet Beschikbaar",
+    "lend": "Te Leen",
+    "trade": "Te Ruil",
+    "sale": "Te Koop",
     "completed": "Voltooid",
     "addPuzzle": "Puzzel Toevoegen",
     "editPuzzle": "Puzzel Bewerken",

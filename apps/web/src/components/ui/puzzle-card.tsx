@@ -278,7 +278,7 @@ export function PuzzleCard({
               </Badge>
               {puzzle.puzzle?.difficulty && (
                 <Badge variant="outline" className="text-xs">
-                  {puzzle.puzzle.difficulty}
+                  {t(puzzle.puzzle.difficulty)}
                 </Badge>
               )}
               <Badge
@@ -290,7 +290,7 @@ export function PuzzleCard({
                 }
                 className="text-xs"
               >
-                {puzzle.condition}
+                {t(puzzle.condition)}
               </Badge>
             </div>
           </div>
