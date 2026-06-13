@@ -7,7 +7,7 @@ import {
   EmptyState,
   MiniStat,
 } from "@/components/community/primitives";
-import { SectionHead } from "@/components/dashboard-home/section-head";
+import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,9 +66,14 @@ export const Route = createFileRoute("/_dashboard/circles/")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "circles") }],
   }),
-  pendingComponent: () => <PageLoading message="Loading circles..." />,
+  pendingComponent: () => <CirclesPending />,
   component: CirclesPage,
 });
+
+function CirclesPending() {
+  const t = useTranslations("circles");
+  return <PageLoading message={t("loading")} />;
+}
 
 const PERMISSIONS: CirclePermissionLevel[] = ["ViewOnly", "Exchange", "Admin"];
 
@@ -94,55 +98,56 @@ function CirclesPage() {
     }
   };
 
+  // The page title lives in the shell page head; publish the meta + primary
+  // action there too so the body carries no duplicate section header.
+  usePageHeaderActions(
+    () => (
+      <>
+        <span className="text-muted-foreground hidden text-sm sm:inline">
+          {t("meta")}
+        </span>
+        <Button variant="brand" size="sm" onClick={() => setIsCreateOpen(true)}>
+          <Plus className="h-4 w-4" />
+          {t("createCircle")}
+        </Button>
+      </>
+    ),
+    [t],
+  );
+
   if (!user || circles === undefined) {
-    return <PageLoading message="Loading circles..." />;
+    return <PageLoading message={t("loading")} />;
   }
 
   return (
     <div className="flex flex-col">
-      <SectionHead
-        title={t("yourCircles")}
-        icon={Users}
-        meta={t("meta")}
-        action={
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                {t("createCircle")}
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create Circle</DialogTitle>
-                <DialogDescription>
-                  A circle is private. You become its first member and admin.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="circle-name">Name</Label>
-                  <Input
-                    id="circle-name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Saturday Puzzlers"
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsCreateOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleCreate}>Create</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        }
-      />
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("manage.createTitle")}</DialogTitle>
+            <DialogDescription>
+              {t("manage.createDescription")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="circle-name">{t("manage.nameLabel")}</Label>
+              <Input
+                id="circle-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={t("manage.namePlaceholder")}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+              {t("manage.cancel")}
+            </Button>
+            <Button onClick={handleCreate}>{t("manage.create")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {circles.length === 0 ? (
         <EmptyState
@@ -273,6 +278,7 @@ function ManageCircleDialog({
   viewerId: string;
   onClose: () => void;
 }) {
+  const t = useTranslations("circles");
   const detail = useQuery(gateway.sharing.circle, { circleId });
   const convexUser = useQuery(
     gateway.identity.byClerkId,
@@ -353,23 +359,25 @@ function ManageCircleDialog({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Manage {detail?.name ?? "circle"}</DialogTitle>
-          <DialogDescription>
-            Add or remove members, set permissions, and share copies.
-          </DialogDescription>
+          <DialogTitle>
+            {t("manage.title", {
+              name: detail?.name ?? t("manage.fallbackName"),
+            })}
+          </DialogTitle>
+          <DialogDescription>{t("manage.description")}</DialogDescription>
         </DialogHeader>
 
         {detail === undefined ? (
-          <PageLoading message="Loading circle..." />
+          <PageLoading message={t("manage.loadingCircle")} />
         ) : detail === null ? (
           <p className="text-sm text-muted-foreground">
-            This circle is no longer available.
+            {t("manage.unavailable")}
           </p>
         ) : (
           <div className="space-y-6">
             {/* Members */}
             <section className="space-y-3">
-              <h3 className="font-medium">Members</h3>
+              <h3 className="font-medium">{t("manage.members")}</h3>
               {detail.members.map((member: CircleMemberView) => (
                 <div
                   key={member.membershipId}
@@ -386,7 +394,7 @@ function ManageCircleDialog({
                       <p className="text-sm font-medium">{member.name}</p>
                       {member.isOwner && (
                         <Badge variant="outline" className="text-xs">
-                          Owner
+                          {t("manage.owner")}
                         </Badge>
                       )}
                     </div>
@@ -426,12 +434,12 @@ function ManageCircleDialog({
 
             {/* Add member */}
             <section className="space-y-3">
-              <h3 className="font-medium">Add member</h3>
+              <h3 className="font-medium">{t("manage.addMember")}</h3>
               <div className="flex items-center gap-2">
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search members by name…"
+                  placeholder={t("manage.searchPlaceholder")}
                 />
                 <Select
                   value={addPermission}
@@ -464,7 +472,7 @@ function ManageCircleDialog({
                         size="sm"
                         onClick={() => handleAdd(result._id)}
                       >
-                        Add
+                        {t("manage.add")}
                       </Button>
                     </div>
                   ))}
@@ -474,16 +482,18 @@ function ManageCircleDialog({
 
             {/* Share a copy — surface the friend-circle VisibilityScope */}
             <section className="space-y-3">
-              <h3 className="font-medium">Share a copy</h3>
+              <h3 className="font-medium">{t("manage.shareCopy")}</h3>
               <p className="text-xs text-muted-foreground">
-                Shared copies become visible to circle members at the
-                <span className="font-medium"> friendCircle</span> visibility
-                scope, even if otherwise private.
+                {t.rich("manage.shareDescription", {
+                  scope: (chunks) => (
+                    <span className="font-medium">{chunks}</span>
+                  ),
+                })}
               </p>
               <div className="flex items-center gap-2">
                 <Select value={shareCopyId} onValueChange={setShareCopyId}>
                   <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Choose one of your copies…" />
+                    <SelectValue placeholder={t("manage.chooseCopy")} />
                   </SelectTrigger>
                   <SelectContent>
                     {(myCopies ?? [])
@@ -493,13 +503,15 @@ function ManageCircleDialog({
                           key={copy._id}
                           value={copy.aggregateId as string}
                         >
-                          {copy.puzzle?.title ?? copy.snapshot?.title ?? "Copy"}
+                          {copy.puzzle?.title ??
+                            copy.snapshot?.title ??
+                            t("manage.copyFallback")}
                         </SelectItem>
                       ))}
                   </SelectContent>
                 </Select>
                 <Button onClick={handleShare} disabled={!shareCopyId}>
-                  Share
+                  {t("manage.share")}
                 </Button>
               </div>
             </section>
@@ -508,7 +520,7 @@ function ManageCircleDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Close
+            {t("manage.close")}
           </Button>
         </DialogFooter>
       </DialogContent>

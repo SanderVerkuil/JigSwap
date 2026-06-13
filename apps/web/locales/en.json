@@ -1135,7 +1135,32 @@
     "sharedWithYou": "Shared with you",
     "membersLabel": "{count, plural, one {member} other {members}}",
     "emptyTitle": "No circles yet",
-    "emptySub": "Create a circle to swap puzzles with friends and family."
+    "emptySub": "Create a circle to swap puzzles with friends and family.",
+    "loading": "Loading circles...",
+    "manage": {
+      "createTitle": "Create Circle",
+      "createDescription": "A circle is private. You become its first member and admin.",
+      "nameLabel": "Name",
+      "namePlaceholder": "e.g. Saturday Puzzlers",
+      "cancel": "Cancel",
+      "create": "Create",
+      "title": "Manage {name}",
+      "fallbackName": "circle",
+      "description": "Add or remove members, set permissions, and share copies.",
+      "loadingCircle": "Loading circle...",
+      "unavailable": "This circle is no longer available.",
+      "members": "Members",
+      "owner": "Owner",
+      "addMember": "Add member",
+      "searchPlaceholder": "Search members by name…",
+      "add": "Add",
+      "shareCopy": "Share a copy",
+      "shareDescription": "Shared copies become visible to circle members at the <scope>friendCircle</scope> visibility scope, even if otherwise private.",
+      "chooseCopy": "Choose one of your copies…",
+      "copyFallback": "Copy",
+      "share": "Share",
+      "close": "Close"
+    }
   },
   "people": {
     "yourNetwork": "Your Network",

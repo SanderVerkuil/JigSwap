@@ -1135,7 +1135,32 @@
     "sharedWithYou": "Met jou gedeeld",
     "membersLabel": "{count, plural, one {lid} other {leden}}",
     "emptyTitle": "Nog geen kringen",
-    "emptySub": "Maak een kring aan om puzzels te ruilen met vrienden en familie."
+    "emptySub": "Maak een kring aan om puzzels te ruilen met vrienden en familie.",
+    "loading": "Kringen laden...",
+    "manage": {
+      "createTitle": "Kring Aanmaken",
+      "createDescription": "Een kring is besloten. Je wordt het eerste lid en de beheerder.",
+      "nameLabel": "Naam",
+      "namePlaceholder": "bijv. Zaterdagpuzzelaars",
+      "cancel": "Annuleren",
+      "create": "Aanmaken",
+      "title": "{name} beheren",
+      "fallbackName": "kring",
+      "description": "Leden toevoegen of verwijderen, rechten instellen en exemplaren delen.",
+      "loadingCircle": "Kring laden...",
+      "unavailable": "Deze kring is niet langer beschikbaar.",
+      "members": "Leden",
+      "owner": "Eigenaar",
+      "addMember": "Lid toevoegen",
+      "searchPlaceholder": "Zoek leden op naam…",
+      "add": "Toevoegen",
+      "shareCopy": "Een exemplaar delen",
+      "shareDescription": "Gedeelde exemplaren worden zichtbaar voor kringleden op het zichtbaarheidsniveau <scope>friendCircle</scope>, ook als ze verder privé zijn.",
+      "chooseCopy": "Kies een van je exemplaren…",
+      "copyFallback": "Exemplaar",
+      "share": "Delen",
+      "close": "Sluiten"
+    }
   },
   "people": {
     "yourNetwork": "Jouw Netwerk",
