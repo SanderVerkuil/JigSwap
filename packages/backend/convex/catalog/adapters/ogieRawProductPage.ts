@@ -77,9 +77,7 @@ export const mapOgieError = (
   error: { code: string; message?: string },
   url: string,
 ): StorePageFetchError => {
-  const detail = error.message
-    ? `${error.code}: ${error.message}`
-    : error.code;
+  const detail = error.message ? `${error.code}: ${error.message}` : error.code;
   switch (error.code) {
     case "INVALID_URL":
       return StorePageFetchError.invalidUrl(url, detail);

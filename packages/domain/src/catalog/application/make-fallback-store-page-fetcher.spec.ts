@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { isErr, isOk } from "../../shared-kernel";
 import { StorePageFetchError } from "../domain";
-import { FakeStorePageFetcher } from "./testing";
 import { makeFallbackStorePageFetcher } from "./make-fallback-store-page-fetcher";
+import { FakeStorePageFetcher } from "./testing";
 
 const URL = "https://example.com/puzzle";
 const PAGE = { ogImages: [], jsonLdProducts: [] };

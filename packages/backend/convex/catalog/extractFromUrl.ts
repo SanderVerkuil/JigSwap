@@ -2,6 +2,7 @@
 import {
   type CachedImportDraft,
   type ImportDraftCache,
+  makeFallbackStorePageFetcher,
   makeImportPuzzleFromUrl,
   type PuzzleMatchLookup,
 } from "@jigswap/domain";
@@ -9,6 +10,7 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
 import { action } from "../_generated/server";
 import { logEvent, type WideEvent } from "../lib/logEvent";
+import { browserStorePageFetcher } from "./adapters/browserStorePageFetcher";
 import { ogieStorePageFetcher } from "./adapters/ogieStorePageFetcher";
 import { systemClock } from "./adapters/systemClock";
 
@@ -75,7 +77,10 @@ export const extractFromUrl = action({
       };
 
       const importDraft = makeImportPuzzleFromUrl({
-        fetcher: ogieStorePageFetcher,
+        fetcher: makeFallbackStorePageFetcher(
+          ogieStorePageFetcher,
+          browserStorePageFetcher,
+        ),
         cache,
         lookup,
         clock: systemClock,

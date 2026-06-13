@@ -1,4 +1,7 @@
-import { type StorePageFetchError, type StorePageFetchErrorCode } from "../domain";
+import {
+  type StorePageFetchError,
+  type StorePageFetchErrorCode,
+} from "../domain";
 import { type StorePageFetcher } from "./ports/out/store-page-fetcher";
 
 // Error codes worth retrying with a different fetch strategy (blocked/garbled/missing pages).
