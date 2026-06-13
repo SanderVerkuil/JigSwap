@@ -67,7 +67,12 @@ export const makeImportPuzzleFromUrl =
         ogImages: raw.ogImages.length,
         images: draft.images.length,
       };
-      await deps.cache.put(normalized, draft);
+      // Only cache a useful extraction. Caching an empty draft (no title and no images) would pin a
+      // failure for the full TTL and mask a later fix (e.g. a new fallback tier), so let empties
+      // re-fetch next time instead.
+      if (draft.title.trim().length > 0 || draft.images.length > 0) {
+        await deps.cache.put(normalized, draft);
+      }
     }
 
     const match =

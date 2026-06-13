@@ -122,4 +122,14 @@ describe("makeImportPuzzleFromUrl", () => {
     expect(isOk(result) && result.value.match).toBeNull();
     expect(lookup.calls).toEqual([]);
   });
+
+  it("does not cache an empty extraction (no title, no images)", async () => {
+    fetcher.seedPage({ ogImages: [], jsonLdProducts: [] });
+    const result = await run()({ url: URL_IN });
+    expect(isOk(result)).toBe(true);
+    if (!isOk(result)) return;
+    expect(result.value.draft.title).toBe("");
+    expect(result.value.draft.images).toEqual([]);
+    expect(await cache.get(NORMALIZED)).toBeNull();
+  });
 });
