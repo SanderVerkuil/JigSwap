@@ -25,14 +25,18 @@ const ROW_PITCH = 1.45;
 const MAX_BOX_H = 1.44 * BOX_SCALE * 1.1;
 // Slight per-row x shift so columns don't grid-align across rows
 // (real shelves never line up).
-const ROW_X_OFFSETS = [0, 0.55, -0.45];
+const ROW_X_OFFSETS = [0, 0.55, -0.45, 0.3, -0.6];
+// How many rows are framed vertically. Any rows beyond this (the shelf is
+// built taller than the frame) bleed off the top and bottom edges so the
+// bookcase reads as continuing above and below the view.
+const VISIBLE_ROWS = 3;
 // Deterministic per-instance footprint variation — repeated boxes read as
 // different copies. Indexed, never Math.random, so renders are stable.
 const SIZE_JITTER = [1, 0.92, 1.06, 0.88, 1.02, 0.95, 1.1, 0.9];
 // Deterministic gap rhythm between neighbouring boxes on a row.
 const GAP_PATTERN = [0.34, 0.5, 0.28, 0.44, 0.58, 0.3];
 // Hard cap per row so ultra-wide viewports can't explode the draw count.
-const MAX_PER_ROW = 14;
+const MAX_PER_ROW = 12;
 // Spotlights are expensive per-fragment: light only the bottom row, every
 // other slot, capped — the upper rows live off key/ambient/hemi light.
 const MAX_SPOTS = 6;
@@ -351,10 +355,16 @@ function Arrangement({
   const size = useThree((s) => s.size);
 
   const rowCount = Math.max(rows.length, 1);
+  // The central row carries the gallery spots + contact shadow (the most
+  // visible row in the frame); the others live off key/ambient/hemi light.
+  const anchorRow = Math.round((rowCount - 1) / 2);
 
-  // ——— vertical framing: shelf stack height drives the camera ———
-  // Stack spans from the bottom board (y ≈ 0) to the top of the top row's
-  // tallest box; frame it with a little headroom.
+  // ——— vertical framing ———
+  // The camera looks at the stack's visual centre, but frames only a fixed
+  // VISIBLE_ROWS-tall window — so when the shelf is built taller than that
+  // (extra rows), the top and bottom rows bleed off-frame and the bookcase
+  // reads as continuing above and below the view. Box size stays constant
+  // regardless of how many rows exist.
   const stackH = ROW_PITCH * (rowCount - 1) + MAX_BOX_H;
   const lookAtY = stackH / 2 - 0.1;
   const cameraY = lookAtY + CAMERA_Y_LIFT;
@@ -363,7 +373,8 @@ function Arrangement({
   const vFov = (FOV * Math.PI) / 180;
   const aspect = size.width / size.height;
   const MIN_VIS_W = 3.2; // never show less than ~3 boxes worth of shelf
-  const contentH = Math.max(stackH + CONTENT_HEADROOM, MIN_VIS_W / aspect);
+  const framedH = ROW_PITCH * (VISIBLE_ROWS - 1) + MAX_BOX_H;
+  const contentH = Math.max(framedH + CONTENT_HEADROOM, MIN_VIS_W / aspect);
   const dist = contentH / 2 / Math.tan(vFov / 2);
 
   // ——— visible world width at z = 0 ———
@@ -436,9 +447,10 @@ function Arrangement({
                   headingFont={headingFont}
                 />
               ))}
-              {/* Gallery spots + contact shadows only on the bottom row: the
-                  ground row anchors the composition; upper rows stay cheap. */}
-              {r === 0 &&
+              {/* Gallery spots + contact shadows only on the central row: it
+                  anchors the composition and is the most visible; the other
+                  rows stay cheap and live off key/ambient/hemi light. */}
+              {r === anchorRow &&
                 instances
                   .filter((_, k) => k % 2 === 0)
                   .slice(0, MAX_SPOTS)
@@ -450,7 +462,7 @@ function Arrangement({
                       reducedMotion={reducedMotion}
                     />
                   ))}
-              {r === 0 && (
+              {r === anchorRow && (
                 <ContactShadows
                   position={[0, 0.001, 0]}
                   opacity={lightingPreset.shadowOpacity}
