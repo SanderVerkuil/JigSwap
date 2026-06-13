@@ -8,6 +8,7 @@ import {
 } from "@jigswap/domain";
 import { lookup as dnsLookup } from "node:dns/promises";
 import { extractFromHtml } from "ogie";
+import { enrichWithHtmlFallback } from "./htmlFallback";
 import { mapOgieError, toRawProductPage } from "./ogieRawProductPage";
 
 const MAX_BODY_BYTES = 5 * 1024 * 1024; // 5 MB cap to avoid reading huge pages
@@ -201,6 +202,9 @@ export const browserStorePageFetcher: StorePageFetcher = {
       );
     }
 
-    return ok({ ...toRawProductPage(ogieResult.data), source: "browser-ua" });
+    return ok({
+      ...enrichWithHtmlFallback(toRawProductPage(ogieResult.data), html, url),
+      source: "browser-ua",
+    });
   },
 };

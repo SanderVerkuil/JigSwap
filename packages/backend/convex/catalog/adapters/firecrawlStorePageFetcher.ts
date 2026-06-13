@@ -7,6 +7,7 @@ import {
   type StorePageFetcher,
 } from "@jigswap/domain";
 import { extractFromHtml } from "ogie";
+import { enrichWithHtmlFallback } from "./htmlFallback";
 import { mapOgieError, toRawProductPage } from "./ogieRawProductPage";
 
 // Firecrawl API: POST /v1/scrape
@@ -92,6 +93,13 @@ export const firecrawlStorePageFetcher: StorePageFetcher = {
       return err(mapOgieError(result.error, url));
     }
 
-    return ok({ ...toRawProductPage(result.data), source: "firecrawl" });
+    return ok({
+      ...enrichWithHtmlFallback(
+        toRawProductPage(result.data),
+        json.data.html,
+        url,
+      ),
+      source: "firecrawl",
+    });
   },
 };
