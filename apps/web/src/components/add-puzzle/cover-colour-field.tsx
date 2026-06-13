@@ -98,11 +98,15 @@ export function CoverColourField({
     [photoOptions],
   );
   const prevUrlSet = useRef(urlSet);
-  if (prevUrlSet.current !== urlSet) {
+  useEffect(() => {
+    // A new import replaced the candidates: re-enable auto-select. Done in an effect (not during
+    // render) so we never touch refs during render; we only WRITE the ref here (no setState). The
+    // `dims` map is intentionally NOT cleared — it is keyed by url, so entries for the old import
+    // are simply never read again (new urls have no entry until measured). The guard skips mount.
+    if (prevUrlSet.current === urlSet) return;
     prevUrlSet.current = urlSet;
     userPicked.current = false;
-    setDims({});
-  }
+  }, [urlSet]);
 
   // Non-uploaded (imported) options are the only ones eligible for comparison.
   const importedUrls = useMemo(
