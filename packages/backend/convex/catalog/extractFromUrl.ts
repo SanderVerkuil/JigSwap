@@ -11,6 +11,7 @@ import { internal } from "../_generated/api";
 import { action } from "../_generated/server";
 import { logEvent, type WideEvent } from "../lib/logEvent";
 import { browserStorePageFetcher } from "./adapters/browserStorePageFetcher";
+import { firecrawlStorePageFetcher } from "./adapters/firecrawlStorePageFetcher";
 import { ogieStorePageFetcher } from "./adapters/ogieStorePageFetcher";
 import { systemClock } from "./adapters/systemClock";
 
@@ -79,7 +80,10 @@ export const extractFromUrl = action({
       const importDraft = makeImportPuzzleFromUrl({
         fetcher: makeFallbackStorePageFetcher(
           ogieStorePageFetcher,
-          browserStorePageFetcher,
+          makeFallbackStorePageFetcher(
+            browserStorePageFetcher,
+            firecrawlStorePageFetcher,
+          ),
         ),
         cache,
         lookup,
