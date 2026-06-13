@@ -452,7 +452,8 @@
       "inProgress": "Bezig",
       "completed": "Voltooid"
     },
-    "resultCount": "{count} van {total} puzzels"
+    "resultCount": "{count} van {total} puzzels",
+    "searchHint": "Druk op ⌘K om puzzels, mensen en meer te zoeken"
   },
   "trades": {
     "title": "Uitwisselingen",
@@ -1822,7 +1823,13 @@
       "inputPlaceholder": "Zoek of spring naar…",
       "empty": "Geen resultaten gevonden.",
       "goTo": "Ga Naar",
-      "quickActions": "Snelle Acties"
+      "quickActions": "Snelle Acties",
+      "groupPuzzles": "Puzzels",
+      "groupPeople": "Mensen",
+      "groupCircles": "Kringen",
+      "groupCollections": "Collecties",
+      "searching": "Zoeken…",
+      "noResultsFor": "Geen resultaten voor “{term}”"
     },
     "actions": {
       "addPuzzle": "Puzzel Toevoegen",
