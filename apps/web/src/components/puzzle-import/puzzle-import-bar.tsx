@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import type { ImportedDraft } from "./draft-to-form-defaults";
@@ -17,26 +17,35 @@ export const PuzzleImportBar = ({ onDraft, onMatch }: PuzzleImportBarProps) => {
   const t = useTranslations("puzzles");
   const { state, run } = usePuzzleImport();
   const [url, setUrl] = useState("");
+  const inputId = useId();
+
+  // Stable ref so the auto-prefill effect never captures a stale onDraft closure.
+  const onDraftRef = useRef(onDraft);
+  useLayoutEffect(() => {
+    onDraftRef.current = onDraft;
+  });
 
   // Auto-prefill the form when there's a clean (no-match) extraction. Runs as an effect so we
   // never call onDraft during render. Keyed on sourceUrl + match presence to avoid re-triggering.
+  const draftKey = state.status === "ready" ? state.draft.sourceUrl : null;
+  const matchKey = "match" in state ? (state.match?.puzzleId ?? null) : null;
   useEffect(() => {
     if (state.status === "ready" && !state.match) {
-      onDraft(state.draft);
+      onDraftRef.current(state.draft);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.status === "ready" ? state.draft.sourceUrl : null, "match" in state ? state.match?.puzzleId : null]);
+  }, [draftKey, matchKey]);
 
   const submit = async () => {
-    if (!url.trim()) return;
+    if (!url.trim() || state.status === "loading") return;
     await run(url.trim());
   };
 
   return (
     <div className="space-y-2 rounded-lg border bg-muted/30 p-4">
-      <label className="text-sm font-medium">{t("importFromUrl")}</label>
+      <label htmlFor={inputId} className="text-sm font-medium">{t("importFromUrl")}</label>
       <div className="flex gap-2">
         <Input
+          id={inputId}
           type="url"
           inputMode="url"
           value={url}
@@ -91,6 +100,9 @@ export const PuzzleImportBar = ({ onDraft, onMatch }: PuzzleImportBarProps) => {
               src={state.draft.imageUrl}
               alt={state.draft.title}
               className="h-12 w-12 rounded object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
             />
           )}
           <div className="text-sm">

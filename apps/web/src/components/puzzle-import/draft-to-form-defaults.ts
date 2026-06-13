@@ -21,7 +21,9 @@ export const draftToFormDefaults = (draft: ImportedDraft): PuzzleFormData => ({
   brand: draft.brand ?? "",
   artist: "",
   series: "",
-  pieceCount: draft.pieceCount as unknown as number,
+  // Cast: the form's defaultValues prop is typed PuzzleFormData; RHF accepts undefined at
+      // runtime (DeepPartial) and Zod enforces the required number on submit.
+      pieceCount: draft.pieceCount as unknown as number,
   difficulty: undefined,
   category: undefined,
   tags: [],
