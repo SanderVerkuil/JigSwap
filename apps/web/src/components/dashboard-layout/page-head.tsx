@@ -11,6 +11,7 @@ import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";
 import { ChevronRight } from "lucide-react";
 import { useTranslations } from "use-intl";
+import { usePageHeaderSlot } from "./page-header-slot";
 import { getNavGroup, getRouteMeta } from "./route-meta";
 
 export function PageHead() {
@@ -18,6 +19,7 @@ export function PageHead() {
   const meta = getRouteMeta(pathname);
   const t = useTranslations("shell");
   const { user } = useUser();
+  const headerActions = usePageHeaderSlot();
 
   if (!meta) {
     return null;
@@ -53,13 +55,20 @@ export function PageHead() {
           <span className="text-foreground">{pageTitle}</span>
         </nav>
       ) : null}
-      <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-0.5">
-        <h1 className="font-heading text-2xl font-bold tracking-tight">
-          {title}
-        </h1>
-        <p className="min-w-0 truncate text-sm text-muted-foreground">
-          {subtitle}
-        </p>
+      <div className="flex items-center gap-4">
+        <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3.5 gap-y-0.5">
+          <h1 className="font-heading text-2xl font-bold tracking-tight">
+            {title}
+          </h1>
+          <p className="min-w-0 truncate text-sm text-muted-foreground">
+            {subtitle}
+          </p>
+        </div>
+        {headerActions ? (
+          <div className="flex shrink-0 items-center gap-2.5">
+            {headerActions}
+          </div>
+        ) : null}
       </div>
     </div>
   );
