@@ -42,7 +42,7 @@ export function PageHead() {
     <div className="hidden shrink-0 border-b bg-background px-4 pt-3.5 pb-3 md:block md:px-7">
       {group ? (
         <nav
-          aria-label="Breadcrumb"
+          aria-label={t("breadcrumbLabel")}
           className="mb-0.5 flex items-center gap-1.5 text-xs text-muted-foreground"
         >
           <Link
