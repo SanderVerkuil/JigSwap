@@ -1,0 +1,8 @@
+/* JigSwap webfonts
+   Heading face: "Fredoka" — a rounded, friendly, geometric display sans that
+   carries the warm, playful, homely personality (weights 400–700).
+   Body/UI uses the native system sans stack (no webfont needed).
+   Loaded from Google Fonts CDN. If you need a fully offline bundle, drop the
+   woff2 binaries into assets/fonts/ and replace the @import below with local
+   @font-face rules. */
+@import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap");
