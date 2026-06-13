@@ -495,7 +495,8 @@
     "checkTitle": "Titel ingevuld",
     "checkBrand": "Merk ingevuld",
     "checkPieces": "Aantal stukken ingevuld",
-    "checkAvailability": "Beschikbaarheid ingesteld"
+    "checkAvailability": "Beschikbaarheid ingesteld",
+    "contributePuzzle": "Een puzzel bijdragen"
   },
   "trades": {
     "title": "Uitwisselingen",

@@ -495,7 +495,8 @@
     "checkTitle": "Title filled in",
     "checkBrand": "Brand filled in",
     "checkPieces": "Piece count filled in",
-    "checkAvailability": "Availability set"
+    "checkAvailability": "Availability set",
+    "contributePuzzle": "Contribute a Puzzle"
   },
   "trades": {
     "title": "Exchanges",
