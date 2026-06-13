@@ -12,7 +12,7 @@ const NOISE_TOKEN_RE = /\b(?:puzzle|puzzel|legpuzzel|jigsaw|jigsawpuzzle)\b/gi;
 // the segment to be dropped. Checked word-by-word (not as a full segment regex) to handle
 // multi-word combos like "Recycled cardboard" or "Gerecycled karton".
 const DESCRIPTOR_WORD_RE =
-  /^(?:karton|cardboard|recycled|gerecycld|gerecycled|hout|houten|wooden|volwassenen|adults|kinderen|children|\d+\+?\s*(?:jaar|years|yr))$/i;
+  /^(?:karton|cardboard|recycled|gerecycled|hout|houten|wooden|volwassenen|adults|kinderen|children|\d+\+?\s*(?:jaar|years|yr))$/i;
 
 // Separator patterns used to split the raw title into segments.
 const SEGMENT_SPLIT_RE = / [-–—] | [|] | \/ /g;

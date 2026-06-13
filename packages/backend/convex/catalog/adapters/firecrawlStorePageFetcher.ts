@@ -1,3 +1,4 @@
+"use node";
 // packages/backend/convex/catalog/adapters/firecrawlStorePageFetcher.ts
 import {
   err,
