@@ -35,8 +35,12 @@ const VISIBLE_ROWS = 3;
 const SIZE_JITTER = [1, 0.92, 1.06, 0.88, 1.02, 0.95, 1.1, 0.9];
 // Deterministic gap rhythm between neighbouring boxes on a row.
 const GAP_PATTERN = [0.34, 0.5, 0.28, 0.44, 0.58, 0.3];
-// Hard cap per row so ultra-wide viewports can't explode the draw count.
-const MAX_PER_ROW = 12;
+// Safety ceiling on boxes per row so ultra-wide viewports can't explode the
+// draw count. Normal/tablet/mobile spans fill well below this; only very wide
+// screens reach it (and the leftover board is centred into the fog — see
+// buildRowInstances). The span itself scales with the viewport, so the number
+// of boxes is dynamic across sizes.
+const MAX_PER_ROW = 20;
 // Spotlights are expensive per-fragment: light only the bottom row, every
 // other slot, capped — the upper rows live off key/ambient/hemi light.
 const MAX_SPOTS = 6;
@@ -323,12 +327,12 @@ function buildRowInstances(
     cursor += w + GAP_PATTERN[(i * 2 + rowIndex) % GAP_PATTERN.length];
   }
   // If MAX_PER_ROW capped the fill before the span was covered (ultra-wide
-  // viewports), slide the whole row right so it stays flush with the near
-  // (camera-side) end; the bare stretch of board lands at the far end, deep
-  // in the fog, instead of in plain view.
+  // viewports), centre the row so any leftover board splits evenly between the
+  // two far ends — both deep in the fog — instead of leaving a bare gap on one
+  // side in plain view.
   const shortfall = span / 2 - cursor;
   if (shortfall > 0) {
-    for (const inst of out) inst.slot.x += shortfall;
+    for (const inst of out) inst.slot.x += shortfall / 2;
   }
   return out;
 }
