@@ -3,31 +3,64 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
+import {
+  computeCollectionStats,
+  DifficultyMix,
+  StatsBar,
+  type DifficultyTier,
+} from "@/components/collections/collection-stats";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import { CoverChip } from "@/components/library/cover-chip";
+import { EmptyState } from "@/components/library/empty-state";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { gateway, Id } from "@/gateway";
+import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "convex/react";
-import { Edit, Grid, List, Plus, Search } from "lucide-react";
-import { useState } from "react";
-import { useTranslations } from "use-intl";
+import {
+  ChevronRight,
+  Edit,
+  FolderOpen,
+  Globe,
+  Lock,
+  Plus,
+  Puzzle,
+  Share2,
+} from "lucide-react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { useFormatter, useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/collections/$id/")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "collection") }],
   }),
-  pendingComponent: () => <PageLoading message="Loading..." />,
+  pendingComponent: () => <CollectionPending />,
   component: CollectionDetailPage,
 });
+
+function CollectionPending() {
+  const tCommon = useTranslations("common");
+  return <PageLoading message={tCommon("loading")} />;
+}
 
 function CollectionDetailPage() {
   const { id } = Route.useParams();
   const router = useRouter();
+  const format = useFormatter();
   const t = useTranslations("collections");
   const tCommon = useTranslations("common");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [searchTerm, setSearchTerm] = useState("");
+  const tPuzzles = useTranslations("puzzles");
 
   const collection = useQuery(gateway.collections.byId, {
     collectionId: id as Id<"collections">,
@@ -36,6 +69,22 @@ function CollectionDetailPage() {
   const removeFromCollection = useMutation(
     gateway.collections.removeOwnedPuzzle,
   );
+  const updateCollection = useMutation(gateway.collections.update);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [sharing, setSharing] = useState(false);
+
+  // Publish only the collection name as the page-head title so the chrome
+  // breadcrumb reads My Library › Collections › <name>. The Add/Share/Edit
+  // actions now live in the in-content hero block per the redesign, so this
+  // page intentionally publishes no header `actions`.
+  usePageHeader(() => ({ title: collection?.name }), [collection?.name]);
+
+  const puzzles = useMemo(
+    () => (collection?.puzzles ?? []).filter((p) => p != null),
+    [collection?.puzzles],
+  );
+
+  const stats = useMemo(() => computeCollectionStats(puzzles), [puzzles]);
 
   const handleRemovePuzzle = async (ownedPuzzleId: Id<"ownedPuzzles">) => {
     // The domain remove takes the Collection + Copy aggregateIds; resolve them from the loaded
@@ -57,137 +106,251 @@ function CollectionDetailPage() {
     }
   };
 
-  const handleEditCollection = () => {
-    router.push(`/collections/${id}/edit`);
+  // Copy the current page URL to the clipboard; guard for SSR / browsers that
+  // lack the async clipboard API. Returns whether the copy succeeded.
+  const copyLink = async () => {
+    if (typeof navigator === "undefined" || !navigator.clipboard) return false;
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      return true;
+    } catch (error) {
+      console.error("Failed to copy collection link:", error);
+      return false;
+    }
   };
 
-  // Filter puzzles based on search term
-  const filteredPuzzles =
-    collection?.puzzles
-      ?.filter(
-        (ownedPuzzle) =>
-          ownedPuzzle &&
-          (ownedPuzzle.puzzle?.title
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-            (ownedPuzzle.puzzle?.brand &&
-              ownedPuzzle.puzzle.brand
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase()))),
-      )
-      .filter(Boolean) || [];
+  // Public collections are link-shareable directly; private ones first ask the
+  // owner how to share (the collection model only supports private/public —
+  // per-circle sharing exists at the copy level, not the collection level).
+  const handleShare = async () => {
+    if (collection?.visibility === "public") {
+      if (await copyLink()) toast.success(t("linkCopied"));
+      return;
+    }
+    setShareOpen(true);
+  };
+
+  const handleMakePublic = async () => {
+    if (!collection?.aggregateId) {
+      console.error("Cannot share: collection is missing its aggregateId.");
+      return;
+    }
+    setSharing(true);
+    try {
+      await updateCollection({
+        collectionId: collection.aggregateId,
+        visibility: "public",
+      });
+      const copied = await copyLink();
+      toast.success(
+        copied ? t("shareDialog.madePublic") : t("shareDialog.madePublicNote"),
+      );
+      setShareOpen(false);
+    } catch (error) {
+      console.error("Failed to make collection public:", error);
+      toast.error(t("shareDialog.error"));
+    } finally {
+      setSharing(false);
+    }
+  };
+
+  const handleCopyPrivate = async () => {
+    if (await copyLink()) toast.success(t("shareDialog.privateLinkCopied"));
+    setShareOpen(false);
+  };
 
   if (collection === undefined) {
     return <PageLoading message={tCommon("loading")} />;
   }
 
   if (collection === null) {
-    return <div>{t("notFound")}</div>;
+    return <div className="text-muted-foreground">{t("notFound")}</div>;
   }
 
+  const tierLabels: Record<DifficultyTier, string> = {
+    easy: tPuzzles("easy"),
+    medium: tPuzzles("medium"),
+    hard: tPuzzles("hard"),
+    expert: tPuzzles("expert"),
+  };
+
+  const isEmpty = puzzles.length === 0;
+
   return (
-    <div className="container mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div
-            className="w-16 h-16 rounded-lg flex items-center justify-center text-2xl"
-            style={{
-              backgroundColor: collection.color || "#f3f4f6",
-            }}
-          >
-            {collection.icon || "📦"}
+    <div className="flex w-full flex-col gap-8">
+      {/* Share dialog — only reached for private collections (public ones copy
+          the link directly). Offers making it public or copying a private,
+          owner-only link. */}
+      <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("shareDialog.title")}</DialogTitle>
+            <DialogDescription>
+              {t("shareDialog.privateExplain")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={handleMakePublic}
+              disabled={sharing}
+              className="hover:bg-accent flex items-center gap-3 rounded-lg border p-3 text-left transition-colors disabled:opacity-60"
+            >
+              <span className="bg-jigsaw-success/15 text-jigsaw-success flex size-9 shrink-0 items-center justify-center rounded-full">
+                <Globe className="size-[18px]" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold">
+                  {t("shareDialog.makePublic")}
+                </span>
+                <span className="text-muted-foreground block text-xs">
+                  {t("shareDialog.makePublicHint")}
+                </span>
+              </span>
+              <ChevronRight className="text-muted-foreground size-4 shrink-0" />
+            </button>
+            <button
+              type="button"
+              onClick={handleCopyPrivate}
+              disabled={sharing}
+              className="hover:bg-accent flex items-center gap-3 rounded-lg border p-3 text-left transition-colors disabled:opacity-60"
+            >
+              <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full">
+                <Lock className="size-[18px]" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold">
+                  {t("shareDialog.keepPrivate")}
+                </span>
+                <span className="text-muted-foreground block text-xs">
+                  {t("shareDialog.keepPrivateHint")}
+                </span>
+              </span>
+              <ChevronRight className="text-muted-foreground size-4 shrink-0" />
+            </button>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold">{collection.name}</h1>
-            <p className="text-muted-foreground">
-              {filteredPuzzles.length} {t("puzzles")}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShareOpen(false)}
+              disabled={sharing}
+            >
+              {tCommon("cancel")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Hero — open block, not a boxed card. */}
+      <div className="flex flex-wrap items-start gap-5">
+        <CoverChip
+          color={collection.color || "#6048e8"}
+          icon={FolderOpen}
+          emoji={collection.icon || undefined}
+          size={96}
+        />
+        <div className="min-w-0 flex-1 space-y-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="font-heading text-2xl font-bold tracking-tight">
+              {collection.name}
+            </h1>
+            <Badge
+              variant="outline"
+              className={cn(
+                collection.visibility === "public"
+                  ? "bg-jigsaw-success/15 text-jigsaw-success border-transparent"
+                  : "text-muted-foreground",
+              )}
+            >
+              {collection.visibility === "public" ? t("public") : t("private")}
+            </Badge>
+          </div>
+          {collection.description && (
+            <p className="text-muted-foreground max-w-2xl text-sm">
+              {collection.description}
             </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleEditCollection}>
-            <Edit className="h-4 w-4 mr-2" />
-            {tCommon("edit")}
-          </Button>
-          <Button asChild>
-            <Link href={`/collections/${id}/add-puzzles`}>
-              <Plus className="h-4 w-4 mr-2" />
-              {t("addPuzzles")}
-            </Link>
-          </Button>
-        </div>
-      </div>
-
-      {collection.description && (
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-muted-foreground">{collection.description}</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Search and Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="flex-1 flex items-center gap-2">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder={tCommon("search")}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant={viewMode === "grid" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("grid")}
-              >
-                <Grid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("list")}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Puzzles Grid/List */}
-      {filteredPuzzles.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <div className="text-muted-foreground mb-4">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                <Plus className="h-8 w-8" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">
-                {t("noPuzzlesInCollection")}
-              </h3>
-              <p className="text-sm">{t("addPuzzlesToCollection")}</p>
-            </div>
-            <Button asChild>
+          )}
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Button variant="brand" asChild>
               <Link href={`/collections/${id}/add-puzzles`}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4" />
                 {t("addPuzzles")}
               </Link>
             </Button>
-          </CardContent>
-        </Card>
+            <Button variant="outline" onClick={handleShare}>
+              <Share2 className="h-4 w-4" />
+              {t("share")}
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => router.push(`/collections/${id}/edit`)}
+            >
+              <Edit className="h-4 w-4" />
+              {tCommon("edit")}
+            </Button>
+          </div>
+        </div>
+        <p className="text-muted-foreground shrink-0 text-xs">
+          {t("updatedAgo", {
+            time: format.relativeTime(new Date(collection.updatedAt)),
+          })}
+        </p>
+      </div>
+
+      {/* Stats bar — only meaningful when the collection has members. */}
+      {!isEmpty && (
+        <StatsBar
+          cells={[
+            { value: String(stats.puzzleCount), label: t("puzzles") },
+            {
+              value: stats.piecesTotal.toLocaleString(),
+              label: t("piecesTotal"),
+            },
+            {
+              value: stats.avgDifficulty
+                ? tierLabels[stats.avgDifficulty]
+                : "—",
+              label: t("avgDifficulty"),
+            },
+            { value: String(stats.upForTrade), label: t("upForTrade") },
+          ]}
+        >
+          <DifficultyMix
+            label={t("difficultyMix")}
+            mix={stats.difficultyMix}
+            tierLabels={tierLabels}
+          />
+        </StatsBar>
+      )}
+
+      {/* Section head */}
+      <div className="flex items-center justify-between border-b pb-2.5">
+        <h2 className="font-heading flex items-center gap-2 text-lg font-bold">
+          <Puzzle aria-hidden className="text-jigsaw-primary h-5 w-5" />
+          {t("puzzlesInCollection")}
+        </h2>
+        <span className="text-muted-foreground text-sm">
+          {t("puzzleCount", { count: puzzles.length })}
+        </span>
+      </div>
+
+      {/* Puzzle grid */}
+      {isEmpty ? (
+        <EmptyState
+          title={t("noPuzzlesInCollection")}
+          sub={t("addPuzzlesFirst")}
+          action={
+            <Button variant="brand" asChild>
+              <Link href={`/collections/${id}/add-puzzles`}>
+                <Plus className="h-4 w-4" />
+                {t("addPuzzles")}
+              </Link>
+            </Button>
+          }
+        />
       ) : (
-        <PuzzleViewProvider viewMode={viewMode}>
-          {filteredPuzzles.map((puzzle) => (
+        <PuzzleViewProvider viewMode="grid">
+          {puzzles.map((puzzle) => (
             <PuzzleCard
               key={puzzle._id}
               puzzle={puzzle}

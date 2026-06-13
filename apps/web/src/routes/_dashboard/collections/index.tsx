@@ -3,15 +3,12 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { useUser } from "@/compat/clerk";
 import { useRouter } from "@/compat/navigation";
+import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
+import { CoverChip } from "@/components/library/cover-chip";
+import { EmptyState } from "@/components/library/empty-state";
+import { chipColor } from "@/components/library/palette";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { ColorPicker } from "@/components/ui/color-picker";
 import {
   Dialog,
@@ -20,7 +17,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { EmojiPickerInput } from "@/components/ui/emoji-picker-input";
 import { Input } from "@/components/ui/input";
@@ -33,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
@@ -44,9 +41,14 @@ export const Route = createFileRoute("/_dashboard/collections/")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "collections") }],
   }),
-  pendingComponent: () => <PageLoading message="Loading collections..." />,
+  pendingComponent: () => <CollectionsPending />,
   component: CollectionsPage,
 });
+
+function CollectionsPending() {
+  const t = useTranslations("collections");
+  return <PageLoading message={t("loadingCollections")} />;
+}
 
 function CollectionsPage() {
   const { user } = useUser();
@@ -149,7 +151,7 @@ function CollectionsPage() {
       console.error("Cannot delete: collection is missing its aggregateId.");
       return;
     }
-    if (confirm("Are you sure you want to delete this collection?")) {
+    if (confirm(t("deleteConfirm"))) {
       try {
         await deleteCollection({
           collectionId: collectionAggregateId,
@@ -180,25 +182,55 @@ function CollectionsPage() {
     setIsEditDialogOpen(true);
   };
 
+  // The page title lives in the shell page head; publish the shelf/puzzle meta
+  // + the create flow there so the body carries no duplicate section header.
+  const loadedCollections = collections ?? [];
+  const totalPuzzles = loadedCollections.reduce(
+    (sum, collection) => sum + (collection.puzzleCount ?? 0),
+    0,
+  );
+  const headerMeta = t("meta", {
+    shelves: loadedCollections.length,
+    puzzles: totalPuzzles,
+  });
+  usePageHeaderActions(
+    () => (
+      <>
+        <span className="text-muted-foreground hidden text-sm sm:inline">
+          {headerMeta}
+        </span>
+        <Button
+          variant="brand"
+          size="sm"
+          onClick={() => setIsCreateDialogOpen(true)}
+        >
+          <Plus className="h-4 w-4" />
+          {t("newCollection")}
+        </Button>
+      </>
+    ),
+    [headerMeta],
+  );
+
   if (!user || convexUser === undefined || collections === undefined) {
-    return <PageLoading message={tCommon("loading")} />;
+    return (
+      <div className="flex flex-col gap-7">
+        <Skeleton className="h-10 w-full" />
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-[18px]">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-[104px] rounded-xl" />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{t("myCollections")}</h1>
-          <p className="text-muted-foreground">{t("organizePuzzles")}</p>
-        </div>
+    <div className="flex flex-col gap-7">
+      {/* The shelf meta + create action now live in the shell page head. */}
+      <section>
+        {/* Create Collection Dialog (unchanged flow, opened from the head) */}
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              {t("createCollection")}
-            </Button>
-          </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{t("createCollection")}</DialogTitle>
@@ -290,87 +322,89 @@ function CollectionsPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
 
-      {/* Collections Grid */}
-      {collections?.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <div className="text-muted-foreground mb-4">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                <FolderOpen className="h-8 w-8" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">{t("noCollections")}</h3>
-              <p className="text-sm">{t("createFirstCollection")}</p>
-            </div>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              {t("createCollection")}
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {collections?.map((collection) => (
-            <Card
-              key={collection._id}
-              className="hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => router.push(`/collections/${collection._id}`)}
-            >
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-8 h-8 rounded flex items-center justify-center text-lg"
-                      style={{
-                        backgroundColor: collection.color + "50",
-                        color: collection.color,
-                      }}
-                    >
-                      {collection.icon}
+        {/* Collections Grid: compact tiles — the sanctioned card use */}
+        {collections.length === 0 ? (
+          <EmptyState
+            title={t("noCollections")}
+            sub={t("createFirstCollection")}
+            action={
+              <Button
+                variant="brand"
+                onClick={() => setIsCreateDialogOpen(true)}
+              >
+                <Plus className="h-4 w-4" />
+                {t("newCollection")}
+              </Button>
+            }
+          />
+        ) : (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-[18px]">
+            {collections.map((collection, index) => (
+              <div
+                key={collection._id}
+                role="button"
+                tabIndex={0}
+                className="bg-card flex cursor-pointer gap-3.5 rounded-xl border p-3.5 shadow-sm transition-shadow hover:shadow-md"
+                onClick={() => router.push(`/collections/${collection._id}`)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    router.push(`/collections/${collection._id}`);
+                  }
+                }}
+              >
+                <CoverChip
+                  color={collection.color || chipColor(index)}
+                  icon={FolderOpen}
+                  emoji={collection.icon || undefined}
+                  size={74}
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="font-heading truncate text-lg font-bold">
+                      {collection.name}
                     </div>
-                    <CardTitle className="text-lg">{collection.name}</CardTitle>
+                    <div className="flex shrink-0 items-center gap-1">
+                      {collection.visibility === "private" ? (
+                        <Lock className="text-muted-foreground h-4 w-4" />
+                      ) : (
+                        <Globe className="text-muted-foreground h-4 w-4" />
+                      )}
+                      {!collection.isDefault && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-7"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditDialog(collection);
+                          }}
+                        >
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    {collection.visibility === "private" ? (
-                      <Lock className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <Globe className="h-4 w-4 text-muted-foreground" />
-                    )}
-                    {!collection.isDefault && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEditDialog(collection);
-                        }}
-                      >
-                        <Settings className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                {collection.description && (
-                  <CardDescription className="line-clamp-2">
-                    {collection.description}
-                  </CardDescription>
-                )}
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <Badge variant="secondary">
-                    {collection.puzzleCount} {t("puzzles")}
-                  </Badge>
-                  {collection.isDefault && (
-                    <Badge variant="outline">{t("default")}</Badge>
+                  {collection.description && (
+                    <p className="text-muted-foreground mt-0.5 line-clamp-1 text-sm">
+                      {collection.description}
+                    </p>
                   )}
+                  <div className="mt-2.5 flex items-center gap-2">
+                    <Badge variant="secondary">
+                      {collection.puzzleCount} {t("puzzles")}
+                    </Badge>
+                    {collection.isDefault && (
+                      <Badge variant="outline">{t("default")}</Badge>
+                    )}
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       {/* Edit Collection Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

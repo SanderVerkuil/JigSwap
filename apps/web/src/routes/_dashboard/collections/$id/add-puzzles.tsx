@@ -2,14 +2,16 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { useUser } from "@/compat/clerk";
 import { useRouter } from "@/compat/navigation";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import { EmptyState } from "@/components/library/empty-state";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { gateway, Id } from "@/gateway";
 import { pageTitle } from "@/lib/page-title";
 import { useMutation, useQuery } from "convex/react";
-import { Grid, Plus, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
 
@@ -18,10 +20,15 @@ export const Route = createFileRoute("/_dashboard/collections/$id/add-puzzles")(
     head: ({ match }) => ({
       meta: [{ title: pageTitle(match.context, "collectionAddPuzzles") }],
     }),
-    pendingComponent: () => <PageLoading message="Loading..." />,
+    pendingComponent: () => <AddPuzzlesPending />,
     component: AddPuzzlesToCollectionPage,
   },
 );
+
+function AddPuzzlesPending() {
+  const tCommon = useTranslations("common");
+  return <PageLoading message={tCommon("loading")} />;
+}
 
 function AddPuzzlesToCollectionPage() {
   const { id } = Route.useParams();
@@ -29,6 +36,7 @@ function AddPuzzlesToCollectionPage() {
   const router = useRouter();
   const t = useTranslations("collections");
   const tCommon = useTranslations("common");
+  const tShell = useTranslations("shell");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPuzzles, setSelectedPuzzles] = useState<
     Set<Id<"ownedPuzzles">>
@@ -87,6 +95,44 @@ function AddPuzzlesToCollectionPage() {
     }
   };
 
+  // Publish an explicit breadcrumb trail + the route title so the chrome reads
+  // My Library › Collections › <name> › Add Puzzles, plus the primary actions
+  // (Cancel + the count-aware confirm) into the page head.
+  const selectedCount = selectedPuzzles.size;
+  usePageHeader(
+    () => ({
+      title: t("addPuzzles"),
+      crumbs: [
+        { label: tShell("groups.library.label"), href: "/library" },
+        { label: tShell("pages.collections.title"), href: "/collections" },
+        ...(collection
+          ? [{ label: collection.name, href: `/collections/${id}` }]
+          : []),
+      ],
+      actions: (
+        <>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push(`/collections/${id}`)}
+          >
+            {tCommon("cancel")}
+          </Button>
+          <Button
+            variant="brand"
+            size="sm"
+            onClick={handleAddSelectedPuzzles}
+            disabled={selectedCount === 0}
+          >
+            <Plus className="h-4 w-4" />
+            {t("addSelected", { count: selectedCount })}
+          </Button>
+        </>
+      ),
+    }),
+    [collection?.name, id, selectedCount],
+  );
+
   // Filter puzzles based on search term
   const filteredPuzzles =
     availablePuzzles
@@ -114,68 +160,29 @@ function AddPuzzlesToCollectionPage() {
   }
 
   if (collection === null) {
-    return <div>{t("notFound")}</div>;
+    return <div className="text-muted-foreground">{t("notFound")}</div>;
   }
 
   return (
-    <div className="container mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{t("addPuzzlesToCollection")}</h1>
-          <p className="text-muted-foreground">
-            {t("selectPuzzlesToAdd")} &quot;{collection.name}&quot;
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => router.push(`/collections/${id}`)}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleAddSelectedPuzzles}
-            disabled={selectedPuzzles.size === 0}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add {selectedPuzzles.size} Puzzle
-            {selectedPuzzles.size !== 1 ? "s" : ""}
-          </Button>
-        </div>
-      </div>
-
+    <div className="flex w-full flex-col gap-6">
       {/* Search */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder={tCommon("search")}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="relative w-full max-w-sm">
+        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+        <Input
+          type="text"
+          placeholder={tCommon("search")}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-9"
+        />
+      </div>
 
       {/* Puzzles Grid */}
       {filteredPuzzles.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <div className="text-muted-foreground">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                <Grid className="h-8 w-8" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">
-                {t("noPuzzlesAvailable")}
-              </h3>
-              <p className="text-sm">{t("addPuzzlesFirst")}</p>
-            </div>
-          </CardContent>
-        </Card>
+        <EmptyState
+          title={t("noPuzzlesAvailable")}
+          sub={t("addPuzzlesFirst")}
+        />
       ) : (
         <PuzzleViewProvider viewMode="grid">
           {filteredPuzzles.map((puzzle) => (

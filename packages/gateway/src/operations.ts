@@ -221,6 +221,14 @@ export const gateway = {
     circle: api.sharing.getCircle.getCircle,
   },
 
+  // Global search: the single read behind the ⌘K command palette. One query returns a grouped,
+  // navigation-ready result set across Puzzles (real catalog search index, approved-only), People
+  // (bounded in-memory scan — no name index yet), the member's Circles, and the member's
+  // Collections. Empty/short terms and unauthenticated callers return empty groups.
+  search: {
+    global: api.search.globalSearch.global,
+  },
+
   // Catalog moderation: the global, moderated category taxonomy (admin). Writes go through the
   // domain-driven catalog module; identifiers are CatalogCategoryId aggregateIds.
   adminCatalog: {

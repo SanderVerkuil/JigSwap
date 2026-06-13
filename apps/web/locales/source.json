@@ -279,6 +279,13 @@
     "signInToAccount": "Sign in to your account",
     "createNewAccount": "Create a new account"
   },
+  "activity": {
+    "completion": "A member completed a puzzle",
+    "acquisition": "A member added a puzzle",
+    "exchange": "A member settled an exchange",
+    "empty": "No recent activity yet",
+    "emptyHint": "Follow other members to see what they are up to."
+  },
   "puzzles": {
     "title": "Title",
     "description": "Description",
@@ -292,6 +299,9 @@
     "owner": "Owner",
     "available": "Available",
     "unavailable": "Unavailable",
+    "lend": "For Lend",
+    "trade": "For Trade",
+    "sale": "For Sale",
     "completed": "Completed",
     "addPuzzle": "Add Puzzle",
     "editPuzzle": "Edit Puzzle",
@@ -299,8 +309,8 @@
     "requestExchange": "Request Exchange",
     "myPuzzles": "My Puzzles",
     "managePuzzles": "Manage your puzzle collection",
-    "noPuzzles": "No puzzles yet",
-    "addFirstPuzzle": "Add your first puzzle to start trading",
+    "noPuzzles": "No puzzles here yet",
+    "addFirstPuzzle": "Add your first puzzle to start trading.",
     "noImage": "No Image",
     "addPuzzleDescription": "Add a new puzzle to your collection",
     "selectPuzzle": "Select Puzzle",
@@ -443,7 +453,24 @@
       "actions": "Actions",
       "addToFavorites": "Add to Favorites",
       "notFound": "Puzzle not found"
-    }
+    },
+    "filters": {
+      "all": "All",
+      "available": "Available",
+      "forTrade": "For Trade",
+      "forLend": "For Lend",
+      "inProgress": "In Progress",
+      "completed": "Completed"
+    },
+    "resultCount": "{count} of {total} puzzles",
+    "searchHint": "Press ⌘K to search puzzles, people and more",
+    "countMeta": "{count, plural, one {# puzzle} other {# puzzles}}",
+    "gridView": "Grid view",
+    "listView": "List view",
+    "deleteConfirm": "Are you sure you want to delete this puzzle?",
+    "loadingPuzzles": "Loading puzzles...",
+    "new_sealed": "New (Sealed)",
+    "like_new": "Like New"
   },
   "trades": {
     "title": "Exchanges",
@@ -475,7 +502,27 @@
     "decline": "Decline",
     "cancel": "Cancel",
     "markComplete": "Mark Complete",
-    "message": "Message"
+    "message": "Message",
+    "all": "All",
+    "exchangesCount": "{count, plural, one {# exchange} other {# exchanges}}",
+    "rowMeta": "{direction} · with {who} · {when}",
+    "kind": {
+      "trade": "Trade",
+      "sale": "Sale",
+      "loan": "Lend"
+    },
+    "direction": {
+      "incoming": "incoming",
+      "outgoing": "outgoing"
+    },
+    "status": {
+      "proposed": "Pending",
+      "accepted": "Accepted",
+      "rejected": "Declined",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "disputed": "Disputed"
+    }
   },
   "reputation": {
     "title": "Reputation",
@@ -520,7 +567,12 @@
     "sendMessage": "Send Message",
     "typeMessage": "Type your message...",
     "noMessages": "No messages yet",
-    "newMessage": "New Message"
+    "newMessage": "New Message",
+    "searchUsers": "Search users...",
+    "online": "Online",
+    "offline": "Offline",
+    "selectConversation": "Select a conversation",
+    "selectConversationHint": "Choose a user from the sidebar to start messaging"
   },
   "profile": {
     "title": "Profile",
@@ -554,7 +606,39 @@
     "reviews": "Reviews",
     "trustLevel": "Trust Level",
     "trustLevelDescription": "Based on completed trades and reviews",
-    "notFound": "User not found"
+    "notFound": "User not found",
+    "trustBadge": "{rating} Trust",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Profile saved",
+    "saveError": "Could not save your profile. Please try again.",
+    "usernamePlaceholder": "your-username",
+    "locationPlaceholder": "City, Country",
+    "bioPlaceholder": "Tell other members about yourself…",
+    "shelf": {
+      "title": "{name}'s Shelf",
+      "meta": "{count, plural, one {# on display} other {# on display}}"
+    },
+    "trustLevels": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "experienced": "Experienced"
+    },
+    "editor": {
+      "title": "Public profile",
+      "description": "Your display name and bio as other members see them.",
+      "edit": "Edit",
+      "save": "Save",
+      "cancel": "Cancel",
+      "displayName": "Display name",
+      "displayNamePlaceholder": "Your display name",
+      "bio": "Bio",
+      "bioPlaceholder": "Tell other members about yourself",
+      "notSetUp": "You have not set up a public profile yet.",
+      "emptyNameError": "Display name cannot be empty",
+      "saved": "Profile saved",
+      "saveError": "Could not save profile"
+    }
   },
   "dashboard": {
     "welcome": "Welcome back",
@@ -575,21 +659,119 @@
     "recentActivity": {
       "title": "Recent Activity",
       "noActivity": "No recent activity"
+    },
+    "brief": {
+      "swapsPendingGoal": "You have <swapsLink>{swapsCount, plural, one {# swap in motion} other {# swaps in motion}}</swapsLink>, {pendingCount, plural, one {one request waiting for your reply} other {# requests waiting for your reply}}, and you're <goalLink>{pct}% of the way</goalLink> to your goal of {target, plural, one {# puzzle} other {# puzzles}}.",
+      "swapsPending": "You have <swapsLink>{swapsCount, plural, one {# swap in motion} other {# swaps in motion}}</swapsLink> and {pendingCount, plural, one {one request waiting for your reply} other {# requests waiting for your reply}}.",
+      "swapsGoal": "You have <swapsLink>{swapsCount, plural, one {# swap in motion} other {# swaps in motion}}</swapsLink>, and you're <goalLink>{pct}% of the way</goalLink> to your goal of {target, plural, one {# puzzle} other {# puzzles}}.",
+      "pendingGoal": "You have {pendingCount, plural, one {one request waiting for your reply} other {# requests waiting for your reply}}, and you're <goalLink>{pct}% of the way</goalLink> to your goal of {target, plural, one {# puzzle} other {# puzzles}}.",
+      "swapsOnly": "You have <swapsLink>{swapsCount, plural, one {# swap in motion} other {# swaps in motion}}</swapsLink> — keep those pieces moving.",
+      "pendingOnly": "You have {pendingCount, plural, one {one request waiting for your reply} other {# requests waiting for your reply}}.",
+      "goalOnly": "All quiet on the swap front — and you're <goalLink>{pct}% of the way</goalLink> to your goal of {target, plural, one {# puzzle} other {# puzzles}}.",
+      "empty": "Your shelf is ready when you are — add a puzzle or browse the community to get things moving. 🧩"
+    },
+    "pendingBanner": {
+      "swap": "<strong>{name}</strong> wants to swap <strong>{theirs}</strong> for your <mineStrong>{mine}</mineStrong>",
+      "want": "<strong>{name}</strong> would love your <mineStrong>{mine}</mineStrong>",
+      "borrow": "<strong>{name}</strong> would like to borrow your <mineStrong>{mine}</mineStrong>",
+      "buy": "<strong>{name}</strong> would like to buy your <mineStrong>{mine}</mineStrong>",
+      "accept": "Accept Swap",
+      "reply": "Reply"
+    },
+    "actions": {
+      "addPuzzle": "Add a Puzzle",
+      "browse": "Browse Community",
+      "logCompletion": "Log a Completion"
+    },
+    "shelf": {
+      "title": "Your Shelf",
+      "meta": "{owned, plural, one {# on the shelf} other {# on the shelf}} · {forTrade, plural, =0 {none up for trade} one {# up for trade} other {# up for trade}}",
+      "viewCollections": "View Collections",
+      "empty": "Your shelf is waiting for its first puzzle — add one and it'll sit right here, ready to be admired (and swapped). 🧩",
+      "addFirst": "Add Your First Puzzle",
+      "stats": {
+        "ownedLabel": "Puzzles Owned",
+        "ownedSub": "{count, plural, =0 {None up for trade yet} one {# up for trade} other {# up for trade}}",
+        "completedLabel": "Exchanges Completed",
+        "completedSub": "Swaps settled all-time",
+        "ratingLabel": "Average Rating",
+        "ratingSub": "{count, plural, =0 {No reviews yet} one {from # review} other {from # reviews}}",
+        "activeLabel": "Active Exchanges",
+        "activeSub": "In motion right now"
+      }
+    },
+    "pulse": {
+      "inMotion": {
+        "title": "In Motion",
+        "all": "All",
+        "meta": "{kind} · {direction} · {who}",
+        "kind": {
+          "trade": "Trade",
+          "sale": "Sale",
+          "loan": "Loan"
+        },
+        "direction": {
+          "incoming": "incoming",
+          "outgoing": "outgoing"
+        },
+        "status": {
+          "proposed": "Pending",
+          "accepted": "Accepted",
+          "completed": "Completed",
+          "disputed": "Disputed",
+          "rejected": "Declined",
+          "cancelled": "Cancelled"
+        },
+        "empty": "Nothing in motion right now — browse the community to line up your next swap. 🧩"
+      },
+      "goals": {
+        "title": "Goals",
+        "all": "All",
+        "done": "{current}/{target} done",
+        "empty": "No goals yet — set yourself a target and watch the ring fill up. 🧩",
+        "setGoal": "Set a Goal"
+      },
+      "latest": {
+        "title": "Latest",
+        "completion": "<strong>{name}</strong> finished a puzzle",
+        "acquisition": "<strong>{name}</strong> added a puzzle to their shelf",
+        "exchange": "<strong>{name}</strong> completed a swap",
+        "empty": "All quiet for now — follow fellow puzzlers and their latest moves will show up here. 🧩"
+      }
+    },
+    "fresh": {
+      "title": "Fresh on the Shelf",
+      "meta": "Recently added",
+      "myPuzzles": "My Puzzles"
     }
   },
   "browse": {
     "title": "Browse Puzzles",
     "subtitle": "Discover amazing puzzles from the community",
     "puzzlesFound": "puzzles found",
-    "searchPlaceholder": "Search puzzles by title, brand, or description...",
+    "searchPlaceholder": "Search puzzles by title, brand, or theme…",
     "allCategories": "All Categories",
     "allDifficulties": "All Difficulties",
     "allConditions": "All Conditions",
     "minPieces": "Min Pieces",
     "maxPieces": "Max Pieces",
-    "clearFilters": "Clear Filters",
+    "clearFilters": "Clear All",
     "noPuzzlesFound": "No puzzles found",
-    "tryDifferentFilters": "Try adjusting your search criteria or filters"
+    "tryDifferentFilters": "Try adjusting your filters.",
+    "filterAll": "All",
+    "available": "Available",
+    "resultsCount": "{count, plural, one {# puzzle found} other {# puzzles found}}",
+    "favoritesComingSoon": "Favorites are coming soon",
+    "searchHint": "Press ⌘K to search by title or brand",
+    "addFilter": "Add Filter",
+    "addFilterSearch": "Filter by…",
+    "noFilters": "No filters left to add.",
+    "removeFilter": "Remove filter",
+    "fieldText": "Text",
+    "fieldAvailability": "Availability",
+    "textPlaceholder": "Title, brand or theme…",
+    "gridView": "Grid View",
+    "listView": "List View"
   },
   "footer": {
     "tagline": "Making jigsaw puzzle trading accessible and sustainable for everyone.",
@@ -978,6 +1160,8 @@
     "default": "Default",
     "addPuzzles": "Add Puzzles",
     "addPuzzlesToCollection": "Add Puzzles to Collection",
+    "noPuzzlesInCollection": "No puzzles in this collection yet",
+    "puzzleCount": "{count, plural, one {# puzzle} other {# puzzles}}",
     "selectPuzzlesToAdd": "Select puzzles to add to collection",
     "noAvailablePuzzles": "No available puzzles",
     "allPuzzlesInCollection": "All your puzzles are already in this collection or match your search",
@@ -988,7 +1172,81 @@
     "collectionNotFound": "Collection not found",
     "backToCollections": "Back to Collections",
     "manageCollections": "Manage Collections",
-    "notFound": "Collection not found"
+    "notFound": "Collection not found",
+    "meta": "{shelves, plural, one {# shelf} other {# shelves}} · {puzzles, plural, one {# puzzle} other {# puzzles}}",
+    "newCollection": "New Collection",
+    "deleteConfirm": "Are you sure you want to delete this collection?",
+    "loadingCollections": "Loading collections...",
+    "piecesTotal": "Pieces Total",
+    "avgDifficulty": "Avg. Difficulty",
+    "upForTrade": "Up for Trade",
+    "difficultyMix": "Difficulty Mix",
+    "puzzlesInCollection": "Puzzles in This Collection",
+    "share": "Share",
+    "linkCopied": "Link copied to clipboard",
+    "shareDialog": {
+      "title": "Share Collection",
+      "privateExplain": "This collection is private — only you can see it. Choose how you'd like to share it.",
+      "makePublic": "Make it public",
+      "makePublicHint": "Anyone with the link can view it.",
+      "keepPrivate": "Keep it private",
+      "keepPrivateHint": "Copy a link only you can open.",
+      "madePublic": "Collection is now public — link copied",
+      "madePublicNote": "Collection is now public",
+      "privateLinkCopied": "Link copied — collection stays private",
+      "error": "Couldn't update sharing. Please try again."
+    },
+    "noPuzzlesAvailable": "No Puzzles Available",
+    "addPuzzlesFirst": "Add puzzles to your library first, then organise them into collections.",
+    "addSelected": "{count, plural, one {Add # puzzle} other {Add # puzzles}}",
+    "updatedAgo": "Updated {time}"
+  },
+  "circles": {
+    "yourCircles": "Your Circles",
+    "meta": "Private groups to swap within",
+    "createCircle": "Create Circle",
+    "roleOwner": "Owner",
+    "roleMember": "Member",
+    "ownedByYou": "Owned by you",
+    "sharedWithYou": "Shared with you",
+    "membersLabel": "{count, plural, one {member} other {members}}",
+    "emptyTitle": "No circles yet",
+    "emptySub": "Create a circle to swap puzzles with friends and family.",
+    "loading": "Loading circles...",
+    "manage": {
+      "createTitle": "Create Circle",
+      "createDescription": "A circle is private. You become its first member and admin.",
+      "nameLabel": "Name",
+      "namePlaceholder": "e.g. Saturday Puzzlers",
+      "cancel": "Cancel",
+      "create": "Create",
+      "title": "Manage {name}",
+      "fallbackName": "circle",
+      "description": "Add or remove members, set permissions, and share copies.",
+      "loadingCircle": "Loading circle...",
+      "unavailable": "This circle is no longer available.",
+      "members": "Members",
+      "owner": "Owner",
+      "addMember": "Add member",
+      "searchPlaceholder": "Search members by name…",
+      "add": "Add",
+      "shareCopy": "Share a copy",
+      "shareDescription": "Shared copies become visible to circle members at the <scope>friendCircle</scope> visibility scope, even if otherwise private.",
+      "chooseCopy": "Choose one of your copies…",
+      "copyFallback": "Copy",
+      "share": "Share",
+      "close": "Close"
+    }
+  },
+  "people": {
+    "yourNetwork": "Your Network",
+    "memberCount": "{count, plural, one {# member} other {# members}}",
+    "followsYou": "Follows you",
+    "ownedLabel": "owned",
+    "swapsLabel": "swaps",
+    "activity": "Activity",
+    "emptyTitle": "No members in your network yet",
+    "emptySub": "Follow fellow puzzlers to build your network."
   },
   "notifications": {
     "title": "Notifications",
@@ -1051,7 +1309,16 @@
       "editWindowClosed": "This completion can no longer be edited (the 24-hour window has closed).",
       "yourReview": "Your review",
       "addReview": "Add a review",
-      "editReview": "Edit review"
+      "editReview": "Edit review",
+      "stats": {
+        "completed": "Puzzles completed",
+        "pieces": "Pieces placed",
+        "thisYear": "This year"
+      },
+      "log": "Completion Log",
+      "logAction": "Log Completion",
+      "mostRecent": "Most recent first",
+      "piecesFinished": "{pieces, number} pieces · finished in {days, plural, one {# day} other {# days}}"
     },
     "logSolve": {
       "trigger": "Log a solve",
@@ -1087,7 +1354,7 @@
       "subtitle": "Set completion targets and track your progress.",
       "empty": "No goals yet",
       "emptyHint": "Create a goal to start working toward a completion target.",
-      "create": "New goal",
+      "create": "New Goal",
       "createTitle": "Create a goal",
       "createDescription": "Set a target number of completions to work toward.",
       "goalTitle": "Title",
@@ -1101,7 +1368,9 @@
       "createError": "Could not create the goal. Please try again.",
       "progress": "{current} of {target} completions",
       "achieved": "Achieved",
-      "dueBy": "Due by {date}"
+      "dueBy": "Due by {date}",
+      "activeCount": "{count} active",
+      "progressShort": "{current}/{target} completions"
     }
   },
   "insights": {
@@ -1163,6 +1432,10 @@
       "success": "Your data has been downloaded.",
       "error": "Could not export your data. Please try again.",
       "capped": "Some lists were capped at {limit} rows per category."
+    },
+    "charts": {
+      "completionsPerMonth": "Completions / month",
+      "swapsPerMonth": "Swaps / month"
     }
   },
   "forms": {
@@ -1356,7 +1629,9 @@
     "statusReturned": "Returned",
     "statusRecalled": "Recalled",
     "borrowedBy": "Borrowed by {name}",
-    "unknownMember": "Unknown member"
+    "unknownMember": "Unknown member",
+    "borrowedCount": "{count, plural, one {# borrowed puzzle} other {# borrowed puzzles}}",
+    "pieceCount": "{count, plural, one {# piece} other {# pieces}}"
   },
   "marketing": {
     "nav": {
@@ -1638,6 +1913,156 @@
     "adminCategories": "Category management — JigSwap",
     "adminModeration": "Moderation — JigSwap",
     "signIn": "Sign in — JigSwap",
-    "signUp": "Sign up — JigSwap"
+    "signUp": "Sign up — JigSwap",
+    "library": "My Library — JigSwap",
+    "people": "People — JigSwap"
+  },
+  "shell": {
+    "search": {
+      "placeholder": "Search puzzles, people, circles…",
+      "label": "Search",
+      "inputPlaceholder": "Search or jump to…",
+      "empty": "No results found.",
+      "goTo": "Go To",
+      "quickActions": "Quick Actions",
+      "groupPuzzles": "Puzzles",
+      "groupPeople": "People",
+      "groupCircles": "Circles",
+      "groupCollections": "Collections",
+      "searching": "Searching…",
+      "noResultsFor": "No results for “{term}”"
+    },
+    "actions": {
+      "addPuzzle": "Add Puzzle",
+      "addAPuzzle": "Add a Puzzle",
+      "logCompletion": "Log a Completion",
+      "createCircle": "Create a Circle",
+      "browseCommunity": "Browse Community"
+    },
+    "welcome": "Welcome back, {name}! 🧩",
+    "welcomeAnonymous": "Welcome back! 🧩",
+    "groups": {
+      "library": {
+        "label": "My Library",
+        "blurb": "Everything you own and track."
+      },
+      "community": {
+        "label": "Community",
+        "blurb": "Discover, swap and connect."
+      }
+    },
+    "pages": {
+      "dashboard": {
+        "title": "Dashboard",
+        "subtitle": "Here's what's happening with your puzzles.",
+        "description": "Your puzzle world at a glance"
+      },
+      "library": {
+        "title": "My Library",
+        "subtitle": "Everything you own and track."
+      },
+      "community": {
+        "title": "Community",
+        "subtitle": "Discover, swap and connect."
+      },
+      "myPuzzles": {
+        "title": "My Puzzles",
+        "subtitle": "Every copy you own and where it stands.",
+        "description": "Copies you own and their status"
+      },
+      "collections": {
+        "title": "Collections",
+        "subtitle": "Curated shelves of your favourites.",
+        "description": "Curated sets and shelves"
+      },
+      "completions": {
+        "title": "Completions",
+        "subtitle": "A log of every puzzle you've finished.",
+        "description": "Your finished-puzzle log"
+      },
+      "goals": {
+        "title": "Goals",
+        "subtitle": "Personal targets for the year.",
+        "description": "Personal targets for the year"
+      },
+      "insights": {
+        "title": "Insights",
+        "subtitle": "Stats and trends across your hobby.",
+        "description": "Stats and trends"
+      },
+      "browse": {
+        "title": "Browse Puzzles",
+        "subtitle": "Discover puzzles from the community.",
+        "description": "Discover from the community"
+      },
+      "circles": {
+        "title": "Circles",
+        "subtitle": "Private groups to swap within.",
+        "description": "Friend and family swap groups"
+      },
+      "exchanges": {
+        "title": "Exchanges",
+        "subtitle": "Swaps, lends and trades in motion.",
+        "description": "Swaps, lends and trades"
+      },
+      "messages": {
+        "title": "Messages",
+        "subtitle": "Conversations with fellow puzzlers.",
+        "description": "Conversations with fellow puzzlers"
+      },
+      "people": {
+        "title": "People",
+        "subtitle": "Members and profiles near you.",
+        "description": "Members and profiles"
+      },
+      "profile": {
+        "title": "Profile",
+        "subtitle": "Your shelf, stats and trust at a glance."
+      },
+      "addPuzzle": {
+        "title": "Add Puzzle",
+        "subtitle": "Add a new puzzle to your shelf."
+      },
+      "puzzles": {
+        "title": "Puzzles",
+        "subtitle": "The shared puzzle catalogue."
+      },
+      "borrowed": {
+        "title": "Borrowed",
+        "subtitle": "Puzzles you've borrowed from others."
+      },
+      "notifications": {
+        "title": "Notifications",
+        "subtitle": "Everything that needs your attention."
+      }
+    },
+    "user": {
+      "preferences": "Preferences",
+      "openPreferences": "Open Preferences",
+      "contentWidth": "Content Width",
+      "centered": "Centered",
+      "fullWidth": "Full Width",
+      "hideEmail": "Hide Email Address",
+      "admin": "Admin"
+    },
+    "mobile": {
+      "tabsLabel": "Primary",
+      "tabs": {
+        "home": "Home",
+        "library": "Library",
+        "swaps": "Swaps",
+        "community": "Community"
+      },
+      "back": "Back to {section}",
+      "openQuickActions": "Quick Actions",
+      "quick": {
+        "addPuzzleSub": "Put a new box on your shelf",
+        "logCompletionSub": "Finished one? Record it",
+        "proposeSwap": "Propose a Swap",
+        "proposeSwapSub": "Trade with a fellow puzzler",
+        "browseCommunitySub": "Discover puzzles near you"
+      }
+    },
+    "breadcrumbLabel": "Breadcrumb"
   }
 }

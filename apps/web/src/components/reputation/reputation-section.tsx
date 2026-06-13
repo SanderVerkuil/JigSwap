@@ -1,21 +1,18 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { SectionHead } from "@/components/dashboard-home/section-head";
 import { StarRating } from "@/components/ui/star-rating";
 import type { Id } from "@/gateway";
 import { gateway } from "@/gateway";
 import { useQuery } from "convex/react";
+import { ShieldCheck } from "lucide-react";
 import { useTranslations } from "use-intl";
 
-// A member's public reputation on their profile: a summary (avg stars, count, credibility hint)
-// plus the reviews they have RECEIVED, newest first, each with reviewer, overall + sub-scores,
-// and an optional comment. Both reads are auth-gated queries keyed by the member's user id.
+// A member's public reputation on their profile: a summary line (avg stars,
+// count, credibility hint) plus the reviews they have RECEIVED, newest first,
+// each with overall + sub-scores and an optional comment. Open, card-free
+// layout: a SectionHead over plain rows separated by hairline rules. Both
+// reads are auth-gated queries keyed by the member's user id.
 interface ReputationSectionProps {
   memberId: Id<"users"> | undefined;
 }
@@ -51,72 +48,68 @@ export function ReputationSection({ memberId }: ReputationSectionProps) {
   ] as const;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("title")}</CardTitle>
-        <CardDescription>{t("subtitle")}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Summary */}
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-3xl font-bold text-yellow-600">
-              {profile.averageRating.toFixed(1)}
-            </span>
-            <StarRating value={Math.round(profile.averageRating)} size="sm" />
-          </div>
-          <div className="text-sm text-muted-foreground">
-            {t("reviewCount", { count: profile.reviewCount })}
-          </div>
-          {profile.reviewCount > 0 && (
-            <div className="text-sm text-muted-foreground">
-              {t("credibility")}:{" "}
-              <span className="font-medium text-foreground">
-                {t(`credibilityLevel.${credibilityKey(profile.credibility)}`)}
-              </span>
-            </div>
-          )}
+    <section>
+      <SectionHead
+        title={t("title")}
+        icon={ShieldCheck}
+        meta={t("reviewCount", { count: profile.reviewCount })}
+      />
+
+      {/* Summary */}
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+        <div className="flex items-center gap-2">
+          <span className="font-heading text-3xl leading-none font-bold">
+            {profile.averageRating.toFixed(1)}
+          </span>
+          <StarRating value={Math.round(profile.averageRating)} size="sm" />
         </div>
-
-        {/* Received reviews */}
-        {reviews.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("noReviewsYet")}</p>
-        ) : (
-          <ul className="space-y-4">
-            {reviews.map((review) => (
-              <li
-                key={review._id}
-                className="rounded-lg border bg-muted/30 p-4 space-y-3"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <StarRating value={review.rating} size="sm" />
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(review.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                  {subScoreKeys.map((key) => (
-                    <div
-                      key={key}
-                      className="flex items-center justify-between gap-2"
-                    >
-                      <span className="text-muted-foreground">
-                        {t(`scores.${key}`)}
-                      </span>
-                      <StarRating value={review.categories[key]} size="sm" />
-                    </div>
-                  ))}
-                </div>
-
-                {review.comment && (
-                  <p className="text-sm text-foreground">{review.comment}</p>
-                )}
-              </li>
-            ))}
-          </ul>
+        {profile.reviewCount > 0 && (
+          <div className="text-muted-foreground text-sm">
+            {t("credibility")}:{" "}
+            <span className="text-foreground font-medium">
+              {t(`credibilityLevel.${credibilityKey(profile.credibility)}`)}
+            </span>
+          </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Received reviews */}
+      {reviews.length === 0 ? (
+        <p className="text-muted-foreground mt-6 text-sm">
+          {t("noReviewsYet")}
+        </p>
+      ) : (
+        <ul className="mt-4 divide-y">
+          {reviews.map((review) => (
+            <li key={review._id} className="space-y-3 py-4">
+              <div className="flex items-center justify-between gap-2">
+                <StarRating value={review.rating} size="sm" />
+                <span className="text-muted-foreground text-xs">
+                  {new Date(review.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+
+              <div className="grid max-w-xl grid-cols-2 gap-x-8 gap-y-1 text-xs">
+                {subScoreKeys.map((key) => (
+                  <div
+                    key={key}
+                    className="flex items-center justify-between gap-2"
+                  >
+                    <span className="text-muted-foreground">
+                      {t(`scores.${key}`)}
+                    </span>
+                    <StarRating value={review.categories[key]} size="sm" />
+                  </div>
+                ))}
+              </div>
+
+              {review.comment && (
+                <p className="text-foreground text-sm">{review.comment}</p>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

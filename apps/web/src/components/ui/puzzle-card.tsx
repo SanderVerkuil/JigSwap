@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { gateway, Id } from "@/gateway";
+import { cn } from "@/lib/utils";
 import type { FunctionReturnType } from "convex/server";
 import {
   Check,
@@ -13,6 +14,7 @@ import {
   Eye,
   Heart,
   MessageCircle,
+  Puzzle,
   Trash2,
   User,
 } from "lucide-react";
@@ -42,19 +44,25 @@ export function usePuzzleView() {
 interface PuzzleViewProviderProps {
   children: ReactNode;
   viewMode: ViewMode;
+  /** Optional override of the wrapper layout classes (e.g. an auto-fill grid). */
+  className?: string;
 }
 
 export function PuzzleViewProvider({
   children,
   viewMode,
+  className,
 }: PuzzleViewProviderProps) {
   return (
     <PuzzleViewContext.Provider value={{ viewMode }}>
       <div
         className={
-          viewMode === "grid"
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-            : "space-y-4"
+          className ??
+          (viewMode === "grid"
+            ? // Design-language puzzle grid: compact covers that auto-fill the
+              // row at a 212px minimum, instead of fixed breakpoint columns.
+              "grid grid-cols-[repeat(auto-fill,minmax(212px,1fr))] gap-[18px]"
+            : "space-y-4")
         }
       >
         {children}
@@ -125,15 +133,23 @@ export function PuzzleCard({
   const ownedId = puzzle._id as Id<"ownedPuzzles">;
 
   const renderImage = () => {
-    const imageUrl = puzzle.puzzle?.images?.[0] || "/placeholder-puzzle.jpg";
+    // Box art is optional; when missing, show a warm gradient + puzzle glyph
+    // rather than a broken <img> pointing at a non-existent placeholder file.
+    const imageUrl = puzzle.puzzle?.images?.[0];
     return (
       <div className="relative aspect-square overflow-hidden rounded-t-lg">
-        <Image
-          src={imageUrl}
-          alt={puzzle.puzzle?.title || "Puzzle"}
-          fill
-          className="object-cover transition-transform hover:scale-105"
-        />
+        {imageUrl ? (
+          <Image
+            src={imageUrl}
+            alt={puzzle.puzzle?.title || "Puzzle"}
+            fill
+            className="object-cover transition-transform hover:scale-105"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-jigsaw-primary/15 to-jigsaw-primary-accent/15 text-jigsaw-primary/50">
+            <Puzzle className="h-1/3 w-1/3" />
+          </div>
+        )}
         {isSelected && (
           <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
             <Check className="h-8 w-8 text-primary" />
@@ -263,7 +279,7 @@ export function PuzzleCard({
               </Badge>
               {puzzle.puzzle?.difficulty && (
                 <Badge variant="outline" className="text-xs">
-                  {puzzle.puzzle.difficulty}
+                  {t(puzzle.puzzle.difficulty)}
                 </Badge>
               )}
               <Badge
@@ -275,7 +291,7 @@ export function PuzzleCard({
                 }
                 className="text-xs"
               >
-                {puzzle.condition}
+                {t(puzzle.condition)}
               </Badge>
             </div>
           </div>
@@ -344,10 +360,17 @@ export function PuzzleCard({
     );
   };
 
+  // p-0/gap-0/overflow-hidden so the cover (or its gradient placeholder) sits
+  // flush against the card's top edge instead of inset by the Card's default
+  // padding; renderContent supplies its own p-4.
   if (viewMode === "list") {
     return (
       <Card
-        className={`${className} ${isSelected ? "ring-2 ring-primary" : ""}`}
+        className={cn(
+          "gap-0 overflow-hidden p-0",
+          isSelected && "ring-2 ring-primary",
+          className,
+        )}
       >
         <div className="flex">
           <div className="w-32 flex-shrink-0">{renderImage()}</div>
@@ -358,7 +381,13 @@ export function PuzzleCard({
   }
 
   return (
-    <Card className={`${className} ${isSelected ? "ring-2 ring-primary" : ""}`}>
+    <Card
+      className={cn(
+        "gap-0 overflow-hidden p-0",
+        isSelected && "ring-2 ring-primary",
+        className,
+      )}
+    >
       {renderImage()}
       {renderContent()}
     </Card>

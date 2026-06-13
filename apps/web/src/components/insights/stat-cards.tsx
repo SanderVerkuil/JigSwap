@@ -1,15 +1,6 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  ArrowLeftRight,
-  CircleCheck,
-  Clock,
-  FolderOpen,
-  Package,
-  Star,
-  Target,
-} from "lucide-react";
+import { StatRow } from "@/components/library/stat-row";
 import { useTranslations } from "use-intl";
 
 export interface PersonalStats {
@@ -26,33 +17,8 @@ export interface PersonalStats {
   goalsAchieved: number;
 }
 
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  hint,
-}: {
-  icon: typeof Clock;
-  label: string;
-  value: string;
-  hint?: string;
-}) {
-  return (
-    <Card>
-      <CardContent className="flex items-start gap-3 px-6">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-          <Icon className="h-5 w-5 text-muted-foreground" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm text-muted-foreground">{label}</p>
-          <p className="text-2xl font-bold leading-tight">{value}</p>
-          {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
+// Card-free personal stats: a big divided headline row for the four numbers
+// that matter most, with the remaining figures as a quieter second row.
 export function StatCards({ stats }: { stats: PersonalStats }) {
   const t = useTranslations("insights.stats");
 
@@ -70,51 +36,55 @@ export function StatCards({ stats }: { stats: PersonalStats }) {
     rating > 0 ? rating.toFixed(1) : t("ratingNone");
 
   return (
-    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-      <StatCard
-        icon={CircleCheck}
-        label={t("completions")}
-        value={String(stats.completionsCount)}
+    <div className="flex flex-col gap-8">
+      <StatRow
+        stats={[
+          {
+            label: t("completions"),
+            value: String(stats.completionsCount),
+          },
+          {
+            label: t("solveTime"),
+            value: formatTime(stats.totalSolveMinutes),
+          },
+          {
+            label: t("puzzlesOwned"),
+            value: String(stats.puzzlesOwned),
+          },
+          {
+            label: t("exchangesCompleted"),
+            value: String(stats.exchangesCompleted),
+          },
+        ]}
       />
-      <StatCard
-        icon={Clock}
-        label={t("solveTime")}
-        value={formatTime(stats.totalSolveMinutes)}
-      />
-      <StatCard
-        icon={Package}
-        label={t("puzzlesOwned")}
-        value={String(stats.puzzlesOwned)}
-        hint={t("distinctDefinitions") + ": " + stats.distinctDefinitions}
-      />
-      <StatCard
-        icon={FolderOpen}
-        label={t("collections")}
-        value={String(stats.collectionsCount)}
-      />
-      <StatCard
-        icon={ArrowLeftRight}
-        label={t("exchangesCompleted")}
-        value={String(stats.exchangesCompleted)}
-      />
-      <StatCard
-        icon={Target}
-        label={t("goals")}
-        value={String(stats.goalsAchieved)}
-        hint={t("goalsValue", {
-          achieved: stats.goalsAchieved,
-          active: stats.goalsActive,
-        })}
-      />
-      <StatCard
-        icon={Star}
-        label={t("ratingGiven")}
-        value={formatRating(stats.averageRatingGiven)}
-      />
-      <StatCard
-        icon={Star}
-        label={t("ratingReceived")}
-        value={formatRating(stats.averageRatingReceived)}
+      <StatRow
+        size="md"
+        stats={[
+          {
+            label: t("collections"),
+            value: String(stats.collectionsCount),
+          },
+          {
+            label: t("distinctDefinitions"),
+            value: String(stats.distinctDefinitions),
+          },
+          {
+            label: t("goals"),
+            value: String(stats.goalsAchieved),
+            sub: t("goalsValue", {
+              achieved: stats.goalsAchieved,
+              active: stats.goalsActive,
+            }),
+          },
+          {
+            label: t("ratingGiven"),
+            value: formatRating(stats.averageRatingGiven),
+          },
+          {
+            label: t("ratingReceived"),
+            value: formatRating(stats.averageRatingReceived),
+          },
+        ]}
       />
     </div>
   );

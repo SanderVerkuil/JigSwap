@@ -10,21 +10,49 @@ import { Canvas, events, useFrame, useThree } from "@react-three/fiber";
 import { easing } from "maath";
 import * as React from "react";
 import * as THREE from "three";
-import { BOX_DEPTH, PuzzleBox, PX, type BoxSlot } from "./box";
+import { BOX_DEPTH, BOX_SCALE, PuzzleBox, PX, type BoxSlot } from "./box";
 import { LIGHTING, type LightingPreset } from "./palette";
 
 const SHELF_THICKNESS = 0.14;
-const SHELF_DEPTH = 0.7;
+const SHELF_DEPTH = 0.6;
+
+// ——— shelf rows ———
+// Vertical distance between shelf-board top surfaces. The tallest boxes are
+// ~1.15 world units (144 px × BOX_SCALE × max jitter), leaving a visible air
+// gap under each board like a real bookcase.
+const ROW_PITCH = 1.45;
+// Tallest box in world units — drives the framed content height.
+const MAX_BOX_H = 1.44 * BOX_SCALE * 1.1;
+// Slight per-row x shift so columns don't grid-align across rows
+// (real shelves never line up).
+const ROW_X_OFFSETS = [0, 0.55, -0.45, 0.3, -0.6];
+// How many rows are framed vertically. Any rows beyond this (the shelf is
+// built taller than the frame) bleed off the top and bottom edges so the
+// bookcase reads as continuing above and below the view.
+const VISIBLE_ROWS = 3;
+// Deterministic per-instance footprint variation — repeated boxes read as
+// different copies. Indexed, never Math.random, so renders are stable.
+const SIZE_JITTER = [1, 0.92, 1.06, 0.88, 1.02, 0.95, 1.1, 0.9];
+// Deterministic gap rhythm between neighbouring boxes on a row.
+const GAP_PATTERN = [0.34, 0.5, 0.28, 0.44, 0.58, 0.3];
+// Safety ceiling on boxes per row so ultra-wide viewports can't explode the
+// draw count. Normal/tablet/mobile spans fill well below this; only very wide
+// screens reach it (and the leftover board is centred into the fog — see
+// buildRowInstances). The span itself scales with the viewport, so the number
+// of boxes is dynamic across sizes.
+const MAX_PER_ROW = 20;
+// Spotlights are expensive per-fragment: light only the bottom row, every
+// other slot, capped — the upper rows live off key/ambient/hemi light.
+const MAX_SPOTS = 6;
 
 // ——— camera constants ———
 const FOV = 38;
 const CAMERA_X = 0.15;
-const CAMERA_Y = 1.5;
-const LOOK_AT_Y = 0.62;
-
-// Vertical content range to frame: boxes ~1.44–1.7 tall + shelf + headroom.
-// Bumped from 2.1 → 2.4 to give near-right boxes more breathing room.
-const CONTENT_H = 2.4;
+// Headroom added above the box stack when computing the framed height.
+const CONTENT_HEADROOM = 0.65;
+// Camera sits slightly above the look-at point for a gentle downward gaze,
+// like standing in front of a bookcase.
+const CAMERA_Y_LIFT = 0.8;
 
 // ——— yaw / perspective constants ———
 // Negative yaw rotates the shelf so its right end swings toward +z (toward the
@@ -37,14 +65,14 @@ const SHELF_YAW = -(27 * Math.PI) / 180;
 // room for the near end which projects larger due to perspective.
 const SPAN_PERSPECTIVE_ALLOWANCE = 1.2;
 
-// Group offset: pull composition slightly left and back so the near-right box
-// doesn't overwhelm the frame after the yaw.
+// Group offset: pull composition slightly left and back so the near-right
+// boxes don't overwhelm the frame after the yaw.
 const GROUP_OFFSET_X = -0.3;
-const GROUP_OFFSET_Z = -0.55;
+const GROUP_OFFSET_Z = -0.7;
 
 // ——— fog constants ———
-// FOG_NEAR ≈ camera distance; FOG_FAR adds ~5 units of haze window so the
-// far-left end dissolves toward the page background color.
+// FOG_NEAR ≈ camera distance; FOG_FAR adds a haze window so both row ends
+// dissolve toward the page background color and the shelf reads as endless.
 const FOG_NEAR_OFFSET = 0; // added to computed dist
 const FOG_FAR_OFFSET = 5; // additional depth beyond near
 
@@ -92,7 +120,7 @@ function Lights({
     <>
       <directionalLight
         ref={key}
-        position={[2.5, 4, 3]}
+        position={[2.5, 5, 3.5]}
         intensity={preset.keyIntensity}
       />
       <ambientLight ref={ambient} intensity={preset.ambientIntensity} />
@@ -104,7 +132,7 @@ function Lights({
       />
       <directionalLight
         ref={rim}
-        position={[-3, 2.5, -2]}
+        position={[-3, 3.5, -2]}
         color="#8b5cf6"
         intensity={preset.rimIntensity}
       />
@@ -211,7 +239,7 @@ function BoxSpot({
   const light = React.useRef<THREE.SpotLight>(null);
   const target = React.useMemo(() => {
     const o = new THREE.Object3D();
-    o.position.set(x, 0.7, 0);
+    o.position.set(x, 0.5, 0);
     return o;
   }, [x]);
   useFrame((_, delta) => {
@@ -229,9 +257,9 @@ function BoxSpot({
       <primitive object={target} />
       <spotLight
         ref={light}
-        position={[x + 0.15, 2.6, 1.1]}
+        position={[x + 0.15, 2.1, 1.0]}
         target={target}
-        angle={0.5}
+        angle={0.45}
         penumbra={0.85}
         decay={1.2}
         intensity={preset.spotIntensity}
@@ -261,19 +289,67 @@ function Haze({
   return null;
 }
 
+// One rendered box on a shelf row: the source box, its slot (x + resolved
+// colors), the deterministic footprint jitter and a lean/yaw seed.
+interface RowInstance {
+  box: PlankBox;
+  slot: BoxSlot;
+  sizeScale: number;
+  index: number;
+}
+
+/**
+ * Fill one shelf row by cycling its box list left → right until the span is
+ * covered (or MAX_PER_ROW). All variation (size jitter, gap rhythm) is
+ * index-derived so the layout is deterministic per (row, span).
+ */
+function buildRowInstances(
+  rowBoxes: PlankBox[],
+  rowResolved: Array<{ c1: string; c2: string }>,
+  rowIndex: number,
+  span: number,
+): RowInstance[] {
+  if (rowBoxes.length === 0) return [];
+  const out: RowInstance[] = [];
+  let cursor = -span / 2;
+  for (let i = 0; cursor < span / 2 && out.length < MAX_PER_ROW; i++) {
+    const src = i % rowBoxes.length;
+    const sizeScale = SIZE_JITTER[(i * 3 + rowIndex * 2) % SIZE_JITTER.length];
+    const w = (rowBoxes[src].width ?? 116) * PX * BOX_SCALE * sizeScale;
+    const colors = rowResolved[src] ?? { c1: "#8b5cf6", c2: "#6d28d9" };
+    out.push({
+      box: rowBoxes[src],
+      slot: { x: cursor + w / 2, c1: colors.c1, c2: colors.c2 },
+      sizeScale,
+      // Decorrelate lean/yaw between vertical neighbours across rows.
+      index: i * 3 + rowIndex,
+    });
+    cursor += w + GAP_PATTERN[(i * 2 + rowIndex) % GAP_PATTERN.length];
+  }
+  // If MAX_PER_ROW capped the fill before the span was covered (ultra-wide
+  // viewports), centre the row so any leftover board splits evenly between the
+  // two far ends — both deep in the fog — instead of leaving a bare gap on one
+  // side in plain view.
+  const shortfall = span / 2 - cursor;
+  if (shortfall > 0) {
+    for (const inst of out) inst.slot.x += shortfall / 2;
+  }
+  return out;
+}
+
 // Inner component that reads live canvas size via useThree, computes camera
-// distance and visible world width, distributes box slots, and positions the
-// camera — all in one place so the math stays consistent.
+// distance and visible world width, distributes box slots across shelf rows,
+// and positions the camera — all in one place so the math stays consistent.
 function Arrangement({
-  boxes,
+  rows,
   resolved,
   headingFont,
   lightingPreset,
   reducedMotion,
   onFirstFrame,
 }: {
-  boxes: PlankBox[];
-  resolved: Array<{ c1: string; c2: string }>;
+  rows: PlankBox[][];
+  resolved: Array<Array<{ c1: string; c2: string }>>;
   headingFont: string;
   lightingPreset: LightingPreset;
   reducedMotion: boolean;
@@ -282,11 +358,27 @@ function Arrangement({
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const size = useThree((s) => s.size);
 
+  const rowCount = Math.max(rows.length, 1);
+  // The central row carries the gallery spots + contact shadow (the most
+  // visible row in the frame); the others live off key/ambient/hemi light.
+  const anchorRow = Math.round((rowCount - 1) / 2);
+
+  // ——— vertical framing ———
+  // The camera looks at the stack's visual centre, but frames only a fixed
+  // VISIBLE_ROWS-tall window — so when the shelf is built taller than that
+  // (extra rows), the top and bottom rows bleed off-frame and the bookcase
+  // reads as continuing above and below the view. Box size stays constant
+  // regardless of how many rows exist.
+  const stackH = ROW_PITCH * (rowCount - 1) + MAX_BOX_H;
+  const lookAtY = stackH / 2 - 0.1;
+  const cameraY = lookAtY + CAMERA_Y_LIFT;
+
   // ——— cover-fit by height, with minimum visible width for narrow canvases ———
   const vFov = (FOV * Math.PI) / 180;
   const aspect = size.width / size.height;
   const MIN_VIS_W = 3.2; // never show less than ~3 boxes worth of shelf
-  const contentH = Math.max(CONTENT_H, MIN_VIS_W / aspect);
+  const framedH = ROW_PITCH * (VISIBLE_ROWS - 1) + MAX_BOX_H;
+  const contentH = Math.max(framedH + CONTENT_HEADROOM, MIN_VIS_W / aspect);
   const dist = contentH / 2 / Math.tan(vFov / 2);
 
   // ——— visible world width at z = 0 ———
@@ -295,40 +387,31 @@ function Arrangement({
 
   // ——— position camera ———
   React.useLayoutEffect(() => {
-    camera.position.set(CAMERA_X, CAMERA_Y, dist);
-    camera.lookAt(0, LOOK_AT_Y, 0);
+    camera.position.set(CAMERA_X, cameraY, dist);
+    camera.lookAt(0, lookAtY, 0);
     camera.updateProjectionMatrix();
-  }, [camera, size, dist]);
+  }, [camera, size, dist, cameraY, lookAtY]);
 
   // ——— fog distance bounds ———
   const fogNear = dist + FOG_NEAR_OFFSET;
   const fogFar = dist + FOG_FAR_OFFSET;
 
-  // ——— box slot distribution across visW + overshoot ———
+  // ——— row span: run past both screen edges so rows dissolve into the fog ———
   // The yawed shelf covers only cos(SHELF_YAW) of its length on screen, so we
   // distribute slots over a wider span; SPAN_PERSPECTIVE_ALLOWANCE adds extra
   // room for the near end which projects larger due to perspective.
-  const widths = boxes.map((b) => (b.width ?? 116) * PX);
-  const n = boxes.length;
-  const totalBoxWidths = widths.reduce((a, b) => a + b, 0);
   const span =
     ((visW + 0.6) / Math.cos(-SHELF_YAW)) * SPAN_PERSPECTIVE_ALLOWANCE;
-  const rawGap = n > 1 ? (span - totalBoxWidths) / (n - 1) : 0;
-  const gap = Math.max(0.25, Math.min(1.15, rawGap));
 
-  // If clamping made the row narrower than span, center it; otherwise start
-  // from the left edge of the span.
-  const rowWidth = totalBoxWidths + gap * Math.max(n - 1, 0);
-  const startX = -rowWidth / 2;
+  const rowInstances = React.useMemo(
+    () =>
+      rows.map((rowBoxes, r) =>
+        buildRowInstances(rowBoxes, resolved[r] ?? [], r, span),
+      ),
+    [rows, resolved, span],
+  );
 
-  const slots: BoxSlot[] = [];
-  let cursor = startX;
-  for (let i = 0; i < n; i++) {
-    slots.push({ x: cursor + widths[i] / 2, ...resolved[i] });
-    cursor += widths[i] + gap;
-  }
-
-  // Shelf extends past both edges, never shows end-caps.
+  // Shelf boards extend past both edges, never showing end-caps.
   const shelfWidth = span + 2;
 
   return (
@@ -337,43 +420,64 @@ function Arrangement({
       <fog attach="fog" args={[lightingPreset.fogColor, fogNear, fogFar]} />
       <Haze preset={lightingPreset} reducedMotion={reducedMotion} />
       <Parallax enabled={!reducedMotion}>
-        {/* Yaw group: rotates shelf + boxes + lights as a unit.
+        {/* Yaw group: rotates all shelf rows + boxes + lights as a unit.
             SHELF_YAW is negative so (1,0,0) → (cos θ, 0, −sin θ) with θ < 0
             gives −sin θ > 0, i.e. the right end moves toward +z (the camera). */}
         <group
           position={[GROUP_OFFSET_X, 0, GROUP_OFFSET_Z]}
           rotation={[0, SHELF_YAW, 0]}
         >
-          <Shelf
-            worldWidth={shelfWidth}
-            color={lightingPreset.shelfColor}
-            reducedMotion={reducedMotion}
-          />
-          {boxes.map((box, i) => (
-            <PuzzleBox
-              key={i}
-              box={box}
-              slot={slots[i]}
-              index={i}
-              headingFont={headingFont}
-            />
+          {rowInstances.map((instances, r) => (
+            <group
+              key={r}
+              position={[
+                ROW_X_OFFSETS[r % ROW_X_OFFSETS.length],
+                r * ROW_PITCH,
+                0,
+              ]}
+            >
+              <Shelf
+                worldWidth={shelfWidth}
+                color={lightingPreset.shelfColor}
+                reducedMotion={reducedMotion}
+              />
+              {instances.map((inst, k) => (
+                <PuzzleBox
+                  key={k}
+                  box={inst.box}
+                  slot={inst.slot}
+                  index={inst.index}
+                  sizeScale={inst.sizeScale}
+                  headingFont={headingFont}
+                />
+              ))}
+              {/* Gallery spots + contact shadows only on the central row: it
+                  anchors the composition and is the most visible; the other
+                  rows stay cheap and live off key/ambient/hemi light. */}
+              {r === anchorRow &&
+                instances
+                  .filter((_, k) => k % 2 === 0)
+                  .slice(0, MAX_SPOTS)
+                  .map((inst, k) => (
+                    <BoxSpot
+                      key={k}
+                      x={inst.slot.x}
+                      preset={lightingPreset}
+                      reducedMotion={reducedMotion}
+                    />
+                  ))}
+              {r === anchorRow && (
+                <ContactShadows
+                  position={[0, 0.001, 0]}
+                  opacity={lightingPreset.shadowOpacity}
+                  scale={shelfWidth}
+                  blur={2.2}
+                  far={1.2}
+                  resolution={256}
+                />
+              )}
+            </group>
           ))}
-          {slots.map((slot, i) => (
-            <BoxSpot
-              key={i}
-              x={slot.x}
-              preset={lightingPreset}
-              reducedMotion={reducedMotion}
-            />
-          ))}
-          <ContactShadows
-            position={[0, 0.001, 0]}
-            opacity={lightingPreset.shadowOpacity}
-            scale={shelfWidth}
-            blur={2.2}
-            far={1.2}
-            resolution={256}
-          />
         </group>
       </Parallax>
     </>
@@ -381,10 +485,11 @@ function Arrangement({
 }
 
 export interface SceneProps {
-  boxes: PlankBox[];
+  /** Shelf rows, bottom row first; each row carries its own box list. */
+  rows: PlankBox[][];
   /** Pre-resolved per-box colors + heading font (resolved in index.tsx,
-   *  where the marketing DOM scope is available). */
-  resolved: Array<{ c1: string; c2: string }>;
+   *  where the marketing DOM scope is available). Parallel to `rows`. */
+  resolved: Array<Array<{ c1: string; c2: string }>>;
   headingFont: string;
   theme: "light" | "dark";
   reducedMotion: boolean;
@@ -408,7 +513,7 @@ export default function PlankScene(props: SceneProps) {
     >
       <Lights preset={lightingPreset} reducedMotion={props.reducedMotion} />
       <Arrangement
-        boxes={props.boxes}
+        rows={props.rows}
         resolved={props.resolved}
         headingFont={props.headingFont}
         lightingPreset={lightingPreset}

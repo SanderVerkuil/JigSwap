@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { gateway } from "@/gateway";
 import { useQuery } from "convex/react";
+import { useTranslations } from "use-intl";
 
 // A followers or following list for the acting member. The query resolves each counterparty's
 // display name server-side; here we only render the FollowEdgeView entries.
@@ -14,6 +15,7 @@ export function FollowList({
   variant: "followers" | "following";
   emptyHint: string;
 }) {
+  const tCommon = useTranslations("common");
   const edges = useQuery(
     variant === "followers"
       ? gateway.social.followers
@@ -25,7 +27,7 @@ export function FollowList({
     return (
       <Card>
         <CardContent className="p-6 text-sm text-muted-foreground">
-          Loading...
+          {tCommon("loading")}
         </CardContent>
       </Card>
     );

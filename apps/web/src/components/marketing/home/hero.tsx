@@ -32,6 +32,10 @@ const PLANK_WIDE: PlankBox[] = [
     c2: "var(--mk-green-600)",
     width: 96,
   },
+  // The real-cover box: index 2 deals onto the central anchor row
+  // (2 % SHELF_ROWS), where the gallery spots and contact shadows keep it
+  // prominent and it sits in the framed part of the bookcase.
+  { cover: coverSand, title: "Zandsculpturen", width: 134 },
   {
     series: "Kunst",
     title: "Sterrennacht",
@@ -40,8 +44,6 @@ const PLANK_WIDE: PlankBox[] = [
     c2: "var(--mk-pink-500)",
     width: 108,
   },
-  // The real-cover box sits right-of-center where the scrim doesn't dim it.
-  { cover: coverSand, title: "Zandsculpturen", width: 134 },
   {
     series: "Natuur",
     title: "Waddenzee",
@@ -66,6 +68,62 @@ const PLANK_WIDE: PlankBox[] = [
     c2: "var(--mk-pink-500)",
     width: 98,
   },
+  {
+    series: "Natuur",
+    title: "Keukenhof",
+    pieceCount: 1000,
+    c1: "var(--mk-green-400)",
+    c2: "var(--mk-green-600)",
+    width: 112,
+  },
+  {
+    series: "Steden",
+    title: "Utrecht",
+    pieceCount: 750,
+    c1: "var(--mk-violet-400)",
+    c2: "var(--mk-violet-600)",
+    width: 94,
+  },
+  {
+    series: "Kunst",
+    title: "De Nachtwacht",
+    pieceCount: 2000,
+    c1: "var(--mk-pink-400)",
+    c2: "var(--mk-pink-500)",
+    width: 118,
+  },
+  {
+    series: "Natuur",
+    title: "Hoge Veluwe",
+    pieceCount: 1500,
+    c1: "var(--mk-green-300)",
+    c2: "var(--mk-green-600)",
+    width: 102,
+  },
+  {
+    series: "Steden",
+    title: "Giethoorn",
+    pieceCount: 500,
+    c1: "var(--mk-violet-300)",
+    c2: "var(--mk-violet-700)",
+    width: 88,
+  },
+  {
+    series: "Kunst",
+    title: "Delfts Blauw",
+    pieceCount: 1000,
+    c1: "var(--mk-pink-300)",
+    c2: "var(--mk-pink-500)",
+    width: 106,
+  },
+  {
+    series: "Natuur",
+    title: "Kinderdijk",
+    pieceCount: 1500,
+    c1: "var(--mk-green-400)",
+    c2: "var(--mk-green-600)",
+    width: 96,
+  },
 ];
 
 const WIDTHS = [100, 134, 96, 108, 90, 104, 98] as const;
@@ -75,6 +133,20 @@ const COLOR_PAIRS: Array<[string, string]> = [
   ["var(--mk-pink-400)", "var(--mk-pink-500)"],
   ["var(--mk-violet-300)", "var(--mk-violet-700)"],
 ];
+
+// Number of stacked shelf rows in the 3D backdrop. The scene frames only the
+// central rows, so the top and bottom rows bleed off-frame and the bookcase
+// reads as continuing above and below the view.
+const SHELF_ROWS = 5;
+
+// Deal boxes round-robin across the shelf rows so each row gets its own mix
+// of colours and covers; the 3D scene cycles each row's list to fill the
+// visible span, so a handful of unique boxes per row is enough.
+function toRows(boxes: PlankBox[]): PlankBox[][] {
+  const rows: PlankBox[][] = Array.from({ length: SHELF_ROWS }, () => []);
+  boxes.forEach((box, i) => rows[i % SHELF_ROWS].push(box));
+  return rows;
+}
 
 type PlankPuzzleView = {
   title: string;
@@ -225,13 +297,17 @@ export function Hero() {
   React.useEffect(() => setSeed(Math.floor(Math.random() * 0xffffffff)), []);
   const livePuzzles = useQuery(
     gateway.insights.plankPuzzles,
-    seed === null ? "skip" : { limit: 7, seed },
+    // 12 is the backend's clamp ceiling — enough for ~4 unique boxes per
+    // shelf row before the scene starts cycling them.
+    seed === null ? "skip" : { limit: 12, seed },
   );
-  const boxes = React.useMemo(
+  const rows = React.useMemo(
     () =>
-      livePuzzles && livePuzzles.length >= 3
-        ? livePuzzles.map(toPlankBox)
-        : PLANK_WIDE,
+      toRows(
+        livePuzzles && livePuzzles.length >= 3
+          ? livePuzzles.map(toPlankBox)
+          : PLANK_WIDE,
+      ),
     [livePuzzles],
   );
 
@@ -241,7 +317,7 @@ export function Hero() {
 
       {/* Full-bleed 3D backdrop layer */}
       <div className="absolute inset-0" aria-hidden="true">
-        <JigPlank3D boxes={boxes} />
+        <JigPlank3D rows={rows} />
       </div>
 
       {/* Readability scrim: horizontal fade for the text side + bottom fade so

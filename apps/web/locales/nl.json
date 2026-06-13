@@ -279,6 +279,13 @@
     "signInToAccount": "Log in op je account",
     "createNewAccount": "Maak een nieuw account"
   },
+  "activity": {
+    "completion": "Een lid heeft een puzzel voltooid",
+    "acquisition": "Een lid heeft een puzzel toegevoegd",
+    "exchange": "Een lid heeft een ruil afgerond",
+    "empty": "Nog geen recente activiteit",
+    "emptyHint": "Volg andere leden om te zien wat zij doen."
+  },
   "puzzles": {
     "title": "Titel",
     "description": "Beschrijving",
@@ -292,6 +299,9 @@
     "owner": "Eigenaar",
     "available": "Beschikbaar",
     "unavailable": "Niet Beschikbaar",
+    "lend": "Te Leen",
+    "trade": "Te Ruil",
+    "sale": "Te Koop",
     "completed": "Voltooid",
     "addPuzzle": "Puzzel Toevoegen",
     "editPuzzle": "Puzzel Bewerken",
@@ -299,8 +309,8 @@
     "requestExchange": "Uitwisseling Aanvragen",
     "myPuzzles": "Mijn Puzzels",
     "managePuzzles": "Beheer je puzzelcollectie",
-    "noPuzzles": "Nog geen puzzels",
-    "addFirstPuzzle": "Voeg je eerste puzzel toe om te beginnen met ruilen",
+    "noPuzzles": "Nog geen puzzels hier",
+    "addFirstPuzzle": "Voeg je eerste puzzel toe om te beginnen met ruilen.",
     "noImage": "Geen Afbeelding",
     "addPuzzleDescription": "Voeg een nieuwe puzzel toe aan je collectie",
     "selectPuzzle": "Puzzel Selecteren",
@@ -443,7 +453,24 @@
       "actions": "Acties",
       "addToFavorites": "Toevoegen aan Favorieten",
       "notFound": "Puzzel niet gevonden"
-    }
+    },
+    "filters": {
+      "all": "Alles",
+      "available": "Beschikbaar",
+      "forTrade": "Te Ruilen",
+      "forLend": "Te Leen",
+      "inProgress": "Bezig",
+      "completed": "Voltooid"
+    },
+    "resultCount": "{count} van {total} puzzels",
+    "searchHint": "Druk op ⌘K om puzzels, mensen en meer te zoeken",
+    "countMeta": "{count, plural, one {# puzzel} other {# puzzels}}",
+    "gridView": "Rasterweergave",
+    "listView": "Lijstweergave",
+    "deleteConfirm": "Weet je zeker dat je deze puzzel wilt verwijderen?",
+    "loadingPuzzles": "Puzzels laden...",
+    "new_sealed": "Nieuw (Verzegeld)",
+    "like_new": "Zo Goed Als Nieuw"
   },
   "trades": {
     "title": "Uitwisselingen",
@@ -475,7 +502,27 @@
     "decline": "Afwijzen",
     "cancel": "Annuleren",
     "markComplete": "Markeren als Voltooid",
-    "message": "Bericht"
+    "message": "Bericht",
+    "all": "Alle",
+    "exchangesCount": "{count, plural, one {# uitwisseling} other {# uitwisselingen}}",
+    "rowMeta": "{direction} · met {who} · {when}",
+    "kind": {
+      "trade": "Ruil",
+      "sale": "Verkoop",
+      "loan": "Uitleen"
+    },
+    "direction": {
+      "incoming": "inkomend",
+      "outgoing": "uitgaand"
+    },
+    "status": {
+      "proposed": "In afwachting",
+      "accepted": "Geaccepteerd",
+      "rejected": "Afgewezen",
+      "completed": "Afgerond",
+      "cancelled": "Geannuleerd",
+      "disputed": "In geschil"
+    }
   },
   "reputation": {
     "title": "Reputatie",
@@ -520,7 +567,12 @@
     "sendMessage": "Bericht Versturen",
     "typeMessage": "Type je bericht...",
     "noMessages": "Nog geen berichten",
-    "newMessage": "Nieuw Bericht"
+    "newMessage": "Nieuw Bericht",
+    "searchUsers": "Zoek gebruikers...",
+    "online": "Online",
+    "offline": "Offline",
+    "selectConversation": "Selecteer een gesprek",
+    "selectConversationHint": "Kies een gebruiker in de zijbalk om te beginnen met chatten"
   },
   "profile": {
     "title": "Profiel",
@@ -554,7 +606,39 @@
     "reviews": "Beoordelingen",
     "trustLevel": "Vertrouwensniveau",
     "trustLevelDescription": "Gebaseerd op voltooide uitwisselingen en beoordelingen",
-    "notFound": "Gebruiker niet gevonden"
+    "notFound": "Gebruiker niet gevonden",
+    "trustBadge": "{rating} Vertrouwen",
+    "save": "Opslaan",
+    "saving": "Opslaan…",
+    "saved": "Profiel opgeslagen",
+    "saveError": "Je profiel kon niet worden opgeslagen. Probeer het opnieuw.",
+    "usernamePlaceholder": "jouw-gebruikersnaam",
+    "locationPlaceholder": "Plaats, Land",
+    "bioPlaceholder": "Vertel andere leden iets over jezelf…",
+    "shelf": {
+      "title": "De Plank van {name}",
+      "meta": "{count, plural, one {# uitgestald} other {# uitgestald}}"
+    },
+    "trustLevels": {
+      "beginner": "Beginner",
+      "intermediate": "Gevorderd",
+      "experienced": "Ervaren"
+    },
+    "editor": {
+      "title": "Openbaar profiel",
+      "description": "Je weergavenaam en bio zoals andere leden ze zien.",
+      "edit": "Bewerken",
+      "save": "Opslaan",
+      "cancel": "Annuleren",
+      "displayName": "Weergavenaam",
+      "displayNamePlaceholder": "Je weergavenaam",
+      "bio": "Bio",
+      "bioPlaceholder": "Vertel andere leden iets over jezelf",
+      "notSetUp": "Je hebt nog geen openbaar profiel ingesteld.",
+      "emptyNameError": "Weergavenaam mag niet leeg zijn",
+      "saved": "Profiel opgeslagen",
+      "saveError": "Kon profiel niet opslaan"
+    }
   },
   "dashboard": {
     "welcome": "Welkom terug",
@@ -575,21 +659,119 @@
     "recentActivity": {
       "title": "Recente Activiteit",
       "noActivity": "Geen recente activiteit"
+    },
+    "brief": {
+      "swapsPendingGoal": "Je hebt <swapsLink>{swapsCount, plural, one {# lopende ruil} other {# lopende ruilen}}</swapsLink>, {pendingCount, plural, one {één verzoek dat op je antwoord wacht} other {# verzoeken die op je antwoord wachten}}, en je bent <goalLink>{pct}% op weg</goalLink> naar je doel van {target, plural, one {# puzzel} other {# puzzels}}.",
+      "swapsPending": "Je hebt <swapsLink>{swapsCount, plural, one {# lopende ruil} other {# lopende ruilen}}</swapsLink> en {pendingCount, plural, one {één verzoek dat op je antwoord wacht} other {# verzoeken die op je antwoord wachten}}.",
+      "swapsGoal": "Je hebt <swapsLink>{swapsCount, plural, one {# lopende ruil} other {# lopende ruilen}}</swapsLink>, en je bent <goalLink>{pct}% op weg</goalLink> naar je doel van {target, plural, one {# puzzel} other {# puzzels}}.",
+      "pendingGoal": "Je hebt {pendingCount, plural, one {één verzoek dat op je antwoord wacht} other {# verzoeken die op je antwoord wachten}}, en je bent <goalLink>{pct}% op weg</goalLink> naar je doel van {target, plural, one {# puzzel} other {# puzzels}}.",
+      "swapsOnly": "Je hebt <swapsLink>{swapsCount, plural, one {# lopende ruil} other {# lopende ruilen}}</swapsLink> — houd die stukjes in beweging.",
+      "pendingOnly": "Je hebt {pendingCount, plural, one {één verzoek dat op je antwoord wacht} other {# verzoeken die op je antwoord wachten}}.",
+      "goalOnly": "Alles rustig aan het ruilfront — en je bent <goalLink>{pct}% op weg</goalLink> naar je doel van {target, plural, one {# puzzel} other {# puzzels}}.",
+      "empty": "Je plank is er klaar voor — voeg een puzzel toe of neus rond in de community om de boel in beweging te krijgen. 🧩"
+    },
+    "pendingBanner": {
+      "swap": "<strong>{name}</strong> wil <strong>{theirs}</strong> ruilen voor jouw <mineStrong>{mine}</mineStrong>",
+      "want": "<strong>{name}</strong> wil jouw <mineStrong>{mine}</mineStrong> graag hebben",
+      "borrow": "<strong>{name}</strong> wil jouw <mineStrong>{mine}</mineStrong> graag lenen",
+      "buy": "<strong>{name}</strong> wil jouw <mineStrong>{mine}</mineStrong> graag kopen",
+      "accept": "Ruil Accepteren",
+      "reply": "Reageren"
+    },
+    "actions": {
+      "addPuzzle": "Puzzel Toevoegen",
+      "browse": "Community Verkennen",
+      "logCompletion": "Voltooiing Vastleggen"
+    },
+    "shelf": {
+      "title": "Jouw Plank",
+      "meta": "{owned, plural, one {# op de plank} other {# op de plank}} · {forTrade, plural, =0 {geen te ruil} one {# te ruil} other {# te ruil}}",
+      "viewCollections": "Collecties Bekijken",
+      "empty": "Je plank wacht op zijn eerste puzzel — voeg er een toe en hij staat hier te pronken (en te ruilen). 🧩",
+      "addFirst": "Voeg Je Eerste Puzzel Toe",
+      "stats": {
+        "ownedLabel": "Puzzels in Bezit",
+        "ownedSub": "{count, plural, =0 {Nog geen te ruil} one {# te ruil} other {# te ruil}}",
+        "completedLabel": "Ruilen Afgerond",
+        "completedSub": "Alle afgeronde ruilen",
+        "ratingLabel": "Gemiddelde Beoordeling",
+        "ratingSub": "{count, plural, =0 {Nog geen reviews} one {op basis van # review} other {op basis van # reviews}}",
+        "activeLabel": "Lopende Ruilen",
+        "activeSub": "Op dit moment in beweging"
+      }
+    },
+    "pulse": {
+      "inMotion": {
+        "title": "In Beweging",
+        "all": "Alles",
+        "meta": "{kind} · {direction} · {who}",
+        "kind": {
+          "trade": "Ruil",
+          "sale": "Verkoop",
+          "loan": "Leen"
+        },
+        "direction": {
+          "incoming": "inkomend",
+          "outgoing": "uitgaand"
+        },
+        "status": {
+          "proposed": "In Afwachting",
+          "accepted": "Geaccepteerd",
+          "completed": "Afgerond",
+          "disputed": "In Geschil",
+          "rejected": "Afgewezen",
+          "cancelled": "Geannuleerd"
+        },
+        "empty": "Er is nu niets in beweging — neus rond in de community om je volgende ruil op te zetten. 🧩"
+      },
+      "goals": {
+        "title": "Doelen",
+        "all": "Alles",
+        "done": "{current}/{target} gedaan",
+        "empty": "Nog geen doelen — stel jezelf een doel en zie de ring vollopen. 🧩",
+        "setGoal": "Stel een Doel"
+      },
+      "latest": {
+        "title": "Recent",
+        "completion": "<strong>{name}</strong> heeft een puzzel afgemaakt",
+        "acquisition": "<strong>{name}</strong> heeft een puzzel op de plank gezet",
+        "exchange": "<strong>{name}</strong> heeft een ruil afgerond",
+        "empty": "Voorlopig alles rustig — volg medepuzzelaars en hun nieuwste stappen verschijnen hier. 🧩"
+      }
+    },
+    "fresh": {
+      "title": "Vers op de Plank",
+      "meta": "Onlangs toegevoegd",
+      "myPuzzles": "Mijn Puzzels"
     }
   },
   "browse": {
     "title": "Puzzels Bladeren",
     "subtitle": "Ontdek geweldige puzzels van de community",
     "puzzlesFound": "puzzels gevonden",
-    "searchPlaceholder": "Zoek puzzels op titel, merk of beschrijving...",
+    "searchPlaceholder": "Zoek puzzels op titel, merk of thema…",
     "allCategories": "Alle Categorieën",
     "allDifficulties": "Alle Moeilijkheidsgraden",
     "allConditions": "Alle Condities",
     "minPieces": "Min Stukken",
     "maxPieces": "Max Stukken",
-    "clearFilters": "Filters Wissen",
+    "clearFilters": "Alles Wissen",
     "noPuzzlesFound": "Geen puzzels gevonden",
-    "tryDifferentFilters": "Probeer je zoekcriteria of filters aan te passen"
+    "tryDifferentFilters": "Pas je filters aan.",
+    "filterAll": "Alle",
+    "available": "Beschikbaar",
+    "resultsCount": "{count, plural, one {# puzzel gevonden} other {# puzzels gevonden}}",
+    "favoritesComingSoon": "Favorieten komen binnenkort",
+    "searchHint": "Druk op ⌘K om op titel of merk te zoeken",
+    "addFilter": "Filter Toevoegen",
+    "addFilterSearch": "Filteren op…",
+    "noFilters": "Geen filters meer om toe te voegen.",
+    "removeFilter": "Filter verwijderen",
+    "fieldText": "Tekst",
+    "fieldAvailability": "Beschikbaarheid",
+    "textPlaceholder": "Titel, merk of thema…",
+    "gridView": "Rasterweergave",
+    "listView": "Lijstweergave"
   },
   "footer": {
     "tagline": "Legpuzzelruil toegankelijk en duurzaam maken voor iedereen.",
@@ -978,6 +1160,8 @@
     "default": "Standaard",
     "addPuzzles": "Puzzels Toevoegen",
     "addPuzzlesToCollection": "Puzzels Toevoegen aan Collectie",
+    "noPuzzlesInCollection": "Nog geen puzzels in deze collectie",
+    "puzzleCount": "{count, plural, one {# puzzel} other {# puzzels}}",
     "selectPuzzlesToAdd": "Selecteer puzzels om toe te voegen aan collectie",
     "noAvailablePuzzles": "Geen beschikbare puzzels",
     "allPuzzlesInCollection": "Al je puzzels zijn al in deze collectie of komen overeen met je zoekopdracht",
@@ -988,7 +1172,81 @@
     "collectionNotFound": "Collectie niet gevonden",
     "backToCollections": "Terug naar Collecties",
     "manageCollections": "Collecties Beheren",
-    "notFound": "Collectie niet gevonden"
+    "notFound": "Collectie niet gevonden",
+    "meta": "{shelves, plural, one {# plank} other {# planken}} · {puzzles, plural, one {# puzzel} other {# puzzels}}",
+    "newCollection": "Nieuwe Collectie",
+    "deleteConfirm": "Weet je zeker dat je deze collectie wilt verwijderen?",
+    "loadingCollections": "Collecties laden...",
+    "piecesTotal": "Stukjes Totaal",
+    "avgDifficulty": "Gem. Moeilijkheid",
+    "upForTrade": "Te Ruil",
+    "difficultyMix": "Moeilijkheidsverdeling",
+    "puzzlesInCollection": "Puzzels in Deze Collectie",
+    "share": "Delen",
+    "linkCopied": "Link gekopieerd naar klembord",
+    "shareDialog": {
+      "title": "Collectie Delen",
+      "privateExplain": "Deze collectie is privé — alleen jij kunt haar zien. Kies hoe je haar wilt delen.",
+      "makePublic": "Maak openbaar",
+      "makePublicHint": "Iedereen met de link kan haar bekijken.",
+      "keepPrivate": "Houd privé",
+      "keepPrivateHint": "Kopieer een link die alleen jij kunt openen.",
+      "madePublic": "Collectie is nu openbaar — link gekopieerd",
+      "madePublicNote": "Collectie is nu openbaar",
+      "privateLinkCopied": "Link gekopieerd — collectie blijft privé",
+      "error": "Kon delen niet bijwerken. Probeer het opnieuw."
+    },
+    "noPuzzlesAvailable": "Geen Puzzels Beschikbaar",
+    "addPuzzlesFirst": "Voeg eerst puzzels toe aan je bibliotheek en orden ze dan in collecties.",
+    "addSelected": "{count, plural, one {# puzzel toevoegen} other {# puzzels toevoegen}}",
+    "updatedAgo": "Bijgewerkt {time}"
+  },
+  "circles": {
+    "yourCircles": "Jouw Kringen",
+    "meta": "Besloten groepen om binnen te ruilen",
+    "createCircle": "Kring Aanmaken",
+    "roleOwner": "Eigenaar",
+    "roleMember": "Lid",
+    "ownedByYou": "Van jou",
+    "sharedWithYou": "Met jou gedeeld",
+    "membersLabel": "{count, plural, one {lid} other {leden}}",
+    "emptyTitle": "Nog geen kringen",
+    "emptySub": "Maak een kring aan om puzzels te ruilen met vrienden en familie.",
+    "loading": "Kringen laden...",
+    "manage": {
+      "createTitle": "Kring Aanmaken",
+      "createDescription": "Een kring is besloten. Je wordt het eerste lid en de beheerder.",
+      "nameLabel": "Naam",
+      "namePlaceholder": "bijv. Zaterdagpuzzelaars",
+      "cancel": "Annuleren",
+      "create": "Aanmaken",
+      "title": "{name} beheren",
+      "fallbackName": "kring",
+      "description": "Leden toevoegen of verwijderen, rechten instellen en exemplaren delen.",
+      "loadingCircle": "Kring laden...",
+      "unavailable": "Deze kring is niet langer beschikbaar.",
+      "members": "Leden",
+      "owner": "Eigenaar",
+      "addMember": "Lid toevoegen",
+      "searchPlaceholder": "Zoek leden op naam…",
+      "add": "Toevoegen",
+      "shareCopy": "Een exemplaar delen",
+      "shareDescription": "Gedeelde exemplaren worden zichtbaar voor kringleden op het zichtbaarheidsniveau <scope>friendCircle</scope>, ook als ze verder privé zijn.",
+      "chooseCopy": "Kies een van je exemplaren…",
+      "copyFallback": "Exemplaar",
+      "share": "Delen",
+      "close": "Sluiten"
+    }
+  },
+  "people": {
+    "yourNetwork": "Jouw Netwerk",
+    "memberCount": "{count, plural, one {# lid} other {# leden}}",
+    "followsYou": "Volgt jou",
+    "ownedLabel": "in bezit",
+    "swapsLabel": "ruilen",
+    "activity": "Activiteit",
+    "emptyTitle": "Nog geen leden in je netwerk",
+    "emptySub": "Volg medepuzzelaars om je netwerk op te bouwen."
   },
   "notifications": {
     "title": "Meldingen",
@@ -1051,7 +1309,16 @@
       "editWindowClosed": "Deze voltooiing kan niet meer worden bewerkt (het venster van 24 uur is gesloten).",
       "yourReview": "Jouw review",
       "addReview": "Review toevoegen",
-      "editReview": "Review bewerken"
+      "editReview": "Review bewerken",
+      "stats": {
+        "completed": "Puzzels voltooid",
+        "pieces": "Stukjes gelegd",
+        "thisYear": "Dit jaar"
+      },
+      "log": "Voltooiingslog",
+      "logAction": "Voltooiing Loggen",
+      "mostRecent": "Meest recente eerst",
+      "piecesFinished": "{pieces, number} stukjes · voltooid in {days, plural, one {# dag} other {# dagen}}"
     },
     "logSolve": {
       "trigger": "Oplossing vastleggen",
@@ -1087,7 +1354,7 @@
       "subtitle": "Stel voltooiingsdoelen in en volg je voortgang.",
       "empty": "Nog geen doelen",
       "emptyHint": "Maak een doel aan om naar een voltooiingsdoel toe te werken.",
-      "create": "Nieuw doel",
+      "create": "Nieuw Doel",
       "createTitle": "Doel aanmaken",
       "createDescription": "Stel een doelaantal voltooiingen in om naartoe te werken.",
       "goalTitle": "Titel",
@@ -1101,7 +1368,9 @@
       "createError": "Kon het doel niet aanmaken. Probeer het opnieuw.",
       "progress": "{current} van {target} voltooiingen",
       "achieved": "Behaald",
-      "dueBy": "Vóór {date}"
+      "dueBy": "Vóór {date}",
+      "activeCount": "{count} actief",
+      "progressShort": "{current}/{target} voltooid"
     }
   },
   "insights": {
@@ -1163,6 +1432,10 @@
       "success": "Je gegevens zijn gedownload.",
       "error": "Kon je gegevens niet exporteren. Probeer het opnieuw.",
       "capped": "Sommige lijsten zijn beperkt tot {limit} rijen per categorie."
+    },
+    "charts": {
+      "completionsPerMonth": "Voltooiingen / maand",
+      "swapsPerMonth": "Ruilacties / maand"
     }
   },
   "forms": {
@@ -1356,7 +1629,9 @@
     "statusReturned": "Teruggegeven",
     "statusRecalled": "Teruggevraagd",
     "borrowedBy": "Geleend door {name}",
-    "unknownMember": "Onbekend lid"
+    "unknownMember": "Onbekend lid",
+    "borrowedCount": "{count, plural, one {# geleende puzzel} other {# geleende puzzels}}",
+    "pieceCount": "{count, plural, one {# stuk} other {# stukken}}"
   },
   "marketing": {
     "nav": {
@@ -1638,6 +1913,156 @@
     "adminCategories": "Categoriebeheer — JigSwap",
     "adminModeration": "Moderatie — JigSwap",
     "signIn": "Inloggen — JigSwap",
-    "signUp": "Registreren — JigSwap"
+    "signUp": "Registreren — JigSwap",
+    "library": "Mijn Bibliotheek — JigSwap",
+    "people": "Mensen — JigSwap"
+  },
+  "shell": {
+    "search": {
+      "placeholder": "Zoek puzzels, mensen, kringen…",
+      "label": "Zoeken",
+      "inputPlaceholder": "Zoek of spring naar…",
+      "empty": "Geen resultaten gevonden.",
+      "goTo": "Ga Naar",
+      "quickActions": "Snelle Acties",
+      "groupPuzzles": "Puzzels",
+      "groupPeople": "Mensen",
+      "groupCircles": "Kringen",
+      "groupCollections": "Collecties",
+      "searching": "Zoeken…",
+      "noResultsFor": "Geen resultaten voor “{term}”"
+    },
+    "actions": {
+      "addPuzzle": "Puzzel Toevoegen",
+      "addAPuzzle": "Een Puzzel Toevoegen",
+      "logCompletion": "Een Voltooiing Vastleggen",
+      "createCircle": "Een Kring Aanmaken",
+      "browseCommunity": "Community Verkennen"
+    },
+    "welcome": "Welkom terug, {name}! 🧩",
+    "welcomeAnonymous": "Welkom terug! 🧩",
+    "groups": {
+      "library": {
+        "label": "Mijn Bibliotheek",
+        "blurb": "Alles wat je bezit en bijhoudt."
+      },
+      "community": {
+        "label": "Community",
+        "blurb": "Ontdek, ruil en maak contact."
+      }
+    },
+    "pages": {
+      "dashboard": {
+        "title": "Dashboard",
+        "subtitle": "Dit is wat er speelt rond je puzzels.",
+        "description": "Je puzzelwereld in één oogopslag"
+      },
+      "library": {
+        "title": "Mijn Bibliotheek",
+        "subtitle": "Alles wat je bezit en bijhoudt."
+      },
+      "community": {
+        "title": "Community",
+        "subtitle": "Ontdek, ruil en maak contact."
+      },
+      "myPuzzles": {
+        "title": "Mijn Puzzels",
+        "subtitle": "Elk exemplaar dat je bezit en hoe het ervoor staat.",
+        "description": "Exemplaren die je bezit en hun status"
+      },
+      "collections": {
+        "title": "Collecties",
+        "subtitle": "Samengestelde planken met je favorieten.",
+        "description": "Samengestelde sets en planken"
+      },
+      "completions": {
+        "title": "Voltooiingen",
+        "subtitle": "Een logboek van elke puzzel die je hebt afgemaakt.",
+        "description": "Je logboek van afgemaakte puzzels"
+      },
+      "goals": {
+        "title": "Doelen",
+        "subtitle": "Persoonlijke doelen voor dit jaar.",
+        "description": "Persoonlijke doelen voor dit jaar"
+      },
+      "insights": {
+        "title": "Inzichten",
+        "subtitle": "Statistieken en trends in je hobby.",
+        "description": "Statistieken en trends"
+      },
+      "browse": {
+        "title": "Puzzels Ontdekken",
+        "subtitle": "Ontdek puzzels uit de community.",
+        "description": "Ontdek puzzels uit de community"
+      },
+      "circles": {
+        "title": "Kringen",
+        "subtitle": "Besloten groepen om binnen te ruilen.",
+        "description": "Ruilgroepen voor vrienden en familie"
+      },
+      "exchanges": {
+        "title": "Uitwisselingen",
+        "subtitle": "Ruilen, lenen en handelen in beweging.",
+        "description": "Ruilen, lenen en handelen"
+      },
+      "messages": {
+        "title": "Berichten",
+        "subtitle": "Gesprekken met medepuzzelaars.",
+        "description": "Gesprekken met medepuzzelaars"
+      },
+      "people": {
+        "title": "Mensen",
+        "subtitle": "Leden en profielen bij jou in de buurt.",
+        "description": "Leden en profielen"
+      },
+      "profile": {
+        "title": "Profiel",
+        "subtitle": "Je plank, statistieken en vertrouwen in één oogopslag."
+      },
+      "addPuzzle": {
+        "title": "Puzzel Toevoegen",
+        "subtitle": "Voeg een nieuwe puzzel toe aan je plank."
+      },
+      "puzzles": {
+        "title": "Puzzels",
+        "subtitle": "De gedeelde puzzelcatalogus."
+      },
+      "borrowed": {
+        "title": "Geleend",
+        "subtitle": "Puzzels die je van anderen hebt geleend."
+      },
+      "notifications": {
+        "title": "Meldingen",
+        "subtitle": "Alles wat je aandacht vraagt."
+      }
+    },
+    "user": {
+      "preferences": "Voorkeuren",
+      "openPreferences": "Voorkeuren Openen",
+      "contentWidth": "Contentbreedte",
+      "centered": "Gecentreerd",
+      "fullWidth": "Volledige Breedte",
+      "hideEmail": "E-mailadres Verbergen",
+      "admin": "Beheer"
+    },
+    "mobile": {
+      "tabsLabel": "Hoofdnavigatie",
+      "tabs": {
+        "home": "Home",
+        "library": "Bibliotheek",
+        "swaps": "Ruilen",
+        "community": "Community"
+      },
+      "back": "Terug naar {section}",
+      "openQuickActions": "Snelle Acties",
+      "quick": {
+        "addPuzzleSub": "Zet een nieuwe doos op je plank",
+        "logCompletionSub": "Eentje af? Leg het vast",
+        "proposeSwap": "Een Ruil Voorstellen",
+        "proposeSwapSub": "Ruil met een mede-puzzelaar",
+        "browseCommunitySub": "Ontdek puzzels bij jou in de buurt"
+      }
+    },
+    "breadcrumbLabel": "Broodkruimel"
   }
 }

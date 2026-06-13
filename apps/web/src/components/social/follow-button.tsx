@@ -9,7 +9,14 @@ import { toast } from "sonner";
 
 // Follow/unfollow toggle for a target member. Reads the live follow state from the gateway and
 // flips it; disabled while a mutation is in flight. The acting member is derived server-side.
-export function FollowButton({ memberId }: { memberId: Id<"users"> }) {
+// `size` lets compact contexts (e.g. member tiles) render the small button variant.
+export function FollowButton({
+  memberId,
+  size = "default",
+}: {
+  memberId: Id<"users">;
+  size?: "default" | "sm";
+}) {
   const following = useQuery(gateway.social.isFollowing, {
     followeeId: memberId,
   });
@@ -36,7 +43,7 @@ export function FollowButton({ memberId }: { memberId: Id<"users"> }) {
 
   if (following === undefined) {
     return (
-      <Button variant="outline" disabled>
+      <Button variant="outline" size={size} disabled>
         <UserPlus className="mr-2 h-4 w-4" />
         Follow
       </Button>
@@ -46,6 +53,7 @@ export function FollowButton({ memberId }: { memberId: Id<"users"> }) {
   return (
     <Button
       variant={following ? "outline" : "default"}
+      size={size}
       onClick={handleClick}
       disabled={pending}
     >

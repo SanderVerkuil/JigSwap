@@ -3,23 +3,34 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 import { useUser } from "@/compat/clerk";
+import {
+  type CategoryOption,
+  EMPTY_QUERY,
+  QueryBuilder,
+  type QueryBuilderState,
+} from "@/components/browse/query-builder";
+import { EmptyState } from "@/components/community/primitives";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { gateway, Id } from "@/gateway";
 import { useQuery } from "convex/react";
-import { Grid, List, Search } from "lucide-react";
-import { useState } from "react";
+import { Grid, List } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/browse")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "browse") }],
   }),
-  pendingComponent: () => <PageLoading message="Loading browse..." />,
+  pendingComponent: () => <BrowsePending />,
   component: BrowsePage,
 });
+
+function BrowsePending() {
+  const tCommon = useTranslations("common");
+  return <PageLoading message={tCommon("loading")} />;
+}
 
 function BrowsePage() {
   const navigate = useNavigate();
@@ -29,55 +40,61 @@ function BrowsePage() {
   const tBrowse = useTranslations("browse");
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedDifficulty, setSelectedDifficulty] = useState("");
-  const [selectedCondition, setSelectedCondition] = useState("");
-  const [minPieces, setMinPieces] = useState("");
-  const [maxPieces, setMaxPieces] = useState("");
+  const [query, setQuery] = useState<QueryBuilderState>(EMPTY_QUERY);
 
-  type Difficulty = "easy" | "medium" | "hard" | "expert";
-  type Condition = "new_sealed" | "like_new" | "good" | "fair" | "poor";
+  // Debounce the free-text condition (~200ms) so typing narrows results without
+  // refetching the browse query on every keystroke. Every other condition is
+  // applied immediately. `debouncedText` is what we actually send to the server.
+  const [debouncedText, setDebouncedText] = useState("");
+  useEffect(() => {
+    const handle = setTimeout(() => setDebouncedText(query.text.trim()), 200);
+    return () => clearTimeout(handle);
+  }, [query.text]);
 
   const convexUser = useQuery(
     gateway.identity.byClerkId,
     user?.id ? { clerkId: user.id } : "skip",
   );
 
+  // Server-side filters: category, condition, difficulty, piece range, and the
+  // free-text searchTerm (which the browse query matches over title / brand /
+  // description / tags) are all honoured by gateway.library.browseOwned.
   const browseOwnedPuzzlesResult = useQuery(gateway.library.browseOwned, {
-    searchTerm: searchTerm || undefined,
-    category: selectedCategory
-      ? (selectedCategory as Id<"adminCategories">)
+    category: query.category
+      ? (query.category as Id<"adminCategories">)
       : undefined,
-    difficulty: (selectedDifficulty as Difficulty) || undefined,
-    condition: (selectedCondition as Condition) || undefined,
-    minPieceCount: minPieces ? parseInt(minPieces) : undefined,
-    maxPieceCount: maxPieces ? parseInt(maxPieces) : undefined,
+    difficulty: query.difficulty || undefined,
+    condition: query.condition || undefined,
+    minPieceCount: query.minPieces ? parseInt(query.minPieces) : undefined,
+    maxPieceCount: query.maxPieces ? parseInt(query.maxPieces) : undefined,
+    searchTerm: debouncedText || undefined,
     includeOwnPuzzles: false,
     limit: 50,
   });
 
-  const categories = useQuery(gateway.catalog.puzzleCategories);
+  const categoriesRaw = useQuery(gateway.catalog.puzzleCategories);
 
-  const ownedPuzzles = browseOwnedPuzzlesResult?.ownedPuzzles || [];
-  const totalownedPuzzles = browseOwnedPuzzlesResult?.total || 0;
+  const categories: CategoryOption[] = useMemo(
+    () =>
+      (categoriesRaw ?? []).map((category) => ({
+        id: category._id,
+        name: category.name.en,
+      })),
+    [categoriesRaw],
+  );
 
-  const clearFilters = () => {
-    setSearchTerm("");
-    setSelectedCategory("");
-    setSelectedDifficulty("");
-    setSelectedCondition("");
-    setMinPieces("");
-    setMaxPieces("");
-  };
-
-  const hasActiveFilters =
-    searchTerm ||
-    selectedCategory ||
-    selectedDifficulty ||
-    selectedCondition ||
-    minPieces ||
-    maxPieces;
+  // Client-side filter: per-availability-flag narrowing. The browse query only
+  // prefilters to copies with ANY availability flag set, so selecting specific
+  // channels (for trade / lend / sale) is filtered here over the returned rows.
+  // TODO: a server-side `availability` arg on browseOwnedPuzzles would let this
+  // run in the query and keep paging counts exact for large libraries.
+  const shownPuzzles = useMemo(() => {
+    const rows = browseOwnedPuzzlesResult?.ownedPuzzles ?? [];
+    if (query.availability.length === 0) return rows;
+    return rows.filter((puzzle) =>
+      query.availability.some((flag) => puzzle.availability[flag]),
+    );
+  }, [browseOwnedPuzzlesResult, query.availability]);
 
   if (
     !user ||
@@ -88,165 +105,60 @@ function BrowsePage() {
   }
 
   return (
-    <div className="container mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{tBrowse("title")}</h1>
-          <p className="text-muted-foreground">
-            {tBrowse("subtitle")} ({totalownedPuzzles} {tBrowse("puzzlesFound")}
-            )
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant={viewMode === "grid" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setViewMode("grid")}
-          >
-            <Grid className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewMode === "list" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setViewMode("list")}
-          >
-            <List className="h-4 w-4" />
-          </Button>
+    <div className="flex flex-col gap-[18px]">
+      {/* Query builder + result count + view toggle. Members compose multiple
+          AND-combined conditions (one of them the free-text filter); the global
+          ⌘K palette stays the quick known-item lookup. The shell owns the page
+          title and width — no boxed card, no container wrapper here. */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <QueryBuilder
+          value={query}
+          onChange={setQuery}
+          categories={categories}
+          tBrowse={tBrowse}
+          tEnum={t}
+        />
+        <div className="flex items-center gap-3">
+          <span className="text-muted-foreground text-sm">
+            {tBrowse("resultsCount", { count: shownPuzzles.length })}
+          </span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant={viewMode === "grid" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("grid")}
+              aria-label={tBrowse("gridView")}
+            >
+              <Grid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("list")}
+              aria-label={tBrowse("listView")}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Search and Filters */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="space-y-4">
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder={tBrowse("searchPlaceholder")}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-lg"
-              />
-            </div>
-
-            {/* Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  {t("category")}
-                </label>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="">{tBrowse("allCategories")}</option>
-                  {categories?.map((category) => (
-                    <option key={category._id} value={category._id}>
-                      {category.name.en}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  {t("difficulty")}
-                </label>
-                <select
-                  value={selectedDifficulty}
-                  onChange={(e) => setSelectedDifficulty(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="">{tBrowse("allDifficulties")}</option>
-                  <option value="easy">{t("easy")}</option>
-                  <option value="medium">{t("medium")}</option>
-                  <option value="hard">{t("hard")}</option>
-                  <option value="expert">{t("expert")}</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  {t("condition")}
-                </label>
-                <select
-                  value={selectedCondition}
-                  onChange={(e) => setSelectedCondition(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="">{tBrowse("allConditions")}</option>
-                  <option value="new_sealed">{t("new_sealed")}</option>
-                  <option value="like_new">{t("like_new")}</option>
-                  <option value="good">{t("good")}</option>
-                  <option value="fair">{t("fair")}</option>
-                  <option value="poor">{t("poor")}</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  {tBrowse("minPieces")}
-                </label>
-                <input
-                  type="number"
-                  placeholder="100"
-                  value={minPieces}
-                  onChange={(e) => setMinPieces(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  {tBrowse("maxPieces")}
-                </label>
-                <input
-                  type="number"
-                  placeholder="5000"
-                  value={maxPieces}
-                  onChange={(e) => setMaxPieces(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-
-              <div className="flex items-end">
-                {hasActiveFilters && (
-                  <Button
-                    variant="outline"
-                    onClick={clearFilters}
-                    className="w-full"
-                  >
-                    {tBrowse("clearFilters")}
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Results */}
-      {ownedPuzzles.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <div className="text-muted-foreground">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                <Search className="h-8 w-8" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">
-                {tBrowse("noPuzzlesFound")}
-              </h3>
-              <p className="text-sm">{tBrowse("tryDifferentFilters")}</p>
-            </div>
-          </CardContent>
-        </Card>
+      {shownPuzzles.length === 0 ? (
+        <EmptyState
+          title={tBrowse("noPuzzlesFound")}
+          sub={tBrowse("tryDifferentFilters")}
+        />
       ) : (
-        <PuzzleViewProvider viewMode={viewMode}>
-          {ownedPuzzles.map((puzzle) => (
+        <PuzzleViewProvider
+          viewMode={viewMode}
+          className={
+            viewMode === "grid"
+              ? "grid gap-[18px] [grid-template-columns:repeat(auto-fill,minmax(212px,1fr))]"
+              : undefined
+          }
+        >
+          {shownPuzzles.map((puzzle) => (
             <PuzzleCard
               key={puzzle._id}
               puzzle={puzzle}
@@ -254,7 +166,7 @@ function BrowsePage() {
               showOwner={true}
               onRequestExchange={() => navigate({ to: "/trades" })}
               onMessage={() => navigate({ to: "/messages" })}
-              onFavorite={() => toast("Favorites are coming soon")}
+              onFavorite={() => toast(tBrowse("favoritesComingSoon"))}
             />
           ))}
         </PuzzleViewProvider>

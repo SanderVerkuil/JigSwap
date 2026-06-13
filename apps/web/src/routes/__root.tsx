@@ -1,3 +1,4 @@
+import { enUS, nlNL } from "@clerk/localizations";
 import { ClerkProvider, useAuth } from "@clerk/tanstack-react-start";
 import { auth } from "@clerk/tanstack-react-start/server";
 import { ConvexQueryClient } from "@convex-dev/react-query";
@@ -49,7 +50,12 @@ export const Route = createRootRouteWithContext<{
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      // viewport-fit=cover lets the mobile shell extend under the notch /
+      // home indicator and pad itself with env(safe-area-inset-*).
+      {
+        name: "viewport",
+        content: "width=device-width, initial-scale=1, viewport-fit=cover",
+      },
       { title: "JigSwap" },
     ],
     links: [
@@ -64,9 +70,9 @@ export const Route = createRootRouteWithContext<{
       },
       {
         rel: "stylesheet",
-        // Fraunces is the marketing heading face (see styles/marketing.css);
-        // variable opsz so headers get the large-optical-size cut.
-        href: "https://fonts.googleapis.com/css2?family=Baloo+2:wght@400..800&family=Fraunces:opsz,wght@9..144,400..700&family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap",
+        // Baloo 2 is the single heading face for both the app (--font-heading)
+        // and marketing (--font-mk-heading); Poppins is the body sans.
+        href: "https://fonts.googleapis.com/css2?family=Baloo+2:wght@400..800&family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap",
       },
     ],
   }),
@@ -111,8 +117,10 @@ function RootComponent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Render Clerk's own UI (UserButton, UserProfile, sign-in/up) in the active
+  // app locale. Reactive to intl.locale so a language switch re-localizes Clerk.
   return (
-    <ClerkProvider>
+    <ClerkProvider localization={intl.locale === "nl" ? nlNL : enUS}>
       <ConvexProviderWithClerk client={context.convexClient} useAuth={useAuth}>
         <AuthCacheSync />
         <RootDocument>

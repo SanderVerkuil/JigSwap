@@ -10,23 +10,24 @@
   --card-foreground: oklch(0.129 0.042 264.695);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
+  /* Brand violet is the everyday primary (vivid Jig Violet ≈ #6048e8). */
+  --primary: oklch(0.52 0.22 279);
+  --primary-foreground: oklch(0.985 0.002 286);
+  --secondary: oklch(0.965 0.012 286);
+  --secondary-foreground: oklch(0.32 0.08 281);
+  --muted: oklch(0.965 0.012 286);
+  --muted-foreground: oklch(0.553 0.035 282);
+  --accent: oklch(0.95 0.022 286);
+  --accent-foreground: oklch(0.45 0.18 281);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: #f8fafc;
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  --border: oklch(0.915 0.013 286);
+  --input: oklch(0.915 0.013 286);
+  --ring: oklch(0.55 0.2 279);
   --radius: 0.625rem;
 
   /* JigSwap custom colors */
-  --jigsaw-primary: #494e92;
+  --jigsaw-primary: #6048e8;
   --jigsaw-primary-accent: #ec4899;
   --jigsaw-secondary: #19c316;
   --jigsaw-success: #10b981;
@@ -38,42 +39,45 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
-  --background: oklch(1 0 0);
+  /* Shell chrome: gently violet-tinted surface (single hue, slightly deeper
+     than the page), with violet hover/active accents for the sidebar nav. */
+  --sidebar: oklch(0.955 0.022 286);
+  --sidebar-foreground: oklch(0.2 0.03 281);
+  --sidebar-primary: oklch(0.52 0.22 279);
+  --sidebar-primary-foreground: oklch(0.985 0.002 286);
+  --sidebar-accent: oklch(0.925 0.035 286);
+  --sidebar-accent-foreground: oklch(0.5 0.21 280);
+  --sidebar-border: oklch(0.905 0.022 286);
+  --sidebar-ring: oklch(0.55 0.2 279);
+  --background: oklch(0.995 0.004 286);
   --foreground: oklch(0.129 0.042 264.695);
 }
 
 .dark {
-  /* Dark mode colors */
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
+  /* Dark mode colors — a dark *violet* tone of the primary hue, kept clearly
+     above black so the brand stays recognisable (never near-black). */
+  --background: oklch(0.24 0.045 285);
+  --foreground: oklch(0.965 0.01 286);
+  --card: oklch(0.285 0.05 285);
+  --card-foreground: oklch(0.965 0.01 286);
+  --popover: oklch(0.285 0.05 285);
+  --popover-foreground: oklch(0.965 0.01 286);
+  --primary: oklch(0.62 0.21 282);
+  --primary-foreground: oklch(0.99 0.005 286);
+  --secondary: oklch(0.33 0.05 285);
+  --secondary-foreground: oklch(0.965 0.01 286);
+  --muted: oklch(0.33 0.05 285);
+  --muted-foreground: oklch(0.72 0.04 286);
+  --accent: oklch(0.36 0.06 285);
+  --accent-foreground: oklch(0.965 0.01 286);
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: #f8fafc;
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.62 0.21 282);
 
   /* JigSwap custom colors for dark mode */
-  --jigsaw-primary: #494e92;
+  --jigsaw-primary: #7560f0;
   --jigsaw-primary-accent: #ec4899;
   --jigsaw-secondary: #19c316;
   --jigsaw-success: #34d399;
@@ -85,14 +89,16 @@
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
+  /* Shell chrome (dark): same single violet hint, slightly deeper than the
+     page card so the inset reads against it. */
+  --sidebar: oklch(0.2 0.04 285);
+  --sidebar-foreground: oklch(0.965 0.01 286);
+  --sidebar-primary: oklch(0.62 0.21 282);
+  --sidebar-primary-foreground: oklch(0.99 0.005 286);
+  --sidebar-accent: oklch(0.32 0.07 285);
+  --sidebar-accent-foreground: oklch(0.85 0.12 285);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  --sidebar-ring: oklch(0.62 0.21 282);
 }
 
 @theme inline {
