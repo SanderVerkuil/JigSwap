@@ -59,7 +59,8 @@ export function ImportZone({
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && url.trim()) void run(url.trim());
+              if (e.key === "Enter" && url.trim() && state.status !== "loading")
+                void run(url.trim());
             }}
             placeholder="https://www.ravensburger.com/…"
             className="pl-9"
@@ -67,7 +68,9 @@ export function ImportZone({
         </div>
         <Button
           type="button"
-          onClick={() => url.trim() && run(url.trim())}
+          onClick={() => {
+            if (url.trim() && state.status !== "loading") void run(url.trim());
+          }}
           disabled={state.status === "loading"}
         >
           {state.status === "loading" ? (

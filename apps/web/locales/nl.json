@@ -478,7 +478,11 @@
     "importFailed": "Kon die pagina niet lezen — vul de gegevens handmatig in.",
     "importAlreadyExists": "Deze puzzel staat al op JigSwap — toevoegen aan je collectie?",
     "importAddToCollection": "Aan collectie toevoegen",
-    "importCreateAnyway": "Toch nieuw aanmaken"
+    "importCreateAnyway": "Toch nieuw aanmaken",
+    "matchFoundLead": "We vonden",
+    "matchFoundTail": "al — is dit dezelfde puzzel?",
+    "matchUseThis": "Gebruik deze",
+    "matchDifferent": "Nee, het is een andere"
   },
   "trades": {
     "title": "Uitwisselingen",

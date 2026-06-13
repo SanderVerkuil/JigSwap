@@ -478,7 +478,11 @@
     "importFailed": "Couldn't read that page — add the details manually.",
     "importAlreadyExists": "This puzzle is already on JigSwap — add it to your collection?",
     "importAddToCollection": "Add to collection",
-    "importCreateAnyway": "Create new anyway"
+    "importCreateAnyway": "Create new anyway",
+    "matchFoundLead": "We found",
+    "matchFoundTail": "already — is this the same puzzle?",
+    "matchUseThis": "Use this one",
+    "matchDifferent": "No, it's different"
   },
   "trades": {
     "title": "Exchanges",
