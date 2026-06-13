@@ -3,9 +3,14 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { useRouter } from "@/compat/navigation";
 import { PuzzleForm, PuzzleFormData } from "@/components/forms/puzzle-form";
+import {
+  draftToFormDefaults,
+  type ImportedDraft,
+} from "@/components/puzzle-import/draft-to-form-defaults";
+import { PuzzleImportBar } from "@/components/puzzle-import/puzzle-import-bar";
 import { gateway } from "@/gateway";
-import { useMutation } from "convex/react";
-import { useTransition } from "react";
+import { useAction, useMutation } from "convex/react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
@@ -20,25 +25,47 @@ function AddPuzzlePage() {
   const router = useRouter();
   const createPuzzle = useMutation(gateway.catalog.createPuzzle);
   const generateUploadUrl = useMutation(gateway.library.generateUploadUrl);
+  const importImage = useAction(gateway.catalog.importPuzzleImage);
   const t = useTranslations("puzzles");
   const [isPending, startTransition] = useTransition();
+
+  const [defaults, setDefaults] = useState<PuzzleFormData | undefined>(
+    undefined,
+  );
+  const [importKey, setImportKey] = useState(0);
+  const [importedImageUrl, setImportedImageUrl] = useState<string | undefined>(
+    undefined,
+  );
+
+  const applyDraft = (draft: ImportedDraft) => {
+    setDefaults(draftToFormDefaults(draft));
+    setImportedImageUrl(draft.imageUrl);
+    setImportKey((k) => k + 1);
+  };
 
   const handleSubmit = async (data: PuzzleFormData) => {
     startTransition(async () => {
       try {
         console.log("Creating puzzle");
         const storageId = await (async () => {
-          if (!(data.image instanceof File)) {
+          if (data.image instanceof File) {
+            const imageUrl = await generateUploadUrl();
+            const result = await fetch(imageUrl, {
+              method: "POST",
+              headers: { "Content-Type": data.image.type },
+              body: data.image,
+            });
+            const { storageId } = await result.json();
+            return storageId;
+          } else if (importedImageUrl) {
+            try {
+              return await importImage({ url: importedImageUrl });
+            } catch {
+              return undefined;
+            }
+          } else {
             return undefined;
           }
-          const imageUrl = await generateUploadUrl();
-          const result = await fetch(imageUrl, {
-            method: "POST",
-            headers: { "Content-Type": data.image.type },
-            body: data.image,
-          });
-          const { storageId } = await result.json();
-          return storageId;
         })();
         await createPuzzle({
           title: data.title,
@@ -76,7 +103,16 @@ function AddPuzzlePage() {
           <p className="text-muted-foreground">{t("addPuzzleDescription")}</p>
         </div>
 
+        <PuzzleImportBar
+          onDraft={applyDraft}
+          onMatch={(match) =>
+            router.push(`/my-puzzles/add?puzzleId=${match.puzzleId}`)
+          }
+        />
+
         <PuzzleForm
+          key={importKey}
+          defaultValues={defaults}
           onSubmit={handleSubmit}
           onCancel={() => router.push("/puzzles")}
           pending={isPending}
