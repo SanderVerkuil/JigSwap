@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { useUser } from "@/compat/clerk";
 import { useRouter } from "@/compat/navigation";
-import { SectionHead } from "@/components/dashboard-home/section-head";
+import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { CoverChip } from "@/components/library/cover-chip";
 import { EmptyState } from "@/components/library/empty-state";
 import { chipColor } from "@/components/library/palette";
@@ -41,9 +41,14 @@ export const Route = createFileRoute("/_dashboard/collections/")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "collections") }],
   }),
-  pendingComponent: () => <PageLoading message="Loading collections..." />,
+  pendingComponent: () => <CollectionsPending />,
   component: CollectionsPage,
 });
+
+function CollectionsPending() {
+  const t = useTranslations("collections");
+  return <PageLoading message={t("loadingCollections")} />;
+}
 
 function CollectionsPage() {
   const { user } = useUser();
@@ -146,7 +151,7 @@ function CollectionsPage() {
       console.error("Cannot delete: collection is missing its aggregateId.");
       return;
     }
-    if (confirm("Are you sure you want to delete this collection?")) {
+    if (confirm(t("deleteConfirm"))) {
       try {
         await deleteCollection({
           collectionId: collectionAggregateId,
@@ -177,6 +182,36 @@ function CollectionsPage() {
     setIsEditDialogOpen(true);
   };
 
+  // The page title lives in the shell page head; publish the shelf/puzzle meta
+  // + the create flow there so the body carries no duplicate section header.
+  const loadedCollections = collections ?? [];
+  const totalPuzzles = loadedCollections.reduce(
+    (sum, collection) => sum + (collection.puzzleCount ?? 0),
+    0,
+  );
+  const headerMeta = t("meta", {
+    shelves: loadedCollections.length,
+    puzzles: totalPuzzles,
+  });
+  usePageHeaderActions(
+    () => (
+      <>
+        <span className="text-muted-foreground hidden text-sm sm:inline">
+          {headerMeta}
+        </span>
+        <Button
+          variant="brand"
+          size="sm"
+          onClick={() => setIsCreateDialogOpen(true)}
+        >
+          <Plus className="h-4 w-4" />
+          {t("newCollection")}
+        </Button>
+      </>
+    ),
+    [headerMeta],
+  );
+
   if (!user || convexUser === undefined || collections === undefined) {
     return (
       <div className="flex flex-col gap-7">
@@ -190,34 +225,10 @@ function CollectionsPage() {
     );
   }
 
-  const totalPuzzles = collections.reduce(
-    (sum, collection) => sum + (collection.puzzleCount ?? 0),
-    0,
-  );
-
   return (
     <div className="flex flex-col gap-7">
-      {/* Section head: shelf meta + the create flow behind a brand button */}
+      {/* The shelf meta + create action now live in the shell page head. */}
       <section>
-        <SectionHead
-          title={t("myCollections")}
-          icon={FolderOpen}
-          meta={t("meta", {
-            shelves: collections.length,
-            puzzles: totalPuzzles,
-          })}
-          action={
-            <Button
-              variant="brand"
-              size="sm"
-              onClick={() => setIsCreateDialogOpen(true)}
-            >
-              <Plus className="h-4 w-4" />
-              {t("newCollection")}
-            </Button>
-          }
-        />
-
         {/* Create Collection Dialog (unchanged flow, opened from the head) */}
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogContent>

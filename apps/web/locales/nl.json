@@ -452,7 +452,12 @@
       "inProgress": "Bezig",
       "completed": "Voltooid"
     },
-    "resultCount": "{count} van {total} puzzels"
+    "resultCount": "{count} van {total} puzzels",
+    "countMeta": "{count, plural, one {# puzzel} other {# puzzels}}",
+    "gridView": "Rasterweergave",
+    "listView": "Lijstweergave",
+    "deleteConfirm": "Weet je zeker dat je deze puzzel wilt verwijderen?",
+    "loadingPuzzles": "Puzzels laden..."
   },
   "trades": {
     "title": "Uitwisselingen",
@@ -1123,7 +1128,9 @@
     "manageCollections": "Collecties Beheren",
     "notFound": "Collectie niet gevonden",
     "meta": "{shelves, plural, one {# plank} other {# planken}} · {puzzles, plural, one {# puzzel} other {# puzzels}}",
-    "newCollection": "Nieuwe Collectie"
+    "newCollection": "Nieuwe Collectie",
+    "deleteConfirm": "Weet je zeker dat je deze collectie wilt verwijderen?",
+    "loadingCollections": "Collecties laden..."
   },
   "circles": {
     "yourCircles": "Jouw Kringen",
