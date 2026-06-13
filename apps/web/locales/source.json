@@ -337,7 +337,7 @@
     "descriptionPlaceholder": "Describe your puzzle (optional)",
     "brandPlaceholder": "e.g. Ravensburger, Clementoni",
     "categoryPlaceholder": "e.g. Landscape, Animals, Art",
-    "tagsPlaceholder": "nature, colorful, challenging",
+    "tagsPlaceholder": "landscape, ocean, calm…",
     "tagsHelp": "Separate tags with commas",
     "selectDifficulty": "Select difficulty",
     "easy": "Easy",
@@ -508,7 +508,6 @@
     "availabilityHint": "How you'd like to share this puzzle. Pick any that apply.",
     "fieldTags": "Tags",
     "tagsHint": "Press Enter to add. Helps people discover your puzzle.",
-    "tagsPlaceholder": "landscape, ocean, calm…",
     "fieldNotes": "Notes",
     "notesPlaceholderLong": "Anything worth mentioning — missing pieces, special edition, where you got it…",
     "optional": "Optional",
@@ -1262,7 +1261,8 @@
     "noPuzzlesAvailable": "No Puzzles Available",
     "addPuzzlesFirst": "Add puzzles to your library first, then organise them into collections.",
     "addSelected": "{count, plural, one {Add # puzzle} other {Add # puzzles}}",
-    "updatedAgo": "Updated {time}"
+    "updatedAgo": "Updated {time}",
+    "added": "Added"
   },
   "circles": {
     "yourCircles": "Your Circles",

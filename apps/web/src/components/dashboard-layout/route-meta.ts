@@ -21,6 +21,7 @@ import {
   MessageSquare,
   Puzzle,
   Search,
+  Shapes,
   Target,
   Users,
 } from "lucide-react";
@@ -49,8 +50,8 @@ export const DASHBOARD_ITEM: ShellNavItem = {
 };
 
 // Deduplicated IA per the design handoff: Dashboard ungrouped, then
-// My Library and Community. Puzzles/Borrowed/Notifications stay routable
-// but intentionally have no nav entry.
+// My Library and Community. Borrowed/Notifications stay routable but
+// intentionally have no nav entry.
 export const NAV_GROUPS: ShellNavGroup[] = [
   {
     key: "library",
@@ -58,6 +59,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     icon: BookOpen,
     items: [
       { key: "myPuzzles", href: "/my-puzzles", icon: Puzzle },
+      { key: "puzzles", href: "/puzzles", icon: Shapes },
       { key: "collections", href: "/collections", icon: FolderOpen },
       { key: "completions", href: "/completions", icon: CircleCheck },
       { key: "goals", href: "/goals", icon: Target },
@@ -120,9 +122,11 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   "/messages": { pageKey: "messages", group: "community" },
   "/people": { pageKey: "people", group: "community" },
 
-  // Routes removed from the nav but still alive.
+  // The shared catalogue (in the library nav) and its contribute sub-route.
   "/puzzles": { pageKey: "puzzles", group: "library" },
   "/puzzles/add": { pageKey: "contributePuzzle", group: "library" },
+
+  // Routes removed from the nav but still alive.
   "/borrowed": { pageKey: "borrowed", group: "library" },
   "/notifications": { pageKey: "notifications" },
 };

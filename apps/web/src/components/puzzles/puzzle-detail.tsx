@@ -20,6 +20,9 @@ export function PuzzleDetail({ puzzleId }: PuzzleDetailProps) {
   const router = useRouter();
   const t = useTranslations("puzzles");
   const tPuzzles = useTranslations("puzzles");
+  // Detail-view strings (difficulty labels, metadata captions, …) live under the nested
+  // `puzzles.puzzles.*` namespace, not the flat `puzzles.*` one used by `t`.
+  const tCat = useTranslations("puzzles.puzzles");
   const tCommon = useTranslations("common");
 
   const puzzle = useQuery(gateway.catalog.puzzleById, {
@@ -74,15 +77,15 @@ export function PuzzleDetail({ puzzleId }: PuzzleDetailProps) {
   const getDifficultyLabel = (difficulty?: string) => {
     switch (difficulty) {
       case "easy":
-        return t("difficulty.easy");
+        return tCat("difficulty.easy");
       case "medium":
-        return t("difficulty.medium");
+        return tCat("difficulty.medium");
       case "hard":
-        return t("difficulty.hard");
+        return tCat("difficulty.hard");
       case "expert":
-        return t("difficulty.expert");
+        return tCat("difficulty.expert");
       default:
-        return t("difficulty.unknown");
+        return tCat("difficulty.unknown");
     }
   };
 
@@ -184,7 +187,7 @@ export function PuzzleDetail({ puzzleId }: PuzzleDetailProps) {
           {/* Puzzle Details */}
           <Card>
             <CardHeader>
-              <CardTitle>{t("puzzleDetails")}</CardTitle>
+              <CardTitle>{tCat("puzzleDetails")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center">
@@ -220,19 +223,19 @@ export function PuzzleDetail({ puzzleId }: PuzzleDetailProps) {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
-                {t("metadata")}
+                {tCat("metadata")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="font-medium">{t("created")}</span>
+                <span className="font-medium">{tCat("created")}</span>
                 <span className="text-sm text-muted-foreground">
                   {formatDate(puzzle.createdAt ?? 0)}
                 </span>
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="font-medium">{t("updated")}</span>
+                <span className="font-medium">{tCat("updated")}</span>
                 <span className="text-sm text-muted-foreground">
                   {formatDate(puzzle.updatedAt ?? 0)}
                 </span>
@@ -243,7 +246,7 @@ export function PuzzleDetail({ puzzleId }: PuzzleDetailProps) {
           {/* Actions */}
           <Card>
             <CardHeader>
-              <CardTitle>{t("actions")}</CardTitle>
+              <CardTitle>{tCat("actions")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <Button asChild className="w-full">
@@ -255,7 +258,7 @@ export function PuzzleDetail({ puzzleId }: PuzzleDetailProps) {
 
               <Button variant="outline" className="w-full">
                 <Star className="h-4 w-4 mr-2" />
-                {t("addToFavorites")}
+                {tCat("addToFavorites")}
               </Button>
             </CardContent>
           </Card>

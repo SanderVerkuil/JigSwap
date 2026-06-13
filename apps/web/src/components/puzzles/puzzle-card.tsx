@@ -22,6 +22,9 @@ interface PuzzleCardProps {
 export function PuzzleCard({ puzzle }: PuzzleCardProps) {
   const t = useTranslations("puzzles");
   const tPuzzles = useTranslations("puzzles");
+  // Catalog-card strings (difficulty labels, "view details", …) live under the nested
+  // `puzzles.puzzles.*` namespace, not the flat `puzzles.*` one used by `t`.
+  const tCat = useTranslations("puzzles.puzzles");
   const { viewMode } = usePuzzleView();
 
   const getDifficultyColor = (difficulty?: string) => {
@@ -42,15 +45,15 @@ export function PuzzleCard({ puzzle }: PuzzleCardProps) {
   const getDifficultyLabel = (difficulty?: string) => {
     switch (difficulty) {
       case "easy":
-        return t("difficulty.easy");
+        return tCat("difficulty.easy");
       case "medium":
-        return t("difficulty.medium");
+        return tCat("difficulty.medium");
       case "hard":
-        return t("difficulty.hard");
+        return tCat("difficulty.hard");
       case "expert":
-        return t("difficulty.expert");
+        return tCat("difficulty.expert");
       default:
-        return t("difficulty.unknown");
+        return tCat("difficulty.unknown");
     }
   };
 
@@ -151,7 +154,7 @@ export function PuzzleCard({ puzzle }: PuzzleCardProps) {
           <Button variant="outline" size="sm" asChild className="flex-1">
             <Link href={`/puzzles/${puzzle._id}`}>
               <Eye className="h-4 w-4 mr-2" />
-              {t("viewDetails")}
+              {tCat("viewDetails")}
             </Link>
           </Button>
           <Button size="sm" asChild className="flex-1">
@@ -253,7 +256,7 @@ export function PuzzleCard({ puzzle }: PuzzleCardProps) {
           <Button variant="outline" size="sm" asChild className="flex-1">
             <Link href={`/puzzles/${puzzle._id}`}>
               <Eye className="h-4 w-4 mr-2" />
-              {t("viewDetails")}
+              {tCat("viewDetails")}
             </Link>
           </Button>
           <Button size="sm" asChild className="flex-1">

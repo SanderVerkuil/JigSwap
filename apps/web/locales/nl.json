@@ -337,7 +337,7 @@
     "descriptionPlaceholder": "Beschrijf je puzzel (optioneel)",
     "brandPlaceholder": "bijv. Ravensburger, Clementoni",
     "categoryPlaceholder": "bijv. Landschap, Dieren, Kunst",
-    "tagsPlaceholder": "natuur, kleurrijk, uitdagend",
+    "tagsPlaceholder": "landschap, oceaan, rustig…",
     "tagsHelp": "Scheid tags met komma's",
     "selectDifficulty": "Selecteer moeilijkheidsgraad",
     "easy": "Gemakkelijk",
@@ -508,7 +508,6 @@
     "availabilityHint": "Hoe je deze puzzel wilt delen. Kies wat van toepassing is.",
     "fieldTags": "Tags",
     "tagsHint": "Druk op Enter om toe te voegen — zo vinden anderen je puzzel.",
-    "tagsPlaceholder": "landschap, oceaan, rustig…",
     "fieldNotes": "Notities",
     "notesPlaceholderLong": "Iets vermeldenswaards — ontbrekende stukjes, speciale editie, waar je hem vandaan hebt…",
     "optional": "Optioneel",
@@ -1262,7 +1261,8 @@
     "noPuzzlesAvailable": "Geen Puzzels Beschikbaar",
     "addPuzzlesFirst": "Voeg eerst puzzels toe aan je bibliotheek en orden ze dan in collecties.",
     "addSelected": "{count, plural, one {# puzzel toevoegen} other {# puzzels toevoegen}}",
-    "updatedAgo": "Bijgewerkt {time}"
+    "updatedAgo": "Bijgewerkt {time}",
+    "added": "Toegevoegd"
   },
   "circles": {
     "yourCircles": "Jouw Kringen",

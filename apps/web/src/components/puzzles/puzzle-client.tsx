@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@/compat/link";
+import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
@@ -128,26 +129,31 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
     Array.isArray(value) ? value.length > 0 : value !== "",
   );
 
+  // The title/subtitle live in the shared shell page head (via route-meta); publish only the
+  // result count + the "contribute to catalogue" action there so the body carries no own header.
+  usePageHeaderActions(
+    () => (
+      <>
+        <span className="text-muted-foreground hidden text-sm sm:inline">
+          {t("puzzlesFound", { count: filteredPuzzles.length })}
+        </span>
+        <Button size="sm" asChild>
+          <Link href="/puzzles/add">
+            <Plus className="h-4 w-4" />
+            {t("addPuzzle")}
+          </Link>
+        </Button>
+      </>
+    ),
+    [filteredPuzzles.length],
+  );
+
   if (isLoading && puzzles.length === 0) {
     return <PageLoading message={tCommon("loading")} />;
   }
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">{t("title")}</h1>
-          <p className="text-muted-foreground">{t("subtitle")}</p>
-        </div>
-        <Button asChild>
-          <Link href="/puzzles/add">
-            <Plus className="h-4 w-4 mr-2" />
-            {t("addPuzzle")}
-          </Link>
-        </Button>
-      </div>
-
       {/* Filters and Search */}
       <Card>
         <CardContent>
