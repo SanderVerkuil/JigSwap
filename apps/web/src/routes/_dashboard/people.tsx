@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { EmptyState } from "@/components/community/primitives";
 import { SectionHead } from "@/components/dashboard-home/section-head";
+import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { ActivityFeed } from "@/components/social/activity-feed";
 import {
   MemberTile,
@@ -11,7 +12,7 @@ import {
 import { ProfileEditor } from "@/components/social/profile-editor";
 import { gateway, Id } from "@/gateway";
 import { useQuery } from "convex/react";
-import { Bell, Globe } from "lucide-react";
+import { Bell } from "lucide-react";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/people")({
@@ -47,16 +48,24 @@ function PeoplePage() {
   }
   const members = Array.from(network.entries());
 
+  // The page title ("People") lives in the shell page head; publish the network
+  // member count there too so the body carries no duplicate section header.
+  const headerMeta = loading
+    ? undefined
+    : t("memberCount", { count: members.length });
+  usePageHeaderActions(
+    () =>
+      headerMeta ? (
+        <span className="text-muted-foreground hidden text-sm sm:inline">
+          {headerMeta}
+        </span>
+      ) : null,
+    [headerMeta],
+  );
+
   return (
     <div className="flex flex-col gap-10">
       <section>
-        <SectionHead
-          title={t("yourNetwork")}
-          icon={Globe}
-          meta={
-            loading ? undefined : t("memberCount", { count: members.length })
-          }
-        />
         {loading ? (
           <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
             {Array.from({ length: 3 }).map((_, i) => (
