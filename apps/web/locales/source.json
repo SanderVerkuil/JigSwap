@@ -761,7 +761,8 @@
     "filterAll": "All",
     "available": "Available",
     "resultsCount": "{count, plural, one {# puzzle found} other {# puzzles found}}",
-    "favoritesComingSoon": "Favorites are coming soon"
+    "favoritesComingSoon": "Favorites are coming soon",
+    "searchHint": "Press ⌘K to search by title or brand"
   },
   "footer": {
     "tagline": "Making jigsaw puzzle trading accessible and sustainable for everyone.",

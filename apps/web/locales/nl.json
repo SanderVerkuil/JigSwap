@@ -761,7 +761,8 @@
     "filterAll": "Alle",
     "available": "Beschikbaar",
     "resultsCount": "{count, plural, one {# puzzel gevonden} other {# puzzels gevonden}}",
-    "favoritesComingSoon": "Favorieten komen binnenkort"
+    "favoritesComingSoon": "Favorieten komen binnenkort",
+    "searchHint": "Druk op ⌘K om op titel of merk te zoeken"
   },
   "footer": {
     "tagline": "Legpuzzelruil toegankelijk en duurzaam maken voor iedereen.",

@@ -9,7 +9,7 @@ import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { gateway, Id } from "@/gateway";
 import { useQuery } from "convex/react";
-import { Grid, List, Search } from "lucide-react";
+import { Grid, List } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
 
@@ -50,7 +50,6 @@ function BrowsePage() {
   const tBrowse = useTranslations("browse");
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [searchTerm, setSearchTerm] = useState("");
   const [pill, setPill] = useState<BrowsePill>("all");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedCondition, setSelectedCondition] = useState("");
@@ -68,8 +67,9 @@ function BrowsePage() {
     ? (pill as Difficulty)
     : undefined;
 
+  // Free-text catalog search lives in the global ⌘K command palette
+  // (gateway.search.global), so Browse owns exploration via facets only.
   const browseOwnedPuzzlesResult = useQuery(gateway.library.browseOwned, {
-    searchTerm: searchTerm || undefined,
     category: selectedCategory
       ? (selectedCategory as Id<"adminCategories">)
       : undefined,
@@ -95,7 +95,6 @@ function BrowsePage() {
       : ownedPuzzles;
 
   const clearFilters = () => {
-    setSearchTerm("");
     setPill("all");
     setSelectedCategory("");
     setSelectedCondition("");
@@ -104,7 +103,6 @@ function BrowsePage() {
   };
 
   const hasActiveFilters =
-    searchTerm ||
     pill !== "all" ||
     selectedCategory ||
     selectedCondition ||
@@ -133,42 +131,37 @@ function BrowsePage() {
 
   return (
     <div className="flex flex-col gap-[18px]">
-      {/* Prominent search */}
-      <div className="relative">
-        <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2" />
-        <input
-          type="text"
-          placeholder={tBrowse("searchPlaceholder")}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="bg-card focus:ring-primary h-11 w-full rounded-lg border pr-4 pl-10 text-base focus:ring-2 focus:outline-none"
-        />
-      </div>
-
-      {/* Filter pills + muted result count + view toggle */}
+      {/* Filter pills + muted result count + ⌘K hint + view toggle. Free-text
+          catalog search lives in the global command palette, so Browse leads
+          with exploration (facets) and points to ⌘K for known-item lookup. */}
       <FilterBar
         filters={pillFilters}
         value={pill}
         onChange={setPill}
         count={tBrowse("resultsCount", { count: shownPuzzles.length })}
         extra={
-          <div className="flex items-center gap-1">
-            <Button
-              variant={viewMode === "grid" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("grid")}
-              aria-label="Grid"
-            >
-              <Grid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("list")}
-              aria-label="List"
-            >
-              <List className="h-4 w-4" />
-            </Button>
+          <div className="flex items-center gap-3">
+            <span className="text-muted-foreground hidden text-sm sm:inline">
+              {tBrowse("searchHint")}
+            </span>
+            <div className="flex items-center gap-1">
+              <Button
+                variant={viewMode === "grid" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("grid")}
+                aria-label="Grid"
+              >
+                <Grid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("list")}
+                aria-label="List"
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         }
       />
