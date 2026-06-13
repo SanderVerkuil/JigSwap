@@ -25,7 +25,10 @@ describe("extractPuzzleDraft", () => {
     const d = extractPuzzleDraft(raw, SRC);
     expect(d.title).toBe("Ravensburger Mountain Vista");
     expect(d.brand).toBe("Ravensburger");
+    // JSON-LD image is first; OG image appended after (deduped).
+    expect(d.images).toEqual(["https://img/product.jpg", "https://img/og.jpg"]);
     expect(d.imageUrl).toBe("https://img/product.jpg");
+    expect(d.imageUrl).toBe(d.images[0]);
     expect(d.ean).toBe("4005556150007");
     expect(d.upc).toBeUndefined();
     expect(d.pieceCount).toBe(1000);
@@ -71,5 +74,37 @@ describe("extractPuzzleDraft", () => {
 
   it("returns an empty title when nothing is extractable", () => {
     expect(extractPuzzleDraft(empty, SRC).title).toBe("");
+  });
+
+  it("collects multiple JSON-LD images then OG images, deduped, capped at 8", () => {
+    const raw: RawProductPage = {
+      ...empty,
+      ogImages: [
+        "https://img/og1.jpg",
+        "https://img/product-a.jpg", // duplicate of JSON-LD; should be dropped
+        "https://img/og2.jpg",
+      ],
+      jsonLdProducts: [
+        {
+          name: "Puzzle",
+          image: ["https://img/product-a.jpg", "https://img/product-b.jpg"],
+        },
+      ],
+    };
+    const d = extractPuzzleDraft(raw, SRC);
+    // JSON-LD images come first; OG images follow with duplicates removed.
+    expect(d.images).toEqual([
+      "https://img/product-a.jpg",
+      "https://img/product-b.jpg",
+      "https://img/og1.jpg",
+      "https://img/og2.jpg",
+    ]);
+    expect(d.imageUrl).toBe(d.images[0]);
+  });
+
+  it("excludes non-http(s) URLs and imageUrl is undefined when no images present", () => {
+    const d = extractPuzzleDraft(empty, SRC);
+    expect(d.images).toEqual([]);
+    expect(d.imageUrl).toBeUndefined();
   });
 });

@@ -112,6 +112,7 @@ export default defineSchema({
       title: v.string(),
       brand: v.optional(v.string()),
       imageUrl: v.optional(v.string()),
+      images: v.optional(v.array(v.string())),
       description: v.optional(v.string()),
       ean: v.optional(v.string()),
       upc: v.optional(v.string()),

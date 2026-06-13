@@ -55,7 +55,7 @@ export const extractFromUrl = action({
           );
           return row
             ? ({
-                draft: row.draft,
+                draft: { ...row.draft, images: row.draft.images ?? [] },
                 fetchedAt: new Date(row.fetchedAt),
               } satisfies CachedImportDraft)
             : null;
@@ -63,7 +63,7 @@ export const extractFromUrl = action({
         async put(normalizedUrl, draft) {
           await ctx.runMutation(internal.catalog.importCache.putCachedImport, {
             normalizedUrl,
-            draft,
+            draft: { ...draft, images: [...draft.images] },
           });
         },
       };
@@ -100,16 +100,20 @@ export const extractFromUrl = action({
         return { ok: false as const, code: result.error.code };
       }
 
-      const { draft, match, cached } = result.value;
+      const { draft, match, cached, diagnostics } = result.value;
       event.cache_hit = cached;
       event.match_found = match !== null;
       event.match_puzzle_id = match?.puzzleId ?? null;
+      event.extraction = diagnostics;
       event.draft = {
         has_title: draft.title.length > 0,
         title: draft.title.slice(0, 120),
         brand: draft.brand ?? null,
         piece_count: draft.pieceCount ?? null,
         has_image: Boolean(draft.imageUrl),
+        image_count: draft.images.length,
+        image_url: draft.imageUrl ?? null,
+        description_len: draft.description?.length ?? 0,
         has_ean: Boolean(draft.ean),
         has_upc: Boolean(draft.upc),
       };

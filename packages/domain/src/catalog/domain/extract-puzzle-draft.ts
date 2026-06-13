@@ -18,10 +18,36 @@ const parsePieceCount = (text: string): number | undefined => {
   return Number.isFinite(n) && n >= 1 && n <= 100000 ? n : undefined;
 };
 
-const firstImage = (
+const toImageArray = (
   image: string | readonly string[] | undefined,
-): string | undefined =>
-  Array.isArray(image) ? image[0] : (image as string | undefined);
+): readonly string[] => {
+  if (image == null) return [];
+  return Array.isArray(image)
+    ? (image as readonly string[])
+    : [image as string];
+};
+
+const MAX_IMAGES = 8;
+const HTTP_RE = /^https?:\/\//;
+
+const buildImages = (raw: RawProductPage): readonly string[] => {
+  const product = raw.jsonLdProducts[0];
+  const candidates = [...toImageArray(product?.image), ...raw.ogImages];
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const url of candidates) {
+    if (
+      typeof url === "string" &&
+      HTTP_RE.test(url) &&
+      !seen.has(url) &&
+      result.length < MAX_IMAGES
+    ) {
+      seen.add(url);
+      result.push(url);
+    }
+  }
+  return result;
+};
 
 const barcodes = (
   product: JsonLdProduct | undefined,
@@ -64,10 +90,14 @@ export const extractPuzzleDraft = (
   // Clean title AFTER deriving pieceCount (cleaning may strip the count phrase).
   const title = cleanPuzzleTitle(rawTitle, { brand, pieceCount });
 
+  // Build deduplicated image list: JSON-LD product images first, then OG images.
+  const images = buildImages(raw);
+
   return {
     title,
     brand,
-    imageUrl: firstImage(product?.image) ?? raw.ogImages[0],
+    imageUrl: images[0],
+    images,
     description,
     ean,
     upc,

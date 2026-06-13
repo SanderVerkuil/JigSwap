@@ -51,7 +51,7 @@ describe("makeImportPuzzleFromUrl", () => {
   it("serves a fresh cached draft without fetching", async () => {
     cache.seed(
       NORMALIZED,
-      { title: "Cached", sourceUrl: NORMALIZED },
+      { title: "Cached", sourceUrl: NORMALIZED, images: [] },
       new Date(NOW.getTime() - 1000),
     );
     const result = await run()({ url: URL_IN });
@@ -63,7 +63,7 @@ describe("makeImportPuzzleFromUrl", () => {
   it("re-fetches when the cached draft is older than the TTL", async () => {
     cache.seed(
       NORMALIZED,
-      { title: "Stale", sourceUrl: NORMALIZED },
+      { title: "Stale", sourceUrl: NORMALIZED, images: [] },
       new Date(NOW.getTime() - 8 * 24 * 60 * 60 * 1000),
     );
     fetcher.seedPage({ ogImages: [], jsonLdProducts: [{ name: "Fresh" }] });
@@ -87,7 +87,7 @@ describe("makeImportPuzzleFromUrl", () => {
   it("re-fetches when the cached draft is exactly TTL old (boundary)", async () => {
     cache.seed(
       NORMALIZED,
-      { title: "AtBoundary", sourceUrl: NORMALIZED },
+      { title: "AtBoundary", sourceUrl: NORMALIZED, images: [] },
       new Date(NOW.getTime() - 7 * 24 * 60 * 60 * 1000),
     );
     fetcher.seedPage({

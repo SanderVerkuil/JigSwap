@@ -37,16 +37,36 @@ export const makeImportPuzzleFromUrl =
 
     let draft: PuzzleImportDraft;
     let servedFromCache = false;
+    let diagnostics: {
+      source: string;
+      jsonLdProducts: number;
+      ogImages: number;
+      images: number;
+    };
+
     if (
       cached &&
       deps.clock.now().getTime() - cached.fetchedAt.getTime() < ttl
     ) {
       draft = cached.draft;
       servedFromCache = true;
+      diagnostics = {
+        source: "cache",
+        jsonLdProducts: 0,
+        ogImages: 0,
+        images: draft.images.length,
+      };
     } else {
       const fetched = await deps.fetcher.fetch(cmd.url);
       if (fetched.isErr) return err(fetched.error);
-      draft = extractPuzzleDraft(fetched.value, cmd.url);
+      const raw = fetched.value;
+      draft = extractPuzzleDraft(raw, cmd.url);
+      diagnostics = {
+        source: raw.source ?? "unknown",
+        jsonLdProducts: raw.jsonLdProducts.length,
+        ogImages: raw.ogImages.length,
+        images: draft.images.length,
+      };
       await deps.cache.put(normalized, draft);
     }
 
@@ -54,5 +74,5 @@ export const makeImportPuzzleFromUrl =
       draft.ean || draft.upc
         ? await deps.lookup.findByBarcode({ ean: draft.ean, upc: draft.upc })
         : null;
-    return ok({ draft, match, cached: servedFromCache });
+    return ok({ draft, match, cached: servedFromCache, diagnostics });
   };
