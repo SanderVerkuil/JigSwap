@@ -20,6 +20,22 @@ import {
 const asArray = (value: unknown): unknown[] =>
   Array.isArray(value) ? value : value == null ? [] : [value];
 
+// JSON-LD `image` is wildly inconsistent: a string, an array, or an ImageObject ({ url }).
+const extractJsonLdImage = (image: unknown): string | string[] | undefined => {
+  const one = (value: unknown): string | null => {
+    if (typeof value === "string") return value;
+    if (value && typeof value === "object" && typeof (value as { url?: unknown }).url === "string") {
+      return (value as { url: string }).url;
+    }
+    return null;
+  };
+  if (Array.isArray(image)) {
+    const urls = image.map(one).filter((u): u is string => u !== null);
+    return urls.length > 0 ? urls : undefined;
+  }
+  return one(image) ?? undefined;
+};
+
 const flattenBrand = (brand: unknown): string | undefined => {
   if (typeof brand === "string") return brand;
   if (brand && typeof brand === "object" && "name" in brand) {
@@ -36,10 +52,12 @@ const toJsonLdProducts = (jsonLd: unknown): JsonLdProduct[] => {
     ? asArray((jsonLd as { raw: unknown }).raw)
     : asArray(jsonLd);
 
-  const nodes = rawArray.flatMap((node) => {
-    const graph = (node as { "@graph"?: unknown })?.["@graph"];
-    return graph ? asArray(graph) : [node];
-  });
+  const nodes = asArray(rawArray)
+    .flatMap((node) => (Array.isArray(node) ? node : [node]))   // unwrap top-level arrays
+    .flatMap((node) => {
+      const graph = (node as { "@graph"?: unknown })?.["@graph"];
+      return graph ? asArray(graph) : [node];
+    });
 
   return nodes
     .filter((node): node is Record<string, unknown> => {
@@ -50,10 +68,7 @@ const toJsonLdProducts = (jsonLd: unknown): JsonLdProduct[] => {
       name: typeof node.name === "string" ? node.name : undefined,
       brand: flattenBrand(node.brand),
       description: typeof node.description === "string" ? node.description : undefined,
-      image: (Array.isArray(node.image) ? node.image : node.image) as
-        | string
-        | string[]
-        | undefined,
+      image: extractJsonLdImage(node.image),
       gtin13: typeof node.gtin13 === "string" ? node.gtin13 : undefined,
       gtin12: typeof node.gtin12 === "string" ? node.gtin12 : undefined,
       gtin: typeof node.gtin === "string" ? node.gtin : undefined,
@@ -62,7 +77,8 @@ const toJsonLdProducts = (jsonLd: unknown): JsonLdProduct[] => {
 
 // Map ogie ErrorCode to domain StorePageFetchError.
 // ogie codes: FETCH_ERROR | TIMEOUT | PARSE_ERROR | INVALID_URL | NO_HTML | REDIRECT_LIMIT
-const mapError = (code: string | undefined, url: string): StorePageFetchError => {
+// result.error is always defined on ExtractFailure (non-optional in ogie types), so no ?. needed.
+const mapError = (code: string, url: string): StorePageFetchError => {
   switch (code) {
     case "INVALID_URL":
       return StorePageFetchError.invalidUrl(url);
@@ -75,7 +91,7 @@ const mapError = (code: string | undefined, url: string): StorePageFetchError =>
       return StorePageFetchError.fetchFailed("Too many redirects");
     case "FETCH_ERROR":
     default:
-      return StorePageFetchError.fetchFailed(code ?? "unknown");
+      return StorePageFetchError.fetchFailed(code);
   }
 };
 
@@ -93,7 +109,7 @@ export const ogieStorePageFetcher: StorePageFetcher = {
     }
 
     if (!result.success) {
-      return err(mapError(result.error?.code, url));
+      return err(mapError(result.error.code, url));
     }
 
     const data = result.data;
