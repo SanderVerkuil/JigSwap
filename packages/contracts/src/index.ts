@@ -5,6 +5,7 @@ export * from "./identity";
 export * from "./insights";
 export * from "./lending";
 export * from "./library";
+export * from "./search";
 export * from "./shared";
 export * from "./sharing";
 export * from "./social";
