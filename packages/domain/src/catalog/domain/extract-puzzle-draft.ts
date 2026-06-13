@@ -1,4 +1,5 @@
 // packages/domain/src/catalog/domain/extract-puzzle-draft.ts
+import { cleanPuzzleTitle } from "./clean-puzzle-title";
 import type {
   JsonLdProduct,
   PuzzleImportDraft,
@@ -46,20 +47,31 @@ export const extractPuzzleDraft = (
   sourceUrl: string,
 ): PuzzleImportDraft => {
   const product = raw.jsonLdProducts[0];
-  const title = (product?.name ?? raw.ogTitle ?? raw.basicTitle ?? "").trim();
+  // Compute rawTitle BEFORE cleaning — pieceCount is parsed from it.
+  const rawTitle = (
+    product?.name ??
+    raw.ogTitle ??
+    raw.basicTitle ??
+    ""
+  ).trim();
   const description = clean(
     product?.description ?? raw.ogDescription ?? raw.basicDescription,
   );
   const { ean, upc } = barcodes(product);
+  const brand = clean(product?.brand);
+  // Parse piece count from the ORIGINAL title + description so cleaning doesn't lose the count.
+  const pieceCount = parsePieceCount(`${rawTitle} ${description ?? ""}`);
+  // Clean title AFTER deriving pieceCount (cleaning may strip the count phrase).
+  const title = cleanPuzzleTitle(rawTitle, { brand, pieceCount });
 
   return {
     title,
-    brand: clean(product?.brand),
+    brand,
     imageUrl: firstImage(product?.image) ?? raw.ogImages[0],
     description,
     ean,
     upc,
-    pieceCount: parsePieceCount(`${title} ${description ?? ""}`),
+    pieceCount,
     sourceUrl,
   };
 };

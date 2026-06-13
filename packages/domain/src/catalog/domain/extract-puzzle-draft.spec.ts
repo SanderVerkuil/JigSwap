@@ -23,7 +23,7 @@ describe("extractPuzzleDraft", () => {
       ],
     };
     const d = extractPuzzleDraft(raw, SRC);
-    expect(d.title).toBe("Ravensburger Mountain Vista 1000 pieces");
+    expect(d.title).toBe("Ravensburger Mountain Vista");
     expect(d.brand).toBe("Ravensburger");
     expect(d.imageUrl).toBe("https://img/product.jpg");
     expect(d.ean).toBe("4005556150007");
@@ -42,11 +42,11 @@ describe("extractPuzzleDraft", () => {
         },
         SRC,
       ).title,
-    ).toBe("OG Puzzle 500 stukjes");
+    ).toBe("OG");
     expect(
       extractPuzzleDraft({ ...empty, basicTitle: "Basic 750 Teile" }, SRC)
         .title,
-    ).toBe("Basic 750 Teile");
+    ).toBe("Basic");
   });
 
   it("parses multilingual piece counts incl. thousands separators", () => {
