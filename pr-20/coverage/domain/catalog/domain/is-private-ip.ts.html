@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">94.59% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>35/37</span>
+                <span class='fraction'>37/37</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">95% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>38/40</span>
+                <span class='fraction'>40/40</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">96.29% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>26/27</span>
+                <span class='fraction'>27/27</span>
             </div>
         
             
@@ -107,51 +107,51 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">52x</span>
-<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">191x</span>
+<span class="cline-any cline-yes">49x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">52x</span>
+<span class="cline-any cline-yes">180x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">13x</span>
-<span class="cline-any cline-yes">13x</span>
-<span class="cline-any cline-yes">10x</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-yes">30x</span>
+<span class="cline-any cline-yes">25x</span>
+<span class="cline-any cline-yes">21x</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">43x</span>
+<span class="cline-any cline-yes">43x</span>
+<span class="cline-any cline-yes">37x</span>
+<span class="cline-any cline-yes">31x</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-yes">21x</span>
+<span class="cline-any cline-yes">21x</span>
 <span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">11x</span>
-<span class="cline-any cline-yes">11x</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-yes">80x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// packages/domain/src/catalog/domain/is-private-ip.ts
 &nbsp;
 // SSRF guard for raw image fetches (the page fetch is guarded by ogie). Given a resolved IP
 // literal, returns true if it points at loopback / private / link-local / unspecified space.
 const ipv4Private = (ip: string): boolean =&gt; {
   const parts = ip.split(".").map((p) =&gt; Number.parseInt(p, 10));
-  <span class="missing-if-branch" title="if path not taken" >I</span>if (
+  if (
     parts.length !== 4 ||
     parts.some((n) =&gt; !Number.isInteger(n) || n &lt; 0 || n &gt; 255)
   ) {
-<span class="cstat-no" title="statement not covered" >    return false;</span>
+    return false;
   }
   const [a, b] = parts;
   if (a === 0 || a === 127) return true; // unspecified, loopback
@@ -168,7 +168,7 @@ const ipv6Private = (raw: string): boolean =&gt; {
   if (/^fe[89ab]/i.test(ip)) return true; // link-local fe80::/10
   if (/^f[cd][0-9a-f]{2}:/.test(ip)) return true; // fc00::/7 unique-local
   const mapped = ip.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/); // IPv4-mapped dotted-decimal
-  <span class="missing-if-branch" title="if path not taken" >I</span>if (mapped) <span class="cstat-no" title="statement not covered" >return ipv4Private(mapped[1]);</span>
+  if (mapped) return ipv4Private(mapped[1]);
   const hexMapped = ip.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/); // IPv4-mapped hex-colon
   if (hexMapped) {
     const hi = Number.parseInt(hexMapped[1], 16);
@@ -187,7 +187,7 @@ export const isPrivateIp = (ip: string): boolean =&gt;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-13T22:44:24.445Z
+                at 2026-06-13T23:05:47.140Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
