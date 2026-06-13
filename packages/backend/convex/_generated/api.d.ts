@@ -15,6 +15,7 @@ import type * as catalog_adapters_convexCatalogCategoryRepository from "../catal
 import type * as catalog_adapters_convexPuzzleDefinitionRepository from "../catalog/adapters/convexPuzzleDefinitionRepository.js";
 import type * as catalog_adapters_eventPublisher from "../catalog/adapters/eventPublisher.js";
 import type * as catalog_adapters_firecrawlStorePageFetcher from "../catalog/adapters/firecrawlStorePageFetcher.js";
+import type * as catalog_adapters_htmlFallback from "../catalog/adapters/htmlFallback.js";
 import type * as catalog_adapters_mapper from "../catalog/adapters/mapper.js";
 import type * as catalog_adapters_ogieRawProductPage from "../catalog/adapters/ogieRawProductPage.js";
 import type * as catalog_adapters_ogieStorePageFetcher from "../catalog/adapters/ogieStorePageFetcher.js";
@@ -233,6 +234,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/adapters/convexPuzzleDefinitionRepository": typeof catalog_adapters_convexPuzzleDefinitionRepository;
   "catalog/adapters/eventPublisher": typeof catalog_adapters_eventPublisher;
   "catalog/adapters/firecrawlStorePageFetcher": typeof catalog_adapters_firecrawlStorePageFetcher;
+  "catalog/adapters/htmlFallback": typeof catalog_adapters_htmlFallback;
   "catalog/adapters/mapper": typeof catalog_adapters_mapper;
   "catalog/adapters/ogieRawProductPage": typeof catalog_adapters_ogieRawProductPage;
   "catalog/adapters/ogieStorePageFetcher": typeof catalog_adapters_ogieStorePageFetcher;
