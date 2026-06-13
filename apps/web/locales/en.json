@@ -529,6 +529,8 @@
     "previewView": "View",
     "previewAdd": "Add",
     "uploadPhoto": "Upload photo",
+    "coverPhoto": "Your photo",
+    "advancedDetails": "More details (optional)",
     "cancel": "Cancel"
   },
   "trades": {
@@ -1613,6 +1615,7 @@
         "placeholder": "Enter model number"
       },
       "dimensions": {
+        "label": "Dimensions",
         "width": {
           "label": "Width",
           "placeholder": "Enter width"

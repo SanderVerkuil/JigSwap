@@ -529,6 +529,8 @@
     "previewView": "Bekijken",
     "previewAdd": "Toevoegen",
     "uploadPhoto": "Foto uploaden",
+    "coverPhoto": "Jouw foto",
+    "advancedDetails": "Meer details (optioneel)",
     "cancel": "Annuleren"
   },
   "trades": {
@@ -1613,6 +1615,7 @@
         "placeholder": "Voer modelnummer in"
       },
       "dimensions": {
+        "label": "Afmetingen",
         "width": {
           "label": "Breedte",
           "placeholder": "Voer breedte in"
