@@ -4,6 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
+import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
 import { FilterBar, FilterOption } from "@/components/library/filter-bar";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
@@ -22,9 +23,14 @@ export const Route = createFileRoute("/_dashboard/my-puzzles/")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "myPuzzles") }],
   }),
-  pendingComponent: () => <PageLoading message="Loading puzzles..." />,
+  pendingComponent: () => <PuzzlesPending />,
   component: PuzzlesPage,
 });
+
+function PuzzlesPending() {
+  const t = useTranslations("puzzles");
+  return <PageLoading message={t("loadingPuzzles")} />;
+}
 
 // Status pills mapped onto what the data actually carries: the availability
 // flags on each owned copy, and the member's solve log for progress states.
@@ -134,7 +140,7 @@ function PuzzlesPage() {
       console.error("Cannot delete: copy is missing its aggregateId.");
       return;
     }
-    if (confirm("Are you sure you want to delete this puzzle?")) {
+    if (confirm(t("deleteConfirm"))) {
       try {
         await deletePuzzle({
           copyId: copy.aggregateId,
@@ -189,14 +195,35 @@ function PuzzlesPage() {
     return solveState?.completed ?? false;
   });
 
+  // The page title lives in the shell page head; publish the owned count + the
+  // Add Puzzle action there so the page body carries no duplicate header.
+  const ownedCount = (userownedPuzzles ?? []).length;
+  const headerMeta = t("countMeta", { count: ownedCount });
+  usePageHeaderActions(
+    () => (
+      <>
+        <span className="text-muted-foreground hidden text-sm sm:inline">
+          {headerMeta}
+        </span>
+        <Button variant="brand" size="sm" asChild>
+          <Link href="/my-puzzles/add">
+            <Plus className="h-4 w-4" />
+            {t("addPuzzle")}
+          </Link>
+        </Button>
+      </>
+    ),
+    [headerMeta],
+  );
+
   if (!user || !convexUser || userownedPuzzles === undefined) {
     return <PuzzlesGridSkeleton />;
   }
 
   return (
     <div className="flex flex-col gap-[18px]">
-      {/* Toolbar: a muted search hint on the left, view toggle + Add Puzzle on the right. Free-text
-          search moved to the global ⌘K palette. */}
+      {/* Toolbar: a muted search hint on the left, view toggle on the right. Free-text search moved
+          to the global ⌘K palette; the count + Add Puzzle action live in the shell page head. */}
       <div className="flex flex-wrap items-center gap-3">
         <p className="text-muted-foreground hidden text-sm sm:block">
           {t("searchHint")}
@@ -205,7 +232,7 @@ function PuzzlesPage() {
           <Button
             variant={viewMode === "grid" ? "secondary" : "ghost"}
             size="icon"
-            aria-label="Grid view"
+            aria-label={t("gridView")}
             onClick={() => setViewMode("grid")}
           >
             <Grid className="h-4 w-4" />
@@ -213,16 +240,10 @@ function PuzzlesPage() {
           <Button
             variant={viewMode === "list" ? "secondary" : "ghost"}
             size="icon"
-            aria-label="List view"
+            aria-label={t("listView")}
             onClick={() => setViewMode("list")}
           >
             <List className="h-4 w-4" />
-          </Button>
-          <Button variant="brand" asChild>
-            <Link href="/my-puzzles/add">
-              <Plus className="h-4 w-4" />
-              {t("addPuzzle")}
-            </Link>
           </Button>
         </div>
       </div>

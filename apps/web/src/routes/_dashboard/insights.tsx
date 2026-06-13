@@ -26,9 +26,14 @@ export const Route = createFileRoute("/_dashboard/insights")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "insights") }],
   }),
-  pendingComponent: () => <PageLoading message="Loading insights..." />,
+  pendingComponent: () => <InsightsPending />,
   component: InsightsPage,
 });
+
+function InsightsPending() {
+  const t = useTranslations("insights");
+  return <PageLoading message={t("loading")} />;
+}
 
 function InsightsPage() {
   const { user } = useUser();

@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
-import { SectionHead } from "@/components/dashboard-home/section-head";
+import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { CoverChip } from "@/components/library/cover-chip";
 import { EmptyState } from "@/components/library/empty-state";
 import { chipColor } from "@/components/library/palette";
@@ -102,6 +102,25 @@ function CompletionsPage() {
     return map;
   }, [ownedPuzzles]);
 
+  // The page title lives in the shell page head; publish the log meta + the Log
+  // Completion action there so the body carries no duplicate section header.
+  usePageHeaderActions(
+    () => (
+      <>
+        <span className="text-muted-foreground hidden text-sm sm:inline">
+          {t("mostRecent")}
+        </span>
+        <Button variant="brand" size="sm" asChild>
+          <Link href="/my-puzzles">
+            <Plus className="h-4 w-4" />
+            {t("logAction")}
+          </Link>
+        </Button>
+      </>
+    ),
+    [t],
+  );
+
   if (!user || convexUser === undefined || completions === undefined) {
     return <CompletionsSkeleton />;
   }
@@ -147,21 +166,9 @@ function CompletionsPage() {
         ]}
       />
 
+      {/* The log title, meta + Log Completion action now live in the shell
+          page head; the stat row above stays as a distinct sub-section. */}
       <section>
-        <SectionHead
-          title={t("log")}
-          icon={CircleCheck}
-          meta={t("mostRecent")}
-          action={
-            <Button variant="brand" size="sm" asChild>
-              <Link href="/my-puzzles">
-                <Plus className="h-4 w-4" />
-                {t("logAction")}
-              </Link>
-            </Button>
-          }
-        />
-
         {sorted.length === 0 ? (
           <EmptyState title={t("empty")} sub={t("emptyHint")} />
         ) : (
