@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { MoreVertical, Search, Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/messages")({
   head: ({ match }) => ({
@@ -168,6 +169,7 @@ function ConversationRow({
 }
 
 function MessagesPage() {
+  const t = useTranslations("messages");
   const [selectedUser, setSelectedUser] = useState<User | null>(mockUsers[0]);
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [newMessage, setNewMessage] = useState("");
@@ -213,7 +215,7 @@ function MessagesPage() {
       <div className="flex w-full max-w-xs flex-col sm:w-80">
         <div className="relative mb-2">
           <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-          <Input placeholder="Search users..." className="pl-9" />
+          <Input placeholder={t("searchUsers")} className="pl-9" />
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto">
           {mockUsers.map((user, index) => (
@@ -259,7 +261,7 @@ function MessagesPage() {
                     {selectedUser.name}
                   </p>
                   <p className="text-muted-foreground text-xs">
-                    {selectedUser.isOnline ? "Online" : "Offline"}
+                    {selectedUser.isOnline ? t("online") : t("offline")}
                   </p>
                 </div>
               </div>
@@ -307,7 +309,7 @@ function MessagesPage() {
             <div className="border-t pt-3">
               <div className="flex gap-2">
                 <Input
-                  placeholder="Type a message..."
+                  placeholder={t("typeMessage")}
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
@@ -330,10 +332,10 @@ function MessagesPage() {
                 🧩
               </div>
               <h3 className="font-heading text-lg font-bold">
-                Select a conversation
+                {t("selectConversation")}
               </h3>
               <p className="text-muted-foreground text-sm">
-                Choose a user from the sidebar to start messaging
+                {t("selectConversationHint")}
               </p>
             </div>
           </div>

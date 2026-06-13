@@ -551,7 +551,12 @@
     "sendMessage": "Bericht Versturen",
     "typeMessage": "Type je bericht...",
     "noMessages": "Nog geen berichten",
-    "newMessage": "Nieuw Bericht"
+    "newMessage": "Nieuw Bericht",
+    "searchUsers": "Zoek gebruikers...",
+    "online": "Online",
+    "offline": "Offline",
+    "selectConversation": "Selecteer een gesprek",
+    "selectConversationHint": "Kies een gebruiker in de zijbalk om te beginnen met chatten"
   },
   "profile": {
     "title": "Profiel",
@@ -602,6 +607,21 @@
       "beginner": "Beginner",
       "intermediate": "Gevorderd",
       "experienced": "Ervaren"
+    },
+    "editor": {
+      "title": "Openbaar profiel",
+      "description": "Je weergavenaam en bio zoals andere leden ze zien.",
+      "edit": "Bewerken",
+      "save": "Opslaan",
+      "cancel": "Annuleren",
+      "displayName": "Weergavenaam",
+      "displayNamePlaceholder": "Je weergavenaam",
+      "bio": "Bio",
+      "bioPlaceholder": "Vertel andere leden iets over jezelf",
+      "notSetUp": "Je hebt nog geen openbaar profiel ingesteld.",
+      "emptyNameError": "Weergavenaam mag niet leeg zijn",
+      "saved": "Profiel opgeslagen",
+      "saveError": "Kon profiel niet opslaan"
     }
   },
   "dashboard": {
