@@ -8,3 +8,4 @@ export * from "./piece-count";
 export * from "./puzzle-definition";
 export * from "./puzzle-import-draft";
 export * from "./store-page-fetch-error";
+export * from "./normalize-store-url";
