@@ -1,5 +1,6 @@
 // packages/domain/src/catalog/domain/store-page-fetch-error.spec.ts
 import { describe, expect, it } from "vitest";
+import { DomainError } from "../../shared-kernel";
 import { StorePageFetchError } from "./store-page-fetch-error";
 
 describe("StorePageFetchError", () => {
@@ -14,5 +15,6 @@ describe("StorePageFetchError", () => {
 
   it("is an Error subclass", () => {
     expect(StorePageFetchError.timeout("x")).toBeInstanceOf(Error);
+    expect(StorePageFetchError.timeout("x")).toBeInstanceOf(DomainError);
   });
 });

@@ -29,6 +29,17 @@ describe("isPrivateIp", () => {
     }
   });
 
+  it("flags link-local across the full fe80::/10 range", () => {
+    expect(isPrivateIp("fe80::1")).toBe(true);
+    expect(isPrivateIp("feb0::1")).toBe(true);
+    expect(isPrivateIp("febf::1")).toBe(true);
+  });
+
+  it("flags IPv4-mapped private addresses in hex-colon form", () => {
+    expect(isPrivateIp("::ffff:7f00:1")).toBe(true); // 127.0.0.1
+    expect(isPrivateIp("::ffff:0808:0808")).toBe(false); // 8.8.8.8
+  });
+
   it("allows public IPv6", () => {
     expect(isPrivateIp("2606:4700:4700::1111")).toBe(false);
   });

@@ -19,10 +19,16 @@ const ipv4Private = (ip: string): boolean => {
 const ipv6Private = (raw: string): boolean => {
   const ip = raw.toLowerCase().replace(/^\[|\]$/g, "");
   if (ip === "::" || ip === "::1") return true; // unspecified, loopback
-  if (ip.startsWith("fe80")) return true; // link-local
+  if (/^fe[89ab]/i.test(ip)) return true; // link-local fe80::/10
   if (/^f[cd][0-9a-f]{2}:/.test(ip)) return true; // fc00::/7 unique-local
-  const mapped = ip.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/); // IPv4-mapped
+  const mapped = ip.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/); // IPv4-mapped dotted-decimal
   if (mapped) return ipv4Private(mapped[1]);
+  const hexMapped = ip.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/); // IPv4-mapped hex-colon
+  if (hexMapped) {
+    const hi = Number.parseInt(hexMapped[1], 16);
+    const lo = Number.parseInt(hexMapped[2], 16);
+    return ipv4Private(`${hi >> 8}.${hi & 0xff}.${lo >> 8}.${lo & 0xff}`);
+  }
   return false;
 };
 
