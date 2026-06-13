@@ -2,6 +2,8 @@ import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
 
 // Shared validator for the cached draft; mirrors the domain PuzzleImportDraft shape.
+// NOTE: schema.ts carries a byte-identical inline copy — the Convex module graph (schema.ts is
+// imported by _generated) prevents importing this const there, so keep the two in sync manually.
 const draftValidator = v.object({
   title: v.string(),
   brand: v.optional(v.string()),

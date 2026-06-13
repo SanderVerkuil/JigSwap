@@ -4,7 +4,9 @@ import { internalQuery } from "../_generated/server";
 
 // Surfaces an existing APPROVED catalog puzzle carrying the extracted EAN/UPC, to drive the
 // "already on JigSwap" dedup branch. Approved-only by design: never leak another member's
-// unapproved submission. A rare pending-collision is caught later by the submit barcode rule.
+// unapproved submission. v1 scope: the design doc's "caller's own pending submissions" branch
+// is deferred (would require threading the submitter id through this internal query); a rare
+// own-pending collision is instead caught by the submit barcode-uniqueness rule.
 export const findPuzzleByBarcode = internalQuery({
   args: { ean: v.optional(v.string()), upc: v.optional(v.string()) },
   handler: async (ctx, { ean, upc }) => {
@@ -27,7 +29,7 @@ export const findPuzzleByBarcode = internalQuery({
     if (!match) return null;
 
     return {
-      puzzleId: match._id as string,
+      puzzleId: match._id as unknown as string,
       aggregateId: match.aggregateId,
       title: match.title,
       brand: match.brand,

@@ -42,4 +42,32 @@ describe("catalog.findPuzzleByBarcode", () => {
     });
     expect(match).toBeNull();
   });
+
+  test("returns an approved match by UPC", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      const submittedBy = await ctx.db.insert("users", {
+        clerkId: "c3", email: "g@h.i", name: "C", isActive: true, createdAt: 0, updatedAt: 0,
+      });
+      await ctx.db.insert("puzzles", seedPuzzle({ upc: "036000291452", submittedBy }));
+    });
+    const match = await t.query(internal.catalog.findPuzzleByBarcode.findPuzzleByBarcode, {
+      upc: "036000291452",
+    });
+    expect(match?.title).toBe("Mountain Vista");
+  });
+
+  test("ignores rejected matches and returns null", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      const submittedBy = await ctx.db.insert("users", {
+        clerkId: "c4", email: "j@k.l", name: "D", isActive: true, createdAt: 0, updatedAt: 0,
+      });
+      await ctx.db.insert("puzzles", seedPuzzle({ ean: "222", status: "rejected", submittedBy }));
+    });
+    const match = await t.query(internal.catalog.findPuzzleByBarcode.findPuzzleByBarcode, {
+      ean: "222",
+    });
+    expect(match).toBeNull();
+  });
 });
