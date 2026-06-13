@@ -275,7 +275,13 @@ function AddPuzzlePage() {
   const formColumn = (
     <>
       {/* URL import zone */}
-      <ImportZone onDraft={applyDraft} onMatch={(m) => setPendingMatch(m)} />
+      <ImportZone
+        onDraft={applyDraft}
+        onMatch={(m) => {
+          setSelectedDefinitionId(null);
+          setPendingMatch(m);
+        }}
+      />
 
       {/* MatchConfirm banner — shown when the import found an existing catalog entry */}
       {pendingMatch && (
@@ -401,7 +407,12 @@ function AddPuzzlePage() {
             color={form.coverColor}
             hasPhoto={!!form.coverFile}
             onColor={(c) =>
-              setForm((f) => ({ ...f, coverColor: c, coverFile: undefined }))
+              setForm((f) => ({
+                ...f,
+                coverColor: c,
+                coverFile: undefined,
+                importedImageUrl: undefined,
+              }))
             }
             onPhoto={(file) => setForm((f) => ({ ...f, coverFile: file }))}
           />

@@ -237,7 +237,12 @@ function ContributePuzzlePage() {
             color={form.coverColor}
             hasPhoto={!!form.coverFile}
             onColor={(c) =>
-              setForm((f) => ({ ...f, coverColor: c, coverFile: undefined }))
+              setForm((f) => ({
+                ...f,
+                coverColor: c,
+                coverFile: undefined,
+                importedImageUrl: undefined,
+              }))
             }
             onPhoto={(file) => setForm((f) => ({ ...f, coverFile: file }))}
           />
