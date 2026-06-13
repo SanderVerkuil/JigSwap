@@ -4,6 +4,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Image } from "@/compat/image";
 import { useRouter, useSearchParams } from "@/compat/navigation";
 import { PuzzleForm, PuzzleFormData } from "@/components/forms/puzzle-form";
+import {
+  draftToFormDefaults,
+  type ImportedDraft,
+} from "@/components/puzzle-import/draft-to-form-defaults";
+import { PuzzleImportBar } from "@/components/puzzle-import/puzzle-import-bar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,7 +59,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { gateway, Id } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -114,10 +119,19 @@ function AddPuzzlePage() {
   const [isCreatingPuzzle, setIsCreatingPuzzle] = useState(false);
   const [isCreatingOwnedPuzzle, setIsCreatingOwnedPuzzle] = useState(false);
 
+  const [createDefaults, setCreateDefaults] = useState<
+    PuzzleFormData | undefined
+  >(undefined);
+  const [createFormKey, setCreateFormKey] = useState(0);
+  const [importedImageUrl, setImportedImageUrl] = useState<string | undefined>(
+    undefined,
+  );
+
   const createInstance = useMutation(gateway.library.createOwned);
   const updateSharing = useMutation(gateway.library.updateSharing);
   const createPuzzle = useMutation(gateway.catalog.createPuzzle);
   const generateUploadUrl = useMutation(gateway.library.generateUploadUrl);
+  const importImage = useAction(gateway.catalog.importPuzzleImage);
 
   // Get puzzle suggestions based on search
   const puzzleSuggestions = useQuery(
@@ -193,12 +207,19 @@ function AddPuzzlePage() {
     setSearchValue(puzzle.title);
   };
 
+  const applyImportedDraft = (draft: ImportedDraft) => {
+    setCreateDefaults(draftToFormDefaults(draft));
+    setImportedImageUrl(draft.imageUrl);
+    setCreateFormKey((k) => k + 1);
+    setCreatePuzzleOpen(true);
+  };
+
   const handleCreatePuzzle = async (data: PuzzleFormData) => {
     setIsCreatingPuzzle(true);
     try {
       // Handle image upload if provided
       let imageId: Id<"_storage"> | undefined;
-      if (data.image) {
+      if (data.image instanceof File) {
         const uploadUrl = await generateUploadUrl();
         const uploadResult = await fetch(uploadUrl, {
           method: "POST",
@@ -207,6 +228,12 @@ function AddPuzzlePage() {
         });
         if (!uploadResult.ok) throw new Error("Failed to upload image");
         imageId = await uploadResult.json();
+      } else if (importedImageUrl) {
+        try {
+          imageId = await importImage({ url: importedImageUrl });
+        } catch {
+          imageId = undefined;
+        }
       }
 
       // Submission returns a CatalogCategoryId aggregateId; the definition lands as `pending` and
@@ -289,6 +316,20 @@ function AddPuzzlePage() {
             <CardDescription>{t("selectPuzzleDescription")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <PuzzleImportBar
+              onDraft={applyImportedDraft}
+              onMatch={(match) =>
+                handlePuzzleSelect({
+                  _id: match.puzzleId,
+                  aggregateId: match.aggregateId,
+                  title: match.title,
+                  brand: match.brand,
+                  pieceCount: match.pieceCount,
+                  image: match.imageUrl ?? null,
+                })
+              }
+            />
+
             {/* Puzzle Search Combobox */}
             <div className="space-y-2">
               <label className="text-sm font-medium">{t("searchPuzzle")}</label>
@@ -339,6 +380,8 @@ function AddPuzzlePage() {
                                 </DialogDescription>
                               </DialogHeader>
                               <PuzzleForm
+                                key={createFormKey}
+                                defaultValues={createDefaults}
                                 onSubmit={handleCreatePuzzle}
                                 onCancel={() => setCreatePuzzleOpen(false)}
                                 pending={isCreatingPuzzle}
