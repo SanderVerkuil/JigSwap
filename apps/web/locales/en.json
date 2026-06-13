@@ -452,7 +452,9 @@
       "inProgress": "In Progress",
       "completed": "Completed"
     },
-    "resultCount": "{count} of {total} puzzles"
+    "resultCount": "{count} of {total} puzzles",
+    "new_sealed": "New (Sealed)",
+    "like_new": "Like New"
   },
   "trades": {
     "title": "Exchanges",
@@ -722,7 +724,8 @@
     "tryDifferentFilters": "Try adjusting your search or filters.",
     "filterAll": "All",
     "available": "Available",
-    "resultsCount": "{count, plural, one {# puzzle found} other {# puzzles found}}"
+    "resultsCount": "{count, plural, one {# puzzle found} other {# puzzles found}}",
+    "favoritesComingSoon": "Favorites are coming soon"
   },
   "footer": {
     "tagline": "Making jigsaw puzzle trading accessible and sustainable for everyone.",
@@ -1554,7 +1557,8 @@
     "statusRecalled": "Recalled",
     "borrowedBy": "Borrowed by {name}",
     "unknownMember": "Unknown member",
-    "borrowedCount": "{count, plural, one {# borrowed puzzle} other {# borrowed puzzles}}"
+    "borrowedCount": "{count, plural, one {# borrowed puzzle} other {# borrowed puzzles}}",
+    "pieceCount": "{count, plural, one {# piece} other {# pieces}}"
   },
   "marketing": {
     "nav": {
@@ -1979,6 +1983,7 @@
         "proposeSwapSub": "Trade with a fellow puzzler",
         "browseCommunitySub": "Discover puzzles near you"
       }
-    }
+    },
+    "breadcrumbLabel": "Breadcrumb"
   }
 }

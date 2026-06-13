@@ -16,9 +16,14 @@ export const Route = createFileRoute("/_dashboard/borrowed")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "borrowed") }],
   }),
-  pendingComponent: () => <PageLoading message="Loading loans..." />,
+  pendingComponent: () => <BorrowedPending />,
   component: BorrowedPage,
 });
+
+function BorrowedPending() {
+  const tCommon = useTranslations("common");
+  return <PageLoading message={tCommon("loading")} />;
+}
 
 function BorrowedPage() {
   const t = useTranslations("lending");
@@ -81,8 +86,7 @@ function BorrowedPage() {
                     <div className="space-y-1">
                       <h3 className="font-semibold">{loan.puzzleTitle}</h3>
                       <Badge variant="secondary" className="text-xs">
-                        {loan.pieceCount}{" "}
-                        {loan.pieceCount === 1 ? "piece" : "pieces"}
+                        {t("pieceCount", { count: loan.pieceCount })}
                       </Badge>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <User className="h-4 w-4" />

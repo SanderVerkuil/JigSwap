@@ -452,7 +452,9 @@
       "inProgress": "Bezig",
       "completed": "Voltooid"
     },
-    "resultCount": "{count} van {total} puzzels"
+    "resultCount": "{count} van {total} puzzels",
+    "new_sealed": "Nieuw (Verzegeld)",
+    "like_new": "Zo Goed Als Nieuw"
   },
   "trades": {
     "title": "Uitwisselingen",
@@ -722,7 +724,8 @@
     "tryDifferentFilters": "Pas je zoekopdracht of filters aan.",
     "filterAll": "Alle",
     "available": "Beschikbaar",
-    "resultsCount": "{count, plural, one {# puzzel gevonden} other {# puzzels gevonden}}"
+    "resultsCount": "{count, plural, one {# puzzel gevonden} other {# puzzels gevonden}}",
+    "favoritesComingSoon": "Favorieten komen binnenkort"
   },
   "footer": {
     "tagline": "Legpuzzelruil toegankelijk en duurzaam maken voor iedereen.",
@@ -1554,7 +1557,8 @@
     "statusRecalled": "Teruggevraagd",
     "borrowedBy": "Geleend door {name}",
     "unknownMember": "Onbekend lid",
-    "borrowedCount": "{count, plural, one {# geleende puzzel} other {# geleende puzzels}}"
+    "borrowedCount": "{count, plural, one {# geleende puzzel} other {# geleende puzzels}}",
+    "pieceCount": "{count, plural, one {# stuk} other {# stukken}}"
   },
   "marketing": {
     "nav": {
@@ -1979,6 +1983,7 @@
         "proposeSwapSub": "Ruil met een mede-puzzelaar",
         "browseCommunitySub": "Ontdek puzzels bij jou in de buurt"
       }
-    }
+    },
+    "breadcrumbLabel": "Broodkruimel"
   }
 }
