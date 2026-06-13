@@ -1,3 +1,4 @@
+import { enUS, nlNL } from "@clerk/localizations";
 import { ClerkProvider, useAuth } from "@clerk/tanstack-react-start";
 import { auth } from "@clerk/tanstack-react-start/server";
 import { ConvexQueryClient } from "@convex-dev/react-query";
@@ -116,8 +117,10 @@ function RootComponent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Render Clerk's own UI (UserButton, UserProfile, sign-in/up) in the active
+  // app locale. Reactive to intl.locale so a language switch re-localizes Clerk.
   return (
-    <ClerkProvider>
+    <ClerkProvider localization={intl.locale === "nl" ? nlNL : enUS}>
       <ConvexProviderWithClerk client={context.convexClient} useAuth={useAuth}>
         <AuthCacheSync />
         <RootDocument>
