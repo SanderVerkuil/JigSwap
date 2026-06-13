@@ -1176,7 +1176,18 @@
     "meta": "{shelves, plural, one {# plank} other {# planken}} · {puzzles, plural, one {# puzzel} other {# puzzels}}",
     "newCollection": "Nieuwe Collectie",
     "deleteConfirm": "Weet je zeker dat je deze collectie wilt verwijderen?",
-    "loadingCollections": "Collecties laden..."
+    "loadingCollections": "Collecties laden...",
+    "piecesTotal": "Stukjes Totaal",
+    "avgDifficulty": "Gem. Moeilijkheid",
+    "upForTrade": "Te Ruil",
+    "difficultyMix": "Moeilijkheidsverdeling",
+    "puzzlesInCollection": "Puzzels in Deze Collectie",
+    "share": "Delen",
+    "linkCopied": "Link gekopieerd naar klembord",
+    "noPuzzlesAvailable": "Geen Puzzels Beschikbaar",
+    "addPuzzlesFirst": "Voeg eerst puzzels toe aan je bibliotheek en orden ze dan in collecties.",
+    "addSelected": "{count, plural, one {# puzzel toevoegen} other {# puzzels toevoegen}}",
+    "updatedAgo": "Bijgewerkt {time}"
   },
   "circles": {
     "yourCircles": "Jouw Kringen",
