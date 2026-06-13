@@ -1176,7 +1176,18 @@
     "meta": "{shelves, plural, one {# shelf} other {# shelves}} · {puzzles, plural, one {# puzzle} other {# puzzles}}",
     "newCollection": "New Collection",
     "deleteConfirm": "Are you sure you want to delete this collection?",
-    "loadingCollections": "Loading collections..."
+    "loadingCollections": "Loading collections...",
+    "piecesTotal": "Pieces Total",
+    "avgDifficulty": "Avg. Difficulty",
+    "upForTrade": "Up for Trade",
+    "difficultyMix": "Difficulty Mix",
+    "puzzlesInCollection": "Puzzles in This Collection",
+    "share": "Share",
+    "linkCopied": "Link copied to clipboard",
+    "noPuzzlesAvailable": "No Puzzles Available",
+    "addPuzzlesFirst": "Add puzzles to your library first, then organise them into collections.",
+    "addSelected": "{count, plural, one {Add # puzzle} other {Add # puzzles}}",
+    "updatedAgo": "Updated {time}"
   },
   "circles": {
     "yourCircles": "Your Circles",
