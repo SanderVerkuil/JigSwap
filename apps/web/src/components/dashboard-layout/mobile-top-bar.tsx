@@ -24,11 +24,7 @@ import { getNavGroup, getRouteMeta } from "./route-meta";
 const tapTarget =
   "inline-flex size-11 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-accent";
 
-export function MobileTopBar({
-  onOpenPalette,
-}: {
-  onOpenPalette: () => void;
-}) {
+export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const t = useTranslations("shell");
   const tNotifications = useTranslations("notifications");
   const pathname = usePathname();
@@ -66,7 +62,11 @@ export function MobileTopBar({
             href="/dashboard"
             className="flex h-11 shrink-0 items-center gap-2 pl-1.5"
           >
-            <Image src={logoIcon} alt="JigSwap" className="size-7 object-contain" />
+            <Image
+              src={logoIcon}
+              alt="JigSwap"
+              className="size-7 object-contain"
+            />
             <span className="font-heading text-[19px] leading-none font-bold">
               <span className="text-jigsaw-primary">Jig</span>
               <span className="text-jigsaw-secondary">Swap</span>

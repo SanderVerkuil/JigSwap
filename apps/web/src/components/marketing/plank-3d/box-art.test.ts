@@ -88,7 +88,11 @@ describe("boxArtCacheKey", () => {
   });
 
   it("differs when any art-affecting input differs", () => {
-    const base = buildBoxArtSpec({ title: "Boslicht", width: 100 }, colors, 144);
+    const base = buildBoxArtSpec(
+      { title: "Boslicht", width: 100 },
+      colors,
+      144,
+    );
     const key = boxArtCacheKey(base, fonts);
     expect(
       boxArtCacheKey(
@@ -106,9 +110,9 @@ describe("boxArtCacheKey", () => {
         fonts,
       ),
     ).not.toBe(key);
-    expect(
-      boxArtCacheKey(base, { heading: "system-ui, sans-serif" }),
-    ).not.toBe(key);
+    expect(boxArtCacheKey(base, { heading: "system-ui, sans-serif" })).not.toBe(
+      key,
+    );
   });
 
   it("distinguishes cover mode from gradient mode for the same dimensions", () => {

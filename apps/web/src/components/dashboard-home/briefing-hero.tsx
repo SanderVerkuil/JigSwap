@@ -1,17 +1,13 @@
 "use client";
 
 import { Link } from "@/compat/link";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
 import { cn } from "@/lib/utils";
-import type { FunctionReturnType } from "convex/server";
 import { useQuery } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import { CircleCheck, Plus, Search } from "lucide-react";
 import type { ReactNode } from "react";
 import { useFormatter, useTranslations } from "use-intl";
@@ -117,19 +113,30 @@ function PendingRequestBanner({ exchange }: { exchange: ExchangeRow }) {
         name: requester.name,
         theirs,
         mine,
-        strong: (chunks) => <strong className="text-foreground">{chunks}</strong>,
+        strong: (chunks) => (
+          <strong className="text-foreground">{chunks}</strong>
+        ),
         mineStrong: (chunks) => (
           <strong className="text-jigsaw-primary">{chunks}</strong>
         ),
       })
-    : t.rich(exchange.type === "loan" ? "borrow" : exchange.type === "sale" ? "buy" : "want", {
-        name: requester.name,
-        mine,
-        strong: (chunks) => <strong className="text-foreground">{chunks}</strong>,
-        mineStrong: (chunks) => (
-          <strong className="text-jigsaw-primary">{chunks}</strong>
-        ),
-      });
+    : t.rich(
+        exchange.type === "loan"
+          ? "borrow"
+          : exchange.type === "sale"
+            ? "buy"
+            : "want",
+        {
+          name: requester.name,
+          mine,
+          strong: (chunks) => (
+            <strong className="text-foreground">{chunks}</strong>
+          ),
+          mineStrong: (chunks) => (
+            <strong className="text-jigsaw-primary">{chunks}</strong>
+          ),
+        },
+      );
 
   return (
     <div className="border-jigsaw-primary/20 bg-jigsaw-primary/5 flex flex-wrap items-center gap-3.5 rounded-xl border px-4 py-3">
@@ -137,7 +144,9 @@ function PendingRequestBanner({ exchange }: { exchange: ExchangeRow }) {
         {requester.avatar && (
           <AvatarImage src={requester.avatar} alt={requester.name} />
         )}
-        <AvatarFallback>{requester.name.charAt(0).toUpperCase()}</AvatarFallback>
+        <AvatarFallback>
+          {requester.name.charAt(0).toUpperCase()}
+        </AvatarFallback>
       </Avatar>
       <div className="text-muted-foreground min-w-0 flex-1 text-sm">
         {message}
@@ -211,9 +220,7 @@ export function BriefingHero() {
     );
   }
 
-  const active = (exchanges ?? []).filter((e) =>
-    ACTIVE_STATUSES.has(e.status),
-  );
+  const active = (exchanges ?? []).filter((e) => ACTIVE_STATUSES.has(e.status));
   const pendingIncoming = (exchanges ?? []).filter(
     (e) => e.userRole === "owner" && e.status === "proposed",
   );

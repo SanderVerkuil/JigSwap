@@ -306,8 +306,7 @@ function buildRowInstances(
   let cursor = -span / 2;
   for (let i = 0; cursor < span / 2 && out.length < MAX_PER_ROW; i++) {
     const src = i % rowBoxes.length;
-    const sizeScale =
-      SIZE_JITTER[(i * 3 + rowIndex * 2) % SIZE_JITTER.length];
+    const sizeScale = SIZE_JITTER[(i * 3 + rowIndex * 2) % SIZE_JITTER.length];
     const w = (rowBoxes[src].width ?? 116) * PX * BOX_SCALE * sizeScale;
     const colors = rowResolved[src] ?? { c1: "#8b5cf6", c2: "#6d28d9" };
     out.push({
