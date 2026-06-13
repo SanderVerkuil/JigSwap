@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { gateway, Id } from "@/gateway";
+import { cn } from "@/lib/utils";
 import type { FunctionReturnType } from "convex/server";
 import {
   Check,
@@ -359,10 +360,17 @@ export function PuzzleCard({
     );
   };
 
+  // p-0/gap-0/overflow-hidden so the cover (or its gradient placeholder) sits
+  // flush against the card's top edge instead of inset by the Card's default
+  // padding; renderContent supplies its own p-4.
   if (viewMode === "list") {
     return (
       <Card
-        className={`${className} ${isSelected ? "ring-2 ring-primary" : ""}`}
+        className={cn(
+          "gap-0 overflow-hidden p-0",
+          isSelected && "ring-2 ring-primary",
+          className,
+        )}
       >
         <div className="flex">
           <div className="w-32 flex-shrink-0">{renderImage()}</div>
@@ -373,7 +381,13 @@ export function PuzzleCard({
   }
 
   return (
-    <Card className={`${className} ${isSelected ? "ring-2 ring-primary" : ""}`}>
+    <Card
+      className={cn(
+        "gap-0 overflow-hidden p-0",
+        isSelected && "ring-2 ring-primary",
+        className,
+      )}
+    >
       {renderImage()}
       {renderContent()}
     </Card>
