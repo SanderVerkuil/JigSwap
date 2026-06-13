@@ -6,15 +6,17 @@ import { AxiomWithoutBatching } from "@axiomhq/js";
 // is configured in the Convex deployment, and never throws — observability must never break the
 // request it is observing.
 //
-// We use AxiomWithoutBatching so each action invocation ingests exactly one event and awaits the
-// HTTP call (no background batch to flush before the serverless function exits).
+// REGION: the `jigswap` dataset lives in the eu-central-1 region of Axiom's unified platform, so
+// ingest must go through that region's EDGE endpoint via the SDK's `edge` option — NOT
+// `api.eu.axiom.co`, which is Axiom's separate legacy EU cloud and rejects unified-platform tokens.
+//
+// TOKEN: edge ingest REQUIRES an API token (`xaat-*`) with ingest permission. Personal access
+// tokens (`xapt-*`) are rejected by the edge.
 //
 // Env (set per Convex deployment with `npx convex env set ...`):
-//   AXIOM_API_KEY  (required to enable) — an Axiom API token with INGEST permission on the dataset,
-//                  created in the SAME region/org as the dataset (else Axiom returns 403 Forbidden)
+//   AXIOM_API_KEY  (required to enable) — an `xaat-*` API token with INGEST on the dataset
 //   AXIOM_DATASET  (default "jigswap")
-//   AXIOM_URL      (default "https://api.eu.axiom.co") — the org/dataset is EU-region. Without an
-//                  `edge` option, the SDK uses `url` for ingest as well.
+//   AXIOM_EDGE     (default "eu-central-1.aws.edge.axiom.co") — regional edge domain, no scheme
 
 let client: AxiomWithoutBatching | null = null;
 let resolved = false;
@@ -26,11 +28,8 @@ const getClient = (): AxiomWithoutBatching | null => {
   if (token) {
     client = new AxiomWithoutBatching({
       token,
-      // Strip any trailing slash so the SDK doesn't build a `//v1/...` path.
-      url: (process.env.AXIOM_URL ?? "https://api.eu.axiom.co").replace(
-        /\/+$/,
-        "",
-      ),
+      // Routes ingest/query to the dataset's region. The scheme is added by the SDK.
+      edge: process.env.AXIOM_EDGE ?? "eu-central-1.aws.edge.axiom.co",
     });
   }
   return client;
