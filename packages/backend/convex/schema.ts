@@ -104,6 +104,23 @@ export default defineSchema({
       filterFields: ["status"],
     }),
 
+  // Cache of scraped store pages, keyed on a normalized URL, so repeated pastes of the same link
+  // skip re-fetching. TTL is enforced at read time in the extract action (7 days).
+  puzzleImportCache: defineTable({
+    normalizedUrl: v.string(),
+    draft: v.object({
+      title: v.string(),
+      brand: v.optional(v.string()),
+      imageUrl: v.optional(v.string()),
+      description: v.optional(v.string()),
+      ean: v.optional(v.string()),
+      upc: v.optional(v.string()),
+      pieceCount: v.optional(v.number()),
+      sourceUrl: v.string(),
+    }),
+    fetchedAt: v.number(),
+  }).index("by_url", ["normalizedUrl"]),
+
   // Puzzle instances - individual copies that people own
   ownedPuzzles: defineTable({
     // Library CopyId. Optional so legacy rows still validate; the domain-driven library
