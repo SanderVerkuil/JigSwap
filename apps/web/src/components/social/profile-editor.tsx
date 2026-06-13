@@ -15,10 +15,12 @@ import { useMutation, useQuery } from "convex/react";
 import { Pencil, Save, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "use-intl";
 
 // View + inline edit of the acting member's public Social profile (display name + bio). First-time
 // editors create the profile via the same mutation; the server enforces a non-empty display name.
 export function ProfileEditor() {
+  const t = useTranslations("profile.editor");
   const profile = useQuery(gateway.social.profile, {});
   const editProfile = useMutation(gateway.social.editProfile);
 
@@ -37,7 +39,7 @@ export function ProfileEditor() {
 
   const handleSave = async () => {
     if (displayName.trim().length === 0) {
-      toast.error("Display name cannot be empty");
+      toast.error(t("emptyNameError"));
       return;
     }
     setSaving(true);
@@ -46,10 +48,10 @@ export function ProfileEditor() {
         displayName: displayName.trim(),
         bio: bio.trim() === "" ? undefined : bio.trim(),
       });
-      toast.success("Profile saved");
+      toast.success(t("saved"));
       setIsEditing(false);
     } catch {
-      toast.error("Could not save profile");
+      toast.error(t("saveError"));
     } finally {
       setSaving(false);
     }
@@ -59,10 +61,8 @@ export function ProfileEditor() {
     <Card>
       <CardHeader className="flex flex-row items-start justify-between">
         <div>
-          <CardTitle>Public profile</CardTitle>
-          <CardDescription>
-            Your display name and bio as other members see them.
-          </CardDescription>
+          <CardTitle>{t("title")}</CardTitle>
+          <CardDescription>{t("description")}</CardDescription>
         </div>
         {!isEditing && (
           <Button
@@ -71,7 +71,7 @@ export function ProfileEditor() {
             onClick={() => setIsEditing(true)}
           >
             <Pencil className="mr-2 h-4 w-4" />
-            Edit
+            {t("edit")}
           </Button>
         )}
       </CardHeader>
@@ -79,26 +79,26 @@ export function ProfileEditor() {
         {isEditing ? (
           <>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Display name</label>
+              <label className="text-sm font-medium">{t("displayName")}</label>
               <Input
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Your display name"
+                placeholder={t("displayNamePlaceholder")}
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Bio</label>
+              <label className="text-sm font-medium">{t("bio")}</label>
               <Textarea
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                placeholder="Tell other members about yourself"
+                placeholder={t("bioPlaceholder")}
                 rows={3}
               />
             </div>
             <div className="flex gap-2">
               <Button onClick={handleSave} disabled={saving}>
                 <Save className="mr-2 h-4 w-4" />
-                Save
+                {t("save")}
               </Button>
               <Button
                 variant="outline"
@@ -106,7 +106,7 @@ export function ProfileEditor() {
                 disabled={saving}
               >
                 <X className="mr-2 h-4 w-4" />
-                Cancel
+                {t("cancel")}
               </Button>
             </div>
           </>
@@ -122,9 +122,7 @@ export function ProfileEditor() {
             </div>
           </>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            You have not set up a public profile yet.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("notSetUp")}</p>
         )}
       </CardContent>
     </Card>

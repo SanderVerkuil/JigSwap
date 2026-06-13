@@ -49,9 +49,14 @@ export const Route = createFileRoute("/_dashboard/trades")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "trades") }],
   }),
-  pendingComponent: () => <PageLoading message="Loading trades..." />,
+  pendingComponent: () => <TradesPending />,
   component: ExchangesPage,
 });
+
+function TradesPending() {
+  const tCommon = useTranslations("common");
+  return <PageLoading message={tCommon("loading")} />;
+}
 
 // Soft status pill tones (same mapping as the dashboard pulse): Pending and
 // Disputed amber, Accepted violet, Completed green, the rest muted.
@@ -442,6 +447,7 @@ function PuzzleSummary({
   title?: string;
   pieceCount?: number;
 }) {
+  const tLending = useTranslations("lending");
   return (
     <div>
       <h4 className="text-muted-foreground text-sm font-medium">{label}</h4>
@@ -450,7 +456,9 @@ function PuzzleSummary({
         <div>
           <p className="text-sm font-medium">{title}</p>
           {pieceCount != null && (
-            <p className="text-muted-foreground text-xs">{pieceCount} pieces</p>
+            <p className="text-muted-foreground text-xs">
+              {tLending("pieceCount", { count: pieceCount })}
+            </p>
           )}
         </div>
       </div>
@@ -506,7 +514,7 @@ function BorrowedList({ borrowed }: { borrowed: BorrowedLoan[] | undefined }) {
               {loan.puzzleTitle}
               <span className="text-muted-foreground font-medium">
                 {" "}
-                · {loan.pieceCount} {loan.pieceCount === 1 ? "piece" : "pieces"}
+                · {t("pieceCount", { count: loan.pieceCount })}
               </span>
             </div>
             <div className="text-muted-foreground mt-0.5 truncate text-xs">

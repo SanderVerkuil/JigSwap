@@ -458,7 +458,9 @@
     "gridView": "Rasterweergave",
     "listView": "Lijstweergave",
     "deleteConfirm": "Weet je zeker dat je deze puzzel wilt verwijderen?",
-    "loadingPuzzles": "Puzzels laden..."
+    "loadingPuzzles": "Puzzels laden...",
+    "new_sealed": "Nieuw (Verzegeld)",
+    "like_new": "Zo Goed Als Nieuw"
   },
   "trades": {
     "title": "Uitwisselingen",
@@ -555,7 +557,12 @@
     "sendMessage": "Bericht Versturen",
     "typeMessage": "Type je bericht...",
     "noMessages": "Nog geen berichten",
-    "newMessage": "Nieuw Bericht"
+    "newMessage": "Nieuw Bericht",
+    "searchUsers": "Zoek gebruikers...",
+    "online": "Online",
+    "offline": "Offline",
+    "selectConversation": "Selecteer een gesprek",
+    "selectConversationHint": "Kies een gebruiker in de zijbalk om te beginnen met chatten"
   },
   "profile": {
     "title": "Profiel",
@@ -606,6 +613,21 @@
       "beginner": "Beginner",
       "intermediate": "Gevorderd",
       "experienced": "Ervaren"
+    },
+    "editor": {
+      "title": "Openbaar profiel",
+      "description": "Je weergavenaam en bio zoals andere leden ze zien.",
+      "edit": "Bewerken",
+      "save": "Opslaan",
+      "cancel": "Annuleren",
+      "displayName": "Weergavenaam",
+      "displayNamePlaceholder": "Je weergavenaam",
+      "bio": "Bio",
+      "bioPlaceholder": "Vertel andere leden iets over jezelf",
+      "notSetUp": "Je hebt nog geen openbaar profiel ingesteld.",
+      "emptyNameError": "Weergavenaam mag niet leeg zijn",
+      "saved": "Profiel opgeslagen",
+      "saveError": "Kon profiel niet opslaan"
     }
   },
   "dashboard": {
@@ -728,7 +750,8 @@
     "tryDifferentFilters": "Pas je zoekopdracht of filters aan.",
     "filterAll": "Alle",
     "available": "Beschikbaar",
-    "resultsCount": "{count, plural, one {# puzzel gevonden} other {# puzzels gevonden}}"
+    "resultsCount": "{count, plural, one {# puzzel gevonden} other {# puzzels gevonden}}",
+    "favoritesComingSoon": "Favorieten komen binnenkort"
   },
   "footer": {
     "tagline": "Legpuzzelruil toegankelijk en duurzaam maken voor iedereen.",
@@ -1143,7 +1166,32 @@
     "sharedWithYou": "Met jou gedeeld",
     "membersLabel": "{count, plural, one {lid} other {leden}}",
     "emptyTitle": "Nog geen kringen",
-    "emptySub": "Maak een kring aan om puzzels te ruilen met vrienden en familie."
+    "emptySub": "Maak een kring aan om puzzels te ruilen met vrienden en familie.",
+    "loading": "Kringen laden...",
+    "manage": {
+      "createTitle": "Kring Aanmaken",
+      "createDescription": "Een kring is besloten. Je wordt het eerste lid en de beheerder.",
+      "nameLabel": "Naam",
+      "namePlaceholder": "bijv. Zaterdagpuzzelaars",
+      "cancel": "Annuleren",
+      "create": "Aanmaken",
+      "title": "{name} beheren",
+      "fallbackName": "kring",
+      "description": "Leden toevoegen of verwijderen, rechten instellen en exemplaren delen.",
+      "loadingCircle": "Kring laden...",
+      "unavailable": "Deze kring is niet langer beschikbaar.",
+      "members": "Leden",
+      "owner": "Eigenaar",
+      "addMember": "Lid toevoegen",
+      "searchPlaceholder": "Zoek leden op naam…",
+      "add": "Toevoegen",
+      "shareCopy": "Een exemplaar delen",
+      "shareDescription": "Gedeelde exemplaren worden zichtbaar voor kringleden op het zichtbaarheidsniveau <scope>friendCircle</scope>, ook als ze verder privé zijn.",
+      "chooseCopy": "Kies een van je exemplaren…",
+      "copyFallback": "Exemplaar",
+      "share": "Delen",
+      "close": "Sluiten"
+    }
   },
   "people": {
     "yourNetwork": "Jouw Netwerk",
@@ -1537,7 +1585,8 @@
     "statusRecalled": "Teruggevraagd",
     "borrowedBy": "Geleend door {name}",
     "unknownMember": "Onbekend lid",
-    "borrowedCount": "{count, plural, one {# geleende puzzel} other {# geleende puzzels}}"
+    "borrowedCount": "{count, plural, one {# geleende puzzel} other {# geleende puzzels}}",
+    "pieceCount": "{count, plural, one {# stuk} other {# stukken}}"
   },
   "marketing": {
     "nav": {
@@ -1968,6 +2017,7 @@
         "proposeSwapSub": "Ruil met een mede-puzzelaar",
         "browseCommunitySub": "Ontdek puzzels bij jou in de buurt"
       }
-    }
+    },
+    "breadcrumbLabel": "Broodkruimel"
   }
 }

@@ -17,9 +17,14 @@ export const Route = createFileRoute("/_dashboard/browse")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "browse") }],
   }),
-  pendingComponent: () => <PageLoading message="Loading browse..." />,
+  pendingComponent: () => <BrowsePending />,
   component: BrowsePage,
 });
+
+function BrowsePending() {
+  const tCommon = useTranslations("common");
+  return <PageLoading message={tCommon("loading")} />;
+}
 
 type Difficulty = "easy" | "medium" | "hard" | "expert";
 type Condition = "new_sealed" | "like_new" | "good" | "fair" | "poor";
@@ -246,7 +251,7 @@ function BrowsePage() {
               showOwner={true}
               onRequestExchange={() => navigate({ to: "/trades" })}
               onMessage={() => navigate({ to: "/messages" })}
-              onFavorite={() => toast("Favorites are coming soon")}
+              onFavorite={() => toast(tBrowse("favoritesComingSoon"))}
             />
           ))}
         </PuzzleViewProvider>
