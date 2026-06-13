@@ -9,6 +9,7 @@ import {
 import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
 import { action } from "../_generated/server";
+import { ingestToAxiom } from "../lib/axiom";
 import { logEvent, type WideEvent } from "../lib/logEvent";
 import { browserStorePageFetcher } from "./adapters/browserStorePageFetcher";
 import { firecrawlStorePageFetcher } from "./adapters/firecrawlStorePageFetcher";
@@ -32,9 +33,11 @@ export const extractFromUrl = action({
       request_id: crypto.randomUUID(),
       url,
     };
-    const flush = () => {
+    // Emit to Convex logs (console) and forward to Axiom (no-op unless AXIOM_API_KEY is set).
+    const flush = async () => {
       event.duration_ms = Date.now() - startedAt;
-      logEvent(event);
+      const line = logEvent(event);
+      await ingestToAxiom(line);
     };
 
     const identity = await ctx.auth.getUserIdentity();
@@ -42,7 +45,7 @@ export const extractFromUrl = action({
     if (identity === null) {
       event.outcome = "error";
       event.error = { code: "Unauthenticated" };
-      flush();
+      await flush();
       throw new ConvexError("Unauthenticated");
     }
 
@@ -131,7 +134,7 @@ export const extractFromUrl = action({
       };
       return { ok: false as const, code: "FetchFailed" as const };
     } finally {
-      flush();
+      await flush();
     }
   },
 });

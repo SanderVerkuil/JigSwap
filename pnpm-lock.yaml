@@ -284,6 +284,9 @@ importers:
 
   packages/backend:
     dependencies:
+      '@axiomhq/js':
+        specifier: ^1.6.1
+        version: 1.6.1
       '@clerk/backend':
         specifier: ^3.7.0
         version: 3.7.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -334,6 +337,10 @@ importers:
         version: link:../backend
 
 packages:
+
+  '@axiomhq/js@1.6.1':
+    resolution: {integrity: sha512-iNWOnGvP+R2lIWYk9jkfvRI/rfhOR9hlWJOBJhMKwZ9mfpE0KdnFnG2XPLoMcrbyrOBKj6Jw0hpIH5GhPucLog==}
+    engines: {node: '>=20'}
 
   '@babel/code-frame@7.27.1':
     resolution: {integrity: sha512-cjQ7ZlQ0Mv3b47hABuTevyTuYN4i+loJKGeV9flcCgIK37cCXRh+L1bd3iBHlynerhQ7BhCkn2BPbQUL+rGqFg==}
@@ -5806,6 +5813,9 @@ packages:
       picomatch:
         optional: true
 
+  fetch-retry@6.0.0:
+    resolution: {integrity: sha512-BUFj1aMubgib37I3v4q78fYo63Po7t4HUPTpQ6/QE6yK6cIQrP+W43FYToeTEyg5m2Y7eFUtijUuAv/PDlWuag==}
+
   fetchdts@0.1.7:
     resolution: {integrity: sha512-YoZjBdafyLIop9lSxXVI33oLD5kN31q4Td+CasofLLYeLXRFeOsuOw0Uo+XNRi9PZlbfdlN2GmRtm4tCEQ9/KA==}
 
@@ -9341,6 +9351,10 @@ packages:
         optional: true
 
 snapshots:
+
+  '@axiomhq/js@1.6.1':
+    dependencies:
+      fetch-retry: 6.0.0
 
   '@babel/code-frame@7.27.1':
     dependencies:
@@ -15353,6 +15367,8 @@ snapshots:
   fdir@6.5.0(picomatch@4.0.4):
     optionalDependencies:
       picomatch: 4.0.4
+
+  fetch-retry@6.0.0: {}
 
   fetchdts@0.1.7: {}
 

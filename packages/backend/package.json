@@ -5,6 +5,7 @@
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
+    "@axiomhq/js": "^1.6.1",
     "@clerk/backend": "^3.7.0",
     "@jigswap/contracts": "workspace:^",
     "@jigswap/domain": "workspace:^",

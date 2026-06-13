@@ -24,7 +24,9 @@ export interface WideEvent {
   [field: string]: unknown;
 }
 
-export const logEvent = (fields: WideEvent): void => {
+// Emits the wide event to the Convex deployment logs (console) and returns the enriched line so
+// callers in a Node action can also forward it to an external sink (e.g. Axiom) — see lib/axiom.
+export const logEvent = (fields: WideEvent): Record<string, unknown> => {
   const line = {
     timestamp: new Date().toISOString(),
     ...environment,
@@ -36,4 +38,5 @@ export const logEvent = (fields: WideEvent): void => {
   } else {
     console.log(JSON.stringify(line));
   }
+  return line;
 };
