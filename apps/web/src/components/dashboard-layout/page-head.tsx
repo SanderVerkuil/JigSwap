@@ -22,8 +22,11 @@ export function PageHead() {
   const meta = getRouteMeta(pathname);
   const t = useTranslations("shell");
   const { user } = useUser();
-  const { title: titleOverride, actions: headerActions } =
-    usePageHeaderContent();
+  const {
+    title: titleOverride,
+    crumbs,
+    actions: headerActions,
+  } = usePageHeaderContent();
 
   if (!meta) {
     return null;
@@ -49,26 +52,43 @@ export function PageHead() {
       ? group.items.find((item) => item.key === meta.pageKey)
       : undefined;
 
+  const crumbLink =
+    "transition-colors hover:text-sidebar-accent-foreground hover:underline";
+
   return (
     <div className="hidden shrink-0 border-b bg-background px-4 pt-3.5 pb-3 md:block md:px-7">
-      {group ? (
+      {crumbs && crumbs.length > 0 ? (
+        // Explicit trail published by the page (deep routes).
+        <nav
+          aria-label={t("breadcrumbLabel")}
+          className="mb-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground"
+        >
+          {crumbs.map((crumb, i) => (
+            <span key={i} className="flex items-center gap-1.5">
+              {crumb.href ? (
+                <Link href={crumb.href} className={crumbLink}>
+                  {crumb.label}
+                </Link>
+              ) : (
+                <span>{crumb.label}</span>
+              )}
+              <ChevronRight aria-hidden className="size-3" />
+            </span>
+          ))}
+          <span className="text-foreground">{title}</span>
+        </nav>
+      ) : group ? (
         <nav
           aria-label={t("breadcrumbLabel")}
           className="mb-0.5 flex items-center gap-1.5 text-xs text-muted-foreground"
         >
-          <Link
-            href={group.href}
-            className="transition-colors hover:text-sidebar-accent-foreground hover:underline"
-          >
+          <Link href={group.href} className={crumbLink}>
             {t(`groups.${group.key}.label`)}
           </Link>
           <ChevronRight aria-hidden className="size-3" />
           {parentItem ? (
             <>
-              <Link
-                href={parentItem.href}
-                className="transition-colors hover:text-sidebar-accent-foreground hover:underline"
-              >
+              <Link href={parentItem.href} className={crumbLink}>
                 {pageTitle}
               </Link>
               <ChevronRight aria-hidden className="size-3" />

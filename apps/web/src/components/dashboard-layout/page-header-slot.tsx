@@ -20,9 +20,18 @@ import {
   useState,
 } from "react";
 
+export type PageHeaderCrumb = { label: ReactNode; href?: string };
+
 export type PageHeaderContent = {
   /** Overrides the route's static page title (for dynamic routes). */
   title?: ReactNode;
+  /**
+   * Explicit breadcrumb parent trail (excluding the current leaf, which is the
+   * title). When set, the page head renders these crumbs instead of the
+   * auto-derived Group › Page trail — use for deep routes like a collection's
+   * add-puzzles page (My Library › Collections › <name> › Add Puzzles).
+   */
+  crumbs?: PageHeaderCrumb[];
   /** Meta + primary action node shown to the right of the title. */
   actions?: ReactNode;
 };
