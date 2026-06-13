@@ -7,6 +7,7 @@
 // Open, card-free building blocks — cards stay reserved for genuinely
 // self-contained tiles.
 
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
@@ -41,19 +42,21 @@ export function FilterBar<T extends string>({
         {filters.map((filter) => {
           const active = filter.value === value;
           return (
-            <button
+            <Button
               key={filter.value}
               type="button"
+              size="sm"
+              variant={active ? "default" : "outline"}
+              aria-pressed={active}
               onClick={() => onChange(filter.value)}
               className={cn(
-                "rounded-full px-3.5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors",
-                active
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-card text-foreground border hover:bg-muted",
+                "rounded-full",
+                active &&
+                  "bg-jigsaw-primary text-white hover:bg-jigsaw-primary/90",
               )}
             >
               {filter.label}
-            </button>
+            </Button>
           );
         })}
       </div>

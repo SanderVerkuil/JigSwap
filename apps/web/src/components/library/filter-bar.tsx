@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
@@ -6,9 +7,9 @@ export interface FilterOption<T extends string> {
   label: string;
 }
 
-// Rounded-pill filter row from the design language: active pill solid primary,
-// inactive pills outlined on the card surface, with a muted result count
-// right-aligned on the same line.
+// Rounded-pill filter row from the design language, built on the themed shadcn
+// Button: the active pill takes the brand violet, inactive pills are outlined,
+// with a muted result count right-aligned on the same line.
 export function FilterBar<T extends string>({
   options,
   value,
@@ -30,22 +31,26 @@ export function FilterBar<T extends string>({
       )}
     >
       <div className="flex flex-wrap gap-2" role="group">
-        {options.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            aria-pressed={value === option.value}
-            onClick={() => onChange(option.value)}
-            className={cn(
-              "rounded-full border px-3.5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors",
-              value === option.value
-                ? "border-transparent bg-primary text-primary-foreground"
-                : "bg-card hover:bg-accent text-foreground",
-            )}
-          >
-            {option.label}
-          </button>
-        ))}
+        {options.map((option) => {
+          const active = value === option.value;
+          return (
+            <Button
+              key={option.value}
+              type="button"
+              size="sm"
+              variant={active ? "default" : "outline"}
+              aria-pressed={active}
+              onClick={() => onChange(option.value)}
+              className={cn(
+                "rounded-full",
+                active &&
+                  "bg-jigsaw-primary text-white hover:bg-jigsaw-primary/90",
+              )}
+            >
+              {option.label}
+            </Button>
+          );
+        })}
       </div>
       {count && <span className="text-muted-foreground text-sm">{count}</span>}
     </div>
