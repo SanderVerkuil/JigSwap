@@ -1,4 +1,5 @@
 export * from "./approve-puzzle-definition";
+export * from "./import-puzzle-from-url";
 export * from "./create-catalog-category";
 export * from "./reject-puzzle-definition";
 export * from "./reorder-catalog-categories";
