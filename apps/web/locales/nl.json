@@ -1151,6 +1151,8 @@
     "default": "Standaard",
     "addPuzzles": "Puzzels Toevoegen",
     "addPuzzlesToCollection": "Puzzels Toevoegen aan Collectie",
+    "noPuzzlesInCollection": "Nog geen puzzels in deze collectie",
+    "puzzleCount": "{count, plural, one {# puzzel} other {# puzzels}}",
     "selectPuzzlesToAdd": "Selecteer puzzels om toe te voegen aan collectie",
     "noAvailablePuzzles": "Geen beschikbare puzzels",
     "allPuzzlesInCollection": "Al je puzzels zijn al in deze collectie of komen overeen met je zoekopdracht",

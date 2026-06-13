@@ -1151,6 +1151,8 @@
     "default": "Default",
     "addPuzzles": "Add Puzzles",
     "addPuzzlesToCollection": "Add Puzzles to Collection",
+    "noPuzzlesInCollection": "No puzzles in this collection yet",
+    "puzzleCount": "{count, plural, one {# puzzle} other {# puzzles}}",
     "selectPuzzlesToAdd": "Select puzzles to add to collection",
     "noAvailablePuzzles": "No available puzzles",
     "allPuzzlesInCollection": "All your puzzles are already in this collection or match your search",

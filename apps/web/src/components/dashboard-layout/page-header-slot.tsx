@@ -1,13 +1,15 @@
 "use client";
 
-// Lets a page publish its contextual header content — the count/meta line and
-// the primary action (e.g. "0 active" + "New Goal") — up into the shell page
-// head, so a page no longer renders its own duplicate title/section header.
+// Lets a page publish contextual content into the shell page head: its primary
+// action(s) (the count/meta line + buttons) and, for dynamic routes, a title
+// override (e.g. a collection's name). The same content is rendered in two
+// CSS-exclusive places — the desktop page head (title + actions) and a slim
+// mobile actions row — so a page registers once and never renders its own
+// duplicate header.
 //
-// The same registered node is rendered in two CSS-exclusive places: the
-// desktop page head (right of the title) and a slim row at the top of the
-// mobile content area (the mobile top bar is too slim to carry it). A page
-// registers once via usePageHeaderActions; both sites read the same node.
+// When a page publishes a `title`, the page head treats the route's own static
+// title as a middle breadcrumb (linking to the route's base page) and shows the
+// published title as the current leaf — e.g. My Library › Collections › Test.
 
 import {
   createContext,
@@ -18,27 +20,33 @@ import {
   useState,
 } from "react";
 
+export type PageHeaderContent = {
+  /** Overrides the route's static page title (for dynamic routes). */
+  title?: ReactNode;
+  /** Meta + primary action node shown to the right of the title. */
+  actions?: ReactNode;
+};
+
 type PageHeaderSlot = {
-  node: ReactNode;
-  setNode: (node: ReactNode) => void;
+  content: PageHeaderContent;
+  setContent: (content: PageHeaderContent) => void;
 };
 
 const PageHeaderSlotContext = createContext<PageHeaderSlot | null>(null);
 
 export function PageHeaderSlotProvider({ children }: { children: ReactNode }) {
-  const [node, setNode] = useState<ReactNode>(null);
+  const [content, setContent] = useState<PageHeaderContent>({});
   return (
-    <PageHeaderSlotContext.Provider value={{ node, setNode }}>
+    <PageHeaderSlotContext.Provider value={{ content, setContent }}>
       {children}
     </PageHeaderSlotContext.Provider>
   );
 }
 
 /**
- * Publish header actions for the current page. `render` returns the node
- * (meta text, buttons…); `deps` work exactly like useEffect deps — include any
- * value the node displays or closes over (counts, dialog setters) so it stays
- * fresh. The slot is cleared on unmount so sibling pages start empty.
+ * Publish header actions for the current page. `render` returns the node (meta
+ * text, buttons…); `deps` work exactly like useEffect deps — include any value
+ * the node displays or closes over. Cleared on unmount.
  */
 export function usePageHeaderActions(
   render: () => ReactNode,
@@ -46,13 +54,31 @@ export function usePageHeaderActions(
 ) {
   const slot = useContext(PageHeaderSlotContext);
   useEffect(() => {
-    slot?.setNode(render());
-    return () => slot?.setNode(null);
+    slot?.setContent({ actions: render() });
+    return () => slot?.setContent({});
     // render is intentionally excluded; callers declare their own deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 }
 
-export function usePageHeaderSlot(): ReactNode {
-  return useContext(PageHeaderSlotContext)?.node ?? null;
+/**
+ * Publish a full header config (title override + actions) for the current page.
+ * `factory` returns the config; `deps` work like useEffect deps. Cleared on
+ * unmount. Use for dynamic routes that need a runtime title (and crumb).
+ */
+export function usePageHeader(
+  factory: () => PageHeaderContent,
+  deps: DependencyList,
+) {
+  const slot = useContext(PageHeaderSlotContext);
+  useEffect(() => {
+    slot?.setContent(factory());
+    return () => slot?.setContent({});
+    // factory is intentionally excluded; callers declare their own deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+}
+
+export function usePageHeaderContent(): PageHeaderContent {
+  return useContext(PageHeaderSlotContext)?.content ?? {};
 }

@@ -1,17 +1,20 @@
 "use client";
 
 // Page head at the top of the inset content card: an optional breadcrumb row
-// (`Group > Page` only — the group crumb links to its landing page; no crumbs
-// on Dashboard, Profile or the landings themselves) above the page title and
-// its muted one-line subtitle on the same baseline row. Desktop-only: below
-// md the mobile top bar owns the title and the back affordance.
+// above the page title and its muted one-line subtitle. Two breadcrumb shapes:
+//   • normal page:  Group › Page         (group links to its landing)
+//   • dynamic page: Group › Page › Leaf   (a page publishing a title override,
+//     e.g. a collection's name, via usePageHeader — the route's own title
+//     becomes a middle crumb linking back to the listing).
+// No crumbs on Dashboard, Profile or the landings themselves. Desktop-only:
+// below md the mobile top bar owns the title and the back affordance.
 
 import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";
 import { ChevronRight } from "lucide-react";
 import { useTranslations } from "use-intl";
-import { usePageHeaderSlot } from "./page-header-slot";
+import { usePageHeaderContent } from "./page-header-slot";
 import { getNavGroup, getRouteMeta } from "./route-meta";
 
 export function PageHead() {
@@ -19,7 +22,8 @@ export function PageHead() {
   const meta = getRouteMeta(pathname);
   const t = useTranslations("shell");
   const { user } = useUser();
-  const headerActions = usePageHeaderSlot();
+  const { title: titleOverride, actions: headerActions } =
+    usePageHeaderContent();
 
   if (!meta) {
     return null;
@@ -27,15 +31,22 @@ export function PageHead() {
 
   const pageTitle = t(`pages.${meta.pageKey}.title`);
   const subtitle = t(`pages.${meta.pageKey}.subtitle`);
-  const title =
+  const baseTitle =
     meta.variant === "dashboard"
       ? user?.firstName
         ? t("welcome", { name: user.firstName })
         : t("welcomeAnonymous")
       : pageTitle;
+  // A published title (dynamic route) overrides the static route title.
+  const title = titleOverride ?? baseTitle;
   const group =
     meta.group && meta.variant === undefined
       ? getNavGroup(meta.group)
+      : undefined;
+  // For a title-override page, link the route's own page as the middle crumb.
+  const parentItem =
+    titleOverride && group
+      ? group.items.find((item) => item.key === meta.pageKey)
       : undefined;
 
   return (
@@ -52,7 +63,20 @@ export function PageHead() {
             {t(`groups.${group.key}.label`)}
           </Link>
           <ChevronRight aria-hidden className="size-3" />
-          <span className="text-foreground">{pageTitle}</span>
+          {parentItem ? (
+            <>
+              <Link
+                href={parentItem.href}
+                className="transition-colors hover:text-sidebar-accent-foreground hover:underline"
+              >
+                {pageTitle}
+              </Link>
+              <ChevronRight aria-hidden className="size-3" />
+              <span className="text-foreground">{title}</span>
+            </>
+          ) : (
+            <span className="text-foreground">{pageTitle}</span>
+          )}
         </nav>
       ) : null}
       <div className="flex items-center gap-4">
@@ -60,9 +84,11 @@ export function PageHead() {
           <h1 className="font-heading text-2xl font-bold tracking-tight">
             {title}
           </h1>
-          <p className="min-w-0 truncate text-sm text-muted-foreground">
-            {subtitle}
-          </p>
+          {!titleOverride && (
+            <p className="min-w-0 truncate text-sm text-muted-foreground">
+              {subtitle}
+            </p>
+          )}
         </div>
         {headerActions ? (
           <div className="flex shrink-0 items-center gap-2.5">

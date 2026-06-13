@@ -21,7 +21,10 @@ import { CommandPalette } from "./command-palette";
 import { MobileTabBar } from "./mobile-tab-bar";
 import { MobileTopBar } from "./mobile-top-bar";
 import { PageHead } from "./page-head";
-import { PageHeaderSlotProvider, usePageHeaderSlot } from "./page-header-slot";
+import {
+  PageHeaderSlotProvider,
+  usePageHeaderContent,
+} from "./page-header-slot";
 import { ShellPreferencesProvider, useShellPreferences } from "./preferences";
 import { TopBar } from "./top-bar";
 
@@ -53,11 +56,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 // page head is hidden below md, so without this the primary action (New Goal,
 // Create Circle…) would be unreachable on phones.
 function MobilePageActions() {
-  const node = usePageHeaderSlot();
-  if (!node) return null;
+  const { actions } = usePageHeaderContent();
+  if (!actions) return null;
   return (
     <div className="mb-4 flex items-center justify-end gap-2 md:hidden">
-      {node}
+      {actions}
     </div>
   );
 }

@@ -3,8 +3,10 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import { EmptyState } from "@/components/library/empty-state";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { gateway, Id } from "@/gateway";
@@ -17,15 +19,21 @@ export const Route = createFileRoute("/_dashboard/collections/$id/")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "collection") }],
   }),
-  pendingComponent: () => <PageLoading message="Loading..." />,
+  pendingComponent: () => <CollectionPending />,
   component: CollectionDetailPage,
 });
+
+function CollectionPending() {
+  const tCommon = useTranslations("common");
+  return <PageLoading message={tCommon("loading")} />;
+}
 
 function CollectionDetailPage() {
   const { id } = Route.useParams();
   const router = useRouter();
   const t = useTranslations("collections");
   const tCommon = useTranslations("common");
+  const tPuzzles = useTranslations("puzzles");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -57,134 +65,113 @@ function CollectionDetailPage() {
     }
   };
 
-  const handleEditCollection = () => {
-    router.push(`/collections/${id}/edit`);
-  };
-
-  // Filter puzzles based on search term
-  const filteredPuzzles =
-    collection?.puzzles
-      ?.filter(
-        (ownedPuzzle) =>
-          ownedPuzzle &&
-          (ownedPuzzle.puzzle?.title
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-            (ownedPuzzle.puzzle?.brand &&
-              ownedPuzzle.puzzle.brand
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase()))),
-      )
-      .filter(Boolean) || [];
+  // Publish the collection name as the page-head title (so the breadcrumb reads
+  // My Library › Collections › <name>) plus the count, Edit and Add actions.
+  const totalPuzzles = (collection?.puzzles ?? []).filter(Boolean).length;
+  usePageHeader(
+    () => ({
+      title: collection
+        ? collection.icon
+          ? `${collection.icon} ${collection.name}`
+          : collection.name
+        : undefined,
+      actions: collection ? (
+        <>
+          <span className="text-muted-foreground hidden text-sm sm:inline">
+            {t("puzzleCount", { count: totalPuzzles })}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push(`/collections/${id}/edit`)}
+          >
+            <Edit className="h-4 w-4" />
+            {tCommon("edit")}
+          </Button>
+          <Button variant="brand" size="sm" asChild>
+            <Link href={`/collections/${id}/add-puzzles`}>
+              <Plus className="h-4 w-4" />
+              {t("addPuzzles")}
+            </Link>
+          </Button>
+        </>
+      ) : null,
+    }),
+    [collection?.name, collection?.icon, totalPuzzles, id],
+  );
 
   if (collection === undefined) {
     return <PageLoading message={tCommon("loading")} />;
   }
 
   if (collection === null) {
-    return <div>{t("notFound")}</div>;
+    return <div className="text-muted-foreground">{t("notFound")}</div>;
   }
 
-  return (
-    <div className="container mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div
-            className="w-16 h-16 rounded-lg flex items-center justify-center text-2xl"
-            style={{
-              backgroundColor: collection.color || "#f3f4f6",
-            }}
-          >
-            {collection.icon || "📦"}
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold">{collection.name}</h1>
-            <p className="text-muted-foreground">
-              {filteredPuzzles.length} {t("puzzles")}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleEditCollection}>
-            <Edit className="h-4 w-4 mr-2" />
-            {tCommon("edit")}
-          </Button>
-          <Button asChild>
-            <Link href={`/collections/${id}/add-puzzles`}>
-              <Plus className="h-4 w-4 mr-2" />
-              {t("addPuzzles")}
-            </Link>
-          </Button>
-        </div>
-      </div>
+  const filteredPuzzles = (collection.puzzles ?? [])
+    .filter(Boolean)
+    .filter((ownedPuzzle) => {
+      const term = searchTerm.trim().toLowerCase();
+      if (!term) return true;
+      const title = ownedPuzzle.puzzle?.title?.toLowerCase() ?? "";
+      const brand = ownedPuzzle.puzzle?.brand?.toLowerCase() ?? "";
+      return title.includes(term) || brand.includes(term);
+    });
 
+  return (
+    <div className="flex w-full flex-col gap-6">
       {collection.description && (
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-muted-foreground">{collection.description}</p>
-          </CardContent>
-        </Card>
+        <p className="text-muted-foreground max-w-3xl text-sm">
+          {collection.description}
+        </p>
       )}
 
-      {/* Search and Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="flex-1 flex items-center gap-2">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder={tCommon("search")}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant={viewMode === "grid" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("grid")}
-              >
-                <Grid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("list")}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
+      {totalPuzzles > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="relative w-full max-w-sm">
+            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+            <Input
+              type="text"
+              placeholder={tCommon("search")}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex items-center gap-2">
+            <Button
+              variant={viewMode === "grid" ? "secondary" : "ghost"}
+              size="icon"
+              aria-label={tPuzzles("gridView")}
+              onClick={() => setViewMode("grid")}
+            >
+              <Grid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "secondary" : "ghost"}
+              size="icon"
+              aria-label={tPuzzles("listView")}
+              onClick={() => setViewMode("list")}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
-      {/* Puzzles Grid/List */}
-      {filteredPuzzles.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <div className="text-muted-foreground mb-4">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                <Plus className="h-8 w-8" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">
-                {t("noPuzzlesInCollection")}
-              </h3>
-              <p className="text-sm">{t("addPuzzlesToCollection")}</p>
-            </div>
-            <Button asChild>
+      {totalPuzzles === 0 ? (
+        <EmptyState
+          title={t("noPuzzlesInCollection")}
+          sub={t("addPuzzlesToCollection")}
+          action={
+            <Button variant="brand" asChild>
               <Link href={`/collections/${id}/add-puzzles`}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4" />
                 {t("addPuzzles")}
               </Link>
             </Button>
-          </CardContent>
-        </Card>
+          }
+        />
       ) : (
         <PuzzleViewProvider viewMode={viewMode}>
           {filteredPuzzles.map((puzzle) => (
