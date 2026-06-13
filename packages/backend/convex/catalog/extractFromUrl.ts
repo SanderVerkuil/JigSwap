@@ -24,11 +24,17 @@ export const extractFromUrl = action({
     try {
       const cache: ImportDraftCache = {
         async get(normalizedUrl) {
-          const row = await ctx.runQuery(internal.catalog.importCache.getCachedImport, {
-            normalizedUrl,
-          });
+          const row = await ctx.runQuery(
+            internal.catalog.importCache.getCachedImport,
+            {
+              normalizedUrl,
+            },
+          );
           return row
-            ? ({ draft: row.draft, fetchedAt: new Date(row.fetchedAt) } satisfies CachedImportDraft)
+            ? ({
+                draft: row.draft,
+                fetchedAt: new Date(row.fetchedAt),
+              } satisfies CachedImportDraft)
             : null;
         },
         async put(normalizedUrl, draft) {
@@ -41,10 +47,13 @@ export const extractFromUrl = action({
 
       const lookup: PuzzleMatchLookup = {
         async findByBarcode({ ean, upc }) {
-          return ctx.runQuery(internal.catalog.findPuzzleByBarcode.findPuzzleByBarcode, {
-            ean,
-            upc,
-          });
+          return ctx.runQuery(
+            internal.catalog.findPuzzleByBarcode.findPuzzleByBarcode,
+            {
+              ean,
+              upc,
+            },
+          );
         },
       };
 
@@ -57,7 +66,11 @@ export const extractFromUrl = action({
 
       const result = await importDraft({ url });
       if (result.isErr) return { ok: false as const, code: result.error.code };
-      return { ok: true as const, draft: result.value.draft, match: result.value.match };
+      return {
+        ok: true as const,
+        draft: result.value.draft,
+        match: result.value.match,
+      };
     } catch (error) {
       console.error("extractFromUrl failed:", error);
       return { ok: false as const, code: "FetchFailed" as const };

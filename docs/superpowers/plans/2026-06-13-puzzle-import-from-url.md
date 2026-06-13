@@ -15,6 +15,7 @@
 ## File Structure
 
 **Domain (`packages/domain/src/catalog/`)**
+
 - `domain/puzzle-import-draft.ts` — `PuzzleImportDraft`, `RawProductPage`, `JsonLdProduct` types
 - `domain/store-page-fetch-error.ts` — `StorePageFetchError` (DomainError subclass)
 - `domain/normalize-store-url.ts` — `normalizeStoreUrl`
@@ -29,6 +30,7 @@
 - `*.spec.ts` alongside each pure module + the use case
 
 **Backend (`packages/backend/convex/`)**
+
 - `schema.ts` — add `puzzleImportCache` table (modify)
 - `catalog/importCache.ts` — `getCachedImport` (internalQuery), `putCachedImport` (internalMutation)
 - `catalog/findPuzzleByBarcode.ts` — `findPuzzleByBarcode` (internalQuery)
@@ -41,6 +43,7 @@
 **Gateway (`packages/gateway/src/operations.ts`)** — add two catalog entries (modify)
 
 **Web (`apps/web/src/`)**
+
 - `components/puzzle-import/use-puzzle-import.ts` — hook + `ImportedPuzzle` types
 - `components/puzzle-import/draft-to-form-defaults.ts` — pure mapper
 - `components/puzzle-import/puzzle-import-bar.tsx` — UI component
@@ -85,6 +88,7 @@ Expected: existing tests pass (0 failures). If anything fails, STOP and report b
 ## Task 1: Draft + raw-page types
 
 **Files:**
+
 - Create: `packages/domain/src/catalog/domain/puzzle-import-draft.ts`
 - Modify: `packages/domain/src/catalog/domain/index.ts`
 
@@ -153,6 +157,7 @@ git commit -m "feat(catalog): add puzzle import draft + raw page types"
 ## Task 2: StorePageFetchError
 
 **Files:**
+
 - Create: `packages/domain/src/catalog/domain/store-page-fetch-error.ts`
 - Test: `packages/domain/src/catalog/domain/store-page-fetch-error.spec.ts`
 - Modify: `packages/domain/src/catalog/domain/index.ts`
@@ -215,7 +220,10 @@ export class StorePageFetchError extends DomainError {
     return new StorePageFetchError("InvalidUrl", `Not a valid URL: ${url}`);
   }
   static blocked(url: string): StorePageFetchError {
-    return new StorePageFetchError("Blocked", `Refused to fetch (blocked address): ${url}`);
+    return new StorePageFetchError(
+      "Blocked",
+      `Refused to fetch (blocked address): ${url}`,
+    );
   }
   static timeout(url: string): StorePageFetchError {
     return new StorePageFetchError("Timeout", `Timed out fetching ${url}`);
@@ -227,7 +235,10 @@ export class StorePageFetchError extends DomainError {
     return new StorePageFetchError("FetchFailed", `Fetch failed: ${message}`);
   }
   static unparseable(url: string): StorePageFetchError {
-    return new StorePageFetchError("Unparseable", `Could not parse metadata from ${url}`);
+    return new StorePageFetchError(
+      "Unparseable",
+      `Could not parse metadata from ${url}`,
+    );
   }
 }
 ```
@@ -259,6 +270,7 @@ git commit -m "feat(catalog): add StorePageFetchError"
 ## Task 3: normalizeStoreUrl
 
 **Files:**
+
 - Create: `packages/domain/src/catalog/domain/normalize-store-url.ts`
 - Test: `packages/domain/src/catalog/domain/normalize-store-url.spec.ts`
 - Modify: `packages/domain/src/catalog/domain/index.ts`
@@ -278,7 +290,9 @@ describe("normalizeStoreUrl", () => {
   });
 
   it("drops the fragment", () => {
-    expect(normalizeStoreUrl("https://a.com/p#reviews")).toBe("https://a.com/p");
+    expect(normalizeStoreUrl("https://a.com/p#reviews")).toBe(
+      "https://a.com/p",
+    );
   });
 
   it("strips tracking params but keeps meaningful query", () => {
@@ -355,6 +369,7 @@ git commit -m "feat(catalog): add normalizeStoreUrl"
 ## Task 4: extractPuzzleDraft (tiered extraction)
 
 **Files:**
+
 - Create: `packages/domain/src/catalog/domain/extract-puzzle-draft.ts`
 - Test: `packages/domain/src/catalog/domain/extract-puzzle-draft.spec.ts`
 - Modify: `packages/domain/src/catalog/domain/index.ts`
@@ -399,12 +414,17 @@ describe("extractPuzzleDraft", () => {
   it("falls back to OpenGraph then <title> (tiers 2-3)", () => {
     expect(
       extractPuzzleDraft(
-        { ...empty, ogTitle: "OG Puzzle 500 stukjes", ogImages: ["https://img/og.jpg"] },
+        {
+          ...empty,
+          ogTitle: "OG Puzzle 500 stukjes",
+          ogImages: ["https://img/og.jpg"],
+        },
         SRC,
       ).title,
     ).toBe("OG Puzzle 500 stukjes");
     expect(
-      extractPuzzleDraft({ ...empty, basicTitle: "Basic 750 Teile" }, SRC).title,
+      extractPuzzleDraft({ ...empty, basicTitle: "Basic 750 Teile" }, SRC)
+        .title,
     ).toBe("Basic 750 Teile");
   });
 
@@ -469,8 +489,12 @@ const firstImage = (
 const barcodes = (
   product: JsonLdProduct | undefined,
 ): { ean?: string; upc?: string } => {
-  const gtin13 = product?.gtin13 ?? (product?.gtin?.length === 13 ? product.gtin : undefined);
-  const gtin12 = product?.gtin12 ?? (product?.gtin?.length === 12 ? product.gtin : undefined);
+  const gtin13 =
+    product?.gtin13 ??
+    (product?.gtin?.length === 13 ? product.gtin : undefined);
+  const gtin12 =
+    product?.gtin12 ??
+    (product?.gtin?.length === 12 ? product.gtin : undefined);
   return { ean: gtin13, upc: gtin12 };
 };
 
@@ -530,6 +554,7 @@ git commit -m "feat(catalog): add tiered extractPuzzleDraft"
 ## Task 5: isPrivateIp (SSRF helper)
 
 **Files:**
+
 - Create: `packages/domain/src/catalog/domain/is-private-ip.ts`
 - Test: `packages/domain/src/catalog/domain/is-private-ip.spec.ts`
 - Modify: `packages/domain/src/catalog/domain/index.ts`
@@ -588,7 +613,10 @@ Expected: FAIL (module not found).
 // literal, returns true if it points at loopback / private / link-local / unspecified space.
 const ipv4Private = (ip: string): boolean => {
   const parts = ip.split(".").map((p) => Number.parseInt(p, 10));
-  if (parts.length !== 4 || parts.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) {
+  if (
+    parts.length !== 4 ||
+    parts.some((n) => !Number.isInteger(n) || n < 0 || n > 255)
+  ) {
     return false;
   }
   const [a, b] = parts;
@@ -639,6 +667,7 @@ git commit -m "feat(catalog): add isPrivateIp SSRF helper"
 ## Task 6: Outbound + inbound ports
 
 **Files:**
+
 - Create: `packages/domain/src/catalog/application/ports/out/store-page-fetcher.ts`
 - Create: `packages/domain/src/catalog/application/ports/out/import-draft-cache.ts`
 - Create: `packages/domain/src/catalog/application/ports/out/puzzle-match-lookup.ts`
@@ -756,6 +785,7 @@ git commit -m "feat(catalog): add import ports (fetcher, cache, match lookup, in
 ## Task 7: Test doubles for the import ports
 
 **Files:**
+
 - Create: `packages/domain/src/catalog/application/testing/fake-store-page-fetcher.ts`
 - Create: `packages/domain/src/catalog/application/testing/in-memory-import-draft-cache.ts`
 - Create: `packages/domain/src/catalog/application/testing/fake-puzzle-match-lookup.ts`
@@ -783,7 +813,9 @@ export class FakeStorePageFetcher implements StorePageFetcher {
     this.result = err(error);
   }
 
-  async fetch(url: string): Promise<Result<RawProductPage, StorePageFetchError>> {
+  async fetch(
+    url: string,
+  ): Promise<Result<RawProductPage, StorePageFetchError>> {
     this.calls.push(url);
     return this.result;
   }
@@ -793,7 +825,10 @@ export class FakeStorePageFetcher implements StorePageFetcher {
 ```typescript
 // packages/domain/src/catalog/application/testing/in-memory-import-draft-cache.ts
 import { PuzzleImportDraft } from "../../domain";
-import { CachedImportDraft, ImportDraftCache } from "../ports/out/import-draft-cache";
+import {
+  CachedImportDraft,
+  ImportDraftCache,
+} from "../ports/out/import-draft-cache";
 
 export class InMemoryImportDraftCache implements ImportDraftCache {
   private store = new Map<string, CachedImportDraft>();
@@ -813,7 +848,10 @@ export class InMemoryImportDraftCache implements ImportDraftCache {
 
 ```typescript
 // packages/domain/src/catalog/application/testing/fake-puzzle-match-lookup.ts
-import { PuzzleMatch, PuzzleMatchLookup } from "../ports/out/puzzle-match-lookup";
+import {
+  PuzzleMatch,
+  PuzzleMatchLookup,
+} from "../ports/out/puzzle-match-lookup";
 
 export class FakePuzzleMatchLookup implements PuzzleMatchLookup {
   public calls: Array<{ ean?: string; upc?: string }> = [];
@@ -823,7 +861,10 @@ export class FakePuzzleMatchLookup implements PuzzleMatchLookup {
     this.match = match;
   }
 
-  async findByBarcode(barcodes: { ean?: string; upc?: string }): Promise<PuzzleMatch | null> {
+  async findByBarcode(barcodes: {
+    ean?: string;
+    upc?: string;
+  }): Promise<PuzzleMatch | null> {
     this.calls.push(barcodes);
     return this.match;
   }
@@ -857,6 +898,7 @@ git commit -m "test(catalog): add fakes for import ports"
 ## Task 8: makeImportPuzzleFromUrl use case
 
 **Files:**
+
 - Create: `packages/domain/src/catalog/application/use-cases/import-puzzle-from-url.ts`
 - Test: `packages/domain/src/catalog/application/use-cases/import-puzzle-from-url.spec.ts`
 - Modify: `packages/domain/src/catalog/application/use-cases/index.ts`
@@ -998,7 +1040,10 @@ export const makeImportPuzzleFromUrl =
     const cached = await deps.cache.get(normalized);
 
     let draft: PuzzleImportDraft;
-    if (cached && deps.clock.now().getTime() - cached.fetchedAt.getTime() < ttl) {
+    if (
+      cached &&
+      deps.clock.now().getTime() - cached.fetchedAt.getTime() < ttl
+    ) {
       draft = cached.draft;
     } else {
       const fetched = await deps.fetcher.fetch(cmd.url);
@@ -1047,6 +1092,7 @@ git commit -m "feat(catalog): add makeImportPuzzleFromUrl use case"
 ## Task 9: Add ogie + puzzleImportCache table
 
 **Files:**
+
 - Modify: `packages/backend/package.json`
 - Modify: `packages/backend/convex/schema.ts`
 
@@ -1100,6 +1146,7 @@ git commit -m "feat(backend): add ogie dep and puzzleImportCache table"
 ## Task 10: importCache internal functions
 
 **Files:**
+
 - Create: `packages/backend/convex/catalog/importCache.ts`
 - Test: `packages/backend/convex/catalog/importCache.test.ts`
 
@@ -1140,7 +1187,12 @@ export const putCachedImport = internalMutation({
       .unique();
     const fetchedAt = Date.now();
     if (existing) await ctx.db.patch(existing._id, { draft, fetchedAt });
-    else await ctx.db.insert("puzzleImportCache", { normalizedUrl, draft, fetchedAt });
+    else
+      await ctx.db.insert("puzzleImportCache", {
+        normalizedUrl,
+        draft,
+        fetchedAt,
+      });
   },
 });
 ```
@@ -1199,6 +1251,7 @@ git commit -m "feat(backend): add puzzle import cache internal functions"
 ## Task 11: findPuzzleByBarcode internal query
 
 **Files:**
+
 - Create: `packages/backend/convex/catalog/findPuzzleByBarcode.ts`
 - Test: `packages/backend/convex/catalog/findPuzzleByBarcode.test.ts`
 
@@ -1240,7 +1293,9 @@ export const findPuzzleByBarcode = internalQuery({
       title: match.title,
       brand: match.brand,
       pieceCount: match.pieceCount,
-      imageUrl: match.image ? (await ctx.storage.getUrl(match.image)) ?? undefined : undefined,
+      imageUrl: match.image
+        ? ((await ctx.storage.getUrl(match.image)) ?? undefined)
+        : undefined,
     };
   },
 });
@@ -1271,13 +1326,24 @@ describe("catalog.findPuzzleByBarcode", () => {
     const t = convexTest(schema, modules);
     await t.run(async (ctx) => {
       const submittedBy = await ctx.db.insert("users", {
-        clerkId: "c1", email: "a@b.c", name: "A", isActive: true, createdAt: 0, updatedAt: 0,
+        clerkId: "c1",
+        email: "a@b.c",
+        name: "A",
+        isActive: true,
+        createdAt: 0,
+        updatedAt: 0,
       });
-      await ctx.db.insert("puzzles", seedPuzzle({ ean: "4005556150007", submittedBy }));
+      await ctx.db.insert(
+        "puzzles",
+        seedPuzzle({ ean: "4005556150007", submittedBy }),
+      );
     });
-    const match = await t.query(internal.catalog.findPuzzleByBarcode.findPuzzleByBarcode, {
-      ean: "4005556150007",
-    });
+    const match = await t.query(
+      internal.catalog.findPuzzleByBarcode.findPuzzleByBarcode,
+      {
+        ean: "4005556150007",
+      },
+    );
     expect(match?.title).toBe("Mountain Vista");
   });
 
@@ -1285,13 +1351,24 @@ describe("catalog.findPuzzleByBarcode", () => {
     const t = convexTest(schema, modules);
     await t.run(async (ctx) => {
       const submittedBy = await ctx.db.insert("users", {
-        clerkId: "c2", email: "d@e.f", name: "B", isActive: true, createdAt: 0, updatedAt: 0,
+        clerkId: "c2",
+        email: "d@e.f",
+        name: "B",
+        isActive: true,
+        createdAt: 0,
+        updatedAt: 0,
       });
-      await ctx.db.insert("puzzles", seedPuzzle({ ean: "111", status: "pending", submittedBy }));
+      await ctx.db.insert(
+        "puzzles",
+        seedPuzzle({ ean: "111", status: "pending", submittedBy }),
+      );
     });
-    const match = await t.query(internal.catalog.findPuzzleByBarcode.findPuzzleByBarcode, {
-      ean: "111",
-    });
+    const match = await t.query(
+      internal.catalog.findPuzzleByBarcode.findPuzzleByBarcode,
+      {
+        ean: "111",
+      },
+    );
     expect(match).toBeNull();
   });
 });
@@ -1314,6 +1391,7 @@ git commit -m "feat(backend): add findPuzzleByBarcode dedup query"
 ## Task 12: ogie page-fetcher adapter
 
 **Files:**
+
 - Create: `packages/backend/convex/catalog/adapters/ogieStorePageFetcher.ts`
 
 > Note: this module imports `ogie` (a Node package). It is imported ONLY by the `"use node"`
@@ -1364,7 +1442,8 @@ const toJsonLdProducts = (jsonLd: unknown): JsonLdProduct[] => {
     .map((node) => ({
       name: typeof node.name === "string" ? node.name : undefined,
       brand: flattenBrand(node.brand),
-      description: typeof node.description === "string" ? node.description : undefined,
+      description:
+        typeof node.description === "string" ? node.description : undefined,
       image: (Array.isArray(node.image) ? node.image : node.image) as
         | string
         | string[]
@@ -1375,7 +1454,10 @@ const toJsonLdProducts = (jsonLd: unknown): JsonLdProduct[] => {
     }));
 };
 
-const mapError = (code: string | undefined, url: string): StorePageFetchError => {
+const mapError = (
+  code: string | undefined,
+  url: string,
+): StorePageFetchError => {
   switch (code) {
     case "INVALID_URL":
       return StorePageFetchError.invalidUrl(url);
@@ -1402,7 +1484,11 @@ export const ogieStorePageFetcher: StorePageFetcher = {
         maxRedirects: 5,
       });
     } catch (e) {
-      return err(StorePageFetchError.fetchFailed(e instanceof Error ? e.message : String(e)));
+      return err(
+        StorePageFetchError.fetchFailed(
+          e instanceof Error ? e.message : String(e),
+        ),
+      );
     }
 
     if (!result.success || !result.data) {
@@ -1410,7 +1496,11 @@ export const ogieStorePageFetcher: StorePageFetcher = {
     }
 
     const data = result.data as {
-      og?: { title?: string; description?: string; images?: Array<{ url?: string }> };
+      og?: {
+        title?: string;
+        description?: string;
+        images?: Array<{ url?: string }>;
+      };
       basic?: { title?: string; description?: string };
       jsonLd?: unknown;
     };
@@ -1447,6 +1537,7 @@ git commit -m "feat(backend): add ogie store-page fetcher adapter"
 ## Task 13: extractFromUrl action
 
 **Files:**
+
 - Create: `packages/backend/convex/catalog/extractFromUrl.ts`
 
 - [ ] **Step 1: Implement**
@@ -1474,11 +1565,17 @@ export const extractFromUrl = action({
   handler: async (ctx, { url }) => {
     const cache: ImportDraftCache = {
       async get(normalizedUrl) {
-        const row = await ctx.runQuery(internal.catalog.importCache.getCachedImport, {
-          normalizedUrl,
-        });
+        const row = await ctx.runQuery(
+          internal.catalog.importCache.getCachedImport,
+          {
+            normalizedUrl,
+          },
+        );
         return row
-          ? ({ draft: row.draft, fetchedAt: new Date(row.fetchedAt) } satisfies CachedImportDraft)
+          ? ({
+              draft: row.draft,
+              fetchedAt: new Date(row.fetchedAt),
+            } satisfies CachedImportDraft)
           : null;
       },
       async put(normalizedUrl, draft) {
@@ -1491,10 +1588,13 @@ export const extractFromUrl = action({
 
     const lookup: PuzzleMatchLookup = {
       async findByBarcode({ ean, upc }) {
-        return ctx.runQuery(internal.catalog.findPuzzleByBarcode.findPuzzleByBarcode, {
-          ean,
-          upc,
-        });
+        return ctx.runQuery(
+          internal.catalog.findPuzzleByBarcode.findPuzzleByBarcode,
+          {
+            ean,
+            upc,
+          },
+        );
       },
     };
 
@@ -1507,7 +1607,11 @@ export const extractFromUrl = action({
 
     const result = await importDraft({ url });
     if (result.isErr) return { ok: false as const, code: result.error.code };
-    return { ok: true as const, draft: result.value.draft, match: result.value.match };
+    return {
+      ok: true as const,
+      draft: result.value.draft,
+      match: result.value.match,
+    };
   },
 });
 ```
@@ -1534,6 +1638,7 @@ git commit -m "feat(backend): add extractFromUrl node action"
 ## Task 14: importPuzzleImage action
 
 **Files:**
+
 - Create: `packages/backend/convex/catalog/importPuzzleImage.ts`
 
 - [ ] **Step 1: Implement**
@@ -1564,7 +1669,10 @@ export const importPuzzleImage = action({
     }
 
     const addresses = await dnsLookup(parsed.hostname, { all: true });
-    if (addresses.length === 0 || addresses.some((a) => isPrivateIp(a.address))) {
+    if (
+      addresses.length === 0 ||
+      addresses.some((a) => isPrivateIp(a.address))
+    ) {
       throw new ConvexError("Refused to fetch image (blocked address)");
     }
 
@@ -1585,7 +1693,9 @@ export const importPuzzleImage = action({
     const buffer = await res.arrayBuffer();
     if (buffer.byteLength > MAX_BYTES) throw new ConvexError("Image too large");
 
-    const storageId = await ctx.storage.store(new Blob([buffer], { type: contentType }));
+    const storageId = await ctx.storage.store(
+      new Blob([buffer], { type: contentType }),
+    );
     return storageId;
   },
 });
@@ -1613,6 +1723,7 @@ git commit -m "feat(backend): add importPuzzleImage node action with SSRF guard"
 ## Task 15: Expose gateway operations
 
 **Files:**
+
 - Modify: `packages/gateway/src/operations.ts`
 
 - [ ] **Step 1: Add the two catalog entries**
@@ -1641,6 +1752,7 @@ git commit -m "feat(gateway): expose extractPuzzleFromUrl + importPuzzleImage"
 ## Task 16: draft→form-defaults mapper
 
 **Files:**
+
 - Create: `apps/web/src/components/puzzle-import/draft-to-form-defaults.ts`
 - Test: `apps/web/src/components/puzzle-import/draft-to-form-defaults.test.ts`
 
@@ -1649,9 +1761,15 @@ git commit -m "feat(gateway): expose extractPuzzleFromUrl + importPuzzleImage"
 ```typescript
 // apps/web/src/components/puzzle-import/draft-to-form-defaults.test.ts
 import { describe, expect, it } from "vitest";
-import { draftToFormDefaults, type ImportedDraft } from "./draft-to-form-defaults";
+import {
+  draftToFormDefaults,
+  type ImportedDraft,
+} from "./draft-to-form-defaults";
 
-const base: ImportedDraft = { title: "Puzzle 1000 pieces", sourceUrl: "https://a.com/p" };
+const base: ImportedDraft = {
+  title: "Puzzle 1000 pieces",
+  sourceUrl: "https://a.com/p",
+};
 
 describe("draftToFormDefaults", () => {
   it("maps present fields and blanks the rest to form-safe defaults", () => {
@@ -1742,6 +1860,7 @@ git commit -m "feat(web): add draft-to-form-defaults mapper"
 ## Task 17: usePuzzleImport hook
 
 **Files:**
+
 - Create: `apps/web/src/components/puzzle-import/use-puzzle-import.ts`
 
 - [ ] **Step 1: Implement**
@@ -1809,6 +1928,7 @@ git commit -m "feat(web): add usePuzzleImport hook"
 ## Task 18: i18n keys
 
 **Files:**
+
 - Modify: `apps/web/locales/en.json`
 - Modify: `apps/web/locales/nl.json`
 - Modify: `apps/web/locales/source.json`
@@ -1860,6 +1980,7 @@ git commit -m "i18n: add puzzle import strings (en, nl, source)"
 ## Task 19: PuzzleImportBar component
 
 **Files:**
+
 - Create: `apps/web/src/components/puzzle-import/puzzle-import-bar.tsx`
 
 - [ ] **Step 1: Implement**
@@ -1925,7 +2046,11 @@ export const PuzzleImportBar = ({ onDraft, onMatch }: PuzzleImportBarProps) => {
         <div className="flex items-center justify-between gap-2 rounded border bg-background p-2">
           <span className="text-sm">{t("importAlreadyExists")}</span>
           <div className="flex gap-2">
-            <Button type="button" size="sm" onClick={() => onMatch(state.match!)}>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => onMatch(state.match!)}
+            >
               {t("importAddToCollection")}
             </Button>
             <Button
@@ -1970,7 +2095,9 @@ const ReadyPreview = ({
       )}
       <div className="text-sm">
         <div className="font-medium">{draft.title}</div>
-        {draft.brand && <div className="text-muted-foreground">{draft.brand}</div>}
+        {draft.brand && (
+          <div className="text-muted-foreground">{draft.brand}</div>
+        )}
       </div>
     </div>
   );
@@ -1998,6 +2125,7 @@ git commit -m "feat(web): add PuzzleImportBar component"
 ## Task 20: Integrate into /puzzles/add
 
 **Files:**
+
 - Modify: `apps/web/src/routes/_dashboard/puzzles/add.tsx`
 
 - [ ] **Step 1: Add imports + import state**
@@ -2037,28 +2165,28 @@ function AddPuzzlePage() {
 Replace the `storageId` IIFE in `handleSubmit` with:
 
 ```tsx
-        const storageId = await (async () => {
-          if (data.image instanceof File) {
-            const imageUrl = await generateUploadUrl();
-            const result = await fetch(imageUrl, {
-              method: "POST",
-              headers: { "Content-Type": data.image.type },
-              body: data.image,
-            });
-            const { storageId } = await result.json();
-            return storageId;
-          }
-          // No user-picked file: if the draft carried a remote image, fetch+store it server-side.
-          if (importedImageUrl) {
-            try {
-              return await importImage({ url: importedImageUrl });
-            } catch (error) {
-              console.error("Imported image failed; creating without it:", error);
-              return undefined;
-            }
-          }
-          return undefined;
-        })();
+const storageId = await (async () => {
+  if (data.image instanceof File) {
+    const imageUrl = await generateUploadUrl();
+    const result = await fetch(imageUrl, {
+      method: "POST",
+      headers: { "Content-Type": data.image.type },
+      body: data.image,
+    });
+    const { storageId } = await result.json();
+    return storageId;
+  }
+  // No user-picked file: if the draft carried a remote image, fetch+store it server-side.
+  if (importedImageUrl) {
+    try {
+      return await importImage({ url: importedImageUrl });
+    } catch (error) {
+      console.error("Imported image failed; creating without it:", error);
+      return undefined;
+    }
+  }
+  return undefined;
+})();
 ```
 
 - [ ] **Step 3: Render the import bar + key the form**
@@ -2104,6 +2232,7 @@ git commit -m "feat(web): wire puzzle import into /puzzles/add"
 ## Task 21: Integrate into /my-puzzles/add
 
 **Files:**
+
 - Modify: `apps/web/src/routes/_dashboard/my-puzzles/add.tsx`
 
 - [ ] **Step 1: Add imports, actions, and draft state**
@@ -2112,21 +2241,28 @@ Add near the other hooks in `AddPuzzlePage`:
 
 ```tsx
 import { PuzzleImportBar } from "@/components/puzzle-import/puzzle-import-bar";
-import { draftToFormDefaults, type ImportedDraft } from "@/components/puzzle-import/draft-to-form-defaults";
+import {
+  draftToFormDefaults,
+  type ImportedDraft,
+} from "@/components/puzzle-import/draft-to-form-defaults";
 import { useAction } from "convex/react";
 // ...
 
-  const importImage = useAction(gateway.catalog.importPuzzleImage);
-  const [createDefaults, setCreateDefaults] = useState<PuzzleFormData | undefined>(undefined);
-  const [createFormKey, setCreateFormKey] = useState(0);
-  const [importedImageUrl, setImportedImageUrl] = useState<string | undefined>(undefined);
+const importImage = useAction(gateway.catalog.importPuzzleImage);
+const [createDefaults, setCreateDefaults] = useState<
+  PuzzleFormData | undefined
+>(undefined);
+const [createFormKey, setCreateFormKey] = useState(0);
+const [importedImageUrl, setImportedImageUrl] = useState<string | undefined>(
+  undefined,
+);
 
-  const applyImportedDraft = (draft: ImportedDraft) => {
-    setCreateDefaults(draftToFormDefaults(draft));
-    setImportedImageUrl(draft.imageUrl);
-    setCreateFormKey((k) => k + 1);
-    setCreatePuzzleOpen(true);
-  };
+const applyImportedDraft = (draft: ImportedDraft) => {
+  setCreateDefaults(draftToFormDefaults(draft));
+  setImportedImageUrl(draft.imageUrl);
+  setCreateFormKey((k) => k + 1);
+  setCreatePuzzleOpen(true);
+};
 ```
 
 Add `PuzzleFormData` to the existing puzzle-form import:
@@ -2140,23 +2276,23 @@ import { PuzzleForm, PuzzleFormData } from "@/components/forms/puzzle-form";
 Replace the image block in `handleCreatePuzzle` with:
 
 ```tsx
-      let imageId: Id<"_storage"> | undefined;
-      if (data.image instanceof File) {
-        const uploadUrl = await generateUploadUrl();
-        const uploadResult = await fetch(uploadUrl, {
-          method: "POST",
-          headers: { "Content-Type": data.image.type },
-          body: data.image,
-        });
-        if (!uploadResult.ok) throw new Error("Failed to upload image");
-        imageId = await uploadResult.json();
-      } else if (importedImageUrl) {
-        try {
-          imageId = (await importImage({ url: importedImageUrl })) as Id<"_storage">;
-        } catch (error) {
-          console.error("Imported image failed; creating without it:", error);
-        }
-      }
+let imageId: Id<"_storage"> | undefined;
+if (data.image instanceof File) {
+  const uploadUrl = await generateUploadUrl();
+  const uploadResult = await fetch(uploadUrl, {
+    method: "POST",
+    headers: { "Content-Type": data.image.type },
+    body: data.image,
+  });
+  if (!uploadResult.ok) throw new Error("Failed to upload image");
+  imageId = await uploadResult.json();
+} else if (importedImageUrl) {
+  try {
+    imageId = (await importImage({ url: importedImageUrl })) as Id<"_storage">;
+  } catch (error) {
+    console.error("Imported image failed; creating without it:", error);
+  }
+}
 ```
 
 - [ ] **Step 3: Render the import bar + prefill the create dialog form**
@@ -2164,19 +2300,19 @@ Replace the image block in `handleCreatePuzzle` with:
 Add the bar above the search combobox `<div className="space-y-2">` (inside the first `CardContent`):
 
 ```tsx
-            <PuzzleImportBar
-              onDraft={applyImportedDraft}
-              onMatch={(match) =>
-                handlePuzzleSelect({
-                  _id: match.puzzleId,
-                  aggregateId: match.aggregateId,
-                  title: match.title,
-                  brand: match.brand,
-                  pieceCount: match.pieceCount,
-                  image: match.imageUrl ?? null,
-                })
-              }
-            />
+<PuzzleImportBar
+  onDraft={applyImportedDraft}
+  onMatch={(match) =>
+    handlePuzzleSelect({
+      _id: match.puzzleId,
+      aggregateId: match.aggregateId,
+      title: match.title,
+      brand: match.brand,
+      pieceCount: match.pieceCount,
+      image: match.imageUrl ?? null,
+    })
+  }
+/>
 ```
 
 Then key + prefill the dialog's `<PuzzleForm>`:

@@ -35,12 +35,17 @@ describe("extractPuzzleDraft", () => {
   it("falls back to OpenGraph then <title> (tiers 2-3)", () => {
     expect(
       extractPuzzleDraft(
-        { ...empty, ogTitle: "OG Puzzle 500 stukjes", ogImages: ["https://img/og.jpg"] },
+        {
+          ...empty,
+          ogTitle: "OG Puzzle 500 stukjes",
+          ogImages: ["https://img/og.jpg"],
+        },
         SRC,
       ).title,
     ).toBe("OG Puzzle 500 stukjes");
     expect(
-      extractPuzzleDraft({ ...empty, basicTitle: "Basic 750 Teile" }, SRC).title,
+      extractPuzzleDraft({ ...empty, basicTitle: "Basic 750 Teile" }, SRC)
+        .title,
     ).toBe("Basic 750 Teile");
   });
 

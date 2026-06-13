@@ -25,8 +25,12 @@ const firstImage = (
 const barcodes = (
   product: JsonLdProduct | undefined,
 ): { ean?: string; upc?: string } => {
-  const gtin13 = product?.gtin13 ?? (product?.gtin?.length === 13 ? product.gtin : undefined);
-  const gtin12 = product?.gtin12 ?? (product?.gtin?.length === 12 ? product.gtin : undefined);
+  const gtin13 =
+    product?.gtin13 ??
+    (product?.gtin?.length === 13 ? product.gtin : undefined);
+  const gtin12 =
+    product?.gtin12 ??
+    (product?.gtin?.length === 12 ? product.gtin : undefined);
   return { ean: gtin13, upc: gtin12 };
 };
 

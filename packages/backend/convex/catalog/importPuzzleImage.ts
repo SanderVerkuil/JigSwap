@@ -8,7 +8,13 @@ import { action } from "../_generated/server";
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 const MAX_REDIRECTS = 5;
 // Raster formats only. SVG is intentionally excluded — it can carry scripts (stored-XSS vector).
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
+const ALLOWED_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/avif",
+];
 
 // Reject any hostname that resolves to a private/loopback/link-local address (SSRF guard).
 const assertPublicHost = async (hostname: string): Promise<void> => {
@@ -54,7 +60,8 @@ export const importPuzzleImage = action({
 
       if (res.status >= 300 && res.status < 400) {
         const location = res.headers.get("location");
-        if (!location) throw new ConvexError("Redirect without a location header");
+        if (!location)
+          throw new ConvexError("Redirect without a location header");
         currentUrl = new URL(location, currentUrl).toString(); // resolve relative redirects
         continue;
       }
@@ -63,13 +70,16 @@ export const importPuzzleImage = action({
     }
 
     if (!response) throw new ConvexError("Too many redirects");
-    if (!response.ok) throw new ConvexError(`Image fetch failed: ${response.status}`);
+    if (!response.ok)
+      throw new ConvexError(`Image fetch failed: ${response.status}`);
 
     const contentType = response.headers.get("content-type") ?? "";
     if (!ALLOWED_TYPES.some((t) => contentType.startsWith(t))) {
       throw new ConvexError("Unsupported image type");
     }
-    const declaredLength = Number(response.headers.get("content-length") ?? "0");
+    const declaredLength = Number(
+      response.headers.get("content-length") ?? "0",
+    );
     if (declaredLength > MAX_BYTES) throw new ConvexError("Image too large");
 
     const buffer = await response.arrayBuffer();

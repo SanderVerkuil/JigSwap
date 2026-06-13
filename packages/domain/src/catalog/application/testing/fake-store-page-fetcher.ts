@@ -16,7 +16,9 @@ export class FakeStorePageFetcher implements StorePageFetcher {
     this.result = err(error);
   }
 
-  async fetch(url: string): Promise<Result<RawProductPage, StorePageFetchError>> {
+  async fetch(
+    url: string,
+  ): Promise<Result<RawProductPage, StorePageFetchError>> {
     this.calls.push(url);
     return this.result;
   }

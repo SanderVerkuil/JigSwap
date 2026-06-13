@@ -33,6 +33,9 @@ export const PuzzleImportBar = ({ onDraft, onMatch }: PuzzleImportBarProps) => {
     if (state.status === "ready" && !state.match) {
       onDraftRef.current(state.draft);
     }
+    // Intentionally keyed on the derived draft/match keys (not the whole `state`):
+    // onDraft is read through a ref, so re-running only on a new draft/match is correct.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftKey, matchKey]);
 
   const submit = async () => {
@@ -42,7 +45,9 @@ export const PuzzleImportBar = ({ onDraft, onMatch }: PuzzleImportBarProps) => {
 
   return (
     <div className="space-y-2 rounded-lg border bg-muted/30 p-4">
-      <label htmlFor={inputId} className="text-sm font-medium">{t("importFromUrl")}</label>
+      <label htmlFor={inputId} className="text-sm font-medium">
+        {t("importFromUrl")}
+      </label>
       <div className="flex gap-2">
         <Input
           id={inputId}
@@ -75,7 +80,11 @@ export const PuzzleImportBar = ({ onDraft, onMatch }: PuzzleImportBarProps) => {
         <div className="flex items-center justify-between gap-2 rounded border bg-background p-2">
           <span className="text-sm">{t("importAlreadyExists")}</span>
           <div className="flex gap-2">
-            <Button type="button" size="sm" onClick={() => onMatch(state.match!)}>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => onMatch(state.match!)}
+            >
               {t("importAddToCollection")}
             </Button>
             <Button

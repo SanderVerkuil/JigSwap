@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { draftToFormDefaults, type ImportedDraft } from "./draft-to-form-defaults";
+import {
+  draftToFormDefaults,
+  type ImportedDraft,
+} from "./draft-to-form-defaults";
 
-const base: ImportedDraft = { title: "Puzzle 1000 pieces", sourceUrl: "https://a.com/p" };
+const base: ImportedDraft = {
+  title: "Puzzle 1000 pieces",
+  sourceUrl: "https://a.com/p",
+};
 
 describe("draftToFormDefaults", () => {
   it("maps present fields and blanks the rest to form-safe defaults", () => {

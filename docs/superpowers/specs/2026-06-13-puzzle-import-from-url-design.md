@@ -13,21 +13,21 @@ Extraction never auto-creates a puzzle.
 
 ## Locked decisions
 
-| Decision | Choice |
-| --- | --- |
-| Extraction layering | Outbound `StorePageFetcher` port (Convex Node adapter wrapping `ogie`) + **pure** domain extractor that maps raw page data → draft |
-| v1 scope | EAN/UPC dedup, server-side image storage, **and** scrape caching all in v1 |
-| Confirm orchestration | Frontend calls image action → storage ID, then reuses the **existing** `submitPuzzleDefinition` mutation |
-| Scraper library | `ogie` v2.1.0 (MIT) — secure by default, built-in SSRF / private-IP blocking |
-| Post-create behavior | Mirror the **existing** add-puzzle form exactly (create `pending` definition; no behavior change) |
-| Import bar placement | Shared `<PuzzleImportBar>` component used in **both** `/puzzles/add` and `/my-puzzles/add` |
+| Decision              | Choice                                                                                                                             |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Extraction layering   | Outbound `StorePageFetcher` port (Convex Node adapter wrapping `ogie`) + **pure** domain extractor that maps raw page data → draft |
+| v1 scope              | EAN/UPC dedup, server-side image storage, **and** scrape caching all in v1                                                         |
+| Confirm orchestration | Frontend calls image action → storage ID, then reuses the **existing** `submitPuzzleDefinition` mutation                           |
+| Scraper library       | `ogie` v2.1.0 (MIT) — secure by default, built-in SSRF / private-IP blocking                                                       |
+| Post-create behavior  | Mirror the **existing** add-puzzle form exactly (create `pending` definition; no behavior change)                                  |
+| Import bar placement  | Shared `<PuzzleImportBar>` component used in **both** `/puzzles/add` and `/my-puzzles/add`                                         |
 
 ## Architecture (hexagonal, by layer)
 
 The repo is DDD + hexagonal with Convex as adapters. This feature slots into the
 existing **Catalog** bounded context, branching into **Library** (`acquireCopy`)
 on a dedup hit. It reuses `submitPuzzleDefinition` for creation; the only net-new
-backend capabilities are *fetch/parse a store page* and *server-side image fetch+store*.
+backend capabilities are _fetch/parse a store page_ and _server-side image fetch+store_.
 
 ### 1. Domain — pure TypeScript, no Convex / no network
 
@@ -137,7 +137,7 @@ Location: `packages/backend/convex/catalog/`
 Location: `packages/backend/convex/catalog/importPuzzleImage.ts` — Node action (`"use node";`)
 
 - Args `{ url: string }`. Returns `Id<"_storage">`.
-- **Own SSRF guard is required here** — `ogie` protects only the *page* fetch, not this
+- **Own SSRF guard is required here** — `ogie` protects only the _page_ fetch, not this
   separate raw image fetch:
   - Validate protocol is http/https.
   - Resolve host; reject loopback / private (10/8, 172.16/12, 192.168/16) / link-local
@@ -168,7 +168,7 @@ puzzleImportCache: defineTable({
     sourceUrl: v.string(),
   }),
   fetchedAt: v.number(),
-}).index("by_url", ["normalizedUrl"])
+}).index("by_url", ["normalizedUrl"]);
 ```
 
 - TTL: 7 days, enforced at read time (`extractFromUrl` treats stale rows as a miss).
@@ -191,7 +191,7 @@ Reuse existing gateway entries unchanged: `catalog.createPuzzle` (= `submitPuzzl
   - URL input + "Fetch details" button. `usePuzzleImport` hook holds
     `{ status: idle|loading|error|ready, draft, match }`.
   - On **ready, no match** → call `onDraft(draft)` so the host page prefills its
-    `<PuzzleForm>` default values; show the remote image as a *preview only* (stored on confirm).
+    `<PuzzleForm>` default values; show the remote image as a _preview only_ (stored on confirm).
   - On **ready, match** → render "This puzzle is already on JigSwap — add it to your
     collection?" with a primary action and a secondary "create new anyway."
   - On **error / partial** → toast "Couldn't read that page — add the details manually,"
@@ -247,7 +247,7 @@ draft.imageUrl ─► catalog.importPuzzleImage(url) → storageId   (non-fatal 
 - **Image validation:** `content-type` must be `image/*`; size capped at 10 MB.
 - **Auth:** `submittedBy` is always derived from `requireMember(ctx)`; never user-supplied.
 - **Barcode uniqueness:** existing domain rule in `submitPuzzleDefinition` is unchanged; the
-  dedup query simply surfaces an existing match *before* the user reaches that rule.
+  dedup query simply surfaces an existing match _before_ the user reaches that rule.
 - **Graceful degradation:** every failure path returns a usable draft-less response and the
   UI falls back to manual entry. No unhandled errors surface to the user.
 
@@ -270,7 +270,7 @@ draft.imageUrl ─► catalog.importPuzzleImage(url) → storageId   (non-fatal 
 ## Implementation reference
 
 - `ogie` v2.1.0 API (`extract`, `extractFromHtml`, result `{ success, data:{ og, twitter,
-  basic, jsonLd }, error:{ code } }`). The `dobroslavradosavljevic/ogie` agent skill can be
+basic, jsonLd }, error:{ code } }`). The `dobroslavradosavljevic/ogie` agent skill can be
   added during implementation for authoritative API details.
 
 ## Deltas from the original spec

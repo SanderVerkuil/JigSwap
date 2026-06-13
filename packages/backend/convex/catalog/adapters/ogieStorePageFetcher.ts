@@ -1,12 +1,12 @@
-import { extract } from "ogie";
 import {
   err,
   ok,
+  StorePageFetchError,
   type JsonLdProduct,
   type RawProductPage,
   type StorePageFetcher,
-  StorePageFetchError,
 } from "@jigswap/domain";
+import { extract } from "ogie";
 
 // NOTE on ogie's real type shape (confirmed from ogie@2.1.0 dist/types-Cf4MiUzI.d.mts):
 //   result.data.og.images is OpenGraphImage[] (non-optional, always present)
@@ -24,7 +24,11 @@ const asArray = (value: unknown): unknown[] =>
 const extractJsonLdImage = (image: unknown): string | string[] | undefined => {
   const one = (value: unknown): string | null => {
     if (typeof value === "string") return value;
-    if (value && typeof value === "object" && typeof (value as { url?: unknown }).url === "string") {
+    if (
+      value &&
+      typeof value === "object" &&
+      typeof (value as { url?: unknown }).url === "string"
+    ) {
       return (value as { url: string }).url;
     }
     return null;
@@ -48,12 +52,13 @@ const flattenBrand = (brand: unknown): string | undefined => {
 // Pull every JSON-LD node whose @type is (or includes) "Product" and project the fields we use.
 const toJsonLdProducts = (jsonLd: unknown): JsonLdProduct[] => {
   // jsonLd is JsonLdData = { items: JsonLdItem[]; raw: unknown[] } — use .raw for @type filtering
-  const rawArray = jsonLd != null && typeof jsonLd === "object" && "raw" in jsonLd
-    ? asArray((jsonLd as { raw: unknown }).raw)
-    : asArray(jsonLd);
+  const rawArray =
+    jsonLd != null && typeof jsonLd === "object" && "raw" in jsonLd
+      ? asArray((jsonLd as { raw: unknown }).raw)
+      : asArray(jsonLd);
 
   const nodes = asArray(rawArray)
-    .flatMap((node) => (Array.isArray(node) ? node : [node]))   // unwrap top-level arrays
+    .flatMap((node) => (Array.isArray(node) ? node : [node])) // unwrap top-level arrays
     .flatMap((node) => {
       const graph = (node as { "@graph"?: unknown })?.["@graph"];
       return graph ? asArray(graph) : [node];
@@ -67,7 +72,8 @@ const toJsonLdProducts = (jsonLd: unknown): JsonLdProduct[] => {
     .map((node) => ({
       name: typeof node.name === "string" ? node.name : undefined,
       brand: flattenBrand(node.brand),
-      description: typeof node.description === "string" ? node.description : undefined,
+      description:
+        typeof node.description === "string" ? node.description : undefined,
       image: extractJsonLdImage(node.image),
       gtin13: typeof node.gtin13 === "string" ? node.gtin13 : undefined,
       gtin12: typeof node.gtin12 === "string" ? node.gtin12 : undefined,
@@ -105,7 +111,11 @@ export const ogieStorePageFetcher: StorePageFetcher = {
         maxRedirects: 5,
       });
     } catch (e) {
-      return err(StorePageFetchError.fetchFailed(e instanceof Error ? e.message : String(e)));
+      return err(
+        StorePageFetchError.fetchFailed(
+          e instanceof Error ? e.message : String(e),
+        ),
+      );
     }
 
     if (!result.success) {

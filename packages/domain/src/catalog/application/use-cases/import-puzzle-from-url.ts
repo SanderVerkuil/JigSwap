@@ -5,10 +5,10 @@ import {
   PuzzleImportDraft,
   StorePageFetchError,
 } from "../../domain";
+import { ImportPuzzleFromUrl } from "../ports/in/import-puzzle-from-url.port";
 import { ImportDraftCache } from "../ports/out/import-draft-cache";
 import { PuzzleMatchLookup } from "../ports/out/puzzle-match-lookup";
 import { StorePageFetcher } from "../ports/out/store-page-fetcher";
-import { ImportPuzzleFromUrl } from "../ports/in/import-puzzle-from-url.port";
 
 const DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -36,7 +36,10 @@ export const makeImportPuzzleFromUrl =
     const cached = await deps.cache.get(normalized);
 
     let draft: PuzzleImportDraft;
-    if (cached && deps.clock.now().getTime() - cached.fetchedAt.getTime() < ttl) {
+    if (
+      cached &&
+      deps.clock.now().getTime() - cached.fetchedAt.getTime() < ttl
+    ) {
       draft = cached.draft;
     } else {
       const fetched = await deps.fetcher.fetch(cmd.url);

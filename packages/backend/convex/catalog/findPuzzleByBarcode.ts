@@ -34,7 +34,9 @@ export const findPuzzleByBarcode = internalQuery({
       title: match.title,
       brand: match.brand,
       pieceCount: match.pieceCount,
-      imageUrl: match.image ? (await ctx.storage.getUrl(match.image)) ?? undefined : undefined,
+      imageUrl: match.image
+        ? ((await ctx.storage.getUrl(match.image)) ?? undefined)
+        : undefined,
     };
   },
 });

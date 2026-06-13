@@ -25,7 +25,10 @@ export class StorePageFetchError extends DomainError {
     return new StorePageFetchError("InvalidUrl", `Not a valid URL: ${url}`);
   }
   static blocked(url: string): StorePageFetchError {
-    return new StorePageFetchError("Blocked", `Refused to fetch (blocked address): ${url}`);
+    return new StorePageFetchError(
+      "Blocked",
+      `Refused to fetch (blocked address): ${url}`,
+    );
   }
   static timeout(url: string): StorePageFetchError {
     return new StorePageFetchError("Timeout", `Timed out fetching ${url}`);
@@ -37,6 +40,9 @@ export class StorePageFetchError extends DomainError {
     return new StorePageFetchError("FetchFailed", `Fetch failed: ${message}`);
   }
   static unparseable(url: string): StorePageFetchError {
-    return new StorePageFetchError("Unparseable", `Could not parse metadata from ${url}`);
+    return new StorePageFetchError(
+      "Unparseable",
+      `Could not parse metadata from ${url}`,
+    );
   }
 }

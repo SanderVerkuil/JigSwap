@@ -33,6 +33,11 @@ export const putCachedImport = internalMutation({
       .unique();
     const fetchedAt = Date.now();
     if (existing) await ctx.db.patch(existing._id, { draft, fetchedAt });
-    else await ctx.db.insert("puzzleImportCache", { normalizedUrl, draft, fetchedAt });
+    else
+      await ctx.db.insert("puzzleImportCache", {
+        normalizedUrl,
+        draft,
+        fetchedAt,
+      });
   },
 });

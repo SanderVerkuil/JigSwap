@@ -10,7 +10,9 @@ describe("normalizeStoreUrl", () => {
   });
 
   it("drops the fragment", () => {
-    expect(normalizeStoreUrl("https://a.com/p#reviews")).toBe("https://a.com/p");
+    expect(normalizeStoreUrl("https://a.com/p#reviews")).toBe(
+      "https://a.com/p",
+    );
   });
 
   it("strips tracking params but keeps meaningful query", () => {

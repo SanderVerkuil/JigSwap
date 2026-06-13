@@ -4,7 +4,10 @@
 // literal, returns true if it points at loopback / private / link-local / unspecified space.
 const ipv4Private = (ip: string): boolean => {
   const parts = ip.split(".").map((p) => Number.parseInt(p, 10));
-  if (parts.length !== 4 || parts.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) {
+  if (
+    parts.length !== 4 ||
+    parts.some((n) => !Number.isInteger(n) || n < 0 || n > 255)
+  ) {
     return false;
   }
   const [a, b] = parts;
