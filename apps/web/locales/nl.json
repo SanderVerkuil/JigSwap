@@ -1184,6 +1184,18 @@
     "puzzlesInCollection": "Puzzels in Deze Collectie",
     "share": "Delen",
     "linkCopied": "Link gekopieerd naar klembord",
+    "shareDialog": {
+      "title": "Collectie Delen",
+      "privateExplain": "Deze collectie is privé — alleen jij kunt haar zien. Kies hoe je haar wilt delen.",
+      "makePublic": "Maak openbaar",
+      "makePublicHint": "Iedereen met de link kan haar bekijken.",
+      "keepPrivate": "Houd privé",
+      "keepPrivateHint": "Kopieer een link die alleen jij kunt openen.",
+      "madePublic": "Collectie is nu openbaar — link gekopieerd",
+      "madePublicNote": "Collectie is nu openbaar",
+      "privateLinkCopied": "Link gekopieerd — collectie blijft privé",
+      "error": "Kon delen niet bijwerken. Probeer het opnieuw."
+    },
     "noPuzzlesAvailable": "Geen Puzzels Beschikbaar",
     "addPuzzlesFirst": "Voeg eerst puzzels toe aan je bibliotheek en orden ze dan in collecties.",
     "addSelected": "{count, plural, one {# puzzel toevoegen} other {# puzzels toevoegen}}",

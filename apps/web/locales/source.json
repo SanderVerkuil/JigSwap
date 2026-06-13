@@ -1184,6 +1184,18 @@
     "puzzlesInCollection": "Puzzles in This Collection",
     "share": "Share",
     "linkCopied": "Link copied to clipboard",
+    "shareDialog": {
+      "title": "Share Collection",
+      "privateExplain": "This collection is private — only you can see it. Choose how you'd like to share it.",
+      "makePublic": "Make it public",
+      "makePublicHint": "Anyone with the link can view it.",
+      "keepPrivate": "Keep it private",
+      "keepPrivateHint": "Copy a link only you can open.",
+      "madePublic": "Collection is now public — link copied",
+      "madePublicNote": "Collection is now public",
+      "privateLinkCopied": "Link copied — collection stays private",
+      "error": "Couldn't update sharing. Please try again."
+    },
     "noPuzzlesAvailable": "No Puzzles Available",
     "addPuzzlesFirst": "Add puzzles to your library first, then organise them into collections.",
     "addSelected": "{count, plural, one {Add # puzzle} other {Add # puzzles}}",

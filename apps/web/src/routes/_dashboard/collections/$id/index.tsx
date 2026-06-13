@@ -14,13 +14,30 @@ import { CoverChip } from "@/components/library/cover-chip";
 import { EmptyState } from "@/components/library/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { gateway, Id } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "convex/react";
-import { Edit, FolderOpen, Plus, Puzzle, Share2 } from "lucide-react";
-import { useMemo } from "react";
+import {
+  ChevronRight,
+  Edit,
+  FolderOpen,
+  Globe,
+  Lock,
+  Plus,
+  Puzzle,
+  Share2,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
 
@@ -52,6 +69,9 @@ function CollectionDetailPage() {
   const removeFromCollection = useMutation(
     gateway.collections.removeOwnedPuzzle,
   );
+  const updateCollection = useMutation(gateway.collections.update);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
   // Publish only the collection name as the page-head title so the chrome
   // breadcrumb reads My Library › Collections › <name>. The Add/Share/Edit
@@ -86,16 +106,57 @@ function CollectionDetailPage() {
     }
   };
 
-  const handleShare = async () => {
-    // Copy the current page URL to the clipboard; guard for SSR / browsers that
-    // lack the async clipboard API.
-    if (typeof navigator === "undefined" || !navigator.clipboard) return;
+  // Copy the current page URL to the clipboard; guard for SSR / browsers that
+  // lack the async clipboard API. Returns whether the copy succeeded.
+  const copyLink = async () => {
+    if (typeof navigator === "undefined" || !navigator.clipboard) return false;
     try {
       await navigator.clipboard.writeText(window.location.href);
-      toast.success(t("linkCopied"));
+      return true;
     } catch (error) {
       console.error("Failed to copy collection link:", error);
+      return false;
     }
+  };
+
+  // Public collections are link-shareable directly; private ones first ask the
+  // owner how to share (the collection model only supports private/public —
+  // per-circle sharing exists at the copy level, not the collection level).
+  const handleShare = async () => {
+    if (collection?.visibility === "public") {
+      if (await copyLink()) toast.success(t("linkCopied"));
+      return;
+    }
+    setShareOpen(true);
+  };
+
+  const handleMakePublic = async () => {
+    if (!collection?.aggregateId) {
+      console.error("Cannot share: collection is missing its aggregateId.");
+      return;
+    }
+    setSharing(true);
+    try {
+      await updateCollection({
+        collectionId: collection.aggregateId,
+        visibility: "public",
+      });
+      const copied = await copyLink();
+      toast.success(
+        copied ? t("shareDialog.madePublic") : t("shareDialog.madePublicNote"),
+      );
+      setShareOpen(false);
+    } catch (error) {
+      console.error("Failed to make collection public:", error);
+      toast.error(t("shareDialog.error"));
+    } finally {
+      setSharing(false);
+    }
+  };
+
+  const handleCopyPrivate = async () => {
+    if (await copyLink()) toast.success(t("shareDialog.privateLinkCopied"));
+    setShareOpen(false);
   };
 
   if (collection === undefined) {
@@ -117,6 +178,69 @@ function CollectionDetailPage() {
 
   return (
     <div className="flex w-full flex-col gap-8">
+      {/* Share dialog — only reached for private collections (public ones copy
+          the link directly). Offers making it public or copying a private,
+          owner-only link. */}
+      <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("shareDialog.title")}</DialogTitle>
+            <DialogDescription>
+              {t("shareDialog.privateExplain")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={handleMakePublic}
+              disabled={sharing}
+              className="hover:bg-accent flex items-center gap-3 rounded-lg border p-3 text-left transition-colors disabled:opacity-60"
+            >
+              <span className="bg-jigsaw-success/15 text-jigsaw-success flex size-9 shrink-0 items-center justify-center rounded-full">
+                <Globe className="size-[18px]" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold">
+                  {t("shareDialog.makePublic")}
+                </span>
+                <span className="text-muted-foreground block text-xs">
+                  {t("shareDialog.makePublicHint")}
+                </span>
+              </span>
+              <ChevronRight className="text-muted-foreground size-4 shrink-0" />
+            </button>
+            <button
+              type="button"
+              onClick={handleCopyPrivate}
+              disabled={sharing}
+              className="hover:bg-accent flex items-center gap-3 rounded-lg border p-3 text-left transition-colors disabled:opacity-60"
+            >
+              <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full">
+                <Lock className="size-[18px]" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold">
+                  {t("shareDialog.keepPrivate")}
+                </span>
+                <span className="text-muted-foreground block text-xs">
+                  {t("shareDialog.keepPrivateHint")}
+                </span>
+              </span>
+              <ChevronRight className="text-muted-foreground size-4 shrink-0" />
+            </button>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShareOpen(false)}
+              disabled={sharing}
+            >
+              {tCommon("cancel")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Hero — open block, not a boxed card. */}
       <div className="flex flex-wrap items-start gap-5">
         <CoverChip
