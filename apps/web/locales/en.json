@@ -470,7 +470,15 @@
     "deleteConfirm": "Are you sure you want to delete this puzzle?",
     "loadingPuzzles": "Loading puzzles...",
     "new_sealed": "New (Sealed)",
-    "like_new": "Like New"
+    "like_new": "Like New",
+    "importFromUrl": "Import from a store link",
+    "importUrlPlaceholder": "Paste a puzzle product URL",
+    "importFetch": "Fetch details",
+    "importFetching": "Fetching…",
+    "importFailed": "Couldn't read that page — add the details manually.",
+    "importAlreadyExists": "This puzzle is already on JigSwap — add it to your collection?",
+    "importAddToCollection": "Add to collection",
+    "importCreateAnyway": "Create new anyway"
   },
   "trades": {
     "title": "Exchanges",

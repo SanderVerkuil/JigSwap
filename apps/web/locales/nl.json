@@ -470,7 +470,15 @@
     "deleteConfirm": "Weet je zeker dat je deze puzzel wilt verwijderen?",
     "loadingPuzzles": "Puzzels laden...",
     "new_sealed": "Nieuw (Verzegeld)",
-    "like_new": "Zo Goed Als Nieuw"
+    "like_new": "Zo Goed Als Nieuw",
+    "importFromUrl": "Importeer via een winkellink",
+    "importUrlPlaceholder": "Plak een product-URL van een puzzel",
+    "importFetch": "Gegevens ophalen",
+    "importFetching": "Bezig met ophalen…",
+    "importFailed": "Kon die pagina niet lezen — vul de gegevens handmatig in.",
+    "importAlreadyExists": "Deze puzzel staat al op JigSwap — toevoegen aan je collectie?",
+    "importAddToCollection": "Aan collectie toevoegen",
+    "importCreateAnyway": "Toch nieuw aanmaken"
   },
   "trades": {
     "title": "Uitwisselingen",
