@@ -30,4 +30,48 @@ describe("StorePageFetchError", () => {
     // other factories leave detail undefined when not provided
     expect(StorePageFetchError.invalidUrl("x").detail).toBeUndefined();
   });
+
+  it("overrides name to the concrete error type", () => {
+    expect(StorePageFetchError.timeout("x").name).toBe("StorePageFetchError");
+  });
+
+  // Each factory builds an exact human message that interpolates its argument. Asserting the
+  // full string pins both the literal text and that the interpolated value actually appears.
+  describe("messages", () => {
+    it("invalidUrl interpolates the url", () => {
+      expect(StorePageFetchError.invalidUrl("ftp://x").message).toBe(
+        "Not a valid URL: ftp://x",
+      );
+    });
+
+    it("blocked interpolates the url", () => {
+      expect(StorePageFetchError.blocked("http://10.0.0.1").message).toBe(
+        "Refused to fetch (blocked address): http://10.0.0.1",
+      );
+    });
+
+    it("timeout interpolates the url", () => {
+      expect(StorePageFetchError.timeout("https://slow.example").message).toBe(
+        "Timed out fetching https://slow.example",
+      );
+    });
+
+    it("notFound interpolates the url", () => {
+      expect(StorePageFetchError.notFound("https://gone.example").message).toBe(
+        "Page not found: https://gone.example",
+      );
+    });
+
+    it("fetchFailed interpolates the underlying message", () => {
+      expect(StorePageFetchError.fetchFailed("dns fail").message).toBe(
+        "Fetch failed: dns fail",
+      );
+    });
+
+    it("unparseable interpolates the url", () => {
+      expect(
+        StorePageFetchError.unparseable("https://nohead.example").message,
+      ).toBe("Could not parse metadata from https://nohead.example");
+    });
+  });
 });

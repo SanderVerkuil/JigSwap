@@ -21,6 +21,9 @@ const parsePieceCount = (text: string): number | undefined => {
 const toImageArray = (
   image: string | readonly string[] | undefined,
 ): readonly string[] => {
+  // Stryker disable next-line ConditionalExpression,ArrayDeclaration: defensive guard against
+  // null/undefined image fields in untrusted JSON-LD. Equivalent under the downstream filter in
+  // buildImages (typeof === "string" + HTTP_RE), which discards any null/sentinel that leaks past.
   if (image == null) return [];
   return Array.isArray(image)
     ? (image as readonly string[])
@@ -37,6 +40,8 @@ const buildImages = (raw: RawProductPage): readonly string[] => {
   const result: string[] = [];
   for (const url of candidates) {
     if (
+      // Stryker disable next-line ConditionalExpression: runtime guard against non-string image
+      // entries in untrusted JSON-LD. Equivalent under the static string[] type, but real defense.
       typeof url === "string" &&
       HTTP_RE.test(url) &&
       !seen.has(url) &&
@@ -73,22 +78,21 @@ export const extractPuzzleDraft = (
   sourceUrl: string,
 ): PuzzleImportDraft => {
   const product = raw.jsonLdProducts[0];
-  // Compute rawTitle BEFORE cleaning — pieceCount is parsed from it.
-  const rawTitle = (
-    product?.name ??
-    raw.ogTitle ??
-    raw.basicTitle ??
-    ""
-  ).trim();
+  // Compute rawTitle BEFORE cleaning — pieceCount is parsed from it. No outer trim is needed:
+  // parsePieceCount tolerates surrounding whitespace and cleanPuzzleTitle trims internally.
+  const rawTitle = product?.name ?? raw.ogTitle ?? raw.basicTitle ?? "";
   const description = clean(
     product?.description ?? raw.ogDescription ?? raw.basicDescription,
   );
   const { ean, upc } = barcodes(product);
   const brand = clean(product?.brand);
   // Parse piece count from the ORIGINAL title + description so cleaning doesn't lose the count.
+  // Stryker disable next-line StringLiteral: the "" fallback only applies when description is
+  // absent; any replacement string is whitespace/word-only and carries no digit+unit token, so it
+  // cannot change the parsed piece count — an equivalent mutant.
   const pieceCount = parsePieceCount(`${rawTitle} ${description ?? ""}`);
   // Clean title AFTER deriving pieceCount (cleaning may strip the count phrase).
-  const title = cleanPuzzleTitle(rawTitle, { brand, pieceCount });
+  const title = cleanPuzzleTitle(rawTitle);
 
   // Build deduplicated image list: JSON-LD product images first, then OG images.
   const images = buildImages(raw);

@@ -22,8 +22,10 @@ const SEGMENT_SPLIT_RE = / [-–—] | [|] | \/ /g;
  * An empty string returns false (handled separately).
  */
 const isAllDescriptors = (seg: string): boolean => {
-  const words = seg.split(/\s+/).filter(Boolean);
-  return words.length > 0 && words.every((w) => DESCRIPTOR_WORD_RE.test(w));
+  // `seg` is always a non-empty, single-space-collapsed segment (callers filter empties first),
+  // so a literal-space split yields the words directly without needing a regex or `filter(Boolean)`.
+  const words = seg.split(" ");
+  return words.every((w) => DESCRIPTOR_WORD_RE.test(w));
 };
 
 /**
@@ -35,12 +37,8 @@ const isAllDescriptors = (seg: string): boolean => {
  * 5. Joining surviving segments with a space.
  * 6. Falling back to the trimmed raw input if everything was dropped.
  */
-export const cleanPuzzleTitle = (
-  raw: string,
-  _opts: { brand?: string; pieceCount?: number } = {},
-): string => {
+export const cleanPuzzleTitle = (raw: string): string => {
   const trimmed = raw.trim();
-  if (!trimmed) return trimmed;
 
   const segments = trimmed
     .split(SEGMENT_SPLIT_RE)

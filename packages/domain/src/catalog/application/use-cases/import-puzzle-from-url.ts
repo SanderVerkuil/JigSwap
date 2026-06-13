@@ -74,6 +74,8 @@ export const makeImportPuzzleFromUrl =
       // Only cache a useful extraction. Caching an empty draft (no title and no images) would pin a
       // failure for the full TTL and mask a later fix (e.g. a new fallback tier), so let empties
       // re-fetch next time instead.
+      // Stryker disable next-line MethodExpression: `draft` comes straight from extractPuzzleDraft,
+      // whose title is always pre-trimmed, so `.trim()` here cannot change the result — equivalent.
       if (draft.title.trim().length > 0 || draft.images.length > 0) {
         await deps.cache.put(normalized, draft);
       }
