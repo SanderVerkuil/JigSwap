@@ -12,6 +12,8 @@ export const gateway = {
   catalog: {
     // Writes go through the domain-driven catalog module (file.export namespacing); submissions
     // land as `pending` and must be approved (moderation) before appearing publicly.
+    extractPuzzleFromUrl: api.catalog.extractFromUrl.extractFromUrl,
+    importPuzzleImage: api.catalog.importPuzzleImage.importPuzzleImage,
     createPuzzle: api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
     updatePuzzle: api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
     approve: api.catalog.approvePuzzleDefinition.approvePuzzleDefinition,
