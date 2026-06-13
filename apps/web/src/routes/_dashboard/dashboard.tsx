@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_dashboard/dashboard")({
 
 function DashboardPage() {
   return (
-    <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-8 md:gap-10">
+    <div className="flex w-full flex-col gap-8 md:gap-10">
       <BriefingHero />
       <ShelfSection />
       <PulseSection />

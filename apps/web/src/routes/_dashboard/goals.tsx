@@ -115,7 +115,7 @@ function GoalsPage() {
 
   if (!user || convexUser === undefined || goals === undefined) {
     return (
-      <div className="mx-auto flex w-full max-w-[860px] flex-col gap-[26px]">
+      <div className="flex w-full flex-col gap-[26px]">
         <Skeleton className="h-10 w-full" />
         {Array.from({ length: 3 }).map((_, i) => (
           <Skeleton key={i} className="h-16" />

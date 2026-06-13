@@ -39,7 +39,7 @@ function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[1000px] flex-col gap-8 md:gap-9">
+    <div className="flex w-full flex-col gap-8 md:gap-9">
       <IdentityHeader
         member={member}
         isEditing={isEditing}
