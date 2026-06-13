@@ -172,15 +172,17 @@ export function PuzzleBox({
     [stripTextures],
   );
 
-  const lean = (index % 2 === 0 ? 1 : -1) * 0.015 + (index % 9) * 0.002;
-  const baseYaw = 0.06 * (index % 3 === 2 ? -1 : 1);
+  // Only a slight turn about the vertical axis varies the row — no sideways
+  // roll, so every box sits flat on the shelf board like a real boxed puzzle
+  // squared up on a shelf (a roll would balance it on one bottom corner).
+  const yaw = 0.04 * (index % 3 === 2 ? -1 : 1);
   const baseY = h / 2;
 
   // Body color: use edge average for cover boxes when available, otherwise slot.c2.
   const bodyColor = edges ? edges.body : slot.c2;
 
   return (
-    <group position={[slot.x, baseY, 0]} rotation={[0, baseYaw, lean]}>
+    <group position={[slot.x, baseY, 0]} rotation={[0, yaw, 0]}>
       <RoundedBox args={[w, h, BOX_DEPTH]} radius={0.015} smoothness={4}>
         <meshStandardMaterial
           color={bodyColor}
