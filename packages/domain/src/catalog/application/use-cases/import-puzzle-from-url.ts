@@ -44,11 +44,15 @@ export const makeImportPuzzleFromUrl =
       images: number;
     };
 
-    if (
-      cached &&
-      deps.clock.now().getTime() - cached.fetchedAt.getTime() < ttl
-    ) {
-      draft = cached.draft;
+    // Serve from cache only when the entry is fresh AND non-empty. Ignoring empty cached drafts
+    // lets a stale failure (cached before a fix) re-fetch instead of returning nothing forever.
+    const cachedIsUsable =
+      cached !== null &&
+      deps.clock.now().getTime() - cached.fetchedAt.getTime() < ttl &&
+      (cached.draft.title.trim().length > 0 || cached.draft.images.length > 0);
+
+    if (cachedIsUsable) {
+      draft = cached!.draft;
       servedFromCache = true;
       diagnostics = {
         source: "cache",

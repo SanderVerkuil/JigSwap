@@ -132,4 +132,16 @@ describe("makeImportPuzzleFromUrl", () => {
     expect(result.value.draft.images).toEqual([]);
     expect(await cache.get(NORMALIZED)).toBeNull();
   });
+
+  it("ignores a fresh-but-empty cached draft and re-fetches", async () => {
+    cache.seed(
+      NORMALIZED,
+      { title: "", sourceUrl: NORMALIZED, images: [] },
+      new Date(NOW.getTime() - 1000),
+    );
+    fetcher.seedPage({ ogImages: [], jsonLdProducts: [{ name: "Recovered" }] });
+    const result = await run()({ url: URL_IN });
+    expect(isOk(result) && result.value.draft.title).toBe("Recovered");
+    expect(fetcher.calls).toEqual([URL_IN]);
+  });
 });
