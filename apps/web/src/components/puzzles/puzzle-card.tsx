@@ -158,7 +158,7 @@ export function PuzzleCard({ puzzle }: PuzzleCardProps) {
             </Link>
           </Button>
           <Button size="sm" asChild className="flex-1">
-            <Link href={`/my-puzzles/add?puzzleId=${puzzle._id}`}>
+            <Link href={`/my-puzzles/add/new?puzzleId=${puzzle._id}`}>
               <Plus className="h-4 w-4 mr-2" />
               {t("addPuzzle")}
             </Link>
@@ -260,7 +260,7 @@ export function PuzzleCard({ puzzle }: PuzzleCardProps) {
             </Link>
           </Button>
           <Button size="sm" asChild className="flex-1">
-            <Link href={`/my-puzzles/add?puzzleId=${puzzle._id}`}>
+            <Link href={`/my-puzzles/add/new?puzzleId=${puzzle._id}`}>
               <Plus className="h-4 w-4 mr-2" />
               {t("addPuzzle")}
             </Link>

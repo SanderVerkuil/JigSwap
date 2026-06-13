@@ -532,7 +532,20 @@
     "coverBestQuality": "Best quality",
     "coverBest": "Best",
     "advancedDetails": "More details (optional)",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "chooser": {
+      "searchPlaceholder": "Search puzzles by title or brand…",
+      "yourSubmissions": "Your submissions",
+      "yourSubmissionsHint": "Puzzles you've added to the catalogue that aren't approved yet.",
+      "allPuzzles": "All puzzles",
+      "allPuzzlesHint": "Pick one from the shared catalogue to add a copy to your library.",
+      "cantFind": "Can't find your puzzle? Create a new one.",
+      "createNew": "Create new",
+      "noResults": "No puzzles found",
+      "noCatalogueResults": "No catalogue puzzles match your search.",
+      "chosenPuzzle": "Adding a copy of",
+      "copyDetails": "Your copy"
+    }
   },
   "trades": {
     "title": "Exchanges",
@@ -1957,6 +1970,7 @@
     "browse": "Browse puzzles — JigSwap",
     "myPuzzles": "My puzzles — JigSwap",
     "addPuzzle": "Add puzzle — JigSwap",
+    "createPuzzle": "Create puzzle — JigSwap",
     "puzzles": "Puzzles — JigSwap",
     "puzzle": "Puzzle details — JigSwap",
     "collections": "Collections — JigSwap",
@@ -2085,7 +2099,11 @@
       },
       "addPuzzle": {
         "title": "Add Puzzle",
-        "subtitle": "Add a new puzzle to your shelf."
+        "subtitle": "Pick one from the catalogue, or create a new one."
+      },
+      "createPuzzle": {
+        "title": "Create a Puzzle",
+        "subtitle": "Add a brand-new puzzle to the catalogue and your shelf."
       },
       "contributePuzzle": {
         "title": "Contribute a Puzzle",

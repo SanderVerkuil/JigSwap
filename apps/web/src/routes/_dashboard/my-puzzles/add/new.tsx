@@ -45,13 +45,14 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
-export const Route = createFileRoute("/_dashboard/my-puzzles/add")({
+export const Route = createFileRoute("/_dashboard/my-puzzles/add/new")({
   head: ({ match }) => ({
-    meta: [{ title: pageTitle(match.context, "addPuzzle") }],
+    meta: [{ title: pageTitle(match.context, "createPuzzle") }],
   }),
   // The page reads ?puzzleId off the URL via the next/navigation compat
   // (useSearchParams -> useSearch({ strict: false })); validate it so the
-  // typed search carries it through.
+  // typed search carries it through. When present the form switches to
+  // "copy mode": acquiring a copy of an existing catalogue definition.
   validateSearch: (search: Record<string, unknown>) => ({
     puzzleId: typeof search.puzzleId === "string" ? search.puzzleId : undefined,
   }),
@@ -125,7 +126,7 @@ function AddPuzzlePage() {
   const generateUploadUrl = useMutation(gateway.library.generateUploadUrl);
   const importImage = useAction(gateway.catalog.importPuzzleImage);
 
-  // puzzleId from URL — pre-select an existing definition
+  // puzzleId from URL — pre-select an existing definition (copy mode).
   const puzzleIdFromUrl = searchParams.get("puzzleId") as Id<"puzzles"> | null;
   const specificPuzzle = useQuery(
     gateway.catalog.puzzleById,
@@ -144,6 +145,14 @@ function AddPuzzlePage() {
       pieceCount: specificPuzzle.pieceCount,
     }));
   }, [puzzleIdFromUrl, specificPuzzle, selectedDefinitionId]);
+
+  // "Copy mode": the form is acquiring a copy of an existing catalogue
+  // definition reached via ?puzzleId. We hide the import + definition-editing
+  // fields and show the chosen definition read-only. We key off the URL param
+  // (not selectedDefinitionId, which also flips during an import match) so the
+  // chrome doesn't flicker between the loading and resolved states.
+  const isCopyMode = !!puzzleIdFromUrl;
+  const copyLoading = isCopyMode && specificPuzzle === undefined;
 
   // Object URL for the cover file preview — create and revoke in one effect
   const [coverFileUrl, setCoverFileUrl] = useState<string | undefined>(
@@ -307,8 +316,10 @@ function AddPuzzlePage() {
     }
   };
 
-  const isReady =
-    !!form.title.trim() && !!form.brand.trim() && !!form.pieceCount;
+  // In copy mode the definition is fixed, so only the copy fields gate submit.
+  const isReady = isCopyMode
+    ? !!selectedDefinitionId
+    : !!form.title.trim() && !!form.brand.trim() && !!form.pieceCount;
 
   const difficultyOptions = DIFFICULTY_OPTIONS.map((o) => ({
     ...o,
@@ -318,6 +329,185 @@ function AddPuzzlePage() {
     value: o.value,
     label: t(`condition_${o.value}`),
   }));
+
+  // The chosen definition shown read-only at the top of copy mode.
+  const chosenDefinition = isCopyMode ? (
+    <div className="flex items-start gap-4 rounded-xl border border-border bg-card p-4">
+      <div className="size-20 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
+        {specificPuzzle?.image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={specificPuzzle.image}
+            alt={specificPuzzle.title}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-2xl">
+            🧩
+          </div>
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="font-mono text-[10px] uppercase tracking-[0.09em] text-muted-foreground">
+          {t("chooser.chosenPuzzle")}
+        </div>
+        <div className="mt-1 truncate font-semibold">
+          {specificPuzzle?.title ?? form.title}
+        </div>
+        {(specificPuzzle?.brand || form.brand) && (
+          <div className="truncate text-sm text-muted-foreground">
+            {specificPuzzle?.brand ?? form.brand}
+          </div>
+        )}
+        {(specificPuzzle?.pieceCount ?? form.pieceCount) != null && (
+          <div className="mt-0.5 text-sm text-muted-foreground">
+            {specificPuzzle?.pieceCount ?? form.pieceCount} {t("pieces")}
+          </div>
+        )}
+      </div>
+    </div>
+  ) : null;
+
+  // The copy fields are shared between both modes; in copy mode they are the
+  // only editable section, in full mode they sit alongside the definition fields.
+  const copyFields = (
+    <div className="flex flex-col gap-5">
+      {/* Condition */}
+      <div className="flex flex-col gap-1.5">
+        <Label>{t("fieldCondition")}</Label>
+        <SegmentedPills
+          options={conditionOptions}
+          value={form.condition}
+          onChange={(v) =>
+            setForm((f) => ({
+              ...f,
+              condition: v as FormState["condition"],
+            }))
+          }
+          ariaLabel={t("fieldCondition")}
+        />
+      </div>
+
+      {/* Availability */}
+      <div className="flex flex-col gap-1.5">
+        <Label>{t("fieldAvailability")}</Label>
+        <p className="text-xs text-muted-foreground">{t("availabilityHint")}</p>
+        <AvailabilityChips
+          value={form.availability}
+          onChange={(v) => setForm((f) => ({ ...f, availability: v }))}
+        />
+      </div>
+    </div>
+  );
+
+  // The cover-photo picker (kept for the copy too, so a member can attach their
+  // own shelf photo) and notes — shared between modes.
+  const coverAndNotes = (
+    <div className="flex flex-col gap-5">
+      {/* Cover colour / photo */}
+      <div className="flex flex-col gap-1.5">
+        <Label>{t("coverColour")}</Label>
+        <p className="text-xs text-muted-foreground">{t("coverColourHint")}</p>
+        <CoverColourField
+          color={form.coverColor}
+          mode={form.coverMode}
+          photoOptions={[
+            ...form.importedImages.map((url) => ({ url })),
+            ...(coverFileUrl ? [{ url: coverFileUrl, uploaded: true }] : []),
+          ]}
+          selectedPhotoUrl={
+            form.coverFile ? coverFileUrl : form.selectedImageUrl
+          }
+          onSelectColor={(c) =>
+            setForm((f) => ({ ...f, coverColor: c, coverMode: "color" }))
+          }
+          onSelectPhoto={(url) =>
+            setForm((f) =>
+              url === coverFileUrl
+                ? { ...f, coverMode: "photo" }
+                : {
+                    ...f,
+                    coverMode: "photo",
+                    coverFile: undefined,
+                    selectedImageUrl: url,
+                  },
+            )
+          }
+          onUploadPhoto={(file) =>
+            setForm((f) => ({ ...f, coverFile: file, coverMode: "photo" }))
+          }
+        />
+      </div>
+
+      {/* Notes */}
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="ap-notes">
+          {t("fieldNotes")}{" "}
+          <span className="text-xs font-normal text-muted-foreground">
+            {t("optional")}
+          </span>
+        </Label>
+        <Textarea
+          id="ap-notes"
+          value={form.notes}
+          onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+          placeholder={t("notesPlaceholderLong")}
+          rows={3}
+        />
+      </div>
+    </div>
+  );
+
+  const footerButtons = (
+    <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
+      <Button
+        type="button"
+        disabled={!isReady || submitting}
+        onClick={handleAdd}
+      >
+        {isCopyMode ? t("addToLibrary") : t("addPuzzle")}
+      </Button>
+      {!isCopyMode && (
+        <Button
+          type="button"
+          variant="outline"
+          disabled={!isReady || submitting}
+          onClick={handleSaveAndAddAnother}
+        >
+          {t("saveAndAddAnother")}
+        </Button>
+      )}
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={() => router.push(isCopyMode ? "/my-puzzles/add" : "/puzzles")}
+      >
+        {t("cancel")}
+      </Button>
+      {!isReady && !copyLoading && (
+        <span className="ml-auto text-xs text-muted-foreground">
+          {t("addReadyHint")}
+        </span>
+      )}
+    </div>
+  );
+
+  // Copy mode: a focused single-step form — chosen definition read-only + the
+  // copy-specific fields. No import zone, no definition editing.
+  const copyColumn = (
+    <>
+      {copyLoading ? (
+        <div className="h-24 animate-pulse rounded-xl bg-muted" />
+      ) : (
+        chosenDefinition
+      )}
+      <SectionDivider label={t("chooser.copyDetails")} />
+      {copyFields}
+      <SectionDivider label={t("dividerCover")} />
+      {coverAndNotes}
+      {footerButtons}
+    </>
+  );
 
   const formColumn = (
     <>
@@ -683,36 +873,7 @@ function AddPuzzlePage() {
         </Collapsible>
       </div>
 
-      {/* Footer buttons */}
-      <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
-        <Button
-          type="button"
-          disabled={!isReady || submitting}
-          onClick={handleAdd}
-        >
-          {t("addToLibrary")}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={!isReady || submitting}
-          onClick={handleSaveAndAddAnother}
-        >
-          {t("saveAndAddAnother")}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => router.push("/puzzles")}
-        >
-          {t("cancel")}
-        </Button>
-        {!isReady && (
-          <span className="ml-auto text-xs text-muted-foreground">
-            {t("addReadyHint")}
-          </span>
-        )}
-      </div>
+      {footerButtons}
     </>
   );
 
@@ -722,34 +883,43 @@ function AddPuzzlePage() {
         {t("livePreview")}
       </div>
       <LivePreviewCard
-        title={form.title}
-        brand={form.brand}
-        pieceCount={form.pieceCount}
-        difficulty={form.difficulty}
+        title={specificPuzzle?.title ?? form.title}
+        brand={specificPuzzle?.brand ?? form.brand}
+        pieceCount={specificPuzzle?.pieceCount ?? form.pieceCount}
+        difficulty={specificPuzzle?.difficulty ?? form.difficulty}
         coverColor={form.coverColor}
-        coverPhotoUrl={previewPhotoUrl}
+        coverPhotoUrl={
+          isCopyMode
+            ? (previewPhotoUrl ?? specificPuzzle?.image ?? undefined)
+            : previewPhotoUrl
+        }
         available={hasAnyAvailability(form.availability)}
       />
       <p className="text-xs leading-relaxed text-muted-foreground">
         {t("livePreviewCaption")}
       </p>
-      <ReadinessChecklist
-        items={[
-          { ok: !!form.title.trim(), label: t("checkTitle") },
-          { ok: !!form.brand.trim(), label: t("checkBrand") },
-          { ok: !!form.pieceCount, label: t("checkPieces") },
-          {
-            ok: hasAnyAvailability(form.availability),
-            label: t("checkAvailability"),
-          },
-        ]}
-      />
+      {!isCopyMode && (
+        <ReadinessChecklist
+          items={[
+            { ok: !!form.title.trim(), label: t("checkTitle") },
+            { ok: !!form.brand.trim(), label: t("checkBrand") },
+            { ok: !!form.pieceCount, label: t("checkPieces") },
+            {
+              ok: hasAnyAvailability(form.availability),
+              label: t("checkAvailability"),
+            },
+          ]}
+        />
+      )}
     </>
   );
 
   return (
     <div className="space-y-6">
-      <AddPuzzleLayout form={formColumn} preview={previewColumn} />
+      <AddPuzzleLayout
+        form={isCopyMode ? copyColumn : formColumn}
+        preview={previewColumn}
+      />
     </div>
   );
 }

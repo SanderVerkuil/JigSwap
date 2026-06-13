@@ -532,7 +532,20 @@
     "coverBestQuality": "Beste kwaliteit",
     "coverBest": "Beste",
     "advancedDetails": "Meer details (optioneel)",
-    "cancel": "Annuleren"
+    "cancel": "Annuleren",
+    "chooser": {
+      "searchPlaceholder": "Zoek puzzels op titel of merk…",
+      "yourSubmissions": "Jouw inzendingen",
+      "yourSubmissionsHint": "Puzzels die je aan de catalogus hebt toegevoegd en nog niet zijn goedgekeurd.",
+      "allPuzzles": "Alle puzzels",
+      "allPuzzlesHint": "Kies er een uit de gedeelde catalogus om een exemplaar aan je collectie toe te voegen.",
+      "cantFind": "Kun je je puzzel niet vinden? Maak een nieuwe aan.",
+      "createNew": "Nieuwe aanmaken",
+      "noResults": "Geen puzzels gevonden",
+      "noCatalogueResults": "Geen catalogus-puzzels komen overeen met je zoekopdracht.",
+      "chosenPuzzle": "Een exemplaar toevoegen van",
+      "copyDetails": "Jouw exemplaar"
+    }
   },
   "trades": {
     "title": "Uitwisselingen",
@@ -1957,6 +1970,7 @@
     "browse": "Puzzels bladeren — JigSwap",
     "myPuzzles": "Mijn puzzels — JigSwap",
     "addPuzzle": "Puzzel toevoegen — JigSwap",
+    "createPuzzle": "Puzzel aanmaken — JigSwap",
     "puzzles": "Puzzels — JigSwap",
     "puzzle": "Puzzeldetails — JigSwap",
     "collections": "Collecties — JigSwap",
@@ -2085,7 +2099,11 @@
       },
       "addPuzzle": {
         "title": "Puzzel Toevoegen",
-        "subtitle": "Voeg een nieuwe puzzel toe aan je plank."
+        "subtitle": "Kies er een uit de catalogus, of maak een nieuwe aan."
+      },
+      "createPuzzle": {
+        "title": "Een puzzel aanmaken",
+        "subtitle": "Voeg een gloednieuwe puzzel toe aan de catalogus en je plank."
       },
       "contributePuzzle": {
         "title": "Een puzzel bijdragen",

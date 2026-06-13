@@ -110,7 +110,7 @@ export function PuzzleDetail({ puzzleId }: PuzzleDetailProps) {
           )}
         </div>
         <Button asChild>
-          <Link href={`/my-puzzles/add?puzzleId=${puzzleId}`}>
+          <Link href={`/my-puzzles/add/new?puzzleId=${puzzleId}`}>
             <Plus className="h-4 w-4 mr-2" />
             {t("addPuzzle")}
           </Link>
@@ -250,7 +250,7 @@ export function PuzzleDetail({ puzzleId }: PuzzleDetailProps) {
             </CardHeader>
             <CardContent className="space-y-3">
               <Button asChild className="w-full">
-                <Link href={`/my-puzzles/add?puzzleId=${puzzleId}`}>
+                <Link href={`/my-puzzles/add/new?puzzleId=${puzzleId}`}>
                   <Plus className="h-4 w-4 mr-2" />
                   {t("addPuzzle")}
                 </Link>

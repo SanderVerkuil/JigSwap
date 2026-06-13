@@ -217,13 +217,15 @@ function ContributePuzzlePage() {
       <ImportZone onDraft={applyDraft} onMatch={(m) => setPendingMatch(m)} />
 
       {/* MatchConfirm banner — if the import found an existing catalog entry,
-          redirect to my-puzzles/add so the user can add it to their library */}
+          redirect to the copy-mode add form so the user can add it to their library */}
       {pendingMatch && (
         <MatchConfirm
           match={pendingMatch}
           onUse={() => {
             setPendingMatch(null);
-            router.push(`/my-puzzles/add?puzzleId=${pendingMatch.puzzleId}`);
+            router.push(
+              `/my-puzzles/add/new?puzzleId=${pendingMatch.puzzleId}`,
+            );
           }}
           onIgnore={() => setPendingMatch(null)}
         />
