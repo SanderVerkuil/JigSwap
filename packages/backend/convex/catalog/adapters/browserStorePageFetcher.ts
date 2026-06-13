@@ -201,6 +201,6 @@ export const browserStorePageFetcher: StorePageFetcher = {
       );
     }
 
-    return ok(toRawProductPage(ogieResult.data));
+    return ok({ ...toRawProductPage(ogieResult.data), source: "browser-ua" });
   },
 };

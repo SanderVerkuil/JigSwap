@@ -26,6 +26,6 @@ export const ogieStorePageFetcher: StorePageFetcher = {
       return err(mapOgieError(result.error, url));
     }
 
-    return ok(toRawProductPage(result.data));
+    return ok({ ...toRawProductPage(result.data), source: "ogie" });
   },
 };
