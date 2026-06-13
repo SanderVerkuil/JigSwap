@@ -2,7 +2,7 @@ import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useUser } from "@/compat/clerk";
-import { SectionHead } from "@/components/dashboard-home/section-head";
+import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -94,6 +94,25 @@ function GoalsPage() {
     }
   };
 
+  // The page title lives in the shell page head; publish the count + primary
+  // action there too so the page body carries no duplicate section header.
+  const activeCount = (goals ?? []).filter((goal) => goal.isActive).length;
+  const headerMeta = t("activeCount", { count: activeCount });
+  usePageHeaderActions(
+    () => (
+      <>
+        <span className="text-muted-foreground hidden text-sm sm:inline">
+          {headerMeta}
+        </span>
+        <Button variant="brand" size="sm" onClick={() => setOpen(true)}>
+          <Plus className="h-4 w-4" />
+          {t("create")}
+        </Button>
+      </>
+    ),
+    [headerMeta],
+  );
+
   if (!user || convexUser === undefined || goals === undefined) {
     return (
       <div className="mx-auto flex w-full max-w-[860px] flex-col gap-[26px]">
@@ -105,22 +124,8 @@ function GoalsPage() {
     );
   }
 
-  const activeCount = goals.filter((goal) => goal.isActive).length;
-
   return (
     <div className="mx-auto flex w-full max-w-[860px] flex-col gap-[26px]">
-      <SectionHead
-        title={t("title")}
-        icon={Target}
-        meta={t("activeCount", { count: activeCount })}
-        action={
-          <Button variant="brand" size="sm" onClick={() => setOpen(true)}>
-            <Plus className="h-4 w-4" />
-            {t("create")}
-          </Button>
-        }
-      />
-
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>

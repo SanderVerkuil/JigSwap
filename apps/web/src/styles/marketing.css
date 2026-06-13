@@ -260,8 +260,9 @@
   --color-mk-diff-expert-fg: var(--mk-diff-expert-fg);
   --color-mk-diff-expert-bg: var(--mk-diff-expert-bg);
 
-  /* Marketing type: Fraunces display-serif headings, crisp system-sans body. */
-  --font-mk-heading: "Fraunces", ui-serif, Georgia, "Times New Roman", serif;
+  /* Marketing type: Baloo 2 rounded headings (shared with the app for one warm,
+     consistent brand voice across marketing and product), crisp system-sans body. */
+  --font-mk-heading: "Baloo 2", ui-rounded, "Segoe UI", system-ui, sans-serif;
   --font-mk-sans:
     ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";

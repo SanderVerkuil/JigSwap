@@ -21,6 +21,7 @@ import { CommandPalette } from "./command-palette";
 import { MobileTabBar } from "./mobile-tab-bar";
 import { MobileTopBar } from "./mobile-top-bar";
 import { PageHead } from "./page-head";
+import { PageHeaderSlotProvider, usePageHeaderSlot } from "./page-header-slot";
 import { ShellPreferencesProvider, useShellPreferences } from "./preferences";
 import { TopBar } from "./top-bar";
 
@@ -29,20 +30,35 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <ShellPreferencesProvider>
-      <SidebarProvider className="h-svh flex-col overflow-hidden">
-        <TopBar onOpenPalette={() => setPaletteOpen(true)} />
-        <MobileTopBar onOpenPalette={() => setPaletteOpen(true)} />
-        <div className="flex min-h-0 flex-1">
-          <AppSidebar />
-          <SidebarInset className="min-h-0 overflow-hidden md:peer-data-[variant=inset]:mt-0 md:peer-data-[variant=inset]:mr-3 md:peer-data-[variant=inset]:mb-3 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:border md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-0">
-            <PageHead />
-            <ContentArea>{children}</ContentArea>
-          </SidebarInset>
-        </div>
-        <MobileTabBar />
-        <CommandPalette open={paletteOpen} setOpen={setPaletteOpen} />
-      </SidebarProvider>
+      <PageHeaderSlotProvider>
+        <SidebarProvider className="h-svh flex-col overflow-hidden">
+          <TopBar onOpenPalette={() => setPaletteOpen(true)} />
+          <MobileTopBar onOpenPalette={() => setPaletteOpen(true)} />
+          <div className="flex min-h-0 flex-1">
+            <AppSidebar />
+            <SidebarInset className="min-h-0 overflow-hidden md:peer-data-[variant=inset]:mt-0 md:peer-data-[variant=inset]:mr-3 md:peer-data-[variant=inset]:mb-3 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:border md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-0">
+              <PageHead />
+              <ContentArea>{children}</ContentArea>
+            </SidebarInset>
+          </div>
+          <MobileTabBar />
+          <CommandPalette open={paletteOpen} setOpen={setPaletteOpen} />
+        </SidebarProvider>
+      </PageHeaderSlotProvider>
     </ShellPreferencesProvider>
+  );
+}
+
+// Mobile-only row carrying the page's registered header actions; the desktop
+// page head is hidden below md, so without this the primary action (New Goal,
+// Create Circle…) would be unreachable on phones.
+function MobilePageActions() {
+  const node = usePageHeaderSlot();
+  if (!node) return null;
+  return (
+    <div className="mb-4 flex items-center justify-end gap-2 md:hidden">
+      {node}
+    </div>
   );
 }
 
@@ -61,6 +77,7 @@ function ContentArea({ children }: { children: React.ReactNode }) {
           !fullWidth && "mx-auto max-w-[1180px]",
         )}
       >
+        <MobilePageActions />
         {children}
       </div>
     </div>
