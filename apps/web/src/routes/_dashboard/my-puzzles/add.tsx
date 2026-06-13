@@ -1,88 +1,36 @@
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { Image } from "@/compat/image";
 import { useRouter, useSearchParams } from "@/compat/navigation";
-import { PuzzleForm, PuzzleFormData } from "@/components/forms/puzzle-form";
 import {
-  draftToFormDefaults,
-  type ImportedDraft,
-} from "@/components/puzzle-import/draft-to-form-defaults";
-import { PuzzleImportBar } from "@/components/puzzle-import/puzzle-import-bar";
-import { Badge } from "@/components/ui/badge";
+  AddPuzzleLayout,
+  AvailabilityChips,
+  availabilityToSharing,
+  CONDITION_OPTIONS,
+  COVER_SWATCHES,
+  CoverColourField,
+  DIFFICULTY_OPTIONS,
+  hasAnyAvailability,
+  ImportZone,
+  LivePreviewCard,
+  MatchConfirm,
+  PieceCountField,
+  ReadinessChecklist,
+  SectionDivider,
+  SegmentedPills,
+  TagInput,
+} from "@/components/add-puzzle";
+import type { ImportedDraft } from "@/components/puzzle-import/draft-to-form-defaults";
+import type { ImportedMatch } from "@/components/puzzle-import/use-puzzle-import";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, Id } from "@/gateway";
-import { cn } from "@/lib/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useAction, useMutation, useQuery } from "convex/react";
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
-import { z } from "zod";
-
-// Schema for the instance form
-const instanceFormSchema = z.object({
-  condition: z.enum(["new_sealed", "like_new", "good", "fair", "poor"]),
-  availability: z.object({
-    forTrade: z.boolean(),
-    forSale: z.boolean(),
-    forLend: z.boolean(),
-  }),
-  acquisitionDate: z.string().optional(),
-  notes: z
-    .string()
-    .max(1000, "Notes must be less than 1000 characters")
-    .optional(),
-});
-
-type InstanceFormData = z.infer<typeof instanceFormSchema>;
 
 export const Route = createFileRoute("/_dashboard/my-puzzles/add")({
   head: ({ match }) => ({
@@ -97,524 +45,465 @@ export const Route = createFileRoute("/_dashboard/my-puzzles/add")({
   component: AddPuzzlePage,
 });
 
+interface FormState {
+  title: string;
+  brand: string;
+  pieceCount: number | undefined;
+  difficulty: "easy" | "medium" | "hard" | "expert" | undefined;
+  condition: "new_sealed" | "like_new" | "good" | "fair" | "poor";
+  availability: { forTrade: boolean; forLend: boolean; forSale: boolean };
+  coverColor: string;
+  coverFile: File | undefined;
+  importedImageUrl: string | undefined;
+  tags: string[];
+  notes: string;
+  ean: string | undefined;
+  upc: string | undefined;
+}
+
+const DEFAULT_FORM: FormState = {
+  title: "",
+  brand: "",
+  pieceCount: undefined,
+  difficulty: undefined,
+  condition: "good",
+  availability: { forTrade: true, forLend: false, forSale: false },
+  coverColor: COVER_SWATCHES[0],
+  coverFile: undefined,
+  importedImageUrl: undefined,
+  tags: [],
+  notes: "",
+  ean: undefined,
+  upc: undefined,
+};
+
 function AddPuzzlePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useTranslations("puzzles");
-  const tCommon = useTranslations("common");
 
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState("");
-  const [selectedPuzzle, setSelectedPuzzle] = useState<{
-    // Catalog view ids surface as opaque strings; the acquire keys on `aggregateId`, not `_id`.
-    _id: string;
-    // The Catalog PuzzleDefinitionId the domain acquire takes; legacy rows may lack it.
-    aggregateId?: string;
-    title: string;
-    brand?: string;
-    pieceCount: number;
-    image?: string | null;
-  } | null>(null);
-  const [createPuzzleOpen, setCreatePuzzleOpen] = useState(false);
-  const [isCreatingPuzzle, setIsCreatingPuzzle] = useState(false);
-  const [isCreatingOwnedPuzzle, setIsCreatingOwnedPuzzle] = useState(false);
+  const [form, setForm] = useState<FormState>(DEFAULT_FORM);
+  const [selectedDefinitionId, setSelectedDefinitionId] = useState<
+    string | null
+  >(null);
+  const [pendingMatch, setPendingMatch] = useState<ImportedMatch | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const [createDefaults, setCreateDefaults] = useState<
-    PuzzleFormData | undefined
-  >(undefined);
-  const [createFormKey, setCreateFormKey] = useState(0);
-  const [importedImageUrl, setImportedImageUrl] = useState<string | undefined>(
-    undefined,
-  );
-
-  const createInstance = useMutation(gateway.library.createOwned);
-  const updateSharing = useMutation(gateway.library.updateSharing);
+  // Mutations & actions
   const createPuzzle = useMutation(gateway.catalog.createPuzzle);
+  const createOwned = useMutation(gateway.library.createOwned);
+  const updateSharing = useMutation(gateway.library.updateSharing);
   const generateUploadUrl = useMutation(gateway.library.generateUploadUrl);
   const importImage = useAction(gateway.catalog.importPuzzleImage);
 
-  // Get puzzle suggestions based on search
-  const puzzleSuggestions = useQuery(
-    gateway.catalog.puzzleSuggestions,
-    searchValue.length > 0 ? { searchTerm: searchValue, limit: 10 } : "skip",
-  );
-
-  // The member's own not-yet-approved submissions. Public search only returns approved
-  // definitions, but a contributor may acquire a copy of a puzzle they submitted before it is
-  // approved — so offer those here too (filtered to the current search term client-side).
-  const myPending = useQuery(gateway.catalog.myContributedPuzzles, {});
-  const myPendingMatches = (myPending ?? []).filter((puzzle) => {
-    const term = searchValue.trim().toLowerCase();
-    if (!term) return true;
-    return (
-      puzzle.title.toLowerCase().includes(term) ||
-      (puzzle.brand?.toLowerCase().includes(term) ?? false)
-    );
-  });
-
-  // Check if there's a puzzleId in URL params
+  // puzzleId from URL — pre-select an existing definition
   const puzzleIdFromUrl = searchParams.get("puzzleId") as Id<"puzzles"> | null;
-
-  // If puzzleId is provided, fetch that specific puzzle
   const specificPuzzle = useQuery(
     gateway.catalog.puzzleById,
     puzzleIdFromUrl ? { puzzleId: puzzleIdFromUrl } : "skip",
   );
 
-  // Set selected puzzle from URL if available
   useEffect(() => {
-    if (puzzleIdFromUrl && specificPuzzle && !selectedPuzzle) {
-      setSelectedPuzzle({
-        _id: specificPuzzle._id,
-        aggregateId: specificPuzzle.aggregateId,
-        title: specificPuzzle.title,
-        brand: specificPuzzle.brand,
-        pieceCount: specificPuzzle.pieceCount,
-        image: specificPuzzle.image ?? undefined,
-      });
-    }
-  }, [puzzleIdFromUrl, specificPuzzle, selectedPuzzle]);
+    if (!puzzleIdFromUrl || !specificPuzzle) return;
+    // Only pre-fill once (when selectedDefinitionId is still null)
+    if (selectedDefinitionId) return;
+    setSelectedDefinitionId(specificPuzzle.aggregateId ?? null);
+    setForm((f) => ({
+      ...f,
+      title: specificPuzzle.title,
+      brand: specificPuzzle.brand ?? "",
+      pieceCount: specificPuzzle.pieceCount,
+    }));
+  }, [puzzleIdFromUrl, specificPuzzle, selectedDefinitionId]);
 
-  const instanceForm = useForm<InstanceFormData>({
-    resolver: zodResolver(instanceFormSchema),
-    defaultValues: {
-      condition: "good",
-      availability: {
-        forTrade: true,
-        forSale: true,
-        forLend: true,
-      },
-    },
-  });
+  // Object URL for the cover file preview
+  const previewUrl = useMemo(() => {
+    if (form.coverFile) return URL.createObjectURL(form.coverFile);
+    return form.importedImageUrl;
+  }, [form.coverFile, form.importedImageUrl]);
 
-  const handlePuzzleSelect = (puzzle: {
-    _id: string;
-    aggregateId?: string;
-    title: string;
-    brand?: string;
-    pieceCount: number;
-    image?: string | null;
-  }) => {
-    setSelectedPuzzle({
-      _id: puzzle._id,
-      aggregateId: puzzle.aggregateId,
-      title: puzzle.title,
-      brand: puzzle.brand,
-      pieceCount: puzzle.pieceCount,
-      image: puzzle.image,
-    });
-    setSearchOpen(false);
-    setSearchValue(puzzle.title);
+  // Revoke object URLs to avoid memory leaks
+  useEffect(() => {
+    return () => {
+      if (previewUrl && form.coverFile) URL.revokeObjectURL(previewUrl);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewUrl]);
+
+  // Apply a scraped draft onto the form fields
+  const applyDraft = (draft: ImportedDraft) => {
+    setSelectedDefinitionId(null);
+    setForm((f) => ({
+      ...f,
+      title: draft.title ?? "",
+      brand: draft.brand ?? "",
+      pieceCount: draft.pieceCount,
+      ean: draft.ean,
+      upc: draft.upc,
+      importedImageUrl: draft.imageUrl,
+      coverFile: undefined,
+    }));
   };
 
-  const applyImportedDraft = (draft: ImportedDraft) => {
-    setCreateDefaults(draftToFormDefaults(draft));
-    setImportedImageUrl(draft.imageUrl);
-    setCreateFormKey((k) => k + 1);
-    setCreatePuzzleOpen(true);
+  const resetForm = () => {
+    setForm(DEFAULT_FORM);
+    setSelectedDefinitionId(null);
+    setPendingMatch(null);
   };
 
-  const handleCreatePuzzle = async (data: PuzzleFormData) => {
-    setIsCreatingPuzzle(true);
+  const handleAdd = async () => {
+    setSubmitting(true);
     try {
-      // Handle image upload if provided
-      let imageId: Id<"_storage"> | undefined;
-      if (data.image instanceof File) {
-        const uploadUrl = await generateUploadUrl();
-        const uploadResult = await fetch(uploadUrl, {
-          method: "POST",
-          headers: { "Content-Type": data.image.type },
-          body: data.image,
-        });
-        if (!uploadResult.ok) throw new Error("Failed to upload image");
-        const { storageId } = await uploadResult.json();
-        imageId = storageId;
-      } else if (importedImageUrl) {
-        try {
-          imageId = await importImage({ url: importedImageUrl });
-        } catch {
-          imageId = undefined;
+      // 1. Resolve the catalog definition id (existing match or create new).
+      let definitionId = selectedDefinitionId;
+      if (!definitionId) {
+        let imageId: Id<"_storage"> | undefined;
+        if (form.coverFile) {
+          const uploadUrl = await generateUploadUrl();
+          const res = await fetch(uploadUrl, {
+            method: "POST",
+            headers: { "Content-Type": form.coverFile.type },
+            body: form.coverFile,
+          });
+          if (!res.ok) throw new Error("Image upload failed");
+          const { storageId } = (await res.json()) as { storageId: string };
+          imageId = storageId as Id<"_storage">;
+        } else if (form.importedImageUrl) {
+          try {
+            imageId = await importImage({ url: form.importedImageUrl });
+          } catch {
+            // Non-fatal: proceed without the remote image
+            imageId = undefined;
+          }
         }
+        definitionId = (await createPuzzle({
+          title: form.title,
+          brand: form.brand || undefined,
+          pieceCount: form.pieceCount!,
+          difficulty: form.difficulty,
+          tags: form.tags,
+          ean: form.ean || undefined,
+          upc: form.upc || undefined,
+          image: imageId,
+        })) as string;
       }
 
-      // Submission returns a CatalogCategoryId aggregateId; the definition lands as `pending` and
-      // must be approved before it is searchable, so we cannot auto-select it for a copy yet.
-      await createPuzzle({
-        title: data.title,
-        description: data.description,
-        brand: data.brand,
-        pieceCount: data.pieceCount,
-        difficulty: data.difficulty,
-        category: data.category,
-        tags: data.tags,
-        image: imageId,
-      });
+      // 2. Acquire a copy of that definition.
+      const copyId = (await createOwned({
+        puzzleDefinitionId: definitionId,
+        condition: form.condition,
+        notes: form.notes || undefined,
+      })) as string;
 
-      setCreatePuzzleOpen(false);
-      setImportedImageUrl(undefined);
-      setCreateDefaults(undefined);
-      toast.success(t("puzzleSubmittedForReview"));
-    } catch (error) {
-      console.error("Failed to create puzzle:", error);
-      toast.error(t("puzzleCreationFailed"));
-    } finally {
-      setIsCreatingPuzzle(false);
-    }
-  };
-
-  const handleCreateInstance = async (data: InstanceFormData) => {
-    if (!selectedPuzzle) {
-      toast.error(t("noPuzzleSelected"));
-      return;
-    }
-    // The domain acquires a copy against the Catalog PuzzleDefinitionId (aggregateId), not the
-    // Convex _id. Guard puzzles that predate the backfill and so cannot be acquired against.
-    if (!selectedPuzzle.aggregateId) {
-      toast.error(t("puzzleCreationFailed"));
-      return;
-    }
-
-    setIsCreatingOwnedPuzzle(true);
-    try {
-      // Acquire the copy first; it returns the new CopyId (aggregateId). Sharing is no longer
-      // part of acquisition, so apply the chosen availability via the granular sharing mutation
-      // when anything is enabled (visibility flips to "visible" once a copy is offered).
-      const copyId = await createInstance({
-        puzzleDefinitionId: selectedPuzzle.aggregateId,
-        condition: data.condition,
-        notes: data.notes,
-        acquisition: data.acquisitionDate
-          ? { date: new Date(data.acquisitionDate).getTime() }
-          : undefined,
-      });
-
-      const { forTrade, forSale, forLend } = data.availability;
-      if (forTrade || forSale || forLend) {
-        await updateSharing({
-          copyId,
-          visibility: "visible",
-          forTrade,
-          forSale,
-          forLend,
-        });
+      // 3. Apply availability if any chip is on.
+      if (hasAnyAvailability(form.availability)) {
+        await updateSharing(availabilityToSharing(copyId, form.availability));
       }
 
       toast.success(t("puzzleAdded"));
       router.push("/puzzles");
     } catch (error) {
-      console.error("Failed to create puzzle instance:", error);
+      console.error("Add to library failed:", error);
       toast.error(t("puzzleCreationFailed"));
     } finally {
-      setIsCreatingOwnedPuzzle(false);
+      setSubmitting(false);
     }
   };
 
-  return (
-    <div className="mx-auto max-w-2xl">
-      {/* The shell PageHead owns the page title; the form starts right away. */}
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("selectPuzzle")}</CardTitle>
-            <CardDescription>{t("selectPuzzleDescription")}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <PuzzleImportBar
-              onDraft={applyImportedDraft}
-              onMatch={(match) =>
-                handlePuzzleSelect({
-                  _id: match.puzzleId,
-                  aggregateId: match.aggregateId,
-                  title: match.title,
-                  brand: match.brand,
-                  pieceCount: match.pieceCount,
-                  image: match.imageUrl ?? null,
-                })
+  const handleSaveAndAddAnother = async () => {
+    setSubmitting(true);
+    try {
+      let definitionId = selectedDefinitionId;
+      if (!definitionId) {
+        let imageId: Id<"_storage"> | undefined;
+        if (form.coverFile) {
+          const uploadUrl = await generateUploadUrl();
+          const res = await fetch(uploadUrl, {
+            method: "POST",
+            headers: { "Content-Type": form.coverFile.type },
+            body: form.coverFile,
+          });
+          if (!res.ok) throw new Error("Image upload failed");
+          const { storageId } = (await res.json()) as { storageId: string };
+          imageId = storageId as Id<"_storage">;
+        } else if (form.importedImageUrl) {
+          try {
+            imageId = await importImage({ url: form.importedImageUrl });
+          } catch {
+            imageId = undefined;
+          }
+        }
+        definitionId = (await createPuzzle({
+          title: form.title,
+          brand: form.brand || undefined,
+          pieceCount: form.pieceCount!,
+          difficulty: form.difficulty,
+          tags: form.tags,
+          ean: form.ean || undefined,
+          upc: form.upc || undefined,
+          image: imageId,
+        })) as string;
+      }
+
+      const copyId = (await createOwned({
+        puzzleDefinitionId: definitionId,
+        condition: form.condition,
+        notes: form.notes || undefined,
+      })) as string;
+
+      if (hasAnyAvailability(form.availability)) {
+        await updateSharing(availabilityToSharing(copyId, form.availability));
+      }
+
+      toast.success(t("puzzleAdded"));
+      resetForm();
+    } catch (error) {
+      console.error("Add to library failed:", error);
+      toast.error(t("puzzleCreationFailed"));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const isReady =
+    !!form.title.trim() && !!form.brand.trim() && !!form.pieceCount;
+
+  const formColumn = (
+    <>
+      {/* URL import zone */}
+      <ImportZone onDraft={applyDraft} onMatch={(m) => setPendingMatch(m)} />
+
+      {/* MatchConfirm banner — shown when the import found an existing catalog entry */}
+      {pendingMatch && (
+        <MatchConfirm
+          match={pendingMatch}
+          onUse={() => {
+            setSelectedDefinitionId(pendingMatch.aggregateId ?? null);
+            setForm((f) => ({
+              ...f,
+              title: pendingMatch.title,
+              brand: pendingMatch.brand ?? "",
+              pieceCount: pendingMatch.pieceCount,
+            }));
+            setPendingMatch(null);
+          }}
+          onIgnore={() => setPendingMatch(null)}
+        />
+      )}
+
+      <SectionDivider label="or enter the details yourself" />
+
+      {/* Core details */}
+      <div className="flex flex-col gap-5">
+        {/* Title */}
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="ap-title">Puzzle Title</Label>
+          <Input
+            id="ap-title"
+            value={form.title}
+            onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+            placeholder="e.g. Starry Night"
+          />
+        </div>
+
+        {/* Brand + Piece Count */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="ap-brand">Brand</Label>
+            <Input
+              id="ap-brand"
+              value={form.brand}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, brand: e.target.value }))
               }
+              placeholder="e.g. Ravensburger"
             />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="ap-pieces">Piece Count</Label>
+            <PieceCountField
+              id="ap-pieces"
+              value={form.pieceCount}
+              onChange={(n) => setForm((f) => ({ ...f, pieceCount: n }))}
+            />
+          </div>
+        </div>
 
-            {/* Puzzle Search Combobox */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">{t("searchPuzzle")}</label>
-              <Popover open={searchOpen} onOpenChange={setSearchOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={searchOpen}
-                    className="w-full justify-between"
-                  >
-                    {selectedPuzzle
-                      ? selectedPuzzle.title
-                      : t("searchPlaceholder")}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
-                  <Command>
-                    <CommandInput
-                      placeholder={t("searchPlaceholder")}
-                      value={searchValue}
-                      onValueChange={setSearchValue}
-                    />
-                    <CommandList>
-                      <CommandEmpty>
-                        <div className="p-4 text-center">
-                          <p className="text-sm text-muted-foreground mb-4">
-                            {t("noPuzzlesFound")}
-                          </p>
-                          <Dialog
-                            open={createPuzzleOpen}
-                            onOpenChange={setCreatePuzzleOpen}
-                          >
-                            <DialogTrigger asChild>
-                              <Button size="sm">
-                                <Plus className="mr-2 h-4 w-4" />
-                                {t("createNewPuzzle")}
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-2xl overflow-y-auto">
-                              <DialogHeader>
-                                <DialogTitle>
-                                  {t("createNewPuzzle")}
-                                </DialogTitle>
-                                <DialogDescription>
-                                  {t("createNewPuzzleDescription")}
-                                </DialogDescription>
-                              </DialogHeader>
-                              <PuzzleForm
-                                key={createFormKey}
-                                defaultValues={createDefaults}
-                                onSubmit={handleCreatePuzzle}
-                                onCancel={() => setCreatePuzzleOpen(false)}
-                                pending={isCreatingPuzzle}
-                              >
-                                <div className="max-h-[60vh] overflow-y-auto pb-6">
-                                  <PuzzleForm.Content />
-                                </div>
-                                <PuzzleForm.Actions />
-                              </PuzzleForm>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                      </CommandEmpty>
-                      <CommandGroup>
-                        {puzzleSuggestions?.map((puzzle) => (
-                          <CommandItem
-                            key={puzzle._id}
-                            value={puzzle._id}
-                            onSelect={() => handlePuzzleSelect(puzzle)}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                selectedPuzzle?._id === puzzle._id
-                                  ? "opacity-100"
-                                  : "opacity-0",
-                              )}
-                            />
-                            <div className="flex items-center gap-2">
-                              {puzzle.image && (
-                                <Image
-                                  src={puzzle.image}
-                                  alt={puzzle.title}
-                                  width={32}
-                                  height={32}
-                                  className="w-8 h-8 rounded object-cover"
-                                />
-                              )}
-                              <div>
-                                <div className="font-medium">
-                                  {puzzle.title}
-                                </div>
-                                <div className="text-sm text-muted-foreground">
-                                  {puzzle.brand && `${puzzle.brand} • `}
-                                  {puzzle.pieceCount} {t("pieces")}
-                                </div>
-                              </div>
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                      {/* A contributor's own not-yet-approved submissions: not in public search,
-                          but acquirable by their submitter. */}
-                      {myPendingMatches.length > 0 && (
-                        <CommandGroup heading={t("yourPendingSubmissions")}>
-                          {myPendingMatches.map((puzzle) => (
-                            <CommandItem
-                              key={puzzle._id}
-                              value={`mine-${puzzle._id}`}
-                              onSelect={() => handlePuzzleSelect(puzzle)}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  selectedPuzzle?._id === puzzle._id
-                                    ? "opacity-100"
-                                    : "opacity-0",
-                                )}
-                              />
-                              <div className="flex items-center gap-2">
-                                {puzzle.image && (
-                                  <Image
-                                    src={puzzle.image}
-                                    alt={puzzle.title}
-                                    width={32}
-                                    height={32}
-                                    className="w-8 h-8 rounded object-cover"
-                                  />
-                                )}
-                                <div>
-                                  <div className="flex items-center gap-2 font-medium">
-                                    {puzzle.title}
-                                    <Badge variant="secondary">
-                                      {t("pendingReview")}
-                                    </Badge>
-                                  </div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {puzzle.brand && `${puzzle.brand} • `}
-                                    {puzzle.pieceCount} {t("pieces")}
-                                  </div>
-                                </div>
-                              </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      )}
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
+        {/* Difficulty */}
+        <div className="flex flex-col gap-1.5">
+          <Label>Difficulty</Label>
+          <SegmentedPills
+            options={DIFFICULTY_OPTIONS}
+            value={form.difficulty ?? "medium"}
+            onChange={(v) =>
+              setForm((f) => ({
+                ...f,
+                difficulty: v as FormState["difficulty"],
+              }))
+            }
+            ariaLabel="Difficulty"
+          />
+        </div>
 
-            {/* Selected Puzzle Display */}
-            {selectedPuzzle && (
-              <Card className="border-primary/20 bg-primary/5">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    {selectedPuzzle.image && (
-                      <Image
-                        src={selectedPuzzle.image}
-                        alt={selectedPuzzle.title}
-                        width={64}
-                        height={64}
-                        className="w-16 h-16 rounded object-cover"
-                      />
-                    )}
-                    <div className="flex-1">
-                      <h3 className="font-semibold">{selectedPuzzle.title}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {selectedPuzzle.brand && `${selectedPuzzle.brand} • `}
-                        {selectedPuzzle.pieceCount} {t("pieces")}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+        {/* Condition */}
+        <div className="flex flex-col gap-1.5">
+          <Label>Condition</Label>
+          <SegmentedPills
+            options={CONDITION_OPTIONS.map((o) => ({
+              value: o.value,
+              label: o.label,
+            }))}
+            value={form.condition}
+            onChange={(v) =>
+              setForm((f) => ({
+                ...f,
+                condition: v as FormState["condition"],
+              }))
+            }
+            ariaLabel="Condition"
+          />
+        </div>
 
-            {/* Instance Details Form */}
-            {selectedPuzzle && (
-              <Form {...instanceForm}>
-                <form
-                  onSubmit={instanceForm.handleSubmit(handleCreateInstance)}
-                  className="space-y-4"
-                >
-                  <FormField
-                    control={instanceForm.control}
-                    name="condition"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("condition")}</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder={t("selectCondition")} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="excellent">
-                              {t("condition.excellent")}
-                            </SelectItem>
-                            <SelectItem value="good">
-                              {t("condition.good")}
-                            </SelectItem>
-                            <SelectItem value="fair">
-                              {t("condition.fair")}
-                            </SelectItem>
-                            <SelectItem value="poor">
-                              {t("condition.poor")}
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={instanceForm.control}
-                    name="acquisitionDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("acquisitionDate")}</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="date"
-                            {...field}
-                            placeholder={t("acquisitionDatePlaceholder")}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={instanceForm.control}
-                    name="notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("notes")}</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            {...field}
-                            placeholder={t("notesPlaceholder")}
-                            rows={3}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="flex gap-2 pt-4">
-                    <Button
-                      type="submit"
-                      disabled={isCreatingOwnedPuzzle}
-                      className="flex-1"
-                    >
-                      {isCreatingOwnedPuzzle
-                        ? tCommon("saving")
-                        : t("addToCollection")}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => router.push("/puzzles")}
-                    >
-                      {tCommon("cancel")}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            )}
-          </CardContent>
-        </Card>
+        {/* Availability */}
+        <div className="flex flex-col gap-1.5">
+          <Label>Availability</Label>
+          <p className="text-xs text-muted-foreground">
+            How you&apos;d like to share this puzzle. Pick any that apply.
+          </p>
+          <AvailabilityChips
+            value={form.availability}
+            onChange={(v) => setForm((f) => ({ ...f, availability: v }))}
+          />
+        </div>
       </div>
+
+      <SectionDivider label="cover & extras" />
+
+      <div className="flex flex-col gap-5">
+        {/* Cover colour / photo */}
+        <div className="flex flex-col gap-1.5">
+          <Label>{t("coverColour")}</Label>
+          <p className="text-xs text-muted-foreground">
+            {t("coverColourHint")}
+          </p>
+          <CoverColourField
+            color={form.coverColor}
+            hasPhoto={!!form.coverFile}
+            onColor={(c) =>
+              setForm((f) => ({ ...f, coverColor: c, coverFile: undefined }))
+            }
+            onPhoto={(file) => setForm((f) => ({ ...f, coverFile: file }))}
+          />
+        </div>
+
+        {/* Tags */}
+        <div className="flex flex-col gap-1.5">
+          <Label>
+            Tags{" "}
+            <span className="text-xs font-normal text-muted-foreground">
+              Optional
+            </span>
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            Press Enter to add. Helps people discover your puzzle.
+          </p>
+          <TagInput
+            value={form.tags}
+            onChange={(tags) => setForm((f) => ({ ...f, tags }))}
+          />
+        </div>
+
+        {/* Notes */}
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="ap-notes">
+            Notes{" "}
+            <span className="text-xs font-normal text-muted-foreground">
+              Optional
+            </span>
+          </Label>
+          <Textarea
+            id="ap-notes"
+            value={form.notes}
+            onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+            placeholder="Anything worth mentioning — missing pieces, special edition, where you got it…"
+            rows={3}
+          />
+        </div>
+      </div>
+
+      {/* Footer buttons */}
+      <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
+        <Button
+          type="button"
+          disabled={!isReady || submitting}
+          onClick={handleAdd}
+        >
+          {t("addToLibrary")}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={!isReady || submitting}
+          onClick={handleSaveAndAddAnother}
+        >
+          {t("saveAndAddAnother")}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => router.push("/puzzles")}
+        >
+          Cancel
+        </Button>
+        {!isReady && (
+          <span className="ml-auto text-xs text-muted-foreground">
+            {t("addReadyHint")}
+          </span>
+        )}
+      </div>
+    </>
+  );
+
+  const previewColumn = (
+    <>
+      <div className="font-mono text-[10px] uppercase tracking-[0.09em] text-muted-foreground">
+        {t("livePreview")}
+      </div>
+      <LivePreviewCard
+        title={form.title}
+        brand={form.brand}
+        pieceCount={form.pieceCount}
+        difficulty={form.difficulty}
+        coverColor={form.coverColor}
+        coverPhotoUrl={previewUrl}
+        available={hasAnyAvailability(form.availability)}
+      />
+      <p className="text-xs leading-relaxed text-muted-foreground">
+        {t("livePreviewCaption")}
+      </p>
+      <ReadinessChecklist
+        items={[
+          { ok: !!form.title.trim(), label: t("checkTitle") },
+          { ok: !!form.brand.trim(), label: t("checkBrand") },
+          { ok: !!form.pieceCount, label: t("checkPieces") },
+          {
+            ok: hasAnyAvailability(form.availability),
+            label: t("checkAvailability"),
+          },
+        ]}
+      />
+    </>
+  );
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Add a Puzzle</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Import from a shop link or fill in the details yourself.
+        </p>
+      </div>
+      <AddPuzzleLayout form={formColumn} preview={previewColumn} />
     </div>
   );
 }
