@@ -15,13 +15,14 @@ export function CoverColourField({
 }) {
   return (
     <div className="flex flex-wrap gap-2.5">
-      {COVER_SWATCHES.map((c) => {
+      {COVER_SWATCHES.map((c, i) => {
         const selected = color === c && !hasPhoto;
         return (
           <button
             key={c}
             type="button"
-            aria-label="cover colour"
+            aria-label={`Cover colour ${i + 1}`}
+            aria-pressed={selected}
             onClick={() => onColor(c)}
             style={{
               background: `linear-gradient(140deg, ${c}, color-mix(in oklab, ${c}, black 30%))`,

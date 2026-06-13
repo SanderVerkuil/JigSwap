@@ -2,6 +2,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
+import { DIFFICULTY_OPTIONS } from "./add-puzzle-schema";
 
 export interface LivePreviewProps {
   title: string;
@@ -12,13 +13,6 @@ export interface LivePreviewProps {
   coverPhotoUrl?: string;
   available: boolean;
 }
-
-const DIFFICULTY_LABEL: Record<string, string> = {
-  easy: "Easy",
-  medium: "Medium",
-  hard: "Hard",
-  expert: "Expert",
-};
 
 export function LivePreviewCard(props: LivePreviewProps) {
   const cover = props.coverPhotoUrl
@@ -46,10 +40,19 @@ export function LivePreviewCard(props: LivePreviewProps) {
       </div>
       <div className="flex items-center justify-between gap-2 p-3">
         <span className="text-sm">
-          <span className="font-semibold">{props.pieceCount ?? 0}</span> pieces
+          {props.pieceCount != null ? (
+            <>
+              <span className="font-semibold">{props.pieceCount}</span> pieces
+            </>
+          ) : (
+            "— pieces"
+          )}
         </span>
         {props.difficulty && (
-          <Badge variant="outline">{DIFFICULTY_LABEL[props.difficulty]}</Badge>
+          <Badge variant="outline">
+            {DIFFICULTY_OPTIONS.find((o) => o.value === props.difficulty)
+              ?.label ?? props.difficulty}
+          </Badge>
         )}
       </div>
       <div className="grid grid-cols-2 gap-2 px-3 pb-3">
@@ -85,6 +88,7 @@ export function ReadinessChecklist({
               c.ok ? "bg-jigsaw-secondary text-white" : "bg-muted",
             ].join(" ")}
           >
+            <span className="sr-only">{c.ok ? "complete" : "incomplete"}</span>
             {c.ok && <Check className="size-3" />}
           </span>
           {c.label}

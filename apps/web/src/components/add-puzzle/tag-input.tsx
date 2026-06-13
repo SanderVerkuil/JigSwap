@@ -11,8 +11,13 @@ export function TagInput({
 }) {
   const [draft, setDraft] = useState("");
   const add = (raw: string) => {
-    const t = raw.trim().replace(/,$/, "");
-    if (t && !value.includes(t)) onChange([...value, t]);
+    const parts = raw
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+    const next = [...value];
+    for (const p of parts) if (!next.includes(p)) next.push(p);
+    onChange(next);
     setDraft("");
   };
   return (
@@ -25,6 +30,7 @@ export function TagInput({
           {t}
           <button
             type="button"
+            aria-label={`Remove ${t}`}
             onClick={() => onChange(value.filter((x) => x !== t))}
             className="inline-flex cursor-pointer"
           >
@@ -33,8 +39,12 @@ export function TagInput({
         </span>
       ))}
       <input
+        aria-label="Tags"
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
+        onBlur={() => {
+          if (draft.trim()) add(draft);
+        }}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             e.preventDefault();

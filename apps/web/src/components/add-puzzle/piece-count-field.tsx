@@ -17,11 +17,15 @@ export function PieceCountField({
         id={id}
         type="number"
         inputMode="numeric"
+        step="1"
+        min="1"
         value={value ?? ""}
         placeholder="1000"
-        onChange={(e) =>
-          onChange(e.target.value === "" ? undefined : Number(e.target.value))
-        }
+        onChange={(e) => {
+          if (e.target.value === "") return onChange(undefined);
+          const n = Number(e.target.value);
+          onChange(Number.isInteger(n) && n >= 1 ? n : undefined);
+        }}
       />
       <div className="flex flex-wrap gap-1.5">
         {PIECE_PRESETS.map((n) => (
