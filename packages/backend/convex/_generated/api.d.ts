@@ -9,11 +9,13 @@
  */
 
 import type * as adminCategories from "../adminCategories.js";
+import type * as catalog_adapters_browserStorePageFetcher from "../catalog/adapters/browserStorePageFetcher.js";
 import type * as catalog_adapters_catalogIdGenerator from "../catalog/adapters/catalogIdGenerator.js";
 import type * as catalog_adapters_convexCatalogCategoryRepository from "../catalog/adapters/convexCatalogCategoryRepository.js";
 import type * as catalog_adapters_convexPuzzleDefinitionRepository from "../catalog/adapters/convexPuzzleDefinitionRepository.js";
 import type * as catalog_adapters_eventPublisher from "../catalog/adapters/eventPublisher.js";
 import type * as catalog_adapters_mapper from "../catalog/adapters/mapper.js";
+import type * as catalog_adapters_ogieRawProductPage from "../catalog/adapters/ogieRawProductPage.js";
 import type * as catalog_adapters_ogieStorePageFetcher from "../catalog/adapters/ogieStorePageFetcher.js";
 import type * as catalog_adapters_systemClock from "../catalog/adapters/systemClock.js";
 import type * as catalog_approvePuzzleDefinition from "../catalog/approvePuzzleDefinition.js";
@@ -223,11 +225,13 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   adminCategories: typeof adminCategories;
+  "catalog/adapters/browserStorePageFetcher": typeof catalog_adapters_browserStorePageFetcher;
   "catalog/adapters/catalogIdGenerator": typeof catalog_adapters_catalogIdGenerator;
   "catalog/adapters/convexCatalogCategoryRepository": typeof catalog_adapters_convexCatalogCategoryRepository;
   "catalog/adapters/convexPuzzleDefinitionRepository": typeof catalog_adapters_convexPuzzleDefinitionRepository;
   "catalog/adapters/eventPublisher": typeof catalog_adapters_eventPublisher;
   "catalog/adapters/mapper": typeof catalog_adapters_mapper;
+  "catalog/adapters/ogieRawProductPage": typeof catalog_adapters_ogieRawProductPage;
   "catalog/adapters/ogieStorePageFetcher": typeof catalog_adapters_ogieStorePageFetcher;
   "catalog/adapters/systemClock": typeof catalog_adapters_systemClock;
   "catalog/approvePuzzleDefinition": typeof catalog_approvePuzzleDefinition;
