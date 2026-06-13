@@ -81,4 +81,33 @@ describe("makeImportPuzzleFromUrl", () => {
     expect(isErr(result) && result.error.code).toBe("InvalidUrl");
     expect(fetcher.calls).toEqual([]);
   });
+
+  it("re-fetches when the cached draft is exactly TTL old (boundary)", async () => {
+    cache.seed(
+      NORMALIZED,
+      { title: "AtBoundary", sourceUrl: NORMALIZED },
+      new Date(NOW.getTime() - 7 * 24 * 60 * 60 * 1000),
+    );
+    fetcher.seedPage({ ogImages: [], jsonLdProducts: [{ name: "BoundaryFresh" }] });
+    const result = await run()({ url: URL_IN });
+    expect(isOk(result) && result.value.draft.title).toBe("BoundaryFresh");
+    expect(fetcher.calls).toEqual([URL_IN]);
+  });
+
+  it("returns a match when a barcode is found in the catalog", async () => {
+    fetcher.seedPage({
+      ogImages: [],
+      jsonLdProducts: [{ name: "Ravensburger X", gtin13: "4005556150007" }],
+    });
+    lookup.seedMatch({ puzzleId: "p1", title: "Ravensburger X", pieceCount: 1000 });
+    const result = await run()({ url: URL_IN });
+    expect(isOk(result) && result.value.match?.puzzleId).toBe("p1");
+  });
+
+  it("skips the barcode lookup when the draft has no ean/upc", async () => {
+    fetcher.seedPage({ ogImages: [], jsonLdProducts: [{ name: "No Barcode Puzzle" }] });
+    const result = await run()({ url: URL_IN });
+    expect(isOk(result) && result.value.match).toBeNull();
+    expect(lookup.calls).toEqual([]);
+  });
 });

@@ -45,9 +45,9 @@ export const makeImportPuzzleFromUrl =
       await deps.cache.put(normalized, draft);
     }
 
-    const match = await deps.lookup.findByBarcode({
-      ean: draft.ean,
-      upc: draft.upc,
-    });
+    const match =
+      draft.ean || draft.upc
+        ? await deps.lookup.findByBarcode({ ean: draft.ean, upc: draft.upc })
+        : null;
     return ok({ draft, match });
   };

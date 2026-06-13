@@ -11,6 +11,7 @@ export interface PuzzleMatch {
 }
 
 export interface PuzzleMatchLookup {
+  /** Passing both `ean` and `upc` as `undefined` is legal and must return `null` (no match). */
   findByBarcode(barcodes: {
     ean?: string;
     upc?: string;
