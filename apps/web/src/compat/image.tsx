@@ -1,8 +1,10 @@
 import * as React from "react";
 
 // next/image compat: approximates next/image props with a styled <img>. No
-// optimization pipeline — `fill` maps to absolute-cover, `priority` to eager
-// loading. Ported `next/image` files just swap the import.
+// optimization pipeline — `fill` absolutely positions the image to fill its
+// (positioned) parent, `priority` maps to eager loading. Like real next/image,
+// object-fit is the caller's job: pass `className="object-cover"` /
+// `object-contain`. Ported `next/image` files just swap the import.
 type ImgProps = Omit<
   React.ComponentPropsWithoutRef<"img">,
   "src" | "width" | "height"
@@ -48,29 +50,15 @@ export function Image({
   void unoptimized;
   void loader;
 
-  // A `fill` image is absolutely positioned to cover its (positioned) parent. The object-fit is
-  // applied inline so it deterministically wins, but it HONORS an explicit `object-*` utility in
-  // `className` (e.g. `object-contain`) — defaulting to `cover` when none is given. (Previously this
-  // hardcoded `cover`, silently overriding any `object-contain` class.)
-  const objectFit: React.CSSProperties["objectFit"] = className?.includes(
-    "object-contain",
-  )
-    ? "contain"
-    : className?.includes("object-scale-down")
-      ? "scale-down"
-      : className?.includes("object-fill")
-        ? "fill"
-        : className?.includes("object-none")
-          ? "none"
-          : "cover";
-
+  // A `fill` image is absolutely positioned to fill its (positioned) parent. Object-fit is left to
+  // the caller's `className` (`object-cover` / `object-contain`) — no inline override, matching
+  // next/image (which has no objectFit prop and forces no default fit).
   const fillStyle: React.CSSProperties | undefined = fill
     ? {
         position: "absolute",
         inset: 0,
         width: "100%",
         height: "100%",
-        objectFit,
       }
     : undefined;
 
