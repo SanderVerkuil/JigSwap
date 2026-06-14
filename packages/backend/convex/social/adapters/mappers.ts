@@ -3,6 +3,7 @@ import {
   DisplayName,
   Follow,
   type FollowState,
+  type PhotoComment,
   Profile,
   type ProfileState,
   toFollowId,
@@ -18,6 +19,10 @@ import type { Doc, Id } from "../../_generated/dataModel";
 export type ProfileRow = Omit<Doc<"profiles">, "_id" | "_creationTime">;
 export type FollowRow = Omit<Doc<"follows">, "_id" | "_creationTime">;
 export type CommentRow = Omit<Doc<"puzzleComments">, "_id" | "_creationTime">;
+export type PhotoCommentRow = Omit<
+  Doc<"photoComments">,
+  "_id" | "_creationTime"
+>;
 
 // Row -> Profile aggregate. The row MUST carry an aggregateId (only domain-written rows do).
 // DisplayName re-validation here is total: a persisted name was already valid, so `create` succeeds.
@@ -90,6 +95,20 @@ export const commentToRow = (comment: Comment): CommentRow => {
     authorId: state.authorId as unknown as Id<"users">,
     text: state.text.value,
     rating: state.rating?.value,
+    createdAt: state.createdAt.getTime(),
+  };
+};
+
+// PhotoComment aggregate -> row payload. Domain PhotoCommentId becomes `aggregateId`; the PhotoId it
+// carries is the `ownedPuzzleImages` _id (passed in by the mutation), re-branded to the `photoId`
+// FK column. Photo comments are text-only, so there is no rating field.
+export const photoCommentToRow = (comment: PhotoComment): PhotoCommentRow => {
+  const state = comment.toState();
+  return {
+    aggregateId: state.id as string,
+    photoId: state.photoId as unknown as Id<"ownedPuzzleImages">,
+    authorId: state.authorId as unknown as Id<"users">,
+    text: state.text.value,
     createdAt: state.createdAt.getTime(),
   };
 };

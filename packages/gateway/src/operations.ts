@@ -67,6 +67,11 @@ export const gateway = {
     // list of REACHABLE available copies (Browse's public-OR-circle gate).
     getPuzzleDefinitionView:
       api.library.getPuzzleDefinitionView.getPuzzleDefinitionView,
+    // Per-photo discussion comments for the gallery lightbox, keyed by the `ownedPuzzleImages` _id.
+    // Text-only (no rating); anyone authenticated may post and authors are shown with their real
+    // identity. Photo metadata itself flows through getCopyInstanceView's gallery.
+    postPhotoComment: api.library.postPhotoComment.postPhotoComment,
+    listPhotoComments: api.library.listPhotoComments.listPhotoComments,
     // Image upload is storage infra, not a domain op; keep it on the legacy function. The URL is
     // used for copy photos.
     generateUploadUrl: api.puzzles.generateUploadUrl,

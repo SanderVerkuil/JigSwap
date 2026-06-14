@@ -557,18 +557,19 @@ describe("getCopyInstanceView rich detail", () => {
     expect(view?.community.breakdown).toEqual([0, 0, 0, 0, 0]);
   });
 
-  test("gallery resolves seeded ownedPuzzleImages to URLs with captions", async () => {
+  test("gallery resolves seeded ownedPuzzleImages to per-photo metadata", async () => {
     const t = convexTest(schema, modules);
     const { now, viewer, copy } = await seedCopy(t);
 
-    await t.run(async (ctx) => {
+    const photoIds = await t.run(async (ctx) => {
       const blob = new Blob(["fake-image-bytes"], { type: "image/png" });
       const fileId = await ctx.storage.store(blob);
-      await ctx.db.insert("ownedPuzzleImages", {
+      const first = await ctx.db.insert("ownedPuzzleImages", {
         ownedPuzzleId: copy,
         uploaderId: viewer,
         fileId,
         title: "Box front",
+        description: "The front of the box",
         tag: "box_front",
         takenAt: now + 10,
         createdAt: now,
@@ -577,7 +578,7 @@ describe("getCopyInstanceView rich detail", () => {
       // A second image with no title -> caption falls back to the tag.
       const blob2 = new Blob(["fake-image-2"], { type: "image/png" });
       const fileId2 = await ctx.storage.store(blob2);
-      await ctx.db.insert("ownedPuzzleImages", {
+      const second = await ctx.db.insert("ownedPuzzleImages", {
         ownedPuzzleId: copy,
         uploaderId: viewer,
         fileId: fileId2,
@@ -586,6 +587,7 @@ describe("getCopyInstanceView rich detail", () => {
         createdAt: now,
         updatedAt: now,
       });
+      return { first, second };
     });
 
     const view = await asViewer(t).query(
@@ -594,10 +596,23 @@ describe("getCopyInstanceView rich detail", () => {
     );
     expect(view?.gallery).toHaveLength(2);
     // Newest first by takenAt: the box_front (now+10) precedes the pieces (now+5).
-    expect(view?.gallery[0]?.caption).toBe("Box front");
-    expect(view?.gallery[0]?.url).toEqual(expect.any(String));
-    expect(view?.gallery[1]?.caption).toBe("pieces");
-    expect(view?.gallery[1]?.url).toEqual(expect.any(String));
+    const first = view?.gallery[0];
+    expect(first?.id).toBe(photoIds.first as string);
+    expect(first?.url).toEqual(expect.any(String));
+    expect(first?.caption).toBe("Box front");
+    expect(first?.tag).toBe("box_front");
+    expect(first?.description).toBe("The front of the box");
+    expect(first?.uploaderName).toBe("Viewer");
+    expect(first?.takenAt).toBe(now + 10);
+    expect(first?.createdAt).toBe(now);
+
+    const second = view?.gallery[1];
+    expect(second?.id).toBe(photoIds.second as string);
+    // caption falls back to the tag when no title; description null when absent.
+    expect(second?.caption).toBe("pieces");
+    expect(second?.tag).toBe("pieces");
+    expect(second?.description).toBeNull();
+    expect(second?.uploaderName).toBe("Viewer");
   });
 
   test("grouped completion entries carry rating, note and isYou", async () => {

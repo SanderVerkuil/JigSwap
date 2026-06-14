@@ -11,6 +11,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { toMemberView } from "../identity/toMemberView";
 import { projectMemberIdentity } from "../social/privacy";
 
 const MS_PER_DAY = 86_400_000;
@@ -262,13 +263,22 @@ export const getCopyInstanceView = query({
       imageRows
         .slice()
         .sort((a, b) => (b.takenAt ?? b.createdAt) - (a.takenAt ?? a.createdAt))
-        .map(async (img) => {
+        .map(async (img): Promise<CopyPhoto | null> => {
           const url = await ctx.storage.getUrl(img.fileId);
           if (!url) return null;
+          // Resolve the uploader's display name (the lightbox shows who took the shot); null when
+          // the user row vanished so an orphaned photo never breaks the gallery.
+          const uploader = await ctx.db.get(img.uploaderId);
           return {
+            id: img._id as string,
             url,
             caption: img.title ?? img.tag ?? null,
-          } satisfies CopyPhoto;
+            tag: img.tag ?? null,
+            description: img.description ?? null,
+            uploaderName: uploader ? toMemberView(uploader).name : null,
+            takenAt: img.takenAt ?? null,
+            createdAt: img.createdAt,
+          };
         }),
     );
     const gallery: CopyPhoto[] = galleryResolved.filter(

@@ -1,4 +1,9 @@
-import { CommentId, FollowId, ProfileId } from "../../../domain";
+import {
+  CommentId,
+  FollowId,
+  PhotoCommentId,
+  ProfileId,
+} from "../../../domain";
 
 // Outbound ports: minting new aggregate ids. The aggregates take their id as input (they are
 // pure and do no I/O), so the use case obtains one here. The 1b-convex adapter can back these
@@ -13,4 +18,8 @@ export interface ProfileIdGenerator {
 
 export interface CommentIdGenerator {
   next(): CommentId;
+}
+
+export interface PhotoCommentIdGenerator {
+  next(): PhotoCommentId;
 }

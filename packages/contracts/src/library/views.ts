@@ -345,12 +345,24 @@ export interface CopyInstanceCommunity {
   breakdown: [number, number, number, number, number];
 }
 
-/** A resolved gallery photo for this copy. */
+/** A resolved gallery photo for this copy, with the metadata a lightbox needs. */
 export interface CopyPhoto {
+  /** The `ownedPuzzleImages` _id as a string. Keys the photo's comment thread in the lightbox. */
+  id: string;
   /** The resolved storage URL. */
   url: string;
   /** The caption (`title ?? tag`), or null when absent. */
   caption: string | null;
+  /** The photo's tag (e.g. `box_front`), or null when absent. */
+  tag: string | null;
+  /** The uploader-provided description, or null when absent. */
+  description: string | null;
+  /** The uploader's display name, or null when the uploader could not be resolved. */
+  uploaderName: string | null;
+  /** When the photo was taken (epoch ms), or null when not recorded. */
+  takenAt: number | null;
+  /** When the photo row was created (epoch ms). */
+  createdAt: number;
 }
 
 /**

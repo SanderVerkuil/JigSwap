@@ -607,6 +607,17 @@ export default defineSchema({
     createdAt: v.number(),
   }).index("by_puzzle", ["puzzleId"]),
 
+  // Social: a text-only discussion comment on a single shared PHOTO (an `ownedPuzzleImages` row),
+  // surfaced in the photo lightbox. Keyed by the photo _id (not a puzzle definition); aggregateId is
+  // the PhotoCommentId. Append-only — the read side projects this table directly into view DTOs.
+  photoComments: defineTable({
+    aggregateId: v.optional(v.string()),
+    photoId: v.id("ownedPuzzleImages"),
+    authorId: v.id("users"),
+    text: v.string(),
+    createdAt: v.number(),
+  }).index("by_photo", ["photoId"]),
+
   // Social: a directed follow edge (followerId -> followeeId). Indexed both ways so the read side
   // can list a member's followers and the people they follow; aggregateId is the FollowId.
   follows: defineTable({

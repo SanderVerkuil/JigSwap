@@ -1,8 +1,14 @@
-import { toCommentId, toFollowId, toProfileId } from "../../../shared-kernel";
-import { CommentId, FollowId, ProfileId } from "../../domain";
+import {
+  toCommentId,
+  toFollowId,
+  toPhotoCommentId,
+  toProfileId,
+} from "../../../shared-kernel";
+import { CommentId, FollowId, PhotoCommentId, ProfileId } from "../../domain";
 import {
   CommentIdGenerator,
   FollowIdGenerator,
+  PhotoCommentIdGenerator,
   ProfileIdGenerator,
 } from "../ports/out/id-generators";
 
@@ -33,5 +39,15 @@ export class SequentialCommentIdGenerator implements CommentIdGenerator {
   next(): CommentId {
     this.counter += 1;
     return toCommentId(`comment-${this.counter}`);
+  }
+}
+
+// Deterministic PhotoCommentIdGenerator for tests: photo-comment-1, photo-comment-2, ...
+export class SequentialPhotoCommentIdGenerator implements PhotoCommentIdGenerator {
+  private counter = 0;
+
+  next(): PhotoCommentId {
+    this.counter += 1;
+    return toPhotoCommentId(`photo-comment-${this.counter}`);
   }
 }

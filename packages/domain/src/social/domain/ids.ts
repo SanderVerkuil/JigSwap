@@ -4,6 +4,14 @@ import { Id } from "../../shared-kernel";
 export type ProfileId = Id<"ProfileId">;
 export type FollowId = Id<"FollowId">;
 export type CommentId = Id<"CommentId">;
+export type PhotoCommentId = Id<"PhotoCommentId">;
+
+// Foreign-aggregate reference to a single uploaded PHOTO (an `ownedPuzzleImages` row), held as a
+// branded string. A PhotoComment is posted against ONE specific photo (not a puzzle definition or an
+// owned copy), so Social carries the PhotoId without ever loading the Library aggregate. PhotoId is
+// owned by Library; keeping it branded prevents mixing it where one of this context's own ids is
+// expected.
+export type PhotoId = Id<"PhotoId">;
 
 // Foreign-aggregate reference to a Catalog puzzle definition, held as a branded string. A Comment
 // is posted against the puzzle DEFINITION (shared across every owned copy of it), so Social carries
