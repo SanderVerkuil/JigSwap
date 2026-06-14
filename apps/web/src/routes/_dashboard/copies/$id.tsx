@@ -231,7 +231,7 @@ function CopyInstanceDetail({
               src={snapshot.image}
               alt={snapshot.title}
               fill
-              className="object-cover"
+              className="object-contain"
             />
           ) : (
             <div className="from-jigsaw-primary/20 to-jigsaw-primary text-jigsaw-primary-foreground/70 absolute inset-0 flex items-center justify-center bg-gradient-to-br">

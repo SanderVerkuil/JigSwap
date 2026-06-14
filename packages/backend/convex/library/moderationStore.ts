@@ -13,6 +13,10 @@ export const getImageForModeration = internalQuery({
     return {
       fileId: row.fileId,
       moderationStatus: row.moderationStatus,
+      // Business context for the wide event (which copy / who uploaded / what kind of shot).
+      ownedPuzzleId: row.ownedPuzzleId,
+      uploaderId: row.uploaderId,
+      tag: row.tag,
     };
   },
 });

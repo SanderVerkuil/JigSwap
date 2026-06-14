@@ -3,10 +3,15 @@ import { v } from "convex/values";
 import { Jimp } from "jimp";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
+import { ingestToAxiom } from "../lib/axiom";
+import { logEvent, type WideEvent } from "../lib/logEvent";
 import {
   makeModerationPortFromEnv,
   toArrayBuffer,
 } from "./adapters/photoModeration";
+
+const errMsg = (e: unknown): string =>
+  e instanceof Error ? e.message : String(e);
 
 // Async image-moderation pipeline for an uploaded copy photo. Scheduled (runAfter 0) by
 // `addCopyPhoto`, which inserts the row as `moderationStatus: "pending"`. This action:
@@ -57,90 +62,123 @@ export const reencodeImage = async (
 export const moderatePhoto = internalAction({
   args: { imageId: v.id("ownedPuzzleImages") },
   handler: async (ctx, { imageId }) => {
-    const row = await ctx.runQuery(
-      internal.library.moderationStore.getImageForModeration,
-      { imageId },
-    );
-    // Gone, or already decided (idempotent: a re-run on an approved/rejected row is a no-op).
-    if (!row || row.moderationStatus !== "pending") return;
+    const startedAt = Date.now();
+    const provider = (process.env.MODERATION_PROVIDER ?? "huggingface").trim();
+    // ONE canonical wide event per moderation (logging-best-practices): high-cardinality ids,
+    // business context (copy / uploader / shot kind), the re-encode + classifier facts, the
+    // decision, and timing. Built up through the pipeline and flushed once in `finally`, then
+    // forwarded to Axiom. Replaces the scattered per-stage console.error lines.
+    const event: WideEvent = {
+      event: "library.moderatePhoto",
+      outcome: "success",
+      image_id: imageId,
+      provider,
+    };
+    const flush = async () => {
+      event.duration_ms = Date.now() - startedAt;
+      const line = logEvent(event);
+      await ingestToAxiom(line);
+    };
 
-    let bytes: Uint8Array;
+    const approve = () =>
+      ctx.runMutation(internal.library.moderationStore.setModerationVerdict, {
+        imageId,
+        moderationStatus: "approved",
+      });
+
     try {
-      const blob = await ctx.storage.get(row.fileId);
-      if (!blob) {
-        console.error(
-          `[moderation] storage blob missing for image ${imageId}; approving (fail-open).`,
-        );
-        await ctx.runMutation(
-          internal.library.moderationStore.setModerationVerdict,
-          { imageId, moderationStatus: "approved" },
-        );
+      const row = await ctx.runQuery(
+        internal.library.moderationStore.getImageForModeration,
+        { imageId },
+      );
+      if (!row) {
+        event.result = "skipped_missing";
         return;
       }
-      bytes = new Uint8Array(await blob.arrayBuffer());
-    } catch (error) {
-      console.error(
-        `[moderation] failed to download blob for image ${imageId}; approving (fail-open).`,
-        error instanceof Error ? error.message : String(error),
-      );
-      await ctx.runMutation(
-        internal.library.moderationStore.setModerationVerdict,
-        { imageId, moderationStatus: "approved" },
-      );
-      return;
-    }
-
-    // --- Re-encode (strip EXIF/metadata). Best-effort: on decode failure, classify the original. ---
-    let cleanBytes = bytes;
-    try {
-      const { bytes: encoded, mime } = await reencodeImage(bytes);
-      cleanBytes = encoded;
-      const newFileId = await ctx.storage.store(
-        new Blob([toArrayBuffer(cleanBytes)], { type: mime }),
-      );
-      await ctx.runMutation(
-        internal.library.moderationStore.setModerationFile,
-        { imageId, fileId: newFileId },
-      );
-      // The row now points at the clean blob; drop the original (best-effort).
-      try {
-        await ctx.storage.delete(row.fileId);
-      } catch (error) {
-        console.error(
-          `[moderation] failed to delete original blob for image ${imageId}.`,
-          error instanceof Error ? error.message : String(error),
-        );
+      event.copy_id = row.ownedPuzzleId;
+      event.uploader_id = row.uploaderId;
+      event.photo_tag = row.tag ?? null;
+      // Already decided (idempotent): a re-run on an approved/rejected row is a no-op.
+      if (row.moderationStatus !== "pending") {
+        event.result = "skipped_not_pending";
+        event.prior_status = row.moderationStatus ?? null;
+        return;
       }
-    } catch (error) {
-      console.error(
-        `[moderation] re-encode failed for image ${imageId}; keeping original, continuing to classify.`,
-        error instanceof Error ? error.message : String(error),
-      );
-      cleanBytes = bytes;
-    }
 
-    // --- Classify. The port itself fails open; this try/catch is the last-resort guard. ---
-    try {
-      const port = makeModerationPortFromEnv(process.env);
-      const result = await port.classify(cleanBytes);
-      await ctx.runMutation(
-        internal.library.moderationStore.setModerationVerdict,
-        {
-          imageId,
-          moderationStatus: result.status,
-          moderationScore: result.score ?? undefined,
-          moderationLabel: result.label ?? undefined,
-        },
-      );
-    } catch (error) {
-      console.error(
-        `[moderation] classification failed for image ${imageId}; approving (fail-open).`,
-        error instanceof Error ? error.message : String(error),
-      );
-      await ctx.runMutation(
-        internal.library.moderationStore.setModerationVerdict,
-        { imageId, moderationStatus: "approved" },
-      );
+      let bytes: Uint8Array;
+      try {
+        const blob = await ctx.storage.get(row.fileId);
+        if (!blob) {
+          event.outcome = "error";
+          event.error = { stage: "download", message: "storage blob missing" };
+          event.decision = "approved";
+          event.fail_open = true;
+          await approve();
+          return;
+        }
+        bytes = new Uint8Array(await blob.arrayBuffer());
+        event.original_bytes = bytes.length;
+      } catch (error) {
+        event.outcome = "error";
+        event.error = { stage: "download", message: errMsg(error) };
+        event.decision = "approved";
+        event.fail_open = true;
+        await approve();
+        return;
+      }
+
+      // Re-encode (strip EXIF/metadata). Best-effort: on decode failure, classify the original.
+      let cleanBytes = bytes;
+      try {
+        const { bytes: encoded, mime } = await reencodeImage(bytes);
+        cleanBytes = encoded;
+        event.reencoded = true;
+        event.reencoded_mime = mime;
+        event.reencoded_bytes = encoded.length;
+        const newFileId = await ctx.storage.store(
+          new Blob([toArrayBuffer(cleanBytes)], { type: mime }),
+        );
+        await ctx.runMutation(
+          internal.library.moderationStore.setModerationFile,
+          { imageId, fileId: newFileId },
+        );
+        // The row now points at the clean blob; drop the original (best-effort).
+        try {
+          await ctx.storage.delete(row.fileId);
+        } catch (error) {
+          event.delete_original_error = errMsg(error);
+        }
+      } catch (error) {
+        event.reencoded = false;
+        event.reencode_error = errMsg(error);
+        cleanBytes = bytes;
+      }
+
+      // Classify. The port itself fails open; this try/catch is the last-resort guard.
+      try {
+        const port = makeModerationPortFromEnv(process.env);
+        const result = await port.classify(cleanBytes);
+        await ctx.runMutation(
+          internal.library.moderationStore.setModerationVerdict,
+          {
+            imageId,
+            moderationStatus: result.status,
+            moderationScore: result.score ?? undefined,
+            moderationLabel: result.label ?? undefined,
+          },
+        );
+        event.decision = result.status;
+        event.nsfw_score = result.score ?? null;
+        event.nsfw_label = result.label ?? null;
+      } catch (error) {
+        event.outcome = "error";
+        event.error = { stage: "classify", message: errMsg(error) };
+        event.decision = "approved";
+        event.fail_open = true;
+        await approve();
+      }
+    } finally {
+      await flush();
     }
   },
 });

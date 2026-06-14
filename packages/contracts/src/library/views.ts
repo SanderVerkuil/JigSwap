@@ -82,6 +82,12 @@ export interface OwnedCopyView {
   puzzle: OwnedCopyPuzzleView | null;
   // Present only on reads that join the owner (`library.browseOwned`).
   owner?: OwnedCopyOwnerView | null;
+  /**
+   * Resolved cover image URL for the card: the copy's chosen-and-approved cover photo when set,
+   * else the puzzle's global catalogue box art, else null. Only populated by reads that resolve it
+   * (e.g. `library.ownedByOwner`); undefined elsewhere.
+   */
+  coverUrl?: string | null;
 }
 
 /** The paginated wrapper `library.browseOwned` returns (offset/limit paging, not Convex cursors). */
