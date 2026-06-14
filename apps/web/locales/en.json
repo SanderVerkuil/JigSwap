@@ -2257,7 +2257,20 @@
     "rateOptional": "Rate this puzzle (optional)",
     "post": "Post",
     "noComments": "No comments yet. Be the first.",
-    "commentFailed": "Couldn't post comment"
+    "commentFailed": "Couldn't post comment",
+    "photoLightbox": {
+      "uploadedBy": "Uploaded by {name}",
+      "takenOn": "Taken on {date}",
+      "comments": "Comments",
+      "addComment": "Add a comment…",
+      "post": "Post",
+      "noComments": "No comments yet.",
+      "close": "Close",
+      "prev": "Previous photo",
+      "next": "Next photo",
+      "counter": "{current} / {total}",
+      "commentFailed": "Couldn’t post your comment. Please try again."
+    }
   },
   "puzzleDefinition": {
     "notFound": "Puzzle not found",

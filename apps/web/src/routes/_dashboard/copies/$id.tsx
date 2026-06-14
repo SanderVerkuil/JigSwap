@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { Image } from "@/compat/image";
 import { useRouter } from "@/compat/navigation";
+import { PhotoLightbox } from "@/components/copies/photo-lightbox";
 import { EmptyState } from "@/components/library/empty-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -589,8 +590,15 @@ function PhotoStrip({
   const t = useTranslations("copyInstance");
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
   const generateUploadUrl = useMutation(gateway.library.generateUploadUrl);
   const addCopyPhoto = useMutation(gateway.library.addCopyPhoto);
+
+  const openLightbox = (index: number) => {
+    setActiveIndex(index);
+    setLightboxOpen(true);
+  };
 
   // Photo upload: ask Convex for a one-shot upload URL, POST the blob to it, then
   // attach the returned storageId to this copy. The getCopyInstanceView query
@@ -622,22 +630,25 @@ function PhotoStrip({
   return (
     <div className="flex gap-3.5 overflow-x-auto pb-1.5">
       {gallery.map((photo, i) => (
-        <figure
-          key={i}
-          className="bg-muted relative aspect-[4/3] w-[210px] shrink-0 overflow-hidden rounded-lg shadow-sm"
+        <button
+          key={photo.id}
+          type="button"
+          onClick={() => openLightbox(i)}
+          aria-label={photo.caption ?? t("photos")}
+          className="bg-muted focus-visible:ring-ring relative aspect-[4/3] w-[210px] shrink-0 cursor-pointer overflow-hidden rounded-lg shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={photo.url}
             alt={photo.caption ?? ""}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-contain"
           />
           {photo.caption && (
-            <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2.5 pt-5 text-xs font-semibold text-white">
+            <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2.5 pt-5 text-left text-xs font-semibold text-white">
               {photo.caption}
             </figcaption>
           )}
-        </figure>
+        </button>
       ))}
       {canAdd && (
         <label
@@ -663,6 +674,15 @@ function PhotoStrip({
       )}
       {gallery.length === 0 && !canAdd && (
         <p className="text-muted-foreground text-sm">{t("noPhotos")}</p>
+      )}
+      {gallery.length > 0 && (
+        <PhotoLightbox
+          gallery={gallery}
+          index={activeIndex}
+          open={lightboxOpen}
+          onOpenChange={setLightboxOpen}
+          onIndexChange={setActiveIndex}
+        />
       )}
     </div>
   );

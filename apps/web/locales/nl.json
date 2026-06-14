@@ -2257,7 +2257,20 @@
     "rateOptional": "Beoordeel deze puzzel (optioneel)",
     "post": "Plaatsen",
     "noComments": "Nog geen reacties. Wees de eerste.",
-    "commentFailed": "Kon reactie niet plaatsen"
+    "commentFailed": "Kon reactie niet plaatsen",
+    "photoLightbox": {
+      "uploadedBy": "Geüpload door {name}",
+      "takenOn": "Gemaakt op {date}",
+      "comments": "Reacties",
+      "addComment": "Voeg een reactie toe…",
+      "post": "Plaatsen",
+      "noComments": "Nog geen reacties.",
+      "close": "Sluiten",
+      "prev": "Vorige foto",
+      "next": "Volgende foto",
+      "counter": "{current} / {total}",
+      "commentFailed": "Je reactie kon niet worden geplaatst. Probeer het opnieuw."
+    }
   },
   "puzzleDefinition": {
     "notFound": "Puzzel niet gevonden",
