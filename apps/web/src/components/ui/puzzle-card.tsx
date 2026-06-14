@@ -1,11 +1,18 @@
 "use client";
 
-import Image from "@/compat/image";
+import {
+  PuzzleCardShell,
+  type PuzzleCardView,
+} from "@/components/puzzles/puzzle-card-shell";
+// Re-export the consolidated provider so existing call sites that import
+// `{ PuzzleCard, PuzzleViewProvider }` from this module keep working.
+import {
+  PuzzleViewProvider,
+  usePuzzleView,
+} from "@/components/puzzles/puzzle-view-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { gateway, Id } from "@/gateway";
-import { cn } from "@/lib/utils";
 import type { FunctionReturnType } from "convex/server";
 import {
   Check,
@@ -14,62 +21,14 @@ import {
   Eye,
   Heart,
   MessageCircle,
-  Puzzle,
   Trash2,
   User,
 } from "lucide-react";
-import { createContext, ReactNode, useContext } from "react";
+import { ReactNode } from "react";
 import { useTranslations } from "use-intl";
 import { CollectionDropdown } from "./collection-dropdown";
 
-// Context for view mode
-type ViewMode = "grid" | "list";
-
-interface PuzzleViewContextType {
-  viewMode: ViewMode;
-}
-
-const PuzzleViewContext = createContext<PuzzleViewContextType | undefined>(
-  undefined,
-);
-
-export function usePuzzleView() {
-  const context = useContext(PuzzleViewContext);
-  if (!context) {
-    throw new Error("usePuzzleView must be used within a PuzzleViewProvider");
-  }
-  return context;
-}
-
-interface PuzzleViewProviderProps {
-  children: ReactNode;
-  viewMode: ViewMode;
-  /** Optional override of the wrapper layout classes (e.g. an auto-fill grid). */
-  className?: string;
-}
-
-export function PuzzleViewProvider({
-  children,
-  viewMode,
-  className,
-}: PuzzleViewProviderProps) {
-  return (
-    <PuzzleViewContext.Provider value={{ viewMode }}>
-      <div
-        className={
-          className ??
-          (viewMode === "grid"
-            ? // Design-language puzzle grid: compact covers that auto-fill the
-              // row at a 212px minimum, instead of fixed breakpoint columns.
-              "grid grid-cols-[repeat(auto-fill,minmax(212px,1fr))] gap-[18px]"
-            : "space-y-4")
-        }
-      >
-        {children}
-      </div>
-    </PuzzleViewContext.Provider>
-  );
-}
+export { PuzzleViewProvider, usePuzzleView };
 
 // Owned-copy view DTO this card renders, derived from the library read it is fed by (ids surface as
 // opaque strings; the card re-casts `_id` to `Id<"ownedPuzzles">` once at the callback boundary).
@@ -122,7 +81,6 @@ export function PuzzleCard({
 }: PuzzleCardProps) {
   const t = useTranslations("puzzles");
   const tSolving = useTranslations("solving.logSolve");
-  const { viewMode } = usePuzzleView();
 
   // Early return if no puzzle data
   if (!puzzle.puzzle) {
@@ -132,264 +90,195 @@ export function PuzzleCard({
   // DTO surfaces the copy id as a string; callbacks/CollectionDropdown take a branded Convex id.
   const ownedId = puzzle._id as Id<"ownedPuzzles">;
 
-  const renderImage = () => {
-    // Box art is optional; when missing, show a warm gradient + puzzle glyph
-    // rather than a broken <img> pointing at a non-existent placeholder file.
-    const imageUrl = puzzle.puzzle?.images?.[0];
-    return (
-      <div className="relative aspect-square overflow-hidden rounded-t-lg">
-        {imageUrl ? (
-          <Image
-            src={imageUrl}
-            alt={puzzle.puzzle?.title || "Puzzle"}
-            fill
-            className="object-cover transition-transform hover:scale-105"
+  const view: PuzzleCardView = {
+    id: puzzle._id,
+    title: puzzle.puzzle.title || "Unknown Puzzle",
+    brand: puzzle.puzzle.brand,
+    pieceCount: puzzle.puzzle.pieceCount,
+    difficulty: puzzle.puzzle.difficulty,
+    description: puzzle.puzzle.description,
+    tags: puzzle.puzzle.tags,
+    imageUrl: puzzle.puzzle.images?.[0],
+  };
+
+  // Context badges: condition, availability flags, and the owner — the
+  // owned-copy specifics that the shared shell deliberately doesn't know about.
+  const badges = (
+    <>
+      <div className="flex flex-wrap items-center gap-2 mb-2">
+        <Badge
+          variant={
+            puzzle.condition === "new_sealed" || puzzle.condition === "like_new"
+              ? "default"
+              : "secondary"
+          }
+          className="text-xs"
+        >
+          {t(puzzle.condition)}
+        </Badge>
+      </div>
+
+      {showAvailability && (
+        <div className="flex items-center gap-2 mb-2">
+          {puzzle.availability.forLend ? (
+            <Badge variant="outline" className="text-xs">
+              {t("lend")}
+            </Badge>
+          ) : null}
+          {puzzle.availability.forTrade ? (
+            <Badge variant="outline" className="text-xs">
+              {t("trade")}
+            </Badge>
+          ) : null}
+          {puzzle.availability.forSale ? (
+            <Badge variant="outline" className="text-xs">
+              {t("sale")}
+            </Badge>
+          ) : null}
+        </div>
+      )}
+
+      {showOwner && puzzle.owner && (
+        <div className="flex items-center gap-2 mb-2">
+          <User className="h-3 w-3 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">
+            {puzzle.owner.name}
+          </span>
+        </div>
+      )}
+    </>
+  );
+
+  // Image overlays: the selection ring's check, and the selection-variant checkbox.
+  const overlay = (
+    <>
+      {isSelected && (
+        <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+          <Check className="h-8 w-8 text-primary" />
+        </div>
+      )}
+      {variant === "selection" && (
+        <div className="absolute top-2 right-2">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => onSelect?.(ownedId)}
+            className="h-4 w-4"
           />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-jigsaw-primary/15 to-jigsaw-primary-accent/15 text-jigsaw-primary/50">
-            <Puzzle className="h-1/3 w-1/3" />
-          </div>
-        )}
-        {isSelected && (
-          <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-            <Check className="h-8 w-8 text-primary" />
-          </div>
-        )}
-        {variant === "selection" && (
-          <div className="absolute top-2 right-2">
-            <input
-              type="checkbox"
-              checked={isSelected}
-              onChange={() => onSelect?.(ownedId)}
-              className="h-4 w-4"
-            />
-          </div>
-        )}
-      </div>
-    );
-  };
+        </div>
+      )}
+    </>
+  );
 
-  const renderActions = () => {
-    if (!showActions) return null;
-
-    return (
-      <div className="flex items-center gap-2">
-        {onView && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onView(ownedId)}
-            className="h-8 w-8 p-0"
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-        )}
-        {onLogSolve && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onLogSolve(ownedId)}
-            className="h-8 w-8 p-0"
-            title={tSolving("trigger")}
-            aria-label={tSolving("trigger")}
-          >
-            <CircleCheck className="h-4 w-4" />
-          </Button>
-        )}
-        {onEdit && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onEdit(ownedId)}
-            className="h-8 w-8 p-0"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-        )}
-        {onDelete && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onDelete(ownedId)}
-            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
-        {onRemove && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onRemove(ownedId)}
-            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
-        {onRequestExchange && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onRequestExchange(ownedId)}
-            className="h-8 w-8 p-0"
-          >
-            <MessageCircle className="h-4 w-4" />
-          </Button>
-        )}
-        {onMessage && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onMessage(ownedId)}
-            className="h-8 w-8 p-0"
-          >
-            <MessageCircle className="h-4 w-4" />
-          </Button>
-        )}
-        {onFavorite && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onFavorite(ownedId)}
-            className="h-8 w-8 p-0"
-          >
-            <Heart className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
-    );
-  };
-
-  const renderContent = () => {
-    return (
-      <div className="p-4">
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex-1">
-            <h3 className="font-semibold text-sm line-clamp-2 mb-1">
-              {puzzle.puzzle?.title || "Unknown Puzzle"}
-            </h3>
-            {puzzle.puzzle?.brand && (
-              <p className="text-xs text-muted-foreground mb-1">
-                {puzzle.puzzle.brand}
-              </p>
-            )}
-            <div className="flex items-center gap-2 mb-2">
-              <Badge variant="secondary" className="text-xs">
-                {puzzle.puzzle?.pieceCount || 0} {t("pieces")}
-              </Badge>
-              {puzzle.puzzle?.difficulty && (
-                <Badge variant="outline" className="text-xs">
-                  {t(puzzle.puzzle.difficulty)}
-                </Badge>
-              )}
-              <Badge
-                variant={
-                  puzzle.condition === "new_sealed" ||
-                  puzzle.condition === "like_new"
-                    ? "default"
-                    : "secondary"
-                }
-                className="text-xs"
+  const actions =
+    showActions || showCollectionDropdown ? (
+      <div className="flex items-center justify-between gap-2">
+        {showActions ? (
+          <div className="flex items-center gap-2">
+            {onView && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onView(ownedId)}
+                className="h-8 w-8 p-0"
               >
-                {t(puzzle.condition)}
-              </Badge>
-            </div>
-          </div>
-          {showCollectionDropdown && (
-            <CollectionDropdown
-              ownedPuzzleId={ownedId}
-              copyAggregateId={puzzle.aggregateId}
-            />
-          )}
-        </div>
-
-        {showAvailability && (
-          <div className="flex items-center gap-2 mb-2">
-            {puzzle.availability.forLend ? (
-              <Badge variant="outline" className="text-xs">
-                {t("lend")}
-              </Badge>
-            ) : null}
-            {puzzle.availability.forTrade ? (
-              <Badge variant="outline" className="text-xs">
-                {t("trade")}
-              </Badge>
-            ) : null}
-            {puzzle.availability.forSale ? (
-              <Badge variant="outline" className="text-xs">
-                {t("sale")}
-              </Badge>
-            ) : null}
-          </div>
-        )}
-
-        {showOwner && puzzle.owner && (
-          <div className="flex items-center gap-2 mb-2">
-            <User className="h-3 w-3 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">
-              {puzzle.owner.name}
-            </span>
-          </div>
-        )}
-
-        {puzzle.puzzle?.description && (
-          <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
-            {puzzle.puzzle.description}
-          </p>
-        )}
-
-        {puzzle.puzzle?.tags && puzzle.puzzle.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-2">
-            {puzzle.puzzle.tags.slice(0, 3).map((tag, index) => (
-              <Badge key={index} variant="outline" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
-            {puzzle.puzzle.tags.length > 3 && (
-              <Badge variant="outline" className="text-xs">
-                +{puzzle.puzzle.tags.length - 3}
-              </Badge>
+                <Eye className="h-4 w-4" />
+              </Button>
+            )}
+            {onLogSolve && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onLogSolve(ownedId)}
+                className="h-8 w-8 p-0"
+                title={tSolving("trigger")}
+                aria-label={tSolving("trigger")}
+              >
+                <CircleCheck className="h-4 w-4" />
+              </Button>
+            )}
+            {onEdit && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onEdit(ownedId)}
+                className="h-8 w-8 p-0"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            )}
+            {onDelete && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onDelete(ownedId)}
+                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+            {onRemove && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onRemove(ownedId)}
+                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+            {onRequestExchange && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onRequestExchange(ownedId)}
+                className="h-8 w-8 p-0"
+              >
+                <MessageCircle className="h-4 w-4" />
+              </Button>
+            )}
+            {onMessage && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onMessage(ownedId)}
+                className="h-8 w-8 p-0"
+              >
+                <MessageCircle className="h-4 w-4" />
+              </Button>
+            )}
+            {onFavorite && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onFavorite(ownedId)}
+                className="h-8 w-8 p-0"
+              >
+                <Heart className="h-4 w-4" />
+              </Button>
             )}
           </div>
+        ) : (
+          <span />
         )}
-
-        {loanBadge && <div className="mb-2">{loanBadge}</div>}
-
-        {renderActions()}
+        {showCollectionDropdown && (
+          <CollectionDropdown
+            ownedPuzzleId={ownedId}
+            copyAggregateId={puzzle.aggregateId}
+          />
+        )}
       </div>
-    );
-  };
-
-  // p-0/gap-0/overflow-hidden so the cover (or its gradient placeholder) sits
-  // flush against the card's top edge instead of inset by the Card's default
-  // padding; renderContent supplies its own p-4.
-  if (viewMode === "list") {
-    return (
-      <Card
-        className={cn(
-          "gap-0 overflow-hidden p-0",
-          isSelected && "ring-2 ring-primary",
-          className,
-        )}
-      >
-        <div className="flex">
-          <div className="w-32 flex-shrink-0">{renderImage()}</div>
-          <div className="flex-1">{renderContent()}</div>
-        </div>
-      </Card>
-    );
-  }
+    ) : undefined;
 
   return (
-    <Card
-      className={cn(
-        "gap-0 overflow-hidden p-0",
-        isSelected && "ring-2 ring-primary",
-        className,
-      )}
-    >
-      {renderImage()}
-      {renderContent()}
-    </Card>
+    <PuzzleCardShell
+      puzzle={view}
+      selected={isSelected}
+      badges={badges}
+      overlay={overlay}
+      footer={loanBadge}
+      actions={actions}
+      className={className}
+    />
   );
 }
