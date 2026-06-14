@@ -33,6 +33,7 @@ export function Image({
   priority,
   sizes,
   style,
+  className,
   // Accepted from the next/image API surface but not forwarded to the DOM.
   quality,
   placeholder,
@@ -47,13 +48,29 @@ export function Image({
   void unoptimized;
   void loader;
 
+  // A `fill` image is absolutely positioned to cover its (positioned) parent. The object-fit is
+  // applied inline so it deterministically wins, but it HONORS an explicit `object-*` utility in
+  // `className` (e.g. `object-contain`) — defaulting to `cover` when none is given. (Previously this
+  // hardcoded `cover`, silently overriding any `object-contain` class.)
+  const objectFit: React.CSSProperties["objectFit"] = className?.includes(
+    "object-contain",
+  )
+    ? "contain"
+    : className?.includes("object-scale-down")
+      ? "scale-down"
+      : className?.includes("object-fill")
+        ? "fill"
+        : className?.includes("object-none")
+          ? "none"
+          : "cover";
+
   const fillStyle: React.CSSProperties | undefined = fill
     ? {
         position: "absolute",
         inset: 0,
         width: "100%",
         height: "100%",
-        objectFit: "cover",
+        objectFit,
       }
     : undefined;
 
@@ -62,6 +79,7 @@ export function Image({
     <img
       src={src}
       alt={alt}
+      className={className}
       width={fill ? undefined : width}
       height={fill ? undefined : height}
       sizes={sizes}
