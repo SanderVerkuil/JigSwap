@@ -7,6 +7,7 @@ import { LibraryError } from "./errors";
 import {
   CopyAcquired,
   CopyConditionChanged,
+  CopyCoverChanged,
   CopyDeleted,
   CopyDetailsUpdated,
   CopyImageAdded,
@@ -48,6 +49,9 @@ export interface CopyState {
   readonly sharing: SharingSetting;
   readonly acquisition: Acquisition;
   readonly images: readonly CopyImage[];
+  // The chosen cover picture: an `ownedPuzzleImages` id, or absent to use the puzzle's global
+  // catalogue image. Owner-selectable per copy.
+  readonly coverImageId?: string;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }
@@ -224,6 +228,22 @@ export class Copy {
   // CopyDeleted event the use case publishes afterwards so subscribers can react.
   delete(now: Date): Result<void, LibraryError> {
     this.record(new CopyDeleted(this.id, now));
+    return ok(undefined);
+  }
+
+  // Choose the cover picture: one of the copy's own photos (its `ownedPuzzleImages` id), or null
+  // to clear the selection and fall back to the puzzle's global catalogue image. The application
+  // layer validates that the id belongs to this copy before calling.
+  changeCover(
+    coverImageId: string | null,
+    now: Date,
+  ): Result<void, LibraryError> {
+    this.state = {
+      ...this.state,
+      coverImageId: coverImageId ?? undefined,
+      updatedAt: now,
+    };
+    this.record(new CopyCoverChanged(this.id, coverImageId, now));
     return ok(undefined);
   }
 

@@ -10,6 +10,7 @@ export * from "./open-loan";
 export * from "./recall-loan";
 export * from "./remove-copy-from-collection";
 export * from "./return-loan";
+export * from "./set-copy-cover";
 export * from "./transfer-copy-ownership";
 export * from "./update-collection";
 export * from "./update-copy-details";

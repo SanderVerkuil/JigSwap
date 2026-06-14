@@ -158,6 +158,11 @@ export default defineSchema({
     missingPiecesCount: v.optional(v.number()), // Undefined means unknown
     notes: v.optional(v.string()), // Personal notes, e.g., "corner piece is a bit bent"
 
+    // --- Cover ---
+    // The copy's chosen cover picture: one of its `ownedPuzzleImages`. Absent means use the
+    // puzzle's global catalogue image (the default).
+    coverImageId: v.optional(v.id("ownedPuzzleImages")),
+
     // --- Availability for Exchange ---
     availability: v.object({
       forTrade: v.boolean(),

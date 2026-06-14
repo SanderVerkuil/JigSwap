@@ -66,6 +66,17 @@ export class CopyImageAdded implements DomainEvent {
   ) {}
 }
 
+// The copy's cover picture selection changed. `coverImageId` is the chosen `ownedPuzzleImages`
+// id, or null to clear the selection (fall back to the puzzle's global catalogue image).
+export class CopyCoverChanged implements DomainEvent {
+  readonly name = "CopyCoverChanged";
+  constructor(
+    readonly copyId: CopyId,
+    readonly coverImageId: string | null,
+    readonly occurredAt: Date,
+  ) {}
+}
+
 // Descriptive fields (missing-piece count, free-text notes) changed. Distinct from
 // CopyConditionChanged so subscribers can treat grade changes and note edits differently.
 export class CopyDetailsUpdated implements DomainEvent {
@@ -229,6 +240,7 @@ export type LibraryDomainEvent =
   | CopyMadeAvailable
   | CopyMadeUnavailable
   | CopyImageAdded
+  | CopyCoverChanged
   | CopyDetailsUpdated
   | CopyOwnershipTransferred
   | CopyLentOut

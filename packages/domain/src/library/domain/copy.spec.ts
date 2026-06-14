@@ -13,6 +13,7 @@ import { CopyImage } from "./copy-image";
 import {
   CopyAcquired,
   CopyConditionChanged,
+  CopyCoverChanged,
   CopyMadeAvailable,
   CopyMadeUnavailable,
 } from "./events";
@@ -174,6 +175,35 @@ describe("addImage", () => {
     expect(copy.toState().images).toHaveLength(1);
     const events = copy.pullEvents();
     expect(names(events)).toEqual(["CopyImageAdded"]);
+  });
+});
+
+describe("changeCover", () => {
+  it("sets the cover to one of the copy's photos and records CopyCoverChanged", () => {
+    const copy = acquire();
+    copy.pullEvents();
+    const r = copy.changeCover("img-1", LATER);
+    expect(r.isOk).toBe(true);
+    expect(copy.toState().coverImageId).toBe("img-1");
+    expect(copy.toState().updatedAt).toBe(LATER);
+    const events = copy.pullEvents();
+    expect(names(events)).toEqual(["CopyCoverChanged"]);
+    const changed = events[0] as CopyCoverChanged;
+    expect(changed.coverImageId).toBe("img-1");
+    expect(changed.occurredAt).toBe(LATER);
+  });
+
+  it("clears the cover (null) back to the global image and records the change", () => {
+    const copy = acquire();
+    copy.changeCover("img-1", NOW);
+    copy.pullEvents();
+    const r = copy.changeCover(null, LATER);
+    expect(r.isOk).toBe(true);
+    expect(copy.toState().coverImageId).toBeUndefined();
+    const events = copy.pullEvents();
+    expect(names(events)).toEqual(["CopyCoverChanged"]);
+    const changed = events[0] as CopyCoverChanged;
+    expect(changed.coverImageId).toBeNull();
   });
 });
 

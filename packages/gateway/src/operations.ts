@@ -50,6 +50,9 @@ export const gateway = {
     // Owner-only photo upload keyed by the copy's Convex id; pairs with generateUploadUrl. Writes
     // the `ownedPuzzleImages` read-model the getCopyInstanceView gallery reads.
     addCopyPhoto: api.library.addCopyPhoto.addCopyPhoto,
+    // Owner-only per-copy cover selection: pick one of the copy's photos, or clear to the global
+    // image. Keyed by the copy's Convex id (like addCopyPhoto / getCopyInstanceView).
+    setCopyCover: api.library.setCopyCover.setCopyCover,
     deleteOwned: api.library.deleteCopy.deleteCopy,
     // Reads go through the domain-driven library module (file.export namespacing); each is a thin
     // Convex query returning a typed @jigswap/contracts view DTO, not a raw row.

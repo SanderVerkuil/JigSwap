@@ -382,7 +382,16 @@ export interface CopyInstanceView {
     title: string;
     brand?: string;
     pieceCount: number;
+    /**
+     * The resolved cover image URL: the selected per-copy photo when one is chosen and resolvable,
+     * otherwise the puzzle's global catalogue image.
+     */
     image?: string;
+    /**
+     * The chosen cover photo's `ownedPuzzleImages` id, or null when none is selected (the global
+     * image is in use). Lets the cover picker show the current selection.
+     */
+    coverImageId: string | null;
     condition: CopyCondition;
     notes?: string;
     availability: CopyAvailability;

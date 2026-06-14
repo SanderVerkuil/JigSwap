@@ -83,6 +83,7 @@ export const toDomain = (
       price: acquisitionPrice,
     }),
     images: images.map(imageToVo),
+    coverImageId: row.coverImageId as unknown as string | undefined,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
   };
@@ -129,6 +130,8 @@ export const toRow = (copy: Copy): OwnedPuzzleRow => {
           currency: state.acquisition.price.currency,
         }
       : undefined,
+    coverImageId:
+      state.coverImageId as unknown as OwnedPuzzleRow["coverImageId"],
     createdAt: state.createdAt.getTime(),
     updatedAt: state.updatedAt.getTime(),
   };

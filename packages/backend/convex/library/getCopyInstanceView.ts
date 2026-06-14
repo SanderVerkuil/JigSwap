@@ -285,6 +285,25 @@ export const getCopyInstanceView = query({
       (p): p is CopyPhoto => p != null,
     );
 
+    // --- Cover resolution. --------------------------------------------------------------------
+    // The copy may pin one of its own photos as the cover; resolve it to a URL. Falls back to the
+    // puzzle's global catalogue image when no cover is chosen, the image row vanished, or its
+    // stored file no longer resolves. `coverImageId` is null unless a cover both exists AND resolves
+    // so the picker only reports an active, usable selection.
+    const globalImage = copy.snapshot?.thumbnail;
+    let coverImage: string | undefined = globalImage;
+    let coverImageId: string | null = null;
+    if (copy.coverImageId) {
+      const coverRow = await ctx.db.get(copy.coverImageId);
+      if (coverRow && coverRow.ownedPuzzleId === args.copyId) {
+        const coverUrl = await ctx.storage.getUrl(coverRow.fileId);
+        if (coverUrl) {
+          coverImage = coverUrl;
+          coverImageId = coverRow._id as string;
+        }
+      }
+    }
+
     return {
       copyId: copy._id,
       viewerIsOwner,
@@ -293,7 +312,8 @@ export const getCopyInstanceView = query({
         title: copy.snapshot?.title ?? puzzle?.title ?? "Unknown Puzzle",
         brand: copy.snapshot?.brand ?? puzzle?.brand,
         pieceCount: copy.snapshot?.pieceCount ?? puzzle?.pieceCount ?? 0,
-        image: copy.snapshot?.thumbnail,
+        image: coverImage,
+        coverImageId,
         condition: copy.condition,
         notes: copy.notes,
         availability: copy.availability,
