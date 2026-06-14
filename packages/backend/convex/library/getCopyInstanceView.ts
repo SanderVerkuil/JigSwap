@@ -1,6 +1,10 @@
 import type {
+  CopyCompletionEntry,
   CopyInstanceTimelineEntry,
   CopyInstanceView,
+  CopyLoanEntry,
+  CopyPhoto,
+  CopyTransferEntry,
   ProjectedMember,
 } from "@jigswap/contracts";
 import { v } from "convex/values";
@@ -8,6 +12,27 @@ import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { projectMemberIdentity } from "../social/privacy";
+
+const MS_PER_DAY = 86_400_000;
+
+// Whole-day solve duration: prefer (endDate - startDate) rounded to whole days; else fall back to
+// completionTimeMinutes / 1440 rounded; else null when neither is recorded.
+const finishDaysOf = (c: {
+  startDate: number;
+  endDate?: number;
+  completionTimeMinutes?: number;
+}): number | null => {
+  if (c.endDate != null) {
+    return Math.round((c.endDate - c.startDate) / MS_PER_DAY);
+  }
+  if (c.completionTimeMinutes != null) {
+    return Math.round(c.completionTimeMinutes / 1440);
+  }
+  return null;
+};
+
+// Round to 1 decimal place.
+const round1 = (n: number): number => Math.round(n * 10) / 10;
 
 // Privacy-gated detail read for a single owned COPY (instance). Auth-gated; the acting member is the
 // viewer. Assembles the copy's catalog/condition snapshot, its (projected) current owner, and one
@@ -136,6 +161,120 @@ export const getCopyInstanceView = query({
 
     const owner = await project(copy.ownerId);
 
+    // --- Type-grouped history (in addition to before/since), newest first. ---------------------
+    const completedCompletions = completions.filter((c) => c.isCompleted);
+
+    const completionsGrouped: CopyCompletionEntry[] = await Promise.all(
+      completedCompletions
+        .slice()
+        .sort((a, b) => (b.endDate ?? b.startDate) - (a.endDate ?? a.startDate))
+        .map(async (c) => ({
+          solver: await project(c.userId),
+          isYou: c.userId === viewerId,
+          occurredAt: c.endDate ?? c.startDate,
+          finishDays: finishDaysOf(c),
+          rating: c.rating ?? null,
+          note: c.review ?? null,
+        })),
+    );
+
+    const loansGrouped: CopyLoanEntry[] = await Promise.all(
+      loans
+        .slice()
+        .sort((a, b) => b.openedAt - a.openedAt)
+        .map(async (l) => ({
+          lender: await project(l.lenderId),
+          borrower: await project(l.borrowerId),
+          openedAt: l.openedAt,
+          closedAt: l.closedAt ?? null,
+          status: l.status,
+        })),
+    );
+
+    const transfersGrouped: CopyTransferEntry[] = await Promise.all(
+      custodyEntries
+        .slice()
+        .sort((a, b) => b.occurredAt - a.occurredAt)
+        .map(async (e) => ({
+          from: await project(e.previousOwner),
+          to: await project(e.newOwner),
+          viaExchange: e.exchangeId !== "" && e.exchangeId != null,
+          occurredAt: e.occurredAt,
+        })),
+    );
+
+    // --- Per-copy stats. -----------------------------------------------------------------------
+    const finishDaysList = completedCompletions
+      .map(finishDaysOf)
+      .filter((d): d is number => d != null);
+    const fastestFinishDays =
+      finishDaysList.length > 0 ? Math.min(...finishDaysList) : null;
+
+    const viewerRatings = completions
+      .filter((c) => c.userId === viewerId && c.rating != null)
+      .map((c) => c.rating as number);
+    const yourAvgRating =
+      viewerRatings.length > 0
+        ? round1(
+            viewerRatings.reduce((s, r) => s + r, 0) / viewerRatings.length,
+          )
+        : null;
+
+    const stats = {
+      timesCompleted: completedCompletions.length,
+      fastestFinishDays,
+      timesLentOut: loans.length,
+      yourAvgRating,
+    };
+
+    // --- Community rating aggregate over ALL rated completions of the PUZZLE DEFINITION. -------
+    const puzzleCompletions = await ctx.db
+      .query("completions")
+      .withIndex("by_puzzle", (q) => q.eq("puzzleId", copy.puzzleId))
+      .collect();
+    const ratedPuzzleCompletions = puzzleCompletions.filter(
+      (c) => c.rating != null,
+    );
+    // breakdown index 0..4 == [5★,4★,3★,2★,1★].
+    const breakdown: [number, number, number, number, number] = [0, 0, 0, 0, 0];
+    let ratingSum = 0;
+    for (const c of ratedPuzzleCompletions) {
+      const r = c.rating as number;
+      ratingSum += r;
+      const bucket = 5 - r; // r=5 -> 0, r=1 -> 4
+      if (bucket >= 0 && bucket <= 4) breakdown[bucket] += 1;
+    }
+    const community = {
+      count: ratedPuzzleCompletions.length,
+      rating:
+        ratedPuzzleCompletions.length > 0
+          ? round1(ratingSum / ratedPuzzleCompletions.length)
+          : 0,
+      breakdown,
+    };
+
+    // --- Gallery: per-copy uploaded images, resolved to URLs, newest first. --------------------
+    const imageRows = await ctx.db
+      .query("ownedPuzzleImages")
+      .withIndex("by_owned_puzzle", (q) => q.eq("ownedPuzzleId", args.copyId))
+      .collect();
+    const galleryResolved = await Promise.all(
+      imageRows
+        .slice()
+        .sort((a, b) => (b.takenAt ?? b.createdAt) - (a.takenAt ?? a.createdAt))
+        .map(async (img) => {
+          const url = await ctx.storage.getUrl(img.fileId);
+          if (!url) return null;
+          return {
+            url,
+            caption: img.title ?? img.tag ?? null,
+          } satisfies CopyPhoto;
+        }),
+    );
+    const gallery: CopyPhoto[] = galleryResolved.filter(
+      (p): p is CopyPhoto => p != null,
+    );
+
     return {
       copyId: copy._id,
       viewerIsOwner,
@@ -150,10 +289,18 @@ export const getCopyInstanceView = query({
         availability: copy.availability,
         acquisitionDate: copy.acquisitionDate,
         acquisitionSource: copy.acquisitionSource,
+        difficulty: puzzle?.difficulty,
+        tags: puzzle?.tags ?? [],
       },
       acquiredByViewerAt,
       since,
       before,
+      completions: completionsGrouped,
+      loans: loansGrouped,
+      transfers: transfersGrouped,
+      stats,
+      community,
+      gallery,
     };
   },
 });

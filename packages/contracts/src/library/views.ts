@@ -271,6 +271,88 @@ export type CopyInstanceTimelineEntry =
   | CopyInstanceCompletionEntry
   | CopyInstanceLoanEntry;
 
+// --- Type-grouped history (richer detail page) -------------------------------------------------
+// The same three history sources as the merged timeline, but grouped by type and carrying the extra
+// per-record facts the detail page renders (rating/note/finish duration). Every member is still
+// privacy-projected (salt = copyId). Each list is descending by `occurredAt` (newest first).
+
+/** A finished completion of this copy, for the grouped completions list. */
+export interface CopyCompletionEntry {
+  /** The member who solved it (projected). */
+  solver: ProjectedMember;
+  /** Whether the solver is the acting viewer. */
+  isYou: boolean;
+  /** Epoch millis the completion is sorted/dated on (its `endDate`, else `startDate`). */
+  occurredAt: number;
+  /**
+   * How long the solve took, in whole days: `endDate - startDate` rounded to whole days when both
+   * are present, else `completionTimeMinutes / 1440` rounded, else null.
+   */
+  finishDays: number | null;
+  /** The 1-5 star rating, or null when unrated. */
+  rating: number | null;
+  /** The free-text review, or null when absent. */
+  note: string | null;
+}
+
+/** A loan of this copy, for the grouped loans list. */
+export interface CopyLoanEntry {
+  /** The lender (projected). */
+  lender: ProjectedMember;
+  /** The borrower (projected). */
+  borrower: ProjectedMember;
+  /** Epoch millis the loan opened. */
+  openedAt: number;
+  /** Epoch millis the loan closed, or null while open. */
+  closedAt: number | null;
+  status: "open" | "returned" | "recalled";
+}
+
+/** An ownership transfer of this copy, for the grouped transfers list. */
+export interface CopyTransferEntry {
+  /** The member the copy moved FROM (projected). */
+  from: ProjectedMember;
+  /** The member the copy moved TO (projected). */
+  to: ProjectedMember;
+  /** Whether the transfer settled via an exchange. */
+  viaExchange: boolean;
+  /** Epoch millis the transfer occurred. */
+  occurredAt: number;
+}
+
+/** Per-copy aggregate stats the detail page surfaces. */
+export interface CopyInstanceStats {
+  /** Number of completed completions of this copy. */
+  timesCompleted: number;
+  /** The smallest `finishDays` across completed completions, or null when none. */
+  fastestFinishDays: number | null;
+  /** Number of loans recorded for this copy. */
+  timesLentOut: number;
+  /**
+   * The VIEWER's own average rating (1 decimal) across their rated completions of this copy, or
+   * null when they have none rated.
+   */
+  yourAvgRating: number | null;
+}
+
+/** Community-wide rating aggregate over ALL rated completions of the copy's puzzle DEFINITION. */
+export interface CopyInstanceCommunity {
+  /** Average rating to 1 decimal across rated completions (0 when none). */
+  rating: number;
+  /** Number of rated completions. */
+  count: number;
+  /** Counts per star bucket, ordered [5★, 4★, 3★, 2★, 1★]. */
+  breakdown: [number, number, number, number, number];
+}
+
+/** A resolved gallery photo for this copy. */
+export interface CopyPhoto {
+  /** The resolved storage URL. */
+  url: string;
+  /** The caption (`title ?? tag`), or null when absent. */
+  caption: string | null;
+}
+
 /**
  * The privacy-gated detail view of a single owned copy, as returned by
  * `library.getCopyInstanceView`. `owner` and every participant in `since`/`before` are projected
@@ -294,6 +376,10 @@ export interface CopyInstanceView {
     availability: CopyAvailability;
     acquisitionDate?: number;
     acquisitionSource?: "bought_new" | "bought_used" | "trade" | "gift";
+    /** The puzzle definition's difficulty, when set. */
+    difficulty?: PuzzleDifficulty;
+    /** The puzzle definition's tags (empty array when none). */
+    tags: string[];
   };
   /**
    * When the viewer acquired the copy (the latest custody transfer to them, else the copy's
@@ -304,6 +390,18 @@ export interface CopyInstanceView {
   since: CopyInstanceTimelineEntry[];
   /** Events before `acquiredByViewerAt` (gated history). All events for non-owners. */
   before: CopyInstanceTimelineEntry[];
+  /** Every completed completion of this copy, newest first. Members privacy-projected. */
+  completions: CopyCompletionEntry[];
+  /** Every loan of this copy, newest first. Members privacy-projected. */
+  loans: CopyLoanEntry[];
+  /** Every ownership transfer of this copy, newest first. Members privacy-projected. */
+  transfers: CopyTransferEntry[];
+  /** Per-copy aggregate stats. */
+  stats: CopyInstanceStats;
+  /** Community-wide rating aggregate over the copy's puzzle definition (no identities). */
+  community: CopyInstanceCommunity;
+  /** Resolved gallery photos for this copy, newest first. */
+  gallery: CopyPhoto[];
 }
 
 /**

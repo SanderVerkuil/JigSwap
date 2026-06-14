@@ -360,3 +360,302 @@ describe("getCopyInstanceView privacy gating", () => {
     expect(notOwner?.before).toHaveLength(3); // transfer + completion + loan
   });
 });
+
+const DAY = 86_400_000;
+
+describe("getCopyInstanceView rich detail", () => {
+  test("difficulty + tags surface from the puzzle definition", async () => {
+    const t = convexTest(schema, modules);
+    const { copy } = await seedCopy(t);
+    // Patch the puzzle def with difficulty/tags.
+    await t.run(async (ctx) => {
+      const c = await ctx.db.get(copy);
+      await ctx.db.patch(c!.puzzleId, {
+        difficulty: "hard",
+        tags: ["landscape", "1000pc"],
+      });
+    });
+
+    const view = await asViewer(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    expect(view?.snapshot.difficulty).toBe("hard");
+    expect(view?.snapshot.tags).toEqual(["landscape", "1000pc"]);
+  });
+
+  test("tags default to [] when the puzzle has none", async () => {
+    const t = convexTest(schema, modules);
+    const { copy } = await seedCopy(t);
+    const view = await asViewer(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    expect(view?.snapshot.tags).toEqual([]);
+    expect(view?.snapshot.difficulty).toBeUndefined();
+  });
+
+  test("stats: timesCompleted, fastestFinishDays, timesLentOut, yourAvgRating", async () => {
+    const t = convexTest(schema, modules);
+    const { now, viewer, solver, copy } = await seedCopy(t);
+    await setVisibility(t, solver, "public");
+
+    await t.run(async (ctx) => {
+      // Viewer completion #1: 5-day solve, rating 4.
+      await ctx.db.insert("completions", {
+        userId: viewer,
+        ownedPuzzleId: copy,
+        startDate: now,
+        endDate: now + 5 * DAY,
+        rating: 4,
+        photos: [],
+        isCompleted: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      // Viewer completion #2: 2-day solve (fastest), rating 5.
+      await ctx.db.insert("completions", {
+        userId: viewer,
+        ownedPuzzleId: copy,
+        startDate: now,
+        endDate: now + 2 * DAY,
+        rating: 5,
+        photos: [],
+        isCompleted: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      // Another solver's completion: 10-day solve, unrated (no rating).
+      await ctx.db.insert("completions", {
+        userId: solver,
+        ownedPuzzleId: copy,
+        startDate: now,
+        endDate: now + 10 * DAY,
+        photos: [],
+        isCompleted: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      // In-progress (not counted toward timesCompleted).
+      await ctx.db.insert("completions", {
+        userId: viewer,
+        ownedPuzzleId: copy,
+        startDate: now,
+        photos: [],
+        isCompleted: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+      // Two loans of the copy (keyed by aggregateId "copy-1").
+      await ctx.db.insert("loans", {
+        aggregateId: "loan-a",
+        copyId: "copy-1",
+        lenderId: viewer,
+        borrowerId: solver,
+        status: "returned",
+        openedAt: now + 1,
+        closedAt: now + 2,
+      });
+      await ctx.db.insert("loans", {
+        aggregateId: "loan-b",
+        copyId: "copy-1",
+        lenderId: viewer,
+        borrowerId: solver,
+        status: "open",
+        openedAt: now + 3,
+      });
+    });
+
+    const view = await asViewer(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    expect(view?.stats.timesCompleted).toBe(3);
+    expect(view?.stats.fastestFinishDays).toBe(2);
+    expect(view?.stats.timesLentOut).toBe(2);
+    // Viewer's own ratings: 4 and 5 -> avg 4.5.
+    expect(view?.stats.yourAvgRating).toBe(4.5);
+  });
+
+  test("stats with no completions: zeros and nulls", async () => {
+    const t = convexTest(schema, modules);
+    const { copy } = await seedCopy(t);
+    const view = await asViewer(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    expect(view?.stats.timesCompleted).toBe(0);
+    expect(view?.stats.fastestFinishDays).toBeNull();
+    expect(view?.stats.timesLentOut).toBe(0);
+    expect(view?.stats.yourAvgRating).toBeNull();
+  });
+
+  test("community aggregation over the puzzle definition: count, avg, breakdown buckets", async () => {
+    const t = convexTest(schema, modules);
+    const { now, viewer, solver, copy } = await seedCopy(t);
+    const puzzleId = await t.run(async (ctx) => {
+      const c = await ctx.db.get(copy);
+      return c!.puzzleId;
+    });
+
+    const otherUser = await t.run(async (ctx) =>
+      mkUser(ctx, "clerk_other", "Other", now),
+    );
+
+    await t.run(async (ctx) => {
+      // Rated completions across users of the PUZZLE DEFINITION (keyed by puzzleId):
+      // ratings 5, 5, 3, 1 -> count 4, sum 14, avg 3.5; breakdown [5★,4★,3★,2★,1★] = [2,0,1,0,1].
+      for (const [user, rating] of [
+        [viewer, 5],
+        [solver, 5],
+        [otherUser, 3],
+        [viewer, 1],
+      ] as const) {
+        await ctx.db.insert("completions", {
+          userId: user,
+          puzzleId,
+          startDate: now,
+          endDate: now + DAY,
+          rating,
+          photos: [],
+          isCompleted: true,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+      // An unrated puzzle-def completion must be excluded from count/avg/breakdown.
+      await ctx.db.insert("completions", {
+        userId: otherUser,
+        puzzleId,
+        startDate: now,
+        endDate: now + DAY,
+        photos: [],
+        isCompleted: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const view = await asViewer(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    expect(view?.community.count).toBe(4);
+    expect(view?.community.rating).toBe(3.5);
+    expect(view?.community.breakdown).toEqual([2, 0, 1, 0, 1]);
+  });
+
+  test("community is 0/empty when the puzzle has no rated completions", async () => {
+    const t = convexTest(schema, modules);
+    const { copy } = await seedCopy(t);
+    const view = await asViewer(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    expect(view?.community.count).toBe(0);
+    expect(view?.community.rating).toBe(0);
+    expect(view?.community.breakdown).toEqual([0, 0, 0, 0, 0]);
+  });
+
+  test("gallery resolves seeded ownedPuzzleImages to URLs with captions", async () => {
+    const t = convexTest(schema, modules);
+    const { now, viewer, copy } = await seedCopy(t);
+
+    await t.run(async (ctx) => {
+      const blob = new Blob(["fake-image-bytes"], { type: "image/png" });
+      const fileId = await ctx.storage.store(blob);
+      await ctx.db.insert("ownedPuzzleImages", {
+        ownedPuzzleId: copy,
+        uploaderId: viewer,
+        fileId,
+        title: "Box front",
+        tag: "box_front",
+        takenAt: now + 10,
+        createdAt: now,
+        updatedAt: now,
+      });
+      // A second image with no title -> caption falls back to the tag.
+      const blob2 = new Blob(["fake-image-2"], { type: "image/png" });
+      const fileId2 = await ctx.storage.store(blob2);
+      await ctx.db.insert("ownedPuzzleImages", {
+        ownedPuzzleId: copy,
+        uploaderId: viewer,
+        fileId: fileId2,
+        tag: "pieces",
+        takenAt: now + 5,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const view = await asViewer(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    expect(view?.gallery).toHaveLength(2);
+    // Newest first by takenAt: the box_front (now+10) precedes the pieces (now+5).
+    expect(view?.gallery[0]?.caption).toBe("Box front");
+    expect(view?.gallery[0]?.url).toEqual(expect.any(String));
+    expect(view?.gallery[1]?.caption).toBe("pieces");
+    expect(view?.gallery[1]?.url).toEqual(expect.any(String));
+  });
+
+  test("grouped completion entries carry rating, note and isYou", async () => {
+    const t = convexTest(schema, modules);
+    const { now, viewer, solver, copy } = await seedCopy(t);
+    await setVisibility(t, solver, "public");
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("completions", {
+        userId: viewer,
+        ownedPuzzleId: copy,
+        startDate: now,
+        endDate: now + 3 * DAY,
+        rating: 5,
+        review: "Loved it",
+        photos: [],
+        isCompleted: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("completions", {
+        userId: solver,
+        ownedPuzzleId: copy,
+        startDate: now,
+        endDate: now + 7 * DAY,
+        photos: [],
+        isCompleted: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      // In-progress completion is excluded from the grouped completions list.
+      await ctx.db.insert("completions", {
+        userId: viewer,
+        ownedPuzzleId: copy,
+        startDate: now,
+        photos: [],
+        isCompleted: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const view = await asViewer(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    expect(view?.completions).toHaveLength(2);
+    // Newest first: solver's (now+7d) precedes viewer's (now+3d).
+    const solverEntry = view?.completions[0];
+    const viewerEntry = view?.completions[1];
+    expect(solverEntry?.isYou).toBe(false);
+    expect(solverEntry?.finishDays).toBe(7);
+    expect(solverEntry?.rating).toBeNull();
+    expect(solverEntry?.note).toBeNull();
+
+    expect(viewerEntry?.isYou).toBe(true);
+    expect(viewerEntry?.finishDays).toBe(3);
+    expect(viewerEntry?.rating).toBe(5);
+    expect(viewerEntry?.note).toBe("Loved it");
+  });
+});
