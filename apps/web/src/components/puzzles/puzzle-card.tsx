@@ -35,17 +35,31 @@ export function PuzzleCard({ puzzle }: PuzzleCardProps) {
         imageUrl: puzzle.image,
       }}
       actions={
-        <div className="flex gap-2 mt-auto">
-          <Button variant="outline" size="sm" asChild className="flex-1">
+        // The grid columns are ~212px wide, so the row must fit two buttons
+        // without overflowing the card (which is `overflow-hidden`). The primary
+        // "view details" takes the remaining width and truncates if needed; the
+        // add action is a compact icon-only button with an accessible label.
+        <div className="mt-2 flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            asChild
+            className="min-w-0 flex-1"
+          >
             <Link href={`/puzzles/${puzzle._id}`}>
-              <Eye className="h-4 w-4 mr-2" />
-              {tCat("viewDetails")}
+              <Eye className="h-4 w-4 shrink-0" />
+              <span className="truncate">{tCat("viewDetails")}</span>
             </Link>
           </Button>
-          <Button size="sm" asChild className="flex-1">
+          <Button
+            size="icon"
+            asChild
+            aria-label={t("addPuzzle")}
+            title={t("addPuzzle")}
+            className="shrink-0"
+          >
             <Link href={`/my-puzzles/add/new?puzzleId=${puzzle._id}`}>
-              <Plus className="h-4 w-4 mr-2" />
-              {t("addPuzzle")}
+              <Plus className="h-4 w-4" />
             </Link>
           </Button>
         </div>
