@@ -104,6 +104,24 @@ export default defineSchema({
       filterFields: ["status"],
     }),
 
+  // Cache of scraped store pages, keyed on a normalized URL, so repeated pastes of the same link
+  // skip re-fetching. TTL is enforced at read time in the extract action (7 days).
+  puzzleImportCache: defineTable({
+    normalizedUrl: v.string(),
+    draft: v.object({
+      title: v.string(),
+      brand: v.optional(v.string()),
+      imageUrl: v.optional(v.string()),
+      images: v.optional(v.array(v.string())),
+      description: v.optional(v.string()),
+      ean: v.optional(v.string()),
+      upc: v.optional(v.string()),
+      pieceCount: v.optional(v.number()),
+      sourceUrl: v.string(),
+    }),
+    fetchedAt: v.number(),
+  }).index("by_url", ["normalizedUrl"]),
+
   // Puzzle instances - individual copies that people own
   ownedPuzzles: defineTable({
     // Library CopyId. Optional so legacy rows still validate; the domain-driven library
@@ -570,10 +588,24 @@ export default defineSchema({
     memberId: v.id("users"),
     displayName: v.string(),
     bio: v.optional(v.string()),
+    // Who can see this profile. Optional so existing rows stay valid; absent means "public".
+    visibility: v.optional(v.union(v.literal("public"), v.literal("private"))),
     updatedAt: v.number(),
   })
     .index("by_member", ["memberId"])
     .index("by_aggregate_id", ["aggregateId"]),
+
+  // Social: a community comment on a PUZZLE DEFINITION (shared across every owned copy of that
+  // puzzle). A lightweight, append-only post: trimmed text + optional 1–5 rating + author + when.
+  // aggregateId is the CommentId; `by_puzzle` backs the newest-first read keyed on puzzleId.
+  puzzleComments: defineTable({
+    aggregateId: v.optional(v.string()),
+    puzzleId: v.id("puzzles"),
+    authorId: v.id("users"),
+    text: v.string(),
+    rating: v.optional(v.number()),
+    createdAt: v.number(),
+  }).index("by_puzzle", ["puzzleId"]),
 
   // Social: a directed follow edge (followerId -> followeeId). Indexed both ways so the read side
   // can list a member's followers and the people they follow; aggregateId is the FollowId.

@@ -14,6 +14,7 @@ import { gateway, Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { FolderOpen, Plus } from "lucide-react";
 import { useState } from "react";
+import { useTranslations } from "use-intl";
 
 interface CollectionDropdownProps {
   ownedPuzzleId: Id<"ownedPuzzles">;
@@ -28,6 +29,7 @@ export function CollectionDropdown({
   className,
 }: CollectionDropdownProps) {
   const { user } = useUser();
+  const t = useTranslations("collections");
   const [isAdding, setIsAdding] = useState(false);
 
   const convexUser = useQuery(
@@ -82,7 +84,7 @@ export function CollectionDropdown({
           <DropdownMenuItem asChild>
             <Link href="/collections">
               <Plus className="h-4 w-4 mr-2" />
-              Create Collection
+              {t("createCollection")}
             </Link>
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -122,7 +124,9 @@ export function CollectionDropdown({
               </div>
               <span className="flex-1">{collection.name}</span>
               {isInCollection(collection._id) && (
-                <span className="text-xs text-muted-foreground">Added</span>
+                <span className="text-xs text-muted-foreground">
+                  {t("added")}
+                </span>
               )}
             </div>
           </DropdownMenuItem>
@@ -131,7 +135,7 @@ export function CollectionDropdown({
         <DropdownMenuItem asChild>
           <Link href="/collections">
             <Plus className="h-4 w-4 mr-2" />
-            Manage Collections
+            {t("manageCollections")}
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>

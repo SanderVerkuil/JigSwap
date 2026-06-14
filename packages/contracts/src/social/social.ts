@@ -1,3 +1,4 @@
+import type { MemberView } from "../identity/member";
 import type { ConvexSystemFields } from "../shared/convex";
 
 /**
@@ -10,6 +11,11 @@ export interface ProfileView extends ConvexSystemFields {
   memberId: string;
   displayName: string;
   bio?: string;
+  /**
+   * Who can see this profile. "public" reveals the member's identity to anyone; "private" hides
+   * it from members they are not connected with. Absent on legacy rows, derived as "public".
+   */
+  visibility: "public" | "private";
   updatedAt: number;
 }
 
@@ -36,3 +42,31 @@ export interface ActivityEntryView {
   occurredAt: number;
   ref: string;
 }
+
+/**
+ * One community comment on a puzzle, as surfaced on the catalog/copy view. A comment is posted
+ * against the puzzle DEFINITION, so every owned copy of that puzzle shows the same list. The
+ * `author` is the real member identity (comments are voluntary public posts — never anonymised);
+ * `rating` is the author's optional 1–5 star opinion, or null when they left only text. `id` is the
+ * CommentId aggregateId. Newest comments are returned first.
+ */
+export interface PuzzleCommentView {
+  id: string;
+  author: MemberView;
+  text: string;
+  rating: number | null;
+  createdAt: number;
+}
+
+/**
+ * The server-side projection of one member's identity to a given viewer, the output of the privacy
+ * chokepoint that gates every participant surfaced in a copy's history. A discriminated union: when
+ * `anonymous` is false the member is revealed as a full MemberView; when true the member is hidden
+ * and ONLY a deterministic, non-reversible `anonRef` is emitted — NO real id, name, username, or
+ * avatar crosses the wire. The viewer is revealed a member iff it is themself, the member's profile
+ * is public, or the two are mutual followers; otherwise the member is anonymised. The "Anonymous
+ * user" label is the UI's concern (i18n there); it is intentionally NOT part of this DTO.
+ */
+export type ProjectedMember =
+  | { anonymous: false; member: MemberView }
+  | { anonymous: true; anonRef: string };

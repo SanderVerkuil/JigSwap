@@ -1,4 +1,5 @@
 import {
+  type Comment,
   DisplayName,
   Follow,
   type FollowState,
@@ -16,6 +17,7 @@ import type { Doc, Id } from "../../_generated/dataModel";
 
 export type ProfileRow = Omit<Doc<"profiles">, "_id" | "_creationTime">;
 export type FollowRow = Omit<Doc<"follows">, "_id" | "_creationTime">;
+export type CommentRow = Omit<Doc<"puzzleComments">, "_id" | "_creationTime">;
 
 // Row -> Profile aggregate. The row MUST carry an aggregateId (only domain-written rows do).
 // DisplayName re-validation here is total: a persisted name was already valid, so `create` succeeds.
@@ -32,6 +34,8 @@ export const profileToDomain = (row: Doc<"profiles">): Profile => {
     memberId: toMemberId(row.memberId),
     displayName: displayName.value,
     bio: row.bio,
+    // Legacy rows written before visibility existed are treated as public.
+    visibility: row.visibility ?? "public",
     updatedAt: new Date(row.updatedAt),
   };
   return Profile.rehydrate(state);
@@ -46,6 +50,7 @@ export const profileToRow = (profile: Profile): ProfileRow => {
     memberId: state.memberId as unknown as Id<"users">,
     displayName: state.displayName.value,
     bio: state.bio,
+    visibility: state.visibility,
     updatedAt: state.updatedAt.getTime(),
   };
 };
@@ -70,6 +75,21 @@ export const followToRow = (follow: Follow): FollowRow => {
     aggregateId: state.id as string,
     followerId: state.followerId as unknown as Id<"users">,
     followeeId: state.followeeId as unknown as Id<"users">,
+    createdAt: state.createdAt.getTime(),
+  };
+};
+
+// Comment aggregate -> row payload. Domain CommentId becomes `aggregateId`; the PuzzleDefinitionId
+// it carries is the catalog puzzle's Convex `_id` (resolved from the owned copy in the mutation),
+// re-branded to the `puzzles` FK column. A cleared rating is stored as undefined (column absent).
+export const commentToRow = (comment: Comment): CommentRow => {
+  const state = comment.toState();
+  return {
+    aggregateId: state.id as string,
+    puzzleId: state.puzzleId as unknown as Id<"puzzles">,
+    authorId: state.authorId as unknown as Id<"users">,
+    text: state.text.value,
+    rating: state.rating?.value,
     createdAt: state.createdAt.getTime(),
   };
 };

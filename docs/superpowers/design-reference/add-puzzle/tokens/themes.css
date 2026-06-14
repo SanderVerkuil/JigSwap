@@ -1,0 +1,136 @@
+/* ============================================================================
+   JigSwap — Theme engine
+   ----------------------------------------------------------------------------
+   A runtime-themeable layer. Set THREE seed colors on any container:
+
+     <div class="jig-themed" data-mode="light"
+          style="--seed-primary:#c2562f; --seed-secondary:#7a9b6e; --seed-accent:#e6a23c">
+
+   …and this engine derives the full brand ramps, tinted surfaces, text, borders
+   and status tokens that every component already consumes — so a single palette
+   choice propagates everywhere. Two modes via [data-mode="light|dark"].
+
+   Surfaces are gently tinted by a SINGLE hue — the PRIMARY — so the chrome
+   feels part of the palette without muddying it. The sidebar is the same hue,
+   just a touch deeper than the page, to read as a distinct panel. Specimen
+   cards on :root keep the documented default palette — only .jig-themed subtrees
+   are re-skinned.
+   ============================================================================ */
+
+.jig-themed {
+  /* Safe fallbacks — current JigSwap violet/green/pink if no seeds are set */
+  --seed-primary:   #6048e8;
+  --seed-secondary: #19c316;
+  --seed-accent:    #ec4899;
+
+  /* ---- Brand ramps derived from the three seeds ------------------------- */
+  --jig-violet-50:  color-mix(in oklab, var(--seed-primary) 12%, var(--_soft));
+  --jig-violet-100: color-mix(in oklab, var(--seed-primary) 22%, var(--_soft));
+  --jig-violet-200: color-mix(in oklab, var(--seed-primary) 44%, var(--_soft));
+  --jig-violet-300: color-mix(in oklab, var(--seed-primary) 68%, var(--_soft));
+  --jig-violet-400: var(--seed-primary);
+  --jig-violet-500: color-mix(in oklab, var(--seed-primary) 90%, var(--_deep));
+  --jig-violet-600: color-mix(in oklab, var(--seed-primary) 76%, var(--_deep));
+  --jig-violet-700: color-mix(in oklab, var(--seed-primary) 60%, var(--_deep));
+  --jig-violet-800: color-mix(in oklab, var(--seed-primary) 48%, var(--_deep));
+  --jig-violet-900: color-mix(in oklab, var(--seed-primary) 36%, var(--_deep));
+
+  --swap-green-50:  color-mix(in oklab, var(--seed-secondary) 12%, var(--_soft));
+  --swap-green-100: color-mix(in oklab, var(--seed-secondary) 22%, var(--_soft));
+  --swap-green-200: color-mix(in oklab, var(--seed-secondary) 44%, var(--_soft));
+  --swap-green-300: color-mix(in oklab, var(--seed-secondary) 68%, var(--_soft));
+  --swap-green-400: var(--seed-secondary);
+  --swap-green-500: color-mix(in oklab, var(--seed-secondary) 90%, var(--_deep));
+  --swap-green-600: color-mix(in oklab, var(--seed-secondary) 76%, var(--_deep));
+  --swap-green-700: color-mix(in oklab, var(--seed-secondary) 60%, var(--_deep));
+
+  --piece-pink-300: color-mix(in oklab, var(--seed-accent) 68%, var(--_soft));
+  --piece-pink-400: var(--seed-accent);
+  --piece-pink-500: color-mix(in oklab, var(--seed-accent) 84%, var(--_deep));
+
+  /* Brand shortcuts */
+  --jigsaw-primary:        var(--jig-violet-600);
+  --jigsaw-primary-bright: var(--jig-violet-400);
+  --jigsaw-secondary:      var(--swap-green-400);
+  --jigsaw-accent:         var(--piece-pink-400);
+
+  /* Focus ring tracks the primary */
+  --ring: var(--seed-primary);
+}
+
+/* ===========================================================================
+   LIGHT MODE
+   =========================================================================== */
+.jig-themed[data-mode="light"] {
+  --_soft: #ffffff;     /* tint direction for the -50…-300 steps */
+  --_deep: #0b0d11;     /* tint direction for the -500…-900 steps */
+  --_ground: #f7f6fb;   /* faint cool base, so the brand tint reads clean */
+  --_card:   #ffffff;
+
+  --background:      color-mix(in oklab, var(--seed-primary) 6%,  var(--_ground));
+  --surface-card:   color-mix(in oklab, var(--seed-primary) 3%,  var(--_card));
+  --surface-muted:  color-mix(in oklab, var(--seed-primary) 9%,   var(--_ground));
+  --surface-sidebar:color-mix(in oklab, var(--seed-primary) 11%, #f4f2fb);
+
+  --text-strong: #1f1b2e;
+  --text-body:   #3a3548;
+  --text-muted:  #7c7689;
+  --text-on-brand: #ffffff;
+
+  --border:       color-mix(in oklab, var(--seed-primary) 16%, #e7e3f0);
+  --input-border: color-mix(in oklab, var(--seed-primary) 13%, #e7e3f0);
+
+  --action:       color-mix(in oklab, var(--seed-primary) 84%, var(--_deep));
+  --action-fg:    #ffffff;
+  --action-hover: color-mix(in oklab, var(--seed-primary) 68%, var(--_deep));
+
+  --success-strong: #166534;
+  --warning-strong: #854d0e;
+  --danger-strong:  #991b1b;
+}
+
+/* ===========================================================================
+   DARK MODE
+   =========================================================================== */
+.jig-themed[data-mode="dark"] {
+  --_soft: #0b0d11;     /* in dark, the "soft" steps go DARK… */
+  --_deep: #ffffff;     /* …and the "deep" steps go BRIGHT, so ramps invert */
+  --_ground: #14151a;
+  --_card:   #1b1d24;
+
+  --background:      color-mix(in oklab, var(--seed-primary) 9%,  var(--_ground));
+  --surface-card:   color-mix(in oklab, var(--seed-primary) 7%,  var(--_card));
+  --surface-muted:  color-mix(in oklab, var(--seed-primary) 12%, #23252e);
+  --surface-sidebar:color-mix(in oklab, var(--seed-primary) 11%, #121319);
+
+  --text-strong: #f6f2ed;
+  --text-body:   #e6e1da;
+  --text-muted:  #a59d94;
+  --text-on-brand: #ffffff;
+
+  --border:       color-mix(in oklab, var(--seed-primary) 16%, #2c2f39);
+  --input-border: color-mix(in oklab, var(--seed-primary) 16%, #2c2f39);
+
+  --action:       var(--seed-primary);
+  --action-fg:    #ffffff;
+  --action-hover: color-mix(in oklab, var(--seed-primary) 80%, #ffffff);
+
+  /* neutral anchors a few components reference directly */
+  --neutral-0:   var(--surface-card);
+  --neutral-50:  var(--background);
+  --neutral-100: var(--surface-muted);
+
+  /* status: soft fills go dark-tinted, strong text goes bright */
+  --success-soft: color-mix(in oklab, var(--success) 24%, var(--_ground));
+  --warning-soft: color-mix(in oklab, var(--warning) 24%, var(--_ground));
+  --danger-soft:  color-mix(in oklab, var(--danger)  24%, var(--_ground));
+  --success-strong: #7fdca0;
+  --warning-strong: #f1c25a;
+  --danger-strong:  #f3a0a0;
+
+  /* difficulty scale, dark variants */
+  --diff-easy-bg:   color-mix(in oklab, #19c316 20%, var(--_ground)); --diff-easy-fg:   #86e6a0;
+  --diff-medium-bg: color-mix(in oklab, #f59e0b 20%, var(--_ground)); --diff-medium-fg: #f3c969;
+  --diff-hard-bg:   color-mix(in oklab, #f97316 20%, var(--_ground)); --diff-hard-fg:   #f6a866;
+  --diff-expert-bg: color-mix(in oklab, #ef4444 20%, var(--_ground)); --diff-expert-fg: #f49a9a;
+}

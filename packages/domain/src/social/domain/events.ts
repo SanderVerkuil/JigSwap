@@ -1,5 +1,6 @@
 import { DomainEvent } from "../../shared-kernel";
-import { MemberId, ProfileId } from "./ids";
+import { CommentId, MemberId, ProfileId, PuzzleDefinitionId } from "./ids";
+import { ProfileVisibility } from "./profile";
 
 // All Social domain events implement DomainEvent (name + occurredAt). They are plain immutable
 // records: the aggregate records them; an outbound publisher (1b) serialises and dispatches them
@@ -36,7 +37,36 @@ export class ProfileUpdated implements DomainEvent {
   ) {}
 }
 
+// A member changed who can see their profile (public <-> private). Other features read the new
+// visibility to decide whether to reveal the member's identity.
+export class ProfileVisibilityChanged implements DomainEvent {
+  readonly name = "ProfileVisibilityChanged";
+  constructor(
+    readonly profileId: ProfileId,
+    readonly memberId: MemberId,
+    readonly visibility: ProfileVisibility,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+// A member posted a community comment on a puzzle definition. The rating is null when the author
+// left only text. Carries the PuzzleDefinitionId so subscribers (future Insights/Notifications) can
+// react without resolving the comment back through persistence.
+export class CommentPosted implements DomainEvent {
+  readonly name = "CommentPosted";
+  constructor(
+    readonly commentId: CommentId,
+    readonly puzzleId: PuzzleDefinitionId,
+    readonly authorId: MemberId,
+    readonly text: string,
+    readonly rating: number | null,
+    readonly occurredAt: Date,
+  ) {}
+}
+
 export type SocialDomainEvent =
   | MemberFollowed
   | MemberUnfollowed
-  | ProfileUpdated;
+  | ProfileUpdated
+  | ProfileVisibilityChanged
+  | CommentPosted;

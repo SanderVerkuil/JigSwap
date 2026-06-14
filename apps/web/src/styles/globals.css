@@ -34,6 +34,13 @@
   --jigsaw-warning: #f59e0b;
   --jigsaw-puzzle: #ec4899;
   --jigsaw-neutral: #6b7280;
+  /* Brand tint surfaces for forms/chips (Add-Puzzle redesign) */
+  --jigsaw-primary-tint: color-mix(in oklab, var(--jigsaw-primary) 9%, white);
+  --jigsaw-secondary-tint: color-mix(
+    in oklab,
+    var(--jigsaw-secondary) 14%,
+    white
+  );
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -84,6 +91,16 @@
   --jigsaw-warning: #fbbf24;
   --jigsaw-puzzle: #f472b6;
   --jigsaw-neutral: #9ca3af;
+  --jigsaw-primary-tint: color-mix(
+    in oklab,
+    var(--jigsaw-primary) 22%,
+    var(--card)
+  );
+  --jigsaw-secondary-tint: color-mix(
+    in oklab,
+    var(--jigsaw-secondary) 22%,
+    var(--card)
+  );
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -130,6 +147,8 @@
   --color-jigsaw-warning: var(--jigsaw-warning);
   --color-jigsaw-puzzle: var(--jigsaw-puzzle);
   --color-jigsaw-neutral: var(--jigsaw-neutral);
+  --color-jigsaw-primary-tint: var(--jigsaw-primary-tint);
+  --color-jigsaw-secondary-tint: var(--jigsaw-secondary-tint);
 
   /* "Poppins" prepended (loaded via <link> in __root head) to mirror the
      web app's next/font --font-sans; system stack stays as fallback. */

@@ -5,11 +5,14 @@
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
+    "@axiomhq/js": "^1.6.1",
     "@clerk/backend": "^3.7.0",
     "@jigswap/contracts": "workspace:^",
     "@jigswap/domain": "workspace:^",
+    "cheerio": "^1.2.0",
     "convex": "^1.41.0",
     "convex-helpers": "0.1.119",
+    "ogie": "^2.1.0",
     "svix": "^1.95.2",
     "tslib": "^2.8.1"
   },

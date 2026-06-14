@@ -137,9 +137,10 @@ describe("library reads", () => {
       t.query(api.library.browseOwnedPuzzles.browseOwnedPuzzles, {}),
     ).rejects.toBeInstanceOf(ConvexError);
 
+    // Browse shows OTHER members' copies; pass includeOwnPuzzles so Alice sees her own here.
     const result = await asAlice(t).query(
       api.library.browseOwnedPuzzles.browseOwnedPuzzles,
-      { searchTerm: "mountain" },
+      { searchTerm: "mountain", includeOwnPuzzles: true },
     );
     expect(result.total).toBe(1);
     expect(result.hasMore).toBe(false);

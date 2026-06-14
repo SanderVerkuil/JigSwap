@@ -5,7 +5,11 @@ import { DomainError } from "../../shared-kernel";
 // logs/tests only). Modelled as a DomainError subclass so it can be thrown or carried in a
 // Result interchangeably. Cross-aggregate failures (already-following, not-following) depend on
 // the repository and are orchestration concerns that live in the application layer, not here.
-export type SocialErrorCode = "SelfFollow" | "InvalidDisplayName";
+export type SocialErrorCode =
+  | "SelfFollow"
+  | "InvalidDisplayName"
+  | "EmptyCommentText"
+  | "InvalidCommentRating";
 
 export class SocialError extends DomainError {
   override readonly name = "SocialError";
@@ -27,6 +31,22 @@ export class SocialError extends DomainError {
     return new SocialError(
       "InvalidDisplayName",
       "Display name must not be empty",
+    );
+  }
+
+  // A comment's text was empty or whitespace-only after trimming.
+  static emptyCommentText(): SocialError {
+    return new SocialError(
+      "EmptyCommentText",
+      "Comment text must not be empty",
+    );
+  }
+
+  // A comment's optional rating was present but not an integer in the 1–5 range.
+  static invalidCommentRating(value: number): SocialError {
+    return new SocialError(
+      "InvalidCommentRating",
+      `Comment rating must be an integer between 1 and 5, got ${value}`,
     );
   }
 }

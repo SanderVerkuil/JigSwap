@@ -337,7 +337,7 @@
     "descriptionPlaceholder": "Beschrijf je puzzel (optioneel)",
     "brandPlaceholder": "bijv. Ravensburger, Clementoni",
     "categoryPlaceholder": "bijv. Landschap, Dieren, Kunst",
-    "tagsPlaceholder": "natuur, kleurrijk, uitdagend",
+    "tagsPlaceholder": "landschap, oceaan, rustig…",
     "tagsHelp": "Scheid tags met komma's",
     "selectDifficulty": "Selecteer moeilijkheidsgraad",
     "easy": "Gemakkelijk",
@@ -470,7 +470,82 @@
     "deleteConfirm": "Weet je zeker dat je deze puzzel wilt verwijderen?",
     "loadingPuzzles": "Puzzels laden...",
     "new_sealed": "Nieuw (Verzegeld)",
-    "like_new": "Zo Goed Als Nieuw"
+    "like_new": "Zo Goed Als Nieuw",
+    "importFromUrl": "Importeer via een winkellink",
+    "importUrlPlaceholder": "Plak een product-URL van een puzzel",
+    "importFetch": "Gegevens ophalen",
+    "importFetching": "Bezig met ophalen…",
+    "importFailed": "Kon die pagina niet lezen — vul de gegevens handmatig in.",
+    "importAlreadyExists": "Deze puzzel staat al op JigSwap — toevoegen aan je collectie?",
+    "importAddToCollection": "Aan collectie toevoegen",
+    "importCreateAnyway": "Toch nieuw aanmaken",
+    "matchFoundLead": "We vonden",
+    "matchFoundTail": "al — is dit dezelfde puzzel?",
+    "matchUseThis": "Gebruik deze",
+    "matchDifferent": "Nee, het is een andere",
+    "importUrlBlurb": "Plak een link van een puzzelwinkel en wij vullen de details voor je in.",
+    "importImported": "Details geïmporteerd",
+    "coverColour": "Omslagkleur",
+    "coverColourHint": "Kies een kleur of upload een foto — zo verschijnt je puzzel op de plank.",
+    "addToLibrary": "Toevoegen aan bibliotheek",
+    "saveAndAddAnother": "Opslaan & nog een toevoegen",
+    "addReadyHint": "Vul titel, merk en aantal stukken in om door te gaan.",
+    "livePreview": "Live voorbeeld",
+    "livePreviewCaption": "Zo ziet je puzzelkaart eruit voor anderen op je plank.",
+    "checkTitle": "Titel ingevuld",
+    "checkBrand": "Merk ingevuld",
+    "checkPieces": "Aantal stukken ingevuld",
+    "checkAvailability": "Beschikbaarheid ingesteld",
+    "contributePuzzle": "Een puzzel bijdragen",
+    "fieldTitle": "Puzzeltitel",
+    "fieldTitlePlaceholder": "bijv. Sterrennacht",
+    "fieldBrand": "Merk",
+    "fieldBrandPlaceholder": "bijv. Ravensburger",
+    "fieldPieceCount": "Aantal stukjes",
+    "fieldDifficulty": "Moeilijkheid",
+    "fieldCondition": "Conditie",
+    "fieldAvailability": "Beschikbaarheid",
+    "availabilityHint": "Hoe je deze puzzel wilt delen. Kies wat van toepassing is.",
+    "fieldTags": "Tags",
+    "tagsHint": "Druk op Enter om toe te voegen — zo vinden anderen je puzzel.",
+    "fieldNotes": "Notities",
+    "notesPlaceholderLong": "Iets vermeldenswaards — ontbrekende stukjes, speciale editie, waar je hem vandaan hebt…",
+    "optional": "Optioneel",
+    "dividerManual": "of vul de gegevens zelf in",
+    "dividerCover": "omslag & extra's",
+    "difficulty_easy": "Makkelijk",
+    "difficulty_medium": "Gemiddeld",
+    "difficulty_hard": "Moeilijk",
+    "difficulty_expert": "Expert",
+    "condition_like_new": "Uitstekend",
+    "condition_good": "Goed",
+    "condition_fair": "Redelijk",
+    "condition_poor": "Slecht",
+    "availTrade": "Voor ruil",
+    "availLend": "Voor uitlenen",
+    "availSale": "Te koop",
+    "previewAvailable": "Beschikbaar",
+    "previewView": "Bekijken",
+    "previewAdd": "Toevoegen",
+    "uploadPhoto": "Foto uploaden",
+    "coverPhoto": "Jouw foto",
+    "coverBestQuality": "Beste kwaliteit",
+    "coverBest": "Beste",
+    "advancedDetails": "Meer details (optioneel)",
+    "cancel": "Annuleren",
+    "chooser": {
+      "searchPlaceholder": "Zoek puzzels op titel of merk…",
+      "yourSubmissions": "Jouw inzendingen",
+      "yourSubmissionsHint": "Puzzels die je aan de catalogus hebt toegevoegd en nog niet zijn goedgekeurd.",
+      "allPuzzles": "Alle puzzels",
+      "allPuzzlesHint": "Kies er een uit de gedeelde catalogus om een exemplaar aan je collectie toe te voegen.",
+      "cantFind": "Kun je je puzzel niet vinden? Maak een nieuwe aan.",
+      "createNew": "Nieuwe aanmaken",
+      "noResults": "Geen puzzels gevonden",
+      "noCatalogueResults": "Geen catalogus-puzzels komen overeen met je zoekopdracht.",
+      "chosenPuzzle": "Een exemplaar toevoegen van",
+      "copyDetails": "Jouw exemplaar"
+    }
   },
   "trades": {
     "title": "Uitwisselingen",
@@ -615,6 +690,10 @@
     "usernamePlaceholder": "jouw-gebruikersnaam",
     "locationPlaceholder": "Plaats, Land",
     "bioPlaceholder": "Vertel andere leden iets over jezelf…",
+    "visibility": {
+      "label": "Privéprofiel",
+      "helper": "Privéprofielen verschijnen als 'Anonieme gebruiker' voor leden met wie je geen connectie hebt."
+    },
     "shelf": {
       "title": "De Plank van {name}",
       "meta": "{count, plural, one {# uitgestald} other {# uitgestald}}"
@@ -1199,7 +1278,8 @@
     "noPuzzlesAvailable": "Geen Puzzels Beschikbaar",
     "addPuzzlesFirst": "Voeg eerst puzzels toe aan je bibliotheek en orden ze dan in collecties.",
     "addSelected": "{count, plural, one {# puzzel toevoegen} other {# puzzels toevoegen}}",
-    "updatedAgo": "Bijgewerkt {time}"
+    "updatedAgo": "Bijgewerkt {time}",
+    "added": "Toegevoegd"
   },
   "circles": {
     "yourCircles": "Jouw Kringen",
@@ -1554,6 +1634,7 @@
         "placeholder": "Voer modelnummer in"
       },
       "dimensions": {
+        "label": "Afmetingen",
         "width": {
           "label": "Breedte",
           "placeholder": "Voer breedte in"
@@ -1893,6 +1974,7 @@
     "browse": "Puzzels bladeren — JigSwap",
     "myPuzzles": "Mijn puzzels — JigSwap",
     "addPuzzle": "Puzzel toevoegen — JigSwap",
+    "createPuzzle": "Puzzel aanmaken — JigSwap",
     "puzzles": "Puzzels — JigSwap",
     "puzzle": "Puzzeldetails — JigSwap",
     "collections": "Collecties — JigSwap",
@@ -1915,7 +1997,8 @@
     "signIn": "Inloggen — JigSwap",
     "signUp": "Registreren — JigSwap",
     "library": "Mijn Bibliotheek — JigSwap",
-    "people": "Mensen — JigSwap"
+    "people": "Mensen — JigSwap",
+    "copyInstance": "Exemplaar in bezit — JigSwap"
   },
   "shell": {
     "search": {
@@ -2021,7 +2104,15 @@
       },
       "addPuzzle": {
         "title": "Puzzel Toevoegen",
-        "subtitle": "Voeg een nieuwe puzzel toe aan je plank."
+        "subtitle": "Kies er een uit de catalogus, of maak een nieuwe aan."
+      },
+      "createPuzzle": {
+        "title": "Een puzzel aanmaken",
+        "subtitle": "Voeg een gloednieuwe puzzel toe aan de catalogus en je plank."
+      },
+      "contributePuzzle": {
+        "title": "Een puzzel bijdragen",
+        "subtitle": "Voeg een puzzel toe aan de gedeelde catalogus voor iedereen."
       },
       "puzzles": {
         "title": "Puzzels",
@@ -2034,6 +2125,10 @@
       "notifications": {
         "title": "Meldingen",
         "subtitle": "Alles wat je aandacht vraagt."
+      },
+      "copyInstance": {
+        "title": "Exemplaar in bezit",
+        "subtitle": "De herkomst en geschiedenis van één exemplaar."
       }
     },
     "user": {
@@ -2064,5 +2159,136 @@
       }
     },
     "breadcrumbLabel": "Broodkruimel"
+  },
+  "copyInstance": {
+    "notFound": "Exemplaar niet gevonden",
+    "notFoundSub": "Dit exemplaar is mogelijk verwijderd, of je hebt er geen toegang toe.",
+    "details": "Details",
+    "brand": "Merk",
+    "condition": "Staat",
+    "availability": "Beschikbaarheid",
+    "notAvailable": "Niet aangeboden",
+    "notes": "Notities",
+    "owner": "Eigenaar",
+    "anonymousUser": "Anonieme gebruiker",
+    "acquisition": "Verwerving",
+    "acquiredOn": "Verworven op",
+    "acquiredVia": "Verworven via",
+    "acquisitionSource": {
+      "bought_new": "Nieuw gekocht",
+      "bought_used": "Tweedehands gekocht",
+      "trade": "Ruil",
+      "gift": "Cadeau"
+    },
+    "history": "Geschiedenis",
+    "sinceYouAcquired": "Sinds jij het verkreeg",
+    "beforeYou": "Voor jou",
+    "noHistory": "Nog geen geschiedenis vastgelegd.",
+    "swappedFromTo": "Geruild van",
+    "acquiredBy": "Verworven door",
+    "viaExchange": "via ruil",
+    "completedBy": "Voltooid door",
+    "completionTime": "{minutes} min",
+    "lentTo": "Uitgeleend aan",
+    "returned": "Geretourneerd",
+    "loanStatus": {
+      "open": "Uitgeleend",
+      "returned": "Geretourneerd",
+      "recalled": "Teruggevraagd"
+    },
+    "actions": {
+      "edit": "Bewerken",
+      "logSolve": "Oplossing vastleggen",
+      "delete": "Verwijderen",
+      "requestSwap": "Ruil aanvragen",
+      "message": "Bericht",
+      "proposeSwap": "Ruil voorstellen",
+      "offerToLend": "Aanbieden om uit te lenen",
+      "logCompletion": "Voltooiing vastleggen"
+    },
+    "available": "Beschikbaar",
+    "forTrade": "Te ruilen",
+    "forLend": "Uit te lenen",
+    "forSale": "Te koop",
+    "acquired": "Verworven",
+    "source": "Bron",
+    "inYourLibrary": "In jouw bibliotheek",
+    "tags": "Labels",
+    "durationLessThanMonth": "<1m",
+    "durationYears": "{years}j",
+    "durationMonths": "{months}m",
+    "acquisitionSourceLabel": {
+      "bought_new": "Nieuw gekocht",
+      "bought_used": "Tweedehands gekocht",
+      "trade": "Ruil",
+      "gift": "Cadeau"
+    },
+    "conditionLabel": {
+      "new_sealed": "Nieuw (verzegeld)",
+      "like_new": "Zo goed als nieuw"
+    },
+    "statTimesCompleted": "keer voltooid",
+    "statFastestFinish": "snelste tijd",
+    "statTimesLentOut": "keer uitgeleend",
+    "statYourAvgRating": "jouw gem. beoordeling",
+    "statDaysValue": "{days}d",
+    "photos": "Foto's",
+    "photosCount": "{count} foto's",
+    "addPhoto": "Foto toevoegen",
+    "uploading": "Uploaden…",
+    "photoAdded": "Foto toegevoegd",
+    "photoFailed": "Kon foto niet toevoegen",
+    "noPhotos": "Nog geen foto's.",
+    "completionHistory": "Voltooiingsgeschiedenis",
+    "completionsCount": "{count} voltooiingen",
+    "noCompletions": "Deze puzzel is nog niet voltooid.",
+    "lendingHistory": "Uitleengeschiedenis",
+    "lendsCount": "{count} keer uitgeleend",
+    "noLends": "Deze puzzel is nog niet uitgeleend.",
+    "swapHistory": "Ruil- & handelsgeschiedenis",
+    "exchangesCount": "{count} ruilen",
+    "noSwaps": "Nog geen ruilen of handel voor deze puzzel.",
+    "you": "jij",
+    "finishedIn": "voltooid in {days, plural, one {# dag} other {# dagen}}",
+    "communityRating": "Communitybeoordeling",
+    "communityRatings": "{count} communitybeoordelingen",
+    "comments": "Reacties",
+    "addComment": "Voeg een reactie toe…",
+    "rateOptional": "Beoordeel deze puzzel (optioneel)",
+    "post": "Plaatsen",
+    "noComments": "Nog geen reacties. Wees de eerste.",
+    "commentFailed": "Kon reactie niet plaatsen"
+  },
+  "puzzleDefinition": {
+    "notFound": "Puzzel niet gevonden",
+    "notFoundSub": "Deze puzzel is mogelijk uit de catalogus verwijderd, of de link klopt niet.",
+    "eyebrow": "Catalogus · Puzzeldefinitie",
+    "communityOwners": "eigenaren in community",
+    "totalCompletions": "keer voltooid",
+    "avgCompletion": "gem. voltooitijd",
+    "avgCompletionValue": "{days}d",
+    "availableToSwap": "beschikbaar om te ruilen",
+    "youOwnACopy": "Je hebt een exemplaar",
+    "conditionSuffix": "conditie {condition}.",
+    "viewYourCopy": "Bekijk jouw exemplaar →",
+    "findCopyToSwap": "Vind een exemplaar om te ruilen",
+    "writeReview": "Schrijf een review",
+    "communityRating": "Communitybeoordeling",
+    "ratingsCount": "{count, plural, one {# beoordeling} other {# beoordelingen}}",
+    "availableToSwapSection": "Beschikbaar om te ruilen",
+    "copiesCount": "{count, plural, one {# exemplaar} other {# exemplaren}}",
+    "seeAllCopies": "Bekijk alle {count} beschikbare exemplaren →",
+    "noCopies": "Er zijn nog geen exemplaren beschikbaar om te ruilen.",
+    "reviews": "Reviews",
+    "reviewPlaceholder": "Beoordeel {title}…",
+    "rateOptional": "Beoordeel deze puzzel (optioneel)",
+    "post": "Plaatsen",
+    "reviewFailed": "Kon review niet plaatsen",
+    "noReviews": "Nog geen reviews. Wees de eerste.",
+    "swapType": {
+      "swap": "Ruilen",
+      "lend": "Lenen",
+      "sale": "Verkoop"
+    }
   }
 }

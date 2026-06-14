@@ -12,6 +12,8 @@ export const gateway = {
   catalog: {
     // Writes go through the domain-driven catalog module (file.export namespacing); submissions
     // land as `pending` and must be approved (moderation) before appearing publicly.
+    extractPuzzleFromUrl: api.catalog.extractFromUrl.extractFromUrl,
+    importPuzzleImage: api.catalog.importPuzzleImage.importPuzzleImage,
     createPuzzle: api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
     updatePuzzle: api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
     approve: api.catalog.approvePuzzleDefinition.approvePuzzleDefinition,
@@ -45,6 +47,9 @@ export const gateway = {
     updateSharing: api.library.updateCopySharing.updateCopySharing,
     updateDetails: api.library.updateCopyDetails.updateCopyDetails,
     addImage: api.library.addCopyImage.addCopyImage,
+    // Owner-only photo upload keyed by the copy's Convex id; pairs with generateUploadUrl. Writes
+    // the `ownedPuzzleImages` read-model the getCopyInstanceView gallery reads.
+    addCopyPhoto: api.library.addCopyPhoto.addCopyPhoto,
     deleteOwned: api.library.deleteCopy.deleteCopy,
     // Reads go through the domain-driven library module (file.export namespacing); each is a thin
     // Convex query returning a typed @jigswap/contracts view DTO, not a raw row.
@@ -54,6 +59,14 @@ export const gateway = {
     ownedWithCollectionStatus:
       api.library.getOwnedPuzzleWithCollectionStatus
         .getOwnedPuzzleWithCollectionStatus,
+    // Privacy-gated detail of a single owned copy: snapshot + projected owner + merged, anonymised
+    // history timeline (transfers/completions/loans) split into the viewer's tenure vs gated history.
+    getCopyInstanceView: api.library.getCopyInstanceView.getCopyInstanceView,
+    // Redesigned catalog detail of a puzzle DEFINITION: catalog facts + community rating
+    // distribution + ownership/completion/availability stats + the viewer's own ownership + a short
+    // list of REACHABLE available copies (Browse's public-OR-circle gate).
+    getPuzzleDefinitionView:
+      api.library.getPuzzleDefinitionView.getPuzzleDefinitionView,
     // Image upload is storage infra, not a domain op; keep it on the legacy function. The URL is
     // used for copy photos.
     generateUploadUrl: api.puzzles.generateUploadUrl,
@@ -170,6 +183,7 @@ export const gateway = {
   // derived from auth, never the client. Reads return typed @jigswap/contracts view DTOs.
   social: {
     editProfile: api.social.editProfile.editProfile,
+    setProfileVisibility: api.social.setProfileVisibility.setProfileVisibility,
     follow: api.social.followMember.followMember,
     unfollow: api.social.unfollowMember.unfollowMember,
     profile: api.social.getProfile.getProfile,
@@ -178,6 +192,14 @@ export const gateway = {
     isFollowing: api.social.isFollowing.isFollowing,
     // The feed is scoped server-side to the acting member + the people they follow.
     activityFeed: api.social.getActivityFeed.getActivityFeed,
+    // Community comments on a puzzle definition, keyed by a copy id for the UI's convenience
+    // (resolved to the shared puzzle internally). Authors are shown with their real identity.
+    postPuzzleComment: api.social.postPuzzleComment.postPuzzleComment,
+    listPuzzleComments: api.social.listPuzzleComments.listPuzzleComments,
+    // Community reviews keyed by the puzzle DEFINITION (the catalog detail page has no copy id).
+    // Same `puzzleComments` table + post-comment use case as the copy-keyed variants above.
+    postPuzzleReview: api.social.postPuzzleReview.postPuzzleReview,
+    listPuzzleReviews: api.social.listPuzzleReviews.listPuzzleReviews,
   },
 
   // Insights: read-side aggregate stats. globalStats is platform-wide; the rest are the signed-in

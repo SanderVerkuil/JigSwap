@@ -52,9 +52,13 @@ export const Route = createRootRouteWithContext<{
       { charSet: "utf-8" },
       // viewport-fit=cover lets the mobile shell extend under the notch /
       // home indicator and pad itself with env(safe-area-inset-*).
+      // interactive-widget=resizes-content makes the on-screen keyboard shrink
+      // the layout viewport (so `dvh`/the shell resize above it) instead of
+      // overlaying and hiding the bottom bar / focused input.
       {
         name: "viewport",
-        content: "width=device-width, initial-scale=1, viewport-fit=cover",
+        content:
+          "width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content",
       },
       { title: "JigSwap" },
     ],

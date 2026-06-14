@@ -1,4 +1,7 @@
 export * from "./activity-feed";
+export * from "./comment";
+export * from "./comment-rating";
+export * from "./comment-text";
 export * from "./display-name";
 export * from "./errors";
 export * from "./events";

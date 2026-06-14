@@ -1,0 +1,113 @@
+/* ============================================================================
+   JigSwap — Color tokens
+   ----------------------------------------------------------------------------
+   Two layers:
+   1. BASE palette  — raw brand + neutral ramps (the "what")
+   2. SEMANTIC roles — meaning-based aliases the UI actually consumes (the "why")
+
+   The JigSwap brand is warm and community-minded: a vivid blue-violet from the
+   logo, a fresh leaf green for "Swap", a playful pink accent, and a soft, near-
+   paper neutral ground. ShadCN/Radix-derived oklch neutrals back the UI chrome.
+   ============================================================================ */
+
+:root {
+  /* ---- BRAND : Jig (violet) ------------------------------------------------ */
+  --jig-violet-50:  #eeebfd;
+  --jig-violet-100: #d8d1fb;
+  --jig-violet-200: #b3a6f5;
+  --jig-violet-300: #8e7bef;
+  --jig-violet-400: #6048e8;   /* logo wordmark "Jig" — the signature brand hue */
+  --jig-violet-500: #5238d6;
+  --jig-violet-600: #494e92;   /* deep indigo — app token --primary, headers */
+  --jig-violet-700: #3a3f76;
+  --jig-violet-800: #2c2f57;
+  --jig-violet-900: #1d1f3a;
+
+  /* ---- BRAND : Swap (green) ------------------------------------------------ */
+  --swap-green-50:  #e7fae6;
+  --swap-green-100: #c5f3c2;
+  --swap-green-200: #8ee889;
+  --swap-green-300: #4fd64a;
+  --swap-green-400: #19c316;   /* logo wordmark "Swap" — exchange / go / available */
+  --swap-green-500: #14a512;
+  --swap-green-600: #10850f;
+  --swap-green-700: #0d680c;
+
+  /* ---- BRAND : Pieces (pink accent) --------------------------------------- */
+  --piece-pink-300: #f9a8d4;
+  --piece-pink-400: #ec4899;   /* playful accent — highlights, puzzle pieces */
+  --piece-pink-500: #db2777;
+
+  /* ---- SUPPORT / STATUS ramps --------------------------------------------- */
+  --amber-400:  #f59e0b;       /* warning / "medium" difficulty */
+  --amber-100:  #fef3c7;
+  --orange-500: #f97316;       /* "hard" difficulty */
+  --orange-100: #ffedd5;
+  --emerald-500:#10b981;       /* success */
+  --emerald-100:#d1fae5;
+  --red-500:    #ef4444;       /* destructive / "expert" difficulty */
+  --red-100:    #fee2e2;
+
+  /* ---- NEUTRALS (cool-tinted, oklch — from the app's shadcn base) ---------- */
+  --neutral-0:   oklch(1 0 0);                    /* pure white — cards */
+  --neutral-50:  oklch(0.984 0.003 247.858);      /* app/page ground, sidebar */
+  --neutral-100: oklch(0.968 0.007 247.896);      /* muted / secondary surface */
+  --neutral-200: oklch(0.929 0.013 255.508);      /* borders, inputs */
+  --neutral-400: oklch(0.704 0.04 256.788);       /* ring, disabled text */
+  --neutral-500: oklch(0.554 0.046 257.417);      /* muted foreground */
+  --neutral-700: oklch(0.279 0.041 260.031);      /* dark surfaces */
+  --neutral-900: oklch(0.208 0.042 265.755);      /* primary ink / near-navy */
+  --neutral-950: oklch(0.129 0.042 264.695);      /* foreground text */
+
+  /* =========================================================================
+     SEMANTIC ROLES — consume these in components, not the raw ramps above
+     ========================================================================= */
+
+  /* Brand shortcuts (mirror the app's --jigsaw-* utilities) */
+  --jigsaw-primary:        var(--jig-violet-600);
+  --jigsaw-primary-bright: var(--jig-violet-400);
+  --jigsaw-secondary:      var(--swap-green-400);
+  --jigsaw-accent:         var(--piece-pink-400);
+  --jigsaw-success:        var(--emerald-500);
+  --jigsaw-warning:        var(--amber-400);
+  --jigsaw-neutral:        #6b7280;
+
+  /* Surfaces */
+  --background:       var(--neutral-50);   /* page ground */
+  --surface-card:     var(--neutral-0);    /* cards, popovers, sheets */
+  --surface-muted:    var(--neutral-100);  /* subtle fills, secondary buttons */
+  --surface-sidebar:  var(--neutral-50);
+
+  /* Text */
+  --text-strong:   var(--neutral-950);   /* headings, primary body */
+  --text-body:     var(--neutral-900);
+  --text-muted:    var(--neutral-500);   /* captions, helper, metadata */
+  --text-on-brand: #ffffff;              /* text over violet / green / pink */
+
+  /* Lines & focus */
+  --border:        var(--neutral-200);
+  --input-border:  var(--neutral-200);
+  --ring:          var(--jig-violet-400);
+
+  /* Interactive (primary action = deep indigo, per app --primary) */
+  --action:        var(--neutral-900);
+  --action-fg:     var(--neutral-50);
+  --action-hover:  var(--jig-violet-700);
+
+  /* Status semantic */
+  --success:        var(--emerald-500);
+  --success-soft:   var(--emerald-100);
+  --success-strong: #166534;
+  --warning:        var(--amber-400);
+  --warning-soft:   var(--amber-100);
+  --warning-strong: #854d0e;
+  --danger:         var(--red-500);
+  --danger-soft:    var(--red-100);
+  --danger-strong:  #991b1b;
+
+  /* Difficulty scale (puzzle-specific) */
+  --diff-easy-fg:   #166534; --diff-easy-bg:   #dcfce7;
+  --diff-medium-fg: #854d0e; --diff-medium-bg: #fef9c3;
+  --diff-hard-fg:   #9a3412; --diff-hard-bg:   #ffedd5;
+  --diff-expert-fg: #991b1b; --diff-expert-bg: #fee2e2;
+}

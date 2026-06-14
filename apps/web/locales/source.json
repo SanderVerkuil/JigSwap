@@ -337,7 +337,7 @@
     "descriptionPlaceholder": "Describe your puzzle (optional)",
     "brandPlaceholder": "e.g. Ravensburger, Clementoni",
     "categoryPlaceholder": "e.g. Landscape, Animals, Art",
-    "tagsPlaceholder": "nature, colorful, challenging",
+    "tagsPlaceholder": "landscape, ocean, calm…",
     "tagsHelp": "Separate tags with commas",
     "selectDifficulty": "Select difficulty",
     "easy": "Easy",
@@ -470,7 +470,82 @@
     "deleteConfirm": "Are you sure you want to delete this puzzle?",
     "loadingPuzzles": "Loading puzzles...",
     "new_sealed": "New (Sealed)",
-    "like_new": "Like New"
+    "like_new": "Like New",
+    "importFromUrl": "Import from a store link",
+    "importUrlPlaceholder": "Paste a puzzle product URL",
+    "importFetch": "Fetch details",
+    "importFetching": "Fetching…",
+    "importFailed": "Couldn't read that page — add the details manually.",
+    "importAlreadyExists": "This puzzle is already on JigSwap — add it to your collection?",
+    "importAddToCollection": "Add to collection",
+    "importCreateAnyway": "Create new anyway",
+    "matchFoundLead": "We found",
+    "matchFoundTail": "already — is this the same puzzle?",
+    "matchUseThis": "Use this one",
+    "matchDifferent": "No, it's different",
+    "importUrlBlurb": "Paste a link from any puzzle shop and we'll fill in the details for you.",
+    "importImported": "Details imported",
+    "coverColour": "Cover colour",
+    "coverColourHint": "Pick a colour or upload a photo — this is how your puzzle appears on the shelf.",
+    "addToLibrary": "Add to Library",
+    "saveAndAddAnother": "Save & Add Another",
+    "addReadyHint": "Fill in title, brand, and piece count to continue.",
+    "livePreview": "Live preview",
+    "livePreviewCaption": "This is how your puzzle card will look to others on your shelf.",
+    "checkTitle": "Title filled in",
+    "checkBrand": "Brand filled in",
+    "checkPieces": "Piece count filled in",
+    "checkAvailability": "Availability set",
+    "contributePuzzle": "Contribute a Puzzle",
+    "fieldTitle": "Puzzle Title",
+    "fieldTitlePlaceholder": "e.g. Starry Night",
+    "fieldBrand": "Brand",
+    "fieldBrandPlaceholder": "e.g. Ravensburger",
+    "fieldPieceCount": "Piece Count",
+    "fieldDifficulty": "Difficulty",
+    "fieldCondition": "Condition",
+    "fieldAvailability": "Availability",
+    "availabilityHint": "How you'd like to share this puzzle. Pick any that apply.",
+    "fieldTags": "Tags",
+    "tagsHint": "Press Enter to add. Helps people discover your puzzle.",
+    "fieldNotes": "Notes",
+    "notesPlaceholderLong": "Anything worth mentioning — missing pieces, special edition, where you got it…",
+    "optional": "Optional",
+    "dividerManual": "or enter the details yourself",
+    "dividerCover": "cover & extras",
+    "difficulty_easy": "Easy",
+    "difficulty_medium": "Medium",
+    "difficulty_hard": "Hard",
+    "difficulty_expert": "Expert",
+    "condition_like_new": "Excellent",
+    "condition_good": "Good",
+    "condition_fair": "Fair",
+    "condition_poor": "Poor",
+    "availTrade": "For Trade",
+    "availLend": "For Lend",
+    "availSale": "For Sale",
+    "previewAvailable": "Available",
+    "previewView": "View",
+    "previewAdd": "Add",
+    "uploadPhoto": "Upload photo",
+    "coverPhoto": "Your photo",
+    "coverBestQuality": "Best quality",
+    "coverBest": "Best",
+    "advancedDetails": "More details (optional)",
+    "cancel": "Cancel",
+    "chooser": {
+      "searchPlaceholder": "Search puzzles by title or brand…",
+      "yourSubmissions": "Your submissions",
+      "yourSubmissionsHint": "Puzzles you've added to the catalogue that aren't approved yet.",
+      "allPuzzles": "All puzzles",
+      "allPuzzlesHint": "Pick one from the shared catalogue to add a copy to your library.",
+      "cantFind": "Can't find your puzzle? Create a new one.",
+      "createNew": "Create new",
+      "noResults": "No puzzles found",
+      "noCatalogueResults": "No catalogue puzzles match your search.",
+      "chosenPuzzle": "Adding a copy of",
+      "copyDetails": "Your copy"
+    }
   },
   "trades": {
     "title": "Exchanges",
@@ -615,6 +690,10 @@
     "usernamePlaceholder": "your-username",
     "locationPlaceholder": "City, Country",
     "bioPlaceholder": "Tell other members about yourself…",
+    "visibility": {
+      "label": "Private profile",
+      "helper": "Private profiles appear as 'Anonymous user' to members you're not connected with."
+    },
     "shelf": {
       "title": "{name}'s Shelf",
       "meta": "{count, plural, one {# on display} other {# on display}}"
@@ -1199,7 +1278,8 @@
     "noPuzzlesAvailable": "No Puzzles Available",
     "addPuzzlesFirst": "Add puzzles to your library first, then organise them into collections.",
     "addSelected": "{count, plural, one {Add # puzzle} other {Add # puzzles}}",
-    "updatedAgo": "Updated {time}"
+    "updatedAgo": "Updated {time}",
+    "added": "Added"
   },
   "circles": {
     "yourCircles": "Your Circles",
@@ -1554,6 +1634,7 @@
         "placeholder": "Enter model number"
       },
       "dimensions": {
+        "label": "Dimensions",
         "width": {
           "label": "Width",
           "placeholder": "Enter width"
@@ -1893,6 +1974,7 @@
     "browse": "Browse puzzles — JigSwap",
     "myPuzzles": "My puzzles — JigSwap",
     "addPuzzle": "Add puzzle — JigSwap",
+    "createPuzzle": "Create puzzle — JigSwap",
     "puzzles": "Puzzles — JigSwap",
     "puzzle": "Puzzle details — JigSwap",
     "collections": "Collections — JigSwap",
@@ -1915,7 +1997,8 @@
     "signIn": "Sign in — JigSwap",
     "signUp": "Sign up — JigSwap",
     "library": "My Library — JigSwap",
-    "people": "People — JigSwap"
+    "people": "People — JigSwap",
+    "copyInstance": "Owned copy — JigSwap"
   },
   "shell": {
     "search": {
@@ -2021,7 +2104,15 @@
       },
       "addPuzzle": {
         "title": "Add Puzzle",
-        "subtitle": "Add a new puzzle to your shelf."
+        "subtitle": "Pick one from the catalogue, or create a new one."
+      },
+      "createPuzzle": {
+        "title": "Create a Puzzle",
+        "subtitle": "Add a brand-new puzzle to the catalogue and your shelf."
+      },
+      "contributePuzzle": {
+        "title": "Contribute a Puzzle",
+        "subtitle": "Add a puzzle to the shared catalogue for everyone."
       },
       "puzzles": {
         "title": "Puzzles",
@@ -2034,6 +2125,10 @@
       "notifications": {
         "title": "Notifications",
         "subtitle": "Everything that needs your attention."
+      },
+      "copyInstance": {
+        "title": "Owned copy",
+        "subtitle": "The provenance and history of a single copy."
       }
     },
     "user": {
@@ -2064,5 +2159,136 @@
       }
     },
     "breadcrumbLabel": "Breadcrumb"
+  },
+  "copyInstance": {
+    "notFound": "Copy not found",
+    "notFoundSub": "This copy may have been removed, or you don't have access to it.",
+    "details": "Details",
+    "brand": "Brand",
+    "condition": "Condition",
+    "availability": "Availability",
+    "notAvailable": "Not listed",
+    "notes": "Notes",
+    "owner": "Owner",
+    "anonymousUser": "Anonymous user",
+    "acquisition": "Acquisition",
+    "acquiredOn": "Acquired on",
+    "acquiredVia": "Acquired via",
+    "acquisitionSource": {
+      "bought_new": "Bought new",
+      "bought_used": "Bought used",
+      "trade": "Trade",
+      "gift": "Gift"
+    },
+    "history": "History",
+    "sinceYouAcquired": "Since you acquired it",
+    "beforeYou": "Before you",
+    "noHistory": "No recorded history yet.",
+    "swappedFromTo": "Swapped from",
+    "acquiredBy": "Acquired by",
+    "viaExchange": "via exchange",
+    "completedBy": "Completed by",
+    "completionTime": "{minutes} min",
+    "lentTo": "Lent to",
+    "returned": "Returned",
+    "loanStatus": {
+      "open": "On loan",
+      "returned": "Returned",
+      "recalled": "Recalled"
+    },
+    "actions": {
+      "edit": "Edit",
+      "logSolve": "Log solve",
+      "delete": "Delete",
+      "requestSwap": "Request swap",
+      "message": "Message",
+      "proposeSwap": "Propose a Swap",
+      "offerToLend": "Offer to Lend",
+      "logCompletion": "Log a Completion"
+    },
+    "available": "Available",
+    "forTrade": "For Trade",
+    "forLend": "For Lend",
+    "forSale": "For Sale",
+    "acquired": "Acquired",
+    "source": "Source",
+    "inYourLibrary": "In your library",
+    "tags": "Tags",
+    "durationLessThanMonth": "<1m",
+    "durationYears": "{years}y",
+    "durationMonths": "{months}m",
+    "acquisitionSourceLabel": {
+      "bought_new": "Bought new",
+      "bought_used": "Bought used",
+      "trade": "Trade",
+      "gift": "Gift"
+    },
+    "conditionLabel": {
+      "new_sealed": "New (sealed)",
+      "like_new": "Like new"
+    },
+    "statTimesCompleted": "times completed",
+    "statFastestFinish": "fastest finish",
+    "statTimesLentOut": "times lent out",
+    "statYourAvgRating": "your avg. rating",
+    "statDaysValue": "{days}d",
+    "photos": "Photos",
+    "photosCount": "{count} photos",
+    "addPhoto": "Add photo",
+    "uploading": "Uploading…",
+    "photoAdded": "Photo added",
+    "photoFailed": "Couldn't add photo",
+    "noPhotos": "No photos yet.",
+    "completionHistory": "Completion History",
+    "completionsCount": "{count} completions",
+    "noCompletions": "This puzzle hasn't been completed yet.",
+    "lendingHistory": "Lending History",
+    "lendsCount": "{count} lends",
+    "noLends": "This puzzle hasn't been lent out yet.",
+    "swapHistory": "Swap & Trade History",
+    "exchangesCount": "{count} exchanges",
+    "noSwaps": "No swaps or trades for this puzzle yet.",
+    "you": "you",
+    "finishedIn": "finished in {days, plural, one {# day} other {# days}}",
+    "communityRating": "Community Rating",
+    "communityRatings": "{count} community ratings",
+    "comments": "Comments",
+    "addComment": "Add a comment…",
+    "rateOptional": "Rate this puzzle (optional)",
+    "post": "Post",
+    "noComments": "No comments yet. Be the first.",
+    "commentFailed": "Couldn't post comment"
+  },
+  "puzzleDefinition": {
+    "notFound": "Puzzle not found",
+    "notFoundSub": "This puzzle may have been removed from the catalog, or the link is wrong.",
+    "eyebrow": "Catalog · Puzzle Definition",
+    "communityOwners": "community owners",
+    "totalCompletions": "total completions",
+    "avgCompletion": "avg. completion",
+    "avgCompletionValue": "{days}d",
+    "availableToSwap": "available to swap",
+    "youOwnACopy": "You own a copy",
+    "conditionSuffix": "{condition} condition.",
+    "viewYourCopy": "View your copy →",
+    "findCopyToSwap": "Find a Copy to Swap",
+    "writeReview": "Write a Review",
+    "communityRating": "Community Rating",
+    "ratingsCount": "{count, plural, one {# rating} other {# ratings}}",
+    "availableToSwapSection": "Available to Swap",
+    "copiesCount": "{count, plural, one {# copy} other {# copies}}",
+    "seeAllCopies": "See all {count} available copies →",
+    "noCopies": "No copies are available to swap yet.",
+    "reviews": "Reviews",
+    "reviewPlaceholder": "Review {title}…",
+    "rateOptional": "Rate this puzzle (optional)",
+    "post": "Post",
+    "reviewFailed": "Couldn't post review",
+    "noReviews": "No reviews yet. Be the first.",
+    "swapType": {
+      "swap": "Swap",
+      "lend": "Lend",
+      "sale": "Sale"
+    }
   }
 }

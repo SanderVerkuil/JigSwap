@@ -3,8 +3,16 @@ import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { profileVisibilityOf } from "../social/privacy";
 import { collectCircleSharedCopies } from "./circleSharedCopies";
 import { toOwnedCopyView } from "./mappers";
+
+// A copy is "open" iff at least one exchange-availability flag is set. Rule 1 of Browse
+// visibility: only open copies are ever shown, including circle-shared ones.
+const isOpen = (copy: Doc<"ownedPuzzles">): boolean =>
+  copy.availability.forTrade ||
+  copy.availability.forSale ||
+  copy.availability.forLend;
 
 // Library read: browse OTHER members' available owned copies with filters. Auth gating, the
 // availability prefilter, every puzzle-based filter (category/pieces/difficulty/search), the
@@ -45,30 +53,71 @@ export const browseOwnedPuzzles = query({
     // user's Convex _id.
     const memberId = (await requireMember(ctx)) as unknown as Id<"users">;
 
-    let ownedPuzzles = await ctx.db
-      .query("ownedPuzzles")
-      .withIndex("by_owner", (q) => q.eq("ownerId", memberId))
-      .filter((f) =>
-        f.or(
-          f.eq(f.field("availability.forTrade"), true),
-          f.eq(f.field("availability.forSale"), true),
-          f.eq(f.field("availability.forLend"), true),
-        ),
-      )
-      .collect();
+    // Availability-sourced candidate set: every OPEN copy (rule 1). Convex can't `neq` on an
+    // index, so we collect the availability-filtered set and exclude the viewer's own copies in
+    // memory (unless includeOwnPuzzles). Browse shows OTHER members' available copies.
+    const availableNotOwn = (
+      await ctx.db
+        .query("ownedPuzzles")
+        .filter((f) =>
+          f.or(
+            f.eq(f.field("availability.forTrade"), true),
+            f.eq(f.field("availability.forSale"), true),
+            f.eq(f.field("availability.forLend"), true),
+          ),
+        )
+        .collect()
+    ).filter((c) => args.includeOwnPuzzles || c.ownerId !== memberId);
 
-    // Friend-Circle visibility (cross-context): also surface copies shared into a circle the viewer
-    // belongs to, even when those copies are otherwise private/unavailable. The public/no-circle
-    // case is untouched — this is a pure UNION on top of the existing availability prefilter,
-    // de-duplicated by copy id.
-    const circleShared = await collectCircleSharedCopies(ctx, memberId);
-    const seen = new Set(ownedPuzzles.map((c) => c._id as unknown as string));
-    for (const copy of circleShared) {
-      if (!seen.has(copy._id as unknown as string)) {
-        ownedPuzzles.push(copy as Doc<"ownedPuzzles">);
-        seen.add(copy._id as unknown as string);
+    // Circle-shared copies the viewer may see (cross-context). Rule 1 applies to these too: a
+    // copy must be OPEN to appear, even when reached via a circle. Build the set of circle-shared
+    // copy ids for the membership check below, and keep the (open) rows so the union also adds any
+    // open circle copy the availability collect missed (e.g. a viewer's own copy is dropped above
+    // but a fellow member's open circle copy that wasn't in the prefilter is added here).
+    const circleShared = (
+      await collectCircleSharedCopies(ctx, memberId)
+    ).filter(isOpen);
+    const circleSharedIds = new Set(
+      circleShared.map((c) => c._id as unknown as string),
+    );
+
+    // Resolve each distinct owner's profile visibility ONCE (cache by ownerId), so we never issue
+    // N profile queries for N copies by the same owner.
+    const visibilityCache = new Map<string, "public" | "private">();
+    const ownerIsPublic = async (ownerId: Id<"users">): Promise<boolean> => {
+      const key = ownerId as unknown as string;
+      let cached = visibilityCache.get(key);
+      if (cached === undefined) {
+        cached = await profileVisibilityOf(ctx, ownerId);
+        visibilityCache.set(key, cached);
+      }
+      return cached === "public";
+    };
+
+    // Rule 2 (reachability): a copy is shown when its owner is PUBLIC, or the copy is circle-shared
+    // with the viewer. Private, non-circle owners' copies are excluded entirely (no row over the
+    // wire). Apply to the availability-sourced set, then UNION any open circle-shared copy the
+    // availability collect missed — de-duplicated by copy id.
+    const shown: Doc<"ownedPuzzles">[] = [];
+    const seen = new Set<string>();
+    for (const copy of availableNotOwn) {
+      const id = copy._id as unknown as string;
+      if (seen.has(id)) continue;
+      if (circleSharedIds.has(id) || (await ownerIsPublic(copy.ownerId))) {
+        shown.push(copy);
+        seen.add(id);
       }
     }
+    for (const copy of circleShared) {
+      const id = copy._id as unknown as string;
+      if (seen.has(id)) continue;
+      // Circle copies still respect includeOwnPuzzles: a viewer's own copy is excluded by default.
+      if (!args.includeOwnPuzzles && copy.ownerId === memberId) continue;
+      shown.push(copy);
+      seen.add(id);
+    }
+
+    let ownedPuzzles = shown;
 
     if (args.condition) {
       ownedPuzzles = ownedPuzzles.filter((i) => i.condition === args.condition);

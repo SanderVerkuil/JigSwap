@@ -1,0 +1,52 @@
+/* ============================================================================
+   JigSwap — Typography tokens
+   ----------------------------------------------------------------------------
+   Two families:
+   • Display / headings → "Fredoka"  — rounded, warm, geometric. Carries the
+     homely, friendly personality. Use 500–700 weights for titles, never for body.
+   • Body / UI → native system sans stack — crisp, neutral, fast. All running text,
+     labels, inputs, metadata.
+   • Mono → system mono for piece counts, EANs, code-ish data.
+   ============================================================================ */
+
+:root {
+  /* ---- Families ---- */
+  --font-heading: "Fredoka", ui-sans-serif, system-ui, -apple-system,
+                  "Segoe UI", Roboto, sans-serif;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+               Helvetica, Arial, sans-serif, "Apple Color Emoji",
+               "Segoe UI Emoji";
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+               "Liberation Mono", monospace;
+
+  /* ---- Weights ---- */
+  --fw-regular: 400;   /* @kind font */
+  --fw-medium: 500;    /* @kind font */
+  --fw-semibold: 600;  /* @kind font */
+  --fw-bold: 700;      /* @kind font */
+  --fw-extrabold: 700; /* @kind font */
+
+  /* ---- Type scale (rem, 16px root) ----
+     Tight, app-oriented scale. Headings pair with --font-heading. */
+  --text-xs:   0.75rem;   /* 12px — badges, micro-labels */
+  --text-sm:   0.875rem;  /* 14px — UI default, body, buttons */
+  --text-base: 1rem;      /* 16px — comfortable body / inputs */
+  --text-lg:   1.125rem;  /* 18px — card titles */
+  --text-xl:   1.25rem;   /* 20px — feature titles */
+  --text-2xl:  1.5rem;    /* 24px — section headings */
+  --text-3xl:  1.875rem;  /* 30px — page H1 (dashboard) */
+  --text-4xl:  2.25rem;   /* 36px — marketing H2 */
+  --text-5xl:  3rem;      /* 48px — hero */
+  --text-6xl:  3.75rem;   /* 60px — large hero display */
+
+  /* ---- Line heights ---- */
+  --leading-tight: 1.15;   /* display headings */
+  --leading-snug: 1.3;
+  --leading-normal: 1.5;   /* body */
+  --leading-relaxed: 1.625;
+
+  /* ---- Letter spacing ---- */
+  --tracking-tight: -0.01em;  /* large Fredoka headings */
+  --tracking-normal: 0;
+  --tracking-wide: 0.04em;    /* small caps-ish labels */
+}

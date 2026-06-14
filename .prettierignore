@@ -9,3 +9,5 @@
 /apps/web/.output
 /apps/web/stats.html
 /packages/backend/convex/_generated/*
+# Verbatim Claude Design handoff reference — keep as-authored, do not reformat
+docs/superpowers/design-reference/

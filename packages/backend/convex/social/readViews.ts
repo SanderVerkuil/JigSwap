@@ -12,6 +12,7 @@ export const toProfileView = (row: Doc<"profiles">): ProfileView => ({
   memberId: row.memberId,
   displayName: row.displayName,
   bio: row.bio,
+  visibility: row.visibility ?? "public",
   updatedAt: row.updatedAt,
 });
 

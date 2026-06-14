@@ -27,6 +27,7 @@ describe("Profile.create", () => {
     const profile = result.value;
     expect(profile.displayName.value).toBe("Alice");
     expect(profile.bio).toBe("Loves 1000-piece landscapes");
+    expect(profile.visibility).toBe("public");
 
     const events = profile.pullEvents();
     expect(events.map((e) => e.name)).toEqual(["ProfileUpdated"]);
@@ -97,5 +98,65 @@ describe("Profile.edit", () => {
     expect(rehydrated.displayName.value).toBe("Alice");
     expect(rehydrated.memberId).toBe(member);
     expect(rehydrated.pullEvents()).toHaveLength(0);
+  });
+});
+
+describe("Profile.changeVisibility", () => {
+  const LATER = new Date("2026-06-09T12:00:00Z");
+
+  const open = (): Profile => {
+    const result = Profile.create(profileId, member, editProps());
+    if (!result.isOk) throw new Error("setup");
+    result.value.pullEvents(); // discard the creation event
+    return result.value;
+  };
+
+  it("defaults to public on a freshly created profile", () => {
+    const profile = open();
+    expect(profile.visibility).toBe("public");
+  });
+
+  it("changes public -> private, sets updatedAt, and emits ProfileVisibilityChanged", () => {
+    const profile = open();
+    const changed = profile.changeVisibility("private", LATER);
+
+    expect(changed.isOk).toBe(true);
+    expect(profile.visibility).toBe("private");
+    expect(profile.toState().updatedAt).toEqual(LATER);
+
+    const events = profile.pullEvents();
+    expect(events.map((e) => e.name)).toEqual(["ProfileVisibilityChanged"]);
+    const event = events[0] as unknown as {
+      profileId: ProfileId;
+      memberId: MemberId;
+      visibility: string;
+      occurredAt: Date;
+    };
+    expect(event.profileId).toBe(profileId);
+    expect(event.memberId).toBe(member);
+    expect(event.visibility).toBe("private");
+    expect(event.occurredAt).toEqual(LATER);
+  });
+
+  it("changes private -> public again, emitting a public event", () => {
+    const profile = open();
+    profile.changeVisibility("private", NOW);
+    profile.pullEvents(); // discard the first change
+
+    const changed = profile.changeVisibility("public", LATER);
+    expect(changed.isOk).toBe(true);
+    expect(profile.visibility).toBe("public");
+
+    const events = profile.pullEvents();
+    expect(events.map((e) => e.name)).toEqual(["ProfileVisibilityChanged"]);
+    const event = events[0] as unknown as { visibility: string };
+    expect(event.visibility).toBe("public");
+  });
+
+  it("leaves the display name and bio untouched when visibility changes", () => {
+    const profile = open();
+    profile.changeVisibility("private", LATER);
+    expect(profile.displayName.value).toBe("Alice");
+    expect(profile.bio).toBe("Loves 1000-piece landscapes");
   });
 });
