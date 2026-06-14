@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>25/25</span>
+                <span class='fraction'>26/26</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>29/29</span>
+                <span class='fraction'>31/31</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>21/21</span>
+                <span class='fraction'>22/22</span>
             </div>
         
             
@@ -143,7 +143,13 @@
 <a name='L78'></a><a href='#L78'>78</a>
 <a name='L79'></a><a href='#L79'>79</a>
 <a name='L80'></a><a href='#L80'>80</a>
-<a name='L81'></a><a href='#L81'>81</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -163,20 +169,20 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">16x</span>
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">16x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -185,7 +191,13 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -210,17 +222,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">18x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">16x</span>
-<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { ok } from "../../shared-kernel";
@@ -265,21 +277,27 @@ const hasImages = (page: RawProductPage): boolean =&gt;
 const mergePages = (
   primary: RawProductPage,
   fallback: RawProductPage,
-): RawProductPage =&gt; ({
-  ogTitle: primary.ogTitle ?? fallback.ogTitle,
-  ogDescription: primary.ogDescription ?? fallback.ogDescription,
-  basicTitle: primary.basicTitle ?? fallback.basicTitle,
-  basicDescription: primary.basicDescription ?? fallback.basicDescription,
-  ogImages: [...primary.ogImages, ...imagesOf(fallback)],
-  jsonLdProducts:
-    primary.jsonLdProducts.length &gt; 0
-      ? primary.jsonLdProducts
-      : fallback.jsonLdProducts,
-  source:
-    primary.source != null &amp;&amp; fallback.source != null
-      ? `${primary.source}+${fallback.source}`
-      : (primary.source ?? fallback.source),
-});
+): RawProductPage =&gt; {
+  // Union the per-URL alt maps; the primary wins on a key conflict. Undefined (not {}) when neither
+  // tier scraped alt text, keeping the merged page minimal.
+  const mergedAlts = { ...fallback.imageAlts, ...primary.imageAlts };
+  return {
+    ogTitle: primary.ogTitle ?? fallback.ogTitle,
+    ogDescription: primary.ogDescription ?? fallback.ogDescription,
+    basicTitle: primary.basicTitle ?? fallback.basicTitle,
+    basicDescription: primary.basicDescription ?? fallback.basicDescription,
+    ogImages: [...primary.ogImages, ...imagesOf(fallback)],
+    imageAlts: Object.keys(mergedAlts).length &gt; 0 ? mergedAlts : undefined,
+    jsonLdProducts:
+      primary.jsonLdProducts.length &gt; 0
+        ? primary.jsonLdProducts
+        : fallback.jsonLdProducts,
+    source:
+      primary.source != null &amp;&amp; fallback.source != null
+        ? `${primary.source}+${fallback.source}`
+        : (primary.source ?? fallback.source),
+  };
+};
 &nbsp;
 // Tries `primary`; if it fails with a retryable error, tries `fallback`. Additionally, when the
 // primary SUCCEEDS but the page carries no image, it tries the fallback too and merges any images it
@@ -310,7 +328,7 @@ export const makeFallbackStorePageFetcher = (
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-14T22:42:46.144Z
+                at 2026-06-14T22:53:24.130Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
