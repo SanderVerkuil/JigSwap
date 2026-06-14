@@ -25,6 +25,24 @@ export const getCachedImport = internalQuery({
       .unique(),
 });
 
+// Ops: flush cached import drafts so a fetcher fix (e.g. honouring <base href>) isn't masked by
+// stale drafts for the full TTL. A cached draft that still has a title/images is "usable" and would
+// otherwise be served verbatim. Pass `normalizedUrl` to drop one entry, or omit to flush all.
+// Run with `npx convex run catalog/importCache:clearImportCache '{}'`.
+export const clearImportCache = internalMutation({
+  args: { normalizedUrl: v.optional(v.string()) },
+  handler: async (ctx, { normalizedUrl }) => {
+    const rows = normalizedUrl
+      ? await ctx.db
+          .query("puzzleImportCache")
+          .withIndex("by_url", (q) => q.eq("normalizedUrl", normalizedUrl))
+          .collect()
+      : await ctx.db.query("puzzleImportCache").collect();
+    for (const row of rows) await ctx.db.delete(row._id);
+    return { deleted: rows.length };
+  },
+});
+
 export const putCachedImport = internalMutation({
   args: { normalizedUrl: v.string(), draft: draftValidator },
   handler: async (ctx, { normalizedUrl, draft }) => {

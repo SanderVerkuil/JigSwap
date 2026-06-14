@@ -82,6 +82,21 @@ export const scrapeHtmlFallback = (
   try {
     const $ = cheerio.load(html);
 
+    // Honour a <base href> if the page sets one: all relative URLs (images included) resolve
+    // against it, NOT the page's own path. jvh-puzzels serves <base href="https://site/"> with
+    // path-relative img srcs like `isotope/i/...`, so resolving against the deep product URL would
+    // wrongly yield `/webshop/product/.../isotope/i/...` (a 404). Fall back to sourceUrl if absent
+    // or unparseable.
+    const baseHref = $("base[href]").first().attr("href");
+    let resolveBase = sourceUrl;
+    if (baseHref) {
+      try {
+        resolveBase = new URL(baseHref, sourceUrl).toString();
+      } catch {
+        // keep sourceUrl
+      }
+    }
+
     // --- Title ---
     let title: string | undefined;
     $("h1").each((_, el) => {
@@ -112,7 +127,7 @@ export const scrapeHtmlFallback = (
     // --- Images ---
     const candidates: Candidate[] = [];
     const pushCandidate = (rawUrl: string, hintText: string): void => {
-      const resolved = resolveUrl(rawUrl, sourceUrl);
+      const resolved = resolveUrl(rawUrl, resolveBase);
       if (!resolved) return;
       if (JUNK_RE.test(resolved) || JUNK_RE.test(hintText)) return;
       candidates.push({ url: resolved, score: 0 });

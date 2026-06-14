@@ -32,6 +32,37 @@ describe("scrapeHtmlFallback", () => {
   test("never throws on malformed input", () => {
     expect(() => scrapeHtmlFallback("<<<not-html", SOURCE_URL)).not.toThrow();
   });
+
+  test("resolves path-relative images against <base href>, not the page path (jvh-puzzels)", () => {
+    // jvh-puzzels serves <base href="https://site/"> and a path-relative `isotope/i/...` src.
+    // Resolving against the deep product URL would wrongly produce `/webshop/product/.../isotope/...`.
+    const html =
+      '<html><head><base href="https://www.jvh-puzzels.nl/">' +
+      "<title>Hockey Kampioenschappen</title></head><body>" +
+      '<img src="isotope/i/id-1110100816-hockey-kampioenschappen-artwork.jpg" width="1000" height="714" alt="">' +
+      "</body></html>";
+    const result = scrapeHtmlFallback(
+      html,
+      "https://www.jvh-puzzels.nl/webshop/product/1000-stukjes/hockey-kampioenschappen-1000-stukjes.html",
+    );
+
+    expect(result.images).toContain(
+      "https://www.jvh-puzzels.nl/isotope/i/id-1110100816-hockey-kampioenschappen-artwork.jpg",
+    );
+    expect(result.images.some((u) => u.includes("/webshop/product/"))).toBe(
+      false,
+    );
+  });
+
+  test("falls back to the page URL when there is no <base href>", () => {
+    const html =
+      "<html><head><title>P</title></head><body>" +
+      '<img src="img/box.jpg" width="800" height="800">' +
+      "</body></html>";
+    const result = scrapeHtmlFallback(html, "https://shop.example.com/p/123");
+
+    expect(result.images).toContain("https://shop.example.com/p/img/box.jpg");
+  });
 });
 
 describe("enrichWithHtmlFallback", () => {
