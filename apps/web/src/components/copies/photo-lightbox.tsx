@@ -87,7 +87,9 @@ export function PhotoLightbox({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="grid h-[90vh] max-h-[90vh] w-full max-w-[min(96vw,1200px)] grid-rows-[minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 md:max-h-[88vh] md:grid-cols-[minmax(0,1.6fr)_minmax(320px,1fr)] md:grid-rows-1"
+        // Override the dialog's default `sm:max-w-lg` (else the lightbox stays ~512px wide) so it
+        // fills most of the viewport; the image stage takes the lion's share, comments sit beside it.
+        className="grid h-[90vh] max-h-[90vh] w-full max-w-[96vw] grid-rows-[minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 sm:max-w-[96vw] md:max-h-[88vh] md:max-w-[min(94vw,1500px)] md:grid-cols-[minmax(0,2.2fr)_minmax(340px,1fr)] md:grid-rows-1"
         showCloseButton={true}
       >
         {/* a11y: titled but visually hidden so the dialog announces itself to screen readers. */}

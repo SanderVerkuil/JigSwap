@@ -10,8 +10,9 @@ import {
 
 // Async image-moderation pipeline for an uploaded copy photo. Scheduled (runAfter 0) by
 // `addCopyPhoto`, which inserts the row as `moderationStatus: "pending"`. This action:
-//   1. Re-encodes the blob to JPEG via jimp (a pure-JS codec), which DROPS all EXIF/metadata, then
-//      swaps the row's fileId to the clean blob and deletes the original.
+//   1. Re-encodes the blob via jimp (a pure-JS codec) — PNG when it has transparency, else JPEG —
+//      which DROPS all EXIF/metadata, then swaps the row's fileId to the clean blob and deletes the
+//      original.
 //   2. Classifies the clean bytes via the configured PhotoModerationPort and records the verdict.
 //
 // Why jimp (not sharp): Convex's Node runtime bundles the action; sharp ships a platform-specific
@@ -27,14 +28,30 @@ import {
 //   MODERATION_PROVIDER       — "huggingface" (default) | "none" (always approve).
 //   MODERATION_NSFW_THRESHOLD — float in [0,1], default 0.85; nsfw score >= threshold => rejected.
 
-// Re-encode arbitrary image bytes to a metadata-free JPEG. Pulled out as a tiny helper so the
-// action body stays readable; the heavy lifting is jimp's decode + JPEG encode.
-export const reencodeToJpeg = async (
+// Re-encode arbitrary image bytes to a metadata-free image. Either output (PNG/JPEG) drops all
+// EXIF/metadata. Format is alpha-aware: if the source has ANY transparent pixel we emit PNG so the
+// transparency is preserved — a JPEG would flatten the alpha to black (jimp has no WebP encoder).
+// Opaque images emit JPEG (smaller). Returns the bytes plus the mime so the caller stores the blob
+// with the matching content type.
+export const reencodeImage = async (
   input: Uint8Array,
-): Promise<Uint8Array> => {
+): Promise<{ bytes: Uint8Array; mime: "image/png" | "image/jpeg" }> => {
   const image = await Jimp.read(Buffer.from(input));
+  // bitmap.data is RGBA; a single non-opaque pixel means the image carries real transparency.
+  const data = image.bitmap.data;
+  let hasAlpha = false;
+  for (let i = 3; i < data.length; i += 4) {
+    if (data[i] < 255) {
+      hasAlpha = true;
+      break;
+    }
+  }
+  if (hasAlpha) {
+    const out = await image.getBuffer("image/png");
+    return { bytes: new Uint8Array(out), mime: "image/png" };
+  }
   const out = await image.getBuffer("image/jpeg", { quality: 90 });
-  return new Uint8Array(out);
+  return { bytes: new Uint8Array(out), mime: "image/jpeg" };
 };
 
 export const moderatePhoto = internalAction({
@@ -76,9 +93,10 @@ export const moderatePhoto = internalAction({
     // --- Re-encode (strip EXIF/metadata). Best-effort: on decode failure, classify the original. ---
     let cleanBytes = bytes;
     try {
-      cleanBytes = await reencodeToJpeg(bytes);
+      const { bytes: encoded, mime } = await reencodeImage(bytes);
+      cleanBytes = encoded;
       const newFileId = await ctx.storage.store(
-        new Blob([toArrayBuffer(cleanBytes)], { type: "image/jpeg" }),
+        new Blob([toArrayBuffer(cleanBytes)], { type: mime }),
       );
       await ctx.runMutation(
         internal.library.moderationStore.setModerationFile,
