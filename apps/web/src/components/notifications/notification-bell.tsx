@@ -11,6 +11,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { gateway } from "@/gateway";
+import { useDateFnsLocale } from "@/lib/date-locale";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
@@ -33,6 +34,7 @@ const PREVIEW_COUNT = 6;
 export function NotificationBell() {
   const { user } = useUser();
   const t = useTranslations("notifications");
+  const dateLocale = useDateFnsLocale();
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
@@ -174,6 +176,7 @@ export function NotificationBell() {
                         <span className="block text-[11px] text-muted-foreground">
                           {formatDistanceToNow(new Date(row.createdAt), {
                             addSuffix: true,
+                            locale: dateLocale,
                           })}
                         </span>
                       </span>

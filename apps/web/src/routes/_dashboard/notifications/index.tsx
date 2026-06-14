@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
+import { useDateFnsLocale } from "@/lib/date-locale";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
@@ -36,6 +37,7 @@ function NotificationsPage() {
   const { user } = useUser();
   const t = useTranslations("notifications");
   const tCommon = useTranslations("common");
+  const dateLocale = useDateFnsLocale();
   const router = useRouter();
 
   const notifications = useQuery(
@@ -164,6 +166,7 @@ function NotificationsPage() {
                     <p className="text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(row.createdAt), {
                         addSuffix: true,
+                        locale: dateLocale,
                       })}
                     </p>
                   </div>
