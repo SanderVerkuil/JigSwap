@@ -1,8 +1,11 @@
 import {
+  type CommentId,
+  type CommentIdGenerator,
   type FollowId,
   type FollowIdGenerator,
   type ProfileId,
   type ProfileIdGenerator,
+  toCommentId,
   toFollowId,
   toProfileId,
 } from "@jigswap/domain";
@@ -15,4 +18,8 @@ export const followIdGenerator: FollowIdGenerator = {
 
 export const profileIdGenerator: ProfileIdGenerator = {
   next: (): ProfileId => toProfileId(crypto.randomUUID()),
+};
+
+export const commentIdGenerator: CommentIdGenerator = {
+  next: (): CommentId => toCommentId(crypto.randomUUID()),
 };

@@ -47,6 +47,8 @@ export const toMembershipId = (value: string): Id<"MembershipId"> =>
 export const toGoalId = (value: string): Id<"GoalId"> => toId<"GoalId">(value);
 export const toFollowId = (value: string): Id<"FollowId"> =>
   toId<"FollowId">(value);
+export const toCommentId = (value: string): Id<"CommentId"> =>
+  toId<"CommentId">(value);
 export const toSubmitterId = (value: string): Id<"SubmitterId"> =>
   toId<"SubmitterId">(value);
 export const toMessageId = (value: string): Id<"MessageId"> =>

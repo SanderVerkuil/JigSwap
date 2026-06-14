@@ -1,6 +1,7 @@
-import { toFollowId, toProfileId } from "../../../shared-kernel";
-import { FollowId, ProfileId } from "../../domain";
+import { toCommentId, toFollowId, toProfileId } from "../../../shared-kernel";
+import { CommentId, FollowId, ProfileId } from "../../domain";
 import {
+  CommentIdGenerator,
   FollowIdGenerator,
   ProfileIdGenerator,
 } from "../ports/out/id-generators";
@@ -22,5 +23,15 @@ export class SequentialProfileIdGenerator implements ProfileIdGenerator {
   next(): ProfileId {
     this.counter += 1;
     return toProfileId(`profile-${this.counter}`);
+  }
+}
+
+// Deterministic CommentIdGenerator for tests: comment-1, comment-2, ...
+export class SequentialCommentIdGenerator implements CommentIdGenerator {
+  private counter = 0;
+
+  next(): CommentId {
+    this.counter += 1;
+    return toCommentId(`comment-${this.counter}`);
   }
 }

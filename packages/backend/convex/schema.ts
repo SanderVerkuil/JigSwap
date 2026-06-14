@@ -595,6 +595,18 @@ export default defineSchema({
     .index("by_member", ["memberId"])
     .index("by_aggregate_id", ["aggregateId"]),
 
+  // Social: a community comment on a PUZZLE DEFINITION (shared across every owned copy of that
+  // puzzle). A lightweight, append-only post: trimmed text + optional 1–5 rating + author + when.
+  // aggregateId is the CommentId; `by_puzzle` backs the newest-first read keyed on puzzleId.
+  puzzleComments: defineTable({
+    aggregateId: v.optional(v.string()),
+    puzzleId: v.id("puzzles"),
+    authorId: v.id("users"),
+    text: v.string(),
+    rating: v.optional(v.number()),
+    createdAt: v.number(),
+  }).index("by_puzzle", ["puzzleId"]),
+
   // Social: a directed follow edge (followerId -> followeeId). Indexed both ways so the read side
   // can list a member's followers and the people they follow; aggregateId is the FollowId.
   follows: defineTable({

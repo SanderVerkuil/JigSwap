@@ -44,6 +44,21 @@ export interface ActivityEntryView {
 }
 
 /**
+ * One community comment on a puzzle, as surfaced on the catalog/copy view. A comment is posted
+ * against the puzzle DEFINITION, so every owned copy of that puzzle shows the same list. The
+ * `author` is the real member identity (comments are voluntary public posts — never anonymised);
+ * `rating` is the author's optional 1–5 star opinion, or null when they left only text. `id` is the
+ * CommentId aggregateId. Newest comments are returned first.
+ */
+export interface PuzzleCommentView {
+  id: string;
+  author: MemberView;
+  text: string;
+  rating: number | null;
+  createdAt: number;
+}
+
+/**
  * The server-side projection of one member's identity to a given viewer, the output of the privacy
  * chokepoint that gates every participant surfaced in a copy's history. A discriminated union: when
  * `anonymous` is false the member is revealed as a full MemberView; when true the member is hidden

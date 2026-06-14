@@ -47,6 +47,9 @@ export const gateway = {
     updateSharing: api.library.updateCopySharing.updateCopySharing,
     updateDetails: api.library.updateCopyDetails.updateCopyDetails,
     addImage: api.library.addCopyImage.addCopyImage,
+    // Owner-only photo upload keyed by the copy's Convex id; pairs with generateUploadUrl. Writes
+    // the `ownedPuzzleImages` read-model the getCopyInstanceView gallery reads.
+    addCopyPhoto: api.library.addCopyPhoto.addCopyPhoto,
     deleteOwned: api.library.deleteCopy.deleteCopy,
     // Reads go through the domain-driven library module (file.export namespacing); each is a thin
     // Convex query returning a typed @jigswap/contracts view DTO, not a raw row.
@@ -184,6 +187,10 @@ export const gateway = {
     isFollowing: api.social.isFollowing.isFollowing,
     // The feed is scoped server-side to the acting member + the people they follow.
     activityFeed: api.social.getActivityFeed.getActivityFeed,
+    // Community comments on a puzzle definition, keyed by a copy id for the UI's convenience
+    // (resolved to the shared puzzle internally). Authors are shown with their real identity.
+    postPuzzleComment: api.social.postPuzzleComment.postPuzzleComment,
+    listPuzzleComments: api.social.listPuzzleComments.listPuzzleComments,
   },
 
   // Insights: read-side aggregate stats. globalStats is platform-wide; the rest are the signed-in
