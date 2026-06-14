@@ -2258,5 +2258,37 @@
     "post": "Post",
     "noComments": "No comments yet. Be the first.",
     "commentFailed": "Couldn't post comment"
+  },
+  "puzzleDefinition": {
+    "notFound": "Puzzle not found",
+    "notFoundSub": "This puzzle may have been removed from the catalog, or the link is wrong.",
+    "eyebrow": "Catalog · Puzzle Definition",
+    "communityOwners": "community owners",
+    "totalCompletions": "total completions",
+    "avgCompletion": "avg. completion",
+    "avgCompletionValue": "{days}d",
+    "availableToSwap": "available to swap",
+    "youOwnACopy": "You own a copy",
+    "conditionSuffix": "{condition} condition.",
+    "viewYourCopy": "View your copy →",
+    "findCopyToSwap": "Find a Copy to Swap",
+    "writeReview": "Write a Review",
+    "communityRating": "Community Rating",
+    "ratingsCount": "{count, plural, one {# rating} other {# ratings}}",
+    "availableToSwapSection": "Available to Swap",
+    "copiesCount": "{count, plural, one {# copy} other {# copies}}",
+    "seeAllCopies": "See all {count} available copies →",
+    "noCopies": "No copies are available to swap yet.",
+    "reviews": "Reviews",
+    "reviewPlaceholder": "Review {title}…",
+    "rateOptional": "Rate this puzzle (optional)",
+    "post": "Post",
+    "reviewFailed": "Couldn't post review",
+    "noReviews": "No reviews yet. Be the first.",
+    "swapType": {
+      "swap": "Swap",
+      "lend": "Lend",
+      "sale": "Sale"
+    }
   }
 }

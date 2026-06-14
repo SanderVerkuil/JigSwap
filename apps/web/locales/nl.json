@@ -2258,5 +2258,37 @@
     "post": "Plaatsen",
     "noComments": "Nog geen reacties. Wees de eerste.",
     "commentFailed": "Kon reactie niet plaatsen"
+  },
+  "puzzleDefinition": {
+    "notFound": "Puzzel niet gevonden",
+    "notFoundSub": "Deze puzzel is mogelijk uit de catalogus verwijderd, of de link klopt niet.",
+    "eyebrow": "Catalogus · Puzzeldefinitie",
+    "communityOwners": "eigenaren in community",
+    "totalCompletions": "keer voltooid",
+    "avgCompletion": "gem. voltooitijd",
+    "avgCompletionValue": "{days}d",
+    "availableToSwap": "beschikbaar om te ruilen",
+    "youOwnACopy": "Je hebt een exemplaar",
+    "conditionSuffix": "conditie {condition}.",
+    "viewYourCopy": "Bekijk jouw exemplaar →",
+    "findCopyToSwap": "Vind een exemplaar om te ruilen",
+    "writeReview": "Schrijf een review",
+    "communityRating": "Communitybeoordeling",
+    "ratingsCount": "{count, plural, one {# beoordeling} other {# beoordelingen}}",
+    "availableToSwapSection": "Beschikbaar om te ruilen",
+    "copiesCount": "{count, plural, one {# exemplaar} other {# exemplaren}}",
+    "seeAllCopies": "Bekijk alle {count} beschikbare exemplaren →",
+    "noCopies": "Er zijn nog geen exemplaren beschikbaar om te ruilen.",
+    "reviews": "Reviews",
+    "reviewPlaceholder": "Beoordeel {title}…",
+    "rateOptional": "Beoordeel deze puzzel (optioneel)",
+    "post": "Plaatsen",
+    "reviewFailed": "Kon review niet plaatsen",
+    "noReviews": "Nog geen reviews. Wees de eerste.",
+    "swapType": {
+      "swap": "Ruilen",
+      "lend": "Lenen",
+      "sale": "Verkoop"
+    }
   }
 }
