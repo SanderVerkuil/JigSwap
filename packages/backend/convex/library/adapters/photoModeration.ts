@@ -28,12 +28,15 @@ export interface ModerationLabelScore {
 
 /**
  * The outcome of classifying one image. `status` is the decision; `score`/`label` are the decisive
- * nsfw signal (null when the provider produced no score — e.g. "none" or a missing token).
+ * nsfw signal (null when the provider produced no score — e.g. "none" or a missing token); `scores`
+ * is the full raw per-label output from the model (empty when nothing was classified), surfaced for
+ * the wide log so an unexpected verdict is debuggable.
  */
 export interface ModerationResult {
   status: "approved" | "rejected";
   score: number | null;
   label: string | null;
+  scores: readonly ModerationLabelScore[];
 }
 
 /**
@@ -45,8 +48,9 @@ export interface PhotoModerationPort {
   classify(bytes: Uint8Array): Promise<ModerationResult>;
 }
 
-const HF_ENDPOINT =
-  "https://api-inference.huggingface.co/models/Falconsai/nsfw_image_detection";
+/** The Hugging Face image-classification model id (also logged for context). */
+export const HF_MODEL = "Falconsai/nsfw_image_detection";
+const HF_ENDPOINT = `https://api-inference.huggingface.co/models/${HF_MODEL}`;
 
 // Narrow the unknown JSON shape returned by HF. The model returns either a flat
 // `[{label,score}, …]` array or, occasionally, a nested `[[{label,score}, …]]`. Be liberal.
@@ -83,12 +87,13 @@ export const decideFromScores = (
 ): ModerationResult => {
   const nsfw = scores.find((s) => s.label.toLowerCase() === "nsfw");
   if (!nsfw) {
-    return { status: "approved", score: null, label: null };
+    return { status: "approved", score: null, label: null, scores };
   }
   return {
     status: nsfw.score >= threshold ? "rejected" : "approved",
     score: nsfw.score,
     label: "nsfw",
+    scores,
   };
 };
 
@@ -117,7 +122,7 @@ export const makeHuggingFaceModerationPort = (
         log.warn(
           "[moderation] HF_MODERATION_TOKEN unset; approving photo without classification (set the token to enable moderation).",
         );
-        return { status: "approved", score: null, label: null };
+        return { status: "approved", score: null, label: null, scores: [] };
       }
       try {
         const response = await fetchImpl(HF_ENDPOINT, {
@@ -136,7 +141,7 @@ export const makeHuggingFaceModerationPort = (
               .text()
               .catch(() => "")}`,
           );
-          return { status: "approved", score: null, label: null };
+          return { status: "approved", score: null, label: null, scores: [] };
         }
         const raw: unknown = await response.json();
         return decideFromScores(flattenScores(raw), opts.threshold);
@@ -145,7 +150,7 @@ export const makeHuggingFaceModerationPort = (
           "[moderation] HF inference threw; failing open (approve).",
           error instanceof Error ? error.message : String(error),
         );
-        return { status: "approved", score: null, label: null };
+        return { status: "approved", score: null, label: null, scores: [] };
       }
     },
   };
@@ -154,7 +159,7 @@ export const makeHuggingFaceModerationPort = (
 /** The "none" provider: always approves, no classification. Lets an operator disable moderation. */
 export const makeNoopModerationPort = (): PhotoModerationPort => ({
   async classify(): Promise<ModerationResult> {
-    return { status: "approved", score: null, label: null };
+    return { status: "approved", score: null, label: null, scores: [] };
   },
 });
 

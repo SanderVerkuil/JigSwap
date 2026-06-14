@@ -33,7 +33,15 @@ describe("decideFromScores", () => {
       ],
       0.85,
     );
-    expect(result).toEqual({ status: "rejected", score: 0.92, label: "nsfw" });
+    expect(result).toEqual({
+      status: "rejected",
+      score: 0.92,
+      label: "nsfw",
+      scores: [
+        { label: "nsfw", score: 0.92 },
+        { label: "normal", score: 0.08 },
+      ],
+    });
   });
 
   test("nsfw score below threshold => approved (score retained)", () => {
@@ -44,7 +52,15 @@ describe("decideFromScores", () => {
       ],
       0.85,
     );
-    expect(result).toEqual({ status: "approved", score: 0.1, label: "nsfw" });
+    expect(result).toEqual({
+      status: "approved",
+      score: 0.1,
+      label: "nsfw",
+      scores: [
+        { label: "nsfw", score: 0.1 },
+        { label: "normal", score: 0.9 },
+      ],
+    });
   });
 
   test("threshold boundary is inclusive (>=)", () => {
@@ -61,6 +77,7 @@ describe("decideFromScores", () => {
       status: "approved",
       score: null,
       label: null,
+      scores: [{ label: "normal", score: 0.99 }],
     });
   });
 
@@ -98,7 +115,12 @@ describe("makeHuggingFaceModerationPort", () => {
       logger: silentLogger,
     });
     const result = await port.classify(bytes);
-    expect(result).toEqual({ status: "approved", score: null, label: null });
+    expect(result).toEqual({
+      status: "approved",
+      score: null,
+      label: null,
+      scores: [],
+    });
     // It must NOT call the API when unconfigured.
     expect(fetchImpl).not.toHaveBeenCalled();
   });
@@ -117,6 +139,10 @@ describe("makeHuggingFaceModerationPort", () => {
       status: "rejected",
       score: 0.97,
       label: "nsfw",
+      scores: [
+        { label: "nsfw", score: 0.97 },
+        { label: "normal", score: 0.03 },
+      ],
     });
   });
 
@@ -134,6 +160,10 @@ describe("makeHuggingFaceModerationPort", () => {
       status: "approved",
       score: 0.02,
       label: "nsfw",
+      scores: [
+        { label: "nsfw", score: 0.02 },
+        { label: "normal", score: 0.98 },
+      ],
     });
   });
 
@@ -169,6 +199,7 @@ describe("makeHuggingFaceModerationPort", () => {
       status: "approved",
       score: null,
       label: null,
+      scores: [],
     });
     expect(logger.error).toHaveBeenCalled();
   });
@@ -201,6 +232,7 @@ describe("makeModerationPortFromEnv", () => {
       status: "approved",
       score: null,
       label: null,
+      scores: [],
     });
     expect(fetchImpl).not.toHaveBeenCalled();
   });
@@ -211,6 +243,7 @@ describe("makeModerationPortFromEnv", () => {
       status: "approved",
       score: null,
       label: null,
+      scores: [],
     });
   });
 
@@ -219,6 +252,7 @@ describe("makeModerationPortFromEnv", () => {
       status: "approved",
       score: null,
       label: null,
+      scores: [],
     });
   });
 });

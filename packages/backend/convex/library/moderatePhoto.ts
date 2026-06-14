@@ -6,7 +6,9 @@ import { internalAction } from "../_generated/server";
 import { ingestToAxiom } from "../lib/axiom";
 import { logEvent, type WideEvent } from "../lib/logEvent";
 import {
+  HF_MODEL,
   makeModerationPortFromEnv,
+  readThreshold,
   toArrayBuffer,
 } from "./adapters/photoModeration";
 
@@ -65,14 +67,18 @@ export const moderatePhoto = internalAction({
     const startedAt = Date.now();
     const provider = (process.env.MODERATION_PROVIDER ?? "huggingface").trim();
     // ONE canonical wide event per moderation (logging-best-practices): high-cardinality ids,
-    // business context (copy / uploader / shot kind), the re-encode + classifier facts, the
-    // decision, and timing. Built up through the pipeline and flushed once in `finally`, then
-    // forwarded to Axiom. Replaces the scattered per-stage console.error lines.
+    // business context (copy / uploader / shot kind), the re-encode + classifier facts (model,
+    // threshold, the raw per-label scores), the decision, and timing. Built up through the pipeline
+    // and flushed once in `finally`, then forwarded to Axiom. Replaces the scattered console.error.
     const event: WideEvent = {
       event: "library.moderatePhoto",
       outcome: "success",
       image_id: imageId,
       provider,
+      // "none" disables classification; any other value resolves to the HF adapter (it fails open
+      // when unconfigured), so the model logged is HF unless moderation is explicitly off.
+      model: provider.toLowerCase() === "none" ? null : HF_MODEL,
+      nsfw_threshold: readThreshold(process.env.MODERATION_NSFW_THRESHOLD),
     };
     const flush = async () => {
       event.duration_ms = Date.now() - startedAt;
@@ -170,6 +176,9 @@ export const moderatePhoto = internalAction({
         event.decision = result.status;
         event.nsfw_score = result.score ?? null;
         event.nsfw_label = result.label ?? null;
+        // The raw per-label classifier output (e.g. [{label:"nsfw",score},{label:"normal",score}])
+        // so an unexpected verdict is debuggable straight from the log line.
+        event.classifier_scores = result.scores;
       } catch (error) {
         event.outcome = "error";
         event.error = { stage: "classify", message: errMsg(error) };
