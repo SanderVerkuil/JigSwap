@@ -8,6 +8,7 @@ import { FaqItem } from "@/components/marketing/faq-item";
 import { PageHero } from "@/components/marketing/page-hero";
 import { Reveal } from "@/components/marketing/reveal";
 import { Section, SectionHead } from "@/components/marketing/section";
+import { useStartHref } from "@/components/marketing/use-start-href";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useTranslations } from "use-intl";
@@ -31,6 +32,7 @@ const MODE_ACCENTS = [
 function HowItWorksPage() {
   const t = useTranslations("marketing.how");
   const tNav = useTranslations("marketing.nav");
+  const startHref = useStartHref();
   const steps = [1, 2, 3, 4, 5] as const;
   const modes = [1, 2, 3] as const;
   const faqs = [1, 2, 3, 4] as const;
@@ -118,7 +120,7 @@ function HowItWorksPage() {
           </div>
           <div className="mt-10">
             <Button variant="brand" className="h-11 px-6 text-[15px]" asChild>
-              <Link href="/sign-up">
+              <Link href={startHref}>
                 {tNav("startTrading")}
                 <ArrowRight size={17} />
               </Link>

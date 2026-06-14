@@ -2,6 +2,7 @@ import { Link } from "@/compat/link";
 import { Container } from "@/components/marketing/container";
 import { PieceMotif } from "@/components/marketing/piece-motif";
 import { Section } from "@/components/marketing/section";
+import { useStartHref } from "@/components/marketing/use-start-href";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useTranslations } from "use-intl";
@@ -9,6 +10,7 @@ import { useTranslations } from "use-intl";
 // Closing CTA panel: violet gradient, floating piece motifs, white button.
 export function FinalCTA() {
   const t = useTranslations("marketing");
+  const startHref = useStartHref();
   return (
     <Section>
       <Container>
@@ -37,7 +39,7 @@ export function FinalCTA() {
                 className="h-11 px-6 text-[15px] bg-white text-mk-violet-600 hover:bg-white/90"
                 asChild
               >
-                <Link href="/sign-up">
+                <Link href={startHref}>
                   {t("nav.startTrading")}
                   <ArrowRight size={17} />
                 </Link>

@@ -3,6 +3,7 @@ import { type PlankBox } from "@/components/marketing/plank";
 import { JigPlank3D } from "@/components/marketing/plank-3d";
 import { Reveal } from "@/components/marketing/reveal";
 import { Eyebrow } from "@/components/marketing/section";
+import { useStartHref } from "@/components/marketing/use-start-href";
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
 import { useQuery } from "convex/react";
@@ -262,10 +263,11 @@ function TrustRow() {
 
 function HeroCTAs() {
   const t = useTranslations("marketing");
+  const startHref = useStartHref();
   return (
     <div className="flex gap-3 flex-wrap mt-[30px]">
       <Button variant="brand" className="h-11 px-6 text-[15px]" asChild>
-        <Link href="/sign-up">
+        <Link href={startHref}>
           {t("nav.startTrading")}
           <ArrowRight size={17} />
         </Link>

@@ -7,6 +7,7 @@ import { Container } from "@/components/marketing/container";
 import { PageHero } from "@/components/marketing/page-hero";
 import { Reveal } from "@/components/marketing/reveal";
 import { Section, SectionHead } from "@/components/marketing/section";
+import { useStartHref } from "@/components/marketing/use-start-href";
 import { Button } from "@/components/ui/button";
 import { useTranslations } from "use-intl";
 
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/_public/features")({
 function FeaturesPage() {
   const t = useTranslations("marketing.features");
   const tNav = useTranslations("marketing.nav");
+  const startHref = useStartHref();
   const groups = [1, 2, 3, 4] as const;
   const items = [1, 2, 3] as const;
 
@@ -67,7 +69,7 @@ function FeaturesPage() {
           </h2>
           <div className="mt-[26px] flex justify-center gap-3 flex-wrap">
             <Button variant="brand" className="h-11 px-6 text-[15px]" asChild>
-              <Link href="/sign-up">{tNav("startTrading")}</Link>
+              <Link href={startHref}>{tNav("startTrading")}</Link>
             </Button>
             <Button
               variant="outline"
