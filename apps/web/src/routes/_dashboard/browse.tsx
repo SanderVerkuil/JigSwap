@@ -164,6 +164,12 @@ function BrowsePage() {
               puzzle={puzzle}
               variant="browse"
               showOwner={true}
+              onView={(ownedPuzzleId) =>
+                navigate({
+                  to: "/copies/$id",
+                  params: { id: ownedPuzzleId },
+                })
+              }
               onRequestExchange={() => navigate({ to: "/trades" })}
               onMessage={() => navigate({ to: "/messages" })}
               onFavorite={() => toast(tBrowse("favoritesComingSoon"))}

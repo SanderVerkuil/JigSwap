@@ -270,15 +270,40 @@ describe("sharing.getCircle visibility", () => {
 
 // --- Circle-aware visibility (cross-context) ---------------------------------------------------
 
-// Alice acquires a copy and keeps it PRIVATE (no exchange availability).
+// Alice acquires an OPEN copy (forLend) but keeps her PROFILE private, so the only way another
+// member can reach the copy in Browse is via a shared circle. Browse rule 1 requires a copy to be
+// open even when reached through a circle, so the row is marked forLend; rule 2 (owner public OR
+// circle-shared) is exercised by Alice's private profile — the public path is closed.
 const acquirePrivateForAlice = async (
   t: ReturnType<typeof convexTest>,
   puzzleAggregateId: string,
-) =>
-  (await asAlice(t).mutation(api.library.acquireCopy.acquireCopy, {
-    puzzleDefinitionId: puzzleAggregateId,
-    condition: "good",
-  })) as string;
+) => {
+  const copyId = (await asAlice(t).mutation(
+    api.library.acquireCopy.acquireCopy,
+    {
+      puzzleDefinitionId: puzzleAggregateId,
+      condition: "good",
+    },
+  )) as string;
+  await t.run(async (ctx) => {
+    const row = await ctx.db
+      .query("ownedPuzzles")
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", copyId))
+      .unique();
+    if (!row) throw new Error("seed: acquired copy not found");
+    await ctx.db.patch(row._id, {
+      availability: { forTrade: false, forSale: false, forLend: true },
+    });
+    // Alice's profile is PRIVATE: she is reachable only through a shared circle.
+    await ctx.db.insert("profiles", {
+      memberId: row.ownerId,
+      displayName: "Alice",
+      visibility: "private",
+      updatedAt: Date.now(),
+    });
+  });
+  return copyId;
+};
 
 describe("library.browseOwnedPuzzles circle-aware visibility", () => {
   test("a private copy shared into a circle is visible to a fellow member", async () => {

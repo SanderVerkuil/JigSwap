@@ -1997,7 +1997,8 @@
     "signIn": "Inloggen — JigSwap",
     "signUp": "Registreren — JigSwap",
     "library": "Mijn Bibliotheek — JigSwap",
-    "people": "Mensen — JigSwap"
+    "people": "Mensen — JigSwap",
+    "copyInstance": "Exemplaar in bezit — JigSwap"
   },
   "shell": {
     "search": {
@@ -2124,6 +2125,10 @@
       "notifications": {
         "title": "Meldingen",
         "subtitle": "Alles wat je aandacht vraagt."
+      },
+      "copyInstance": {
+        "title": "Exemplaar in bezit",
+        "subtitle": "De herkomst en geschiedenis van één exemplaar."
       }
     },
     "user": {
@@ -2154,5 +2159,49 @@
       }
     },
     "breadcrumbLabel": "Broodkruimel"
+  },
+  "copyInstance": {
+    "notFound": "Exemplaar niet gevonden",
+    "notFoundSub": "Dit exemplaar is mogelijk verwijderd, of je hebt er geen toegang toe.",
+    "details": "Details",
+    "brand": "Merk",
+    "condition": "Staat",
+    "availability": "Beschikbaarheid",
+    "notAvailable": "Niet aangeboden",
+    "notes": "Notities",
+    "owner": "Eigenaar",
+    "anonymousUser": "Anonieme gebruiker",
+    "acquisition": "Verwerving",
+    "acquiredOn": "Verworven op",
+    "acquiredVia": "Verworven via",
+    "acquisitionSource": {
+      "bought_new": "Nieuw gekocht",
+      "bought_used": "Tweedehands gekocht",
+      "trade": "Ruil",
+      "gift": "Cadeau"
+    },
+    "history": "Geschiedenis",
+    "sinceYouAcquired": "Sinds jij het verkreeg",
+    "beforeYou": "Voor jou",
+    "noHistory": "Nog geen geschiedenis vastgelegd.",
+    "swappedFromTo": "Geruild van",
+    "acquiredBy": "Verworven door",
+    "viaExchange": "via ruil",
+    "completedBy": "Voltooid door",
+    "completionTime": "{minutes} min",
+    "lentTo": "Uitgeleend aan",
+    "returned": "Geretourneerd",
+    "loanStatus": {
+      "open": "Uitgeleend",
+      "returned": "Geretourneerd",
+      "recalled": "Teruggevraagd"
+    },
+    "actions": {
+      "edit": "Bewerken",
+      "logSolve": "Oplossing vastleggen",
+      "delete": "Verwijderen",
+      "requestSwap": "Ruil aanvragen",
+      "message": "Bericht"
+    }
   }
 }

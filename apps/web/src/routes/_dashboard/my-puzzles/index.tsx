@@ -156,7 +156,7 @@ function PuzzlesPage() {
   };
 
   const handleViewPuzzle = (ownedPuzzleId: Id<"ownedPuzzles">) => {
-    router.push(`/my-puzzles/${ownedPuzzleId}`);
+    router.push(`/copies/${ownedPuzzleId}`);
   };
 
   const handleLogSolve = (ownedPuzzleId: Id<"ownedPuzzles">) => {
