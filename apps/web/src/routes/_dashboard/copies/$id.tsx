@@ -66,7 +66,7 @@ function CopyInstancePage() {
 
 function CopyInstanceSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-[1140px] space-y-8">
+    <div className="w-full space-y-8">
       <div className="grid gap-7 lg:grid-cols-[300px_minmax(0,1fr)]">
         <Skeleton className="aspect-square w-full rounded-2xl" />
         <div className="space-y-4">
@@ -180,7 +180,7 @@ function CopyInstanceDetail({
     difficulty ? tDifficulty(difficulty) : tDifficulty("unknown");
 
   return (
-    <div className="mx-auto flex w-full max-w-[1140px] flex-col gap-10">
+    <div className="flex w-full flex-col gap-10">
       {/* Hero */}
       <section className="grid items-start gap-7 lg:grid-cols-[300px_minmax(0,1fr)]">
         {/* Cover */}
