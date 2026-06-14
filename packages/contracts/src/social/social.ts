@@ -1,3 +1,4 @@
+import type { MemberView } from "../identity/member";
 import type { ConvexSystemFields } from "../shared/convex";
 
 /**
@@ -41,3 +42,16 @@ export interface ActivityEntryView {
   occurredAt: number;
   ref: string;
 }
+
+/**
+ * The server-side projection of one member's identity to a given viewer, the output of the privacy
+ * chokepoint that gates every participant surfaced in a copy's history. A discriminated union: when
+ * `anonymous` is false the member is revealed as a full MemberView; when true the member is hidden
+ * and ONLY a deterministic, non-reversible `anonRef` is emitted — NO real id, name, username, or
+ * avatar crosses the wire. The viewer is revealed a member iff it is themself, the member's profile
+ * is public, or the two are mutual followers; otherwise the member is anonymised. The "Anonymous
+ * user" label is the UI's concern (i18n there); it is intentionally NOT part of this DTO.
+ */
+export type ProjectedMember =
+  | { anonymous: false; member: MemberView }
+  | { anonymous: true; anonRef: string };

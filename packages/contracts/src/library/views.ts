@@ -4,6 +4,7 @@
 // the opaque strings they are at runtime; the web app re-casts to its own `Id<...>` at the edge.
 
 import type { DocId, PuzzleDifficulty } from "../catalog/views";
+import type { ProjectedMember } from "../social/social";
 
 export type CopyCondition =
   | "new_sealed"
@@ -215,6 +216,94 @@ export interface CollectionDetailView {
   createdAt: number;
   updatedAt: number;
   puzzles: OwnedCopyView[];
+}
+
+// --- Copy instance (owned-copy) timeline -------------------------------------------------------
+// The privacy-gated provenance of a single owned copy: its catalog snapshot, the (projected) owner,
+// and one merged chronological event stream (ownership transfers, completions, loans). Every member
+// surfaced in the stream is a ProjectedMember, anonymised server-side per the viewer's connection so
+// private identities never cross the wire. The stream is split into `since` (events while the viewer
+// has held the copy) and `before` (its history before they acquired it); non-owners see everything
+// in `before`. Returned by `library.getCopyInstanceView`.
+
+/** An ownership transfer in a copy's history (from the custody projection). */
+export interface CopyInstanceTransferEntry {
+  type: "transfer";
+  /** The member the copy moved FROM (projected). */
+  from: ProjectedMember;
+  /** The member the copy moved TO (projected). */
+  to: ProjectedMember;
+  /** Whether the transfer settled via an exchange (true when an exchange id is recorded). */
+  viaExchange: boolean;
+  /** Epoch millis the transfer occurred. */
+  occurredAt: number;
+}
+
+/** A completion of the copy (from the solving projection). */
+export interface CopyInstanceCompletionEntry {
+  type: "completion";
+  /** The member who solved it (projected). */
+  solver: ProjectedMember;
+  startDate: number;
+  endDate?: number;
+  timeMinutes?: number;
+  /** Sort key: the completion's `endDate` if finished, else its `startDate`. */
+  occurredAt: number;
+}
+
+/** A loan of the copy's possession (from the lending projection). */
+export interface CopyInstanceLoanEntry {
+  type: "loan";
+  /** The lender (projected). */
+  lender: ProjectedMember;
+  /** The borrower (projected). */
+  borrower: ProjectedMember;
+  openedAt: number;
+  closedAt?: number;
+  status: "open" | "returned" | "recalled";
+  /** Sort key: when the loan opened. */
+  occurredAt: number;
+}
+
+/** One entry in a copy's merged timeline. Discriminated on `type`. */
+export type CopyInstanceTimelineEntry =
+  | CopyInstanceTransferEntry
+  | CopyInstanceCompletionEntry
+  | CopyInstanceLoanEntry;
+
+/**
+ * The privacy-gated detail view of a single owned copy, as returned by
+ * `library.getCopyInstanceView`. `owner` and every participant in `since`/`before` are projected
+ * server-side. `since`/`before` are each ascending by `occurredAt`.
+ */
+export interface CopyInstanceView {
+  /** The copy's `ownedPuzzles` _id. */
+  copyId: DocId;
+  /** Whether the acting viewer currently owns this copy. */
+  viewerIsOwner: boolean;
+  /** The (projected) current owner. */
+  owner: ProjectedMember;
+  /** Catalog/condition snapshot of the copy. */
+  snapshot: {
+    title: string;
+    brand?: string;
+    pieceCount: number;
+    image?: string;
+    condition: CopyCondition;
+    notes?: string;
+    availability: CopyAvailability;
+    acquisitionDate?: number;
+    acquisitionSource?: "bought_new" | "bought_used" | "trade" | "gift";
+  };
+  /**
+   * When the viewer acquired the copy (the latest custody transfer to them, else the copy's
+   * creation time). Only meaningful when `viewerIsOwner` is true.
+   */
+  acquiredByViewerAt: number;
+  /** Events at/after `acquiredByViewerAt` (the viewer's own tenure). Empty for non-owners. */
+  since: CopyInstanceTimelineEntry[];
+  /** Events before `acquiredByViewerAt` (gated history). All events for non-owners. */
+  before: CopyInstanceTimelineEntry[];
 }
 
 /**

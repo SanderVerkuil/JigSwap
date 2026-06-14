@@ -56,6 +56,9 @@ export const gateway = {
     ownedWithCollectionStatus:
       api.library.getOwnedPuzzleWithCollectionStatus
         .getOwnedPuzzleWithCollectionStatus,
+    // Privacy-gated detail of a single owned copy: snapshot + projected owner + merged, anonymised
+    // history timeline (transfers/completions/loans) split into the viewer's tenure vs gated history.
+    getCopyInstanceView: api.library.getCopyInstanceView.getCopyInstanceView,
     // Image upload is storage infra, not a domain op; keep it on the legacy function. The URL is
     // used for copy photos.
     generateUploadUrl: api.puzzles.generateUploadUrl,
