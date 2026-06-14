@@ -88,6 +88,39 @@ describe("addCopyPhoto", () => {
     expect(view?.gallery.length).toBe(1);
   });
 
+  test("a new photo is inserted pending and schedules the moderation job", async () => {
+    const t = convexTest(schema, modules);
+    const { aliceCopy } = await seed(t);
+    const fileId = (await storeBlob(t)) as Id<"_storage">;
+
+    await asAlice(t).mutation(api.library.addCopyPhoto.addCopyPhoto, {
+      copyId: aliceCopy,
+      fileId,
+      tag: "box_front",
+    });
+
+    // The row starts in "pending" until the async pipeline decides.
+    const images = await t.run((ctx) =>
+      ctx.db
+        .query("ownedPuzzleImages")
+        .withIndex("by_owned_puzzle", (q) => q.eq("ownedPuzzleId", aliceCopy))
+        .collect(),
+    );
+    expect(images).toHaveLength(1);
+    expect(images[0].moderationStatus).toBe("pending");
+    expect(images[0].moderationScore).toBeUndefined();
+
+    // A moderatePhoto job was scheduled for this exact image (runAfter 0).
+    const scheduled = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect(),
+    );
+    const job = scheduled.find((s) => s.name.includes("moderatePhoto"));
+    expect(job).toBeDefined();
+    expect((job?.args[0] as { imageId?: string })?.imageId).toBe(
+      images[0]._id as string,
+    );
+  });
+
   test("a non-owner is rejected and nothing is written", async () => {
     const t = convexTest(schema, modules);
     const { aliceCopy } = await seed(t);

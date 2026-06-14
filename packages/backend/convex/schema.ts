@@ -232,6 +232,25 @@ export default defineSchema({
     // The date the photo was taken
     takenAt: v.optional(v.number()),
 
+    // --- Async content moderation (image-moderation pipeline) ---
+    // Lifecycle: a freshly uploaded photo is "pending" until the moderatePhoto Node action
+    // re-encodes it (strips EXIF) and content-classifies it, then flips it to "approved" or
+    // "rejected". ABSENT means the row predates moderation and is treated as "approved" so legacy
+    // photos stay visible. The gallery only surfaces approved photos (plus the uploader's own
+    // pending ones).
+    moderationStatus: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("approved"),
+        v.literal("rejected"),
+      ),
+    ),
+    // The classifier's NSFW score in [0,1] (null/absent when un-scored, e.g. provider "none" or
+    // missing token). Kept for auditability/threshold tuning.
+    moderationScore: v.optional(v.number()),
+    // The decisive label from the classifier (e.g. "nsfw"/"normal"), for diagnostics.
+    moderationLabel: v.optional(v.string()),
+
     // --- Timestamps ---
     createdAt: v.number(),
     updatedAt: v.number(),

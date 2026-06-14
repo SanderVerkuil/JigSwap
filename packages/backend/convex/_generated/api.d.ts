@@ -105,6 +105,7 @@ import type * as library_adapters_copyMapper from "../library/adapters/copyMappe
 import type * as library_adapters_eventPublisher from "../library/adapters/eventPublisher.js";
 import type * as library_adapters_idGenerators from "../library/adapters/idGenerators.js";
 import type * as library_adapters_loanMapper from "../library/adapters/loanMapper.js";
+import type * as library_adapters_photoModeration from "../library/adapters/photoModeration.js";
 import type * as library_adapters_systemClock from "../library/adapters/systemClock.js";
 import type * as library_adapters_visibilityPolicy from "../library/adapters/visibilityPolicy.js";
 import type * as library_addCopyImage from "../library/addCopyImage.js";
@@ -132,6 +133,8 @@ import type * as library_getUserCollections from "../library/getUserCollections.
 import type * as library_listPhotoComments from "../library/listPhotoComments.js";
 import type * as library_loanReadViews from "../library/loanReadViews.js";
 import type * as library_mappers from "../library/mappers.js";
+import type * as library_moderatePhoto from "../library/moderatePhoto.js";
+import type * as library_moderationStore from "../library/moderationStore.js";
 import type * as library_openLoanOnSettlement from "../library/openLoanOnSettlement.js";
 import type * as library_postPhotoComment from "../library/postPhotoComment.js";
 import type * as library_recallLoan from "../library/recallLoan.js";
@@ -338,6 +341,7 @@ declare const fullApi: ApiFromModules<{
   "library/adapters/eventPublisher": typeof library_adapters_eventPublisher;
   "library/adapters/idGenerators": typeof library_adapters_idGenerators;
   "library/adapters/loanMapper": typeof library_adapters_loanMapper;
+  "library/adapters/photoModeration": typeof library_adapters_photoModeration;
   "library/adapters/systemClock": typeof library_adapters_systemClock;
   "library/adapters/visibilityPolicy": typeof library_adapters_visibilityPolicy;
   "library/addCopyImage": typeof library_addCopyImage;
@@ -365,6 +369,8 @@ declare const fullApi: ApiFromModules<{
   "library/listPhotoComments": typeof library_listPhotoComments;
   "library/loanReadViews": typeof library_loanReadViews;
   "library/mappers": typeof library_mappers;
+  "library/moderatePhoto": typeof library_moderatePhoto;
+  "library/moderationStore": typeof library_moderationStore;
   "library/openLoanOnSettlement": typeof library_openLoanOnSettlement;
   "library/postPhotoComment": typeof library_postPhotoComment;
   "library/recallLoan": typeof library_recallLoan;

@@ -615,6 +615,76 @@ describe("getCopyInstanceView rich detail", () => {
     expect(second?.uploaderName).toBe("Viewer");
   });
 
+  test("gallery moderation gating: approved/absent shown to all; rejected hidden; pending only to its uploader", async () => {
+    const t = convexTest(schema, modules);
+    const { now, viewer, prevOwner, copy } = await seedCopy(t);
+
+    const ids = await t.run(async (ctx) => {
+      const store = (label: string) =>
+        ctx.storage.store(new Blob([label], { type: "image/png" }));
+      const mkPhoto = async (
+        uploaderId: Id<"users">,
+        moderationStatus: "pending" | "approved" | "rejected" | undefined,
+        takenAt: number,
+      ) =>
+        ctx.db.insert("ownedPuzzleImages", {
+          ownedPuzzleId: copy,
+          uploaderId,
+          fileId: await store(`${moderationStatus ?? "legacy"}-${takenAt}`),
+          ...(moderationStatus ? { moderationStatus } : {}),
+          takenAt,
+          createdAt: now,
+          updatedAt: now,
+        });
+
+      return {
+        approved: await mkPhoto(viewer, "approved", now + 50),
+        legacy: await mkPhoto(viewer, undefined, now + 40),
+        rejected: await mkPhoto(viewer, "rejected", now + 30),
+        viewerPending: await mkPhoto(viewer, "pending", now + 20),
+        otherPending: await mkPhoto(prevOwner, "pending", now + 10),
+      };
+    });
+
+    // The OWNER/uploader (viewer) sees: approved + legacy(absent) + their own pending. NOT the
+    // rejected one, NOT the other member's pending one.
+    const ownerView = await asViewer(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    const ownerIds = (ownerView?.gallery ?? []).map((p) => p.id);
+    expect(ownerIds).toEqual([
+      ids.approved as string,
+      ids.legacy as string,
+      ids.viewerPending as string,
+    ]);
+    // The viewer's own pending photo carries the badge; approved/legacy read "approved".
+    const byId = new Map(
+      (ownerView?.gallery ?? []).map((p) => [p.id, p.moderationStatus]),
+    );
+    expect(byId.get(ids.viewerPending as string)).toBe("pending");
+    expect(byId.get(ids.approved as string)).toBe("approved");
+    expect(byId.get(ids.legacy as string)).toBe("approved");
+
+    // A DIFFERENT viewer (who uploaded none of these) sees ONLY approved + legacy — no pending
+    // (none are theirs), no rejected. Gating keys on the UPLOADER, not the copy owner, so we query
+    // as a fresh identity rather than reassigning ownership.
+    await t.run(async (ctx) =>
+      mkUser(ctx, "clerk_stranger2", "Stranger2", now),
+    );
+    const strangerView = await t
+      .withIdentity({ subject: "clerk_stranger2" })
+      .query(api.library.getCopyInstanceView.getCopyInstanceView, {
+        copyId: copy,
+      });
+    const strangerIds = (strangerView?.gallery ?? []).map((p) => p.id);
+    expect(strangerIds).toEqual([ids.approved as string, ids.legacy as string]);
+    // Adversarial: the rejected and the foreign-pending photos never appear.
+    expect(strangerIds).not.toContain(ids.rejected as string);
+    expect(strangerIds).not.toContain(ids.viewerPending as string);
+    expect(strangerIds).not.toContain(ids.otherPending as string);
+  });
+
   test("grouped completion entries carry rating, note and isYou", async () => {
     const t = convexTest(schema, modules);
     const { now, viewer, solver, copy } = await seedCopy(t);

@@ -1,4 +1,5 @@
 import { ConvexError, v } from "convex/values";
+import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
@@ -33,14 +34,26 @@ export const addCopyPhoto = mutation({
     }
 
     const now = Date.now();
-    await ctx.db.insert("ownedPuzzleImages", {
+    // Inserted as "pending": the async moderatePhoto pipeline re-encodes (strips EXIF) and
+    // content-classifies the photo, then flips it to approved/rejected. Until then only the
+    // uploader sees it in the gallery (see getCopyInstanceView).
+    const imageId = await ctx.db.insert("ownedPuzzleImages", {
       ownedPuzzleId: args.copyId,
       uploaderId: memberId,
       fileId: args.fileId,
       title: args.title,
       tag: args.tag,
+      moderationStatus: "pending",
       createdAt: now,
       updatedAt: now,
     });
+
+    // Kick the async moderation pipeline (runAfter 0 = as soon as this mutation commits). Scheduling
+    // is transactional with the insert, so the job is only enqueued if the row is actually written.
+    await ctx.scheduler.runAfter(
+      0,
+      internal.library.moderatePhoto.moderatePhoto,
+      { imageId },
+    );
   },
 });

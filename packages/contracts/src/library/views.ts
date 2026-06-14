@@ -363,6 +363,12 @@ export interface CopyPhoto {
   takenAt: number | null;
   /** When the photo row was created (epoch ms). */
   createdAt: number;
+  /**
+   * The async moderation verdict: "approved" (default — also when the row predates moderation),
+   * or "pending" while the moderation pipeline runs. A "pending" photo is only ever included for
+   * its own uploader, who can show a "pending review" badge; rejected photos are never returned.
+   */
+  moderationStatus: "approved" | "pending";
 }
 
 /**
