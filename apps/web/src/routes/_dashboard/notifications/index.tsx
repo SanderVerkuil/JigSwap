@@ -8,6 +8,7 @@ import {
   type NotificationRow,
   type NotificationType,
   notificationAccent,
+  notificationCopy,
   notificationHref,
   notificationIcon,
   notificationId,
@@ -115,6 +116,7 @@ function NotificationsPage() {
             {notifications.map((row) => {
               const Icon = notificationIcon(row.type);
               const href = notificationHref(row);
+              const copy = notificationCopy(row, t);
               return (
                 <li
                   key={row._id}
@@ -139,10 +141,12 @@ function NotificationsPage() {
                           onClick={() => handleOpen(row)}
                           className="text-left text-sm font-medium hover:underline"
                         >
-                          {row.title}
+                          {copy.title}
                         </button>
                       ) : (
-                        <span className="text-sm font-medium">{row.title}</span>
+                        <span className="text-sm font-medium">
+                          {copy.title}
+                        </span>
                       )}
                       <Badge variant="secondary" className="text-[10px]">
                         {t(`types.${row.type as NotificationType}`)}
@@ -155,7 +159,7 @@ function NotificationsPage() {
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {row.message}
+                      {copy.message}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(row.createdAt), {

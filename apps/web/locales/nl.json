@@ -1368,6 +1368,60 @@
       "puzzle_approved": "Puzzel goedgekeurd",
       "puzzle_rejected": "Puzzel afgewezen",
       "goal_achieved": "Doel behaald"
+    },
+    "copy": {
+      "trade_request": {
+        "title": "Nieuw ruilverzoek",
+        "message": "Iemand wil ruilen voor een van je puzzels."
+      },
+      "trade_accepted": {
+        "title": "Ruil geaccepteerd",
+        "message": "Je ruilverzoek is geaccepteerd!"
+      },
+      "trade_declined": {
+        "title": "Ruil afgewezen",
+        "message": "Je ruilverzoek is afgewezen."
+      },
+      "trade_completed": {
+        "title": "Ruil voltooid",
+        "message": "De ruil is als voltooid gemarkeerd."
+      },
+      "trade_cancelled": {
+        "title": "Ruil geannuleerd",
+        "message": "Het ruilverzoek is geannuleerd."
+      },
+      "exchange_proposed": {
+        "title": "Ruil voorgesteld",
+        "message": "Je hebt een nieuw ruilvoorstel."
+      },
+      "exchange_disputed": {
+        "title": "Ruil betwist",
+        "message": "De andere partij heeft een probleem met je ruil gemeld."
+      },
+      "message_received": {
+        "title": "Nieuw bericht",
+        "message": "Je hebt een nieuw bericht in je ruilgesprek."
+      },
+      "review_received": {
+        "title": "Nieuwe beoordeling",
+        "message": "Je hebt een nieuwe partnerbeoordeling ontvangen."
+      },
+      "puzzle_favorited": {
+        "title": "Puzzel als favoriet",
+        "message": "Iemand heeft je puzzel als favoriet gemarkeerd."
+      },
+      "puzzle_approved": {
+        "title": "Puzzel goedgekeurd",
+        "message": "Je puzzelinzending is goedgekeurd."
+      },
+      "puzzle_rejected": {
+        "title": "Puzzel afgewezen",
+        "message": "Je puzzelinzending is afgewezen."
+      },
+      "goal_achieved": {
+        "title": "Doel behaald",
+        "message": "Je hebt een van je doelen bereikt!"
+      }
     }
   },
   "solving": {

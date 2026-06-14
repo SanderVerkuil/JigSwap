@@ -21,6 +21,7 @@ import { useTranslations } from "use-intl";
 import {
   type NotificationRow,
   notificationAccent,
+  notificationCopy,
   notificationHref,
   notificationIcon,
   notificationId,
@@ -136,6 +137,7 @@ export function NotificationBell() {
             <ul className="divide-y">
               {preview.map((row) => {
                 const Icon = notificationIcon(row.type);
+                const copy = notificationCopy(row, t);
                 return (
                   <li key={row._id}>
                     <button
@@ -157,7 +159,7 @@ export function NotificationBell() {
                       <span className="flex-1 space-y-0.5">
                         <span className="flex items-center gap-2">
                           <span className="line-clamp-1 text-sm font-medium">
-                            {row.title}
+                            {copy.title}
                           </span>
                           {!row.isRead && (
                             <span
@@ -167,7 +169,7 @@ export function NotificationBell() {
                           )}
                         </span>
                         <span className="line-clamp-2 text-xs text-muted-foreground">
-                          {row.message}
+                          {copy.message}
                         </span>
                         <span className="block text-[11px] text-muted-foreground">
                           {formatDistanceToNow(new Date(row.createdAt), {

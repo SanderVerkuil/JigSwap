@@ -1368,6 +1368,60 @@
       "puzzle_approved": "Puzzle approved",
       "puzzle_rejected": "Puzzle rejected",
       "goal_achieved": "Goal achieved"
+    },
+    "copy": {
+      "trade_request": {
+        "title": "New exchange request",
+        "message": "Someone wants to trade for one of your puzzles."
+      },
+      "trade_accepted": {
+        "title": "Exchange accepted",
+        "message": "Your trade request has been accepted!"
+      },
+      "trade_declined": {
+        "title": "Exchange declined",
+        "message": "Your trade request has been declined."
+      },
+      "trade_completed": {
+        "title": "Exchange completed",
+        "message": "The exchange has been marked as completed."
+      },
+      "trade_cancelled": {
+        "title": "Exchange cancelled",
+        "message": "The exchange request has been cancelled."
+      },
+      "exchange_proposed": {
+        "title": "Exchange proposed",
+        "message": "You have a new exchange proposal."
+      },
+      "exchange_disputed": {
+        "title": "Exchange disputed",
+        "message": "The other party has flagged an issue with your exchange."
+      },
+      "message_received": {
+        "title": "New message",
+        "message": "You have a new message in your trade conversation."
+      },
+      "review_received": {
+        "title": "New review",
+        "message": "You received a new partner review."
+      },
+      "puzzle_favorited": {
+        "title": "Puzzle favorited",
+        "message": "Someone favorited your puzzle."
+      },
+      "puzzle_approved": {
+        "title": "Puzzle approved",
+        "message": "Your puzzle submission was approved."
+      },
+      "puzzle_rejected": {
+        "title": "Puzzle rejected",
+        "message": "Your puzzle submission was rejected."
+      },
+      "goal_achieved": {
+        "title": "Goal achieved",
+        "message": "You reached one of your goals!"
+      }
     }
   },
   "solving": {
