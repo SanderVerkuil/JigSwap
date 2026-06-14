@@ -2269,7 +2269,12 @@
       "prev": "Previous photo",
       "next": "Next photo",
       "counter": "{current} / {total}",
-      "commentFailed": "Couldn’t post your comment. Please try again."
+      "commentFailed": "Couldn’t post your comment. Please try again.",
+      "setAsCover": "Set as cover",
+      "currentCover": "Current cover",
+      "coverUpdated": "Cover updated",
+      "coverFailed": "Couldn't update the cover",
+      "pendingReview": "Pending review"
     },
     "offerForSwap": "Offer for Swap",
     "offeredForSwap": "Offered for Swap",
@@ -2286,7 +2291,9 @@
       "useCatalogueImage": "Use catalogue image",
       "noPhotosForCover": "Add photos to this copy to choose a custom cover.",
       "notesPlaceholder": "Add a note about this copy…"
-    }
+    },
+    "photoCover": "Cover",
+    "photoPending": "Pending review"
   },
   "puzzleDefinition": {
     "notFound": "Puzzle not found",

@@ -30,6 +30,7 @@ import {
   MessageCircle,
   Package,
   Puzzle,
+  Star,
   Tag,
 } from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
@@ -430,6 +431,7 @@ function CopyInstanceDetail({
           gallery={gallery}
           canAdd={copy.viewerIsOwner}
           copyId={copyId}
+          coverImageId={snapshot.coverImageId}
         />
       </section>
 
@@ -643,10 +645,12 @@ function PhotoStrip({
   gallery,
   canAdd,
   copyId,
+  coverImageId,
 }: {
   gallery: CopyInstanceView["gallery"];
   canAdd: boolean;
   copyId: string;
+  coverImageId: string | null;
 }) {
   const t = useTranslations("copyInstance");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -704,6 +708,22 @@ function PhotoStrip({
             alt={photo.caption ?? ""}
             className="h-full w-full object-contain"
           />
+          {/* Top-left status chips: which photo is the cover + a "pending review" flag while a
+              freshly-uploaded photo is being moderated (only the uploader sees their pending ones). */}
+          <div className="absolute left-2 top-2 flex flex-wrap gap-1">
+            {coverImageId === photo.id && (
+              <span className="bg-jigsaw-primary inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
+                <Star className="h-2.5 w-2.5" fill="currentColor" />
+                {t("photoCover")}
+              </span>
+            )}
+            {photo.moderationStatus === "pending" && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
+                <Clock className="h-2.5 w-2.5" />
+                {t("photoPending")}
+              </span>
+            )}
+          </div>
           {photo.caption && (
             <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2.5 pt-5 text-left text-xs font-semibold text-white">
               {photo.caption}
@@ -743,6 +763,9 @@ function PhotoStrip({
           open={lightboxOpen}
           onOpenChange={setLightboxOpen}
           onIndexChange={setActiveIndex}
+          canSetCover={canAdd}
+          copyId={copyId}
+          coverImageId={coverImageId}
         />
       )}
     </div>

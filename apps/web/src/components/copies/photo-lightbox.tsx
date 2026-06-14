@@ -14,7 +14,13 @@ import { gateway, Id } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { ChevronLeft, ChevronRight, MessageCircle } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  MessageCircle,
+  Star,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
@@ -38,18 +44,45 @@ export function PhotoLightbox({
   open,
   onOpenChange,
   onIndexChange,
+  canSetCover,
+  copyId,
+  coverImageId,
 }: {
   gallery: GalleryPhoto[];
   index: number;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onIndexChange: (index: number) => void;
+  /** Owner-only: lets the viewer set this photo as the copy's cover. */
+  canSetCover: boolean;
+  /** The copy's `ownedPuzzles` _id (setCopyCover keys on this). */
+  copyId: string;
+  /** The currently-selected cover photo id, or null when the catalogue image is in use. */
+  coverImageId: string | null;
 }) {
   const t = useTranslations("copyInstance.photoLightbox");
   const format = useFormatter();
+  const setCopyCover = useMutation(gateway.library.setCopyCover);
+  const [settingCover, setSettingCover] = useState(false);
 
   const count = gallery.length;
   const photo = gallery[index];
+
+  const setAsCover = async () => {
+    if (!photo) return;
+    setSettingCover(true);
+    try {
+      await setCopyCover({
+        copyId: copyId as Id<"ownedPuzzles">,
+        coverImageId: photo.id as Id<"ownedPuzzleImages">,
+      });
+      toast.success(t("coverUpdated"));
+    } catch {
+      toast.error(t("coverFailed"));
+    } finally {
+      setSettingCover(false);
+    }
+  };
 
   // Arrow-key navigation while the lightbox is open. Wraps at both ends so the gallery is a loop.
   // Esc/overlay close stays with the Dialog's built-in behaviour.
@@ -160,6 +193,33 @@ export function PhotoLightbox({
                 {t("takenOn", { date: takenLabel })}
               </div>
             </dl>
+
+            {photo.moderationStatus === "pending" && (
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                <Clock className="h-3.5 w-3.5" />
+                {t("pendingReview")}
+              </div>
+            )}
+
+            {/* Owner-only: choose this photo as the copy's cover, right where you're viewing it. */}
+            {canSetCover &&
+              (coverImageId === photo.id ? (
+                <div className="text-jigsaw-primary inline-flex items-center gap-1.5 text-sm font-semibold">
+                  <Star className="h-4 w-4" fill="currentColor" />
+                  {t("currentCover")}
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void setAsCover()}
+                  disabled={settingCover}
+                  className="w-full"
+                >
+                  <Star className="h-4 w-4" />
+                  {t("setAsCover")}
+                </Button>
+              ))}
           </div>
 
           <div className="border-border border-t px-5 py-4">

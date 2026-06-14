@@ -2269,7 +2269,12 @@
       "prev": "Vorige foto",
       "next": "Volgende foto",
       "counter": "{current} / {total}",
-      "commentFailed": "Je reactie kon niet worden geplaatst. Probeer het opnieuw."
+      "commentFailed": "Je reactie kon niet worden geplaatst. Probeer het opnieuw.",
+      "setAsCover": "Als omslag instellen",
+      "currentCover": "Huidige omslag",
+      "coverUpdated": "Omslag bijgewerkt",
+      "coverFailed": "Kon de omslag niet bijwerken",
+      "pendingReview": "Wordt beoordeeld"
     },
     "offerForSwap": "Aanbieden voor ruil",
     "offeredForSwap": "Aangeboden voor ruil",
@@ -2286,7 +2291,9 @@
       "useCatalogueImage": "Catalogusafbeelding gebruiken",
       "noPhotosForCover": "Voeg fotos toe aan dit exemplaar om een eigen omslag te kiezen.",
       "notesPlaceholder": "Voeg een notitie toe over dit exemplaar…"
-    }
+    },
+    "photoCover": "Omslag",
+    "photoPending": "Wordt beoordeeld"
   },
   "puzzleDefinition": {
     "notFound": "Puzzel niet gevonden",
