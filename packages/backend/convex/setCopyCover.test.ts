@@ -157,9 +157,11 @@ describe("library.setCopyCover", () => {
 
     const v = await view(t, copyId);
     expect(v?.snapshot.coverImageId).toBeNull();
-    // Fall back to the puzzle's global catalogue image (the copy's cached snapshot thumbnail, the
-    // raw box-art storage id).
-    expect(v?.snapshot.image).toBe(globalImageId as string);
+    // Fall back to the puzzle's global catalogue image, RESOLVED to a URL (not the raw storage id —
+    // emitting the raw id would render a broken <img src>).
+    const globalUrl = await t.run((ctx) => ctx.storage.getUrl(globalImageId));
+    expect(v?.snapshot.image).toBe(globalUrl);
+    expect(v?.snapshot.image).not.toBe(globalImageId as string);
   });
 
   test("rejects a non-owner", async () => {

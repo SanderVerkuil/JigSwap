@@ -304,7 +304,11 @@ export const getCopyInstanceView = query({
     // puzzle's global catalogue image when no cover is chosen, the image row vanished, or its
     // stored file no longer resolves. `coverImageId` is null unless a cover both exists AND resolves
     // so the picker only reports an active, usable selection.
-    const globalImage = copy.snapshot?.thumbnail;
+    // NOTE: the catalogue image is a _storage id, so it MUST be resolved via getUrl — emitting the
+    // raw id renders a broken <img src>. (snapshot.thumbnail caches the same storage id.)
+    const globalImage = puzzle?.image
+      ? ((await ctx.storage.getUrl(puzzle.image)) ?? undefined)
+      : undefined;
     let coverImage: string | undefined = globalImage;
     let coverImageId: string | null = null;
     if (copy.coverImageId) {
