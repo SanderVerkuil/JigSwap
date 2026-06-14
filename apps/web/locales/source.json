@@ -2274,7 +2274,12 @@
       "currentCover": "Current cover",
       "coverUpdated": "Cover updated",
       "coverFailed": "Couldn't update the cover",
-      "pendingReview": "Pending review"
+      "pendingReview": "Pending review",
+      "removePhoto": "Remove photo",
+      "confirmRemove": "Remove",
+      "photoRemoved": "Photo removed",
+      "removeFailed": "Couldn't remove the photo",
+      "cancel": "Cancel"
     },
     "offerForSwap": "Offer for Swap",
     "offeredForSwap": "Offered for Swap",

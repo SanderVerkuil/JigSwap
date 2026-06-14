@@ -20,6 +20,7 @@ import {
   Clock,
   MessageCircle,
   Star,
+  Trash2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -63,10 +64,19 @@ export function PhotoLightbox({
   const t = useTranslations("copyInstance.photoLightbox");
   const format = useFormatter();
   const setCopyCover = useMutation(gateway.library.setCopyCover);
+  const removeCopyPhoto = useMutation(gateway.library.removeCopyPhoto);
   const [settingCover, setSettingCover] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
   const count = gallery.length;
   const photo = gallery[index];
+
+  // Reset the remove-confirmation when the shown photo changes, so a primed confirm never carries
+  // over to a different photo after navigating.
+  useEffect(() => {
+    setConfirmRemove(false);
+  }, [index]);
 
   const setAsCover = async () => {
     if (!photo) return;
@@ -81,6 +91,21 @@ export function PhotoLightbox({
       toast.error(t("coverFailed"));
     } finally {
       setSettingCover(false);
+    }
+  };
+
+  const removePhoto = async () => {
+    if (!photo) return;
+    setRemoving(true);
+    try {
+      await removeCopyPhoto({ imageId: photo.id as Id<"ownedPuzzleImages"> });
+      toast.success(t("photoRemoved"));
+      onOpenChange(false); // close; the gallery refetches via Convex reactivity
+    } catch {
+      toast.error(t("removeFailed"));
+    } finally {
+      setRemoving(false);
+      setConfirmRemove(false);
     }
   };
 
@@ -218,6 +243,41 @@ export function PhotoLightbox({
                 >
                   <Star className="h-4 w-4" />
                   {t("setAsCover")}
+                </Button>
+              ))}
+
+            {/* Owner-only: remove this photo. Two-step inline confirm; on success the lightbox
+                closes and the gallery refetches. */}
+            {canSetCover &&
+              (confirmRemove ? (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => void removePhoto()}
+                    disabled={removing}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    {t("confirmRemove")}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setConfirmRemove(false)}
+                    disabled={removing}
+                  >
+                    {t("cancel")}
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setConfirmRemove(true)}
+                  className="text-destructive hover:text-destructive w-full justify-start"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {t("removePhoto")}
                 </Button>
               ))}
           </div>

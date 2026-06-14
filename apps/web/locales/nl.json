@@ -2274,7 +2274,12 @@
       "currentCover": "Huidige omslag",
       "coverUpdated": "Omslag bijgewerkt",
       "coverFailed": "Kon de omslag niet bijwerken",
-      "pendingReview": "Wordt beoordeeld"
+      "pendingReview": "Wordt beoordeeld",
+      "removePhoto": "Foto verwijderen",
+      "confirmRemove": "Verwijderen",
+      "photoRemoved": "Foto verwijderd",
+      "removeFailed": "Kon de foto niet verwijderen",
+      "cancel": "Annuleren"
     },
     "offerForSwap": "Aanbieden voor ruil",
     "offeredForSwap": "Aangeboden voor ruil",

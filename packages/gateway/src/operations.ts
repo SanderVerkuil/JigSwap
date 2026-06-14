@@ -50,6 +50,9 @@ export const gateway = {
     // Owner-only photo upload keyed by the copy's Convex id; pairs with generateUploadUrl. Writes
     // the `ownedPuzzleImages` read-model the getCopyInstanceView gallery reads.
     addCopyPhoto: api.library.addCopyPhoto.addCopyPhoto,
+    // Owner-only removal of an uploaded copy photo (deletes the row + blob, clears the cover if it
+    // was the cover). Keyed by the ownedPuzzleImages id.
+    removeCopyPhoto: api.library.removeCopyPhoto.removeCopyPhoto,
     // Owner-only per-copy cover selection: pick one of the copy's photos, or clear to the global
     // image. Keyed by the copy's Convex id (like addCopyPhoto / getCopyInstanceView).
     setCopyCover: api.library.setCopyCover.setCopyCover,

@@ -139,6 +139,7 @@ import type * as library_openLoanOnSettlement from "../library/openLoanOnSettlem
 import type * as library_postPhotoComment from "../library/postPhotoComment.js";
 import type * as library_recallLoan from "../library/recallLoan.js";
 import type * as library_removeCopyFromCollection from "../library/removeCopyFromCollection.js";
+import type * as library_removeCopyPhoto from "../library/removeCopyPhoto.js";
 import type * as library_returnLoan from "../library/returnLoan.js";
 import type * as library_setCopyCover from "../library/setCopyCover.js";
 import type * as library_transferOnSettlement from "../library/transferOnSettlement.js";
@@ -375,6 +376,7 @@ declare const fullApi: ApiFromModules<{
   "library/postPhotoComment": typeof library_postPhotoComment;
   "library/recallLoan": typeof library_recallLoan;
   "library/removeCopyFromCollection": typeof library_removeCopyFromCollection;
+  "library/removeCopyPhoto": typeof library_removeCopyPhoto;
   "library/returnLoan": typeof library_returnLoan;
   "library/setCopyCover": typeof library_setCopyCover;
   "library/transferOnSettlement": typeof library_transferOnSettlement;
