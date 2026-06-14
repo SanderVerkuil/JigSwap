@@ -55,6 +55,29 @@ describe("Catalog PuzzleDefinition use cases", () => {
     expect(id).toBe(toPuzzleDefinitionId("pd-1"));
   });
 
+  it("leaves a normal submission pending (no autoApprove)", async () => {
+    const id = await submitOk();
+    const stored = await repo.findById(id);
+    expect(stored?.status).toBe("pending");
+  });
+
+  it("auto-approves the submission when autoApprove is set, saving it approved and emitting both events", async () => {
+    const submit = makeSubmitPuzzleDefinition(deps);
+    const r = await submit({
+      title: "Starry Night",
+      pieceCount: 1000,
+      submittedBy: submitter,
+      autoApprove: true,
+    });
+    if (!r.isOk) throw new Error(`submit failed: ${r.error.code}`);
+    const stored = await repo.findById(r.value);
+    expect(stored?.status).toBe("approved");
+    expect(events.names()).toEqual([
+      "PuzzleDefinitionSubmitted",
+      "PuzzleDefinitionApproved",
+    ]);
+  });
+
   it("rejects a duplicate barcode via the repository (DuplicateBarcode)", async () => {
     await submitOk({ ean: "4006381333931" });
     const submit = makeSubmitPuzzleDefinition(deps);

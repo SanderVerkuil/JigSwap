@@ -58,6 +58,17 @@ export const makeSubmitPuzzleDefinition =
     });
     if (definition.isErr) return err(definition.error);
 
+    // A trusted submitter (admin) skips moderation: approve in the same transaction so the
+    // definition is publicly listable immediately. Both Submitted + Approved events are emitted.
+    if (cmd.autoApprove) {
+      const approved = definition.value.approve(deps.clock.now());
+      // Stryker disable next-line ConditionalExpression: `definition` was just created by submit(),
+      // so it is always `pending`; the pending -> approved transition is always legal, making this
+      // error branch unreachable here. Kept as a defensive guard against a future submit() that
+      // could yield a non-pending state — an equivalent mutant under the current factory.
+      if (approved.isErr) return err(approved.error);
+    }
+
     await deps.definitions.save(definition.value);
     await deps.events.publish(definition.value.pullEvents());
     return ok(definition.value.id);
