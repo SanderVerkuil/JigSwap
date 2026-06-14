@@ -6,6 +6,8 @@ export interface ImportedDraft {
   brand?: string;
   imageUrl?: string;
   images?: readonly string[];
+  // Alt text per image URL (subset of `images`); only HTML-scraped images carry it.
+  imageAlts?: Readonly<Record<string, string>>;
   description?: string;
   ean?: string;
   upc?: string;

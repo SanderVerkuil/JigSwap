@@ -382,4 +382,61 @@ describe("extractPuzzleDraft", () => {
       expect(d.pieceCount).toBe(1500);
     });
   });
+
+  describe("imageAlts (pickAlts)", () => {
+    it("carries alt text for surviving images, keyed by URL", () => {
+      const d = extractPuzzleDraft(
+        {
+          ...empty,
+          ogImages: ["https://img/a.jpg", "https://img/b.jpg"],
+          imageAlts: {
+            "https://img/a.jpg": "Box front",
+            "https://img/b.jpg": "Box back",
+          },
+        },
+        SRC,
+      );
+      expect(d.imageAlts).toEqual({
+        "https://img/a.jpg": "Box front",
+        "https://img/b.jpg": "Box back",
+      });
+    });
+
+    it("drops alt entries whose image was filtered out (non-http / capped)", () => {
+      // The ftp URL is dropped from `images`, so its alt must not appear in the draft.
+      const d = extractPuzzleDraft(
+        {
+          ...empty,
+          ogImages: ["ftp://img/bad.jpg", "https://img/ok.jpg"],
+          imageAlts: {
+            "ftp://img/bad.jpg": "Dropped",
+            "https://img/ok.jpg": "Kept",
+          },
+        },
+        SRC,
+      );
+      expect(d.images).toEqual(["https://img/ok.jpg"]);
+      expect(d.imageAlts).toEqual({ "https://img/ok.jpg": "Kept" });
+    });
+
+    it("is undefined when the page carries no alt map", () => {
+      const d = extractPuzzleDraft(
+        { ...empty, ogImages: ["https://img/a.jpg"] },
+        SRC,
+      );
+      expect(d.imageAlts).toBeUndefined();
+    });
+
+    it("is undefined when no surviving image has alt text", () => {
+      const d = extractPuzzleDraft(
+        {
+          ...empty,
+          ogImages: ["https://img/a.jpg"],
+          imageAlts: { "https://img/other.jpg": "Not in the set" },
+        },
+        SRC,
+      );
+      expect(d.imageAlts).toBeUndefined();
+    });
+  });
 });

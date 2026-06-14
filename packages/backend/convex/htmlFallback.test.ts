@@ -54,6 +54,33 @@ describe("scrapeHtmlFallback", () => {
     );
   });
 
+  test("captures non-empty alt text keyed by resolved image URL", () => {
+    const html =
+      "<html><head><title>P</title></head><body>" +
+      '<img src="/img/box.jpg" width="800" height="800" alt="Sunset over the bay">' +
+      '<img src="/img/back.jpg" width="800" height="800" alt="">' +
+      "</body></html>";
+    const result = scrapeHtmlFallback(html, "https://shop.example.com/p");
+
+    expect(result.imageAlts).toEqual({
+      "https://shop.example.com/img/box.jpg": "Sunset over the bay",
+    });
+    // The empty-alt image contributes no entry.
+    expect(
+      result.imageAlts?.["https://shop.example.com/img/back.jpg"],
+    ).toBeUndefined();
+  });
+
+  test("omits imageAlts entirely when no image has alt text", () => {
+    const html =
+      "<html><head><title>P</title></head><body>" +
+      '<img src="/img/box.jpg" width="800" height="800" alt="">' +
+      "</body></html>";
+    const result = scrapeHtmlFallback(html, "https://shop.example.com/p");
+
+    expect(result.imageAlts).toBeUndefined();
+  });
+
   test("falls back to the page URL when there is no <base href>", () => {
     const html =
       "<html><head><title>P</title></head><body>" +
@@ -90,5 +117,21 @@ describe("enrichWithHtmlFallback", () => {
       "https://www.kleertjes.com/media/p/jungletocht-800.jpg",
     );
     expect(enriched.basicDescription).toBe("Mooie puzzel");
+  });
+
+  test("propagates scraped alt text onto the page when adopting scraped images", () => {
+    const empty: RawProductPage = { ogImages: [], jsonLdProducts: [] };
+    const html =
+      "<html><head><title>P</title></head><body>" +
+      '<img src="/img/box.jpg" width="800" height="800" alt="The box front">' +
+      "</body></html>";
+    const enriched = enrichWithHtmlFallback(
+      empty,
+      html,
+      "https://shop.example.com/p",
+    );
+    expect(enriched.imageAlts).toEqual({
+      "https://shop.example.com/img/box.jpg": "The box front",
+    });
   });
 });

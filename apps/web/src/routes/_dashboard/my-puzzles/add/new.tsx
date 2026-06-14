@@ -70,6 +70,8 @@ interface FormState {
   coverMode: "color" | "photo";
   coverFile: File | undefined;
   importedImages: string[];
+  // Alt text per imported image URL (only HTML-scraped images carry it); shown in the cover picker.
+  importedImageAlts: Record<string, string> | undefined;
   selectedImageUrl: string | undefined;
   tags: string[];
   notes: string;
@@ -93,6 +95,7 @@ const DEFAULT_FORM: FormState = {
   coverMode: "color",
   coverFile: undefined,
   importedImages: [],
+  importedImageAlts: undefined,
   selectedImageUrl: undefined,
   tags: [],
   notes: "",
@@ -191,6 +194,7 @@ function AddPuzzlePage() {
       ean: draft.ean ?? "",
       upc: draft.upc ?? "",
       importedImages: imgs,
+      importedImageAlts: draft.imageAlts ? { ...draft.imageAlts } : undefined,
       selectedImageUrl: imgs[0],
       coverFile: undefined,
       coverMode: imgs.length ? "photo" : "color",
@@ -412,7 +416,10 @@ function AddPuzzlePage() {
           color={form.coverColor}
           mode={form.coverMode}
           photoOptions={[
-            ...form.importedImages.map((url) => ({ url })),
+            ...form.importedImages.map((url) => ({
+              url,
+              alt: form.importedImageAlts?.[url],
+            })),
             ...(coverFileUrl ? [{ url: coverFileUrl, uploaded: true }] : []),
           ]}
           selectedPhotoUrl={
@@ -641,7 +648,10 @@ function AddPuzzlePage() {
             color={form.coverColor}
             mode={form.coverMode}
             photoOptions={[
-              ...form.importedImages.map((url) => ({ url })),
+              ...form.importedImages.map((url) => ({
+                url,
+                alt: form.importedImageAlts?.[url],
+              })),
               ...(coverFileUrl ? [{ url: coverFileUrl, uploaded: true }] : []),
             ]}
             selectedPhotoUrl={

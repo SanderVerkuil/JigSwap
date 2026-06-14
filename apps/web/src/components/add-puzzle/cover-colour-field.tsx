@@ -64,7 +64,11 @@ export function CoverColourField({
 }: {
   color: string;
   mode: "color" | "photo";
-  photoOptions: ReadonlyArray<{ url: string; uploaded?: boolean }>;
+  photoOptions: ReadonlyArray<{
+    url: string;
+    uploaded?: boolean;
+    alt?: string;
+  }>;
   selectedPhotoUrl?: string;
   onSelectColor: (c: string) => void;
   onSelectPhoto: (url: string) => void;
@@ -203,9 +207,14 @@ export function CoverColourField({
                 <TooltipContent side="top" className="p-1.5">
                   <img
                     src={opt.url}
-                    alt=""
+                    alt={opt.alt ?? ""}
                     className="max-h-[280px] max-w-[260px] rounded-md object-contain"
                   />
+                  {opt.alt && (
+                    <div className="mx-auto mt-1 max-w-[260px] text-center text-[11px] text-primary-foreground">
+                      {opt.alt}
+                    </div>
+                  )}
                   {measured && (
                     <div className="mt-1 text-center text-[11px] text-primary-foreground/70">
                       {d.w} × {d.h}

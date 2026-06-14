@@ -184,6 +184,52 @@ describe("makeFallbackStorePageFetcher", () => {
     expect(result.value.source).toBe("ogie");
   });
 
+  it("merges imageAlts from both tiers (primary wins on conflict)", async () => {
+    const primary = new FakeStorePageFetcher();
+    primary.seedPage({
+      ogTitle: "T",
+      ogImages: [],
+      jsonLdProducts: [],
+      imageAlts: { "https://img/shared.jpg": "primary alt" },
+    });
+    const fallback = new FakeStorePageFetcher();
+    fallback.seedPage({
+      ogImages: ["https://img/scraped.jpg"],
+      jsonLdProducts: [],
+      imageAlts: {
+        "https://img/shared.jpg": "fallback alt",
+        "https://img/scraped.jpg": "scraped alt",
+      },
+    });
+
+    const fetcher = makeFallbackStorePageFetcher(primary, fallback);
+    const result = await fetcher.fetch(URL);
+
+    expect(isOk(result)).toBe(true);
+    if (!isOk(result)) return;
+    expect(result.value.imageAlts).toEqual({
+      "https://img/shared.jpg": "primary alt",
+      "https://img/scraped.jpg": "scraped alt",
+    });
+  });
+
+  it("leaves imageAlts undefined when neither tier scraped any", async () => {
+    const primary = new FakeStorePageFetcher();
+    primary.seedPage({ ogTitle: "T", ogImages: [], jsonLdProducts: [] });
+    const fallback = new FakeStorePageFetcher();
+    fallback.seedPage({
+      ogImages: ["https://img/scraped.jpg"],
+      jsonLdProducts: [],
+    });
+
+    const fetcher = makeFallbackStorePageFetcher(primary, fallback);
+    const result = await fetcher.fetch(URL);
+
+    expect(isOk(result)).toBe(true);
+    if (!isOk(result)) return;
+    expect(result.value.imageAlts).toBeUndefined();
+  });
+
   it("returns primary Timeout error without calling fallback (Timeout is not retryable)", async () => {
     const primary = new FakeStorePageFetcher();
     primary.seedError(StorePageFetchError.timeout(URL));

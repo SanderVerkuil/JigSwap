@@ -40,21 +40,27 @@ const hasImages = (page: RawProductPage): boolean =>
 const mergePages = (
   primary: RawProductPage,
   fallback: RawProductPage,
-): RawProductPage => ({
-  ogTitle: primary.ogTitle ?? fallback.ogTitle,
-  ogDescription: primary.ogDescription ?? fallback.ogDescription,
-  basicTitle: primary.basicTitle ?? fallback.basicTitle,
-  basicDescription: primary.basicDescription ?? fallback.basicDescription,
-  ogImages: [...primary.ogImages, ...imagesOf(fallback)],
-  jsonLdProducts:
-    primary.jsonLdProducts.length > 0
-      ? primary.jsonLdProducts
-      : fallback.jsonLdProducts,
-  source:
-    primary.source != null && fallback.source != null
-      ? `${primary.source}+${fallback.source}`
-      : (primary.source ?? fallback.source),
-});
+): RawProductPage => {
+  // Union the per-URL alt maps; the primary wins on a key conflict. Undefined (not {}) when neither
+  // tier scraped alt text, keeping the merged page minimal.
+  const mergedAlts = { ...fallback.imageAlts, ...primary.imageAlts };
+  return {
+    ogTitle: primary.ogTitle ?? fallback.ogTitle,
+    ogDescription: primary.ogDescription ?? fallback.ogDescription,
+    basicTitle: primary.basicTitle ?? fallback.basicTitle,
+    basicDescription: primary.basicDescription ?? fallback.basicDescription,
+    ogImages: [...primary.ogImages, ...imagesOf(fallback)],
+    imageAlts: Object.keys(mergedAlts).length > 0 ? mergedAlts : undefined,
+    jsonLdProducts:
+      primary.jsonLdProducts.length > 0
+        ? primary.jsonLdProducts
+        : fallback.jsonLdProducts,
+    source:
+      primary.source != null && fallback.source != null
+        ? `${primary.source}+${fallback.source}`
+        : (primary.source ?? fallback.source),
+  };
+};
 
 // Tries `primary`; if it fails with a retryable error, tries `fallback`. Additionally, when the
 // primary SUCCEEDS but the page carries no image, it tries the fallback too and merges any images it

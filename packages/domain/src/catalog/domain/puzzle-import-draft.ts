@@ -9,6 +9,9 @@ export interface PuzzleImportDraft {
   readonly brand?: string;
   readonly imageUrl?: string;
   readonly images: readonly string[];
+  // Optional alt text per image URL (a subset of `images`). Only HTML-scraped images carry alt;
+  // OG/JSON-LD images have none. Keyed by the image URL so the picker can caption a thumbnail.
+  readonly imageAlts?: Readonly<Record<string, string>>;
   readonly description?: string;
   readonly ean?: string; // gtin13 / 13-digit gtin
   readonly upc?: string; // gtin12 / 12-digit gtin
@@ -32,6 +35,8 @@ export interface RawProductPage {
   readonly ogTitle?: string;
   readonly ogDescription?: string;
   readonly ogImages: readonly string[];
+  // Optional alt text per image URL, populated by the raw-HTML scraper (OG/JSON-LD images have none).
+  readonly imageAlts?: Readonly<Record<string, string>>;
   readonly basicTitle?: string; // <title>
   readonly basicDescription?: string; // <meta name="description">
   readonly jsonLdProducts: readonly JsonLdProduct[];

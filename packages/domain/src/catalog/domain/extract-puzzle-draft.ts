@@ -54,6 +54,21 @@ const buildImages = (raw: RawProductPage): readonly string[] => {
   return result;
 };
 
+// Keep only the alt entries whose image survived dedup/cap, so the draft never references a URL
+// that isn't in `images`. Returns undefined (not {}) when nothing matches, keeping the draft minimal.
+const pickAlts = (
+  images: readonly string[],
+  alts: Readonly<Record<string, string>> | undefined,
+): Readonly<Record<string, string>> | undefined => {
+  if (!alts) return undefined;
+  const out: Record<string, string> = {};
+  for (const url of images) {
+    const alt = alts[url];
+    if (alt) out[url] = alt;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+};
+
 const barcodes = (
   product: JsonLdProduct | undefined,
 ): { ean?: string; upc?: string } => {
@@ -102,6 +117,7 @@ export const extractPuzzleDraft = (
     brand,
     imageUrl: images[0],
     images,
+    imageAlts: pickAlts(images, raw.imageAlts),
     description,
     ean,
     upc,
