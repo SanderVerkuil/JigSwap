@@ -62,6 +62,11 @@ export const gateway = {
     // Privacy-gated detail of a single owned copy: snapshot + projected owner + merged, anonymised
     // history timeline (transfers/completions/loans) split into the viewer's tenure vs gated history.
     getCopyInstanceView: api.library.getCopyInstanceView.getCopyInstanceView,
+    // Redesigned catalog detail of a puzzle DEFINITION: catalog facts + community rating
+    // distribution + ownership/completion/availability stats + the viewer's own ownership + a short
+    // list of REACHABLE available copies (Browse's public-OR-circle gate).
+    getPuzzleDefinitionView:
+      api.library.getPuzzleDefinitionView.getPuzzleDefinitionView,
     // Image upload is storage infra, not a domain op; keep it on the legacy function. The URL is
     // used for copy photos.
     generateUploadUrl: api.puzzles.generateUploadUrl,
@@ -191,6 +196,10 @@ export const gateway = {
     // (resolved to the shared puzzle internally). Authors are shown with their real identity.
     postPuzzleComment: api.social.postPuzzleComment.postPuzzleComment,
     listPuzzleComments: api.social.listPuzzleComments.listPuzzleComments,
+    // Community reviews keyed by the puzzle DEFINITION (the catalog detail page has no copy id).
+    // Same `puzzleComments` table + post-comment use case as the copy-keyed variants above.
+    postPuzzleReview: api.social.postPuzzleReview.postPuzzleReview,
+    listPuzzleReviews: api.social.listPuzzleReviews.listPuzzleReviews,
   },
 
   // Insights: read-side aggregate stats. globalStats is platform-wide; the rest are the signed-in

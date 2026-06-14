@@ -127,6 +127,7 @@ import type * as library_getCopyLoanHistory from "../library/getCopyLoanHistory.
 import type * as library_getLentOutLoans from "../library/getLentOutLoans.js";
 import type * as library_getOwnedPuzzleWithCollectionStatus from "../library/getOwnedPuzzleWithCollectionStatus.js";
 import type * as library_getOwnedPuzzlesByOwner from "../library/getOwnedPuzzlesByOwner.js";
+import type * as library_getPuzzleDefinitionView from "../library/getPuzzleDefinitionView.js";
 import type * as library_getUserCollections from "../library/getUserCollections.js";
 import type * as library_loanReadViews from "../library/loanReadViews.js";
 import type * as library_mappers from "../library/mappers.js";
@@ -204,7 +205,9 @@ import type * as social_isFollowing from "../social/isFollowing.js";
 import type * as social_listFollowees from "../social/listFollowees.js";
 import type * as social_listFollowers from "../social/listFollowers.js";
 import type * as social_listPuzzleComments from "../social/listPuzzleComments.js";
+import type * as social_listPuzzleReviews from "../social/listPuzzleReviews.js";
 import type * as social_postPuzzleComment from "../social/postPuzzleComment.js";
+import type * as social_postPuzzleReview from "../social/postPuzzleReview.js";
 import type * as social_privacy from "../social/privacy.js";
 import type * as social_readViews from "../social/readViews.js";
 import type * as social_setProfileVisibility from "../social/setProfileVisibility.js";
@@ -353,6 +356,7 @@ declare const fullApi: ApiFromModules<{
   "library/getLentOutLoans": typeof library_getLentOutLoans;
   "library/getOwnedPuzzleWithCollectionStatus": typeof library_getOwnedPuzzleWithCollectionStatus;
   "library/getOwnedPuzzlesByOwner": typeof library_getOwnedPuzzlesByOwner;
+  "library/getPuzzleDefinitionView": typeof library_getPuzzleDefinitionView;
   "library/getUserCollections": typeof library_getUserCollections;
   "library/loanReadViews": typeof library_loanReadViews;
   "library/mappers": typeof library_mappers;
@@ -430,7 +434,9 @@ declare const fullApi: ApiFromModules<{
   "social/listFollowees": typeof social_listFollowees;
   "social/listFollowers": typeof social_listFollowers;
   "social/listPuzzleComments": typeof social_listPuzzleComments;
+  "social/listPuzzleReviews": typeof social_listPuzzleReviews;
   "social/postPuzzleComment": typeof social_postPuzzleComment;
+  "social/postPuzzleReview": typeof social_postPuzzleReview;
   "social/privacy": typeof social_privacy;
   "social/readViews": typeof social_readViews;
   "social/setProfileVisibility": typeof social_setProfileVisibility;

@@ -404,6 +404,89 @@ export interface CopyInstanceView {
   gallery: CopyPhoto[];
 }
 
+// --- Catalog puzzle-DEFINITION detail page -----------------------------------------------------
+// The redesigned catalog detail view for a puzzle DEFINITION (not a single owned copy). Aggregates
+// the community's rating distribution, ownership/completion stats, the viewer's own ownership, and a
+// short list of REACHABLE available copies the viewer could swap/lend/buy. Returned by
+// `library.getPuzzleDefinitionView`. Distinct from the catalog row DTO `PuzzleDefinitionView`.
+
+/** How an offered copy is available, in priority order: trade -> "swap", lend -> "lend", sale -> "sale". */
+export type CopyOfferSwapType = "swap" | "lend" | "sale";
+
+/**
+ * One reachable, available copy of the puzzle the viewer could acquire, as surfaced on the catalog
+ * detail page. The owner is REACHABLE by construction (their profile is public OR the copy is shared
+ * into a circle the viewer belongs to — the same gate Browse applies), so their name/location/avatar
+ * and aggregate reputation are shown un-anonymised. `avgRating` is the owner's average partner-review
+ * rating (null when they have no reviews yet).
+ */
+export interface CopyOfferView {
+  copyId: DocId;
+  swapType: CopyOfferSwapType;
+  owner: {
+    name: string;
+    location: string | null;
+    avatarUrl: string | null;
+    avgRating: number | null;
+  };
+}
+
+/**
+ * The redesigned catalog detail view of a puzzle DEFINITION, as returned by
+ * `library.getPuzzleDefinitionView` (null when the puzzle does not exist). Auth-gated; the acting
+ * member is the viewer. `availableCopies` is capped at 5 (newest first); `totalAvailable` is the full
+ * count of reachable available copies for a "See all N" affordance.
+ */
+export interface PuzzleDefinitionDetailView {
+  /** Catalog facts of the puzzle definition. */
+  definition: {
+    title: string;
+    brand?: string;
+    pieceCount: number;
+    /** Resolved box-art URL (when the definition has one). */
+    image?: string;
+    difficulty?: PuzzleDifficulty;
+    /** The English name of the definition's category, when it has one. */
+    categoryName?: string;
+    tags: string[];
+    description?: string;
+  };
+  /** Community rating distribution over this definition's rated reviews (`puzzleComments` with a rating). */
+  rating: {
+    /** Average rating to 1 decimal across rated reviews (0 when none). */
+    rating: number;
+    /** Number of rated reviews. */
+    count: number;
+    /** Counts per star bucket, ordered [5★, 4★, 3★, 2★, 1★]. */
+    breakdown: [number, number, number, number, number];
+    /** Each bucket as a percentage of `count`, rounded (all 0 when `count` is 0), same order. */
+    percentages: [number, number, number, number, number];
+  };
+  /** Community-wide ownership/completion/availability stats for this definition. */
+  stats: {
+    /** Distinct owners holding a copy of this definition. */
+    communityOwners: number;
+    /** Completed completions recorded against this definition. */
+    totalCompletions: number;
+    /** Mean finish-days across completed completions, or null when none. */
+    avgCompletionDays: number | null;
+    /** Reachable available copies the viewer could acquire (excludes the viewer's own). */
+    availableToSwap: number;
+  };
+  /** Whether (and how) the acting viewer owns a copy of this definition. */
+  ownership: {
+    viewerOwns: boolean;
+    /** The viewer's owning copy's `ownedPuzzles` _id, or null when they own none. */
+    copyId: string | null;
+    /** The viewer's owning copy's condition, or null when they own none. */
+    condition: string | null;
+  };
+  /** Up to 5 reachable available copies, newest first. */
+  availableCopies: CopyOfferView[];
+  /** Total count of reachable available copies (for "See all N"). */
+  totalAvailable: number;
+}
+
 /**
  * A collection that contains a given copy, as returned by `collections.forOwnedPuzzle`. This is the
  * bare collection row (no derived puzzleCount) the legacy read returned; consumers key on `_id`.
