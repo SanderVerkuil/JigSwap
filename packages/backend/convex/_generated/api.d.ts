@@ -201,6 +201,7 @@ import type * as social_isFollowing from "../social/isFollowing.js";
 import type * as social_listFollowees from "../social/listFollowees.js";
 import type * as social_listFollowers from "../social/listFollowers.js";
 import type * as social_readViews from "../social/readViews.js";
+import type * as social_setProfileVisibility from "../social/setProfileVisibility.js";
 import type * as social_unfollowMember from "../social/unfollowMember.js";
 import type * as solving_adapters_completionMapper from "../solving/adapters/completionMapper.js";
 import type * as solving_adapters_convexCompletionRepository from "../solving/adapters/convexCompletionRepository.js";
@@ -420,6 +421,7 @@ declare const fullApi: ApiFromModules<{
   "social/listFollowees": typeof social_listFollowees;
   "social/listFollowers": typeof social_listFollowers;
   "social/readViews": typeof social_readViews;
+  "social/setProfileVisibility": typeof social_setProfileVisibility;
   "social/unfollowMember": typeof social_unfollowMember;
   "solving/adapters/completionMapper": typeof solving_adapters_completionMapper;
   "solving/adapters/convexCompletionRepository": typeof solving_adapters_convexCompletionRepository;

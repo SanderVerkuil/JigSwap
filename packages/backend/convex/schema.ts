@@ -588,6 +588,8 @@ export default defineSchema({
     memberId: v.id("users"),
     displayName: v.string(),
     bio: v.optional(v.string()),
+    // Who can see this profile. Optional so existing rows stay valid; absent means "public".
+    visibility: v.optional(v.union(v.literal("public"), v.literal("private"))),
     updatedAt: v.number(),
   })
     .index("by_member", ["memberId"])

@@ -690,6 +690,10 @@
     "usernamePlaceholder": "jouw-gebruikersnaam",
     "locationPlaceholder": "Plaats, Land",
     "bioPlaceholder": "Vertel andere leden iets over jezelf…",
+    "visibility": {
+      "label": "Privéprofiel",
+      "helper": "Privéprofielen verschijnen als 'Anonieme gebruiker' voor leden met wie je geen connectie hebt."
+    },
     "shelf": {
       "title": "De Plank van {name}",
       "meta": "{count, plural, one {# uitgestald} other {# uitgestald}}"

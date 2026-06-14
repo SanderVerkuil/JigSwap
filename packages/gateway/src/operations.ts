@@ -172,6 +172,7 @@ export const gateway = {
   // derived from auth, never the client. Reads return typed @jigswap/contracts view DTOs.
   social: {
     editProfile: api.social.editProfile.editProfile,
+    setProfileVisibility: api.social.setProfileVisibility.setProfileVisibility,
     follow: api.social.followMember.followMember,
     unfollow: api.social.unfollowMember.unfollowMember,
     profile: api.social.getProfile.getProfile,

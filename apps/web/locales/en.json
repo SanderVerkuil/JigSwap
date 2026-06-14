@@ -690,6 +690,10 @@
     "usernamePlaceholder": "your-username",
     "locationPlaceholder": "City, Country",
     "bioPlaceholder": "Tell other members about yourself…",
+    "visibility": {
+      "label": "Private profile",
+      "helper": "Private profiles appear as 'Anonymous user' to members you're not connected with."
+    },
     "shelf": {
       "title": "{name}'s Shelf",
       "meta": "{count, plural, one {# on display} other {# on display}}"

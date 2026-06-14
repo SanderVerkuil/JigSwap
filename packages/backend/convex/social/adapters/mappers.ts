@@ -32,6 +32,8 @@ export const profileToDomain = (row: Doc<"profiles">): Profile => {
     memberId: toMemberId(row.memberId),
     displayName: displayName.value,
     bio: row.bio,
+    // Legacy rows written before visibility existed are treated as public.
+    visibility: row.visibility ?? "public",
     updatedAt: new Date(row.updatedAt),
   };
   return Profile.rehydrate(state);
@@ -46,6 +48,7 @@ export const profileToRow = (profile: Profile): ProfileRow => {
     memberId: state.memberId as unknown as Id<"users">,
     displayName: state.displayName.value,
     bio: state.bio,
+    visibility: state.visibility,
     updatedAt: state.updatedAt.getTime(),
   };
 };

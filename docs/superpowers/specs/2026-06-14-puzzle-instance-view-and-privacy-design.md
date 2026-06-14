@@ -7,7 +7,8 @@
 - **Connected = mutual follow** ("friends"): a private participant's real identity is revealed only when viewer and participant follow each other. Otherwise → "Anonymous user".
 - **Pre-ownership history = condensed named timeline** (chronological; names where connected, else "Anonymous user").
 - **Instance page reachable from My Puzzles + Browse** (serves your copies and others'); owner + history privacy-gated.
-- **This iteration gates the instance page only** — the Browse list keeps showing owners as today (consistent Browse gating is a follow-up).
+- **Instance-page history identity** uses the mutual-follow gate (above).
+- **Browse listing visibility (refined per follow-up):** a copy appears in Browse only when (a) it is open to swap/sale/lend (availability flag set) **and** (b) the owner is reachable — owner profile is `public`, **or** owner shares a circle with the viewer / the copy is shared into a circle the viewer belongs to. Private, non-circle owners' copies are **filtered out** (excluded), not anonymized. (Browse uses the circle/public gate; the instance-history identity reveal uses mutual-follow — two distinct surfaces, two gates.)
 - **Profile `visibility` default = `public`** (opt-in to private).
 
 ## Key facts (from code map)
@@ -42,13 +43,23 @@
    - else → `{ anonymous:true, label:"Anonymous user", anonRef: hash(targetId+salt) }`. No real id/name serialized. `salt = copyId` so identical hidden people group within one timeline but can't be correlated across copies.
 4. **`library.getCopyInstanceView({ copyId })`** (auth-gated): snapshot + `viewerIsOwner` + timeline merged from `copyCustodyEntries` + `completions`(by-copy) + `loans`, every participant via `projectMemberIdentity(salt=copyId)`, split before/since-you. Anonymous owner → hide Message; swap-request still routes through the copy.
 
+## Part D — Browse listing filter (refined)
+
+Extend `library/browseOwnedPuzzles` so a candidate copy is included only when:
+
+- `availability.forTrade || forSale || forLend` (open to swap/sale/lend) — already filtered today; keep, AND
+- the owner is reachable: `owner.profile.visibility === "public"` **OR** the copy is circle-shared with the viewer (reuse the existing `collectCircleSharedCopies` / shared-circle logic).
+
+A private, non-circle owner's copies are excluded entirely (no row over the wire). This is a filter, not anonymization, so Browse cards keep showing the (now necessarily reachable) owner. Depends on the Phase 2 `profiles.visibility` field.
+
 ## Phasing
 
-1. Unified card + provider (frontend) → verify.
+1. ✅ Unified card + provider (frontend).
 2. Profile-visibility setting (domain event + Convex field + mutation + settings toggle) → verify + tests.
 3. Privacy helpers (`areMutualFollowers`, `projectMemberIdentity`) + `getCopyInstanceView` (+ completions by-copy index) → verify + tests.
-4. Instance page wired from My Puzzles + Browse → verify.
-5. i18n + full CI-mirror verify + deploy.
+4. Browse filter (Part D): gate `browseOwnedPuzzles` by public-profile-OR-circle + availability → verify + tests.
+5. Instance page wired from My Puzzles + Browse → verify.
+6. i18n + full CI-mirror verify + deploy.
 
 ## Test/verify
 
