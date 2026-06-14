@@ -373,6 +373,11 @@ export interface CopyPhoto {
 export interface CopyInstanceView {
   /** The copy's `ownedPuzzles` _id. */
   copyId: DocId;
+  /**
+   * The domain CopyId (aggregateId). The copy-edit mutations (changeCondition, updateSharing,
+   * updateDetails) and recordCompletion key on this, not the `_id`. Null for legacy rows.
+   */
+  aggregateId: string | null;
   /** Whether the acting viewer currently owns this copy. */
   viewerIsOwner: boolean;
   /** The (projected) current owner. */

@@ -3,8 +3,12 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { Image } from "@/compat/image";
 import { useRouter } from "@/compat/navigation";
+import { availabilityToSharing } from "@/components/add-puzzle";
+import { EditCopyDialog } from "@/components/copies/edit-copy-dialog";
 import { PhotoLightbox } from "@/components/copies/photo-lightbox";
+import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
+import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -137,6 +141,41 @@ function CopyInstanceDetail({
   const availability = snapshot.availability;
   const isAvailable =
     availability.forTrade || availability.forSale || availability.forLend;
+
+  // Owner action dialogs. `logOpen` drives the completion logger; `editOpen` drives the inline
+  // copy editor (also reachable from the page-head Edit button registered below).
+  const [logOpen, setLogOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const updateSharing = useMutation(gateway.library.updateSharing);
+
+  // Toggle a single sharing flag on the copy. Optimistic from the user's view via Convex
+  // reactivity; on failure we surface a toast and the next query refresh restores the real state.
+  const toggleSharing = async (flag: "forTrade" | "forLend") => {
+    if (!copy.viewerIsOwner || copy.aggregateId == null) return;
+    try {
+      await updateSharing(
+        availabilityToSharing(copy.aggregateId, {
+          ...availability,
+          [flag]: !availability[flag],
+        }),
+      );
+    } catch {
+      toast.error(t("editCopy.editFailed"));
+    }
+  };
+
+  // Owner-only: publish the Edit action into the shell page head (top-right). Non-owners get no
+  // header action. Deps include the toggles the button closes over so the slot stays in sync.
+  usePageHeaderActions(
+    () =>
+      copy.viewerIsOwner ? (
+        <Button variant="outline" onClick={() => setEditOpen(true)}>
+          <Edit className="h-4 w-4" />
+          {t("actions.edit")}
+        </Button>
+      ) : null,
+    [copy.viewerIsOwner, t],
+  );
 
   const formatDay = (timestamp: number) =>
     format.dateTime(new Date(timestamp), {
@@ -300,30 +339,35 @@ function CopyInstanceDetail({
           <div className="mt-5 flex flex-wrap gap-2.5">
             {copy.viewerIsOwner ? (
               <>
-                <Button variant="brand" onClick={() => router.push("/trades")}>
+                <Button
+                  variant={availability.forTrade ? "brand" : "outline"}
+                  aria-pressed={availability.forTrade}
+                  disabled={copy.aggregateId == null}
+                  onClick={() => void toggleSharing("forTrade")}
+                >
                   <ArrowLeftRight className="h-4 w-4" />
-                  {t("actions.proposeSwap")}
+                  {availability.forTrade
+                    ? t("offeredForSwap")
+                    : t("offerForSwap")}
                 </Button>
                 <Button
-                  variant="outline"
-                  onClick={() => router.push("/trades")}
+                  variant={availability.forLend ? "brand" : "outline"}
+                  aria-pressed={availability.forLend}
+                  disabled={copy.aggregateId == null}
+                  onClick={() => void toggleSharing("forLend")}
                 >
                   <Package className="h-4 w-4" />
-                  {t("actions.offerToLend")}
+                  {availability.forLend
+                    ? t("offeredForLend")
+                    : t("offerForLend")}
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => router.push(`/my-puzzles/${copyId}`)}
+                  disabled={copy.aggregateId == null}
+                  onClick={() => setLogOpen(true)}
                 >
                   <CircleCheck className="h-4 w-4" />
                   {t("actions.logCompletion")}
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => router.push(`/my-puzzles/${copyId}/edit`)}
-                >
-                  <Edit className="h-4 w-4" />
-                  {t("actions.edit")}
                 </Button>
               </>
             ) : (
@@ -515,6 +559,23 @@ function CopyInstanceDetail({
           <CommentsSection copyId={copyId} />
         </div>
       </div>
+
+      {/* Owner dialogs: completion logger (keyed by aggregateId) + inline copy editor. */}
+      {copy.viewerIsOwner && (
+        <>
+          <LogSolveDialog
+            open={logOpen}
+            onOpenChange={setLogOpen}
+            copyId={copy.aggregateId ?? ""}
+            puzzleTitle={snapshot.title}
+          />
+          <EditCopyDialog
+            open={editOpen}
+            onOpenChange={setEditOpen}
+            copy={copy}
+          />
+        </>
+      )}
     </div>
   );
 }

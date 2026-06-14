@@ -2270,6 +2270,22 @@
       "next": "Volgende foto",
       "counter": "{current} / {total}",
       "commentFailed": "Je reactie kon niet worden geplaatst. Probeer het opnieuw."
+    },
+    "offerForSwap": "Aanbieden voor ruil",
+    "offeredForSwap": "Aangeboden voor ruil",
+    "offerForLend": "Aanbieden om uit te lenen",
+    "offeredForLend": "Aangeboden om uit te lenen",
+    "editCopy": {
+      "title": "Exemplaar bewerken",
+      "save": "Opslaan",
+      "saving": "Opslaan…",
+      "saved": "Wijzigingen opgeslagen",
+      "cancel": "Annuleren",
+      "editFailed": "Je wijzigingen konden niet worden opgeslagen. Probeer het opnieuw.",
+      "cover": "Omslagafbeelding",
+      "useCatalogueImage": "Catalogusafbeelding gebruiken",
+      "noPhotosForCover": "Voeg fotos toe aan dit exemplaar om een eigen omslag te kiezen.",
+      "notesPlaceholder": "Voeg een notitie toe over dit exemplaar…"
     }
   },
   "puzzleDefinition": {

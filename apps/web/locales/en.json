@@ -2270,6 +2270,22 @@
       "next": "Next photo",
       "counter": "{current} / {total}",
       "commentFailed": "Couldn’t post your comment. Please try again."
+    },
+    "offerForSwap": "Offer for Swap",
+    "offeredForSwap": "Offered for Swap",
+    "offerForLend": "Offer to Lend",
+    "offeredForLend": "Offered for Lend",
+    "editCopy": {
+      "title": "Edit copy",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Changes saved",
+      "cancel": "Cancel",
+      "editFailed": "Could not save your changes. Please try again.",
+      "cover": "Cover image",
+      "useCatalogueImage": "Use catalogue image",
+      "noPhotosForCover": "Add photos to this copy to choose a custom cover.",
+      "notesPlaceholder": "Add a note about this copy…"
     }
   },
   "puzzleDefinition": {

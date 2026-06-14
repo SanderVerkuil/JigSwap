@@ -306,6 +306,9 @@ export const getCopyInstanceView = query({
 
     return {
       copyId: copy._id,
+      // The domain CopyId — the copy-edit mutations (condition/sharing/details, recordCompletion)
+      // key on this aggregateId, not the _id. Null for rows that predate the backfill.
+      aggregateId: copy.aggregateId ?? null,
       viewerIsOwner,
       owner,
       snapshot: {
