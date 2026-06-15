@@ -155,9 +155,13 @@ interface DragState {
   buf: Array<{ pos: THREE.Vector3; t: number }>; // ring buffer for velocity
   bufIdx: number;
   canvas: HTMLCanvasElement;
+  minY: number; // lowest the box center may go (its half-height) — keeps it above the shelf
 }
 
-function useBoxDrag(rigidBodyRefs: React.RefObject<RapierRigidBody | null>[]): {
+function useBoxDrag(
+  rigidBodyRefs: React.RefObject<RapierRigidBody | null>[],
+  boxMinY: number[],
+): {
   onPointerDown: (e: React.PointerEvent<HTMLElement>, index: number) => void;
 } {
   const { camera, raycaster, pointer } = useThree();
@@ -190,6 +194,8 @@ function useBoxDrag(rigidBodyRefs: React.RefObject<RapierRigidBody | null>[]): {
       if (!body) return;
 
       const targetPos = hit.clone().sub(ds.grabOffset);
+      // Don't let a held box be dragged down into/through the shelf board.
+      targetPos.y = Math.max(targetPos.y, ds.minY);
       body.setNextKinematicTranslation(targetPos);
 
       // Push into ring buffer
@@ -332,9 +338,10 @@ function useBoxDrag(rigidBodyRefs: React.RefObject<RapierRigidBody | null>[]): {
         buf: [],
         bufIdx: 0,
         canvas: canvas,
+        minY: boxMinY[index] ?? 0,
       };
     },
-    [camera, canvas, pointer, raycaster, rigidBodyRefs],
+    [camera, canvas, pointer, raycaster, rigidBodyRefs, boxMinY],
   );
 
   return { onPointerDown };
@@ -396,8 +403,16 @@ function PhysicsArrangement({
     [boxes.length],
   );
 
+  // Lowest each box center may be dragged (its half-height), so a held box never
+  // sinks below the shelf top (y = 0).
+  const boxMinY = React.useMemo(
+    () => boxes.map((b) => boxWorldSize(b).h / 2),
+    [boxes],
+  );
+
   const { onPointerDown } = useBoxDrag(
     rigidBodyRefs as React.RefObject<RapierRigidBody | null>[],
+    boxMinY,
   );
 
   // Reset: snap every box back to its resting layout slot (upright, still). Driven
@@ -518,6 +533,7 @@ function PhysicsArrangement({
                 headingFont={headingFont}
                 sizeScale={1}
                 anchored={false}
+                fixedSize
               />
             </group>
           </RigidBody>

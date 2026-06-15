@@ -110,6 +110,7 @@ export function PuzzleBox({
   headingFont,
   sizeScale = 1,
   anchored = true,
+  fixedSize = false,
 }: {
   box: PlankBox;
   slot: BoxSlot;
@@ -124,6 +125,13 @@ export function PuzzleBox({
    * <RigidBody> owns the world transform and a centered CuboidCollider matches.
    */
   anchored?: boolean;
+  /**
+   * When true, skip the post-load cover aspect-correction and render at the
+   * deterministic boxWorldSize height. The physics scene needs this so the
+   * rendered box matches its (statically-sized) CuboidCollider — otherwise a
+   * cover with aspect ≠ 1.4 ends up a different size than its physics body.
+   */
+  fixedSize?: boolean;
 }) {
   const widthPx = box.width ?? 116;
   const worldScale = PX * BOX_SCALE * sizeScale;
@@ -146,14 +154,20 @@ export function PuzzleBox({
   // Height in CSS-plank pixels; corrected to the cover's real aspect when the
   // image loads (possibly long ago, on the cached entry).
   const [hPx, setHPx] = React.useState(() =>
-    entry.aspect != null ? widthPx / entry.aspect : defaultHPx,
+    fixedSize || entry.aspect == null ? defaultHPx : widthPx / entry.aspect,
   );
   const [edges, setEdges] = React.useState<CoverEdges | null>(entry.edges);
 
   React.useEffect(() => {
-    setHPx(entry.aspect != null ? widthPx / entry.aspect : defaultHPx);
+    // fixedSize keeps the height at defaultHPx (== boxWorldSize, == the physics
+    // collider); only the edge-bleed strips still update from the cache.
+    if (!fixedSize) {
+      setHPx(entry.aspect != null ? widthPx / entry.aspect : defaultHPx);
+    }
     setEdges(entry.edges);
-    const onAspect = (aspect: number) => setHPx(widthPx / aspect);
+    const onAspect = (aspect: number) => {
+      if (!fixedSize) setHPx(widthPx / aspect);
+    };
     const onEdges = (e: CoverEdges) => setEdges(e);
     entry.aspectSubs.add(onAspect);
     entry.edgeSubs.add(onEdges);
@@ -161,7 +175,7 @@ export function PuzzleBox({
       entry.aspectSubs.delete(onAspect);
       entry.edgeSubs.delete(onEdges);
     };
-  }, [entry, widthPx, defaultHPx]);
+  }, [entry, widthPx, defaultHPx, fixedSize]);
 
   const texture = entry.texture;
   const h = hPx * worldScale;
