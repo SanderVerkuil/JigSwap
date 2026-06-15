@@ -22,6 +22,7 @@ import { useShellPreferences } from "./preferences";
 export function UserFooter() {
   const { user } = useUser();
   const { hideEmail } = useShellPreferences();
+  const t = useTranslations("shell");
 
   if (!user) {
     return null;
@@ -47,7 +48,14 @@ export function UserFooter() {
           <PreferencesPage />
         </UserButton.UserProfilePage>
       </UserButton>
-      <div className="grid min-w-0 flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
+      {/* The identity block links to the member's own profile — the avatar
+          (Clerk UserButton) owns account management, so this is the only
+          in-shell route to /profile on desktop. */}
+      <Link
+        href="/profile"
+        title={t("pages.profile.title")}
+        className="grid min-w-0 flex-1 rounded-md px-1 py-0.5 text-left text-sm leading-tight transition-colors hover:bg-accent group-data-[collapsible=icon]:hidden"
+      >
         <span className="truncate font-medium">
           {user.firstName} {user.lastName}
         </span>
@@ -60,7 +68,7 @@ export function UserFooter() {
         >
           {email}
         </span>
-      </div>
+      </Link>
       <AdminBadge />
     </div>
   );
