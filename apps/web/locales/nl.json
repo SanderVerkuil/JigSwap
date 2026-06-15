@@ -2217,7 +2217,7 @@
         "subtitle": "Voeg een puzzel toe aan de gedeelde catalogus voor iedereen."
       },
       "puzzles": {
-        "title": "Puzzels",
+        "title": "Puzzelcatalogus",
         "subtitle": "De gedeelde puzzelcatalogus."
       },
       "borrowed": {
@@ -2264,7 +2264,10 @@
         "browseCommunitySub": "Ontdek puzzels bij jou in de buurt"
       }
     },
-    "breadcrumbLabel": "Broodkruimel"
+    "breadcrumbLabel": "Broodkruimel",
+    "crumbs": {
+      "ownedCopies": "Exemplaren"
+    }
   },
   "copyInstance": {
     "notFound": "Exemplaar niet gevonden",

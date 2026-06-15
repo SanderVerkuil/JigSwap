@@ -7,7 +7,7 @@ import { useRouter } from "@/compat/navigation";
 import { availabilityToSharing } from "@/components/add-puzzle";
 import { EditCopyDialog } from "@/components/copies/edit-copy-dialog";
 import { PhotoLightbox } from "@/components/copies/photo-lightbox";
-import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -34,7 +34,7 @@ import {
   Star,
   Tag,
 } from "lucide-react";
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
 
@@ -56,11 +56,31 @@ export const Route = createFileRoute("/_dashboard/copies/$id")({
 
 function CopyInstancePage() {
   const { id } = Route.useParams();
+  return <CopyInstanceScreen copyId={id} owned={false} />;
+}
+
+// Shared copy-detail screen used by BOTH the public route (/copies/$id, owned=false)
+// and the owner route (/my-puzzles/$id, owned=true). `owned` drives the breadcrumb
+// framing and gates the owner route: viewing a copy you don't own under /my-puzzles
+// bounces to the public /copies view.
+export function CopyInstanceScreen({
+  copyId,
+  owned,
+}: {
+  copyId: string;
+  owned: boolean;
+}) {
+  const router = useRouter();
   const copy = useQuery(gateway.library.getCopyInstanceView, {
-    copyId: id as Id<"ownedPuzzles">,
+    copyId: copyId as Id<"ownedPuzzles">,
   });
 
-  if (copy === undefined) {
+  const notOwner = owned && copy != null && copy.viewerIsOwner === false;
+  useEffect(() => {
+    if (notOwner) router.push(`/copies/${copyId}`);
+  }, [notOwner, copyId, router]);
+
+  if (copy === undefined || notOwner) {
     return <CopyInstanceSkeleton />;
   }
 
@@ -68,7 +88,7 @@ function CopyInstancePage() {
     return <CopyInstanceNotFound />;
   }
 
-  return <CopyInstanceDetail copy={copy} copyId={id} />;
+  return <CopyInstanceDetail copy={copy} copyId={copyId} owned={owned} />;
 }
 
 function CopyInstanceSkeleton() {
@@ -126,12 +146,15 @@ function conditionDotClass(condition: string) {
 function CopyInstanceDetail({
   copy,
   copyId,
+  owned,
 }: {
   copy: CopyInstanceView;
   copyId: string;
+  owned: boolean;
 }) {
   const router = useRouter();
   const t = useTranslations("copyInstance");
+  const tShell = useTranslations("shell");
   const tPuzzles = useTranslations("puzzles");
   const tDifficulty = useTranslations("puzzles.puzzles.difficulty");
   const format = useFormatter();
@@ -166,17 +189,28 @@ function CopyInstanceDetail({
     }
   };
 
-  // Owner-only: publish the Edit action into the shell page head (top-right). Non-owners get no
-  // header action. Deps include the toggles the button closes over so the slot stays in sync.
-  usePageHeaderActions(
-    () =>
-      copy.viewerIsOwner ? (
+  // Publish the page head: the puzzle name as the title (replacing the generic
+  // "Owned copy"), the breadcrumb trail, and the owner-only Edit action. For the
+  // owner route (owned) the crumbs are left to the shell's auto trail (My Library ›
+  // My Puzzles › <name>, since /my-puzzles/$id's pageKey matches the nav item);
+  // the public route publishes an explicit Community › Owned Copies › <name> trail.
+  usePageHeader(
+    () => ({
+      title: snapshot.title,
+      crumbs: owned
+        ? undefined
+        : [
+            { label: tShell("groups.community.label"), href: "/community" },
+            { label: tShell("crumbs.ownedCopies"), href: "/browse" },
+          ],
+      actions: copy.viewerIsOwner ? (
         <Button variant="outline" onClick={() => setEditOpen(true)}>
           <Edit className="h-4 w-4" />
           {t("actions.edit")}
         </Button>
       ) : null,
-    [copy.viewerIsOwner, t],
+    }),
+    [snapshot.title, owned, copy.viewerIsOwner, t, tShell],
   );
 
   const formatDay = (timestamp: number) =>

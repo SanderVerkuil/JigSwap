@@ -2217,7 +2217,7 @@
         "subtitle": "Add a puzzle to the shared catalogue for everyone."
       },
       "puzzles": {
-        "title": "Puzzles",
+        "title": "Puzzles catalogue",
         "subtitle": "The shared puzzle catalogue."
       },
       "borrowed": {
@@ -2264,7 +2264,10 @@
         "browseCommunitySub": "Discover puzzles near you"
       }
     },
-    "breadcrumbLabel": "Breadcrumb"
+    "breadcrumbLabel": "Breadcrumb",
+    "crumbs": {
+      "ownedCopies": "Owned Copies"
+    }
   },
   "copyInstance": {
     "notFound": "Copy not found",
