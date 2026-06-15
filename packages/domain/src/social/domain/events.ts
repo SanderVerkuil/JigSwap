@@ -85,10 +85,23 @@ export class PhotoCommentPosted implements DomainEvent {
   ) {}
 }
 
+// A member re-arranged their profile display shelf (the ordered, curated set of owned copies
+// shown on their profile). copyIds is the new ordered list (deduped, capped); empty clears it.
+export class ProfileShelfArranged implements DomainEvent {
+  readonly name = "ProfileShelfArranged";
+  constructor(
+    readonly profileId: ProfileId,
+    readonly memberId: MemberId,
+    readonly copyIds: readonly string[],
+    readonly occurredAt: Date,
+  ) {}
+}
+
 export type SocialDomainEvent =
   | MemberFollowed
   | MemberUnfollowed
   | ProfileUpdated
   | ProfileVisibilityChanged
   | CommentPosted
-  | PhotoCommentPosted;
+  | PhotoCommentPosted
+  | ProfileShelfArranged;

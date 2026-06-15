@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { toMemberId, toProfileId } from "../../shared-kernel";
+import type { ProfileShelfArranged } from "./events";
 import { MemberId, ProfileId } from "./ids";
 import { EditProps, Profile } from "./profile";
 
@@ -158,5 +159,66 @@ describe("Profile.changeVisibility", () => {
     profile.changeVisibility("private", LATER);
     expect(profile.displayName.value).toBe("Alice");
     expect(profile.bio).toBe("Loves 1000-piece landscapes");
+  });
+});
+
+describe("Profile.arrangeShelf", () => {
+  const LATER = new Date("2026-06-09T12:00:00Z");
+
+  const open = (): Profile => {
+    const result = Profile.create(profileId, member, editProps());
+    if (!result.isOk) throw new Error("setup");
+    result.value.pullEvents(); // discard the creation event
+    return result.value;
+  };
+
+  it("sets featuredCopyIds in the given order and records a ProfileShelfArranged event", () => {
+    const profile = open();
+    const result = profile.arrangeShelf(["a", "b", "c"], LATER);
+
+    expect(result.isOk).toBe(true);
+    expect(profile.featuredCopyIds).toEqual(["a", "b", "c"]);
+
+    const events = profile.pullEvents();
+    expect(events.map((e) => e.name)).toEqual(["ProfileShelfArranged"]);
+    const event = events[0] as unknown as ProfileShelfArranged;
+    expect(event.profileId).toBe(profileId);
+    expect(event.memberId).toBe(member);
+    expect(event.copyIds).toEqual(["a", "b", "c"]);
+    expect(event.occurredAt).toEqual(LATER);
+  });
+
+  it("de-duplicates, preserving first-occurrence order", () => {
+    const profile = open();
+    profile.arrangeShelf(["a", "b", "a"], LATER);
+    expect(profile.featuredCopyIds).toEqual(["a", "b"]);
+  });
+
+  it("caps at MAX_FEATURED (6) — an 8-item input keeps the first 6", () => {
+    const profile = open();
+    profile.arrangeShelf(["a", "b", "c", "d", "e", "f", "g", "h"], LATER);
+    expect(profile.featuredCopyIds).toEqual(["a", "b", "c", "d", "e", "f"]);
+    expect(profile.featuredCopyIds).toHaveLength(6);
+  });
+
+  it("empty array clears the shelf and still records the event", () => {
+    const profile = open();
+    profile.arrangeShelf(["a", "b"], NOW);
+    profile.pullEvents(); // discard first event
+
+    const result = profile.arrangeShelf([], LATER);
+    expect(result.isOk).toBe(true);
+    expect(profile.featuredCopyIds).toEqual([]);
+
+    const events = profile.pullEvents();
+    expect(events.map((e) => e.name)).toEqual(["ProfileShelfArranged"]);
+    const event = events[0] as unknown as ProfileShelfArranged;
+    expect(event.copyIds).toEqual([]);
+  });
+
+  it("sets updatedAt to the passed now", () => {
+    const profile = open();
+    profile.arrangeShelf(["a"], LATER);
+    expect(profile.toState().updatedAt).toEqual(LATER);
   });
 });
