@@ -43,6 +43,9 @@ export interface PuzzleCardShellProps {
   href?: string;
   /** When set, the cover image links to this href (the puzzle's view page). */
   imageHref?: string;
+  /** How the cover image fills its square: "cover" crops to fill (default),
+   *  "contain" shows the whole image letterboxed. */
+  imageFit?: "cover" | "contain";
   className?: string;
 }
 
@@ -73,6 +76,7 @@ export function PuzzleCardShell({
   selectable = false,
   href,
   imageHref,
+  imageFit = "cover",
   className,
 }: PuzzleCardShellProps) {
   const t = useTranslations("puzzles");
@@ -106,7 +110,10 @@ export function PuzzleCardShell({
             src={puzzle.imageUrl}
             alt={puzzle.title || "Puzzle"}
             fill
-            className="object-cover transition-transform group-hover:scale-105"
+            className={cn(
+              "transition-transform group-hover:scale-105",
+              imageFit === "contain" ? "object-contain" : "object-cover",
+            )}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-jigsaw-primary/15 to-jigsaw-primary-accent/15 text-jigsaw-primary/50">

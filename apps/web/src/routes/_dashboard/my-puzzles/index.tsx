@@ -285,6 +285,7 @@ function PuzzlesPage() {
                 variant="default"
                 showCollectionDropdown={true}
                 viewBasePath="/my-puzzles"
+                imageFit="contain"
                 onEdit={handleEditPuzzle}
                 onView={handleViewPuzzle}
                 onDelete={handleDeletePuzzle}
