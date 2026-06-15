@@ -24,7 +24,7 @@ export const Route = createFileRoute("/")({
 // sustainability band, founders' quote and the closing CTA.
 function Home() {
   return (
-    <div className="mk-root font-mk-sans min-h-screen">
+    <div className="mk-root font-mk-sans min-h-screen overflow-x-clip">
       <MarketingHeader />
       <main>
         <Hero />
