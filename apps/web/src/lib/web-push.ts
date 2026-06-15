@@ -51,21 +51,68 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
   return navigator.serviceWorker.register("/sw.js");
 }
 
+// Wait until the registration has an ACTIVE worker (pushManager.subscribe needs one). Unlike
+// `navigator.serviceWorker.ready` — which hangs forever if the worker never activates (e.g. /sw.js
+// served as HTML, a parse error, or it goes redundant) — this resolves on activation, REJECTS with a
+// clear message if the worker becomes redundant, and times out instead of hanging.
+function waitForActiveWorker(
+  registration: ServiceWorkerRegistration,
+  timeoutMs = 10000,
+): Promise<void> {
+  if (registration.active) return Promise.resolve();
+  const worker = registration.installing ?? registration.waiting;
+  if (!worker) return Promise.resolve();
+  return new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error("Service worker did not activate in time")),
+      timeoutMs,
+    );
+    const check = () => {
+      if (worker.state === "activated") {
+        clearTimeout(timer);
+        resolve();
+      } else if (worker.state === "redundant") {
+        clearTimeout(timer);
+        reject(
+          new Error("Service worker failed to install (became redundant)"),
+        );
+      }
+    };
+    worker.addEventListener("statechange", check);
+    check();
+  });
+}
+
 // Subscribe this browser to push with the given VAPID public key, returning the storable payload.
-// Reuses an existing subscription if present (idempotent).
+// Reuses an existing subscription if present (idempotent), and recovers from a stale subscription
+// created with a different VAPID key (which would otherwise make subscribe throw InvalidStateError).
 export async function subscribeToPush(
   vapidPublicKey: string,
 ): Promise<PushSubscriptionPayload> {
   const registration = await registerServiceWorker();
-  await navigator.serviceWorker.ready;
+  await waitForActiveWorker(registration);
+
   const existing = await registration.pushManager.getSubscription();
-  const subscription =
-    existing ??
-    (await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
-    }));
-  return subscriptionToPayload(subscription);
+  if (existing) return subscriptionToPayload(existing);
+
+  const options: PushSubscriptionOptionsInit = {
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+  };
+  try {
+    return subscriptionToPayload(
+      await registration.pushManager.subscribe(options),
+    );
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "InvalidStateError") {
+      const stale = await registration.pushManager.getSubscription();
+      if (stale) await stale.unsubscribe();
+      return subscriptionToPayload(
+        await registration.pushManager.subscribe(options),
+      );
+    }
+    throw error;
+  }
 }
 
 // The service-worker registration controlling this origin, or null. Prefers the registration for the

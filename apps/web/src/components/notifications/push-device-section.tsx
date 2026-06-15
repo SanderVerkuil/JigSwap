@@ -71,8 +71,11 @@ export function PushDeviceSection() {
       // (the browser is already subscribed and must remain turn-off-able).
       await registerPush(payload);
       toast.success(t("pushEnabled"));
-    } catch {
-      toast.error(t("pushError"));
+    } catch (error) {
+      // Surface the real cause: the subscribe pipeline (permission → SW activation → PushManager)
+      // has many failure points, and a silent generic toast made them undiagnosable.
+      console.error("[push] enable failed:", error);
+      toast.error(`${t("pushError")}: ${errorMessage(error)}`);
     } finally {
       // Always reconcile with the real browser state, whatever happened above.
       syncFromBrowser();
@@ -89,8 +92,9 @@ export function PushDeviceSection() {
       setEndpoint(null);
       if (ep) await unregisterPush({ endpoint: ep });
       toast.success(t("pushDisabled"));
-    } catch {
-      toast.error(t("pushError"));
+    } catch (error) {
+      console.error("[push] disable failed:", error);
+      toast.error(`${t("pushError")}: ${errorMessage(error)}`);
     } finally {
       syncFromBrowser();
       setBusy(false);
@@ -152,4 +156,9 @@ export function PushDeviceSection() {
 
 function Status({ text }: { text: string }) {
   return <p className="text-muted-foreground text-sm">{text}</p>;
+}
+
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return String(error);
 }
