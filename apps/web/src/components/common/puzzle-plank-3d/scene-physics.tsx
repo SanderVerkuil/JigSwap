@@ -297,11 +297,18 @@ function useBoxDrag(rigidBodyRefs: React.RefObject<RapierRigidBody | null>[]): {
       );
       raycaster.setFromCamera(pointer, camera);
 
-      // Drag plane: normal = camera forward, through the body's current position
+      // Drag plane through the body, VERTICAL (contains world-up) and facing the
+      // camera horizontally. Using the camera's full forward made a tilted plane
+      // where cursor moves mapped to a confusing diagonal; flattening the normal
+      // to the horizontal decouples the axes: left/right slides the box along the
+      // shelf, up/down lifts it.
       const bodyPos = body.translation();
       const bodyVec = new THREE.Vector3(bodyPos.x, bodyPos.y, bodyPos.z);
       const camForward = new THREE.Vector3();
       camera.getWorldDirection(camForward);
+      camForward.y = 0;
+      if (camForward.lengthSq() < 1e-6) camForward.set(0, 0, 1); // near top-down fallback
+      camForward.normalize();
       const dragPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(
         camForward,
         bodyVec,
