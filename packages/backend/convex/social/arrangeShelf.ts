@@ -1,4 +1,4 @@
-import { makeArrangeShelf, Profile } from "@jigswap/domain";
+import { makeArrangeShelf, MAX_FEATURED, Profile } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
@@ -19,6 +19,15 @@ export const arrangeShelf = mutation({
   },
   handler: async (ctx, args) => {
     const memberId = await requireMember(ctx);
+
+    // Transport-layer guard: the domain caps to MAX_FEATURED anyway, but reject an oversized
+    // payload up front so a malformed client can't force a long ownership-check read loop.
+    if (args.copyIds.length > MAX_FEATURED) {
+      throw new ConvexError({
+        code: "TooManyCopyIds",
+        message: `At most ${MAX_FEATURED} copies can be featured`,
+      });
+    }
 
     // Ownership check: every supplied copy must be owned by the calling member. Reject if any
     // copy is owned by a different user or no longer exists (server-side enforcement).
