@@ -42,6 +42,15 @@ export function PushDeviceCard() {
   const [busy, setBusy] = useState(false);
   const supported = mounted && pushSupported();
 
+  // Re-read the SOURCE OF TRUTH — does this browser actually hold a push subscription — and reflect
+  // it in the UI. Called after every action so the button never diverges from reality even when the
+  // server sync fails.
+  const syncFromBrowser = () => {
+    currentSubscriptionEndpoint()
+      .then(setEndpoint)
+      .catch(() => setEndpoint(null));
+  };
+
   useEffect(() => {
     setMounted(true);
     if (!pushSupported()) return;
@@ -61,13 +70,19 @@ export function PushDeviceCard() {
       if (perm !== "granted") return;
       const key = pushConfig?.vapidPublicKey;
       if (!key) return;
+      // Subscribe in the browser first and reflect that immediately — the device is "on" once the
+      // browser holds a subscription, regardless of whether the server sync below succeeds.
       const payload = await subscribeToPush(key);
-      await registerPush(payload);
       setEndpoint(payload.endpoint);
+      // Best-effort server registration; a failure here must NOT leave the button stuck on "Enable"
+      // (the browser is already subscribed and must remain turn-off-able).
+      await registerPush(payload);
       toast.success(t("pushEnabled"));
     } catch {
       toast.error(t("pushError"));
     } finally {
+      // Always reconcile with the real browser state, whatever happened above.
+      syncFromBrowser();
       setBusy(false);
     }
   };
@@ -75,24 +90,30 @@ export function PushDeviceCard() {
   const disable = async () => {
     setBusy(true);
     try {
+      // Unsubscribe in the browser (the truth) and flip the UI before the server cleanup, so a
+      // failing unregister can't leave the device stuck "on".
       const ep = await unsubscribeFromPush();
-      if (ep) await unregisterPush({ endpoint: ep });
       setEndpoint(null);
+      if (ep) await unregisterPush({ endpoint: ep });
       toast.success(t("pushDisabled"));
     } catch {
       toast.error(t("pushError"));
     } finally {
+      syncFromBrowser();
       setBusy(false);
     }
   };
 
   // Resolve the single status message + action for the current device state.
+  const loading = pushConfig === undefined;
   const configured = pushConfig?.vapidPublicKey != null;
   const enabled = endpoint != null;
 
   let body: React.ReactNode;
   if (!supported) {
     body = <Status text={t("pushUnsupported")} />;
+  } else if (loading) {
+    body = <Status text={t("pushDeviceDesc")} />;
   } else if (!configured) {
     body = <Status text={t("pushUnconfigured")} />;
   } else if (permission === "denied") {

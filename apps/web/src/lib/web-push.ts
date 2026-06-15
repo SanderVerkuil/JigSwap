@@ -68,11 +68,21 @@ export async function subscribeToPush(
   return subscriptionToPayload(subscription);
 }
 
+// The service-worker registration controlling this origin, or null. Prefers the registration for the
+// current page scope and falls back to scanning all registrations, so it works regardless of which
+// page the call is made from (more robust than passing a clientURL).
+async function getPushRegistration(): Promise<ServiceWorkerRegistration | null> {
+  if (!("serviceWorker" in navigator)) return null;
+  const byScope = await navigator.serviceWorker.getRegistration();
+  if (byScope) return byScope;
+  const all = await navigator.serviceWorker.getRegistrations();
+  return all[0] ?? null;
+}
+
 // Tear down this browser's subscription, returning its endpoint (so the caller can unregister it
 // server-side), or null if there was none.
 export async function unsubscribeFromPush(): Promise<string | null> {
-  if (!("serviceWorker" in navigator)) return null;
-  const registration = await navigator.serviceWorker.getRegistration("/sw.js");
+  const registration = await getPushRegistration();
   if (!registration) return null;
   const subscription = await registration.pushManager.getSubscription();
   if (!subscription) return null;
@@ -83,8 +93,7 @@ export async function unsubscribeFromPush(): Promise<string | null> {
 
 // The current subscription's endpoint, or null. Used to show whether THIS browser is subscribed.
 export async function currentSubscriptionEndpoint(): Promise<string | null> {
-  if (!("serviceWorker" in navigator)) return null;
-  const registration = await navigator.serviceWorker.getRegistration("/sw.js");
+  const registration = await getPushRegistration();
   if (!registration) return null;
   const subscription = await registration.pushManager.getSubscription();
   return subscription?.endpoint ?? null;
