@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>2/4</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/1</span>
+                <span class='fraction'>1/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>2/4</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -73,7 +73,22 @@
 <a name='L8'></a><a href='#L8'>8</a>
 <a name='L9'></a><a href='#L9'>9</a>
 <a name='L10'></a><a href='#L10'>10</a>
-<a name='L11'></a><a href='#L11'>11</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -81,18 +96,39 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">258x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type { Notification } from "@jigswap/domain";
+import { internal } from "../../../_generated/api";
+import type { Id } from "../../../_generated/dataModel";
 import type { MutationCtx } from "../../../_generated/server";
-import { knockChannel } from "./knockChannel";
 &nbsp;
-// Push channel, delivered through Knock: the workflow's push step is gated on
-// `data.channel == "push"`. No-ops (with a log) when Knock is not configured, so opting a member
-// into push never creates in-app rows — only inAppChannel persists.
-export const pushChannel = (
-  ctx: MutationCtx,
-): ((notification: Notification) =&gt; Promise&lt;void&gt;) =&gt; knockChannel(ctx, "push");
+// Web Push channel: schedules the out-of-band send (notifications/sendWebPush) after commit, which
+// fans the notification out to every active push subscription of the recipient via VAPID. Scheduling
+// (rather than sending here) keeps the delivering mutation transactional and fast, and the action
+// only runs once the in-app row durably exists. No-ops downstream when push is unconfigured (no
+// VAPID keys) or the member has no subscriptions — opting into push never creates in-app rows.
+export const pushChannel =
+  (ctx: MutationCtx) =&gt;
+<span class="fstat-no" title="function not covered" >  async (n</span>otification: Notification): Promise&lt;void&gt; =&gt; {
+    const state = <span class="cstat-no" title="statement not covered" >notification.toState();</span>
+<span class="cstat-no" title="statement not covered" >    await ctx.scheduler.runAfter(0, internal.notifications.sendWebPush.send, {</span>
+      userId: state.userId as unknown as Id&lt;"users"&gt;,
+      type: state.type as string,
+      title: state.title,
+      message: state.message,
+      relatedId: state.relatedId,
+    });
+  };
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -100,7 +136,7 @@ export const pushChannel = (
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-15T07:37:39.663Z
+                at 2026-06-15T08:04:54.918Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>
