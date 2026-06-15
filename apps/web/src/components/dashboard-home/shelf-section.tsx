@@ -1,7 +1,8 @@
 "use client";
 
 import { Link } from "@/compat/link";
-import { PuzzlePlank, PuzzlePlankBox } from "@/components/common/puzzle-plank";
+import { PuzzlePlankBox } from "@/components/common/puzzle-plank";
+import { PuzzlePlank3D } from "@/components/common/puzzle-plank-3d";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
@@ -9,6 +10,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { BookOpen, ChevronRight } from "lucide-react";
+import { useMemo } from "react";
 import { useTranslations } from "use-intl";
 import { SectionHead } from "./section-head";
 import { useCurrentMember } from "./use-current-member";
@@ -105,6 +107,16 @@ export function ShelfSection() {
     member?._id ? { userId: member._id as Id<"users"> } : "skip",
   );
 
+  // Memoized so the 3D plank's color-resolution effect doesn't re-run on every
+  // reactive re-render of this dashboard (only when the copies/viewport change).
+  const plankBoxes = useMemo(
+    () =>
+      (copies ?? [])
+        .slice(0, 5)
+        .map((copy, i) => toPlankBox(copy, i, isMobile)),
+    [copies, isMobile],
+  );
+
   const loading =
     isMemberLoading ||
     (member != null &&
@@ -187,14 +199,8 @@ export function ShelfSection() {
         </div>
       ) : (
         <div className="grid items-center gap-10 lg:grid-cols-[1fr_252px]">
-          {/* min-w-0 lets the grid column shrink so the plank swipes
-              horizontally on narrow screens instead of blowing out. */}
-          <div className="min-w-0 overflow-x-auto px-2 pt-3 pb-3 md:pt-6 md:pb-5">
-            <PuzzlePlank
-              boxes={owned
-                .slice(0, 5)
-                .map((copy, i) => toPlankBox(copy, i, isMobile))}
-            />
+          <div className="h-[300px] min-w-0 md:h-[360px]">
+            <PuzzlePlank3D boxes={plankBoxes} />
           </div>
           <div className="flex flex-col">
             {statRows.map((row) => (

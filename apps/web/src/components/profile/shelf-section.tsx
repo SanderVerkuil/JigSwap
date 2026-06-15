@@ -1,7 +1,8 @@
 "use client";
 
 import { Link } from "@/compat/link";
-import { PuzzlePlank, PuzzlePlankBox } from "@/components/common/puzzle-plank";
+import { PuzzlePlankBox } from "@/components/common/puzzle-plank";
+import { PuzzlePlank3D } from "@/components/common/puzzle-plank-3d";
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,6 +10,7 @@ import { gateway, Id } from "@/gateway";
 import { useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { BookOpen } from "lucide-react";
+import { useMemo } from "react";
 import { useTranslations } from "use-intl";
 import type { Member } from "./member-view";
 
@@ -56,6 +58,13 @@ export function ProfileShelfSection({ member }: { member: Member }) {
   const firstName = member.name?.split(/\s+/)[0] ?? member.name;
   const title = t("title", { name: firstName });
 
+  // Memoized so the 3D plank's color-resolution effect doesn't re-run on every
+  // reactive re-render (only when the copies change).
+  const boxes = useMemo(
+    () => (copies ?? []).slice(0, 6).map(toPlankBox),
+    [copies],
+  );
+
   if (copies === undefined) {
     return (
       <section>
@@ -64,8 +73,6 @@ export function ProfileShelfSection({ member }: { member: Member }) {
       </section>
     );
   }
-
-  const boxes = copies.slice(0, 6).map(toPlankBox);
 
   return (
     <section>
@@ -84,8 +91,8 @@ export function ProfileShelfSection({ member }: { member: Member }) {
           </Button>
         </div>
       ) : (
-        <div className="min-w-0 overflow-x-auto px-2 pt-6 pb-6">
-          <PuzzlePlank boxes={boxes} />
+        <div className="h-[300px] min-w-0 md:h-[360px]">
+          <PuzzlePlank3D boxes={boxes} />
         </div>
       )}
     </section>
