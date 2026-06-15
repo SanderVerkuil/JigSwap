@@ -209,8 +209,10 @@ import type * as social_adapters_idGenerators from "../social/adapters/idGenerat
 import type * as social_adapters_inProcessEventPublisher from "../social/adapters/inProcessEventPublisher.js";
 import type * as social_adapters_mappers from "../social/adapters/mappers.js";
 import type * as social_adapters_systemClock from "../social/adapters/systemClock.js";
+import type * as social_arrangeShelf from "../social/arrangeShelf.js";
 import type * as social_editProfile from "../social/editProfile.js";
 import type * as social_errors from "../social/errors.js";
+import type * as social_featuredShelf from "../social/featuredShelf.js";
 import type * as social_followMember from "../social/followMember.js";
 import type * as social_getActivityFeed from "../social/getActivityFeed.js";
 import type * as social_getProfile from "../social/getProfile.js";
@@ -451,8 +453,10 @@ declare const fullApi: ApiFromModules<{
   "social/adapters/inProcessEventPublisher": typeof social_adapters_inProcessEventPublisher;
   "social/adapters/mappers": typeof social_adapters_mappers;
   "social/adapters/systemClock": typeof social_adapters_systemClock;
+  "social/arrangeShelf": typeof social_arrangeShelf;
   "social/editProfile": typeof social_editProfile;
   "social/errors": typeof social_errors;
+  "social/featuredShelf": typeof social_featuredShelf;
   "social/followMember": typeof social_followMember;
   "social/getActivityFeed": typeof social_getActivityFeed;
   "social/getProfile": typeof social_getProfile;
