@@ -1451,7 +1451,7 @@
       "puzzle_rejected": "Wanneer een puzzel die je hebt ingediend is afgewezen.",
       "goal_achieved": "Wanneer je een puzzeldoel behaalt."
     },
-    "pushServiceUnreachable": "Je browser kon zijn pushdienst niet bereiken. Gebruik je Brave, zet dan 'Google-services voor pushberichten gebruiken' aan (Instellingen → Privacy en beveiliging); adblockers, privacy-extensies of je netwerk kunnen dit ook blokkeren."
+    "pushServiceUnreachable": "Je browser kon zijn pushdienst niet bereiken. Sommige privacybrowsers blokkeren of verwijderen die — Brave schakelt het standaard uit (zet 'Google-services voor pushberichten gebruiken' aan in Instellingen), en de-Googled Chromium-browsers zoals Helium verwijderen het. Firefox, Chrome of Edge werkt wel."
   },
   "solving": {
     "title": "Oplossen",
