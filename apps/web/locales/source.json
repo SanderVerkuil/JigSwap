@@ -1450,7 +1450,8 @@
       "puzzle_approved": "When a puzzle you submitted is approved for the catalogue.",
       "puzzle_rejected": "When a puzzle you submitted is rejected.",
       "goal_achieved": "When you reach a solving goal."
-    }
+    },
+    "pushServiceUnreachable": "Your browser couldn't reach its push service. If you use Brave, turn on 'Use Google services for push messaging' (Settings → Privacy and security); ad-blockers, privacy extensions, or your network can also block it."
   },
   "solving": {
     "title": "Solving",

@@ -1450,7 +1450,8 @@
       "puzzle_approved": "Wanneer een puzzel die je hebt ingediend is goedgekeurd voor de catalogus.",
       "puzzle_rejected": "Wanneer een puzzel die je hebt ingediend is afgewezen.",
       "goal_achieved": "Wanneer je een puzzeldoel behaalt."
-    }
+    },
+    "pushServiceUnreachable": "Je browser kon zijn pushdienst niet bereiken. Gebruik je Brave, zet dan 'Google-services voor pushberichten gebruiken' aan (Instellingen → Privacy en beveiliging); adblockers, privacy-extensies of je netwerk kunnen dit ook blokkeren."
   },
   "solving": {
     "title": "Oplossen",

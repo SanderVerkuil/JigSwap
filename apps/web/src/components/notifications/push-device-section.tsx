@@ -71,15 +71,23 @@ export function PushDeviceSection() {
       // Best-effort server registration; a failure here must NOT leave the button stuck on "Enable"
       // (the browser is already subscribed and must remain turn-off-able). Timed out so a stalled
       // mutation can't hang the button either.
-      console.debug("[push] register subscription with server…");
+      console.log("[push] register subscription with server…");
       await withTimeout(registerPush(payload), 15000, "register subscription");
-      console.debug("[push] done");
+      console.log("[push] done");
       toast.success(t("pushEnabled"));
     } catch (error) {
       // Surface the real cause: the subscribe pipeline (permission → SW activation → PushManager)
-      // has many failure points, and a silent generic toast made them undiagnosable.
+      // has many failure points, and a silent generic toast made them undiagnosable. A hung
+      // PushManager.subscribe means the browser couldn't reach its push backend (FCM/Mozilla) —
+      // usually Brave's default block, a privacy extension/ad-blocker, or the network — so we show
+      // actionable guidance for that specific case.
       console.error("[push] enable failed:", error);
-      toast.error(`${t("pushError")}: ${errorMessage(error)}`);
+      const msg = errorMessage(error);
+      toast.error(
+        msg.includes("PushManager.subscribe")
+          ? t("pushServiceUnreachable")
+          : `${t("pushError")}: ${msg}`,
+      );
     } finally {
       // Always reconcile with the real browser state, whatever happened above.
       syncFromBrowser();
