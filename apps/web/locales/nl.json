@@ -1435,7 +1435,22 @@
     "pushEnabled": "Push ingeschakeld op dit apparaat",
     "pushDisabled": "Push uitgeschakeld op dit apparaat",
     "pushError": "Kon pushmeldingen niet bijwerken",
-    "matrixLabel": "Meldingskanalen per type"
+    "matrixLabel": "Meldingskanalen per type",
+    "typeDesc": {
+      "trade_request": "Wanneer iemand een ruil voorstelt voor een van je puzzels.",
+      "trade_accepted": "Wanneer iemand een ruil accepteert die je hebt voorgesteld.",
+      "trade_declined": "Wanneer iemand een ruil afwijst die je hebt voorgesteld.",
+      "trade_completed": "Wanneer een ruil is voltooid.",
+      "trade_cancelled": "Wanneer een ruil is geannuleerd.",
+      "exchange_proposed": "Wanneer iemand een uitwisseling voorstelt — ruil, verkoop of uitlenen.",
+      "exchange_disputed": "Wanneer een uitwisseling waaraan je deelneemt wordt betwist.",
+      "message_received": "Wanneer je een nieuw bericht ontvangt.",
+      "review_received": "Wanneer iemand je een beoordeling geeft na een uitwisseling.",
+      "puzzle_favorited": "Wanneer iemand een puzzel die je hebt toegevoegd als favoriet markeert.",
+      "puzzle_approved": "Wanneer een puzzel die je hebt ingediend is goedgekeurd voor de catalogus.",
+      "puzzle_rejected": "Wanneer een puzzel die je hebt ingediend is afgewezen.",
+      "goal_achieved": "Wanneer je een puzzeldoel behaalt."
+    }
   },
   "solving": {
     "title": "Oplossen",

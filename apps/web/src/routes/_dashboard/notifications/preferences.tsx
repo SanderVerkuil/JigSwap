@@ -63,9 +63,10 @@ function NotificationPreferencesPage() {
   };
 
   // The shell chrome (PageHead) owns the "Notification preferences" title + subtitle, so there is no
-  // page h1 here. The screen is two card-free sections on the page ground.
+  // page h1 here. Width follows the shell's content-width setting (ContentArea centres or fills), so
+  // we just stretch — no local max-width. The screen is two card-free sections on the page ground.
   return (
-    <div className="flex w-full max-w-4xl flex-col gap-10 md:gap-12">
+    <div className="flex w-full flex-col gap-10 md:gap-12">
       <PushDeviceSection />
 
       <section>

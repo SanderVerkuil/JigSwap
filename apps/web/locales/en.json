@@ -1435,7 +1435,22 @@
     "pushEnabled": "Push enabled on this device",
     "pushDisabled": "Push disabled on this device",
     "pushError": "Couldn't update push notifications",
-    "matrixLabel": "Notification channels by type"
+    "matrixLabel": "Notification channels by type",
+    "typeDesc": {
+      "trade_request": "When someone proposes a trade for one of your puzzles.",
+      "trade_accepted": "When someone accepts a trade you proposed.",
+      "trade_declined": "When someone declines a trade you proposed.",
+      "trade_completed": "When a trade is completed.",
+      "trade_cancelled": "When a trade is cancelled.",
+      "exchange_proposed": "When someone proposes an exchange — a swap, sale, or lend.",
+      "exchange_disputed": "When an exchange you're part of is disputed.",
+      "message_received": "When you receive a new message.",
+      "review_received": "When someone leaves you a review after an exchange.",
+      "puzzle_favorited": "When someone favourites a puzzle you added.",
+      "puzzle_approved": "When a puzzle you submitted is approved for the catalogue.",
+      "puzzle_rejected": "When a puzzle you submitted is rejected.",
+      "goal_achieved": "When you reach a solving goal."
+    }
   },
   "solving": {
     "title": "Solving",

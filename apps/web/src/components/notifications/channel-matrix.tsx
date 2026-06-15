@@ -77,7 +77,7 @@ export function ChannelMatrix({
                 <span
                   role="rowheader"
                   id={`row-${type}`}
-                  className="flex items-center gap-3 pr-3"
+                  className="flex items-center gap-3 pr-4"
                 >
                   <span
                     aria-hidden
@@ -88,8 +88,13 @@ export function ChannelMatrix({
                   >
                     <Icon className="h-4 w-4" />
                   </span>
-                  <span className="text-sm font-medium">
-                    {t(`types.${type}`)}
+                  <span className="flex min-w-0 flex-col">
+                    <span className="text-sm font-medium">
+                      {t(`types.${type}`)}
+                    </span>
+                    <span className="text-muted-foreground text-xs">
+                      {t(`typeDesc.${type}`)}
+                    </span>
                   </span>
                 </span>
                 {NOTIFICATION_CHANNELS.map((channel) => (
@@ -125,10 +130,7 @@ export function ChannelMatrix({
               key={type}
               className="py-4"
             >
-              <div
-                id={`m-${type}`}
-                className="mb-3 flex items-center gap-2.5 text-sm font-medium"
-              >
+              <div id={`m-${type}`} className="mb-3 flex items-center gap-2.5">
                 <span
                   aria-hidden
                   className={cn(
@@ -138,7 +140,14 @@ export function ChannelMatrix({
                 >
                   <Icon className="h-4 w-4" />
                 </span>
-                {t(`types.${type}`)}
+                <span className="flex min-w-0 flex-col">
+                  <span className="text-sm font-medium">
+                    {t(`types.${type}`)}
+                  </span>
+                  <span className="text-muted-foreground text-xs">
+                    {t(`typeDesc.${type}`)}
+                  </span>
+                </span>
               </div>
               <div className="flex flex-col gap-3 pl-11">
                 {NOTIFICATION_CHANNELS.map((channel) => {
