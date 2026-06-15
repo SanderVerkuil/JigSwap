@@ -1,5 +1,6 @@
 "use client";
 
+import { useUser } from "@/compat/clerk";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,10 +14,21 @@ import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import type { Member } from "./member-view";
 
+// Best-effort extraction of a human message from a Clerk API error (e.g. an
+// already-taken or too-short username), falling back to undefined.
+function clerkErrorMessage(err: unknown): string | undefined {
+  if (err && typeof err === "object" && "errors" in err) {
+    const errs = (err as { errors?: Array<{ longMessage?: string }> }).errors;
+    return errs?.[0]?.longMessage;
+  }
+  return undefined;
+}
+
 // The inline editor behind the header's Edit Profile toggle: username,
-// location and bio as open labelled fields (no card), saved through the
-// identity gateway. The server rejects taken usernames; we surface that as a
-// toast and keep the form open so nothing is lost.
+// location and bio as open labelled fields (no card). Username's source of
+// truth is Clerk (updated here; mirrored to Convex by the user.updated
+// webhook); location/bio are saved straight to Convex via the identity gateway.
+// Clerk rejects taken/invalid usernames; we surface that as a toast.
 export function EditProfileForm({
   member,
   onDone,
@@ -25,6 +37,7 @@ export function EditProfileForm({
   onDone: () => void;
 }) {
   const t = useTranslations("profile");
+  const { user } = useUser();
   const updateProfile = useMutation(gateway.identity.updateProfile);
   const setProfileVisibility = useMutation(gateway.social.setProfileVisibility);
 
@@ -56,16 +69,22 @@ export function EditProfileForm({
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Username -> Clerk (the source of truth); the user.updated webhook mirrors
+      // it into the Convex `users` cache. Only call when it actually changed.
+      const nextUsername = username.trim();
+      if (user && nextUsername !== (member.username ?? "")) {
+        await user.update({ username: nextUsername });
+      }
+      // Location/bio live only in Convex.
       await updateProfile({
         userId: member._id as Id<"users">,
-        username: username.trim() || undefined,
         location: location.trim() || undefined,
         bio: bio.trim() || undefined,
       });
       toast.success(t("saved"));
       onDone();
-    } catch {
-      toast.error(t("saveError"));
+    } catch (err) {
+      toast.error(clerkErrorMessage(err) ?? t("saveError"));
     } finally {
       setSaving(false);
     }
