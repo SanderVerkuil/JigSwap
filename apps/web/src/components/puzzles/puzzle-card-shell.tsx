@@ -106,7 +106,7 @@ export function PuzzleCardShell({
             src={puzzle.imageUrl}
             alt={puzzle.title || "Puzzle"}
             fill
-            className="object-cover transition-transform hover:scale-105"
+            className="object-cover transition-transform group-hover:scale-105"
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-jigsaw-primary/15 to-jigsaw-primary-accent/15 text-jigsaw-primary/50">
@@ -215,7 +215,9 @@ export function PuzzleCardShell({
   const card = (
     <Card
       className={cn(
-        "relative h-full gap-0 overflow-hidden p-0",
+        // `group` so the cover zooms on hover of the WHOLE card (the stretched-link
+        // overlay covers the image, so image-only :hover no longer fires).
+        "group relative h-full gap-0 overflow-hidden p-0",
         selected && "ring-2 ring-primary",
         (href || selectable) && "cursor-pointer",
         className,
