@@ -46,6 +46,24 @@ export function subscriptionToPayload(
   };
 }
 
+// Reject a promise if it doesn't settle within `ms`, so no step in the subscribe pipeline can hang
+// the UI indefinitely; the label tells us WHICH step stalled.
+export function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  label: string,
+): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`${label} timed out after ${ms}ms`)),
+        ms,
+      ),
+    ),
+  ]);
+}
+
 // Register (or reuse) the root-scoped service worker that receives pushes.
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration> {
   return navigator.serviceWorker.register("/sw.js");
@@ -89,27 +107,45 @@ function waitForActiveWorker(
 export async function subscribeToPush(
   vapidPublicKey: string,
 ): Promise<PushSubscriptionPayload> {
-  const registration = await registerServiceWorker();
+  // Breadcrumbs: if any step stalls, the console shows the last line reached, pinpointing the cause.
+  console.debug("[push] register service worker…");
+  const registration = await withTimeout(
+    registerServiceWorker(),
+    10000,
+    "register service worker",
+  );
+  console.debug("[push] wait for active worker…");
   await waitForActiveWorker(registration);
-
+  console.debug("[push] read existing subscription…");
   const existing = await registration.pushManager.getSubscription();
-  if (existing) return subscriptionToPayload(existing);
+  if (existing) {
+    console.debug("[push] reusing existing subscription");
+    return subscriptionToPayload(existing);
+  }
 
   const options: PushSubscriptionOptionsInit = {
     userVisibleOnly: true,
     applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
   };
-  try {
-    return subscriptionToPayload(
-      await registration.pushManager.subscribe(options),
+  const subscribe = () =>
+    withTimeout(
+      registration.pushManager.subscribe(options),
+      15000,
+      "PushManager.subscribe",
     );
+  try {
+    console.debug("[push] subscribe via PushManager…");
+    const sub = await subscribe();
+    console.debug("[push] subscribed");
+    return subscriptionToPayload(sub);
   } catch (error) {
+    // A stale subscription created with a different VAPID key makes subscribe throw
+    // InvalidStateError; drop it and retry once.
     if (error instanceof DOMException && error.name === "InvalidStateError") {
+      console.debug("[push] stale subscription; unsubscribe + retry…");
       const stale = await registration.pushManager.getSubscription();
       if (stale) await stale.unsubscribe();
-      return subscriptionToPayload(
-        await registration.pushManager.subscribe(options),
-      );
+      return subscriptionToPayload(await subscribe());
     }
     throw error;
   }

@@ -6,6 +6,7 @@ import {
   pushSupported,
   subscribeToPush,
   unsubscribeFromPush,
+  withTimeout,
 } from "@/lib/web-push";
 import { useMutation, useQuery } from "convex/react";
 import { BellOff, BellRing, Smartphone } from "lucide-react";
@@ -68,8 +69,11 @@ export function PushDeviceSection() {
       const payload = await subscribeToPush(key);
       setEndpoint(payload.endpoint);
       // Best-effort server registration; a failure here must NOT leave the button stuck on "Enable"
-      // (the browser is already subscribed and must remain turn-off-able).
-      await registerPush(payload);
+      // (the browser is already subscribed and must remain turn-off-able). Timed out so a stalled
+      // mutation can't hang the button either.
+      console.debug("[push] register subscription with server…");
+      await withTimeout(registerPush(payload), 15000, "register subscription");
+      console.debug("[push] done");
       toast.success(t("pushEnabled"));
     } catch (error) {
       // Surface the real cause: the subscribe pipeline (permission → SW activation → PushManager)
