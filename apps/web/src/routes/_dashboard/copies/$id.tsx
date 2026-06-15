@@ -1,3 +1,4 @@
+import { durationParts } from "@/lib/humanize-duration";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -187,6 +188,13 @@ function CopyInstanceDetail({
 
   const formatMonth = (timestamp: number) =>
     format.dateTime(new Date(timestamp), { year: "numeric", month: "short" });
+
+  // Humanize a solve duration (minutes) to a localized "2 hours" / "1 day" / "1 week" via the
+  // largest sensible unit — Intl unit formatting handles plurals + locale.
+  const formatDuration = (minutes: number) => {
+    const { value, unit } = durationParts(minutes);
+    return format.number(value, { style: "unit", unit, unitDisplay: "long" });
+  };
 
   const acquisitionSourceLabel = (
     source?: "bought_new" | "bought_used" | "trade" | "gift",
@@ -397,8 +405,8 @@ function CopyInstanceDetail({
         <Stat value={stats.timesCompleted} label={t("statTimesCompleted")} />
         <Stat
           value={
-            stats.fastestFinishDays != null
-              ? t("statDaysValue", { days: stats.fastestFinishDays })
+            stats.fastestFinishMinutes != null
+              ? formatDuration(stats.fastestFinishMinutes)
               : "—"
           }
           label={t("statFastestFinish")}
@@ -471,8 +479,8 @@ function CopyInstanceDetail({
                   </>
                 }
                 sub={
-                  c.finishDays != null
-                    ? `${formatDay(c.occurredAt)} · ${t("finishedIn", { days: c.finishDays })}`
+                  c.finishMinutes != null
+                    ? `${formatDay(c.occurredAt)} · ${t("finishedIn", { duration: formatDuration(c.finishMinutes) })}`
                     : formatDay(c.occurredAt)
                 }
                 right={

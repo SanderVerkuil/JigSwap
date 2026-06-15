@@ -2355,7 +2355,7 @@
     "exchangesCount": "{count} ruilen",
     "noSwaps": "Nog geen ruilen of handel voor deze puzzel.",
     "you": "jij",
-    "finishedIn": "voltooid in {days, plural, one {# dag} other {# dagen}}",
+    "finishedIn": "voltooid in {duration}",
     "communityRating": "Communitybeoordeling",
     "communityRatings": "{count} communitybeoordelingen",
     "comments": "Reacties",

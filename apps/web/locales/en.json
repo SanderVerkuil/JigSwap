@@ -2355,7 +2355,7 @@
     "exchangesCount": "{count} exchanges",
     "noSwaps": "No swaps or trades for this puzzle yet.",
     "you": "you",
-    "finishedIn": "finished in {days, plural, one {# day} other {# days}}",
+    "finishedIn": "finished in {duration}",
     "communityRating": "Community Rating",
     "communityRatings": "{count} community ratings",
     "comments": "Comments",

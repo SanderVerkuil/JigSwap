@@ -395,7 +395,7 @@ describe("getCopyInstanceView rich detail", () => {
     expect(view?.snapshot.difficulty).toBeUndefined();
   });
 
-  test("stats: timesCompleted, fastestFinishDays, timesLentOut, yourAvgRating", async () => {
+  test("stats: timesCompleted, fastestFinishMinutes, timesLentOut, yourAvgRating", async () => {
     const t = convexTest(schema, modules);
     const { now, viewer, solver, copy } = await seedCopy(t);
     await setVisibility(t, solver, "public");
@@ -471,7 +471,8 @@ describe("getCopyInstanceView rich detail", () => {
       { copyId: copy },
     );
     expect(view?.stats.timesCompleted).toBe(3);
-    expect(view?.stats.fastestFinishDays).toBe(2);
+    // 2-day fastest solve, now reported in raw minutes (2 * 24 * 60).
+    expect(view?.stats.fastestFinishMinutes).toBe(2 * 24 * 60);
     expect(view?.stats.timesLentOut).toBe(2);
     // Viewer's own ratings: 4 and 5 -> avg 4.5.
     expect(view?.stats.yourAvgRating).toBe(4.5);
@@ -485,7 +486,7 @@ describe("getCopyInstanceView rich detail", () => {
       { copyId: copy },
     );
     expect(view?.stats.timesCompleted).toBe(0);
-    expect(view?.stats.fastestFinishDays).toBeNull();
+    expect(view?.stats.fastestFinishMinutes).toBeNull();
     expect(view?.stats.timesLentOut).toBe(0);
     expect(view?.stats.yourAvgRating).toBeNull();
   });
@@ -734,12 +735,12 @@ describe("getCopyInstanceView rich detail", () => {
     const solverEntry = view?.completions[0];
     const viewerEntry = view?.completions[1];
     expect(solverEntry?.isYou).toBe(false);
-    expect(solverEntry?.finishDays).toBe(7);
+    expect(solverEntry?.finishMinutes).toBe(7 * 24 * 60);
     expect(solverEntry?.rating).toBeNull();
     expect(solverEntry?.note).toBeNull();
 
     expect(viewerEntry?.isYou).toBe(true);
-    expect(viewerEntry?.finishDays).toBe(3);
+    expect(viewerEntry?.finishMinutes).toBe(3 * 24 * 60);
     expect(viewerEntry?.rating).toBe(5);
     expect(viewerEntry?.note).toBe("Loved it");
   });
