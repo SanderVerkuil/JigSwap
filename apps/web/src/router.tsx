@@ -4,7 +4,7 @@ import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { DefaultCatchBoundary } from "./components/DefaultCatchBoundary";
-import { NotFound } from "./components/NotFound";
+import { NotFoundContent } from "./components/NotFound";
 import { routeTree } from "./routeTree.gen";
 
 export function getRouter() {
@@ -34,7 +34,11 @@ export function getRouter() {
     routeTree,
     defaultPreload: "intent",
     defaultErrorComponent: DefaultCatchBoundary,
-    defaultNotFoundComponent: () => <NotFound />,
+    // Chrome-free: TanStack renders the matched layout chain and drops this into
+    // the deepest outlet, so a 404 picks up whichever shell it's under (app /
+    // admin / marketing). The root route's own notFoundComponent (marketing
+    // NotFound) covers truly top-level unmatched paths where no shell applies.
+    defaultNotFoundComponent: () => <NotFoundContent />,
     context: { queryClient, convexClient: convex, convexQueryClient },
     scrollRestoration: true,
     Wrap: ({ children }) => (
