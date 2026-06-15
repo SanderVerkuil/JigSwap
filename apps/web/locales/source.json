@@ -2269,7 +2269,8 @@
     "breadcrumbLabel": "Breadcrumb",
     "crumbs": {
       "ownedCopies": "Owned Copies"
-    }
+    },
+    "plankReset": "Reset"
   },
   "copyInstance": {
     "notFound": "Copy not found",

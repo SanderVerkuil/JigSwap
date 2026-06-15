@@ -340,12 +340,14 @@ function PhysicsArrangement({
   headingFont,
   lightingPreset,
   onFirstFrame,
+  resetNonce = 0,
 }: {
   boxes: PuzzlePlankBox[];
   resolved: Array<{ c1: string; c2: string }>;
   headingFont: string;
   lightingPreset: LightingPreset;
   onFirstFrame: () => void;
+  resetNonce?: number;
 }) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const size = useThree((s) => s.size);
@@ -390,6 +392,24 @@ function PhysicsArrangement({
   const { onPointerDown } = useBoxDrag(
     rigidBodyRefs as React.RefObject<RapierRigidBody | null>[],
   );
+
+  // Reset: snap every box back to its resting layout slot (upright, still). Driven
+  // by resetNonce so it fires only on an explicit reset, never on data refreshes.
+  React.useEffect(() => {
+    if (!resetNonce) return; // 0 = initial mount, nothing to reset
+    boxes.forEach((box, i) => {
+      const body = rigidBodyRefs[i]?.current;
+      const slot = slots[i];
+      if (!body || !slot) return;
+      const { h } = boxWorldSize(box);
+      body.setTranslation({ x: slot.x, y: h / 2, z: 0 }, true);
+      body.setRotation({ x: 0, y: 0, z: 0, w: 1 }, true);
+      body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+      body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+    });
+    // Intentionally only resetNonce — boxes/slots/refs are stable for a given layout.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetNonce]);
 
   return (
     <>
@@ -466,8 +486,10 @@ function PhysicsArrangement({
             colliders={false}
             restitution={0.1}
             friction={0.8}
-            linearDamping={0.5}
-            angularDamping={0.8}
+            // Lower damping so boxes respond livelier to grabs/throws and tumble
+            // more naturally (higher damping felt sluggish/static).
+            linearDamping={0.3}
+            angularDamping={0.4}
           >
             <CuboidCollider args={[w / 2, h / 2, BOX_DEPTH / 2]} />
             <group
@@ -531,6 +553,7 @@ export default function PlankScenePhysics(props: PlankSceneProps) {
           headingFont={props.headingFont}
           lightingPreset={lightingPreset}
           onFirstFrame={props.onFirstFrame}
+          resetNonce={props.resetNonce}
         />
       </Physics>
     </Canvas>

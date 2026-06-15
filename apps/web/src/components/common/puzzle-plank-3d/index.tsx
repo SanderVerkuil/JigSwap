@@ -8,8 +8,11 @@ import {
   resolveCssColor,
   resolveHeadingFont,
 } from "@/components/marketing/plank-3d/palette";
+import { Button } from "@/components/ui/button";
+import { RotateCcw } from "lucide-react";
 import { useTheme } from "next-themes";
 import * as React from "react";
+import { useTranslations } from "use-intl";
 import type { PlankSceneProps } from "./scene";
 
 const PlankScene = React.lazy(() => import("./scene"));
@@ -74,6 +77,9 @@ export function PuzzlePlank3D({
     PlankSceneProps["resolved"] | null
   >(null);
   const [headingFont, setHeadingFont] = React.useState("system-ui, sans-serif");
+  // Bumped by the Reset button to snap the physics boxes back to their layout.
+  const [resetNonce, setResetNonce] = React.useState(0);
+  const t = useTranslations("shell");
   const reducedMotion = usePrefersReducedMotion();
   const { resolvedTheme } = useTheme();
   const theme: "light" | "dark" = resolvedTheme === "dark" ? "dark" : "light";
@@ -124,17 +130,19 @@ export function PuzzlePlank3D({
     visible,
     onFirstFrame: () => setSceneReady(true),
     eventSource: container,
+    resetNonce,
   };
 
   return (
     <div
       ref={container}
       style={{ position: "relative", width: "100%", height: "100%" }}
-      aria-hidden="true"
     >
       {/* CSS plank: fallback shown until the scene's first frame, or permanently
-          when WebGL is unavailable or the scene boundary catches an error. */}
+          when WebGL is unavailable or the scene boundary catches an error.
+          Decorative — hidden from assistive tech. */}
       <div
+        aria-hidden="true"
         style={{
           position: "absolute",
           inset: 0,
@@ -153,6 +161,7 @@ export function PuzzlePlank3D({
         <SceneBoundary onError={() => setSceneReady(false)}>
           <React.Suspense fallback={null}>
             <div
+              aria-hidden="true"
               style={{
                 position: "absolute",
                 inset: 0,
@@ -171,6 +180,23 @@ export function PuzzlePlank3D({
             </div>
           </React.Suspense>
         </SceneBoundary>
+      )}
+
+      {/* Reset control: only in the interactive physics scene, once it's live.
+          stopPropagation on pointer-down so the press isn't picked up by r3f as a
+          box grab (the canvas listens on this container as its event source). */}
+      {usePhysics && sceneReady && (
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={() => setResetNonce((n) => n + 1)}
+          className="absolute right-2 bottom-2 z-10 gap-1.5 shadow-sm"
+        >
+          <RotateCcw className="size-3.5" />
+          {t("plankReset")}
+        </Button>
       )}
     </div>
   );

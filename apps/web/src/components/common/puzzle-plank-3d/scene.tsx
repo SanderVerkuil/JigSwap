@@ -271,6 +271,9 @@ export interface PlankSceneProps {
   visible: boolean;
   onFirstFrame: () => void;
   eventSource: React.RefObject<HTMLDivElement | null>;
+  /** Bumped to snap the physics boxes back to their resting layout (ignored by
+   *  the static scene). */
+  resetNonce?: number;
 }
 
 export default function PlankScene(props: PlankSceneProps) {

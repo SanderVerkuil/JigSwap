@@ -2269,7 +2269,8 @@
     "breadcrumbLabel": "Broodkruimel",
     "crumbs": {
       "ownedCopies": "Exemplaren"
-    }
+    },
+    "plankReset": "Herstellen"
   },
   "copyInstance": {
     "notFound": "Exemplaar niet gevonden",
