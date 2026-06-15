@@ -31,7 +31,10 @@ const BOX_GRADIENTS: ReadonlyArray<readonly [string, string]> = [
 const BOX_HEIGHTS = [148, 130, 156, 126, 142];
 
 function toPlankBox(copy: OwnedCopy, index: number): PuzzlePlankBox {
-  const cover = copy.puzzle?.images?.[0] ?? copy.snapshot?.thumbnail;
+  // Prefer the copy's resolved cover (a user-uploaded/pinned photo) over the
+  // catalogue image so a copy with its own cover shows it, not placeholder art.
+  const cover =
+    copy.coverUrl ?? copy.puzzle?.images?.[0] ?? copy.snapshot?.thumbnail;
   const [c1, c2] = BOX_GRADIENTS[index % BOX_GRADIENTS.length];
   return {
     title: copy.puzzle?.title ?? copy.snapshot?.title,
