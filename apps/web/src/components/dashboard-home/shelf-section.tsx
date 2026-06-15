@@ -5,6 +5,7 @@ import { PuzzlePlank, PuzzlePlankBox } from "@/components/common/puzzle-plank";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { BookOpen, ChevronRight } from "lucide-react";
@@ -28,9 +29,17 @@ const BOX_GRADIENTS: ReadonlyArray<readonly [string, string]> = [
 // Varied box heights so the shelf reads like a real, lived-in collection.
 const BOX_HEIGHTS = [148, 130, 156, 126, 142];
 
-function toPlankBox(copy: OwnedCopy, index: number): PuzzlePlankBox {
+// Shorter set for the cramped mobile dashboard (see sub-project ②).
+const MOBILE_BOX_HEIGHTS = [118, 104, 124, 100, 114];
+
+function toPlankBox(
+  copy: OwnedCopy,
+  index: number,
+  isMobile: boolean,
+): PuzzlePlankBox {
   const cover = copy.puzzle?.images?.[0] ?? copy.snapshot?.thumbnail;
   const [c1, c2] = BOX_GRADIENTS[index % BOX_GRADIENTS.length];
+  const heights = isMobile ? MOBILE_BOX_HEIGHTS : BOX_HEIGHTS;
   return {
     title: copy.puzzle?.title ?? copy.snapshot?.title,
     series: copy.puzzle?.brand ?? copy.snapshot?.brand,
@@ -38,7 +47,10 @@ function toPlankBox(copy: OwnedCopy, index: number): PuzzlePlankBox {
     cover,
     c1,
     c2,
-    height: cover ? undefined : BOX_HEIGHTS[index % BOX_HEIGHTS.length],
+    // Narrower boxes on mobile; PuzzlePlank derives cover-box height from width,
+    // so this shortens the whole shelf. Desktop keeps the component default (116).
+    width: isMobile ? 92 : undefined,
+    height: cover ? undefined : heights[index % heights.length],
   };
 }
 
@@ -75,6 +87,7 @@ function StatRow({
 // ground, no stat cards.
 export function ShelfSection() {
   const t = useTranslations("dashboard.shelf");
+  const isMobile = useIsMobile();
   const { member, isMemberLoading } = useCurrentMember();
 
   const copies = useQuery(
@@ -176,8 +189,12 @@ export function ShelfSection() {
         <div className="grid items-center gap-10 lg:grid-cols-[1fr_252px]">
           {/* min-w-0 lets the grid column shrink so the plank swipes
               horizontally on narrow screens instead of blowing out. */}
-          <div className="min-w-0 overflow-x-auto px-2 pt-6 pb-5">
-            <PuzzlePlank boxes={owned.slice(0, 5).map(toPlankBox)} />
+          <div className="min-w-0 overflow-x-auto px-2 pt-3 pb-3 md:pt-6 md:pb-5">
+            <PuzzlePlank
+              boxes={owned
+                .slice(0, 5)
+                .map((copy, i) => toPlankBox(copy, i, isMobile))}
+            />
           </div>
           <div className="flex flex-col">
             {statRows.map((row) => (

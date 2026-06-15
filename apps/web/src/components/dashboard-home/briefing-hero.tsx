@@ -77,7 +77,7 @@ function Headline({
         : null;
 
   return (
-    <p className="font-heading max-w-[860px] text-2xl leading-[1.4] font-semibold tracking-tight text-pretty md:text-3xl">
+    <p className="font-heading max-w-[860px] text-xl leading-snug font-semibold tracking-tight text-pretty md:text-3xl md:leading-[1.4]">
       {variant === null
         ? t("empty")
         : t.rich(variant, {
@@ -206,7 +206,7 @@ export function BriefingHero() {
 
   if (loading) {
     return (
-      <section className="flex flex-col gap-5">
+      <section className="flex flex-col gap-4 md:gap-5">
         <div className="max-w-[860px] space-y-3">
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-8 w-3/4" />
@@ -243,7 +243,7 @@ export function BriefingHero() {
       : null;
 
   return (
-    <section className="flex flex-col gap-5">
+    <section className="flex flex-col gap-4 md:gap-5">
       <Headline
         activeCount={active.length}
         pendingCount={pendingIncoming.length}
