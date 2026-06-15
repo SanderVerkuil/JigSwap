@@ -120,9 +120,10 @@ function TabLink({
   return (
     <Link
       href={tab.href}
+      aria-label={t(`tabs.${tab.key}`)}
       aria-current={on ? "page" : undefined}
       className={cn(
-        "flex min-h-14 flex-col items-center justify-center gap-[3px] pt-[7px] pb-1.5",
+        "flex min-h-14 flex-col items-center justify-center",
         on ? "text-jigsaw-primary" : "text-muted-foreground",
       )}
     >
@@ -133,14 +134,6 @@ function TabLink({
             {badge > 9 ? "9+" : badge}
           </span>
         )}
-      </span>
-      <span
-        className={cn(
-          "text-[10.5px] tracking-[0.01em]",
-          on ? "font-bold" : "font-medium",
-        )}
-      >
-        {t(`tabs.${tab.key}`)}
       </span>
     </Link>
   );
