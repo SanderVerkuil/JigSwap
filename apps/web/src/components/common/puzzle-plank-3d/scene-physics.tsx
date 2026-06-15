@@ -46,9 +46,9 @@ const FOV = 38;
 const CONTENT_HEADROOM = 0.4;
 const MIN_VIS_W = 2.0;
 const CAMERA_Y_LIFT = 0.3;
-// The yaw is baked into the camera position/lookAt; physics bodies live in
-// world-aligned space so they don't need to be wrapped in a rotated group.
-const FIXED_YAW = -(12 * Math.PI) / 180;
+// In-app planks render FACE-ON (no yaw) — the camera looks straight on. The
+// angled, depth-y look is reserved for the marketing hero background.
+const FIXED_YAW = 0;
 
 // ——— drag ring-buffer size ———
 const DRAG_BUF = 4;

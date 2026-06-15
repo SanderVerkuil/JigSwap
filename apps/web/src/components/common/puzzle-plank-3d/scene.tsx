@@ -33,8 +33,9 @@ const CONTENT_HEADROOM = 0.4;
 const MIN_VIS_W = 2.0;
 // Camera sits slightly above the look-at point for a gentle downward gaze.
 const CAMERA_Y_LIFT = 0.3;
-// Fixed yaw so boxes read as 3D (no parallax-driven component here).
-const FIXED_YAW = -(12 * Math.PI) / 180;
+// In-app planks render FACE-ON (no yaw) — the angled, depth-y look is reserved
+// for the marketing hero background. Box depth + lighting still read as 3D.
+const FIXED_YAW = 0;
 
 // ——— world height of one box (delegates to the shared helper) ———
 function boxWorldHeight(box: PuzzlePlankBox): number {
