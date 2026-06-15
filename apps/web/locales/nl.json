@@ -696,7 +696,26 @@
     },
     "shelf": {
       "title": "De Plank van {name}",
-      "meta": "{count, plural, one {# uitgestald} other {# uitgestald}}"
+      "meta": "{count, plural, one {# uitgestald} other {# uitgestald}}",
+      "arrangeDialog": {
+        "title": "Plank indelen",
+        "description": "Selecteer en orden maximaal {max} kopieën om te tonen op je profielplank.",
+        "loading": "Kopieën laden…",
+        "noCopies": "Je hebt nog geen puzzelkopieën.",
+        "pickSection": "Je collectie",
+        "maxHint": "Maximaal {max} kopieën geselecteerd.",
+        "orderSection": "Geselecteerd ({count}/{max})",
+        "moveUp": "Omhoog",
+        "moveDown": "Omlaag",
+        "remove": "Verwijderen",
+        "cancel": "Annuleren",
+        "save": "Opslaan",
+        "saving": "Opslaan…",
+        "saved": "Plank opgeslagen",
+        "saveError": "Opslaan mislukt",
+        "untitled": "Naamloos"
+      },
+      "arrangeShelf": "Plank indelen"
     },
     "trustLevels": {
       "beginner": "Beginner",

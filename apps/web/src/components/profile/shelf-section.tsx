@@ -9,9 +9,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
 import { useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { BookOpen } from "lucide-react";
-import { useMemo } from "react";
+import { BookOpen, Settings2 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "use-intl";
+import { ArrangeShelfDialog } from "./arrange-shelf-dialog";
 import type { Member } from "./member-view";
 
 type OwnedCopy = FunctionReturnType<
@@ -46,26 +47,48 @@ function toPlankBox(copy: OwnedCopy, index: number): PuzzlePlankBox {
 // "{FirstName}'s Shelf": the signature puzzle plank rendering the member's
 // real copies on their profile, capped at six boxes so the plank stays a
 // display shelf rather than a catalogue (My Puzzles is the catalogue).
+// When the viewer is the owner, an "Arrange shelf" button opens a dialog to
+// curate and reorder up to 6 copies (sub-project ④).
 export function ProfileShelfSection({ member }: { member: Member }) {
   const t = useTranslations("profile.shelf");
   const tDashboardShelf = useTranslations("dashboard.shelf");
+
+  const [arrangeOpen, setArrangeOpen] = useState(false);
+
+  // Determine whether the signed-in user is the profile owner.
+  const me = useQuery(gateway.identity.currentUser);
+  const isOwner = me?._id === member._id;
 
   const copies = useQuery(gateway.library.ownedByOwner, {
     ownerId: member._id as Id<"users">,
     includeUnavailable: true,
   });
 
+  // The curated shelf — empty list means uncurated (fall back to recent-6 below).
+  const featuredCopies = useQuery(gateway.social.featuredShelf, {
+    userId: member._id as Id<"users">,
+  });
+
   const firstName = member.name?.split(/\s+/)[0] ?? member.name;
   const title = t("title", { name: firstName });
 
-  // Memoized so the 3D plank's color-resolution effect doesn't re-run on every
-  // reactive re-render (only when the copies change).
-  const boxes = useMemo(
-    () => (copies ?? []).slice(0, 6).map(toPlankBox),
-    [copies],
+  // Current featured copy ids for seeding the arrange dialog.
+  const currentFeaturedIds = useMemo(
+    () => (featuredCopies ?? []).map((c) => c._id as Id<"ownedPuzzles">),
+    [featuredCopies],
   );
 
-  if (copies === undefined) {
+  // Memoized so the 3D plank's color-resolution effect doesn't re-run on every
+  // reactive re-render (only when the copies change). Use curated order when
+  // available; fall back to the most-recent 6.
+  const boxes = useMemo(() => {
+    if (featuredCopies !== undefined && featuredCopies.length > 0) {
+      return featuredCopies.slice(0, 6).map(toPlankBox);
+    }
+    return (copies ?? []).slice(0, 6).map(toPlankBox);
+  }, [copies, featuredCopies]);
+
+  if (copies === undefined || featuredCopies === undefined) {
     return (
       <section>
         <SectionHead title={title} icon={BookOpen} />
@@ -80,6 +103,19 @@ export function ProfileShelfSection({ member }: { member: Member }) {
         title={title}
         icon={BookOpen}
         meta={boxes.length > 0 ? t("meta", { count: boxes.length }) : undefined}
+        action={
+          isOwner ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setArrangeOpen(true)}
+              className="gap-1.5"
+            >
+              <Settings2 className="size-4" />
+              {t("arrangeShelf")}
+            </Button>
+          ) : undefined
+        }
       />
       {boxes.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-10 text-center">
@@ -94,6 +130,14 @@ export function ProfileShelfSection({ member }: { member: Member }) {
         <div className="h-[300px] min-w-0 md:h-[360px]">
           <PuzzlePlank3D boxes={boxes} />
         </div>
+      )}
+
+      {isOwner && arrangeOpen && (
+        <ArrangeShelfDialog
+          ownerId={member._id as Id<"users">}
+          currentFeaturedIds={currentFeaturedIds}
+          onClose={() => setArrangeOpen(false)}
+        />
       )}
     </section>
   );

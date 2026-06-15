@@ -696,7 +696,26 @@
     },
     "shelf": {
       "title": "{name}'s Shelf",
-      "meta": "{count, plural, one {# on display} other {# on display}}"
+      "meta": "{count, plural, one {# on display} other {# on display}}",
+      "arrangeDialog": {
+        "title": "Arrange Shelf",
+        "description": "Select and order up to {max} copies to feature on your profile shelf.",
+        "loading": "Loading copies…",
+        "noCopies": "You have no puzzle copies yet.",
+        "pickSection": "Your collection",
+        "maxHint": "Maximum {max} copies selected.",
+        "orderSection": "Selected ({count}/{max})",
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "remove": "Remove",
+        "cancel": "Cancel",
+        "save": "Save",
+        "saving": "Saving…",
+        "saved": "Shelf saved",
+        "saveError": "Failed to save shelf",
+        "untitled": "Untitled"
+      },
+      "arrangeShelf": "Arrange shelf"
     },
     "trustLevels": {
       "beginner": "Beginner",
