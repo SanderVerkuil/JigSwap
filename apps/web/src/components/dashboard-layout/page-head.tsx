@@ -56,7 +56,10 @@ export function PageHead() {
     "transition-colors hover:text-sidebar-accent-foreground hover:underline";
 
   return (
-    <div className="hidden shrink-0 border-b bg-background px-4 pt-3.5 pb-3 md:block md:px-7">
+    // Glass head: sticks to the top of the shared scroll region and frosts the content scrolling
+    // beneath it. Solid bg is the fallback; where backdrop-filter is supported the bg goes
+    // translucent so the blur reads. z-20 keeps it above the scrolling content.
+    <div className="bg-background supports-[backdrop-filter]:bg-background/70 sticky top-0 z-20 hidden border-b px-4 pt-3.5 pb-3 backdrop-blur-md md:block md:px-7">
       {crumbs && crumbs.length > 0 ? (
         // Explicit trail published by the page (deep routes).
         <nav

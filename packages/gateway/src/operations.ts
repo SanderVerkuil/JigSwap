@@ -50,6 +50,12 @@ export const gateway = {
     // Owner-only photo upload keyed by the copy's Convex id; pairs with generateUploadUrl. Writes
     // the `ownedPuzzleImages` read-model the getCopyInstanceView gallery reads.
     addCopyPhoto: api.library.addCopyPhoto.addCopyPhoto,
+    // Owner-only removal of an uploaded copy photo (deletes the row + blob, clears the cover if it
+    // was the cover). Keyed by the ownedPuzzleImages id.
+    removeCopyPhoto: api.library.removeCopyPhoto.removeCopyPhoto,
+    // Owner-only per-copy cover selection: pick one of the copy's photos, or clear to the global
+    // image. Keyed by the copy's Convex id (like addCopyPhoto / getCopyInstanceView).
+    setCopyCover: api.library.setCopyCover.setCopyCover,
     deleteOwned: api.library.deleteCopy.deleteCopy,
     // Reads go through the domain-driven library module (file.export namespacing); each is a thin
     // Convex query returning a typed @jigswap/contracts view DTO, not a raw row.
@@ -67,6 +73,11 @@ export const gateway = {
     // list of REACHABLE available copies (Browse's public-OR-circle gate).
     getPuzzleDefinitionView:
       api.library.getPuzzleDefinitionView.getPuzzleDefinitionView,
+    // Per-photo discussion comments for the gallery lightbox, keyed by the `ownedPuzzleImages` _id.
+    // Text-only (no rating); anyone authenticated may post and authors are shown with their real
+    // identity. Photo metadata itself flows through getCopyInstanceView's gallery.
+    postPhotoComment: api.library.postPhotoComment.postPhotoComment,
+    listPhotoComments: api.library.listPhotoComments.listPhotoComments,
     // Image upload is storage infra, not a domain op; keep it on the legacy function. The URL is
     // used for copy photos.
     generateUploadUrl: api.puzzles.generateUploadUrl,
@@ -176,6 +187,12 @@ export const gateway = {
     updatePreference:
       api.notifications.updateNotificationPreference
         .updateNotificationPreference,
+    // Native Web Push: the client reads the (non-secret) VAPID public key, then registers /
+    // unregisters its PushManager subscription as the member toggles push.
+    pushConfig: api.notifications.getPushConfig.getPushConfig,
+    registerPush: api.notifications.pushSubscriptions.registerPushSubscription,
+    unregisterPush:
+      api.notifications.pushSubscriptions.unregisterPushSubscription,
   },
 
   // Community / Social: public profiles, follow relationships, and the activity feed. Writes go

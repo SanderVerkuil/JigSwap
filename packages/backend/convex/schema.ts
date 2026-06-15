@@ -113,6 +113,7 @@ export default defineSchema({
       brand: v.optional(v.string()),
       imageUrl: v.optional(v.string()),
       images: v.optional(v.array(v.string())),
+      imageAlts: v.optional(v.record(v.string(), v.string())),
       description: v.optional(v.string()),
       ean: v.optional(v.string()),
       upc: v.optional(v.string()),
@@ -157,6 +158,11 @@ export default defineSchema({
     ),
     missingPiecesCount: v.optional(v.number()), // Undefined means unknown
     notes: v.optional(v.string()), // Personal notes, e.g., "corner piece is a bit bent"
+
+    // --- Cover ---
+    // The copy's chosen cover picture: one of its `ownedPuzzleImages`. Absent means use the
+    // puzzle's global catalogue image (the default).
+    coverImageId: v.optional(v.id("ownedPuzzleImages")),
 
     // --- Availability for Exchange ---
     availability: v.object({
@@ -226,6 +232,25 @@ export default defineSchema({
     ),
     // The date the photo was taken
     takenAt: v.optional(v.number()),
+
+    // --- Async content moderation (image-moderation pipeline) ---
+    // Lifecycle: a freshly uploaded photo is "pending" until the moderatePhoto Node action
+    // re-encodes it (strips EXIF) and content-classifies it, then flips it to "approved" or
+    // "rejected". ABSENT means the row predates moderation and is treated as "approved" so legacy
+    // photos stay visible. The gallery only surfaces approved photos (plus the uploader's own
+    // pending ones).
+    moderationStatus: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("approved"),
+        v.literal("rejected"),
+      ),
+    ),
+    // The classifier's NSFW score in [0,1] (null/absent when un-scored, e.g. provider "none" or
+    // missing token). Kept for auditability/threshold tuning.
+    moderationScore: v.optional(v.number()),
+    // The decisive label from the classifier (e.g. "nsfw"/"normal"), for diagnostics.
+    moderationLabel: v.optional(v.string()),
 
     // --- Timestamps ---
     createdAt: v.number(),
@@ -530,6 +555,20 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_member", ["memberId"]),
 
+  // Web Push subscriptions: one row per browser/device a member has granted push permission on. The
+  // push channel (notifications/sendWebPush) fans a notification out to every active subscription of
+  // the recipient via the Web Push protocol (VAPID). A subscription that the push service reports as
+  // permanently gone (HTTP 404/410) is pruned. `endpoint` is the unique push-service URL.
+  pushSubscriptions: defineTable({
+    userId: v.id("users"),
+    endpoint: v.string(),
+    p256dh: v.string(), // client public key (base64url) for payload encryption
+    auth: v.string(), // client auth secret (base64url)
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_endpoint", ["endpoint"]),
+
   // Friend Circles: a private group whose members share circle-scoped visibility. The Circle
   // aggregate persists as ONE unit (root + its embedded memberships) so every invariant is enforced
   // against the whole set. Member lookup goes through the `circleMembers` junction (below) because
@@ -601,11 +640,28 @@ export default defineSchema({
   puzzleComments: defineTable({
     aggregateId: v.optional(v.string()),
     puzzleId: v.id("puzzles"),
+    // Set only for COPY-scoped comments (the owner's notes/rating on one owned copy). Absent rows
+    // are community reviews of the shared puzzle definition. Copy-scoped rows are listed by_copy and
+    // excluded from the definition's community reviews/rating.
+    copyId: v.optional(v.id("ownedPuzzles")),
     authorId: v.id("users"),
     text: v.string(),
     rating: v.optional(v.number()),
     createdAt: v.number(),
-  }).index("by_puzzle", ["puzzleId"]),
+  })
+    .index("by_puzzle", ["puzzleId"])
+    .index("by_copy", ["copyId"]),
+
+  // Social: a text-only discussion comment on a single shared PHOTO (an `ownedPuzzleImages` row),
+  // surfaced in the photo lightbox. Keyed by the photo _id (not a puzzle definition); aggregateId is
+  // the PhotoCommentId. Append-only — the read side projects this table directly into view DTOs.
+  photoComments: defineTable({
+    aggregateId: v.optional(v.string()),
+    photoId: v.id("ownedPuzzleImages"),
+    authorId: v.id("users"),
+    text: v.string(),
+    createdAt: v.number(),
+  }).index("by_photo", ["photoId"]),
 
   // Social: a directed follow edge (followerId -> followeeId). Indexed both ways so the read side
   // can list a member's followers and the people they follow; aggregateId is the FollowId.

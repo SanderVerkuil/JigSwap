@@ -206,6 +206,7 @@ function JigBox({
             src={cover ?? ""}
             alt={title || ""}
             fill
+            className="object-cover"
             onLoad={onImg}
             onError={(e) => e.currentTarget.remove()}
           />

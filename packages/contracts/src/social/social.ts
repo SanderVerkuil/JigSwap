@@ -59,6 +59,19 @@ export interface PuzzleCommentView {
 }
 
 /**
+ * One discussion comment on a single shared PHOTO (an `ownedPuzzleImages` row), as surfaced in the
+ * photo lightbox. Unlike a PuzzleCommentView there is no rating — photo comments are plain text. The
+ * `author` is the real member identity (these are voluntary public posts — never anonymised); `id`
+ * is the PhotoCommentId aggregateId. Newest comments are returned first.
+ */
+export interface PhotoCommentView {
+  id: string;
+  author: MemberView;
+  text: string;
+  createdAt: number;
+}
+
+/**
  * The server-side projection of one member's identity to a given viewer, the output of the privacy
  * chokepoint that gates every participant surfaced in a copy's history. A discriminated union: when
  * `anonymous` is false the member is revealed as a full MemberView; when true the member is hidden

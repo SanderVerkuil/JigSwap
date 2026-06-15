@@ -34,12 +34,13 @@ export function PuzzleCard({ puzzle }: PuzzleCardProps) {
         tags: puzzle.tags,
         imageUrl: puzzle.image,
       }}
+      imageHref={`/puzzles/${puzzle._id}`}
       actions={
         // The grid columns are ~212px wide, so the row must fit two buttons
         // without overflowing the card (which is `overflow-hidden`). The primary
         // "view details" takes the remaining width and truncates if needed; the
         // add action is a compact icon-only button with an accessible label.
-        <div className="mt-2 flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"

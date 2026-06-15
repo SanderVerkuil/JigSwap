@@ -1,5 +1,12 @@
 import { DomainEvent } from "../../shared-kernel";
-import { CommentId, MemberId, ProfileId, PuzzleDefinitionId } from "./ids";
+import {
+  CommentId,
+  MemberId,
+  PhotoCommentId,
+  PhotoId,
+  ProfileId,
+  PuzzleDefinitionId,
+} from "./ids";
 import { ProfileVisibility } from "./profile";
 
 // All Social domain events implement DomainEvent (name + occurredAt). They are plain immutable
@@ -64,9 +71,24 @@ export class CommentPosted implements DomainEvent {
   ) {}
 }
 
+// A member posted a discussion comment on a single shared PHOTO. Photo comments are text-only (no
+// rating). Carries the PhotoId so subscribers (future Notifications) can react without resolving the
+// comment back through persistence.
+export class PhotoCommentPosted implements DomainEvent {
+  readonly name = "PhotoCommentPosted";
+  constructor(
+    readonly commentId: PhotoCommentId,
+    readonly photoId: PhotoId,
+    readonly authorId: MemberId,
+    readonly text: string,
+    readonly occurredAt: Date,
+  ) {}
+}
+
 export type SocialDomainEvent =
   | MemberFollowed
   | MemberUnfollowed
   | ProfileUpdated
   | ProfileVisibilityChanged
-  | CommentPosted;
+  | CommentPosted
+  | PhotoCommentPosted;

@@ -28,6 +28,10 @@ export interface SubmitPuzzleDefinitionCommand {
   readonly category?: CatalogCategoryId;
   readonly tags?: readonly string[];
   readonly image?: string;
+  // When true, the submission is approved in the same transaction (a trusted submitter, e.g. an
+  // admin, skips the moderation queue). The transport adapter decides this from the caller's role;
+  // the domain just honours the flag.
+  readonly autoApprove?: boolean;
 }
 
 // Inbound port: the submit-puzzle-definition use case.

@@ -7,6 +7,9 @@ import * as cheerio from "cheerio";
 
 export interface HtmlFallbackResult {
   readonly images: string[];
+  // Alt text per resolved image URL (only for the URLs in `images`). Absent when no <img> in the
+  // final set carried non-empty alt text.
+  readonly imageAlts?: Record<string, string>;
   readonly title?: string;
   readonly description?: string;
 }
@@ -82,6 +85,21 @@ export const scrapeHtmlFallback = (
   try {
     const $ = cheerio.load(html);
 
+    // Honour a <base href> if the page sets one: all relative URLs (images included) resolve
+    // against it, NOT the page's own path. jvh-puzzels serves <base href="https://site/"> with
+    // path-relative img srcs like `isotope/i/...`, so resolving against the deep product URL would
+    // wrongly yield `/webshop/product/.../isotope/i/...` (a 404). Fall back to sourceUrl if absent
+    // or unparseable.
+    const baseHref = $("base[href]").first().attr("href");
+    let resolveBase = sourceUrl;
+    if (baseHref) {
+      try {
+        resolveBase = new URL(baseHref, sourceUrl).toString();
+      } catch {
+        // keep sourceUrl
+      }
+    }
+
     // --- Title ---
     let title: string | undefined;
     $("h1").each((_, el) => {
@@ -111,24 +129,34 @@ export const scrapeHtmlFallback = (
 
     // --- Images ---
     const candidates: Candidate[] = [];
-    const pushCandidate = (rawUrl: string, hintText: string): void => {
-      const resolved = resolveUrl(rawUrl, sourceUrl);
+    // Resolved-url -> alt text, recorded for any <img> that carries non-empty alt. First writer wins
+    // (a later duplicate src doesn't clobber an earlier alt). Filtered down to the final set below.
+    const alts: Record<string, string> = {};
+    const pushCandidate = (
+      rawUrl: string,
+      hintText: string,
+      alt?: string,
+    ): void => {
+      const resolved = resolveUrl(rawUrl, resolveBase);
       if (!resolved) return;
       if (JUNK_RE.test(resolved) || JUNK_RE.test(hintText)) return;
       candidates.push({ url: resolved, score: 0 });
+      const cleanedAlt = collapseWhitespace(alt ?? "");
+      if (cleanedAlt && !(resolved in alts)) alts[resolved] = cleanedAlt;
     };
 
     $("img").each((_, el) => {
       const $img = $(el);
-      const hint = `${$img.attr("class") ?? ""} ${$img.attr("alt") ?? ""} ${$img.attr("id") ?? ""}`;
+      const alt = $img.attr("alt");
+      const hint = `${$img.attr("class") ?? ""} ${alt ?? ""} ${$img.attr("id") ?? ""}`;
 
       const src = $img.attr("src");
       const srcset = $img.attr("srcset");
       const srcsetBest = srcset ? largestFromSrcset(srcset) : undefined;
 
       const start = candidates.length;
-      if (src) pushCandidate(src, hint);
-      if (srcsetBest) pushCandidate(srcsetBest, hint);
+      if (src) pushCandidate(src, hint, alt);
+      if (srcsetBest) pushCandidate(srcsetBest, hint, alt);
 
       // Score the candidates this <img> contributed.
       const width = Number($img.attr("width"));
@@ -169,7 +197,19 @@ export const scrapeHtmlFallback = (
       if (images.length >= 8) break;
     }
 
-    return { images, title, description };
+    // Keep alt only for URLs that made the final set.
+    const imageAlts: Record<string, string> = {};
+    for (const url of images) {
+      if (alts[url]) imageAlts[url] = alts[url];
+    }
+    const hasAlts = Object.keys(imageAlts).length > 0;
+
+    return {
+      images,
+      title,
+      description,
+      imageAlts: hasAlts ? imageAlts : undefined,
+    };
   } catch {
     return { images: [] };
   }
@@ -192,9 +232,13 @@ export const enrichWithHtmlFallback = (
   if (!needsImages && !needsTitle) return page;
 
   const fb = scrapeHtmlFallback(html, sourceUrl);
+  const usingFbImages = needsImages && fb.images.length > 0;
   return {
     ...page,
-    ogImages: needsImages && fb.images.length > 0 ? fb.images : page.ogImages,
+    ogImages: usingFbImages ? fb.images : page.ogImages,
+    // Attach scraped alt text only when we actually adopt the scraped images, so the alt map always
+    // refers to URLs present on the page.
+    imageAlts: usingFbImages ? fb.imageAlts : page.imageAlts,
     basicTitle: needsTitle && fb.title ? fb.title : page.basicTitle,
     basicDescription: page.basicDescription || fb.description,
   };

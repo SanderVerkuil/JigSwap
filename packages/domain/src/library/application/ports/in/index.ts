@@ -8,6 +8,7 @@ export * from "./create-personal-category.port";
 export * from "./delete-collection.port";
 export * from "./delete-copy.port";
 export * from "./open-loan.port";
+export * from "./set-copy-cover.port";
 export * from "./transfer-copy-ownership.port";
 export * from "./update-collection.port";
 export * from "./update-copy-details.port";

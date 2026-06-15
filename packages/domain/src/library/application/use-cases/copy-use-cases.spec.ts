@@ -18,6 +18,7 @@ import { makeAcquireCopy } from "./acquire-copy";
 import { makeAddCopyImage } from "./add-copy-image";
 import { makeChangeCopyCondition } from "./change-copy-condition";
 import { makeDeleteCopy } from "./delete-copy";
+import { makeSetCopyCover } from "./set-copy-cover";
 import { makeTransferCopyOwnership } from "./transfer-copy-ownership";
 import { makeUpdateCopyDetails } from "./update-copy-details";
 import { makeUpdateCopySharing } from "./update-copy-sharing";
@@ -335,6 +336,64 @@ describe("copy mutation use cases", () => {
         tag: "box_front",
         takenAt,
       });
+    });
+  });
+
+  describe("makeSetCopyCover", () => {
+    const run = () =>
+      makeSetCopyCover({ copies, events, clock: new FixedClock(NOW) });
+
+    it("sets the owner's copy cover and publishes CopyCoverChanged", async () => {
+      const result = await run()({
+        actingMemberId: alice,
+        copyId,
+        coverImageId: "img-1",
+      });
+      expect(result.isOk).toBe(true);
+      expect(events.names()).toEqual(["CopyCoverChanged"]);
+      const saved = await copies.findById(copyId);
+      expect(saved?.toState().coverImageId).toBe("img-1");
+    });
+
+    it("clears the cover (null) and publishes CopyCoverChanged", async () => {
+      await run()({ actingMemberId: alice, copyId, coverImageId: "img-1" });
+      const result = await run()({
+        actingMemberId: alice,
+        copyId,
+        coverImageId: null,
+      });
+      expect(result.isOk).toBe(true);
+      // Two cover changes published; the second carries the cleared (null) selection.
+      expect(events.names()).toEqual(["CopyCoverChanged", "CopyCoverChanged"]);
+      const saved = await copies.findById(copyId);
+      expect(saved?.toState().coverImageId).toBeUndefined();
+    });
+
+    it("rejects a non-owner", async () => {
+      const result = await run()({
+        actingMemberId: bob,
+        copyId,
+        coverImageId: "img-1",
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) {
+        expect(result.error.code).toBe("NotOwner");
+        expect(result.error.message).toBe(
+          "Acting member may not change this copy's cover",
+        );
+      }
+      expect(events.published).toHaveLength(0);
+    });
+
+    it("rejects an unknown copy", async () => {
+      const result = await run()({
+        actingMemberId: alice,
+        copyId: toCopyId("ghost"),
+        coverImageId: "img-1",
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("CopyNotFound");
+      expect(events.published).toHaveLength(0);
     });
   });
 

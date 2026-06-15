@@ -72,6 +72,23 @@ export function notificationId(row: NotificationRow): string {
   return row.aggregateId ?? row._id;
 }
 
+// Localized title + message for a notification, rendered from its `type` via the
+// `notifications.copy.<type>` i18n keys. The stored `title`/`message` are pre-rendered English (the
+// subscriber writes them for email/push), so they're only a fallback for an unknown/legacy type.
+// `t` is a `useTranslations("notifications")` translator.
+export function notificationCopy(
+  row: NotificationRow,
+  t: (key: string) => string,
+): { title: string; message: string } {
+  if ((NOTIFICATION_TYPES as string[]).includes(row.type)) {
+    return {
+      title: t(`copy.${row.type}.title`),
+      message: t(`copy.${row.type}.message`),
+    };
+  }
+  return { title: row.title, message: row.message };
+}
+
 export function notificationIcon(type: string): LucideIcon {
   switch (type) {
     case "trade_request":

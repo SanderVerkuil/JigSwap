@@ -82,6 +82,12 @@ export interface OwnedCopyView {
   puzzle: OwnedCopyPuzzleView | null;
   // Present only on reads that join the owner (`library.browseOwned`).
   owner?: OwnedCopyOwnerView | null;
+  /**
+   * Resolved cover image URL for the card: the copy's chosen-and-approved cover photo when set,
+   * else the puzzle's global catalogue box art, else null. Only populated by reads that resolve it
+   * (e.g. `library.ownedByOwner`); undefined elsewhere.
+   */
+  coverUrl?: string | null;
 }
 
 /** The paginated wrapper `library.browseOwned` returns (offset/limit paging, not Convex cursors). */
@@ -345,12 +351,30 @@ export interface CopyInstanceCommunity {
   breakdown: [number, number, number, number, number];
 }
 
-/** A resolved gallery photo for this copy. */
+/** A resolved gallery photo for this copy, with the metadata a lightbox needs. */
 export interface CopyPhoto {
+  /** The `ownedPuzzleImages` _id as a string. Keys the photo's comment thread in the lightbox. */
+  id: string;
   /** The resolved storage URL. */
   url: string;
   /** The caption (`title ?? tag`), or null when absent. */
   caption: string | null;
+  /** The photo's tag (e.g. `box_front`), or null when absent. */
+  tag: string | null;
+  /** The uploader-provided description, or null when absent. */
+  description: string | null;
+  /** The uploader's display name, or null when the uploader could not be resolved. */
+  uploaderName: string | null;
+  /** When the photo was taken (epoch ms), or null when not recorded. */
+  takenAt: number | null;
+  /** When the photo row was created (epoch ms). */
+  createdAt: number;
+  /**
+   * The async moderation verdict: "approved" (default — also when the row predates moderation),
+   * or "pending" while the moderation pipeline runs. A "pending" photo is only ever included for
+   * its own uploader, who can show a "pending review" badge; rejected photos are never returned.
+   */
+  moderationStatus: "approved" | "pending";
 }
 
 /**
@@ -361,6 +385,11 @@ export interface CopyPhoto {
 export interface CopyInstanceView {
   /** The copy's `ownedPuzzles` _id. */
   copyId: DocId;
+  /**
+   * The domain CopyId (aggregateId). The copy-edit mutations (changeCondition, updateSharing,
+   * updateDetails) and recordCompletion key on this, not the `_id`. Null for legacy rows.
+   */
+  aggregateId: string | null;
   /** Whether the acting viewer currently owns this copy. */
   viewerIsOwner: boolean;
   /** The (projected) current owner. */
@@ -370,7 +399,16 @@ export interface CopyInstanceView {
     title: string;
     brand?: string;
     pieceCount: number;
+    /**
+     * The resolved cover image URL: the selected per-copy photo when one is chosen and resolvable,
+     * otherwise the puzzle's global catalogue image.
+     */
     image?: string;
+    /**
+     * The chosen cover photo's `ownedPuzzleImages` id, or null when none is selected (the global
+     * image is in use). Lets the cover picker show the current selection.
+     */
+    coverImageId: string | null;
     condition: CopyCondition;
     notes?: string;
     availability: CopyAvailability;

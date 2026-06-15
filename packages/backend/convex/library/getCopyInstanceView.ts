@@ -11,6 +11,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { toMemberView } from "../identity/toMemberView";
 import { projectMemberIdentity } from "../social/privacy";
 
 const MS_PER_DAY = 86_400_000;
@@ -258,32 +259,82 @@ export const getCopyInstanceView = query({
       .query("ownedPuzzleImages")
       .withIndex("by_owned_puzzle", (q) => q.eq("ownedPuzzleId", args.copyId))
       .collect();
+    // Moderation gate: include a photo iff it's approved (absent status == legacy == approved), OR
+    // it's the viewer's OWN pending upload (so they see their "pending review" photo). Rejected
+    // photos — and other members' pending photos — are excluded for everyone.
+    const visibleImageRows = imageRows.filter((img) => {
+      const status = img.moderationStatus ?? "approved";
+      if (status === "approved") return true;
+      return status === "pending" && img.uploaderId === viewerId;
+    });
     const galleryResolved = await Promise.all(
-      imageRows
+      visibleImageRows
         .slice()
         .sort((a, b) => (b.takenAt ?? b.createdAt) - (a.takenAt ?? a.createdAt))
-        .map(async (img) => {
+        .map(async (img): Promise<CopyPhoto | null> => {
           const url = await ctx.storage.getUrl(img.fileId);
           if (!url) return null;
+          // Resolve the uploader's display name (the lightbox shows who took the shot); null when
+          // the user row vanished so an orphaned photo never breaks the gallery.
+          const uploader = await ctx.db.get(img.uploaderId);
           return {
+            id: img._id as string,
             url,
             caption: img.title ?? img.tag ?? null,
-          } satisfies CopyPhoto;
+            tag: img.tag ?? null,
+            description: img.description ?? null,
+            uploaderName: uploader ? toMemberView(uploader).name : null,
+            takenAt: img.takenAt ?? null,
+            createdAt: img.createdAt,
+            // Only "approved" or the viewer's own "pending" survive the filter above; an absent
+            // status is legacy => approved.
+            moderationStatus:
+              (img.moderationStatus ?? "approved") === "pending"
+                ? "pending"
+                : "approved",
+          };
         }),
     );
     const gallery: CopyPhoto[] = galleryResolved.filter(
       (p): p is CopyPhoto => p != null,
     );
 
+    // --- Cover resolution. --------------------------------------------------------------------
+    // The copy may pin one of its own photos as the cover; resolve it to a URL. Falls back to the
+    // puzzle's global catalogue image when no cover is chosen, the image row vanished, or its
+    // stored file no longer resolves. `coverImageId` is null unless a cover both exists AND resolves
+    // so the picker only reports an active, usable selection.
+    // NOTE: the catalogue image is a _storage id, so it MUST be resolved via getUrl — emitting the
+    // raw id renders a broken <img src>. (snapshot.thumbnail caches the same storage id.)
+    const globalImage = puzzle?.image
+      ? ((await ctx.storage.getUrl(puzzle.image)) ?? undefined)
+      : undefined;
+    let coverImage: string | undefined = globalImage;
+    let coverImageId: string | null = null;
+    if (copy.coverImageId) {
+      const coverRow = await ctx.db.get(copy.coverImageId);
+      if (coverRow && coverRow.ownedPuzzleId === args.copyId) {
+        const coverUrl = await ctx.storage.getUrl(coverRow.fileId);
+        if (coverUrl) {
+          coverImage = coverUrl;
+          coverImageId = coverRow._id as string;
+        }
+      }
+    }
+
     return {
       copyId: copy._id,
+      // The domain CopyId — the copy-edit mutations (condition/sharing/details, recordCompletion)
+      // key on this aggregateId, not the _id. Null for rows that predate the backfill.
+      aggregateId: copy.aggregateId ?? null,
       viewerIsOwner,
       owner,
       snapshot: {
         title: copy.snapshot?.title ?? puzzle?.title ?? "Unknown Puzzle",
         brand: copy.snapshot?.brand ?? puzzle?.brand,
         pieceCount: copy.snapshot?.pieceCount ?? puzzle?.pieceCount ?? 0,
-        image: copy.snapshot?.thumbnail,
+        image: coverImage,
+        coverImageId,
         condition: copy.condition,
         notes: copy.notes,
         availability: copy.availability,

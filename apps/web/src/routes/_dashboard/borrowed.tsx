@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
+import { useDateFnsLocale } from "@/lib/date-locale";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import { HandHelping, Package, User } from "lucide-react";
@@ -28,6 +29,7 @@ function BorrowedPending() {
 function BorrowedPage() {
   const t = useTranslations("lending");
   const tCommon = useTranslations("common");
+  const dateLocale = useDateFnsLocale();
 
   // Source of truth for "copies I'm holding on loan"; open loans where the caller is the borrower.
   const borrowed = useQuery(gateway.lending.borrowed);
@@ -100,6 +102,7 @@ function BorrowedPage() {
                         {t("openedRelative", {
                           when: formatDistanceToNow(new Date(loan.openedAt), {
                             addSuffix: true,
+                            locale: dateLocale,
                           }),
                         })}
                       </p>

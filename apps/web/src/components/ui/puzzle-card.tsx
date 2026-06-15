@@ -98,7 +98,9 @@ export function PuzzleCard({
     difficulty: puzzle.puzzle.difficulty,
     description: puzzle.puzzle.description,
     tags: puzzle.puzzle.tags,
-    imageUrl: puzzle.puzzle.images?.[0],
+    // Prefer the resolved cover (chosen-and-approved cover photo, else the catalogue box art) so a
+    // copy's custom cover shows on its card instead of the placeholder; falls back to legacy images.
+    imageUrl: puzzle.coverUrl ?? puzzle.puzzle.images?.[0],
   };
 
   // Context badges: condition, availability flags, and the owner — the
@@ -278,6 +280,9 @@ export function PuzzleCard({
       overlay={overlay}
       footer={loanBadge}
       actions={actions}
+      // Clicking the cover opens the owned-copy view, mirroring the Eye action (only when a view
+      // handler is wired — never in the selection picker, where the image toggles selection).
+      imageHref={onView ? `/copies/${ownedId}` : undefined}
       className={className}
     />
   );

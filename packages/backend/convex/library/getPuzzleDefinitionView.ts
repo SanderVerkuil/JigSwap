@@ -98,7 +98,11 @@ export const getPuzzleDefinitionView = query({
       .query("puzzleComments")
       .withIndex("by_puzzle", (q) => q.eq("puzzleId", args.puzzleId))
       .collect();
-    const ratedReviews = comments.filter((c) => c.rating != null);
+    // Community rating draws on DEFINITION-level reviews only; copy-scoped comments (copyId set) are
+    // a copy owner's private rating and never feed the shared community score.
+    const ratedReviews = comments.filter(
+      (c) => c.rating != null && c.copyId == null,
+    );
     // breakdown index 0..4 == [5★,4★,3★,2★,1★].
     const breakdown: [number, number, number, number, number] = [0, 0, 0, 0, 0];
     let ratingSum = 0;
@@ -234,7 +238,21 @@ export const getPuzzleDefinitionView = query({
     );
 
     // --- ownership (does the viewer own a copy of this definition?) -----------------------------
-    const viewerCopy = owned.find((c) => c.ownerId === viewerId) ?? null;
+    // A copy links to a definition by EITHER its resolved `puzzleId` FK OR (when that FK is stale
+    // or unresolved) its domain `puzzleDefinitionId === puzzle.aggregateId`. The `owned` set above
+    // is keyed only on `puzzleId`, so it can miss the viewer's copy. Query the viewer's own copies
+    // (a small set) directly and match on either link, so ownership shows reliably.
+    const viewerCopies = await ctx.db
+      .query("ownedPuzzles")
+      .withIndex("by_owner", (q) => q.eq("ownerId", viewerId))
+      .collect();
+    const viewerCopy =
+      viewerCopies.find(
+        (c) =>
+          c.puzzleId === args.puzzleId ||
+          (puzzle.aggregateId != null &&
+            c.puzzleDefinitionId === puzzle.aggregateId),
+      ) ?? null;
     const ownership = {
       viewerOwns: viewerCopy != null,
       copyId: viewerCopy ? (viewerCopy._id as string) : null,

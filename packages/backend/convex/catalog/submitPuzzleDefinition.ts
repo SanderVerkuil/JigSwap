@@ -5,6 +5,7 @@ import {
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
+import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
 import { catalogIdGenerator } from "./adapters/catalogIdGenerator";
 import { convexPuzzleDefinitionRepository } from "./adapters/convexPuzzleDefinitionRepository";
@@ -58,6 +59,7 @@ export const submitPuzzleDefinition = mutation({
   },
   handler: async (ctx, args) => {
     const submittedBy = await requireMember(ctx); // submitter derived from auth, never the client
+    const autoApprove = await isAdmin(ctx); // admins skip the moderation queue
 
     const submit = makeSubmitPuzzleDefinition({
       definitions: convexPuzzleDefinitionRepository(ctx),
@@ -81,6 +83,7 @@ export const submitPuzzleDefinition = mutation({
       category: args.category ? toCatalogCategoryId(args.category) : undefined,
       tags: args.tags,
       image: args.image,
+      autoApprove,
     });
     if (result.isErr) throw toConvexError(result.error);
     return result.value as string;

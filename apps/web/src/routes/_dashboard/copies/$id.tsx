@@ -3,7 +3,12 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { Image } from "@/compat/image";
 import { useRouter } from "@/compat/navigation";
+import { availabilityToSharing } from "@/components/add-puzzle";
+import { EditCopyDialog } from "@/components/copies/edit-copy-dialog";
+import { PhotoLightbox } from "@/components/copies/photo-lightbox";
+import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
+import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +30,7 @@ import {
   MessageCircle,
   Package,
   Puzzle,
+  Star,
   Tag,
 } from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
@@ -137,6 +143,41 @@ function CopyInstanceDetail({
   const isAvailable =
     availability.forTrade || availability.forSale || availability.forLend;
 
+  // Owner action dialogs. `logOpen` drives the completion logger; `editOpen` drives the inline
+  // copy editor (also reachable from the page-head Edit button registered below).
+  const [logOpen, setLogOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const updateSharing = useMutation(gateway.library.updateSharing);
+
+  // Toggle a single sharing flag on the copy. Optimistic from the user's view via Convex
+  // reactivity; on failure we surface a toast and the next query refresh restores the real state.
+  const toggleSharing = async (flag: "forTrade" | "forLend") => {
+    if (!copy.viewerIsOwner || copy.aggregateId == null) return;
+    try {
+      await updateSharing(
+        availabilityToSharing(copy.aggregateId, {
+          ...availability,
+          [flag]: !availability[flag],
+        }),
+      );
+    } catch {
+      toast.error(t("editCopy.editFailed"));
+    }
+  };
+
+  // Owner-only: publish the Edit action into the shell page head (top-right). Non-owners get no
+  // header action. Deps include the toggles the button closes over so the slot stays in sync.
+  usePageHeaderActions(
+    () =>
+      copy.viewerIsOwner ? (
+        <Button variant="outline" onClick={() => setEditOpen(true)}>
+          <Edit className="h-4 w-4" />
+          {t("actions.edit")}
+        </Button>
+      ) : null,
+    [copy.viewerIsOwner, t],
+  );
+
   const formatDay = (timestamp: number) =>
     format.dateTime(new Date(timestamp), {
       year: "numeric",
@@ -190,7 +231,7 @@ function CopyInstanceDetail({
               src={snapshot.image}
               alt={snapshot.title}
               fill
-              className="object-cover"
+              className="object-contain"
             />
           ) : (
             <div className="from-jigsaw-primary/20 to-jigsaw-primary text-jigsaw-primary-foreground/70 absolute inset-0 flex items-center justify-center bg-gradient-to-br">
@@ -299,30 +340,35 @@ function CopyInstanceDetail({
           <div className="mt-5 flex flex-wrap gap-2.5">
             {copy.viewerIsOwner ? (
               <>
-                <Button variant="brand" onClick={() => router.push("/trades")}>
+                <Button
+                  variant={availability.forTrade ? "brand" : "outline"}
+                  aria-pressed={availability.forTrade}
+                  disabled={copy.aggregateId == null}
+                  onClick={() => void toggleSharing("forTrade")}
+                >
                   <ArrowLeftRight className="h-4 w-4" />
-                  {t("actions.proposeSwap")}
+                  {availability.forTrade
+                    ? t("offeredForSwap")
+                    : t("offerForSwap")}
                 </Button>
                 <Button
-                  variant="outline"
-                  onClick={() => router.push("/trades")}
+                  variant={availability.forLend ? "brand" : "outline"}
+                  aria-pressed={availability.forLend}
+                  disabled={copy.aggregateId == null}
+                  onClick={() => void toggleSharing("forLend")}
                 >
                   <Package className="h-4 w-4" />
-                  {t("actions.offerToLend")}
+                  {availability.forLend
+                    ? t("offeredForLend")
+                    : t("offerForLend")}
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => router.push(`/my-puzzles/${copyId}`)}
+                  disabled={copy.aggregateId == null}
+                  onClick={() => setLogOpen(true)}
                 >
                   <CircleCheck className="h-4 w-4" />
                   {t("actions.logCompletion")}
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => router.push(`/my-puzzles/${copyId}/edit`)}
-                >
-                  <Edit className="h-4 w-4" />
-                  {t("actions.edit")}
                 </Button>
               </>
             ) : (
@@ -385,6 +431,7 @@ function CopyInstanceDetail({
           gallery={gallery}
           canAdd={copy.viewerIsOwner}
           copyId={copyId}
+          coverImageId={snapshot.coverImageId}
         />
       </section>
 
@@ -514,6 +561,23 @@ function CopyInstanceDetail({
           <CommentsSection copyId={copyId} />
         </div>
       </div>
+
+      {/* Owner dialogs: completion logger (keyed by aggregateId) + inline copy editor. */}
+      {copy.viewerIsOwner && (
+        <>
+          <LogSolveDialog
+            open={logOpen}
+            onOpenChange={setLogOpen}
+            copyId={copy.aggregateId ?? ""}
+            puzzleTitle={snapshot.title}
+          />
+          <EditCopyDialog
+            open={editOpen}
+            onOpenChange={setEditOpen}
+            copy={copy}
+          />
+        </>
+      )}
     </div>
   );
 }
@@ -581,16 +645,25 @@ function PhotoStrip({
   gallery,
   canAdd,
   copyId,
+  coverImageId,
 }: {
   gallery: CopyInstanceView["gallery"];
   canAdd: boolean;
   copyId: string;
+  coverImageId: string | null;
 }) {
   const t = useTranslations("copyInstance");
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
   const generateUploadUrl = useMutation(gateway.library.generateUploadUrl);
   const addCopyPhoto = useMutation(gateway.library.addCopyPhoto);
+
+  const openLightbox = (index: number) => {
+    setActiveIndex(index);
+    setLightboxOpen(true);
+  };
 
   // Photo upload: ask Convex for a one-shot upload URL, POST the blob to it, then
   // attach the returned storageId to this copy. The getCopyInstanceView query
@@ -622,22 +695,41 @@ function PhotoStrip({
   return (
     <div className="flex gap-3.5 overflow-x-auto pb-1.5">
       {gallery.map((photo, i) => (
-        <figure
-          key={i}
-          className="bg-muted relative aspect-[4/3] w-[210px] shrink-0 overflow-hidden rounded-lg shadow-sm"
+        <button
+          key={photo.id}
+          type="button"
+          onClick={() => openLightbox(i)}
+          aria-label={photo.caption ?? t("photos")}
+          className="bg-muted focus-visible:ring-ring relative aspect-[4/3] w-[210px] shrink-0 cursor-pointer overflow-hidden rounded-lg shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={photo.url}
             alt={photo.caption ?? ""}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-contain"
           />
+          {/* Top-left status chips: which photo is the cover + a "pending review" flag while a
+              freshly-uploaded photo is being moderated (only the uploader sees their pending ones). */}
+          <div className="absolute left-2 top-2 flex flex-wrap gap-1">
+            {coverImageId === photo.id && (
+              <span className="bg-jigsaw-primary inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
+                <Star className="h-2.5 w-2.5" fill="currentColor" />
+                {t("photoCover")}
+              </span>
+            )}
+            {photo.moderationStatus === "pending" && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
+                <Clock className="h-2.5 w-2.5" />
+                {t("photoPending")}
+              </span>
+            )}
+          </div>
           {photo.caption && (
-            <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2.5 pt-5 text-xs font-semibold text-white">
+            <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2.5 pt-5 text-left text-xs font-semibold text-white">
               {photo.caption}
             </figcaption>
           )}
-        </figure>
+        </button>
       ))}
       {canAdd && (
         <label
@@ -663,6 +755,18 @@ function PhotoStrip({
       )}
       {gallery.length === 0 && !canAdd && (
         <p className="text-muted-foreground text-sm">{t("noPhotos")}</p>
+      )}
+      {gallery.length > 0 && (
+        <PhotoLightbox
+          gallery={gallery}
+          index={activeIndex}
+          open={lightboxOpen}
+          onOpenChange={setLightboxOpen}
+          onIndexChange={setActiveIndex}
+          canSetCover={canAdd}
+          copyId={copyId}
+          coverImageId={coverImageId}
+        />
       )}
     </div>
   );

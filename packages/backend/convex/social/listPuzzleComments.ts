@@ -3,12 +3,11 @@ import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { toMemberView } from "../identity/toMemberView";
 
-// Read side: the community comments on the puzzle DEFINITION the given copy instantiates, newest
-// first. The API is keyed by COPY id for the UI's convenience; we resolve copy -> copy.puzzleId so
-// every copy of the same puzzle returns the same shared discussion. Each comment joins its REAL
-// author (comments are voluntary public posts — never anonymised). A missing copy returns []. The
-// author join falls back to a synthetic "Member" view if the user row vanished, so an orphaned
-// comment never breaks the list.
+// Read side: the COPY-scoped comments on the given owned copy (the owner's own notes/rating),
+// newest first — NOT the shared community reviews (those live on the catalog page via
+// listPuzzleReviews). Each comment joins its REAL author (comments are voluntary public posts —
+// never anonymised). A missing copy returns []. The author join falls back to a synthetic "Member"
+// view if the user row vanished, so an orphaned comment never breaks the list.
 export const listPuzzleComments = query({
   args: { copyId: v.id("ownedPuzzles") },
   handler: async (ctx, args): Promise<PuzzleCommentView[]> => {
@@ -17,7 +16,7 @@ export const listPuzzleComments = query({
 
     const rows = await ctx.db
       .query("puzzleComments")
-      .withIndex("by_puzzle", (q) => q.eq("puzzleId", copy.puzzleId))
+      .withIndex("by_copy", (q) => q.eq("copyId", args.copyId))
       .order("desc")
       .collect();
 

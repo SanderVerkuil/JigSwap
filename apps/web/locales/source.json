@@ -1352,7 +1352,7 @@
     "channelInApp": "In-app",
     "channelEmail": "Email",
     "channelPush": "Push",
-    "channelsNote": "In-app notifications are delivered instantly. Email and push are delivered through Knock.",
+    "channelsNote": "In-app notifications are delivered instantly. Push is delivered to your browser (you'll be asked for permission). Email delivery is not yet available.",
     "notificationType": "Notification",
     "types": {
       "trade_request": "Trade requests",
@@ -1368,7 +1368,90 @@
       "puzzle_approved": "Puzzle approved",
       "puzzle_rejected": "Puzzle rejected",
       "goal_achieved": "Goal achieved"
-    }
+    },
+    "copy": {
+      "trade_request": {
+        "title": "New exchange request",
+        "message": "Someone wants to trade for one of your puzzles."
+      },
+      "trade_accepted": {
+        "title": "Exchange accepted",
+        "message": "Your trade request has been accepted!"
+      },
+      "trade_declined": {
+        "title": "Exchange declined",
+        "message": "Your trade request has been declined."
+      },
+      "trade_completed": {
+        "title": "Exchange completed",
+        "message": "The exchange has been marked as completed."
+      },
+      "trade_cancelled": {
+        "title": "Exchange cancelled",
+        "message": "The exchange request has been cancelled."
+      },
+      "exchange_proposed": {
+        "title": "Exchange proposed",
+        "message": "You have a new exchange proposal."
+      },
+      "exchange_disputed": {
+        "title": "Exchange disputed",
+        "message": "The other party has flagged an issue with your exchange."
+      },
+      "message_received": {
+        "title": "New message",
+        "message": "You have a new message in your trade conversation."
+      },
+      "review_received": {
+        "title": "New review",
+        "message": "You received a new partner review."
+      },
+      "puzzle_favorited": {
+        "title": "Puzzle favorited",
+        "message": "Someone favorited your puzzle."
+      },
+      "puzzle_approved": {
+        "title": "Puzzle approved",
+        "message": "Your puzzle submission was approved."
+      },
+      "puzzle_rejected": {
+        "title": "Puzzle rejected",
+        "message": "Your puzzle submission was rejected."
+      },
+      "goal_achieved": {
+        "title": "Goal achieved",
+        "message": "You reached one of your goals!"
+      }
+    },
+    "pushDeviceTitle": "Push on this device",
+    "pushDeviceSubtitle": "Control whether this browser receives push notifications.",
+    "pushDeviceDesc": "Get notified even when JigSwap isn't open.",
+    "pushEnable": "Enable",
+    "pushDisable": "Disable",
+    "pushEnabledOnDevice": "Enabled on this device",
+    "pushUnsupported": "This browser doesn't support push notifications.",
+    "pushUnconfigured": "Push notifications aren't available right now.",
+    "pushBlocked": "Push is blocked. Allow notifications for this site in your browser settings.",
+    "pushEnabled": "Push enabled on this device",
+    "pushDisabled": "Push disabled on this device",
+    "pushError": "Couldn't update push notifications",
+    "matrixLabel": "Notification channels by type",
+    "typeDesc": {
+      "trade_request": "When someone proposes a trade for one of your puzzles.",
+      "trade_accepted": "When someone accepts a trade you proposed.",
+      "trade_declined": "When someone declines a trade you proposed.",
+      "trade_completed": "When a trade is completed.",
+      "trade_cancelled": "When a trade is cancelled.",
+      "exchange_proposed": "When someone proposes an exchange — a swap, sale, or lend.",
+      "exchange_disputed": "When an exchange you're part of is disputed.",
+      "message_received": "When you receive a new message.",
+      "review_received": "When someone leaves you a review after an exchange.",
+      "puzzle_favorited": "When someone favourites a puzzle you added.",
+      "puzzle_approved": "When a puzzle you submitted is approved for the catalogue.",
+      "puzzle_rejected": "When a puzzle you submitted is rejected.",
+      "goal_achieved": "When you reach a solving goal."
+    },
+    "pushServiceUnreachable": "Your browser couldn't reach its push service. Some privacy browsers block or remove it — Brave disables it by default (enable 'Use Google services for push messaging' in Settings), and de-Googled Chromium builds like Helium strip it out. Firefox, Chrome, or Edge will work."
   },
   "solving": {
     "title": "Solving",
@@ -2129,6 +2212,10 @@
       "copyInstance": {
         "title": "Owned copy",
         "subtitle": "The provenance and history of a single copy."
+      },
+      "notificationPreferences": {
+        "title": "Notification preferences",
+        "subtitle": "Choose how you want to hear about each kind of activity."
       }
     },
     "user": {
@@ -2257,7 +2344,48 @@
     "rateOptional": "Rate this puzzle (optional)",
     "post": "Post",
     "noComments": "No comments yet. Be the first.",
-    "commentFailed": "Couldn't post comment"
+    "commentFailed": "Couldn't post comment",
+    "photoLightbox": {
+      "uploadedBy": "Uploaded by {name}",
+      "takenOn": "Taken on {date}",
+      "comments": "Comments",
+      "addComment": "Add a comment…",
+      "post": "Post",
+      "noComments": "No comments yet.",
+      "close": "Close",
+      "prev": "Previous photo",
+      "next": "Next photo",
+      "counter": "{current} / {total}",
+      "commentFailed": "Couldn’t post your comment. Please try again.",
+      "setAsCover": "Set as cover",
+      "currentCover": "Current cover",
+      "coverUpdated": "Cover updated",
+      "coverFailed": "Couldn't update the cover",
+      "pendingReview": "Pending review",
+      "removePhoto": "Remove photo",
+      "confirmRemove": "Remove",
+      "photoRemoved": "Photo removed",
+      "removeFailed": "Couldn't remove the photo",
+      "cancel": "Cancel"
+    },
+    "offerForSwap": "Offer for Swap",
+    "offeredForSwap": "Offered for Swap",
+    "offerForLend": "Offer to Lend",
+    "offeredForLend": "Offered for Lend",
+    "editCopy": {
+      "title": "Edit copy",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Changes saved",
+      "cancel": "Cancel",
+      "editFailed": "Could not save your changes. Please try again.",
+      "cover": "Cover image",
+      "useCatalogueImage": "Use catalogue image",
+      "noPhotosForCover": "Add photos to this copy to choose a custom cover.",
+      "notesPlaceholder": "Add a note about this copy…"
+    },
+    "photoCover": "Cover",
+    "photoPending": "Pending review"
   },
   "puzzleDefinition": {
     "notFound": "Puzzle not found",

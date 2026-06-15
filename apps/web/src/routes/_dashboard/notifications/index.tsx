@@ -8,6 +8,7 @@ import {
   type NotificationRow,
   type NotificationType,
   notificationAccent,
+  notificationCopy,
   notificationHref,
   notificationIcon,
   notificationId,
@@ -17,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
+import { useDateFnsLocale } from "@/lib/date-locale";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
@@ -35,6 +37,7 @@ function NotificationsPage() {
   const { user } = useUser();
   const t = useTranslations("notifications");
   const tCommon = useTranslations("common");
+  const dateLocale = useDateFnsLocale();
   const router = useRouter();
 
   const notifications = useQuery(
@@ -115,6 +118,7 @@ function NotificationsPage() {
             {notifications.map((row) => {
               const Icon = notificationIcon(row.type);
               const href = notificationHref(row);
+              const copy = notificationCopy(row, t);
               return (
                 <li
                   key={row._id}
@@ -139,10 +143,12 @@ function NotificationsPage() {
                           onClick={() => handleOpen(row)}
                           className="text-left text-sm font-medium hover:underline"
                         >
-                          {row.title}
+                          {copy.title}
                         </button>
                       ) : (
-                        <span className="text-sm font-medium">{row.title}</span>
+                        <span className="text-sm font-medium">
+                          {copy.title}
+                        </span>
                       )}
                       <Badge variant="secondary" className="text-[10px]">
                         {t(`types.${row.type as NotificationType}`)}
@@ -155,11 +161,12 @@ function NotificationsPage() {
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {row.message}
+                      {copy.message}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(row.createdAt), {
                         addSuffix: true,
+                        locale: dateLocale,
                       })}
                     </p>
                   </div>

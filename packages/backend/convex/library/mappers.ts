@@ -45,7 +45,11 @@ export const toOwnedCopyOwnerView = (
 export const toOwnedCopyView = (
   row: Doc<"ownedPuzzles">,
   puzzle: Doc<"puzzles"> | null,
-  opts?: { owner?: Doc<"users"> | null; addedAt?: number },
+  opts?: {
+    owner?: Doc<"users"> | null;
+    addedAt?: number;
+    coverUrl?: string | null;
+  },
 ): OwnedCopyView => ({
   _id: row._id,
   _creationTime: row._creationTime,
@@ -73,6 +77,7 @@ export const toOwnedCopyView = (
         ? toOwnedCopyOwnerView(opts.owner)
         : null
       : undefined,
+  coverUrl: opts?.coverUrl,
 });
 
 /** A stored image row for an owned copy. */
