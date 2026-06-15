@@ -280,6 +280,9 @@ export function PuzzleCard({
       overlay={overlay}
       footer={loanBadge}
       actions={actions}
+      // Clicking the cover opens the owned-copy view, mirroring the Eye action (only when a view
+      // handler is wired — never in the selection picker, where the image toggles selection).
+      imageHref={onView ? `/copies/${ownedId}` : undefined}
       className={className}
     />
   );

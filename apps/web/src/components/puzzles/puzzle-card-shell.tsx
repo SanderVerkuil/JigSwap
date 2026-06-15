@@ -41,6 +41,8 @@ export interface PuzzleCardShellProps {
   selectable?: boolean;
   /** When set, the card body links to this href. */
   href?: string;
+  /** When set, the cover image links to this href (the puzzle's view page). */
+  imageHref?: string;
   className?: string;
 }
 
@@ -70,6 +72,7 @@ export function PuzzleCardShell({
   onSelect,
   selectable = false,
   href,
+  imageHref,
   className,
 }: PuzzleCardShellProps) {
   const t = useTranslations("puzzles");
@@ -92,29 +95,44 @@ export function PuzzleCardShell({
     }
   };
 
-  const renderImage = () => (
+  const renderImage = () => {
     // Box art is optional; when missing, show a warm gradient + puzzle glyph
     // rather than a broken <img> pointing at a non-existent placeholder file.
     // This is THE unified no-image fallback both contexts share.
-    <div className="relative aspect-square overflow-hidden rounded-t-lg">
-      {puzzle.imageUrl ? (
-        <Image
-          src={puzzle.imageUrl}
-          alt={puzzle.title || "Puzzle"}
-          fill
-          className="object-cover transition-transform hover:scale-105"
-        />
-      ) : (
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-jigsaw-primary/15 to-jigsaw-primary-accent/15 text-jigsaw-primary/50">
-          <Puzzle className="h-1/3 w-1/3" />
-        </div>
-      )}
-      {overlay}
-    </div>
-  );
+    const inner = (
+      <div className="relative aspect-square overflow-hidden rounded-t-lg">
+        {puzzle.imageUrl ? (
+          <Image
+            src={puzzle.imageUrl}
+            alt={puzzle.title || "Puzzle"}
+            fill
+            className="object-cover transition-transform hover:scale-105"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-jigsaw-primary/15 to-jigsaw-primary-accent/15 text-jigsaw-primary/50">
+            <Puzzle className="h-1/3 w-1/3" />
+          </div>
+        )}
+        {overlay}
+      </div>
+    );
+    // Make the cover a link to the puzzle's view page, so a click on the image navigates without
+    // having to find the small action button.
+    return imageHref ? (
+      <Link
+        href={imageHref}
+        aria-label={puzzle.title}
+        className="focus-visible:ring-ring block rounded-t-lg focus-visible:ring-2 focus-visible:outline-none"
+      >
+        {inner}
+      </Link>
+    ) : (
+      inner
+    );
+  };
 
   const renderContent = () => (
-    <div className="p-4">
+    <div className="flex flex-1 flex-col p-4">
       <div className="mb-2">
         <h3 className="font-semibold text-sm line-clamp-2 mb-1">
           {puzzle.title}
@@ -162,7 +180,9 @@ export function PuzzleCardShell({
 
       {footer && <div className="mb-2">{footer}</div>}
 
-      {actions}
+      {/* Pin the action row to the bottom so every card in a row shares one baseline, with a
+          hairline divider separating it from the (top-packed) content. */}
+      {actions && <div className="mt-auto border-t pt-3">{actions}</div>}
     </div>
   );
 
@@ -171,9 +191,9 @@ export function PuzzleCardShell({
   // interactive elements.
   const body =
     viewMode === "list" ? (
-      <div className="flex">
+      <div className="flex h-full">
         <div className="w-32 flex-shrink-0">{renderImage()}</div>
-        <div className="flex-1">{renderContent()}</div>
+        <div className="flex flex-1 flex-col">{renderContent()}</div>
       </div>
     ) : (
       <>
@@ -188,7 +208,7 @@ export function PuzzleCardShell({
   const card = (
     <Card
       className={cn(
-        "gap-0 overflow-hidden p-0",
+        "h-full gap-0 overflow-hidden p-0",
         selected && "ring-2 ring-primary",
         (href || selectable) && "cursor-pointer",
         className,
@@ -201,7 +221,7 @@ export function PuzzleCardShell({
 
   if (href) {
     return (
-      <Link href={href} className="block">
+      <Link href={href} className="block h-full">
         {card}
       </Link>
     );
