@@ -178,8 +178,12 @@ function useBoxDrag(rigidBodyRefs: React.RefObject<RapierRigidBody | null>[]): {
       );
       raycaster.setFromCamera(pointer, camera);
 
-      const hit = new THREE.Vector3();
-      raycaster.ray.intersectPlane(ds.dragPlane, hit);
+      // intersectPlane returns null when the ray is parallel to the plane; the
+      // pre-allocated target is always truthy, so we must guard the RETURN value.
+      const hit = raycaster.ray.intersectPlane(
+        ds.dragPlane,
+        new THREE.Vector3(),
+      );
       if (!hit) return;
 
       const body = rigidBodyRefs[ds.bodyIndex]?.current;
@@ -230,15 +234,38 @@ function useBoxDrag(rigidBodyRefs: React.RefObject<RapierRigidBody | null>[]): {
 
       // Restore scroll on touch
       canvas.style.touchAction = "";
-      ds.canvas.releasePointerCapture(e.pointerId);
+      try {
+        ds.canvas.releasePointerCapture(e.pointerId);
+      } catch {
+        // Capture may already be gone (e.g. after a cancel); ignore.
+      }
+      dragState.current = null;
+    };
+
+    // The browser fires pointercancel (NOT pointerup) when it steals the gesture
+    // (pinch-zoom, OS interruption). Without this, touchAction would stay "none"
+    // and the page would be stuck unscrollable. Drop the box in place, no throw.
+    const onCancel = () => {
+      const ds = dragState.current;
+      if (!ds) return;
+      const body = rigidBodyRefs[ds.bodyIndex]?.current;
+      if (body) {
+        body.setBodyType(RB_DYNAMIC, true);
+        body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+      }
+      canvas.style.touchAction = "";
       dragState.current = null;
     };
 
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onCancel);
     return () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onCancel);
+      // Defensive: if we unmount mid-drag, never leave the page unscrollable.
+      canvas.style.touchAction = "";
     };
   }, [camera, canvas, pointer, raycaster, rigidBodyRefs]);
 
@@ -248,8 +275,13 @@ function useBoxDrag(rigidBodyRefs: React.RefObject<RapierRigidBody | null>[]): {
       const body = rigidBodyRefs[index]?.current;
       if (!body) return;
 
-      // Capture the pointer so moves/ups fire even outside the canvas
-      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+      // Capture the pointer on the CANVAS (e.target is a three.js Object3D, not a
+      // DOM node) so moves/ups fire even when the cursor leaves the canvas.
+      try {
+        canvas.setPointerCapture(e.nativeEvent.pointerId);
+      } catch {
+        // Capture is best-effort; the window-level listeners cover the drag anyway.
+      }
 
       // Prevent page scroll while dragging
       canvas.style.touchAction = "none";
@@ -275,9 +307,15 @@ function useBoxDrag(rigidBodyRefs: React.RefObject<RapierRigidBody | null>[]): {
         bodyVec,
       );
 
-      // Grab offset = hit point - body center (so box doesn't jump to cursor)
-      const hit = new THREE.Vector3();
-      raycaster.ray.intersectPlane(dragPlane, hit);
+      // Grab offset = hit point - body center (so box doesn't jump to cursor).
+      // Guard the RETURN value: null when the ray is parallel to the plane.
+      const hit = raycaster.ray.intersectPlane(dragPlane, new THREE.Vector3());
+      if (!hit) {
+        // Degenerate grab — revert the kinematic switch + scroll lock, don't drag.
+        body.setBodyType(RB_DYNAMIC, true);
+        canvas.style.touchAction = "";
+        return;
+      }
       const grabOffset = hit.sub(bodyVec);
 
       dragState.current = {
