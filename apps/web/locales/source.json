@@ -27,7 +27,9 @@
     "description": "Oops! The page you're looking for doesn't exist.",
     "message": "The page you're trying to access might have been moved, deleted, or you entered the wrong URL.",
     "backToHome": "Back to Home",
-    "browsePuzzles": "Browse Puzzles"
+    "browsePuzzles": "Browse Puzzles",
+    "backToDashboard": "Back to Dashboard",
+    "backToAdmin": "Back to Admin"
   },
   "navigation": {
     "home": "Home",

@@ -27,7 +27,9 @@
     "description": "Oeps! De pagina die je zoekt bestaat niet.",
     "message": "De pagina die je probeert te openen is mogelijk verplaatst, verwijderd, of je hebt een verkeerde URL ingevoerd.",
     "backToHome": "Terug naar Home",
-    "browsePuzzles": "Puzzels Bladeren"
+    "browsePuzzles": "Puzzels Bladeren",
+    "backToDashboard": "Terug naar dashboard",
+    "backToAdmin": "Terug naar beheer"
   },
   "navigation": {
     "home": "Home",
