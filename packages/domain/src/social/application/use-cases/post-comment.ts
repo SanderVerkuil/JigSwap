@@ -29,6 +29,7 @@ export const makePostComment =
       authorId: cmd.authorId,
       text: cmd.text,
       rating: cmd.rating,
+      copyId: cmd.copyId,
       now: deps.clock.now(),
     });
     if (comment.isErr) return err(comment.error);

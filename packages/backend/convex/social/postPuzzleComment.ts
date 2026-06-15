@@ -1,7 +1,9 @@
 import {
+  type CopyId,
   makePostComment,
   type MemberId,
   type PuzzleDefinitionId,
+  toCopyId,
   toMemberId,
   toPuzzleDefinitionId,
 } from "@jigswap/domain";
@@ -14,10 +16,11 @@ import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
 
-// Composition root for posting a community comment. The API is keyed by COPY id for the UI's
-// convenience, but a comment belongs to the puzzle DEFINITION (shared across every copy of it), so
-// we resolve copy -> copy.puzzleId before running the use case. The author is derived from auth; the
-// aggregate validates the text/rating.
+// Composition root for posting a COPY-scoped comment. Keyed by copy id: the comment is scoped to
+// that single owned copy (the owner's notes/rating), so we carry the copyId through AND resolve
+// copy -> copy.puzzleId for context. Copy-scoped comments are listed only on that copy and are
+// excluded from the puzzle definition's community reviews/rating. The author is derived from auth;
+// the aggregate validates the text/rating.
 export const postPuzzleComment = mutation({
   args: {
     copyId: v.id("ownedPuzzles"),
@@ -44,6 +47,9 @@ export const postPuzzleComment = mutation({
       puzzleId: toPuzzleDefinitionId(
         copy.puzzleId as unknown as string,
       ) as PuzzleDefinitionId,
+      // Scope the comment to this owned copy so it shows only on the copy page, not as a community
+      // review of the shared definition.
+      copyId: toCopyId(args.copyId as unknown as string) as CopyId,
       text: args.text,
       rating: args.rating,
     });

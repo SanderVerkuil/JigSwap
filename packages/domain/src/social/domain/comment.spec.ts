@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   toCommentId,
+  toCopyId,
   toMemberId,
   toPuzzleDefinitionId,
 } from "../../shared-kernel";
@@ -104,6 +105,21 @@ describe("Comment.post", () => {
     const result = post({ text: "", rating: 99 });
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("EmptyCommentText");
+  });
+
+  it("defaults to no copyId (a community review) when none is supplied", () => {
+    const result = post();
+    if (!result.isOk) throw new Error("setup");
+    expect(result.value.copyId).toBeUndefined();
+  });
+
+  it("carries a copyId when posted scoped to an owned copy", () => {
+    const copyId = toCopyId("copy-1");
+    const result = post({ copyId });
+    if (!result.isOk) throw new Error("setup");
+    expect(result.value.copyId).toBe(copyId);
+    // The copy scope survives a persistence round-trip.
+    expect(Comment.rehydrate(result.value.toState()).copyId).toBe(copyId);
   });
 
   it("pullEvents drains the buffer so a second pull is empty", () => {

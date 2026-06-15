@@ -92,6 +92,8 @@ export const commentToRow = (comment: Comment): CommentRow => {
   return {
     aggregateId: state.id as string,
     puzzleId: state.puzzleId as unknown as Id<"puzzles">,
+    // Present only for copy-scoped comments; absent for community reviews of the definition.
+    copyId: state.copyId as unknown as Id<"ownedPuzzles"> | undefined,
     authorId: state.authorId as unknown as Id<"users">,
     text: state.text.value,
     rating: state.rating?.value,

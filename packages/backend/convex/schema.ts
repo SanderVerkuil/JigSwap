@@ -626,11 +626,17 @@ export default defineSchema({
   puzzleComments: defineTable({
     aggregateId: v.optional(v.string()),
     puzzleId: v.id("puzzles"),
+    // Set only for COPY-scoped comments (the owner's notes/rating on one owned copy). Absent rows
+    // are community reviews of the shared puzzle definition. Copy-scoped rows are listed by_copy and
+    // excluded from the definition's community reviews/rating.
+    copyId: v.optional(v.id("ownedPuzzles")),
     authorId: v.id("users"),
     text: v.string(),
     rating: v.optional(v.number()),
     createdAt: v.number(),
-  }).index("by_puzzle", ["puzzleId"]),
+  })
+    .index("by_puzzle", ["puzzleId"])
+    .index("by_copy", ["copyId"]),
 
   // Social: a text-only discussion comment on a single shared PHOTO (an `ownedPuzzleImages` row),
   // surfaced in the photo lightbox. Keyed by the photo _id (not a puzzle definition); aggregateId is

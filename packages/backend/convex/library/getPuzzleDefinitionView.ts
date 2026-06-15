@@ -98,7 +98,11 @@ export const getPuzzleDefinitionView = query({
       .query("puzzleComments")
       .withIndex("by_puzzle", (q) => q.eq("puzzleId", args.puzzleId))
       .collect();
-    const ratedReviews = comments.filter((c) => c.rating != null);
+    // Community rating draws on DEFINITION-level reviews only; copy-scoped comments (copyId set) are
+    // a copy owner's private rating and never feed the shared community score.
+    const ratedReviews = comments.filter(
+      (c) => c.rating != null && c.copyId == null,
+    );
     // breakdown index 0..4 == [5★,4★,3★,2★,1★].
     const breakdown: [number, number, number, number, number] = [0, 0, 0, 0, 0];
     let ratingSum = 0;

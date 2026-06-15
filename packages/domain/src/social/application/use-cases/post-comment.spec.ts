@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toMemberId, toPuzzleDefinitionId } from "../../../shared-kernel";
+import {
+  toCopyId,
+  toMemberId,
+  toPuzzleDefinitionId,
+} from "../../../shared-kernel";
 import { CommentPosted } from "../../domain";
 import {
   FixedClock,
@@ -65,6 +69,26 @@ describe("makePostComment", () => {
     expect(stored.rating?.value).toBe(5);
     const event = events.published[0] as CommentPosted;
     expect(event.rating).toBe(5);
+  });
+
+  it("threads a copyId through to the saved comment (copy-scoped)", async () => {
+    const copyId = toCopyId("copy-1");
+    const result = await post({
+      authorId: alice,
+      puzzleId,
+      text: "My copy is pristine",
+      rating: 4,
+      copyId,
+    });
+
+    expect(result.isOk).toBe(true);
+    const stored = comments.all()[0];
+    expect(stored.copyId).toBe(copyId);
+  });
+
+  it("leaves copyId undefined for a community review", async () => {
+    await post({ authorId: alice, puzzleId, text: "Great design" });
+    expect(comments.all()[0].copyId).toBeUndefined();
   });
 
   it("mints a fresh id per post so two comments coexist", async () => {

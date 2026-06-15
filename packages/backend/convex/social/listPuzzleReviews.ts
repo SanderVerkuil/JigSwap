@@ -11,11 +11,13 @@ import { toMemberView } from "../identity/toMemberView";
 export const listPuzzleReviews = query({
   args: { puzzleId: v.id("puzzles") },
   handler: async (ctx, args): Promise<PuzzleCommentView[]> => {
-    const rows = await ctx.db
-      .query("puzzleComments")
-      .withIndex("by_puzzle", (q) => q.eq("puzzleId", args.puzzleId))
-      .order("desc")
-      .collect();
+    const rows = (
+      await ctx.db
+        .query("puzzleComments")
+        .withIndex("by_puzzle", (q) => q.eq("puzzleId", args.puzzleId))
+        .order("desc")
+        .collect()
+    ).filter((row) => row.copyId == null); // community reviews only; exclude copy-scoped comments
 
     return Promise.all(
       rows.map(async (row): Promise<PuzzleCommentView> => {

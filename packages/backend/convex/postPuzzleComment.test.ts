@@ -9,7 +9,8 @@ import schema from "./schema";
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 // Seed two members + ONE catalog puzzle + two owned copies of THAT SAME puzzle (one Alice's, one
-// Bob's). Comments attach to the puzzle definition, so both copies must surface the same list.
+// Bob's). Comments are COPY-scoped, so each copy surfaces only its own list (and they never leak
+// into the shared puzzle's community reviews).
 const seed = async (t: ReturnType<typeof convexTest>) =>
   t.run(async (ctx) => {
     const now = Date.now();
@@ -65,12 +66,13 @@ describe("postPuzzleComment / listPuzzleComments", () => {
       rating: 5,
     });
 
-    // Persisted under the catalog puzzleId (not the copy id).
+    // Persisted with the catalog puzzleId (for context) AND scoped to the owned copy.
     const stored = await t.run((ctx) =>
       ctx.db.query("puzzleComments").collect(),
     );
     expect(stored).toHaveLength(1);
     expect(stored[0].puzzleId).toBe(puzzleId);
+    expect(stored[0].copyId).toBe(aliceCopy);
     expect(stored[0].rating).toBe(5);
     expect(stored[0].aggregateId).toBeDefined();
 
@@ -103,7 +105,7 @@ describe("postPuzzleComment / listPuzzleComments", () => {
     expect(list[0].rating).toBeNull();
   });
 
-  test("two copies of the same puzzle share the same comments", async () => {
+  test("comments are scoped to each copy (two copies of the same puzzle do NOT share)", async () => {
     const t = convexTest(schema, modules);
     const { aliceCopy, bobCopy } = await seed(t);
 
@@ -118,7 +120,7 @@ describe("postPuzzleComment / listPuzzleComments", () => {
       text: "from bob",
     });
 
-    // Both copies see BOTH comments.
+    // Each copy sees ONLY its own comment.
     const viaAlice = await asAlice(t).query(
       api.social.listPuzzleComments.listPuzzleComments,
       { copyId: aliceCopy },
@@ -127,14 +129,33 @@ describe("postPuzzleComment / listPuzzleComments", () => {
       api.social.listPuzzleComments.listPuzzleComments,
       { copyId: bobCopy },
     );
-    expect(viaAlice.map((c) => c.text).sort()).toEqual([
-      "from alice",
-      "from bob",
-    ]);
-    expect(viaBob.map((c) => c.text).sort()).toEqual([
-      "from alice",
-      "from bob",
-    ]);
+    expect(viaAlice.map((c) => c.text)).toEqual(["from alice"]);
+    expect(viaBob.map((c) => c.text)).toEqual(["from bob"]);
+  });
+
+  test("copy-scoped comments do NOT appear in the puzzle's community reviews", async () => {
+    const t = convexTest(schema, modules);
+    const { puzzleId, aliceCopy } = await seed(t);
+
+    // A copy-scoped comment with a rating.
+    await asAlice(t).mutation(api.social.postPuzzleComment.postPuzzleComment, {
+      copyId: aliceCopy,
+      text: "my copy is mint",
+      rating: 5,
+    });
+    // A genuine community review on the same puzzle definition.
+    await asBob(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
+      puzzleId,
+      text: "great design",
+      rating: 3,
+    });
+
+    // The catalog reviews list shows ONLY the community review, not the copy comment.
+    const reviews = await asBob(t).query(
+      api.social.listPuzzleReviews.listPuzzleReviews,
+      { puzzleId },
+    );
+    expect(reviews.map((r) => r.text)).toEqual(["great design"]);
   });
 
   test("comments are returned newest-first", async () => {

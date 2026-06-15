@@ -3,29 +3,32 @@ import { CommentRating } from "./comment-rating";
 import { CommentText } from "./comment-text";
 import { SocialError } from "./errors";
 import { CommentPosted } from "./events";
-import { CommentId, MemberId, PuzzleDefinitionId } from "./ids";
+import { CommentId, CopyId, MemberId, PuzzleDefinitionId } from "./ids";
 
 // Input to post(): the comment's identity, the puzzle DEFINITION it is attached to, its author, the
-// still-unvalidated text, an optional rating, and the instant it was posted. A comment is attached
-// to the puzzle definition (not a single owned copy) so every copy of that puzzle shows the same
-// community discussion.
+// still-unvalidated text, an optional rating, and the instant it was posted. When `copyId` is set
+// the comment is SCOPED to that single owned copy (the owner's own notes/rating) and is excluded
+// from the definition's shared community reviews; when absent it is a community review of the puzzle.
 export interface PostCommentProps {
   readonly id: CommentId;
   readonly puzzleId: PuzzleDefinitionId;
   readonly authorId: MemberId;
   readonly text: string;
   readonly rating?: number;
+  readonly copyId?: CopyId;
   readonly now: Date;
 }
 
 // The persistable shape of a community comment, kept close to a `puzzleComments` table so the
-// mapper is a trivial field-for-field translation (value objects <-> primitives).
+// mapper is a trivial field-for-field translation (value objects <-> primitives). `copyId` is set
+// only for copy-scoped comments.
 export interface CommentState {
   readonly id: CommentId;
   readonly puzzleId: PuzzleDefinitionId;
   readonly authorId: MemberId;
   readonly text: CommentText;
   readonly rating?: CommentRating;
+  readonly copyId?: CopyId;
   readonly createdAt: Date;
 }
 
@@ -57,6 +60,10 @@ export class Comment {
     return this.state.rating;
   }
 
+  get copyId(): CopyId | undefined {
+    return this.state.copyId;
+  }
+
   get createdAt(): Date {
     return this.state.createdAt;
   }
@@ -80,6 +87,7 @@ export class Comment {
       authorId: props.authorId,
       text: text.value,
       rating,
+      copyId: props.copyId,
       createdAt: props.now,
     });
     comment.record(
