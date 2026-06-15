@@ -1352,7 +1352,7 @@
     "channelInApp": "In-app",
     "channelEmail": "Email",
     "channelPush": "Push",
-    "channelsNote": "In-app notifications are delivered instantly. Email and push are delivered through Knock.",
+    "channelsNote": "In-app notifications are delivered instantly. Push is delivered to your browser (you'll be asked for permission). Email delivery is not yet available.",
     "notificationType": "Notification",
     "types": {
       "trade_request": "Trade requests",

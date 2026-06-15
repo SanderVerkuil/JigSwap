@@ -555,6 +555,20 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_member", ["memberId"]),
 
+  // Web Push subscriptions: one row per browser/device a member has granted push permission on. The
+  // push channel (notifications/sendWebPush) fans a notification out to every active subscription of
+  // the recipient via the Web Push protocol (VAPID). A subscription that the push service reports as
+  // permanently gone (HTTP 404/410) is pruned. `endpoint` is the unique push-service URL.
+  pushSubscriptions: defineTable({
+    userId: v.id("users"),
+    endpoint: v.string(),
+    p256dh: v.string(), // client public key (base64url) for payload encryption
+    auth: v.string(), // client auth secret (base64url)
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_endpoint", ["endpoint"]),
+
   // Friend Circles: a private group whose members share circle-scoped visibility. The Circle
   // aggregate persists as ONE unit (root + its embedded memberships) so every invariant is enforced
   // against the whole set. Member lookup goes through the `circleMembers` junction (below) because

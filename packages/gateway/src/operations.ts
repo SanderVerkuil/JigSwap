@@ -187,6 +187,12 @@ export const gateway = {
     updatePreference:
       api.notifications.updateNotificationPreference
         .updateNotificationPreference,
+    // Native Web Push: the client reads the (non-secret) VAPID public key, then registers /
+    // unregisters its PushManager subscription as the member toggles push.
+    pushConfig: api.notifications.getPushConfig.getPushConfig,
+    registerPush: api.notifications.pushSubscriptions.registerPushSubscription,
+    unregisterPush:
+      api.notifications.pushSubscriptions.unregisterPushSubscription,
   },
 
   // Community / Social: public profiles, follow relationships, and the activity feed. Writes go
