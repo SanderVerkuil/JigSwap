@@ -110,7 +110,7 @@ export function PuzzleBox({
   headingFont,
   sizeScale = 1,
   anchored = true,
-  fixedSize = false,
+  onResolvedHeight,
 }: {
   box: PlankBox;
   slot: BoxSlot;
@@ -126,12 +126,11 @@ export function PuzzleBox({
    */
   anchored?: boolean;
   /**
-   * When true, skip the post-load cover aspect-correction and render at the
-   * deterministic boxWorldSize height. The physics scene needs this so the
-   * rendered box matches its (statically-sized) CuboidCollider — otherwise a
-   * cover with aspect ≠ 1.4 ends up a different size than its physics body.
+   * Reports the box's world height whenever it changes (the cover aspect-corrects
+   * after the image loads). The physics scene uses this to size the collider to
+   * match the rendered box instead of a fixed 1.4 default.
    */
-  fixedSize?: boolean;
+  onResolvedHeight?: (worldHeight: number) => void;
 }) {
   const widthPx = box.width ?? 116;
   const worldScale = PX * BOX_SCALE * sizeScale;
@@ -154,20 +153,14 @@ export function PuzzleBox({
   // Height in CSS-plank pixels; corrected to the cover's real aspect when the
   // image loads (possibly long ago, on the cached entry).
   const [hPx, setHPx] = React.useState(() =>
-    fixedSize || entry.aspect == null ? defaultHPx : widthPx / entry.aspect,
+    entry.aspect != null ? widthPx / entry.aspect : defaultHPx,
   );
   const [edges, setEdges] = React.useState<CoverEdges | null>(entry.edges);
 
   React.useEffect(() => {
-    // fixedSize keeps the height at defaultHPx (== boxWorldSize, == the physics
-    // collider); only the edge-bleed strips still update from the cache.
-    if (!fixedSize) {
-      setHPx(entry.aspect != null ? widthPx / entry.aspect : defaultHPx);
-    }
+    setHPx(entry.aspect != null ? widthPx / entry.aspect : defaultHPx);
     setEdges(entry.edges);
-    const onAspect = (aspect: number) => {
-      if (!fixedSize) setHPx(widthPx / aspect);
-    };
+    const onAspect = (aspect: number) => setHPx(widthPx / aspect);
     const onEdges = (e: CoverEdges) => setEdges(e);
     entry.aspectSubs.add(onAspect);
     entry.edgeSubs.add(onEdges);
@@ -175,10 +168,16 @@ export function PuzzleBox({
       entry.aspectSubs.delete(onAspect);
       entry.edgeSubs.delete(onEdges);
     };
-  }, [entry, widthPx, defaultHPx, fixedSize]);
+  }, [entry, widthPx, defaultHPx]);
 
   const texture = entry.texture;
   const h = hPx * worldScale;
+
+  // Report the resolved world height so the physics scene can size the collider
+  // to match (covers aspect-correct after the image loads).
+  React.useEffect(() => {
+    onResolvedHeight?.(h);
+  }, [h, onResolvedHeight]);
 
   // Build CanvasTextures from the strip canvases when edges arrive. The strip
   // canvases are shared via the cache; the textures themselves are tiny

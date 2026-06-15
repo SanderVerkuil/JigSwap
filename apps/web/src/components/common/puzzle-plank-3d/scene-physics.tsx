@@ -403,11 +403,24 @@ function PhysicsArrangement({
     [boxes.length],
   );
 
+  // Live per-box world heights: covers aspect-correct after the image loads, so
+  // each box reports its rendered height (onResolvedHeight) and the collider /
+  // rest position follow it. Falls back to the deterministic boxWorldSize.h.
+  const [boxHeights, setBoxHeights] = React.useState<number[]>([]);
+  const reportHeight = React.useCallback((i: number, h: number) => {
+    setBoxHeights((prev) => {
+      if (prev[i] === h) return prev;
+      const next = prev.slice();
+      next[i] = h;
+      return next;
+    });
+  }, []);
+
   // Lowest each box center may be dragged (its half-height), so a held box never
   // sinks below the shelf top (y = 0).
   const boxMinY = React.useMemo(
-    () => boxes.map((b) => boxWorldSize(b).h / 2),
-    [boxes],
+    () => boxes.map((b, i) => (boxHeights[i] ?? boxWorldSize(b).h) / 2),
+    [boxes, boxHeights],
   );
 
   const { onPointerDown } = useBoxDrag(
@@ -423,7 +436,7 @@ function PhysicsArrangement({
       const body = rigidBodyRefs[i]?.current;
       const slot = slots[i];
       if (!body || !slot) return;
-      const { h } = boxWorldSize(box);
+      const h = boxHeights[i] ?? boxWorldSize(box).h;
       body.setTranslation({ x: slot.x, y: h / 2, z: 0 }, true);
       body.setRotation({ x: 0, y: 0, z: 0, w: 1 }, true);
       body.setLinvel({ x: 0, y: 0, z: 0 }, true);
@@ -496,7 +509,8 @@ function PhysicsArrangement({
 
       {/* Dynamic puzzle boxes */}
       {boxes.map((box, i) => {
-        const { w, h } = boxWorldSize(box);
+        const { w } = boxWorldSize(box);
+        const h = boxHeights[i] ?? boxWorldSize(box).h;
         const slot = slots[i];
         if (!slot) return null;
         return (
@@ -533,7 +547,7 @@ function PhysicsArrangement({
                 headingFont={headingFont}
                 sizeScale={1}
                 anchored={false}
-                fixedSize
+                onResolvedHeight={(hh) => reportHeight(i, hh)}
               />
             </group>
           </RigidBody>
