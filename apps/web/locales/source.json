@@ -2391,7 +2391,8 @@
       "confirmRemove": "Remove",
       "photoRemoved": "Photo removed",
       "removeFailed": "Couldn't remove the photo",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "unsetCover": "Unset as cover"
     },
     "offerForSwap": "Offer for Swap",
     "offeredForSwap": "Offered for Swap",

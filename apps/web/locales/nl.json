@@ -2391,7 +2391,8 @@
       "confirmRemove": "Verwijderen",
       "photoRemoved": "Foto verwijderd",
       "removeFailed": "Kon de foto niet verwijderen",
-      "cancel": "Annuleren"
+      "cancel": "Annuleren",
+      "unsetCover": "Omslag verwijderen"
     },
     "offerForSwap": "Aanbieden voor ruil",
     "offeredForSwap": "Aangeboden voor ruil",
