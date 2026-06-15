@@ -13,6 +13,7 @@ import * as React from "react";
 import type { PlankSceneProps } from "./scene";
 
 const PlankScene = React.lazy(() => import("./scene"));
+const PlankScenePhysics = React.lazy(() => import("./scene-physics"));
 
 function supportsWebGL(): boolean {
   try {
@@ -52,7 +53,19 @@ class SceneBoundary extends React.Component<
   }
 }
 
-export function PuzzlePlank3D({ boxes }: { boxes: PuzzlePlankBox[] }) {
+export function PuzzlePlank3D({
+  boxes,
+  interactive = false,
+}: {
+  boxes: PuzzlePlankBox[];
+  /**
+   * When true, loads the rapier physics scene (grab/drag/throw) instead of
+   * the static scene. Only activates when WebGL is available and
+   * prefers-reduced-motion is not set. Defaults to false so all existing
+   * callers (dashboard, marketing hero) are unchanged.
+   */
+  interactive?: boolean;
+}) {
   const container = React.useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = React.useState(false);
   const [sceneReady, setSceneReady] = React.useState(false);
@@ -98,6 +111,20 @@ export function PuzzlePlank3D({ boxes }: { boxes: PuzzlePlankBox[] }) {
   if (boxes.length === 0) return null;
 
   const showScene = mounted && resolved !== null;
+  // Use physics scene only when explicitly opted in, WebGL is available, and
+  // reduced-motion is not active. `mounted` already gates on WebGL.
+  const usePhysics = interactive && mounted && !reducedMotion;
+
+  const sceneProps: PlankSceneProps = {
+    boxes,
+    resolved: resolved ?? [],
+    headingFont,
+    theme,
+    reducedMotion,
+    visible,
+    onFirstFrame: () => setSceneReady(true),
+    eventSource: container,
+  };
 
   return (
     <div
@@ -129,21 +156,18 @@ export function PuzzlePlank3D({ boxes }: { boxes: PuzzlePlankBox[] }) {
               style={{
                 position: "absolute",
                 inset: 0,
-                pointerEvents: "none",
+                // Physics scene needs pointer events for drag; static scene
+                // uses "none" so the surrounding page still scrolls freely.
+                pointerEvents: usePhysics ? "auto" : "none",
                 transition: "opacity .45s ease",
                 opacity: sceneReady ? 1 : 0,
               }}
             >
-              <PlankScene
-                boxes={boxes}
-                resolved={resolved}
-                headingFont={headingFont}
-                theme={theme}
-                reducedMotion={reducedMotion}
-                visible={visible}
-                onFirstFrame={() => setSceneReady(true)}
-                eventSource={container}
-              />
+              {usePhysics ? (
+                <PlankScenePhysics {...sceneProps} />
+              ) : (
+                <PlankScene {...sceneProps} />
+              )}
             </div>
           </React.Suspense>
         </SceneBoundary>
