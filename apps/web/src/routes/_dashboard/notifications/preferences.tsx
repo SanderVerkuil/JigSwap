@@ -2,30 +2,17 @@ import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useUser } from "@/compat/clerk";
-import { Link } from "@/compat/link";
+import { SectionHead } from "@/components/dashboard-home/section-head";
+import { ChannelMatrix } from "@/components/notifications/channel-matrix";
 import {
   type NotificationChannel,
-  NOTIFICATION_CHANNELS,
   NOTIFICATION_TYPES,
-  notificationAccent,
-  notificationIcon,
 } from "@/components/notifications/notification-meta";
-import { PushDeviceCard } from "@/components/notifications/push-device-card";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { PushDeviceSection } from "@/components/notifications/push-device-section";
 import { PageLoading } from "@/components/ui/loading";
-import { Switch } from "@/components/ui/switch";
 import { gateway } from "@/gateway";
-import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowLeft } from "lucide-react";
+import { Bell } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
@@ -75,74 +62,23 @@ function NotificationPreferencesPage() {
     }
   };
 
+  // The shell chrome (PageHead) owns the "Notification preferences" title + subtitle, so there is no
+  // page h1 here. The screen is two card-free sections on the page ground.
   return (
-    <div className="container mx-auto max-w-3xl space-y-6">
-      <div className="space-y-2">
-        <Button asChild variant="ghost" size="sm" className="-ml-2 h-auto px-2">
-          <Link href="/notifications">
-            <ArrowLeft className="mr-1 h-4 w-4" />
-            {t("backToNotifications")}
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold">{t("preferencesTitle")}</h1>
-          <p className="text-muted-foreground">{t("preferencesSubtitle")}</p>
-        </div>
-      </div>
+    <div className="flex w-full max-w-4xl flex-col gap-10 md:gap-12">
+      <PushDeviceSection />
 
-      <PushDeviceCard />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("preferences")}</CardTitle>
-          <CardDescription>{t("channelsNote")}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {NOTIFICATION_TYPES.map((type) => {
-            const Icon = notificationIcon(type);
-            const row = preferences[type] ?? {};
-            return (
-              <div
-                key={type}
-                className="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    className={cn(
-                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted",
-                      notificationAccent(type),
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                  </span>
-                  <span className="text-sm font-medium">
-                    {t(`types.${type}`)}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-4 sm:gap-6">
-                  {NOTIFICATION_CHANNELS.map((channel) => {
-                    const id = `${type}-${channel}`;
-                    return (
-                      <div key={channel} className="flex items-center gap-2">
-                        <Switch
-                          id={id}
-                          checked={row[channel] === true}
-                          onCheckedChange={(checked) =>
-                            handleToggle(type, channel, checked)
-                          }
-                        />
-                        <Label htmlFor={id} className="cursor-pointer text-xs">
-                          {channelLabel[channel]}
-                        </Label>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
+      <section>
+        <SectionHead title={t("preferences")} icon={Bell} />
+        <p className="text-muted-foreground mb-5 max-w-prose text-sm">
+          {t("channelsNote")}
+        </p>
+        <ChannelMatrix
+          preferences={preferences}
+          channelLabel={channelLabel}
+          onToggle={handleToggle}
+        />
+      </section>
     </div>
   );
 }

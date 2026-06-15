@@ -1434,7 +1434,8 @@
     "pushBlocked": "Push is blocked. Allow notifications for this site in your browser settings.",
     "pushEnabled": "Push enabled on this device",
     "pushDisabled": "Push disabled on this device",
-    "pushError": "Couldn't update push notifications"
+    "pushError": "Couldn't update push notifications",
+    "matrixLabel": "Notification channels by type"
   },
   "solving": {
     "title": "Solving",
@@ -2195,6 +2196,10 @@
       "copyInstance": {
         "title": "Owned copy",
         "subtitle": "The provenance and history of a single copy."
+      },
+      "notificationPreferences": {
+        "title": "Notification preferences",
+        "subtitle": "Choose how you want to hear about each kind of activity."
       }
     },
     "user": {

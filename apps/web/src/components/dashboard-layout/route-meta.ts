@@ -132,6 +132,7 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   // Routes removed from the nav but still alive.
   "/borrowed": { pageKey: "borrowed", group: "library" },
   "/notifications": { pageKey: "notifications" },
+  "/notifications/preferences": { pageKey: "notificationPreferences" },
 };
 
 /** Resolve the shell meta for a pathname (exact, then longest prefix). */

@@ -1,11 +1,5 @@
+import { SectionHead } from "@/components/dashboard-home/section-head";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { gateway } from "@/gateway";
 import {
   currentSubscriptionEndpoint,
@@ -14,16 +8,17 @@ import {
   unsubscribeFromPush,
 } from "@/lib/web-push";
 import { useMutation, useQuery } from "convex/react";
-import { BellOff, BellRing } from "lucide-react";
+import { BellOff, BellRing, Smartphone } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 // Per-device Web Push control: a browser subscription is global to this device, separate from the
-// per-type push preference toggles (which decide WHICH notifications go to push). This card owns the
-// "does this browser receive any push at all" decision: request permission, subscribe via the
-// PushManager with the server's VAPID public key, and register/unregister the subscription.
-export function PushDeviceCard() {
+// per-type push preference toggles (which decide WHICH notifications go to push). This card-free
+// section owns the "does this browser receive any push at all" decision: request permission,
+// subscribe via the PushManager with the server's VAPID public key, and register/unregister the
+// subscription. The UI follows the ACTUAL browser subscription; the server sync is best-effort.
+export function PushDeviceSection() {
   const t = useTranslations("notifications");
   const pushConfig = useQuery(gateway.notifications.pushConfig, {}) as
     | { vapidPublicKey: string | null }
@@ -59,8 +54,6 @@ export function PushDeviceCard() {
       .then(setEndpoint)
       .catch(() => {});
   }, []);
-
-  if (!mounted) return null;
 
   const enable = async () => {
     setBusy(true);
@@ -104,23 +97,23 @@ export function PushDeviceCard() {
     }
   };
 
-  // Resolve the single status message + action for the current device state.
   const loading = pushConfig === undefined;
   const configured = pushConfig?.vapidPublicKey != null;
   const enabled = endpoint != null;
 
-  let body: React.ReactNode;
-  if (!supported) {
-    body = <Status text={t("pushUnsupported")} />;
-  } else if (loading) {
-    body = <Status text={t("pushDeviceDesc")} />;
+  // One bordered control row (NOT a card) holding the resolved status + action for this device.
+  let row: React.ReactNode;
+  if (!mounted || loading) {
+    row = <Status text={t("pushDeviceDesc")} />;
+  } else if (!supported) {
+    row = <Status text={t("pushUnsupported")} />;
   } else if (!configured) {
-    body = <Status text={t("pushUnconfigured")} />;
+    row = <Status text={t("pushUnconfigured")} />;
   } else if (permission === "denied") {
-    body = <Status text={t("pushBlocked")} />;
+    row = <Status text={t("pushBlocked")} />;
   } else if (enabled) {
-    body = (
-      <div className="flex items-center justify-between gap-3">
+    row = (
+      <>
         <span className="text-muted-foreground flex items-center gap-2 text-sm">
           <BellRing className="text-jigsaw-secondary h-4 w-4" />
           {t("pushEnabledOnDevice")}
@@ -128,11 +121,11 @@ export function PushDeviceCard() {
         <Button variant="outline" size="sm" disabled={busy} onClick={disable}>
           {t("pushDisable")}
         </Button>
-      </div>
+      </>
     );
   } else {
-    body = (
-      <div className="flex items-center justify-between gap-3">
+    row = (
+      <>
         <span className="text-muted-foreground flex items-center gap-2 text-sm">
           <BellOff className="h-4 w-4" />
           {t("pushDeviceDesc")}
@@ -140,18 +133,20 @@ export function PushDeviceCard() {
         <Button variant="brand" size="sm" disabled={busy} onClick={enable}>
           {t("pushEnable")}
         </Button>
-      </div>
+      </>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">{t("pushDeviceTitle")}</CardTitle>
-        <CardDescription>{t("pushDeviceSubtitle")}</CardDescription>
-      </CardHeader>
-      <CardContent>{body}</CardContent>
-    </Card>
+    <section>
+      <SectionHead title={t("pushDeviceTitle")} icon={Smartphone} />
+      <div className="bg-muted/30 flex items-center justify-between gap-3 rounded-lg border px-4 py-3">
+        {row}
+      </div>
+      <p className="text-muted-foreground mt-2 text-xs">
+        {t("pushDeviceSubtitle")}
+      </p>
+    </section>
   );
 }
 

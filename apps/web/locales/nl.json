@@ -1434,7 +1434,8 @@
     "pushBlocked": "Push is geblokkeerd. Sta meldingen voor deze site toe in je browserinstellingen.",
     "pushEnabled": "Push ingeschakeld op dit apparaat",
     "pushDisabled": "Push uitgeschakeld op dit apparaat",
-    "pushError": "Kon pushmeldingen niet bijwerken"
+    "pushError": "Kon pushmeldingen niet bijwerken",
+    "matrixLabel": "Meldingskanalen per type"
   },
   "solving": {
     "title": "Oplossen",
@@ -2195,6 +2196,10 @@
       "copyInstance": {
         "title": "Exemplaar in bezit",
         "subtitle": "De herkomst en geschiedenis van één exemplaar."
+      },
+      "notificationPreferences": {
+        "title": "Meldingsvoorkeuren",
+        "subtitle": "Kies hoe je over elk soort activiteit wilt horen."
       }
     },
     "user": {
