@@ -41,6 +41,12 @@ interface PuzzleCardProps {
   variant?: "default" | "browse" | "collection" | "selection";
   onEdit?: (puzzleId: Id<"ownedPuzzles">) => void;
   onView?: (puzzleId: Id<"ownedPuzzles">) => void;
+  /**
+   * Base path the cover image links to (so it matches the Eye/view action):
+   * `${viewBasePath}/${ownedId}`. Defaults to "/copies"; My Puzzles passes
+   * "/my-puzzles" so the owner sees their own gated copy route.
+   */
+  viewBasePath?: string;
   onDelete?: (puzzleId: Id<"ownedPuzzles">) => void;
   onRemove?: (puzzleId: Id<"ownedPuzzles">) => void;
   onSelect?: (puzzleId: Id<"ownedPuzzles">) => void;
@@ -64,6 +70,7 @@ export function PuzzleCard({
   variant = "default",
   onEdit,
   onView,
+  viewBasePath = "/copies",
   onDelete,
   onRemove,
   onSelect,
@@ -282,7 +289,8 @@ export function PuzzleCard({
       actions={actions}
       // Clicking the cover opens the owned-copy view, mirroring the Eye action (only when a view
       // handler is wired — never in the selection picker, where the image toggles selection).
-      imageHref={onView ? `/copies/${ownedId}` : undefined}
+      // viewBasePath keeps the cover in step with the Eye target (e.g. "/my-puzzles" for own copies).
+      imageHref={onView ? `${viewBasePath}/${ownedId}` : undefined}
       className={className}
     />
   );

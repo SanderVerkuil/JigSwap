@@ -284,6 +284,7 @@ function PuzzlesPage() {
                 puzzle={puzzle}
                 variant="default"
                 showCollectionDropdown={true}
+                viewBasePath="/my-puzzles"
                 onEdit={handleEditPuzzle}
                 onView={handleViewPuzzle}
                 onDelete={handleDeletePuzzle}
