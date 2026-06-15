@@ -40,8 +40,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <div className="flex min-h-0 flex-1">
             <AppSidebar />
             <SidebarInset className="min-h-0 overflow-hidden md:peer-data-[variant=inset]:mt-0 md:peer-data-[variant=inset]:mr-3 md:peer-data-[variant=inset]:mb-3 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:border md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-0">
-              <PageHead />
-              <ContentArea>{children}</ContentArea>
+              {/* ONE scroll region holds the page head + content, so content scrolls UNDER the
+                  glass head (sticky top-0). Clipped to the card's rounded corners by SidebarInset's
+                  overflow-hidden. */}
+              <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto [scrollbar-gutter:stable]">
+                <PageHead />
+                <ContentArea>{children}</ContentArea>
+              </div>
             </SidebarInset>
           </div>
           <MobileTabBar />
@@ -65,24 +70,23 @@ function MobilePageActions() {
   );
 }
 
-// The scrollable inside of the content card; honours the content-width
-// preference (full width by default, or a ~1180px centered column).
+// The padded content region inside the shared scroll container (the scroll lives one level up so
+// content passes under the sticky glass head). Honours the content-width preference (full width by
+// default, or a ~1180px centered column).
 function ContentArea({ children }: { children: React.ReactNode }) {
   const { fullWidth } = useShellPreferences();
 
   return (
-    <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
-      <div
-        className={cn(
-          // Mobile: 18px top / 16px sides per the mobile spec, with extra
-          // bottom clearance for the tab bar's raised center button.
-          "w-full px-4 pt-[18px] pb-8 md:p-6",
-          !fullWidth && "mx-auto max-w-[1180px]",
-        )}
-      >
-        <MobilePageActions />
-        {children}
-      </div>
+    <div
+      className={cn(
+        // Mobile: 18px top / 16px sides per the mobile spec, with extra
+        // bottom clearance for the tab bar's raised center button.
+        "w-full px-4 pt-[18px] pb-8 md:p-6",
+        !fullWidth && "mx-auto max-w-[1180px]",
+      )}
+    >
+      <MobilePageActions />
+      {children}
     </div>
   );
 }
