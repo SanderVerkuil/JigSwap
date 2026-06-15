@@ -1,9 +1,8 @@
 import type { PuzzlePlankBox } from "@/components/common/puzzle-plank";
 import {
   BOX_DEPTH,
-  BOX_SCALE,
+  boxWorldSize,
   PuzzleBox,
-  PX,
 } from "@/components/marketing/plank-3d/box";
 import {
   LIGHTING,
@@ -37,11 +36,9 @@ const CAMERA_Y_LIFT = 0.3;
 // Fixed yaw so boxes read as 3D (no parallax-driven component here).
 const FIXED_YAW = -(12 * Math.PI) / 180;
 
-// ——— world height of one box (mirrors box.tsx logic) ———
+// ——— world height of one box (delegates to the shared helper) ———
 function boxWorldHeight(box: PuzzlePlankBox): number {
-  const widthPx = box.width ?? 116;
-  const hPx = box.cover ? widthPx / 1.4 : (box.height ?? 144);
-  return hPx * PX * BOX_SCALE;
+  return boxWorldSize(box).h;
 }
 
 /** Damps all light parameters toward the active theme preset. */

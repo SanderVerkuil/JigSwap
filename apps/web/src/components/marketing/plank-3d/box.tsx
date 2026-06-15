@@ -17,6 +17,19 @@ export const PX = 1 / 100;
 export const BOX_SCALE = 0.74;
 export const BOX_DEPTH = 0.18;
 
+/** World-space {w,h} of a box's front face (pre-aspect-correction), mirroring
+ *  the scaling PuzzleBox applies. Used by the bounded scene's framing and the
+ *  physics scene's colliders so they never drift from the visual size. */
+export function boxWorldSize(
+  box: Pick<PlankBox, "width" | "height" | "cover">,
+  sizeScale = 1,
+): { w: number; h: number } {
+  const widthPx = box.width ?? 116;
+  const worldScale = PX * BOX_SCALE * sizeScale;
+  const hPx = box.cover ? widthPx / 1.4 : (box.height ?? 144);
+  return { w: widthPx * worldScale, h: hPx * worldScale };
+}
+
 export interface BoxSlot {
   x: number;
   /** Resolved hex colors for this box. */
@@ -96,6 +109,7 @@ export function PuzzleBox({
   index,
   headingFont,
   sizeScale = 1,
+  anchored = true,
 }: {
   box: PlankBox;
   slot: BoxSlot;
@@ -103,10 +117,17 @@ export function PuzzleBox({
   headingFont: string;
   /** Deterministic per-instance footprint variation (texture is shared). */
   sizeScale?: number;
+  /**
+   * When true (default), the group self-positions at [slot.x, h/2, 0] with a
+   * per-box yaw — the static scene's behaviour.
+   * When false, the group is at local origin with no rotation so that a parent
+   * <RigidBody> owns the world transform and a centered CuboidCollider matches.
+   */
+  anchored?: boolean;
 }) {
   const widthPx = box.width ?? 116;
   const worldScale = PX * BOX_SCALE * sizeScale;
-  const w = widthPx * worldScale;
+  const { w } = boxWorldSize(box, sizeScale);
   const defaultHPx = box.cover ? widthPx / 1.4 : (box.height ?? 144);
 
   const { key, entry } = React.useMemo(
@@ -181,8 +202,15 @@ export function PuzzleBox({
   // Body color: use edge average for cover boxes when available, otherwise slot.c2.
   const bodyColor = edges ? edges.body : slot.c2;
 
+  // When anchored=false the parent RigidBody owns world transform; render at
+  // local origin so a centered CuboidCollider matches the visual exactly.
+  const groupPos: [number, number, number] = anchored
+    ? [slot.x, baseY, 0]
+    : [0, 0, 0];
+  const groupRot: [number, number, number] = anchored ? [0, yaw, 0] : [0, 0, 0];
+
   return (
-    <group position={[slot.x, baseY, 0]} rotation={[0, yaw, 0]}>
+    <group position={groupPos} rotation={groupRot}>
       <RoundedBox args={[w, h, BOX_DEPTH]} radius={0.015} smoothness={4}>
         <meshStandardMaterial
           color={bodyColor}
