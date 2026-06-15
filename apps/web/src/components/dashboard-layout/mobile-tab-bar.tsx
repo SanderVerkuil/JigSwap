@@ -76,7 +76,7 @@ export function MobileTabBar() {
         // `relative z-30` so the raised center button (which rises above the bar
         // via -mt) is never painted over / clipped by positioned page content
         // above it. overflow-visible keeps the button's top from being clipped.
-        className="relative z-30 grid shrink-0 grid-cols-5 items-stretch overflow-visible border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 grid shrink-0 grid-cols-5 items-stretch overflow-visible border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
       >
         {TABS.slice(0, 2).map((tab) => (
           <TabLink key={tab.key} tab={tab} active={active} />
