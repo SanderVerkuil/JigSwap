@@ -116,26 +116,29 @@ export function PuzzleCardShell({
         {overlay}
       </div>
     );
-    // Make the cover a link to the puzzle's view page, so a click on the image navigates without
-    // having to find the small action button.
-    return imageHref ? (
-      <Link
-        href={imageHref}
-        aria-label={puzzle.title}
-        className="focus-visible:ring-ring block rounded-t-lg focus-visible:ring-2 focus-visible:outline-none"
-      >
-        {inner}
-      </Link>
-    ) : (
-      inner
-    );
+    // The cover is no longer its own link — the whole card is clickable via the
+    // stretched title link below (so the image, title and empty card area all
+    // navigate, while the action buttons stay pressable above the overlay).
+    return inner;
   };
 
   const renderContent = () => (
     <div className="flex flex-1 flex-col p-4">
       <div className="mb-2">
         <h3 className="font-semibold text-sm line-clamp-2 mb-1">
-          {puzzle.title}
+          {imageHref ? (
+            // Stretched link: the ::after overlay spans the whole (relative) card, so
+            // clicking the image, title or any empty area navigates. Action buttons
+            // sit above it via `relative z-10` and stay pressable.
+            <Link
+              href={imageHref}
+              className="after:absolute after:inset-0 after:z-[1] after:content-[''] hover:underline focus-visible:underline focus-visible:outline-none"
+            >
+              {puzzle.title}
+            </Link>
+          ) : (
+            puzzle.title
+          )}
         </h3>
         {puzzle.brand && (
           <p className="text-xs text-muted-foreground mb-1">{puzzle.brand}</p>
@@ -178,11 +181,15 @@ export function PuzzleCardShell({
         </div>
       )}
 
-      {footer && <div className="mb-2">{footer}</div>}
+      {/* footer + actions sit ABOVE the stretched-link overlay (relative z-10) so their
+          own buttons/links remain clickable. */}
+      {footer && <div className="relative z-10 mb-2">{footer}</div>}
 
       {/* Pin the action row to the bottom so every card in a row shares one baseline, with a
           hairline divider separating it from the (top-packed) content. */}
-      {actions && <div className="mt-auto border-t pt-3">{actions}</div>}
+      {actions && (
+        <div className="relative z-10 mt-auto border-t pt-3">{actions}</div>
+      )}
     </div>
   );
 
@@ -208,7 +215,7 @@ export function PuzzleCardShell({
   const card = (
     <Card
       className={cn(
-        "h-full gap-0 overflow-hidden p-0",
+        "relative h-full gap-0 overflow-hidden p-0",
         selected && "ring-2 ring-primary",
         (href || selectable) && "cursor-pointer",
         className,
