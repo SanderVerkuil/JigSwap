@@ -51,7 +51,7 @@ export interface VapidConfig {
   readonly subject: string;
 }
 
-export const DEFAULT_SUBJECT = "mailto:notifications@jigswap.app";
+export const DEFAULT_SUBJECT = "mailto:hello@jigswap.site";
 
 // Read VAPID config from env; null when the keypair is not fully configured (push disabled).
 export const vapidConfigFromEnv = (
