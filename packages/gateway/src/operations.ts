@@ -201,6 +201,12 @@ export const gateway = {
   social: {
     editProfile: api.social.editProfile.editProfile,
     setProfileVisibility: api.social.setProfileVisibility.setProfileVisibility,
+    // Profile shelf curation: arrange the ordered set of owned copies shown on the profile plank.
+    // Only the owner can call this (server enforces ownership of every copy). featuredShelf is
+    // the read side — returns the curated copies in order, or [] when uncurated (fallback to
+    // recent-6 is the caller's responsibility).
+    arrangeShelf: api.social.arrangeShelf.arrangeShelf,
+    featuredShelf: api.social.featuredShelf.featuredShelf,
     follow: api.social.followMember.followMember,
     unfollow: api.social.unfollowMember.unfollowMember,
     profile: api.social.getProfile.getProfile,
