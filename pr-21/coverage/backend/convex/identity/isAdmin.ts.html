@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for solving/domain/photo.ts</title>
+    <title>Code coverage report for convex/identity/isAdmin.ts</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../prettify.css" />
     <link rel="stylesheet" href="../../base.css" />
@@ -19,34 +19,34 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> / <a href="index.html">solving/domain</a> photo.ts</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">convex/identity</a> isAdmin.ts</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">85.71% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>3/3</span>
+                <span class='fraction'>6/7</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">75% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/0</span>
+                <span class='fraction'>3/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>3/3</span>
+                <span class='fraction'>1/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>3/3</span>
+                <span class='fraction'>6/6</span>
             </div>
         
             
@@ -93,36 +93,36 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">48x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">48x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Id } from "../../shared-kernel";
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type { QueryCtx } from "../_generated/server";
 &nbsp;
-// A reference to an uploaded image file. The actual storage id is owned by an adapter
-// (Convex `_storage` — the persisted `completions.photos[]`); the domain only carries an opaque
-// branded handle.
-export type FileId = Id&lt;"FileId"&gt;;
-&nbsp;
-// A photo attached to a Completion. Value object owned by the Completion aggregate; a completion
-// holds up to five of them (§1.4). Mirrors an entry in the persisted `completions.photos` array.
-export class Photo {
-  private constructor(readonly fileId: FileId) {}
-&nbsp;
-  static of(fileId: FileId): Photo {
-    return new Photo(fileId);
-  }
-&nbsp;
-  equals(other: Photo): boolean {
-    return this.fileId === other.fileId;
-  }
-}
+// Whether the acting caller is an admin. The role lives in the Clerk JWT (publicMetadata.role,
+// surfaced as the `metadata.role` claim — the same source the web admin guard reads). Convex
+// exposes JWT claims on the identity object; we read it defensively (nested `metadata.role` or a
+// flat `role` claim) and fail CLOSED — an unauthenticated caller or a missing claim is NOT admin.
+//
+// NOTE: for this to be true on the server, the Clerk "convex" JWT template must include the
+// metadata claim (e.g. `"metadata": "{{user.public_metadata}}"`). Without it, admins are simply
+// treated as regular members (submissions stay pending) — safe, never an over-grant.
+export const isAdmin = async (ctx: QueryCtx): Promise&lt;boolean&gt; =&gt; {
+  const identity = await ctx.auth.getUserIdentity();
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (!identity) <span class="cstat-no" title="statement not covered" >return false;</span>
+  const claims = identity as {
+    metadata?: { role?: string };
+    role?: string;
+  };
+  const role = claims.metadata?.role ?? claims.role;
+  return role === "admin";
+};
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -130,7 +130,7 @@ export class Photo {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-15T07:37:32.449Z
+                at 2026-06-15T07:37:39.663Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
