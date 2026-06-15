@@ -27,6 +27,7 @@ import {
   ArrowLeftRight,
   ChevronRight,
   MessageCircle,
+  Plus,
   Star,
 } from "lucide-react";
 import { useRef, useState } from "react";
@@ -236,7 +237,18 @@ function PuzzleDefinitionDetail({
 
           {/* Actions */}
           <div className="mt-5 flex flex-wrap gap-2.5">
-            <Button variant="brand" onClick={() => router.push("/browse")}>
+            {/* Opens the copy-mode add form (definition pre-filled; the member
+                fills in condition/availability/cover/notes for their copy). */}
+            <Button
+              variant="brand"
+              onClick={() =>
+                router.push(`/my-puzzles/add/new?puzzleId=${puzzleId}`)
+              }
+            >
+              <Plus className="h-4 w-4" />
+              {tPuzzles("addToLibrary")}
+            </Button>
+            <Button variant="outline" onClick={() => router.push("/browse")}>
               <ArrowLeftRight className="h-4 w-4" />
               {t("findCopyToSwap")}
             </Button>
