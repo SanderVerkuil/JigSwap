@@ -233,7 +233,7 @@ function useBoxDrag(rigidBodyRefs: React.RefObject<RapierRigidBody | null>[]): {
       }
 
       // Restore scroll on touch
-      canvas.style.touchAction = "";
+      canvas.style.removeProperty("touch-action");
       try {
         ds.canvas.releasePointerCapture(e.pointerId);
       } catch {
@@ -253,7 +253,7 @@ function useBoxDrag(rigidBodyRefs: React.RefObject<RapierRigidBody | null>[]): {
         body.setBodyType(RB_DYNAMIC, true);
         body.setLinvel({ x: 0, y: 0, z: 0 }, true);
       }
-      canvas.style.touchAction = "";
+      canvas.style.removeProperty("touch-action");
       dragState.current = null;
     };
 
@@ -265,7 +265,7 @@ function useBoxDrag(rigidBodyRefs: React.RefObject<RapierRigidBody | null>[]): {
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onCancel);
       // Defensive: if we unmount mid-drag, never leave the page unscrollable.
-      canvas.style.touchAction = "";
+      canvas.style.removeProperty("touch-action");
     };
   }, [camera, canvas, pointer, raycaster, rigidBodyRefs]);
 
@@ -284,7 +284,7 @@ function useBoxDrag(rigidBodyRefs: React.RefObject<RapierRigidBody | null>[]): {
       }
 
       // Prevent page scroll while dragging
-      canvas.style.touchAction = "none";
+      canvas.style.setProperty("touch-action", "none");
 
       // Switch to kinematic so we drive the position
       body.setBodyType(RB_KINEMATIC_POS, true);
@@ -313,7 +313,7 @@ function useBoxDrag(rigidBodyRefs: React.RefObject<RapierRigidBody | null>[]): {
       if (!hit) {
         // Degenerate grab — revert the kinematic switch + scroll lock, don't drag.
         body.setBodyType(RB_DYNAMIC, true);
-        canvas.style.touchAction = "";
+        canvas.style.removeProperty("touch-action");
         return;
       }
       const grabOffset = hit.sub(bodyVec);
@@ -339,14 +339,12 @@ function PhysicsArrangement({
   resolved,
   headingFont,
   lightingPreset,
-  reducedMotion,
   onFirstFrame,
 }: {
   boxes: PuzzlePlankBox[];
   resolved: Array<{ c1: string; c2: string }>;
   headingFont: string;
   lightingPreset: LightingPreset;
-  reducedMotion: boolean;
   onFirstFrame: () => void;
 }) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
@@ -532,7 +530,6 @@ export default function PlankScenePhysics(props: PlankSceneProps) {
           resolved={props.resolved}
           headingFont={props.headingFont}
           lightingPreset={lightingPreset}
-          reducedMotion={props.reducedMotion}
           onFirstFrame={props.onFirstFrame}
         />
       </Physics>
