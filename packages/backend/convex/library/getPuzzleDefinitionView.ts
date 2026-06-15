@@ -140,10 +140,31 @@ export const getPuzzleDefinitionView = query({
     );
 
     // --- completions of the definition (totalCompletions, avgCompletionDays) --------------------
-    const completions = await ctx.db
+    // A solve can be recorded against the puzzle DEFINITION (puzzleId) OR against a specific COPY
+    // of it (ownedPuzzleId, with no puzzleId — that's how "mark my copy complete" stores it). Count
+    // both so completing your own copy still shows in the catalogue total; dedupe by _id in case a
+    // row carries both FKs.
+    const byDefinition = await ctx.db
       .query("completions")
       .withIndex("by_puzzle", (q) => q.eq("puzzleId", args.puzzleId))
       .collect();
+    const byCopy = (
+      await Promise.all(
+        owned.map((copy) =>
+          ctx.db
+            .query("completions")
+            .withIndex("by_owned_puzzle", (q) =>
+              q.eq("ownedPuzzleId", copy._id),
+            )
+            .collect(),
+        ),
+      )
+    ).flat();
+    const dedupedCompletions = new Map<string, (typeof byDefinition)[number]>();
+    for (const c of [...byDefinition, ...byCopy]) {
+      dedupedCompletions.set(c._id as unknown as string, c);
+    }
+    const completions = [...dedupedCompletions.values()];
     const completed = completions.filter((c) => c.isCompleted);
     const finishDaysList = completed
       .map(finishDaysOf)

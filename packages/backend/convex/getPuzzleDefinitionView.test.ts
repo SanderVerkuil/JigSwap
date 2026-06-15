@@ -286,6 +286,38 @@ describe("getPuzzleDefinitionView", () => {
     expect(view?.stats.availableToSwap).toBe(3);
   });
 
+  test("totalCompletions counts a solve recorded against a COPY (ownedPuzzleId, no puzzleId)", async () => {
+    const t = convexTest(schema, modules);
+    const { now, viewer, puzzleId } = await seed(t);
+
+    // The viewer's own copy of this puzzle.
+    const copyId = await mkCopy(t, {
+      aggregateId: "c-viewer",
+      puzzleId,
+      ownerId: viewer,
+      createdAt: now,
+    });
+
+    await t.run(async (ctx) => {
+      // "Mark my copy complete" stores the solve against ownedPuzzleId only (no
+      // puzzleId) — the catalogue total must still count it.
+      await ctx.db.insert("completions", {
+        userId: viewer,
+        ownedPuzzleId: copyId,
+        startDate: now,
+        endDate: now + 3 * DAY,
+        photos: [],
+        isCompleted: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const view = await get(t, puzzleId);
+    expect(view?.stats.totalCompletions).toBe(1);
+    expect(view?.stats.avgCompletionDays).toBe(3);
+  });
+
   test("avgCompletionDays is null when no completed completions", async () => {
     const t = convexTest(schema, modules);
     const { puzzleId } = await seed(t);
