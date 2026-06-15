@@ -10,6 +10,7 @@ import {
   notificationAccent,
   notificationIcon,
 } from "@/components/notifications/notification-meta";
+import { PushDeviceCard } from "@/components/notifications/push-device-card";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -88,6 +89,8 @@ function NotificationPreferencesPage() {
           <p className="text-muted-foreground">{t("preferencesSubtitle")}</p>
         </div>
       </div>
+
+      <PushDeviceCard />
 
       <Card>
         <CardHeader>

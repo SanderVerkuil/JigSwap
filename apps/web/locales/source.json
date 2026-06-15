@@ -1422,7 +1422,19 @@
         "title": "Goal achieved",
         "message": "You reached one of your goals!"
       }
-    }
+    },
+    "pushDeviceTitle": "Push on this device",
+    "pushDeviceSubtitle": "Control whether this browser receives push notifications.",
+    "pushDeviceDesc": "Get notified even when JigSwap isn't open.",
+    "pushEnable": "Enable",
+    "pushDisable": "Disable",
+    "pushEnabledOnDevice": "Enabled on this device",
+    "pushUnsupported": "This browser doesn't support push notifications.",
+    "pushUnconfigured": "Push notifications aren't available right now.",
+    "pushBlocked": "Push is blocked. Allow notifications for this site in your browser settings.",
+    "pushEnabled": "Push enabled on this device",
+    "pushDisabled": "Push disabled on this device",
+    "pushError": "Couldn't update push notifications"
   },
   "solving": {
     "title": "Solving",

@@ -1422,7 +1422,19 @@
         "title": "Doel behaald",
         "message": "Je hebt een van je doelen bereikt!"
       }
-    }
+    },
+    "pushDeviceTitle": "Push op dit apparaat",
+    "pushDeviceSubtitle": "Bepaal of deze browser pushmeldingen ontvangt.",
+    "pushDeviceDesc": "Ontvang meldingen, ook als JigSwap niet open is.",
+    "pushEnable": "Inschakelen",
+    "pushDisable": "Uitschakelen",
+    "pushEnabledOnDevice": "Ingeschakeld op dit apparaat",
+    "pushUnsupported": "Deze browser ondersteunt geen pushmeldingen.",
+    "pushUnconfigured": "Pushmeldingen zijn momenteel niet beschikbaar.",
+    "pushBlocked": "Push is geblokkeerd. Sta meldingen voor deze site toe in je browserinstellingen.",
+    "pushEnabled": "Push ingeschakeld op dit apparaat",
+    "pushDisabled": "Push uitgeschakeld op dit apparaat",
+    "pushError": "Kon pushmeldingen niet bijwerken"
   },
   "solving": {
     "title": "Oplossen",
