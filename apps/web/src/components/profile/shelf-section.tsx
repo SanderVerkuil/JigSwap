@@ -128,7 +128,7 @@ export function ProfileShelfSection({ member }: { member: Member }) {
         </div>
       ) : (
         <div className="h-[300px] min-w-0 md:h-[360px]">
-          <PuzzlePlank3D boxes={boxes} />
+          <PuzzlePlank3D boxes={boxes} interactive />
         </div>
       )}
 
