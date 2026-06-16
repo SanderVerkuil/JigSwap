@@ -52,8 +52,10 @@ function stripLeadingH1() {
 }
 
 // Turn `> **Note:** ...` blockquotes into branded callouts. The first strong
-// child whose text matches a known tone keyword selects the tone.
+// child whose text matches a known tone keyword selects the tone. Keywords are
+// recognized in English and Dutch so localized docs render callouts too.
 const TONES: Record<string, string> = {
+  // English
   note: "info",
   info: "info",
   tip: "tip",
@@ -61,6 +63,13 @@ const TONES: Record<string, string> = {
   caution: "warning",
   danger: "danger",
   important: "danger",
+  // Dutch
+  opmerking: "info",
+  "let op": "info",
+  waarschuwing: "warning",
+  voorzichtig: "warning",
+  gevaar: "danger",
+  belangrijk: "danger",
 };
 function calloutsFromBlockquotes() {
   return (tree: Root) => {

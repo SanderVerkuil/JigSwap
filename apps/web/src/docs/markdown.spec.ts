@@ -77,6 +77,12 @@ describe("compileMarkdown", () => {
     expect(r.html).not.toContain("docs-callout");
   });
 
+  it("recognizes a Dutch tone keyword as a callout", async () => {
+    const r = await compileMarkdown("> **Let op:** wees voorzichtig.\n");
+    expect(r.html).toContain('class="docs-callout"');
+    expect(r.html).toContain('data-tone="info"');
+  });
+
   it("passes through <details>/<summary> raw HTML with inner markdown rendered", async () => {
     const r = await compileMarkdown(
       "<details>\n<summary>Question?</summary>\n\nAn **answer** here.\n\n</details>\n",
