@@ -291,10 +291,10 @@ export interface CopyCompletionEntry {
   /** Epoch millis the completion is sorted/dated on (its `endDate`, else `startDate`). */
   occurredAt: number;
   /**
-   * How long the solve took, in whole days: `endDate - startDate` rounded to whole days when both
-   * are present, else `completionTimeMinutes / 1440` rounded, else null.
+   * How long the solve took, in whole MINUTES: `endDate - startDate` when both are present, else
+   * `completionTimeMinutes`, else null. Raw minutes so the UI can humanize (hours/days/weeks).
    */
-  finishDays: number | null;
+  finishMinutes: number | null;
   /** The 1-5 star rating, or null when unrated. */
   rating: number | null;
   /** The free-text review, or null when absent. */
@@ -330,8 +330,8 @@ export interface CopyTransferEntry {
 export interface CopyInstanceStats {
   /** Number of completed completions of this copy. */
   timesCompleted: number;
-  /** The smallest `finishDays` across completed completions, or null when none. */
-  fastestFinishDays: number | null;
+  /** The smallest `finishMinutes` across completed completions, or null when none. */
+  fastestFinishMinutes: number | null;
   /** Number of loans recorded for this copy. */
   timesLentOut: number;
   /**

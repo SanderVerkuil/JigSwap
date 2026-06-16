@@ -1,3 +1,4 @@
+export * from "./arrange-shelf.port";
 export * from "./edit-profile.port";
 export * from "./follow-member.port";
 export * from "./post-comment.port";

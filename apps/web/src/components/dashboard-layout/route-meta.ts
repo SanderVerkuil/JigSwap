@@ -59,7 +59,6 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     icon: BookOpen,
     items: [
       { key: "myPuzzles", href: "/my-puzzles", icon: Puzzle },
-      { key: "puzzles", href: "/puzzles", icon: Shapes },
       { key: "collections", href: "/collections", icon: FolderOpen },
       { key: "completions", href: "/completions", icon: CircleCheck },
       { key: "goals", href: "/goals", icon: Target },
@@ -72,6 +71,9 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     icon: Users,
     items: [
       { key: "browse", href: "/browse", icon: Search },
+      // The shared puzzle catalogue is discovery, not personal library — it lives
+      // alongside Browse under Community.
+      { key: "puzzles", href: "/puzzles", icon: Shapes },
       { key: "circles", href: "/circles", icon: Users },
       { key: "exchanges", href: "/trades", icon: ArrowLeftRight },
       { key: "messages", href: "/messages", icon: MessageSquare },
@@ -110,8 +112,9 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   "/my-puzzles": { pageKey: "myPuzzles", group: "library" },
   "/my-puzzles/add": { pageKey: "addPuzzle", group: "library" },
   "/my-puzzles/add/new": { pageKey: "createPuzzle", group: "library" },
-  "/copies": { pageKey: "copyInstance", group: "library" },
-  "/copies/$id": { pageKey: "copyInstance", group: "library" },
+  // Owner's own copy detail (gated): nav-highlights My Puzzles; the page publishes
+  // its own "My Library › My Puzzles › <name>" crumbs + title at runtime.
+  "/my-puzzles/$id": { pageKey: "myPuzzles", group: "library" },
   "/collections": { pageKey: "collections", group: "library" },
   "/completions": { pageKey: "completions", group: "library" },
   "/goals": { pageKey: "goals", group: "library" },
@@ -120,14 +123,18 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   // Community
   "/community": { pageKey: "community", variant: "landing" },
   "/browse": { pageKey: "browse", group: "community" },
+  // Anyone's owned copy detail: nav-highlights Community; the page publishes its
+  // own "Community › Owned Copies › <name>" crumbs + title at runtime.
+  "/copies": { pageKey: "copyInstance", group: "community" },
+  "/copies/$id": { pageKey: "copyInstance", group: "community" },
+  // The shared puzzle catalogue (discovery) + its contribute sub-route.
+  "/puzzles": { pageKey: "puzzles", group: "community" },
+  "/puzzles/$id": { pageKey: "puzzles", group: "community" },
+  "/puzzles/add": { pageKey: "contributePuzzle", group: "community" },
   "/circles": { pageKey: "circles", group: "community" },
   "/trades": { pageKey: "exchanges", group: "community" },
   "/messages": { pageKey: "messages", group: "community" },
   "/people": { pageKey: "people", group: "community" },
-
-  // The shared catalogue (in the library nav) and its contribute sub-route.
-  "/puzzles": { pageKey: "puzzles", group: "library" },
-  "/puzzles/add": { pageKey: "contributePuzzle", group: "library" },
 
   // Routes removed from the nav but still alive.
   "/borrowed": { pageKey: "borrowed", group: "library" },

@@ -27,7 +27,9 @@
     "description": "Oops! The page you're looking for doesn't exist.",
     "message": "The page you're trying to access might have been moved, deleted, or you entered the wrong URL.",
     "backToHome": "Back to Home",
-    "browsePuzzles": "Browse Puzzles"
+    "browsePuzzles": "Browse Puzzles",
+    "backToDashboard": "Back to Dashboard",
+    "backToAdmin": "Back to Admin"
   },
   "navigation": {
     "home": "Home",
@@ -696,7 +698,26 @@
     },
     "shelf": {
       "title": "{name}'s Shelf",
-      "meta": "{count, plural, one {# on display} other {# on display}}"
+      "meta": "{count, plural, one {# on display} other {# on display}}",
+      "arrangeDialog": {
+        "title": "Arrange Shelf",
+        "description": "Select and order up to {max} copies to feature on your profile shelf.",
+        "loading": "Loading copies…",
+        "noCopies": "You have no puzzle copies yet.",
+        "pickSection": "Your collection",
+        "maxHint": "Maximum {max} copies selected.",
+        "orderSection": "Selected ({count}/{max})",
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "remove": "Remove",
+        "cancel": "Cancel",
+        "save": "Save",
+        "saving": "Saving…",
+        "saved": "Shelf saved",
+        "saveError": "Failed to save shelf",
+        "untitled": "Untitled"
+      },
+      "arrangeShelf": "Arrange shelf"
     },
     "trustLevels": {
       "beginner": "Beginner",
@@ -2198,7 +2219,7 @@
         "subtitle": "Add a puzzle to the shared catalogue for everyone."
       },
       "puzzles": {
-        "title": "Puzzles",
+        "title": "Puzzles catalogue",
         "subtitle": "The shared puzzle catalogue."
       },
       "borrowed": {
@@ -2245,7 +2266,11 @@
         "browseCommunitySub": "Discover puzzles near you"
       }
     },
-    "breadcrumbLabel": "Breadcrumb"
+    "breadcrumbLabel": "Breadcrumb",
+    "crumbs": {
+      "ownedCopies": "Owned Copies"
+    },
+    "plankReset": "Reset"
   },
   "copyInstance": {
     "notFound": "Copy not found",
@@ -2336,7 +2361,7 @@
     "exchangesCount": "{count} exchanges",
     "noSwaps": "No swaps or trades for this puzzle yet.",
     "you": "you",
-    "finishedIn": "finished in {days, plural, one {# day} other {# days}}",
+    "finishedIn": "finished in {duration}",
     "communityRating": "Community Rating",
     "communityRatings": "{count} community ratings",
     "comments": "Comments",
@@ -2366,7 +2391,8 @@
       "confirmRemove": "Remove",
       "photoRemoved": "Photo removed",
       "removeFailed": "Couldn't remove the photo",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "unsetCover": "Unset as cover"
     },
     "offerForSwap": "Offer for Swap",
     "offeredForSwap": "Offered for Swap",

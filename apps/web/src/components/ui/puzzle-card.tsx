@@ -41,6 +41,14 @@ interface PuzzleCardProps {
   variant?: "default" | "browse" | "collection" | "selection";
   onEdit?: (puzzleId: Id<"ownedPuzzles">) => void;
   onView?: (puzzleId: Id<"ownedPuzzles">) => void;
+  /**
+   * Base path the cover image links to (so it matches the Eye/view action):
+   * `${viewBasePath}/${ownedId}`. Defaults to "/copies"; My Puzzles passes
+   * "/my-puzzles" so the owner sees their own gated copy route.
+   */
+  viewBasePath?: string;
+  /** Cover image fit: "cover" crops (default), "contain" shows the full image. */
+  imageFit?: "cover" | "contain";
   onDelete?: (puzzleId: Id<"ownedPuzzles">) => void;
   onRemove?: (puzzleId: Id<"ownedPuzzles">) => void;
   onSelect?: (puzzleId: Id<"ownedPuzzles">) => void;
@@ -64,6 +72,8 @@ export function PuzzleCard({
   variant = "default",
   onEdit,
   onView,
+  viewBasePath = "/copies",
+  imageFit,
   onDelete,
   onRemove,
   onSelect,
@@ -165,6 +175,9 @@ export function PuzzleCard({
             type="checkbox"
             checked={isSelected}
             onChange={() => onSelect?.(ownedId)}
+            // The whole card already toggles selection; stop the click here from
+            // bubbling to the card so the toggle doesn't fire twice and cancel out.
+            onClick={(e) => e.stopPropagation()}
             className="h-4 w-4"
           />
         </div>
@@ -172,10 +185,24 @@ export function PuzzleCard({
     </>
   );
 
+  // Only render the action row (and its top border) when there is something to
+  // show — actual action buttons or the collection dropdown.
+  const hasActions =
+    showActions &&
+    !!(
+      onView ||
+      onLogSolve ||
+      onEdit ||
+      onDelete ||
+      onRemove ||
+      onRequestExchange ||
+      onMessage ||
+      onFavorite
+    );
   const actions =
-    showActions || showCollectionDropdown ? (
+    hasActions || showCollectionDropdown ? (
       <div className="flex items-center justify-between gap-2">
-        {showActions ? (
+        {hasActions ? (
           <div className="flex items-center gap-2">
             {onView && (
               <Button
@@ -276,13 +303,19 @@ export function PuzzleCard({
     <PuzzleCardShell
       puzzle={view}
       selected={isSelected}
+      // In the selection picker the whole card toggles selection (not just the
+      // checkbox); the checkbox stays as the visible state + keyboard target.
+      selectable={variant === "selection" && !!onSelect}
+      onSelect={onSelect ? () => onSelect(ownedId) : undefined}
       badges={badges}
       overlay={overlay}
       footer={loanBadge}
       actions={actions}
       // Clicking the cover opens the owned-copy view, mirroring the Eye action (only when a view
       // handler is wired — never in the selection picker, where the image toggles selection).
-      imageHref={onView ? `/copies/${ownedId}` : undefined}
+      // viewBasePath keeps the cover in step with the Eye target (e.g. "/my-puzzles" for own copies).
+      imageHref={onView ? `${viewBasePath}/${ownedId}` : undefined}
+      imageFit={imageFit}
       className={className}
     />
   );

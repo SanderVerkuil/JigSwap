@@ -1,6 +1,7 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 
 import { Link } from "@/compat/link";
+import { AdminNotFound } from "@/components/NotFound";
 import { HeaderLogo } from "@/components/common/header-logo";
 import { UserProfile } from "@/components/common/user-profile";
 import { PageLoading } from "@/components/ui/loading";
@@ -25,6 +26,8 @@ import { Home } from "lucide-react";
 export const Route = createFileRoute("/admin")({
   beforeLoad: ({ location }) => requireAdmin({ location }),
   pendingComponent: () => <PageLoading message="Loading admin panel..." />,
+  // 404 inside /admin renders within the admin shell (this layout's Outlet).
+  notFoundComponent: AdminNotFound,
   component: AdminLayout,
 });
 

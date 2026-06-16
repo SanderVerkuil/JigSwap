@@ -14,20 +14,19 @@ import { requireMember } from "../identity/requireMember";
 import { toMemberView } from "../identity/toMemberView";
 import { projectMemberIdentity } from "../social/privacy";
 
-const MS_PER_DAY = 86_400_000;
-
-// Whole-day solve duration: prefer (endDate - startDate) rounded to whole days; else fall back to
-// completionTimeMinutes / 1440 rounded; else null when neither is recorded.
-const finishDaysOf = (c: {
+// Solve duration in whole MINUTES: prefer (endDate - startDate); else completionTimeMinutes; else
+// null. Returned raw (not rounded to days) so the UI can humanize it (e.g. "2 hours", "1 day",
+// "4 days", "1 week") instead of collapsing a sub-day solve to "0 days".
+const finishMinutesOf = (c: {
   startDate: number;
   endDate?: number;
   completionTimeMinutes?: number;
 }): number | null => {
   if (c.endDate != null) {
-    return Math.round((c.endDate - c.startDate) / MS_PER_DAY);
+    return Math.round((c.endDate - c.startDate) / 60000);
   }
   if (c.completionTimeMinutes != null) {
-    return Math.round(c.completionTimeMinutes / 1440);
+    return Math.round(c.completionTimeMinutes);
   }
   return null;
 };
@@ -173,7 +172,7 @@ export const getCopyInstanceView = query({
           solver: await project(c.userId),
           isYou: c.userId === viewerId,
           occurredAt: c.endDate ?? c.startDate,
-          finishDays: finishDaysOf(c),
+          finishMinutes: finishMinutesOf(c),
           rating: c.rating ?? null,
           note: c.review ?? null,
         })),
@@ -205,11 +204,11 @@ export const getCopyInstanceView = query({
     );
 
     // --- Per-copy stats. -----------------------------------------------------------------------
-    const finishDaysList = completedCompletions
-      .map(finishDaysOf)
+    const finishMinutesList = completedCompletions
+      .map(finishMinutesOf)
       .filter((d): d is number => d != null);
-    const fastestFinishDays =
-      finishDaysList.length > 0 ? Math.min(...finishDaysList) : null;
+    const fastestFinishMinutes =
+      finishMinutesList.length > 0 ? Math.min(...finishMinutesList) : null;
 
     const viewerRatings = completions
       .filter((c) => c.userId === viewerId && c.rating != null)
@@ -223,7 +222,7 @@ export const getCopyInstanceView = query({
 
     const stats = {
       timesCompleted: completedCompletions.length,
-      fastestFinishDays,
+      fastestFinishMinutes,
       timesLentOut: loans.length,
       yourAvgRating,
     };

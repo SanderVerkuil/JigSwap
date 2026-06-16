@@ -41,6 +41,8 @@ export const profileToDomain = (row: Doc<"profiles">): Profile => {
     bio: row.bio,
     // Legacy rows written before visibility existed are treated as public.
     visibility: row.visibility ?? "public",
+    // Legacy rows written before shelf curation existed are treated as uncurated (empty list).
+    featuredCopyIds: (row.featuredCopyIds ?? []) as string[],
     updatedAt: new Date(row.updatedAt),
   };
   return Profile.rehydrate(state);
@@ -56,6 +58,10 @@ export const profileToRow = (profile: Profile): ProfileRow => {
     displayName: state.displayName.value,
     bio: state.bio,
     visibility: state.visibility,
+    featuredCopyIds:
+      state.featuredCopyIds.length > 0
+        ? (state.featuredCopyIds as unknown as Id<"ownedPuzzles">[])
+        : undefined,
     updatedAt: state.updatedAt.getTime(),
   };
 };

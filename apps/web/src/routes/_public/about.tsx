@@ -4,6 +4,7 @@ import { pageTitle } from "@/lib/page-title";
 
 import { Link } from "@/compat/link";
 import { Container } from "@/components/marketing/container";
+import { FitToWidth } from "@/components/marketing/fit-to-width";
 import { PageHero } from "@/components/marketing/page-hero";
 import { JigPlank } from "@/components/marketing/plank";
 import { Reveal } from "@/components/marketing/reveal";
@@ -49,29 +50,31 @@ function AboutPage() {
               </p>
             </Reveal>
             <Reveal delay={120} className="flex justify-center">
-              <div className="[filter:drop-shadow(0_24px_36px_rgb(40_30_80_/_.16))]">
-                <JigPlank
-                  depth={16}
-                  boxes={[
-                    {
-                      series: "Familie",
-                      title: "Keukentafel",
-                      pieceCount: 500,
-                      c1: "var(--mk-violet-400)",
-                      c2: "var(--mk-violet-600)",
-                      width: 100,
-                    },
-                    { cover: coverSand, title: "Zandsculpturen", width: 132 },
-                    {
-                      series: "Samen",
-                      title: "Eerste ruil",
-                      pieceCount: 1000,
-                      c1: "var(--mk-green-400)",
-                      c2: "var(--mk-green-600)",
-                      width: 104,
-                    },
-                  ]}
-                />
+              <div className="w-full [filter:drop-shadow(0_24px_36px_rgb(40_30_80_/_.16))]">
+                <FitToWidth>
+                  <JigPlank
+                    depth={16}
+                    boxes={[
+                      {
+                        series: "Familie",
+                        title: "Keukentafel",
+                        pieceCount: 500,
+                        c1: "var(--mk-violet-400)",
+                        c2: "var(--mk-violet-600)",
+                        width: 100,
+                      },
+                      { cover: coverSand, title: "Zandsculpturen", width: 132 },
+                      {
+                        series: "Samen",
+                        title: "Eerste ruil",
+                        pieceCount: 1000,
+                        c1: "var(--mk-green-400)",
+                        c2: "var(--mk-green-600)",
+                        width: 104,
+                      },
+                    ]}
+                  />
+                </FitToWidth>
               </div>
             </Reveal>
           </div>

@@ -156,7 +156,8 @@ function PuzzlesPage() {
   };
 
   const handleViewPuzzle = (ownedPuzzleId: Id<"ownedPuzzles">) => {
-    router.push(`/copies/${ownedPuzzleId}`);
+    // These are the member's OWN copies — open the owner-framed route.
+    router.push(`/my-puzzles/${ownedPuzzleId}`);
   };
 
   const handleLogSolve = (ownedPuzzleId: Id<"ownedPuzzles">) => {
@@ -283,6 +284,8 @@ function PuzzlesPage() {
                 puzzle={puzzle}
                 variant="default"
                 showCollectionDropdown={true}
+                viewBasePath="/my-puzzles"
+                imageFit="contain"
                 onEdit={handleEditPuzzle}
                 onView={handleViewPuzzle}
                 onDelete={handleDeletePuzzle}

@@ -1,3 +1,4 @@
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -26,6 +27,7 @@ import {
   ArrowLeftRight,
   ChevronRight,
   MessageCircle,
+  Plus,
   Star,
 } from "lucide-react";
 import { useRef, useState } from "react";
@@ -113,6 +115,11 @@ function PuzzleDefinitionDetail({
     availableCopies,
     totalAvailable,
   } = view;
+
+  // Publish the puzzle name as the page-head title so the shell shows it (and the
+  // breadcrumb becomes "Community › Puzzles catalogue › <name>" — the route's
+  // pageKey "puzzles" matches the catalogue nav item, which renders the middle crumb).
+  usePageHeader(() => ({ title: definition.title }), [definition.title]);
 
   // The review composer is focused by the "Write a Review" action.
   const composerRef = useRef<HTMLInputElement>(null);
@@ -230,7 +237,18 @@ function PuzzleDefinitionDetail({
 
           {/* Actions */}
           <div className="mt-5 flex flex-wrap gap-2.5">
-            <Button variant="brand" onClick={() => router.push("/browse")}>
+            {/* Opens the copy-mode add form (definition pre-filled; the member
+                fills in condition/availability/cover/notes for their copy). */}
+            <Button
+              variant="brand"
+              onClick={() =>
+                router.push(`/my-puzzles/add/new?puzzleId=${puzzleId}`)
+              }
+            >
+              <Plus className="h-4 w-4" />
+              {tPuzzles("addToLibrary")}
+            </Button>
+            <Button variant="outline" onClick={() => router.push("/browse")}>
               <ArrowLeftRight className="h-4 w-4" />
               {t("findCopyToSwap")}
             </Button>

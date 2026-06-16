@@ -94,6 +94,19 @@ export function PhotoLightbox({
     }
   };
 
+  // Clear the cover (omit coverImageId) so the copy falls back to the catalogue image.
+  const unsetCover = async () => {
+    setSettingCover(true);
+    try {
+      await setCopyCover({ copyId: copyId as Id<"ownedPuzzles"> });
+      toast.success(t("coverUpdated"));
+    } catch {
+      toast.error(t("coverFailed"));
+    } finally {
+      setSettingCover(false);
+    }
+  };
+
   const removePhoto = async () => {
     if (!photo) return;
     setRemoving(true);
@@ -229,10 +242,17 @@ export function PhotoLightbox({
             {/* Owner-only: choose this photo as the copy's cover, right where you're viewing it. */}
             {canSetCover &&
               (coverImageId === photo.id ? (
-                <div className="text-jigsaw-primary inline-flex items-center gap-1.5 text-sm font-semibold">
+                // Already the cover — clicking clears it back to the catalogue image.
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void unsetCover()}
+                  disabled={settingCover}
+                  className="w-full"
+                >
                   <Star className="h-4 w-4" fill="currentColor" />
-                  {t("currentCover")}
-                </div>
+                  {t("unsetCover")}
+                </Button>
               ) : (
                 <Button
                   variant="outline"

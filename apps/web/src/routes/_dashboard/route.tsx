@@ -1,5 +1,6 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 
+import { AppNotFound } from "@/components/NotFound";
 import { DashboardShell } from "@/components/dashboard-layout/shell";
 import { PageLoading } from "@/components/ui/loading";
 import { requireAuth } from "@/lib/require-auth";
@@ -13,6 +14,8 @@ import { requireAuth } from "@/lib/require-auth";
 export const Route = createFileRoute("/_dashboard")({
   beforeLoad: ({ context, location }) => requireAuth({ context, location }),
   pendingComponent: () => <PageLoading message="Loading dashboard..." />,
+  // 404 inside the app renders within the dashboard shell (this layout's Outlet).
+  notFoundComponent: AppNotFound,
   component: DashboardLayout,
 });
 

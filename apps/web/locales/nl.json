@@ -27,7 +27,9 @@
     "description": "Oeps! De pagina die je zoekt bestaat niet.",
     "message": "De pagina die je probeert te openen is mogelijk verplaatst, verwijderd, of je hebt een verkeerde URL ingevoerd.",
     "backToHome": "Terug naar Home",
-    "browsePuzzles": "Puzzels Bladeren"
+    "browsePuzzles": "Puzzels Bladeren",
+    "backToDashboard": "Terug naar dashboard",
+    "backToAdmin": "Terug naar beheer"
   },
   "navigation": {
     "home": "Home",
@@ -696,7 +698,26 @@
     },
     "shelf": {
       "title": "De Plank van {name}",
-      "meta": "{count, plural, one {# uitgestald} other {# uitgestald}}"
+      "meta": "{count, plural, one {# uitgestald} other {# uitgestald}}",
+      "arrangeDialog": {
+        "title": "Plank indelen",
+        "description": "Selecteer en orden maximaal {max} kopieën om te tonen op je profielplank.",
+        "loading": "Kopieën laden…",
+        "noCopies": "Je hebt nog geen puzzelkopieën.",
+        "pickSection": "Je collectie",
+        "maxHint": "Maximaal {max} kopieën geselecteerd.",
+        "orderSection": "Geselecteerd ({count}/{max})",
+        "moveUp": "Omhoog",
+        "moveDown": "Omlaag",
+        "remove": "Verwijderen",
+        "cancel": "Annuleren",
+        "save": "Opslaan",
+        "saving": "Opslaan…",
+        "saved": "Plank opgeslagen",
+        "saveError": "Opslaan mislukt",
+        "untitled": "Naamloos"
+      },
+      "arrangeShelf": "Plank indelen"
     },
     "trustLevels": {
       "beginner": "Beginner",
@@ -2198,7 +2219,7 @@
         "subtitle": "Voeg een puzzel toe aan de gedeelde catalogus voor iedereen."
       },
       "puzzles": {
-        "title": "Puzzels",
+        "title": "Puzzelcatalogus",
         "subtitle": "De gedeelde puzzelcatalogus."
       },
       "borrowed": {
@@ -2245,7 +2266,11 @@
         "browseCommunitySub": "Ontdek puzzels bij jou in de buurt"
       }
     },
-    "breadcrumbLabel": "Broodkruimel"
+    "breadcrumbLabel": "Broodkruimel",
+    "crumbs": {
+      "ownedCopies": "Exemplaren"
+    },
+    "plankReset": "Herstellen"
   },
   "copyInstance": {
     "notFound": "Exemplaar niet gevonden",
@@ -2336,7 +2361,7 @@
     "exchangesCount": "{count} ruilen",
     "noSwaps": "Nog geen ruilen of handel voor deze puzzel.",
     "you": "jij",
-    "finishedIn": "voltooid in {days, plural, one {# dag} other {# dagen}}",
+    "finishedIn": "voltooid in {duration}",
     "communityRating": "Communitybeoordeling",
     "communityRatings": "{count} communitybeoordelingen",
     "comments": "Reacties",
@@ -2366,7 +2391,8 @@
       "confirmRemove": "Verwijderen",
       "photoRemoved": "Foto verwijderd",
       "removeFailed": "Kon de foto niet verwijderen",
-      "cancel": "Annuleren"
+      "cancel": "Annuleren",
+      "unsetCover": "Omslag verwijderen"
     },
     "offerForSwap": "Aanbieden voor ruil",
     "offeredForSwap": "Aangeboden voor ruil",

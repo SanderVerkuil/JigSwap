@@ -34,16 +34,16 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <ShellPreferencesProvider>
       <PageHeaderSlotProvider>
-        <SidebarProvider className="h-svh flex-col overflow-hidden">
+        <SidebarProvider className="flex-col md:h-svh md:overflow-hidden">
           <TopBar onOpenPalette={() => setPaletteOpen(true)} />
           <MobileTopBar onOpenPalette={() => setPaletteOpen(true)} />
-          <div className="flex min-h-0 flex-1">
+          <div className="flex flex-1 md:min-h-0">
             <AppSidebar />
-            <SidebarInset className="min-h-0 overflow-hidden md:peer-data-[variant=inset]:mt-0 md:peer-data-[variant=inset]:mr-3 md:peer-data-[variant=inset]:mb-3 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:border md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-0">
+            <SidebarInset className="md:min-h-0 md:overflow-hidden md:peer-data-[variant=inset]:mt-0 md:peer-data-[variant=inset]:mr-3 md:peer-data-[variant=inset]:mb-3 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:border md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-0">
               {/* ONE scroll region holds the page head + content, so content scrolls UNDER the
                   glass head (sticky top-0). Clipped to the card's rounded corners by SidebarInset's
                   overflow-hidden. */}
-              <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto [scrollbar-gutter:stable]">
+              <div className="flex-1 overflow-x-hidden md:min-h-0 md:overflow-y-auto md:[scrollbar-gutter:stable]">
                 <PageHead />
                 <ContentArea>{children}</ContentArea>
               </div>
@@ -81,7 +81,7 @@ function ContentArea({ children }: { children: React.ReactNode }) {
       className={cn(
         // Mobile: 18px top / 16px sides per the mobile spec, with extra
         // bottom clearance for the tab bar's raised center button.
-        "w-full px-4 pt-[18px] pb-8 md:p-6",
+        "w-full px-4 pt-[18px] pb-[calc(env(safe-area-inset-bottom)+84px)] md:p-6",
         !fullWidth && "mx-auto max-w-[1180px]",
       )}
     >

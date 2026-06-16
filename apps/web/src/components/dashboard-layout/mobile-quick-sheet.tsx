@@ -14,6 +14,7 @@ import {
   type LucideIcon,
   Plus,
   Search,
+  UserRound,
 } from "lucide-react";
 import { useTranslations } from "use-intl";
 
@@ -48,6 +49,15 @@ const ACTIONS: Array<{
     subKey: "mobile.quick.browseCommunitySub",
     href: "/browse",
     icon: Search,
+  },
+  // A clear, labelled route to the member's own profile (the top-bar avatar
+  // also links here, but it's an unlabelled icon). Reuses the existing
+  // shell.pages.profile strings — no new translations.
+  {
+    titleKey: "pages.profile.title",
+    subKey: "pages.profile.subtitle",
+    href: "/profile",
+    icon: UserRound,
   },
 ];
 

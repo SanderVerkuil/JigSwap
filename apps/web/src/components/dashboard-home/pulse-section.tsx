@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
@@ -163,9 +164,16 @@ function InMotionColumn({ exchanges }: { exchanges: ExchangeRow[] }) {
 
 // The SVG goal ring: a muted track with the brand-violet progress arc and the
 // big percentage in the middle.
-function GoalRing({ current, target }: { current: number; target: number }) {
+function GoalRing({
+  current,
+  target,
+  size = 148,
+}: {
+  current: number;
+  target: number;
+  size?: number;
+}) {
   const t = useTranslations("dashboard.pulse.goals");
-  const size = 148;
   const stroke = 13;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
@@ -173,7 +181,7 @@ function GoalRing({ current, target }: { current: number; target: number }) {
   const mid = size / 2;
 
   return (
-    <div className="relative size-[148px] shrink-0">
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} aria-hidden>
         <circle
           cx={mid}
@@ -235,6 +243,7 @@ function GoalBar({ goal }: { goal: GoalRow }) {
 
 function GoalsColumn({ goals }: { goals: GoalRow[] }) {
   const t = useTranslations("dashboard.pulse.goals");
+  const isMobile = useIsMobile();
 
   // Lead with the goal still being chased; fall back to any active goal,
   // then the newest one.
@@ -268,6 +277,7 @@ function GoalsColumn({ goals }: { goals: GoalRow[] }) {
             <GoalRing
               current={primary.currentCompletions}
               target={primary.targetCompletions}
+              size={isMobile ? 116 : 148}
             />
           </Link>
           {rest.length > 0 && (
@@ -371,7 +381,7 @@ function LatestColumn({
 
 function PulseSkeleton() {
   return (
-    <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr_1.1fr]">
+    <div className="grid gap-6 lg:gap-10 lg:grid-cols-[1.15fr_0.85fr_1.1fr]">
       {Array.from({ length: 3 }).map((_, i) => (
         <div key={i} className="space-y-4">
           <Skeleton className="h-8 w-2/3" />
@@ -406,7 +416,7 @@ export function PulseSection() {
   if (!member) return null;
 
   return (
-    <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr_1.1fr]">
+    <div className="grid gap-6 lg:gap-10 lg:grid-cols-[1.15fr_0.85fr_1.1fr]">
       <InMotionColumn exchanges={exchanges ?? []} />
       <GoalsColumn goals={goals ?? []} />
       <LatestColumn entries={feed ?? []} me={member} />

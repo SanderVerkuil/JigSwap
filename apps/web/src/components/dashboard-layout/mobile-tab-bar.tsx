@@ -76,7 +76,7 @@ export function MobileTabBar() {
         // `relative z-30` so the raised center button (which rises above the bar
         // via -mt) is never painted over / clipped by positioned page content
         // above it. overflow-visible keeps the button's top from being clipped.
-        className="relative z-30 grid shrink-0 grid-cols-5 items-stretch overflow-visible border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 grid shrink-0 grid-cols-5 items-stretch overflow-visible border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
       >
         {TABS.slice(0, 2).map((tab) => (
           <TabLink key={tab.key} tab={tab} active={active} />
@@ -120,9 +120,10 @@ function TabLink({
   return (
     <Link
       href={tab.href}
+      aria-label={t(`tabs.${tab.key}`)}
       aria-current={on ? "page" : undefined}
       className={cn(
-        "flex min-h-14 flex-col items-center justify-center gap-[3px] pt-[7px] pb-1.5",
+        "flex min-h-14 flex-col items-center justify-center",
         on ? "text-jigsaw-primary" : "text-muted-foreground",
       )}
     >
@@ -133,14 +134,6 @@ function TabLink({
             {badge > 9 ? "9+" : badge}
           </span>
         )}
-      </span>
-      <span
-        className={cn(
-          "text-[10.5px] tracking-[0.01em]",
-          on ? "font-bold" : "font-medium",
-        )}
-      >
-        {t(`tabs.${tab.key}`)}
       </span>
     </Link>
   );

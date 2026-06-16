@@ -1,8 +1,15 @@
 import { DomainEvent, err, ok, Result } from "../../shared-kernel";
 import { DisplayName } from "./display-name";
 import { SocialError } from "./errors";
-import { ProfileUpdated, ProfileVisibilityChanged } from "./events";
+import {
+  ProfileShelfArranged,
+  ProfileUpdated,
+  ProfileVisibilityChanged,
+} from "./events";
 import { MemberId, ProfileId } from "./ids";
+
+// Maximum number of copies that can be featured on the profile shelf.
+export const MAX_FEATURED = 6;
 
 // Who can see a member's profile. "public" (the default) reveals the member's identity to anyone;
 // "private" hides it from members they are not connected with. Read by other features to decide
@@ -25,6 +32,9 @@ export interface ProfileState {
   readonly displayName: DisplayName;
   readonly bio?: string;
   readonly visibility: ProfileVisibility;
+  // Ordered, curated set of owned copies featured on the profile shelf (sub-project ④).
+  // Empty means uncurated (the plank falls back to recent-6).
+  readonly featuredCopyIds: readonly string[];
   readonly updatedAt: Date;
 }
 
@@ -56,6 +66,10 @@ export class Profile {
     return this.state.visibility;
   }
 
+  get featuredCopyIds(): readonly string[] {
+    return this.state.featuredCopyIds;
+  }
+
   // Open a brand-new profile for a member. Validates the display name; an invalid one fails the
   // whole creation. Records ProfileUpdated so the initial public state propagates like any edit.
   static create(
@@ -72,6 +86,7 @@ export class Profile {
       displayName: displayName.value,
       bio: props.bio,
       visibility: "public",
+      featuredCopyIds: [],
       updatedAt: props.now,
     });
     profile.record(
@@ -128,6 +143,26 @@ export class Profile {
     return ok(undefined);
   }
 
+  // Set the curated, ordered list of owned copies featured on the profile shelf. Dedupes preserving
+  // first-occurrence order; caps at MAX_FEATURED. Empty array clears the shelf. Always succeeds —
+  // the Result shape matches changeVisibility for a uniform call site. Emits ProfileShelfArranged.
+  arrangeShelf(
+    copyIds: readonly string[],
+    now: Date,
+  ): Result<void, SocialError> {
+    const deduped = [...new Set(copyIds)].slice(0, MAX_FEATURED);
+    this.state = { ...this.state, featuredCopyIds: deduped, updatedAt: now };
+    this.record(
+      new ProfileShelfArranged(
+        this.state.id,
+        this.state.memberId,
+        deduped,
+        now,
+      ),
+    );
+    return ok(undefined);
+  }
+
   // Drain recorded events for the publisher; clears the buffer so a save can't double-emit.
   pullEvents(): readonly DomainEvent[] {
     const drained = this.events;
@@ -137,7 +172,10 @@ export class Profile {
 
   // Map to/from persistence without the aggregate knowing about any storage technology.
   static rehydrate(state: ProfileState): Profile {
-    return new Profile(state);
+    return new Profile({
+      ...state,
+      featuredCopyIds: state.featuredCopyIds ?? [],
+    });
   }
 
   toState(): ProfileState {

@@ -59,30 +59,19 @@ export const createOrUpdateUser = mutation({
 // were cut over to thin driving adapters under convex/identity/* and convex/insights/getGlobalStats
 // (returning typed view DTOs from @jigswap/contracts). Only writes + internal helpers remain here.
 
-// Update user profile
+// Update the Convex-only profile fields (bio / location / preferredLanguage).
+// Username is intentionally NOT writable here: Clerk is its source of truth
+// (uniqueness + validation), mirrored into this `users` row by the user.updated
+// webhook (see updateOrCreateUser).
 export const updateUserProfile = mutation({
   args: {
     userId: v.id("users"),
     bio: v.optional(v.string()),
     location: v.optional(v.string()),
     preferredLanguage: v.optional(v.string()),
-    username: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { userId, ...updates } = args;
-
-    // Check if username is already taken (if provided)
-    if (updates.username) {
-      const existingUser = await ctx.db
-        .query("users")
-        .withIndex("by_username", (q) => q.eq("username", updates.username))
-        .unique();
-
-      if (existingUser && existingUser._id !== userId) {
-        throw new Error("Username already taken");
-      }
-    }
-
     await ctx.db.patch(userId, {
       ...updates,
       updatedAt: Date.now(),

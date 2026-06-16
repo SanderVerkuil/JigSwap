@@ -45,7 +45,7 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const title = meta && !isHome ? t(`pages.${meta.pageKey}.title`) : undefined;
 
   return (
-    <header className="shrink-0 border-b bg-card pt-[env(safe-area-inset-top)] md:hidden">
+    <header className="sticky top-0 z-30 shrink-0 border-b bg-card pt-[env(safe-area-inset-top)] md:hidden">
       <div className="flex h-14 items-center gap-1 pr-2 pl-1.5">
         {group ? (
           <Link
