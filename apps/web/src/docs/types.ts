@@ -11,7 +11,8 @@ export interface DocHeading {
 }
 
 export interface DocPage {
-  slug: string; // e.g. "getting-started/accounts-and-sign-in" (no leading slash); "" for docs/user/index.md
+  locale: string; // first path segment under docs/user, e.g. "en" / "nl"
+  slug: string; // e.g. "getting-started/accounts-and-sign-in" (no leading slash); "" for docs/user/<locale>/index.md
   group: string; // first path segment, e.g. "getting-started"; "" for the root index
   isIndex: boolean; // true for any index.md
   frontmatter: DocFrontmatter;

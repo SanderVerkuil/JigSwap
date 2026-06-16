@@ -4,7 +4,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Plugin } from "vite";
 import { compileMarkdown } from "./src/docs/markdown";
-import { buildNavTree } from "./src/docs/nav";
 import type { DocPage } from "./src/docs/types";
 
 const VIRTUAL_ID = "virtual:docs";
@@ -21,13 +20,20 @@ async function loadPages(): Promise<DocPage[]> {
   for (const rel of files) {
     const raw = await fs.readFile(path.join(ROOT, rel), "utf8");
     const compiled = await compileMarkdown(raw);
-    const noExt = rel.replace(/\.md$/, "");
-    const isIndex = path.basename(noExt) === "index";
-    const slug = isIndex ? path.dirname(noExt).replace(/^\.$/, "") : noExt;
-    const group = slug.includes("/") ? slug.split("/")[0] : isIndex ? slug : "";
+    // Path layout is locale-first: <locale>/<...slug>.md (POSIX separators
+    // since fast-glob emits forward slashes). First segment selects the locale;
+    // the remainder forms the locale-agnostic slug.
+    const parts = rel.replace(/\.md$/, "").split("/");
+    const locale = parts[0];
+    const rest = parts.slice(1);
+    const isIndex = rest[rest.length - 1] === "index";
+    const slugParts = isIndex ? rest.slice(0, -1) : rest;
+    const slug = slugParts.join("/");
+    const group = slug.includes("/") ? slug.split("/")[0] : slug;
     pages.push({
-      slug: slug === "." ? "" : slug,
-      group: group === "." ? "" : group,
+      locale,
+      slug,
+      group,
       isIndex,
       frontmatter: compiled.frontmatter,
       html: compiled.html,
@@ -47,8 +53,7 @@ export function docsPlugin(): Plugin {
     async load(id) {
       if (id !== RESOLVED_ID) return;
       const pages = await loadPages();
-      const navTree = buildNavTree(pages);
-      return `export const pages = ${JSON.stringify(pages)};\nexport const navTree = ${JSON.stringify(navTree)};`;
+      return `export const pages = ${JSON.stringify(pages)};`;
     },
     configureServer(server) {
       const dir = ROOT;
