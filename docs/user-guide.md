@@ -1,535 +1,525 @@
 # JigSwap User Guide
 
-Welcome to **JigSwap** — your personal jigsaw puzzle library and exchange platform. JigSwap helps you keep track of the puzzles you own, record every puzzle you complete, set solving goals, and share or swap puzzles with friends, family, and the wider community.
+Welcome to **JigSwap** — your personal jigsaw puzzle library and exchange platform. JigSwap lets you catalog the puzzles you own, track every puzzle you solve, set goals, and lend, swap, or trade puzzles with friends, family, and the wider puzzle community.
 
-This guide is written for everyday users. It explains what you can do and walks you through _how_ to do it, step by step. You don't need any technical knowledge to follow along.
+This guide is written for puzzle owners and swappers. It walks you through everything you can do, step by step, organized by what you're trying to accomplish. No technical knowledge required.
 
 ---
 
 ## Table of Contents
 
-1. [Getting Started: Account & Sign-In](#1-getting-started-account--sign-in)
+1. [Getting Started — Account & Sign In](#1-getting-started--account--sign-in)
 2. [Finding Your Way Around](#2-finding-your-way-around)
-3. [Managing Your Puzzle Library](#3-managing-your-puzzle-library)
-4. [Adding & Importing Puzzles](#4-adding--importing-puzzles)
-5. [Organizing with Collections](#5-organizing-with-collections)
-6. [Recording Completions, Solving History & Goals](#6-recording-completions-solving-history--goals)
-7. [Personal Insights & Stats](#7-personal-insights--stats)
-8. [Sharing & Visibility Controls](#8-sharing--visibility-controls)
-9. [The Exchange System: Lend, Swap & Trade](#9-the-exchange-system-lend-swap--trade)
-10. [Discovering Puzzles & People](#10-discovering-puzzles--people)
-11. [Friend Circles](#11-friend-circles)
-12. [Social & Community Features](#12-social--community-features)
-13. [Your Profile & the 3D Shelf](#13-your-profile--the-3d-shelf)
-14. [Notifications](#14-notifications)
-15. [Language & Region (i18n)](#15-language--region-i18n)
-16. [FAQ & Troubleshooting](#16-faq--troubleshooting)
+3. [Your Dashboard (Morning Briefing)](#3-your-dashboard-morning-briefing)
+4. [Managing Your Puzzle Library](#4-managing-your-puzzle-library)
+5. [Adding & Importing Puzzles](#5-adding--importing-puzzles)
+6. [Collections — Organizing Your Shelves](#6-collections--organizing-your-shelves)
+7. [Recording Completions — Your Solving History](#7-recording-completions--your-solving-history)
+8. [Goals](#8-goals)
+9. [Insights & Stats](#9-insights--stats)
+10. [Discovering Puzzles — Browse & Catalogue](#10-discovering-puzzles--browse--catalogue)
+11. [The Exchange System — Lend, Swap & Sell](#11-the-exchange-system--lend-swap--sell)
+12. [Visibility & Sharing Controls](#12-visibility--sharing-controls)
+13. [Friend Circles](#13-friend-circles)
+14. [Social & Community Features](#14-social--community-features)
+15. [Your Profile & the 3D Shelf](#15-your-profile--the-3d-shelf)
+16. [Reputation & Reviews](#16-reputation--reviews)
+17. [Notifications](#17-notifications)
+18. [Language Settings (English / Dutch)](#18-language-settings-english--dutch)
+19. [Quick Search (Command Palette)](#19-quick-search-command-palette)
+20. [FAQ & Troubleshooting](#20-faq--troubleshooting)
 
 ---
 
-## 1. Getting Started: Account & Sign-In
+## 1. Getting Started — Account & Sign In
 
-JigSwap uses a secure sign-in system (powered by Clerk). Everything in your library, your solving history, and your exchanges is tied to your account.
+JigSwap uses a secure sign-in system (powered by Clerk). You'll need an account to use the personal library, exchange, and community features.
 
 ### Create an account
 
-1. Open JigSwap in your browser. You'll land on the public welcome page.
+1. Visit the JigSwap landing page.
 2. Click **Sign Up**.
-3. Enter your details (email and password, or use a supported social sign-in option if available).
-4. Confirm your email if prompted.
-5. After signing up you'll be taken to your **Dashboard** — your personal home screen inside JigSwap.
+3. Follow the prompts to register (email/password or any sign-in option offered).
+4. Once registered, you'll be taken into the app's **Dashboard**.
 
-### Sign in to an existing account
+### Sign in
 
-1. Click **Sign In** from the welcome page.
+1. Click **Sign In**.
 2. Enter your credentials.
-3. You'll be returned to wherever you were trying to go, or to your Dashboard.
+3. You'll land on your personal dashboard.
 
-> **Note:** All the personal areas of JigSwap (your library, trades, profile, etc.) require you to be signed in. If you try to open one of those pages while signed out, JigSwap will send you to the sign-in screen first and bring you back automatically once you're in.
+> **Tip:** If you try to open any private page (your library, trades, profile, etc.) while signed out, JigSwap automatically sends you to the sign-in screen and brings you back to where you were headed after you log in.
 
-### Sign out
+### Public pages (no account needed)
 
-Use the account menu in the sidebar (bottom of the navigation) to sign out. After signing out, protected pages will again ask you to sign in.
+Anyone can read the **landing page**, plus **About**, **Features**, **How It Works**, **Contact**, **Privacy Policy**, and **Terms** without signing in.
 
 ---
 
 ## 2. Finding Your Way Around
 
-After signing in, you're in the **dashboard area**. Navigation is grouped to match the things you'll typically want to do.
+Once signed in, JigSwap presents a **dashboard** with a few consistent navigation pieces:
 
-### The Dashboard (your morning briefing)
+- **On desktop:** a top bar (with a search pill) and a grouped sidebar on the left holding links to all your areas (Library, Community, etc.). Your content appears in a card in the middle.
+- **On mobile (phones/small screens):** a slim top bar plus a **bottom tab bar**. A center **quick-action button** opens a sheet with common actions.
 
-Your Dashboard is the first thing you see after signing in. It gives you an at-a-glance overview:
-
-- A **briefing** banner that highlights pending trade requests and quick actions.
-- A **3D shelf** preview of your puzzles with a count of how many you own.
-- An **In Motion / Goals / Latest** section summarizing active activity and progress.
-- A **fresh** section showing recently added puzzles from the wider catalog.
-
-### Navigation groups
-
-The sidebar organizes pages into two main groups:
-
-- **Library** — your own things: My Puzzles, Collections, Completions, Goals, Insights.
-- **Community** — shared and public things: Browse, the Puzzles catalogue, Exchanges, Circles, People, Messages.
-
-On a **phone or small screen**, the sidebar is replaced by a top bar and a bottom tab bar so everything stays within thumb's reach. The same features are available; only the layout changes.
-
-### Global search (the command palette)
-
-You can jump anywhere or search instantly:
-
-1. Press **Cmd+K** (Mac) or **Ctrl+K** (Windows/Linux), or click the search pill in the top bar.
-2. Start typing (at least 2 characters) to search across **puzzles, people, circles, and collections** at once.
-3. With the box empty, the palette becomes a quick navigator with shortcuts like _Add Puzzle_, _Log Completion_, _Create Circle_, and _Browse Community_.
-4. Use the arrow keys and **Enter** to go to a result.
+Most pages also show a **primary action button** (for example, _Add Puzzle_) and any relevant counts in the page header.
 
 ---
 
-## 3. Managing Your Puzzle Library
+## 3. Your Dashboard (Morning Briefing)
 
-Your library — **My Puzzles** — is the collection of physical puzzle _copies_ you actually own. Each copy is one real puzzle box sitting on your shelf.
+**Where:** the home screen after sign-in (`/dashboard`).
+
+Your dashboard is a personal briefing that summarizes your puzzle life at a glance:
+
+- A **headline sentence** summarizing your active exchanges and goal progress.
+- A **pending-request banner** if someone has sent you an incoming exchange request that needs a response.
+- **Quick-action chips**: _Add Puzzle_, _Browse_, and _Log Completion_.
+- A **3D shelf** ("plank") showing your real puzzle copies as physical objects you can look at.
+- **Live stats**: how many puzzles you own, trades completed, your average rating, and active exchanges.
+- A **pulse section**: exchanges in motion, goal progress, and your latest activity.
+- A **fresh-puzzles scroller** to discover newly added community puzzles.
+
+---
+
+## 4. Managing Your Puzzle Library
+
+Your library is the set of physical puzzle **copies** you personally own. (A "copy" is one physical puzzle you own — the platform tracks each copy separately so your history stays with you.)
+
+**Where:** **My Puzzles** (`/my-puzzles`).
 
 ### View your puzzles
 
-1. Open **My Puzzles** from the Library group.
-2. You'll see all your owned copies as cards (or as a list).
-3. Use the **status filter pills** to narrow the view:
-   - **All** — everything you own
-   - **Available** — copies you've made available to others
-   - **For Trade** — copies you'll swap or trade away
-   - **For Lend** — copies you'll lend out
-   - **In Progress** — puzzles you're currently solving
-   - **Completed** — puzzles you've finished at least once
+1. Open **My Puzzles** from the sidebar or tab bar.
+2. Switch between **grid** and **list** layouts.
+3. Use the **status filter pills** to narrow what you see:
+   - **All**
+   - **Available**
+   - **For Trade**
+   - **For Lend**
+   - **In Progress**
+   - **Completed**
 
-### Per-puzzle actions
+Each puzzle card shows its loan status (who currently has it, if lent out) and gives you quick actions.
 
-Each puzzle card has actions available from its menu:
+### Actions on each puzzle
 
-- **View detail** — open the full copy page (see below).
-- **Edit** — change condition, notes, availability, cover, etc.
-- **Delete** — remove the copy from your library (you'll be asked to confirm).
-- **Log a solve** — record that you completed (or started) this puzzle.
-- **Recall a loan** — if you've lent this copy out, ask for it back.
-- A **loan badge** appears on copies that are currently lent out.
+From a puzzle card you can:
+
+- **View** — open the full copy detail page.
+- **Edit** — change the copy's details.
+- **Delete** — remove the copy from your library (with confirmation).
+- **Log Solve** — record that you've completed (or started) the puzzle.
+- **Recall** — if a puzzle is currently lent out, recall it to get it back.
 
 ### The copy detail page
 
-Click a puzzle to open its full detail page. This is the rich "story" of that single physical copy and includes:
+**Where:** click **View** on a puzzle, or go to `/my-puzzles/<id>`.
 
-- **Cover image** and availability badges.
-- **Condition** and **difficulty**.
-- **Meta** — acquisition date and source, how long it's been in your library, and tags.
-- **Sharing toggles** — quickly mark the copy as For Trade or For Lend.
-- A **stats strip** — number of completions, fastest finish, times lent, average rating.
-- A **photo gallery** where you can upload photos of the copy.
-- Timelines for **completion history**, **lending history**, and **swap history**.
-- A **community rating** breakdown.
-- **Comments** — notes and optional star ratings on the copy.
+The detail page is the rich record of a single owned copy. It includes:
 
-> **Adding photos:** On the copy detail page, choose a photo to upload. Uploaded photos are checked automatically before they appear publicly. Your own pending photos are visible to you while they're being processed.
+- A **hero image** with the availability badge and condition/difficulty chips.
+- **Acquisition details** (how/when you got it) and your private notes.
+- A **stats strip**: times completed, fastest finish, times lent out, and average rating.
+- A **photo strip** with a lightbox. As the owner you can upload photos, set a cover image, and leave per-photo comments.
+- A two-column **history**: your completion timeline (with ratings), lending history (with status pills), and swap/transfer history.
+- A **community rating breakdown** and a comment area.
 
----
-
-## 4. Adding & Importing Puzzles
-
-There are two related concepts in JigSwap:
-
-- A **catalog puzzle** is the shared definition of a puzzle title (e.g. "Ravensburger — Cozy Cabin, 1000 pieces"). It's shared across all users.
-- An **owned copy** is _your_ physical box of that puzzle, with your own condition, notes, and availability.
-
-When you add a puzzle to your library, you create an owned copy that links to a catalog puzzle.
-
-### Add a puzzle to your library
-
-1. Open **My Puzzles** and click **Add Puzzle** (in the page header), or use the quick action from the command palette.
-2. **Step 1 — Choose the puzzle.** On the chooser screen you can search the catalog and scroll through results to find a puzzle that already exists.
-3. **Step 2 — Fill in your copy's details.** Once you pick a catalog puzzle, enter your copy-specific information:
-   - **Condition** (from New to Damaged)
-   - **Availability** (private, or for trade/lend — see [Sharing & Visibility](#8-sharing--visibility-controls))
-   - **Cover** image or cover color
-   - **Notes** and tags
-4. Save. Your new copy appears in My Puzzles.
-
-### Add a brand-new puzzle (not yet in the catalog)
-
-If the puzzle doesn't exist in the catalog yet, you can create the catalog definition and your copy together in one go:
-
-1. From the Add Puzzle flow, go to the **new puzzle form** without selecting an existing puzzle.
-2. Fill in both the puzzle details (title, brand, piece count, difficulty, optional barcode/EAN/UPC and dimensions) and your copy details.
-3. A **live preview card** shows how your puzzle will look as you type.
-4. Save to add it to your library.
-
-### Import a puzzle from a store URL
-
-You don't have to type everything by hand — JigSwap can read a product page for you.
-
-1. On the Add Puzzle form, find the **Import** box at the top.
-2. Paste the web address (URL) of a puzzle product page from a puzzle store.
-3. JigSwap fetches the page and pulls out a draft: **title, brand, piece count, images, and barcode (EAN/UPC)** when available.
-4. If JigSwap finds a matching puzzle already in the catalog, it shows a **match banner**. You can choose to **use the existing puzzle** instead of creating a duplicate.
-5. Review the pre-filled fields, adjust anything that's off, and save.
-
-> **Tip:** Using the existing catalog match keeps community stats and reviews unified, instead of splitting them across duplicate entries.
-
-### Contribute a puzzle to the shared catalog
-
-If you want to add a puzzle definition to the shared catalog _without_ adding a copy to your own library:
-
-1. Go to the **Puzzles** catalogue page (Community group) and click **Contribute**.
-2. Fill in the puzzle details (you can use the same import-from-URL helper here).
-3. Submit. Your contribution goes to **moderation** and becomes publicly visible once an administrator approves it.
+**Owner actions** on this page include toggling _for-trade_ / _for-lend_, logging a completion, and editing.
+**Visitors** (other members) see a public version with _Request Swap_ and _Message_ actions instead.
 
 ---
 
-## 5. Organizing with Collections
+## 5. Adding & Importing Puzzles
 
-Collections are your own named shelves for grouping puzzles however you like (e.g. "Landscapes", "Kids' puzzles", "To solve in winter").
+**Where:** **My Puzzles → Add Puzzle** (`/my-puzzles/add`).
+
+Adding a puzzle is a two-step flow:
+
+### Step 1 — Choose or search
+
+1. Click **Add Puzzle**.
+2. You'll see a chooser page. It lists:
+   - Your own submissions that aren't approved yet (at the top).
+   - The full **approved catalogue**, with infinite scroll and a free-text search box.
+3. If your puzzle already exists in the catalogue, select it to add a copy of it to your library. If it's new, continue to create it.
+
+### Step 2 — Create or copy
+
+You'll land on the creation/copy form (`/my-puzzles/add/new`).
+
+**Import from a store URL (fastest way):**
+
+1. Find the **import zone** at the top of the form.
+2. Paste a puzzle's web address from a retailer.
+3. JigSwap fetches the puzzle details and auto-fills the form fields for you.
+4. If the puzzle already exists in the catalogue, you'll see a **match banner** offering to use the existing entry instead of creating a duplicate.
+
+**Fill in the details manually (or adjust the imported ones):**
+
+- **Title**, **brand**, **piece count**, **difficulty**, **condition**.
+- **Availability chips**: mark it _for trade_, _for lend_, and/or _for sale_.
+- A **cover** — pick a color swatch, or upload/scrape a photo.
+- **Tags** and **notes**.
+- **Advanced fields** (collapsible): EAN, UPC, model number, artist, series, shape, dimensions.
+
+A **live preview card** and a **readiness checklist** sit alongside the form so you can see how your puzzle will look.
+
+> **Adding a copy of an existing puzzle:** When you add from the catalogue (copy mode), the puzzle's catalogue definition is locked read-only, and you only fill in the copy-specific fields (your condition, availability, notes, photos, etc.).
+
+### Contributing a brand-new puzzle to the catalogue
+
+If a puzzle isn't in the catalogue yet, you can contribute its definition for everyone. Use **Puzzles → Add** (`/puzzles/add`). This uses the same form (without the copy-specific fields) and sends your submission to the **moderation queue** for an admin to approve.
+
+---
+
+## 6. Collections — Organizing Your Shelves
+
+Collections are named shelves you create to organize your copies.
+
+**Where:** **Collections** (`/collections`).
 
 ### Create a collection
 
-1. Open **Collections** (Library group).
+1. Open **Collections**.
 2. Click to create a new collection.
-3. Give it a **name**, choose an **emoji icon** and a **color**, write an optional **description**, and set its **visibility** (private or public).
+3. Set:
+   - A **name**.
+   - An **emoji icon**.
+   - A **color**.
+   - A **description**.
+   - **Visibility** — public or private.
 4. Save.
 
 ### Add puzzles to a collection
 
-1. Open a collection, then use **Add Puzzles**.
-2. Pick the owned copies you want to include.
-3. Remove copies from a collection at any time from the collection's detail view.
+1. Open a collection tile to see its detail.
+2. Use **Add puzzles** (`/collections/<id>/add-puzzles`) to attach copies from your library.
 
-### What a collection shows
-
-Each collection has a stats bar with the total **piece count**, **average difficulty**, a **difficulty mix** chart, and how many puzzles in it are **up for trade**.
-
-### Share a collection
-
-If a collection is **public**, you can share it via a link. If it's private, JigSwap will offer to make it public so you can share it.
+Each collection tile shows its puzzle count and whether it's the default.
 
 ---
 
-## 6. Recording Completions, Solving History & Goals
+## 7. Recording Completions — Your Solving History
 
-JigSwap keeps a permanent record of every puzzle you finish — even if you later trade the puzzle away.
+JigSwap keeps a full **solve log** of every puzzle you've worked on — even after you trade the puzzle away, your completion records stay with you.
 
-### Log a solve
+**Where:** **Completions** (`/completions`).
 
-You can record a solve from a puzzle card menu, from the copy detail page, or via the command palette quick action.
+### Log a completion
 
-1. Choose **Log a solve** for the puzzle.
-2. Enter the details:
-   - **Start date** and **end date**
-   - **Time** spent (in minutes)
-   - **Notes** about the experience
-   - A **rating** (1–5 stars), optional
-3. Save. You can log a puzzle as already-finished, or start one as **in progress** and finish it later.
+1. Go to **My Puzzles**.
+2. On the copy you solved, click **Log Solve**.
+3. In the dialog, record your solve. A completion can be:
+   - **Started** (in-progress) and finished later, or
+   - **Recorded** after the fact (already finished).
+4. Add **start and end dates**, your **solve time**, optional **notes**, and (if you wish) a **review** with a 1–5 star rating.
 
-### Finish an in-progress solve
+> You can attach up to **5 photos** per completion, and edits are allowed within a **24-hour** window after completing.
 
-If you logged a puzzle as in progress, open it from your completions and use **Finish** to record the end date and total time.
+### The Completions page
 
-### Edit a completion
+The Completions page shows all your solve records, newest first, with a three-stat summary at the top: **total finished**, **pieces placed**, and **finishes this year**.
 
-You can edit a completion (for example, to fix the time or add notes) within a short window after logging it.
+Each row shows the title, a status badge, a piece/days line, optional notes and review quote, a star rating, and the finish date. Per-row actions:
 
-### Review a puzzle
-
-From a completed solve you can **Review** the puzzle, attaching a star rating that feeds into the puzzle's community rating.
-
-### View your solving history
-
-1. Open **Completions** (Library group).
-2. You'll see your full history with a stats bar: **total finished**, **pieces placed**, and how many you've finished **this year**.
-
-### Track goals
-
-Set challenges for yourself and watch your progress.
-
-1. Open **Goals** (Library group).
-2. Create a goal with a **title**, **description**, a **target number of completions**, and an optional **due date**.
-3. Each goal shows a **progress bar**, a percentage, and a current/target counter.
-4. When you reach the target, the goal earns a **trophy badge** — and you'll get a notification.
-
-> Goal progress updates automatically as you log completions; you don't need to update goals by hand.
+- **Finish** — for an in-progress solve.
+- **Add/Edit Review** — set or change your star rating and review text.
+- **Edit** — adjust date range, time, and notes.
 
 ---
 
-## 7. Personal Insights & Stats
+## 8. Goals
 
-The **Insights** page (Library group) turns your activity into a personal dashboard:
+Set personal challenges and track them automatically against your solve log.
 
-- Four **stat cards** summarizing your activity (completions, solving time, ratings, exchanges, goals).
-- A **completion trends** chart over time.
+**Where:** **Goals** (`/goals`).
+
+### Create a goal
+
+1. Open **Goals**.
+2. Create a new goal with:
+   - A **title** and **description**.
+   - A **target completion count**.
+   - An optional **due date**.
+3. Save.
+
+Each active goal shows a **progress bar**, a percentage, your current/target count, and a **trophy badge** once achieved. Progress updates automatically as you log completions — you don't have to update goals manually.
+
+---
+
+## 9. Insights & Stats
+
+**Where:** **Insights** (`/insights`).
+
+Your personal analytics dashboard shows:
+
+- Four **stat cards**: total puzzles, completions, trades, and average rating.
+- A **completion trends** line chart (over the past 12 months).
 - A **trade activity** chart.
-- A **collection breakdown** chart (e.g. by piece count, difficulty, or condition).
-- A **CSV export** button so you can download your data for your own records.
-
-To export: open **Insights** and click **Export** (CSV). The file downloads to your device.
+- A **collection breakdown** chart (by piece count, brand, difficulty, condition).
+- A **data export** button to download your personal data.
 
 ---
 
-## 8. Sharing & Visibility Controls
+## 10. Discovering Puzzles — Browse & Catalogue
 
-You decide exactly who can see and request each puzzle. Every owned copy has its own sharing settings, and you can change them at any time.
+### Browse community puzzles
 
-### Visibility levels
+**Where:** **Browse** (`/browse`).
 
-JigSwap uses a layered model. From most private to most open:
+Browse searches all community-owned copies that are currently **available** (for trade, lend, or sale).
 
-1. **Private** — only you can see it.
-2. **Friend circle** — visible only to members of circles you've shared it into (see [Friend Circles](#11-friend-circles)).
-3. **Visible** — publicly viewable, but not offered for any exchange.
-4. **Lendable** — others can ask to borrow it.
-5. **Swappable** — others can propose a puzzle-for-puzzle swap.
-6. **Tradeable** — available to trade (and, where supported, sale).
+1. Open **Browse**.
+2. Build your filter with the **query builder**, combining:
+   - Free-text search.
+   - Category, difficulty, condition.
+   - Piece-count range.
+   - Availability flags (for trade / lend / sale).
+3. Results appear as a grid or list of cards, each showing the owner, a swap/lend/sale badge, and quick actions: **View**, **Request Exchange**, **Message**, **Favorite**.
 
-### Set a copy's availability
+### The puzzle catalogue
 
-1. Open the copy's detail page (or use **Edit** from My Puzzles).
-2. Toggle **For Trade** and/or **For Lend** as desired, or set the visibility level.
-3. Save. The change is reflected immediately, including in others' Browse results.
+**Where:** **Puzzles** (`/puzzles`).
 
-> **Important:** A puzzle that isn't publicly visible (private or friend-circle only) will **not** appear to people outside your circles — JigSwap keeps those copies, and your identity, hidden from non-members. Owners with a **private profile** only surface copies to people in the same circle.
+The catalogue is the community-curated list of approved puzzle definitions (not individual copies).
+
+- Browse the infinite-scroll grid with filters.
+- Open a definition (`/puzzles/<id>`) to see the cover, rating with breakdown, difficulty, category/tag pills, community stats (owners, completions, average solve days, copies available to swap), and a list of available copies with their owners.
+- If you own it, you'll see an ownership banner linking to your copy.
+- You can **add it to your library** from this page, **write a review**, or **contribute a new definition**.
 
 ---
 
-## 9. The Exchange System: Lend, Swap & Trade
+## 11. The Exchange System — Lend, Swap & Sell
 
-Exchanges let you move puzzles between people. JigSwap tracks the whole lifecycle and keeps your completion history intact even after a puzzle changes hands.
+JigSwap supports three kinds of exchanges:
 
-### Types of exchange
+- **Swap** — trade one of your puzzles for one of theirs (puzzle-for-puzzle).
+- **Sale** — sell a puzzle for a price.
+- **Lend (loan)** — let someone borrow a puzzle and get it back later. Ownership never changes hands on a loan.
 
-- **Swap** — puzzle-for-puzzle. The person starting the swap offers one of their own copies in return.
-- **Trade / Sale** — a puzzle changes ownership (a sale records a price and currency).
-- **Lend** — you keep ownership, but possession moves to the borrower for a while. Lending is open-ended, with an optional advisory return date.
+> **Your history is safe.** When a puzzle changes ownership through a swap or sale, your completion history stays with _you_ — it doesn't transfer to the new owner.
+
+**Where:** **Trades** (`/trades`).
 
 ### Propose an exchange
 
-1. Find a puzzle you want — for example on the **Browse** page or a catalog puzzle's detail page.
-2. Choose to request it (e.g. **Find Copy to Swap** from a puzzle's catalog page leads you to available copies).
-3. Select the kind of exchange (swap/lend/trade). For a swap, choose which of _your_ copies you're offering.
-4. Submit your proposal. The owner receives a notification.
+1. Find a puzzle you want via **Browse** or a copy detail page.
+2. Click **Request Exchange** / **Request Swap**.
+3. Set the terms appropriate to the kind (which puzzle you're offering for a swap, a price for a sale, or an optional return date for a loan).
+4. Submit. The owner receives an incoming request.
 
 ### Manage your exchanges
 
-1. Open **Exchanges** (Community group).
-2. Use the tabs to focus:
-   - **All** — every exchange you're involved in
-   - **Incoming** — requests sent to you
-   - **Outgoing** — requests you've sent
-   - **Completed** — finished exchanges
-   - **Borrowed** — puzzles you currently hold on loan
-3. Expand any exchange row to see the requested/offered puzzles and your partner (with their reputation badge).
+The **Trades** page organizes everything into tabs:
 
-### Actions during an exchange
+- **All**
+- **Incoming** — requests sent to you.
+- **Outgoing** — requests you sent.
+- **Completed**
+- **Borrowed** — open loans where you're currently holding someone else's puzzle.
 
-Depending on the stage, you'll see actions such as:
+Click **View** on any exchange to expand its details: both puzzle summaries, the partner's trust badge, and lifecycle action buttons.
 
-- **Accept** or **Decline** a request
-- **Cancel** a request you sent
-- **Mark Complete** — confirm the physical hand-over happened
-- **Return** — (on the Borrowed tab) return a puzzle you borrowed
-- **Leave Review** — rate your exchange partner afterward
-- **Message** — coordinate details (see [Messages](#12-social--community-features))
+### The exchange lifecycle
 
-### Completing an exchange
+An exchange moves through clear steps:
 
-Completion uses **dual confirmation** — both people confirm the hand-over took place. Once both confirm:
+1. **Proposed** — the request has been sent.
+2. **Accepted / Declined** — the recipient responds. (As the recipient of an incoming request, use **Accept** or **Decline**. As the sender of an outgoing request, you can **Cancel**.)
+3. **Completion** — once accepted, **both parties must confirm** completion (dual confirmation). Use **Mark Complete**.
+4. **Completed** — when both confirm, ownership (swap/sale) or possession (loan) transfers, and you can **Leave a Review** of your partner.
 
-- For a **swap/trade**, ownership transfers and the puzzle's sharing resets to private for the new owner.
-- For a **lend**, possession moves to the borrower and an open **loan** is tracked until it's returned or recalled.
-- The full **chain of custody** is recorded, and both parties can leave a partner review.
+### Returning a borrowed puzzle
 
-> Your personal completion history stays with **you**, not with the puzzle — so trading a puzzle away never erases your record of having solved it.
+If you've borrowed a puzzle (it's on the **Borrowed** tab), use the **Return** action to give it back. If you're the lender, you can **Recall** a lent-out copy from your library.
 
-### Reviewing your partner
-
-After an exchange completes, use **Leave Review** to rate the other person (overall rating plus sub-scores like communication and how accurately the puzzle was described). Reviews build each member's reputation, shown as a badge on their profile and on exchange rows.
+You can also **Message** your exchange partner to coordinate details.
 
 ---
 
-## 10. Discovering Puzzles & People
+## 12. Visibility & Sharing Controls
 
-### Browse available copies
+You decide who can see and interact with each puzzle copy. JigSwap uses a layered visibility model:
 
-1. Open **Browse** (Community group).
-2. You'll see copies other people have made available.
-3. Filter by **search text**, **category**, **difficulty**, **condition**, **piece count range**, and **availability type** (trade/lend/sale).
-4. Toggle between **grid** and **list** view.
+- **Private** — only you can see it.
+- **Friend circle** — visible to members of circles you've shared it with.
+- **Visible** — publicly viewable in the community.
+- **Lendable** — others can request to borrow it.
+- **Swappable** — others can propose a swap for it.
+- **Tradeable** — available for trade/sale.
 
-### Browse the puzzle catalogue
+### How to set visibility
 
-1. Open **Puzzles** (Community group) to scroll the full catalogue of approved puzzle definitions.
-2. The list loads more puzzles automatically as you scroll.
-3. Use the **Cmd/Ctrl+K** search to jump to a specific title.
+- **When adding a puzzle:** use the **availability chips** (for trade / lend / sale) and the visibility setting on the add form.
+- **On an owned puzzle later:** open the copy detail page and use the **toggle for-trade / for-lend** controls, or **Edit** the copy.
+- **To share with a specific group:** share the copy to a **friend circle** (see below).
 
-### Puzzle detail (catalog view)
-
-Opening a catalog puzzle shows an aggregated view across the community:
-
-- Cover, **community star rating** with breakdown bars, and difficulty/category/tag chips.
-- A stats strip: how many community members own it, total completions, average days to complete, and how many are available to swap.
-- A list of **available copies** with each owner's name, location, and rating.
-- Reviews and comments.
-- Actions: **Add to Library**, **Find Copy to Swap**, **Write a Review**.
+> A copy that's currently out on loan is automatically made unavailable for new exchanges until it's returned.
 
 ---
 
-## 11. Friend Circles
+## 13. Friend Circles
 
-Circles are private groups for sharing puzzles with people you trust — family, friends, a local puzzle club — without making those puzzles public.
+Friend circles are private groups for sharing puzzles only with people you trust (family, close friends).
 
-### Create a circle
+**Where:** **Circles** (`/circles`).
 
-1. Open **Circles** (Community group).
-2. Create a new circle and give it a name.
+### Create and manage a circle
 
-### Manage members
+1. Open **Circles**.
+2. Create a named circle. As the creator, you are permanently the **Owner/Admin**.
+3. Click **Manage** (owners only) to open the management dialog, where you can:
+   - **Search for and add members** (type at least 2 characters to search).
+   - Set each member's **permission level**: **View Only**, **Exchange**, or **Admin**.
+   - **Remove** members.
+   - **Share a specific owned copy** to the circle so members can see it.
 
-In a circle's **Manage** dialog you can:
-
-1. **Add members** — search for a user (type at least 2 characters) and add them.
-2. **Set permissions** for each member:
-   - **View Only** — can see shared puzzles
-   - **Exchange** — can also propose exchanges
-   - **Admin** — can manage the circle
-3. **Remove members** when needed.
-
-### Share a puzzle into a circle
-
-From the **Manage** dialog (or a copy's sharing settings), share a specific owned copy into the circle. That copy then becomes visible to circle members in their Browse — even if your profile is otherwise private.
+Each circle row shows its icon, your role (Owner/Member), the member count with overlapping avatars, and a Manage button for owners.
 
 ---
 
-## 12. Social & Community Features
+## 14. Social & Community Features
 
-### People (your network)
+### People / Social Hub
 
-1. Open **People** (Community group).
-2. See a grid of users **you follow** and users **following you**, with a _Follows you_ badge on mutual connections.
-3. View an **activity feed** of what you and the people you follow have been doing (completions, new puzzles, completed exchanges).
-4. Edit your own profile inline from here.
+**Where:** **People** (`/people`).
 
-### Following
-
-Follow other members to keep up with their activity and new additions. Following is one-directional — when someone follows you back, you're mutual connections.
+- See your **network** — everyone you follow and everyone who follows you (with a "Follows you" badge).
+- **Follow / Unfollow** members.
+- Read an **activity feed** of recent community activity (completions, acquisitions, completed exchanges).
+- Edit your **public profile** from here too.
 
 ### Comments & reviews
 
-- On a **catalog puzzle**, you can write a **review** with an optional 1–5 star rating to help the community.
-- On an individual **copy photo**, you can leave a **photo comment** in the lightbox.
-- On a **copy**, you can leave comments with an optional star rating.
+- **Puzzle reviews:** On a catalogue definition page, post a community comment with a 1–5 star rating.
+- **Copy comments:** Discuss a specific copy on its detail page.
+- **Photo comments:** In the photo lightbox, leave text comments on individual photos.
 
 ### Messages
 
-Open **Messages** (Community group) to see conversations and threads with other members, including a composer for sending messages.
+**Where:** **Messages** (`/messages`).
 
-> **Note:** The Messages screen is still being connected to live data. The conversation list and chat layout are in place, and exchange coordination is also available directly from the **Message** action on each exchange.
+A two-pane chat interface with a conversation list and a message thread.
 
----
-
-## 13. Your Profile & the 3D Shelf
-
-Your **Profile** is your public face on JigSwap.
-
-### Open and edit your profile
-
-1. Open **Profile** from the sidebar account area (or navigation).
-2. Your profile shows an identity header: **avatar, name, username, location, bio**, and a **trust badge** based on your reputation.
-3. Click to toggle the **inline edit** form, where you can update your display name, bio, and other profile fields.
-
-### The 3D shelf (puzzle plank)
-
-A standout feature of your profile (and your Dashboard) is the **3D shelf** — a visual "plank" that displays your puzzles like boxes standing on a real shelf.
-
-- It appears on your Dashboard with a count of how many puzzles you own.
-- On your profile, you can **curate a featured shelf** of up to six puzzles you want to highlight, arranging which copies appear.
-
-### Profile stats & reputation
-
-Your profile also shows your **personal stats** columns and your **received reputation** (the reviews exchange partners have left for you).
-
-### Profile visibility
-
-You can set your profile to **public** or **private**. A private profile hides your copies and identity from people who aren't in a shared circle with you.
+> **Note:** The messages screen is currently a preview and is **not yet connected to live conversations**. Messaging tied to specific exchanges is planned but not fully wired up yet.
 
 ---
 
-## 14. Notifications
+## 15. Your Profile & the 3D Shelf
 
-JigSwap keeps you informed about trade requests, acceptances, completions, messages, partner reviews, goal achievements, and puzzle approvals/rejections.
+**Where:** **Profile** (`/profile`).
 
-### Read your notifications
+Your profile is your public face on JigSwap. It shows:
 
-1. Click the **bell icon** in the top bar, or open **Notifications**.
-2. Each notification has a type badge and an unread indicator.
-3. Click a notification to jump to the relevant item (e.g. the exchange or puzzle it's about).
-4. Use **Mark as read** on individual items, or **Mark all as read**.
+- An **identity header**: avatar, name, a meta row, and your trust/reputation badge.
+- An **edit toggle** that opens an inline form to update your **display name**, **bio**, **location**, and other identity fields.
+- **"{Your Name}'s Shelf"** — a **3D physics-based plank** rendering your recent puzzle copies as objects on a shelf.
+- Four **stat columns**.
+- A **received reputation** section showing reviews others have left you.
+
+You can also set your profile **visibility** (public or private) and **arrange your shelf** to feature up to six copies.
+
+> The same 3D shelf also appears on your **dashboard**, showing your real owned copies.
+
+---
+
+## 16. Reputation & Reviews
+
+After a completed exchange, either party can leave a **partner review** to help the community gauge reliability.
+
+A partner review includes:
+
+- An overall **1–5 star** rating.
+- Four sub-scores: **communication**, **packaging**, **condition**, and **timeliness**.
+- An optional **text comment**.
+
+To leave one, complete an exchange and use **Leave Review** on the completed exchange (in **Trades**). You can't review yourself. Your received reviews roll up into a **reputation badge** (average rating + a credibility score) shown on your profile.
+
+---
+
+## 17. Notifications
+
+**Where:** **Notifications** (`/notifications`).
+
+JigSwap notifies you about exchange activity, goal achievements, reviews received, and puzzle moderation outcomes.
+
+### Reading notifications
+
+- Each notification has a type-specific icon and color, plus a read/unread indicator (unread shows a blue dot / accent background).
+- **Click a notification** to jump to the relevant page; it's marked read automatically.
+- Use **Mark Read** on a single item, or **Mark All Read** in the header.
 
 ### Notification preferences
 
-Choose exactly what reaches you and how:
+**Where:** **Notifications → Settings** (`/notifications/preferences`).
 
-1. From the Notifications page, open **Settings** (preferences).
-2. You'll see a **matrix of toggles** — one row per notification type, with columns for each channel:
-   - **In-app** — shown inside JigSwap
-   - **Email** — sent to your email address
-   - **Push** — browser/web push notifications
-3. Turn each combination on or off to suit you.
-
-### Web push devices
-
-In the preferences page, the **Push device** section lets you enable web push on your current browser/device and manage your push subscriptions. Your browser will ask permission the first time you enable push.
+- Toggle each notification **type** across each **channel**: **in-app**, **email**, and **push**.
+- By default, all types are on for **in-app**; email and push are off until you enable them.
+- Register a device for **push notifications** in the same screen.
 
 ---
 
-## 15. Language & Region (i18n)
+## 18. Language Settings (English / Dutch)
 
-JigSwap is available in **English** and **Dutch**.
+JigSwap is available in **English (en)** and **Dutch (nl)**.
 
-### Switch languages
+1. Find the **language switcher** in the app.
+2. Select your preferred language.
+3. The interface (and the sign-in screens) switch immediately, and your choice is remembered for future visits.
 
-1. Find the **language switcher** (in the app's settings/menu area).
-2. Choose your preferred language.
-3. The interface reloads in the new language. Your choice is remembered for next time via a cookie — there's no need to change the web address.
-
-> JigSwap detects a sensible default from your browser's language settings the first time you visit, then respects whatever you pick afterward. Dates and times are shown in the Europe/Amsterdam time zone.
+JigSwap automatically picks a starting language based on your saved preference, then your browser's language, defaulting to English.
 
 ---
 
-## 16. FAQ & Troubleshooting
+## 19. Quick Search (Command Palette)
 
-**I added a puzzle but it doesn't show up in the public catalogue.**
-Puzzles you _contribute to the catalog_ go through moderation and only appear publicly once an administrator approves them. A copy you add to _your own library_ shows up in My Puzzles right away regardless of moderation.
+JigSwap has a global search that finds anything quickly.
 
-**Why can't anyone see my puzzle in Browse?**
-A copy only appears in others' Browse results when (1) it has an availability flag set (For Trade, For Lend, etc.) **and** (2) either your profile is public or you've shared the copy into a circle the viewer belongs to. Check the copy's sharing settings and your profile visibility.
-
-**My imported puzzle details are wrong or incomplete.**
-The import reads a store page automatically and may not catch everything. Review the pre-filled fields and edit anything that's off before saving. If a match banner appears, consider using the existing catalog entry to avoid duplicates.
-
-**My uploaded photo isn't visible yet.**
-Photos are checked automatically before becoming public. Your own pending photos are visible to you in the meantime; once approved they appear to everyone.
-
-**I traded a puzzle away — did I lose my solving history?**
-No. Your completion history belongs to you, not the puzzle. Trading or lending a puzzle never deletes your records.
-
-**How do I get a puzzle back that I lent out?**
-Use **Recall a loan** on the copy (from My Puzzles or the copy detail). The borrower can also use **Return** from their **Borrowed** tab in Exchanges.
-
-**An exchange is stuck as "accepted" and won't complete.**
-Completion requires **both** people to confirm the hand-over. Make sure both parties have used **Mark Complete**; until both confirm, the exchange stays open.
-
-**I can't reach a page — it keeps sending me to sign in.**
-Personal pages require you to be signed in. Sign in, and JigSwap will return you to the page you wanted. If it keeps happening, try signing out and back in to refresh your session.
-
-**My language won't switch / reverts.**
-The language preference is stored in a cookie. If your browser blocks cookies for the site, the choice can't be saved. Allow cookies for JigSwap and switch again.
-
-**Where can I get more help?**
-Use the **Contact** page (from the public site) to send a message, or open an issue on the project's GitHub repository.
+- **Open it:** press **Cmd/Ctrl + K**, or click the **search pill** in the desktop top bar.
+- **With nothing typed:** you'll see jump-to navigation destinations and quick-action shortcuts.
+- **Type 2+ characters:** live results appear, grouped into **Puzzles**, **People**, **Circles**, and **Collections**.
+- **Select a result** to navigate straight there.
 
 ---
 
-_Happy puzzling! 🧩_
+## 20. FAQ & Troubleshooting
+
+**Q: I added a puzzle, but it's not showing in the public catalogue. Why?**
+New puzzle _definitions_ you contribute go to a moderation queue and must be **approved by an admin** before they appear publicly. Your own copy is still in your library — only the shared catalogue listing waits for approval. Until then it shows at the top of your Add-Puzzle chooser as an unapproved submission.
+
+**Q: What's the difference between a "puzzle" and a "copy"?**
+A **puzzle** (catalogue definition) is the product — title, brand, piece count, artwork. A **copy** is the specific physical puzzle _you_ own, with its own condition, photos, notes, and completion history. Multiple people can own copies of the same puzzle.
+
+**Q: I traded a puzzle away. Did I lose my solving history?**
+No. Your completion records and stats stay with **you**, not with the puzzle. The new owner gets a fresh history for their copy.
+
+**Q: Why can't I see a puzzle I know someone owns?**
+Visibility is controlled by the owner. If a copy is **private** or only shared to a **friend circle** you're not in, it won't appear in Browse for you.
+
+**Q: A puzzle I lent out isn't available for new exchanges.**
+That's expected — a copy that's on loan is automatically marked unavailable until it's returned. Use **Recall** (owner) or **Return** (borrower) to close the loan.
+
+**Q: How do I complete an exchange? I clicked "Mark Complete" but nothing finalized.**
+Exchanges use **dual confirmation** — _both_ parties must confirm completion before ownership/possession transfers. Wait for your partner to also mark it complete.
+
+**Q: Messaging doesn't seem to work / my message didn't send.**
+The Messages screen is currently a preview and is **not yet connected to live data**. Real in-exchange messaging is planned but not fully available yet.
+
+**Q: I can't access the Admin area.**
+The Admin panel (categories management and puzzle moderation) is restricted to users with the **admin role**. Regular members don't have access.
+
+**Q: I got signed out unexpectedly.**
+JigSwap keeps your session in sync; if you sign out in another tab or your session expires, you'll be returned to the sign-in screen. Sign back in and you'll resume where you were.
+
+**Q: How do I export my data?**
+Go to **Insights** and use the **data export** button to download your personal data.
+
+**Q: How do I change the app's language?**
+Use the language switcher to pick **English** or **Dutch**; your choice is saved automatically.
+
+---
+
+_JigSwap was made with care by a puzzle-loving family for the jigsaw puzzle community. Happy puzzling!_
