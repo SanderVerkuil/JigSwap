@@ -1816,6 +1816,7 @@
     "statusRecalled": "Teruggevraagd",
     "borrowedBy": "Geleend door {name}",
     "unknownMember": "Onbekend lid",
+    "anonymousMember": "Anonieme gebruiker",
     "borrowedCount": "{count, plural, one {# geleende puzzel} other {# geleende puzzels}}",
     "pieceCount": "{count, plural, one {# stuk} other {# stukken}}"
   },

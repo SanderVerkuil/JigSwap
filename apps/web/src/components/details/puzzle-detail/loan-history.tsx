@@ -70,7 +70,9 @@ export function LoanHistory({ copyId }: LoanHistoryProps) {
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium">
                       {t("borrowedBy", {
-                        name: loan.borrower?.name ?? t("unknownMember"),
+                        name: loan.borrower.anonymous
+                          ? t("anonymousMember")
+                          : loan.borrower.member.name,
                       })}
                     </p>
                     <Badge

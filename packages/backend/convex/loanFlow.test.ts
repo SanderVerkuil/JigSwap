@@ -1,4 +1,5 @@
 import { convexTest } from "convex-test";
+import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -122,12 +123,28 @@ describe("loan lifecycle", () => {
         {},
       ),
     ).toHaveLength(0);
+    // The history read is auth-gated.
+    await expect(
+      t.query(api.library.getCopyLoanHistory.getCopyLoanHistory, {
+        copyId: copy,
+      }),
+    ).rejects.toBeInstanceOf(ConvexError);
+
     const history = await asOwner(t).query(
       api.library.getCopyLoanHistory.getCopyLoanHistory,
       { copyId: copy },
     );
     expect(history).toHaveLength(1);
     expect(history[0].status).toBe("returned");
+    // Both parties are privacy-projected; here both have public (default) profiles so they reveal.
+    expect(history[0].lender.anonymous).toBe(false);
+    if (!history[0].lender.anonymous) {
+      expect(history[0].lender.member.name).toBe("clerk_owner");
+    }
+    expect(history[0].borrower.anonymous).toBe(false);
+    if (!history[0].borrower.anonymous) {
+      expect(history[0].borrower.member.name).toBe("clerk_alice");
+    }
   });
 
   test("the owner recalls the loan -> possession back to the owner", async () => {
