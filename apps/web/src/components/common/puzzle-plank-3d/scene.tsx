@@ -20,11 +20,7 @@ import { easing } from "maath";
 import * as React from "react";
 import * as THREE from "three";
 import { layoutRow } from "./layout";
-import {
-  DEFAULT_WOOD_PARAMS,
-  useWoodTexture,
-  type WoodParams,
-} from "./wood-texture";
+import { DEFAULT_WOOD_PARAMS, useWoodTexture } from "./wood-texture";
 
 // ——— shelf constants ———
 const SHELF_THICKNESS = 0.14;
@@ -32,8 +28,10 @@ const SHELF_DEPTH = 0.6;
 
 // ——— camera constants ———
 const FOV = 38;
-// Headroom added above the tallest box when computing the framed height.
-const CONTENT_HEADROOM = 0.4;
+// Headroom added above the tallest box when computing the framed height. Kept
+// generous so the gentle downward camera tilt never clips the top of a tall
+// (portrait) cover.
+const CONTENT_HEADROOM = 0.6;
 // Minimum visible world width so a 1-2 box row isn't hugely zoomed.
 const MIN_VIS_W = 2.0;
 // Camera sits slightly above the look-at point for a gentle downward gaze.
@@ -174,7 +172,6 @@ function Arrangement({
   lightingPreset,
   reducedMotion,
   onFirstFrame,
-  woodParams,
 }: {
   boxes: PuzzlePlankBox[];
   resolved: Array<{ c1: string; c2: string }>;
@@ -182,20 +179,34 @@ function Arrangement({
   lightingPreset: LightingPreset;
   reducedMotion: boolean;
   onFirstFrame: () => void;
-  woodParams: WoodParams;
 }) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const size = useThree((s) => s.size);
 
   // Wood-grain texture for the shelf board, tinted from the theme shelf colour.
-  const woodTexture = useWoodTexture(lightingPreset.shelfColor, woodParams);
+  const woodTexture = useWoodTexture(lightingPreset.shelfColor);
 
   const { slots, rowWidth } = React.useMemo(() => layoutRow(boxes), [boxes]);
 
+  // Live per-box world heights: cover boxes aspect-correct after their image
+  // loads (a portrait cover can resolve much taller than the 1.4 default), so
+  // each box reports its rendered height and the camera framing follows it.
+  // Without this the camera frames the default height and tall covers clip.
+  const [boxHeights, setBoxHeights] = React.useState<number[]>([]);
+  const reportHeight = React.useCallback((i: number, h: number) => {
+    setBoxHeights((prev) => {
+      if (prev[i] === h) return prev;
+      const next = prev.slice();
+      next[i] = h;
+      return next;
+    });
+  }, []);
+
   // Max box world height across the row — drives framing.
   const maxBoxH = React.useMemo(
-    () => Math.max(...boxes.map(boxWorldHeight), 0.5),
-    [boxes],
+    () =>
+      Math.max(...boxes.map((b, i) => boxHeights[i] ?? boxWorldHeight(b)), 0.5),
+    [boxes, boxHeights],
   );
 
   // ——— cover-fit camera: frame the row with headroom ———
@@ -238,7 +249,7 @@ function Arrangement({
             <boxGeometry args={[shelfW, SHELF_THICKNESS, SHELF_DEPTH]} />
             <meshStandardMaterial
               map={woodTexture}
-              roughness={woodParams.roughness}
+              roughness={DEFAULT_WOOD_PARAMS.roughness}
             />
           </mesh>
 
@@ -254,6 +265,7 @@ function Arrangement({
               index={i}
               headingFont={headingFont}
               sizeScale={1}
+              onResolvedHeight={(h) => reportHeight(i, h)}
             />
           ))}
 
@@ -284,8 +296,6 @@ export interface PlankSceneProps {
   /** Bumped to snap the physics boxes back to their resting layout (ignored by
    *  the static scene). */
   resetNonce?: number;
-  /** Temporary: live wood-grain tuning from the tweaks panel. */
-  woodParams?: WoodParams;
 }
 
 export default function PlankScene(props: PlankSceneProps) {
@@ -309,7 +319,6 @@ export default function PlankScene(props: PlankSceneProps) {
         lightingPreset={lightingPreset}
         reducedMotion={props.reducedMotion}
         onFirstFrame={props.onFirstFrame}
-        woodParams={props.woodParams ?? DEFAULT_WOOD_PARAMS}
       />
     </Canvas>
   );

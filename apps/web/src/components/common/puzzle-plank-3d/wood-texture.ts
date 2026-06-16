@@ -31,12 +31,12 @@ export interface WoodParams {
 }
 
 export const DEFAULT_WOOD_PARAMS: WoodParams = {
-  grains: 11,
-  lineStrength: 0.3,
-  streakStrength: 0.16,
-  toneStrength: 0.1,
-  warp: 0.06,
-  roughness: 0.62,
+  grains: 7,
+  lineStrength: 0.08,
+  streakStrength: 0.23,
+  toneStrength: 0.27,
+  warp: 0.105,
+  roughness: 0.66,
 };
 
 function hexToRgb(hex: string): [number, number, number] {

@@ -30,11 +30,7 @@ import * as THREE from "three";
 import { clampThrowVelocity } from "./drag-math";
 import { layoutRow } from "./layout";
 import type { PlankSceneProps } from "./scene";
-import {
-  DEFAULT_WOOD_PARAMS,
-  useWoodTexture,
-  type WoodParams,
-} from "./wood-texture";
+import { DEFAULT_WOOD_PARAMS, useWoodTexture } from "./wood-texture";
 
 // @dimforge/rapier3d-compat is a transitive peer; we reference its enum
 // values via numeric constants to avoid a direct (unresolvable) import.
@@ -48,7 +44,9 @@ const SHELF_DEPTH = 0.6;
 
 // ——— camera constants (mirrors scene.tsx) ———
 const FOV = 38;
-const CONTENT_HEADROOM = 0.4;
+// Generous headroom so the downward camera tilt never clips the top of a tall
+// (portrait) cover. Mirrors scene.tsx.
+const CONTENT_HEADROOM = 0.6;
 const MIN_VIS_W = 2.0;
 const CAMERA_Y_LIFT = 0.3;
 // In-app planks render FACE-ON (no yaw) — the camera looks straight on. The
@@ -360,7 +358,6 @@ function PhysicsArrangement({
   lightingPreset,
   onFirstFrame,
   resetNonce = 0,
-  woodParams,
 }: {
   boxes: PuzzlePlankBox[];
   resolved: Array<{ c1: string; c2: string }>;
@@ -368,19 +365,36 @@ function PhysicsArrangement({
   lightingPreset: LightingPreset;
   onFirstFrame: () => void;
   resetNonce?: number;
-  woodParams: WoodParams;
 }) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const size = useThree((s) => s.size);
 
   // Wood-grain texture for the shelf board, tinted from the theme shelf colour.
-  const woodTexture = useWoodTexture(lightingPreset.shelfColor, woodParams);
+  const woodTexture = useWoodTexture(lightingPreset.shelfColor);
 
   const { slots, rowWidth } = React.useMemo(() => layoutRow(boxes), [boxes]);
 
+  // Live per-box world heights: covers aspect-correct after the image loads, so
+  // each box reports its rendered height (onResolvedHeight) and the collider,
+  // rest position, drag floor, and camera framing all follow it. Falls back to
+  // the deterministic boxWorldSize.h until the image resolves.
+  const [boxHeights, setBoxHeights] = React.useState<number[]>([]);
+  const reportHeight = React.useCallback((i: number, h: number) => {
+    setBoxHeights((prev) => {
+      if (prev[i] === h) return prev;
+      const next = prev.slice();
+      next[i] = h;
+      return next;
+    });
+  }, []);
+
+  // Max box world height across the row — drives framing. Uses the resolved
+  // heights so a portrait cover that resolves taller than the 1.4 default still
+  // gets framed fully (otherwise its top clips out of view).
   const maxBoxH = React.useMemo(
-    () => Math.max(...boxes.map(boxWorldHeight), 0.5),
-    [boxes],
+    () =>
+      Math.max(...boxes.map((b, i) => boxHeights[i] ?? boxWorldHeight(b)), 0.5),
+    [boxes, boxHeights],
   );
 
   // ——— cover-fit camera with yaw baked in ———
@@ -418,19 +432,6 @@ function PhysicsArrangement({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [boxes.length],
   );
-
-  // Live per-box world heights: covers aspect-correct after the image loads, so
-  // each box reports its rendered height (onResolvedHeight) and the collider /
-  // rest position follow it. Falls back to the deterministic boxWorldSize.h.
-  const [boxHeights, setBoxHeights] = React.useState<number[]>([]);
-  const reportHeight = React.useCallback((i: number, h: number) => {
-    setBoxHeights((prev) => {
-      if (prev[i] === h) return prev;
-      const next = prev.slice();
-      next[i] = h;
-      return next;
-    });
-  }, []);
 
   // Lowest each box center may be dragged (its half-height), so a held box never
   // sinks below the shelf top (y = 0).
@@ -486,7 +487,7 @@ function PhysicsArrangement({
           <boxGeometry args={[shelfW, SHELF_THICKNESS, SHELF_DEPTH]} />
           <meshStandardMaterial
             map={woodTexture}
-            roughness={woodParams.roughness}
+            roughness={DEFAULT_WOOD_PARAMS.roughness}
           />
         </mesh>
       </RigidBody>
@@ -599,7 +600,6 @@ export default function PlankScenePhysics(props: PlankSceneProps) {
           lightingPreset={lightingPreset}
           onFirstFrame={props.onFirstFrame}
           resetNonce={props.resetNonce}
-          woodParams={props.woodParams ?? DEFAULT_WOOD_PARAMS}
         />
       </Physics>
     </Canvas>
