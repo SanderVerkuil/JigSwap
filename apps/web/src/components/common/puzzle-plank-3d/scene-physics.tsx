@@ -394,7 +394,13 @@ function PhysicsArrangement({
     camera.updateProjectionMatrix();
   }, [camera, size, dist, cameraY, lookAtY]);
 
-  const shelfW = rowWidth + 0.4;
+  // Plank spans ~95% of the visible width at the shelf plane (face-on, so the
+  // visible world width there is contentH * aspect). This gives boxes plenty of
+  // room to be dragged sideways now that the left/right walls are gone; the
+  // floor below still catches any box pushed off an edge. Never narrower than
+  // the box row itself.
+  const visibleW = contentH * aspect;
+  const shelfW = Math.max(visibleW * 0.95, rowWidth + 0.4);
 
   // Per-box rigid body refs for the drag hook
   const rigidBodyRefs = React.useMemo(
@@ -483,18 +489,10 @@ function PhysicsArrangement({
         />
       </RigidBody>
 
-      {/* Invisible side walls to keep boxes on the shelf */}
+      {/* Invisible front/back walls keep boxes on the shelf along the depth
+          axis. No left/right walls — boxes can be dragged off the ends of the
+          (now wide) plank and tumble to the floor, which feels more physical. */}
       <RigidBody type="fixed" colliders={false}>
-        {/* Left wall */}
-        <CuboidCollider
-          args={[0.05, maxBoxH, SHELF_DEPTH]}
-          position={[-(shelfW / 2 + 0.05), maxBoxH / 2, 0]}
-        />
-        {/* Right wall */}
-        <CuboidCollider
-          args={[0.05, maxBoxH, SHELF_DEPTH]}
-          position={[shelfW / 2 + 0.05, maxBoxH / 2, 0]}
-        />
         {/* Back wall */}
         <CuboidCollider
           args={[shelfW / 2, maxBoxH, 0.05]}
