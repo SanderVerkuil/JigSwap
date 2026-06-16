@@ -758,4 +758,15 @@ export default defineSchema({
     status: v.union(v.literal("new"), v.literal("handled")),
     createdAt: v.number(),
   }).index("by_status", ["status", "createdAt"]),
+
+  // Feedback from the public /docs site ("Was this page helpful?"). Operational/support data, not a
+  // bounded context: written by an unauthenticated thin mutation, read (later) by admin tooling.
+  docFeedback: defineTable({
+    slug: v.string(),
+    helpful: v.boolean(),
+    comment: v.optional(v.string()),
+    locale: v.optional(v.string()),
+    userId: v.optional(v.id("users")),
+    createdAt: v.number(),
+  }).index("by_slug", ["slug", "createdAt"]),
 });
