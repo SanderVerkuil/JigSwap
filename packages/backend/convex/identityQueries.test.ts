@@ -2,6 +2,7 @@ import { convexTest } from "convex-test";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -336,6 +337,118 @@ describe("identity.searchUsers", () => {
       },
     );
     expect(limited).toHaveLength(1);
+  });
+});
+
+describe("identity.searchUsers profile-visibility gating", () => {
+  // Mirrors search.global people gating: a private member is never surfaced by
+  // name/username/avatar to a searcher who is neither them nor a mutual follower.
+  const insertUser = (
+    t: ReturnType<typeof convexTest>,
+    clerkId: string,
+    name: string,
+    username: string,
+  ) =>
+    t.run(async (ctx) => {
+      const now = Date.now();
+      return ctx.db.insert("users", {
+        clerkId,
+        email: `${clerkId}@example.com`,
+        name,
+        username,
+        searchableName: `${name} ${username}`.toLowerCase(),
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+  const setVisibility = (
+    t: ReturnType<typeof convexTest>,
+    memberId: Id<"users">,
+    visibility: "public" | "private",
+  ) =>
+    t.run(async (ctx) => {
+      await ctx.db.insert("profiles", {
+        memberId,
+        displayName: "x",
+        visibility,
+        updatedAt: Date.now(),
+      });
+    });
+
+  const follow = (
+    t: ReturnType<typeof convexTest>,
+    followerId: Id<"users">,
+    followeeId: Id<"users">,
+  ) =>
+    t.run(async (ctx) => {
+      await ctx.db.insert("follows", { followerId, followeeId, createdAt: 1 });
+    });
+
+  const asSearcher = (t: ReturnType<typeof convexTest>) =>
+    t.withIdentity({ subject: "clerk_searcher" });
+
+  test("surfaces a public-profile member to any searcher", async () => {
+    const t = convexTest(schema, modules);
+    await insertUser(t, "clerk_searcher", "Sam Searcher", "sam");
+    await insertUser(t, "clerk_target", "Patricia Public", "patricia");
+
+    const res = await asSearcher(t).query(
+      api.identity.searchUsers.searchUsers,
+      { searchTerm: "patricia" },
+    );
+    expect(res.map((u) => u.name)).toContain("Patricia Public");
+  });
+
+  test("hides a private-profile member from a non-connected searcher", async () => {
+    const t = convexTest(schema, modules);
+    await insertUser(t, "clerk_searcher", "Sam Searcher", "sam");
+    const target = await insertUser(t, "clerk_priv", "Priv Person", "priv");
+    await setVisibility(t, target, "private");
+
+    const res = await asSearcher(t).query(
+      api.identity.searchUsers.searchUsers,
+      { searchTerm: "priv" },
+    );
+    expect(res).toHaveLength(0);
+  });
+
+  test("reveals a private member to a mutual follower", async () => {
+    const t = convexTest(schema, modules);
+    const searcher = await insertUser(
+      t,
+      "clerk_searcher",
+      "Sam Searcher",
+      "sam",
+    );
+    const target = await insertUser(t, "clerk_priv", "Priv Person", "priv");
+    await setVisibility(t, target, "private");
+    await follow(t, searcher, target);
+    await follow(t, target, searcher);
+
+    const res = await asSearcher(t).query(
+      api.identity.searchUsers.searchUsers,
+      { searchTerm: "priv" },
+    );
+    expect(res.map((u) => u.name)).toContain("Priv Person");
+  });
+
+  test("a searcher with a private profile still finds themself", async () => {
+    const t = convexTest(schema, modules);
+    const searcher = await insertUser(
+      t,
+      "clerk_searcher",
+      "Sam Searcher",
+      "sam",
+    );
+    await setVisibility(t, searcher, "private");
+
+    const res = await asSearcher(t).query(
+      api.identity.searchUsers.searchUsers,
+      { searchTerm: "sam" },
+    );
+    expect(res.map((u) => u.name)).toContain("Sam Searcher");
   });
 });
 
