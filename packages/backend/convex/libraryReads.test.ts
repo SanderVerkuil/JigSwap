@@ -198,7 +198,7 @@ describe("collection reads", () => {
     const t = convexTest(schema, modules);
     const { collection } = await seed(t);
 
-    const view = await t.query(
+    const view = await asAlice(t).query(
       api.library.getCollectionById.getCollectionById,
       { collectionId: collection },
     );

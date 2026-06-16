@@ -1,6 +1,8 @@
 import type { CollectionDetailView } from "@jigswap/contracts";
 import { v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { requireMember } from "../identity/requireMember";
 import { toCollectionDetailView, toOwnedCopyView } from "./mappers";
 
 // Library read: a collection with its member copies resolved (each carrying its addedAt and joined
@@ -9,8 +11,18 @@ import { toCollectionDetailView, toOwnedCopyView } from "./mappers";
 export const getCollectionById = query({
   args: { collectionId: v.id("collections") },
   handler: async (ctx, args): Promise<CollectionDetailView | null> => {
+    const actingMember = (await requireMember(ctx)) as unknown as Id<"users">;
+
     const collection = await ctx.db.get(args.collectionId);
     if (!collection) return null;
+
+    // Visibility ACL: only the owner may read a non-public collection.
+    if (
+      collection.userId !== actingMember &&
+      collection.visibility !== "public"
+    ) {
+      return null;
+    }
 
     const members = await ctx.db
       .query("collectionMembers")
