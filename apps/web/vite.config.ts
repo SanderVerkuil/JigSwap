@@ -16,7 +16,24 @@ export default defineConfig({
     tsConfigPaths({ projects: ["./tsconfig.json"] }),
     tailwindcss(),
     docsPlugin(),
-    tanstackStart({ srcDirectory: "src" }),
+    // Statically prerender the public docs to HTML at build time. We seed the
+    // crawler at /docs and let it follow the sidebar/TOC links; the filter keeps
+    // prerendering scoped to /docs/* so the authenticated app is never rendered
+    // without a session. Public docs don't read Convex at load, and root auth
+    // falls back to unauthenticated during prerender (see __root.tsx).
+    tanstackStart({
+      srcDirectory: "src",
+      pages: [{ path: "/docs", prerender: { enabled: true } }],
+      prerender: {
+        enabled: true,
+        // Best-effort: a page that can't be rendered at build time (e.g. no
+        // Clerk/Convex env in CI) is skipped and served via SSR instead of
+        // failing the build. With real env the docs render to static HTML.
+        failOnError: false,
+        crawlLinks: true,
+        filter: (page: { path: string }) => page.path.startsWith("/docs"),
+      },
+    }),
     viteReact(),
     // Reverse-proxy PostHog through /ingest (the paths posthog-provider.tsx targets),
     // replacing the next.config rewrites; static assets first as the more specific rule.
