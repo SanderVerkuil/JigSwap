@@ -208,6 +208,25 @@ describe("postPuzzleComment / listPuzzleComments", () => {
     ).rejects.toThrow(ConvexError);
   });
 
+  test("a non-owner posting on someone else's copy is rejected", async () => {
+    const t = convexTest(schema, modules);
+    const { aliceCopy } = await seed(t);
+
+    // Bob is authenticated but does NOT own aliceCopy.
+    await expect(
+      asBob(t).mutation(api.social.postPuzzleComment.postPuzzleComment, {
+        copyId: aliceCopy,
+        text: "not my copy",
+        rating: 5,
+      }),
+    ).rejects.toThrow(ConvexError);
+
+    const stored = await t.run((ctx) =>
+      ctx.db.query("puzzleComments").collect(),
+    );
+    expect(stored).toHaveLength(0);
+  });
+
   test("auth is required to post a comment", async () => {
     const t = convexTest(schema, modules);
     const { aliceCopy } = await seed(t);
