@@ -6,7 +6,7 @@ import {
   toFileId,
   toPuzzleDefinitionId,
 } from "@jigswap/domain";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { convexCompletionRepository } from "./adapters/convexCompletionRepository";
@@ -32,6 +32,22 @@ export const recordCompletion = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await requireMember(ctx);
+
+    // Logging a solve is an OWNER-ONLY action on one's OWN copy. The domain use cases never load
+    // the Copy, so without this gate any authenticated user could inject fabricated completions
+    // (with ratings/notes) onto another member's copy — getCopyInstanceView surfaces ALL of a
+    // copy's completions. Mirror shareCopyToCircle/setCopyCover: resolve the copy by its
+    // aggregateId (the Library CopyId) and require the actor to be its owner.
+    if (args.copyId !== undefined) {
+      const copy = await ctx.db
+        .query("ownedPuzzles")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", args.copyId))
+        .unique();
+      if (!copy) throw new ConvexError("Copy not found");
+      if (copy.ownerId !== (userId as unknown as string)) {
+        throw new ConvexError("Only the owner can log a solve for this copy");
+      }
+    }
 
     const puzzleDefinitionId = args.puzzleDefinitionId
       ? toPuzzleDefinitionId(args.puzzleDefinitionId)
