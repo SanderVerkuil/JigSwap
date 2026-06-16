@@ -177,19 +177,25 @@ describe("catalog reads", () => {
     expect(categories.map((c) => c.name.en)).toEqual(["Landscapes"]);
   });
 
-  test("getAllBrands returns the distinct brand set", async () => {
+  test("getAllBrands returns approved brands only (pending brand excluded)", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
 
     const brands = await t.query(api.catalog.getAllBrands.getAllBrands, {});
-    expect(new Set(brands)).toEqual(new Set(["Ravensburger", "Clementoni"]));
+    // Only the approved puzzle's brand surfaces; the pending puzzle's brand
+    // ("Clementoni") must NOT leak into the public filter dropdown.
+    expect(new Set(brands)).toEqual(new Set(["Ravensburger"]));
+    expect(brands).not.toContain("Clementoni");
   });
 
-  test("getAllTags returns the flattened, de-duplicated tag set", async () => {
+  test("getAllTags returns approved tags only (pending-only tag excluded)", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
 
     const tags = await t.query(api.catalog.getAllTags.getAllTags, {});
-    expect(new Set(tags)).toEqual(new Set(["nature", "mountains", "ocean"]));
+    // Approved puzzle's tags surface; "ocean" only exists on the pending puzzle
+    // and must NOT leak. "nature" is shared, so it still appears.
+    expect(new Set(tags)).toEqual(new Set(["nature", "mountains"]));
+    expect(tags).not.toContain("ocean");
   });
 });
