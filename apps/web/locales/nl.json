@@ -2095,7 +2095,8 @@
       "landingLead": "Alles wat je nodig hebt om je collectie op te bouwen, oplossingen vast te leggen en puzzels te ruilen met de community.",
       "skipToContent": "Naar inhoud springen",
       "navSheetTitle": "Documentatienavigatie",
-      "navSheetDescription": "Blader door de JigSwap-documentatie op onderwerp."
+      "navSheetDescription": "Blader door de JigSwap-documentatie op onderwerp.",
+      "breadcrumbLabel": "Kruimelpad"
     },
     "titles": {
       "home": "JigSwap — Deel legpuzzels met andere liefhebbers",

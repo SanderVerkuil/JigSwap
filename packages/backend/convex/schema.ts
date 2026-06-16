@@ -766,6 +766,8 @@ export default defineSchema({
     helpful: v.boolean(),
     comment: v.optional(v.string()),
     locale: v.optional(v.string()),
+    // Reserved for future authenticated attribution; the public mutation never
+    // sets it today (docs are public, so feedback is anonymous).
     userId: v.optional(v.id("users")),
     createdAt: v.number(),
   }).index("by_slug", ["slug", "createdAt"]),

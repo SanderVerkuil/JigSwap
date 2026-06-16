@@ -1,14 +1,16 @@
 import { Link } from "@/compat/link";
 import { ChevronRight } from "lucide-react";
+import { useTranslations } from "use-intl";
 
 export function DocBreadcrumb({
   trail,
 }: {
   trail: { title: string; to?: string }[];
 }) {
+  const t = useTranslations("marketing.docs");
   return (
     <nav
-      aria-label="Breadcrumb"
+      aria-label={t("breadcrumbLabel")}
       className="flex items-center gap-1.5 text-[13px] text-mk-text-muted mb-4"
     >
       {trail.map((c, i) => (
