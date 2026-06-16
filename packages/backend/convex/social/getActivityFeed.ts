@@ -87,7 +87,14 @@ export const getActivityFeed = query({
       }
     }
 
-    const feed = buildActivityFeed(entries, {
+    // One activity per (kind, ref): an ExchangeCompleted is attributed to BOTH parties, so a viewer
+    // who is a party AND follows the counterparty would otherwise see the same exchange twice.
+    // buildActivityFeed only sorts/slices, so dedupe here, keeping the first occurrence.
+    const deduped = [
+      ...new Map(entries.map((e) => [`${e.kind}:${e.ref}`, e])).values(),
+    ];
+
+    const feed = buildActivityFeed(deduped, {
       limit: args.limit ?? DEFAULT_LIMIT,
     });
     return feed.map(toActivityEntryView);
