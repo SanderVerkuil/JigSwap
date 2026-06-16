@@ -52,6 +52,11 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
       ownerId: bob,
       condition: "good",
       availability: { forTrade: true, forSale: false, forLend: false },
+      // Owner-only personal fields — must never reach the counterparty (Alice).
+      notes: "bob-private-note-mountain",
+      acquisitionSource: "bought_used",
+      acquisitionDate: now - 99_999,
+      acquisitionPrice: { amount: 4321, currency: "EUR" },
       createdAt: now,
       updatedAt: now,
     });
@@ -60,6 +65,11 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
       ownerId: alice,
       condition: "like_new",
       availability: { forTrade: true, forSale: false, forLend: false },
+      // Owner-only personal fields — must never reach the counterparty (Bob).
+      notes: "alice-private-note-ocean",
+      acquisitionSource: "gift",
+      acquisitionDate: now - 88_888,
+      acquisitionPrice: { amount: 1234, currency: "USD" },
       createdAt: now,
       updatedAt: now,
     });
@@ -164,6 +174,101 @@ describe("exchange.getExchangeById", () => {
       },
     );
     expect(view).toBeNull();
+  });
+});
+
+describe("exchange owner-only field gating (counterparty must not see private copy data)", () => {
+  // Alice owns Ocean Calm (offered), Bob owns Mountain Vista (requested). On the shared exchange
+  // view each party must see owner-only fields (notes + acquisition provenance) ONLY on their own
+  // copy, never on the counterparty's. salePrice is public and is not asserted here.
+  const BOB_SECRETS = [
+    "bob-private-note-mountain",
+    "bought_used",
+    "4321",
+  ] as const;
+  const ALICE_SECRETS = ["alice-private-note-ocean", "gift", "1234"] as const;
+
+  test("getExchangeById: each party sees only their own copy's owner-only fields", async () => {
+    const t = convexTest(schema, modules);
+    const { older } = await seed(t);
+
+    // Alice is the initiator: ownerPuzzle = Bob's requested copy, requesterPuzzle = Alice's offered.
+    const aliceView = await asAlice(t).query(
+      api.exchange.getExchangeById.getExchangeById,
+      { exchangeId: older },
+    );
+    expect(aliceView?.requesterPuzzle?.notes).toBe("alice-private-note-ocean");
+    expect(aliceView?.requesterPuzzle?.acquisitionSource).toBe("gift");
+    expect(aliceView?.requesterPuzzle?.acquisitionPrice?.amount).toBe(1234);
+    expect(aliceView?.requesterPuzzle?.acquisitionDate).toBeDefined();
+    // Bob's copy (the counterparty's) must be stripped of every owner-only field.
+    expect(aliceView?.ownerPuzzle?.notes).toBeUndefined();
+    expect(aliceView?.ownerPuzzle?.acquisitionSource).toBeUndefined();
+    expect(aliceView?.ownerPuzzle?.acquisitionPrice).toBeUndefined();
+    expect(aliceView?.ownerPuzzle?.acquisitionDate).toBeUndefined();
+    const aliceJson = JSON.stringify(aliceView);
+    for (const secret of BOB_SECRETS) {
+      expect(aliceJson).not.toContain(secret);
+    }
+
+    // Bob is the recipient: he must see his own copy's fields and none of Alice's.
+    const bobView = await asBob(t).query(
+      api.exchange.getExchangeById.getExchangeById,
+      { exchangeId: older },
+    );
+    expect(bobView?.ownerPuzzle?.notes).toBe("bob-private-note-mountain");
+    expect(bobView?.ownerPuzzle?.acquisitionSource).toBe("bought_used");
+    expect(bobView?.ownerPuzzle?.acquisitionPrice?.amount).toBe(4321);
+    expect(bobView?.requesterPuzzle?.notes).toBeUndefined();
+    expect(bobView?.requesterPuzzle?.acquisitionSource).toBeUndefined();
+    expect(bobView?.requesterPuzzle?.acquisitionPrice).toBeUndefined();
+    expect(bobView?.requesterPuzzle?.acquisitionDate).toBeUndefined();
+    const bobJson = JSON.stringify(bobView);
+    for (const secret of ALICE_SECRETS) {
+      expect(bobJson).not.toContain(secret);
+    }
+  });
+
+  test("getUserExchanges: initiator never receives the recipient's owner-only fields", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const list = await asAlice(t).query(
+      api.exchange.getUserExchanges.getUserExchanges,
+      {},
+    );
+    const older = list.find((e) => e.aggregateId === "exch-1");
+    // Alice owns the offered copy; she sees its owner-only fields.
+    expect(older?.offeredOwnedPuzzle?.notes).toBe("alice-private-note-ocean");
+    // Bob's requested copy is the counterparty's — stripped.
+    expect(older?.requestedOwnedPuzzle?.notes).toBeUndefined();
+    expect(older?.requestedOwnedPuzzle?.acquisitionSource).toBeUndefined();
+    expect(older?.requestedOwnedPuzzle?.acquisitionPrice).toBeUndefined();
+    const json = JSON.stringify(list);
+    for (const secret of BOB_SECRETS) {
+      expect(json).not.toContain(secret);
+    }
+  });
+
+  test("getExchangesByOwner: recipient never receives the initiator's owner-only fields", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const incoming = await asBob(t).query(
+      api.exchange.getExchangesByOwner.getExchangesByOwner,
+      {},
+    );
+    const older = incoming.find((e) => e.aggregateId === "exch-1");
+    // Bob owns the requested copy; he sees its owner-only fields.
+    expect(older?.requestedOwnedPuzzle?.notes).toBe(
+      "bob-private-note-mountain",
+    );
+    // Alice's offered copy is the counterparty's — stripped.
+    expect(older?.offeredOwnedPuzzle?.notes).toBeUndefined();
+    expect(older?.offeredOwnedPuzzle?.acquisitionSource).toBeUndefined();
+    expect(older?.offeredOwnedPuzzle?.acquisitionPrice).toBeUndefined();
+    const json = JSON.stringify(incoming);
+    for (const secret of ALICE_SECRETS) {
+      expect(json).not.toContain(secret);
+    }
   });
 });
 

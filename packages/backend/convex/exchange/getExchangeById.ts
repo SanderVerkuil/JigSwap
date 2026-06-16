@@ -33,8 +33,10 @@ export const getExchangeById = query({
       ...toExchangeFields(exchange),
       requester: requester ? toMemberView(requester) : null,
       owner: owner ? toMemberView(owner) : null,
-      ownerPuzzle: toOwnedPuzzleView(ownerPuzzle),
-      requesterPuzzle: toOwnedPuzzleView(requesterPuzzle),
+      // Gate each copy independently on the acting member: a party never sees the counterparty's
+      // owner-only fields (notes / acquisition provenance), only those on the copy they own.
+      ownerPuzzle: toOwnedPuzzleView(ownerPuzzle, member),
+      requesterPuzzle: toOwnedPuzzleView(requesterPuzzle, member),
     };
   },
 });

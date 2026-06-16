@@ -67,7 +67,9 @@ export const getUserExchanges = query({
     exchanges.sort((a, b) => b.createdAt - a.createdAt);
 
     return Promise.all(
-      exchanges.map((tr) => enrichExchangeSummary(ctx, tr, tr.userRole)),
+      exchanges.map((tr) =>
+        enrichExchangeSummary(ctx, tr, user._id, tr.userRole),
+      ),
     );
   },
 });

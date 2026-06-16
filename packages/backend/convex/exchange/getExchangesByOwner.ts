@@ -22,7 +22,7 @@ export const getExchangesByOwner = query({
       .collect();
 
     const enriched = await Promise.all(
-      exchanges.map((tr) => enrichExchangeSummary(ctx, tr)),
+      exchanges.map((tr) => enrichExchangeSummary(ctx, tr, user._id)),
     );
     return enriched.sort((a, b) => b.createdAt - a.createdAt);
   },
