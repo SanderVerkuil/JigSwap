@@ -3,7 +3,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { convexCopyRepository } from "./adapters/convexCopyRepository";
 import { convexLoanRepository } from "./adapters/convexLoanRepository";
-import { noopEventPublisher } from "./adapters/eventPublisher";
+import { libraryEventPublisher } from "./adapters/eventPublisher";
 import { loanIdGenerator } from "./adapters/idGenerators";
 import { systemClock } from "./adapters/systemClock";
 
@@ -23,7 +23,7 @@ export const handleDomainEvent = async (
     copies: convexCopyRepository(ctx),
     loans: convexLoanRepository(ctx),
     ids: loanIdGenerator,
-    events: noopEventPublisher(ctx),
+    events: libraryEventPublisher(ctx),
     clock: systemClock,
   });
   await openLoan({

@@ -8,7 +8,7 @@ import {
 } from "@jigswap/domain";
 import type { MutationCtx } from "../_generated/server";
 import { convexPuzzleDefinitionRepository } from "./adapters/convexPuzzleDefinitionRepository";
-import { noopEventPublisher } from "./adapters/eventPublisher";
+import { catalogEventPublisher } from "./adapters/eventPublisher";
 import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
 
@@ -26,7 +26,7 @@ export const runDefinitionAction = async (
 ): Promise<void> => {
   const action = make({
     definitions: convexPuzzleDefinitionRepository(ctx),
-    events: noopEventPublisher(ctx),
+    events: catalogEventPublisher(ctx),
     clock: systemClock,
   });
   const result = await action({

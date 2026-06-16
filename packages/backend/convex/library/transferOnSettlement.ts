@@ -6,7 +6,7 @@ import {
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { convexCopyRepository } from "./adapters/convexCopyRepository";
-import { noopEventPublisher } from "./adapters/eventPublisher";
+import { libraryEventPublisher } from "./adapters/eventPublisher";
 import { systemClock } from "./adapters/systemClock";
 
 // Library's reaction to a settled swap/sale (Exchange's OwnershipTransferred): the SAME copy changes
@@ -25,7 +25,7 @@ export const handleDomainEvent = async (
 
   const transfer = makeTransferCopyOwnership({
     copies: convexCopyRepository(ctx),
-    events: noopEventPublisher(ctx),
+    events: libraryEventPublisher(ctx),
     clock: systemClock,
   });
   // The new owner is the event's member id, which is the resolved users _id the copy row stores.

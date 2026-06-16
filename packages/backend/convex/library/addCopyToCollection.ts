@@ -9,7 +9,7 @@ import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { convexCollectionRepository } from "./adapters/convexCollectionRepository";
 import { convexCopyRepository } from "./adapters/convexCopyRepository";
-import { noopEventPublisher } from "./adapters/eventPublisher";
+import { libraryEventPublisher } from "./adapters/eventPublisher";
 import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
 
@@ -26,7 +26,7 @@ export const addCopyToCollection = mutation({
     const add = makeAddCopyToCollection({
       collections: convexCollectionRepository(ctx),
       copies: convexCopyRepository(ctx),
-      events: noopEventPublisher(ctx),
+      events: libraryEventPublisher(ctx),
       clock: systemClock,
     });
 

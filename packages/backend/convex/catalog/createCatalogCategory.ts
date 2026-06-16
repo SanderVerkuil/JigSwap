@@ -5,7 +5,7 @@ import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
 import { catalogIdGenerator } from "./adapters/catalogIdGenerator";
 import { convexCatalogCategoryRepository } from "./adapters/convexCatalogCategoryRepository";
-import { noopEventPublisher } from "./adapters/eventPublisher";
+import { catalogEventPublisher } from "./adapters/eventPublisher";
 import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
 
@@ -27,7 +27,7 @@ export const createCatalogCategory = mutation({
     const create = makeCreateCatalogCategory({
       categories: convexCatalogCategoryRepository(ctx),
       ids: catalogIdGenerator,
-      events: noopEventPublisher(ctx),
+      events: catalogEventPublisher(ctx),
       clock: systemClock,
     });
 

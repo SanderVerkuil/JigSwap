@@ -7,7 +7,7 @@ import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { convexCollectionRepository } from "./adapters/convexCollectionRepository";
-import { noopEventPublisher } from "./adapters/eventPublisher";
+import { libraryEventPublisher } from "./adapters/eventPublisher";
 import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
 
@@ -20,7 +20,7 @@ export const deleteCollection = mutation({
 
     const remove = makeDeleteCollection({
       collections: convexCollectionRepository(ctx),
-      events: noopEventPublisher(ctx),
+      events: libraryEventPublisher(ctx),
       clock: systemClock,
     });
 

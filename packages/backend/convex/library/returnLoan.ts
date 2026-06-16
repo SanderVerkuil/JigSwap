@@ -4,7 +4,7 @@ import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { convexCopyRepository } from "./adapters/convexCopyRepository";
 import { convexLoanRepository } from "./adapters/convexLoanRepository";
-import { noopEventPublisher } from "./adapters/eventPublisher";
+import { libraryEventPublisher } from "./adapters/eventPublisher";
 import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
 
@@ -17,7 +17,7 @@ export const returnLoan = mutation({
     const result = await makeReturnLoan({
       loans: convexLoanRepository(ctx),
       copies: convexCopyRepository(ctx),
-      events: noopEventPublisher(ctx),
+      events: libraryEventPublisher(ctx),
       clock: systemClock,
     })({
       loanId: toLoanId(args.loanId),

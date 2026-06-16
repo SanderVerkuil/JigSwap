@@ -9,7 +9,7 @@ import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
 import { catalogIdGenerator } from "./adapters/catalogIdGenerator";
 import { convexPuzzleDefinitionRepository } from "./adapters/convexPuzzleDefinitionRepository";
-import { noopEventPublisher } from "./adapters/eventPublisher";
+import { catalogEventPublisher } from "./adapters/eventPublisher";
 import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
 
@@ -64,7 +64,7 @@ export const submitPuzzleDefinition = mutation({
     const submit = makeSubmitPuzzleDefinition({
       definitions: convexPuzzleDefinitionRepository(ctx),
       ids: catalogIdGenerator,
-      events: noopEventPublisher(ctx),
+      events: catalogEventPublisher(ctx),
       clock: systemClock,
     });
 
