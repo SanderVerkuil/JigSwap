@@ -75,6 +75,17 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
       createdAt: now,
       updatedAt: now,
     });
+    // A SECOND collection for Alice so the by_user lookup is genuinely non-unique — guards against a
+    // regression to `.unique()` on `by_user`, which would throw for any member with >=2 collections.
+    await ctx.db.insert("collections", {
+      aggregateId: "coll-a2",
+      userId: alice,
+      name: "Wishlist",
+      visibility: "public",
+      isDefault: false,
+      createdAt: now,
+      updatedAt: now,
+    });
     await ctx.db.insert("collectionMembers", {
       collectionId: collection,
       ownedPuzzleId: available,
@@ -170,8 +181,27 @@ describe("library reads", () => {
     // Consumers read images[0].fileId directly.
     expect(view?.images[0].fileId).toBeDefined();
     expect(view?.owner?.name).toBe("Alice");
+    // The copy IS a member of Alice's "Favourites" collection -> in-collection with its visibility.
     expect(view?.collectionStatus.isInCollection).toBe(true);
+    if (view?.collectionStatus.isInCollection) {
+      expect(view.collectionStatus.visibility).toBe("private");
+    }
     expect(view?.completionHistory).toHaveLength(1);
+  });
+
+  test("getOwnedPuzzleWithCollectionStatus reports not-in-collection for an uncollected copy", async () => {
+    const t = convexTest(schema, modules);
+    const { unavailable } = await seed(t);
+
+    // `unavailable` (copy-b) is in NONE of Alice's collections; despite Alice owning >=2 collections
+    // (which would break a `.unique()` on by_user), status must be exactly { isInCollection: false }.
+    const view = await asAlice(t).query(
+      api.library.getOwnedPuzzleWithCollectionStatus
+        .getOwnedPuzzleWithCollectionStatus,
+      { ownedPuzzleId: unavailable },
+    );
+    expect(view).not.toBeNull();
+    expect(view?.collectionStatus.isInCollection).toBe(false);
   });
 });
 
@@ -188,10 +218,13 @@ describe("collection reads", () => {
       api.library.getUserCollections.getUserCollections,
       { userId: alice },
     );
-    expect(collections).toHaveLength(1);
+    expect(collections).toHaveLength(2);
+    // Default ("Favourites") sorts first; the second collection ("Wishlist") follows.
     expect(collections[0].name).toBe("Favourites");
     expect(collections[0].puzzleCount).toBe(1);
     expect(collections[0].isDefault).toBe(true);
+    expect(collections[1].name).toBe("Wishlist");
+    expect(collections[1].isDefault).toBe(false);
   });
 
   test("getCollectionById resolves member copies with addedAt", async () => {

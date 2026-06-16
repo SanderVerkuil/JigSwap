@@ -35,10 +35,31 @@ export const getOwnedPuzzleWithCollectionStatus = query({
 
     const owner = await ctx.db.get(ownedPuzzle.ownerId);
 
-    const collection = await ctx.db
-      .query("collections")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
-      .unique();
+    // Collection status of THIS specific copy: find a collectionMembers row for the copy whose
+    // collection belongs to the acting member. `by_user` is non-unique, so the user's collection ids
+    // are collected into a set and the copy's membership rows are matched against it. (A bare
+    // `.unique()` on `by_user` would throw for any member with >=2 collections, and a non-null
+    // collection never proved the copy itself was a member.)
+    const userCollectionIds = new Set(
+      (
+        await ctx.db
+          .query("collections")
+          .withIndex("by_user", (q) => q.eq("userId", user._id))
+          .collect()
+      ).map((c) => c._id),
+    );
+    const memberships = await ctx.db
+      .query("collectionMembers")
+      .withIndex("by_owned_puzzle", (q) =>
+        q.eq("ownedPuzzleId", args.ownedPuzzleId),
+      )
+      .collect();
+    const membership = memberships.find((m) =>
+      userCollectionIds.has(m.collectionId),
+    );
+    const collection = membership
+      ? await ctx.db.get(membership.collectionId)
+      : null;
 
     const completions = await ctx.db
       .query("completions")
