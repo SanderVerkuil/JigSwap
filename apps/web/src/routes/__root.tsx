@@ -26,9 +26,16 @@ import appCss from "../styles/globals.css?url";
 // Runs on the server during beforeLoad so the Convex HTTP client can be authed
 // for SSR reads; uses the "convex" JWT template configured in Clerk.
 const fetchClerkAuth = createServerFn({ method: "GET" }).handler(async () => {
-  const { userId, getToken } = await auth();
-  const token = await getToken({ template: "convex" });
-  return { userId, token };
+  try {
+    const { userId, getToken } = await auth();
+    const token = await getToken({ template: "convex" });
+    return { userId, token };
+  } catch {
+    // During static prerender (and any context without a Clerk request) there
+    // is no session, so `auth()` cannot resolve. Fall back to unauthenticated
+    // so public routes like /docs can still be generated.
+    return { userId: null, token: null };
+  }
 });
 
 // beforeLoad re-runs on EVERY navigation (root always matches), which used to
