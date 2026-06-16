@@ -2,23 +2,26 @@ import type { GlobalSearchResults } from "@jigswap/contracts";
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
 
 // Global search: the single read behind the ⌘K command palette. Given a term it returns a small
 // grouped result set across Puzzles, People, Circles and the signed-in member's Collections.
 //
 // Indexing strategy (documented intentionally):
 //   - Puzzles      -> the existing `by_searchable_text` search index (approved-only). REAL index.
-//   - People       -> NO name search index exists; we scan a BOUNDED set of active users
-//                     (PEOPLE_SCAN_LIMIT) and filter in-memory by lowercased substring. This is a
-//                     best-effort match, not exhaustive — see TODO in the report.
+//   - People       -> the `by_searchable_name` search index over users.searchableName. REAL index.
+//                     Results are then routed through the profile-visibility chokepoint so a member
+//                     with a private profile is never surfaced by name/username/avatar to a searcher
+//                     who is neither them nor a mutual follower (consistent with getProfile and the
+//                     custody-timeline projectMemberIdentity chokepoint).
 //   - Circles      -> the signed-in member's circles only (small set), in-memory name filter.
 //   - Collections  -> the signed-in member's collections only (small set), in-memory name filter.
 //
 // Short/empty terms short-circuit to empty groups. Unauthenticated callers get empty groups too.
 
-// How many active users to scan for the in-memory name match. Kept small on purpose; a proper
-// `users` name search index would remove this bound (TODO).
-const PEOPLE_SCAN_LIMIT = 50;
+// We over-fetch people candidates from the search index (since some get dropped by the visibility
+// gate) and stop once `limit` visible matches are collected.
+const PEOPLE_CANDIDATE_LIMIT = 50;
 
 const EMPTY: GlobalSearchResults = {
   puzzles: [],
@@ -62,25 +65,32 @@ export const global = query({
       })),
     );
 
-    // --- People: bounded scan + in-memory substring filter (no name index). ---
-    const scanned = await ctx.db
+    // --- People: real search index + profile-visibility gate. ---
+    const candidates = await ctx.db
       .query("users")
-      .withIndex("by_clerk_id")
-      .take(PEOPLE_SCAN_LIMIT);
-    const people = scanned
-      .filter(
-        (u) =>
-          u._id !== memberId &&
-          (u.name.toLowerCase().includes(term) ||
-            (u.username?.toLowerCase().includes(term) ?? false)),
+      .withSearchIndex("by_searchable_name", (q) =>
+        q.search("searchableName", term),
       )
-      .slice(0, limit)
-      .map((u) => ({
+      .take(PEOPLE_CANDIDATE_LIMIT);
+    const people: GlobalSearchResults["people"] = [];
+    for (const u of candidates) {
+      if (people.length >= limit) break;
+      if (u._id === memberId) continue;
+      // Privacy chokepoint: only surface a member if their profile is public, or
+      // they are a mutual follower of the searcher. Mirrors getProfile and the
+      // custody-timeline projectMemberIdentity rules so a private member is not
+      // identifiable by name/username/avatar via ⌘K.
+      const visible =
+        (await profileVisibilityOf(ctx, u._id)) === "public" ||
+        (await areMutualFollowers(ctx, memberId, u._id));
+      if (!visible) continue;
+      people.push({
         id: u._id,
         name: u.name,
         image: u.avatar ?? null,
         href: "/people",
-      }));
+      });
+    }
 
     // --- Circles: the member's own circles, in-memory name filter. ---
     const circleLinks = await ctx.db
