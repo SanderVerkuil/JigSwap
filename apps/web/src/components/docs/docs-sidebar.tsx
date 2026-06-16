@@ -3,14 +3,21 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { buildNavTree, pagesForLocale } from "@/docs/nav";
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, Search } from "lucide-react";
-import { useTranslations } from "use-intl";
-import { navTree } from "virtual:docs";
+import { useMemo } from "react";
+import { useLocale, useTranslations } from "use-intl";
+import { pages } from "virtual:docs";
 
 export function DocsSidebar({ onOpenSearch }: { onOpenSearch: () => void }) {
   const t = useTranslations("marketing.docs");
+  const locale = useLocale();
+  const navTree = useMemo(
+    () => buildNavTree(pagesForLocale(pages, locale)),
+    [locale],
+  );
   return (
     <nav aria-label={t("navLabel")} className="flex flex-col gap-1">
       <button

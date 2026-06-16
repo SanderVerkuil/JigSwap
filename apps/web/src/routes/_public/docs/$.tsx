@@ -3,9 +3,10 @@ import { DocContent } from "@/components/docs/doc-content";
 import { DocHelpful } from "@/components/docs/doc-helpful";
 import { DocPager } from "@/components/docs/doc-pager";
 import { OnPageToc } from "@/components/docs/on-page-toc";
-import { buildNavTree, buildPager } from "@/docs/nav";
+import { buildNavTree, buildPager, pagesForLocale } from "@/docs/nav";
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { useTranslations } from "use-intl";
+import { useMemo } from "react";
+import { useLocale, useTranslations } from "use-intl";
 import { pages } from "virtual:docs";
 
 export const Route = createFileRoute("/_public/docs/$")({
@@ -14,14 +15,16 @@ export const Route = createFileRoute("/_public/docs/$")({
 
 function DocPageView() {
   const t = useTranslations("marketing.docs");
+  const locale = useLocale();
+  const localePages = useMemo(() => pagesForLocale(pages, locale), [locale]);
   const { _splat } = Route.useParams();
   const slug = (_splat ?? "").replace(/\/$/, "");
   const page =
-    pages.find((p) => p.slug === slug && !p.isIndex) ??
-    pages.find((p) => p.slug === slug); // allow group index pages too
+    localePages.find((p) => p.slug === slug && !p.isIndex) ??
+    localePages.find((p) => p.slug === slug); // allow group index pages too
   if (!page) throw notFound();
 
-  const tree = buildNavTree(pages);
+  const tree = buildNavTree(localePages);
   const pager = buildPager(tree, slug);
   const group = tree.find((g) => g.slug === page.group);
 

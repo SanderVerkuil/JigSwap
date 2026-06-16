@@ -1,5 +1,15 @@
 import type { DocPage, NavGroup, NavTree, Pager } from "./types";
 
+// Pages for a locale, falling back to the English page for any slug missing in
+// that locale. One entry per unique slug.
+export function pagesForLocale(pages: DocPage[], locale: string): DocPage[] {
+  const bySlug = new Map<string, DocPage>();
+  for (const p of pages) if (p.locale === "en") bySlug.set(p.slug, p);
+  if (locale !== "en")
+    for (const p of pages) if (p.locale === locale) bySlug.set(p.slug, p);
+  return [...bySlug.values()];
+}
+
 // Group leaf pages by their group dir. The group's title/order come from the
 // group's index page; leaves are sorted by frontmatter.order then title.
 export function buildNavTree(pages: DocPage[]): NavTree {

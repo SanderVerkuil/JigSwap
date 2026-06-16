@@ -1,10 +1,11 @@
 import { Container } from "@/components/marketing/container";
 import { PageHero } from "@/components/marketing/page-hero";
 import { Section } from "@/components/marketing/section";
-import { buildNavTree } from "@/docs/nav";
+import { buildNavTree, pagesForLocale } from "@/docs/nav";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BookOpen } from "lucide-react";
-import { useTranslations } from "use-intl";
+import { useMemo } from "react";
+import { useLocale, useTranslations } from "use-intl";
 import { pages } from "virtual:docs";
 
 export const Route = createFileRoute("/_public/docs/")({
@@ -13,10 +14,13 @@ export const Route = createFileRoute("/_public/docs/")({
 
 function DocsIndex() {
   const t = useTranslations("marketing.docs");
-  const tree = buildNavTree(pages);
+  const locale = useLocale();
+  const localePages = useMemo(() => pagesForLocale(pages, locale), [locale]);
+  const tree = useMemo(() => buildNavTree(localePages), [localePages]);
   // Each group's blurb comes from its index page frontmatter summary.
   const summaryFor = (slug: string) =>
-    pages.find((p) => p.slug === slug && p.isIndex)?.frontmatter.summary ?? "";
+    localePages.find((p) => p.slug === slug && p.isIndex)?.frontmatter
+      .summary ?? "";
 
   return (
     <div>

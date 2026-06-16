@@ -13,15 +13,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { pagesForLocale } from "@/docs/nav";
 import { buildSearchDocs, createDocsIndex } from "@/docs/search";
 import { useNavigate } from "@tanstack/react-router";
 import { FileText } from "lucide-react";
 import * as React from "react";
-import { useTranslations } from "use-intl";
+import { useLocale, useTranslations } from "use-intl";
 import { pages } from "virtual:docs";
-
-// Built once from the static manifest — the corpus is fixed at build time.
-const index = createDocsIndex(buildSearchDocs(pages));
 
 // Docs command palette. We disable cmdk's own filtering (`shouldFilter={false}`)
 // and feed it MiniSearch results for our controlled query, so ranking/snippets
@@ -34,9 +32,15 @@ export function DocsSearch({
   onOpenChange: (v: boolean) => void;
 }) {
   const t = useTranslations("marketing.docs");
+  const locale = useLocale();
   const navigate = useNavigate();
   const [query, setQuery] = React.useState("");
-  const hits = React.useMemo(() => index.search(query), [query]);
+  // Rebuilt per locale (en + locale overrides); the corpus is otherwise static.
+  const index = React.useMemo(
+    () => createDocsIndex(buildSearchDocs(pagesForLocale(pages, locale))),
+    [locale],
+  );
+  const hits = React.useMemo(() => index.search(query), [index, query]);
 
   const go = (slug: string) => {
     onOpenChange(false);

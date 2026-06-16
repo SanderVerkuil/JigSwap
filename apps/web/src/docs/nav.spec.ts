@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildNavTree, buildPager, flattenOrder } from "./nav";
+import { buildNavTree, buildPager, flattenOrder, pagesForLocale } from "./nav";
 import type { DocPage } from "./types";
 
 function page(
@@ -8,8 +8,10 @@ function page(
   isIndex: boolean,
   title: string,
   order = 0,
+  locale = "en",
 ): DocPage {
   return {
+    locale,
     slug,
     group,
     isIndex,
@@ -40,6 +42,55 @@ const PAGES: DocPage[] = [
   page("your-library", "your-library", true, "Your Library", 2),
   page("your-library/collections", "your-library", false, "Collections", 1),
 ];
+
+describe("pagesForLocale", () => {
+  const MIXED: DocPage[] = [
+    page(
+      "getting-started",
+      "getting-started",
+      true,
+      "Getting Started",
+      1,
+      "en",
+    ),
+    page(
+      "getting-started/accounts",
+      "getting-started",
+      false,
+      "Accounts",
+      1,
+      "en",
+    ),
+    page("your-library", "your-library", true, "Your Library", 2, "en"),
+    // nl overrides one slug, leaves the rest to fall back to en.
+    page("getting-started", "getting-started", true, "Aan de slag", 1, "nl"),
+  ];
+
+  it("returns all en pages for the en locale", () => {
+    const result = pagesForLocale(MIXED, "en");
+    expect(result.map((p) => p.slug).sort()).toEqual([
+      "getting-started",
+      "getting-started/accounts",
+      "your-library",
+    ]);
+    expect(result.every((p) => p.locale === "en")).toBe(true);
+  });
+
+  it("overrides where the locale has a page and falls back to en otherwise", () => {
+    const result = pagesForLocale(MIXED, "nl");
+    const bySlug = new Map(result.map((p) => [p.slug, p]));
+    // One entry per unique slug.
+    expect(result.length).toBe(3);
+    // nl override wins for the slug it provides.
+    expect(bySlug.get("getting-started")?.locale).toBe("nl");
+    expect(bySlug.get("getting-started")?.frontmatter.title).toBe(
+      "Aan de slag",
+    );
+    // Missing slugs fall back to en.
+    expect(bySlug.get("getting-started/accounts")?.locale).toBe("en");
+    expect(bySlug.get("your-library")?.locale).toBe("en");
+  });
+});
 
 describe("buildNavTree", () => {
   it("groups leaf pages under their group, ordered, excluding the root index", () => {
