@@ -103,22 +103,25 @@ describe("identity.getUserByClerkId / getUserById", () => {
   test("resolve the same member by clerk id and _id", async () => {
     const t = convexTest(schema, modules);
     const { alice } = await seed(t);
-    const byClerk = await t.query(
+    const byClerk = await asAlice(t).query(
       api.identity.getUserByClerkId.getUserByClerkId,
       { clerkId: "clerk_alice" },
     );
     expect(byClerk?._id).toBe(alice);
-    const byId = await t.query(api.identity.getUserById.getUserById, {
+    const byId = await asAlice(t).query(api.identity.getUserById.getUserById, {
       userId: alice,
     });
-    expect(byId?.email).toBe("alice@example.com");
+    // MemberView is PII-free: no email/clerkId leak to other members.
+    expect(byId?.name).toBe("Alice Anderson");
+    expect(byId && "email" in byId).toBe(false);
+    expect(byId && "clerkId" in byId).toBe(false);
   });
 
   test("return null for an unknown clerk id", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
     expect(
-      await t.query(api.identity.getUserByClerkId.getUserByClerkId, {
+      await asAlice(t).query(api.identity.getUserByClerkId.getUserByClerkId, {
         clerkId: "nope",
       }),
     ).toBeNull();
@@ -144,15 +147,21 @@ describe("identity.searchUsers", () => {
   test("matches on name/username/location, case-insensitively", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
-    const byName = await t.query(api.identity.searchUsers.searchUsers, {
-      searchTerm: "alice",
-    });
+    const byName = await asAlice(t).query(
+      api.identity.searchUsers.searchUsers,
+      {
+        searchTerm: "alice",
+      },
+    );
     expect(byName.map((u) => u.name)).toContain("Alice Anderson");
-    const byLocation = await t.query(api.identity.searchUsers.searchUsers, {
-      searchTerm: "amsterdam",
-    });
+    const byLocation = await asAlice(t).query(
+      api.identity.searchUsers.searchUsers,
+      {
+        searchTerm: "amsterdam",
+      },
+    );
     expect(byLocation).toHaveLength(1);
-    const none = await t.query(api.identity.searchUsers.searchUsers, {
+    const none = await asAlice(t).query(api.identity.searchUsers.searchUsers, {
       searchTerm: "zzz",
     });
     expect(none).toHaveLength(0);
@@ -162,10 +171,13 @@ describe("identity.searchUsers", () => {
     const t = convexTest(schema, modules);
     await seed(t);
     // Both Alice and Bob contain no shared token except an empty term, which matches all.
-    const limited = await t.query(api.identity.searchUsers.searchUsers, {
-      searchTerm: "",
-      limit: 1,
-    });
+    const limited = await asAlice(t).query(
+      api.identity.searchUsers.searchUsers,
+      {
+        searchTerm: "",
+        limit: 1,
+      },
+    );
     expect(limited).toHaveLength(1);
   });
 });

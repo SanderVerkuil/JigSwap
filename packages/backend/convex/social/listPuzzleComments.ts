@@ -30,8 +30,6 @@ export const listPuzzleComments = query({
             : {
                 _id: row.authorId,
                 _creationTime: 0,
-                clerkId: "",
-                email: "",
                 name: "Member",
                 isActive: false,
                 createdAt: 0,
