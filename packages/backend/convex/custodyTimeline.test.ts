@@ -129,25 +129,28 @@ const settleLoanToAlice = async (
   return id;
 };
 
+// Bob buys the copy from its CURRENT owner (`seller`). After the first sale the copy belongs to
+// Alice, so the second sale must name Alice as the recipient/seller (she now owns the copy).
 const settleSaleToBob = async (
   t: ReturnType<typeof convexTest>,
   copy: Id<"ownedPuzzles">,
-  owner: Id<"users">,
+  seller: Id<"users">,
+  sellerAuth: string,
 ) => {
   const id = await asBob(t).mutation(api.exchange.propose.propose, {
-    recipientId: owner,
+    recipientId: seller,
     type: "sale",
     requestedPuzzleId: copy,
     salePrice: 1200,
   });
   await t
-    .withIdentity({ subject: "clerk_owner" })
+    .withIdentity({ subject: sellerAuth })
     .mutation(api.exchange.accept.accept, { exchangeId: id });
   await asBob(t).mutation(api.exchange.confirmCompletion.confirmCompletion, {
     exchangeId: id,
   });
   await t
-    .withIdentity({ subject: "clerk_owner" })
+    .withIdentity({ subject: sellerAuth })
     .mutation(api.exchange.confirmCompletion.confirmCompletion, {
       exchangeId: id,
     });
@@ -181,12 +184,13 @@ describe("custody.getCopyCustodyTimeline", () => {
 
   test("projects two settled transfers in chronological order with exchange + owner", async () => {
     const t = convexTest(schema, modules);
-    const { copy, owner } = await seed(t);
+    const { copy, owner, alice } = await seed(t);
 
     const firstExchange = await settleSaleToAlice(t, copy, owner);
     await flushScheduled(t);
     await reopenForSale(t, copy);
-    const secondExchange = await settleSaleToBob(t, copy, owner);
+    // After the first sale the copy belongs to Alice; Bob now buys it FROM Alice.
+    const secondExchange = await settleSaleToBob(t, copy, alice, "clerk_alice");
     await flushScheduled(t);
 
     const timeline = await asCarol(t).query(

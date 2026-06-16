@@ -9,6 +9,7 @@ export type ApplicationErrorCode =
   | "CopyNotFound"
   | "CopyNotAvailable"
   | "OfferedCopyNotOwned"
+  | "RecipientNotOwner"
   | "DuplicateProposal"
   | "ExchangeNotFound";
 
@@ -46,6 +47,14 @@ export class ApplicationError extends DomainError {
     return new ApplicationError(
       "OfferedCopyNotOwned",
       `Offered copy ${copyId} is not owned by the initiator`,
+    );
+  }
+
+  // The requested copy is not owned by the named recipient — the proposal targets the wrong member.
+  static recipientNotOwner(copyId: CopyId): ApplicationError {
+    return new ApplicationError(
+      "RecipientNotOwner",
+      `Copy ${copyId} is not owned by the named recipient`,
     );
   }
 

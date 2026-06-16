@@ -64,6 +64,11 @@ export const makeProposeExchange =
         ApplicationError.copyNotAvailable(cmd.requestedCopyId, cmd.kind),
       );
     }
+    // The recipient must actually own the requested copy, else the proposal targets an arbitrary
+    // member (spam) and could never settle.
+    if (requested.ownerId !== cmd.recipientId) {
+      return err(ApplicationError.recipientNotOwner(cmd.requestedCopyId));
+    }
 
     if (cmd.kind === "swap") {
       const offered = await loadOfferedCopy(deps.copies, cmd);
