@@ -7,7 +7,7 @@ import {
   SheetDescription,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Outlet, createFileRoute } from "@tanstack/react-router";
+import { Outlet, createFileRoute, useLocation } from "@tanstack/react-router";
 import * as React from "react";
 
 export const Route = createFileRoute("/_public/docs")({
@@ -17,6 +17,14 @@ export const Route = createFileRoute("/_public/docs")({
 function DocsLayout() {
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [navOpen, setNavOpen] = React.useState(false);
+
+  // The /docs landing page renders a full-bleed marketing hero, which looks
+  // cramped inside the 280px sidebar grid. Detect the exact index route via the
+  // current pathname (trailing slash tolerant) and drop the sidebar column for
+  // it; every nested doc page keeps the sidebar + TOC layout. The mobile bar,
+  // search dialog, and ⌘K handler stay mounted on all docs routes regardless.
+  const { pathname } = useLocation();
+  const isIndex = pathname.replace(/\/$/, "") === "/docs";
 
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -35,14 +43,23 @@ function DocsLayout() {
         onOpenNav={() => setNavOpen(true)}
         onOpenSearch={() => setSearchOpen(true)}
       />
-      <div className="mx-auto w-full max-w-[1400px] px-6 grid grid-cols-[280px_minmax(0,1fr)] max-[1000px]:grid-cols-1 gap-x-[clamp(32px,4vw,64px)] items-start">
-        <aside className="sticky top-[86px] self-start max-h-[calc(100vh-86px)] overflow-y-auto pr-6 border-r border-mk-border py-8 max-[1000px]:hidden">
-          <DocsSidebar onOpenSearch={() => setSearchOpen(true)} />
-        </aside>
-        <main id="docs-content" className="py-8 min-w-0">
+      {isIndex ? (
+        // Full-width landing: no sidebar, no horizontal padding/max-width so the
+        // PageHero band can bleed edge-to-edge. The page supplies its own
+        // Container for the card grid.
+        <main id="docs-content" className="min-w-0">
           <Outlet />
         </main>
-      </div>
+      ) : (
+        <div className="mx-auto w-full max-w-[1400px] px-6 grid grid-cols-[280px_minmax(0,1fr)] max-[1000px]:grid-cols-1 gap-x-[clamp(32px,4vw,64px)] items-start">
+          <aside className="sticky top-[86px] self-start max-h-[calc(100vh-86px)] overflow-y-auto pr-6 border-r border-mk-border py-8 max-[1000px]:hidden">
+            <DocsSidebar onOpenSearch={() => setSearchOpen(true)} />
+          </aside>
+          <main id="docs-content" className="py-8 min-w-0">
+            <Outlet />
+          </main>
+        </div>
+      )}
 
       <Sheet open={navOpen} onOpenChange={setNavOpen}>
         <SheetContent
