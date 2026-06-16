@@ -14,16 +14,17 @@ export const ogieStorePageFetcher: StorePageFetcher = {
       result = await extract(url, {
         timeout: 10000,
         userAgent: "JigSwapBot/1.0",
-        maxRedirects: 5,
-        // SSRF: ogie fetches with `redirect: "manual"` and re-validates EVERY hop (entry URL and
-        // each redirect target) against literal private/loopback/link-local IPs + internal TLDs;
-        // it also blocks https->http downgrades. We PIN allowPrivateUrls:false (rather than relying
-        // on ogie's default) so a redirect to e.g. http://169.254.169.254/ or http://127.0.0.1/ is
-        // rejected by ogie itself — closing the redirect-hop SSRF that this primary tier previously
-        // left to chance. (Residual: ogie's per-hop check is LEXICAL, so a public hostname that DNS-
-        // resolves to a private IP on a redirect hop is not caught here; that DNS-rebinding case is
-        // handled by the DNS-validating browserStorePageFetcher fallback, and the entry URL's DNS is
-        // validated up front by assertPublicUrl.)
+        // SSRF: this primary tier does NOT follow redirects. ogie fetches the entry URL once
+        // (maxRedirects:1 means "fetch entry, follow zero hops" — its loop runs exactly once and
+        // any 3xx surfaces as a REDIRECT_LIMIT error; note maxRedirects:0 would make ogie fetch
+        // NOTHING and always throw, so 1 is the correct "no-follow" value). REDIRECT_LIMIT maps to
+        // a retryable FetchFailed, so a redirecting store URL falls through to the fallback chain
+        // (browserStorePageFetcher), which DNS-validates EVERY hop. Redirect-following — and its
+        // SSRF validation — is therefore handled exclusively by the browser tier, closing the
+        // DNS-rebinding-on-redirect gap that following redirects here would have left open.
+        // allowPrivateUrls:false is still pinned so the entry URL's literal-private check throws
+        // before any egress, defending against a literal private/loopback/link-local entry URL.
+        maxRedirects: 1,
         allowPrivateUrls: false,
       });
     } catch (e) {

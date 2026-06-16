@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { ogieStorePageFetcher } from "./catalog/adapters/ogieStorePageFetcher";
 
 // SSRF regression: the ogie primary tier pins allowPrivateUrls:false, so ogie's own per-hop
@@ -34,4 +34,49 @@ describe("ogieStorePageFetcher SSRF guard", () => {
       }
     });
   }
+});
+
+// SSRF: the ogie primary tier must NOT follow redirects (maxRedirects:1). A redirecting store URL
+// has to surface as a (retryable) failure so the import falls through to the DNS-validating
+// browserStorePageFetcher, which is the only tier allowed to follow — and re-validate — redirect
+// hops. We stub global fetch with a 301 from a PUBLIC-looking host (so ogie's lexical entry-URL
+// check passes and it actually performs the fetch) and assert ogie reports a failure rather than
+// chasing the Location header.
+describe("ogieStorePageFetcher does not follow redirects", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test("a 3xx response surfaces as a retryable failure, not a followed hop", async () => {
+    const redirected = vi.fn();
+    vi.spyOn(globalThis, "fetch").mockImplementation(
+      async (input: RequestInfo | URL) => {
+        const target = typeof input === "string" ? input : input.toString();
+        // The entry URL is answered with a redirect; anything else means ogie followed the hop.
+        if (target === "https://store.example.com/product/123") {
+          return new Response(null, {
+            status: 301,
+            headers: { location: "https://store.example.com/moved" },
+          });
+        }
+        redirected();
+        return new Response("<html><head><title>Moved</title></head></html>", {
+          status: 200,
+          headers: { "content-type": "text/html" },
+        });
+      },
+    );
+
+    const result = await ogieStorePageFetcher.fetch(
+      "https://store.example.com/product/123",
+    );
+
+    // ogie must not have dialled the redirect target.
+    expect(redirected).not.toHaveBeenCalled();
+    expect(result.isErr).toBe(true);
+    if (result.isErr) {
+      // REDIRECT_LIMIT maps to a retryable FetchFailed, which triggers the fallback chain.
+      expect(result.error.code).toBe("FetchFailed");
+    }
+  });
 });

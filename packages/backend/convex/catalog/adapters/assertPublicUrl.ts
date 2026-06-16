@@ -6,15 +6,15 @@ import { lookup as dnsLookup } from "node:dns/promises";
 // a DNS-resolved public host ONCE, so every fetcher tier only ever sees a pre-validated public host.
 // Reuses the domain `isPrivateIp` rule rather than re-implementing it.
 //
-// Redirect-hop coverage (this guards the ENTRY url only; tiers that follow redirects re-validate
-// each hop themselves):
-//   - browserStorePageFetcher: re-runs a DNS-resolving guard on EVERY hop (redirect:"manual").
-//   - ogieStorePageFetcher: ogie fetches with redirect:"manual" and re-validates every hop against
-//     literal private IPs/internal TLDs (allowPrivateUrls:false is pinned), so a redirect to a
-//     literal private IP is rejected. Its per-hop check is LEXICAL only — a public hostname that
-//     DNS-resolves to a private IP on a redirect hop falls through to the DNS-validating browser
-//     tier rather than being followed by ogie. This narrow DNS-rebinding-on-redirect residual is
-//     the only remaining gap and is acceptable given the validating fallback.
+// Redirect-hop coverage (this guards the ENTRY url only; redirect-following is concentrated in the
+// single tier that DNS-validates every hop):
+//   - browserStorePageFetcher: the ONLY tier that follows redirects. It re-runs a DNS-resolving
+//     guard on EVERY hop (redirect:"manual"), so a public hostname that DNS-resolves to a private
+//     IP on a redirect hop is caught here. The DNS-rebinding-on-redirect case is fully covered.
+//   - ogieStorePageFetcher: the primary tier does NOT follow redirects (maxRedirects:1 = fetch
+//     entry, follow zero hops). A redirecting store URL surfaces as a retryable FetchFailed and
+//     falls through to browserStorePageFetcher above. allowPrivateUrls:false is pinned so a literal
+//     private/loopback/link-local entry URL is rejected by ogie before any egress.
 //   - firecrawlStorePageFetcher: our egress only reaches api.firecrawl.dev (a public host); the
 //     target page is fetched by Firecrawl's infra, not ours, so it is not an SSRF vector here.
 export type PublicUrlCheck =
