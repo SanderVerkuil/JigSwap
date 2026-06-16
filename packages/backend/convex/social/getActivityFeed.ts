@@ -29,6 +29,11 @@ const FEED_EVENT_NAMES = [
 
 const DEFAULT_LIMIT = 50;
 
+// Time window + per-name cap so the feed reads a bounded slice of `domainEvents` (via the
+// `by_name` index) instead of scanning the whole log. 90 days comfortably covers a feed page.
+const FEED_WINDOW_MS = 90 * 24 * 60 * 60 * 1000;
+const PER_NAME_CAP = 500;
+
 export const getActivityFeed = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args): Promise<ActivityEntryView[]> => {
@@ -43,13 +48,18 @@ export const getActivityFeed = query({
     const audience = new Set<string>([meId as string]);
     for (const f of followRows) audience.add(f.followeeId as string);
 
-    // Pull the activity-bearing events. Convex has no OR over `name`, so collect per-name.
+    // Pull the activity-bearing events. Convex has no OR over `name`, so query per-name via the
+    // `by_name` index, bounded to a recent window and capped (newest-first) to avoid a full scan.
+    const since = Date.now() - FEED_WINDOW_MS;
     const eventBatches = await Promise.all(
       FEED_EVENT_NAMES.map((name) =>
         ctx.db
           .query("domainEvents")
-          .filter((q) => q.eq(q.field("name"), name))
-          .collect(),
+          .withIndex("by_name", (q) =>
+            q.eq("name", name).gte("occurredAt", since),
+          )
+          .order("desc")
+          .take(PER_NAME_CAP),
       ),
     );
 

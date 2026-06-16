@@ -24,13 +24,24 @@ export const convexCopyReservationPort = (
     if (!copy) return false;
     const ownedPuzzleId = copy._id as Id<"ownedPuzzles">;
 
-    // Scan exchanges that reference the copy as requested or offered, in an active status.
-    const exchanges = await ctx.db.query("exchanges").collect();
-    return exchanges.some(
-      (ex) =>
-        ACTIVE_STATUSES.has(ex.status) &&
-        (ex.requestedPuzzleId === ownedPuzzleId ||
-          ex.offeredPuzzleId === ownedPuzzleId),
+    // Indexed lookup of exchanges that reference the copy as requested or offered (union of the
+    // two indexes), then keep only those in an active status — no full-table scan.
+    const [asRequested, asOffered] = await Promise.all([
+      ctx.db
+        .query("exchanges")
+        .withIndex("by_requested_copy", (q) =>
+          q.eq("requestedPuzzleId", ownedPuzzleId),
+        )
+        .collect(),
+      ctx.db
+        .query("exchanges")
+        .withIndex("by_offered_copy", (q) =>
+          q.eq("offeredPuzzleId", ownedPuzzleId),
+        )
+        .collect(),
+    ]);
+    return [...asRequested, ...asOffered].some((ex) =>
+      ACTIVE_STATUSES.has(ex.status),
     );
   },
 });

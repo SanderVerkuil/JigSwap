@@ -442,7 +442,11 @@ export default defineSchema({
   })
     .index("by_initiator", ["initiatorId", "offeredPuzzleId"])
     .index("by_recipient", ["recipientId", "offeredPuzzleId"])
-    .index("by_aggregate_id", ["aggregateId"]),
+    .index("by_aggregate_id", ["aggregateId"])
+    // Back the copy-reservation check: find exchanges referencing a copy as requested/offered
+    // without scanning the whole table.
+    .index("by_requested_copy", ["requestedPuzzleId"])
+    .index("by_offered_copy", ["offeredPuzzleId"]),
 
   messages: defineTable({
     exchangeId: v.id("exchanges"),
@@ -688,7 +692,11 @@ export default defineSchema({
     occurredAt: v.number(),
     context: v.string(),
     processedAt: v.optional(v.number()),
-  }).index("by_processed", ["processedAt"]),
+  })
+    .index("by_processed", ["processedAt"])
+    // Backs the activity feed: pull recent events of a given name in a bounded time window without
+    // a full-table scan-and-filter.
+    .index("by_name", ["name", "occurredAt"]),
 
   // Chain-of-Custody projection: one row per OwnershipTransferred event, folded by the custody
   // subscriber off the durable event log. WHY a dedicated table: domainEvents.payload is v.any()
