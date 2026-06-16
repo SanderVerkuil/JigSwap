@@ -1790,6 +1790,7 @@
     "description": "How this copy has changed hands over time.",
     "originalOwner": "Original owner",
     "currentOwner": "Current owner",
+    "anonymous": "Anonymous user",
     "transferredVia": "Transferred via exchange {exchangeId}",
     "noTransfers": "This copy has never been transferred.",
     "loading": "Loading custody timeline..."

@@ -1,20 +1,26 @@
 import type {
   CopyCustodyTimelineView,
   CustodyTransferView,
+  ProjectedMember,
 } from "@jigswap/contracts";
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
-import { toMemberView } from "../identity/toMemberView";
+import { requireMember } from "../identity/requireMember";
+import { projectMemberIdentity } from "../social/privacy";
 
 // Chain-of-Custody read: a Copy's full provenance assembled from the custody projection. Ownership
 // IS reassigned on a swap/sale, so the copy's stored ownerId is the CURRENT holder; the chain is
 // derived from the projected entries — the original owner is the first transfer's previousOwner and
 // the current owner is the last transfer's recipient (falling back to the copy's owner when it was
-// never transferred). Member views are resolved via the shared identity mapper; null when unresolved.
+// never transferred). Auth-gated; every surfaced member is run through `projectMemberIdentity`
+// (salt = copyId) so a hidden member's real identity never enters the returned DTO — mirroring
+// getCopyInstanceView's privacy contract.
 export const getCopyCustodyTimeline = query({
   args: { copyId: v.id("ownedPuzzles") },
   handler: async (ctx, args): Promise<CopyCustodyTimelineView | null> => {
+    const viewerId = (await requireMember(ctx)) as unknown as Id<"users">;
+
     const copy = await ctx.db.get(args.copyId);
     if (!copy) return null;
 
@@ -24,37 +30,43 @@ export const getCopyCustodyTimeline = query({
       .order("asc")
       .collect();
 
-    // Resolve every distinct member once (current owner + each transfer's from/to).
-    const memberIds = new Set<string>([
-      copy.ownerId,
-      ...entries.flatMap((e) => [e.previousOwner, e.newOwner]),
-    ]);
-    const members = new Map(
-      await Promise.all(
-        [...memberIds].map(async (id) => {
-          const user = await ctx.db.get(id as Id<"users">);
-          return [id, user ? toMemberView(user) : null] as const;
-        }),
-      ),
-    );
+    const salt = args.copyId as string;
+    // Memoise the projection per target so a hidden member yields one stable anonRef across every
+    // surfaced reference (same target + same salt -> same token).
+    const projections = new Map<string, Promise<ProjectedMember>>();
+    const project = (targetId: string): Promise<ProjectedMember> => {
+      const existing = projections.get(targetId);
+      if (existing) return existing;
+      const p = projectMemberIdentity(
+        ctx,
+        viewerId,
+        targetId as Id<"users">,
+        salt,
+      );
+      projections.set(targetId, p);
+      return p;
+    };
 
-    const transfers: CustodyTransferView[] = entries.map((e) => ({
-      exchangeId: e.exchangeId,
-      newOwner: members.get(e.newOwner) ?? null,
-      occurredAt: e.occurredAt,
-    }));
+    const transfers: CustodyTransferView[] = await Promise.all(
+      entries.map(async (e) => ({
+        exchangeId: e.exchangeId,
+        newOwner: await project(e.newOwner),
+        occurredAt: e.occurredAt,
+      })),
+    );
 
     const first = entries.at(0);
     const last = entries.at(-1);
+    const originalOwner = await project(
+      first ? first.previousOwner : copy.ownerId,
+    );
+    const currentOwner = await project(last ? last.newOwner : copy.ownerId);
+
     return {
       copyId: args.copyId,
-      originalOwner:
-        (first
-          ? members.get(first.previousOwner)
-          : members.get(copy.ownerId)) ?? null,
+      originalOwner,
       transfers,
-      currentOwner:
-        (last ? members.get(last.newOwner) : members.get(copy.ownerId)) ?? null,
+      currentOwner,
     };
   },
 });
