@@ -20,7 +20,11 @@ import { easing } from "maath";
 import * as React from "react";
 import * as THREE from "three";
 import { layoutRow } from "./layout";
-import { useWoodTexture } from "./wood-texture";
+import {
+  DEFAULT_WOOD_PARAMS,
+  useWoodTexture,
+  type WoodParams,
+} from "./wood-texture";
 
 // ——— shelf constants ———
 const SHELF_THICKNESS = 0.14;
@@ -170,6 +174,7 @@ function Arrangement({
   lightingPreset,
   reducedMotion,
   onFirstFrame,
+  woodParams,
 }: {
   boxes: PuzzlePlankBox[];
   resolved: Array<{ c1: string; c2: string }>;
@@ -177,12 +182,13 @@ function Arrangement({
   lightingPreset: LightingPreset;
   reducedMotion: boolean;
   onFirstFrame: () => void;
+  woodParams: WoodParams;
 }) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const size = useThree((s) => s.size);
 
   // Wood-grain texture for the shelf board, tinted from the theme shelf colour.
-  const woodTexture = useWoodTexture(lightingPreset.shelfColor);
+  const woodTexture = useWoodTexture(lightingPreset.shelfColor, woodParams);
 
   const { slots, rowWidth } = React.useMemo(() => layoutRow(boxes), [boxes]);
 
@@ -230,7 +236,10 @@ function Arrangement({
             ]}
           >
             <boxGeometry args={[shelfW, SHELF_THICKNESS, SHELF_DEPTH]} />
-            <meshStandardMaterial map={woodTexture} roughness={0.62} />
+            <meshStandardMaterial
+              map={woodTexture}
+              roughness={woodParams.roughness}
+            />
           </mesh>
 
           {boxes.map((box, i) => (
@@ -275,6 +284,8 @@ export interface PlankSceneProps {
   /** Bumped to snap the physics boxes back to their resting layout (ignored by
    *  the static scene). */
   resetNonce?: number;
+  /** Temporary: live wood-grain tuning from the tweaks panel. */
+  woodParams?: WoodParams;
 }
 
 export default function PlankScene(props: PlankSceneProps) {
@@ -298,6 +309,7 @@ export default function PlankScene(props: PlankSceneProps) {
         lightingPreset={lightingPreset}
         reducedMotion={props.reducedMotion}
         onFirstFrame={props.onFirstFrame}
+        woodParams={props.woodParams ?? DEFAULT_WOOD_PARAMS}
       />
     </Canvas>
   );

@@ -11,9 +11,33 @@ import * as THREE from "three";
 
 const TEX_W = 1024;
 const TEX_H = 512;
-// Grain lines across the board's narrow axis (depth on the top face). Tuned to
-// read as a plank without looking striped.
-const GRAINS = 11;
+
+// Tunable wood look. Exposed (with the temporary tweaks panel) so the grain can
+// be dialed in live; once a good combination is found these become the new
+// defaults and the panel is removed.
+export interface WoodParams {
+  /** Grain lines across the board's narrow axis. */
+  grains: number;
+  /** Depth of the dark grain lines (0 = none). */
+  lineStrength: number;
+  /** Strength of the fine streaks running with the grain. */
+  streakStrength: number;
+  /** Broad low-frequency lightness drift. */
+  toneStrength: number;
+  /** How much the grain lines wobble along the board length. */
+  warp: number;
+  /** Shelf material roughness (not part of the texture; matte ↔ sheen). */
+  roughness: number;
+}
+
+export const DEFAULT_WOOD_PARAMS: WoodParams = {
+  grains: 11,
+  lineStrength: 0.3,
+  streakStrength: 0.16,
+  toneStrength: 0.1,
+  warp: 0.06,
+  roughness: 0.62,
+};
 
 function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace("#", "");
@@ -66,7 +90,11 @@ function fbm(x: number, y: number): number {
 }
 
 /** Build a wood-grain CanvasTexture tinted from `baseColor` (e.g. "#c98f4d"). */
-export function createWoodTexture(baseColor: string): THREE.CanvasTexture {
+export function createWoodTexture(
+  baseColor: string,
+  params: WoodParams = DEFAULT_WOOD_PARAMS,
+): THREE.CanvasTexture {
+  const { grains, lineStrength, streakStrength, toneStrength, warp } = params;
   const [br, bg, bb] = hexToRgb(baseColor);
   const canvas = document.createElement("canvas");
   canvas.width = TEX_W;
@@ -82,8 +110,8 @@ export function createWoodTexture(baseColor: string): THREE.CanvasTexture {
 
       // Warp the grain lines so they wobble gently along the board length
       // rather than running perfectly straight.
-      const warp = fbm(nx * 4, ny * 2) - 0.5;
-      const g = (ny + warp * 0.06) * GRAINS;
+      const warpN = fbm(nx * 4, ny * 2) - 0.5;
+      const g = (ny + warpN * warp) * grains;
       // Thin dark lines at each integer grain boundary.
       const line = Math.pow(1 - Math.abs(Math.sin(g * Math.PI)), 3);
       // Fine high-frequency streaks running with the grain.
@@ -92,7 +120,10 @@ export function createWoodTexture(baseColor: string): THREE.CanvasTexture {
       const tone = fbm(nx * 1.5, ny * 1.5) - 0.5;
 
       const brightness =
-        1 - line * 0.3 - Math.max(0, streak) * 0.16 + tone * 0.1;
+        1 -
+        line * lineStrength -
+        Math.max(0, streak) * streakStrength +
+        tone * toneStrength;
 
       const i = (y * TEX_W + x) * 4;
       data[i] = Math.max(0, Math.min(255, br * brightness));
@@ -117,10 +148,17 @@ export function createWoodTexture(baseColor: string): THREE.CanvasTexture {
  * Memoize one wood texture per shelf colour and dispose it on unmount / change.
  * Each <Canvas> tree calls this independently, so each gets its own GPU texture.
  */
-export function useWoodTexture(baseColor: string): THREE.CanvasTexture {
+export function useWoodTexture(
+  baseColor: string,
+  params: WoodParams = DEFAULT_WOOD_PARAMS,
+): THREE.CanvasTexture {
+  const { grains, lineStrength, streakStrength, toneStrength, warp } = params;
   const texture = React.useMemo(
-    () => createWoodTexture(baseColor),
-    [baseColor],
+    () => createWoodTexture(baseColor, params),
+    // Depend on the primitive params (not the object identity) so live tweaks
+    // regenerate the canvas but stable renders don't.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [baseColor, grains, lineStrength, streakStrength, toneStrength, warp],
   );
   React.useEffect(() => () => texture.dispose(), [texture]);
   return texture;

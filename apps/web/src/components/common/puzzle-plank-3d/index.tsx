@@ -14,6 +14,7 @@ import { useTheme } from "next-themes";
 import * as React from "react";
 import { useTranslations } from "use-intl";
 import type { PlankSceneProps } from "./scene";
+import { DEFAULT_WOOD_PARAMS, type WoodParams } from "./wood-texture";
 
 const PlankScene = React.lazy(() => import("./scene"));
 const PlankScenePhysics = React.lazy(() => import("./scene-physics"));
@@ -79,6 +80,9 @@ export function PuzzlePlank3D({
   const [headingFont, setHeadingFont] = React.useState("system-ui, sans-serif");
   // Bumped by the Reset button to snap the physics boxes back to their layout.
   const [resetNonce, setResetNonce] = React.useState(0);
+  // TEMPORARY: live wood-grain tuning via the on-screen tweaks panel.
+  const [woodParams, setWoodParams] =
+    React.useState<WoodParams>(DEFAULT_WOOD_PARAMS);
   const t = useTranslations("shell");
   const reducedMotion = usePrefersReducedMotion();
   const { resolvedTheme } = useTheme();
@@ -131,6 +135,7 @@ export function PuzzlePlank3D({
     onFirstFrame: () => setSceneReady(true),
     eventSource: container,
     resetNonce,
+    woodParams,
   };
 
   return (
@@ -197,6 +202,163 @@ export function PuzzlePlank3D({
           <RotateCcw className="size-3.5" />
           {t("plankReset")}
         </Button>
+      )}
+
+      {/* TEMPORARY wood-grain tuning panel — remove once the look is dialed in. */}
+      {showScene && sceneReady && (
+        <WoodTweaksPanel value={woodParams} onChange={setWoodParams} />
+      )}
+    </div>
+  );
+}
+
+// ——— TEMPORARY: wood-grain tweaks panel ———
+// A throwaway on-screen control surface so the wood-grain parameters can be
+// dialed in live in the browser. Once a good combination is found, update
+// DEFAULT_WOOD_PARAMS in wood-texture.ts and delete this component + its state.
+const WOOD_SLIDERS: Array<{
+  key: keyof WoodParams;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+}> = [
+  { key: "grains", label: "Grains", min: 2, max: 28, step: 1 },
+  { key: "lineStrength", label: "Line", min: 0, max: 0.6, step: 0.01 },
+  { key: "streakStrength", label: "Streak", min: 0, max: 0.5, step: 0.01 },
+  { key: "toneStrength", label: "Tone", min: 0, max: 0.4, step: 0.01 },
+  { key: "warp", label: "Warp", min: 0, max: 0.25, step: 0.005 },
+  { key: "roughness", label: "Rough", min: 0.1, max: 1, step: 0.02 },
+];
+
+function WoodTweaksPanel({
+  value,
+  onChange,
+}: {
+  value: WoodParams;
+  onChange: (next: WoodParams) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  // Don't let presses inside the panel reach the r3f canvas (box grabs).
+  const stop = (e: React.PointerEvent) => e.stopPropagation();
+
+  return (
+    <div
+      onPointerDown={stop}
+      style={{
+        position: "absolute",
+        top: 8,
+        left: 8,
+        zIndex: 20,
+        fontFamily: "ui-monospace, monospace",
+        fontSize: 11,
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        style={{
+          background: "rgba(20,18,42,0.85)",
+          color: "#fff",
+          border: "1px solid rgba(255,255,255,0.2)",
+          borderRadius: 6,
+          padding: "4px 8px",
+          cursor: "pointer",
+        }}
+      >
+        🪵 Wood {open ? "▲" : "▼"}
+      </button>
+
+      {open && (
+        <div
+          style={{
+            marginTop: 6,
+            width: 220,
+            background: "rgba(20,18,42,0.92)",
+            color: "#fff",
+            border: "1px solid rgba(255,255,255,0.2)",
+            borderRadius: 8,
+            padding: 10,
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+            backdropFilter: "blur(4px)",
+          }}
+        >
+          {WOOD_SLIDERS.map((s) => (
+            <label
+              key={s.key}
+              style={{ display: "flex", flexDirection: "column", gap: 2 }}
+            >
+              <span
+                style={{ display: "flex", justifyContent: "space-between" }}
+              >
+                <span>{s.label}</span>
+                <span style={{ opacity: 0.8 }}>
+                  {Math.round(value[s.key] * 1000) / 1000}
+                </span>
+              </span>
+              <input
+                type="range"
+                min={s.min}
+                max={s.max}
+                step={s.step}
+                value={value[s.key]}
+                onChange={(e) =>
+                  onChange({ ...value, [s.key]: Number(e.target.value) })
+                }
+                style={{ width: "100%" }}
+              />
+            </label>
+          ))}
+
+          <div style={{ display: "flex", gap: 6 }}>
+            <button
+              type="button"
+              onClick={() => onChange(DEFAULT_WOOD_PARAMS)}
+              style={{
+                flex: 1,
+                background: "rgba(255,255,255,0.12)",
+                color: "#fff",
+                border: "1px solid rgba(255,255,255,0.2)",
+                borderRadius: 6,
+                padding: "4px 6px",
+                cursor: "pointer",
+              }}
+            >
+              Reset
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                void navigator.clipboard?.writeText(JSON.stringify(value))
+              }
+              style={{
+                flex: 1,
+                background: "rgba(255,255,255,0.12)",
+                color: "#fff",
+                border: "1px solid rgba(255,255,255,0.2)",
+                borderRadius: 6,
+                padding: "4px 6px",
+                cursor: "pointer",
+              }}
+            >
+              Copy
+            </button>
+          </div>
+
+          <pre
+            style={{
+              margin: 0,
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-all",
+              opacity: 0.85,
+              fontSize: 10,
+            }}
+          >
+            {JSON.stringify(value)}
+          </pre>
+        </div>
       )}
     </div>
   );

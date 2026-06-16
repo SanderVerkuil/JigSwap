@@ -30,7 +30,11 @@ import * as THREE from "three";
 import { clampThrowVelocity } from "./drag-math";
 import { layoutRow } from "./layout";
 import type { PlankSceneProps } from "./scene";
-import { useWoodTexture } from "./wood-texture";
+import {
+  DEFAULT_WOOD_PARAMS,
+  useWoodTexture,
+  type WoodParams,
+} from "./wood-texture";
 
 // @dimforge/rapier3d-compat is a transitive peer; we reference its enum
 // values via numeric constants to avoid a direct (unresolvable) import.
@@ -356,6 +360,7 @@ function PhysicsArrangement({
   lightingPreset,
   onFirstFrame,
   resetNonce = 0,
+  woodParams,
 }: {
   boxes: PuzzlePlankBox[];
   resolved: Array<{ c1: string; c2: string }>;
@@ -363,12 +368,13 @@ function PhysicsArrangement({
   lightingPreset: LightingPreset;
   onFirstFrame: () => void;
   resetNonce?: number;
+  woodParams: WoodParams;
 }) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const size = useThree((s) => s.size);
 
   // Wood-grain texture for the shelf board, tinted from the theme shelf colour.
-  const woodTexture = useWoodTexture(lightingPreset.shelfColor);
+  const woodTexture = useWoodTexture(lightingPreset.shelfColor, woodParams);
 
   const { slots, rowWidth } = React.useMemo(() => layoutRow(boxes), [boxes]);
 
@@ -478,7 +484,10 @@ function PhysicsArrangement({
           ]}
         >
           <boxGeometry args={[shelfW, SHELF_THICKNESS, SHELF_DEPTH]} />
-          <meshStandardMaterial map={woodTexture} roughness={0.62} />
+          <meshStandardMaterial
+            map={woodTexture}
+            roughness={woodParams.roughness}
+          />
         </mesh>
       </RigidBody>
 
@@ -590,6 +599,7 @@ export default function PlankScenePhysics(props: PlankSceneProps) {
           lightingPreset={lightingPreset}
           onFirstFrame={props.onFirstFrame}
           resetNonce={props.resetNonce}
+          woodParams={props.woodParams ?? DEFAULT_WOOD_PARAMS}
         />
       </Physics>
     </Canvas>
