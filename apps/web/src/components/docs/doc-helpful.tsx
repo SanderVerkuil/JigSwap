@@ -14,26 +14,44 @@ export function DocHelpful({ slug }: { slug: string }) {
     "idle",
   );
   const [comment, setComment] = React.useState("");
+  const [sending, setSending] = React.useState(false);
 
   const vote = async (helpful: boolean) => {
-    if (helpful) {
+    if (!helpful) {
+      setState("negative");
+      return;
+    }
+    if (sending) return;
+    setSending(true);
+    try {
       await submit({ slug, helpful: true, locale });
       setState("done");
       toast.success("Thanks for the feedback!");
-    } else {
-      setState("negative");
+    } catch {
+      // Keep the buttons usable so the reader can retry.
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setSending(false);
     }
   };
 
   const sendNegative = async () => {
-    await submit({
-      slug,
-      helpful: false,
-      comment: comment.trim() || undefined,
-      locale,
-    });
-    setState("done");
-    toast.success("Thanks — we'll use this to improve.");
+    if (sending) return;
+    setSending(true);
+    try {
+      await submit({
+        slug,
+        helpful: false,
+        comment: comment.trim() || undefined,
+        locale,
+      });
+      setState("done");
+      toast.success("Thanks — we'll use this to improve.");
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setSending(false);
+    }
   };
 
   if (state === "done") {
@@ -51,10 +69,20 @@ export function DocHelpful({ slug }: { slug: string }) {
           Was this page helpful?
         </span>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => vote(true)}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={sending}
+            onClick={() => vote(true)}
+          >
             <ThumbsUp className="size-4" /> Yes
           </Button>
-          <Button variant="outline" size="sm" onClick={() => vote(false)}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={sending}
+            onClick={() => vote(false)}
+          >
             <ThumbsDown className="size-4" /> Not really
           </Button>
         </div>
@@ -65,6 +93,8 @@ export function DocHelpful({ slug }: { slug: string }) {
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             placeholder="What was missing or unclear? (optional)"
+            aria-label="Feedback comment"
+            maxLength={2000}
             className="bg-mk-card"
             rows={3}
           />
@@ -72,6 +102,7 @@ export function DocHelpful({ slug }: { slug: string }) {
             variant="brand"
             size="sm"
             className="self-start"
+            disabled={sending}
             onClick={sendNegative}
           >
             Send feedback
