@@ -127,7 +127,7 @@ function RootComponent() {
     <ClerkProvider localization={intl.locale === "nl" ? nlNL : enUS}>
       <ConvexProviderWithClerk client={context.convexClient} useAuth={useAuth}>
         <AuthCacheSync />
-        <RootDocument>
+        <RootDocument locale={intl.locale}>
           <Providers locale={intl.locale} messages={intl.messages}>
             <ErrorBoundary>
               <Outlet />
@@ -155,9 +155,18 @@ function AuthCacheSync() {
   return null;
 }
 
-function RootDocument({ children }: { children: React.ReactNode }) {
+// `locale` is threaded from the resolved intl context so <html lang> matches the
+// active language (nl/en) for screen readers, browser translation, hyphenation and
+// SEO. The errorComponent path has no resolved intl context, so it falls back to "en".
+function RootDocument({
+  children,
+  locale = "en",
+}: {
+  children: React.ReactNode;
+  locale?: string;
+}) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
