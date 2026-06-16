@@ -119,15 +119,32 @@
 
 .docs-prose :not(pre) > code {
   font-family: var(--font-mono);
-  font-size: 0.875em;
-  padding: 0.12em 0.4em;
+  font-size: 0.85em;
+  padding: 0.1em 0.4em;
   border-radius: 6px;
-  background: var(--mk-muted);
-  border: 1px solid var(--mk-border);
+  background: color-mix(in oklab, var(--mk-violet-400) 10%, var(--mk-card));
+  border: 1px solid color-mix(in oklab, var(--mk-violet-400) 22%, transparent);
   color: var(--mk-violet-700);
+  /* keep long tokens like URLs/paths on one tidy line, wrapping at boundaries */
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
+/* In dark mode the old muted-grey fill read as a harsh light chip; use a softly
+   violet-tinted dark surface with a low-contrast border and a legible light
+   violet so inline paths/URLs sit calmly in the prose. */
 .dark .docs-prose :not(pre) > code {
-  color: var(--mk-violet-300);
+  background: color-mix(
+    in oklab,
+    var(--mk-violet-400) 14%,
+    var(--mk-card-base)
+  );
+  border-color: color-mix(in oklab, var(--mk-violet-400) 24%, transparent);
+  color: var(--mk-violet-200);
+}
+/* inline code inside a link shouldn't double-decorate */
+.docs-prose a > code {
+  color: inherit;
+  text-decoration: inherit;
 }
 
 .docs-prose pre {
@@ -183,6 +200,71 @@
   margin: 24px 0;
   color: var(--mk-text-muted);
   font-style: italic;
+}
+
+/* Collapsible sections (e.g. the FAQ). Authored as <details><summary>…</summary>
+   …</details> in markdown. */
+.docs-prose details {
+  margin: 10px 0;
+  border: 1px solid var(--mk-border);
+  border-radius: 12px;
+  background: var(--mk-card);
+  overflow: hidden;
+}
+.docs-prose details + details {
+  margin-top: 8px;
+}
+.docs-prose summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  font-family: var(--font-mk-heading);
+  font-weight: 600;
+  font-size: 15.5px;
+  color: var(--mk-text-strong);
+  transition: color 0.15s var(--ease-mk-out);
+}
+.docs-prose summary::-webkit-details-marker {
+  display: none;
+}
+/* chevron affordance that rotates when open */
+.docs-prose summary::before {
+  content: "";
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 7px;
+  border-right: 2px solid var(--mk-violet-400);
+  border-bottom: 2px solid var(--mk-violet-400);
+  transform: rotate(-45deg);
+  transition: transform 0.15s var(--ease-mk-out);
+}
+.docs-prose details[open] > summary::before {
+  transform: rotate(45deg);
+}
+.docs-prose summary:hover {
+  color: var(--mk-violet-600);
+}
+.docs-prose details[open] > summary {
+  border-bottom: 1px solid var(--mk-border);
+}
+/* the answer body inside an open <details> */
+.docs-prose details > :not(summary) {
+  margin: 0;
+  padding: 4px 16px 16px;
+  color: var(--mk-text-body);
+}
+.docs-prose details > :not(summary):first-of-type {
+  padding-top: 14px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .docs-prose summary,
+  .docs-prose summary::before {
+    transition: none;
+  }
 }
 .docs-prose figure {
   margin: 28px 0;
