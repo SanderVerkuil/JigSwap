@@ -20,6 +20,7 @@ import { easing } from "maath";
 import * as React from "react";
 import * as THREE from "three";
 import { layoutRow } from "./layout";
+import { useWoodTexture } from "./wood-texture";
 
 // ——— shelf constants ———
 const SHELF_THICKNESS = 0.14;
@@ -180,6 +181,9 @@ function Arrangement({
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const size = useThree((s) => s.size);
 
+  // Wood-grain texture for the shelf board, tinted from the theme shelf colour.
+  const woodTexture = useWoodTexture(lightingPreset.shelfColor);
+
   const { slots, rowWidth } = React.useMemo(() => layoutRow(boxes), [boxes]);
 
   // Max box world height across the row — drives framing.
@@ -226,10 +230,7 @@ function Arrangement({
             ]}
           >
             <boxGeometry args={[shelfW, SHELF_THICKNESS, SHELF_DEPTH]} />
-            <meshStandardMaterial
-              color={lightingPreset.shelfColor}
-              roughness={0.7}
-            />
+            <meshStandardMaterial map={woodTexture} roughness={0.62} />
           </mesh>
 
           {boxes.map((box, i) => (

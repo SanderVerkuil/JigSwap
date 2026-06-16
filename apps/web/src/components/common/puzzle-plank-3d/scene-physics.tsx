@@ -30,6 +30,7 @@ import * as THREE from "three";
 import { clampThrowVelocity } from "./drag-math";
 import { layoutRow } from "./layout";
 import type { PlankSceneProps } from "./scene";
+import { useWoodTexture } from "./wood-texture";
 
 // @dimforge/rapier3d-compat is a transitive peer; we reference its enum
 // values via numeric constants to avoid a direct (unresolvable) import.
@@ -366,6 +367,9 @@ function PhysicsArrangement({
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const size = useThree((s) => s.size);
 
+  // Wood-grain texture for the shelf board, tinted from the theme shelf colour.
+  const woodTexture = useWoodTexture(lightingPreset.shelfColor);
+
   const { slots, rowWidth } = React.useMemo(() => layoutRow(boxes), [boxes]);
 
   const maxBoxH = React.useMemo(
@@ -474,10 +478,7 @@ function PhysicsArrangement({
           ]}
         >
           <boxGeometry args={[shelfW, SHELF_THICKNESS, SHELF_DEPTH]} />
-          <meshStandardMaterial
-            color={lightingPreset.shelfColor}
-            roughness={0.7}
-          />
+          <meshStandardMaterial map={woodTexture} roughness={0.62} />
         </mesh>
       </RigidBody>
 
