@@ -15,9 +15,10 @@ export const getUserExchanges = query({
       v.union(
         v.literal("proposed"),
         v.literal("accepted"),
-        v.literal("declined"),
+        v.literal("rejected"),
         v.literal("completed"),
         v.literal("cancelled"),
+        v.literal("disputed"),
       ),
     ),
     asRequester: v.optional(v.boolean()),

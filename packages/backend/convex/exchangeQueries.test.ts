@@ -194,6 +194,47 @@ describe("exchange.getUserExchanges", () => {
     expect(completed).toHaveLength(1);
     expect(completed[0].aggregateId).toBe("exch-2");
   });
+
+  test("filters by the schema status 'rejected' (not the legacy 'declined')", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+    // A rejected exchange that the legacy `declined` literal could never match.
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const puzzle = await ctx.db.insert("puzzles", {
+        title: "Forest",
+        pieceCount: 250,
+        status: "approved",
+        submittedBy: bob,
+        createdAt: now,
+        updatedAt: now,
+      });
+      const copy = await ctx.db.insert("ownedPuzzles", {
+        puzzleId: puzzle,
+        ownerId: bob,
+        condition: "good",
+        availability: { forTrade: true, forSale: false, forLend: false },
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("exchanges", {
+        aggregateId: "exch-3",
+        initiatorId: alice,
+        recipientId: bob,
+        type: "trade",
+        requestedPuzzleId: copy,
+        status: "rejected",
+        createdAt: now + 1000,
+        updatedAt: now + 1000,
+      });
+    });
+    const rejected = await asAlice(t).query(
+      api.exchange.getUserExchanges.getUserExchanges,
+      { status: "rejected" },
+    );
+    expect(rejected).toHaveLength(1);
+    expect(rejected[0].aggregateId).toBe("exch-3");
+  });
 });
 
 describe("exchange.getExchangesByOwner / getExchangesByRequester", () => {
