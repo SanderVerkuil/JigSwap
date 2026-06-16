@@ -208,6 +208,49 @@ describe("library reads", () => {
     expect(ownerCopy?.salePrice).toEqual({ amount: 1000, currency: "EUR" });
   });
 
+  test("getOwnedPuzzlesByOwner hides a PRIVATE-profile owner's available copies from a non-owner", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, available } = await seed(t);
+
+    // Alice's copy is AVAILABLE and copy-level visible, but her PROFILE is private. The canViewCopy
+    // reachability gate must keep this off-limits to a non-owner, matching Browse/getCopyInstanceView
+    // (the previous ad-hoc filter only checked the per-copy axes and would have leaked it).
+    await t.run(async (ctx) => {
+      await ctx.db.patch(available, { visibility: "visible" });
+      await ctx.db.insert("profiles", {
+        memberId: alice,
+        displayName: "Alice",
+        visibility: "private",
+        updatedAt: Date.now(),
+      });
+      const now = Date.now();
+      await ctx.db.insert("users", {
+        clerkId: "clerk_bob",
+        email: "bob@example.com",
+        name: "Bob",
+        username: "bob",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    // Non-owner Bob sees NONE of Alice's copies — her private profile makes them unreachable.
+    const asBob = t.withIdentity({ subject: "clerk_bob" });
+    const bobView = await asBob.query(
+      api.library.getOwnedPuzzlesByOwner.getOwnedPuzzlesByOwner,
+      { ownerId: alice, includeUnavailable: true },
+    );
+    expect(bobView).toHaveLength(0);
+
+    // Alice herself still sees her own copies (owner short-circuit).
+    const ownerView = await asAlice(t).query(
+      api.library.getOwnedPuzzlesByOwner.getOwnedPuzzlesByOwner,
+      { ownerId: alice, includeUnavailable: true },
+    );
+    expect(ownerView.map((c) => c._id)).toContain(available as string);
+  });
+
   test("browseOwnedPuzzles is auth-gated and returns a typed paginated view with owner", async () => {
     const t = convexTest(schema, modules);
     await seed(t);

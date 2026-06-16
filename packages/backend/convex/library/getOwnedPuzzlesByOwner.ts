@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { canViewCopy } from "./canViewCopy";
 import { toOwnedCopyView } from "./mappers";
 
 const isOpen = (copy: Doc<"ownedPuzzles">): boolean =>
@@ -31,10 +32,16 @@ export const getOwnedPuzzlesByOwner = query({
       .collect();
 
     if (!isOwner) {
-      // A non-owner only ever sees available, non-private copies — `includeUnavailable` is ignored.
-      ownedPuzzles = ownedPuzzles.filter(
-        (i) => i.visibility !== "private" && isOpen(i),
+      // A non-owner only sees copies that pass THE canonical copy-reachability gate (canViewCopy),
+      // exactly as Browse/getCopyInstanceView do — `includeUnavailable` is ignored. The previous
+      // ad-hoc filter checked only the per-copy `visibility` + isOpen axes, NOT the owner's PROFILE
+      // visibility, so available copies of a member with a PRIVATE profile were still enumerated to
+      // any authenticated viewer. canViewCopy folds in owner-public AND circle-shared reachability,
+      // closing that leak and keeping this read consistent with the rest of the library.
+      const visible = await Promise.all(
+        ownedPuzzles.map((copy) => canViewCopy(ctx, viewerId, copy)),
       );
+      ownedPuzzles = ownedPuzzles.filter((_, i) => visible[i]);
     } else if (!args.includeUnavailable) {
       ownedPuzzles = ownedPuzzles.filter(isOpen);
     }
