@@ -1,6 +1,7 @@
 import rehypeShiki from "@shikijs/rehype"; // default export is the rehype plugin
 import matter from "gray-matter";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import rehypeExternalLinks from "rehype-external-links";
 import rehypeSlug from "rehype-slug";
 import rehypeStringify from "rehype-stringify";
 import remarkGfm from "remark-gfm";
@@ -92,6 +93,13 @@ const processor = unified()
   .use(remarkGfm)
   .use(remarkRehype)
   .use(rehypeSlug)
+  // External links open in a new tab; the .docs-prose ↗ affordance keys off
+  // the resulting target="_blank". Internal links (relative/root paths) are
+  // left untouched.
+  .use(rehypeExternalLinks, {
+    target: "_blank",
+    rel: ["noopener", "noreferrer"],
+  })
   .use(rehypeAutolinkHeadings, { behavior: "wrap" })
   // Build-time syntax highlighting for fenced code blocks. Emits inline styles
   // (no client JS, no FOUC) with both light/dark themes baked in.

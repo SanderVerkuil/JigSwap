@@ -76,6 +76,17 @@ describe("compileMarkdown", () => {
     expect(r.html).not.toContain("docs-callout");
   });
 
+  it("opens external links in a new tab with a safe rel", async () => {
+    const r = await compileMarkdown("[x](https://example.com)\n");
+    expect(r.html).toContain('target="_blank"');
+    expect(r.html).toMatch(/rel="[^"]*noopener/);
+  });
+
+  it("leaves internal links without a target", async () => {
+    const r = await compileMarkdown("[home](/docs/foo)\n");
+    expect(r.html).not.toContain('target="_blank"');
+  });
+
   it("highlights fenced code blocks at build time", async () => {
     const r = await compileMarkdown("```ts\nconst x = 1;\n```\n");
     expect(r.html).toContain("<pre");
