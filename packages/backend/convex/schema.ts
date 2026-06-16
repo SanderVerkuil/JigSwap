@@ -695,7 +695,7 @@ export default defineSchema({
   // with no per-copy index, so transfer history is not queryable by copyId; this read-model makes
   // a Copy's provenance a single indexed scan. Pure projection — keyed by copyId, no aggregateId.
   copyCustodyEntries: defineTable({
-    copyId: v.string(), // the transferred Copy (an ownedPuzzles _id, the domain CopyId)
+    copyId: v.string(), // the transferred Copy's `ownedPuzzles._id` (NOT the aggregateId) — the timeline query indexes by this
     exchangeId: v.string(), // the settling Exchange aggregateId
     previousOwner: v.string(), // the member the Copy moved FROM (a users _id)
     newOwner: v.string(), // the member the Copy moved to (a users _id)
