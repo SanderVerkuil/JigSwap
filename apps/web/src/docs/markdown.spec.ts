@@ -56,4 +56,23 @@ describe("compileMarkdown", () => {
     expect(r.html).not.toContain("<h1");
     expect(r.title).toBe("Page Title");
   });
+
+  it("keeps a non-leading H1 (only the leading one is stripped)", async () => {
+    const r = await compileMarkdown("## First\n\n# Later\n");
+    expect(r.html).toContain("Later");
+    expect(r.title).toBeUndefined();
+  });
+
+  it("leaves an ordinary blockquote as a blockquote", async () => {
+    const r = await compileMarkdown("> Just a quote with **bold** inside.\n");
+    expect(r.html).toContain("<blockquote");
+    expect(r.html).not.toContain("docs-callout");
+  });
+
+  it("does not treat a deeply nested Note: as a callout", async () => {
+    const r = await compileMarkdown(
+      "> Regular quote.\n>\n> Then **Note:** later.\n",
+    );
+    expect(r.html).not.toContain("docs-callout");
+  });
 });

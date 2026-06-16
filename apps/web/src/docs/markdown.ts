@@ -33,12 +33,16 @@ function collectHeadings() {
 function stripLeadingH1() {
   return (tree: any, file: any) => {
     if (!tree.children) return;
+    // Only the genuinely leading heading: the first top-level *element* must be
+    // an h1. A mid-page h1 the author wrote intentionally is left untouched.
     const index = tree.children.findIndex(
-      (node: any) => node.type === "element" && node.tagName === "h1",
+      (node: any) => node.type === "element",
     );
     if (index === -1) return;
-    const [removed] = tree.children.splice(index, 1);
-    file.data.title = toText(removed).trim();
+    const first = tree.children[index];
+    if (first.tagName !== "h1") return;
+    tree.children.splice(index, 1);
+    file.data.title = toText(first).trim();
   };
 }
 
@@ -57,9 +61,18 @@ function calloutsFromBlockquotes() {
   return (tree: any) => {
     visit(tree, "element", (node: any) => {
       if (node.tagName !== "blockquote") return;
-      const firstStrong = findFirstStrongText(node);
-      const key = firstStrong?.replace(/:$/, "").trim().toLowerCase();
-      const tone = key ? TONES[key] : undefined;
+      // Only treat as a callout when the blockquote's first paragraph *leads*
+      // with a tone keyword in bold (e.g. `> **Note:** ...`). This avoids
+      // reclassifying ordinary quotes that merely contain bold text deeper in.
+      const firstPara = (node.children ?? []).find(
+        (c: any) => c.type === "element" && c.tagName === "p",
+      );
+      const leadStrong = (firstPara?.children ?? []).find(
+        (c: any) => c.type === "element" && c.tagName === "strong",
+      );
+      if (!leadStrong) return;
+      const key = toText(leadStrong).replace(/:$/, "").trim().toLowerCase();
+      const tone = TONES[key];
       if (!tone) return;
       node.tagName = "aside";
       node.properties = { className: "docs-callout", "data-tone": tone };
@@ -71,13 +84,6 @@ function toText(node: any): string {
   if (node.type === "text") return node.value;
   if (!node.children) return "";
   return node.children.map(toText).join("");
-}
-function findFirstStrongText(node: any): string | undefined {
-  let found: string | undefined;
-  visit(node, "element", (n: any) => {
-    if (!found && n.tagName === "strong") found = toText(n);
-  });
-  return found;
 }
 
 const processor = unified()
