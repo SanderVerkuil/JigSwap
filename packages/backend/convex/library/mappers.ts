@@ -132,9 +132,18 @@ export const toOwnedCopyCompletionView = (
   updatedAt: row.updatedAt,
 });
 
-/** The bare collection row (no derived count) for the contains-copy read. */
+/**
+ * The bare collection row (no derived count) for the contains-copy read.
+ *
+ * SECURITY: `personalNotes` is the owner's private note on the collection and must never surface to
+ * a non-owner — a PUBLIC collection is readable by anyone, so the note is OMITTED unless
+ * `opts.includeOwnerOnly` is explicitly true (the caller established viewer === collection owner).
+ * `wishedDefinitions` is the substantive (public) content of a shared wishlist and is always
+ * carried.
+ */
 export const toCollectionMembershipView = (
   row: Doc<"collections">,
+  opts?: { includeOwnerOnly?: boolean },
 ): CollectionMembershipView => ({
   _id: row._id,
   _creationTime: row._creationTime,
@@ -148,7 +157,7 @@ export const toCollectionMembershipView = (
   isDefault: row.isDefault,
   isWishlist: row.isWishlist,
   wishedDefinitions: row.wishedDefinitions,
-  personalNotes: row.personalNotes,
+  personalNotes: opts?.includeOwnerOnly ? row.personalNotes : undefined,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
 });
@@ -157,8 +166,9 @@ export const toCollectionMembershipView = (
 export const toCollectionView = (
   row: Doc<"collections">,
   puzzleCount: number,
+  opts?: { includeOwnerOnly?: boolean },
 ): CollectionView => ({
-  ...toCollectionMembershipView(row),
+  ...toCollectionMembershipView(row, opts),
   puzzleCount,
 });
 
@@ -166,7 +176,8 @@ export const toCollectionView = (
 export const toCollectionDetailView = (
   row: Doc<"collections">,
   puzzles: OwnedCopyView[],
+  opts?: { includeOwnerOnly?: boolean },
 ): CollectionDetailView => ({
-  ...toCollectionMembershipView(row),
+  ...toCollectionMembershipView(row, opts),
   puzzles,
 });

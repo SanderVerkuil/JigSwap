@@ -394,6 +394,90 @@ describe("collection reads", () => {
     expect(seenByBob.filter((c) => c.name === "Wishlist")).toHaveLength(1);
   });
 
+  test("getUserCollections withholds personalNotes from a non-owner on a public collection", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+
+    // Give Alice's PUBLIC "Wishlist" a private personalNotes; a non-owner must never receive it.
+    await t.run(async (ctx) => {
+      const wishlist = await ctx.db
+        .query("collections")
+        .withIndex("by_user", (q) => q.eq("userId", alice))
+        .collect();
+      const pub = wishlist.find((c) => c.name === "Wishlist");
+      if (pub) await ctx.db.patch(pub._id, { personalNotes: "secret note" });
+      const now = Date.now();
+      await ctx.db.insert("users", {
+        clerkId: "clerk_bob",
+        email: "bob@example.com",
+        name: "Bob",
+        username: "bob",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const seenByBob = await t
+      .withIdentity({ subject: "clerk_bob" })
+      .query(api.library.getUserCollections.getUserCollections, {
+        userId: alice,
+      });
+    const bobWishlist = seenByBob.find((c) => c.name === "Wishlist");
+    expect(bobWishlist).toBeDefined();
+    expect(bobWishlist?.personalNotes).toBeUndefined();
+    expect(JSON.stringify(seenByBob)).not.toContain("secret note");
+
+    // The owner still sees their own personalNotes.
+    const seenByAlice = await asAlice(t).query(
+      api.library.getUserCollections.getUserCollections,
+      { userId: alice },
+    );
+    expect(seenByAlice.find((c) => c.name === "Wishlist")?.personalNotes).toBe(
+      "secret note",
+    );
+  });
+
+  test("getCollectionById withholds personalNotes from a non-owner on a public collection", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+
+    const wishlistId = await t.run(async (ctx) => {
+      const cols = await ctx.db
+        .query("collections")
+        .withIndex("by_user", (q) => q.eq("userId", alice))
+        .collect();
+      const pub = cols.find((c) => c.name === "Wishlist")!;
+      await ctx.db.patch(pub._id, { personalNotes: "secret note" });
+      const now = Date.now();
+      await ctx.db.insert("users", {
+        clerkId: "clerk_bob",
+        email: "bob@example.com",
+        name: "Bob",
+        username: "bob",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      return pub._id;
+    });
+
+    const seenByBob = await t
+      .withIdentity({ subject: "clerk_bob" })
+      .query(api.library.getCollectionById.getCollectionById, {
+        collectionId: wishlistId,
+      });
+    expect(seenByBob).not.toBeNull();
+    expect(seenByBob?.personalNotes).toBeUndefined();
+    expect(JSON.stringify(seenByBob)).not.toContain("secret note");
+
+    const seenByAlice = await asAlice(t).query(
+      api.library.getCollectionById.getCollectionById,
+      { collectionId: wishlistId },
+    );
+    expect(seenByAlice?.personalNotes).toBe("secret note");
+  });
+
   test("getCollectionById resolves member copies with addedAt", async () => {
     const t = convexTest(schema, modules);
     const { collection } = await seed(t);

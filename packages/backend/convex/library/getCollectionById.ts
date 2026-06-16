@@ -52,6 +52,7 @@ export const getCollectionById = query({
     return toCollectionDetailView(
       collection,
       puzzles.filter((p) => p !== null),
+      { includeOwnerOnly: isOwner },
     );
   },
 });

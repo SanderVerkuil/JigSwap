@@ -62,7 +62,11 @@ export const getUserCollections = query({
             q.eq("collectionId", collection._id),
           )
           .collect();
-        return toCollectionView(collection, members.length);
+        return toCollectionView(collection, members.length, {
+          // personalNotes is owner-only: surface it only on the acting member's OWN collections
+          // (the public-collection set may include OTHER members' collections under includePublic).
+          includeOwnerOnly: collection.userId === currentUser._id,
+        });
       }),
     );
 

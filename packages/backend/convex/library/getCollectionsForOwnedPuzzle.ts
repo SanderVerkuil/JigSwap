@@ -32,8 +32,10 @@ export const getCollectionsForOwnedPuzzle = query({
       }),
     );
 
+    // Every collection here belongs to the acting member (filtered above), so the viewer is the
+    // owner — surface their own personalNotes.
     return collections
       .filter((c) => c !== null)
-      .map(toCollectionMembershipView);
+      .map((c) => toCollectionMembershipView(c, { includeOwnerOnly: true }));
   },
 });
