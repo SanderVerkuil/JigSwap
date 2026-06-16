@@ -9,12 +9,14 @@ import {
 } from "@/components/ui/sheet";
 import { Outlet, createFileRoute, useLocation } from "@tanstack/react-router";
 import * as React from "react";
+import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_public/docs")({
   component: DocsLayout,
 });
 
 function DocsLayout() {
+  const t = useTranslations("marketing.docs");
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [navOpen, setNavOpen] = React.useState(false);
 
@@ -39,6 +41,12 @@ function DocsLayout() {
 
   return (
     <>
+      <a
+        href="#docs-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:rounded-md focus:bg-mk-card focus:px-3 focus:py-2 focus:ring-2 focus:ring-mk-ring"
+      >
+        {t("skipToContent")}
+      </a>
       <DocsMobileBar
         onOpenNav={() => setNavOpen(true)}
         onOpenSearch={() => setSearchOpen(true)}
