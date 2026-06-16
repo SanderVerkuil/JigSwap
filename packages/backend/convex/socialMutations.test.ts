@@ -108,6 +108,82 @@ describe("follow / unfollow", () => {
   });
 });
 
+describe("listFollowers / listFollowees auth + visibility gating", () => {
+  test("passing a memberId while unauthenticated is rejected (no ?? auth bypass)", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+
+    // Supplying a memberId must NOT short-circuit requireMember.
+    await expect(
+      t.query(api.social.listFollowers.listFollowers, { memberId: bob }),
+    ).rejects.toThrow(ConvexError);
+    await expect(
+      t.query(api.social.listFollowees.listFollowees, { memberId: bob }),
+    ).rejects.toThrow(ConvexError);
+  });
+
+  test("a private member's follow graph is hidden from non-mutual viewers", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+
+    // Alice follows Bob (one-directional), and Bob marks his profile private.
+    await asAlice(t).mutation(api.social.followMember.followMember, {
+      followeeId: bob,
+    });
+    await asBob(t).mutation(
+      api.social.setProfileVisibility.setProfileVisibility,
+      { visibility: "private" },
+    );
+
+    // Alice is not a mutual follower of Bob, so Bob's graph is hidden.
+    expect(
+      await asAlice(t).query(api.social.listFollowers.listFollowers, {
+        memberId: bob,
+      }),
+    ).toEqual([]);
+    expect(
+      await asAlice(t).query(api.social.listFollowees.listFollowees, {
+        memberId: bob,
+      }),
+    ).toEqual([]);
+
+    // Bob himself always sees his own graph.
+    const ownFollowers = await asBob(t).query(
+      api.social.listFollowers.listFollowers,
+      { memberId: bob },
+    );
+    expect(ownFollowers.map((f) => f.memberId)).toContain(alice as string);
+  });
+
+  test("mutual followers may see a private member's follow graph", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+
+    // Mutual follow, then Bob goes private.
+    await asAlice(t).mutation(api.social.followMember.followMember, {
+      followeeId: bob,
+    });
+    await asBob(t).mutation(api.social.followMember.followMember, {
+      followeeId: alice,
+    });
+    await asBob(t).mutation(
+      api.social.setProfileVisibility.setProfileVisibility,
+      { visibility: "private" },
+    );
+
+    const followers = await asAlice(t).query(
+      api.social.listFollowers.listFollowers,
+      { memberId: bob },
+    );
+    expect(followers.map((f) => f.memberId)).toContain(alice as string);
+    const followees = await asAlice(t).query(
+      api.social.listFollowees.listFollowees,
+      { memberId: bob },
+    );
+    expect(followees.map((f) => f.memberId)).toContain(alice as string);
+  });
+});
+
 describe("editProfile", () => {
   test("first edit creates the profile; a later edit updates it", async () => {
     const t = convexTest(schema, modules);
