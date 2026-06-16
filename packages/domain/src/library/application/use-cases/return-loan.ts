@@ -23,7 +23,10 @@ export const makeReturnLoan =
     if (closed.isErr) return err(closed.error);
 
     const copy = await deps.copies.findById(loan.copyId);
-    if (copy) copy.returnToOwner(now);
+    if (copy) {
+      const returned = copy.returnToOwner(now);
+      if (returned.isErr) return err(returned.error);
+    }
     await deps.loans.save(loan);
     if (copy) await deps.copies.save(copy);
     await deps.events.publish([
