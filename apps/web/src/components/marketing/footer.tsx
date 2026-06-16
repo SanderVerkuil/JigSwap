@@ -39,6 +39,7 @@ export function MarketingFooter() {
           {col(t("footer.product"), [
             { href: "/how-it-works", label: t("nav.howItWorks") },
             { href: "/features", label: t("nav.features") },
+            { href: "/docs", label: t("nav.docs") },
             { href: "/sign-up", label: t("nav.startTrading") },
           ])}
           {col(t("footer.community"), [
