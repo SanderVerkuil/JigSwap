@@ -163,6 +163,7 @@ describe("library reads", () => {
         salePrice: { amount: 1000, currency: "EUR" },
         acquisitionPrice: { amount: 500, currency: "EUR" },
         acquisitionSource: "bought_new",
+        acquisitionDate: 1_700_000_000_000,
       });
       await ctx.db.patch(unavailable, { visibility: "private" });
       // A fresh non-owner viewer.
@@ -192,6 +193,8 @@ describe("library reads", () => {
     expect(copy.notes).toBeUndefined();
     expect(copy.acquisitionPrice).toBeUndefined();
     expect(copy.acquisitionSource).toBeUndefined();
+    // acquisitionDate is owner-only too — a non-owner must never learn when the copy was acquired.
+    expect(copy.acquisitionDate).toBeUndefined();
     // salePrice is the public asking price for a copy listed for sale — it stays visible.
     expect(copy.salePrice).toEqual({ amount: 1000, currency: "EUR" });
     // Adversarial: the secret notes value never appears anywhere in the payload.
@@ -206,6 +209,7 @@ describe("library reads", () => {
     const ownerCopy = ownerView.find((c) => c._id === (available as string));
     expect(ownerCopy?.notes).toBe("my secret notes");
     expect(ownerCopy?.salePrice).toEqual({ amount: 1000, currency: "EUR" });
+    expect(ownerCopy?.acquisitionDate).toBe(1_700_000_000_000);
   });
 
   test("getOwnedPuzzlesByOwner hides a PRIVATE-profile owner's available copies from a non-owner", async () => {

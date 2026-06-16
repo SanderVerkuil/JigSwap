@@ -44,8 +44,9 @@ export const toOwnedCopyOwnerView = (
 /**
  * An owned copy with its joined puzzle (and optional owner / collection-membership timestamp).
  *
- * SECURITY: the owner-only personal fields — `notes`, `acquisitionPrice`, `acquisitionSource` — are
- * OMITTED by default and only included when `opts.includeOwnerOnly` is explicitly true (i.e. the
+ * SECURITY: the owner-only personal fields — `notes`, `acquisitionPrice`, `acquisitionSource`,
+ * `acquisitionDate` — are OMITTED by default and only included when `opts.includeOwnerOnly` is
+ * explicitly true (i.e. the
  * caller has established viewer === owner). Stripping owner-only data is opt-OUT at the mapper, not
  * something each call site must remember to do. `salePrice` is NOT owner-only: it is the public
  * asking price for a copy listed `forSale`, so it is always carried (the row only holds it when the
@@ -76,7 +77,7 @@ export const toOwnedCopyView = (
   visibility: row.visibility,
   // Public asking price for a copy listed for sale — always carried.
   salePrice: row.salePrice,
-  acquisitionDate: row.acquisitionDate,
+  acquisitionDate: opts?.includeOwnerOnly ? row.acquisitionDate : undefined,
   acquisitionSource: opts?.includeOwnerOnly ? row.acquisitionSource : undefined,
   acquisitionPrice: opts?.includeOwnerOnly ? row.acquisitionPrice : undefined,
   snapshot: row.snapshot,
