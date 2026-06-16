@@ -6,6 +6,19 @@ import { lookup as dnsLookup } from "node:dns/promises";
 // a DNS-resolved public host ONCE, so every fetcher tier only ever sees a pre-validated public host.
 // Reuses the domain `isPrivateIp` rule rather than re-implementing it.
 //
+// RESIDUAL RISK — DNS-rebinding TOCTOU on the initial request (finding #14, accepted):
+//   This guard resolves the hostname and validates the addresses, but the subsequent fetch() does
+//   its OWN independent DNS resolution. An attacker controlling authoritative DNS for an attacker-
+//   owned hostname can return a public IP here and a private/loopback IP (e.g. 169.254.169.254
+//   metadata) for the fetch's resolution, with a low TTL between the two. The redirect-hop case is
+//   re-validated per hop (see below), but this single-request rebind is NOT closed by re-validation.
+//   Fully closing it requires pinning the validated IP into the connection (a custom undici
+//   Dispatcher whose `lookup` returns ONLY the already-validated address, preserving Host/SNI) — a
+//   non-trivial change in the "use node" runtime, deferred rather than shipped as a risky partial.
+//   Defense-in-depth that IS in place: isPrivateIp blocks loopback/RFC-1918/link-local/CGNAT
+//   (100.64/10)/192.0.0.0/24 including the 169.254.169.254 metadata IP, so a rebind can only reach
+//   genuinely public IPs that happen to front internal services.
+//
 // Redirect-hop coverage (this guards the ENTRY url only; redirect-following is concentrated in the
 // single tier that DNS-validates every hop):
 //   - browserStorePageFetcher: the ONLY tier that follows redirects. It re-runs a DNS-resolving

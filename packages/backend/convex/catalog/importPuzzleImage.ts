@@ -17,6 +17,13 @@ const ALLOWED_TYPES = [
 ];
 
 // Reject any hostname that resolves to a private/loopback/link-local address (SSRF guard).
+//
+// RESIDUAL RISK — DNS-rebinding TOCTOU (finding #14, accepted): this resolves DNS, then the fetch()
+// below resolves DNS again independently, so a low-TTL attacker-controlled record can differ between
+// the two. Per-hop re-validation (manual redirects) closes the redirect rebind but NOT the single-
+// request rebind. Pinning the validated IP into the connection (a custom undici Dispatcher lookup)
+// is the real fix and is deferred. isPrivateIp covers loopback/RFC-1918/link-local/CGNAT/192.0.0.0/24
+// (incl. 169.254.169.254 metadata) as defense-in-depth.
 const assertPublicHost = async (hostname: string): Promise<void> => {
   const addresses = await dnsLookup(hostname, { all: true });
   if (addresses.length === 0 || addresses.some((a) => isPrivateIp(a.address))) {

@@ -23,6 +23,23 @@ describe("isPrivateIp", () => {
     }
   });
 
+  // --- 100.64.0.0/10 carrier-grade NAT (RFC 6598) ---
+  it("flags the 100.64/10 CGNAT range and allows its neighbors", () => {
+    expect(isPrivateIp("100.64.0.0")).toBe(true); // lower bound
+    expect(isPrivateIp("100.100.0.1")).toBe(true); // inside
+    expect(isPrivateIp("100.127.255.255")).toBe(true); // upper bound
+    expect(isPrivateIp("100.63.0.1")).toBe(false); // one below the block
+    expect(isPrivateIp("100.128.0.1")).toBe(false); // one above the block
+  });
+
+  // --- 192.0.0.0/24 IETF protocol assignments ---
+  it("flags the 192.0.0.0/24 block and allows the public 192.0.2-derived space", () => {
+    expect(isPrivateIp("192.0.0.0")).toBe(true);
+    expect(isPrivateIp("192.0.0.171")).toBe(true); // NAT64 well-known
+    expect(isPrivateIp("192.0.1.1")).toBe(false); // outside the /24
+    expect(isPrivateIp("192.1.0.1")).toBe(false);
+  });
+
   it("flags IPv6 loopback, ULA, and link-local", () => {
     for (const ip of ["::1", "fc00::1", "fd12::34", "fe80::1", "::"]) {
       expect(isPrivateIp(ip), ip).toBe(true);
