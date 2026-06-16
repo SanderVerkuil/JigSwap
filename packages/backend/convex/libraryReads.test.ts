@@ -359,6 +359,40 @@ describe("collection reads", () => {
     expect(seenByAlice.map((c) => c.name)).toEqual(["Favourites", "Wishlist"]);
   });
 
+  test("getUserCollections de-duplicates the target's public collections under includePublic", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+
+    // A non-owner viewer querying Alice's collections WITH includePublic. Alice's public "Wishlist"
+    // is fetched once as the target's public collection AND again as part of the platform-wide
+    // public set — the result must contain each `_id` exactly once (no duplicate rows).
+    const bobClerk = "clerk_bob";
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("users", {
+        clerkId: bobClerk,
+        email: "bob@example.com",
+        name: "Bob",
+        username: "bob",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const seenByBob = await t
+      .withIdentity({ subject: bobClerk })
+      .query(api.library.getUserCollections.getUserCollections, {
+        userId: alice,
+        includePublic: true,
+      });
+
+    const ids = seenByBob.map((c) => c._id);
+    expect(ids.length).toBe(new Set(ids).size);
+    // Alice's public "Wishlist" appears exactly once.
+    expect(seenByBob.filter((c) => c.name === "Wishlist")).toHaveLength(1);
+  });
+
   test("getCollectionById resolves member copies with addedAt", async () => {
     const t = convexTest(schema, modules);
     const { collection } = await seed(t);

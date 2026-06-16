@@ -41,7 +41,17 @@ export const getUserCollections = query({
         .query("collections")
         .withIndex("by_visibility", (q) => q.eq("visibility", "public"))
         .collect();
-      collections = [...collections, ...publicCollections];
+      // De-duplicate by `_id` (keep first occurrence): the target's public collections were already
+      // fetched above and ALSO appear in this platform-wide public set, so a plain concat would
+      // surface each of the target's public collections twice.
+      const merged = [...collections, ...publicCollections];
+      const seen = new Set<string>();
+      collections = merged.filter((c) => {
+        const id = c._id as unknown as string;
+        if (seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      });
     }
 
     const views = await Promise.all(
