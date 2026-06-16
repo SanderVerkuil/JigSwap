@@ -329,6 +329,31 @@ describe("library.browseOwnedPuzzles circle-aware visibility", () => {
     expect(view.ownedPuzzles.some((c) => c.aggregateId === copyId)).toBe(true);
   });
 
+  test("a circle Admin cannot share a copy they do not own", async () => {
+    const t = convexTest(schema, modules);
+    const { puzzleAggregateId } = await seed(t);
+    // Bob owns the copy.
+    const bobsCopyId = (await asBob(t).mutation(
+      api.library.acquireCopy.acquireCopy,
+      { puzzleDefinitionId: puzzleAggregateId, condition: "good" },
+    )) as string;
+
+    // Alice (the circle Admin) tries to share BOB's copy into her circle -> rejected.
+    const circleId = await createCircleForAlice(t);
+    await expect(
+      asAlice(t).mutation(api.sharing.shareCopyToCircle.shareCopyToCircle, {
+        circleId,
+        copyId: bobsCopyId,
+      }),
+    ).rejects.toBeInstanceOf(ConvexError);
+
+    // And no share row was materialised.
+    const shares = await t.run(async (ctx) =>
+      ctx.db.query("circleCopyShares").collect(),
+    );
+    expect(shares).toHaveLength(0);
+  });
+
   test("a private copy shared into a circle stays hidden from a non-member (public path preserved)", async () => {
     const t = convexTest(schema, modules);
     const { puzzleAggregateId } = await seed(t);

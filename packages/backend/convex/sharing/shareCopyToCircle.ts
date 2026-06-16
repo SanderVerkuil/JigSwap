@@ -4,7 +4,7 @@ import {
   toCircleId,
   toCopyId,
 } from "@jigswap/domain";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { convexCircleRepository } from "./adapters/convexCircleRepository";
@@ -22,6 +22,18 @@ export const shareCopyToCircle = mutation({
   },
   handler: async (ctx, args) => {
     const actorId = await requireMember(ctx);
+
+    // Sharing's aggregate only gates on circle Admin — it never loads the Copy, so a circle Admin
+    // could otherwise share a copy they do NOT own. Verify ownership here: resolve the copy by its
+    // aggregateId (the Library CopyId) and require the actor to be its owner.
+    const copy = await ctx.db
+      .query("ownedPuzzles")
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", args.copyId))
+      .unique();
+    if (!copy) throw new ConvexError("Copy not found");
+    if (copy.ownerId !== (actorId as unknown as string)) {
+      throw new ConvexError("Only the owner can share this copy");
+    }
 
     const shareCopyToCircle = makeShareCopyToCircle({
       circles: convexCircleRepository(ctx),
