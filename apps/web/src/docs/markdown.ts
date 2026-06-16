@@ -3,6 +3,7 @@ import matter from "gray-matter";
 import type { Element, Nodes, Root } from "hast";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeExternalLinks from "rehype-external-links";
+import rehypeRaw from "rehype-raw";
 import rehypeSlug from "rehype-slug";
 import rehypeStringify from "rehype-stringify";
 import remarkGfm from "remark-gfm";
@@ -94,7 +95,12 @@ function toText(node: Nodes): string {
 const processor = unified()
   .use(remarkParse)
   .use(remarkGfm)
-  .use(remarkRehype)
+  // allowDangerousHtml + rehypeRaw lets first-party docs use raw HTML such as
+  // <details>/<summary> for collapsible sections (e.g. the FAQ). Content is
+  // trusted (build-time, repo-authored), so this is safe; rehypeRaw reparses the
+  // raw nodes into real elements before the downstream transforms run.
+  .use(remarkRehype, { allowDangerousHtml: true })
+  .use(rehypeRaw)
   .use(rehypeSlug)
   // External links open in a new tab; the .docs-prose ↗ affordance keys off
   // the resulting target="_blank". Internal links (relative/root paths) are
