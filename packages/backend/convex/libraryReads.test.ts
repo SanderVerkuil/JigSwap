@@ -188,11 +188,12 @@ describe("library reads", () => {
     expect(view).toHaveLength(1);
     const copy = view[0];
     expect(copy.puzzle?.title).toBe("Mountain Vista");
-    // Owner-only fields are stripped.
+    // Owner-only fields (private notes + acquisition provenance) are stripped for a non-owner.
     expect(copy.notes).toBeUndefined();
-    expect(copy.salePrice).toBeUndefined();
     expect(copy.acquisitionPrice).toBeUndefined();
     expect(copy.acquisitionSource).toBeUndefined();
+    // salePrice is the public asking price for a copy listed for sale — it stays visible.
+    expect(copy.salePrice).toEqual({ amount: 1000, currency: "EUR" });
     // Adversarial: the secret notes value never appears anywhere in the payload.
     expect(JSON.stringify(view)).not.toContain("my secret notes");
 
@@ -405,6 +406,73 @@ describe("collection reads", () => {
     expect(view?.puzzles).toHaveLength(1);
     expect(view?.puzzles[0].puzzle?.title).toBe("Mountain Vista");
     expect(view?.puzzles[0].addedAt).toBeDefined();
+  });
+
+  test("getCollectionById strips owner-only copy fields for a non-owner viewing a public collection", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, available } = await seed(t);
+
+    // Make the available copy carry owner-only data, then put it in a PUBLIC collection a non-owner
+    // can read. The collection is readable, but the copy's owner-only fields must not leak.
+    const publicCollection = await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.patch(available, {
+        notes: "my secret notes",
+        acquisitionPrice: { amount: 500, currency: "EUR" },
+        acquisitionSource: "bought_new",
+        salePrice: { amount: 1000, currency: "EUR" },
+      });
+      const coll = await ctx.db.insert("collections", {
+        aggregateId: "coll-public",
+        userId: alice,
+        name: "Public Showcase",
+        visibility: "public",
+        isDefault: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("collectionMembers", {
+        collectionId: coll,
+        ownedPuzzleId: available,
+        addedAt: now,
+      });
+      await ctx.db.insert("users", {
+        clerkId: "clerk_bob",
+        email: "bob@example.com",
+        name: "Bob",
+        username: "bob",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      return coll;
+    });
+
+    const seenByBob = await t
+      .withIdentity({ subject: "clerk_bob" })
+      .query(api.library.getCollectionById.getCollectionById, {
+        collectionId: publicCollection,
+      });
+    expect(seenByBob).not.toBeNull();
+    const bobCopy = seenByBob?.puzzles[0];
+    expect(bobCopy?.notes).toBeUndefined();
+    expect(bobCopy?.acquisitionPrice).toBeUndefined();
+    expect(bobCopy?.acquisitionSource).toBeUndefined();
+    // salePrice (public asking price) is still visible.
+    expect(bobCopy?.salePrice).toEqual({ amount: 1000, currency: "EUR" });
+    expect(JSON.stringify(seenByBob)).not.toContain("my secret notes");
+
+    // The owner sees the owner-only fields.
+    const seenByAlice = await asAlice(t).query(
+      api.library.getCollectionById.getCollectionById,
+      { collectionId: publicCollection },
+    );
+    const aliceCopy = seenByAlice?.puzzles[0];
+    expect(aliceCopy?.notes).toBe("my secret notes");
+    expect(aliceCopy?.acquisitionPrice).toEqual({
+      amount: 500,
+      currency: "EUR",
+    });
   });
 
   test("getCollectionsForOwnedPuzzle returns the member's collections containing the copy", async () => {

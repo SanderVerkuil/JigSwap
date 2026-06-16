@@ -24,6 +24,10 @@ export const getCollectionById = query({
       return null;
     }
 
+    // Owner-only copy fields (notes/acquisition provenance) only surface when the viewer owns the
+    // collection (a public collection is readable by anyone, so a non-owner must not see them).
+    const isOwner = collection.userId === actingMember;
+
     const members = await ctx.db
       .query("collectionMembers")
       .withIndex("by_collection", (q) =>
@@ -38,7 +42,10 @@ export const getCollectionById = query({
           : null;
         if (!copy) return null;
         const puzzle = await ctx.db.get(copy.puzzleId);
-        return toOwnedCopyView(copy, puzzle, { addedAt: member.addedAt });
+        return toOwnedCopyView(copy, puzzle, {
+          addedAt: member.addedAt,
+          includeOwnerOnly: isOwner,
+        });
       }),
     );
 

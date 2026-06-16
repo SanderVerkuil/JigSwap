@@ -41,7 +41,17 @@ export const toOwnedCopyOwnerView = (
   avatar: row.avatar,
 });
 
-/** An owned copy with its joined puzzle (and optional owner / collection-membership timestamp). */
+/**
+ * An owned copy with its joined puzzle (and optional owner / collection-membership timestamp).
+ *
+ * SECURITY: the owner-only personal fields — `notes`, `acquisitionPrice`, `acquisitionSource` — are
+ * OMITTED by default and only included when `opts.includeOwnerOnly` is explicitly true (i.e. the
+ * caller has established viewer === owner). Stripping owner-only data is opt-OUT at the mapper, not
+ * something each call site must remember to do. `salePrice` is NOT owner-only: it is the public
+ * asking price for a copy listed `forSale`, so it is always carried (the row only holds it when the
+ * owner set one). Callers that surface OTHER members' copies must leave `includeOwnerOnly` at its
+ * `false` default.
+ */
 export const toOwnedCopyView = (
   row: Doc<"ownedPuzzles">,
   puzzle: Doc<"puzzles"> | null,
@@ -49,6 +59,7 @@ export const toOwnedCopyView = (
     owner?: Doc<"users"> | null;
     addedAt?: number;
     coverUrl?: string | null;
+    includeOwnerOnly?: boolean;
   },
 ): OwnedCopyView => ({
   _id: row._id,
@@ -59,13 +70,15 @@ export const toOwnedCopyView = (
   ownerId: row.ownerId,
   condition: row.condition,
   missingPiecesCount: row.missingPiecesCount,
-  notes: row.notes,
+  // Owner-only personal fields: only surfaced when the viewer owns the copy.
+  notes: opts?.includeOwnerOnly ? row.notes : undefined,
   availability: row.availability,
   visibility: row.visibility,
+  // Public asking price for a copy listed for sale — always carried.
   salePrice: row.salePrice,
   acquisitionDate: row.acquisitionDate,
-  acquisitionSource: row.acquisitionSource,
-  acquisitionPrice: row.acquisitionPrice,
+  acquisitionSource: opts?.includeOwnerOnly ? row.acquisitionSource : undefined,
+  acquisitionPrice: opts?.includeOwnerOnly ? row.acquisitionPrice : undefined,
   snapshot: row.snapshot,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,

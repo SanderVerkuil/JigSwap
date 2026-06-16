@@ -10,24 +10,12 @@ const isOpen = (copy: Doc<"ownedPuzzles">): boolean =>
   copy.availability.forSale ||
   copy.availability.forLend;
 
-// Owner-only fields that must never surface on a NON-owner's view of a copy (price, provenance and
-// private notes are personal to the owner). Strip them off the row before it reaches the mapper.
-const stripOwnerOnly = (copy: Doc<"ownedPuzzles">): Doc<"ownedPuzzles"> => {
-  const { salePrice, acquisitionPrice, acquisitionSource, notes, ...rest } =
-    copy;
-  void salePrice;
-  void acquisitionPrice;
-  void acquisitionSource;
-  void notes;
-  return rest as Doc<"ownedPuzzles">;
-};
-
 // Library read: a member's owned copies (optionally only the available ones), each joined to its
 // Catalog puzzle. Auth-gated. The OWNER sees everything (both available + private copies, with all
 // owner-only fields). A NON-owner only sees available, non-private copies, with owner-only fields
-// (salePrice/acquisitionPrice/acquisitionSource/notes) stripped — `includeUnavailable` is ignored
-// for non-owners. Filtering, the newest-first ordering, and the join are preserved from legacy
-// puzzles.getOwnedPuzzlesByOwner; rows map to typed copy DTOs.
+// (acquisitionPrice/acquisitionSource/notes) stripped by the mapper's `includeOwnerOnly` default —
+// `includeUnavailable` is ignored for non-owners. Filtering, the newest-first ordering, and the
+// join are preserved from legacy puzzles.getOwnedPuzzlesByOwner; rows map to typed copy DTOs.
 export const getOwnedPuzzlesByOwner = query({
   args: {
     ownerId: v.id("users"),
@@ -52,8 +40,7 @@ export const getOwnedPuzzlesByOwner = query({
     }
 
     const views = await Promise.all(
-      ownedPuzzles.map(async (rawCopy) => {
-        const copy = isOwner ? rawCopy : stripOwnerOnly(rawCopy);
+      ownedPuzzles.map(async (copy) => {
         const puzzle = await ctx.db.get(copy.puzzleId);
         // Resolve the card cover: the copy's chosen-and-APPROVED cover photo if set, otherwise the
         // puzzle's global box art, else null (the card falls back to its placeholder). Pending or
@@ -68,7 +55,10 @@ export const getOwnedPuzzlesByOwner = query({
         if (!coverUrl && puzzle?.image) {
           coverUrl = await ctx.storage.getUrl(puzzle.image);
         }
-        return toOwnedCopyView(copy, puzzle, { coverUrl });
+        return toOwnedCopyView(copy, puzzle, {
+          coverUrl,
+          includeOwnerOnly: isOwner,
+        });
       }),
     );
 

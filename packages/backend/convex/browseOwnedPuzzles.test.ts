@@ -174,4 +174,37 @@ describe("library.browseOwnedPuzzles privacy gating", () => {
     const view = await browse(t);
     expect(ids(view).has("copy-circle-open")).toBe(true);
   });
+
+  test("another member's copy never carries owner-only fields", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+
+    // Stamp the public owner's open copy with owner-only data; browsing it as the viewer must never
+    // surface notes / acquisition provenance.
+    await t.run(async (ctx) => {
+      const copy = await ctx.db
+        .query("ownedPuzzles")
+        .withIndex("by_aggregate_id", (q) =>
+          q.eq("aggregateId", "copy-public-open"),
+        )
+        .unique();
+      if (copy) {
+        await ctx.db.patch(copy._id, {
+          notes: "owner private notes",
+          acquisitionPrice: { amount: 42, currency: "EUR" },
+          acquisitionSource: "bought_new",
+        });
+      }
+    });
+
+    const view = await browse(t);
+    const shown = view.ownedPuzzles.find(
+      (c) => c.aggregateId === "copy-public-open",
+    );
+    expect(shown).toBeDefined();
+    expect(shown?.notes).toBeUndefined();
+    expect(shown?.acquisitionPrice).toBeUndefined();
+    expect(shown?.acquisitionSource).toBeUndefined();
+    expect(JSON.stringify(view)).not.toContain("owner private notes");
+  });
 });
