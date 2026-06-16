@@ -15,12 +15,19 @@ export default defineSchema({
     // Absent or false means the user's avatar image must never appear on public
     // marketing surfaces — initials only. Opt-in; defaults to NOT consented.
     shareAvatarPublicly: v.optional(v.boolean()),
+    // Lowercased "<name> <username>" maintained on every user write, backing the
+    // people search index so member search is a real index lookup rather than a
+    // full-table scan + in-memory filter. Optional so legacy rows still validate.
+    searchableName: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_clerk_id", ["clerkId"])
     .index("by_email", ["email"])
-    .index("by_username", ["username"]),
+    .index("by_username", ["username"])
+    .searchIndex("by_searchable_name", {
+      searchField: "searchableName",
+    }),
 
   // Puzzles  - the actual puzzle designs that exist in the world
   puzzles: defineTable({
@@ -680,6 +687,7 @@ export default defineSchema({
   })
     .index("by_follower", ["followerId"])
     .index("by_followee", ["followeeId"])
+    .index("by_follower_followee", ["followerId", "followeeId"])
     .index("by_aggregate_id", ["aggregateId"]),
 
   // The durable domain-event log: every context's events are appended here, then an async

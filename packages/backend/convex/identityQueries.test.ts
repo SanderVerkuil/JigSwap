@@ -16,6 +16,9 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
       email: "alice@example.com",
       name: "Alice Anderson",
       username: "alice",
+      // searchableName backs the by_searchable_name people-search index and is
+      // maintained on every user write (see convex/users.ts toSearchableName).
+      searchableName: "alice anderson alice",
       location: "Amsterdam",
       bio: "Loves 1000-piece puzzles",
       isActive: true,
@@ -26,6 +29,7 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
       clerkId: "clerk_bob",
       email: "bob@example.com",
       name: "Bob Brown",
+      searchableName: "bob brown",
       isActive: true,
       createdAt: now,
       updatedAt: now,
@@ -154,23 +158,40 @@ describe("identity.getUserStats", () => {
 });
 
 describe("identity.searchUsers", () => {
-  test("matches on name/username/location, case-insensitively", async () => {
+  test("matches on name/username via the search index, case-insensitively", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
+    // Matches on name token.
     const byName = await asAlice(t).query(
       api.identity.searchUsers.searchUsers,
       {
-        searchTerm: "alice",
+        searchTerm: "anderson",
       },
     );
     expect(byName.map((u) => u.name)).toContain("Alice Anderson");
+    // Matches on username token, case-insensitively.
+    const byUsername = await asAlice(t).query(
+      api.identity.searchUsers.searchUsers,
+      {
+        searchTerm: "ALICE",
+      },
+    );
+    expect(byUsername.map((u) => u.name)).toContain("Alice Anderson");
+    // People search is now backed by a single name/username search index, so
+    // location is intentionally no longer a search field (deliberate behavior
+    // change from the old full-table scan that also matched location).
     const byLocation = await asAlice(t).query(
       api.identity.searchUsers.searchUsers,
       {
         searchTerm: "amsterdam",
       },
     );
-    expect(byLocation).toHaveLength(1);
+    expect(byLocation).toHaveLength(0);
+    // An empty/whitespace term short-circuits to no results.
+    const empty = await asAlice(t).query(api.identity.searchUsers.searchUsers, {
+      searchTerm: "   ",
+    });
+    expect(empty).toHaveLength(0);
     const none = await asAlice(t).query(api.identity.searchUsers.searchUsers, {
       searchTerm: "zzz",
     });
@@ -180,11 +201,39 @@ describe("identity.searchUsers", () => {
   test("respects the limit", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
-    // Both Alice and Bob contain no shared token except an empty term, which matches all.
+    // Two members sharing a search token ("collector") so the term matches both;
+    // limit:1 must return only one.
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("users", {
+        clerkId: "clerk_carol",
+        email: "carol@example.com",
+        name: "Carol Collector",
+        username: "carol",
+        searchableName: "carol collector carol",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("users", {
+        clerkId: "clerk_dave",
+        email: "dave@example.com",
+        name: "Dave Collector",
+        username: "dave",
+        searchableName: "dave collector dave",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+    const all = await asAlice(t).query(api.identity.searchUsers.searchUsers, {
+      searchTerm: "collector",
+    });
+    expect(all.length).toBeGreaterThanOrEqual(2);
     const limited = await asAlice(t).query(
       api.identity.searchUsers.searchUsers,
       {
-        searchTerm: "",
+        searchTerm: "collector",
         limit: 1,
       },
     );
