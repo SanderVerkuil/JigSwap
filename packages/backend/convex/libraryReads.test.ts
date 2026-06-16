@@ -189,6 +189,36 @@ describe("library reads", () => {
     expect(view?.completionHistory).toHaveLength(1);
   });
 
+  test("getOwnedPuzzleWithCollectionStatus is gated to the copy owner", async () => {
+    const t = convexTest(schema, modules);
+    const { available } = await seed(t);
+
+    // Bob is authenticated but does NOT own the copy: the owner-only management view (financials,
+    // private notes, unmoderated photos) must not leak — he gets null.
+    const bobClerk = "clerk_bob";
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("users", {
+        clerkId: bobClerk,
+        email: "bob@example.com",
+        name: "Bob",
+        username: "bob",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const seenByBob = await t
+      .withIdentity({ subject: bobClerk })
+      .query(
+        api.library.getOwnedPuzzleWithCollectionStatus
+          .getOwnedPuzzleWithCollectionStatus,
+        { ownedPuzzleId: available },
+      );
+    expect(seenByBob).toBeNull();
+  });
+
   test("getOwnedPuzzleWithCollectionStatus reports not-in-collection for an uncollected copy", async () => {
     const t = convexTest(schema, modules);
     const { unavailable } = await seed(t);

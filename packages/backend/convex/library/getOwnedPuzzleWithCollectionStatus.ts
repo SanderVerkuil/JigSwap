@@ -30,6 +30,12 @@ export const getOwnedPuzzleWithCollectionStatus = query({
     const ownedPuzzle = await ctx.db.get(args.ownedPuzzleId);
     if (!ownedPuzzle) return null;
 
+    // Owner-only management view: collection status and completion history are computed for the
+    // ACTING member, and the result exposes financials (acquisition/sale price), private notes, and
+    // unmoderated photos. A non-owner gets null; the public copy-detail route uses the gated
+    // getCopyInstanceView instead.
+    if (ownedPuzzle.ownerId !== user._id) return null;
+
     const puzzle = await ctx.db.get(ownedPuzzle.puzzleId);
     if (!puzzle) return null;
 
