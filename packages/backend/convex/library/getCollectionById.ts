@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { canViewCopy } from "./canViewCopy";
 import { toCollectionDetailView, toOwnedCopyView } from "./mappers";
 
 // Library read: a collection with its member copies resolved (each carrying its addedAt and joined
@@ -41,6 +42,14 @@ export const getCollectionById = query({
           ? await ctx.db.get(member.ownedPuzzleId)
           : null;
         if (!copy) return null;
+        // Per-copy reachability gate: a non-owner viewing a public collection must NOT see member
+        // copies that fail THE canonical copy-reachability gate (private/closed copies the owner
+        // added), exactly as every sibling copy-read (getOwnedPuzzlesByOwner, getCopyInstanceView,
+        // featuredShelf, listPuzzleComments, ...) does. The owner viewing their own collection sees
+        // everything (canViewCopy short-circuits on ownership).
+        if (!isOwner && !(await canViewCopy(ctx, actingMember, copy))) {
+          return null;
+        }
         const puzzle = await ctx.db.get(copy.puzzleId);
         return toOwnedCopyView(copy, puzzle, {
           addedAt: member.addedAt,

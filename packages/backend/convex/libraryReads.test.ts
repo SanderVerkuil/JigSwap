@@ -606,6 +606,70 @@ describe("collection reads", () => {
     });
   });
 
+  test("getCollectionById hides an unreachable member copy from a non-owner but shows it to the owner", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, available, unavailable } = await seed(t);
+
+    // A PUBLIC collection holding BOTH copies: `available` is OPEN (forTrade) and reachable; the
+    // `unavailable` copy is CLOSED (no availability flags), so a non-owner must not see it even
+    // though the collection itself is public — mirroring THE canonical copy-reachability gate.
+    const publicCollection = await t.run(async (ctx) => {
+      const now = Date.now();
+      const coll = await ctx.db.insert("collections", {
+        aggregateId: "coll-mixed",
+        userId: alice,
+        name: "Mixed Showcase",
+        visibility: "public",
+        isDefault: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("collectionMembers", {
+        collectionId: coll,
+        ownedPuzzleId: available,
+        addedAt: now,
+      });
+      await ctx.db.insert("collectionMembers", {
+        collectionId: coll,
+        ownedPuzzleId: unavailable,
+        addedAt: now,
+      });
+      await ctx.db.insert("users", {
+        clerkId: "clerk_bob",
+        email: "bob@example.com",
+        name: "Bob",
+        username: "bob",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      return coll;
+    });
+
+    // Non-owner: only the reachable (open) copy comes back; the closed copy is dropped entirely so
+    // its condition/availability/snapshot/ownerId never leak.
+    const seenByBob = await t
+      .withIdentity({ subject: "clerk_bob" })
+      .query(api.library.getCollectionById.getCollectionById, {
+        collectionId: publicCollection,
+      });
+    expect(seenByBob).not.toBeNull();
+    expect(seenByBob?.puzzles).toHaveLength(1);
+    expect(seenByBob?.puzzles[0].puzzle?.title).toBe("Mountain Vista");
+    expect(JSON.stringify(seenByBob)).not.toContain("Ocean Calm");
+
+    // Owner: sees BOTH copies, including the closed one.
+    const seenByAlice = await asAlice(t).query(
+      api.library.getCollectionById.getCollectionById,
+      { collectionId: publicCollection },
+    );
+    expect(seenByAlice?.puzzles).toHaveLength(2);
+    expect(seenByAlice?.puzzles.map((p) => p.puzzle?.title).sort()).toEqual([
+      "Mountain Vista",
+      "Ocean Calm",
+    ]);
+  });
+
   test("getCollectionsForOwnedPuzzle returns the member's collections containing the copy", async () => {
     const t = convexTest(schema, modules);
     const { available, collection } = await seed(t);
