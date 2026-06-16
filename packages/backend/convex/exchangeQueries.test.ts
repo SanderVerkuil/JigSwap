@@ -117,9 +117,12 @@ describe("exchange.getExchangeById", () => {
   test("returns the exchange with parties and the owned copies", async () => {
     const t = convexTest(schema, modules);
     const { older } = await seed(t);
-    const view = await t.query(api.exchange.getExchangeById.getExchangeById, {
-      exchangeId: older,
-    });
+    const view = await asAlice(t).query(
+      api.exchange.getExchangeById.getExchangeById,
+      {
+        exchangeId: older,
+      },
+    );
     expect(view?.requester?.name).toBe("Alice");
     expect(view?.owner?.name).toBe("Bob");
     // Legacy naming: ownerPuzzle = requested owned copy, requesterPuzzle = offered owned copy.
@@ -127,13 +130,39 @@ describe("exchange.getExchangeById", () => {
     expect(view?.requesterPuzzle?.condition).toBe("like_new");
   });
 
+  test("returns null for a non-party caller", async () => {
+    const t = convexTest(schema, modules);
+    const { older } = await seed(t);
+    // Carol is neither initiator nor recipient.
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("users", {
+        clerkId: "clerk_carol",
+        email: "carol@example.com",
+        name: "Carol",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+    const view = await t
+      .withIdentity({ subject: "clerk_carol" })
+      .query(api.exchange.getExchangeById.getExchangeById, {
+        exchangeId: older,
+      });
+    expect(view).toBeNull();
+  });
+
   test("returns null for a missing exchange", async () => {
     const t = convexTest(schema, modules);
     const { older } = await seed(t);
     await t.run(async (ctx) => ctx.db.delete(older));
-    const view = await t.query(api.exchange.getExchangeById.getExchangeById, {
-      exchangeId: older,
-    });
+    const view = await asAlice(t).query(
+      api.exchange.getExchangeById.getExchangeById,
+      {
+        exchangeId: older,
+      },
+    );
     expect(view).toBeNull();
   });
 });
@@ -141,10 +170,11 @@ describe("exchange.getExchangeById", () => {
 describe("exchange.getUserExchanges", () => {
   test("tags roles, joins puzzles and sorts newest-first", async () => {
     const t = convexTest(schema, modules);
-    const { alice } = await seed(t);
-    const list = await t.query(api.exchange.getUserExchanges.getUserExchanges, {
-      userId: alice,
-    });
+    await seed(t);
+    const list = await asAlice(t).query(
+      api.exchange.getUserExchanges.getUserExchanges,
+      {},
+    );
     // Alice is initiator on both (asRequester + asOwner default true; she is recipient on neither).
     expect(list).toHaveLength(2);
     expect(list[0].createdAt).toBeGreaterThanOrEqual(list[1].createdAt);
@@ -156,10 +186,10 @@ describe("exchange.getUserExchanges", () => {
 
   test("filters by status", async () => {
     const t = convexTest(schema, modules);
-    const { alice } = await seed(t);
-    const completed = await t.query(
+    await seed(t);
+    const completed = await asAlice(t).query(
       api.exchange.getUserExchanges.getUserExchanges,
-      { userId: alice, status: "completed" },
+      { status: "completed" },
     );
     expect(completed).toHaveLength(1);
     expect(completed[0].aggregateId).toBe("exch-2");
@@ -223,7 +253,7 @@ describe("exchange.getExchangeMessages", () => {
   test("returns messages oldest-first with resolved senders", async () => {
     const t = convexTest(schema, modules);
     const { older } = await seed(t);
-    const messages = await t.query(
+    const messages = await asAlice(t).query(
       api.exchange.getExchangeMessages.getExchangeMessages,
       { exchangeId: older },
     );

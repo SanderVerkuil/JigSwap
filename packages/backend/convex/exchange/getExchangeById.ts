@@ -1,6 +1,8 @@
 import type { ExchangeView } from "@jigswap/contracts";
 import { v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { requireMember } from "../identity/requireMember";
 import { toMemberView } from "../identity/toMemberView";
 import { toExchangeFields, toOwnedPuzzleView } from "./readViews";
 
@@ -10,8 +12,15 @@ import { toExchangeFields, toOwnedPuzzleView } from "./readViews";
 export const getExchangeById = query({
   args: { exchangeId: v.id("exchanges") },
   handler: async (ctx, args): Promise<ExchangeView | null> => {
+    const member = (await requireMember(ctx)) as unknown as Id<"users">;
+
     const exchange = await ctx.db.get(args.exchangeId);
     if (!exchange) return null;
+
+    // Party-only: parties are the initiator/recipient; others get null (leaks emails/prices).
+    if (member !== exchange.initiatorId && member !== exchange.recipientId) {
+      return null;
+    }
 
     const [requester, owner, ownerPuzzle, requesterPuzzle] = await Promise.all([
       ctx.db.get(exchange.initiatorId),

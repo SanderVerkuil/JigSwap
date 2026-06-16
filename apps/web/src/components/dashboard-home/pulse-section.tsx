@@ -399,7 +399,7 @@ export function PulseSection() {
 
   const exchanges = useQuery(
     gateway.exchange.forUser,
-    member?._id ? { userId: member._id as Id<"users"> } : "skip",
+    member?._id ? {} : "skip",
   );
   const goals = useQuery(gateway.solving.myGoals, member?._id ? {} : "skip");
   const feed = useQuery(
