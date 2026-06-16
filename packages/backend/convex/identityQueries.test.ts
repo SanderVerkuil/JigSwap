@@ -82,6 +82,9 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
 const asAlice = (t: ReturnType<typeof convexTest>) =>
   t.withIdentity({ subject: "clerk_alice" });
 
+const asBob = (t: ReturnType<typeof convexTest>) =>
+  t.withIdentity({ subject: "clerk_bob" });
+
 describe("identity.getCurrentUser", () => {
   test("returns null when unauthenticated", async () => {
     const t = convexTest(schema, modules);
@@ -141,11 +144,12 @@ describe("identity.getUserStats", () => {
       api.identity.getUserStats.getUserStats,
       { userId: alice },
     );
-    expect(stats.puzzlesOwned).toBe(1);
-    expect(stats.puzzlesAvailable).toBe(1); // legacy quirk: mirrors puzzlesOwned
-    expect(stats.tradesCompleted).toBe(1);
-    expect(stats.averageRating).toBe(4);
-    expect(stats.totalReviews).toBe(1);
+    expect(stats).not.toBeNull();
+    expect(stats?.puzzlesOwned).toBe(1);
+    expect(stats?.puzzlesAvailable).toBe(1); // legacy quirk: mirrors puzzlesOwned
+    expect(stats?.tradesCompleted).toBe(1);
+    expect(stats?.averageRating).toBe(4);
+    expect(stats?.totalReviews).toBe(1);
   });
 
   test("rejects an unauthenticated caller", async () => {
@@ -154,6 +158,100 @@ describe("identity.getUserStats", () => {
     await expect(
       t.query(api.identity.getUserStats.getUserStats, { userId: alice }),
     ).rejects.toBeInstanceOf(ConvexError);
+  });
+});
+
+// The profile-visibility chokepoint (social/privacy.ts) must also gate the identity reads, so a
+// private member's identity and stats can't be enumerated id-by-id by any authenticated member.
+// Mirrors the listFollowers/listFollowees visibility tests in socialMutations.test.ts.
+describe("identity.getUserById / getUserStats profile-visibility gating", () => {
+  test("a private, non-mutual member's identity and stats are hidden (null)", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+
+    // Alice follows Bob (one-directional only), then Bob goes private.
+    await asAlice(t).mutation(api.social.followMember.followMember, {
+      followeeId: bob,
+    });
+    await asBob(t).mutation(
+      api.social.setProfileVisibility.setProfileVisibility,
+      { visibility: "private" },
+    );
+
+    // Alice is not a mutual follower of Bob -> both reads are hidden.
+    expect(
+      await asAlice(t).query(api.identity.getUserById.getUserById, {
+        userId: bob,
+      }),
+    ).toBeNull();
+    expect(
+      await asAlice(t).query(api.identity.getUserStats.getUserStats, {
+        userId: bob,
+      }),
+    ).toBeNull();
+  });
+
+  test("the owner always sees their own private identity and stats", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+
+    await asBob(t).mutation(
+      api.social.setProfileVisibility.setProfileVisibility,
+      { visibility: "private" },
+    );
+
+    const self = await asBob(t).query(api.identity.getUserById.getUserById, {
+      userId: bob,
+    });
+    expect(self?.name).toBe("Bob Brown");
+    const selfStats = await asBob(t).query(
+      api.identity.getUserStats.getUserStats,
+      { userId: bob },
+    );
+    expect(selfStats).not.toBeNull();
+  });
+
+  test("a mutual follower sees a private member's identity and stats", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+
+    // Mutual follow, then Bob goes private.
+    await asAlice(t).mutation(api.social.followMember.followMember, {
+      followeeId: bob,
+    });
+    await asBob(t).mutation(api.social.followMember.followMember, {
+      followeeId: alice,
+    });
+    await asBob(t).mutation(
+      api.social.setProfileVisibility.setProfileVisibility,
+      { visibility: "private" },
+    );
+
+    const view = await asAlice(t).query(api.identity.getUserById.getUserById, {
+      userId: bob,
+    });
+    expect(view?.name).toBe("Bob Brown");
+    const stats = await asAlice(t).query(
+      api.identity.getUserStats.getUserStats,
+      { userId: bob },
+    );
+    expect(stats).not.toBeNull();
+  });
+
+  test("a public member (default/unset visibility) is unaffected", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+
+    // Bob has no profile row -> profileVisibilityOf defaults to public; Alice (a
+    // non-follower) still reads Alice... use Bob viewing Alice, who is public.
+    const view = await asBob(t).query(api.identity.getUserById.getUserById, {
+      userId: alice,
+    });
+    expect(view?.name).toBe("Alice Anderson");
+    const stats = await asBob(t).query(api.identity.getUserStats.getUserStats, {
+      userId: alice,
+    });
+    expect(stats?.puzzlesOwned).toBe(1);
   });
 });
 

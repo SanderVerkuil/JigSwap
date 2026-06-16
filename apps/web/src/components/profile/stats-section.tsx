@@ -35,6 +35,11 @@ export function ProfileStatsSection({ member }: { member: Member }) {
       </div>
     );
   }
+  // A private, non-mutual member's stats are hidden server-side (null). Degrade
+  // gracefully — render no stats rather than crashing on a missing card.
+  if (stats === null) {
+    return null;
+  }
 
   const items = [
     { value: stats.puzzlesOwned, label: t("puzzlesOwned") },
