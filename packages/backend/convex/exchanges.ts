@@ -11,9 +11,10 @@ export const sendExchangeMessage = mutation({
   args: {
     exchangeId: v.id("exchanges"),
     content: v.string(),
-    messageType: v.optional(
-      v.union(v.literal("text"), v.literal("image"), v.literal("system")),
-    ),
+    // Client may only post 'text'/'image'. 'system' is reserved for server-side
+    // service code (status announcements rendered with authoritative styling); a
+    // party must not be able to spoof a system message inside an exchange thread.
+    messageType: v.optional(v.union(v.literal("text"), v.literal("image"))),
   },
   handler: async (ctx, args) => {
     // Sender is the authenticated member, never a client-supplied id (spoofing).
