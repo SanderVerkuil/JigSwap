@@ -1,5 +1,6 @@
 import rehypeShiki from "@shikijs/rehype"; // default export is the rehype plugin
 import matter from "gray-matter";
+import type { Element, Nodes, Root } from "hast";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeExternalLinks from "rehype-external-links";
 import rehypeSlug from "rehype-slug";
@@ -11,21 +12,25 @@ import { unified } from "unified";
 import { visit } from "unist-util-visit";
 import type { DocFrontmatter, DocHeading } from "./types";
 
+// Extra fields the transforms below stash on the vfile for compileMarkdown to read.
+type DocData = { headings?: DocHeading[]; title?: string };
+
 // Collect h2/h3 headings (with the ids rehype-slug assigns) for the on-page TOC.
 function collectHeadings() {
-  return (tree: any, file: any) => {
+  return (tree: Root, file: { data: Record<string, unknown> }) => {
     const headings: DocHeading[] = [];
-    visit(tree, "element", (node: any) => {
+    visit(tree, (node) => {
+      if (node.type !== "element") return;
       if (node.tagName === "h2" || node.tagName === "h3") {
-        const text = toText(node);
+        const id = node.properties?.id;
         headings.push({
-          id: node.properties?.id ?? "",
-          text,
+          id: typeof id === "string" ? id : "",
+          text: toText(node),
           depth: node.tagName === "h2" ? 2 : 3,
         });
       }
     });
-    file.data.headings = headings;
+    (file.data as DocData).headings = headings;
   };
 }
 
@@ -33,18 +38,15 @@ function collectHeadings() {
 // H1 (the route injects its own from frontmatter). The stripped H1's text is
 // exposed on `file.data.title` as a fallback page title.
 function stripLeadingH1() {
-  return (tree: any, file: any) => {
-    if (!tree.children) return;
+  return (tree: Root, file: { data: Record<string, unknown> }) => {
     // Only the genuinely leading heading: the first top-level *element* must be
     // an h1. A mid-page h1 the author wrote intentionally is left untouched.
-    const index = tree.children.findIndex(
-      (node: any) => node.type === "element",
-    );
+    const index = tree.children.findIndex((node) => node.type === "element");
     if (index === -1) return;
     const first = tree.children[index];
-    if (first.tagName !== "h1") return;
+    if (first.type !== "element" || first.tagName !== "h1") return;
     tree.children.splice(index, 1);
-    file.data.title = toText(first).trim();
+    (file.data as DocData).title = toText(first).trim();
   };
 }
 
@@ -60,17 +62,17 @@ const TONES: Record<string, string> = {
   important: "danger",
 };
 function calloutsFromBlockquotes() {
-  return (tree: any) => {
-    visit(tree, "element", (node: any) => {
-      if (node.tagName !== "blockquote") return;
+  return (tree: Root) => {
+    visit(tree, (node) => {
+      if (node.type !== "element" || node.tagName !== "blockquote") return;
       // Only treat as a callout when the blockquote's first paragraph *leads*
       // with a tone keyword in bold (e.g. `> **Note:** ...`). This avoids
       // reclassifying ordinary quotes that merely contain bold text deeper in.
-      const firstPara = (node.children ?? []).find(
-        (c: any) => c.type === "element" && c.tagName === "p",
+      const firstPara = node.children.find(
+        (c): c is Element => c.type === "element" && c.tagName === "p",
       );
-      const leadStrong = (firstPara?.children ?? []).find(
-        (c: any) => c.type === "element" && c.tagName === "strong",
+      const leadStrong = firstPara?.children.find(
+        (c): c is Element => c.type === "element" && c.tagName === "strong",
       );
       if (!leadStrong) return;
       const key = toText(leadStrong).replace(/:$/, "").trim().toLowerCase();
@@ -82,10 +84,11 @@ function calloutsFromBlockquotes() {
   };
 }
 
-function toText(node: any): string {
+// Recursively extract the text content of any hast node.
+function toText(node: Nodes): string {
   if (node.type === "text") return node.value;
-  if (!node.children) return "";
-  return node.children.map(toText).join("");
+  if ("children" in node) return node.children.map(toText).join("");
+  return "";
 }
 
 const processor = unified()
@@ -123,12 +126,13 @@ export async function compileMarkdown(raw: string): Promise<CompiledDoc> {
   const { content, data } = matter(raw);
   const file = await processor.process(content);
   const html = String(file);
+  const docData = file.data as DocData;
   return {
     frontmatter: data as DocFrontmatter,
     html,
-    headings: (file.data.headings as DocHeading[]) ?? [],
+    headings: docData.headings ?? [],
     text: stripHtml(html),
-    title: file.data.title as string | undefined,
+    title: docData.title,
   };
 }
 
