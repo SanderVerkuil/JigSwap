@@ -227,6 +227,41 @@ describe("collection reads", () => {
     expect(collections[1].isDefault).toBe(false);
   });
 
+  test("getUserCollections hides another member's private collections", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+
+    // A second member who only follows Alice — querying Alice's collections must surface ONLY her
+    // public "Wishlist", never her private "Favourites" (names/notes must not leak).
+    const bobClerk = "clerk_bob";
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("users", {
+        clerkId: bobClerk,
+        email: "bob@example.com",
+        name: "Bob",
+        username: "bob",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const asBob = t.withIdentity({ subject: bobClerk });
+    const seenByBob = await asBob.query(
+      api.library.getUserCollections.getUserCollections,
+      { userId: alice },
+    );
+    expect(seenByBob.map((c) => c.name)).toEqual(["Wishlist"]);
+
+    // The owner still sees ALL of their own collections, private included.
+    const seenByAlice = await asAlice(t).query(
+      api.library.getUserCollections.getUserCollections,
+      { userId: alice },
+    );
+    expect(seenByAlice.map((c) => c.name)).toEqual(["Favourites", "Wishlist"]);
+  });
+
   test("getCollectionById resolves member copies with addedAt", async () => {
     const t = convexTest(schema, modules);
     const { collection } = await seed(t);

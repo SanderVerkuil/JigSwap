@@ -23,13 +23,20 @@ export const getUserCollections = query({
     if (!currentUser) throw new ConvexError("User not found");
 
     const targetUserId = args.userId || currentUser._id;
+    const isOwner = targetUserId === currentUser._id;
 
     let collections = await ctx.db
       .query("collections")
       .withIndex("by_user", (q) => q.eq("userId", targetUserId))
       .collect();
 
-    if (args.includePublic && targetUserId !== currentUser._id) {
+    // Visibility ACL: another member's private collections (names, descriptions, personalNotes,
+    // wished definitions) must never leak — only the owner sees their own private collections.
+    if (!isOwner) {
+      collections = collections.filter((c) => c.visibility === "public");
+    }
+
+    if (args.includePublic && !isOwner) {
       const publicCollections = await ctx.db
         .query("collections")
         .withIndex("by_visibility", (q) => q.eq("visibility", "public"))
