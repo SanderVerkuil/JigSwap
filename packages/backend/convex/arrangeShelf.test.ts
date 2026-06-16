@@ -122,10 +122,11 @@ describe("arrangeShelf", () => {
     );
     expect(profile).not.toBeNull();
 
-    // Verify featuredShelf returns them in order and deduped
-    const shelf = await t.query(api.social.featuredShelf.featuredShelf, {
-      userId: alice,
-    });
+    // Verify featuredShelf returns them in order and deduped (as the owner, who sees all her copies).
+    const shelf = await asAlice(t).query(
+      api.social.featuredShelf.featuredShelf,
+      { userId: alice },
+    );
     expect(shelf).toHaveLength(2);
     expect(shelf[0]._id).toBe(copy2);
     expect(shelf[1]._id).toBe(copy1);
@@ -178,9 +179,10 @@ describe("arrangeShelf", () => {
     // Delete copy1
     await t.run((ctx) => ctx.db.delete(copy1));
 
-    const shelf = await t.query(api.social.featuredShelf.featuredShelf, {
-      userId: alice,
-    });
+    const shelf = await asAlice(t).query(
+      api.social.featuredShelf.featuredShelf,
+      { userId: alice },
+    );
     // copy1 was deleted, only copy2 should remain
     expect(shelf).toHaveLength(1);
     expect(shelf[0]._id).toBe(copy2);
@@ -194,10 +196,92 @@ describe("arrangeShelf", () => {
       displayName: "Alice",
     });
 
-    const shelf = await t.query(api.social.featuredShelf.featuredShelf, {
-      userId: alice,
-    });
+    const shelf = await asAlice(t).query(
+      api.social.featuredShelf.featuredShelf,
+      { userId: alice },
+    );
     expect(shelf).toEqual([]);
+  });
+
+  test("featuredShelf is auth-gated", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seedUsers(t);
+
+    await expect(
+      t.query(api.social.featuredShelf.featuredShelf, { userId: alice }),
+    ).rejects.toThrow(ConvexError);
+  });
+
+  test("featuredShelf hides unreachable copies and owner-only fields from a non-owner", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seedUsers(t);
+
+    const puzzleId = await t.run((ctx) =>
+      ctx.db.insert("puzzles", {
+        title: "Shelf Puzzle",
+        pieceCount: 500,
+        status: "approved",
+        submittedBy: alice,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      }),
+    );
+
+    // Alice's profile is PUBLIC. An OPEN (reachable) copy with owner-only data, and a CLOSED
+    // (unreachable for a non-owner) copy.
+    const openCopy = await t.run((ctx) =>
+      ctx.db.insert("ownedPuzzles", {
+        puzzleId,
+        ownerId: alice,
+        condition: "good",
+        availability: { forTrade: true, forSale: false, forLend: false },
+        notes: "alice private notes",
+        acquisitionPrice: { amount: 30, currency: "EUR" },
+        acquisitionSource: "bought_new",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      }),
+    );
+    const closedCopy = await t.run((ctx) =>
+      ctx.db.insert("ownedPuzzles", {
+        puzzleId,
+        ownerId: alice,
+        condition: "like_new",
+        availability: { forTrade: false, forSale: false, forLend: false },
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      }),
+    );
+
+    await asAlice(t).mutation(api.social.editProfile.editProfile, {
+      displayName: "Alice",
+    });
+    await asAlice(t).mutation(api.social.arrangeShelf.arrangeShelf, {
+      copyIds: [openCopy, closedCopy],
+    });
+
+    // Bob (a non-owner) only sees the reachable OPEN copy, and never the owner-only fields.
+    const seenByBob = await asBob(t).query(
+      api.social.featuredShelf.featuredShelf,
+      { userId: alice },
+    );
+    expect(seenByBob.map((c) => c._id)).toEqual([openCopy]);
+    expect(seenByBob[0].notes).toBeUndefined();
+    expect(seenByBob[0].acquisitionPrice).toBeUndefined();
+    expect(seenByBob[0].acquisitionSource).toBeUndefined();
+    expect(JSON.stringify(seenByBob)).not.toContain("alice private notes");
+
+    // Alice (the owner) sees her full curated shelf with all owner-only fields.
+    const seenByAlice = await asAlice(t).query(
+      api.social.featuredShelf.featuredShelf,
+      { userId: alice },
+    );
+    expect(seenByAlice.map((c) => c._id)).toEqual([openCopy, closedCopy]);
+    expect(seenByAlice[0].notes).toBe("alice private notes");
+    expect(seenByAlice[0].acquisitionPrice).toEqual({
+      amount: 30,
+      currency: "EUR",
+    });
   });
 
   test("arrangeShelf records a ProfileShelfArranged domain event", async () => {
