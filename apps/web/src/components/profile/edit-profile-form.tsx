@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { gateway, Id } from "@/gateway";
+import { gateway } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
 import { Save } from "lucide-react";
 import { useState } from "react";
@@ -77,7 +77,6 @@ export function EditProfileForm({
       }
       // Location/bio live only in Convex.
       await updateProfile({
-        userId: member._id as Id<"users">,
         location: location.trim() || undefined,
         bio: bio.trim() || undefined,
       });

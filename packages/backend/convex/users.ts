@@ -1,15 +1,18 @@
 import { UserJSON } from "@clerk/backend";
 import { v } from "convex/values";
-import { Doc } from "./_generated/dataModel";
+import { Doc, Id } from "./_generated/dataModel";
 import {
   internalMutation,
   internalQuery,
   mutation,
   QueryCtx,
 } from "./_generated/server";
+import { requireMember } from "./identity/requireMember";
 
-// Create or update user from Clerk
-export const createOrUpdateUser = mutation({
+// Create or update user from Clerk. Internal only: the canonical user sync happens via the Clerk
+// webhook (updateOrCreateUser). Exposing this publicly would let any client upsert a `users` row
+// keyed by a client-supplied clerkId (account takeover).
+export const createOrUpdateUser = internalMutation({
   args: {
     clerkId: v.string(),
     email: v.string(),
@@ -65,15 +68,15 @@ export const createOrUpdateUser = mutation({
 // webhook (see updateOrCreateUser).
 export const updateUserProfile = mutation({
   args: {
-    userId: v.id("users"),
     bio: v.optional(v.string()),
     location: v.optional(v.string()),
     preferredLanguage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { userId, ...updates } = args;
-    await ctx.db.patch(userId, {
-      ...updates,
+    // Ownership: the patched row is the authenticated member, never a client-supplied id (IDOR).
+    const memberId = await requireMember(ctx);
+    await ctx.db.patch(memberId as unknown as Id<"users">, {
+      ...args,
       updatedAt: Date.now(),
     });
   },
