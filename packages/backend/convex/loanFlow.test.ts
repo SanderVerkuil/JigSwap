@@ -147,6 +147,48 @@ describe("loan lifecycle", () => {
     }
   });
 
+  test("getCopyLoanHistory returns [] for a non-owner when the copy is unreachable", async () => {
+    const t = convexTest(schema, modules);
+    const { copy, owner } = await seed(t);
+    await settleLend(t, copy, owner);
+    await flush(t);
+
+    // Make the owner private and the copy closed -> a non-owner stranger cannot reach it.
+    await t.run(async (ctx) => {
+      await ctx.db.insert("users", {
+        clerkId: "clerk_stranger",
+        email: "stranger@example.com",
+        name: "clerk_stranger",
+        isActive: true,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      await ctx.db.insert("profiles", {
+        memberId: owner,
+        displayName: "clerk_owner",
+        visibility: "private",
+        updatedAt: Date.now(),
+      });
+      await ctx.db.patch(copy, {
+        availability: { forTrade: false, forSale: false, forLend: false },
+      });
+    });
+
+    const history = await t
+      .withIdentity({ subject: "clerk_stranger" })
+      .query(api.library.getCopyLoanHistory.getCopyLoanHistory, {
+        copyId: copy,
+      });
+    expect(history).toEqual([]);
+
+    // The owner still sees the full history.
+    const ownerHistory = await asOwner(t).query(
+      api.library.getCopyLoanHistory.getCopyLoanHistory,
+      { copyId: copy },
+    );
+    expect(ownerHistory).toHaveLength(1);
+  });
+
   test("the owner recalls the loan -> possession back to the owner", async () => {
     const t = convexTest(schema, modules);
     const { copy, owner } = await seed(t);

@@ -209,6 +209,9 @@ describe("custody.getCopyCustodyTimeline", () => {
     // After the first sale the copy belongs to Alice; Bob now buys it FROM Alice.
     const secondExchange = await settleSaleToBob(t, copy, alice, "clerk_alice");
     await flushScheduled(t);
+    // Settlement closes the copy; re-open it so the (public-owner) reachability gate lets a third
+    // party reach the copy-detail timeline.
+    await reopenForSale(t, copy);
 
     const timeline = await asCarol(t).query(
       api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline,
@@ -235,6 +238,29 @@ describe("custody.getCopyCustodyTimeline", () => {
     );
   });
 
+  test("returns null for a non-owner when the copy is unreachable (private+closed owner)", async () => {
+    const t = convexTest(schema, modules);
+    const { copy, owner } = await seed(t);
+    // Owner is private and the copy is closed -> unreachable for a non-owner (Carol).
+    await t.run(async (ctx) => {
+      await ctx.db.insert("profiles", {
+        memberId: owner,
+        displayName: "clerk_owner",
+        visibility: "private",
+        updatedAt: Date.now(),
+      });
+      await ctx.db.patch(copy, {
+        availability: { forTrade: false, forSale: false, forLend: false },
+      });
+    });
+
+    const timeline = await asCarol(t).query(
+      api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline,
+      { copyId: copy },
+    );
+    expect(timeline).toBeNull();
+  });
+
   test("anonymises a private member the viewer is not connected to", async () => {
     const t = convexTest(schema, modules);
     const { copy, owner } = await seed(t);
@@ -251,6 +277,9 @@ describe("custody.getCopyCustodyTimeline", () => {
         updatedAt: Date.now(),
       }),
     );
+    // The CURRENT owner (Alice) is public; re-open the copy so Carol can reach the copy-detail
+    // timeline (the gate keys on the current owner's profile + the copy being open).
+    await reopenForSale(t, copy);
 
     const timeline = await asCarol(t).query(
       api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline,
@@ -294,10 +323,12 @@ describe("ownership move on settlement", () => {
     const row = await t.run(async (ctx) => ctx.db.get(copy));
     expect(row?.ownerId).toBe(owner); // a loan is possession only — ownership stays with the lender
 
-    const timeline = await asAlice(t).query(
-      api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline,
-      { copyId: copy },
-    );
+    // The copy is reset to closed after settlement; the owner can always view their own timeline.
+    const timeline = await t
+      .withIdentity({ subject: "clerk_owner" })
+      .query(api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline, {
+        copyId: copy,
+      });
     expect(timeline!.transfers).toEqual([]);
     expect(projectedName(timeline!.currentOwner)).toBe("clerk_owner");
   });

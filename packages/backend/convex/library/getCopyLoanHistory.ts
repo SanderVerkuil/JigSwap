@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { canViewCopy } from "./canViewCopy";
 import { toProjectedLoanView } from "./loanReadViews";
 
 // A copy's full lending history (every loan, newest first), for the copy detail page. Auth-gated;
@@ -15,6 +16,9 @@ export const getCopyLoanHistory = query({
 
     const copy = await ctx.db.get(args.copyId);
     if (!copy?.aggregateId) return [];
+    // Copy-reachability gate (identical to browseOwnedPuzzles / getCopyInstanceView): a non-owner
+    // may not read the loan history of a private/unreachable copy.
+    if (!(await canViewCopy(ctx, viewerId, copy))) return [];
     const salt = args.copyId as string;
     const loans = await ctx.db
       .query("loans")

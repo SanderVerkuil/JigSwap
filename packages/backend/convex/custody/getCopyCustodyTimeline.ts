@@ -7,6 +7,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { canViewCopy } from "../library/canViewCopy";
 import { projectMemberIdentity } from "../social/privacy";
 
 // Chain-of-Custody read: a Copy's full provenance assembled from the custody projection. Ownership
@@ -23,6 +24,9 @@ export const getCopyCustodyTimeline = query({
 
     const copy = await ctx.db.get(args.copyId);
     if (!copy) return null;
+    // Copy-reachability gate (identical to browseOwnedPuzzles / getCopyInstanceView): a non-owner
+    // may not read the custody chain of a private/unreachable copy.
+    if (!(await canViewCopy(ctx, viewerId, copy))) return null;
 
     const entries = await ctx.db
       .query("copyCustodyEntries")
