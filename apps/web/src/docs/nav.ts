@@ -1,7 +1,9 @@
 import type { DocPage, NavGroup, NavTree, Pager } from "./types";
 
 // Pages for a locale, falling back to the English page for any slug missing in
-// that locale. One entry per unique slug.
+// that locale. One entry per unique slug. Contract: English is the complete set
+// of slugs (every translated locale is a subset) — a page that exists ONLY in a
+// non-en locale won't surface, since en seeds the slug list.
 export function pagesForLocale(pages: DocPage[], locale: string): DocPage[] {
   const bySlug = new Map<string, DocPage>();
   for (const p of pages) if (p.locale === "en") bySlug.set(p.slug, p);
