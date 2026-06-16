@@ -84,6 +84,32 @@ describe("follow / unfollow", () => {
     ).rejects.toThrow(ConvexError);
   });
 
+  test("isFollowing is duplicate-tolerant (compound index + .first, no 500)", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+
+    // Two identical (alice -> bob) edges. With the old by_follower scan + .unique()
+    // this would throw; the compound index + .first() must return true cleanly.
+    await t.run(async (ctx) => {
+      await ctx.db.insert("follows", {
+        followerId: alice,
+        followeeId: bob,
+        createdAt: 1,
+      });
+      await ctx.db.insert("follows", {
+        followerId: alice,
+        followeeId: bob,
+        createdAt: 2,
+      });
+    });
+
+    expect(
+      await asAlice(t).query(api.social.isFollowing.isFollowing, {
+        followeeId: bob,
+      }),
+    ).toBe(true);
+  });
+
   test("unfollow removes the edge; unfollowing a non-followee is rejected", async () => {
     const t = convexTest(schema, modules);
     const { bob } = await seed(t);
