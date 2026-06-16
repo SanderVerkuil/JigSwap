@@ -74,9 +74,9 @@ function DocsLayout() {
           side="left"
           className="w-[300px] overflow-y-auto bg-mk-card"
         >
-          <SheetTitle className="sr-only">Documentation navigation</SheetTitle>
+          <SheetTitle className="sr-only">{t("navSheetTitle")}</SheetTitle>
           <SheetDescription className="sr-only">
-            Browse the JigSwap documentation by topic.
+            {t("navSheetDescription")}
           </SheetDescription>
           <div className="py-6" onClick={() => setNavOpen(false)}>
             <DocsSidebar

@@ -2093,7 +2093,9 @@
       "landingEyebrow": "Documentation",
       "landingTitle": "JigSwap User Guide",
       "landingLead": "Everything you need to build your library, log solves, and swap puzzles with the community.",
-      "skipToContent": "Skip to content"
+      "skipToContent": "Skip to content",
+      "navSheetTitle": "Documentation navigation",
+      "navSheetDescription": "Browse the JigSwap documentation by topic."
     },
     "titles": {
       "home": "JigSwap — Share jigsaw puzzles with fellow enthusiasts",

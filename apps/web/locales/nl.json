@@ -2093,7 +2093,9 @@
       "landingEyebrow": "Documentatie",
       "landingTitle": "JigSwap-handleiding",
       "landingLead": "Alles wat je nodig hebt om je collectie op te bouwen, oplossingen vast te leggen en puzzels te ruilen met de community.",
-      "skipToContent": "Naar inhoud springen"
+      "skipToContent": "Naar inhoud springen",
+      "navSheetTitle": "Documentatienavigatie",
+      "navSheetDescription": "Blader door de JigSwap-documentatie op onderwerp."
     },
     "titles": {
       "home": "JigSwap — Deel legpuzzels met andere liefhebbers",
