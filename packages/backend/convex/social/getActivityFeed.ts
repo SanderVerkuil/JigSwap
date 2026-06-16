@@ -34,6 +34,22 @@ const DEFAULT_LIMIT = 50;
 const FEED_WINDOW_MS = 90 * 24 * 60 * 60 * 1000;
 const PER_NAME_CAP = 500;
 
+// KNOWN SCALE LIMITATION (finding #7, tracked as a follow-up):
+//   This query pulls a GLOBAL newest-`PER_NAME_CAP`-per-event-name window (keyed on event name +
+//   time, NOT on member) and only THEN filters down to the viewer's audience in memory. On a busy
+//   platform the newest 500 events of a given name can all belong to members the viewer does not
+//   follow, so a viewer following only a few people could see a stale/empty feed even when their
+//   followees have recent activity that fell outside the global window. The 90-day window does not
+//   help — the cap, not the window, is the binding constraint under load.
+//
+//   The correct fix is a per-actor read path, NOT a bigger cap (which only defers the problem and
+//   inflates every read): either (a) add an `actorId` column to `domainEvents` populated at record
+//   time with a `by_actor_and_time` index and query per audience member, or (b) maintain a
+//   denormalized per-member activity table written by the event dispatcher. Both require changes
+//   across the emitting domains (and a backfill), and ExchangeCompleted carries no member today
+//   (parties are resolved from the exchange row), so this is deliberately left as a follow-up
+//   rather than a risky partial. Raising PER_NAME_CAP is an accepted stopgap if needed.
+
 export const getActivityFeed = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args): Promise<ActivityEntryView[]> => {
