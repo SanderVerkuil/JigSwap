@@ -1,3 +1,4 @@
+import rehypeShiki from "@shikijs/rehype"; // default export is the rehype plugin
 import matter from "gray-matter";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeSlug from "rehype-slug";
@@ -92,6 +93,11 @@ const processor = unified()
   .use(remarkRehype)
   .use(rehypeSlug)
   .use(rehypeAutolinkHeadings, { behavior: "wrap" })
+  // Build-time syntax highlighting for fenced code blocks. Emits inline styles
+  // (no client JS, no FOUC) with both light/dark themes baked in.
+  .use(rehypeShiki, {
+    themes: { light: "github-light", dark: "github-dark" },
+  })
   .use(collectHeadings)
   .use(stripLeadingH1)
   .use(calloutsFromBlockquotes)

@@ -75,4 +75,10 @@ describe("compileMarkdown", () => {
     );
     expect(r.html).not.toContain("docs-callout");
   });
+
+  it("highlights fenced code blocks at build time", async () => {
+    const r = await compileMarkdown("```ts\nconst x = 1;\n```\n");
+    expect(r.html).toContain("<pre");
+    expect(r.html).toMatch(/shiki|style="[^"]*color/);
+  });
 });
