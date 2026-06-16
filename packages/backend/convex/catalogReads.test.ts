@@ -36,6 +36,16 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
       updatedAt: now,
     });
 
+    // A second member who is NOT the submitter of the pending definition below.
+    const bob = await ctx.db.insert("users", {
+      clerkId: "clerk_bob",
+      email: "bob@example.com",
+      name: "Bob",
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    });
+
     const approved = await ctx.db.insert("puzzles", {
       aggregateId: "def-approved",
       title: "Mountain Vista",
@@ -50,8 +60,8 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
       createdAt: now,
       updatedAt: now,
     });
-    // Pending: excluded from public lists/suggestions.
-    await ctx.db.insert("puzzles", {
+    // Pending: excluded from public lists/suggestions. Submitted by Alice.
+    const pending = await ctx.db.insert("puzzles", {
       aggregateId: "def-pending",
       title: "Secret Ocean",
       brand: "Clementoni",
@@ -64,7 +74,7 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
       updatedAt: now,
     });
 
-    return { alice, category, approved };
+    return { alice, bob, category, approved, pending };
   });
 
 describe("catalog reads", () => {
@@ -81,6 +91,38 @@ describe("catalog reads", () => {
     expect(view?.status).toBe("approved");
     // Box-art unset -> resolved as null (DTO contract), not the raw storage id.
     expect(view?.image).toBeNull();
+  });
+
+  test("getPuzzleById hides a pending definition from a non-submitter but reveals it to the submitter/admin", async () => {
+    const t = convexTest(schema, modules);
+    const { pending } = await seed(t);
+
+    // Unauthenticated: a pending definition's id must NOT leak.
+    expect(
+      await t.query(api.catalog.getPuzzleById.getPuzzleById, {
+        puzzleId: pending,
+      }),
+    ).toBeNull();
+
+    // A different, authenticated member is still not allowed to see it.
+    expect(
+      await t
+        .withIdentity({ subject: "clerk_bob" })
+        .query(api.catalog.getPuzzleById.getPuzzleById, { puzzleId: pending }),
+    ).toBeNull();
+
+    // The submitter (Alice) sees her own pending definition (the add/new.tsx ?puzzleId flow).
+    const asSubmitter = await t
+      .withIdentity({ subject: "clerk_alice" })
+      .query(api.catalog.getPuzzleById.getPuzzleById, { puzzleId: pending });
+    expect(asSubmitter?.title).toBe("Secret Ocean");
+    expect(asSubmitter?.status).toBe("pending");
+
+    // An admin (role claim) sees it too, even though they did not submit it.
+    const asAdmin = await t
+      .withIdentity({ subject: "clerk_bob", metadata: { role: "admin" } })
+      .query(api.catalog.getPuzzleById.getPuzzleById, { puzzleId: pending });
+    expect(asAdmin?.title).toBe("Secret Ocean");
   });
 
   test("listAllPuzzles returns only approved definitions", async () => {
