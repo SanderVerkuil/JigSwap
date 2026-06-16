@@ -54,12 +54,22 @@ export const convexCopyRepository = (ctx: MutationCtx): CopyRepository => {
         ? (await ctx.db.patch(existing._id, row), existing._id)
         : await ctx.db.insert("ownedPuzzles", row);
 
-      // Images belong to the Copy; persist any the aggregate carries that aren't stored yet.
+      // Images belong to the Copy; sync the persisted rows to the aggregate's image list.
       // Keyed by fileId, which is unique per uploaded file, so re-saves don't duplicate rows.
       const persisted = await loadImages(ownedPuzzleId);
       const persistedFileIds = new Set(
         persisted.map((img) => img.fileId as unknown as string),
       );
+      const currentFileIds = new Set(
+        copy.toState().images.map((img) => img.fileId as unknown as string),
+      );
+      // Delete rows whose fileId no longer exists in the aggregate (e.g. an image removed in the
+      // domain), so reduced image lists don't leave orphaned rows that queries still return.
+      for (const img of persisted) {
+        if (!currentFileIds.has(img.fileId as unknown as string)) {
+          await ctx.db.delete(img._id);
+        }
+      }
       const now = Date.now();
       for (const image of copy.toState().images) {
         const fileId = image.fileId as unknown as string;
