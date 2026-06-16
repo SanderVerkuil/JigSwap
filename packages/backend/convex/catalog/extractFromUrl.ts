@@ -11,6 +11,7 @@ import { internal } from "../_generated/api";
 import { action } from "../_generated/server";
 import { ingestToAxiom } from "../lib/axiom";
 import { logEvent, type WideEvent } from "../lib/logEvent";
+import { assertPublicUrl } from "./adapters/assertPublicUrl";
 import { browserStorePageFetcher } from "./adapters/browserStorePageFetcher";
 import { firecrawlStorePageFetcher } from "./adapters/firecrawlStorePageFetcher";
 import { ogieStorePageFetcher } from "./adapters/ogieStorePageFetcher";
@@ -47,6 +48,17 @@ export const extractFromUrl = action({
       event.error = { code: "Unauthenticated" };
       await flush();
       throw new ConvexError("Unauthenticated");
+    }
+
+    // SSRF pre-flight: enforce http(s) + a public DNS host on the ENTRY url ONCE, before any tier
+    // fetches. ogie (lexical-only) and firecrawl (forwards the raw url) thus never see a private
+    // host; browserStorePageFetcher still re-validates each redirect hop.
+    const publicCheck = await assertPublicUrl(url);
+    if (!publicCheck.ok) {
+      event.outcome = "error";
+      event.error = { code: publicCheck.code, detail: publicCheck.reason };
+      await flush();
+      return { ok: false as const, code: publicCheck.code };
     }
 
     try {
