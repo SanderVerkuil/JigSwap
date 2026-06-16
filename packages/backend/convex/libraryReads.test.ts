@@ -122,7 +122,7 @@ describe("library reads", () => {
     const t = convexTest(schema, modules);
     const { alice } = await seed(t);
 
-    const available = await t.query(
+    const available = await asAlice(t).query(
       api.library.getOwnedPuzzlesByOwner.getOwnedPuzzlesByOwner,
       { ownerId: alice, includeUnavailable: false },
     );
@@ -131,13 +131,80 @@ describe("library reads", () => {
     // Box-art is never joined onto the copy's puzzle snapshot (preserved behaviour).
     expect(available[0].puzzle?.images).toBeUndefined();
 
-    const all = await t.query(
+    const all = await asAlice(t).query(
       api.library.getOwnedPuzzlesByOwner.getOwnedPuzzlesByOwner,
       { ownerId: alice, includeUnavailable: true },
     );
     expect(all).toHaveLength(2);
     // Newest-first.
     expect(all[0].puzzle?.title).toBe("Mountain Vista");
+  });
+
+  test("getOwnedPuzzlesByOwner is auth-gated", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    await expect(
+      t.query(api.library.getOwnedPuzzlesByOwner.getOwnedPuzzlesByOwner, {
+        ownerId: alice,
+      }),
+    ).rejects.toBeInstanceOf(ConvexError);
+  });
+
+  test("getOwnedPuzzlesByOwner gates a non-owner: only available, non-private copies and owner-only fields stripped", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, available, unavailable } = await seed(t);
+
+    // Give the AVAILABLE copy owner-only data + a public visibility, and make the UNAVAILABLE one
+    // private so a non-owner must never see it (even with includeUnavailable).
+    await t.run(async (ctx) => {
+      await ctx.db.patch(available, {
+        visibility: "visible",
+        notes: "my secret notes",
+        salePrice: { amount: 1000, currency: "EUR" },
+        acquisitionPrice: { amount: 500, currency: "EUR" },
+        acquisitionSource: "bought_new",
+      });
+      await ctx.db.patch(unavailable, { visibility: "private" });
+      // A fresh non-owner viewer.
+      const now = Date.now();
+      await ctx.db.insert("users", {
+        clerkId: "clerk_bob",
+        email: "bob@example.com",
+        name: "Bob",
+        username: "bob",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const asBob = t.withIdentity({ subject: "clerk_bob" });
+
+    // Even asking for everything, the non-owner only gets the one available, non-private copy.
+    const view = await asBob.query(
+      api.library.getOwnedPuzzlesByOwner.getOwnedPuzzlesByOwner,
+      { ownerId: alice, includeUnavailable: true },
+    );
+    expect(view).toHaveLength(1);
+    const copy = view[0];
+    expect(copy.puzzle?.title).toBe("Mountain Vista");
+    // Owner-only fields are stripped.
+    expect(copy.notes).toBeUndefined();
+    expect(copy.salePrice).toBeUndefined();
+    expect(copy.acquisitionPrice).toBeUndefined();
+    expect(copy.acquisitionSource).toBeUndefined();
+    // Adversarial: the secret notes value never appears anywhere in the payload.
+    expect(JSON.stringify(view)).not.toContain("my secret notes");
+
+    // The OWNER, by contrast, sees everything including the private copy and the owner-only fields.
+    const ownerView = await asAlice(t).query(
+      api.library.getOwnedPuzzlesByOwner.getOwnedPuzzlesByOwner,
+      { ownerId: alice, includeUnavailable: true },
+    );
+    expect(ownerView).toHaveLength(2);
+    const ownerCopy = ownerView.find((c) => c._id === (available as string));
+    expect(ownerCopy?.notes).toBe("my secret notes");
+    expect(ownerCopy?.salePrice).toEqual({ amount: 1000, currency: "EUR" });
   });
 
   test("browseOwnedPuzzles is auth-gated and returns a typed paginated view with owner", async () => {
