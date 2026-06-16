@@ -5,6 +5,7 @@ import { nitro } from "nitro/vite";
 import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig } from "vite";
 import tsConfigPaths from "vite-tsconfig-paths";
+import { docsPlugin } from "./vite-plugin-docs";
 
 // root pinned to this dir so Vite resolves config/paths from the app, not the
 // monorepo root, when Nx invokes the build from a different cwd.
@@ -14,6 +15,7 @@ export default defineConfig({
   plugins: [
     tsConfigPaths({ projects: ["./tsconfig.json"] }),
     tailwindcss(),
+    docsPlugin(),
     tanstackStart({ srcDirectory: "src" }),
     viteReact(),
     // Reverse-proxy PostHog through /ingest (the paths posthog-provider.tsx targets),
