@@ -27,6 +27,12 @@ const seedMember = async (t: ReturnType<typeof convexTest>) =>
 const asAlice = (t: ReturnType<typeof convexTest>) =>
   t.withIdentity({ subject: "clerk_alice" });
 
+// Alice acting as an admin: the moderation + taxonomy mutations now assert isAdmin server-side
+// (the role lives in the Clerk JWT's metadata.role claim). Keep the same Clerk subject so the
+// resolved member is still the seeded `clerk_alice`.
+const asAdmin = (t: ReturnType<typeof convexTest>) =>
+  t.withIdentity({ subject: "clerk_alice", metadata: { role: "admin" } });
+
 const puzzleRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
   t.run(async (ctx) =>
     ctx.db
@@ -153,7 +159,7 @@ describe("catalog.submitPuzzleDefinition", () => {
   test("submits with a category, persisting the real id and round-tripping the aggregateId", async () => {
     const t = convexTest(schema, modules);
     await seedMember(t);
-    const categoryId = (await asAlice(t).mutation(
+    const categoryId = (await asAdmin(t).mutation(
       api.catalog.createCatalogCategory.createCatalogCategory,
       { name: { en: "Animals", nl: "Dieren" }, sortOrder: 1 },
     )) as string;
@@ -197,7 +203,7 @@ describe("catalog moderation lifecycle", () => {
   test("approve moves pending -> approved", async () => {
     const t = convexTest(schema, modules);
     const id = await submitPending(t);
-    await asAlice(t).mutation(
+    await asAdmin(t).mutation(
       api.catalog.approvePuzzleDefinition.approvePuzzleDefinition,
       {
         puzzleDefinitionId: id,
@@ -209,7 +215,7 @@ describe("catalog moderation lifecycle", () => {
   test("reject moves pending -> rejected", async () => {
     const t = convexTest(schema, modules);
     const id = await submitPending(t);
-    await asAlice(t).mutation(
+    await asAdmin(t).mutation(
       api.catalog.rejectPuzzleDefinition.rejectPuzzleDefinition,
       {
         puzzleDefinitionId: id,
@@ -221,14 +227,14 @@ describe("catalog moderation lifecycle", () => {
   test("illegal transition rejected (approve an already-rejected definition)", async () => {
     const t = convexTest(schema, modules);
     const id = await submitPending(t);
-    await asAlice(t).mutation(
+    await asAdmin(t).mutation(
       api.catalog.rejectPuzzleDefinition.rejectPuzzleDefinition,
       {
         puzzleDefinitionId: id,
       },
     );
     await expectConvexCode(
-      asAlice(t).mutation(
+      asAdmin(t).mutation(
         api.catalog.approvePuzzleDefinition.approvePuzzleDefinition,
         {
           puzzleDefinitionId: id,
@@ -242,7 +248,7 @@ describe("catalog moderation lifecycle", () => {
     const t = convexTest(schema, modules);
     await seedMember(t);
     await expectConvexCode(
-      asAlice(t).mutation(
+      asAdmin(t).mutation(
         api.catalog.approvePuzzleDefinition.approvePuzzleDefinition,
         {
           puzzleDefinitionId: crypto.randomUUID(),
@@ -295,7 +301,7 @@ describe("catalog category management", () => {
     sortOrder: number,
     name = NAME,
   ) =>
-    (await asAlice(t).mutation(
+    (await asAdmin(t).mutation(
       api.catalog.createCatalogCategory.createCatalogCategory,
       { name, sortOrder },
     )) as string;
@@ -314,7 +320,7 @@ describe("catalog category management", () => {
     const t = convexTest(schema, modules);
     await seedMember(t);
     await expectConvexCode(
-      asAlice(t).mutation(
+      asAdmin(t).mutation(
         api.catalog.createCatalogCategory.createCatalogCategory,
         {
           name: { en: "Animals", nl: "  " },
@@ -330,7 +336,7 @@ describe("catalog category management", () => {
     await seedMember(t);
     const a = await createCategory(t, 1, { en: "A", nl: "A" });
     const b = await createCategory(t, 2, { en: "B", nl: "B" });
-    await asAlice(t).mutation(
+    await asAdmin(t).mutation(
       api.catalog.reorderCatalogCategories.reorderCatalogCategories,
       {
         order: [
@@ -347,7 +353,7 @@ describe("catalog category management", () => {
     const t = convexTest(schema, modules);
     await seedMember(t);
     const id = await createCategory(t, 1);
-    await asAlice(t).mutation(
+    await asAdmin(t).mutation(
       api.catalog.setCatalogCategoryActive.setCatalogCategoryActive,
       { catalogCategoryId: id, isActive: false },
     );

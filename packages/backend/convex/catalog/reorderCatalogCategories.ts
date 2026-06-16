@@ -2,8 +2,9 @@ import {
   makeReorderCatalogCategories,
   toCatalogCategoryId,
 } from "@jigswap/domain";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";
+import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
 import { convexCatalogCategoryRepository } from "./adapters/convexCatalogCategoryRepository";
 import { noopEventPublisher } from "./adapters/eventPublisher";
@@ -20,6 +21,7 @@ export const reorderCatalogCategories = mutation({
   },
   handler: async (ctx, args) => {
     await requireMember(ctx);
+    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
 
     const reorder = makeReorderCatalogCategories({
       categories: convexCatalogCategoryRepository(ctx),
