@@ -47,7 +47,7 @@ describe("docs/submitDocFeedback", () => {
         slug: "your-library/collections",
         helpful: true,
         ...override,
-      } as any),
+      }),
     ).rejects.toThrow(ConvexError);
     const rows = await t.run((ctx) => ctx.db.query("docFeedback").collect());
     expect(rows).toHaveLength(0);
