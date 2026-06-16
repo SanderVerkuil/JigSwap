@@ -146,4 +146,22 @@ describe("postPuzzleReview / listPuzzleReviews", () => {
       }),
     ).rejects.toThrow(ConvexError);
   });
+
+  // SECURITY: listPuzzleReviews projects each author through `toMemberView`, exposing member
+  // identity (name/username/bio/location) meant only for OTHER AUTHENTICATED MEMBERS. An
+  // unauthenticated caller must be rejected so that PII never leaks to anonymous clients.
+  test("auth is required to list reviews (no anonymous PII exposure)", async () => {
+    const t = convexTest(schema, modules);
+    const { puzzleId } = await seed(t);
+
+    await asAlice(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
+      puzzleId,
+      text: "Stunning artwork",
+      rating: 5,
+    });
+
+    await expect(
+      t.query(api.social.listPuzzleReviews.listPuzzleReviews, { puzzleId }),
+    ).rejects.toThrow(ConvexError);
+  });
 });
