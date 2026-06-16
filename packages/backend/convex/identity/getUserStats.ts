@@ -1,13 +1,16 @@
 import type { MemberStatsView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
+import { requireMember } from "./requireMember";
 
 // Identity read (thin adapter): a member's public stat card. Counts owned copies, completed
 // exchanges (as initiator + recipient) and averages received review ratings. Math, rounding and
 // the puzzlesAvailable == puzzlesOwned quirk match legacy users.getUserStats exactly.
+// Authenticated members only — matches the other identity reads (getUserById, searchUsers, etc.).
 export const getUserStats = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args): Promise<MemberStatsView> => {
+    await requireMember(ctx);
     const puzzlesOwned = await ctx.db
       .query("ownedPuzzles")
       .withIndex("by_owner", (q) => q.eq("ownerId", args.userId))

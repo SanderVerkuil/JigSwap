@@ -1,4 +1,5 @@
 import { convexTest } from "convex-test";
+import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
@@ -132,14 +133,23 @@ describe("identity.getUserStats", () => {
   test("rolls owned copies, completed exchanges and received reviews", async () => {
     const t = convexTest(schema, modules);
     const { alice } = await seed(t);
-    const stats = await t.query(api.identity.getUserStats.getUserStats, {
-      userId: alice,
-    });
+    const stats = await asAlice(t).query(
+      api.identity.getUserStats.getUserStats,
+      { userId: alice },
+    );
     expect(stats.puzzlesOwned).toBe(1);
     expect(stats.puzzlesAvailable).toBe(1); // legacy quirk: mirrors puzzlesOwned
     expect(stats.tradesCompleted).toBe(1);
     expect(stats.averageRating).toBe(4);
     expect(stats.totalReviews).toBe(1);
+  });
+
+  test("rejects an unauthenticated caller", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    await expect(
+      t.query(api.identity.getUserStats.getUserStats, { userId: alice }),
+    ).rejects.toBeInstanceOf(ConvexError);
   });
 });
 
