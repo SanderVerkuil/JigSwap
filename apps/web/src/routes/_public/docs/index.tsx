@@ -4,6 +4,7 @@ import { Section } from "@/components/marketing/section";
 import { buildNavTree } from "@/docs/nav";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BookOpen } from "lucide-react";
+import { useTranslations } from "use-intl";
 import { pages } from "virtual:docs";
 
 export const Route = createFileRoute("/_public/docs/")({
@@ -11,6 +12,7 @@ export const Route = createFileRoute("/_public/docs/")({
 });
 
 function DocsIndex() {
+  const t = useTranslations("marketing.docs");
   const tree = buildNavTree(pages);
   // Each group's blurb comes from its index page frontmatter summary.
   const summaryFor = (slug: string) =>
@@ -19,9 +21,9 @@ function DocsIndex() {
   return (
     <div>
       <PageHero
-        eyebrow="Documentation"
-        title="JigSwap User Guide"
-        lead="Everything you need to build your library, log solves, and swap puzzles with the community."
+        eyebrow={t("landingEyebrow")}
+        title={t("landingTitle")}
+        lead={t("landingLead")}
       />
       <Section>
         <Container>

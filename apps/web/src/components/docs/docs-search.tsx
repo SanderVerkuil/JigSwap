@@ -17,6 +17,7 @@ import { buildSearchDocs, createDocsIndex } from "@/docs/search";
 import { useNavigate } from "@tanstack/react-router";
 import { FileText } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "use-intl";
 import { pages } from "virtual:docs";
 
 // Built once from the static manifest — the corpus is fixed at build time.
@@ -32,6 +33,7 @@ export function DocsSearch({
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
+  const t = useTranslations("marketing.docs");
   const navigate = useNavigate();
   const [query, setQuery] = React.useState("");
   const hits = React.useMemo(() => index.search(query), [query]);
@@ -46,26 +48,24 @@ export function DocsSearch({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="overflow-hidden p-0">
         <DialogHeader className="sr-only">
-          <DialogTitle>Search documentation</DialogTitle>
-          <DialogDescription>
-            Find a page in the JigSwap user guide
-          </DialogDescription>
+          <DialogTitle>{t("searchTitle")}</DialogTitle>
+          <DialogDescription>{t("searchDescription")}</DialogDescription>
         </DialogHeader>
         <Command
           shouldFilter={false}
           className="[&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group]]:px-2 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3"
         >
           <CommandInput
-            placeholder="Search the docs…"
+            placeholder={t("searchPlaceholder")}
             value={query}
             onValueChange={setQuery}
           />
           <CommandList>
             {query.trim() !== "" && hits.length === 0 && (
-              <CommandEmpty>No results. Try a different term.</CommandEmpty>
+              <CommandEmpty>{t("searchEmpty")}</CommandEmpty>
             )}
             {hits.length > 0 && (
-              <CommandGroup heading="Pages">
+              <CommandGroup heading={t("searchPagesHeading")}>
                 {hits.map((h) => (
                   <CommandItem
                     key={h.slug}

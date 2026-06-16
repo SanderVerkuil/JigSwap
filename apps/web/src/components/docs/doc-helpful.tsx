@@ -5,11 +5,12 @@ import { useMutation } from "convex/react";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
-import { useLocale } from "use-intl";
+import { useLocale, useTranslations } from "use-intl";
 
 export function DocHelpful({ slug }: { slug: string }) {
   const submit = useMutation(gateway.docs.submitFeedback);
   const locale = useLocale();
+  const t = useTranslations("marketing.docs");
   const [state, setState] = React.useState<"idle" | "negative" | "done">(
     "idle",
   );
@@ -26,10 +27,10 @@ export function DocHelpful({ slug }: { slug: string }) {
     try {
       await submit({ slug, helpful: true, locale });
       setState("done");
-      toast.success("Thanks for the feedback!");
+      toast.success(t("helpfulThanks"));
     } catch {
       // Keep the buttons usable so the reader can retry.
-      toast.error("Something went wrong. Please try again.");
+      toast.error(t("helpfulError"));
     } finally {
       setSending(false);
     }
@@ -46,9 +47,9 @@ export function DocHelpful({ slug }: { slug: string }) {
         locale,
       });
       setState("done");
-      toast.success("Thanks — we'll use this to improve.");
+      toast.success(t("helpfulThanksNegative"));
     } catch {
-      toast.error("Something went wrong. Please try again.");
+      toast.error(t("helpfulError"));
     } finally {
       setSending(false);
     }
@@ -57,7 +58,7 @@ export function DocHelpful({ slug }: { slug: string }) {
   if (state === "done") {
     return (
       <div className="mt-10 rounded-[14px] bg-mk-muted border border-mk-border px-5 py-4 text-[14.5px] text-mk-green-600 font-medium">
-        Thanks for the feedback!
+        {t("helpfulThanks")}
       </div>
     );
   }
@@ -66,7 +67,7 @@ export function DocHelpful({ slug }: { slug: string }) {
     <div className="mt-10 rounded-[14px] bg-mk-muted border border-mk-border px-5 py-4">
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-[14.5px] text-mk-text-body font-medium">
-          Was this page helpful?
+          {t("helpfulQuestion")}
         </span>
         <div className="flex gap-2">
           <Button
@@ -75,7 +76,7 @@ export function DocHelpful({ slug }: { slug: string }) {
             disabled={sending}
             onClick={() => vote(true)}
           >
-            <ThumbsUp className="size-4" /> Yes
+            <ThumbsUp className="size-4" /> {t("helpfulYes")}
           </Button>
           <Button
             variant="outline"
@@ -83,7 +84,7 @@ export function DocHelpful({ slug }: { slug: string }) {
             disabled={sending}
             onClick={() => vote(false)}
           >
-            <ThumbsDown className="size-4" /> Not really
+            <ThumbsDown className="size-4" /> {t("helpfulNo")}
           </Button>
         </div>
       </div>
@@ -92,8 +93,8 @@ export function DocHelpful({ slug }: { slug: string }) {
           <Textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="What was missing or unclear? (optional)"
-            aria-label="Feedback comment"
+            placeholder={t("helpfulPlaceholder")}
+            aria-label={t("helpfulCommentLabel")}
             maxLength={2000}
             className="bg-mk-card"
             rows={3}
@@ -105,7 +106,7 @@ export function DocHelpful({ slug }: { slug: string }) {
             disabled={sending}
             onClick={sendNegative}
           >
-            Send feedback
+            {t("helpfulSend")}
           </Button>
         </div>
       )}

@@ -1,6 +1,7 @@
 import type { DocHeading } from "@/docs/types";
 import { cn } from "@/lib/utils";
 import * as React from "react";
+import { useTranslations } from "use-intl";
 
 export function OnPageToc({
   headings,
@@ -9,6 +10,7 @@ export function OnPageToc({
   headings: DocHeading[];
   className?: string;
 }) {
+  const t = useTranslations("marketing.docs");
   const [active, setActive] = React.useState(headings[0]?.id);
   React.useEffect(() => {
     const obs = new IntersectionObserver(
@@ -27,7 +29,7 @@ export function OnPageToc({
   return (
     <aside className={cn("self-start", className)}>
       <div className="font-mono text-[11px] font-bold tracking-[.1em] uppercase text-mk-text-muted mb-3.5">
-        On this page
+        {t("onThisPage")}
       </div>
       <nav className="flex flex-col gap-0.5 border-l border-mk-border">
         {headings.map((h) => (

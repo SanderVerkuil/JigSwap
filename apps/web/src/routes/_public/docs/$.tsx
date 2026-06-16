@@ -5,6 +5,7 @@ import { DocPager } from "@/components/docs/doc-pager";
 import { OnPageToc } from "@/components/docs/on-page-toc";
 import { buildNavTree, buildPager } from "@/docs/nav";
 import { createFileRoute, notFound } from "@tanstack/react-router";
+import { useTranslations } from "use-intl";
 import { pages } from "virtual:docs";
 
 export const Route = createFileRoute("/_public/docs/$")({
@@ -12,6 +13,7 @@ export const Route = createFileRoute("/_public/docs/$")({
 });
 
 function DocPageView() {
+  const t = useTranslations("marketing.docs");
   const { _splat } = Route.useParams();
   const slug = (_splat ?? "").replace(/\/$/, "");
   const page =
@@ -24,7 +26,7 @@ function DocPageView() {
   const group = tree.find((g) => g.slug === page.group);
 
   const trail = [
-    { title: "Docs", to: "/docs" },
+    { title: t("breadcrumbRoot"), to: "/docs" },
     ...(group ? [{ title: group.title }] : []),
     { title: page.frontmatter.title },
   ];
