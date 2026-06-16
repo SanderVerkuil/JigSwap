@@ -1,7 +1,7 @@
 ---
 title: Getting Started
 order: 1
-summary: "Create your account, learn the layout, and set your language."
+summary: "Create your account, learn the layout, read your dashboard, search fast, and set your language."
 ---
 
 # Getting Started

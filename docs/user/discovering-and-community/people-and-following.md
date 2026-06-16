@@ -6,25 +6,25 @@ summary: "Build your network, follow members, leave comments and reviews, and me
 
 # Social & Community Features
 
-## People (your network)
+## People / Social Hub
 
-1. Open **People** (Community group).
-2. See a grid of users **you follow** and users **following you**, with a _Follows you_ badge on mutual connections.
-3. View an **activity feed** of what you and the people you follow have been doing (completions, new puzzles, completed exchanges).
-4. Edit your own profile inline from here.
+**Where:** **People** (`/people`).
 
-## Following
-
-Follow other members to keep up with their activity and new additions. Following is one-directional — when someone follows you back, you're mutual connections.
+- See your **network** — everyone you follow and everyone who follows you (with a "Follows you" badge).
+- **Follow / Unfollow** members.
+- Read an **activity feed** of recent community activity (completions, acquisitions, completed exchanges).
+- Edit your **public profile** from here too.
 
 ## Comments & reviews
 
-- On a **catalog puzzle**, you can write a **review** with an optional 1–5 star rating to help the community.
-- On an individual **copy photo**, you can leave a **photo comment** in the lightbox.
-- On a **copy**, you can leave comments with an optional star rating.
+- **Puzzle reviews:** On a catalogue definition page, post a community comment with a 1–5 star rating.
+- **Copy comments:** Discuss a specific copy on its detail page.
+- **Photo comments:** In the photo lightbox, leave text comments on individual photos.
 
 ## Messages
 
-Open **Messages** (Community group) to see conversations and threads with other members, including a composer for sending messages.
+**Where:** **Messages** (`/messages`).
 
-> **Note:** The Messages screen is still being connected to live data. The conversation list and chat layout are in place, and exchange coordination is also available directly from the **Message** action on each exchange.
+A two-pane chat interface with a conversation list and a message thread.
+
+> **Note:** The messages screen is currently a preview and is **not yet connected to live conversations**. Messaging tied to specific exchanges is planned but not fully wired up yet.

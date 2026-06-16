@@ -6,24 +6,18 @@ summary: "Create private groups, manage members and permissions, and share copie
 
 # Friend Circles
 
-Circles are private groups for sharing puzzles with people you trust — family, friends, a local puzzle club — without making those puzzles public.
+Friend circles are private groups for sharing puzzles only with people you trust (family, close friends).
 
-## Create a circle
+**Where:** **Circles** (`/circles`).
 
-1. Open **Circles** (Community group).
-2. Create a new circle and give it a name.
+## Create and manage a circle
 
-## Manage members
+1. Open **Circles**.
+2. Create a named circle. As the creator, you are permanently the **Owner/Admin**.
+3. Click **Manage** (owners only) to open the management dialog, where you can:
+   - **Search for and add members** (type at least 2 characters to search).
+   - Set each member's **permission level**: **View Only**, **Exchange**, or **Admin**.
+   - **Remove** members.
+   - **Share a specific owned copy** to the circle so members can see it.
 
-In a circle's **Manage** dialog you can:
-
-1. **Add members** — search for a user (type at least 2 characters) and add them.
-2. **Set permissions** for each member:
-   - **View Only** — can see shared puzzles
-   - **Exchange** — can also propose exchanges
-   - **Admin** — can manage the circle
-3. **Remove members** when needed.
-
-## Share a puzzle into a circle
-
-From the **Manage** dialog (or a copy's sharing settings), share a specific owned copy into the circle. That copy then becomes visible to circle members in their Browse — even if your profile is otherwise private.
+Each circle row shows its icon, your role (Owner/Member), the member count with overlapping avatars, and a Manage button for owners.

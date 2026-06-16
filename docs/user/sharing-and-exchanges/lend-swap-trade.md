@@ -1,58 +1,51 @@
 ---
-title: Lend, Swap & Trade
+title: Lend, Swap & Sell
 order: 2
 summary: "Propose and manage exchanges, complete hand-overs, and review partners."
 ---
 
-# The Exchange System: Lend, Swap & Trade
+# The Exchange System — Lend, Swap & Sell
 
-Exchanges let you move puzzles between people. JigSwap tracks the whole lifecycle and keeps your completion history intact even after a puzzle changes hands.
+JigSwap supports three kinds of exchanges:
 
-## Types of exchange
+- **Swap** — trade one of your puzzles for one of theirs (puzzle-for-puzzle).
+- **Sale** — sell a puzzle for a price.
+- **Lend (loan)** — let someone borrow a puzzle and get it back later. Ownership never changes hands on a loan.
 
-- **Swap** — puzzle-for-puzzle. The person starting the swap offers one of their own copies in return.
-- **Trade / Sale** — a puzzle changes ownership (a sale records a price and currency).
-- **Lend** — you keep ownership, but possession moves to the borrower for a while. Lending is open-ended, with an optional advisory return date.
+> **Your history is safe.** When a puzzle changes ownership through a swap or sale, your completion history stays with _you_ — it doesn't transfer to the new owner.
+
+**Where:** **Trades** (`/trades`).
 
 ## Propose an exchange
 
-1. Find a puzzle you want — for example on the **Browse** page or a catalog puzzle's detail page.
-2. Choose to request it (e.g. **Find Copy to Swap** from a puzzle's catalog page leads you to available copies).
-3. Select the kind of exchange (swap/lend/trade). For a swap, choose which of _your_ copies you're offering.
-4. Submit your proposal. The owner receives a notification.
+1. Find a puzzle you want via **Browse** or a copy detail page.
+2. Click **Request Exchange** / **Request Swap**.
+3. Set the terms appropriate to the kind (which puzzle you're offering for a swap, a price for a sale, or an optional return date for a loan).
+4. Submit. The owner receives an incoming request.
 
 ## Manage your exchanges
 
-1. Open **Exchanges** (Community group).
-2. Use the tabs to focus:
-   - **All** — every exchange you're involved in
-   - **Incoming** — requests sent to you
-   - **Outgoing** — requests you've sent
-   - **Completed** — finished exchanges
-   - **Borrowed** — puzzles you currently hold on loan
-3. Expand any exchange row to see the requested/offered puzzles and your partner (with their reputation badge).
+The **Trades** page organizes everything into tabs:
 
-## Actions during an exchange
+- **All**
+- **Incoming** — requests sent to you.
+- **Outgoing** — requests you sent.
+- **Completed**
+- **Borrowed** — open loans where you're currently holding someone else's puzzle.
 
-Depending on the stage, you'll see actions such as:
+Click **View** on any exchange to expand its details: both puzzle summaries, the partner's trust badge, and lifecycle action buttons.
 
-- **Accept** or **Decline** a request
-- **Cancel** a request you sent
-- **Mark Complete** — confirm the physical hand-over happened
-- **Return** — (on the Borrowed tab) return a puzzle you borrowed
-- **Leave Review** — rate your exchange partner afterward
-- **Message** — coordinate details (see [People & Following](/docs/discovering-and-community/people-and-following#messages))
+## The exchange lifecycle
 
-## Completing an exchange
+An exchange moves through clear steps:
 
-Completion uses **dual confirmation** — both people confirm the hand-over took place. Once both confirm:
+1. **Proposed** — the request has been sent.
+2. **Accepted / Declined** — the recipient responds. (As the recipient of an incoming request, use **Accept** or **Decline**. As the sender of an outgoing request, you can **Cancel**.)
+3. **Completion** — once accepted, **both parties must confirm** completion (dual confirmation). Use **Mark Complete**.
+4. **Completed** — when both confirm, ownership (swap/sale) or possession (loan) transfers, and you can **Leave a Review** of your partner.
 
-- For a **swap/trade**, ownership transfers and the puzzle's sharing resets to private for the new owner.
-- For a **lend**, possession moves to the borrower and an open **loan** is tracked until it's returned or recalled.
-- The full **chain of custody** is recorded, and both parties can leave a partner review.
+## Returning a borrowed puzzle
 
-> Your personal completion history stays with **you**, not with the puzzle — so trading a puzzle away never erases your record of having solved it.
+If you've borrowed a puzzle (it's on the **Borrowed** tab), use the **Return** action to give it back. If you're the lender, you can **Recall** a lent-out copy from your library.
 
-## Reviewing your partner
-
-After an exchange completes, use **Leave Review** to rate the other person (overall rating plus sub-scores like communication and how accurately the puzzle was described). Reviews build each member's reputation, shown as a badge on their profile and on exchange rows.
+You can also **Message** your exchange partner to coordinate details.

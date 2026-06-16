@@ -6,32 +6,35 @@ summary: "Answers to common questions and fixes for things that go wrong."
 
 # FAQ & Troubleshooting
 
-**I added a puzzle but it doesn't show up in the public catalogue.**
-Puzzles you _contribute to the catalog_ go through moderation and only appear publicly once an administrator approves them. A copy you add to _your own library_ shows up in My Puzzles right away regardless of moderation.
+**Q: I added a puzzle, but it's not showing in the public catalogue. Why?**
+New puzzle _definitions_ you contribute go to a moderation queue and must be **approved by an admin** before they appear publicly. Your own copy is still in your library — only the shared catalogue listing waits for approval. Until then it shows at the top of your Add-Puzzle chooser as an unapproved submission.
 
-**Why can't anyone see my puzzle in Browse?**
-A copy only appears in others' Browse results when (1) it has an availability flag set (For Trade, For Lend, etc.) **and** (2) either your profile is public or you've shared the copy into a circle the viewer belongs to. Check the copy's sharing settings and your profile visibility.
+**Q: What's the difference between a "puzzle" and a "copy"?**
+A **puzzle** (catalogue definition) is the product — title, brand, piece count, artwork. A **copy** is the specific physical puzzle _you_ own, with its own condition, photos, notes, and completion history. Multiple people can own copies of the same puzzle.
 
-**My imported puzzle details are wrong or incomplete.**
-The import reads a store page automatically and may not catch everything. Review the pre-filled fields and edit anything that's off before saving. If a match banner appears, consider using the existing catalog entry to avoid duplicates.
+**Q: I traded a puzzle away. Did I lose my solving history?**
+No. Your completion records and stats stay with **you**, not with the puzzle. The new owner gets a fresh history for their copy.
 
-**My uploaded photo isn't visible yet.**
-Photos are checked automatically before becoming public. Your own pending photos are visible to you in the meantime; once approved they appear to everyone.
+**Q: Why can't I see a puzzle I know someone owns?**
+Visibility is controlled by the owner. If a copy is **private** or only shared to a **friend circle** you're not in, it won't appear in Browse for you.
 
-**I traded a puzzle away — did I lose my solving history?**
-No. Your completion history belongs to you, not the puzzle. Trading or lending a puzzle never deletes your records.
+**Q: A puzzle I lent out isn't available for new exchanges.**
+That's expected — a copy that's on loan is automatically marked unavailable until it's returned. Use **Recall** (owner) or **Return** (borrower) to close the loan.
 
-**How do I get a puzzle back that I lent out?**
-Use **Recall a loan** on the copy (from My Puzzles or the copy detail). The borrower can also use **Return** from their **Borrowed** tab in Exchanges.
+**Q: How do I complete an exchange? I clicked "Mark Complete" but nothing finalized.**
+Exchanges use **dual confirmation** — _both_ parties must confirm completion before ownership/possession transfers. Wait for your partner to also mark it complete.
 
-**An exchange is stuck as "accepted" and won't complete.**
-Completion requires **both** people to confirm the hand-over. Make sure both parties have used **Mark Complete**; until both confirm, the exchange stays open.
+**Q: Messaging doesn't seem to work / my message didn't send.**
+The Messages screen is currently a preview and is **not yet connected to live data**. Real in-exchange messaging is planned but not fully available yet.
 
-**I can't reach a page — it keeps sending me to sign in.**
-Personal pages require you to be signed in. Sign in, and JigSwap will return you to the page you wanted. If it keeps happening, try signing out and back in to refresh your session.
+**Q: I can't access the Admin area.**
+The Admin panel (categories management and puzzle moderation) is restricted to users with the **admin role**. Regular members don't have access.
 
-**My language won't switch / reverts.**
-The language preference is stored in a cookie. If your browser blocks cookies for the site, the choice can't be saved. Allow cookies for JigSwap and switch again.
+**Q: I got signed out unexpectedly.**
+JigSwap keeps your session in sync; if you sign out in another tab or your session expires, you'll be returned to the sign-in screen. Sign back in and you'll resume where you were.
 
-**Where can I get more help?**
-Use the **Contact** page (from the public site) to send a message, or open an issue on the project's GitHub repository.
+**Q: How do I export my data?**
+Go to **Insights** and use the **data export** button to download your personal data.
+
+**Q: How do I change the app's language?**
+Use the language switcher to pick **English** or **Dutch**; your choice is saved automatically.

@@ -1,7 +1,7 @@
 ---
 title: Discovering & Community
 order: 4
-summary: "Browse puzzles and people, follow members, and curate your profile."
+summary: "Browse puzzles and people, follow members, curate your profile, and build reputation through reviews."
 ---
 
 # Discovering & Community

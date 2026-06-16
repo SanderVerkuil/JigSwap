@@ -1,30 +1,32 @@
 ---
-title: Discovering Puzzles & People
+title: Discovering Puzzles
 order: 1
 summary: "Browse available copies, explore the catalogue, and read aggregated puzzle detail."
 ---
 
-# Discovering Puzzles & People
+# Discovering Puzzles — Browse & Catalogue
 
-## Browse available copies
+## Browse community puzzles
 
-1. Open **Browse** (Community group).
-2. You'll see copies other people have made available.
-3. Filter by **search text**, **category**, **difficulty**, **condition**, **piece count range**, and **availability type** (trade/lend/sale).
-4. Toggle between **grid** and **list** view.
+**Where:** **Browse** (`/browse`).
 
-## Browse the puzzle catalogue
+Browse searches all community-owned copies that are currently **available** (for trade, lend, or sale).
 
-1. Open **Puzzles** (Community group) to scroll the full catalogue of approved puzzle definitions.
-2. The list loads more puzzles automatically as you scroll.
-3. Use the **Cmd/Ctrl+K** search to jump to a specific title.
+1. Open **Browse**.
+2. Build your filter with the **query builder**, combining:
+   - Free-text search.
+   - Category, difficulty, condition.
+   - Piece-count range.
+   - Availability flags (for trade / lend / sale).
+3. Results appear as a grid or list of cards, each showing the owner, a swap/lend/sale badge, and quick actions: **View**, **Request Exchange**, **Message**, **Favorite**.
 
-## Puzzle detail (catalog view)
+## The puzzle catalogue
 
-Opening a catalog puzzle shows an aggregated view across the community:
+**Where:** **Puzzles** (`/puzzles`).
 
-- Cover, **community star rating** with breakdown bars, and difficulty/category/tag chips.
-- A stats strip: how many community members own it, total completions, average days to complete, and how many are available to swap.
-- A list of **available copies** with each owner's name, location, and rating.
-- Reviews and comments.
-- Actions: **Add to Library**, **Find Copy to Swap**, **Write a Review**.
+The catalogue is the community-curated list of approved puzzle definitions (not individual copies).
+
+- Browse the infinite-scroll grid with filters.
+- Open a definition (`/puzzles/<id>`) to see the cover, rating with breakdown, difficulty, category/tag pills, community stats (owners, completions, average solve days, copies available to swap), and a list of available copies with their owners.
+- If you own it, you'll see an ownership banner linking to your copy.
+- You can **add it to your library** from this page, **write a review**, or **contribute a new definition**.

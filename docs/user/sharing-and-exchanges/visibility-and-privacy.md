@@ -4,25 +4,21 @@ order: 1
 summary: "Understand visibility levels and set who can see and request each copy."
 ---
 
-# Sharing & Visibility Controls
+# Visibility & Sharing Controls
 
-You decide exactly who can see and request each puzzle. Every owned copy has its own sharing settings, and you can change them at any time.
+You decide who can see and interact with each puzzle copy. JigSwap uses a layered visibility model:
 
-## Visibility levels
+- **Private** — only you can see it.
+- **Friend circle** — visible to members of circles you've shared it with.
+- **Visible** — publicly viewable in the community.
+- **Lendable** — others can request to borrow it.
+- **Swappable** — others can propose a swap for it.
+- **Tradeable** — available for trade/sale.
 
-JigSwap uses a layered model. From most private to most open:
+## How to set visibility
 
-1. **Private** — only you can see it.
-2. **Friend circle** — visible only to members of circles you've shared it into (see [Friend Circles](/docs/sharing-and-exchanges/friend-circles)).
-3. **Visible** — publicly viewable, but not offered for any exchange.
-4. **Lendable** — others can ask to borrow it.
-5. **Swappable** — others can propose a puzzle-for-puzzle swap.
-6. **Tradeable** — available to trade (and, where supported, sale).
+- **When adding a puzzle:** use the **availability chips** (for trade / lend / sale) and the visibility setting on the add form.
+- **On an owned puzzle later:** open the copy detail page and use the **toggle for-trade / for-lend** controls, or **Edit** the copy.
+- **To share with a specific group:** share the copy to a **friend circle** (see [Friend Circles](/docs/sharing-and-exchanges/friend-circles)).
 
-## Set a copy's availability
-
-1. Open the copy's detail page (or use **Edit** from My Puzzles).
-2. Toggle **For Trade** and/or **For Lend** as desired, or set the visibility level.
-3. Save. The change is reflected immediately, including in others' Browse results.
-
-> **Important:** A puzzle that isn't publicly visible (private or friend-circle only) will **not** appear to people outside your circles — JigSwap keeps those copies, and your identity, hidden from non-members. Owners with a **private profile** only surface copies to people in the same circle.
+> A copy that's currently out on loan is automatically made unavailable for new exchanges until it's returned.

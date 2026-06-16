@@ -6,25 +6,16 @@ summary: "Edit your public profile, curate the 3D shelf, and set profile visibil
 
 # Your Profile & the 3D Shelf
 
-Your **Profile** is your public face on JigSwap.
+**Where:** **Profile** (`/profile`).
 
-## Open and edit your profile
+Your profile is your public face on JigSwap. It shows:
 
-1. Open **Profile** from the sidebar account area (or navigation).
-2. Your profile shows an identity header: **avatar, name, username, location, bio**, and a **trust badge** based on your reputation.
-3. Click to toggle the **inline edit** form, where you can update your display name, bio, and other profile fields.
+- An **identity header**: avatar, name, a meta row, and your trust/reputation badge.
+- An **edit toggle** that opens an inline form to update your **display name**, **bio**, **location**, and other identity fields.
+- **"{Your Name}'s Shelf"** — a **3D physics-based plank** rendering your recent puzzle copies as objects on a shelf.
+- Four **stat columns**.
+- A **received reputation** section showing reviews others have left you.
 
-## The 3D shelf (puzzle plank)
+You can also set your profile **visibility** (public or private) and **arrange your shelf** to feature up to six copies.
 
-A standout feature of your profile (and your Dashboard) is the **3D shelf** — a visual "plank" that displays your puzzles like boxes standing on a real shelf.
-
-- It appears on your Dashboard with a count of how many puzzles you own.
-- On your profile, you can **curate a featured shelf** of up to six puzzles you want to highlight, arranging which copies appear.
-
-## Profile stats & reputation
-
-Your profile also shows your **personal stats** columns and your **received reputation** (the reviews exchange partners have left for you).
-
-## Profile visibility
-
-You can set your profile to **public** or **private**. A private profile hides your copies and identity from people who aren't in a shared circle with you.
+> The same 3D shelf also appears on your **dashboard**, showing your real owned copies.
