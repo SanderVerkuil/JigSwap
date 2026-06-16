@@ -1,5 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { compileMarkdown } from "./markdown";
+
+// The first compileMarkdown call lazily loads Shiki's wasm + theme grammars,
+// which can exceed the default 5s test timeout on a cold CI machine. Warm the
+// shared processor once here (with a generous hook timeout) so individual tests
+// only pay the fast incremental cost.
+beforeAll(async () => {
+  await compileMarkdown("# warmup\n");
+}, 60000);
 
 const SRC = `---
 title: Demo Page
@@ -67,6 +75,15 @@ describe("compileMarkdown", () => {
     const r = await compileMarkdown("> Just a quote with **bold** inside.\n");
     expect(r.html).toContain("<blockquote");
     expect(r.html).not.toContain("docs-callout");
+  });
+
+  it("passes through <details>/<summary> raw HTML with inner markdown rendered", async () => {
+    const r = await compileMarkdown(
+      "<details>\n<summary>Question?</summary>\n\nAn **answer** here.\n\n</details>\n",
+    );
+    expect(r.html).toContain("<details");
+    expect(r.html).toContain("<summary>Question?</summary>");
+    expect(r.html).toContain("<strong>answer</strong>");
   });
 
   it("does not treat a deeply nested Note: as a callout", async () => {
