@@ -238,4 +238,64 @@ describe("postPuzzleComment / listPuzzleComments", () => {
       }),
     ).rejects.toThrow(ConvexError);
   });
+
+  test("listPuzzleComments is auth-gated", async () => {
+    const t = convexTest(schema, modules);
+    const { aliceCopy } = await seed(t);
+
+    await expect(
+      t.query(api.social.listPuzzleComments.listPuzzleComments, {
+        copyId: aliceCopy,
+      }),
+    ).rejects.toThrow(ConvexError);
+  });
+
+  test("listPuzzleComments hides comments on an unreachable copy from a non-owner", async () => {
+    const t = convexTest(schema, modules);
+    const { aliceCopy } = await seed(t);
+
+    // Alice's copy is CLOSED (not open) and her profile defaults to public — so it is unreachable
+    // for Bob, who would otherwise see her private per-copy notes/rating.
+    await asAlice(t).mutation(api.social.postPuzzleComment.postPuzzleComment, {
+      copyId: aliceCopy,
+      text: "my private take",
+      rating: 5,
+    });
+
+    const seenByBob = await asBob(t).query(
+      api.social.listPuzzleComments.listPuzzleComments,
+      { copyId: aliceCopy },
+    );
+    expect(seenByBob).toEqual([]);
+
+    // The owner still sees their own comments.
+    const seenByAlice = await asAlice(t).query(
+      api.social.listPuzzleComments.listPuzzleComments,
+      { copyId: aliceCopy },
+    );
+    expect(seenByAlice.map((c) => c.text)).toEqual(["my private take"]);
+  });
+
+  test("listPuzzleComments returns comments on a reachable copy to a non-owner", async () => {
+    const t = convexTest(schema, modules);
+    const { aliceCopy } = await seed(t);
+
+    // Make Alice's copy OPEN; her profile defaults to public, so it is reachable for Bob.
+    await t.run(async (ctx) => {
+      await ctx.db.patch(aliceCopy, {
+        availability: { forTrade: true, forSale: false, forLend: false },
+      });
+    });
+    await asAlice(t).mutation(api.social.postPuzzleComment.postPuzzleComment, {
+      copyId: aliceCopy,
+      text: "publicly reachable",
+      rating: 4,
+    });
+
+    const seenByBob = await asBob(t).query(
+      api.social.listPuzzleComments.listPuzzleComments,
+      { copyId: aliceCopy },
+    );
+    expect(seenByBob.map((c) => c.text)).toEqual(["publicly reachable"]);
+  });
 });
