@@ -4,8 +4,9 @@ import {
   toCatalogCategoryId,
   toPuzzleDefinitionId,
 } from "@jigswap/domain";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";
+import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
 import { convexPuzzleDefinitionRepository } from "./adapters/convexPuzzleDefinitionRepository";
 import { noopEventPublisher } from "./adapters/eventPublisher";
@@ -55,10 +56,22 @@ export const updatePuzzleDefinition = mutation({
     image: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireMember(ctx);
+    const actingMember = await requireMember(ctx);
+
+    const definitions = convexPuzzleDefinitionRepository(ctx);
+
+    // Ownership ACL: only the original submitter or an admin may edit a definition.
+    const existing = await definitions.findById(
+      toPuzzleDefinitionId(args.puzzleDefinitionId),
+    );
+    if (!existing) throw new ConvexError("Not found");
+    const submittedBy = existing.toState().submittedBy as unknown as string;
+    if (submittedBy !== (actingMember as unknown as string)) {
+      if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    }
 
     const update = makeUpdatePuzzleDefinition({
-      definitions: convexPuzzleDefinitionRepository(ctx),
+      definitions,
       events: noopEventPublisher(ctx),
       clock: systemClock,
     });
