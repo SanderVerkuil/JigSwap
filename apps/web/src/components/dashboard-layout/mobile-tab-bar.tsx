@@ -73,14 +73,14 @@ export function MobileTabBar() {
     <>
       <nav
         aria-label={t("tabsLabel")}
-        // An in-flow flex child at the bottom of the shell's 100dvh column (not
-        // position:fixed) — so it rides the viewport without the lag/jank fixed
-        // bottom bars get as the mobile address bar shows/hides. `relative z-30`
-        // so the raised center button (which rises above the bar via -mt) is
-        // never painted over by the scroll region above it; overflow-visible
-        // keeps the button's top from being clipped. pb carries the home-
-        // indicator safe-area inset for the whole shell.
-        className="relative z-30 grid shrink-0 grid-cols-5 items-stretch overflow-visible border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
+        // Pinned to the bottom of the viewport with position:fixed so it stays
+        // put while the document scrolls (and the address bar auto-hides) under
+        // it. At bottom:0 the bar sits at the true screen edge, so the safe-area
+        // inset collapses to 0 while the address bar is present and only pads up
+        // for the home indicator once the bar is the bottom-most chrome. z-30 so
+        // the raised center button (which rises above the bar via -mt) is never
+        // painted over by page content; overflow-visible keeps its top unclipped.
+        className="fixed inset-x-0 bottom-0 z-30 grid shrink-0 grid-cols-5 items-stretch overflow-visible border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
       >
         {TABS.slice(0, 2).map((tab) => (
           <TabLink key={tab.key} tab={tab} active={active} />
