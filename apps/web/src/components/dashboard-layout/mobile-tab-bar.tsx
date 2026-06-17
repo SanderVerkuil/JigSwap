@@ -94,7 +94,13 @@ export function MobileTabBar() {
         // of content peeks out below it. A box-shadow never affects layout or
         // scroll height, so this fills that transient gap (and any iOS
         // rubber-band overscroll) without adding a scrollable strip.
-        className="sticky bottom-0 z-30 grid shrink-0 grid-cols-5 items-stretch overflow-visible border-t bg-card shadow-[0_24px_0_0_var(--card)] md:hidden"
+        //
+        // will-change-transform: promote the bar to its own compositor layer so
+        // the engine keeps it glued during async scroll / the dynamic-toolbar
+        // transition. Helps the gap most on Firefox for Android, whose Gecko
+        // compositor otherwise lets a sticky bottom bar trail/detach more than
+        // Blink does.
+        className="sticky bottom-0 z-30 grid shrink-0 grid-cols-5 items-stretch overflow-visible border-t bg-card shadow-[0_24px_0_0_var(--card)] [will-change:transform] md:hidden"
       >
         {TABS.slice(0, 2).map((tab) => (
           <TabLink key={tab.key} tab={tab} active={active} />
