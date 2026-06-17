@@ -81,10 +81,13 @@ export function MobileTabBar() {
         // it scrolls smoothly and stays flush as the address bar shows/hides —
         // unlike fixed, which the browser re-snaps to the layout viewport after
         // the toolbar animation (the jitter + the gap when the address bar
-        // appears). pb carries the home-indicator safe-area inset. z-30 + the
-        // overflow-visible keep the raised center button (which rises above the
-        // bar via -mt) painted above page content and unclipped.
-        className="sticky bottom-0 z-30 grid shrink-0 grid-cols-5 items-stretch overflow-visible border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
+        // appears). No env(safe-area-inset-bottom) pad: the mobile browser's
+        // bottom chrome already clears the home indicator, and on this target it
+        // reports a non-zero inset even with the address bar up, which showed as
+        // a standing gap below the bar. z-30 + overflow-visible keep the raised
+        // center button (which rises above the bar via -mt) painted above page
+        // content and unclipped.
+        className="sticky bottom-0 z-30 grid shrink-0 grid-cols-5 items-stretch overflow-visible border-t bg-card md:hidden"
       >
         {TABS.slice(0, 2).map((tab) => (
           <TabLink key={tab.key} tab={tab} active={active} />
