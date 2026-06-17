@@ -1,6 +1,266 @@
-/* Bold/Editorial variant — scoped styles under `.v-editorial`.
- * Redeclare `--mk-*` / add `--v-*` custom properties here for this variant's
- * display type, palette and layout. Replaced/expanded by the Frontend Developer. */
+/* apps/web/src/components/marketing/variants/editorial/editorial.css
+   Bold / Editorial: ink-on-paper near-monochrome, ONE editorial accent (red),
+   oversized Fraunces display. Re-points --mk-* so shared Button/Section/cards,
+   header & footer re-skin with zero component edits. All overrides live under
+   .v-editorial (and .dark .v-editorial); never touches the global token file. */
+
+/* ONE display family, loaded only here. Two weights max (400 + 800). */
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,800&display=swap");
+
 .v-editorial {
-  /* scope marker — variant styles go here */
+  /* ---- Paper + ink grounds (literal: bright off-white page, near-black ink) ---- */
+  --v-paper: #f7f4ee; /* warm off-white — keeps the kitchen-table warmth */
+  --v-ink: #15130f; /* near-black, faintly warm (not pure #000) */
+
+  --mk-ground: var(--v-paper);
+  --mk-card-base: #fffdf8;
+  --mk-bg: var(--v-paper);
+  --mk-card: var(--mk-card-base);
+  --mk-muted: #efe9df; /* the tinted band ground (figures/custody) */
+
+  /* ---- Ink scale (still warm, AA on paper) ---- */
+  --mk-text-strong: #15130f; /* ~16:1 on paper */
+  --mk-text-body: #38332b; /* ~9:1  on paper */
+  --mk-text-muted: #655d52; /* darkened so it clears AA on the muted band too */
+
+  --mk-border: #d8cfbf;
+  --mk-input-border: #c9bfac;
+
+  /* ---- ONE editorial accent (high-chroma red) ---- */
+  --v-accent: #d6253b; /* punctuation, kickers, watermark, accent word */
+  --v-accent-ink: #b21d30; /* the same accent darkened for accent BODY text (AA 4.5:1) */
+  --mk-ring: var(--v-accent);
+  --shadow-mk-brand: 0 10px 30px -8px rgb(214 37 59 / 0.32);
+
+  /* ---- Hero three-word display colors (large text only; >=3:1 on paper) ---- */
+  --v-accent-violet: var(--mk-seed-primary); /* LEND. */
+  --v-accent-green: color-mix(
+    in oklab,
+    var(--mk-seed-secondary) 78%,
+    var(--v-ink)
+  ); /* SWAP. (darkened to pass 3:1) */
+  --v-accent-pink: color-mix(
+    in oklab,
+    var(--mk-seed-accent) 88%,
+    var(--v-ink)
+  ); /* SHARE. */
+
+  /* ---- Radii: editorial = sharp. Near-zero rounding everywhere. ---- */
+  --mk-radius-card: 4px;
+  --v-radius-pill: 999px; /* only for diagram nodes / contributor avatars */
+
+  /* ---- Shadows: minimal; editorial leans on hairlines, not elevation ---- */
+  --shadow-mk-xs: 0 1px 0 0 var(--mk-border);
+  --shadow-mk-md: 0 2px 0 0 var(--mk-border);
+  --shadow-mk-lg: 0 8px 28px -12px rgb(21 19 15 / 0.22);
+
+  /* ---- Display font wired into shared headings ---- */
+  --v-font-display: "Fraunces", "Times New Roman", Georgia, serif;
+  --font-mk-heading: var(--v-font-display);
+
+  /* ---- Texture + motion knobs ---- */
+  --v-grain-opacity: 0.035; /* paper grain, light */
+}
+
+/* Closing-cover inverts to ink ground in BOTH modes; supply paper text there. */
+.v-editorial .editorial-invert {
+  --mk-bg: var(--v-ink);
+  --mk-card: var(--v-ink);
+  --mk-text-strong: var(--v-paper);
+  --mk-text-body: #e7e1d6;
+  --mk-text-muted: #b7af9f; /* ~AA on ink */
+  --mk-border: #3a352c;
+}
+
+/* ---- Dark editorial: newsprint-at-night, not pure black ---- */
+.dark .v-editorial {
+  --v-paper: #16140f; /* dark "paper" */
+  --v-ink: #f4efe4; /* light "ink"  */
+
+  --mk-ground: var(--v-paper);
+  --mk-card-base: #1d1a14;
+  --mk-bg: var(--v-paper);
+  --mk-card: var(--mk-card-base);
+  --mk-muted: #211d16;
+
+  --mk-text-strong: #f4efe4; /* AA+ on dark paper */
+  --mk-text-body: #ddd5c6;
+  --mk-text-muted: #a59c8a; /* >=4.5:1 on --mk-muted */
+
+  --mk-border: #38322a;
+  --mk-input-border: #463f34;
+
+  --v-accent: #ff5167; /* brighter red so it pops & passes on dark */
+  --v-accent-ink: #ff8a98; /* accent body text on dark — >=4.5:1 */
+  --mk-ring: var(--v-accent);
+
+  --v-accent-violet: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 70%,
+    var(--v-ink)
+  );
+  --v-accent-green: var(--mk-seed-secondary); /* fine & bright on dark */
+  --v-accent-pink: var(--mk-seed-accent);
+
+  --shadow-mk-lg: 0 8px 28px -12px rgb(0 0 0 / 0.55);
+  --v-grain-opacity: 0.05; /* allowed up to ~0.09 dark — keep low */
+}
+
+/* Dark + inverted closing cover flips back to a light ink for contrast */
+.dark .v-editorial .editorial-invert {
+  --mk-bg: #0e0c09;
+  --mk-card: #0e0c09;
+  --mk-text-strong: #f7f4ee;
+  --mk-text-body: #e7e1d6;
+  --mk-text-muted: #b7af9f;
+  --mk-border: #2a251e;
+}
+
+/* ===========================================================================
+   Variant-only styling (all scoped under .v-editorial)
+   =========================================================================== */
+
+/* Paper grain overlay — pure inline SVG feTurbulence, no binary asset.
+   Applied via the <Paper> wrapper. Decorative, never affects layout/contrast. */
+.v-editorial .grain {
+  position: relative;
+}
+.v-editorial .grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  opacity: var(--v-grain-opacity);
+  mix-blend-mode: multiply;
+}
+.dark .v-editorial .grain::after {
+  mix-blend-mode: screen;
+}
+.v-editorial .grain > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* The hero headline — three stacked oversized display words. */
+.v-editorial .ed-headline {
+  font-family: var(--v-font-display);
+  font-weight: 800;
+  font-size: clamp(40px, 11vw, 128px);
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.v-editorial .ed-headline span.ed-word {
+  display: block;
+}
+/* The period after each word is the recurring accent punctuation motif. */
+.v-editorial .ed-headline .ed-dot {
+  color: var(--v-accent);
+  display: inline-block;
+}
+
+/* Optional micro-flourish: the accent periods scale/fade in. */
+@keyframes ed-dot-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.v-editorial .ed-headline .ed-dot {
+  animation: ed-dot-in 280ms var(--ease-mk-out, ease-out) both;
+}
+.v-editorial .ed-headline .ed-word:nth-child(1) .ed-dot {
+  animation-delay: 120ms;
+}
+.v-editorial .ed-headline .ed-word:nth-child(2) .ed-dot {
+  animation-delay: 220ms;
+}
+.v-editorial .ed-headline .ed-word:nth-child(3) .ed-dot {
+  animation-delay: 320ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .v-editorial .ed-headline .ed-dot {
+    animation: none;
+  }
+}
+
+/* Big-number figures band. */
+.v-editorial .ed-figure {
+  font-family: var(--v-font-display);
+  font-weight: 800;
+  font-size: clamp(52px, 9vw, 128px);
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--mk-text-strong);
+}
+
+/* Manifesto pull-quote. */
+.v-editorial .ed-quote {
+  font-family: var(--v-font-display);
+  font-weight: 800;
+  font-size: clamp(30px, 5.5vw, 68px);
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  color: var(--mk-text-strong);
+}
+.v-editorial .ed-quote .ed-quote-accent {
+  color: var(--v-accent);
+}
+/* The hanging quotation mark. */
+.v-editorial .ed-quote-mark {
+  font-family: var(--v-font-display);
+  font-weight: 800;
+  color: var(--v-accent);
+  line-height: 0.7;
+  font-size: clamp(56px, 9vw, 120px);
+}
+
+/* The loop spreads watermark numerals. */
+.v-editorial .ed-watermark {
+  font-family: var(--v-font-display);
+  font-weight: 800;
+  font-size: clamp(72px, 14vw, 200px);
+  line-height: 0.8;
+  letter-spacing: -0.03em;
+  color: color-mix(in oklab, var(--v-accent) 18%, transparent);
+  user-select: none;
+}
+
+/* Founders' letter drop-cap. */
+.v-editorial .ed-dropcap::first-letter {
+  font-family: var(--v-font-display);
+  font-weight: 800;
+  float: left;
+  line-height: 0.78;
+  font-size: clamp(58px, 9vw, 92px);
+  padding-right: 0.08em;
+  margin-top: 0.04em;
+  color: var(--v-accent);
+}
+
+/* Closing cover big-type lockup. */
+.v-editorial .ed-bigtype {
+  font-family: var(--v-font-display);
+  font-weight: 800;
+  font-size: clamp(46px, 10vw, 132px);
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+  color: var(--mk-text-strong);
+}
+.v-editorial .ed-bigtype .ed-dot {
+  color: var(--v-accent);
+}
+
+/* Mono labels (kickers, rules, datelines). */
+.v-editorial .ed-mono {
+  font-family:
+    ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Menlo, Consolas,
+    monospace;
 }

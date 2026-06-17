@@ -1,6 +1,280 @@
 /* Cozy/Hygge variant — scoped styles under `.v-cozy`.
- * Warm palette, soft shadows, lifestyle treatment. Redeclare `--mk-*` / add
- * `--v-*` custom properties here. Replaced/expanded by the Frontend Developer. */
+ * Warm amber/terracotta re-seed, soft cream surfaces, humanist soft serif
+ * (Fraunces) display, generous radii, gentle grain + warm photo-fallback.
+ * Everything below lives ONLY under `.v-cozy` / `.dark .v-cozy` — no global
+ * token file is touched, so shared Button/Section/cards re-skin warm for free.
+ */
+
+/* Display font — Fraunces (humanist soft serif). swap + metric serif fallback.
+ * Italic axis loaded for the founders' note. Body stays on --font-mk-sans. */
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..500&display=swap");
+
 .v-cozy {
-  /* scope marker — variant styles go here */
+  /* ---- Re-seed toward warm (keeps the ramp relationships coherent) ---- */
+  --mk-seed-primary: #c2683d; /* terracotta — replaces violet "brand" */
+  --mk-seed-secondary: #7d8b5a; /* sage/olive — replaces go-green */
+  --mk-seed-accent: #d9a441; /* honey — replaces pink highlight */
+
+  /* ---- Warm cream grounds (lamplight, not screen-blue) ---- */
+  --mk-ground: #f6ede0;
+  --mk-card-base: #fffaf2;
+  --mk-bg: color-mix(in oklab, var(--mk-seed-primary) 5%, var(--mk-ground));
+  --mk-card: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 3%,
+    var(--mk-card-base)
+  );
+  --mk-muted: color-mix(in oklab, var(--mk-seed-primary) 8%, #efe2d0);
+
+  /* ---- Warm-neutral ink (AA on cream — -muted darkened to clear 4.5:1) ---- */
+  --mk-text-strong: #2e2117;
+  --mk-text-body: #4a3a2c;
+  --mk-text-muted: #7a6450;
+
+  --mk-border: color-mix(in oklab, var(--mk-seed-primary) 16%, #e6d6c2);
+  --mk-input-border: var(--mk-border);
+  --mk-ring: var(--mk-seed-primary);
+
+  /* ---- Re-point the violet/green ramps so component utilities that bypass
+          var(--mk-*) via Tailwind classes (Wordmark, Eyebrow, header/footer
+          links: text-mk-violet-600 / text-mk-green-600 / bg-mk-violet-400)
+          turn warm instead of staying violet/green on cream. ---- */
+  --mk-violet-200: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 26%,
+    var(--mk-card)
+  );
+  --mk-violet-300: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 40%,
+    var(--mk-card)
+  );
+  --mk-violet-400: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 55%,
+    var(--mk-card)
+  );
+  --mk-violet-500: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 80%,
+    var(--mk-card)
+  );
+  --mk-violet-600: var(--mk-seed-primary); /* "Jig" + eyebrow → terracotta */
+  --mk-violet-700: color-mix(in oklab, var(--mk-seed-primary) 80%, #2e2117);
+  --mk-green-300: color-mix(
+    in oklab,
+    var(--mk-seed-secondary) 40%,
+    var(--mk-card)
+  );
+  --mk-green-400: color-mix(
+    in oklab,
+    var(--mk-seed-secondary) 60%,
+    var(--mk-card)
+  );
+  --mk-green-500: color-mix(
+    in oklab,
+    var(--mk-seed-secondary) 80%,
+    var(--mk-card)
+  );
+  --mk-green-600: var(--mk-seed-secondary); /* "Swap" → sage */
+  --mk-pink-300: color-mix(in oklab, var(--mk-seed-accent) 40%, var(--mk-card));
+  --mk-pink-400: color-mix(in oklab, var(--mk-seed-accent) 60%, var(--mk-card));
+  --mk-pink-500: var(--mk-seed-accent);
+
+  /* ---- Softer, warmer shadows than the cool-neutral defaults ---- */
+  --shadow-mk-md: 0 6px 18px -4px rgb(120 70 30 / 0.16);
+  --shadow-mk-lg: 0 16px 36px -8px rgb(120 70 30 / 0.2);
+  --shadow-mk-brand: 0 10px 30px -8px rgb(194 104 61 / 0.34);
+
+  /* ---- Radii ---- */
+  --mk-radius-card: 22px;
+  --v-radius-note: 26px;
+  --v-radius-pill: 999px;
+
+  /* ---- Display font + variant-only texture/motion tokens ---- */
+  --v-font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-mk-heading: var(
+    --v-font-display
+  ); /* wires shared headings warm-serif */
+  --v-paper-warmth: 0.06; /* gradient/texture intensity */
+  --v-grain-light: 0.045; /* grain overlay opacity (light) */
+  --v-drift-dur: 14s; /* floating-piece drift period */
+
+  /* ---- Duotone (for cover-sand now, real photos later) ---- */
+  --v-duo-shadow: color-mix(in oklab, var(--mk-seed-primary) 70%, #2e2117);
+  --v-duo-highlight: color-mix(in oklab, var(--mk-seed-accent) 35%, #fffaf2);
+}
+
+/* Dark cozy: candle-lit, not black. Re-derive grounds + ramps. */
+.dark .v-cozy {
+  --mk-ground: #221913;
+  --mk-card-base: #2c211a;
+  --mk-bg: color-mix(in oklab, var(--mk-seed-primary) 10%, var(--mk-ground));
+  --mk-card: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 8%,
+    var(--mk-card-base)
+  );
+  --mk-muted: color-mix(in oklab, var(--mk-seed-primary) 12%, #2e231b);
+
+  --mk-text-strong: #f4e9da;
+  --mk-text-body: #e4d4c2;
+  --mk-text-muted: #b39e88;
+  --mk-border: color-mix(in oklab, var(--mk-seed-primary) 18%, #3a2c22);
+
+  --mk-violet-200: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 30%,
+    var(--mk-card)
+  );
+  --mk-violet-300: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 45%,
+    var(--mk-card)
+  );
+  --mk-violet-400: color-mix(
+    in oklab,
+    var(--mk-seed-primary) 60%,
+    var(--mk-card)
+  );
+  --mk-violet-600: color-mix(in oklab, var(--mk-seed-primary) 78%, #f4e9da);
+  --mk-violet-700: color-mix(in oklab, var(--mk-seed-primary) 90%, #f4e9da);
+  --mk-green-400: color-mix(
+    in oklab,
+    var(--mk-seed-secondary) 55%,
+    var(--mk-card)
+  );
+  --mk-green-600: color-mix(in oklab, var(--mk-seed-secondary) 72%, #f4e9da);
+  --mk-pink-400: color-mix(in oklab, var(--mk-seed-accent) 55%, var(--mk-card));
+  --mk-pink-500: color-mix(in oklab, var(--mk-seed-accent) 72%, #f4e9da);
+
+  --v-grain-light: 0.07; /* slightly more grain survives on dark */
+  --v-duo-shadow: color-mix(in oklab, var(--mk-seed-primary) 70%, #160f0a);
+  --v-duo-highlight: color-mix(in oklab, var(--mk-seed-accent) 30%, #2c211a);
+}
+
+/* ----------------------------------------------------------------------- */
+/* Warm photo-fallback: layered radial + linear gradients off the warm
+ * seeds. Every [PHOTO PLACEHOLDER] uses this. A real photo later drops in
+ * over the same box as a background-image — the gradient is the SSR/no-image
+ * baseline. */
+.v-cozy .cozy-photo-fallback {
+  background:
+    radial-gradient(
+      60% 70% at 20% 15%,
+      color-mix(in oklab, var(--mk-seed-accent) 40%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      55% 65% at 85% 10%,
+      color-mix(in oklab, var(--mk-seed-primary) 28%, transparent),
+      transparent 72%
+    ),
+    linear-gradient(
+      160deg,
+      color-mix(in oklab, var(--mk-seed-accent) 14%, var(--mk-card)),
+      var(--mk-bg)
+    );
+}
+
+/* A slightly deeper variant for the hero stage ground. */
+.v-cozy .cozy-hero-ground {
+  background:
+    radial-gradient(
+      80% 90% at 78% 8%,
+      color-mix(in oklab, var(--mk-seed-accent) 22%, transparent),
+      transparent 65%
+    ),
+    radial-gradient(
+      70% 80% at 12% 95%,
+      color-mix(in oklab, var(--mk-seed-primary) 14%, transparent),
+      transparent 70%
+    ),
+    var(--mk-bg);
+}
+
+/* ----------------------------------------------------------------------- */
+/* Grain overlay (feTurbulence data-URI). Sits BELOW the text/scrim layer
+ * everywhere so it never reduces text contrast; opacity capped by token. */
+.v-cozy .cozy-grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23g)' opacity='0.5'/></svg>");
+  background-size: 160px 160px;
+  mix-blend-mode: soft-light;
+  opacity: var(--v-grain-light);
+  border-radius: inherit;
+}
+.dark .v-cozy .cozy-grain::after {
+  mix-blend-mode: overlay;
+}
+
+/* ----------------------------------------------------------------------- */
+/* Duotone treatment for the single real photo (cover-sand) and any future
+ * imagery: desaturate + a warm-shadow / cream-highlight gradient blended in
+ * `color`. Auto-matches the palette and ties cover-sand into the mood. */
+.v-cozy .cozy-duotone {
+  position: relative;
+  overflow: hidden;
+}
+.v-cozy .cozy-duotone img {
+  filter: grayscale(1) contrast(1.04) brightness(0.98);
+}
+.v-cozy .cozy-duotone::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: color;
+  background: linear-gradient(
+    150deg,
+    var(--v-duo-shadow),
+    var(--v-duo-highlight)
+  );
+}
+
+/* ----------------------------------------------------------------------- */
+/* Floating hero pieces — slow, small-amplitude drift; stays inside the clip. */
+.v-cozy .cozy-drift {
+  will-change: transform;
+  animation: cozy-drift var(--v-drift-dur) ease-in-out infinite;
+}
+@keyframes cozy-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(var(--cozy-rot, 0deg));
+  }
+  50% {
+    transform: translate3d(0, -12px, 0)
+      rotate(calc(var(--cozy-rot, 0deg) + 4deg));
+  }
+}
+
+/* Soft "lamp glow" radial behind the final CTA lockup. */
+.v-cozy .cozy-lamp-glow {
+  background: radial-gradient(
+    closest-side at 50% 38%,
+    color-mix(in oklab, var(--mk-seed-accent) 30%, transparent),
+    transparent 75%
+  );
+}
+
+/* Card hover lift used by vignettes. */
+.v-cozy .cozy-lift {
+  transition:
+    box-shadow 0.3s var(--ease-mk-out),
+    transform 0.3s var(--ease-mk-out);
+}
+.v-cozy .cozy-lift:hover {
+  box-shadow: var(--shadow-mk-lg);
+  transform: translateY(-2px);
+}
+
+/* Decorative motion stops fully under reduced-motion; static grain stays. */
+@media (prefers-reduced-motion: reduce) {
+  .v-cozy .cozy-drift {
+    animation: none !important;
+  }
 }
