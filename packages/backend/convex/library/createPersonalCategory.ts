@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { convexPersonalCategoryRepository } from "./adapters/convexPersonalCategoryRepository";
-import { noopEventPublisher } from "./adapters/eventPublisher";
+import { libraryEventPublisher } from "./adapters/eventPublisher";
 import { personalCategoryIdGenerator } from "./adapters/idGenerators";
 import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
@@ -22,7 +22,7 @@ export const createPersonalCategory = mutation({
     const create = makeCreatePersonalCategory({
       categories: convexPersonalCategoryRepository(ctx),
       ids: personalCategoryIdGenerator,
-      events: noopEventPublisher(ctx),
+      events: libraryEventPublisher(ctx),
       clock: systemClock,
     });
 

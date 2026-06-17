@@ -107,7 +107,7 @@ export function ShelfSection() {
   );
   const exchanges = useQuery(
     gateway.exchange.forUser,
-    member?._id ? { userId: member._id as Id<"users"> } : "skip",
+    member?._id ? {} : "skip",
   );
 
   // Memoized so the 3D plank's color-resolution effect doesn't re-run on every

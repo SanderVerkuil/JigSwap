@@ -4,7 +4,7 @@ import { Link } from "@/compat/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { gateway, Id } from "@/gateway";
+import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
@@ -196,7 +196,7 @@ export function BriefingHero() {
 
   const exchanges = useQuery(
     gateway.exchange.forUser,
-    member?._id ? { userId: member._id as Id<"users"> } : "skip",
+    member?._id ? {} : "skip",
   );
   const goals = useQuery(gateway.solving.myGoals, member?._id ? {} : "skip");
 

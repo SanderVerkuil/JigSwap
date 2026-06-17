@@ -35,11 +35,13 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
       updatedAt: now,
     });
 
+    // Alice's copy is OPEN (forTrade) and her profile is PUBLIC, so the copy is reachable by any
+    // member via canViewCopy — the reachability gate on photo comments lets Bob comment/read.
     const copy = await ctx.db.insert("ownedPuzzles", {
       puzzleId,
       ownerId: alice,
       condition: "good",
-      availability: { forTrade: false, forSale: false, forLend: false },
+      availability: { forTrade: true, forSale: false, forLend: false },
       createdAt: now,
       updatedAt: now,
     });
@@ -56,7 +58,7 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
       updatedAt: now,
     });
 
-    return { alice, bob, photoId };
+    return { alice, bob, copy, photoId };
   });
 
 const asAlice = (t: ReturnType<typeof convexTest>) =>
@@ -201,5 +203,107 @@ describe("postPhotoComment / listPhotoComments", () => {
         text: "anon",
       }),
     ).rejects.toThrow(ConvexError);
+  });
+
+  test("listPhotoComments requires auth even with a photoId", async () => {
+    const t = convexTest(schema, modules);
+    const { photoId } = await seed(t);
+
+    await expect(
+      t.query(api.library.listPhotoComments.listPhotoComments, { photoId }),
+    ).rejects.toThrow(ConvexError);
+  });
+});
+
+describe("photo comment reachability gating", () => {
+  // Seed a CLOSED copy (no availability flags) on a PUBLIC owner: unreachable by a non-owner because
+  // canViewCopy requires the copy to be open for a public-profile reveal.
+  const seedClosed = (t: ReturnType<typeof convexTest>) =>
+    t.run(async (ctx) => {
+      const now = Date.now();
+      const mkUser = (clerkId: string, email: string, name: string) =>
+        ctx.db.insert("users", {
+          clerkId,
+          email,
+          name,
+          isActive: true,
+          createdAt: now,
+          updatedAt: now,
+        });
+      const alice = await mkUser("clerk_alice", "alice@example.com", "Alice");
+      const bob = await mkUser("clerk_bob", "bob@example.com", "Bob");
+
+      const puzzleId = await ctx.db.insert("puzzles", {
+        aggregateId: crypto.randomUUID(),
+        title: "Closed Vista",
+        pieceCount: 500,
+        status: "approved",
+        submittedBy: alice,
+        createdAt: now,
+        updatedAt: now,
+      });
+      const copy = await ctx.db.insert("ownedPuzzles", {
+        puzzleId,
+        ownerId: alice,
+        condition: "good",
+        availability: { forTrade: false, forSale: false, forLend: false },
+        createdAt: now,
+        updatedAt: now,
+      });
+      const blob = new Blob(["fake-image-bytes"], { type: "image/png" });
+      const fileId = await ctx.storage.store(blob);
+      const photoId = await ctx.db.insert("ownedPuzzleImages", {
+        ownedPuzzleId: copy,
+        uploaderId: alice,
+        fileId,
+        title: "Box front",
+        tag: "box_front",
+        createdAt: now,
+        updatedAt: now,
+      });
+      return { alice, bob, photoId };
+    });
+
+  test("a viewer who cannot see the copy gets [] from listPhotoComments", async () => {
+    const t = convexTest(schema, modules);
+    const { photoId } = await seedClosed(t);
+
+    // The owner posts a comment on her own (closed) copy's photo.
+    await asAlice(t).mutation(api.library.postPhotoComment.postPhotoComment, {
+      photoId,
+      text: "owner note",
+    });
+
+    // The owner still sees it...
+    expect(
+      await asAlice(t).query(api.library.listPhotoComments.listPhotoComments, {
+        photoId,
+      }),
+    ).toHaveLength(1);
+
+    // ...but Bob cannot reach the closed copy, so the discussion is hidden.
+    expect(
+      await asBob(t).query(api.library.listPhotoComments.listPhotoComments, {
+        photoId,
+      }),
+    ).toEqual([]);
+  });
+
+  test("posting on a photo of an unreachable copy is rejected", async () => {
+    const t = convexTest(schema, modules);
+    const { photoId } = await seedClosed(t);
+
+    await expect(
+      asBob(t).mutation(api.library.postPhotoComment.postPhotoComment, {
+        photoId,
+        text: "from bob",
+      }),
+    ).rejects.toThrow(ConvexError);
+
+    // Nothing persisted.
+    const stored = await t.run((ctx) =>
+      ctx.db.query("photoComments").collect(),
+    );
+    expect(stored).toHaveLength(0);
   });
 });

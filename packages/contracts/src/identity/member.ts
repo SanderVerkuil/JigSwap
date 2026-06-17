@@ -2,13 +2,12 @@ import { z } from "zod";
 import type { ConvexSystemFields } from "../shared/convex";
 
 /**
- * A member (the wrapper over a Clerk user). Faithful superset of the `users` document the legacy
- * `getCurrentUser` / `getUserByClerkId` / `getUserById` / `searchUsers` reads returned raw, so
- * consumers that read `_id`, `name`, `avatar`, `bio`, `location`, etc. keep working unchanged.
+ * A member (the wrapper over a Clerk user) as projected to OTHER authenticated members.
+ * Deliberately excludes PII (`email`) and the Clerk subject (`clerkId`): those must never be
+ * exposed across members (GDPR + identity-provider subject leakage). The self-only `me` query
+ * returns {@link CurrentMemberView}, which adds those fields back for the signed-in member.
  */
 export interface MemberView extends ConvexSystemFields {
-  clerkId: string;
-  email: string;
   name: string;
   username?: string;
   avatar?: string;
@@ -18,6 +17,16 @@ export interface MemberView extends ConvexSystemFields {
   isActive: boolean;
   createdAt: number;
   updatedAt: number;
+}
+
+/**
+ * The signed-in member's own view (the `getCurrentUser` query only). Superset of {@link MemberView}
+ * that re-adds the member's own `email` and `clerkId` — safe because it is only ever returned for
+ * the caller's own account, never for another member.
+ */
+export interface CurrentMemberView extends MemberView {
+  clerkId: string;
+  email: string;
 }
 
 /**

@@ -1,11 +1,18 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  err,
   toCopyId,
   toLoanId,
   toOwnerId,
   toPuzzleDefinitionId,
 } from "../../../shared-kernel";
-import { CatalogSnapshot, Copy, CopyId, LoanId } from "../../domain";
+import {
+  CatalogSnapshot,
+  Copy,
+  CopyId,
+  LibraryError,
+  LoanId,
+} from "../../domain";
 import {
   FixedClock,
   InMemoryCopyRepository,
@@ -199,6 +206,42 @@ describe("loan use cases", () => {
       })({ loanId: toLoanId("ghost"), actingMemberId: owner });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("LoanNotFound");
+    });
+
+    // returnToOwner returns a Result; both close use cases must propagate a failure rather than
+    // silently swallow it and still report ok. Wrap the repo so the loaded copy fails to return.
+    const failingReturnCopies = (): InMemoryCopyRepository => {
+      const wrapped = copies;
+      return {
+        ...wrapped,
+        findById: async (id: CopyId) => {
+          const copy = await wrapped.findById(id);
+          if (copy) {
+            copy.returnToOwner = () => err(LibraryError.notOwner("return"));
+          }
+          return copy;
+        },
+      } as InMemoryCopyRepository;
+    };
+
+    it("propagates a returnToOwner failure on return (does not report ok)", async () => {
+      const result = await makeReturnLoan({
+        loans,
+        copies: failingReturnCopies(),
+        events,
+        clock: new FixedClock(LATER),
+      })({ loanId, actingMemberId: borrower });
+      expect(result.isErr).toBe(true);
+    });
+
+    it("propagates a returnToOwner failure on recall (does not report ok)", async () => {
+      const result = await makeRecallLoan({
+        loans,
+        copies: failingReturnCopies(),
+        events,
+        clock: new FixedClock(LATER),
+      })({ loanId, actingMemberId: owner });
+      expect(result.isErr).toBe(true);
     });
   });
 });

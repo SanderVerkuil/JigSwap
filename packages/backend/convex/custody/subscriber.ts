@@ -23,7 +23,9 @@ export const handleDomainEvent = async (
   if (!copy) return;
 
   await ctx.db.insert("copyCustodyEntries", {
-    copyId: p.copyId as string,
+    // Persist the resolved row's `_id`, not the raw payload value, so `copyId` always matches the
+    // `ownedPuzzles._id` the timeline query indexes by (avoids _id vs aggregateId drift).
+    copyId: copy._id as string,
     exchangeId: p.exchangeId as string,
     previousOwner: copy.ownerId,
     newOwner: p.newOwner as string,

@@ -13,6 +13,7 @@ import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { toMemberView } from "../identity/toMemberView";
 import { projectMemberIdentity } from "../social/privacy";
+import { canViewCopy } from "./canViewCopy";
 
 // Solve duration in whole MINUTES: prefer (endDate - startDate); else completionTimeMinutes; else
 // null. Returned raw (not rounded to days) so the UI can humanize it (e.g. "2 hours", "1 day",
@@ -51,6 +52,13 @@ export const getCopyInstanceView = query({
 
     const copy = await ctx.db.get(args.copyId);
     if (!copy) return null;
+
+    // Copy-reachability gate (identical to browseOwnedPuzzles): the viewer may only see this copy if
+    // they own it, the owner is public AND the copy is open, or the copy is circle-shared to them.
+    // A private/unreachable copy of another member returns null — no personal data leaks.
+    if (!(await canViewCopy(ctx, viewerId, copy))) return null;
+
+    const viewerIsOwner = copy.ownerId === viewerId;
 
     const puzzle = await ctx.db.get(copy.puzzleId);
     const salt = args.copyId as string;
@@ -135,8 +143,6 @@ export const getCopyInstanceView = query({
       ...completionEntries,
       ...loanEntries,
     ].sort((a, b) => a.occurredAt - b.occurredAt);
-
-    const viewerIsOwner = copy.ownerId === viewerId;
 
     // The acquisition boundary: the latest custody transfer that handed the copy TO the viewer,
     // else the copy's creation time. Only meaningful when the viewer owns the copy.
@@ -335,10 +341,12 @@ export const getCopyInstanceView = query({
         image: coverImage,
         coverImageId,
         condition: copy.condition,
-        notes: copy.notes,
+        // Owner-only personal fields (notes / acquisition provenance) are omitted for non-owners,
+        // alongside the sale/acquisition price the DTO already never carries for them.
+        notes: viewerIsOwner ? copy.notes : undefined,
         availability: copy.availability,
-        acquisitionDate: copy.acquisitionDate,
-        acquisitionSource: copy.acquisitionSource,
+        acquisitionDate: viewerIsOwner ? copy.acquisitionDate : undefined,
+        acquisitionSource: viewerIsOwner ? copy.acquisitionSource : undefined,
         difficulty: puzzle?.difficulty,
         tags: puzzle?.tags ?? [],
       },

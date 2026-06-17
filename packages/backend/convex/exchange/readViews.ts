@@ -4,7 +4,7 @@ import type {
   ExchangePuzzleView,
   ExchangeSummaryView,
 } from "@jigswap/contracts";
-import type { Doc } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { toMemberView } from "../identity/toMemberView";
 
@@ -29,31 +29,45 @@ export const toExchangeFields = (e: Doc<"exchanges">): ExchangeFields => ({
   updatedAt: e.updatedAt,
 });
 
+/**
+ * SECURITY: an exchange shows BOTH parties two owned copies (the requested copy owned by the
+ * recipient, the offered copy owned by the initiator) to BOTH parties. The owner-only personal
+ * fields — `notes` and the acquisition provenance (`acquisitionDate` / `acquisitionSource` /
+ * `acquisitionPrice`, i.e. where/when/what-was-paid) — must never cross to the counterparty, so they
+ * are OMITTED unless `viewerId` owns THIS specific copy (`c.ownerId === viewerId`). Mirrors
+ * `library/mappers.ts` `toOwnedCopyView` and `getCopyInstanceView`. `salePrice` is NOT owner-only:
+ * it is the public asking price for a copy listed for sale (and intrinsic to the exchange), so it is
+ * always carried. Each copy is gated independently — pass the acting member as `viewerId`.
+ */
 export const toOwnedPuzzleView = (
   c: Doc<"ownedPuzzles"> | null,
-): ExchangeOwnedPuzzleView | null =>
-  c
-    ? {
-        _id: c._id,
-        _creationTime: c._creationTime,
-        aggregateId: c.aggregateId,
-        puzzleId: c.puzzleId,
-        puzzleDefinitionId: c.puzzleDefinitionId,
-        snapshot: c.snapshot,
-        ownerId: c.ownerId,
-        condition: c.condition,
-        missingPiecesCount: c.missingPiecesCount,
-        notes: c.notes,
-        availability: c.availability,
-        visibility: c.visibility,
-        salePrice: c.salePrice,
-        acquisitionDate: c.acquisitionDate,
-        acquisitionSource: c.acquisitionSource,
-        acquisitionPrice: c.acquisitionPrice,
-        createdAt: c.createdAt,
-        updatedAt: c.updatedAt,
-      }
-    : null;
+  viewerId: Id<"users">,
+): ExchangeOwnedPuzzleView | null => {
+  if (!c) return null;
+  const viewerIsOwner = c.ownerId === viewerId;
+  return {
+    _id: c._id,
+    _creationTime: c._creationTime,
+    aggregateId: c.aggregateId,
+    puzzleId: c.puzzleId,
+    puzzleDefinitionId: c.puzzleDefinitionId,
+    snapshot: c.snapshot,
+    ownerId: c.ownerId,
+    condition: c.condition,
+    missingPiecesCount: c.missingPiecesCount,
+    // Owner-only personal fields: only surfaced when the viewer owns this copy.
+    notes: viewerIsOwner ? c.notes : undefined,
+    availability: c.availability,
+    visibility: c.visibility,
+    // Public asking price for a copy listed for sale — always carried.
+    salePrice: c.salePrice,
+    acquisitionDate: viewerIsOwner ? c.acquisitionDate : undefined,
+    acquisitionSource: viewerIsOwner ? c.acquisitionSource : undefined,
+    acquisitionPrice: viewerIsOwner ? c.acquisitionPrice : undefined,
+    createdAt: c.createdAt,
+    updatedAt: c.updatedAt,
+  };
+};
 
 export const toPuzzleView = (
   p: Doc<"puzzles"> | null,
@@ -92,6 +106,7 @@ export const toPuzzleView = (
 export const enrichExchangeSummary = async (
   ctx: QueryCtx,
   e: Doc<"exchanges">,
+  viewerId: Id<"users">,
   userRole?: "requester" | "owner",
 ): Promise<ExchangeSummaryView> => {
   const [requester, owner, requestedOwnedPuzzle, offeredOwnedPuzzle] =
@@ -112,9 +127,10 @@ export const enrichExchangeSummary = async (
     ...(userRole ? { userRole } : {}),
     requester: requester ? toMemberView(requester) : null,
     owner: owner ? toMemberView(owner) : null,
-    requestedOwnedPuzzle: toOwnedPuzzleView(requestedOwnedPuzzle),
+    // Gate each copy independently: the viewer sees owner-only fields only on the copy they own.
+    requestedOwnedPuzzle: toOwnedPuzzleView(requestedOwnedPuzzle, viewerId),
     requestedPuzzle: toPuzzleView(requestedPuzzle),
-    offeredOwnedPuzzle: toOwnedPuzzleView(offeredOwnedPuzzle),
+    offeredOwnedPuzzle: toOwnedPuzzleView(offeredOwnedPuzzle, viewerId),
     offeredPuzzle: toPuzzleView(offeredPuzzle),
   };
 };

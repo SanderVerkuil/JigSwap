@@ -32,6 +32,11 @@ export const postPuzzleComment = mutation({
 
     const copy = await ctx.db.get(args.copyId);
     if (!copy) throw new ConvexError("Copy not found");
+    // Copy-scoped comments ARE the owner's own notes/rating on their copy, so only the owner may
+    // post one — mirroring the addCopyPhoto ownership guard.
+    if (copy.ownerId !== (authorId as unknown as string)) {
+      throw new ConvexError("Only the owner can comment on this copy");
+    }
 
     const post = makePostComment({
       comments: convexCommentRepository(ctx),

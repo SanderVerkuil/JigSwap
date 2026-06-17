@@ -56,6 +56,9 @@ export const browseOwnedPuzzles = query({
     // Availability-sourced candidate set: every OPEN copy (rule 1). Convex can't `neq` on an
     // index, so we collect the availability-filtered set and exclude the viewer's own copies in
     // memory (unless includeOwnPuzzles). Browse shows OTHER members' available copies.
+    // Perf: bound the worst-case scan with `.take(500)` instead of an unbounded `.collect()`.
+    // CAVEAT: this is a read-cap, not a true index — at large catalogue scale this set should be
+    // sourced from a dedicated availability index + cursor paging rather than an in-memory filter.
     const availableNotOwn = (
       await ctx.db
         .query("ownedPuzzles")
@@ -66,7 +69,7 @@ export const browseOwnedPuzzles = query({
             f.eq(f.field("availability.forLend"), true),
           ),
         )
-        .collect()
+        .take(500)
     ).filter((c) => args.includeOwnPuzzles || c.ownerId !== memberId);
 
     // Circle-shared copies the viewer may see (cross-context). Rule 1 applies to these too: a

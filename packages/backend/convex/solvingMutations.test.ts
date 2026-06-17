@@ -141,6 +141,57 @@ describe("solving.recordCompletion", () => {
     expect(row?.completionTimeMinutes).toBe(60);
   });
 
+  test("a non-owner cannot record a completion against someone else's copy, and nothing is written", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId, ownedPuzzleId } = await seed(t);
+
+    await expect(
+      asBob(t).mutation(api.solving.recordCompletion.recordCompletion, {
+        copyId: copyAggregateId,
+        startDate: Date.now() - 2 * HOUR,
+        endDate: Date.now() - HOUR,
+        notes: "fabricated",
+      }),
+    ).rejects.toBeInstanceOf(ConvexError);
+
+    // No completion row was inserted against the copy.
+    const rows = await t.run(async (ctx) =>
+      ctx.db
+        .query("completions")
+        .withIndex("by_owned_puzzle", (q) =>
+          q.eq("ownedPuzzleId", ownedPuzzleId),
+        )
+        .collect(),
+    );
+    expect(rows).toHaveLength(0);
+  });
+
+  test("a non-owner cannot start a completion against someone else's copy, and nothing is written", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId, ownedPuzzleId } = await seed(t);
+
+    await expect(
+      asBob(t).mutation(api.solving.recordCompletion.recordCompletion, {
+        copyId: copyAggregateId,
+        startDate: Date.now() - HOUR,
+      }),
+    ).rejects.toBeInstanceOf(ConvexError);
+
+    const rows = await t.run(async (ctx) =>
+      ctx.db
+        .query("completions")
+        .withIndex("by_owned_puzzle", (q) =>
+          q.eq("ownedPuzzleId", ownedPuzzleId),
+        )
+        .collect(),
+    );
+    expect(rows).toHaveLength(0);
+
+    // The owner can still log a solve for their own copy.
+    const completionId = await recordForAlice(t, copyAggregateId);
+    expect(typeof completionId).toBe("string");
+  });
+
   test("records against a puzzle definition, resolving the puzzles._id FK", async () => {
     const t = convexTest(schema, modules);
     const { puzzleAggregateId, puzzleId } = await seed(t);

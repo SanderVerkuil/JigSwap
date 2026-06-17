@@ -2,11 +2,12 @@ import {
   makeSetCatalogCategoryActive,
   toCatalogCategoryId,
 } from "@jigswap/domain";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";
+import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
 import { convexCatalogCategoryRepository } from "./adapters/convexCatalogCategoryRepository";
-import { noopEventPublisher } from "./adapters/eventPublisher";
+import { catalogEventPublisher } from "./adapters/eventPublisher";
 import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
 
@@ -16,10 +17,11 @@ export const setCatalogCategoryActive = mutation({
   args: { catalogCategoryId: v.string(), isActive: v.boolean() },
   handler: async (ctx, args) => {
     await requireMember(ctx);
+    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
 
     const setActive = makeSetCatalogCategoryActive({
       categories: convexCatalogCategoryRepository(ctx),
-      events: noopEventPublisher(ctx),
+      events: catalogEventPublisher(ctx),
       clock: systemClock,
     });
 

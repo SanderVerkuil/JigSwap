@@ -15,7 +15,9 @@ const ipv4Private = (ip: string): boolean => {
   if (a === 10) return true; // 10/8
   if (a === 172 && b >= 16 && b <= 31) return true; // 172.16/12
   if (a === 192 && b === 168) return true; // 192.168/16
+  if (a === 192 && b === 0 && parts[2] === 0) return true; // 192.0.0.0/24 IETF protocol assignments
   if (a === 169 && b === 254) return true; // link-local
+  if (a === 100 && b >= 64 && b <= 127) return true; // 100.64/10 carrier-grade NAT (RFC 6598)
   return false;
 };
 

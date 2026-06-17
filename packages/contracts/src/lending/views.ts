@@ -3,6 +3,7 @@
 // `lending.*` reads return these. Ids are opaque strings (the web app re-casts at the edge).
 
 import type { MemberView } from "../identity/member";
+import type { ProjectedMember } from "../social/social";
 
 /**
  * One loan — used for a member's currently-borrowed list, their currently-lent-out list, and a
@@ -29,4 +30,17 @@ export interface LoanView {
   lender: MemberView | null;
   /** The borrower holding the copy. Null if unresolved. */
   borrower: MemberView | null;
+}
+
+/**
+ * A loan as surfaced on a Copy's public lending history (`lending.copyHistory`). Identical to
+ * {@link LoanView} except both parties are privacy-projected ({@link ProjectedMember}) so a hidden
+ * member's real identity never crosses the wire — mirroring getCopyInstanceView's loan projection.
+ */
+export interface ProjectedLoanView extends Omit<
+  LoanView,
+  "lender" | "borrower"
+> {
+  lender: ProjectedMember;
+  borrower: ProjectedMember;
 }

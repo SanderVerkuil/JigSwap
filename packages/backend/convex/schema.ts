@@ -15,12 +15,19 @@ export default defineSchema({
     // Absent or false means the user's avatar image must never appear on public
     // marketing surfaces — initials only. Opt-in; defaults to NOT consented.
     shareAvatarPublicly: v.optional(v.boolean()),
+    // Lowercased "<name> <username>" maintained on every user write, backing the
+    // people search index so member search is a real index lookup rather than a
+    // full-table scan + in-memory filter. Optional so legacy rows still validate.
+    searchableName: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_clerk_id", ["clerkId"])
     .index("by_email", ["email"])
-    .index("by_username", ["username"]),
+    .index("by_username", ["username"])
+    .searchIndex("by_searchable_name", {
+      searchField: "searchableName",
+    }),
 
   // Puzzles  - the actual puzzle designs that exist in the world
   puzzles: defineTable({
@@ -442,7 +449,11 @@ export default defineSchema({
   })
     .index("by_initiator", ["initiatorId", "offeredPuzzleId"])
     .index("by_recipient", ["recipientId", "offeredPuzzleId"])
-    .index("by_aggregate_id", ["aggregateId"]),
+    .index("by_aggregate_id", ["aggregateId"])
+    // Back the copy-reservation check: find exchanges referencing a copy as requested/offered
+    // without scanning the whole table.
+    .index("by_requested_copy", ["requestedPuzzleId"])
+    .index("by_offered_copy", ["offeredPuzzleId"]),
 
   messages: defineTable({
     exchangeId: v.id("exchanges"),
@@ -676,6 +687,7 @@ export default defineSchema({
   })
     .index("by_follower", ["followerId"])
     .index("by_followee", ["followeeId"])
+    .index("by_follower_followee", ["followerId", "followeeId"])
     .index("by_aggregate_id", ["aggregateId"]),
 
   // The durable domain-event log: every context's events are appended here, then an async
@@ -688,14 +700,18 @@ export default defineSchema({
     occurredAt: v.number(),
     context: v.string(),
     processedAt: v.optional(v.number()),
-  }).index("by_processed", ["processedAt"]),
+  })
+    .index("by_processed", ["processedAt"])
+    // Backs the activity feed: pull recent events of a given name in a bounded time window without
+    // a full-table scan-and-filter.
+    .index("by_name", ["name", "occurredAt"]),
 
   // Chain-of-Custody projection: one row per OwnershipTransferred event, folded by the custody
   // subscriber off the durable event log. WHY a dedicated table: domainEvents.payload is v.any()
   // with no per-copy index, so transfer history is not queryable by copyId; this read-model makes
   // a Copy's provenance a single indexed scan. Pure projection — keyed by copyId, no aggregateId.
   copyCustodyEntries: defineTable({
-    copyId: v.string(), // the transferred Copy (an ownedPuzzles _id, the domain CopyId)
+    copyId: v.string(), // the transferred Copy's `ownedPuzzles._id` (NOT the aggregateId) — the timeline query indexes by this
     exchangeId: v.string(), // the settling Exchange aggregateId
     previousOwner: v.string(), // the member the Copy moved FROM (a users _id)
     newOwner: v.string(), // the member the Copy moved to (a users _id)

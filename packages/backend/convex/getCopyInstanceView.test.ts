@@ -299,6 +299,65 @@ describe("getCopyInstanceView privacy gating", () => {
     expect(transfer2.from.anonRef).not.toBe(ref1);
   });
 
+  test("a non-owned UNREACHABLE copy returns null (private/closed owner)", async () => {
+    const t = convexTest(schema, modules);
+    const { viewer, prevOwner, copy } = await seedCopy(t);
+    // Hand the copy to prevOwner and make their profile private + the copy closed: unreachable.
+    await t.run(async (ctx) => {
+      await ctx.db.patch(copy, { ownerId: prevOwner });
+    });
+    await setVisibility(t, prevOwner, "private");
+    void viewer;
+
+    const view = await asViewer(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    expect(view).toBeNull();
+  });
+
+  test("a non-owned PUBLIC, OPEN copy is visible but omits owner-only fields", async () => {
+    const t = convexTest(schema, modules);
+    const { prevOwner, copy } = await seedCopy(t);
+    // Hand the copy to prevOwner, mark it open, give it owner-only data, and make prevOwner public.
+    await t.run(async (ctx) => {
+      await ctx.db.patch(copy, {
+        ownerId: prevOwner,
+        availability: { forTrade: true, forSale: false, forLend: false },
+        notes: "private owner note",
+        acquisitionSource: "bought_used",
+        acquisitionDate: 12345,
+      });
+    });
+    await setVisibility(t, prevOwner, "public");
+
+    const view = await asViewer(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    expect(view).not.toBeNull();
+    expect(view?.viewerIsOwner).toBe(false);
+    // Owner-only snapshot fields are omitted for a non-owner.
+    expect(view?.snapshot.notes).toBeUndefined();
+    expect(view?.snapshot.acquisitionSource).toBeUndefined();
+    expect(view?.snapshot.acquisitionDate).toBeUndefined();
+    // Adversarial: the private note value never appears anywhere in the payload.
+    expect(JSON.stringify(view)).not.toContain("private owner note");
+
+    // The owner, by contrast, sees those fields.
+    await t.run(async (ctx) =>
+      mkUser(ctx, "clerk_owner_check", "Owner Check", 1),
+    );
+    const ownerView = await t
+      .withIdentity({ subject: "clerk_prev" })
+      .query(api.library.getCopyInstanceView.getCopyInstanceView, {
+        copyId: copy,
+      });
+    expect(ownerView?.viewerIsOwner).toBe(true);
+    expect(ownerView?.snapshot.notes).toBe("private owner note");
+    expect(ownerView?.snapshot.acquisitionSource).toBe("bought_used");
+  });
+
   test("owner sees since/before split around acquiredByViewerAt; non-owner gets all in before", async () => {
     const t = convexTest(schema, modules);
     const { now, viewer, prevOwner, solver, copy } = await seedCopy(t);
@@ -346,9 +405,13 @@ describe("getCopyInstanceView privacy gating", () => {
     const stranger = await t.run(async (ctx) =>
       mkUser(ctx, "clerk_stranger", "Stranger", now),
     );
-    // Reassign ownership away from the viewer so the acting member is no longer the owner.
+    // Reassign ownership away from the viewer so the acting member is no longer the owner. Make the
+    // copy OPEN so the public-owner reachability gate lets the non-owner view it.
     await t.run(async (ctx) => {
-      await ctx.db.patch(copy, { ownerId: stranger });
+      await ctx.db.patch(copy, {
+        ownerId: stranger,
+        availability: { forTrade: true, forSale: false, forLend: false },
+      });
     });
     await setVisibility(t, stranger, "public");
     const notOwner = await asViewer(t).query(
@@ -669,10 +732,14 @@ describe("getCopyInstanceView rich detail", () => {
 
     // A DIFFERENT viewer (who uploaded none of these) sees ONLY approved + legacy — no pending
     // (none are theirs), no rejected. Gating keys on the UPLOADER, not the copy owner, so we query
-    // as a fresh identity rather than reassigning ownership.
-    await t.run(async (ctx) =>
-      mkUser(ctx, "clerk_stranger2", "Stranger2", now),
-    );
+    // as a fresh identity rather than reassigning ownership. The copy must be OPEN so the
+    // public-owner reachability gate lets this non-owner reach it.
+    await t.run(async (ctx) => {
+      await mkUser(ctx, "clerk_stranger2", "Stranger2", now);
+      await ctx.db.patch(copy, {
+        availability: { forTrade: true, forSale: false, forLend: false },
+      });
+    });
     const strangerView = await t
       .withIdentity({ subject: "clerk_stranger2" })
       .query(api.library.getCopyInstanceView.getCopyInstanceView, {

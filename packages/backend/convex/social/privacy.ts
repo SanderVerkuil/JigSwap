@@ -31,14 +31,16 @@ export const areMutualFollowers = async (
   if (a === b) return false;
   const aFollowsB = await ctx.db
     .query("follows")
-    .withIndex("by_follower", (q) => q.eq("followerId", a))
-    .filter((q) => q.eq(q.field("followeeId"), b))
+    .withIndex("by_follower_followee", (q) =>
+      q.eq("followerId", a).eq("followeeId", b),
+    )
     .first();
   if (!aFollowsB) return false;
   const bFollowsA = await ctx.db
     .query("follows")
-    .withIndex("by_follower", (q) => q.eq("followerId", b))
-    .filter((q) => q.eq(q.field("followeeId"), a))
+    .withIndex("by_follower_followee", (q) =>
+      q.eq("followerId", b).eq("followeeId", a),
+    )
     .first();
   return bFollowsA !== null;
 };

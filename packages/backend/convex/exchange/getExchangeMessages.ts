@@ -1,6 +1,8 @@
 import type { ExchangeMessageView } from "@jigswap/contracts";
 import { v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { requireMember } from "../identity/requireMember";
 
 // Exchange read (thin adapter): the conversation on an exchange, oldest-first, each message carrying
 // a resolved sender summary (_id/name/avatar only). Ordering and sender shape match legacy
@@ -8,6 +10,15 @@ import { query } from "../_generated/server";
 export const getExchangeMessages = query({
   args: { exchangeId: v.id("exchanges") },
   handler: async (ctx, args): Promise<ExchangeMessageView[]> => {
+    const member = (await requireMember(ctx)) as unknown as Id<"users">;
+
+    // Party-only: only the exchange's initiator/recipient may read its thread.
+    const exchange = await ctx.db.get(args.exchangeId);
+    if (!exchange) return [];
+    if (member !== exchange.initiatorId && member !== exchange.recipientId) {
+      return [];
+    }
+
     const messages = await ctx.db
       .query("messages")
       .withIndex("by_exchange", (q) => q.eq("exchangeId", args.exchangeId))

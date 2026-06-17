@@ -23,18 +23,35 @@ export const getUserCollections = query({
     if (!currentUser) throw new ConvexError("User not found");
 
     const targetUserId = args.userId || currentUser._id;
+    const isOwner = targetUserId === currentUser._id;
 
     let collections = await ctx.db
       .query("collections")
       .withIndex("by_user", (q) => q.eq("userId", targetUserId))
       .collect();
 
-    if (args.includePublic && targetUserId !== currentUser._id) {
+    // Visibility ACL: another member's private collections (names, descriptions, personalNotes,
+    // wished definitions) must never leak — only the owner sees their own private collections.
+    if (!isOwner) {
+      collections = collections.filter((c) => c.visibility === "public");
+    }
+
+    if (args.includePublic && !isOwner) {
       const publicCollections = await ctx.db
         .query("collections")
         .withIndex("by_visibility", (q) => q.eq("visibility", "public"))
         .collect();
-      collections = [...collections, ...publicCollections];
+      // De-duplicate by `_id` (keep first occurrence): the target's public collections were already
+      // fetched above and ALSO appear in this platform-wide public set, so a plain concat would
+      // surface each of the target's public collections twice.
+      const merged = [...collections, ...publicCollections];
+      const seen = new Set<string>();
+      collections = merged.filter((c) => {
+        const id = c._id as unknown as string;
+        if (seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      });
     }
 
     const views = await Promise.all(
@@ -45,7 +62,11 @@ export const getUserCollections = query({
             q.eq("collectionId", collection._id),
           )
           .collect();
-        return toCollectionView(collection, members.length);
+        return toCollectionView(collection, members.length, {
+          // personalNotes is owner-only: surface it only on the acting member's OWN collections
+          // (the public-collection set may include OTHER members' collections under includePublic).
+          includeOwnerOnly: collection.userId === currentUser._id,
+        });
       }),
     );
 

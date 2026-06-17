@@ -9,11 +9,16 @@ export const isFollowing = query({
   args: { followeeId: v.id("users") },
   handler: async (ctx, args): Promise<boolean> => {
     const followerId = (await requireMember(ctx)) as unknown as Id<"users">;
+    // Use the compound (followerId, followeeId) index rather than scanning all of
+    // the follower's edges and filtering. `.first()` is duplicate-tolerant
+    // (matches areMutualFollowers in privacy.ts) so a stray duplicate edge never
+    // 500s the follow/unfollow button state.
     const row = await ctx.db
       .query("follows")
-      .withIndex("by_follower", (q) => q.eq("followerId", followerId))
-      .filter((q) => q.eq(q.field("followeeId"), args.followeeId))
-      .unique();
+      .withIndex("by_follower_followee", (q) =>
+        q.eq("followerId", followerId).eq("followeeId", args.followeeId),
+      )
+      .first();
     return row !== null;
   },
 });

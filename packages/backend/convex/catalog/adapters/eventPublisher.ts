@@ -6,5 +6,5 @@ import { makeEventPublisher } from "../../events/makeEventPublisher";
 // CRITICAL in-transaction reaction (no sync handlers); it durably records + schedules its events
 // for the async subscribers. Notifications maps PuzzleDefinitionApproved/Rejected -> the
 // submitter's "puzzle_approved"/"puzzle_rejected".
-export const noopEventPublisher = (ctx: MutationCtx): DomainEventPublisher =>
+export const catalogEventPublisher = (ctx: MutationCtx): DomainEventPublisher =>
   makeEventPublisher(ctx, "catalog");

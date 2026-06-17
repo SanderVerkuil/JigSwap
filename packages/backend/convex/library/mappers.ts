@@ -41,7 +41,18 @@ export const toOwnedCopyOwnerView = (
   avatar: row.avatar,
 });
 
-/** An owned copy with its joined puzzle (and optional owner / collection-membership timestamp). */
+/**
+ * An owned copy with its joined puzzle (and optional owner / collection-membership timestamp).
+ *
+ * SECURITY: the owner-only personal fields — `notes`, `acquisitionPrice`, `acquisitionSource`,
+ * `acquisitionDate` — are OMITTED by default and only included when `opts.includeOwnerOnly` is
+ * explicitly true (i.e. the
+ * caller has established viewer === owner). Stripping owner-only data is opt-OUT at the mapper, not
+ * something each call site must remember to do. `salePrice` is NOT owner-only: it is the public
+ * asking price for a copy listed `forSale`, so it is always carried (the row only holds it when the
+ * owner set one). Callers that surface OTHER members' copies must leave `includeOwnerOnly` at its
+ * `false` default.
+ */
 export const toOwnedCopyView = (
   row: Doc<"ownedPuzzles">,
   puzzle: Doc<"puzzles"> | null,
@@ -49,6 +60,7 @@ export const toOwnedCopyView = (
     owner?: Doc<"users"> | null;
     addedAt?: number;
     coverUrl?: string | null;
+    includeOwnerOnly?: boolean;
   },
 ): OwnedCopyView => ({
   _id: row._id,
@@ -59,13 +71,15 @@ export const toOwnedCopyView = (
   ownerId: row.ownerId,
   condition: row.condition,
   missingPiecesCount: row.missingPiecesCount,
-  notes: row.notes,
+  // Owner-only personal fields: only surfaced when the viewer owns the copy.
+  notes: opts?.includeOwnerOnly ? row.notes : undefined,
   availability: row.availability,
   visibility: row.visibility,
+  // Public asking price for a copy listed for sale — always carried.
   salePrice: row.salePrice,
-  acquisitionDate: row.acquisitionDate,
-  acquisitionSource: row.acquisitionSource,
-  acquisitionPrice: row.acquisitionPrice,
+  acquisitionDate: opts?.includeOwnerOnly ? row.acquisitionDate : undefined,
+  acquisitionSource: opts?.includeOwnerOnly ? row.acquisitionSource : undefined,
+  acquisitionPrice: opts?.includeOwnerOnly ? row.acquisitionPrice : undefined,
   snapshot: row.snapshot,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
@@ -119,9 +133,18 @@ export const toOwnedCopyCompletionView = (
   updatedAt: row.updatedAt,
 });
 
-/** The bare collection row (no derived count) for the contains-copy read. */
+/**
+ * The bare collection row (no derived count) for the contains-copy read.
+ *
+ * SECURITY: `personalNotes` is the owner's private note on the collection and must never surface to
+ * a non-owner — a PUBLIC collection is readable by anyone, so the note is OMITTED unless
+ * `opts.includeOwnerOnly` is explicitly true (the caller established viewer === collection owner).
+ * `wishedDefinitions` is the substantive (public) content of a shared wishlist and is always
+ * carried.
+ */
 export const toCollectionMembershipView = (
   row: Doc<"collections">,
+  opts?: { includeOwnerOnly?: boolean },
 ): CollectionMembershipView => ({
   _id: row._id,
   _creationTime: row._creationTime,
@@ -135,7 +158,7 @@ export const toCollectionMembershipView = (
   isDefault: row.isDefault,
   isWishlist: row.isWishlist,
   wishedDefinitions: row.wishedDefinitions,
-  personalNotes: row.personalNotes,
+  personalNotes: opts?.includeOwnerOnly ? row.personalNotes : undefined,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
 });
@@ -144,8 +167,9 @@ export const toCollectionMembershipView = (
 export const toCollectionView = (
   row: Doc<"collections">,
   puzzleCount: number,
+  opts?: { includeOwnerOnly?: boolean },
 ): CollectionView => ({
-  ...toCollectionMembershipView(row),
+  ...toCollectionMembershipView(row, opts),
   puzzleCount,
 });
 
@@ -153,7 +177,8 @@ export const toCollectionView = (
 export const toCollectionDetailView = (
   row: Doc<"collections">,
   puzzles: OwnedCopyView[],
+  opts?: { includeOwnerOnly?: boolean },
 ): CollectionDetailView => ({
-  ...toCollectionMembershipView(row),
+  ...toCollectionMembershipView(row, opts),
   puzzles,
 });

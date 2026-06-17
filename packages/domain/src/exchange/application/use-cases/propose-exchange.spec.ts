@@ -234,6 +234,31 @@ describe("makeProposeExchange", () => {
     if (result.isErr) expect(result.error.code).toBe("CopyNotFound");
   });
 
+  it("rejects when the requested copy is not owned by the named recipient", async () => {
+    // carol owns the requested copy, but the proposal names bob as the recipient.
+    const carol = toMemberId("carol");
+    copies
+      .seed(
+        copy({
+          id: requestedId,
+          ownerId: carol,
+          availability: { forTrade: false, forSale: true, forLend: false },
+        }),
+      )
+      .seed(copy({ id: offeredId, ownerId: alice }));
+
+    const result = await propose({
+      initiatorId: alice,
+      recipientId: bob,
+      kind: "sale",
+      requestedCopyId: requestedId,
+      terms: saleTerms(),
+    });
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("RecipientNotOwner");
+    expect(events.published).toHaveLength(0);
+  });
+
   it("delegates self-exchange rejection to the aggregate", async () => {
     copies.seed(
       copy({

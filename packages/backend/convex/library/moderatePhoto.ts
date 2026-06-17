@@ -135,6 +135,10 @@ export const moderatePhoto = internalAction({
 
       // Re-encode (strip EXIF/metadata). Best-effort: on decode failure, classify the original.
       let cleanBytes = bytes;
+      // Tracks the just-stored clean blob across the try/catch. If `setModerationFile` throws AFTER
+      // the store succeeded, the row still points at the original, so the clean blob is unreferenced.
+      // There is no storage GC, so we must delete it ourselves to avoid orphaning it permanently.
+      let storedFileId: string | null = null;
       try {
         const { bytes: encoded, mime } = await reencodeImage(bytes);
         cleanBytes = encoded;
@@ -144,11 +148,14 @@ export const moderatePhoto = internalAction({
         const newFileId = await ctx.storage.store(
           new Blob([toArrayBuffer(cleanBytes)], { type: mime }),
         );
+        storedFileId = newFileId;
         await ctx.runMutation(
           internal.library.moderationStore.setModerationFile,
           { imageId, fileId: newFileId },
         );
-        // The row now points at the clean blob; drop the original (best-effort).
+        // Swap succeeded: the row now points at the clean blob, so it is no longer the one to clean
+        // up on failure; drop the original instead (best-effort).
+        storedFileId = null;
         try {
           await ctx.storage.delete(row.fileId);
         } catch (error) {
@@ -158,6 +165,15 @@ export const moderatePhoto = internalAction({
         event.reencoded = false;
         event.reencode_error = errMsg(error);
         cleanBytes = bytes;
+        // If the clean blob was stored but the row swap failed, the blob is now orphaned (the row
+        // still references the original). Delete it best-effort before falling back to the original.
+        if (storedFileId !== null) {
+          try {
+            await ctx.storage.delete(storedFileId);
+          } catch (cleanupError) {
+            event.orphan_cleanup_error = errMsg(cleanupError);
+          }
+        }
       }
 
       // Classify. The port itself fails open; this try/catch is the last-resort guard.

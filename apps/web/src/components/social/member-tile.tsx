@@ -71,7 +71,7 @@ export function MemberTile({
         <div className="text-muted-foreground mt-2 flex items-center gap-3 text-xs">
           {stats === undefined ? (
             <Skeleton className="h-3 w-32" />
-          ) : (
+          ) : stats === null ? null : (
             <>
               <span>
                 <strong className="text-foreground">

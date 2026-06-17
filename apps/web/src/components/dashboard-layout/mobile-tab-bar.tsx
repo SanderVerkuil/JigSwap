@@ -10,7 +10,7 @@
 import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
-import { gateway, Id } from "@/gateway";
+import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
 import {
@@ -62,7 +62,7 @@ export function MobileTabBar() {
   const { member } = useCurrentMember();
   const exchanges = useQuery(
     gateway.exchange.forUser,
-    member?._id ? { userId: member._id as Id<"users"> } : "skip",
+    member?._id ? {} : "skip",
   );
   const pending = (exchanges ?? []).filter(
     (exchange) =>

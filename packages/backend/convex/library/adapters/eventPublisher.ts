@@ -6,5 +6,5 @@ import { makeEventPublisher } from "../../events/makeEventPublisher";
 // CRITICAL in-transaction reaction (no sync handlers); it durably records + schedules its events
 // (CopyAcquired, CollectionCreated, ...) for the async subscribers. None map to a member-facing
 // notification yet, but recording keeps the log complete + the seam ready for Social/Insights.
-export const noopEventPublisher = (ctx: MutationCtx): DomainEventPublisher =>
+export const libraryEventPublisher = (ctx: MutationCtx): DomainEventPublisher =>
   makeEventPublisher(ctx, "library");

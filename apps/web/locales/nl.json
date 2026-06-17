@@ -1790,6 +1790,7 @@
     "description": "Hoe dit exemplaar in de loop van de tijd van eigenaar is gewisseld.",
     "originalOwner": "Oorspronkelijke eigenaar",
     "currentOwner": "Huidige eigenaar",
+    "anonymous": "Anonieme gebruiker",
     "transferredVia": "Overgedragen via ruil {exchangeId}",
     "noTransfers": "Dit exemplaar is nooit overgedragen.",
     "loading": "Eigendomsketen laden..."
@@ -1815,6 +1816,7 @@
     "statusRecalled": "Teruggevraagd",
     "borrowedBy": "Geleend door {name}",
     "unknownMember": "Onbekend lid",
+    "anonymousMember": "Anonieme gebruiker",
     "borrowedCount": "{count, plural, one {# geleende puzzel} other {# geleende puzzels}}",
     "pieceCount": "{count, plural, one {# stuk} other {# stukken}}"
   },

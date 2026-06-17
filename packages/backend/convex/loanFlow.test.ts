@@ -1,4 +1,5 @@
 import { convexTest } from "convex-test";
+import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -122,12 +123,70 @@ describe("loan lifecycle", () => {
         {},
       ),
     ).toHaveLength(0);
+    // The history read is auth-gated.
+    await expect(
+      t.query(api.library.getCopyLoanHistory.getCopyLoanHistory, {
+        copyId: copy,
+      }),
+    ).rejects.toBeInstanceOf(ConvexError);
+
     const history = await asOwner(t).query(
       api.library.getCopyLoanHistory.getCopyLoanHistory,
       { copyId: copy },
     );
     expect(history).toHaveLength(1);
     expect(history[0].status).toBe("returned");
+    // Both parties are privacy-projected; here both have public (default) profiles so they reveal.
+    expect(history[0].lender.anonymous).toBe(false);
+    if (!history[0].lender.anonymous) {
+      expect(history[0].lender.member.name).toBe("clerk_owner");
+    }
+    expect(history[0].borrower.anonymous).toBe(false);
+    if (!history[0].borrower.anonymous) {
+      expect(history[0].borrower.member.name).toBe("clerk_alice");
+    }
+  });
+
+  test("getCopyLoanHistory returns [] for a non-owner when the copy is unreachable", async () => {
+    const t = convexTest(schema, modules);
+    const { copy, owner } = await seed(t);
+    await settleLend(t, copy, owner);
+    await flush(t);
+
+    // Make the owner private and the copy closed -> a non-owner stranger cannot reach it.
+    await t.run(async (ctx) => {
+      await ctx.db.insert("users", {
+        clerkId: "clerk_stranger",
+        email: "stranger@example.com",
+        name: "clerk_stranger",
+        isActive: true,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      await ctx.db.insert("profiles", {
+        memberId: owner,
+        displayName: "clerk_owner",
+        visibility: "private",
+        updatedAt: Date.now(),
+      });
+      await ctx.db.patch(copy, {
+        availability: { forTrade: false, forSale: false, forLend: false },
+      });
+    });
+
+    const history = await t
+      .withIdentity({ subject: "clerk_stranger" })
+      .query(api.library.getCopyLoanHistory.getCopyLoanHistory, {
+        copyId: copy,
+      });
+    expect(history).toEqual([]);
+
+    // The owner still sees the full history.
+    const ownerHistory = await asOwner(t).query(
+      api.library.getCopyLoanHistory.getCopyLoanHistory,
+      { copyId: copy },
+    );
+    expect(ownerHistory).toHaveLength(1);
   });
 
   test("the owner recalls the loan -> possession back to the owner", async () => {

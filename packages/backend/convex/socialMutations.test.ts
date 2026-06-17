@@ -84,6 +84,32 @@ describe("follow / unfollow", () => {
     ).rejects.toThrow(ConvexError);
   });
 
+  test("isFollowing is duplicate-tolerant (compound index + .first, no 500)", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+
+    // Two identical (alice -> bob) edges. With the old by_follower scan + .unique()
+    // this would throw; the compound index + .first() must return true cleanly.
+    await t.run(async (ctx) => {
+      await ctx.db.insert("follows", {
+        followerId: alice,
+        followeeId: bob,
+        createdAt: 1,
+      });
+      await ctx.db.insert("follows", {
+        followerId: alice,
+        followeeId: bob,
+        createdAt: 2,
+      });
+    });
+
+    expect(
+      await asAlice(t).query(api.social.isFollowing.isFollowing, {
+        followeeId: bob,
+      }),
+    ).toBe(true);
+  });
+
   test("unfollow removes the edge; unfollowing a non-followee is rejected", async () => {
     const t = convexTest(schema, modules);
     const { bob } = await seed(t);
@@ -105,6 +131,82 @@ describe("follow / unfollow", () => {
         followeeId: bob,
       }),
     ).rejects.toThrow(ConvexError);
+  });
+});
+
+describe("listFollowers / listFollowees auth + visibility gating", () => {
+  test("passing a memberId while unauthenticated is rejected (no ?? auth bypass)", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+
+    // Supplying a memberId must NOT short-circuit requireMember.
+    await expect(
+      t.query(api.social.listFollowers.listFollowers, { memberId: bob }),
+    ).rejects.toThrow(ConvexError);
+    await expect(
+      t.query(api.social.listFollowees.listFollowees, { memberId: bob }),
+    ).rejects.toThrow(ConvexError);
+  });
+
+  test("a private member's follow graph is hidden from non-mutual viewers", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+
+    // Alice follows Bob (one-directional), and Bob marks his profile private.
+    await asAlice(t).mutation(api.social.followMember.followMember, {
+      followeeId: bob,
+    });
+    await asBob(t).mutation(
+      api.social.setProfileVisibility.setProfileVisibility,
+      { visibility: "private" },
+    );
+
+    // Alice is not a mutual follower of Bob, so Bob's graph is hidden.
+    expect(
+      await asAlice(t).query(api.social.listFollowers.listFollowers, {
+        memberId: bob,
+      }),
+    ).toEqual([]);
+    expect(
+      await asAlice(t).query(api.social.listFollowees.listFollowees, {
+        memberId: bob,
+      }),
+    ).toEqual([]);
+
+    // Bob himself always sees his own graph.
+    const ownFollowers = await asBob(t).query(
+      api.social.listFollowers.listFollowers,
+      { memberId: bob },
+    );
+    expect(ownFollowers.map((f) => f.memberId)).toContain(alice as string);
+  });
+
+  test("mutual followers may see a private member's follow graph", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+
+    // Mutual follow, then Bob goes private.
+    await asAlice(t).mutation(api.social.followMember.followMember, {
+      followeeId: bob,
+    });
+    await asBob(t).mutation(api.social.followMember.followMember, {
+      followeeId: alice,
+    });
+    await asBob(t).mutation(
+      api.social.setProfileVisibility.setProfileVisibility,
+      { visibility: "private" },
+    );
+
+    const followers = await asAlice(t).query(
+      api.social.listFollowers.listFollowers,
+      { memberId: bob },
+    );
+    expect(followers.map((f) => f.memberId)).toContain(alice as string);
+    const followees = await asAlice(t).query(
+      api.social.listFollowees.listFollowees,
+      { memberId: bob },
+    );
+    expect(followees.map((f) => f.memberId)).toContain(alice as string);
   });
 });
 
@@ -266,5 +368,60 @@ describe("activity feed projection", () => {
     expect(feed[0].kind).toBe("exchange");
     expect(feed[0].ref).toBe(exchangeAggregateId);
     expect(feed[0].memberId).toBe(alice as string);
+  });
+
+  test("a completed exchange appears once when the viewer is a party AND follows the counterparty", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+
+    // Alice is a party (initiator) AND follows Bob (the recipient/counterparty) — both parties land
+    // in her audience, which previously emitted the same exchange twice.
+    await asAlice(t).mutation(api.social.followMember.followMember, {
+      followeeId: bob,
+    });
+
+    const exchangeAggregateId = "exch-dup";
+    await t.run(async (ctx) => {
+      const puzzleId = await ctx.db.insert("puzzles", {
+        title: "P",
+        pieceCount: 100,
+        status: "approved",
+        submittedBy: bob,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      const copyId = await ctx.db.insert("ownedPuzzles", {
+        puzzleId,
+        ownerId: bob,
+        condition: "good",
+        availability: { forTrade: true, forSale: false, forLend: false },
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      await ctx.db.insert("exchanges", {
+        aggregateId: exchangeAggregateId,
+        initiatorId: alice,
+        recipientId: bob,
+        type: "trade",
+        requestedPuzzleId: copyId,
+        status: "completed",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+    await insertEvent(
+      t,
+      "ExchangeCompleted",
+      { exchangeId: exchangeAggregateId },
+      Date.now(),
+      "exchange",
+    );
+
+    const feed = await asAlice(t).query(
+      api.social.getActivityFeed.getActivityFeed,
+      {},
+    );
+    // De-duplicated by (kind, ref): the exchange shows exactly once, not twice.
+    expect(feed.filter((e) => e.ref === exchangeAggregateId)).toHaveLength(1);
   });
 });
