@@ -115,6 +115,27 @@ export const Route = createRootRouteWithContext<{
   component: RootComponent,
 });
 
+// Make all Clerk UI (UserButton menu, UserProfile modal, sign-in/up) follow our
+// design tokens. The values are var(--…) references to the same CSS variables
+// the app themes with, so Clerk tracks both the brand palette and light/dark
+// automatically — the browser resolves each var to the active theme's value, no
+// theme detection needed. (Clerk ignores variables it doesn't recognise.)
+const clerkAppearance = {
+  variables: {
+    colorPrimary: "var(--primary)",
+    colorTextOnPrimaryBackground: "var(--primary-foreground)",
+    colorText: "var(--popover-foreground)",
+    colorTextSecondary: "var(--muted-foreground)",
+    colorBackground: "var(--popover)",
+    colorInputText: "var(--foreground)",
+    colorInputBackground: "var(--background)",
+    colorNeutral: "var(--foreground)",
+    colorDanger: "var(--destructive)",
+    colorSuccess: "var(--jigsaw-success)",
+    colorWarning: "var(--jigsaw-warning)",
+  },
+} as const;
+
 function RootComponent() {
   const context = useRouteContext({ from: Route.id });
   const { intl, userId, token } = context;
@@ -131,7 +152,10 @@ function RootComponent() {
   // Render Clerk's own UI (UserButton, UserProfile, sign-in/up) in the active
   // app locale. Reactive to intl.locale so a language switch re-localizes Clerk.
   return (
-    <ClerkProvider localization={intl.locale === "nl" ? nlNL : enUS}>
+    <ClerkProvider
+      localization={intl.locale === "nl" ? nlNL : enUS}
+      appearance={clerkAppearance}
+    >
       <ConvexProviderWithClerk client={context.convexClient} useAuth={useAuth}>
         <AuthCacheSync />
         <RootDocument locale={intl.locale}>
