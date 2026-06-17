@@ -210,7 +210,7 @@ function MessagesPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-14rem)] min-h-[420px] gap-6">
+    <div className="flex h-[calc(100dvh-14rem)] min-h-[420px] gap-6">
       {/* Conversation list — open rows on the ground, no boxed card */}
       <div className="flex w-full max-w-xs flex-col sm:w-80">
         <div className="relative mb-2">

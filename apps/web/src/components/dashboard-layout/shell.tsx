@@ -34,16 +34,25 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <ShellPreferencesProvider>
       <PageHeaderSlotProvider>
-        <SidebarProvider className="flex-col md:h-svh md:overflow-hidden">
+        {/* The shell is a fixed-height flex column that owns its own scroll.
+            On mobile `100dvh` tracks the browser's dynamic toolbar (and, via
+            interactive-widget=resizes-content, the on-screen keyboard) so the
+            bottom tab bar — an in-flow flex child, not position:fixed — rides
+            the viewport without the lag/repositioning jank fixed elements get
+            during the address-bar show/hide animation. overflow-hidden keeps
+            the document itself from scrolling, so env(safe-area-inset-bottom)
+            stops toggling as the address bar appears/disappears. Desktop keeps
+            `svh` (no dynamic toolbar, so svh == dvh there). */}
+        <SidebarProvider className="flex-col h-[100dvh] overflow-hidden md:h-svh">
           <TopBar onOpenPalette={() => setPaletteOpen(true)} />
           <MobileTopBar onOpenPalette={() => setPaletteOpen(true)} />
-          <div className="flex flex-1 md:min-h-0">
+          <div className="flex min-h-0 flex-1">
             <AppSidebar />
-            <SidebarInset className="md:min-h-0 md:overflow-hidden md:peer-data-[variant=inset]:mt-0 md:peer-data-[variant=inset]:mr-3 md:peer-data-[variant=inset]:mb-3 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:border md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-0">
+            <SidebarInset className="min-h-0 overflow-hidden md:peer-data-[variant=inset]:mt-0 md:peer-data-[variant=inset]:mr-3 md:peer-data-[variant=inset]:mb-3 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:border md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-0">
               {/* ONE scroll region holds the page head + content, so content scrolls UNDER the
                   glass head (sticky top-0). Clipped to the card's rounded corners by SidebarInset's
                   overflow-hidden. */}
-              <div className="flex-1 overflow-x-hidden md:min-h-0 md:overflow-y-auto md:[scrollbar-gutter:stable]">
+              <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto md:[scrollbar-gutter:stable]">
                 <PageHead />
                 <ContentArea>{children}</ContentArea>
               </div>
@@ -79,9 +88,12 @@ function ContentArea({ children }: { children: React.ReactNode }) {
   return (
     <div
       className={cn(
-        // Mobile: 18px top / 16px sides per the mobile spec, with extra
-        // bottom clearance for the tab bar's raised center button.
-        "w-full px-4 pt-[18px] pb-[calc(env(safe-area-inset-bottom)+84px)] md:p-6",
+        // Mobile: 18px top / 16px sides per the mobile spec. The tab bar is an
+        // in-flow flex sibling below this scroll region now, so content no
+        // longer reserves space for it (or for the safe-area inset, which the
+        // bar carries) — just a little bottom breathing room under the raised
+        // center button.
+        "w-full px-4 pt-[18px] pb-6 md:p-6",
         !fullWidth && "mx-auto max-w-[1180px]",
       )}
     >

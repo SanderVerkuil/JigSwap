@@ -60,7 +60,7 @@ function DocsLayout() {
         </main>
       ) : (
         <div className="mx-auto w-full max-w-[1400px] px-6 grid grid-cols-[280px_minmax(0,1fr)] max-[1000px]:grid-cols-1 gap-x-[clamp(32px,4vw,64px)] items-start">
-          <aside className="sticky top-[86px] self-start max-h-[calc(100vh-86px)] overflow-y-auto pr-6 border-r border-mk-border py-8 max-[1000px]:hidden">
+          <aside className="sticky top-[86px] self-start max-h-[calc(100dvh-86px)] overflow-y-auto pr-6 border-r border-mk-border py-8 max-[1000px]:hidden">
             <DocsSidebar onOpenSearch={() => setSearchOpen(true)} />
           </aside>
           <main id="docs-content" className="py-8 min-w-0">
