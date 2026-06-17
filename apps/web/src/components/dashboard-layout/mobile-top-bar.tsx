@@ -12,13 +12,13 @@ import { Image } from "@/compat/image";
 import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";
 import logoIcon from "@/components/common/header-icon/logo.png";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
 import { Bell, ChevronLeft, Search } from "lucide-react";
 import { useTranslations } from "use-intl";
 import { getNavGroup, getRouteMeta } from "./route-meta";
+import { ShellUserButton } from "./shell-user-button";
 
 // Shared 44px touch target for every control in the bar.
 const tapTarget =
@@ -105,20 +105,7 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
             <span className="bg-jigsaw-primary-accent ring-card absolute top-2.5 right-2.5 size-2 rounded-full ring-2" />
           )}
         </Link>
-        <Link
-          href="/profile"
-          aria-label={t("pages.profile.title")}
-          className={tapTarget}
-        >
-          <Avatar className="size-7">
-            {user?.imageUrl && (
-              <AvatarImage src={user.imageUrl} alt={user.fullName ?? ""} />
-            )}
-            <AvatarFallback>
-              {(user?.firstName ?? "?").charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-        </Link>
+        <ShellUserButton tapTarget />
       </div>
     </header>
   );
