@@ -9,6 +9,7 @@
  */
 
 import type * as adminCategories from "../adminCategories.js";
+import type * as catalog_adapters_assertPublicUrl from "../catalog/adapters/assertPublicUrl.js";
 import type * as catalog_adapters_browserStorePageFetcher from "../catalog/adapters/browserStorePageFetcher.js";
 import type * as catalog_adapters_catalogIdGenerator from "../catalog/adapters/catalogIdGenerator.js";
 import type * as catalog_adapters_convexCatalogCategoryRepository from "../catalog/adapters/convexCatalogCategoryRepository.js";
@@ -45,9 +46,9 @@ import type * as catalog_submitPuzzleDefinition from "../catalog/submitPuzzleDef
 import type * as catalog_updateCatalogCategory from "../catalog/updateCatalogCategory.js";
 import type * as catalog_updatePuzzleDefinition from "../catalog/updatePuzzleDefinition.js";
 import type * as contact_submitContactMessage from "../contact/submitContactMessage.js";
-import type * as docs_submitDocFeedback from "../docs/submitDocFeedback.js";
 import type * as custody_getCopyCustodyTimeline from "../custody/getCopyCustodyTimeline.js";
 import type * as custody_subscriber from "../custody/subscriber.js";
+import type * as docs_submitDocFeedback from "../docs/submitDocFeedback.js";
 import type * as events_dispatch from "../events/dispatch.js";
 import type * as events_makeEventPublisher from "../events/makeEventPublisher.js";
 import type * as events_recordAndSchedule from "../events/recordAndSchedule.js";
@@ -115,6 +116,7 @@ import type * as library_addCopyPhoto from "../library/addCopyPhoto.js";
 import type * as library_addCopyToCollection from "../library/addCopyToCollection.js";
 import type * as library_backfill from "../library/backfill.js";
 import type * as library_browseOwnedPuzzles from "../library/browseOwnedPuzzles.js";
+import type * as library_canViewCopy from "../library/canViewCopy.js";
 import type * as library_changeCopyCondition from "../library/changeCopyCondition.js";
 import type * as library_circleSharedCopies from "../library/circleSharedCopies.js";
 import type * as library_createCollection from "../library/createCollection.js";
@@ -254,6 +256,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   adminCategories: typeof adminCategories;
+  "catalog/adapters/assertPublicUrl": typeof catalog_adapters_assertPublicUrl;
   "catalog/adapters/browserStorePageFetcher": typeof catalog_adapters_browserStorePageFetcher;
   "catalog/adapters/catalogIdGenerator": typeof catalog_adapters_catalogIdGenerator;
   "catalog/adapters/convexCatalogCategoryRepository": typeof catalog_adapters_convexCatalogCategoryRepository;
@@ -290,9 +293,9 @@ declare const fullApi: ApiFromModules<{
   "catalog/updateCatalogCategory": typeof catalog_updateCatalogCategory;
   "catalog/updatePuzzleDefinition": typeof catalog_updatePuzzleDefinition;
   "contact/submitContactMessage": typeof contact_submitContactMessage;
-  "docs/submitDocFeedback": typeof docs_submitDocFeedback;
   "custody/getCopyCustodyTimeline": typeof custody_getCopyCustodyTimeline;
   "custody/subscriber": typeof custody_subscriber;
+  "docs/submitDocFeedback": typeof docs_submitDocFeedback;
   "events/dispatch": typeof events_dispatch;
   "events/makeEventPublisher": typeof events_makeEventPublisher;
   "events/recordAndSchedule": typeof events_recordAndSchedule;
@@ -360,6 +363,7 @@ declare const fullApi: ApiFromModules<{
   "library/addCopyToCollection": typeof library_addCopyToCollection;
   "library/backfill": typeof library_backfill;
   "library/browseOwnedPuzzles": typeof library_browseOwnedPuzzles;
+  "library/canViewCopy": typeof library_canViewCopy;
   "library/changeCopyCondition": typeof library_changeCopyCondition;
   "library/circleSharedCopies": typeof library_circleSharedCopies;
   "library/createCollection": typeof library_createCollection;
