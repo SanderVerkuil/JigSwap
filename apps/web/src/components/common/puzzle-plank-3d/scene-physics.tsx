@@ -266,13 +266,25 @@ function useBoxDrag(
       dragState.current = null;
     };
 
+    // The touch-action:none set in onPointerDown can't stop THIS gesture: the
+    // browser latches touch-action at touchstart, before the drag begins, so a
+    // vertical drag is already claimed by the page's vertical scroll (a
+    // horizontal drag had no scroll axis to fight — which is why only up/down
+    // failed). Cancel that scroll imperatively — a non-passive touchmove
+    // preventDefault while a drag is live overrides the latched touch-action.
+    const onTouchMove = (e: TouchEvent) => {
+      if (dragState.current) e.preventDefault();
+    };
+
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onCancel);
+    canvas.addEventListener("touchmove", onTouchMove, { passive: false });
     return () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onCancel);
+      canvas.removeEventListener("touchmove", onTouchMove);
       // Defensive: if we unmount mid-drag, never leave the page unscrollable.
       canvas.style.removeProperty("touch-action");
     };
