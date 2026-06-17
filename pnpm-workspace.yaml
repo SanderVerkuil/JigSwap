@@ -25,6 +25,19 @@ overrides:
   zod: 4.4.3
   less: 4.4.0
   eslint-plugin-react-hooks: 7.0.1
+  # Security patches for transitive deps flagged by Dependabot — each pins only
+  # the vulnerable range to its first patched version (selective overrides).
+  # Vite 8 accepts esbuild ^0.27.0 || ^0.28.0, so 0.28.1 is in range.
+  # Not forced: js-yaml (gray-matter parses only trusted repo frontmatter, and
+  # the 4.2.0 fix is a major bump that breaks gray-matter's js-yaml v3 API) and
+  # uuid (dev-only via webpack-dev-server>sockjs; v11 is ESM-only, breaks it).
+  esbuild@<0.28.1: ^0.28.1
+  form-data@<4.0.6: ^4.0.6
+  tmp@<0.2.7: ^0.2.7
+  ws@>=8.0.0 <8.21.0: ^8.21.0
+  dompurify@<3.4.9: ^3.4.9
+  postcss@<8.5.10: ^8.5.10
+  qs@>=6.11.1 <6.15.2: ^6.15.2
 
 onlyBuiltDependencies:
   - "@clerk/shared"
