@@ -252,6 +252,12 @@ export const gateway = {
     submit: api.contact.submitContactMessage.submitContactMessage,
   },
 
+  // Public docs feedback: operational/support write from the marketing /docs site. The thin
+  // mutation is unauthenticated and persists the "Was this page helpful?" vote for admin review.
+  docs: {
+    submitFeedback: api.docs.submitDocFeedback.submitDocFeedback,
+  },
+
   // Friend Circles (Sharing): private groups whose members share circle-scoped visibility. Writes
   // go through the domain-driven sharing module (file.export namespacing); membership ops are
   // admin-gated in the Circle aggregate. `circleId` is the CircleId aggregateId; `copyId` is the

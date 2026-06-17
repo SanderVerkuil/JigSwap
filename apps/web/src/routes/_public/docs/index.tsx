@@ -1,0 +1,59 @@
+import { Container } from "@/components/marketing/container";
+import { PageHero } from "@/components/marketing/page-hero";
+import { Section } from "@/components/marketing/section";
+import { buildNavTree, pagesForLocale } from "@/docs/nav";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { BookOpen } from "lucide-react";
+import { useMemo } from "react";
+import { useLocale, useTranslations } from "use-intl";
+import { pages } from "virtual:docs";
+
+export const Route = createFileRoute("/_public/docs/")({
+  component: DocsIndex,
+});
+
+function DocsIndex() {
+  const t = useTranslations("marketing.docs");
+  const locale = useLocale();
+  const localePages = useMemo(() => pagesForLocale(pages, locale), [locale]);
+  const tree = useMemo(() => buildNavTree(localePages), [localePages]);
+  // Each group's blurb comes from its index page frontmatter summary.
+  const summaryFor = (slug: string) =>
+    localePages.find((p) => p.slug === slug && p.isIndex)?.frontmatter
+      .summary ?? "";
+
+  return (
+    <div>
+      <PageHero
+        eyebrow={t("landingEyebrow")}
+        title={t("landingTitle")}
+        lead={t("landingLead")}
+      />
+      <Section>
+        <Container>
+          <div className="grid grid-cols-3 max-[860px]:grid-cols-2 max-[540px]:grid-cols-1 gap-6">
+            {tree.map((group) => (
+              <Link
+                key={group.slug}
+                // Typed router Link carries the splat param, unlike @/compat/link.
+                to="/docs/$"
+                params={{ _splat: group.links[0]?.slug ?? group.slug }}
+                className="group rounded-[20px] bg-mk-card border border-mk-border p-6 transition-all hover:shadow-mk-md hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mk-ring"
+              >
+                <div className="grid place-items-center size-11 rounded-[12px] bg-mk-violet-50 text-mk-violet-600 mb-4">
+                  <BookOpen className="size-5" />
+                </div>
+                <h3 className="font-mk-heading font-semibold text-[18px] text-mk-text-strong group-hover:text-mk-violet-600">
+                  {group.title}
+                </h3>
+                <p className="text-[14.5px] text-mk-text-muted mt-1.5">
+                  {summaryFor(group.slug)}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </Container>
+      </Section>
+    </div>
+  );
+}
