@@ -1,0 +1,6 @@
+/* Retro/Tactile variant — scoped styles under `.v-retro`.
+ * Paper texture, nostalgic palette, board-game-box feel. Redeclare `--mk-*` /
+ * add `--v-*` custom properties here. Replaced/expanded by the Frontend Developer. */
+.v-retro {
+  /* scope marker — variant styles go here */
+}

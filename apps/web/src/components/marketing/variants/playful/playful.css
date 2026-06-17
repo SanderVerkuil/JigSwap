@@ -1,0 +1,8 @@
+/* Playful-Premium variant — scoped styles.
+ * All overrides live under `.v-playful` so they never leak into other variants
+ * or the global token system. Redeclare `--mk-*` / add `--v-*` custom
+ * properties here to give this variant its own palette, type and motion.
+ * Replaced/expanded by the Frontend Developer building this variant. */
+.v-playful {
+  /* scope marker — variant styles go here */
+}

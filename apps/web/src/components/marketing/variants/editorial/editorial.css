@@ -1,0 +1,6 @@
+/* Bold/Editorial variant — scoped styles under `.v-editorial`.
+ * Redeclare `--mk-*` / add `--v-*` custom properties here for this variant's
+ * display type, palette and layout. Replaced/expanded by the Frontend Developer. */
+.v-editorial {
+  /* scope marker — variant styles go here */
+}

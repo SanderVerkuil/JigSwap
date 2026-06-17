@@ -1,0 +1,6 @@
+/* Cozy/Hygge variant — scoped styles under `.v-cozy`.
+ * Warm palette, soft shadows, lifestyle treatment. Redeclare `--mk-*` / add
+ * `--v-*` custom properties here. Replaced/expanded by the Frontend Developer. */
+.v-cozy {
+  /* scope marker — variant styles go here */
+}
