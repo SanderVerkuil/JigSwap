@@ -26,30 +26,43 @@ function isLocale(value: string | undefined): value is Locale {
   return !!value && (locales as readonly string[]).includes(value);
 }
 
+// A tag is safe to hand to match() only if Intl can canonicalize it. Negotiator
+// emits the wildcard "*" (meaning "any language") and passes through malformed
+// tags, both of which make Intl.getCanonicalLocales — and therefore match() —
+// throw RangeError("Incorrect locale information provided"). One bad tag throws
+// the whole list, so we filter per-tag before negotiating.
+function isCanonicalizableTag(tag: string): boolean {
+  if (tag === "*") return false;
+  try {
+    Intl.getCanonicalLocales(tag);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Pure (no server primitives) so it's unit-testable: pick the best supported
+// locale from an Accept-Language header, or null if none negotiate.
+export function negotiateLocale(
+  acceptLanguage: string | null | undefined,
+): Locale | null {
+  if (!acceptLanguage) return null;
+  const requested = new Negotiator({
+    headers: { "accept-language": acceptLanguage },
+  })
+    .languages()
+    .filter(isCanonicalizableTag);
+  if (requested.length === 0) return null;
+  const matched = match(requested, locales as readonly string[], defaultLocale);
+  return isLocale(matched) ? matched : null;
+}
+
 // Server-only: resolve the active locale from the jigswap-intl cookie, falling
 // back to Accept-Language negotiation, then the default.
 function detectLocale(): Locale {
   const cookie = getCookie(INTL_COOKIE_NAME);
   if (isLocale(cookie)) return cookie;
-
-  const acceptLanguage = getRequestHeader("accept-language");
-  if (acceptLanguage) {
-    try {
-      const languages = new Negotiator({
-        headers: { "accept-language": acceptLanguage },
-      }).languages();
-      const matched = match(
-        languages,
-        locales as readonly string[],
-        defaultLocale,
-      );
-      if (isLocale(matched)) return matched;
-    } catch (error) {
-      console.warn("Error matching locale:", error);
-    }
-  }
-
-  return defaultLocale;
+  return negotiateLocale(getRequestHeader("accept-language")) ?? defaultLocale;
 }
 
 // Dev falls back to source.json (Crowdin OTA catalogs are populated in prod);
