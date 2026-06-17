@@ -16,7 +16,10 @@ export function KeepCard() {
         <span
           aria-hidden="true"
           className="absolute top-4 right-4 inline-flex rotate-[-4deg] items-center gap-1 rounded-[var(--v-radius-chip)] px-2.5 py-1 font-mono text-[10px] font-bold tracking-[0.14em] uppercase"
-          style={{ background: "var(--v-band-teal)", color: "#fbf3df" }}
+          style={{
+            background: "var(--v-band-teal)",
+            color: "var(--v-on-band)",
+          }}
         >
           ✶ Keep this
         </span>

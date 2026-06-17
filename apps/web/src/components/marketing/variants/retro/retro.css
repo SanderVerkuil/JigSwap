@@ -1,55 +1,35 @@
 /* apps/web/src/components/marketing/variants/retro/retro.css
-   Retro / Tactile: vintage board-game box. Muted mustard/teal/brick/cream,
-   slab display type, paper grain. Re-points --mk-* so shared Button/Section/
-   cards/header turn retro with no component edits; adds --v-* for box craft. */
+   Retro / Tactile: vintage board-game box. Keeps JigSwap's ORIGINAL brand
+   palette — surfaces, text, ramps and ring all inherit the global brand
+   --mk-*. Only the LAYOUT/craft changes: slab display type, paper grain,
+   die-cut box shadows, letterpress buttons, stamps and perforations. The
+   "box lid" / "numbers" bands are recoloured to the signature brand violet
+   (white ink on them is AA-safe). All scoped under .v-retro. */
 
 @import url("https://fonts.googleapis.com/css2?family=Rokkitt:wght@500;600;700;800&display=swap");
 
 .v-retro {
-  /* --- Board-game seeds (literal, deliberately off the violet brand) --- */
-  --mk-seed-primary: #c64f33; /* brick — "brand"/primary ink */
-  --mk-seed-secondary: #1f7a6f; /* teal — "go"/secondary ink */
-  --mk-seed-accent: #d9a32a; /* mustard — highlight/stamp */
-
-  /* --- Paper grounds (literal cream / off-white print stock) --- */
-  --v-paper: #f3e6cb; /* warm cream page */
-  --v-paper-card: #fbf3df; /* lighter card stock */
-  --v-paper-deep: #e8d6b0; /* muted band / contents bag */
-  --v-lid-ground: #d9a32a; /* mustard hero/CTA band */
-  --v-band-teal: #1f7a6f; /* numbers band ground */
-
-  --mk-bg: var(--v-paper);
-  --mk-card: var(--v-paper-card);
-  --mk-muted: var(--v-paper-deep);
-
-  /* --- Ink (AA on cream + on mustard) --- */
-  --mk-text-strong: #241a10; /* near-black brown ink */
-  --mk-text-body: #3d2f1d; /* 8.9:1 on cream */
-  --mk-text-muted: #6f5a3c; /* ~4.6:1 on cream */
-
-  --mk-border: #b89a64; /* warm print rule */
-  --mk-input-border: #a98a56;
-  --mk-ring: #1f7a6f; /* teal focus — ≥3:1 on cream + mustard */
-
-  /* Shared violet/green utility tokens used by reused components — re-point so
-     Eyebrow/SectionHead/links stop reading violet and turn retro ink/teal. */
-  --mk-violet-200: color-mix(in oklab, var(--mk-seed-secondary) 30%, #e8d6b0);
-  --mk-violet-400: color-mix(in oklab, var(--mk-seed-secondary) 60%, #c9b489);
-  --mk-violet-600: #1a5f57; /* teal-ink, AA on cream for eyebrow/links */
-  --mk-green-600: #c64f33; /* brick — wordmark "Swap" reads as ink */
-
-  /* --- Letterpress shadows (warm, low, inky) --- */
-  --shadow-mk-xs: 0 1px 0 rgb(60 40 16 / 0.18);
-  --shadow-mk-sm: 0 2px 0 rgb(60 40 16 / 0.16);
-  --shadow-mk-md:
-    0 3px 0 rgb(60 40 16 / 0.2), 0 8px 18px -8px rgb(60 40 16 / 0.3);
-  --shadow-mk-lg:
-    0 5px 0 rgb(60 40 16 / 0.22), 0 18px 34px -10px rgb(60 40 16 / 0.32);
-  --shadow-mk-brand: 0 4px 0 #8a3724, 0 12px 26px -8px rgb(140 56 36 / 0.4);
+  /* --- Colored box-craft bands, re-based on the BRAND violet --- */
+  --v-lid-ground: var(--mk-seed-primary); /* hero "box lid" band (#6048e8) */
+  --v-band-teal: var(
+    --mk-violet-700
+  ); /* numbers band + chips (deeper violet) */
+  --v-on-band: #ffffff; /* "ink" printed on the violet bands (AA on both) */
 
   /* --- Display font wired into shared headings --- */
   --v-font-display: "Rokkitt", "Rockwell", "Courier New", Georgia, serif;
   --font-mk-heading: var(--v-font-display);
+
+  /* --- Letterpress shadows: hard offsets in brand-neutral ink --- */
+  --shadow-mk-xs: 0 1px 0 rgb(31 27 46 / 0.18);
+  --shadow-mk-sm: 0 2px 0 rgb(31 27 46 / 0.16);
+  --shadow-mk-md:
+    0 3px 0 rgb(31 27 46 / 0.2), 0 8px 18px -8px rgb(31 27 46 / 0.3);
+  --shadow-mk-lg:
+    0 5px 0 rgb(31 27 46 / 0.22), 0 18px 34px -10px rgb(31 27 46 / 0.32);
+  /* Chunky letterpress brand button: hard violet offset + soft brand glow. */
+  --shadow-mk-brand:
+    0 4px 0 var(--mk-violet-700), 0 12px 26px -8px rgb(96 72 232 / 0.4);
 
   /* --- Variant-only box-craft tokens --- */
   --v-radius-box: 10px; /* die-cut box corner */
@@ -59,36 +39,16 @@
   --v-rule: 1px dashed var(--mk-border);
   --v-shadow-die:
     0 0 0 3px var(--mk-text-strong),
-    /* ink keyline */ 6px 7px 0 rgb(36 26 16 / 0.18),
-    /* offset drop = "box thickness" */ 0 22px 40px -14px rgb(36 26 16 / 0.34);
+    /* ink keyline */ 6px 7px 0 rgb(31 27 46 / 0.18),
+    /* offset drop = "box thickness" */ 0 22px 40px -14px rgb(31 27 46 / 0.34);
   --v-press-drift: 1px; /* offset-print ghost breathe distance */
   --v-grain: var(--v-grain-light);
 }
 
-/* --- Dark retro: dim the paper to a tobacco/board ground, KEEP the grain --- */
+/* Dark retro inherits the global brand .dark surfaces/text/ramps; keep the
+   grain heavier and the die-cut drop deeper. The violet bands + white ink
+   still read in dark. */
 .dark .v-retro {
-  --v-paper: #221a10;
-  --v-paper-card: #2b2114;
-  --v-paper-deep: #1c150c;
-  --v-lid-ground: #8f6c17; /* dimmer mustard so cream ink stays AA */
-  --v-band-teal: #12433d;
-
-  --mk-bg: var(--v-paper);
-  --mk-card: var(--v-paper-card);
-  --mk-muted: var(--v-paper-deep);
-
-  --mk-text-strong: #f5e9cf; /* cream ink */
-  --mk-text-body: #e6d4ac;
-  --mk-text-muted: #b89a64; /* ≥4.5:1 on tobacco */
-
-  --mk-border: #5a472a;
-  --mk-ring: #5bb7a9; /* brighter teal for dark focus visibility */
-
-  --mk-violet-200: color-mix(in oklab, var(--mk-seed-secondary) 30%, #2b2114);
-  --mk-violet-400: color-mix(in oklab, var(--mk-seed-secondary) 55%, #3a2c18);
-  --mk-violet-600: #6fcabb; /* teal-ink readable on tobacco */
-  --mk-green-600: #e7895f; /* warm brick on dark */
-
   --v-grain: var(--v-grain-dark);
   --v-shadow-die:
     0 0 0 3px #0d0a05, 6px 7px 0 rgb(0 0 0 / 0.5),
@@ -129,13 +89,14 @@
   box-shadow: var(--v-shadow-die);
 }
 
-/* Offset-print misregistration ghost behind ink type (the signature look). */
+/* Offset-print misregistration ghost behind ink type (the signature look),
+   tinted with the brand green seed. */
 .v-retro .v-offset {
   text-shadow: 1.5px 1.5px 0
     color-mix(in oklab, var(--mk-seed-secondary) 50%, transparent);
 }
 
-/* Hero h1: a slightly stronger teal ghost + a barely-perceptible drift. */
+/* Hero h1: a slightly stronger ghost + a barely-perceptible drift. */
 .v-retro .v-offset-hero {
   text-shadow: 1.5px 1.5px 0
     color-mix(in oklab, var(--mk-seed-secondary) 55%, transparent);
@@ -190,8 +151,8 @@
     transform: translateY(8px);
     box-shadow:
       0 0 0 3px var(--mk-text-strong),
-      2px 3px 0 rgb(36 26 16 / 0.12),
-      0 8px 16px -10px rgb(36 26 16 / 0.2);
+      2px 3px 0 rgb(31 27 46 / 0.12),
+      0 8px 16px -10px rgb(31 27 46 / 0.2);
   }
   to {
     transform: translateY(0);

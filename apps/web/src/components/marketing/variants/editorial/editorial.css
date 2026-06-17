@@ -1,119 +1,71 @@
 /* apps/web/src/components/marketing/variants/editorial/editorial.css
-   Bold / Editorial: ink-on-paper near-monochrome, ONE editorial accent (red),
-   oversized Fraunces display. Re-points --mk-* so shared Button/Section/cards,
-   header & footer re-skin with zero component edits. All overrides live under
-   .v-editorial (and .dark .v-editorial); never touches the global token file. */
+   Bold / Editorial: oversized Fraunces display + asymmetric magazine layout.
+   Keeps JigSwap's ORIGINAL brand palette — only the LAYOUT and typography
+   change. Surfaces, text, border and ring all inherit the global brand --mk-*;
+   this file only sets the display font, sharp radii, hairline shadows, and
+   which brand hue plays the recurring editorial "accent". All scoped under
+   .v-editorial; never touches the global token file. */
 
 /* ONE display family, loaded only here. Two weights max (400 + 800). */
 @import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,800&display=swap");
 
 .v-editorial {
-  /* ---- Paper + ink grounds (literal: bright off-white page, near-black ink) ---- */
-  --v-paper: #f7f4ee; /* warm off-white — keeps the kitchen-table warmth */
-  --v-ink: #15130f; /* near-black, faintly warm (not pure #000) */
+  /* The recurring editorial accent = the signature brand violet. */
+  --v-accent: var(
+    --mk-violet-600
+  ); /* punctuation, kickers, watermark, accent word */
+  --v-accent-ink: var(
+    --mk-violet-700
+  ); /* accent BODY text (AA 4.5:1 on light) */
 
-  --mk-ground: var(--v-paper);
-  --mk-card-base: #fffdf8;
-  --mk-bg: var(--v-paper);
-  --mk-card: var(--mk-card-base);
-  --mk-muted: #efe9df; /* the tinted band ground (figures/custody) */
+  /* Hero three-word display colours — the brand trio (large text, >=3:1). */
+  --v-accent-violet: var(--mk-violet-600); /* LEND. */
+  --v-accent-green: var(--mk-green-600); /* SWAP. */
+  --v-accent-pink: var(--mk-pink-500); /* SHARE. */
 
-  /* ---- Ink scale (still warm, AA on paper) ---- */
-  --mk-text-strong: #15130f; /* ~16:1 on paper */
-  --mk-text-body: #38332b; /* ~9:1  on paper */
-  --mk-text-muted: #655d52; /* darkened so it clears AA on the muted band too */
-
-  --mk-border: #d8cfbf;
-  --mk-input-border: #c9bfac;
-
-  /* ---- ONE editorial accent (high-chroma red) ---- */
-  --v-accent: #d6253b; /* punctuation, kickers, watermark, accent word */
-  --v-accent-ink: #b21d30; /* the same accent darkened for accent BODY text (AA 4.5:1) */
-  --mk-ring: var(--v-accent);
-  --shadow-mk-brand: 0 10px 30px -8px rgb(214 37 59 / 0.32);
-
-  /* ---- Hero three-word display colors (large text only; >=3:1 on paper) ---- */
-  --v-accent-violet: var(--mk-seed-primary); /* LEND. */
-  --v-accent-green: color-mix(
-    in oklab,
-    var(--mk-seed-secondary) 78%,
-    var(--v-ink)
-  ); /* SWAP. (darkened to pass 3:1) */
-  --v-accent-pink: color-mix(
-    in oklab,
-    var(--mk-seed-accent) 88%,
-    var(--v-ink)
-  ); /* SHARE. */
-
-  /* ---- Radii: editorial = sharp. Near-zero rounding everywhere. ---- */
+  /* Editorial = sharp. Near-zero rounding everywhere. */
   --mk-radius-card: 4px;
   --v-radius-pill: 999px; /* only for diagram nodes / contributor avatars */
 
-  /* ---- Shadows: minimal; editorial leans on hairlines, not elevation ---- */
+  /* Minimal elevation: editorial leans on hairlines, not shadows. The hairline
+     shadows pick up the (brand) --mk-border automatically. */
   --shadow-mk-xs: 0 1px 0 0 var(--mk-border);
   --shadow-mk-md: 0 2px 0 0 var(--mk-border);
-  --shadow-mk-lg: 0 8px 28px -12px rgb(21 19 15 / 0.22);
+  --shadow-mk-lg: 0 8px 28px -12px rgb(31 27 46 / 0.22);
 
-  /* ---- Display font wired into shared headings ---- */
+  /* Display font wired into shared headings. */
   --v-font-display: "Fraunces", "Times New Roman", Georgia, serif;
   --font-mk-heading: var(--v-font-display);
 
-  /* ---- Texture + motion knobs ---- */
-  --v-grain-opacity: 0.035; /* paper grain, light */
+  /* Paper grain knob (decorative, never affects layout/contrast). */
+  --v-grain-opacity: 0.04;
 }
 
-/* Closing-cover inverts to ink ground in BOTH modes; supply paper text there. */
+/* Closing cover = a dramatic deep brand-violet block in both modes (the
+   signature hue at full depth), with light type. Layout device only — echoes
+   the original violet final-CTA. */
 .v-editorial .editorial-invert {
-  --mk-bg: var(--v-ink);
-  --mk-card: var(--v-ink);
-  --mk-text-strong: var(--v-paper);
-  --mk-text-body: #e7e1d6;
-  --mk-text-muted: #b7af9f; /* ~AA on ink */
-  --mk-border: #3a352c;
+  --mk-bg: var(--mk-violet-900);
+  --mk-card: var(--mk-violet-900);
+  --mk-text-strong: #ffffff;
+  --mk-text-body: color-mix(in oklab, #ffffff 86%, var(--mk-seed-primary));
+  --mk-text-muted: color-mix(in oklab, #ffffff 66%, var(--mk-seed-primary));
+  --mk-border: color-mix(in oklab, #ffffff 22%, transparent);
+  --v-accent: var(--mk-pink-400); /* accent pops against the deep violet */
 }
 
-/* ---- Dark editorial: newsprint-at-night, not pure black ---- */
+/* Dark editorial inherits the global brand .dark surfaces/text; only the
+   accent + grain shift for legibility on the dark ground. */
 .dark .v-editorial {
-  --v-paper: #16140f; /* dark "paper" */
-  --v-ink: #f4efe4; /* light "ink"  */
+  --v-accent: var(--mk-violet-400);
+  --v-accent-ink: var(--mk-violet-300);
 
-  --mk-ground: var(--v-paper);
-  --mk-card-base: #1d1a14;
-  --mk-bg: var(--v-paper);
-  --mk-card: var(--mk-card-base);
-  --mk-muted: #211d16;
-
-  --mk-text-strong: #f4efe4; /* AA+ on dark paper */
-  --mk-text-body: #ddd5c6;
-  --mk-text-muted: #a59c8a; /* >=4.5:1 on --mk-muted */
-
-  --mk-border: #38322a;
-  --mk-input-border: #463f34;
-
-  --v-accent: #ff5167; /* brighter red so it pops & passes on dark */
-  --v-accent-ink: #ff8a98; /* accent body text on dark — >=4.5:1 */
-  --mk-ring: var(--v-accent);
-
-  --v-accent-violet: color-mix(
-    in oklab,
-    var(--mk-seed-primary) 70%,
-    var(--v-ink)
-  );
-  --v-accent-green: var(--mk-seed-secondary); /* fine & bright on dark */
-  --v-accent-pink: var(--mk-seed-accent);
+  --v-accent-violet: var(--mk-violet-400);
+  --v-accent-green: var(--mk-green-400);
+  --v-accent-pink: var(--mk-pink-400);
 
   --shadow-mk-lg: 0 8px 28px -12px rgb(0 0 0 / 0.55);
-  --v-grain-opacity: 0.05; /* allowed up to ~0.09 dark — keep low */
-}
-
-/* Dark + inverted closing cover flips back to a light ink for contrast */
-.dark .v-editorial .editorial-invert {
-  --mk-bg: #0e0c09;
-  --mk-card: #0e0c09;
-  --mk-text-strong: #f7f4ee;
-  --mk-text-body: #e7e1d6;
-  --mk-text-muted: #b7af9f;
-  --mk-border: #2a251e;
+  --v-grain-opacity: 0.06; /* allowed up to ~0.09 dark — keep low */
 }
 
 /* ===========================================================================

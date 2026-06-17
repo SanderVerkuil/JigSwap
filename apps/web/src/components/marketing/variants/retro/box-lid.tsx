@@ -43,7 +43,7 @@ export function BoxLid({
                   className="mb-6 inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-1 rounded-[var(--v-radius-chip)] px-4 py-2 font-mono text-[11px] font-bold tracking-[0.14em] uppercase"
                   style={{
                     background: "var(--v-band-teal)",
-                    color: "#fbf3df",
+                    color: "var(--v-on-band)",
                   }}
                 >
                   <span>Ages 6–106</span>

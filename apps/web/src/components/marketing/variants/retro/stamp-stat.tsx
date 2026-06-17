@@ -20,7 +20,7 @@ export function StampStat({
       className="v-stamp flex aspect-square w-[clamp(150px,22vw,196px)] flex-col items-center justify-center rounded-full p-4 text-center max-[860px]:[transform:rotate(var(--v-stamp-rot-sm))]"
       style={
         {
-          color: "#fbf3df",
+          color: "var(--v-on-band)",
           transform: `rotate(${rotate})`,
           ["--v-stamp-rot-sm" as string]: rotate.startsWith("-")
             ? "-1deg"
@@ -31,7 +31,7 @@ export function StampStat({
       {loading ? (
         <span
           aria-hidden="true"
-          className="h-9 w-20 animate-pulse rounded-[4px] bg-[#fbf3df]/40"
+          className="h-9 w-20 animate-pulse rounded-[4px] bg-white/40"
         />
       ) : (
         <span className="font-mk-heading text-[clamp(34px,5vw,52px)] leading-none font-extrabold tabular-nums">

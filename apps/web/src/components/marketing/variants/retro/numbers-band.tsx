@@ -13,17 +13,17 @@ export function NumbersBand({ stats }: { stats: LandingStats | undefined }) {
       <div className="mx-auto w-full max-w-[1200px] px-6 text-center">
         <div
           className="inline-flex items-center gap-2 font-mono text-xs font-semibold tracking-[0.14em] uppercase"
-          style={{ color: "#fbf3df" }}
+          style={{ color: "var(--v-on-band)" }}
         >
           <span
             className="h-0.5 w-[18px] rounded-xs"
-            style={{ background: "#fbf3df" }}
+            style={{ background: "var(--v-on-band)" }}
           />
           By the numbers
         </div>
         <h2
           className="font-mk-heading mx-auto mt-3.5 max-w-[20ch] text-[clamp(28px,4vw,40px)] leading-[1.1] font-bold tracking-tight"
-          style={{ color: "#fbf3df" }}
+          style={{ color: "var(--v-on-band)" }}
         >
           A growing box of puzzlers
         </h2>
