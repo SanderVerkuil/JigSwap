@@ -1,11 +1,11 @@
 "use client";
 
 // Bottom-left user identity (the ONLY place the user appears in the shell on
-// desktop): the Clerk user button (avatar → account dropdown, which now carries
-// the "My profile" link to /profile) plus a display-only name + email label.
-// The email blurs (and becomes unselectable) when the hide-email preference is
-// on. The avatar is the single control — the name is no longer a competing link
-// to /profile; that route lives inside the dropdown (see ShellUserButton).
+// desktop): the Clerk user button (avatar → account dropdown, which carries the
+// "My profile" link to /profile) plus the name + email. Clicking the name/email
+// opens the same account dropdown as the avatar, so the whole row acts as one
+// control instead of competing click targets. The email blurs (and becomes
+// unselectable) when the hide-email preference is on.
 //
 // The shell preferences (content width, hide email) live INSIDE Clerk's own
 // profile UI as a custom <UserButton.UserProfilePage> ("Preferences"), persisted
@@ -17,6 +17,7 @@ import { Link } from "@/compat/link";
 import { CheckRole } from "@/components/utils/check-role/server";
 import { cn } from "@/lib/utils";
 import { Shield } from "lucide-react";
+import { useRef } from "react";
 import { useTranslations } from "use-intl";
 import { useShellPreferences } from "./preferences";
 import { ShellUserButton } from "./shell-user-button";
@@ -24,6 +25,7 @@ import { ShellUserButton } from "./shell-user-button";
 export function UserFooter() {
   const { user } = useUser();
   const { hideEmail } = useShellPreferences();
+  const rootRef = useRef<HTMLDivElement>(null);
 
   if (!user) {
     return null;
@@ -31,13 +33,29 @@ export function UserFooter() {
 
   const email = user.primaryEmailAddress?.emailAddress ?? user.username ?? "";
 
+  // Make the whole identity block open the same account menu as the avatar.
+  // Clerk's <UserButton> must stay its own <button> (the avatar), so rather than
+  // nesting buttons we forward a click on the name/email to Clerk's trigger via
+  // its stable .cl-userButtonTrigger class — clicking anywhere on the row opens
+  // the menu, and /profile / sign out / preferences all live inside it.
+  const openUserMenu = () => {
+    rootRef.current
+      ?.querySelector<HTMLButtonElement>(".cl-userButtonTrigger")
+      ?.click();
+  };
+
   return (
-    <div className="flex items-center gap-2 rounded-md p-1.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0">
+    <div
+      ref={rootRef}
+      className="flex items-center gap-2 rounded-md p-1.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
+    >
       <ShellUserButton />
-      {/* Display-only identity: every action (account management, sign out, and
-          the link to /profile) lives in the avatar's dropdown, so this is no
-          longer a click target of its own. */}
-      <div className="grid min-w-0 flex-1 px-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
+      <button
+        type="button"
+        onClick={openUserMenu}
+        aria-haspopup="menu"
+        className="grid min-w-0 flex-1 rounded-md px-1 py-0.5 text-left text-sm leading-tight transition-colors hover:bg-accent group-data-[collapsible=icon]:hidden"
+      >
         <span className="truncate font-medium">
           {user.firstName} {user.lastName}
         </span>
@@ -50,7 +68,7 @@ export function UserFooter() {
         >
           {email}
         </span>
-      </div>
+      </button>
       <AdminBadge />
     </div>
   );
