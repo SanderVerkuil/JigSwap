@@ -86,11 +86,11 @@ function ContentArea({ children }: { children: React.ReactNode }) {
   return (
     <div
       className={cn(
-        // Mobile: 18px top / 16px sides per the mobile spec, with extra bottom
-        // clearance so the last content clears the position:fixed tab bar (its
-        // ~62px height + the raised center button's overhang) plus the home-
-        // indicator safe-area inset.
-        "w-full px-4 pt-[18px] pb-[calc(env(safe-area-inset-bottom)+84px)] md:p-6",
+        // Mobile: 18px top / 16px sides per the mobile spec. The sticky tab bar
+        // occupies its own layout space below this scroll content, so we only
+        // need a little bottom breathing room so the last item clears the raised
+        // center button's overhang.
+        "w-full px-4 pt-[18px] pb-6 md:p-6",
         !fullWidth && "mx-auto max-w-[1180px]",
       )}
     >

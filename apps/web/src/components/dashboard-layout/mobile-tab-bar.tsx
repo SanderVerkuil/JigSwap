@@ -73,14 +73,18 @@ export function MobileTabBar() {
     <>
       <nav
         aria-label={t("tabsLabel")}
-        // Pinned to the bottom of the viewport with position:fixed so it stays
-        // put while the document scrolls (and the address bar auto-hides) under
-        // it. At bottom:0 the bar sits at the true screen edge, so the safe-area
-        // inset collapses to 0 while the address bar is present and only pads up
-        // for the home indicator once the bar is the bottom-most chrome. z-30 so
-        // the raised center button (which rises above the bar via -mt) is never
-        // painted over by page content; overflow-visible keeps its top unclipped.
-        className="fixed inset-x-0 bottom-0 z-30 grid shrink-0 grid-cols-5 items-stretch overflow-visible border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
+        // position:sticky (not fixed) — it's the last flex child of the shell
+        // column with the content row (flex-1) above it, so it lands at the
+        // viewport bottom whether content is short (flex pushes it down) or tall
+        // (it sticks at bottom:0 while the document scrolls under it). Sticky is
+        // painted with the scroll content and tracks the *visual* viewport, so
+        // it scrolls smoothly and stays flush as the address bar shows/hides —
+        // unlike fixed, which the browser re-snaps to the layout viewport after
+        // the toolbar animation (the jitter + the gap when the address bar
+        // appears). pb carries the home-indicator safe-area inset. z-30 + the
+        // overflow-visible keep the raised center button (which rises above the
+        // bar via -mt) painted above page content and unclipped.
+        className="sticky bottom-0 z-30 grid shrink-0 grid-cols-5 items-stretch overflow-visible border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
       >
         {TABS.slice(0, 2).map((tab) => (
           <TabLink key={tab.key} tab={tab} active={active} />
