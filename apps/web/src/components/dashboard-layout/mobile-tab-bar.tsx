@@ -87,7 +87,14 @@ export function MobileTabBar() {
         // a standing gap below the bar. z-30 + overflow-visible keep the raised
         // center button (which rises above the bar via -mt) painted above page
         // content and unclipped.
-        className="sticky bottom-0 z-30 grid shrink-0 grid-cols-5 items-stretch overflow-visible border-t bg-card md:hidden"
+        //
+        // shadow: a solid same-colour "skirt" painted 24px BELOW the bar. Over a
+        // body-scrolling page the browser repaints a sticky/fixed bottom bar a
+        // frame behind the scroll, so during a fling the bar trails and a sliver
+        // of content peeks out below it. A box-shadow never affects layout or
+        // scroll height, so this fills that transient gap (and any iOS
+        // rubber-band overscroll) without adding a scrollable strip.
+        className="sticky bottom-0 z-30 grid shrink-0 grid-cols-5 items-stretch overflow-visible border-t bg-card shadow-[0_24px_0_0_var(--card)] md:hidden"
       >
         {TABS.slice(0, 2).map((tab) => (
           <TabLink key={tab.key} tab={tab} active={active} />
