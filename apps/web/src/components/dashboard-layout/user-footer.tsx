@@ -26,6 +26,7 @@ export function UserFooter() {
   const { user } = useUser();
   const { hideEmail } = useShellPreferences();
   const rootRef = useRef<HTMLDivElement>(null);
+  const menuWasOpenRef = useRef(false);
 
   if (!user) {
     return null;
@@ -38,7 +39,20 @@ export function UserFooter() {
   // nesting buttons we forward a click on the name/email to Clerk's trigger via
   // its stable .cl-userButtonTrigger class — clicking anywhere on the row opens
   // the menu, and /profile / sign out / preferences all live inside it.
+  //
+  // Record (at pointerdown, before Clerk's outside-click dismiss runs) whether
+  // the menu was already open. If it was, this same press dismisses it — so we
+  // must NOT re-click the trigger, or it would close-then-reopen. Forward the
+  // click only when the menu was closed, giving the name/email a clean toggle.
+  const rememberMenuState = () => {
+    const trigger = rootRef.current?.querySelector(".cl-userButtonTrigger");
+    menuWasOpenRef.current =
+      trigger?.getAttribute("aria-expanded") === "true" ||
+      !!document.querySelector(".cl-userButtonPopoverCard");
+  };
+
   const openUserMenu = () => {
+    if (menuWasOpenRef.current) return;
     rootRef.current
       ?.querySelector<HTMLButtonElement>(".cl-userButtonTrigger")
       ?.click();
@@ -52,6 +66,7 @@ export function UserFooter() {
       <ShellUserButton />
       <button
         type="button"
+        onPointerDown={rememberMenuState}
         onClick={openUserMenu}
         aria-haspopup="menu"
         className="grid min-w-0 flex-1 rounded-md px-1 py-0.5 text-left text-sm leading-tight transition-colors hover:bg-accent group-data-[collapsible=icon]:hidden"
