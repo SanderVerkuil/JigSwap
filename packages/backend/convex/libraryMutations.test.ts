@@ -160,6 +160,40 @@ describe("library.acquireCopy", () => {
     });
   });
 
+  test("acquires a legacy puzzle that has no aggregateId by its raw Convex _id", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    // A legacy/seeded catalog row that predates aggregateId — the add/new copy flow reaches
+    // these by their raw _id, which the snapshot provider resolves via its by-_id fallback.
+    const legacyId = await t.run(async (ctx) => {
+      const now = Date.now();
+      return ctx.db.insert("puzzles", {
+        title: "Legacy Lighthouse",
+        brand: "Schmidt",
+        pieceCount: 750,
+        searchableText: "Legacy Lighthouse Schmidt",
+        status: "approved",
+        submittedBy: alice,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const copyId = (await asAlice(t).mutation(
+      api.library.acquireCopy.acquireCopy,
+      { puzzleDefinitionId: legacyId, condition: "good" },
+    )) as string;
+
+    const row = await copyRow(t, copyId);
+    expect(row?.puzzleDefinitionId).toBe(legacyId);
+    expect(row?.snapshot).toEqual({
+      title: "Legacy Lighthouse",
+      brand: "Schmidt",
+      pieceCount: 750,
+      thumbnail: undefined,
+    });
+  });
+
   test("an unknown puzzle definition => PuzzleNotFound", async () => {
     const t = convexTest(schema, modules);
     await seed(t);

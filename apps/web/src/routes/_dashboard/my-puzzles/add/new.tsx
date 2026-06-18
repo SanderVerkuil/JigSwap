@@ -16,6 +16,7 @@ import {
   MatchConfirm,
   PieceCountField,
   ReadinessChecklist,
+  resolveDefinitionId,
   SectionDivider,
   SegmentedPills,
   TagInput,
@@ -140,7 +141,9 @@ function AddPuzzlePage() {
     if (!puzzleIdFromUrl || !specificPuzzle) return;
     // Only pre-fill once (when selectedDefinitionId is still null)
     if (selectedDefinitionId) return;
-    setSelectedDefinitionId(specificPuzzle.aggregateId ?? null);
+    setSelectedDefinitionId(
+      resolveDefinitionId(specificPuzzle.aggregateId, specificPuzzle._id),
+    );
     setForm((f) => ({
       ...f,
       title: specificPuzzle.title,
@@ -532,7 +535,12 @@ function AddPuzzlePage() {
         <MatchConfirm
           match={pendingMatch}
           onUse={() => {
-            setSelectedDefinitionId(pendingMatch.aggregateId ?? null);
+            setSelectedDefinitionId(
+              resolveDefinitionId(
+                pendingMatch.aggregateId,
+                pendingMatch.puzzleId,
+              ),
+            );
             setForm((f) => ({
               ...f,
               title: pendingMatch.title,
