@@ -1,0 +1,87 @@
+name: Convex Deploy
+
+# Convex backend deploys from CI:
+#   - dev: pushes to the single shared development deployment on every PR and on main
+#     (preview deployments need Convex Pro; the free plan has one shared dev deployment,
+#     so PRs deploy to it directly — fine as long as PRs are rarely schema-destructive).
+#   - production: only after the CI workflow succeeds on main (workflow_run gate), so prod
+#     never deploys code that failed lint/type-check/test/build.
+# _generated/* is committed, so a deploy only needs the deploy-key secrets.
+#
+# `npx convex deploy` only targets production/preview, so the dev deployment is pushed with
+# `npx convex dev --once` (a single non-interactive push), selected by a dev deploy key.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  dev:
+    name: Deploy dev deployment
+    # Direct triggers only (PRs + pushes to main); the workflow_run event is for prod.
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # One shared dev deployment: serialize all deploys into a single global queue and let the
+    # newest supersede an in-flight one, so concurrent PRs don't race to push the same target.
+    concurrency:
+      group: convex-dev-deploy
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Deploy to dev
+        working-directory: packages/backend
+        env:
+          # A dev deploy key (format "dev:<name>|...") selects the development deployment.
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_DEV }}
+        run: pnpm exec convex dev --once
+
+  production:
+    name: Deploy production deployment
+    # Only when the CI workflow completed successfully on main.
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Never cancel an in-flight production deploy; queue instead.
+    concurrency:
+      group: convex-prod-deploy
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # workflow_run runs detached from the triggering commit; check out the exact SHA CI passed on.
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Deploy production
+        working-directory: packages/backend
+        env:
+          # A production deploy key targets prod non-interactively (no confirmation prompt).
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_PROD }}
+        run: pnpm exec convex deploy
