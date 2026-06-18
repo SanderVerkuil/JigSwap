@@ -22,6 +22,7 @@ import type * as catalog_adapters_ogieRawProductPage from "../catalog/adapters/o
 import type * as catalog_adapters_ogieStorePageFetcher from "../catalog/adapters/ogieStorePageFetcher.js";
 import type * as catalog_adapters_systemClock from "../catalog/adapters/systemClock.js";
 import type * as catalog_approvePuzzleDefinition from "../catalog/approvePuzzleDefinition.js";
+import type * as catalog_backfill from "../catalog/backfill.js";
 import type * as catalog_createCatalogCategory from "../catalog/createCatalogCategory.js";
 import type * as catalog_errors from "../catalog/errors.js";
 import type * as catalog_extractFromUrl from "../catalog/extractFromUrl.js";
@@ -269,6 +270,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/adapters/ogieStorePageFetcher": typeof catalog_adapters_ogieStorePageFetcher;
   "catalog/adapters/systemClock": typeof catalog_adapters_systemClock;
   "catalog/approvePuzzleDefinition": typeof catalog_approvePuzzleDefinition;
+  "catalog/backfill": typeof catalog_backfill;
   "catalog/createCatalogCategory": typeof catalog_createCatalogCategory;
   "catalog/errors": typeof catalog_errors;
   "catalog/extractFromUrl": typeof catalog_extractFromUrl;
