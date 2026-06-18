@@ -3,15 +3,15 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for conversation/application/use-cases/mark-thread-read.ts</title>
+    <title>Code coverage report for convex/catalog/backfill.ts</title>
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="../../../prettify.css" />
-    <link rel="stylesheet" href="../../../base.css" />
-    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.png" />
+    <link rel="stylesheet" href="../../prettify.css" />
+    <link rel="stylesheet" href="../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style type='text/css'>
         .coverage-summary .sorter {
-            background-image: url(../../../sort-arrow-sprite.png);
+            background-image: url(../../sort-arrow-sprite.png);
         }
     </style>
 </head>
@@ -19,34 +19,34 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../../index.html">All files</a> / <a href="index.html">conversation/application/use-cases</a> mark-thread-read.ts</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">convex/catalog</a> backfill.ts</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>4/4</span>
-            </div>
-        
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
-                <span class="quiet">Functions</span>
                 <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>1/1</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>9/9</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
@@ -93,16 +93,7 @@
 <a name='L28'></a><a href='#L28'>28</a>
 <a name='L29'></a><a href='#L29'>29</a>
 <a name='L30'></a><a href='#L30'>30</a>
-<a name='L31'></a><a href='#L31'>31</a>
-<a name='L32'></a><a href='#L32'>32</a>
-<a name='L33'></a><a href='#L33'>33</a>
-<a name='L34'></a><a href='#L34'>34</a>
-<a name='L35'></a><a href='#L35'>35</a>
-<a name='L36'></a><a href='#L36'>36</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L31'></a><a href='#L31'>31</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -116,58 +107,52 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Clock, err, ok, Result } from "../../../shared-kernel";
-import { ConversationError } from "../../domain";
-import { ConversationApplicationError } from "../errors";
-import {
-  MarkThreadRead,
-  MarkThreadReadCommand,
-} from "../ports/in/mark-thread-read.port";
-import { ThreadRepository } from "../ports/out/thread.repository";
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { internalMutation } from "../_generated/server";
 &nbsp;
-export interface MarkThreadReadDeps {
-  readonly threads: ThreadRepository;
-  readonly clock: Clock;
-}
+// One-shot, idempotent migration: puzzles created before the domain catalog path never received
+// an aggregateId, so the copy-acquisition flow (which resolves a definition by aggregateId)
+// cannot reach them — in the add-to-library form their Save button stays disabled. library's
+// backfill only stamps puzzles reachable through an existing copy, so never-acquired catalog
+// rows stay unstamped; this sweep covers them.
+//
+// We use the row's own Convex _id as the aggregateId rather than a fresh UUID: the domain
+// PuzzleDefinitionId does no runtime format validation, and every existing _id reference (legacy
+// copies, plus copies acquired through the add/new _id fallback) then satisfies
+// puzzleDefinitionId === aggregateId, so ownership and grouping stay consistent with no copy
+// rewrite. Re-runnable: rows that already carry an aggregateId are skipped, never overwritten.
+export const backfillPuzzleAggregateIds = internalMutation({
+  args: {},
+  handler: async (ctx) =&gt; {
+    const puzzles = await ctx.db.query("puzzles").collect();
 &nbsp;
-// Transaction script: load the thread (ThreadNotFound if absent), then delegate to
-// Thread.markRead, which updates only the caller's receipt (a non-participant is rejected). No
-// domain event is recorded for a read, so there is nothing to publish — only the save persists it.
-export const makeMarkThreadRead =
-  (deps: MarkThreadReadDeps): MarkThreadRead =&gt;
-  async (
-    cmd: MarkThreadReadCommand,
-  ): Promise&lt;
-    Result&lt;void, ConversationError | ConversationApplicationError&gt;
-  &gt; =&gt; {
-    const thread = await deps.threads.findById(cmd.threadId);
-    if (!thread) {
-      return err(ConversationApplicationError.threadNotFound(cmd.threadId));
+    let patched = 0;
+    for (const puzzle of puzzles) {
+      if (puzzle.aggregateId) continue;
+      await ctx.db.patch(puzzle._id, {
+        aggregateId: puzzle._id as unknown as string,
+      });
+      patched++;
     }
 &nbsp;
-    const marked = thread.markRead(cmd.memberId, deps.clock.now());
-    if (marked.isErr) return err(marked.error);
-&nbsp;
-    await deps.threads.save(thread);
-    return ok(undefined);
-  };
+    return { patched };
+  },
+});
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -175,16 +160,16 @@ export const makeMarkThreadRead =
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-18T07:15:29.651Z
+                at 2026-06-18T07:15:40.916Z
             </div>
-        <script src="../../../prettify.js"></script>
+        <script src="../../prettify.js"></script>
         <script>
             window.onload = function () {
                 prettyPrint();
             };
         </script>
-        <script src="../../../sorter.js"></script>
-        <script src="../../../block-navigation.js"></script>
+        <script src="../../sorter.js"></script>
+        <script src="../../block-navigation.js"></script>
     </body>
 </html>
     
