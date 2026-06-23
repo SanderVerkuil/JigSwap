@@ -2,13 +2,16 @@ import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { Link } from "@/compat/link";
-import { useRouter } from "@/compat/navigation";
 import {
   computeCollectionStats,
   DifficultyMix,
   StatsBar,
   type DifficultyTier,
 } from "@/components/collections/collection-stats";
+import {
+  EditCollectionDialog,
+  type EditableCollection,
+} from "@/components/collections/edit-collection-dialog";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { CoverChip } from "@/components/library/cover-chip";
 import { EmptyState } from "@/components/library/empty-state";
@@ -56,7 +59,6 @@ function CollectionPending() {
 
 function CollectionDetailPage() {
   const { id } = Route.useParams();
-  const router = useRouter();
   const format = useFormatter();
   const t = useTranslations("collections");
   const tCommon = useTranslations("common");
@@ -72,6 +74,7 @@ function CollectionDetailPage() {
   const updateCollection = useMutation(gateway.collections.update);
   const [shareOpen, setShareOpen] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   // Publish only the collection name as the page-head title so the chrome
   // breadcrumb reads My Library › Collections › <name>. The Add/Share/Edit
@@ -178,6 +181,26 @@ function CollectionDetailPage() {
 
   return (
     <div className="flex w-full flex-col gap-8">
+      {/* Edit dialog — opened by the Edit button in the hero. The collection
+          data from the query is passed directly; it re-seeds on open. */}
+      <EditCollectionDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        collection={
+          collection
+            ? ({
+                _id: collection._id,
+                aggregateId: collection.aggregateId,
+                name: collection.name,
+                description: collection.description ?? undefined,
+                visibility: collection.visibility,
+                color: collection.color ?? undefined,
+                icon: collection.icon ?? undefined,
+              } satisfies EditableCollection)
+            : null
+        }
+      />
+
       {/* Share dialog — only reached for private collections (public ones copy
           the link directly). Offers making it public or copying a private,
           owner-only link. */}
@@ -281,10 +304,7 @@ function CollectionDetailPage() {
               <Share2 className="h-4 w-4" />
               {t("share")}
             </Button>
-            <Button
-              variant="ghost"
-              onClick={() => router.push(`/collections/${id}/edit`)}
-            >
+            <Button variant="ghost" onClick={() => setEditOpen(true)}>
               <Edit className="h-4 w-4" />
               {tCommon("edit")}
             </Button>
