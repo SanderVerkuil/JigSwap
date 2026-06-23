@@ -38,7 +38,9 @@ type OwnedPuzzleData = FunctionReturnType<
 
 interface PuzzleCardProps {
   puzzle: OwnedPuzzleData;
-  variant?: "default" | "browse" | "collection" | "selection";
+  // "pick" = single-pick picker: the whole card is clickable (fires onSelect) but renders no
+  // multi-select checkbox or selection ring, so it doesn't read as a bulk action.
+  variant?: "default" | "browse" | "collection" | "selection" | "pick";
   onEdit?: (puzzleId: Id<"ownedPuzzles">) => void;
   onView?: (puzzleId: Id<"ownedPuzzles">) => void;
   /**
@@ -304,8 +306,9 @@ export function PuzzleCard({
       puzzle={view}
       selected={isSelected}
       // In the selection picker the whole card toggles selection (not just the
-      // checkbox); the checkbox stays as the visible state + keyboard target.
-      selectable={variant === "selection" && !!onSelect}
+      // checkbox); the checkbox stays as the visible state + keyboard target. The
+      // "pick" variant is also card-clickable but shows no checkbox (single pick).
+      selectable={(variant === "selection" || variant === "pick") && !!onSelect}
       onSelect={onSelect ? () => onSelect(ownedId) : undefined}
       badges={badges}
       overlay={overlay}

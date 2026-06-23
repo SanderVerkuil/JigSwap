@@ -117,8 +117,7 @@ function NewCompletionPage() {
             <PuzzleCard
               key={puzzle._id}
               puzzle={puzzle}
-              variant="selection"
-              isSelected={solveTarget?.copyId === puzzle.aggregateId}
+              variant="pick"
               onSelect={handleSelect}
             />
           ))}
