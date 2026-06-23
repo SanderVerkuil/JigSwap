@@ -2,9 +2,9 @@
 
 // The shell's user menu: Clerk's <UserButton> account dropdown (manage account,
 // sign out) plus a "My profile" link to the app's own profile page and a custom
-// "Preferences" page (content width + hide email) mounted inside Clerk's profile
-// modal. Shared by the desktop sidebar footer and the mobile top bar so both
-// open the same menu instead of hard-navigating to /profile.
+// "Preferences" page (content width, hide email, solve-duration tracking) mounted
+// inside Clerk's profile modal. Shared by the desktop sidebar footer and the mobile
+// top bar so both open the same menu instead of hard-navigating to /profile.
 
 import { UserButton } from "@/compat/clerk";
 import { Switch } from "@/components/ui/switch";
@@ -63,8 +63,9 @@ export function ShellUserButton({
 }
 
 // Content of the Clerk custom profile page: the content-width choice and the
-// hide-email toggle, wired to the same useShellPreferences() store the shell
-// reads from. Uses the existing shell.user.* translations.
+// hide-email toggle (useShellPreferences, Clerk metadata) plus the solve-duration
+// tracking toggle (useUserSettings, the Solving-context Convex preference). Uses
+// the shell.user.* and solving.settings.* translations.
 function PreferencesPage() {
   const { fullWidth, hideEmail, setPreference } = useShellPreferences();
   const { trackCompletionDuration, setTrackDuration } = useUserSettings();
