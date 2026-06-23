@@ -1,6 +1,7 @@
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
+import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,6 +30,7 @@ function BorrowedPending() {
 function BorrowedPage() {
   const t = useTranslations("lending");
   const tCommon = useTranslations("common");
+  const tSolve = useTranslations("solving.logSolve");
   const dateLocale = useDateFnsLocale();
 
   // Source of truth for "copies I'm holding on loan"; open loans where the caller is the borrower.
@@ -37,6 +39,11 @@ function BorrowedPage() {
 
   // The loan currently being returned, so we can disable just its button while the mutation runs.
   const [returningId, setReturningId] = useState<string | null>(null);
+  // The loan for which we are logging a solve (null = dialog closed).
+  const [solveFor, setSolveFor] = useState<{
+    copyId: string;
+    title: string;
+  } | null>(null);
 
   const handleReturn = async (loanId: string) => {
     setReturningId(loanId);
@@ -109,20 +116,44 @@ function BorrowedPage() {
                     </div>
                   </div>
 
-                  <Button
-                    size="sm"
-                    disabled={returningId === loan.loanId}
-                    onClick={() => handleReturn(loan.loanId)}
-                  >
-                    {returningId === loan.loanId
-                      ? t("returning")
-                      : t("returnAction")}
-                  </Button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        setSolveFor({
+                          copyId: loan.copyId,
+                          title: loan.puzzleTitle,
+                        })
+                      }
+                    >
+                      {tSolve("trigger")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      disabled={returningId === loan.loanId}
+                      onClick={() => handleReturn(loan.loanId)}
+                    >
+                      {returningId === loan.loanId
+                        ? t("returning")
+                        : t("returnAction")}
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
+      )}
+
+      {solveFor && (
+        <LogSolveDialog
+          open={true}
+          onOpenChange={(o) => !o && setSolveFor(null)}
+          copyId={solveFor.copyId}
+          puzzleTitle={solveFor.title}
+          viewerIsOwner={false}
+        />
       )}
     </div>
   );
