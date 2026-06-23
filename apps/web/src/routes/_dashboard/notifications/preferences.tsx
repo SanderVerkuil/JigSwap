@@ -9,13 +9,10 @@ import {
   NOTIFICATION_TYPES,
 } from "@/components/notifications/notification-meta";
 import { PushDeviceSection } from "@/components/notifications/push-device-section";
-import { Label } from "@/components/ui/label";
 import { PageLoading } from "@/components/ui/loading";
-import { Switch } from "@/components/ui/switch";
 import { gateway } from "@/gateway";
-import { useUserSettings } from "@/hooks/use-user-settings";
 import { useMutation, useQuery } from "convex/react";
-import { Bell, Timer } from "lucide-react";
+import { Bell } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
@@ -32,9 +29,7 @@ export const Route = createFileRoute("/_dashboard/notifications/preferences")({
 function NotificationPreferencesPage() {
   const { user } = useUser();
   const t = useTranslations("notifications");
-  const ts = useTranslations("solving.settings");
   const tCommon = useTranslations("common");
-  const { trackCompletionDuration, setTrackDuration } = useUserSettings();
 
   const preferences = useQuery(
     gateway.notifications.preferences,
@@ -84,23 +79,6 @@ function NotificationPreferencesPage() {
           channelLabel={channelLabel}
           onToggle={handleToggle}
         />
-      </section>
-
-      <section>
-        <SectionHead title={ts("sectionTitle")} icon={Timer} />
-        <div className="flex items-center justify-between gap-4">
-          <div className="space-y-0.5">
-            <Label htmlFor="track-duration">{ts("trackDurationLabel")}</Label>
-            <p className="text-muted-foreground text-sm">
-              {ts("trackDurationHint")}
-            </p>
-          </div>
-          <Switch
-            id="track-duration"
-            checked={trackCompletionDuration === true}
-            onCheckedChange={(checked) => void setTrackDuration(checked)}
-          />
-        </div>
       </section>
     </div>
   );

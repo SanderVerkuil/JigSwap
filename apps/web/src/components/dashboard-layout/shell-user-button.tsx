@@ -8,6 +8,7 @@
 
 import { UserButton } from "@/compat/clerk";
 import { Switch } from "@/components/ui/switch";
+import { useUserSettings } from "@/hooks/use-user-settings";
 import { cn } from "@/lib/utils";
 import { SlidersHorizontal, User } from "lucide-react";
 import { useTranslations } from "use-intl";
@@ -66,7 +67,9 @@ export function ShellUserButton({
 // reads from. Uses the existing shell.user.* translations.
 function PreferencesPage() {
   const { fullWidth, hideEmail, setPreference } = useShellPreferences();
+  const { trackCompletionDuration, setTrackDuration } = useUserSettings();
   const t = useTranslations("shell.user");
+  const ts = useTranslations("solving.settings");
 
   return (
     <div className="flex flex-col gap-6">
@@ -103,6 +106,26 @@ function PreferencesPage() {
           checked={hideEmail}
           onCheckedChange={(checked) => setPreference("hideEmail", checked)}
         />
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-sm font-medium">{ts("sectionTitle")}</h2>
+        <div className="flex items-center justify-between gap-4">
+          <label
+            htmlFor="track-completion-duration"
+            className="text-muted-foreground text-sm"
+          >
+            {ts("trackDurationLabel")}
+          </label>
+          <Switch
+            id="track-completion-duration"
+            checked={trackCompletionDuration === true}
+            onCheckedChange={(checked) => void setTrackDuration(checked)}
+          />
+        </div>
+        <p className="text-muted-foreground text-xs">
+          {ts("trackDurationHint")}
+        </p>
       </section>
     </div>
   );
