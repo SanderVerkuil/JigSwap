@@ -557,7 +557,8 @@
       "noCatalogueResults": "No catalogue puzzles match your search.",
       "chosenPuzzle": "Adding a copy of",
       "copyDetails": "Your copy"
-    }
+    },
+    "removeFromCollection": "Remove from this collection"
   },
   "trades": {
     "title": "Exchanges",

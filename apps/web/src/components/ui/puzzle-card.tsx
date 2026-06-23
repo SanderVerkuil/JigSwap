@@ -23,6 +23,12 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { gateway, Id } from "@/gateway";
 import type { FunctionReturnType } from "convex/server";
 import {
@@ -85,6 +91,18 @@ interface PuzzleCardProps {
 // Rendered as a cover overlay so it sits above the stretched-link (z-10) and
 // is always mounted for keyboard/SR reachability. Suppressed in selection/pick.
 // ---------------------------------------------------------------------------
+// Shared top-right "corner chip" styling for the card's overlay controls (the ⋯ menu and the
+// collection remove button): frosted glass, always mounted, dimmed at rest on hover-capable
+// devices, full on card-hover/focus/touch. 44px hit area via negative margin + padding.
+const CORNER_CHIP_CLASS = [
+  "flex h-[40px] w-[40px] items-center justify-center rounded-full",
+  "bg-background/70 backdrop-blur-md border border-border/50 shadow-sm",
+  "-m-[2px] p-[2px]",
+  "motion-safe:transition-opacity motion-safe:duration-150",
+  "[@media(hover:hover)_and_(pointer:fine)]:opacity-60",
+  "group-hover:opacity-100 focus-within:opacity-100",
+].join(" ");
+
 interface PuzzleOverflowMenuProps {
   ownedId: Id<"ownedPuzzles">;
   onLogSolve?: (id: Id<"ownedPuzzles">) => void;
@@ -119,26 +137,8 @@ function PuzzleOverflowMenu({
             type="button"
             aria-label={t("overflowMenu.ariaLabel")}
             onClick={(e) => e.stopPropagation()}
-            // Chip: frosted glass appearance; always mounted but dimmed on desktop
-            // when the card is not hovered. Touch/coarse devices stay at full opacity.
-            // `group-hover` + focus-within bring it to full opacity on pointer hover.
-            // The @media guard ensures we only dim on hover-capable devices.
-            // `data-[state=open]` pins opacity when the menu is open.
-            className={[
-              // Base chip style
-              "flex h-[40px] w-[40px] items-center justify-center rounded-full",
-              "bg-background/70 backdrop-blur-md border border-border/50 shadow-sm",
-              "text-foreground",
-              // Keep the negative margin so the 44px hit-area pads outward,
-              // keeping the visual chip at ~40px.
-              "-m-[2px] p-[2px]",
-              // Transition (respects prefers-reduced-motion via Tailwind's motion-safe)
-              "motion-safe:transition-opacity motion-safe:duration-150",
-              // Desktop: dim at rest, full on card-hover/focus-within/menu-open
-              "[@media(hover:hover)_and_(pointer:fine)]:opacity-60",
-              "group-hover:opacity-100 focus-within:opacity-100",
-              "data-[state=open]:opacity-100 data-[state=open]:bg-accent",
-            ].join(" ")}
+            // `data-[state=open]` pins opacity + a subtle bg while the menu is open.
+            className={`${CORNER_CHIP_CLASS} text-foreground data-[state=open]:opacity-100 data-[state=open]:bg-accent`}
           >
             <MoreHorizontal className="h-4 w-4" aria-hidden />
           </button>
@@ -199,6 +199,40 @@ function PuzzleOverflowMenu({
           )}
         </DropdownMenuContent>
       </DropdownMenu>
+    </div>
+  );
+}
+
+// Collection cards use the top-right corner (where owner cards show the ⋯ menu) for a single
+// "remove from this collection" action, with a tooltip clarifying what it does.
+function PuzzleCornerRemove({
+  ownedId,
+  onRemove,
+}: {
+  ownedId: Id<"ownedPuzzles">;
+  onRemove: (id: Id<"ownedPuzzles">) => void;
+}) {
+  const t = useTranslations("puzzles");
+  return (
+    <div className="absolute top-2 right-2 z-10">
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label={t("removeFromCollection")}
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove(ownedId);
+              }}
+              className={`${CORNER_CHIP_CLASS} text-destructive hover:bg-destructive/10`}
+            >
+              <Trash2 className="h-4 w-4" aria-hidden />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>{t("removeFromCollection")}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 }
@@ -318,6 +352,9 @@ export function PuzzleCard({
           copyAggregateId={puzzle.aggregateId}
         />
       )}
+      {showActions && variant === "collection" && onRemove && (
+        <PuzzleCornerRemove ownedId={ownedId} onRemove={onRemove} />
+      )}
       {isSelected && (
         <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
           <Check className="h-8 w-8 text-primary" />
@@ -342,9 +379,10 @@ export function PuzzleCard({
   // Browse/exchange/social actions stay in the bottom action row as before.
   // The owner-management actions (log solve, edit, delete) AND "add to collection" now live in
   // the ⋯ overflow menu (the latter as a submenu), so they no longer render a bottom-row control.
+  // The collection variant's onRemove moves to the top-right corner chip (PuzzleCornerRemove).
   // onView is intentionally omitted here: whole-card navigation covers it (stretched link).
   const browseActions = !!(
-    onRemove ||
+    (variant !== "collection" && onRemove) ||
     onRequestExchange ||
     onMessage ||
     onFavorite
@@ -354,7 +392,7 @@ export function PuzzleCard({
   const actions = hasBrowseRow ? (
     <div className="flex items-center justify-between gap-2">
       <div className="flex items-center gap-2">
-        {onRemove && (
+        {variant !== "collection" && onRemove && (
           <Button
             variant="ghost"
             size="sm"

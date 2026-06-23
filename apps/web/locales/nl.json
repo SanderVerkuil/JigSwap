@@ -557,7 +557,8 @@
       "noCatalogueResults": "Geen catalogus-puzzels komen overeen met je zoekopdracht.",
       "chosenPuzzle": "Een exemplaar toevoegen van",
       "copyDetails": "Jouw exemplaar"
-    }
+    },
+    "removeFromCollection": "Uit deze collectie verwijderen"
   },
   "trades": {
     "title": "Uitwisselingen",
