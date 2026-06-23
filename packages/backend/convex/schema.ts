@@ -566,6 +566,14 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_member", ["memberId"]),
 
+  // Solving-context member preferences (federated settings: each context owns its settings).
+  // Keyed by member; `trackCompletionDuration` undefined = never asked → first-time prompt.
+  solvingPreferences: defineTable({
+    memberId: v.id("users"),
+    trackCompletionDuration: v.optional(v.boolean()),
+    updatedAt: v.number(),
+  }).index("by_member", ["memberId"]),
+
   // Web Push subscriptions: one row per browser/device a member has granted push permission on. The
   // push channel (notifications/sendWebPush) fans a notification out to every active subscription of
   // the recipient via the Web Push protocol (VAPID). A subscription that the push service reports as
