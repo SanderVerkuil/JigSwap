@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for solving/domain/solve-duration.ts</title>
+    <title>Code coverage report for convex/library/resolveCoverUrl.ts</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../prettify.css" />
     <link rel="stylesheet" href="../../base.css" />
@@ -19,34 +19,34 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> / <a href="index.html">solving/domain</a> solve-duration.ts</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">convex/library</a> resolveCoverUrl.ts</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">88.88% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>11/11</span>
+                <span class='fraction'>8/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">83.33% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>6/6</span>
+                <span class='fraction'>10/12</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>5/5</span>
+                <span class='fraction'>1/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">88.88% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>8/9</span>
             </div>
         
             
@@ -88,86 +88,56 @@
 <a name='L23'></a><a href='#L23'>23</a>
 <a name='L24'></a><a href='#L24'>24</a>
 <a name='L25'></a><a href='#L25'>25</a>
-<a name='L26'></a><a href='#L26'>26</a>
-<a name='L27'></a><a href='#L27'>27</a>
-<a name='L28'></a><a href='#L28'>28</a>
-<a name='L29'></a><a href='#L29'>29</a>
-<a name='L30'></a><a href='#L30'>30</a>
-<a name='L31'></a><a href='#L31'>31</a>
-<a name='L32'></a><a href='#L32'>32</a>
-<a name='L33'></a><a href='#L33'>33</a>
-<a name='L34'></a><a href='#L34'>34</a>
-<a name='L35'></a><a href='#L35'>35</a>
-<a name='L36'></a><a href='#L36'>36</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<a name='L26'></a><a href='#L26'>26</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">61x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">64x</span>
-<span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">57x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">50x</span>
-<span class="cline-any cline-yes">50x</span>
-<span class="cline-any cline-yes">48x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">32x</span>
+<span class="cline-any cline-yes">32x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">32x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">32x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { err, ok, Result } from "../../shared-kernel";
-import { SolvingError } from "./errors";
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type { Doc } from "../_generated/dataModel";
+import type { QueryCtx } from "../_generated/server";
 &nbsp;
-const MS_PER_MINUTE = 60_000;
-&nbsp;
-// A solve duration measured in whole positive minutes (mirrors the persisted
-// `completions.completionTimeMinutes`). A value object so the "positive minutes" invariant
-// lives in one place and a Completion never holds a negative or fractional duration.
-export class SolveDuration {
-  private constructor(readonly minutes: number) {}
-&nbsp;
-  static ofMinutes(minutes: number): Result&lt;SolveDuration, SolvingError&gt; {
-    if (!Number.isFinite(minutes) || minutes &lt;= 0) {
-      return err(SolvingError.invalidDuration());
+// Canonical card-cover resolution for an owned copy, shared by every list read so cards look the
+// same everywhere: the copy's chosen-and-APPROVED cover photo if set, otherwise the puzzle's global
+// box art, else null (the card falls back to its placeholder). Pending/rejected cover photos do not
+// surface — only approved (an absent status is legacy = approved). The catalogue `image` is a
+// `_storage` id, so it MUST be resolved via `getUrl`.
+export const resolveCopyCoverUrl = async (
+  ctx: QueryCtx,
+  copy: Doc&lt;"ownedPuzzles"&gt;,
+  puzzle: Doc&lt;"puzzles"&gt; | null,
+): Promise&lt;string | null&gt; =&gt; {
+  let coverUrl: string | null = null;
+  if (copy.coverImageId) {
+    const img = await ctx.db.get(copy.coverImageId);
+    <span class="missing-if-branch" title="else path not taken" >E</span>if (img &amp;&amp; (img.moderationStatus ?? "approved") === "approved") {
+      coverUrl = await ctx.storage.getUrl(img.fileId);
     }
-    return ok(new SolveDuration(Math.round(minutes)));
   }
-&nbsp;
-  // Derive a duration from a start/end pair (end must be on or after start). A zero-length span
-  // is not a valid solve, so equal instants are rejected as an invalid duration.
-  static between(start: Date, end: Date): Result&lt;SolveDuration, SolvingError&gt; {
-    const ms = end.getTime() - start.getTime();
-    if (ms &lt;= 0) return err(SolvingError.invalidDuration());
-    return SolveDuration.ofMinutes(ms / MS_PER_MINUTE);
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (!coverUrl &amp;&amp; puzzle?.image) {
+<span class="cstat-no" title="statement not covered" >    coverUrl = await ctx.storage.getUrl(puzzle.image);</span>
   }
-&nbsp;
-  // Rehydrate a persisted value that was already validated when first stored.
-  static fromState(minutes: number): SolveDuration {
-    return new SolveDuration(minutes);
-  }
-&nbsp;
-  equals(other: SolveDuration): boolean {
-    return this.minutes === other.minutes;
-  }
-}
+  return coverUrl;
+};
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -175,7 +145,7 @@ export class SolveDuration {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-23T18:26:10.072Z
+                at 2026-06-23T18:26:21.377Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
