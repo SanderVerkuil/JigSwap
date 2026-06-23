@@ -1,4 +1,5 @@
 export * from "./create-goal";
+export * from "./delete-completion";
 export * from "./edit-completion";
 export * from "./finish-completion";
 export * from "./get-solving-preferences";

@@ -514,6 +514,60 @@ describe("goal progress reacts to completions", () => {
   });
 });
 
+describe("solving.deleteCompletion", () => {
+  test("owner can delete their own completion — row is gone", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    const completionId = await recordForAlice(t, copyAggregateId);
+
+    await asAlice(t).mutation(api.solving.deleteCompletion.deleteCompletion, {
+      completionId,
+    });
+
+    const row = await completionRow(t, completionId);
+    expect(row).toBeNull();
+  });
+
+  test("non-owner is rejected with NotCompletionOwner — row remains", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    const completionId = await recordForAlice(t, copyAggregateId);
+
+    await expectConvexCode(
+      asBob(t).mutation(api.solving.deleteCompletion.deleteCompletion, {
+        completionId,
+      }),
+      "NotCompletionOwner",
+    );
+
+    const row = await completionRow(t, completionId);
+    expect(row).not.toBeNull();
+  });
+
+  test("deleting a completion recomputes goal progress back to 0", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+
+    // Create a goal with target 1.
+    const goalId = (await asAlice(t).mutation(
+      api.solving.createGoal.createGoal,
+      { title: "Solve 1 puzzle", targetCompletions: 1 },
+    )) as string;
+
+    // Record a completion — goal progress advances to 1.
+    const completionId = await recordForAlice(t, copyAggregateId);
+    let row = await goalRow(t, goalId);
+    expect(row?.currentCompletions).toBe(1);
+
+    // Delete the completion — goal progress must recompute back to 0.
+    await asAlice(t).mutation(api.solving.deleteCompletion.deleteCompletion, {
+      completionId,
+    });
+    row = await goalRow(t, goalId);
+    expect(row?.currentCompletions).toBe(0);
+  });
+});
+
 describe("solving read queries", () => {
   test("listMyCompletions returns the member's completions only", async () => {
     const t = convexTest(schema, modules);

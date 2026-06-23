@@ -50,6 +50,17 @@ export class CompletionEdited implements DomainEvent {
   ) {}
 }
 
+// A completion was deleted by its owner (e.g. logged by accident). The userId is carried so the
+// goal-progress reactor can recompute the member's derived goal progress in the same transaction.
+export class CompletionDeleted implements DomainEvent {
+  readonly name = "CompletionDeleted";
+  constructor(
+    readonly completionId: CompletionId,
+    readonly userId: MemberId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
 // A PuzzleReview (opinion of the puzzle) was attached to a completion.
 export class PuzzleReviewed implements DomainEvent {
   readonly name = "PuzzleReviewed";
@@ -100,6 +111,7 @@ export type SolvingDomainEvent =
   | CompletionStarted
   | CompletionRecorded
   | CompletionEdited
+  | CompletionDeleted
   | PuzzleReviewed
   | GoalCreated
   | GoalProgressed

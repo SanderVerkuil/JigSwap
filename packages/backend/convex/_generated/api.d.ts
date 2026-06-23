@@ -242,6 +242,7 @@ import type * as solving_adapters_solvingSettingsProvider from "../solving/adapt
 import type * as solving_backfill from "../solving/backfill.js";
 import type * as solving_backfillCompletionPuzzleId from "../solving/backfillCompletionPuzzleId.js";
 import type * as solving_createGoal from "../solving/createGoal.js";
+import type * as solving_deleteCompletion from "../solving/deleteCompletion.js";
 import type * as solving_editCompletion from "../solving/editCompletion.js";
 import type * as solving_errors from "../solving/errors.js";
 import type * as solving_finishCompletion from "../solving/finishCompletion.js";
@@ -494,6 +495,7 @@ declare const fullApi: ApiFromModules<{
   "solving/backfill": typeof solving_backfill;
   "solving/backfillCompletionPuzzleId": typeof solving_backfillCompletionPuzzleId;
   "solving/createGoal": typeof solving_createGoal;
+  "solving/deleteCompletion": typeof solving_deleteCompletion;
   "solving/editCompletion": typeof solving_editCompletion;
   "solving/errors": typeof solving_errors;
   "solving/finishCompletion": typeof solving_finishCompletion;
