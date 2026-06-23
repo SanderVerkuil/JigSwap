@@ -13,13 +13,22 @@ import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { ReviewPuzzleDialog } from "@/components/solving/review-puzzle-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { useQuery } from "convex/react";
-import { CircleCheck, Clock, Pencil, Plus, Star } from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
+import { CircleCheck, Clock, Pencil, Plus, Star, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 type DialogState =
@@ -38,6 +47,7 @@ type DialogState =
       rating?: number;
       text?: string;
     }
+  | { kind: "delete"; completionId: string }
   | null;
 
 export const Route = createFileRoute("/_dashboard/completions/")({
@@ -68,7 +78,10 @@ function CompletionsSkeleton() {
 function CompletionsPage() {
   const { user } = useUser();
   const t = useTranslations("solving.completions");
+  const tCommon = useTranslations("common");
   const [dialog, setDialog] = useState<DialogState>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const deleteCompletion = useMutation(gateway.solving.deleteCompletion);
 
   const convexUser = useQuery(
     gateway.identity.byClerkId,
@@ -339,6 +352,23 @@ function CompletionsPage() {
                         <Pencil className="h-4 w-4" />
                       </Button>
                     )}
+                    {completion.aggregateId && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 text-destructive hover:text-destructive"
+                        title={t("delete")}
+                        aria-label={t("delete")}
+                        onClick={() =>
+                          setDialog({
+                            kind: "delete",
+                            completionId: completion.aggregateId!,
+                          })
+                        }
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               );
@@ -373,6 +403,49 @@ function CompletionsPage() {
           initialTimeMinutes={dialog.timeMinutes}
           initialNotes={dialog.notes}
         />
+      )}
+      {dialog?.kind === "delete" && (
+        <Dialog
+          open
+          onOpenChange={(open) => !open && !isDeleting && setDialog(null)}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("deleteConfirmTitle")}</DialogTitle>
+              <DialogDescription>{t("deleteConfirmBody")}</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setDialog(null)}
+                disabled={isDeleting}
+              >
+                {tCommon("cancel")}
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={isDeleting}
+                onClick={async () => {
+                  if (!dialog.completionId) return;
+                  setIsDeleting(true);
+                  try {
+                    await deleteCompletion({
+                      completionId: dialog.completionId,
+                    });
+                    toast.success(t("deleteSuccess"));
+                    setDialog(null);
+                  } catch {
+                    toast.error(t("deleteError"));
+                  } finally {
+                    setIsDeleting(false);
+                  }
+                }}
+              >
+                {t("deleteConfirm")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

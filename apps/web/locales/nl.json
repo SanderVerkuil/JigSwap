@@ -1512,7 +1512,13 @@
         "subtitle": "Kies een puzzel om een oplossing tegen te registreren.",
         "noPuzzles": "Nog geen puzzels",
         "noPuzzlesHint": "Voeg eerst puzzels toe aan je bibliotheek en log hier dan een voltooiing."
-      }
+      },
+      "delete": "Verwijderen",
+      "deleteConfirmTitle": "Voltooiing verwijderen?",
+      "deleteConfirmBody": "Dit verwijdert de voltooiing definitief uit je geschiedenis. Dit kan niet ongedaan worden gemaakt.",
+      "deleteConfirm": "Verwijderen",
+      "deleteSuccess": "Voltooiing verwijderd",
+      "deleteError": "Voltooiing kon niet worden verwijderd"
     },
     "logSolve": {
       "trigger": "Oplossing vastleggen",

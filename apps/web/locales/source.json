@@ -1512,7 +1512,13 @@
         "subtitle": "Pick a puzzle to log a solve against.",
         "noPuzzles": "No puzzles yet",
         "noPuzzlesHint": "Add puzzles to your library first, then log a completion here."
-      }
+      },
+      "delete": "Delete",
+      "deleteConfirmTitle": "Delete this completion?",
+      "deleteConfirmBody": "This will permanently remove the completion from your history. This can't be undone.",
+      "deleteConfirm": "Delete",
+      "deleteSuccess": "Completion deleted",
+      "deleteError": "Could not delete completion"
     },
     "logSolve": {
       "trigger": "Log a solve",
