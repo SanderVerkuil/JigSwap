@@ -181,12 +181,11 @@ describe("exchange owner-only field gating (counterparty must not see private co
   // Alice owns Ocean Calm (offered), Bob owns Mountain Vista (requested). On the shared exchange
   // view each party must see owner-only fields (notes + acquisition provenance) ONLY on their own
   // copy, never on the counterparty's. salePrice is public and is not asserted here.
-  const BOB_SECRETS = [
-    "bob-private-note-mountain",
-    "bought_used",
-    "4321",
-  ] as const;
-  const ALICE_SECRETS = ["alice-private-note-ocean", "gift", "1234"] as const;
+  // Unique string sentinels only. The acquisitionPrice (a number) is collision-prone as a JSON
+  // substring — random convex ids/timestamps can contain "1234"/"4321" — so it is NOT substring-
+  // checked here; each test asserts the counterparty's `acquisitionPrice` is `undefined` directly.
+  const BOB_SECRETS = ["bob-private-note-mountain", "bought_used"] as const;
+  const ALICE_SECRETS = ["alice-private-note-ocean", "gift"] as const;
 
   test("getExchangeById: each party sees only their own copy's owner-only fields", async () => {
     const t = convexTest(schema, modules);
