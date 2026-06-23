@@ -20,7 +20,7 @@ import type { Doc, Id } from "../../_generated/dataModel";
 // repository resolves and supplies them.
 export type CompletionRow = Omit<
   Doc<"completions">,
-  "_id" | "_creationTime" | "puzzleId" | "ownedPuzzleId"
+  "_id" | "_creationTime" | "puzzleId" | "ownedPuzzleId" | "copySnapshot"
 >;
 
 // Row -> aggregate. The row MUST carry an aggregateId (only domain-written rows do); callers
@@ -49,6 +49,7 @@ export const toDomain = (
       Photo.of(toFileId(fileId as unknown as string)),
     ),
     review,
+    allPiecesPresent: row.allPiecesPresent,
     isCompleted: row.isCompleted,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
@@ -73,6 +74,7 @@ export const toRow = (completion: Completion): CompletionRow => {
     photos: state.photos.map(
       (photo) => photo.fileId as unknown as Id<"_storage">,
     ),
+    allPiecesPresent: state.allPiecesPresent,
     isCompleted: state.isCompleted,
     createdAt: state.createdAt.getTime(),
     updatedAt: state.updatedAt.getTime(),
