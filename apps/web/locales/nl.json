@@ -2546,6 +2546,17 @@
   "emojiPicker": {
     "search": "Zoek emoji",
     "notFound": "Geen emoji gevonden",
-    "selectPrompt": "Kies een emoji…"
+    "selectPrompt": "Kies een emoji…",
+    "categories": {
+      "smileysEmotion": "Smileys en emotie",
+      "peopleBody": "Mensen en lichaam",
+      "animalsNature": "Dieren en natuur",
+      "foodDrink": "Eten en drinken",
+      "travelPlaces": "Reizen en plaatsen",
+      "activities": "Activiteiten",
+      "objects": "Objecten",
+      "symbols": "Symbolen",
+      "flags": "Vlaggen"
+    }
   }
 }

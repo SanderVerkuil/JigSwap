@@ -74,17 +74,36 @@ function EmojiPickerEmoji({
   );
 }
 
+// frimousse takes category labels from emojibase's per-locale messages, which can be incomplete
+// (e.g. "People & Body" stays English in nl). Map the standard group labels (keyed by their English
+// form) to our own translations so any emojibase left in English is localized; already-localized
+// labels don't match the English keys and pass through unchanged.
+const CATEGORY_I18N_KEY: Record<string, string> = {
+  "smileys & emotion": "smileysEmotion",
+  "people & body": "peopleBody",
+  "animals & nature": "animalsNature",
+  "food & drink": "foodDrink",
+  "travel & places": "travelPlaces",
+  activities: "activities",
+  objects: "objects",
+  symbols: "symbols",
+  flags: "flags",
+};
+
 function EmojiPickerCategoryHeader({
   category,
   ...props
 }: EmojiPickerListCategoryHeaderProps) {
+  const t = useTranslations("emojiPicker");
+  const key = CATEGORY_I18N_KEY[category.label.toLowerCase()];
+  const label = key ? t(`categories.${key}`) : category.label;
   return (
     <div
       {...props}
       className="bg-popover text-muted-foreground px-3 pb-2 pt-3.5 text-xs leading-none"
       data-slot="emoji-picker-category-header"
     >
-      {category.label}
+      {label}
     </div>
   );
 }

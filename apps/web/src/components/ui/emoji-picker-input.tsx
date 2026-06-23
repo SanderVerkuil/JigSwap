@@ -12,6 +12,7 @@ import {
   EmojiPickerSearch,
 } from "./emoji-picker";
 
+import { useEmojiLabel } from "@/lib/emoji-label";
 import { cn } from "@/lib/utils";
 import { Button } from "./button";
 import { Card, CardContent } from "./card";
@@ -32,12 +33,11 @@ export function EmojiPickerInput({
   className?: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  // The localized name of the just-picked emoji, shown next to the glyph in the trigger. frimousse
-  // has no reverse char->name lookup, so a persisted icon (on first render) shows just the glyph
-  // until the user (re)picks; picking surfaces the localized name immediately.
-  const [label, setLabel] = useState<string | null>(null);
   const t = useTranslations("emojiPicker");
   const locale = useLocale();
+  // The localized name of the CURRENT value's emoji, shown next to the glyph in the trigger —
+  // resolved for both a persisted icon (on open) and a freshly picked one (value updates).
+  const label = useEmojiLabel(value || undefined, locale);
 
   return (
     <div id={id}>
@@ -85,7 +85,6 @@ export function EmojiPickerInput({
                   className="h-[320px] w-[324px]"
                   onEmojiSelect={(emoji) => {
                     onChange(emoji.emoji);
-                    setLabel(emoji.label);
                     setIsOpen(false);
                   }}
                 >

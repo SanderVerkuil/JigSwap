@@ -2546,6 +2546,17 @@
   "emojiPicker": {
     "search": "Search emoji",
     "notFound": "No emoji found",
-    "selectPrompt": "Select an emoji…"
+    "selectPrompt": "Select an emoji…",
+    "categories": {
+      "smileysEmotion": "Smileys & Emotion",
+      "peopleBody": "People & Body",
+      "animalsNature": "Animals & Nature",
+      "foodDrink": "Food & Drink",
+      "travelPlaces": "Travel & Places",
+      "activities": "Activities",
+      "objects": "Objects",
+      "symbols": "Symbols",
+      "flags": "Flags"
+    }
   }
 }
