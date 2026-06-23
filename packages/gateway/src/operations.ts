@@ -167,6 +167,12 @@ export const gateway = {
       api.solving.setTrackCompletionDuration.setTrackCompletionDuration,
   },
 
+  // Federated user settings: a read-composition over each context's settings section. Writes are
+  // owned by the originating context (e.g. solving.setTrackCompletionDuration).
+  settings: {
+    mine: api.settings.getMyUserSettings.getMyUserSettings,
+  },
+
   // Reputation: partner reviews after a completed Exchange + the per-member profile projection.
   // submitReview.exchangeId is the Exchange aggregateId; reviewee/member are user _ids (MemberId).
   reputation: {
