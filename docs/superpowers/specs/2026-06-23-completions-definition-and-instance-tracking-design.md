@@ -59,18 +59,34 @@ table), and **no per-solve record of whether all pieces were present**.
 Net: each completion has a durable **definition** link (always), an optional **live copy**
 link (may null), and a durable **copy snapshot** (survives deletion).
 
-**New `userSettings` table:**
+**Settings are domain-owned per bounded context (federated), not a god "Settings" domain.**
+`trackCompletionDuration` is a **Solving-context** preference: the context that understands it
+owns its aggregate, ports, use cases, and storage. A thin, cross-cutting "user settings" read
+endpoint composes every context's settings read-port into one API; there is no separate settings
+domain (the aggregation is a read-model composition root in the backend, infrastructure not
+domain). Adding a future setting to another context means: model it in that context + register its
+section provider — the aggregator picks it up.
 
-```ts
-userSettings: defineTable({
-  aggregateId: v.optional(v.string()),
-  userId: v.id("users"),
-  trackCompletionDuration: v.optional(v.boolean()), // undefined = never asked → first-time prompt
-  updatedAt: v.number(),
-}).index("by_user", ["userId"]);
-```
+- **Domain** (`packages/domain/src/solving/`): a `SolvingPreferences` entity identified by
+  `memberId` (state `{ memberId, trackCompletionDuration?, updatedAt }`, eventless — settings have
+  no domain events that matter). Out-port `SolvingPreferencesRepository { findByMember, save }`,
+  with a segregated `SolvingPreferencesReader { findByMember }` so the read path needs no write
+  capability. In-ports + use cases `makeGetSolvingPreferences` (returns the member's prefs or
+  `createDefault`) and `makeSetTrackCompletionDuration` (upsert via `createDefault` + mutate).
+- **Storage** (context-owned table): `solvingPreferences` keyed by member.
+  ```ts
+  solvingPreferences: defineTable({
+    memberId: v.id("users"),
+    trackCompletionDuration: v.optional(v.boolean()), // undefined = never asked → first-time prompt
+    updatedAt: v.number(),
+  }).index("by_member", ["memberId"]);
+  ```
+- **Federated read endpoint** (`packages/backend/convex/settings/`): a `MemberSettingsSection`
+  provider contract `{ section, read(ctx, memberId) }`; each context exports a provider
+  (`solvingSettingsSection`). A static `memberSettingsSections` registry is iterated by
+  `getMyUserSettings` to build `{ solving: { trackCompletionDuration } }`.
 
-`trackCompletionDuration` is optional on purpose: `undefined` means the user has never been
+`trackCompletionDuration` is optional on purpose: `undefined` means the member has never been
 asked and is what drives the first-time prompt. After answering it is `true`/`false`.
 
 ### Section 2 — Backend functions & authz
@@ -93,11 +109,14 @@ is false, the **UI** offers a follow-up "update this copy's missing-pieces too?"
 the existing copy-update mutation. Kept explicit so we never silently mutate a friend's copy;
 borrowed copies (holder, not owner) get no offer.
 
-**New settings functions** (new `settings/` folder under convex, or alongside `solving/`):
+**Settings functions:**
 
-- `getMyUserSettings` query — returns the row, or `{ trackCompletionDuration: undefined }`
-  when none exists.
-- `setTrackCompletionDuration` mutation — upserts the row, member-gated.
+- `settings/getMyUserSettings` query — member-gated composition root; iterates the
+  `memberSettingsSections` registry and returns `{ solving: { trackCompletionDuration } }`
+  (defaulting `undefined` when no row exists). Read-only (uses the segregated reader port).
+- `solving/setTrackCompletionDuration` mutation — composition root over
+  `makeSetTrackCompletionDuration`, member-gated. The write belongs to the Solving context (its
+  owner), exposed to the UI via the gateway.
 
 **Snapshot building** lives in the repository/mapper layer
 (`convexCompletionRepository.ts` / `completionMapper.ts`), consistent with the existing FK
@@ -106,27 +125,32 @@ alongside the row.
 
 ### Section 3 — UX flow
 
-**First-time duration prompt** (`apps/web/src/components/solving/log-solve-dialog.tsx`,
-`finish-solve-dialog.tsx`):
+**First-time duration prompt — a secondary modal after the log dialog closes.** The dialogs read
+`settings.mine` (the federated read → `solving.trackCompletionDuration`).
 
-- Dialog reads `getMyUserSettings`.
-- If `trackCompletionDuration === undefined`, the first time the user goes to log a solve a
-  prompt appears: **"Do you want to keep track of how long puzzles take you?"** (Yes / No).
-- On answer → `setTrackCompletionDuration`, then a one-time tip/toast:
-  _"You can change this anytime in Settings."_
-- Thereafter duration fields (hours/minutes) are shown when `true`, hidden when `false`.
-  The setting governs **only** duration; dates, notes, rating, and the pieces checkbox are
-  always available.
+- While the preference is `undefined`, the duration fields stay hidden (we don't know the choice
+  yet). The member logs their solve normally; the log dialog closes.
+- A **separate ShadCN `Dialog`** then opens (a `DurationPromptProvider` mounted once in the
+  dashboard shell, so it survives the log dialog unmounting): title **"Track how long puzzles take
+  you?"**, body, and **room for a GIF/image** (`/help/track-duration-setting.gif`) pointing out
+  where the toggle lives in Settings. Two buttons (Track duration / Keep it simple) call
+  `solving.setTrackCompletionDuration`. A tip line states it can be changed in Settings.
+- Thereafter duration fields show when `true`, hidden when `false`. The setting governs **only**
+  duration; dates, notes, rating, and the pieces checkbox are always available.
+- All prompts use **ShadCN `Dialog`** components (no raw sonner). Sonner is reserved for
+  non-blocking success toasts.
 
 **Pieces checkbox:**
 
-- New checkbox **"All pieces were present"**, default **checked**.
-- If unchecked **and** the user owns the copy, an inline follow-up offers:
-  _"Update this copy's condition to note missing pieces?"_ → existing copy-update mutation.
-  Borrowed copies skip the offer.
+- New checkbox **"All pieces were present"**, default **checked**, shown when a solve is being
+  completed (an end date is set / the finish dialog).
+- If unchecked **and** the user owns the copy, a **ShadCN `Dialog`** follow-up offers:
+  _"Update this copy's missing-pieces count?"_ → existing copy-update mutation. Borrowed copies
+  (holder, not owner) skip the offer.
 
-**Settings page:** a "Track completion duration" toggle in the user settings route (find /
-extend the existing one) — the destination the help tip points to.
+**Settings page:** a "Track completion duration" toggle (a "Solving" section on the existing
+`notifications/preferences` route) that writes via `solving.setTrackCompletionDuration` — the
+destination the prompt's image points to.
 
 **Completion history** (`apps/web/src/routes/_dashboard/completions.tsx`):
 
