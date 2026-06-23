@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { globalStatsQuery } from "@/lib/marketing-queries";
 import { pageTitle } from "@/lib/page-title";
 
 import { MarketingFooter } from "@/components/marketing/footer";
@@ -16,6 +17,11 @@ export const Route = createFileRoute("/")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "home") }],
   }),
+  // Prefetch the platform counts (hero trust-row + stats strip) so they're SSR'd and present on
+  // first paint rather than flashing in after a client round-trip.
+  loader: async ({ context }) => {
+    await context.queryClient.ensureQueryData(globalStatsQuery);
+  },
   component: Home,
 });
 

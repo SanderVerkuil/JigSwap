@@ -1,16 +1,16 @@
 import { Container } from "@/components/marketing/container";
 import { Reveal } from "@/components/marketing/reveal";
 import { Section } from "@/components/marketing/section";
-import { gateway } from "@/gateway";
-import { useQuery } from "convex/react";
+import { globalStatsQuery } from "@/lib/marketing-queries";
+import { useQuery } from "@tanstack/react-query";
 import { useFormatter, useTranslations } from "use-intl";
 
-// Stats strip — real platform numbers from gateway.insights.globalStats
-// (the prototype's invented totals would overclaim).
+// Stats strip — real platform numbers from gateway.insights.globalStats (prefetched in the home
+// route loader; the prototype's invented totals would overclaim).
 export function Stats() {
   const t = useTranslations("marketing.home.stats");
   const format = useFormatter();
-  const stats = useQuery(gateway.insights.globalStats, {});
+  const { data: stats } = useQuery(globalStatsQuery);
 
   const items: Array<[string, number | undefined]> = [
     [t("puzzlers"), stats?.totalUsers],
