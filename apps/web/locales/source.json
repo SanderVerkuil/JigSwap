@@ -513,6 +513,15 @@
     "fieldNotes": "Notes",
     "notesPlaceholderLong": "Anything worth mentioning — missing pieces, special edition, where you got it…",
     "optional": "Optional",
+    "overflowMenu": {
+      "ariaLabel": "Puzzle actions",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "coachmark": {
+      "body": "Quick actions like logging a solve live in the ⋯ menu on each puzzle card.",
+      "dismiss": "Dismiss hint"
+    },
     "dividerManual": "or enter the details yourself",
     "dividerCover": "cover & extras",
     "difficulty_easy": "Easy",

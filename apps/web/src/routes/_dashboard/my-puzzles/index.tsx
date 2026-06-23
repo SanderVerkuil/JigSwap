@@ -15,7 +15,7 @@ import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
 import { useMutation, useQuery } from "convex/react";
-import { Grid, List, Plus, Undo2 } from "lucide-react";
+import { Grid, List, Plus, Undo2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslations } from "use-intl";
 
@@ -56,6 +56,50 @@ function PuzzlesGridSkeleton() {
           <Skeleton key={i} className="aspect-[3/4] w-full rounded-xl" />
         ))}
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// One-time coachmark banner
+// Persists dismissed state in localStorage; lazy-initialised so it never reads
+// `window` during render (SSR safe), and avoids a setState-in-effect pattern.
+// ---------------------------------------------------------------------------
+const COACHMARK_KEY = "jigswap.coachmark.myPuzzlesActions";
+
+function ActionsCoachmark() {
+  const t = useTranslations("puzzles.coachmark");
+
+  // Lazy initialiser: reads localStorage once at mount, never in the render body.
+  const [dismissed, setDismissed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem(COACHMARK_KEY) === "1";
+  });
+
+  if (dismissed) return null;
+
+  const handleDismiss = () => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(COACHMARK_KEY, "1");
+    }
+    setDismissed(true);
+  };
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="flex items-start gap-3 rounded-lg border border-border bg-muted/60 px-4 py-3 text-sm text-muted-foreground"
+    >
+      <span className="flex-1">{t("body")}</span>
+      <button
+        type="button"
+        aria-label={t("dismiss")}
+        onClick={handleDismiss}
+        className="shrink-0 rounded p-0.5 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <X className="h-4 w-4" />
+      </button>
     </div>
   );
 }
@@ -155,11 +199,6 @@ function PuzzlesPage() {
     router.push(`/my-puzzles/${ownedPuzzleId}/edit`);
   };
 
-  const handleViewPuzzle = (ownedPuzzleId: Id<"ownedPuzzles">) => {
-    // These are the member's OWN copies — open the owner-framed route.
-    router.push(`/my-puzzles/${ownedPuzzleId}`);
-  };
-
   const handleLogSolve = (ownedPuzzleId: Id<"ownedPuzzles">) => {
     // Solves are logged against the Copy aggregateId; guard rows predating the backfill rather
     // than open a dialog that can't persist.
@@ -223,6 +262,9 @@ function PuzzlesPage() {
 
   return (
     <div className="flex flex-col gap-[18px]">
+      {/* One-time coachmark: points users at the ⋯ overflow menu on each card */}
+      <ActionsCoachmark />
+
       {/* Toolbar: a muted search hint on the left, view toggle on the right. Free-text search moved
           to the global ⌘K palette; the count + Add Puzzle action live in the shell page head. */}
       <div className="flex flex-wrap items-center gap-3">
@@ -287,7 +329,6 @@ function PuzzlesPage() {
                 viewBasePath="/my-puzzles"
                 imageFit="contain"
                 onEdit={handleEditPuzzle}
-                onView={handleViewPuzzle}
                 onDelete={handleDeletePuzzle}
                 onLogSolve={handleLogSolve}
                 loanBadge={

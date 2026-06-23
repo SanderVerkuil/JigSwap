@@ -12,21 +12,28 @@ import {
 } from "@/components/puzzles/puzzle-view-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CollectionDropdown } from "@/components/ui/collection-dropdown";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { gateway, Id } from "@/gateway";
 import type { FunctionReturnType } from "convex/server";
 import {
   Check,
   CircleCheck,
   Edit,
-  Eye,
   Heart,
   MessageCircle,
+  MoreHorizontal,
   Trash2,
   User,
 } from "lucide-react";
 import { ReactNode } from "react";
 import { useTranslations } from "use-intl";
-import { CollectionDropdown } from "./collection-dropdown";
 
 export { PuzzleViewProvider, usePuzzleView };
 
@@ -69,11 +76,115 @@ interface PuzzleCardProps {
   className?: string;
 }
 
+// ---------------------------------------------------------------------------
+// Persistent top-right "⋯" overflow menu chip (owner-management actions).
+// Rendered as a cover overlay so it sits above the stretched-link (z-10) and
+// is always mounted for keyboard/SR reachability. Suppressed in selection/pick.
+// ---------------------------------------------------------------------------
+interface PuzzleOverflowMenuProps {
+  ownedId: Id<"ownedPuzzles">;
+  onLogSolve?: (id: Id<"ownedPuzzles">) => void;
+  onEdit?: (id: Id<"ownedPuzzles">) => void;
+  onDelete?: (id: Id<"ownedPuzzles">) => void;
+}
+
+function PuzzleOverflowMenu({
+  ownedId,
+  onLogSolve,
+  onEdit,
+  onDelete,
+}: PuzzleOverflowMenuProps) {
+  const t = useTranslations("puzzles");
+  const tSolving = useTranslations("solving.logSolve");
+
+  // Don't mount the chip at all when no owner actions are wired.
+  if (!onLogSolve && !onEdit && !onDelete) return null;
+
+  return (
+    // `relative z-10` wrapper sits above the stretched-link overlay (z-[1]).
+    // The 44px touch target is achieved via negative margin + extra padding.
+    <div className="absolute top-2 right-2 z-10">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            aria-label={t("overflowMenu.ariaLabel")}
+            onClick={(e) => e.stopPropagation()}
+            // Chip: frosted glass appearance; always mounted but dimmed on desktop
+            // when the card is not hovered. Touch/coarse devices stay at full opacity.
+            // `group-hover` + focus-within bring it to full opacity on pointer hover.
+            // The @media guard ensures we only dim on hover-capable devices.
+            // `data-[state=open]` pins opacity when the menu is open.
+            className={[
+              // Base chip style
+              "flex h-[40px] w-[40px] items-center justify-center rounded-full",
+              "bg-background/70 backdrop-blur-md border border-border/50 shadow-sm",
+              "text-foreground",
+              // Keep the negative margin so the 44px hit-area pads outward,
+              // keeping the visual chip at ~40px.
+              "-m-[2px] p-[2px]",
+              // Transition (respects prefers-reduced-motion via Tailwind's motion-safe)
+              "motion-safe:transition-opacity motion-safe:duration-150",
+              // Desktop: dim at rest, full on card-hover/focus-within/menu-open
+              "[@media(hover:hover)_and_(pointer:fine)]:opacity-60",
+              "group-hover:opacity-100 focus-within:opacity-100",
+              "data-[state=open]:opacity-100 data-[state=open]:bg-accent",
+            ].join(" ")}
+          >
+            <MoreHorizontal className="h-4 w-4" aria-hidden />
+          </button>
+        </DropdownMenuTrigger>
+        {/* Portal ensures the menu content is portaled out of the card's
+            stacking context so clicks can't fall through to the stretched link. */}
+        <DropdownMenuContent align="end" className="min-w-[160px]">
+          {onLogSolve && (
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onLogSolve(ownedId);
+              }}
+            >
+              <CircleCheck className="h-4 w-4 mr-2 shrink-0" />
+              {tSolving("trigger")}
+            </DropdownMenuItem>
+          )}
+          {onEdit && (
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(ownedId);
+              }}
+            >
+              <Edit className="h-4 w-4 mr-2 shrink-0" />
+              {t("overflowMenu.edit")}
+            </DropdownMenuItem>
+          )}
+          {onDelete && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(ownedId);
+                }}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="h-4 w-4 mr-2 shrink-0" />
+                {t("overflowMenu.delete")}
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
 export function PuzzleCard({
   puzzle,
   variant = "default",
   onEdit,
-  onView,
+  onView: _onView,
   viewBasePath = "/copies",
   imageFit,
   onDelete,
@@ -92,7 +203,6 @@ export function PuzzleCard({
   className = "",
 }: PuzzleCardProps) {
   const t = useTranslations("puzzles");
-  const tSolving = useTranslations("solving.logSolve");
 
   // Early return if no puzzle data
   if (!puzzle.puzzle) {
@@ -163,9 +273,26 @@ export function PuzzleCard({
     </>
   );
 
-  // Image overlays: the selection ring's check, and the selection-variant checkbox.
+  // Whether this variant should show the ⋯ overflow menu (owner-management actions).
+  // Suppressed in selection/pick where card-click owns the interaction.
+  const showOverflowMenu =
+    showActions &&
+    variant !== "selection" &&
+    variant !== "pick" &&
+    !!(onLogSolve || onEdit || onDelete);
+
+  // Image overlays: the ⋯ overflow chip (top-right), the selection ring's
+  // check, and the selection-variant checkbox.
   const overlay = (
     <>
+      {showOverflowMenu && (
+        <PuzzleOverflowMenu
+          ownedId={ownedId}
+          onLogSolve={onLogSolve}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
+      )}
       {isSelected && (
         <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
           <Check className="h-8 w-8 text-primary" />
@@ -187,119 +314,70 @@ export function PuzzleCard({
     </>
   );
 
-  // Only render the action row (and its top border) when there is something to
-  // show — actual action buttons or the collection dropdown.
-  const hasActions =
-    showActions &&
-    !!(
-      onView ||
-      onLogSolve ||
-      onEdit ||
-      onDelete ||
-      onRemove ||
-      onRequestExchange ||
-      onMessage ||
-      onFavorite
-    );
-  const actions =
-    hasActions || showCollectionDropdown ? (
-      <div className="flex items-center justify-between gap-2">
-        {hasActions ? (
-          <div className="flex items-center gap-2">
-            {onView && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onView(ownedId)}
-                className="h-8 w-8 p-0"
-              >
-                <Eye className="h-4 w-4" />
-              </Button>
-            )}
-            {onLogSolve && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onLogSolve(ownedId)}
-                className="h-8 w-8 p-0"
-                title={tSolving("trigger")}
-                aria-label={tSolving("trigger")}
-              >
-                <CircleCheck className="h-4 w-4" />
-              </Button>
-            )}
-            {onEdit && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onEdit(ownedId)}
-                className="h-8 w-8 p-0"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-            )}
-            {onDelete && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(ownedId)}
-                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-            {onRemove && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onRemove(ownedId)}
-                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-            {onRequestExchange && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onRequestExchange(ownedId)}
-                className="h-8 w-8 p-0"
-              >
-                <MessageCircle className="h-4 w-4" />
-              </Button>
-            )}
-            {onMessage && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onMessage(ownedId)}
-                className="h-8 w-8 p-0"
-              >
-                <MessageCircle className="h-4 w-4" />
-              </Button>
-            )}
-            {onFavorite && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onFavorite(ownedId)}
-                className="h-8 w-8 p-0"
-              >
-                <Heart className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        ) : (
-          <span />
+  // Browse/exchange/social actions stay in the bottom action row as before.
+  // The owner-management actions (log solve, edit, delete) have moved to the ⋯ menu.
+  // onView is intentionally omitted here: whole-card navigation covers it (stretched link).
+  // CollectionDropdown remains as a separate control in the action row.
+  const browseActions = !!(
+    onRemove ||
+    onRequestExchange ||
+    onMessage ||
+    onFavorite
+  );
+  const hasBrowseRow = showActions && (browseActions || showCollectionDropdown);
+
+  const actions = hasBrowseRow ? (
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2">
+        {onRemove && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onRemove(ownedId)}
+            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         )}
-        {showCollectionDropdown && (
-          <CollectionDropdown
-            ownedPuzzleId={ownedId}
-            copyAggregateId={puzzle.aggregateId}
-          />
+        {onRequestExchange && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onRequestExchange(ownedId)}
+            className="h-8 w-8 p-0"
+          >
+            <MessageCircle className="h-4 w-4" />
+          </Button>
+        )}
+        {onMessage && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onMessage(ownedId)}
+            className="h-8 w-8 p-0"
+          >
+            <MessageCircle className="h-4 w-4" />
+          </Button>
+        )}
+        {onFavorite && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onFavorite(ownedId)}
+            className="h-8 w-8 p-0"
+          >
+            <Heart className="h-4 w-4" />
+          </Button>
         )}
       </div>
-    ) : undefined;
+      {showCollectionDropdown && (
+        <CollectionDropdown
+          ownedPuzzleId={ownedId}
+          copyAggregateId={puzzle.aggregateId}
+        />
+      )}
+    </div>
+  ) : undefined;
 
   return (
     <PuzzleCardShell
@@ -314,10 +392,12 @@ export function PuzzleCard({
       overlay={overlay}
       footer={loanBadge}
       actions={actions}
-      // Clicking the cover opens the owned-copy view, mirroring the Eye action (only when a view
-      // handler is wired — never in the selection picker, where the image toggles selection).
-      // viewBasePath keeps the cover in step with the Eye target (e.g. "/my-puzzles" for own copies).
-      imageHref={onView ? `${viewBasePath}/${ownedId}` : undefined}
+      // The cover link navigates to the puzzle's view page. With the overflow
+      // menu in place, `onView` no longer drives a bottom button — but the
+      // stretched link (via imageHref) still handles whole-card navigation.
+      imageHref={
+        viewBasePath && ownedId ? `${viewBasePath}/${ownedId}` : undefined
+      }
       imageFit={imageFit}
       className={className}
     />

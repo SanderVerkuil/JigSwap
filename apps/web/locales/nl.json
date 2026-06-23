@@ -513,6 +513,15 @@
     "fieldNotes": "Notities",
     "notesPlaceholderLong": "Iets vermeldenswaards — ontbrekende stukjes, speciale editie, waar je hem vandaan hebt…",
     "optional": "Optioneel",
+    "overflowMenu": {
+      "ariaLabel": "Puzzelacties",
+      "edit": "Bewerken",
+      "delete": "Verwijderen"
+    },
+    "coachmark": {
+      "body": "Snelle acties zoals een oplossing vastleggen vind je in het ⋯ menu op elke puzzelkaart.",
+      "dismiss": "Tip verbergen"
+    },
     "dividerManual": "of vul de gegevens zelf in",
     "dividerCover": "omslag & extra's",
     "difficulty_easy": "Makkelijk",
