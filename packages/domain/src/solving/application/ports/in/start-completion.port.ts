@@ -16,6 +16,7 @@ export interface StartCompletionCommand {
   readonly startDate: Date;
   readonly notes?: string;
   readonly photoFileIds?: readonly FileId[];
+  readonly allPiecesPresent?: boolean;
 }
 
 export interface StartCompletion {
