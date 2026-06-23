@@ -516,7 +516,8 @@
     "overflowMenu": {
       "ariaLabel": "Puzzle actions",
       "edit": "Edit",
-      "delete": "Delete"
+      "delete": "Delete",
+      "collection": "Add to collection"
     },
     "coachmark": {
       "body": "Quick actions like logging a solve live in the ⋯ menu on each puzzle card.",

@@ -516,7 +516,8 @@
     "overflowMenu": {
       "ariaLabel": "Puzzelacties",
       "edit": "Bewerken",
-      "delete": "Verwijderen"
+      "delete": "Verwijderen",
+      "collection": "Aan collectie toevoegen"
     },
     "coachmark": {
       "body": "Snelle acties zoals een oplossing vastleggen vind je in het ⋯ menu op elke puzzelkaart.",

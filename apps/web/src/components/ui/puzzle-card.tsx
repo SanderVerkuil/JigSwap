@@ -12,12 +12,15 @@ import {
 } from "@/components/puzzles/puzzle-view-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CollectionDropdown } from "@/components/ui/collection-dropdown";
+import { CollectionMenuItems } from "@/components/ui/collection-dropdown";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { gateway, Id } from "@/gateway";
@@ -26,6 +29,7 @@ import {
   Check,
   CircleCheck,
   Edit,
+  FolderOpen,
   Heart,
   MessageCircle,
   MoreHorizontal,
@@ -86,6 +90,9 @@ interface PuzzleOverflowMenuProps {
   onLogSolve?: (id: Id<"ownedPuzzles">) => void;
   onEdit?: (id: Id<"ownedPuzzles">) => void;
   onDelete?: (id: Id<"ownedPuzzles">) => void;
+  // When set, the menu includes an "add to collection" submenu (the Copy aggregateId the add needs).
+  showCollection?: boolean;
+  copyAggregateId?: string;
 }
 
 function PuzzleOverflowMenu({
@@ -93,12 +100,14 @@ function PuzzleOverflowMenu({
   onLogSolve,
   onEdit,
   onDelete,
+  showCollection = false,
+  copyAggregateId,
 }: PuzzleOverflowMenuProps) {
   const t = useTranslations("puzzles");
   const tSolving = useTranslations("solving.logSolve");
 
-  // Don't mount the chip at all when no owner actions are wired.
-  if (!onLogSolve && !onEdit && !onDelete) return null;
+  // Don't mount the chip at all when nothing is wired.
+  if (!onLogSolve && !onEdit && !onDelete && !showCollection) return null;
 
   return (
     // `relative z-10` wrapper sits above the stretched-link overlay (z-[1]).
@@ -158,6 +167,20 @@ function PuzzleOverflowMenu({
               <Edit className="h-4 w-4 mr-2 shrink-0" />
               {t("overflowMenu.edit")}
             </DropdownMenuItem>
+          )}
+          {showCollection && (
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger onClick={(e) => e.stopPropagation()}>
+                <FolderOpen className="h-4 w-4 mr-2 shrink-0" />
+                {t("overflowMenu.collection")}
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                <CollectionMenuItems
+                  ownedPuzzleId={ownedId}
+                  copyAggregateId={copyAggregateId}
+                />
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
           )}
           {onDelete && (
             <>
@@ -279,7 +302,7 @@ export function PuzzleCard({
     showActions &&
     variant !== "selection" &&
     variant !== "pick" &&
-    !!(onLogSolve || onEdit || onDelete);
+    !!(onLogSolve || onEdit || onDelete || showCollectionDropdown);
 
   // Image overlays: the ⋯ overflow chip (top-right), the selection ring's
   // check, and the selection-variant checkbox.
@@ -291,6 +314,8 @@ export function PuzzleCard({
           onLogSolve={onLogSolve}
           onEdit={onEdit}
           onDelete={onDelete}
+          showCollection={showCollectionDropdown}
+          copyAggregateId={puzzle.aggregateId}
         />
       )}
       {isSelected && (
@@ -315,16 +340,16 @@ export function PuzzleCard({
   );
 
   // Browse/exchange/social actions stay in the bottom action row as before.
-  // The owner-management actions (log solve, edit, delete) have moved to the ⋯ menu.
+  // The owner-management actions (log solve, edit, delete) AND "add to collection" now live in
+  // the ⋯ overflow menu (the latter as a submenu), so they no longer render a bottom-row control.
   // onView is intentionally omitted here: whole-card navigation covers it (stretched link).
-  // CollectionDropdown remains as a separate control in the action row.
   const browseActions = !!(
     onRemove ||
     onRequestExchange ||
     onMessage ||
     onFavorite
   );
-  const hasBrowseRow = showActions && (browseActions || showCollectionDropdown);
+  const hasBrowseRow = showActions && browseActions;
 
   const actions = hasBrowseRow ? (
     <div className="flex items-center justify-between gap-2">
@@ -370,12 +395,6 @@ export function PuzzleCard({
           </Button>
         )}
       </div>
-      {showCollectionDropdown && (
-        <CollectionDropdown
-          ownedPuzzleId={ownedId}
-          copyAggregateId={puzzle.aggregateId}
-        />
-      )}
     </div>
   ) : undefined;
 
