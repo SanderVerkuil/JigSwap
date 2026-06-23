@@ -5,6 +5,7 @@ import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { canViewCopy } from "./canViewCopy";
 import { toCollectionDetailView, toOwnedCopyView } from "./mappers";
+import { resolveCopyCoverUrl } from "./resolveCoverUrl";
 
 // Library read: a collection with its member copies resolved (each carrying its addedAt and joined
 // Catalog puzzle). Returns null on a missing collection, and drops members whose copy was deleted —
@@ -54,6 +55,7 @@ export const getCollectionById = query({
         return toOwnedCopyView(copy, puzzle, {
           addedAt: member.addedAt,
           includeOwnerOnly: isOwner,
+          coverUrl: await resolveCopyCoverUrl(ctx, copy, puzzle),
         });
       }),
     );
