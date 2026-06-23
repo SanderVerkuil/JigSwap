@@ -92,10 +92,19 @@ describe("Completion.record", () => {
     if (result.isErr) expect(result.error.code).toBe("InvalidTimeRange");
   });
 
-  it("rejects equal start/end as InvalidDuration", () => {
+  it("allows equal start/end (same-day) and leaves completionTimeMinutes undefined", () => {
     const result = recordValid({ endDate: START });
-    expect(result.isErr).toBe(true);
-    if (result.isErr) expect(result.error.code).toBe("InvalidDuration");
+    expect(result.isOk).toBe(true);
+    if (!result.isOk) return;
+    expect(result.value.isCompleted).toBe(true);
+    expect(result.value.toState().completionTimeMinutes).toBeUndefined();
+  });
+
+  it("allows equal start/end with an explicit positive time and stores that time", () => {
+    const result = recordValid({ endDate: START, completionTimeMinutes: 45 });
+    expect(result.isOk).toBe(true);
+    if (!result.isOk) return;
+    expect(result.value.toState().completionTimeMinutes).toBe(45);
   });
 
   it("honours an explicit completionTimeMinutes over the span", () => {

@@ -329,6 +329,19 @@ describe("solving.recordCompletion", () => {
     expect(row?.isCompleted).toBe(false);
     expect(row?.endDate).toBeUndefined();
   });
+
+  test("same-day completion (startDate == endDate, no explicit time) succeeds with undefined duration", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    const today = Date.now();
+    const completionId = (await asAlice(t).mutation(
+      api.solving.recordCompletion.recordCompletion,
+      { copyId: copyAggregateId, startDate: today, endDate: today },
+    )) as string;
+    const row = await completionRow(t, completionId);
+    expect(row?.isCompleted).toBe(true);
+    expect(row?.completionTimeMinutes).toBeUndefined();
+  });
 });
 
 describe("solving.finishCompletion", () => {

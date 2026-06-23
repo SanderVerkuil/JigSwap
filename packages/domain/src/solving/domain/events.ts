@@ -36,7 +36,7 @@ export class CompletionRecorded implements DomainEvent {
     readonly copyId: CopyId | undefined,
     readonly startDate: Date,
     readonly endDate: Date,
-    readonly completionTimeMinutes: number,
+    readonly completionTimeMinutes: number | undefined,
     readonly occurredAt: Date,
   ) {}
 }

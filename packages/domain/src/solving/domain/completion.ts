@@ -171,7 +171,7 @@ export class Completion {
       copyId: props.copyId,
       startDate: props.startDate,
       endDate: props.endDate,
-      completionTimeMinutes: duration.value.minutes,
+      completionTimeMinutes: duration.value,
       notes: props.notes,
       photos,
       review: props.review,
@@ -188,7 +188,7 @@ export class Completion {
         props.copyId,
         props.startDate,
         props.endDate,
-        duration.value.minutes,
+        duration.value,
         props.now,
       ),
     );
@@ -228,7 +228,7 @@ export class Completion {
     this.state = {
       ...this.state,
       endDate,
-      completionTimeMinutes: duration.value.minutes,
+      completionTimeMinutes: duration.value,
       allPiecesPresent: allPiecesPresent ?? this.state.allPiecesPresent,
       isCompleted: true,
       updatedAt: now,
@@ -241,7 +241,7 @@ export class Completion {
         this.state.copyId,
         this.state.startDate,
         endDate,
-        duration.value.minutes,
+        duration.value,
         now,
       ),
     );
@@ -293,7 +293,7 @@ export class Completion {
           changes.completionTimeMinutes,
         );
         if (duration.isErr) return err(duration.error);
-        nextDuration = duration.value.minutes;
+        nextDuration = duration.value;
       } else if (changes.completionTimeMinutes !== undefined) {
         const duration = SolveDuration.ofMinutes(changes.completionTimeMinutes);
         if (duration.isErr) return err(duration.error);
@@ -353,17 +353,27 @@ export class Completion {
 
   // --- internals ---
 
-  // Reconcile a supplied duration with the start/end span. When no duration is supplied it is
-  // derived from the span; when one is supplied it must still be a valid positive duration.
+  // Reconcile a supplied duration with the start/end span. Returns the resolved minutes (or
+  // undefined when the span is zero and no explicit minutes were given — duration is then unknown).
+  // An explicit minutes value must be a positive number. An explicit end-before-start is rejected
+  // before this helper is called, so the only "no duration" case is start == end.
   private static resolveDuration(
     start: Date,
     end: Date,
     minutes?: number,
-  ): Result<SolveDuration, SolvingError> {
-    if (minutes === undefined) {
-      return SolveDuration.between(start, end);
+  ): Result<number | undefined, SolvingError> {
+    if (minutes !== undefined) {
+      const duration = SolveDuration.ofMinutes(minutes);
+      if (duration.isErr) return err(duration.error);
+      return ok(duration.value.minutes);
     }
-    return SolveDuration.ofMinutes(minutes);
+    if (end.getTime() > start.getTime()) {
+      const duration = SolveDuration.between(start, end);
+      if (duration.isErr) return err(duration.error);
+      return ok(duration.value.minutes);
+    }
+    // start == end: duration is unknown (same-day solve with no explicit time).
+    return ok(undefined);
   }
 
   private record(event: DomainEvent): void {
