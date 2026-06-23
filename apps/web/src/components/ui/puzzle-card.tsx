@@ -395,8 +395,12 @@ export function PuzzleCard({
       // The cover link navigates to the puzzle's view page. With the overflow
       // menu in place, `onView` no longer drives a bottom button — but the
       // stretched link (via imageHref) still handles whole-card navigation.
+      // NOT in the selection/pick variants: there the whole card click is the
+      // selection action, so a navigating cover link would hijack it.
       imageHref={
-        viewBasePath && ownedId ? `${viewBasePath}/${ownedId}` : undefined
+        variant !== "selection" && variant !== "pick" && viewBasePath && ownedId
+          ? `${viewBasePath}/${ownedId}`
+          : undefined
       }
       imageFit={imageFit}
       className={className}
