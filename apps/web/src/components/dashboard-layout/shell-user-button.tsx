@@ -7,10 +7,11 @@
 // top bar so both open the same menu instead of hard-navigating to /profile.
 
 import { UserButton } from "@/compat/clerk";
+import { NotificationPreferencesPanel } from "@/components/notifications/notification-preferences-panel";
 import { Switch } from "@/components/ui/switch";
 import { useUserSettings } from "@/hooks/use-user-settings";
 import { cn } from "@/lib/utils";
-import { SlidersHorizontal, User } from "lucide-react";
+import { Bell, SlidersHorizontal, User } from "lucide-react";
 import { useTranslations } from "use-intl";
 import { useShellPreferences } from "./preferences";
 
@@ -50,13 +51,20 @@ export function ShellUserButton({
         <UserButton.Action label="manageAccount" />
         <UserButton.Action label="signOut" />
       </UserButton.MenuItems>
-      {/* Custom page mounted inside Clerk's own UserProfile modal. */}
+      {/* Custom pages mounted inside Clerk's own UserProfile modal. */}
       <UserButton.UserProfilePage
         label="Preferences"
         labelIcon={<SlidersHorizontal className="size-4" />}
         url="shell-preferences"
       >
         <PreferencesPage />
+      </UserButton.UserProfilePage>
+      <UserButton.UserProfilePage
+        label={t("user.notifications")}
+        labelIcon={<Bell className="size-4" />}
+        url="notifications"
+      >
+        <NotificationPreferencesPanel />
       </UserButton.UserProfilePage>
     </UserButton>
   );

@@ -2298,6 +2298,7 @@
     "user": {
       "preferences": "Preferences",
       "openPreferences": "Open Preferences",
+      "notifications": "Notifications",
       "contentWidth": "Content Width",
       "centered": "Centered",
       "fullWidth": "Full Width",
