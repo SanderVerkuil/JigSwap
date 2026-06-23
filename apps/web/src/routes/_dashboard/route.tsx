@@ -2,6 +2,7 @@ import { Outlet, createFileRoute } from "@tanstack/react-router";
 
 import { AppNotFound } from "@/components/NotFound";
 import { DashboardShell } from "@/components/dashboard-layout/shell";
+import { DurationPromptProvider } from "@/components/solving/duration-prompt-provider";
 import { PageLoading } from "@/components/ui/loading";
 import { requireAuth } from "@/lib/require-auth";
 
@@ -22,7 +23,9 @@ export const Route = createFileRoute("/_dashboard")({
 function DashboardLayout() {
   return (
     <DashboardShell>
-      <Outlet />
+      <DurationPromptProvider>
+        <Outlet />
+      </DurationPromptProvider>
     </DashboardShell>
   );
 }
