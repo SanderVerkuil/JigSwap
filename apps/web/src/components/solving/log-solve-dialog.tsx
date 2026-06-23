@@ -44,6 +44,8 @@ interface LogSolveDialogProps {
   puzzleTitle: string;
   // True when the viewer owns this copy: only then do we offer to update its missing-pieces count.
   viewerIsOwner?: boolean;
+  // Called after a successful save (before the dialog closes). Useful for post-save navigation.
+  onSuccess?: () => void;
 }
 
 export function LogSolveDialog({
@@ -52,6 +54,7 @@ export function LogSolveDialog({
   copyId,
   puzzleTitle,
   viewerIsOwner = false,
+  onSuccess,
 }: LogSolveDialogProps) {
   const t = useTranslations("solving.logSolve");
   const recordCompletion = useMutation(gateway.solving.recordCompletion);
@@ -60,7 +63,7 @@ export function LogSolveDialog({
   const { requestPrompt } = useDurationPrompt();
 
   const [startDate, setStartDate] = useState(todayInputValue);
-  const [endDate, setEndDate] = useState("");
+  const [endDate, setEndDate] = useState(todayInputValue);
   const [hours, setHours] = useState("");
   const [minutes, setMinutes] = useState("");
   const [notes, setNotes] = useState("");
@@ -73,7 +76,7 @@ export function LogSolveDialog({
 
   const reset = () => {
     setStartDate(todayInputValue());
-    setEndDate("");
+    setEndDate(todayInputValue());
     setHours("");
     setMinutes("");
     setNotes("");
@@ -106,6 +109,7 @@ export function LogSolveDialog({
 
       const piecesMissing = end !== undefined && !allPiecesPresent;
       reset();
+      onSuccess?.();
       onOpenChange(false);
 
       // After the log dialog closes: ask the first-time duration question (secondary modal), and/or
