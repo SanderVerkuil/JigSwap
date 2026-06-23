@@ -2542,5 +2542,10 @@
       "lend": "Lenen",
       "sale": "Verkoop"
     }
+  },
+  "emojiPicker": {
+    "search": "Zoek emoji",
+    "notFound": "Geen emoji gevonden",
+    "selectPrompt": "Kies een emoji…"
   }
 }

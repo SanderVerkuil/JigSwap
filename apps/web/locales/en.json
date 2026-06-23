@@ -2542,5 +2542,10 @@
       "lend": "Lend",
       "sale": "Sale"
     }
+  },
+  "emojiPicker": {
+    "search": "Search emoji",
+    "notFound": "No emoji found",
+    "selectPrompt": "Select an emoji…"
   }
 }
