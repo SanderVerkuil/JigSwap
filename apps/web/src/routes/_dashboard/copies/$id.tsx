@@ -612,6 +612,7 @@ function CopyInstanceDetail({
             onOpenChange={setLogOpen}
             copyId={copy.aggregateId ?? ""}
             puzzleTitle={snapshot.title}
+            viewerIsOwner={copy.viewerIsOwner}
           />
           <EditCopyDialog
             open={editOpen}
