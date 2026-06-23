@@ -163,6 +163,8 @@ export const gateway = {
     myCompletions: api.solving.listMyCompletions.listMyCompletions,
     completionHistory: api.solving.getCompletionHistory.getCompletionHistory,
     myGoals: api.solving.listMyGoals.listMyGoals,
+    setTrackCompletionDuration:
+      api.solving.setTrackCompletionDuration.setTrackCompletionDuration,
   },
 
   // Reputation: partner reviews after a completed Exchange + the per-member profile projection.

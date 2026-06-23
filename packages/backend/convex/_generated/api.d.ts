@@ -236,6 +236,9 @@ import type * as solving_adapters_convexGoalRepository from "../solving/adapters
 import type * as solving_adapters_idGenerators from "../solving/adapters/idGenerators.js";
 import type * as solving_adapters_inProcessEventPublisher from "../solving/adapters/inProcessEventPublisher.js";
 import type * as solving_adapters_systemClock from "../solving/adapters/systemClock.js";
+import type * as settings_getMyUserSettings from "../settings/getMyUserSettings.js";
+import type * as solving_adapters_convexSolvingPreferencesRepository from "../solving/adapters/convexSolvingPreferencesRepository.js";
+import type * as solving_adapters_solvingSettingsProvider from "../solving/adapters/solvingSettingsProvider.js";
 import type * as solving_backfill from "../solving/backfill.js";
 import type * as solving_createGoal from "../solving/createGoal.js";
 import type * as solving_editCompletion from "../solving/editCompletion.js";
@@ -246,6 +249,7 @@ import type * as solving_listMyCompletions from "../solving/listMyCompletions.js
 import type * as solving_listMyGoals from "../solving/listMyGoals.js";
 import type * as solving_recordCompletion from "../solving/recordCompletion.js";
 import type * as solving_reviewPuzzle from "../solving/reviewPuzzle.js";
+import type * as solving_setTrackCompletionDuration from "../solving/setTrackCompletionDuration.js";
 import type * as users from "../users.js";
 
 import type {
@@ -477,11 +481,14 @@ declare const fullApi: ApiFromModules<{
   "social/readViews": typeof social_readViews;
   "social/setProfileVisibility": typeof social_setProfileVisibility;
   "social/unfollowMember": typeof social_unfollowMember;
+  "settings/getMyUserSettings": typeof settings_getMyUserSettings;
   "solving/adapters/completionMapper": typeof solving_adapters_completionMapper;
   "solving/adapters/convexCompletionRepository": typeof solving_adapters_convexCompletionRepository;
   "solving/adapters/convexGoalRepository": typeof solving_adapters_convexGoalRepository;
+  "solving/adapters/convexSolvingPreferencesRepository": typeof solving_adapters_convexSolvingPreferencesRepository;
   "solving/adapters/idGenerators": typeof solving_adapters_idGenerators;
   "solving/adapters/inProcessEventPublisher": typeof solving_adapters_inProcessEventPublisher;
+  "solving/adapters/solvingSettingsProvider": typeof solving_adapters_solvingSettingsProvider;
   "solving/adapters/systemClock": typeof solving_adapters_systemClock;
   "solving/backfill": typeof solving_backfill;
   "solving/createGoal": typeof solving_createGoal;
@@ -493,6 +500,7 @@ declare const fullApi: ApiFromModules<{
   "solving/listMyGoals": typeof solving_listMyGoals;
   "solving/recordCompletion": typeof solving_recordCompletion;
   "solving/reviewPuzzle": typeof solving_reviewPuzzle;
+  "solving/setTrackCompletionDuration": typeof solving_setTrackCompletionDuration;
   users: typeof users;
 }>;
 
