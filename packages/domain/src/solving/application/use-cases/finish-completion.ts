@@ -30,6 +30,7 @@ export const makeFinishCompletion =
       cmd.endDate,
       deps.clock.now(),
       cmd.completionTimeMinutes,
+      cmd.allPiecesPresent,
     );
     if (outcome.isErr) return err(outcome.error);
 

@@ -27,6 +27,7 @@ export interface StartCompletionProps {
   readonly startDate: Date;
   readonly notes?: string;
   readonly photos?: readonly Photo[];
+  readonly allPiecesPresent?: boolean;
   readonly now: Date;
 }
 
@@ -43,6 +44,7 @@ export interface RecordCompletionProps {
   readonly notes?: string;
   readonly photos?: readonly Photo[];
   readonly review?: PuzzleReview;
+  readonly allPiecesPresent?: boolean;
   readonly now: Date;
 }
 
@@ -62,6 +64,7 @@ export interface CompletionState {
   readonly notes?: string;
   readonly photos: readonly Photo[];
   readonly review?: PuzzleReview;
+  readonly allPiecesPresent?: boolean;
   readonly isCompleted: boolean;
   readonly createdAt: Date;
   readonly updatedAt: Date;
@@ -122,6 +125,7 @@ export class Completion {
       startDate: props.startDate,
       notes: props.notes,
       photos,
+      allPiecesPresent: props.allPiecesPresent,
       isCompleted: false,
       createdAt: props.now,
       updatedAt: props.now,
@@ -171,6 +175,7 @@ export class Completion {
       notes: props.notes,
       photos,
       review: props.review,
+      allPiecesPresent: props.allPiecesPresent,
       isCompleted: true,
       createdAt: props.now,
       updatedAt: props.now,
@@ -207,6 +212,7 @@ export class Completion {
     endDate: Date,
     now: Date,
     completionTimeMinutes?: number,
+    allPiecesPresent?: boolean,
   ): Result<void, SolvingError> {
     if (this.state.isCompleted) return ok(undefined);
     if (endDate.getTime() < this.state.startDate.getTime()) {
@@ -223,6 +229,7 @@ export class Completion {
       ...this.state,
       endDate,
       completionTimeMinutes: duration.value.minutes,
+      allPiecesPresent: allPiecesPresent ?? this.state.allPiecesPresent,
       isCompleted: true,
       updatedAt: now,
     };

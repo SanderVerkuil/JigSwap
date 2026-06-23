@@ -84,6 +84,16 @@ const goalRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
       .unique(),
   );
 
+// Lend the seeded copy to Bob: ownership stays with Alice, possession (heldBy) moves to Bob.
+const lendToBob = async (
+  t: ReturnType<typeof convexTest>,
+  ownedPuzzleId: Id<"ownedPuzzles">,
+  bob: Id<"users">,
+) =>
+  t.run(async (ctx) => {
+    await ctx.db.patch(ownedPuzzleId, { heldBy: bob });
+  });
+
 // convex-test serializes ConvexError.data to a JSON string at the function boundary; normalise.
 const dataOf = (e: unknown): { code?: string } => {
   const data = (e as ConvexError<unknown>).data;
@@ -113,6 +123,73 @@ const recordForAlice = async (
     endDate: Date.now() - HOUR,
     ...overrides,
   })) as string;
+
+describe("solving.recordCompletion — borrowing, snapshot, pieces", () => {
+  test("the current holder (borrower) can log a solve on a copy they do not own", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, copyAggregateId, ownedPuzzleId } = await seed(t);
+    await lendToBob(t, ownedPuzzleId, bob);
+    const completionId = (await asBob(t).mutation(
+      api.solving.recordCompletion.recordCompletion,
+      {
+        copyId: copyAggregateId,
+        startDate: Date.now() - 2 * HOUR,
+        endDate: Date.now() - HOUR,
+      },
+    )) as string;
+    const row = await completionRow(t, completionId);
+    expect(row?.userId).toBe(bob);
+    expect(row?.ownedPuzzleId).toBe(ownedPuzzleId);
+    expect(row?.copySnapshot?.wasBorrowed).toBe(true);
+  });
+
+  test("a non-owner who is not the holder is still rejected", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId, ownedPuzzleId } = await seed(t);
+    await expect(
+      asBob(t).mutation(api.solving.recordCompletion.recordCompletion, {
+        copyId: copyAggregateId,
+        startDate: Date.now() - 2 * HOUR,
+        endDate: Date.now() - HOUR,
+      }),
+    ).rejects.toBeInstanceOf(ConvexError);
+    const rows = await t.run(async (ctx) =>
+      ctx.db
+        .query("completions")
+        .withIndex("by_owned_puzzle", (q) =>
+          q.eq("ownedPuzzleId", ownedPuzzleId),
+        )
+        .collect(),
+    );
+    expect(rows).toHaveLength(0);
+  });
+
+  test("an owner's completion gets a copy snapshot and a populated puzzleId anchor", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId, puzzleId } = await seed(t);
+    const completionId = await recordForAlice(t, copyAggregateId, {
+      allPiecesPresent: false,
+    });
+    const row = await completionRow(t, completionId);
+    expect(row?.puzzleId).toBe(puzzleId);
+    expect(row?.allPiecesPresent).toBe(false);
+    expect(row?.copySnapshot?.wasBorrowed).toBe(false);
+    expect(row?.copySnapshot?.condition).toBe("good");
+    expect(row?.copySnapshot?.copyId).toBe(copyAggregateId);
+  });
+
+  test("deleting the copy keeps puzzleId + snapshot; only the live link is affected", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId, puzzleId, ownedPuzzleId } = await seed(t);
+    const completionId = await recordForAlice(t, copyAggregateId);
+    await t.run(async (ctx) => {
+      await ctx.db.delete(ownedPuzzleId);
+    });
+    const row = await completionRow(t, completionId);
+    expect(row?.puzzleId).toBe(puzzleId);
+    expect(row?.copySnapshot?.copyId).toBe(copyAggregateId);
+  });
+});
 
 describe("solving.recordCompletion", () => {
   test("requires authentication", async () => {

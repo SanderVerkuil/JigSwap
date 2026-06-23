@@ -37,6 +37,7 @@ export const makeRecordCompletion =
       notes: cmd.notes,
       photos: cmd.photoFileIds?.map((id) => Photo.of(id)),
       review,
+      allPiecesPresent: cmd.allPiecesPresent,
       now: deps.clock.now(),
     });
     if (completion.isErr) return err(completion.error);

@@ -421,6 +421,50 @@ describe("Completion.edit", () => {
   });
 });
 
+describe("Completion.allPiecesPresent", () => {
+  it("defaults to undefined when not provided", () => {
+    const result = recordValid();
+    expect(result.isOk).toBe(true);
+    if (!result.isOk) return;
+    expect(result.value.toState().allPiecesPresent).toBeUndefined();
+  });
+
+  it("carries allPiecesPresent=false through record()", () => {
+    const result = recordValid({ allPiecesPresent: false });
+    expect(result.isOk).toBe(true);
+    if (!result.isOk) return;
+    expect(result.value.toState().allPiecesPresent).toBe(false);
+  });
+
+  it("carries allPiecesPresent through start()", () => {
+    const result = Completion.start({
+      id: ID,
+      userId: ALICE,
+      startDate: START,
+      now: NOW,
+      allPiecesPresent: true,
+    });
+    expect(result.isOk).toBe(true);
+    if (!result.isOk) return;
+    expect(result.value.toState().allPiecesPresent).toBe(true);
+  });
+
+  it("finish() sets allPiecesPresent when provided and leaves it otherwise", () => {
+    const started = Completion.start({
+      id: ID,
+      userId: ALICE,
+      startDate: START,
+      now: NOW,
+    });
+    expect(started.isOk).toBe(true);
+    if (!started.isOk) return;
+    const c = started.value;
+    const outcome = c.finish(END, NOW, undefined, true);
+    expect(outcome.isOk).toBe(true);
+    expect(c.toState().allPiecesPresent).toBe(true);
+  });
+});
+
 describe("Completion.review", () => {
   it("attaches a PuzzleReview with rating and text and records PuzzleReviewed", () => {
     const recorded = recordValid();

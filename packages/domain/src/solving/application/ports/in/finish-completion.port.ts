@@ -8,6 +8,7 @@ export interface FinishCompletionCommand {
   readonly completionId: CompletionId;
   readonly endDate: Date;
   readonly completionTimeMinutes?: number;
+  readonly allPiecesPresent?: boolean;
 }
 
 export interface FinishCompletion {
