@@ -195,8 +195,14 @@ function CompletionsPage() {
                 done && info?.pieceCount && days !== undefined
                   ? t("piecesFinished", { pieces: info.pieceCount, days })
                   : done && completion.endDate !== undefined
-                    ? `${t("finished", { date: formatDate(completion.endDate) })} · ${formatTime(completion.completionTimeMinutes)}`
-                    : `${t("started", { date: formatDate(completion.startDate) })} · ${formatTime(completion.completionTimeMinutes)}`;
+                    ? completion.completionTimeMinutes !== undefined
+                      ? `${t("finished", { date: formatDate(completion.endDate) })} · ${formatTime(completion.completionTimeMinutes)}`
+                      : t("finished", { date: formatDate(completion.endDate) })
+                    : completion.completionTimeMinutes !== undefined
+                      ? `${t("started", { date: formatDate(completion.startDate) })} · ${formatTime(completion.completionTimeMinutes)}`
+                      : t("started", {
+                          date: formatDate(completion.startDate),
+                        });
 
               return (
                 <div
@@ -233,6 +239,21 @@ function CompletionsPage() {
                         {completion.review}
                       </p>
                     )}
+                    {"copySnapshot" in completion &&
+                      completion.copySnapshot != null && (
+                        <p className="text-muted-foreground mt-0.5 text-xs">
+                          {completion.copySnapshot.wasBorrowed
+                            ? t("solvedBorrowedCopy")
+                            : t("solvedOwnCopy")}
+                          {"allPiecesPresent" in completion &&
+                          completion.allPiecesPresent === false
+                            ? ` — ${t("piecesMissing")}`
+                            : "allPiecesPresent" in completion &&
+                                completion.allPiecesPresent === true
+                              ? ` — ${t("piecesComplete")}`
+                              : ""}
+                        </p>
+                      )}
                   </div>
 
                   {completion.rating !== undefined && (
