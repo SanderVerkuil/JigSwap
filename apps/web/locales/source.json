@@ -2317,6 +2317,18 @@
       "hideEmail": "Hide Email Address",
       "admin": "Admin"
     },
+    "theme": {
+      "toggle": "Toggle theme",
+      "label": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "language": {
+      "switch": "Switch language",
+      "label": "Language",
+      "changed": "Language changed successfully"
+    },
     "mobile": {
       "tabsLabel": "Primary",
       "tabs": {

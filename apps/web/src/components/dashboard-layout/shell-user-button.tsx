@@ -53,7 +53,7 @@ export function ShellUserButton({
       </UserButton.MenuItems>
       {/* Custom pages mounted inside Clerk's own UserProfile modal. */}
       <UserButton.UserProfilePage
-        label="Preferences"
+        label={t("user.preferences")}
         labelIcon={<SlidersHorizontal className="size-4" />}
         url="shell-preferences"
       >

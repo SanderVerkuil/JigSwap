@@ -2317,6 +2317,18 @@
       "hideEmail": "E-mailadres Verbergen",
       "admin": "Beheer"
     },
+    "theme": {
+      "toggle": "Thema wisselen",
+      "label": "Thema",
+      "light": "Licht",
+      "dark": "Donker",
+      "system": "Systeem"
+    },
+    "language": {
+      "switch": "Taal wisselen",
+      "label": "Taal",
+      "changed": "Taal succesvol gewijzigd"
+    },
     "mobile": {
       "tabsLabel": "Hoofdnavigatie",
       "tabs": {
