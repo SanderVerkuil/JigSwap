@@ -328,6 +328,7 @@ function PuzzlesPage() {
           }}
           copyId={solveTarget.copyId}
           puzzleTitle={solveTarget.title}
+          viewerIsOwner={true}
         />
       )}
     </div>

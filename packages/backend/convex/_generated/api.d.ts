@@ -240,6 +240,7 @@ import type * as settings_getMyUserSettings from "../settings/getMyUserSettings.
 import type * as solving_adapters_convexSolvingPreferencesRepository from "../solving/adapters/convexSolvingPreferencesRepository.js";
 import type * as solving_adapters_solvingSettingsProvider from "../solving/adapters/solvingSettingsProvider.js";
 import type * as solving_backfill from "../solving/backfill.js";
+import type * as solving_backfillCompletionPuzzleId from "../solving/backfillCompletionPuzzleId.js";
 import type * as solving_createGoal from "../solving/createGoal.js";
 import type * as solving_editCompletion from "../solving/editCompletion.js";
 import type * as solving_errors from "../solving/errors.js";
@@ -491,6 +492,7 @@ declare const fullApi: ApiFromModules<{
   "solving/adapters/solvingSettingsProvider": typeof solving_adapters_solvingSettingsProvider;
   "solving/adapters/systemClock": typeof solving_adapters_systemClock;
   "solving/backfill": typeof solving_backfill;
+  "solving/backfillCompletionPuzzleId": typeof solving_backfillCompletionPuzzleId;
   "solving/createGoal": typeof solving_createGoal;
   "solving/editCompletion": typeof solving_editCompletion;
   "solving/errors": typeof solving_errors;

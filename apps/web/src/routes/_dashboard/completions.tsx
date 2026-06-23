@@ -143,7 +143,11 @@ function CompletionsPage() {
     const info = completion.ownedPuzzleId
       ? infoByCopyId.get(completion.ownedPuzzleId)
       : undefined;
-    return sum + (info?.pieceCount ?? 0);
+    // Borrowed copies aren't in the viewer's library join, so fall back to the durable snapshot
+    // the backend denormalized at solve time.
+    const snapshot =
+      "copySnapshot" in completion ? completion.copySnapshot : undefined;
+    return sum + (info?.pieceCount ?? snapshot?.pieceCount ?? 0);
   }, 0);
   const yearStart = new Date(new Date().getFullYear(), 0, 1).getTime();
   const thisYear = finished.filter(
@@ -178,7 +182,14 @@ function CompletionsPage() {
                 (completion.ownedPuzzleId &&
                   infoByCopyId.get(completion.ownedPuzzleId)) ||
                 undefined;
-              const title = info?.title ?? t("title");
+              // Borrowed copies aren't in the viewer's library, so fall back to the durable
+              // copySnapshot for the title and piece count.
+              const snapshot =
+                "copySnapshot" in completion
+                  ? completion.copySnapshot
+                  : undefined;
+              const title = info?.title ?? snapshot?.title ?? t("title");
+              const pieceCount = info?.pieceCount ?? snapshot?.pieceCount;
               const done = completion.isCompleted;
               // Whole days between start and finish, floored at one — "finished
               // in 3 days" reads better than raw milliseconds.
@@ -192,8 +203,8 @@ function CompletionsPage() {
                     )
                   : undefined;
               const metaLine =
-                done && info?.pieceCount && days !== undefined
-                  ? t("piecesFinished", { pieces: info.pieceCount, days })
+                done && pieceCount && days !== undefined
+                  ? t("piecesFinished", { pieces: pieceCount, days })
                   : done && completion.endDate !== undefined
                     ? completion.completionTimeMinutes !== undefined
                       ? `${t("finished", { date: formatDate(completion.endDate) })} · ${formatTime(completion.completionTimeMinutes)}`
