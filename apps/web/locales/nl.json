@@ -1502,7 +1502,11 @@
       "log": "Voltooiingslog",
       "logAction": "Voltooiing Loggen",
       "mostRecent": "Meest recente eerst",
-      "piecesFinished": "{pieces, number} stukjes · voltooid in {days, plural, one {# dag} other {# dagen}}"
+      "piecesFinished": "{pieces, number} stukjes · voltooid in {days, plural, one {# dag} other {# dagen}}",
+      "solvedOwnCopy": "Eigen exemplaar opgelost",
+      "solvedBorrowedCopy": "Geleend exemplaar opgelost",
+      "piecesComplete": "was compleet",
+      "piecesMissing": "miste stukjes"
     },
     "logSolve": {
       "trigger": "Oplossing vastleggen",
@@ -1520,7 +1524,24 @@
       "saved": "Oplossing vastgelegd",
       "savedInProgress": "Oplossing gestart",
       "finished": "Oplossing afgerond",
-      "saveError": "Kon de oplossing niet opslaan. Probeer het opnieuw."
+      "saveError": "Kon de oplossing niet opslaan. Probeer het opnieuw.",
+      "allPiecesPresent": "Alle stukjes waren aanwezig",
+      "updateCopyPiecesTitle": "Dit exemplaar bijwerken?",
+      "updateCopyPiecesBody": "Je gaf aan dat er stukjes ontbreken. Wil je het aantal ontbrekende stukjes van dit exemplaar ook bijwerken?",
+      "updateCopyPiecesConfirm": "Exemplaar bijwerken",
+      "updateCopyPiecesDismiss": "Niet nu"
+    },
+    "durationPrompt": {
+      "title": "Bijhouden hoelang puzzels duren?",
+      "body": "Sommige puzzelaars houden hun tijd graag bij, anderen houden het liever simpel. Je kunt dit altijd wijzigen in Instellingen.",
+      "imageAlt": "Waar je het bijhouden van tijd wijzigt in Instellingen",
+      "yes": "Tijd bijhouden",
+      "no": "Houd het simpel"
+    },
+    "settings": {
+      "sectionTitle": "Puzzelen",
+      "trackDurationLabel": "Voltooiingstijd bijhouden",
+      "trackDurationHint": "Indien aan vragen de dialoogvensters hoelang een puzzel duurde."
     },
     "review": {
       "title": "Beoordeel deze puzzel",

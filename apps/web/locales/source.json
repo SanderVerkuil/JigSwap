@@ -1502,7 +1502,11 @@
       "log": "Completion Log",
       "logAction": "Log Completion",
       "mostRecent": "Most recent first",
-      "piecesFinished": "{pieces, number} pieces · finished in {days, plural, one {# day} other {# days}}"
+      "piecesFinished": "{pieces, number} pieces · finished in {days, plural, one {# day} other {# days}}",
+      "solvedOwnCopy": "Solved your copy",
+      "solvedBorrowedCopy": "Solved a borrowed copy",
+      "piecesComplete": "was complete",
+      "piecesMissing": "had missing pieces"
     },
     "logSolve": {
       "trigger": "Log a solve",
@@ -1520,7 +1524,24 @@
       "saved": "Solve logged",
       "savedInProgress": "Solve started",
       "finished": "Solve finished",
-      "saveError": "Could not save the solve. Please try again."
+      "saveError": "Could not save the solve. Please try again.",
+      "allPiecesPresent": "All pieces were present",
+      "updateCopyPiecesTitle": "Update this copy?",
+      "updateCopyPiecesBody": "You marked pieces missing. Update this copy's missing-pieces count too?",
+      "updateCopyPiecesConfirm": "Update copy",
+      "updateCopyPiecesDismiss": "Not now"
+    },
+    "durationPrompt": {
+      "title": "Track how long puzzles take you?",
+      "body": "Some solvers like recording solve times; others prefer to keep it simple. You can change this anytime in Settings.",
+      "imageAlt": "Where to change duration tracking in Settings",
+      "yes": "Track duration",
+      "no": "Keep it simple"
+    },
+    "settings": {
+      "sectionTitle": "Solving",
+      "trackDurationLabel": "Track completion duration",
+      "trackDurationHint": "When on, the solve dialogs ask how long a puzzle took."
     },
     "review": {
       "title": "Review this puzzle",
