@@ -40,7 +40,7 @@ type DialogState =
     }
   | null;
 
-export const Route = createFileRoute("/_dashboard/completions")({
+export const Route = createFileRoute("/_dashboard/completions/")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "completions") }],
   }),
@@ -111,7 +111,7 @@ function CompletionsPage() {
           {t("mostRecent")}
         </span>
         <Button variant="brand" size="sm" asChild>
-          <Link href="/my-puzzles">
+          <Link href="/completions/new">
             <Plus className="h-4 w-4" />
             {t("logAction")}
           </Link>

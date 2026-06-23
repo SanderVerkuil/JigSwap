@@ -1506,7 +1506,13 @@
       "solvedOwnCopy": "Solved your copy",
       "solvedBorrowedCopy": "Solved a borrowed copy",
       "piecesComplete": "was complete",
-      "piecesMissing": "had missing pieces"
+      "piecesMissing": "had missing pieces",
+      "new": {
+        "title": "Log a completion",
+        "subtitle": "Pick a puzzle to log a solve against.",
+        "noPuzzles": "No puzzles yet",
+        "noPuzzlesHint": "Add puzzles to your library first, then log a completion here."
+      }
     },
     "logSolve": {
       "trigger": "Log a solve",
@@ -2148,6 +2154,7 @@
     "goals": "Goals — JigSwap",
     "insights": "Insights — JigSwap",
     "completions": "Completions — JigSwap",
+    "completionNew": "Log a completion — JigSwap",
     "community": "Community — JigSwap",
     "circles": "Circles — JigSwap",
     "borrowed": "Borrowed — JigSwap",
@@ -2222,6 +2229,11 @@
         "title": "Completions",
         "subtitle": "A log of every puzzle you've finished.",
         "description": "Your finished-puzzle log"
+      },
+      "completionNew": {
+        "title": "Log a completion",
+        "subtitle": "Pick a puzzle to log a solve against.",
+        "description": "Log a new completion"
       },
       "goals": {
         "title": "Goals",

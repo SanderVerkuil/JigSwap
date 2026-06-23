@@ -1506,7 +1506,13 @@
       "solvedOwnCopy": "Eigen exemplaar opgelost",
       "solvedBorrowedCopy": "Geleend exemplaar opgelost",
       "piecesComplete": "was compleet",
-      "piecesMissing": "miste stukjes"
+      "piecesMissing": "miste stukjes",
+      "new": {
+        "title": "Voltooiing vastleggen",
+        "subtitle": "Kies een puzzel om een oplossing tegen te registreren.",
+        "noPuzzles": "Nog geen puzzels",
+        "noPuzzlesHint": "Voeg eerst puzzels toe aan je bibliotheek en log hier dan een voltooiing."
+      }
     },
     "logSolve": {
       "trigger": "Oplossing vastleggen",
@@ -2148,6 +2154,7 @@
     "goals": "Doelen — JigSwap",
     "insights": "Inzichten — JigSwap",
     "completions": "Voltooiingen — JigSwap",
+    "completionNew": "Voltooiing vastleggen — JigSwap",
     "community": "Community — JigSwap",
     "circles": "Kringen — JigSwap",
     "borrowed": "Geleend — JigSwap",
@@ -2222,6 +2229,11 @@
         "title": "Voltooiingen",
         "subtitle": "Een logboek van elke puzzel die je hebt afgemaakt.",
         "description": "Je logboek van afgemaakte puzzels"
+      },
+      "completionNew": {
+        "title": "Voltooiing vastleggen",
+        "subtitle": "Kies een puzzel om een oplossing tegen te registreren.",
+        "description": "Nieuwe voltooiing vastleggen"
       },
       "goals": {
         "title": "Doelen",

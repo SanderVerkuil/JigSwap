@@ -117,6 +117,7 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   "/my-puzzles/$id": { pageKey: "myPuzzles", group: "library" },
   "/collections": { pageKey: "collections", group: "library" },
   "/completions": { pageKey: "completions", group: "library" },
+  "/completions/new": { pageKey: "completionNew", group: "library" },
   "/goals": { pageKey: "goals", group: "library" },
   "/insights": { pageKey: "insights", group: "library" },
 
