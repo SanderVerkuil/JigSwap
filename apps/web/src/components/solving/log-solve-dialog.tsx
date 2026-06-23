@@ -123,6 +123,9 @@ export function LogSolveDialog({
   const confirmUpdateCopy = async () => {
     try {
       await updateDetails({ copyId, missingPiecesCount: 1 });
+    } catch (error) {
+      console.error("Failed to update copy pieces:", error);
+      toast.error(t("saveError"));
     } finally {
       setOfferUpdateCopy(false);
     }

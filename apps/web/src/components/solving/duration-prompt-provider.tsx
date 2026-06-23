@@ -46,10 +46,12 @@ export function DurationPromptProvider({ children }: { children: ReactNode }) {
             <DialogTitle>{t("title")}</DialogTitle>
             <DialogDescription>{t("body")}</DialogDescription>
           </DialogHeader>
+          {/* Placeholder slot until the real screencast is dropped in at this path: a 1×1
+              placeholder GIF would otherwise stretch, so constrain + contain it. */}
           <img
             src="/help/track-duration-setting.gif"
             alt={t("imageAlt")}
-            className="w-full rounded-md border"
+            className="bg-muted max-h-48 w-full rounded-md border object-contain"
             onError={(e) => {
               e.currentTarget.style.display = "none";
             }}
