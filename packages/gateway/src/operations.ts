@@ -158,11 +158,20 @@ export const gateway = {
     recordCompletion: api.solving.recordCompletion.recordCompletion,
     finishCompletion: api.solving.finishCompletion.finishCompletion,
     editCompletion: api.solving.editCompletion.editCompletion,
+    deleteCompletion: api.solving.deleteCompletion.deleteCompletion,
     reviewPuzzle: api.solving.reviewPuzzle.reviewPuzzle,
     createGoal: api.solving.createGoal.createGoal,
     myCompletions: api.solving.listMyCompletions.listMyCompletions,
     completionHistory: api.solving.getCompletionHistory.getCompletionHistory,
     myGoals: api.solving.listMyGoals.listMyGoals,
+    setTrackCompletionDuration:
+      api.solving.setTrackCompletionDuration.setTrackCompletionDuration,
+  },
+
+  // Federated user settings: a read-composition over each context's settings section. Writes are
+  // owned by the originating context (e.g. solving.setTrackCompletionDuration).
+  settings: {
+    mine: api.settings.getMyUserSettings.getMyUserSettings,
   },
 
   // Reputation: partner reviews after a completed Exchange + the per-member profile projection.

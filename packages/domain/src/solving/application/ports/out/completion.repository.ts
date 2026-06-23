@@ -9,4 +9,6 @@ export interface CompletionRepository {
   // The authoritative count of a member's recorded (finished) completions. Drives the DERIVED
   // goal progress so the count is never hand-set on a Goal.
   countCompletedByUser(userId: MemberId): Promise<number>;
+  // Hard-delete a completion by its domain id. No-op if the completion is already gone.
+  delete(id: CompletionId): Promise<void>;
 }

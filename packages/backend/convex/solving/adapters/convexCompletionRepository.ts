@@ -129,5 +129,11 @@ export const convexCompletionRepository = (
       // The authoritative count of FINISHED completions; drives the derived goal progress.
       return rows.filter((row) => row.isCompleted).length;
     },
+
+    async delete(id: CompletionId): Promise<void> {
+      const row = await rowById(id);
+      // No-op if the row is already gone (idempotent).
+      if (row) await ctx.db.delete(row._id);
+    },
   };
 };

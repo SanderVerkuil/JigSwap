@@ -3,6 +3,10 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { useUser } from "@/compat/clerk";
 import { useRouter } from "@/compat/navigation";
+import {
+  EditCollectionDialog,
+  type EditableCollection,
+} from "@/components/collections/edit-collection-dialog";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { CoverChip } from "@/components/library/cover-chip";
 import { EmptyState } from "@/components/library/empty-state";
@@ -57,16 +61,8 @@ function CollectionsPage() {
   const tCommon = useTranslations("common");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingCollection, setEditingCollection] = useState<{
-    _id: string;
-    // The domain CollectionId the update/delete mutations take; legacy rows may lack it.
-    aggregateId?: string;
-    name: string;
-    description?: string;
-    visibility: "private" | "public";
-    color?: string;
-    icon?: string;
-  } | null>(null);
+  const [editingCollection, setEditingCollection] =
+    useState<EditableCollection | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -86,7 +82,6 @@ function CollectionsPage() {
   );
 
   const createCollection = useMutation(gateway.collections.create);
-  const updateCollection = useMutation(gateway.collections.update);
   const deleteCollection = useMutation(gateway.collections.delete);
 
   const handleCreateCollection = async () => {
@@ -112,37 +107,6 @@ function CollectionsPage() {
     }
   };
 
-  const handleEditCollection = async () => {
-    if (!editingCollection) return;
-    // The domain update takes the CollectionId (aggregateId); guard rows missing it.
-    if (!editingCollection.aggregateId) {
-      console.error("Cannot update: collection is missing its aggregateId.");
-      return;
-    }
-
-    try {
-      await updateCollection({
-        collectionId: editingCollection.aggregateId,
-        name: formData.name,
-        description: formData.description,
-        visibility: formData.visibility,
-        color: formData.color,
-        icon: formData.icon,
-      });
-      setIsEditDialogOpen(false);
-      setEditingCollection(null);
-      setFormData({
-        name: "",
-        description: "",
-        visibility: "private",
-        color: "#3b82f6",
-        icon: "📦",
-      });
-    } catch (error) {
-      console.error("Failed to update collection:", error);
-    }
-  };
-
   // Wired to a delete affordance in a follow-up; kept to preserve the intended flow.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleDeleteCollection = async (collectionAggregateId?: string) => {
@@ -162,23 +126,8 @@ function CollectionsPage() {
     }
   };
 
-  const openEditDialog = (collection: {
-    _id: string;
-    aggregateId?: string;
-    name: string;
-    description?: string;
-    visibility: "private" | "public";
-    color?: string;
-    icon?: string;
-  }) => {
+  const openEditDialog = (collection: EditableCollection) => {
     setEditingCollection(collection);
-    setFormData({
-      name: collection.name,
-      description: collection.description || "",
-      visibility: collection.visibility,
-      color: collection.color || "#3b82f6",
-      icon: collection.icon || "📦",
-    });
     setIsEditDialogOpen(true);
   };
 
@@ -239,7 +188,7 @@ function CollectionsPage() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="name">{t("name")}</Label>
                 <Input
                   id="name"
@@ -250,7 +199,7 @@ function CollectionsPage() {
                   placeholder={t("collectionNamePlaceholder")}
                 />
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="description">{t("description")}</Label>
                 <Textarea
                   id="description"
@@ -261,7 +210,7 @@ function CollectionsPage() {
                   placeholder={t("descriptionPlaceholder")}
                 />
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="visibility">{t("visibility")}</Label>
                 <Select
                   value={formData.visibility}
@@ -289,7 +238,7 @@ function CollectionsPage() {
                 </Select>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="icon">{t("icon")}</Label>
                   <EmojiPickerInput
                     id="icon"
@@ -300,7 +249,7 @@ function CollectionsPage() {
                     placeholder="📦"
                   />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="color">{t("color")}</Label>
                   <ColorPicker
                     value={formData.color}
@@ -406,99 +355,11 @@ function CollectionsPage() {
         )}
       </section>
 
-      {/* Edit Collection Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("editCollection")}</DialogTitle>
-            <DialogDescription>
-              {t("editCollectionDescription")}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="edit-name">{t("name")}</Label>
-              <Input
-                id="edit-name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                placeholder={t("collectionNamePlaceholder")}
-              />
-            </div>
-            <div>
-              <Label htmlFor="edit-description">{t("description")}</Label>
-              <Textarea
-                id="edit-description"
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                placeholder={t("descriptionPlaceholder")}
-              />
-            </div>
-            <div>
-              <Label htmlFor="edit-visibility">{t("visibility")}</Label>
-              <Select
-                value={formData.visibility}
-                onValueChange={(value: "private" | "public") =>
-                  setFormData({ ...formData, visibility: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="private">
-                    <div className="flex items-center gap-2">
-                      <Lock className="h-4 w-4" />
-                      {t("private")}
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="public">
-                    <div className="flex items-center gap-2">
-                      <Globe className="h-4 w-4" />
-                      {t("public")}
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="edit-icon">{t("icon")}</Label>
-                <EmojiPickerInput
-                  id="edit-icon"
-                  value={formData.icon}
-                  onChange={(emoji) =>
-                    setFormData({ ...formData, icon: emoji })
-                  }
-                  placeholder="📦"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-color">{t("color")}</Label>
-                <ColorPicker
-                  value={formData.color}
-                  onChange={(color) =>
-                    setFormData({ ...formData, color: color })
-                  }
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsEditDialogOpen(false)}
-            >
-              {tCommon("cancel")}
-            </Button>
-            <Button onClick={handleEditCollection}>{t("save")}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <EditCollectionDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        collection={editingCollection}
+      />
     </div>
   );
 }

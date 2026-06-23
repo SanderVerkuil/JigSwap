@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { gateway } from "@/gateway";
+import { useUserSettings } from "@/hooks/use-user-settings";
 import { useMutation } from "convex/react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -36,11 +38,15 @@ export function FinishSolveDialog({
 }: FinishSolveDialogProps) {
   const t = useTranslations("solving.logSolve");
   const finishCompletion = useMutation(gateway.solving.finishCompletion);
+  const { trackCompletionDuration } = useUserSettings();
 
   const [endDate, setEndDate] = useState(todayInputValue);
   const [hours, setHours] = useState("");
   const [minutes, setMinutes] = useState("");
+  const [allPiecesPresent, setAllPiecesPresent] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  const showDuration = trackCompletionDuration === true;
 
   const handleSubmit = async () => {
     const end = new Date(endDate).getTime();
@@ -53,7 +59,8 @@ export function FinishSolveDialog({
       await finishCompletion({
         completionId,
         endDate: end,
-        completionTimeMinutes: totalMinutes,
+        completionTimeMinutes: showDuration ? totalMinutes : undefined,
+        allPiecesPresent,
       });
       toast.success(t("finished"));
       onOpenChange(false);
@@ -83,29 +90,43 @@ export function FinishSolveDialog({
               onChange={(e) => setEndDate(e.target.value)}
             />
           </div>
-          <div className="space-y-2">
-            <Label>{t("timeLabel")}</Label>
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                type="number"
-                min={0}
-                inputMode="numeric"
-                placeholder={t("hours")}
-                aria-label={t("hours")}
-                value={hours}
-                onChange={(e) => setHours(e.target.value)}
-              />
-              <Input
-                type="number"
-                min={0}
-                max={59}
-                inputMode="numeric"
-                placeholder={t("minutes")}
-                aria-label={t("minutes")}
-                value={minutes}
-                onChange={(e) => setMinutes(e.target.value)}
-              />
+
+          {showDuration && (
+            <div className="space-y-2">
+              <Label>{t("timeLabel")}</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  type="number"
+                  min={0}
+                  inputMode="numeric"
+                  placeholder={t("hours")}
+                  aria-label={t("hours")}
+                  value={hours}
+                  onChange={(e) => setHours(e.target.value)}
+                />
+                <Input
+                  type="number"
+                  min={0}
+                  max={59}
+                  inputMode="numeric"
+                  placeholder={t("minutes")}
+                  aria-label={t("minutes")}
+                  value={minutes}
+                  onChange={(e) => setMinutes(e.target.value)}
+                />
+              </div>
             </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="finish-pieces"
+              checked={allPiecesPresent}
+              onCheckedChange={(checked) =>
+                setAllPiecesPresent(checked === true)
+              }
+            />
+            <Label htmlFor="finish-pieces">{t("allPiecesPresent")}</Label>
           </div>
         </div>
 

@@ -92,10 +92,19 @@ describe("Completion.record", () => {
     if (result.isErr) expect(result.error.code).toBe("InvalidTimeRange");
   });
 
-  it("rejects equal start/end as InvalidDuration", () => {
+  it("allows equal start/end (same-day) and leaves completionTimeMinutes undefined", () => {
     const result = recordValid({ endDate: START });
-    expect(result.isErr).toBe(true);
-    if (result.isErr) expect(result.error.code).toBe("InvalidDuration");
+    expect(result.isOk).toBe(true);
+    if (!result.isOk) return;
+    expect(result.value.isCompleted).toBe(true);
+    expect(result.value.toState().completionTimeMinutes).toBeUndefined();
+  });
+
+  it("allows equal start/end with an explicit positive time and stores that time", () => {
+    const result = recordValid({ endDate: START, completionTimeMinutes: 45 });
+    expect(result.isOk).toBe(true);
+    if (!result.isOk) return;
+    expect(result.value.toState().completionTimeMinutes).toBe(45);
   });
 
   it("honours an explicit completionTimeMinutes over the span", () => {
@@ -418,6 +427,50 @@ describe("Completion.edit", () => {
       expect(outcome.isErr).toBe(true);
       if (outcome.isErr) expect(outcome.error.code).toBe("InvalidDuration");
     });
+  });
+});
+
+describe("Completion.allPiecesPresent", () => {
+  it("defaults to undefined when not provided", () => {
+    const result = recordValid();
+    expect(result.isOk).toBe(true);
+    if (!result.isOk) return;
+    expect(result.value.toState().allPiecesPresent).toBeUndefined();
+  });
+
+  it("carries allPiecesPresent=false through record()", () => {
+    const result = recordValid({ allPiecesPresent: false });
+    expect(result.isOk).toBe(true);
+    if (!result.isOk) return;
+    expect(result.value.toState().allPiecesPresent).toBe(false);
+  });
+
+  it("carries allPiecesPresent through start()", () => {
+    const result = Completion.start({
+      id: ID,
+      userId: ALICE,
+      startDate: START,
+      now: NOW,
+      allPiecesPresent: true,
+    });
+    expect(result.isOk).toBe(true);
+    if (!result.isOk) return;
+    expect(result.value.toState().allPiecesPresent).toBe(true);
+  });
+
+  it("finish() sets allPiecesPresent when provided and leaves it otherwise", () => {
+    const started = Completion.start({
+      id: ID,
+      userId: ALICE,
+      startDate: START,
+      now: NOW,
+    });
+    expect(started.isOk).toBe(true);
+    if (!started.isOk) return;
+    const c = started.value;
+    const outcome = c.finish(END, NOW, undefined, true);
+    expect(outcome.isOk).toBe(true);
+    expect(c.toState().allPiecesPresent).toBe(true);
   });
 });
 

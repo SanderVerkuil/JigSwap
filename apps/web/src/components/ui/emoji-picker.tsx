@@ -8,6 +8,7 @@ import {
 } from "frimousse";
 import { LoaderIcon, SearchIcon } from "lucide-react";
 import type * as React from "react";
+import { useTranslations } from "use-intl";
 
 import { cn } from "@/lib/utils";
 
@@ -73,17 +74,36 @@ function EmojiPickerEmoji({
   );
 }
 
+// frimousse takes category labels from emojibase's per-locale messages, which can be incomplete
+// (e.g. "People & Body" stays English in nl). Map the standard group labels (keyed by their English
+// form) to our own translations so any emojibase left in English is localized; already-localized
+// labels don't match the English keys and pass through unchanged.
+const CATEGORY_I18N_KEY: Record<string, string> = {
+  "smileys & emotion": "smileysEmotion",
+  "people & body": "peopleBody",
+  "animals & nature": "animalsNature",
+  "food & drink": "foodDrink",
+  "travel & places": "travelPlaces",
+  activities: "activities",
+  objects: "objects",
+  symbols: "symbols",
+  flags: "flags",
+};
+
 function EmojiPickerCategoryHeader({
   category,
   ...props
 }: EmojiPickerListCategoryHeaderProps) {
+  const t = useTranslations("emojiPicker");
+  const key = CATEGORY_I18N_KEY[category.label.toLowerCase()];
+  const label = key ? t(`categories.${key}`) : category.label;
   return (
     <div
       {...props}
       className="bg-popover text-muted-foreground px-3 pb-2 pt-3.5 text-xs leading-none"
       data-slot="emoji-picker-category-header"
     >
-      {category.label}
+      {label}
     </div>
   );
 }
@@ -92,6 +112,7 @@ function EmojiPickerContent({
   className,
   ...props
 }: React.ComponentProps<typeof EmojiPickerPrimitive.Viewport>) {
+  const t = useTranslations("emojiPicker");
   return (
     <EmojiPickerPrimitive.Viewport
       className={cn("outline-hidden relative flex-1", className)}
@@ -108,7 +129,7 @@ function EmojiPickerContent({
         className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm"
         data-slot="emoji-picker-empty"
       >
-        No emoji found.
+        {t("notFound")}
       </EmojiPickerPrimitive.Empty>
       <EmojiPickerPrimitive.List
         className="select-none pb-1"
@@ -127,6 +148,7 @@ function EmojiPickerFooter({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const t = useTranslations("emojiPicker");
   return (
     <div
       className={cn(
@@ -149,7 +171,7 @@ function EmojiPickerFooter({
             </>
           ) : (
             <span className="text-muted-foreground ml-1.5 flex h-7 items-center truncate text-xs">
-              Select an emoji…
+              {t("selectPrompt")}
             </span>
           )
         }

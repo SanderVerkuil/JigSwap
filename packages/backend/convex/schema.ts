@@ -319,6 +319,30 @@ export default defineSchema({
     review: v.optional(v.string()),
     notes: v.optional(v.string()),
     photos: v.array(v.id("_storage")), // Array of photo URLs (max 5)
+    // Per-solve record: were all pieces present this time? Optional so legacy rows and
+    // "didn't say" stay valid. Set by the domain path (record/finish).
+    allPiecesPresent: v.optional(v.boolean()),
+    // Denormalized, durable snapshot of the copy at completion time. Library-context data the
+    // Solving domain never loads, so it is written by the recordCompletion composition root (not
+    // the domain mapper). Survives copy deletion; the live `ownedPuzzleId` link may go stale.
+    copySnapshot: v.optional(
+      v.object({
+        copyId: v.string(), // original Library CopyId aggregateId, kept even after deletion
+        ownerId: v.id("users"),
+        wasBorrowed: v.boolean(), // true if the logger was not the owner
+        condition: v.union(
+          v.literal("new_sealed"),
+          v.literal("like_new"),
+          v.literal("good"),
+          v.literal("fair"),
+          v.literal("poor"),
+        ),
+        missingPiecesCount: v.optional(v.number()),
+        title: v.optional(v.string()),
+        brand: v.optional(v.string()),
+        pieceCount: v.optional(v.number()),
+      }),
+    ),
     isCompleted: v.boolean(), // true = completed, false = in progress
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -563,6 +587,14 @@ export default defineSchema({
     aggregateId: v.optional(v.string()),
     memberId: v.id("users"),
     toggles: v.any(),
+    updatedAt: v.number(),
+  }).index("by_member", ["memberId"]),
+
+  // Solving-context member preferences (federated settings: each context owns its settings).
+  // Keyed by member; `trackCompletionDuration` undefined = never asked → first-time prompt.
+  solvingPreferences: defineTable({
+    memberId: v.id("users"),
+    trackCompletionDuration: v.optional(v.boolean()),
     updatedAt: v.number(),
   }).index("by_member", ["memberId"]),
 

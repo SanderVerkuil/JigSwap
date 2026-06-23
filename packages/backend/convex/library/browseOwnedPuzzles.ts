@@ -6,6 +6,7 @@ import { requireMember } from "../identity/requireMember";
 import { profileVisibilityOf } from "../social/privacy";
 import { collectCircleSharedCopies } from "./circleSharedCopies";
 import { toOwnedCopyView } from "./mappers";
+import { resolveCopyCoverUrl } from "./resolveCoverUrl";
 
 // A copy is "open" iff at least one exchange-availability flag is set. Rule 1 of Browse
 // visibility: only open copies are ever shown, including circle-shared ones.
@@ -180,6 +181,7 @@ export const browseOwnedPuzzles = query({
       filtered.slice(offset, offset + limit).map(async ({ copy, puzzle }) =>
         toOwnedCopyView(copy, puzzle, {
           owner: await ctx.db.get(copy.ownerId),
+          coverUrl: await resolveCopyCoverUrl(ctx, copy, puzzle),
         }),
       ),
     );

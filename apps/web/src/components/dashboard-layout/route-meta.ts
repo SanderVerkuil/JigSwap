@@ -117,6 +117,7 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   "/my-puzzles/$id": { pageKey: "myPuzzles", group: "library" },
   "/collections": { pageKey: "collections", group: "library" },
   "/completions": { pageKey: "completions", group: "library" },
+  "/completions/new": { pageKey: "completionNew", group: "library" },
   "/goals": { pageKey: "goals", group: "library" },
   "/insights": { pageKey: "insights", group: "library" },
 
@@ -139,7 +140,6 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   // Routes removed from the nav but still alive.
   "/borrowed": { pageKey: "borrowed", group: "library" },
   "/notifications": { pageKey: "notifications" },
-  "/notifications/preferences": { pageKey: "notificationPreferences" },
 };
 
 /** Resolve the shell meta for a pathname (exact, then longest prefix). */

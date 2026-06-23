@@ -30,6 +30,10 @@ export class InMemoryCompletionRepository implements CompletionRepository {
     ).length;
   }
 
+  async delete(id: CompletionId): Promise<void> {
+    this.store.delete(id);
+  }
+
   size(): number {
     return this.store.size;
   }

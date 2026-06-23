@@ -19,6 +19,7 @@ export const finishCompletion = mutation({
     completionId: v.string(),
     endDate: v.number(),
     completionTimeMinutes: v.optional(v.number()),
+    allPiecesPresent: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const actingMemberId = await requireMember(ctx);
@@ -33,6 +34,7 @@ export const finishCompletion = mutation({
       completionId: toCompletionId(args.completionId),
       endDate: new Date(args.endDate),
       completionTimeMinutes: args.completionTimeMinutes,
+      allPiecesPresent: args.allPiecesPresent,
     });
     if (result.isErr) throw toConvexError(result.error);
   },

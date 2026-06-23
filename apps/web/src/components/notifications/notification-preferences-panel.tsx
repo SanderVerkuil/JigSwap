@@ -1,6 +1,3 @@
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
-
 import { useUser } from "@/compat/clerk";
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import { ChannelMatrix } from "@/components/notifications/channel-matrix";
@@ -19,14 +16,10 @@ import { useTranslations } from "use-intl";
 // The toggle map the backend returns: type -> channel -> enabled. Absent resolves to off.
 type Toggles = Record<string, Partial<Record<NotificationChannel, boolean>>>;
 
-export const Route = createFileRoute("/_dashboard/notifications/preferences")({
-  head: ({ match }) => ({
-    meta: [{ title: pageTitle(match.context, "notificationPreferences") }],
-  }),
-  component: NotificationPreferencesPage,
-});
-
-function NotificationPreferencesPage() {
+// Self-contained notification preferences panel — usable inside the Clerk profile
+// modal (shell-user-button) or any other surface. No route/PageHead/createFileRoute
+// dependencies.
+export function NotificationPreferencesPanel() {
   const { user } = useUser();
   const t = useTranslations("notifications");
   const tCommon = useTranslations("common");
@@ -54,17 +47,12 @@ function NotificationPreferencesPage() {
     enabled: boolean,
   ) => {
     try {
-      // The mutation is the single source of truth; the reactive query reflects the new value,
-      // so we don't keep local optimistic state.
       await updatePreference({ type, channel, enabled });
     } catch {
       toast.error(t("preferencesError"));
     }
   };
 
-  // The shell chrome (PageHead) owns the "Notification preferences" title + subtitle, so there is no
-  // page h1 here. Width follows the shell's content-width setting (ContentArea centres or fills), so
-  // we just stretch — no local max-width. The screen is two card-free sections on the page ground.
   return (
     <div className="flex w-full flex-col gap-10 md:gap-12">
       <PushDeviceSection />

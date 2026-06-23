@@ -10,7 +10,7 @@ import { clearIntlCache, type Locale, setLocale } from "@/lib/i18n";
 import { useRouter } from "@tanstack/react-router";
 import { Globe } from "lucide-react";
 import { toast } from "sonner";
-import { useLocale } from "use-intl";
+import { useLocale, useTranslations } from "use-intl";
 
 const languages = [
   { code: "en", name: "English", flag: "🇺🇸" },
@@ -20,6 +20,7 @@ const languages = [
 export function LanguageSwitcher() {
   const currentLocale = useLocale();
   const router = useRouter();
+  const t = useTranslations("shell.language");
 
   const handleLanguageChange = async (locale: string) => {
     await setLocale({ data: locale as Locale });
@@ -27,7 +28,7 @@ export function LanguageSwitcher() {
     // the IntlProvider picks up the new catalog.
     clearIntlCache();
     await router.invalidate();
-    toast.success("Language changed successfully");
+    toast.success(t("changed"));
   };
 
   return (
@@ -35,11 +36,11 @@ export function LanguageSwitcher() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Globe className="h-[1.2rem] w-[1.2rem]" />
-          <span className="sr-only">Switch language</span>
+          <span className="sr-only">{t("switch")}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Language</DropdownMenuLabel>
+        <DropdownMenuLabel>{t("label")}</DropdownMenuLabel>
         {languages.map((language) => (
           <DropdownMenuItem
             key={language.code}

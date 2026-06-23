@@ -21,6 +21,7 @@ export interface RecordCompletionCommand {
   readonly photoFileIds?: readonly FileId[];
   readonly rating?: number;
   readonly reviewText?: string;
+  readonly allPiecesPresent?: boolean;
 }
 
 export interface RecordCompletion {

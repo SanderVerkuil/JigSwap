@@ -513,6 +513,16 @@
     "fieldNotes": "Notities",
     "notesPlaceholderLong": "Iets vermeldenswaards — ontbrekende stukjes, speciale editie, waar je hem vandaan hebt…",
     "optional": "Optioneel",
+    "overflowMenu": {
+      "ariaLabel": "Puzzelacties",
+      "edit": "Bewerken",
+      "delete": "Verwijderen",
+      "collection": "Aan collectie toevoegen"
+    },
+    "coachmark": {
+      "body": "Snelle acties zoals een oplossing vastleggen vind je in het ⋯ menu op elke puzzelkaart.",
+      "dismiss": "Tip verbergen"
+    },
     "dividerManual": "of vul de gegevens zelf in",
     "dividerCover": "omslag & extra's",
     "difficulty_easy": "Makkelijk",
@@ -547,7 +557,8 @@
       "noCatalogueResults": "Geen catalogus-puzzels komen overeen met je zoekopdracht.",
       "chosenPuzzle": "Een exemplaar toevoegen van",
       "copyDetails": "Jouw exemplaar"
-    }
+    },
+    "removeFromCollection": "Uit deze collectie verwijderen"
   },
   "trades": {
     "title": "Uitwisselingen",
@@ -1502,7 +1513,23 @@
       "log": "Voltooiingslog",
       "logAction": "Voltooiing Loggen",
       "mostRecent": "Meest recente eerst",
-      "piecesFinished": "{pieces, number} stukjes · voltooid in {days, plural, one {# dag} other {# dagen}}"
+      "piecesFinished": "{pieces, number} stukjes · voltooid in {days, plural, one {# dag} other {# dagen}}",
+      "solvedOwnCopy": "Eigen exemplaar opgelost",
+      "solvedBorrowedCopy": "Geleend exemplaar opgelost",
+      "piecesComplete": "was compleet",
+      "piecesMissing": "miste stukjes",
+      "new": {
+        "title": "Voltooiing vastleggen",
+        "subtitle": "Kies een puzzel om een oplossing tegen te registreren.",
+        "noPuzzles": "Nog geen puzzels",
+        "noPuzzlesHint": "Voeg eerst puzzels toe aan je bibliotheek en log hier dan een voltooiing."
+      },
+      "delete": "Verwijderen",
+      "deleteConfirmTitle": "Voltooiing verwijderen?",
+      "deleteConfirmBody": "Dit verwijdert de voltooiing definitief uit je geschiedenis. Dit kan niet ongedaan worden gemaakt.",
+      "deleteConfirm": "Verwijderen",
+      "deleteSuccess": "Voltooiing verwijderd",
+      "deleteError": "Voltooiing kon niet worden verwijderd"
     },
     "logSolve": {
       "trigger": "Oplossing vastleggen",
@@ -1520,7 +1547,24 @@
       "saved": "Oplossing vastgelegd",
       "savedInProgress": "Oplossing gestart",
       "finished": "Oplossing afgerond",
-      "saveError": "Kon de oplossing niet opslaan. Probeer het opnieuw."
+      "saveError": "Kon de oplossing niet opslaan. Probeer het opnieuw.",
+      "allPiecesPresent": "Alle stukjes waren aanwezig",
+      "updateCopyPiecesTitle": "Dit exemplaar bijwerken?",
+      "updateCopyPiecesBody": "Je gaf aan dat er stukjes ontbreken. Wil je het aantal ontbrekende stukjes van dit exemplaar ook bijwerken?",
+      "updateCopyPiecesConfirm": "Exemplaar bijwerken",
+      "updateCopyPiecesDismiss": "Niet nu"
+    },
+    "durationPrompt": {
+      "title": "Bijhouden hoelang puzzels duren?",
+      "body": "Sommige puzzelaars houden hun tijd graag bij, anderen houden het liever simpel. Je kunt dit altijd wijzigen in Instellingen.",
+      "imageAlt": "Waar je het bijhouden van tijd wijzigt in Instellingen",
+      "yes": "Tijd bijhouden",
+      "no": "Houd het simpel"
+    },
+    "settings": {
+      "sectionTitle": "Puzzelen",
+      "trackDurationLabel": "Voltooiingstijd bijhouden",
+      "trackDurationHint": "Indien aan vragen de dialoogvensters hoelang een puzzel duurde."
     },
     "review": {
       "title": "Beoordeel deze puzzel",
@@ -2127,6 +2171,7 @@
     "goals": "Doelen — JigSwap",
     "insights": "Inzichten — JigSwap",
     "completions": "Voltooiingen — JigSwap",
+    "completionNew": "Voltooiing vastleggen — JigSwap",
     "community": "Community — JigSwap",
     "circles": "Kringen — JigSwap",
     "borrowed": "Geleend — JigSwap",
@@ -2201,6 +2246,11 @@
         "title": "Voltooiingen",
         "subtitle": "Een logboek van elke puzzel die je hebt afgemaakt.",
         "description": "Je logboek van afgemaakte puzzels"
+      },
+      "completionNew": {
+        "title": "Voltooiing vastleggen",
+        "subtitle": "Kies een puzzel om een oplossing tegen te registreren.",
+        "description": "Nieuwe voltooiing vastleggen"
       },
       "goals": {
         "title": "Doelen",
@@ -2277,11 +2327,24 @@
     "user": {
       "preferences": "Voorkeuren",
       "openPreferences": "Voorkeuren Openen",
+      "notifications": "Meldingen",
       "contentWidth": "Contentbreedte",
       "centered": "Gecentreerd",
       "fullWidth": "Volledige Breedte",
       "hideEmail": "E-mailadres Verbergen",
       "admin": "Beheer"
+    },
+    "theme": {
+      "toggle": "Thema wisselen",
+      "label": "Thema",
+      "light": "Licht",
+      "dark": "Donker",
+      "system": "Systeem"
+    },
+    "language": {
+      "switch": "Taal wisselen",
+      "label": "Taal",
+      "changed": "Taal succesvol gewijzigd"
     },
     "mobile": {
       "tabsLabel": "Hoofdnavigatie",
@@ -2478,6 +2541,22 @@
       "swap": "Ruilen",
       "lend": "Lenen",
       "sale": "Verkoop"
+    }
+  },
+  "emojiPicker": {
+    "search": "Zoek emoji",
+    "notFound": "Geen emoji gevonden",
+    "selectPrompt": "Kies een emoji…",
+    "categories": {
+      "smileysEmotion": "Smileys en emotie",
+      "peopleBody": "Mensen en lichaam",
+      "animalsNature": "Dieren en natuur",
+      "foodDrink": "Eten en drinken",
+      "travelPlaces": "Reizen en plaatsen",
+      "activities": "Activiteiten",
+      "objects": "Objecten",
+      "symbols": "Symbolen",
+      "flags": "Vlaggen"
     }
   }
 }

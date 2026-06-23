@@ -513,6 +513,16 @@
     "fieldNotes": "Notes",
     "notesPlaceholderLong": "Anything worth mentioning — missing pieces, special edition, where you got it…",
     "optional": "Optional",
+    "overflowMenu": {
+      "ariaLabel": "Puzzle actions",
+      "edit": "Edit",
+      "delete": "Delete",
+      "collection": "Add to collection"
+    },
+    "coachmark": {
+      "body": "Quick actions like logging a solve live in the ⋯ menu on each puzzle card.",
+      "dismiss": "Dismiss hint"
+    },
     "dividerManual": "or enter the details yourself",
     "dividerCover": "cover & extras",
     "difficulty_easy": "Easy",
@@ -547,7 +557,8 @@
       "noCatalogueResults": "No catalogue puzzles match your search.",
       "chosenPuzzle": "Adding a copy of",
       "copyDetails": "Your copy"
-    }
+    },
+    "removeFromCollection": "Remove from this collection"
   },
   "trades": {
     "title": "Exchanges",
@@ -1502,7 +1513,23 @@
       "log": "Completion Log",
       "logAction": "Log Completion",
       "mostRecent": "Most recent first",
-      "piecesFinished": "{pieces, number} pieces · finished in {days, plural, one {# day} other {# days}}"
+      "piecesFinished": "{pieces, number} pieces · finished in {days, plural, one {# day} other {# days}}",
+      "solvedOwnCopy": "Solved your copy",
+      "solvedBorrowedCopy": "Solved a borrowed copy",
+      "piecesComplete": "was complete",
+      "piecesMissing": "had missing pieces",
+      "new": {
+        "title": "Log a completion",
+        "subtitle": "Pick a puzzle to log a solve against.",
+        "noPuzzles": "No puzzles yet",
+        "noPuzzlesHint": "Add puzzles to your library first, then log a completion here."
+      },
+      "delete": "Delete",
+      "deleteConfirmTitle": "Delete this completion?",
+      "deleteConfirmBody": "This will permanently remove the completion from your history. This can't be undone.",
+      "deleteConfirm": "Delete",
+      "deleteSuccess": "Completion deleted",
+      "deleteError": "Could not delete completion"
     },
     "logSolve": {
       "trigger": "Log a solve",
@@ -1520,7 +1547,24 @@
       "saved": "Solve logged",
       "savedInProgress": "Solve started",
       "finished": "Solve finished",
-      "saveError": "Could not save the solve. Please try again."
+      "saveError": "Could not save the solve. Please try again.",
+      "allPiecesPresent": "All pieces were present",
+      "updateCopyPiecesTitle": "Update this copy?",
+      "updateCopyPiecesBody": "You marked pieces missing. Update this copy's missing-pieces count too?",
+      "updateCopyPiecesConfirm": "Update copy",
+      "updateCopyPiecesDismiss": "Not now"
+    },
+    "durationPrompt": {
+      "title": "Track how long puzzles take you?",
+      "body": "Some solvers like recording solve times; others prefer to keep it simple. You can change this anytime in Settings.",
+      "imageAlt": "Where to change duration tracking in Settings",
+      "yes": "Track duration",
+      "no": "Keep it simple"
+    },
+    "settings": {
+      "sectionTitle": "Solving",
+      "trackDurationLabel": "Track completion duration",
+      "trackDurationHint": "When on, the solve dialogs ask how long a puzzle took."
     },
     "review": {
       "title": "Review this puzzle",
@@ -2127,6 +2171,7 @@
     "goals": "Goals — JigSwap",
     "insights": "Insights — JigSwap",
     "completions": "Completions — JigSwap",
+    "completionNew": "Log a completion — JigSwap",
     "community": "Community — JigSwap",
     "circles": "Circles — JigSwap",
     "borrowed": "Borrowed — JigSwap",
@@ -2201,6 +2246,11 @@
         "title": "Completions",
         "subtitle": "A log of every puzzle you've finished.",
         "description": "Your finished-puzzle log"
+      },
+      "completionNew": {
+        "title": "Log a completion",
+        "subtitle": "Pick a puzzle to log a solve against.",
+        "description": "Log a new completion"
       },
       "goals": {
         "title": "Goals",
@@ -2277,11 +2327,24 @@
     "user": {
       "preferences": "Preferences",
       "openPreferences": "Open Preferences",
+      "notifications": "Notifications",
       "contentWidth": "Content Width",
       "centered": "Centered",
       "fullWidth": "Full Width",
       "hideEmail": "Hide Email Address",
       "admin": "Admin"
+    },
+    "theme": {
+      "toggle": "Toggle theme",
+      "label": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "language": {
+      "switch": "Switch language",
+      "label": "Language",
+      "changed": "Language changed successfully"
     },
     "mobile": {
       "tabsLabel": "Primary",
@@ -2478,6 +2541,22 @@
       "swap": "Swap",
       "lend": "Lend",
       "sale": "Sale"
+    }
+  },
+  "emojiPicker": {
+    "search": "Search emoji",
+    "notFound": "No emoji found",
+    "selectPrompt": "Select an emoji…",
+    "categories": {
+      "smileysEmotion": "Smileys & Emotion",
+      "peopleBody": "People & Body",
+      "animalsNature": "Animals & Nature",
+      "foodDrink": "Food & Drink",
+      "travelPlaces": "Travel & Places",
+      "activities": "Activities",
+      "objects": "Objects",
+      "symbols": "Symbols",
+      "flags": "Flags"
     }
   }
 }

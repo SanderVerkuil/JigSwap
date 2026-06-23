@@ -539,6 +539,22 @@ describe("collection reads", () => {
     expect(view?.puzzles[0].addedAt).toBeDefined();
   });
 
+  test("getCollectionById resolves each member copy's cover image (same card as elsewhere)", async () => {
+    const t = convexTest(schema, modules);
+    const { available, collection, fileId } = await seed(t);
+    // Make the seeded (legacy = approved) image the copy's chosen cover.
+    await t.run(async (ctx) => {
+      await ctx.db.patch(available, { coverImageId: fileId });
+    });
+
+    const view = await asAlice(t).query(
+      api.library.getCollectionById.getCollectionById,
+      { collectionId: collection },
+    );
+    // The collection card must carry a resolved coverUrl just like getOwnedPuzzlesByOwner.
+    expect(view?.puzzles[0]?.coverUrl).toEqual(expect.any(String));
+  });
+
   test("getCollectionById strips owner-only copy fields for a non-owner viewing a public collection", async () => {
     const t = convexTest(schema, modules);
     const { alice, available } = await seed(t);

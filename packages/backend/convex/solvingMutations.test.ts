@@ -84,6 +84,16 @@ const goalRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
       .unique(),
   );
 
+// Lend the seeded copy to Bob: ownership stays with Alice, possession (heldBy) moves to Bob.
+const lendToBob = async (
+  t: ReturnType<typeof convexTest>,
+  ownedPuzzleId: Id<"ownedPuzzles">,
+  bob: Id<"users">,
+) =>
+  t.run(async (ctx) => {
+    await ctx.db.patch(ownedPuzzleId, { heldBy: bob });
+  });
+
 // convex-test serializes ConvexError.data to a JSON string at the function boundary; normalise.
 const dataOf = (e: unknown): { code?: string } => {
   const data = (e as ConvexError<unknown>).data;
@@ -113,6 +123,94 @@ const recordForAlice = async (
     endDate: Date.now() - HOUR,
     ...overrides,
   })) as string;
+
+describe("solving.recordCompletion — borrowing, snapshot, pieces", () => {
+  test("the current holder (borrower) can log a solve on a copy they do not own", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, copyAggregateId, ownedPuzzleId } = await seed(t);
+    await lendToBob(t, ownedPuzzleId, bob);
+    const completionId = (await asBob(t).mutation(
+      api.solving.recordCompletion.recordCompletion,
+      {
+        copyId: copyAggregateId,
+        startDate: Date.now() - 2 * HOUR,
+        endDate: Date.now() - HOUR,
+      },
+    )) as string;
+    const row = await completionRow(t, completionId);
+    expect(row?.userId).toBe(bob);
+    expect(row?.ownedPuzzleId).toBe(ownedPuzzleId);
+    expect(row?.copySnapshot?.wasBorrowed).toBe(true);
+  });
+
+  test("a non-owner who is not the holder is still rejected", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId, ownedPuzzleId } = await seed(t);
+    await expect(
+      asBob(t).mutation(api.solving.recordCompletion.recordCompletion, {
+        copyId: copyAggregateId,
+        startDate: Date.now() - 2 * HOUR,
+        endDate: Date.now() - HOUR,
+      }),
+    ).rejects.toBeInstanceOf(ConvexError);
+    const rows = await t.run(async (ctx) =>
+      ctx.db
+        .query("completions")
+        .withIndex("by_owned_puzzle", (q) =>
+          q.eq("ownedPuzzleId", ownedPuzzleId),
+        )
+        .collect(),
+    );
+    expect(rows).toHaveLength(0);
+  });
+
+  test("an owner's completion gets a copy snapshot and a populated puzzleId anchor", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId, puzzleId } = await seed(t);
+    const completionId = await recordForAlice(t, copyAggregateId, {
+      allPiecesPresent: false,
+    });
+    const row = await completionRow(t, completionId);
+    expect(row?.puzzleId).toBe(puzzleId);
+    expect(row?.allPiecesPresent).toBe(false);
+    expect(row?.copySnapshot?.wasBorrowed).toBe(false);
+    expect(row?.copySnapshot?.condition).toBe("good");
+    expect(row?.copySnapshot?.copyId).toBe(copyAggregateId);
+  });
+
+  test("deleting the copy keeps puzzleId + snapshot; only the live link is affected", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId, puzzleId, ownedPuzzleId } = await seed(t);
+    const completionId = await recordForAlice(t, copyAggregateId);
+    await t.run(async (ctx) => {
+      await ctx.db.delete(ownedPuzzleId);
+    });
+    const row = await completionRow(t, completionId);
+    expect(row?.puzzleId).toBe(puzzleId);
+    expect(row?.copySnapshot?.copyId).toBe(copyAggregateId);
+  });
+
+  test("finishing a copy-only in-progress completion preserves the puzzleId anchor + snapshot", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId, puzzleId } = await seed(t);
+    // Start (no endDate, no puzzleDefinitionId): the composition root denormalizes puzzleId + snapshot.
+    const completionId = (await asAlice(t).mutation(
+      api.solving.recordCompletion.recordCompletion,
+      { copyId: copyAggregateId, startDate: Date.now() - HOUR },
+    )) as string;
+    expect((await completionRow(t, completionId))?.puzzleId).toBe(puzzleId);
+
+    // Finishing goes through the repository save() again — the anchor + snapshot must survive.
+    await asAlice(t).mutation(api.solving.finishCompletion.finishCompletion, {
+      completionId,
+      endDate: Date.now(),
+    });
+    const row = await completionRow(t, completionId);
+    expect(row?.isCompleted).toBe(true);
+    expect(row?.puzzleId).toBe(puzzleId);
+    expect(row?.copySnapshot?.copyId).toBe(copyAggregateId);
+  });
+});
 
 describe("solving.recordCompletion", () => {
   test("requires authentication", async () => {
@@ -230,6 +328,19 @@ describe("solving.recordCompletion", () => {
     const row = await completionRow(t, completionId);
     expect(row?.isCompleted).toBe(false);
     expect(row?.endDate).toBeUndefined();
+  });
+
+  test("same-day completion (startDate == endDate, no explicit time) succeeds with undefined duration", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    const today = Date.now();
+    const completionId = (await asAlice(t).mutation(
+      api.solving.recordCompletion.recordCompletion,
+      { copyId: copyAggregateId, startDate: today, endDate: today },
+    )) as string;
+    const row = await completionRow(t, completionId);
+    expect(row?.isCompleted).toBe(true);
+    expect(row?.completionTimeMinutes).toBeUndefined();
   });
 });
 
@@ -400,6 +511,60 @@ describe("goal progress reacts to completions", () => {
     );
     expect(goals).toHaveLength(1);
     expect(goals[0]?.isAchieved).toBe(true);
+  });
+});
+
+describe("solving.deleteCompletion", () => {
+  test("owner can delete their own completion — row is gone", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    const completionId = await recordForAlice(t, copyAggregateId);
+
+    await asAlice(t).mutation(api.solving.deleteCompletion.deleteCompletion, {
+      completionId,
+    });
+
+    const row = await completionRow(t, completionId);
+    expect(row).toBeNull();
+  });
+
+  test("non-owner is rejected with NotCompletionOwner — row remains", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    const completionId = await recordForAlice(t, copyAggregateId);
+
+    await expectConvexCode(
+      asBob(t).mutation(api.solving.deleteCompletion.deleteCompletion, {
+        completionId,
+      }),
+      "NotCompletionOwner",
+    );
+
+    const row = await completionRow(t, completionId);
+    expect(row).not.toBeNull();
+  });
+
+  test("deleting a completion recomputes goal progress back to 0", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+
+    // Create a goal with target 1.
+    const goalId = (await asAlice(t).mutation(
+      api.solving.createGoal.createGoal,
+      { title: "Solve 1 puzzle", targetCompletions: 1 },
+    )) as string;
+
+    // Record a completion — goal progress advances to 1.
+    const completionId = await recordForAlice(t, copyAggregateId);
+    let row = await goalRow(t, goalId);
+    expect(row?.currentCompletions).toBe(1);
+
+    // Delete the completion — goal progress must recompute back to 0.
+    await asAlice(t).mutation(api.solving.deleteCompletion.deleteCompletion, {
+      completionId,
+    });
+    row = await goalRow(t, goalId);
+    expect(row?.currentCompletions).toBe(0);
   });
 });
 

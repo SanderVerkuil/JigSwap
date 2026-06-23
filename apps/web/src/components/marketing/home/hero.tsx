@@ -6,6 +6,8 @@ import { Eyebrow } from "@/components/marketing/section";
 import { useStartHref } from "@/components/marketing/use-start-href";
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
+import { globalStatsQuery } from "@/lib/marketing-queries";
+import { useQuery as useStatsQuery } from "@tanstack/react-query";
 import { useQuery } from "convex/react";
 import { ArrowRight } from "lucide-react";
 import * as React from "react";
@@ -175,15 +177,6 @@ function toPlankBox(p: PlankPuzzleView, i: number): PlankBox {
 // from @jigswap/contracts without importing the package directly.
 type CommunityAvatar = { initials: string; image: string | null };
 
-// Decorative placeholders shown during loading and when the community query
-// returns no results. These are not real members.
-const FALLBACK_AVATARS: Array<[string, string]> = [
-  ["MI", "var(--mk-violet-400)"],
-  ["TK", "var(--mk-green-500)"],
-  ["LV", "var(--mk-pink-400)"],
-  ["RJ", "var(--mk-violet-600)"],
-];
-
 const AVATAR_COLORS = [
   "var(--mk-violet-400)",
   "var(--mk-green-500)",
@@ -195,7 +188,8 @@ const AVATAR_COLORS = [
 function TrustRow() {
   const t = useTranslations("marketing.home");
   const format = useFormatter();
-  const stats = useQuery(gateway.insights.globalStats, {});
+  // Prefetched in the home route loader, so the count is present on first paint.
+  const { data: stats } = useStatsQuery(globalStatsQuery);
 
   // Stable per-visit seed: generated client-side after mount (SSR-safe).
   // The query is skipped until the seed is ready; FALLBACK_AVATARS fills the
@@ -207,51 +201,43 @@ function TrustRow() {
     seed === null ? "skip" : { limit: 4, seed },
   );
 
-  // Use live community data when at least one member is returned; otherwise
-  // keep the decorative fallback placeholders visible.
+  // Only render the avatar cluster once real community members are loaded — never
+  // fake placeholder users. Until then (loading or no members) the cluster is hidden.
   const hasLiveAvatars =
     communityAvatars != null && communityAvatars.length >= 1;
 
   return (
     <div className="flex items-center gap-3.5 mt-[30px] flex-wrap">
-      <div aria-hidden="true" className="flex">
-        {hasLiveAvatars
-          ? communityAvatars.map((member, i) =>
-              member.image != null ? (
-                <span
-                  key={i}
-                  className="w-[38px] h-[38px] rounded-full inline-flex items-center justify-center border-2 border-mk-card overflow-hidden"
-                  style={{ marginLeft: i ? -11 : 0 }}
-                >
-                  <img
-                    src={member.image}
-                    alt=""
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                </span>
-              ) : (
-                <span
-                  key={i}
-                  className="w-[38px] h-[38px] rounded-full text-white font-mk-heading font-semibold text-[13px] inline-flex items-center justify-center border-2 border-mk-card"
-                  style={{
-                    background: AVATAR_COLORS[i % AVATAR_COLORS.length],
-                    marginLeft: i ? -11 : 0,
-                  }}
-                >
-                  {member.initials}
-                </span>
-              ),
-            )
-          : FALLBACK_AVATARS.map(([txt, bg], i) => (
+      {hasLiveAvatars && (
+        <div aria-hidden="true" className="flex">
+          {communityAvatars.map((member, i) =>
+            member.image != null ? (
               <span
-                key={txt}
-                className="w-[38px] h-[38px] rounded-full text-white font-mk-heading font-semibold text-[13px] inline-flex items-center justify-center border-2 border-mk-card"
-                style={{ background: bg, marginLeft: i ? -11 : 0 }}
+                key={i}
+                className="w-[38px] h-[38px] rounded-full inline-flex items-center justify-center border-2 border-mk-card overflow-hidden"
+                style={{ marginLeft: i ? -11 : 0 }}
               >
-                {txt}
+                <img
+                  src={member.image}
+                  alt=""
+                  className="w-full h-full rounded-full object-cover"
+                />
               </span>
-            ))}
-      </div>
+            ) : (
+              <span
+                key={i}
+                className="w-[38px] h-[38px] rounded-full text-white font-mk-heading font-semibold text-[13px] inline-flex items-center justify-center border-2 border-mk-card"
+                style={{
+                  background: AVATAR_COLORS[i % AVATAR_COLORS.length],
+                  marginLeft: i ? -11 : 0,
+                }}
+              >
+                {member.initials}
+              </span>
+            ),
+          )}
+        </div>
+      )}
       {stats != null && (
         <div className="text-[14.5px] text-mk-text-muted leading-snug">
           {t("trustRow", { count: format.number(stats.totalUsers) })}

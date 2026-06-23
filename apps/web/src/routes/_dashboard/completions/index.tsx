@@ -13,13 +13,22 @@ import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { ReviewPuzzleDialog } from "@/components/solving/review-puzzle-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { useQuery } from "convex/react";
-import { CircleCheck, Clock, Pencil, Plus, Star } from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
+import { CircleCheck, Clock, Pencil, Plus, Star, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 type DialogState =
@@ -38,9 +47,10 @@ type DialogState =
       rating?: number;
       text?: string;
     }
+  | { kind: "delete"; completionId: string }
   | null;
 
-export const Route = createFileRoute("/_dashboard/completions")({
+export const Route = createFileRoute("/_dashboard/completions/")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "completions") }],
   }),
@@ -68,7 +78,10 @@ function CompletionsSkeleton() {
 function CompletionsPage() {
   const { user } = useUser();
   const t = useTranslations("solving.completions");
+  const tCommon = useTranslations("common");
   const [dialog, setDialog] = useState<DialogState>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const deleteCompletion = useMutation(gateway.solving.deleteCompletion);
 
   const convexUser = useQuery(
     gateway.identity.byClerkId,
@@ -111,7 +124,7 @@ function CompletionsPage() {
           {t("mostRecent")}
         </span>
         <Button variant="brand" size="sm" asChild>
-          <Link href="/my-puzzles">
+          <Link href="/completions/new">
             <Plus className="h-4 w-4" />
             {t("logAction")}
           </Link>
@@ -143,7 +156,11 @@ function CompletionsPage() {
     const info = completion.ownedPuzzleId
       ? infoByCopyId.get(completion.ownedPuzzleId)
       : undefined;
-    return sum + (info?.pieceCount ?? 0);
+    // Borrowed copies aren't in the viewer's library join, so fall back to the durable snapshot
+    // the backend denormalized at solve time.
+    const snapshot =
+      "copySnapshot" in completion ? completion.copySnapshot : undefined;
+    return sum + (info?.pieceCount ?? snapshot?.pieceCount ?? 0);
   }, 0);
   const yearStart = new Date(new Date().getFullYear(), 0, 1).getTime();
   const thisYear = finished.filter(
@@ -178,7 +195,14 @@ function CompletionsPage() {
                 (completion.ownedPuzzleId &&
                   infoByCopyId.get(completion.ownedPuzzleId)) ||
                 undefined;
-              const title = info?.title ?? t("title");
+              // Borrowed copies aren't in the viewer's library, so fall back to the durable
+              // copySnapshot for the title and piece count.
+              const snapshot =
+                "copySnapshot" in completion
+                  ? completion.copySnapshot
+                  : undefined;
+              const title = info?.title ?? snapshot?.title ?? t("title");
+              const pieceCount = info?.pieceCount ?? snapshot?.pieceCount;
               const done = completion.isCompleted;
               // Whole days between start and finish, floored at one — "finished
               // in 3 days" reads better than raw milliseconds.
@@ -192,11 +216,17 @@ function CompletionsPage() {
                     )
                   : undefined;
               const metaLine =
-                done && info?.pieceCount && days !== undefined
-                  ? t("piecesFinished", { pieces: info.pieceCount, days })
+                done && pieceCount && days !== undefined
+                  ? t("piecesFinished", { pieces: pieceCount, days })
                   : done && completion.endDate !== undefined
-                    ? `${t("finished", { date: formatDate(completion.endDate) })} · ${formatTime(completion.completionTimeMinutes)}`
-                    : `${t("started", { date: formatDate(completion.startDate) })} · ${formatTime(completion.completionTimeMinutes)}`;
+                    ? completion.completionTimeMinutes !== undefined
+                      ? `${t("finished", { date: formatDate(completion.endDate) })} · ${formatTime(completion.completionTimeMinutes)}`
+                      : t("finished", { date: formatDate(completion.endDate) })
+                    : completion.completionTimeMinutes !== undefined
+                      ? `${t("started", { date: formatDate(completion.startDate) })} · ${formatTime(completion.completionTimeMinutes)}`
+                      : t("started", {
+                          date: formatDate(completion.startDate),
+                        });
 
               return (
                 <div
@@ -233,6 +263,21 @@ function CompletionsPage() {
                         {completion.review}
                       </p>
                     )}
+                    {"copySnapshot" in completion &&
+                      completion.copySnapshot != null && (
+                        <p className="text-muted-foreground mt-0.5 text-xs">
+                          {completion.copySnapshot.wasBorrowed
+                            ? t("solvedBorrowedCopy")
+                            : t("solvedOwnCopy")}
+                          {"allPiecesPresent" in completion &&
+                          completion.allPiecesPresent === false
+                            ? ` — ${t("piecesMissing")}`
+                            : "allPiecesPresent" in completion &&
+                                completion.allPiecesPresent === true
+                              ? ` — ${t("piecesComplete")}`
+                              : ""}
+                        </p>
+                      )}
                   </div>
 
                   {completion.rating !== undefined && (
@@ -307,6 +352,23 @@ function CompletionsPage() {
                         <Pencil className="h-4 w-4" />
                       </Button>
                     )}
+                    {completion.aggregateId && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 text-destructive hover:text-destructive"
+                        title={t("delete")}
+                        aria-label={t("delete")}
+                        onClick={() =>
+                          setDialog({
+                            kind: "delete",
+                            completionId: completion.aggregateId!,
+                          })
+                        }
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               );
@@ -341,6 +403,49 @@ function CompletionsPage() {
           initialTimeMinutes={dialog.timeMinutes}
           initialNotes={dialog.notes}
         />
+      )}
+      {dialog?.kind === "delete" && (
+        <Dialog
+          open
+          onOpenChange={(open) => !open && !isDeleting && setDialog(null)}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("deleteConfirmTitle")}</DialogTitle>
+              <DialogDescription>{t("deleteConfirmBody")}</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setDialog(null)}
+                disabled={isDeleting}
+              >
+                {tCommon("cancel")}
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={isDeleting}
+                onClick={async () => {
+                  if (!dialog.completionId) return;
+                  setIsDeleting(true);
+                  try {
+                    await deleteCompletion({
+                      completionId: dialog.completionId,
+                    });
+                    toast.success(t("deleteSuccess"));
+                    setDialog(null);
+                  } catch {
+                    toast.error(t("deleteError"));
+                  } finally {
+                    setIsDeleting(false);
+                  }
+                }}
+              >
+                {t("deleteConfirm")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

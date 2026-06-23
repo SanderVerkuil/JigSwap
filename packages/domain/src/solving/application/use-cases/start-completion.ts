@@ -26,6 +26,7 @@ export const makeStartCompletion =
       startDate: cmd.startDate,
       notes: cmd.notes,
       photos: cmd.photoFileIds?.map((id) => Photo.of(id)),
+      allPiecesPresent: cmd.allPiecesPresent,
       now: deps.clock.now(),
     });
     if (completion.isErr) return err(completion.error);

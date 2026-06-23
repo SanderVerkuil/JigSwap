@@ -25,7 +25,10 @@ export const inProcessEventPublisher = (
 ): DomainEventPublisher =>
   makeEventPublisher(ctx, "solving", async (events) => {
     for (const event of events as readonly SolvingDomainEvent[]) {
-      if (event.name === "CompletionRecorded") {
+      if (
+        event.name === "CompletionRecorded" ||
+        event.name === "CompletionDeleted"
+      ) {
         await recomputeGoals(ctx, event.userId);
       }
     }

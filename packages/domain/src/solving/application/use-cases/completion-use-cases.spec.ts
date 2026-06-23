@@ -8,6 +8,7 @@ import {
   RecordingEventPublisher,
   SequentialCompletionIdGenerator,
 } from "../testing";
+import { makeDeleteCompletion } from "./delete-completion";
 import { makeEditCompletion } from "./edit-completion";
 import { makeFinishCompletion } from "./finish-completion";
 import { makeRecordCompletion } from "./record-completion";
@@ -271,6 +272,49 @@ describe("Completion use cases", () => {
       });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("NotCompletionOwner");
+    });
+  });
+
+  describe("deleteCompletion", () => {
+    const seedRecorded = async () => {
+      const record = makeRecordCompletion({ completions, ids, events, clock });
+      const recorded = await record({
+        userId: ALICE,
+        startDate: START,
+        endDate: END,
+      });
+      if (!recorded.isOk) throw new Error("setup failed");
+      events.published.length = 0;
+      return recorded.value;
+    };
+
+    it("owner deletes their completion: repo.delete called, CompletionDeleted published", async () => {
+      const id = await seedRecorded();
+      const del = makeDeleteCompletion({ completions, events, clock });
+      const result = await del({ actingMemberId: ALICE, completionId: id });
+      expect(result.isOk).toBe(true);
+      expect(completions.size()).toBe(0);
+      expect(events.names()).toEqual(["CompletionDeleted"]);
+    });
+
+    it("non-owner gets NotCompletionOwner and completion remains", async () => {
+      const id = await seedRecorded();
+      const del = makeDeleteCompletion({ completions, events, clock });
+      const result = await del({ actingMemberId: BOB, completionId: id });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("NotCompletionOwner");
+      expect(completions.size()).toBe(1);
+      expect(events.published).toHaveLength(0);
+    });
+
+    it("missing completion returns CompletionNotFound", async () => {
+      const del = makeDeleteCompletion({ completions, events, clock });
+      const result = await del({
+        actingMemberId: ALICE,
+        completionId: toCompletionId("nope"),
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("CompletionNotFound");
     });
   });
 
