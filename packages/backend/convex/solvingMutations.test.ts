@@ -189,6 +189,27 @@ describe("solving.recordCompletion — borrowing, snapshot, pieces", () => {
     expect(row?.puzzleId).toBe(puzzleId);
     expect(row?.copySnapshot?.copyId).toBe(copyAggregateId);
   });
+
+  test("finishing a copy-only in-progress completion preserves the puzzleId anchor + snapshot", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId, puzzleId } = await seed(t);
+    // Start (no endDate, no puzzleDefinitionId): the composition root denormalizes puzzleId + snapshot.
+    const completionId = (await asAlice(t).mutation(
+      api.solving.recordCompletion.recordCompletion,
+      { copyId: copyAggregateId, startDate: Date.now() - HOUR },
+    )) as string;
+    expect((await completionRow(t, completionId))?.puzzleId).toBe(puzzleId);
+
+    // Finishing goes through the repository save() again — the anchor + snapshot must survive.
+    await asAlice(t).mutation(api.solving.finishCompletion.finishCompletion, {
+      completionId,
+      endDate: Date.now(),
+    });
+    const row = await completionRow(t, completionId);
+    expect(row?.isCompleted).toBe(true);
+    expect(row?.puzzleId).toBe(puzzleId);
+    expect(row?.copySnapshot?.copyId).toBe(copyAggregateId);
+  });
 });
 
 describe("solving.recordCompletion", () => {
