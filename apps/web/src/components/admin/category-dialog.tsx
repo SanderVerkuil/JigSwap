@@ -1,8 +1,10 @@
 "use client";
 
-// Create/edit dialog for admin catalog categories (the edit-approve-dialog
-// pattern: RHF + zod, re-seeded every time the dialog opens). The route owns
-// when the dialog is open and for which category; the dialog owns the
+// Create/edit dialog for admin catalog categories (RHF + zod). All per-open
+// form state lives in CategoryForm inside DialogContent — Radix unmounts
+// closed content, so every open mounts it fresh and the useState/useForm
+// initializers seed it (no reseed effect needed). The route owns when the
+// dialog is open and for which category; the dialog owns the
 // create/update mutations. sortOrder is not a form field — a new category is
 // appended at the end of the list (nextSortOrder) and order is managed by
 // drag-reorder in the list; activation is a row-level action there too.
@@ -40,15 +42,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { gateway } from "@/gateway";
+import { useConvexMutation } from "@convex-dev/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "convex/react";
+import { useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
-import {
-  useForm,
-  useWatch,
-  type FieldErrors,
-  type UseFormReturn,
-} from "react-hook-form";
+import { useForm, useWatch, type FieldErrors } from "react-hook-form";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { z } from "zod";
@@ -89,44 +87,18 @@ export function CategoryDialog({
 }) {
   const t = useTranslations("admin.categories.form");
   const tCommon = useTranslations("common");
-  const createCategory = useMutation(gateway.adminCatalog.create);
-  const updateCategory = useMutation(gateway.adminCatalog.update);
-  const [busy, setBusy] = useState(false);
-  // Name-derived color stops once the picker is used; editing an existing
-  // category counts as touched so a stored color is never overwritten.
-  const [colorTouched, setColorTouched] = useState(Boolean(category));
-
-  const schema = useMemo(
-    () =>
-      z.object({
-        name: z.object({
-          en: z.string().min(1, t("nameRequired")),
-          nl: z.string().min(1, t("nameRequired")),
-        }),
-        description: z.object({ en: z.string(), nl: z.string() }),
-        color: z.string(),
-      }),
-    [t],
-  );
-
-  const form = useForm<CategoryFormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: toDefaults(category),
+  const createCategory = useMutation({
+    mutationFn: useConvexMutation(gateway.adminCatalog.create),
   });
-
-  // Re-seed when the dialog opens for a (possibly different) category.
-  useEffect(() => {
-    if (open) {
-      form.reset(toDefaults(category));
-      setColorTouched(Boolean(category));
-    }
-  }, [open, category, form]);
+  const updateCategory = useMutation({
+    mutationFn: useConvexMutation(gateway.adminCatalog.update),
+  });
+  const busy = createCategory.isPending || updateCategory.isPending;
 
   const onSubmit = async (values: CategoryFormValues) => {
-    setBusy(true);
     try {
       if (category?.aggregateId) {
-        await updateCategory({
+        await updateCategory.mutateAsync({
           catalogCategoryId: category.aggregateId,
           name: values.name,
           description: nonEmptyDescription(values.description),
@@ -134,7 +106,7 @@ export function CategoryDialog({
         });
         toast.success(t("updateSuccess"));
       } else {
-        await createCategory({
+        await createCategory.mutateAsync({
           name: values.name,
           sortOrder: nextSortOrder,
           description: nonEmptyDescription(values.description),
@@ -145,8 +117,6 @@ export function CategoryDialog({
       onOpenChange(false);
     } catch {
       toast.error(t("saveError"));
-    } finally {
-      setBusy(false);
     }
   };
 
@@ -176,10 +146,8 @@ export function CategoryDialog({
         </DialogHeader>
         <TranslatableFieldsProvider>
           <CategoryForm
-            form={form}
+            category={category}
             onSubmit={onSubmit}
-            colorTouched={colorTouched}
-            onColorTouched={() => setColorTouched(true)}
             initialFocusRef={initialFocusRef}
           />
         </TranslatableFieldsProvider>
@@ -202,23 +170,43 @@ export function CategoryDialog({
 }
 
 // The form body lives under the TranslatableFieldsProvider so it can drive the
-// synced locale toggle (onInvalid auto-switch below).
+// synced locale toggle (onInvalid auto-switch below). It mounts fresh on every
+// dialog open (Radix unmounts closed content), so the initializers below seed
+// the per-open state.
 function CategoryForm({
-  form,
+  category,
   onSubmit,
-  colorTouched,
-  onColorTouched,
   initialFocusRef,
 }: {
-  form: UseFormReturn<CategoryFormValues>;
+  category?: Category;
   onSubmit: (values: CategoryFormValues) => Promise<void>;
-  colorTouched: boolean;
-  onColorTouched: () => void;
   // Written here, called by DialogContent's onOpenAutoFocus above.
   initialFocusRef: RefObject<(() => void) | null>;
 }) {
   const t = useTranslations("admin.categories.form");
   const { locales, activeLocale, setActiveLocale } = useTranslatableFields();
+
+  // Name-derived color stops once the picker is used; editing an existing
+  // category counts as touched so a stored color is never overwritten.
+  const [colorTouched, setColorTouched] = useState(() => Boolean(category));
+
+  const schema = useMemo(
+    () =>
+      z.object({
+        name: z.object({
+          en: z.string().min(1, t("nameRequired")),
+          nl: z.string().min(1, t("nameRequired")),
+        }),
+        description: z.object({ en: z.string(), nl: z.string() }),
+        color: z.string(),
+      }),
+    [t],
+  );
+
+  const form = useForm<CategoryFormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: toDefaults(category),
+  });
 
   // Keep the dialog's open-focus callback pointed at the visible name input.
   // This effect runs before Radix's autofocus effect (child effects run before
@@ -286,7 +274,7 @@ function CategoryForm({
                 <ColorPicker
                   value={field.value}
                   onChange={(color) => {
-                    onColorTouched();
+                    setColorTouched(true);
                     field.onChange(color);
                   }}
                   badge={

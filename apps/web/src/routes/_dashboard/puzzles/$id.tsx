@@ -22,7 +22,8 @@ import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
 import { useFavorites } from "@/hooks/use-favorites";
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import {
   ArrowLeftRight,
@@ -54,9 +55,11 @@ export const Route = createFileRoute("/_dashboard/puzzles/$id")({
 
 function PuzzlePage() {
   const { id } = Route.useParams();
-  const view = useQuery(gateway.library.getPuzzleDefinitionView, {
-    puzzleId: id as Id<"puzzles">,
-  });
+  const { data: view } = useQuery(
+    convexQuery(gateway.library.getPuzzleDefinitionView, {
+      puzzleId: id as Id<"puzzles">,
+    }),
+  );
 
   if (view === undefined) {
     return <PuzzleDefinitionSkeleton />;
@@ -452,18 +455,23 @@ function ReviewsSection({
 }) {
   const t = useTranslations("puzzleDefinition");
   const format = useFormatter();
-  const reviews = useQuery(gateway.social.listPuzzleReviews, {
-    puzzleId: puzzleId as Id<"puzzles">,
+  const { data: reviews } = useQuery(
+    convexQuery(gateway.social.listPuzzleReviews, {
+      puzzleId: puzzleId as Id<"puzzles">,
+    }),
+  );
+  const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
+  const { data: view } = useQuery(
+    convexQuery(gateway.library.getPuzzleDefinitionView, {
+      puzzleId: puzzleId as Id<"puzzles">,
+    }),
+  );
+  const postReview = useMutation({
+    mutationFn: useConvexMutation(gateway.social.postPuzzleReview),
   });
-  const me = useQuery(gateway.identity.currentUser, {});
-  const view = useQuery(gateway.library.getPuzzleDefinitionView, {
-    puzzleId: puzzleId as Id<"puzzles">,
-  });
-  const postReview = useMutation(gateway.social.postPuzzleReview);
 
   const [text, setText] = useState("");
   const [rating, setRating] = useState(0);
-  const [posting, setPosting] = useState(false);
   const [now] = useState(() => Date.now());
 
   const list = reviews ?? [];
@@ -475,9 +483,8 @@ function ReviewsSection({
   const submit = async () => {
     const trimmed = text.trim();
     if (!trimmed) return;
-    setPosting(true);
     try {
-      await postReview({
+      await postReview.mutateAsync({
         puzzleId: puzzleId as Id<"puzzles">,
         text: trimmed,
         ...(rating > 0 ? { rating } : {}),
@@ -486,8 +493,6 @@ function ReviewsSection({
       setRating(0);
     } catch {
       toast.error(t("reviewFailed"));
-    } finally {
-      setPosting(false);
     }
   };
 
@@ -520,7 +525,7 @@ function ReviewsSection({
             <Button
               variant="brand"
               onClick={() => void submit()}
-              disabled={posting || text.trim().length === 0}
+              disabled={postReview.isPending || text.trim().length === 0}
             >
               {t("post")}
             </Button>

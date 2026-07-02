@@ -4,7 +4,8 @@ import { EmptyState } from "@/components/community/primitives";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import type { LucideIcon } from "lucide-react";
 import { ArrowRightLeft, CircleCheck, Package } from "lucide-react";
 import { useFormatter, useTranslations } from "use-intl";
@@ -25,7 +26,7 @@ const META: Record<ActivityKind, { icon: LucideIcon; accent: string }> = {
 export function ActivityFeed() {
   const t = useTranslations("activity");
   const format = useFormatter();
-  const feed = useQuery(gateway.social.activityFeed, {});
+  const { data: feed } = useQuery(convexQuery(gateway.social.activityFeed, {}));
 
   if (feed === undefined) {
     return (

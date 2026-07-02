@@ -34,9 +34,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { gateway, Id } from "@/gateway";
-import { useAction, useMutation } from "convex/react";
+import { useConvexAction, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
@@ -97,27 +98,27 @@ function ContributePuzzlePage() {
 
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [pendingMatch, setPendingMatch] = useState<ImportedMatch | null>(null);
-  const [submitting, setSubmitting] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
-  // Mutations & actions
-  const createPuzzle = useMutation(gateway.catalog.createPuzzle);
-  const generateUploadUrl = useMutation(gateway.library.generateUploadUrl);
-  const importImage = useAction(gateway.catalog.importPuzzleImage);
-
-  // Object URL for the cover file preview — create and revoke in one effect
-  const [coverFileUrl, setCoverFileUrl] = useState<string | undefined>(
-    undefined,
+  // Convex mutations & actions, called inside the contribute wrapper below.
+  const createPuzzle = useConvexMutation(gateway.catalog.createPuzzle);
+  const generateUploadUrl = useConvexMutation(
+    gateway.library.generateUploadUrl,
   );
-  useEffect(() => {
-    if (!form.coverFile) {
-      setCoverFileUrl(undefined);
-      return;
-    }
-    const url = URL.createObjectURL(form.coverFile);
-    setCoverFileUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [form.coverFile]);
+  const importImage = useConvexAction(gateway.catalog.importPuzzleImage);
+
+  // Object URL for the cover file preview — derived from the file; the effect only revokes the
+  // previous URL when the file changes (or on unmount), so no setState runs inside an effect.
+  const coverFileUrl = useMemo(
+    () => (form.coverFile ? URL.createObjectURL(form.coverFile) : undefined),
+    [form.coverFile],
+  );
+  useEffect(
+    () => () => {
+      if (coverFileUrl) URL.revokeObjectURL(coverFileUrl);
+    },
+    [coverFileUrl],
+  );
 
   // The preview shows the photo only when mode is "photo"
   const previewPhotoUrl =
@@ -148,14 +149,14 @@ function ContributePuzzlePage() {
     }));
   };
 
-  const handleContribute = async () => {
-    if (!form.title.trim() || !form.brand.trim() || !form.pieceCount) return;
-    setSubmitting(true);
-    try {
+  // The WHOLE contribute flow — optional image upload/import + createPuzzle — runs
+  // as one mutationFn so isPending spans the full sequence (busy-state rule v2).
+  const contribute = useMutation({
+    mutationFn: async () => {
       let imageId: Id<"_storage"> | undefined;
       if (form.coverMode === "photo") {
         if (form.coverFile) {
-          const uploadUrl = await generateUploadUrl();
+          const uploadUrl = await generateUploadUrl({});
           const res = await fetch(uploadUrl, {
             method: "POST",
             headers: { "Content-Type": form.coverFile.type },
@@ -196,15 +197,20 @@ function ContributePuzzlePage() {
             : undefined,
         image: imageId,
       });
-
+    },
+    onSuccess: () => {
       toast.success(t("puzzleSubmittedForReview"));
       router.push("/puzzles");
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error("Contribute puzzle failed:", error);
       toast.error(t("puzzleCreationFailed"));
-    } finally {
-      setSubmitting(false);
-    }
+    },
+  });
+
+  const handleContribute = () => {
+    if (!form.title.trim() || !form.brand.trim() || !form.pieceCount) return;
+    contribute.mutate();
   };
 
   const isReady =
@@ -525,7 +531,7 @@ function ContributePuzzlePage() {
       <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
         <Button
           type="button"
-          disabled={!isReady || submitting}
+          disabled={!isReady || contribute.isPending}
           onClick={handleContribute}
         >
           {t("contributePuzzle")}

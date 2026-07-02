@@ -10,7 +10,8 @@ import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { gateway, Id } from "@/gateway";
 import { pageTitle } from "@/lib/page-title";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Plus, Search } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
@@ -42,23 +43,35 @@ function AddPuzzlesToCollectionPage() {
     Set<Id<"ownedPuzzles">>
   >(new Set());
 
-  const convexUser = useQuery(
-    gateway.identity.byClerkId,
-    user?.id ? { clerkId: user.id } : "skip",
+  const { data: convexUser, isPending: convexUserPending } = useQuery(
+    convexQuery(
+      gateway.identity.byClerkId,
+      user?.id ? { clerkId: user.id } : "skip",
+    ),
   );
 
-  const collection = useQuery(gateway.collections.byId, {
-    collectionId: id as Id<"collections">,
+  const { data: collection, isPending: collectionPending } = useQuery(
+    convexQuery(gateway.collections.byId, {
+      collectionId: id as Id<"collections">,
+    }),
+  );
+
+  const { data: availablePuzzles, isPending: availablePuzzlesPending } =
+    useQuery(
+      convexQuery(
+        gateway.library.ownedByOwner,
+        convexUser?._id
+          ? {
+              ownerId: convexUser._id as Id<"users">,
+              includeUnavailable: false,
+            }
+          : "skip",
+      ),
+    );
+
+  const addPuzzleToCollection = useMutation({
+    mutationFn: useConvexMutation(gateway.collections.addOwnedPuzzle),
   });
-
-  const availablePuzzles = useQuery(
-    gateway.library.ownedByOwner,
-    convexUser?._id
-      ? { ownerId: convexUser._id as Id<"users">, includeUnavailable: false }
-      : "skip",
-  );
-
-  const addPuzzleToCollection = useMutation(gateway.collections.addOwnedPuzzle);
 
   const togglePuzzleSelection = (puzzleId: Id<"ownedPuzzles">) => {
     const newSelected = new Set(selectedPuzzles);
@@ -84,7 +97,7 @@ function AddPuzzlesToCollectionPage() {
           console.error("Skipping copy missing its aggregateId:", puzzleId);
           continue;
         }
-        await addPuzzleToCollection({
+        await addPuzzleToCollection.mutateAsync({
           collectionId: collection.aggregateId,
           copyId: copy.aggregateId,
         });
@@ -152,8 +165,11 @@ function AddPuzzlesToCollectionPage() {
       ) || [];
 
   if (
+    collectionPending ||
     collection === undefined ||
+    availablePuzzlesPending ||
     availablePuzzles === undefined ||
+    convexUserPending ||
     convexUser === undefined
   ) {
     return <PageLoading message={tCommon("loading")} />;

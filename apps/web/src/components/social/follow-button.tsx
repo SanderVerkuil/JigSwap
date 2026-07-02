@@ -2,9 +2,9 @@
 
 import { Button } from "@/components/ui/button";
 import { gateway, Id } from "@/gateway";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { UserMinus, UserPlus } from "lucide-react";
-import { useState } from "react";
 import { toast } from "sonner";
 
 // Follow/unfollow toggle for a target member. Reads the live follow state from the gateway and
@@ -17,27 +17,30 @@ export function FollowButton({
   memberId: Id<"users">;
   size?: "default" | "sm";
 }) {
-  const following = useQuery(gateway.social.isFollowing, {
-    followeeId: memberId,
+  const { data: following } = useQuery(
+    convexQuery(gateway.social.isFollowing, {
+      followeeId: memberId,
+    }),
+  );
+  const follow = useMutation({
+    mutationFn: useConvexMutation(gateway.social.follow),
   });
-  const follow = useMutation(gateway.social.follow);
-  const unfollow = useMutation(gateway.social.unfollow);
-  const [pending, setPending] = useState(false);
+  const unfollow = useMutation({
+    mutationFn: useConvexMutation(gateway.social.unfollow),
+  });
+  const pending = follow.isPending || unfollow.isPending;
 
   const handleClick = async () => {
-    setPending(true);
     try {
       if (following) {
-        await unfollow({ followeeId: memberId });
+        await unfollow.mutateAsync({ followeeId: memberId });
         toast.success("Unfollowed");
       } else {
-        await follow({ followeeId: memberId });
+        await follow.mutateAsync({ followeeId: memberId });
         toast.success("Following");
       }
     } catch {
       toast.error("Could not update follow status");
-    } finally {
-      setPending(false);
     }
   };
 

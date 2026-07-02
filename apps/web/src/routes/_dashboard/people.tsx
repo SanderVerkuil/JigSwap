@@ -11,7 +11,8 @@ import {
 } from "@/components/social/member-tile";
 import { ProfileEditDialog } from "@/components/social/profile-edit-dialog";
 import { gateway, Id } from "@/gateway";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
 import { useTranslations } from "use-intl";
 
@@ -30,8 +31,12 @@ export const Route = createFileRoute("/_dashboard/people")({
 function PeoplePage() {
   const t = useTranslations("people");
 
-  const following = useQuery(gateway.social.following, {});
-  const followers = useQuery(gateway.social.followers, {});
+  const { data: following } = useQuery(
+    convexQuery(gateway.social.following, {}),
+  );
+  const { data: followers } = useQuery(
+    convexQuery(gateway.social.followers, {}),
+  );
 
   const loading = following === undefined || followers === undefined;
 

@@ -6,7 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { gateway, Id } from "@/gateway";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Grid, List, Plus, Search } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
@@ -35,13 +36,15 @@ export function CollectionDetail({
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const collection = useQuery(gateway.collections.byId, {
-    collectionId,
-  });
-
-  const removeFromCollection = useMutation(
-    gateway.collections.removeOwnedPuzzle,
+  const { data: collection, isPending } = useQuery(
+    convexQuery(gateway.collections.byId, {
+      collectionId,
+    }),
   );
+
+  const removeFromCollection = useMutation({
+    mutationFn: useConvexMutation(gateway.collections.removeOwnedPuzzle),
+  });
 
   const handleRemovePuzzle = async (ownedPuzzleId: Id<"ownedPuzzles">) => {
     // The domain remove takes the Collection + Copy aggregateIds; resolve them from the loaded
@@ -54,7 +57,7 @@ export function CollectionDetail({
       return;
     }
     try {
-      await removeFromCollection({
+      await removeFromCollection.mutateAsync({
         collectionId: collection.aggregateId,
         copyId: copy.aggregateId,
       });
@@ -95,7 +98,7 @@ export function CollectionDetail({
       )
       .filter(Boolean) || [];
 
-  if (collection === undefined) {
+  if (isPending || collection === undefined) {
     return <PageLoading message={tCommon("loading")} />;
   }
 

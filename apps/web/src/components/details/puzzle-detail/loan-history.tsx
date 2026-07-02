@@ -3,7 +3,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { gateway, Id } from "@/gateway";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { HandHelping, User } from "lucide-react";
 import { useTranslations } from "use-intl";
 
@@ -22,9 +23,11 @@ const STATUS_VARIANT = {
 // first), read from the lending read-model via the gateway. Mirrors the custody timeline sibling.
 export function LoanHistory({ copyId }: LoanHistoryProps) {
   const t = useTranslations("lending");
-  const loans = useQuery(gateway.lending.copyHistory, { copyId });
+  const { data: loans, isPending } = useQuery(
+    convexQuery(gateway.lending.copyHistory, { copyId }),
+  );
 
-  if (loans === undefined) {
+  if (isPending || loans === undefined) {
     return (
       <Card>
         <CardHeader>

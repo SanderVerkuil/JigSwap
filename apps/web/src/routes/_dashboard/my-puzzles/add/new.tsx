@@ -39,9 +39,14 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, Id } from "@/gateway";
-import { useAction, useMutation, useQuery } from "convex/react";
+import {
+  convexQuery,
+  useConvexAction,
+  useConvexMutation,
+} from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
@@ -119,35 +124,48 @@ function AddPuzzlePage() {
     string | null
   >(null);
   const [pendingMatch, setPendingMatch] = useState<ImportedMatch | null>(null);
-  const [submitting, setSubmitting] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
-  // Mutations & actions
-  const createPuzzle = useMutation(gateway.catalog.createPuzzle);
-  const createOwned = useMutation(gateway.library.createOwned);
-  const updateSharing = useMutation(gateway.library.updateSharing);
-  const generateUploadUrl = useMutation(gateway.library.generateUploadUrl);
-  const importImage = useAction(gateway.catalog.importPuzzleImage);
+  // Convex mutations & actions, called inside the submitPuzzle wrapper below.
+  const createPuzzle = useConvexMutation(gateway.catalog.createPuzzle);
+  const createOwned = useConvexMutation(gateway.library.createOwned);
+  const updateSharing = useConvexMutation(gateway.library.updateSharing);
+  const generateUploadUrl = useConvexMutation(
+    gateway.library.generateUploadUrl,
+  );
+  const importImage = useConvexAction(gateway.catalog.importPuzzleImage);
 
   // puzzleId from URL — pre-select an existing definition (copy mode).
   const puzzleIdFromUrl = searchParams.get("puzzleId") as Id<"puzzles"> | null;
-  const specificPuzzle = useQuery(
-    gateway.catalog.puzzleById,
-    puzzleIdFromUrl ? { puzzleId: puzzleIdFromUrl } : "skip",
+  const { data: specificPuzzle } = useQuery(
+    convexQuery(
+      gateway.catalog.puzzleById,
+      puzzleIdFromUrl ? { puzzleId: puzzleIdFromUrl } : "skip",
+    ),
   );
 
-  useEffect(() => {
-    if (!puzzleIdFromUrl || !specificPuzzle) return;
-    // Only pre-fill once (when selectedDefinitionId is still null)
-    if (selectedDefinitionId) return;
-    setSelectedDefinitionId(specificPuzzle.aggregateId ?? null);
-    setForm((f) => ({
-      ...f,
-      title: specificPuzzle.title,
-      brand: specificPuzzle.brand ?? "",
-      pieceCount: specificPuzzle.pieceCount,
-    }));
-  }, [puzzleIdFromUrl, specificPuzzle, selectedDefinitionId]);
+  // Pre-fill from the loaded definition using the derive-state-during-render pattern: track the
+  // previously seen puzzle (keyed by id, not object identity — the query may re-emit new objects)
+  // and seed the selection + form fields during the render where it first appears. Only pre-fill
+  // while nothing is selected yet, matching the old once-only effect.
+  const specificPuzzleKey = specificPuzzle
+    ? (specificPuzzle.aggregateId ?? specificPuzzle._id)
+    : null;
+  const [prevSpecificPuzzleKey, setPrevSpecificPuzzleKey] = useState<
+    string | null
+  >(null);
+  if (specificPuzzleKey !== prevSpecificPuzzleKey) {
+    setPrevSpecificPuzzleKey(specificPuzzleKey);
+    if (puzzleIdFromUrl && specificPuzzle && !selectedDefinitionId) {
+      setSelectedDefinitionId(specificPuzzle.aggregateId ?? null);
+      setForm((f) => ({
+        ...f,
+        title: specificPuzzle.title,
+        brand: specificPuzzle.brand ?? "",
+        pieceCount: specificPuzzle.pieceCount,
+      }));
+    }
+  }
 
   // "Copy mode": the form is acquiring a copy of an existing catalogue
   // definition reached via ?puzzleId. We hide the import + definition-editing
@@ -157,19 +175,18 @@ function AddPuzzlePage() {
   const isCopyMode = !!puzzleIdFromUrl;
   const copyLoading = isCopyMode && specificPuzzle === undefined;
 
-  // Object URL for the cover file preview — create and revoke in one effect
-  const [coverFileUrl, setCoverFileUrl] = useState<string | undefined>(
-    undefined,
+  // Object URL for the cover file preview — derived from the file; the effect only revokes the
+  // previous URL when the file changes (or on unmount), so no setState runs inside an effect.
+  const coverFileUrl = useMemo(
+    () => (form.coverFile ? URL.createObjectURL(form.coverFile) : undefined),
+    [form.coverFile],
   );
-  useEffect(() => {
-    if (!form.coverFile) {
-      setCoverFileUrl(undefined);
-      return;
-    }
-    const url = URL.createObjectURL(form.coverFile);
-    setCoverFileUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [form.coverFile]);
+  useEffect(
+    () => () => {
+      if (coverFileUrl) URL.revokeObjectURL(coverFileUrl);
+    },
+    [coverFileUrl],
+  );
 
   // The photo URL used for the live preview: uploaded file takes priority, else selected import
   const previewPhotoUrl =
@@ -210,7 +227,7 @@ function AddPuzzlePage() {
   const buildImageId = async (): Promise<Id<"_storage"> | undefined> => {
     if (form.coverMode !== "photo") return undefined;
     if (form.coverFile) {
-      const uploadUrl = await generateUploadUrl();
+      const uploadUrl = await generateUploadUrl({});
       const res = await fetch(uploadUrl, {
         method: "POST",
         headers: { "Content-Type": form.coverFile.type },
@@ -253,10 +270,12 @@ function AddPuzzlePage() {
     image: imageId,
   });
 
-  const handleAdd = async () => {
-    if (!form.title.trim() || !form.brand.trim() || !form.pieceCount) return;
-    setSubmitting(true);
-    try {
+  // The WHOLE multi-step create — optional image upload/import, createPuzzle,
+  // createOwned, updateSharing — runs as ONE mutationFn so isPending spans the full
+  // sequence (busy-state rule v2). Both footer buttons share it; the `andAnother`
+  // variant only changes what happens after success (reset vs navigate).
+  const submitPuzzle = useMutation({
+    mutationFn: async (_variables: { andAnother: boolean }) => {
       // 1. Resolve the catalog definition id (existing match or create new).
       let definitionId = selectedDefinitionId;
       if (!definitionId) {
@@ -277,47 +296,29 @@ function AddPuzzlePage() {
       if (hasAnyAvailability(form.availability)) {
         await updateSharing(availabilityToSharing(copyId, form.availability));
       }
-
+    },
+    onSuccess: (_, { andAnother }) => {
       toast.success(t("puzzleAdded"));
-      router.push("/puzzles");
-    } catch (error) {
+      if (andAnother) {
+        resetForm();
+      } else {
+        router.push("/puzzles");
+      }
+    },
+    onError: (error) => {
       console.error("Add to library failed:", error);
       toast.error(t("puzzleCreationFailed"));
-    } finally {
-      setSubmitting(false);
-    }
+    },
+  });
+
+  const handleAdd = () => {
+    if (!form.title.trim() || !form.brand.trim() || !form.pieceCount) return;
+    submitPuzzle.mutate({ andAnother: false });
   };
 
-  const handleSaveAndAddAnother = async () => {
+  const handleSaveAndAddAnother = () => {
     if (!form.title.trim() || !form.brand.trim() || !form.pieceCount) return;
-    setSubmitting(true);
-    try {
-      let definitionId = selectedDefinitionId;
-      if (!definitionId) {
-        const imageId = await buildImageId();
-        definitionId = (await createPuzzle(
-          buildCreatePuzzleArgs(imageId),
-        )) as string;
-      }
-
-      const copyId = (await createOwned({
-        puzzleDefinitionId: definitionId,
-        condition: form.condition,
-        notes: form.notes || undefined,
-      })) as string;
-
-      if (hasAnyAvailability(form.availability)) {
-        await updateSharing(availabilityToSharing(copyId, form.availability));
-      }
-
-      toast.success(t("puzzleAdded"));
-      resetForm();
-    } catch (error) {
-      console.error("Add to library failed:", error);
-      toast.error(t("puzzleCreationFailed"));
-    } finally {
-      setSubmitting(false);
-    }
+    submitPuzzle.mutate({ andAnother: true });
   };
 
   // In copy mode the definition is fixed, so only the copy fields gate submit.
@@ -469,7 +470,7 @@ function AddPuzzlePage() {
     <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
       <Button
         type="button"
-        disabled={!isReady || submitting}
+        disabled={!isReady || submitPuzzle.isPending}
         onClick={handleAdd}
       >
         {isCopyMode ? t("addToLibrary") : t("addPuzzle")}
@@ -478,7 +479,7 @@ function AddPuzzlePage() {
         <Button
           type="button"
           variant="outline"
-          disabled={!isReady || submitting}
+          disabled={!isReady || submitPuzzle.isPending}
           onClick={handleSaveAndAddAnother}
         >
           {t("saveAndAddAnother")}

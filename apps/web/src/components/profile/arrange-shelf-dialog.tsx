@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { gateway, Id } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import { ArrowDown, ArrowUp, Check, X } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -42,18 +43,21 @@ export function ArrangeShelfDialog({
 }) {
   const t = useTranslations("profile.shelf.arrangeDialog");
 
-  const copies = useQuery(gateway.library.ownedByOwner, {
-    ownerId,
-    includeUnavailable: true,
-  });
+  const { data: copies } = useQuery(
+    convexQuery(gateway.library.ownedByOwner, {
+      ownerId,
+      includeUnavailable: true,
+    }),
+  );
 
-  const arrange = useMutation(gateway.social.arrangeShelf);
+  const arrange = useMutation({
+    mutationFn: useConvexMutation(gateway.social.arrangeShelf),
+  });
 
   // Selected copy ids in display order (the arrangement).
   const [selected, setSelected] = useState<Id<"ownedPuzzles">[]>(
     () => currentFeaturedIds,
   );
-  const [saving, setSaving] = useState(false);
 
   // Build a lookup for quick title resolution.
   const copyMap = useMemo(() => {
@@ -100,15 +104,12 @@ export function ArrangeShelfDialog({
   }
 
   async function handleSave() {
-    setSaving(true);
     try {
-      await arrange({ copyIds: selected });
+      await arrange.mutateAsync({ copyIds: selected });
       toast.success(t("saved"));
       onClose();
     } catch {
       toast.error(t("saveError"));
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -252,12 +253,16 @@ export function ArrangeShelfDialog({
             type="button"
             variant="outline"
             onClick={onClose}
-            disabled={saving}
+            disabled={arrange.isPending}
           >
             {t("cancel")}
           </Button>
-          <Button type="button" onClick={handleSave} disabled={saving}>
-            {saving ? t("saving") : t("save")}
+          <Button
+            type="button"
+            onClick={handleSave}
+            disabled={arrange.isPending}
+          >
+            {arrange.isPending ? t("saving") : t("save")}
           </Button>
         </DialogFooter>
       </DialogContent>

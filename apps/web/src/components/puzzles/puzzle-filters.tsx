@@ -13,7 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { gateway } from "@/gateway";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useTranslations } from "use-intl";
 
@@ -46,12 +47,14 @@ export function PuzzleFilters({
   const tPuzzles = useTranslations("puzzles");
 
   // Extract unique brands and categories from puzzles
-  const brands = useQuery(gateway.catalog.allBrands);
+  const { data: brands } = useQuery(convexQuery(gateway.catalog.allBrands, {}));
 
-  const categories = useQuery(gateway.adminCatalog.listAll);
+  const { data: categories } = useQuery(
+    convexQuery(gateway.adminCatalog.listAll, {}),
+  );
 
   // Extract all unique tags
-  const allTags = useQuery(gateway.catalog.allTags);
+  const { data: allTags } = useQuery(convexQuery(gateway.catalog.allTags, {}));
 
   const updateFilter = (key: keyof Filters, value: string | string[]) => {
     onFiltersChange({ ...filters, [key]: value });

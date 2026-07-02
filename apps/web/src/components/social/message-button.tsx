@@ -9,10 +9,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { gateway, Id } from "@/gateway";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { useMutation, useQuery } from "convex/react";
 import { MessageCircle } from "lucide-react";
-import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
@@ -33,23 +33,26 @@ export function MessageButton({
   const { member } = useCurrentMember();
   const me = member?._id;
 
-  const canMessage = useQuery(
-    gateway.conversation.canMessage,
-    me ? { recipientId: memberId } : "skip",
+  const { data: canMessage } = useQuery(
+    convexQuery(
+      gateway.conversation.canMessage,
+      me ? { recipientId: memberId } : "skip",
+    ),
   );
-  const openDmThread = useMutation(gateway.conversation.openDmThread);
-  const [pending, setPending] = useState(false);
+  const openDmThread = useMutation({
+    mutationFn: useConvexMutation(gateway.conversation.openDmThread),
+  });
+  const pending = openDmThread.isPending;
 
   const handleClick = async () => {
-    setPending(true);
     try {
-      const threadId = await openDmThread({ recipientId: memberId });
+      const threadId = await openDmThread.mutateAsync({
+        recipientId: memberId,
+      });
       await navigate({ to: "/messages/$threadId", params: { threadId } });
     } catch (error) {
       const code = conversationErrorCode(error);
       toast.error(code === "NotConnected" ? t("notConnected") : t("openError"));
-    } finally {
-      setPending(false);
     }
   };
 

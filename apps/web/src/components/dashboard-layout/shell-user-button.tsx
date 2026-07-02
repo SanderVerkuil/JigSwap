@@ -12,7 +12,8 @@ import { Switch } from "@/components/ui/switch";
 import { gateway } from "@/gateway";
 import { useUserSettings } from "@/hooks/use-user-settings";
 import { cn } from "@/lib/utils";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Bell, Shield, SlidersHorizontal, User } from "lucide-react";
 import { useTranslations } from "use-intl";
 import { useShellPreferences } from "./preferences";
@@ -31,7 +32,9 @@ export function ShellUserButton({
   // Backend-confirmed admin role — same source as the /admin route guard and
   // the sidebar's gated group; Convex dedupes the shared subscription. This
   // menu item is the mobile path to /admin (no admin tab in the tab bar).
-  const isAdmin = useQuery(gateway.identity.isAdmin, user?.id ? {} : "skip");
+  const { data: isAdmin } = useQuery(
+    convexQuery(gateway.identity.isAdmin, user?.id ? {} : "skip"),
+  );
 
   return (
     <UserButton

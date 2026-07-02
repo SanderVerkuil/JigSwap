@@ -1,9 +1,10 @@
 import { useUser } from "@/compat/clerk";
 import { PageLoading } from "@/components/ui/loading";
 import { requireAdmin } from "@/lib/require-admin";
+import { convexQuery } from "@convex-dev/react-query";
 import { gateway } from "@jigswap/gateway";
+import { useQuery } from "@tanstack/react-query";
 import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "convex/react";
 import { useEffect } from "react";
 
 // Admin pages render inside the dashboard shell; this pathless-child group only
@@ -28,7 +29,9 @@ export const Route = createFileRoute("/_dashboard/admin")({
 
 function AdminGate() {
   const { user } = useUser();
-  const isAdmin = useQuery(gateway.identity.isAdmin, user?.id ? {} : "skip");
+  const { data: isAdmin } = useQuery(
+    convexQuery(gateway.identity.isAdmin, user?.id ? {} : "skip"),
+  );
   const navigate = useNavigate();
 
   useEffect(() => {

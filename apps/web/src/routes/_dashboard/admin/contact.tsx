@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import type { Id } from "@/gateway";
 import { gateway } from "@/gateway";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Check } from "lucide-react";
-import { useState } from "react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
 
@@ -27,19 +27,24 @@ function ContactTriagePage() {
   const t = useTranslations("admin.contact");
   const tAdmin = useTranslations("admin");
   const format = useFormatter();
-  const messages = useQuery(gateway.adminTriage.contactMessages);
-  const markHandled = useMutation(gateway.adminTriage.markContactHandled);
-  const [busyId, setBusyId] = useState<string | null>(null);
+  const { data: messages } = useQuery(
+    convexQuery(gateway.adminTriage.contactMessages, {}),
+  );
+  const markHandled = useMutation({
+    mutationFn: useConvexMutation(gateway.adminTriage.markContactHandled),
+  });
+  // Scope the pending state to the message being handled so only that row's
+  // button disables, exactly as the old per-id busy flag did.
+  const busyId = markHandled.isPending
+    ? (markHandled.variables?.id ?? null)
+    : null;
 
   const handle = async (id: Id<"contactMessages">) => {
-    setBusyId(id);
     try {
-      await markHandled({ id });
+      await markHandled.mutateAsync({ id });
       toast.success(t("markHandledSuccess"));
     } catch {
       toast.error(t("markHandledError"));
-    } finally {
-      setBusyId(null);
     }
   };
 

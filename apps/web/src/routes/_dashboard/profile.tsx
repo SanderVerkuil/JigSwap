@@ -8,7 +8,8 @@ import { ProfileStatsSection } from "@/components/profile/stats-section";
 import { ReputationSection } from "@/components/reputation/reputation-section";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
 
@@ -28,7 +29,9 @@ function ProfilePage() {
   const t = useTranslations("profile");
   const [isEditing, setIsEditing] = useState(false);
 
-  const member = useQuery(gateway.identity.currentUser);
+  const { data: member } = useQuery(
+    convexQuery(gateway.identity.currentUser, {}),
+  );
 
   if (member === undefined) {
     return <PageLoading message={t("loading")} />;

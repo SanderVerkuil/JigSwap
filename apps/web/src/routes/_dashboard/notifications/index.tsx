@@ -19,7 +19,8 @@ import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
 import { useDateFnsLocale } from "@/lib/date-locale";
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { Bell, Check, CheckCheck, Settings2 } from "lucide-react";
 import { toast } from "sonner";
@@ -41,12 +42,15 @@ function NotificationsPage() {
   const router = useRouter();
 
   const notifications = useQuery(
-    gateway.notifications.list,
-    user?.id ? {} : "skip",
-  ) as NotificationRow[] | undefined;
+    convexQuery(gateway.notifications.list, user?.id ? {} : "skip"),
+  ).data as NotificationRow[] | undefined;
 
-  const markRead = useMutation(gateway.notifications.markRead);
-  const markAllRead = useMutation(gateway.notifications.markAllRead);
+  const markRead = useMutation({
+    mutationFn: useConvexMutation(gateway.notifications.markRead),
+  });
+  const markAllRead = useMutation({
+    mutationFn: useConvexMutation(gateway.notifications.markAllRead),
+  });
 
   if (!user || notifications === undefined) {
     return <PageLoading message={tCommon("loading")} />;
@@ -56,7 +60,7 @@ function NotificationsPage() {
 
   const handleMarkRead = async (row: NotificationRow) => {
     try {
-      await markRead({ notificationId: notificationId(row) });
+      await markRead.mutateAsync({ notificationId: notificationId(row) });
     } catch {
       toast.error(t("markError"));
     }
@@ -64,9 +68,11 @@ function NotificationsPage() {
 
   const handleOpen = (row: NotificationRow) => {
     if (!row.isRead) {
-      markRead({ notificationId: notificationId(row) }).catch(() => {
-        toast.error(t("markError"));
-      });
+      markRead
+        .mutateAsync({ notificationId: notificationId(row) })
+        .catch(() => {
+          toast.error(t("markError"));
+        });
     }
     const href = notificationHref(row);
     if (href) router.push(href);
@@ -74,7 +80,7 @@ function NotificationsPage() {
 
   const handleMarkAll = async () => {
     try {
-      const count = await markAllRead({});
+      const count = await markAllRead.mutateAsync({});
       toast.success(t("markedAllRead", { count: count ?? 0 }));
     } catch {
       toast.error(t("markError"));

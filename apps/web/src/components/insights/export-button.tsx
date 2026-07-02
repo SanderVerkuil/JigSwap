@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
+// sanctioned convex/react exception: useConvex (see tanstack-query migration spec)
 import { useConvex } from "convex/react";
 import { Download } from "lucide-react";
 import { useState } from "react";

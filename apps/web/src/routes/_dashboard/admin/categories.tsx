@@ -7,7 +7,8 @@ import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Plus, Shapes } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslations } from "use-intl";
@@ -33,7 +34,9 @@ type DialogState = { mode: "create" } | { mode: "edit"; category: Category };
 
 function CategoriesPage() {
   const t = useTranslations("admin.categories");
-  const categories = useQuery(gateway.adminCatalog.listAll);
+  const { data: categories } = useQuery(
+    convexQuery(gateway.adminCatalog.listAll, {}),
+  );
 
   const [dialog, setDialog] = useState<DialogState | null>(null);
 

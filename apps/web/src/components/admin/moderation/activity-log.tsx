@@ -8,7 +8,8 @@
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import {
   CheckCircle,
@@ -36,9 +37,13 @@ const KIND_META: Record<ActivityRow["kind"], [LucideIcon, string]> = {
 export function ActivityLog({ emptyTitle }: { emptyTitle: string }) {
   const t = useTranslations("admin.moderation");
   const format = useFormatter();
-  const activity = useQuery(gateway.admin.getModerationActivity, {});
+  const { data: activity, isPending } = useQuery(
+    convexQuery(gateway.admin.getModerationActivity, {}),
+  );
 
-  if (activity === undefined) {
+  // The undefined check narrows `activity` for TypeScript (TanStack's result union
+  // still allows undefined data in the error branch); isPending is the loading signal.
+  if (isPending || activity === undefined) {
     return <PageLoading message={t("activity.loading")} />;
   }
   if (activity.length === 0) {

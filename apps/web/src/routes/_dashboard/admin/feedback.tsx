@@ -5,7 +5,8 @@ import { QueueEmpty } from "@/components/admin/queue-empty";
 import { Badge } from "@/components/ui/badge";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 import { useFormatter, useTranslations } from "use-intl";
 
@@ -22,7 +23,9 @@ function DocFeedbackPage() {
   const t = useTranslations("admin.docFeedback");
   const tAdmin = useTranslations("admin");
   const format = useFormatter();
-  const feedback = useQuery(gateway.adminTriage.docFeedback);
+  const { data: feedback } = useQuery(
+    convexQuery(gateway.adminTriage.docFeedback, {}),
+  );
 
   if (feedback === undefined) {
     return <PageLoading message={t("loading")} />;

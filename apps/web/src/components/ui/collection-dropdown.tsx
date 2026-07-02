@@ -11,9 +11,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { gateway, Id } from "@/gateway";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { FolderOpen, Plus } from "lucide-react";
-import { useState } from "react";
 import { useTranslations } from "use-intl";
 
 interface CollectionTargetProps {
@@ -32,23 +32,30 @@ export function CollectionMenuItems({
 }: CollectionTargetProps) {
   const { user } = useUser();
   const t = useTranslations("collections");
-  const [isAdding, setIsAdding] = useState(false);
 
-  const convexUser = useQuery(
-    gateway.identity.byClerkId,
-    user?.id ? { clerkId: user.id } : "skip",
+  const { data: convexUser } = useQuery(
+    convexQuery(
+      gateway.identity.byClerkId,
+      user?.id ? { clerkId: user.id } : "skip",
+    ),
   );
 
-  const collections = useQuery(
-    gateway.collections.listForUser,
-    convexUser?._id ? { userId: convexUser._id as Id<"users"> } : "skip",
+  const { data: collections } = useQuery(
+    convexQuery(
+      gateway.collections.listForUser,
+      convexUser?._id ? { userId: convexUser._id as Id<"users"> } : "skip",
+    ),
   );
 
-  const puzzleCollections = useQuery(gateway.collections.forOwnedPuzzle, {
-    ownedPuzzleId,
+  const { data: puzzleCollections } = useQuery(
+    convexQuery(gateway.collections.forOwnedPuzzle, {
+      ownedPuzzleId,
+    }),
+  );
+
+  const addPuzzleToCollection = useMutation({
+    mutationFn: useConvexMutation(gateway.collections.addOwnedPuzzle),
   });
-
-  const addPuzzleToCollection = useMutation(gateway.collections.addOwnedPuzzle);
 
   const handleAddToCollection = async (collectionAggregateId?: string) => {
     // The domain add takes the Collection + Copy aggregateIds; guard either missing.
@@ -56,16 +63,13 @@ export function CollectionMenuItems({
       console.error("Cannot add: collection or copy is missing aggregateId.");
       return;
     }
-    setIsAdding(true);
     try {
-      await addPuzzleToCollection({
+      await addPuzzleToCollection.mutateAsync({
         collectionId: collectionAggregateId,
         copyId: copyAggregateId,
       });
     } catch (error) {
       console.error("Failed to add puzzle to collection:", error);
-    } finally {
-      setIsAdding(false);
     }
   };
 
@@ -90,7 +94,9 @@ export function CollectionMenuItems({
         <DropdownMenuItem
           key={collection._id}
           onClick={() => handleAddToCollection(collection.aggregateId)}
-          disabled={isInCollection(collection._id) || isAdding}
+          disabled={
+            isInCollection(collection._id) || addPuzzleToCollection.isPending
+          }
           className={isInCollection(collection._id) ? "opacity-50" : ""}
         >
           <div className="flex items-center gap-2 w-full">

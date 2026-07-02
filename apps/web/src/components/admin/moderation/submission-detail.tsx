@@ -9,7 +9,8 @@
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import { AlertTriangle, Check, Pencil, Puzzle, X } from "lucide-react";
 import { useFormatter, useTranslations } from "use-intl";
@@ -82,10 +83,12 @@ export function SubmissionDetail({
 
   // Possible-dup check for the SELECTED submission only: the approved-only
   // suggestions index is the catalog's existing cheap title lookup.
-  const suggestions = useQuery(gateway.catalog.puzzleSuggestions, {
-    searchTerm: submission.title,
-    limit: 5,
-  });
+  const { data: suggestions } = useQuery(
+    convexQuery(gateway.catalog.puzzleSuggestions, {
+      searchTerm: submission.title,
+      limit: 5,
+    }),
+  );
   const dup = findTitleMatch(submission.title, suggestions);
 
   const meta: [string, string][] = [

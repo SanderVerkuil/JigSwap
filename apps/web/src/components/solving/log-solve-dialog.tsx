@@ -16,7 +16,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
 import { useUserSettings } from "@/hooks/use-user-settings";
-import { useMutation } from "convex/react";
+import { useConvexMutation } from "@convex-dev/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
@@ -57,8 +58,12 @@ export function LogSolveDialog({
   onSuccess,
 }: LogSolveDialogProps) {
   const t = useTranslations("solving.logSolve");
-  const recordCompletion = useMutation(gateway.solving.recordCompletion);
-  const updateDetails = useMutation(gateway.library.updateDetails);
+  const recordCompletion = useMutation({
+    mutationFn: useConvexMutation(gateway.solving.recordCompletion),
+  });
+  const updateDetails = useMutation({
+    mutationFn: useConvexMutation(gateway.library.updateDetails),
+  });
   const { trackCompletionDuration } = useUserSettings();
   const { requestPrompt } = useDurationPrompt();
 
@@ -68,7 +73,6 @@ export function LogSolveDialog({
   const [minutes, setMinutes] = useState("");
   const [notes, setNotes] = useState("");
   const [allPiecesPresent, setAllPiecesPresent] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [offerUpdateCopy, setOfferUpdateCopy] = useState(false);
 
   const showDuration = trackCompletionDuration === true;
@@ -94,9 +98,8 @@ export function LogSolveDialog({
 
     const wasFirstChoice = trackCompletionDuration === undefined;
 
-    setSubmitting(true);
     try {
-      await recordCompletion({
+      await recordCompletion.mutateAsync({
         copyId,
         startDate: start,
         endDate: end,
@@ -119,14 +122,12 @@ export function LogSolveDialog({
     } catch (error) {
       console.error("Failed to log solve:", error);
       toast.error(t("saveError"));
-    } finally {
-      setSubmitting(false);
     }
   };
 
   const confirmUpdateCopy = async () => {
     try {
-      await updateDetails({ copyId, missingPiecesCount: 1 });
+      await updateDetails.mutateAsync({ copyId, missingPiecesCount: 1 });
     } catch (error) {
       console.error("Failed to update copy pieces:", error);
       toast.error(t("saveError"));
@@ -228,7 +229,10 @@ export function LogSolveDialog({
           </div>
 
           <DialogFooter>
-            <Button onClick={handleSubmit} disabled={submitting || !startDate}>
+            <Button
+              onClick={handleSubmit}
+              disabled={recordCompletion.isPending || !startDate}
+            >
               {t("submit")}
             </Button>
           </DialogFooter>

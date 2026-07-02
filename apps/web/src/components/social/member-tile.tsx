@@ -12,7 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { MapPin, Star } from "lucide-react";
 import { useTranslations } from "use-intl";
 import { FollowButton } from "./follow-button";
@@ -38,8 +39,12 @@ export function MemberTile({
   followsYou: boolean;
 }) {
   const t = useTranslations("people");
-  const member = useQuery(gateway.identity.byId, { userId: memberId });
-  const stats = useQuery(gateway.identity.userStats, { userId: memberId });
+  const { data: member } = useQuery(
+    convexQuery(gateway.identity.byId, { userId: memberId }),
+  );
+  const { data: stats } = useQuery(
+    convexQuery(gateway.identity.userStats, { userId: memberId }),
+  );
 
   if (member === undefined) {
     return <MemberTileSkeleton />;

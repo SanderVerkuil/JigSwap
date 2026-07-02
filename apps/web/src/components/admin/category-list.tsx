@@ -30,6 +30,7 @@ import {
 import { gateway } from "@/gateway";
 import { locales, type Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { useConvexMutation } from "@convex-dev/react-query";
 import {
   closestCenter,
   DndContext,
@@ -48,7 +49,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useMutation } from "convex/react";
+import { useMutation } from "@tanstack/react-query";
 import { Edit, Eye, EyeOff, GripVertical } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -78,31 +79,39 @@ export function CategoryList({
   const tCommon = useTranslations("common");
   const uiLocale = useLocale() as Locale;
   // The domain soft-deactivates; there is no hard delete, so "delete" hides a node via setActive.
-  const setCategoryActive = useMutation(gateway.adminCatalog.delete);
+  const setCategoryActive = useMutation({
+    mutationFn: useConvexMutation(gateway.adminCatalog.delete),
+  });
   // Optimistically renumber the listAll rows so the drop lands instantly; Convex
   // rolls the patch back if the mutation is rejected.
-  const reorderCategories = useMutation(
-    gateway.adminCatalog.reorder,
-  ).withOptimisticUpdate((localStore, args) => {
-    const current = localStore.getQuery(gateway.adminCatalog.listAll, {});
-    if (current === undefined) return;
-    const orders = new Map(
-      args.order.map((entry) => [entry.catalogCategoryId, entry.sortOrder]),
-    );
-    localStore.setQuery(
-      gateway.adminCatalog.listAll,
-      {},
-      current.map((row) =>
-        row.aggregateId !== undefined && orders.has(row.aggregateId)
-          ? { ...row, sortOrder: orders.get(row.aggregateId)! }
-          : row,
-      ),
-    );
+  const reorderCategories = useMutation({
+    mutationFn: useConvexMutation(
+      gateway.adminCatalog.reorder,
+    ).withOptimisticUpdate((localStore, args) => {
+      const current = localStore.getQuery(gateway.adminCatalog.listAll, {});
+      if (current === undefined) return;
+      const orders = new Map(
+        args.order.map((entry) => [entry.catalogCategoryId, entry.sortOrder]),
+      );
+      localStore.setQuery(
+        gateway.adminCatalog.listAll,
+        {},
+        current.map((row) =>
+          row.aggregateId !== undefined && orders.has(row.aggregateId)
+            ? { ...row, sortOrder: orders.get(row.aggregateId)! }
+            : row,
+        ),
+      );
+    }),
   });
 
   // The category awaiting the destructive deactivate confirm.
   const [confirming, setConfirming] = useState<Category | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
+  // Per-row busy state derived from the in-flight mutation's variables (the
+  // trades.tsx idiom) instead of a manual keyed flag — busy-state rule v2.
+  const busyId = setCategoryActive.isPending
+    ? (setCategoryActive.variables?.catalogCategoryId ?? null)
+    : null;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -127,7 +136,7 @@ export function CategoryList({
         sortOrder: index,
       }));
     try {
-      await reorderCategories({ order });
+      await reorderCategories.mutateAsync({ order });
     } catch {
       toast.error(t("reorderError"));
     }
@@ -139,17 +148,14 @@ export function CategoryList({
     messages: { success: string; error: string },
   ) => {
     if (!category.aggregateId) return;
-    setBusyId(category._id);
     try {
-      await setCategoryActive({
+      await setCategoryActive.mutateAsync({
         catalogCategoryId: category.aggregateId,
         isActive,
       });
       toast.success(messages.success);
     } catch {
       toast.error(messages.error);
-    } finally {
-      setBusyId(null);
     }
   };
 
@@ -170,7 +176,8 @@ export function CategoryList({
               <CategoryRow
                 key={category._id}
                 category={category}
-                busy={busyId === category._id}
+                // The mutation is keyed by aggregateId (its catalogCategoryId arg).
+                busy={busyId !== null && busyId === category.aggregateId}
                 onEdit={() => onEdit(category)}
                 onDeactivate={() => setConfirming(category)}
                 onReactivate={() =>

@@ -13,7 +13,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Pencil, Save, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -24,13 +25,15 @@ import { useTranslations } from "use-intl";
 // enforces a non-empty display name.
 export function ProfileEditDialog() {
   const t = useTranslations("profile.editor");
-  const profile = useQuery(gateway.social.profile, {});
-  const editProfile = useMutation(gateway.social.editProfile);
+  const { data: profile } = useQuery(convexQuery(gateway.social.profile, {}));
+  const editProfile = useMutation({
+    mutationFn: useConvexMutation(gateway.social.editProfile),
+  });
+  const saving = editProfile.isPending;
 
   const [open, setOpen] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
-  const [saving, setSaving] = useState(false);
 
   // Reseed the form from the loaded profile every time the dialog opens, so a
   // reopen always starts from the saved values rather than a stale draft.
@@ -47,9 +50,8 @@ export function ProfileEditDialog() {
       toast.error(t("emptyNameError"));
       return;
     }
-    setSaving(true);
     try {
-      await editProfile({
+      await editProfile.mutateAsync({
         displayName: displayName.trim(),
         bio: bio.trim() === "" ? undefined : bio.trim(),
       });
@@ -57,8 +59,6 @@ export function ProfileEditDialog() {
       setOpen(false);
     } catch {
       toast.error(t("saveError"));
-    } finally {
-      setSaving(false);
     }
   };
 

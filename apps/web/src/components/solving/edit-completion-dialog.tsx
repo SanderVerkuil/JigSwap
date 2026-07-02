@@ -13,7 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
-import { useMutation } from "convex/react";
+import { useConvexMutation } from "@convex-dev/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
@@ -54,7 +55,9 @@ export function EditCompletionDialog({
 }: EditCompletionDialogProps) {
   const t = useTranslations("solving.logSolve");
   const tCompletions = useTranslations("solving.completions");
-  const editCompletion = useMutation(gateway.solving.editCompletion);
+  const editCompletion = useMutation({
+    mutationFn: useConvexMutation(gateway.solving.editCompletion),
+  });
 
   const [startDate, setStartDate] = useState(msToDateInput(initialStartDate));
   const [endDate, setEndDate] = useState(msToDateInput(initialEndDate));
@@ -65,7 +68,7 @@ export function EditCompletionDialog({
     initialTimeMinutes ? String(initialTimeMinutes % 60) : "",
   );
   const [notes, setNotes] = useState(initialNotes ?? "");
-  const [submitting, setSubmitting] = useState(false);
+  const submitting = editCompletion.isPending;
 
   const handleSubmit = async () => {
     const start = dateInputToMs(startDate);
@@ -73,9 +76,8 @@ export function EditCompletionDialog({
     const totalMinutes =
       (Number(hours) || 0) * 60 + (Number(minutes) || 0) || undefined;
 
-    setSubmitting(true);
     try {
-      await editCompletion({
+      await editCompletion.mutateAsync({
         completionId,
         startDate: start,
         endDate: end,
@@ -92,8 +94,6 @@ export function EditCompletionDialog({
         console.error("Failed to edit completion:", error);
         toast.error(t("saveError"));
       }
-    } finally {
-      setSubmitting(false);
     }
   };
 

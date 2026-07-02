@@ -10,6 +10,7 @@ import {
 import { clearIntlCache, type Locale, setLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { useLocation, useRouter } from "@tanstack/react-router";
+// sanctioned convex/react exception: Authenticated/Unauthenticated auth-state components (see tanstack-query migration spec)
 import { Authenticated, Unauthenticated } from "convex/react";
 import { Menu, Moon, Sun, X } from "lucide-react";
 import { useTheme } from "next-themes";

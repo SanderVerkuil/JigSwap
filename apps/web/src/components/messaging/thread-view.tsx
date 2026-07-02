@@ -14,7 +14,8 @@ import { Link } from "@/compat/link";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronLeft, MessageSquare } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useFormatter, useTranslations } from "use-intl";
@@ -36,14 +37,25 @@ export function ThreadView({
   const { member } = useCurrentMember();
   const me = member?._id;
 
-  const messages = useQuery(
-    gateway.conversation.getThreadMessages,
-    me ? { threadId } : "skip",
+  const { data: messages } = useQuery({
+    ...convexQuery(
+      gateway.conversation.getThreadMessages,
+      me ? { threadId } : "skip",
+    ),
+    // Stale/foreign thread ids must THROW so the $threadId route's
+    // errorComponent renders AppNotFound (TanStack returns errors in .error
+    // by default, which would leave the skeleton up forever).
+    throwOnError: true,
+  });
+  const { data: inbox } = useQuery(
+    convexQuery(gateway.conversation.getMyInbox, me ? {} : "skip"),
   );
-  const inbox = useQuery(gateway.conversation.getMyInbox, me ? {} : "skip");
   const thread = inbox?.find((row) => row.threadId === threadId);
 
-  const markThreadRead = useMutation(gateway.conversation.markThreadRead);
+  // mutateAsync is referentially stable, so the effect deps below behave as before.
+  const { mutateAsync: markThreadRead } = useMutation({
+    mutationFn: useConvexMutation(gateway.conversation.markThreadRead),
+  });
   const messageCount = messages?.length;
   const newestAuthorId = messages?.at(-1)?.authorId;
 

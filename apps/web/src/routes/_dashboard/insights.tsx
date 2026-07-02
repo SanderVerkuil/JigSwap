@@ -19,7 +19,8 @@ import {
 import { PageLoading } from "@/components/ui/loading";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/insights")({
@@ -41,24 +42,23 @@ function InsightsPage() {
 
   // requireMember-backed queries take no args; gate on the Clerk → Convex member resolving so we
   // don't fire them while signed out (they would throw), mirroring the other dashboard pages.
-  const convexUser = useQuery(
-    gateway.identity.byClerkId,
-    user?.id ? { clerkId: user.id } : "skip",
+  const { data: convexUser } = useQuery(
+    convexQuery(
+      gateway.identity.byClerkId,
+      user?.id ? { clerkId: user.id } : "skip",
+    ),
   );
   const ready = convexUser?._id ? {} : "skip";
 
-  const stats = useQuery(gateway.insights.personalStats, ready) as
-    | PersonalStats
-    | undefined;
-  const trends = useQuery(gateway.insights.completionTrends, ready) as
-    | CompletionTrendPoint[]
-    | undefined;
-  const breakdown = useQuery(gateway.insights.collectionBreakdown, ready) as
-    | CollectionBreakdownData
-    | undefined;
-  const trades = useQuery(gateway.insights.tradeActivity, ready) as
-    | TradeActivityData
-    | undefined;
+  const stats = useQuery(convexQuery(gateway.insights.personalStats, ready))
+    .data as PersonalStats | undefined;
+  const trends = useQuery(convexQuery(gateway.insights.completionTrends, ready))
+    .data as CompletionTrendPoint[] | undefined;
+  const breakdown = useQuery(
+    convexQuery(gateway.insights.collectionBreakdown, ready),
+  ).data as CollectionBreakdownData | undefined;
+  const trades = useQuery(convexQuery(gateway.insights.tradeActivity, ready))
+    .data as TradeActivityData | undefined;
 
   if (
     !user ||

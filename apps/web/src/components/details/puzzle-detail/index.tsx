@@ -3,7 +3,8 @@
 import { Image } from "@/compat/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { gateway, Id } from "@/gateway";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Grid } from "lucide-react";
 import { useTranslations } from "use-intl";
 
@@ -41,11 +42,13 @@ export function PuzzleDetail({
 }: PuzzleDetailProps) {
   const t = useTranslations("puzzles");
 
-  const ownedPuzzle = useQuery(gateway.library.ownedWithCollectionStatus, {
-    ownedPuzzleId,
-  });
+  const { data: ownedPuzzle, isPending } = useQuery(
+    convexQuery(gateway.library.ownedWithCollectionStatus, {
+      ownedPuzzleId,
+    }),
+  );
 
-  if (ownedPuzzle === undefined) {
+  if (isPending || ownedPuzzle === undefined) {
     return <PageLoading message="Loading puzzle..." />;
   }
 

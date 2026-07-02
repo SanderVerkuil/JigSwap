@@ -10,7 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
-import { usePaginatedQuery, useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
+// sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
+import { usePaginatedQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { Plus, Search } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -49,7 +52,9 @@ function AddPuzzleChooserPage() {
 
   // The member's own not-yet-approved submissions — offered first so they can
   // acquire a copy of a puzzle they contributed before it is approved.
-  const mySubmissions = useQuery(gateway.catalog.myContributedPuzzles);
+  const { data: mySubmissions } = useQuery(
+    convexQuery(gateway.catalog.myContributedPuzzles, {}),
+  );
 
   // The full, paginated, approved catalogue with infinite scroll (mirrors
   // puzzle-client.tsx).

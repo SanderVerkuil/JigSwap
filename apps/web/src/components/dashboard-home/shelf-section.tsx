@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import { BookOpen, ChevronRight } from "lucide-react";
 import { useMemo } from "react";
@@ -95,19 +96,22 @@ export function ShelfSection() {
   const isMobile = useIsMobile();
   const { member, isMemberLoading } = useCurrentMember();
 
-  const copies = useQuery(
-    gateway.library.ownedByOwner,
-    member?._id
-      ? { ownerId: member._id as Id<"users">, includeUnavailable: true }
-      : "skip",
+  const { data: copies } = useQuery(
+    convexQuery(
+      gateway.library.ownedByOwner,
+      member?._id
+        ? { ownerId: member._id as Id<"users">, includeUnavailable: true }
+        : "skip",
+    ),
   );
-  const stats = useQuery(
-    gateway.identity.userStats,
-    member?._id ? { userId: member._id as Id<"users"> } : "skip",
+  const { data: stats } = useQuery(
+    convexQuery(
+      gateway.identity.userStats,
+      member?._id ? { userId: member._id as Id<"users"> } : "skip",
+    ),
   );
-  const exchanges = useQuery(
-    gateway.exchange.forUser,
-    member?._id ? {} : "skip",
+  const { data: exchanges } = useQuery(
+    convexQuery(gateway.exchange.forUser, member?._id ? {} : "skip"),
   );
 
   // Memoized so the 3D plank's color-resolution effect doesn't re-run on every

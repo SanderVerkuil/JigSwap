@@ -1,3 +1,4 @@
+// sanctioned convex/react exception: useConvexAuth (see tanstack-query migration spec)
 import { useConvexAuth } from "convex/react";
 
 // Target for the "Start trading" CTAs on the marketing site: a signed-in member goes straight to

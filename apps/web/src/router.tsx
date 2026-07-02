@@ -25,6 +25,17 @@ export function getRouter() {
       queries: {
         queryKeyHashFn: convexQueryClient.hashFn(),
         queryFn: convexQueryClient.queryFn(),
+        // WHY Infinity: the bridge holds a live Convex subscription per cached query and
+        // pushes every new server result straight into this cache, so data is never
+        // stale and never needs refetch-on-mount/focus. The @convex-dev/react-query
+        // README: "New query results are pushed from the server, so a staleTime of
+        // Infinity should be used." (convexQuery() also sets it per-site; this default
+        // covers anything routed through the global queryFn without the factory.)
+        staleTime: Infinity,
+        // gcTime deliberately stays at the TanStack default (5 min): the README
+        // prescribes no value, only that it controls how long the Convex subscription
+        // outlives the last unmounted useQuery — 5 min keeps remounts (tab switches,
+        // navigation) rendering instantly from live cache instead of flashing loading.
       },
     },
   });

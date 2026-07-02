@@ -15,7 +15,8 @@ import { StarRating } from "@/components/ui/star-rating";
 import { Textarea } from "@/components/ui/textarea";
 import type { Id } from "@/gateway";
 import { gateway } from "@/gateway";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { ConvexError } from "convex/values";
 import { CheckCircle, Star } from "lucide-react";
 import { useState } from "react";
@@ -52,11 +53,15 @@ export function LeaveReviewDialog({
   revieweeName,
 }: LeaveReviewDialogProps) {
   const t = useTranslations("reputation");
-  const submitReview = useMutation(gateway.reputation.submitReview);
+  const submitReview = useMutation({
+    mutationFn: useConvexMutation(gateway.reputation.submitReview),
+  });
 
-  const existingReview = useQuery(
-    gateway.reputation.myReviewForExchange,
-    exchangeId ? { exchangeId } : "skip",
+  const { data: existingReview } = useQuery(
+    convexQuery(
+      gateway.reputation.myReviewForExchange,
+      exchangeId ? { exchangeId } : "skip",
+    ),
   );
 
   const [open, setOpen] = useState(false);
@@ -68,7 +73,6 @@ export function LeaveReviewDialog({
     timeliness: 0,
   });
   const [comment, setComment] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
   // Legacy rows without an aggregateId, or a missing counterparty, can't be reviewed.
   const canReview = Boolean(exchangeId && revieweeId);
@@ -97,9 +101,8 @@ export function LeaveReviewDialog({
 
   const handleSubmit = async () => {
     if (!exchangeId || !revieweeId || !allFilled) return;
-    setSubmitting(true);
     try {
-      await submitReview({
+      await submitReview.mutateAsync({
         exchangeId,
         revieweeId,
         rating,
@@ -137,8 +140,6 @@ export function LeaveReviewDialog({
         default:
           toast.error(t("errors.generic"));
       }
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -207,12 +208,15 @@ export function LeaveReviewDialog({
           <Button
             variant="ghost"
             onClick={() => setOpen(false)}
-            disabled={submitting}
+            disabled={submitReview.isPending}
           >
             {t("cancel")}
           </Button>
-          <Button onClick={handleSubmit} disabled={!allFilled || submitting}>
-            {submitting ? t("submitting") : t("submitReview")}
+          <Button
+            onClick={handleSubmit}
+            disabled={!allFilled || submitReview.isPending}
+          >
+            {submitReview.isPending ? t("submitting") : t("submitReview")}
           </Button>
         </DialogFooter>
       </DialogContent>

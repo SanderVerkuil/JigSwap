@@ -1,21 +1,24 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
-import { useMutation } from "convex/react";
+import { useConvexMutation } from "@convex-dev/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "use-intl";
 
 export function DocHelpful({ slug }: { slug: string }) {
-  const submit = useMutation(gateway.docs.submitFeedback);
+  const submit = useMutation({
+    mutationFn: useConvexMutation(gateway.docs.submitFeedback),
+  });
   const locale = useLocale();
   const t = useTranslations("marketing.docs");
   const [state, setState] = React.useState<"idle" | "negative" | "done">(
     "idle",
   );
   const [comment, setComment] = React.useState("");
-  const [sending, setSending] = React.useState(false);
+  const sending = submit.isPending;
 
   const vote = async (helpful: boolean) => {
     if (!helpful) {
@@ -23,24 +26,20 @@ export function DocHelpful({ slug }: { slug: string }) {
       return;
     }
     if (sending) return;
-    setSending(true);
     try {
-      await submit({ slug, helpful: true, locale });
+      await submit.mutateAsync({ slug, helpful: true, locale });
       setState("done");
       toast.success(t("helpfulThanks"));
     } catch {
       // Keep the buttons usable so the reader can retry.
       toast.error(t("helpfulError"));
-    } finally {
-      setSending(false);
     }
   };
 
   const sendNegative = async () => {
     if (sending) return;
-    setSending(true);
     try {
-      await submit({
+      await submit.mutateAsync({
         slug,
         helpful: false,
         comment: comment.trim() || undefined,
@@ -50,8 +49,6 @@ export function DocHelpful({ slug }: { slug: string }) {
       toast.success(t("helpfulThanksNegative"));
     } catch {
       toast.error(t("helpfulError"));
-    } finally {
-      setSending(false);
     }
   };
 

@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Save } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -38,37 +39,26 @@ export function EditProfileForm({
 }) {
   const t = useTranslations("profile");
   const { user } = useUser();
-  const updateProfile = useMutation(gateway.identity.updateProfile);
-  const setProfileVisibility = useMutation(gateway.social.setProfileVisibility);
+  const updateProfile = useConvexMutation(gateway.identity.updateProfile);
+  const setProfileVisibility = useMutation({
+    mutationFn: useConvexMutation(gateway.social.setProfileVisibility),
+  });
 
   // The visibility setting lives on the Social profile (separate from the identity account fields
   // above). Treat an absent profile/value as the "public" default.
-  const socialProfile = useQuery(gateway.social.profile, {});
+  const { data: socialProfile } = useQuery(
+    convexQuery(gateway.social.profile, {}),
+  );
   const isPrivate = socialProfile?.visibility === "private";
 
   const [username, setUsername] = useState(member.username ?? "");
   const [location, setLocation] = useState(member.location ?? "");
   const [bio, setBio] = useState(member.bio ?? "");
-  const [saving, setSaving] = useState(false);
-  const [visibilitySaving, setVisibilitySaving] = useState(false);
 
-  const handleVisibilityChange = async (nextPrivate: boolean) => {
-    setVisibilitySaving(true);
-    try {
-      await setProfileVisibility({
-        visibility: nextPrivate ? "private" : "public",
-      });
-      toast.success(t("saved"));
-    } catch {
-      toast.error(t("saveError"));
-    } finally {
-      setVisibilitySaving(false);
-    }
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
+  // The WHOLE save — the Clerk username update AND the Convex profile write — runs as one
+  // mutationFn so isPending spans both steps with no gap (busy-state rule v2).
+  const saveProfile = useMutation({
+    mutationFn: async () => {
       // Username -> Clerk (the source of truth); the user.updated webhook mirrors
       // it into the Convex `users` cache. Only call when it actually changed.
       const nextUsername = username.trim();
@@ -80,12 +70,24 @@ export function EditProfileForm({
         location: location.trim() || undefined,
         bio: bio.trim() || undefined,
       });
+    },
+    onSuccess: () => {
       toast.success(t("saved"));
       onDone();
-    } catch (err) {
+    },
+    onError: (err) => {
       toast.error(clerkErrorMessage(err) ?? t("saveError"));
-    } finally {
-      setSaving(false);
+    },
+  });
+
+  const handleVisibilityChange = async (nextPrivate: boolean) => {
+    try {
+      await setProfileVisibility.mutateAsync({
+        visibility: nextPrivate ? "private" : "public",
+      });
+      toast.success(t("saved"));
+    } catch {
+      toast.error(t("saveError"));
     }
   };
 
@@ -129,17 +131,26 @@ export function EditProfileForm({
         <Switch
           id="profile-visibility"
           checked={isPrivate}
-          disabled={visibilitySaving || socialProfile === undefined}
+          disabled={
+            setProfileVisibility.isPending || socialProfile === undefined
+          }
           onCheckedChange={handleVisibilityChange}
           aria-label={t("visibility.label")}
         />
       </div>
       <div className="flex gap-2 sm:col-span-2">
-        <Button onClick={handleSave} disabled={saving}>
+        <Button
+          onClick={() => saveProfile.mutate()}
+          disabled={saveProfile.isPending}
+        >
           <Save aria-hidden />
-          {saving ? t("saving") : t("save")}
+          {saveProfile.isPending ? t("saving") : t("save")}
         </Button>
-        <Button variant="outline" onClick={onDone} disabled={saving}>
+        <Button
+          variant="outline"
+          onClick={onDone}
+          disabled={saveProfile.isPending}
+        >
           {t("cancel")}
         </Button>
       </div>

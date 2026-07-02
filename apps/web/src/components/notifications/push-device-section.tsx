@@ -8,11 +8,24 @@ import {
   unsubscribeFromPush,
   withTimeout,
 } from "@/lib/web-push";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { BellOff, BellRing, Smartphone } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
+
+// A subscribe that never fires: with `useSyncExternalStore` this yields the client snapshot on the
+// first client render and the server snapshot during SSR — the canonical hydration-safe way to read
+// browser-only values without a mount effect.
+const emptySubscribe = () => () => {};
+
+// Snapshot of the browser's notification permission. Re-read on every render (the store never
+// pushes), so it refreshes whenever something else re-renders the component — e.g. the enable
+// mutation settling after `Notification.requestPermission()` resolves.
+const getPermissionSnapshot = (): NotificationPermission | null =>
+  typeof Notification !== "undefined" ? Notification.permission : null;
+const getServerPermissionSnapshot = () => null;
 
 // Per-device Web Push control: a browser subscription is global to this device, separate from the
 // per-type push preference toggles (which decide WHICH notifications go to push). This card-free
@@ -21,21 +34,28 @@ import { useTranslations } from "use-intl";
 // subscription. The UI follows the ACTUAL browser subscription; the server sync is best-effort.
 export function PushDeviceSection() {
   const t = useTranslations("notifications");
-  const pushConfig = useQuery(gateway.notifications.pushConfig, {}) as
-    | { vapidPublicKey: string | null }
-    | undefined;
-  const registerPush = useMutation(gateway.notifications.registerPush);
-  const unregisterPush = useMutation(gateway.notifications.unregisterPush);
+  const pushConfig = useQuery(convexQuery(gateway.notifications.pushConfig, {}))
+    .data as { vapidPublicKey: string | null } | undefined;
+  const registerPush = useConvexMutation(gateway.notifications.registerPush);
+  const unregisterPush = useConvexMutation(
+    gateway.notifications.unregisterPush,
+  );
 
   // `mounted` defers all browser-only reads (pushSupported, Notification.permission, the existing
   // subscription) to the client, so the server render and first client render agree (no hydration
-  // mismatch) and we never touch `Notification`/`navigator` during SSR.
-  const [mounted, setMounted] = useState(false);
-  const [endpoint, setEndpoint] = useState<string | null>(null);
-  const [permission, setPermission] = useState<NotificationPermission | null>(
-    null,
+  // mismatch) and we never touch `Notification`/`navigator` during SSR. false during SSR/hydration,
+  // true from the first client render after.
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
   );
-  const [busy, setBusy] = useState(false);
+  const [endpoint, setEndpoint] = useState<string | null>(null);
+  const permission = useSyncExternalStore(
+    emptySubscribe,
+    getPermissionSnapshot,
+    getServerPermissionSnapshot,
+  );
   const supported = mounted && pushSupported();
 
   // Re-read the SOURCE OF TRUTH — does this browser actually hold a push subscription — and reflect
@@ -47,20 +67,21 @@ export function PushDeviceSection() {
       .catch(() => setEndpoint(null));
   };
 
+  // Seed the endpoint from the browser's actual subscription once, on the client.
   useEffect(() => {
-    setMounted(true);
     if (!pushSupported()) return;
-    setPermission(Notification.permission);
     currentSubscriptionEndpoint()
       .then(setEndpoint)
       .catch(() => {});
   }, []);
 
-  const enable = async () => {
-    setBusy(true);
-    try {
+  // The WHOLE enable flow — permission prompt, browser PushManager subscribe, server register —
+  // runs as one mutationFn so isPending spans the entire sequence natively (busy-state rule v2).
+  const enableDevice = useMutation({
+    mutationFn: async () => {
+      // `permission` (the useSyncExternalStore snapshot above) picks the new value up on the
+      // re-render this mutation triggers when it settles — no manual setState needed.
       const perm = await Notification.requestPermission();
-      setPermission(perm);
       if (perm !== "granted") return;
       const key = pushConfig?.vapidPublicKey;
       if (!key) return;
@@ -75,7 +96,8 @@ export function PushDeviceSection() {
       await withTimeout(registerPush(payload), 15000, "register subscription");
       console.log("[push] done");
       toast.success(t("pushEnabled"));
-    } catch (error) {
+    },
+    onError: (error) => {
       // Surface the real cause: the subscribe pipeline (permission → SW activation → PushManager)
       // has many failure points, and a silent generic toast made them undiagnosable. A hung
       // PushManager.subscribe means the browser couldn't reach its push backend (FCM/Mozilla) —
@@ -88,30 +110,30 @@ export function PushDeviceSection() {
           ? t("pushServiceUnreachable")
           : `${t("pushError")}: ${msg}`,
       );
-    } finally {
-      // Always reconcile with the real browser state, whatever happened above.
-      syncFromBrowser();
-      setBusy(false);
-    }
-  };
+    },
+    // Always reconcile with the real browser state, whatever happened above.
+    onSettled: () => syncFromBrowser(),
+  });
 
-  const disable = async () => {
-    setBusy(true);
-    try {
+  // Same treatment for disable: browser unsubscribe + server unregister as one span.
+  const disableDevice = useMutation({
+    mutationFn: async () => {
       // Unsubscribe in the browser (the truth) and flip the UI before the server cleanup, so a
       // failing unregister can't leave the device stuck "on".
       const ep = await unsubscribeFromPush();
       setEndpoint(null);
       if (ep) await unregisterPush({ endpoint: ep });
       toast.success(t("pushDisabled"));
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error("[push] disable failed:", error);
       toast.error(`${t("pushError")}: ${errorMessage(error)}`);
-    } finally {
-      syncFromBrowser();
-      setBusy(false);
-    }
-  };
+    },
+    onSettled: () => syncFromBrowser(),
+  });
+
+  // Shared disable across both actions, matching the old single busy flag.
+  const busy = enableDevice.isPending || disableDevice.isPending;
 
   const loading = pushConfig === undefined;
   const configured = pushConfig?.vapidPublicKey != null;
@@ -134,7 +156,12 @@ export function PushDeviceSection() {
           <BellRing className="text-jigsaw-secondary h-4 w-4" />
           {t("pushEnabledOnDevice")}
         </span>
-        <Button variant="outline" size="sm" disabled={busy} onClick={disable}>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={busy}
+          onClick={() => disableDevice.mutate()}
+        >
           {t("pushDisable")}
         </Button>
       </>
@@ -146,7 +173,12 @@ export function PushDeviceSection() {
           <BellOff className="h-4 w-4" />
           {t("pushDeviceDesc")}
         </span>
-        <Button variant="brand" size="sm" disabled={busy} onClick={enable}>
+        <Button
+          variant="brand"
+          size="sm"
+          disabled={busy}
+          onClick={() => enableDevice.mutate()}
+        >
           {t("pushEnable")}
         </Button>
       </>
