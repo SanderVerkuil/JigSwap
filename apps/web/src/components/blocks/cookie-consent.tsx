@@ -9,6 +9,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  readAnalyticsConsent,
+  writeAnalyticsConsent,
+} from "@/lib/analytics-consent";
 import { cn } from "@/lib/utils";
 import { Cookie } from "lucide-react";
 import * as React from "react";
@@ -47,16 +51,19 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
 
     const handleAccept = React.useCallback(() => {
       setIsOpen(false);
-      document.cookie =
-        "cookieConsent=true; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+      writeAnalyticsConsent("granted");
       setTimeout(() => {
         setHide(true);
       }, 700);
       onAcceptCallback();
     }, [onAcceptCallback]);
 
+    // Declines are persisted too, so analytics stays off on every future visit
+    // and the banner doesn't nag again (the privacy policy promises declined
+    // analytics is never loaded).
     const handleDecline = React.useCallback(() => {
       setIsOpen(false);
+      writeAnalyticsConsent("denied");
       setTimeout(() => {
         setHide(true);
       }, 700);
@@ -66,7 +73,7 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
     React.useEffect(() => {
       try {
         setIsOpen(true);
-        if (document.cookie.includes("cookieConsent=true") && !demo) {
+        if (readAnalyticsConsent(document.cookie) !== "unset" && !demo) {
           setIsOpen(false);
           setTimeout(() => {
             setHide(true);

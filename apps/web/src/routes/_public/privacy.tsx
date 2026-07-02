@@ -15,8 +15,7 @@ export const Route = createFileRoute("/_public/privacy")({
 });
 
 // Privacy policy in the marketing LegalDoc layout (sticky TOC + reading
-// column). The `privacy` catalog holds real copy tailored to what JigSwap does;
-// [OWNER TO CONFIRM: …] tokens mark details only the owner can fill in.
+// column). The `privacy` catalog holds real copy tailored to what JigSwap does.
 function PrivacyPolicyPage() {
   const t = useTranslations("privacy");
   const tm = useTranslations("marketing.legal");
@@ -67,6 +66,8 @@ function PrivacyPolicyPage() {
         { type: "p", text: t("dataStorage.convex.description") },
         { type: "sub", text: t("dataStorage.clerk.title") },
         { type: "p", text: t("dataStorage.clerk.description") },
+        { type: "sub", text: t("dataStorage.vercel.title") },
+        { type: "p", text: t("dataStorage.vercel.description") },
       ],
     },
     {
@@ -152,13 +153,20 @@ function PrivacyPolicyPage() {
         sections={sections}
       >
         {t("contact.description")}{" "}
+        <a
+          href={`mailto:${t("contact.emailAddress")}`}
+          className="text-mk-violet-600 font-medium hover:underline"
+        >
+          {t("contact.emailAddress")}
+        </a>
+        . {t("contact.formNote")}{" "}
         <Link
           href="/contact"
           className="text-mk-violet-600 font-medium hover:underline"
         >
           {t("contact.linkLabel")}
         </Link>
-        . {t("contact.emailNote")}
+        .
       </LegalDoc>
     </main>
   );

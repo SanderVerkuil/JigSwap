@@ -898,7 +898,7 @@
     "title": "Privacy Policy",
     "lastUpdated": "Last Updated",
     "effectiveDate": "2 July 2026",
-    "introduction": "This Privacy Policy explains what personal data JigSwap collects, why we collect it, and what your rights are. JigSwap is run by [OWNER TO CONFIRM: legal name of the operator], who is the controller for the processing described here. We aim to collect as little as possible and to be transparent about the rest.",
+    "introduction": "This Privacy Policy explains what personal data JigSwap collects, why we collect it, and what your rights are. JigSwap is run by Sander Verkuil, who is the controller for the processing described here. We aim to collect as little as possible and to be transparent about the rest.",
     "informationWeCollect": {
       "title": "Information We Collect",
       "description": "We collect information you give us directly, plus a limited amount of information collected automatically while you use JigSwap.",
@@ -916,7 +916,7 @@
       "automaticallyCollected": {
         "title": "Collected automatically",
         "items": [
-          "Product analytics events, such as pages visited and features used (via PostHog)",
+          "Product analytics events, such as pages visited and features used (via PostHog, only after you accept the cookie notice)",
           "Error reports and operational logs used to keep the service running",
           "Your language preference and cookie-notice choice, stored in cookies",
           "A push notification subscription — only if you turn push notifications on"
@@ -948,14 +948,18 @@
     },
     "dataStorage": {
       "title": "Where Your Data Lives",
-      "description": "JigSwap does not run its own servers. Your data is stored with a small number of service providers:",
+      "description": "JigSwap does not run its own servers. Your data is stored in the European Union with a small number of service providers:",
       "convex": {
         "title": "Convex",
-        "description": "Our database and file storage. Your library, exchanges, messages, and uploaded photos are stored in Convex."
+        "description": "Our database and file storage, on Convex's EU hosting. Your library, exchanges, messages, and uploaded photos are stored in the European Union."
       },
       "clerk": {
         "title": "Clerk",
-        "description": "Our authentication provider. Clerk stores your sign-in credentials and core account details (name, email address, avatar) and handles signing in. When you delete your account, Clerk notifies us and we remove your account record."
+        "description": "Our authentication provider, with EU data residency. Clerk stores your sign-in credentials and core account details (name, email address, avatar) and handles signing in. When you delete your account, Clerk notifies us and we remove your account record."
+      },
+      "vercel": {
+        "title": "Vercel",
+        "description": "Our hosting provider. The JigSwap web application is served through Vercel's global edge network. Vercel delivers the site to your browser; your personal data itself lives in the EU-hosted services above."
       }
     },
     "photos": {
@@ -972,7 +976,7 @@
       "description": "We use analytics to understand how JigSwap is used and to catch errors before they spoil the fun.",
       "posthog": {
         "title": "PostHog",
-        "description": "We use PostHog, hosted in the European Union, for product analytics and error reporting. Analytics requests are routed through our own domain. This data is used only to improve JigSwap."
+        "description": "We use PostHog, hosted in the European Union, for product analytics and error reporting. Analytics requests are routed through our own domain. PostHog only starts after you accept the cookie notice — if you decline, it is never loaded. This data is used only to improve JigSwap."
       },
       "noAdvertising": "We do not show ads, we do not use your data for advertising, and we never sell your data."
     },
@@ -982,7 +986,7 @@
       "noSale": "We do not sell, rent, or trade your personal data. Ever.",
       "limitedSharing": "Data is shared only in these cases:",
       "circumstances": [
-        "With the providers named in this policy, as processors on our behalf: Convex (database and files), Clerk (sign-in), PostHog (analytics and error reporting), Axiom (operational logs, EU-hosted), and Hugging Face (automated photo screening)",
+        "With the providers named in this policy, as processors on our behalf: Convex (database and files), Clerk (sign-in), Vercel (hosting), PostHog (analytics and error reporting), Axiom (operational logs, EU-hosted), and Hugging Face (automated photo screening)",
         "With other members, to the extent you choose — your profile and the parts of your library you share are visible according to your settings",
         "When the law requires it, or to protect the service and its members against fraud or abuse",
         "For anything else: only with your explicit consent"
@@ -1017,9 +1021,9 @@
         "Sign-in cookies from Clerk that keep you logged in (strictly necessary)",
         "A language cookie that remembers your English/Dutch preference",
         "A cookie that remembers that you have seen the cookie notice",
-        "Analytics identifiers from PostHog, stored in cookies and local storage, to tell visits apart"
+        "Analytics identifiers from PostHog, stored in cookies and local storage — only after you accept the cookie notice"
       ],
-      "control": "You can block or delete cookies in your browser settings. JigSwap keeps working, though you will need to sign in again and your preferences may reset."
+      "control": "Analytics is opt-in: it only runs after you accept the cookie notice, and declining means it is never loaded. You can also block or delete cookies in your browser settings; JigSwap keeps working, though you will need to sign in again and your preferences may reset."
     },
     "cookieConsent": {
       "title": "We use cookies",
@@ -1035,7 +1039,7 @@
     },
     "international": {
       "title": "International Data Transfers",
-      "description": "We prefer EU-hosted providers where we can: PostHog and Axiom process data in the European Union. Convex and Clerk are US-based companies, so some data may be processed outside the EU/EEA. Where that happens, transfers take place under the safeguards those providers offer for GDPR compliance, such as the EU standard contractual clauses."
+      "description": "Your personal data is stored in the European Union: we use the EU-hosted variants of Convex, Clerk, PostHog, and Axiom. Our hosting provider Vercel serves the website through a global edge network, so requests may pass through servers outside the EU on their way to you, but the personal data itself stays stored in the EU. Where a provider processes limited data outside the EU/EEA, transfers take place under GDPR safeguards such as the EU standard contractual clauses."
     },
     "changes": {
       "title": "Changes to This Policy",
@@ -1043,16 +1047,17 @@
     },
     "contact": {
       "title": "Contact",
-      "description": "Questions about privacy or your data? The easiest way to reach us is the",
-      "linkLabel": "contact form",
-      "emailNote": "You can also email [OWNER TO CONFIRM: contact email]."
+      "description": "Questions about privacy or your data? Email us at",
+      "emailAddress": "privacy@jigswap.site",
+      "formNote": "You can also use the",
+      "linkLabel": "contact form"
     }
   },
   "terms": {
     "title": "Terms of Service",
     "lastUpdated": "Last Updated",
     "effectiveDate": "2 July 2026",
-    "introduction": "These Terms of Service ('Terms') govern your use of JigSwap, a community platform for jigsaw puzzle enthusiasts, run by [OWNER TO CONFIRM: legal name of the operator]. JigSwap is a hobby project, not a commercial marketplace. By creating an account or using JigSwap, you agree to these Terms.",
+    "introduction": "These Terms of Service ('Terms') govern your use of JigSwap, a community platform for jigsaw puzzle enthusiasts, run by Sander Verkuil. JigSwap is a hobby project, not a commercial marketplace. By creating an account or using JigSwap, you agree to these Terms.",
     "acceptance": {
       "title": "Acceptance of Terms",
       "description": "By accessing or using JigSwap you agree to be bound by these Terms. If you do not agree with any part of them, please do not use the service."
@@ -1144,9 +1149,10 @@
     },
     "contact": {
       "title": "Contact",
-      "description": "Questions about these Terms? The easiest way to reach us is the",
-      "linkLabel": "contact form",
-      "emailNote": "You can also email [OWNER TO CONFIRM: contact email]."
+      "description": "Questions about these Terms? Email us at",
+      "emailAddress": "legal@jigswap.site",
+      "formNote": "You can also use the",
+      "linkLabel": "contact form"
     }
   },
   "about": {

@@ -1,6 +1,6 @@
 import CookieConsent from "@/components/blocks/cookie-consent";
 import { PostHogPageView } from "@/components/posthog-page-view";
-import { PostHogProvider } from "@/components/posthog-provider";
+import { initPostHog, PostHogProvider } from "@/components/posthog-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { type Messages, timeZone } from "@/lib/i18n";
 import { ThemeProvider } from "next-themes";
@@ -29,7 +29,9 @@ export function Providers({
       >
         <PostHogProvider>
           {children}
-          <CookieConsent variant="mini" />
+          {/* Accepting the notice starts analytics right away (no reload);
+              PostHogProvider only auto-inits when consent was already granted. */}
+          <CookieConsent variant="mini" onAcceptCallback={initPostHog} />
           <PostHogPageView />
           <Toaster />
         </PostHogProvider>

@@ -898,7 +898,7 @@
     "title": "Privacybeleid",
     "lastUpdated": "Laatst bijgewerkt",
     "effectiveDate": "2 juli 2026",
-    "introduction": "Dit privacybeleid legt uit welke persoonsgegevens JigSwap verzamelt, waarom we dat doen en welke rechten je hebt. JigSwap wordt beheerd door [OWNER TO CONFIRM: legal name of the operator], die de verwerkingsverantwoordelijke is voor de verwerking die hier wordt beschreven. We willen zo min mogelijk verzamelen en transparant zijn over de rest.",
+    "introduction": "Dit privacybeleid legt uit welke persoonsgegevens JigSwap verzamelt, waarom we dat doen en welke rechten je hebt. JigSwap wordt beheerd door Sander Verkuil, die de verwerkingsverantwoordelijke is voor de verwerking die hier wordt beschreven. We willen zo min mogelijk verzamelen en transparant zijn over de rest.",
     "informationWeCollect": {
       "title": "Welke gegevens we verzamelen",
       "description": "We verzamelen gegevens die je ons zelf geeft, plus een beperkte hoeveelheid gegevens die automatisch wordt verzameld terwijl je JigSwap gebruikt.",
@@ -916,7 +916,7 @@
       "automaticallyCollected": {
         "title": "Automatisch verzameld",
         "items": [
-          "Productanalyse-events, zoals bezochte pagina's en gebruikte functies (via PostHog)",
+          "Productanalyse-events, zoals bezochte pagina's en gebruikte functies (via PostHog, alleen nadat je de cookiemelding hebt geaccepteerd)",
           "Foutrapportages en operationele logs om de dienst draaiend te houden",
           "Je taalvoorkeur en je keuze bij de cookiemelding, opgeslagen in cookies",
           "Een pushnotificatie-abonnement — alleen als je pushmeldingen aanzet"
@@ -948,14 +948,18 @@
     },
     "dataStorage": {
       "title": "Waar je gegevens staan",
-      "description": "JigSwap heeft geen eigen servers. Je gegevens staan bij een klein aantal dienstverleners:",
+      "description": "JigSwap heeft geen eigen servers. Je gegevens worden in de Europese Unie opgeslagen bij een klein aantal dienstverleners:",
       "convex": {
         "title": "Convex",
-        "description": "Onze database en bestandsopslag. Je bibliotheek, uitwisselingen, berichten en geüploade foto's worden opgeslagen in Convex."
+        "description": "Onze database en bestandsopslag, op de EU-hosting van Convex. Je bibliotheek, uitwisselingen, berichten en geüploade foto's worden opgeslagen in de Europese Unie."
       },
       "clerk": {
         "title": "Clerk",
-        "description": "Onze authenticatieprovider. Clerk bewaart je inloggegevens en basisaccountgegevens (naam, e-mailadres, avatar) en verzorgt het inloggen. Als je je account verwijdert, krijgen wij daar bericht van via Clerk en verwijderen we je accountrecord."
+        "description": "Onze authenticatieprovider, met EU-dataresidentie. Clerk bewaart je inloggegevens en basisaccountgegevens (naam, e-mailadres, avatar) en verzorgt het inloggen. Als je je account verwijdert, krijgen wij daar bericht van via Clerk en verwijderen we je accountrecord."
+      },
+      "vercel": {
+        "title": "Vercel",
+        "description": "Onze hostingprovider. De JigSwap-webapplicatie wordt geleverd via het wereldwijde edge-netwerk van Vercel. Vercel bezorgt de site bij je browser; je persoonsgegevens zelf staan in de EU-gehoste diensten hierboven."
       }
     },
     "photos": {
@@ -972,7 +976,7 @@
       "description": "We gebruiken analyse om te begrijpen hoe JigSwap wordt gebruikt en om fouten op te sporen voordat ze het plezier bederven.",
       "posthog": {
         "title": "PostHog",
-        "description": "We gebruiken PostHog, gehost in de Europese Unie, voor productanalyse en foutrapportage. Analyseverzoeken lopen via ons eigen domein. Deze gegevens gebruiken we alleen om JigSwap te verbeteren."
+        "description": "We gebruiken PostHog, gehost in de Europese Unie, voor productanalyse en foutrapportage. Analyseverzoeken lopen via ons eigen domein. PostHog start pas nadat je de cookiemelding hebt geaccepteerd — weiger je, dan wordt het nooit geladen. Deze gegevens gebruiken we alleen om JigSwap te verbeteren."
       },
       "noAdvertising": "We tonen geen advertenties, we gebruiken je gegevens niet voor reclame en we verkopen je gegevens nooit."
     },
@@ -982,7 +986,7 @@
       "noSale": "We verkopen, verhuren of verhandelen je persoonsgegevens niet. Nooit.",
       "limitedSharing": "Gegevens worden alleen in deze gevallen gedeeld:",
       "circumstances": [
-        "Met de dienstverleners uit dit beleid, als verwerkers namens ons: Convex (database en bestanden), Clerk (inloggen), PostHog (analyse en foutrapportage), Axiom (operationele logs, gehost in de EU) en Hugging Face (automatische fotocontrole)",
+        "Met de dienstverleners uit dit beleid, als verwerkers namens ons: Convex (database en bestanden), Clerk (inloggen), Vercel (hosting), PostHog (analyse en foutrapportage), Axiom (operationele logs, gehost in de EU) en Hugging Face (automatische fotocontrole)",
         "Met andere leden, voor zover jij dat kiest — je profiel en de delen van je bibliotheek die je deelt zijn zichtbaar volgens jouw instellingen",
         "Wanneer de wet dat vereist, of om de dienst en haar leden te beschermen tegen fraude of misbruik",
         "Voor al het andere: alleen met jouw uitdrukkelijke toestemming"
@@ -1017,9 +1021,9 @@
         "Inlogcookies van Clerk die je ingelogd houden (strikt noodzakelijk)",
         "Een taalcookie die je voorkeur voor Engels of Nederlands onthoudt",
         "Een cookie die onthoudt dat je de cookiemelding hebt gezien",
-        "Analyse-identifiers van PostHog, opgeslagen in cookies en local storage, om bezoeken uit elkaar te houden"
+        "Analyse-identifiers van PostHog, opgeslagen in cookies en local storage — alleen nadat je de cookiemelding hebt geaccepteerd"
       ],
-      "control": "Je kunt cookies blokkeren of verwijderen via je browserinstellingen. JigSwap blijft werken, al moet je dan opnieuw inloggen en kunnen je voorkeuren worden gereset."
+      "control": "Analyse is opt-in: die draait alleen nadat je de cookiemelding hebt geaccepteerd, en weiger je, dan wordt die nooit geladen. Je kunt cookies ook blokkeren of verwijderen via je browserinstellingen; JigSwap blijft werken, al moet je dan opnieuw inloggen en kunnen je voorkeuren worden gereset."
     },
     "cookieConsent": {
       "title": "We gebruiken cookies",
@@ -1035,7 +1039,7 @@
     },
     "international": {
       "title": "Internationale doorgifte van gegevens",
-      "description": "Waar mogelijk kiezen we dienstverleners die in de EU hosten: PostHog en Axiom verwerken gegevens in de Europese Unie. Convex en Clerk zijn Amerikaanse bedrijven, dus sommige gegevens kunnen buiten de EU/EER worden verwerkt. In dat geval vindt de doorgifte plaats onder de waarborgen die deze dienstverleners bieden voor AVG-naleving, zoals de EU-standaardcontractbepalingen."
+      "description": "Je persoonsgegevens worden opgeslagen in de Europese Unie: we gebruiken de EU-gehoste varianten van Convex, Clerk, PostHog en Axiom. Onze hostingprovider Vercel levert de website via een wereldwijd edge-netwerk, waardoor verzoeken onderweg servers buiten de EU kunnen passeren, maar de persoonsgegevens zelf blijven in de EU opgeslagen. Waar een dienstverlener beperkte gegevens buiten de EU/EER verwerkt, gebeurt de doorgifte onder AVG-waarborgen zoals de EU-standaardcontractbepalingen."
     },
     "changes": {
       "title": "Wijzigingen in dit beleid",
@@ -1043,16 +1047,17 @@
     },
     "contact": {
       "title": "Contact",
-      "description": "Vragen over privacy of je gegevens? Je bereikt ons het makkelijkst via het",
-      "linkLabel": "contactformulier",
-      "emailNote": "Je kunt ook mailen naar [OWNER TO CONFIRM: contact email]."
+      "description": "Vragen over privacy of je gegevens? Mail ons via",
+      "emailAddress": "privacy@jigswap.site",
+      "formNote": "Je kunt ook terecht bij het",
+      "linkLabel": "contactformulier"
     }
   },
   "terms": {
     "title": "Algemene Voorwaarden",
     "lastUpdated": "Laatst bijgewerkt",
     "effectiveDate": "2 juli 2026",
-    "introduction": "Deze algemene voorwaarden ('Voorwaarden') zijn van toepassing op je gebruik van JigSwap, een communityplatform voor legpuzzelliefhebbers, beheerd door [OWNER TO CONFIRM: legal name of the operator]. JigSwap is een hobbyproject, geen commerciële marktplaats. Door een account aan te maken of JigSwap te gebruiken ga je akkoord met deze Voorwaarden.",
+    "introduction": "Deze algemene voorwaarden ('Voorwaarden') zijn van toepassing op je gebruik van JigSwap, een communityplatform voor legpuzzelliefhebbers, beheerd door Sander Verkuil. JigSwap is een hobbyproject, geen commerciële marktplaats. Door een account aan te maken of JigSwap te gebruiken ga je akkoord met deze Voorwaarden.",
     "acceptance": {
       "title": "Akkoord met de Voorwaarden",
       "description": "Door JigSwap te bezoeken of te gebruiken ga je akkoord met deze Voorwaarden. Ben je het met een deel ervan niet eens, gebruik de dienst dan niet."
@@ -1144,9 +1149,10 @@
     },
     "contact": {
       "title": "Contact",
-      "description": "Vragen over deze Voorwaarden? Je bereikt ons het makkelijkst via het",
-      "linkLabel": "contactformulier",
-      "emailNote": "Je kunt ook mailen naar [OWNER TO CONFIRM: contact email]."
+      "description": "Vragen over deze Voorwaarden? Mail ons via",
+      "emailAddress": "legal@jigswap.site",
+      "formNote": "Je kunt ook terecht bij het",
+      "linkLabel": "contactformulier"
     }
   },
   "about": {
