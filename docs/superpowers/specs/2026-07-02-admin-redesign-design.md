@@ -78,6 +78,37 @@ Supersedes the categories portion above after the initial de-carding landed:
   search; drag-reorder must be disabled while a search filter is active (reordering a filtered
   subset is ambiguous).
 
+## TranslatableField + category polish (amendment, approved 2026-07-02)
+
+- **TranslatableField** (new, `apps/web/src/components/forms/translatable-field.tsx` +
+  `TranslatableFieldsProvider`): RHF-integrated control for `Record<locale, string>` values.
+  Per-field segmented locale toggle in the label row (user decision: per-field beats a single
+  header switch because presence dots are per-field information); selection is SYNCED across all
+  fields via provider context — every toggle renders the same state, so switching one visibly
+  flips all (self-revealing sync). All locales stay mounted (`hidden`, never unmounted) — no
+  data loss, hidden inputs untabbable. Locales sourced from `lib/i18n.ts`, overridable.
+- **Flags:** hand-inlined SVG components in new `ui/flag.tsx` (`FlagEn` 🇬🇧-style, `FlagNl`) —
+  emoji flags render as letter pairs on Windows/Linux Chrome; the flag-icons package is 500KB
+  for two locales. 16x12 in forms. Radix Tooltip with the language name on hover AND focus;
+  segments are a radiogroup (one tab stop, arrows between locales), aria-labels carry presence
+  ("English — translated/missing").
+- **Presence/error dots** on each segment: green (`--jigsaw-success`) dot = non-blank trimmed
+  value; nothing = absent + optional; destructive dot + `ring-destructive` = required-but-
+  missing/invalid after touch or submit attempt. Submit with an error in a non-visible locale
+  auto-switches to the first errored locale and focuses the field (`onInvalid` handler).
+- **Dialog layout:** name grid drops to full-width single fields (one locale visible at a
+  time): Name → Description → Color, `sm:max-w-md` unchanged.
+- **List rows:** name + description render the CURRENT UI locale only (muted duplicate span
+  removed); after the name, one small flag (w-3.5, opacity-50 hover:100) per other locale with
+  tooltip `Nederlands: "<translation>"`; missing translation = opacity-25 flag + "missing"
+  tooltip (visible gaps are the point of an admin QA surface).
+- **Name-derived color:** create mode only — djb2 hash of `name.en.trim().toLowerCase()` %
+  10 indexes `DEFAULT_COLOR_PRESETS`; live while typing until the user touches the picker
+  (`colorTouched`; edit mode counts as touched). An "Auto" chip on the ColorPicker trigger
+  communicates the behavior; disappears on first manual pick.
+- Follow-up recorded, not in scope: migrate `language-switcher.tsx` off emoji flags to
+  `ui/flag.tsx`.
+
 ## Moderation backend
 
 - **`moderationActions` table** (additive): `actorId` (`v.id("users")` or the literal `"system"`),
