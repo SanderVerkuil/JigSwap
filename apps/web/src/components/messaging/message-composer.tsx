@@ -7,28 +7,19 @@
 // messages clear themselves. PROVISIONAL layout per the design doc.
 
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
+import { conversationErrorCode } from "@/components/messaging/format";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
 import type { OptimisticUpdate } from "convex/browser";
 import { useMutation } from "convex/react";
 import type { FunctionArgs } from "convex/server";
-import { ConvexError } from "convex/values";
 import { Send } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
 
 // The Thread aggregate rejects longer bodies (ConvexError code MessageTooLong).
 const MAX_MESSAGE_LENGTH = 4000;
-
-// Pull the stable domain error code out of a mutation rejection.
-function conversationErrorCode(error: unknown): string | undefined {
-  if (error instanceof ConvexError) {
-    const data = error.data as { code?: unknown } | undefined;
-    if (data && typeof data.code === "string") return data.code;
-  }
-  return undefined;
-}
 
 type PostMessageArgs = FunctionArgs<typeof gateway.conversation.postMessage>;
 

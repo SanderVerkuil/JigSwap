@@ -116,14 +116,15 @@ export const gateway = {
       api.library.getCollectionsForOwnedPuzzle.getCollectionsForOwnedPuzzle,
   },
 
-  // Exchange (Trading): proposing, settling, and messaging on exchanges.
+  // Exchange (Trading): proposing and settling exchanges. Messaging on an exchange lives in the
+  // Conversation namespace below (the legacy per-exchange chat was backfilled into threads).
   // Writes go through the domain-driven exchange module (file.export namespacing);
   // these enforce party-auth and legal transitions in the aggregate.
   exchange: {
     create: api.exchange.propose.propose,
     // Reads go through thin Convex adapters that return typed view DTOs from @jigswap/contracts
-    // (ExchangeView / ExchangeSummaryView / ExchangeStatsView / ExchangeMessageView) rather than
-    // raw rows; party-visibility, ordering and the joins are preserved so the UI is unchanged.
+    // (ExchangeView / ExchangeSummaryView / ExchangeStatsView) rather than raw rows;
+    // party-visibility, ordering and the joins are preserved so the UI is unchanged.
     byId: api.exchange.getExchangeById.getExchangeById,
     forUser: api.exchange.getUserExchanges.getUserExchanges,
     incoming: api.exchange.getExchangesByOwner.getExchangesByOwner,
@@ -134,9 +135,6 @@ export const gateway = {
     cancel: api.exchange.cancel.cancel,
     dispute: api.exchange.raiseDispute.raiseDispute,
     stats: api.exchange.getExchangeStats.getExchangeStats,
-    // The write mutation stays on the legacy module (only reads are being cut over).
-    sendMessage: api.exchanges.sendExchangeMessage,
-    messages: api.exchange.getExchangeMessages.getExchangeMessages,
   },
 
   // Conversation: threads, DMs, exchange chat, inbox.

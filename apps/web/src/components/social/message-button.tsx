@@ -1,6 +1,7 @@
 "use client";
 
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
+import { conversationErrorCode } from "@/components/messaging/format";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -10,7 +11,6 @@ import {
 import { gateway, Id } from "@/gateway";
 import { useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
-import { ConvexError } from "convex/values";
 import { MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -46,10 +46,7 @@ export function MessageButton({
       const threadId = await openDmThread({ recipientId: memberId });
       await navigate({ to: "/messages/$threadId", params: { threadId } });
     } catch (error) {
-      const code =
-        error instanceof ConvexError
-          ? (error.data as { code?: unknown } | undefined)?.code
-          : undefined;
+      const code = conversationErrorCode(error);
       toast.error(code === "NotConnected" ? t("notConnected") : t("openError"));
     } finally {
       setPending(false);

@@ -1,11 +1,28 @@
+import { ConvexError } from "convex/values";
 import { describe, expect, it } from "vitest";
 import type { InboxThread } from "./format";
-import { formatUnreadCount, threadSubjectTitle } from "./format";
+import {
+  conversationErrorCode,
+  formatUnreadCount,
+  threadSubjectTitle,
+} from "./format";
 
 // Deterministic translator stub: bare key when no values, key + values when
 // interpolating — enough to assert both the key chosen and what was passed.
 const t = (key: string, values?: Record<string, string | number>) =>
   values ? `${key}:${Object.values(values).join("|")}` : key;
+
+describe("conversationErrorCode", () => {
+  it("extracts the code from a ConvexError carrying one", () => {
+    expect(
+      conversationErrorCode(new ConvexError({ code: "MessageTooLong" })),
+    ).toBe("MessageTooLong");
+  });
+
+  it("yields nothing for a non-ConvexError rejection", () => {
+    expect(conversationErrorCode(new Error("boom"))).toBeUndefined();
+  });
+});
 
 describe("formatUnreadCount", () => {
   it("renders counts below the cap verbatim", () => {

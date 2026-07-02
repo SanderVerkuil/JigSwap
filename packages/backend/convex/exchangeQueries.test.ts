@@ -7,7 +7,7 @@ import schema from "./schema";
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 // Alice (initiator) proposes a trade to Bob (recipient): she offers her copy of "Ocean Calm" for
-// his copy of "Mountain Vista". A second, newer exchange exercises ordering. Plus two messages.
+// his copy of "Mountain Vista". A second, newer exchange exercises ordering.
 const seed = async (t: ReturnType<typeof convexTest>) =>
   t.run(async (ctx) => {
     const now = Date.now();
@@ -94,25 +94,6 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
       status: "completed",
       createdAt: now,
       updatedAt: now,
-    });
-
-    await ctx.db.insert("messages", {
-      exchangeId: older,
-      senderId: alice,
-      receiverId: bob,
-      content: "first",
-      messageType: "text",
-      isRead: false,
-      createdAt: now - 500,
-    });
-    await ctx.db.insert("messages", {
-      exchangeId: older,
-      senderId: bob,
-      receiverId: alice,
-      content: "second",
-      messageType: "text",
-      isRead: false,
-      createdAt: now - 200,
     });
 
     return { alice, bob, older, newer };
@@ -391,19 +372,5 @@ describe("exchange.getExchangeStats", () => {
     expect(stats.proposed).toBe(1);
     expect(stats.completed).toBe(1);
     expect(stats.rejected).toBe(0);
-  });
-});
-
-describe("exchange.getExchangeMessages", () => {
-  test("returns messages oldest-first with resolved senders", async () => {
-    const t = convexTest(schema, modules);
-    const { older } = await seed(t);
-    const messages = await asAlice(t).query(
-      api.exchange.getExchangeMessages.getExchangeMessages,
-      { exchangeId: older },
-    );
-    expect(messages.map((m) => m.content)).toEqual(["first", "second"]);
-    expect(messages[0].sender?.name).toBe("Alice");
-    expect(messages[0].sender?.avatar).toBe("https://img/alice.png");
   });
 });
