@@ -670,6 +670,7 @@
     "selectConversationHint": "Kies een gesprek uit de lijst om te beginnen met chatten",
     "sendError": "Je bericht kon niet worden verzonden. Probeer het opnieuw.",
     "sendMessage": "Bericht Versturen",
+    "threadFallbackTitle": "Gesprek",
     "tooLong": "Dat bericht is te lang (maximaal 4.000 tekens).",
     "typeMessage": "Type je bericht...",
     "unreadCount": "{count, plural, one {# ongelezen bericht} other {# ongelezen berichten}}",

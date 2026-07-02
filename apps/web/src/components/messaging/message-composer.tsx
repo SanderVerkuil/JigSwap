@@ -110,6 +110,7 @@ export function MessageComposer({ threadId }: { threadId: string }) {
           }}
           onKeyDown={handleKeyDown}
           placeholder={t("typeMessage")}
+          aria-label={t("typeMessage")}
           maxLength={MAX_MESSAGE_LENGTH}
           rows={1}
           className="max-h-40 min-h-9 flex-1 resize-none"

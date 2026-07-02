@@ -12,40 +12,14 @@ import { gateway } from "@/gateway";
 import { useDateFnsLocale } from "@/lib/date-locale";
 import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
-import type { FunctionReturnType } from "convex/server";
 import { formatDistanceToNow } from "date-fns";
 import { ArrowLeftRight, MessageSquare, User } from "lucide-react";
 import { useTranslations } from "use-intl";
-
-// The web tier derives Convex view types from the gateway (not @jigswap/contracts directly).
-export type InboxThread = FunctionReturnType<
-  typeof gateway.conversation.getMyInbox
->[number];
-
-// A `useTranslations("messages")` translator, loosened so subject helpers can
-// be shared between the list and the thread header.
-type Translator = (
-  key: string,
-  values?: Record<string, string | number>,
-) => string;
-
-// A thread row's display title: the other member for a DM (an anonymised
-// member renders the app's anonymous label — never a real identity), or
-// "<Type>: <puzzle>" for an exchange thread.
-export function threadSubjectTitle(
-  subject: InboxThread["subject"],
-  t: Translator,
-): string {
-  if (subject.kind === "dm") {
-    return subject.otherMember.anonymous
-      ? t("anonymous")
-      : subject.otherMember.member.name;
-  }
-  return t("exchangeThread", {
-    type: t(`exchangeType.${subject.exchangeType}`),
-    title: subject.puzzleTitle ?? t("untitledPuzzle"),
-  });
-}
+import {
+  formatUnreadCount,
+  threadSubjectTitle,
+  type InboxThread,
+} from "./format";
 
 // Avatar chip for a thread subject: the member's avatar/initials for a
 // revealed DM partner, a generic person glyph for an anonymised one, and an
@@ -186,13 +160,18 @@ function ThreadRow({
           })}
         </span>
         {unread && (
-          <span
-            className="bg-primary text-primary-foreground inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[11px] font-bold"
-            aria-label={t("unreadCount", { count: thread.unreadCount })}
-          >
-            {/* The backend caps the per-thread count at 50 — 50 means "50 or more". */}
-            {thread.unreadCount >= 50 ? "50+" : thread.unreadCount}
-          </span>
+          <>
+            <span
+              aria-hidden
+              className="bg-primary text-primary-foreground inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[11px] font-bold"
+            >
+              {formatUnreadCount(thread.unreadCount)}
+            </span>
+            {/* Announced as part of the link text, so the visual pill stays aria-hidden. */}
+            <span className="sr-only">
+              {t("unreadCount", { count: thread.unreadCount })}
+            </span>
+          </>
         )}
       </div>
     </Link>

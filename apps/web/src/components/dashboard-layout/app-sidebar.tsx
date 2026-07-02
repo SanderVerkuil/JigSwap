@@ -8,6 +8,7 @@
 import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
+import { formatUnreadCount } from "@/components/messaging/format";
 import {
   Sidebar,
   SidebarContent,
@@ -77,9 +78,20 @@ export function AppSidebar() {
 
 function NavLink({ item }: { item: ShellNavItem }) {
   const t = useTranslations("shell");
+  const tMessages = useTranslations("messages");
   const pathname = usePathname();
   const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
   const title = t(`pages.${item.key}.title`);
+
+  // Live unread-messages total, subscribed for the Messages item only (every
+  // other item skips). The backend caps the value at 50, so 50 genuinely
+  // means "50 or more" and renders "50+".
+  const { member } = useCurrentMember();
+  const unread =
+    useQuery(
+      gateway.conversation.getUnreadTotal,
+      item.key === "messages" && member?._id ? {} : "skip",
+    ) ?? 0;
 
   return (
     <SidebarMenuItem>
@@ -87,29 +99,23 @@ function NavLink({ item }: { item: ShellNavItem }) {
         <Link href={item.href}>
           <item.icon />
           <span>{title}</span>
+          {unread > 0 && (
+            // Inside the link so screen readers announce the count with it;
+            // the visual pill below stays aria-hidden.
+            <span className="sr-only">
+              {tMessages("unreadCount", { count: unread })}
+            </span>
+          )}
         </Link>
       </SidebarMenuButton>
-      {item.key === "messages" && <MessagesUnreadBadge />}
+      {unread > 0 && (
+        <SidebarMenuBadge
+          aria-hidden
+          className="bg-jigsaw-primary-accent rounded-full text-white"
+        >
+          {formatUnreadCount(unread)}
+        </SidebarMenuBadge>
+      )}
     </SidebarMenuItem>
-  );
-}
-
-// Live unread-messages count on the Messages nav item. The backend caps the
-// total at 50, so a value of 50 genuinely means "50 or more" and reads "50+".
-function MessagesUnreadBadge() {
-  const t = useTranslations("messages");
-  const { member } = useCurrentMember();
-  const unread =
-    useQuery(gateway.conversation.getUnreadTotal, member?._id ? {} : "skip") ??
-    0;
-
-  if (unread === 0) return null;
-  return (
-    <SidebarMenuBadge
-      className="bg-jigsaw-primary-accent rounded-full text-white"
-      aria-label={t("unreadCount", { count: unread })}
-    >
-      {unread >= 50 ? "50+" : unread}
-    </SidebarMenuBadge>
   );
 }

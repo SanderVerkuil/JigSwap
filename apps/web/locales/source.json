@@ -670,6 +670,7 @@
     "selectConversationHint": "Choose a conversation from the list to start messaging",
     "sendError": "Your message couldn't be sent. Please try again.",
     "sendMessage": "Send Message",
+    "threadFallbackTitle": "Conversation",
     "tooLong": "That message is too long (4,000 characters max).",
     "typeMessage": "Type your message...",
     "unreadCount": "{count, plural, one {# unread message} other {# unread messages}}",

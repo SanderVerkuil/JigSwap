@@ -6,6 +6,9 @@
 // dedupes it with the list pane. PROVISIONAL layout per the design doc — all
 // data access lives in the messaging components so a designer pass can
 // restyle presentation only.
+//
+// TODO: only the newest page (50 messages) renders — the getThreadMessages
+// `before` cursor exists but a "load older messages" affordance is unbuilt.
 
 import { Link } from "@/compat/link";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
@@ -15,10 +18,19 @@ import { useMutation, useQuery } from "convex/react";
 import { ChevronLeft, MessageSquare } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useFormatter, useTranslations } from "use-intl";
+import { threadSubjectTitle } from "./format";
 import { MessageComposer } from "./message-composer";
-import { ThreadSubjectAvatar, threadSubjectTitle } from "./thread-list";
+import { ThreadSubjectAvatar } from "./thread-list";
 
-export function ThreadView({ threadId }: { threadId: string }) {
+export function ThreadView({
+  threadId,
+  // Task 11 (trades panel) embeds the view without the subject header/back
+  // affordance; the standalone /messages route keeps the default.
+  hideHeader = false,
+}: {
+  threadId: string;
+  hideHeader?: boolean;
+}) {
   const t = useTranslations("messages");
   const format = useFormatter();
   const { member } = useCurrentMember();
@@ -33,48 +45,88 @@ export function ThreadView({ threadId }: { threadId: string }) {
 
   const markThreadRead = useMutation(gateway.conversation.markThreadRead);
   const messageCount = messages?.length;
+  const newestAuthorId = messages?.at(-1)?.authorId;
+
+  // Per-thread one-shot flags, reset when navigating between threads.
+  const hasMarkedReadRef = useRef(false);
+  const hasScrolledRef = useRef(false);
   useEffect(() => {
-    // Mark read once the subscription has data and again whenever new
-    // messages land — never while loading or unauthenticated.
+    hasMarkedReadRef.current = false;
+    hasScrolledRef.current = false;
+  }, [threadId]);
+
+  useEffect(() => {
+    // Mark read once the subscription has data — never while loading or
+    // unauthenticated. After the initial receipt, skip changes whose newest
+    // message is our own (optimistic) send: only others' messages (including
+    // system messages, authorId null) create unread state.
     if (!me || messageCount === undefined) return;
+    if (hasMarkedReadRef.current && newestAuthorId === me) return;
+    hasMarkedReadRef.current = true;
     markThreadRead({ threadId }).catch(() => {
       // Non-fatal: the receipt catches up on the next message.
     });
-  }, [me, messageCount, threadId, markThreadRead]);
+  }, [me, messageCount, newestAuthorId, threadId, markThreadRead]);
 
-  const endRef = useRef<HTMLDivElement>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messageCount]);
+    // Scroll rule: jump instantly to the newest message on first load; after
+    // that, follow new messages only when the user is already near the bottom
+    // or the newest message is their own send — never yank someone who
+    // scrolled up to read history.
+    const scroller = scrollerRef.current;
+    if (!scroller || messageCount === undefined) return;
+    if (!hasScrolledRef.current) {
+      hasScrolledRef.current = true;
+      scroller.scrollTop = scroller.scrollHeight;
+      return;
+    }
+    const nearBottom =
+      scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 120;
+    if (nearBottom || newestAuthorId === me) {
+      scroller.scrollTo({ top: scroller.scrollHeight, behavior: "smooth" });
+    }
+  }, [messageCount, newestAuthorId, me]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {/* Thread header — back affordance to the inbox list on mobile only. */}
-      <div className="flex items-center gap-3 border-b pb-3">
-        <Link
-          href="/messages"
-          aria-label={t("backToInbox")}
-          className="hover:bg-accent -ml-2 inline-flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors md:hidden"
-        >
-          <ChevronLeft className="size-5" />
-        </Link>
-        {thread ? (
-          <>
-            <ThreadSubjectAvatar subject={thread.subject} />
+      {!hideHeader && (
+        <div className="flex items-center gap-3 border-b pb-3">
+          <Link
+            href="/messages"
+            aria-label={t("backToInbox")}
+            className="hover:bg-accent -ml-2 inline-flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors md:hidden"
+          >
+            <ChevronLeft className="size-5" />
+          </Link>
+          {inbox === undefined ? (
+            <div
+              className="bg-muted h-10 w-44 animate-pulse rounded"
+              aria-hidden
+            />
+          ) : thread ? (
+            <>
+              <ThreadSubjectAvatar subject={thread.subject} />
+              <p className="font-heading min-w-0 truncate text-base font-bold">
+                {threadSubjectTitle(thread.subject, t)}
+              </p>
+            </>
+          ) : (
+            // Inbox loaded but this thread isn't in it (e.g. a subject that no
+            // longer resolves) — a generic title beats an eternal skeleton.
             <p className="font-heading min-w-0 truncate text-base font-bold">
-              {threadSubjectTitle(thread.subject, t)}
+              {t("threadFallbackTitle")}
             </p>
-          </>
-        ) : (
-          <div
-            className="bg-muted h-10 w-44 animate-pulse rounded"
-            aria-hidden
-          />
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {/* Messages ascending: own right-aligned, system centered and muted. */}
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto py-4">
+      <div
+        ref={scrollerRef}
+        className="min-h-0 flex-1 space-y-4 overflow-y-auto py-4"
+      >
         {messages === undefined ? (
           <div className="space-y-4" aria-hidden>
             <div className="bg-muted h-12 w-1/2 animate-pulse rounded-lg" />
@@ -135,7 +187,6 @@ export function ThreadView({ threadId }: { threadId: string }) {
             );
           })
         )}
-        <div ref={endRef} />
       </div>
 
       <MessageComposer threadId={threadId} />
