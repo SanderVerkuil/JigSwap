@@ -13,6 +13,9 @@ export interface ImportedMatch {
   imageUrl?: string;
 }
 
+// Kept as an explicit state machine (busy-state rule v2 exemption): the exported
+// ImportState carries draft/match result data and maps a non-throwing
+// result.ok === false to 'error', which a derived useMutation mapping would not simplify.
 export type ImportState =
   | { status: "idle" }
   | { status: "loading" }

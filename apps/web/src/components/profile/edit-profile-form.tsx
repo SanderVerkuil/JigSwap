@@ -39,9 +39,7 @@ export function EditProfileForm({
 }) {
   const t = useTranslations("profile");
   const { user } = useUser();
-  const updateProfile = useMutation({
-    mutationFn: useConvexMutation(gateway.identity.updateProfile),
-  });
+  const updateProfile = useConvexMutation(gateway.identity.updateProfile);
   const setProfileVisibility = useMutation({
     mutationFn: useConvexMutation(gateway.social.setProfileVisibility),
   });
@@ -56,7 +54,31 @@ export function EditProfileForm({
   const [username, setUsername] = useState(member.username ?? "");
   const [location, setLocation] = useState(member.location ?? "");
   const [bio, setBio] = useState(member.bio ?? "");
-  const [saving, setSaving] = useState(false);
+
+  // The WHOLE save — the Clerk username update AND the Convex profile write — runs as one
+  // mutationFn so isPending spans both steps with no gap (busy-state rule v2).
+  const saveProfile = useMutation({
+    mutationFn: async () => {
+      // Username -> Clerk (the source of truth); the user.updated webhook mirrors
+      // it into the Convex `users` cache. Only call when it actually changed.
+      const nextUsername = username.trim();
+      if (user && nextUsername !== (member.username ?? "")) {
+        await user.update({ username: nextUsername });
+      }
+      // Location/bio live only in Convex.
+      await updateProfile({
+        location: location.trim() || undefined,
+        bio: bio.trim() || undefined,
+      });
+    },
+    onSuccess: () => {
+      toast.success(t("saved"));
+      onDone();
+    },
+    onError: (err) => {
+      toast.error(clerkErrorMessage(err) ?? t("saveError"));
+    },
+  });
 
   const handleVisibilityChange = async (nextPrivate: boolean) => {
     try {
@@ -66,29 +88,6 @@ export function EditProfileForm({
       toast.success(t("saved"));
     } catch {
       toast.error(t("saveError"));
-    }
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      // Username -> Clerk (the source of truth); the user.updated webhook mirrors
-      // it into the Convex `users` cache. Only call when it actually changed.
-      const nextUsername = username.trim();
-      if (user && nextUsername !== (member.username ?? "")) {
-        await user.update({ username: nextUsername });
-      }
-      // Location/bio live only in Convex.
-      await updateProfile.mutateAsync({
-        location: location.trim() || undefined,
-        bio: bio.trim() || undefined,
-      });
-      toast.success(t("saved"));
-      onDone();
-    } catch (err) {
-      toast.error(clerkErrorMessage(err) ?? t("saveError"));
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -140,11 +139,18 @@ export function EditProfileForm({
         />
       </div>
       <div className="flex gap-2 sm:col-span-2">
-        <Button onClick={handleSave} disabled={saving}>
+        <Button
+          onClick={() => saveProfile.mutate()}
+          disabled={saveProfile.isPending}
+        >
           <Save aria-hidden />
-          {saving ? t("saving") : t("save")}
+          {saveProfile.isPending ? t("saving") : t("save")}
         </Button>
-        <Button variant="outline" onClick={onDone} disabled={saving}>
+        <Button
+          variant="outline"
+          onClick={onDone}
+          disabled={saveProfile.isPending}
+        >
           {t("cancel")}
         </Button>
       </div>

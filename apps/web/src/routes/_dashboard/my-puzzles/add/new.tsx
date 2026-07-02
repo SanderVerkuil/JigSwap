@@ -124,25 +124,16 @@ function AddPuzzlePage() {
     string | null
   >(null);
   const [pendingMatch, setPendingMatch] = useState<ImportedMatch | null>(null);
-  const [submitting, setSubmitting] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
-  // Mutations & actions
-  const createPuzzle = useMutation({
-    mutationFn: useConvexMutation(gateway.catalog.createPuzzle),
-  });
-  const createOwned = useMutation({
-    mutationFn: useConvexMutation(gateway.library.createOwned),
-  });
-  const updateSharing = useMutation({
-    mutationFn: useConvexMutation(gateway.library.updateSharing),
-  });
-  const generateUploadUrl = useMutation({
-    mutationFn: useConvexMutation(gateway.library.generateUploadUrl),
-  });
-  const importImage = useMutation({
-    mutationFn: useConvexAction(gateway.catalog.importPuzzleImage),
-  });
+  // Convex mutations & actions, called inside the submitPuzzle wrapper below.
+  const createPuzzle = useConvexMutation(gateway.catalog.createPuzzle);
+  const createOwned = useConvexMutation(gateway.library.createOwned);
+  const updateSharing = useConvexMutation(gateway.library.updateSharing);
+  const generateUploadUrl = useConvexMutation(
+    gateway.library.generateUploadUrl,
+  );
+  const importImage = useConvexAction(gateway.catalog.importPuzzleImage);
 
   // puzzleId from URL — pre-select an existing definition (copy mode).
   const puzzleIdFromUrl = searchParams.get("puzzleId") as Id<"puzzles"> | null;
@@ -157,6 +148,7 @@ function AddPuzzlePage() {
     if (!puzzleIdFromUrl || !specificPuzzle) return;
     // Only pre-fill once (when selectedDefinitionId is still null)
     if (selectedDefinitionId) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- pre-existing pre-fill sync; surfaced once this component became compiler-analyzable
     setSelectedDefinitionId(specificPuzzle.aggregateId ?? null);
     setForm((f) => ({
       ...f,
@@ -180,6 +172,7 @@ function AddPuzzlePage() {
   );
   useEffect(() => {
     if (!form.coverFile) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- pre-existing object-URL lifecycle; surfaced once this component became compiler-analyzable
       setCoverFileUrl(undefined);
       return;
     }
@@ -227,7 +220,7 @@ function AddPuzzlePage() {
   const buildImageId = async (): Promise<Id<"_storage"> | undefined> => {
     if (form.coverMode !== "photo") return undefined;
     if (form.coverFile) {
-      const uploadUrl = await generateUploadUrl.mutateAsync({});
+      const uploadUrl = await generateUploadUrl({});
       const res = await fetch(uploadUrl, {
         method: "POST",
         headers: { "Content-Type": form.coverFile.type },
@@ -238,7 +231,7 @@ function AddPuzzlePage() {
       return storageId as Id<"_storage">;
     } else if (form.selectedImageUrl) {
       try {
-        return await importImage.mutateAsync({ url: form.selectedImageUrl });
+        return await importImage({ url: form.selectedImageUrl });
       } catch {
         // Non-fatal: proceed without the remote image
         return undefined;
@@ -270,21 +263,23 @@ function AddPuzzlePage() {
     image: imageId,
   });
 
-  const handleAdd = async () => {
-    if (!form.title.trim() || !form.brand.trim() || !form.pieceCount) return;
-    setSubmitting(true);
-    try {
+  // The WHOLE multi-step create — optional image upload/import, createPuzzle,
+  // createOwned, updateSharing — runs as ONE mutationFn so isPending spans the full
+  // sequence (busy-state rule v2). Both footer buttons share it; the `andAnother`
+  // variant only changes what happens after success (reset vs navigate).
+  const submitPuzzle = useMutation({
+    mutationFn: async (_variables: { andAnother: boolean }) => {
       // 1. Resolve the catalog definition id (existing match or create new).
       let definitionId = selectedDefinitionId;
       if (!definitionId) {
         const imageId = await buildImageId();
-        definitionId = (await createPuzzle.mutateAsync(
+        definitionId = (await createPuzzle(
           buildCreatePuzzleArgs(imageId),
         )) as string;
       }
 
       // 2. Acquire a copy of that definition.
-      const copyId = (await createOwned.mutateAsync({
+      const copyId = (await createOwned({
         puzzleDefinitionId: definitionId,
         condition: form.condition,
         notes: form.notes || undefined,
@@ -292,53 +287,31 @@ function AddPuzzlePage() {
 
       // 3. Apply availability if any chip is on.
       if (hasAnyAvailability(form.availability)) {
-        await updateSharing.mutateAsync(
-          availabilityToSharing(copyId, form.availability),
-        );
+        await updateSharing(availabilityToSharing(copyId, form.availability));
       }
-
+    },
+    onSuccess: (_, { andAnother }) => {
       toast.success(t("puzzleAdded"));
-      router.push("/puzzles");
-    } catch (error) {
+      if (andAnother) {
+        resetForm();
+      } else {
+        router.push("/puzzles");
+      }
+    },
+    onError: (error) => {
       console.error("Add to library failed:", error);
       toast.error(t("puzzleCreationFailed"));
-    } finally {
-      setSubmitting(false);
-    }
+    },
+  });
+
+  const handleAdd = () => {
+    if (!form.title.trim() || !form.brand.trim() || !form.pieceCount) return;
+    submitPuzzle.mutate({ andAnother: false });
   };
 
-  const handleSaveAndAddAnother = async () => {
+  const handleSaveAndAddAnother = () => {
     if (!form.title.trim() || !form.brand.trim() || !form.pieceCount) return;
-    setSubmitting(true);
-    try {
-      let definitionId = selectedDefinitionId;
-      if (!definitionId) {
-        const imageId = await buildImageId();
-        definitionId = (await createPuzzle.mutateAsync(
-          buildCreatePuzzleArgs(imageId),
-        )) as string;
-      }
-
-      const copyId = (await createOwned.mutateAsync({
-        puzzleDefinitionId: definitionId,
-        condition: form.condition,
-        notes: form.notes || undefined,
-      })) as string;
-
-      if (hasAnyAvailability(form.availability)) {
-        await updateSharing.mutateAsync(
-          availabilityToSharing(copyId, form.availability),
-        );
-      }
-
-      toast.success(t("puzzleAdded"));
-      resetForm();
-    } catch (error) {
-      console.error("Add to library failed:", error);
-      toast.error(t("puzzleCreationFailed"));
-    } finally {
-      setSubmitting(false);
-    }
+    submitPuzzle.mutate({ andAnother: true });
   };
 
   // In copy mode the definition is fixed, so only the copy fields gate submit.
@@ -490,7 +463,7 @@ function AddPuzzlePage() {
     <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
       <Button
         type="button"
-        disabled={!isReady || submitting}
+        disabled={!isReady || submitPuzzle.isPending}
         onClick={handleAdd}
       >
         {isCopyMode ? t("addToLibrary") : t("addPuzzle")}
@@ -499,7 +472,7 @@ function AddPuzzlePage() {
         <Button
           type="button"
           variant="outline"
-          disabled={!isReady || submitting}
+          disabled={!isReady || submitPuzzle.isPending}
           onClick={handleSaveAndAddAnother}
         >
           {t("saveAndAddAnother")}

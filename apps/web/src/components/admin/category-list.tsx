@@ -107,7 +107,11 @@ export function CategoryList({
 
   // The category awaiting the destructive deactivate confirm.
   const [confirming, setConfirming] = useState<Category | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
+  // Per-row busy state derived from the in-flight mutation's variables (the
+  // trades.tsx idiom) instead of a manual keyed flag — busy-state rule v2.
+  const busyId = setCategoryActive.isPending
+    ? (setCategoryActive.variables?.catalogCategoryId ?? null)
+    : null;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -144,7 +148,6 @@ export function CategoryList({
     messages: { success: string; error: string },
   ) => {
     if (!category.aggregateId) return;
-    setBusyId(category._id);
     try {
       await setCategoryActive.mutateAsync({
         catalogCategoryId: category.aggregateId,
@@ -153,8 +156,6 @@ export function CategoryList({
       toast.success(messages.success);
     } catch {
       toast.error(messages.error);
-    } finally {
-      setBusyId(null);
     }
   };
 
@@ -175,7 +176,8 @@ export function CategoryList({
               <CategoryRow
                 key={category._id}
                 category={category}
-                busy={busyId === category._id}
+                // The mutation is keyed by aggregateId (its catalogCategoryId arg).
+                busy={busyId !== null && busyId === category.aggregateId}
                 onEdit={() => onEdit(category)}
                 onDeactivate={() => setConfirming(category)}
                 onReactivate={() =>

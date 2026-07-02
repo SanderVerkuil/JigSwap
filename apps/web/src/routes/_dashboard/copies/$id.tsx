@@ -702,15 +702,12 @@ function PhotoStrip({
 }) {
   const t = useTranslations("copyInstance");
   const inputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
-  const generateUploadUrl = useMutation({
-    mutationFn: useConvexMutation(gateway.library.generateUploadUrl),
-  });
-  const addCopyPhoto = useMutation({
-    mutationFn: useConvexMutation(gateway.library.addCopyPhoto),
-  });
+  const generateUploadUrl = useConvexMutation(
+    gateway.library.generateUploadUrl,
+  );
+  const addCopyPhoto = useConvexMutation(gateway.library.addCopyPhoto);
 
   const openLightbox = (index: number) => {
     setActiveIndex(index);
@@ -720,10 +717,11 @@ function PhotoStrip({
   // Photo upload: ask Convex for a one-shot upload URL, POST the blob to it, then
   // attach the returned storageId to this copy. The getCopyInstanceView query
   // reads the same table so Convex reactivity refreshes the strip automatically.
-  const handleFile = async (file: File) => {
-    setUploading(true);
-    try {
-      const uploadUrl = await generateUploadUrl.mutateAsync({});
+  // The WHOLE pipeline (URL grant → raw fetch POST → attach) is the mutationFn so
+  // isPending covers the full upload span (busy-state rule v2).
+  const uploadPhoto = useMutation({
+    mutationFn: async (file: File) => {
+      const uploadUrl = await generateUploadUrl({});
       const res = await fetch(uploadUrl, {
         method: "POST",
         headers: { "Content-Type": file.type },
@@ -731,18 +729,18 @@ function PhotoStrip({
       });
       if (!res.ok) throw new Error("upload failed");
       const { storageId } = (await res.json()) as { storageId: string };
-      await addCopyPhoto.mutateAsync({
+      await addCopyPhoto({
         copyId: copyId as Id<"ownedPuzzles">,
         fileId: storageId as Id<"_storage">,
       });
-      toast.success(t("photoAdded"));
-    } catch {
-      toast.error(t("photoFailed"));
-    } finally {
-      setUploading(false);
+    },
+    onSuccess: () => toast.success(t("photoAdded")),
+    onError: () => toast.error(t("photoFailed")),
+    onSettled: () => {
       if (inputRef.current) inputRef.current.value = "";
-    }
-  };
+    },
+  });
+  const uploading = uploadPhoto.isPending;
 
   return (
     <div className="flex gap-3.5 overflow-x-auto pb-1.5">
@@ -800,7 +798,7 @@ function PhotoStrip({
             disabled={uploading}
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) void handleFile(file);
+              if (file) uploadPhoto.mutate(file);
             }}
           />
         </label>

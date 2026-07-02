@@ -98,19 +98,14 @@ function ContributePuzzlePage() {
 
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [pendingMatch, setPendingMatch] = useState<ImportedMatch | null>(null);
-  const [submitting, setSubmitting] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
-  // Mutations & actions
-  const createPuzzle = useMutation({
-    mutationFn: useConvexMutation(gateway.catalog.createPuzzle),
-  });
-  const generateUploadUrl = useMutation({
-    mutationFn: useConvexMutation(gateway.library.generateUploadUrl),
-  });
-  const importImage = useMutation({
-    mutationFn: useConvexAction(gateway.catalog.importPuzzleImage),
-  });
+  // Convex mutations & actions, called inside the contribute wrapper below.
+  const createPuzzle = useConvexMutation(gateway.catalog.createPuzzle);
+  const generateUploadUrl = useConvexMutation(
+    gateway.library.generateUploadUrl,
+  );
+  const importImage = useConvexAction(gateway.catalog.importPuzzleImage);
 
   // Object URL for the cover file preview — create and revoke in one effect
   const [coverFileUrl, setCoverFileUrl] = useState<string | undefined>(
@@ -118,6 +113,7 @@ function ContributePuzzlePage() {
   );
   useEffect(() => {
     if (!form.coverFile) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- pre-existing object-URL lifecycle; surfaced once this component became compiler-analyzable
       setCoverFileUrl(undefined);
       return;
     }
@@ -155,14 +151,14 @@ function ContributePuzzlePage() {
     }));
   };
 
-  const handleContribute = async () => {
-    if (!form.title.trim() || !form.brand.trim() || !form.pieceCount) return;
-    setSubmitting(true);
-    try {
+  // The WHOLE contribute flow — optional image upload/import + createPuzzle — runs
+  // as one mutationFn so isPending spans the full sequence (busy-state rule v2).
+  const contribute = useMutation({
+    mutationFn: async () => {
       let imageId: Id<"_storage"> | undefined;
       if (form.coverMode === "photo") {
         if (form.coverFile) {
-          const uploadUrl = await generateUploadUrl.mutateAsync({});
+          const uploadUrl = await generateUploadUrl({});
           const res = await fetch(uploadUrl, {
             method: "POST",
             headers: { "Content-Type": form.coverFile.type },
@@ -173,9 +169,7 @@ function ContributePuzzlePage() {
           imageId = storageId as Id<"_storage">;
         } else if (form.selectedImageUrl) {
           try {
-            imageId = await importImage.mutateAsync({
-              url: form.selectedImageUrl,
-            });
+            imageId = await importImage({ url: form.selectedImageUrl });
           } catch {
             // Non-fatal: proceed without the remote image
             imageId = undefined;
@@ -183,7 +177,7 @@ function ContributePuzzlePage() {
         }
       }
 
-      await createPuzzle.mutateAsync({
+      await createPuzzle({
         title: form.title,
         brand: form.brand || undefined,
         pieceCount: form.pieceCount!,
@@ -205,15 +199,20 @@ function ContributePuzzlePage() {
             : undefined,
         image: imageId,
       });
-
+    },
+    onSuccess: () => {
       toast.success(t("puzzleSubmittedForReview"));
       router.push("/puzzles");
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error("Contribute puzzle failed:", error);
       toast.error(t("puzzleCreationFailed"));
-    } finally {
-      setSubmitting(false);
-    }
+    },
+  });
+
+  const handleContribute = () => {
+    if (!form.title.trim() || !form.brand.trim() || !form.pieceCount) return;
+    contribute.mutate();
   };
 
   const isReady =
@@ -534,7 +533,7 @@ function ContributePuzzlePage() {
       <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
         <Button
           type="button"
-          disabled={!isReady || submitting}
+          disabled={!isReady || contribute.isPending}
           onClick={handleContribute}
         >
           {t("contributePuzzle")}
