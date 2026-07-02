@@ -2648,13 +2648,44 @@
     "moderation": {
       "loading": "Loading submissions…",
       "empty": "No pending submissions.",
-      "pending": "Pending",
       "pieces": "{count} pieces",
-      "approve": "Approve",
       "reject": "Reject",
       "approveSuccess": "Puzzle approved",
       "rejectSuccess": "Puzzle rejected",
-      "error": "Failed to update submission"
+      "error": "Failed to update submission",
+      "banner": {
+        "pill": "ADMIN",
+        "subtitle": "Moderation console"
+      },
+      "kpis": {
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "flagsCleared": "Flags cleared",
+        "avgReview": "Avg. review time",
+        "thisWeek": "this week"
+      },
+      "tabs": {
+        "submissions": "Submissions",
+        "flagged": "Flagged Images",
+        "activity": "Activity Log"
+      },
+      "detail": {
+        "submitted": "Submitted",
+        "difficulty": "Difficulty"
+      },
+      "dupWarning": "Possible duplicate of <strong>{title}</strong> already in the catalog. Review before approving.",
+      "actions": {
+        "approve": "Approve & Publish",
+        "edit": "Edit & Approve"
+      },
+      "editDialog": {
+        "title": "Edit & Approve",
+        "description": "Fix the submission's details, then save to approve and publish it in one step.",
+        "save": "Save & Approve"
+      },
+      "editApproveSuccess": "Puzzle updated and approved",
+      "flaggedEmpty": "No flagged images. The community's happy.",
+      "activityEmpty": "No moderation activity yet."
     },
     "contact": {
       "loading": "Loading messages…",

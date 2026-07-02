@@ -2648,13 +2648,44 @@
     "moderation": {
       "loading": "Inzendingen laden…",
       "empty": "Geen openstaande inzendingen.",
-      "pending": "In afwachting",
       "pieces": "{count} stukjes",
-      "approve": "Goedkeuren",
       "reject": "Afkeuren",
       "approveSuccess": "Puzzel goedgekeurd",
       "rejectSuccess": "Puzzel afgekeurd",
-      "error": "Inzending bijwerken mislukt"
+      "error": "Inzending bijwerken mislukt",
+      "banner": {
+        "pill": "ADMIN",
+        "subtitle": "Moderatieconsole"
+      },
+      "kpis": {
+        "approved": "Goedgekeurd",
+        "rejected": "Afgekeurd",
+        "flagsCleared": "Meldingen afgehandeld",
+        "avgReview": "Gem. beoordelingstijd",
+        "thisWeek": "deze week"
+      },
+      "tabs": {
+        "submissions": "Inzendingen",
+        "flagged": "Gemarkeerde afbeeldingen",
+        "activity": "Activiteitenlog"
+      },
+      "detail": {
+        "submitted": "Ingezonden",
+        "difficulty": "Moeilijkheid"
+      },
+      "dupWarning": "Mogelijk duplicaat van <strong>{title}</strong> dat al in de catalogus staat. Controleer voor het goedkeuren.",
+      "actions": {
+        "approve": "Goedkeuren & publiceren",
+        "edit": "Bewerken & goedkeuren"
+      },
+      "editDialog": {
+        "title": "Bewerken & goedkeuren",
+        "description": "Corrigeer de gegevens van de inzending en sla op om deze in één stap goed te keuren en te publiceren.",
+        "save": "Opslaan & goedkeuren"
+      },
+      "editApproveSuccess": "Puzzel bijgewerkt en goedgekeurd",
+      "flaggedEmpty": "Geen gemarkeerde afbeeldingen. De community is tevreden.",
+      "activityEmpty": "Nog geen moderatieactiviteit."
     },
     "contact": {
       "loading": "Berichten laden…",
