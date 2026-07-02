@@ -1,14 +1,14 @@
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { CategoryForm } from "@/components/admin/category-form";
+import { CategoryDialog } from "@/components/admin/category-dialog";
 import { CategoryList, type Category } from "@/components/admin/category-list";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
 import { useQuery } from "convex/react";
-import { Plus } from "lucide-react";
-import { useState } from "react";
+import { Plus, Shapes } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/admin/categories")({
@@ -24,21 +24,29 @@ function CategoriesPending() {
   return <PageLoading message={t("loading")} />;
 }
 
-// Admin CRUD for catalog categories. The route only wires the listing query
-// and the state shared between the form and the list (create mode + which
-// category is being edited); the form and list own their own mutations.
+// Admin CRUD for catalog categories. The page title/subtitle come from the
+// shell page head (ROUTE_META), so the route renders only the "Add category"
+// action row over the sortable list; the create/edit dialog state lives here,
+// while the dialog and the list own their own mutations.
+type DialogState = { mode: "create" } | { mode: "edit"; category: Category };
+
 function CategoriesPage() {
   const t = useTranslations("admin.categories");
   const categories = useQuery(gateway.adminCatalog.listAll);
 
-  const [isCreating, setIsCreating] = useState(false);
-  // The category being edited; doubles as the form's initial values.
-  const [editing, setEditing] = useState<Category | null>(null);
+  const [dialog, setDialog] = useState<DialogState | null>(null);
 
-  const closeForm = () => {
-    setIsCreating(false);
-    setEditing(null);
-  };
+  // listAll returns creation order; the list renders (and drags) sortOrder.
+  const sorted = useMemo(
+    () =>
+      categories
+        ? [...categories].sort((a, b) => a.sortOrder - b.sortOrder)
+        : [],
+    [categories],
+  );
+  // A created category is appended after the current last one.
+  const nextSortOrder =
+    sorted.length > 0 ? Math.max(...sorted.map((c) => c.sortOrder)) + 1 : 0;
 
   if (categories === undefined) {
     return <PageLoading message={t("loading")} />;
@@ -46,31 +54,50 @@ function CategoriesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <Button
-          onClick={() => setIsCreating(true)}
-          className="flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          {t("add")}
-        </Button>
-      </div>
-
-      {(isCreating || editing) && (
-        <CategoryForm
-          key={editing?.aggregateId ?? "create"}
-          initial={editing ?? undefined}
-          onSaved={closeForm}
-          onCancel={closeForm}
-        />
+      {sorted.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed px-6 py-12 text-center">
+          <Shapes className="size-8 text-muted-foreground" aria-hidden />
+          <p className="font-semibold">{t("empty.title")}</p>
+          <p className="text-sm text-muted-foreground">
+            {t("empty.description")}
+          </p>
+          <Button
+            size="sm"
+            className="mt-2"
+            onClick={() => setDialog({ mode: "create" })}
+          >
+            <Plus className="h-4 w-4" />
+            {t("add")}
+          </Button>
+        </div>
+      ) : (
+        <>
+          <div className="flex justify-end">
+            <Button
+              onClick={() => setDialog({ mode: "create" })}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              {t("add")}
+            </Button>
+          </div>
+          <CategoryList
+            categories={sorted}
+            onEdit={(category) => {
+              if (!category.aggregateId) return; // un-backfilled legacy row: not editable via the domain API
+              setDialog({ mode: "edit", category });
+            }}
+          />
+        </>
       )}
 
-      <CategoryList
-        categories={categories}
-        onEdit={(category) => {
-          if (!category.aggregateId) return; // un-backfilled legacy row: not editable via the domain API
-          setEditing(category);
+      <CategoryDialog
+        open={dialog !== null}
+        onOpenChange={(open) => {
+          if (!open) setDialog(null);
         }}
+        category={dialog?.mode === "edit" ? dialog.category : undefined}
+        nextSortOrder={nextSortOrder}
       />
     </div>
   );

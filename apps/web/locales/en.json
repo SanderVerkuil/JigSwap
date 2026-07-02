@@ -2748,33 +2748,40 @@
     "categories": {
       "loading": "Loading categories…",
       "add": "Add Category",
+      "empty": {
+        "title": "No categories yet",
+        "description": "Create the first category to organize the catalog."
+      },
       "form": {
         "createTitle": "Create New Category",
+        "createDescription": "Add a new category to the catalog. It becomes active immediately.",
         "editTitle": "Edit Category",
+        "editDescription": "Update the names, descriptions, and color of this category.",
         "nameEn": "Name (English)",
         "nameNl": "Name (Dutch)",
+        "nameRequired": "Name is required",
         "descriptionEn": "Description (English)",
         "descriptionNl": "Description (Dutch)",
         "color": "Color",
-        "sortOrder": "Sort Order",
-        "active": "Active",
         "create": "Create",
         "update": "Update",
-        "cancel": "Cancel",
         "createSuccess": "Category created successfully",
         "updateSuccess": "Category updated successfully",
         "saveError": "Failed to save category"
       },
       "list": {
-        "sortOrder": "Sort order: {order}",
-        "statusActive": "Active",
         "statusInactive": "Inactive",
-        "noDescription": "No description",
         "edit": "Edit",
         "deactivate": "Deactivate",
-        "deactivateConfirm": "Deactivate this category? It will be hidden but not deleted.",
+        "deactivateConfirmTitle": "Deactivate “{name}”?",
+        "deactivateConfirmBody": "The category is hidden from members but not deleted; existing puzzles keep it. You can reactivate it from this list at any time.",
         "deactivateSuccess": "Category deactivated successfully",
-        "deactivateError": "Failed to deactivate category"
+        "deactivateError": "Failed to deactivate category",
+        "reactivate": "Reactivate",
+        "reactivateSuccess": "Category reactivated successfully",
+        "reactivateError": "Failed to reactivate category",
+        "reorderError": "Failed to reorder categories",
+        "dragHandle": "Drag to reorder {name}"
       }
     },
     "queueEmpty": {

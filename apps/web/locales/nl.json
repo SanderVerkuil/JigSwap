@@ -2748,33 +2748,40 @@
     "categories": {
       "loading": "Categorieën laden…",
       "add": "Categorie toevoegen",
+      "empty": {
+        "title": "Nog geen categorieën",
+        "description": "Maak de eerste categorie aan om de catalogus te ordenen."
+      },
       "form": {
         "createTitle": "Nieuwe categorie aanmaken",
+        "createDescription": "Voeg een nieuwe categorie toe aan de catalogus. Ze is direct actief.",
         "editTitle": "Categorie bewerken",
+        "editDescription": "Werk de namen, beschrijvingen en kleur van deze categorie bij.",
         "nameEn": "Naam (Engels)",
         "nameNl": "Naam (Nederlands)",
+        "nameRequired": "Naam is verplicht",
         "descriptionEn": "Beschrijving (Engels)",
         "descriptionNl": "Beschrijving (Nederlands)",
         "color": "Kleur",
-        "sortOrder": "Sorteervolgorde",
-        "active": "Actief",
         "create": "Aanmaken",
         "update": "Bijwerken",
-        "cancel": "Annuleren",
         "createSuccess": "Categorie aangemaakt",
         "updateSuccess": "Categorie bijgewerkt",
         "saveError": "Categorie opslaan mislukt"
       },
       "list": {
-        "sortOrder": "Sorteervolgorde: {order}",
-        "statusActive": "Actief",
         "statusInactive": "Inactief",
-        "noDescription": "Geen beschrijving",
         "edit": "Bewerken",
         "deactivate": "Deactiveren",
-        "deactivateConfirm": "Deze categorie deactiveren? Ze wordt verborgen, maar niet verwijderd.",
+        "deactivateConfirmTitle": "“{name}” deactiveren?",
+        "deactivateConfirmBody": "De categorie wordt verborgen voor leden, maar niet verwijderd; bestaande puzzels behouden haar. Je kunt haar op elk moment vanuit deze lijst reactiveren.",
         "deactivateSuccess": "Categorie gedeactiveerd",
-        "deactivateError": "Categorie deactiveren mislukt"
+        "deactivateError": "Categorie deactiveren mislukt",
+        "reactivate": "Reactiveren",
+        "reactivateSuccess": "Categorie gereactiveerd",
+        "reactivateError": "Categorie reactiveren mislukt",
+        "reorderError": "Categorieën herordenen mislukt",
+        "dragHandle": "Sleep om {name} te herordenen"
       }
     },
     "queueEmpty": {
