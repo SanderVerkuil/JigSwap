@@ -78,8 +78,11 @@ photo_restored | photo_removal_confirmed | photo_auto_rejected`), `targetLabel` 
 
 Per the handoff, translated to shadcn + `--jigsaw-*` tokens:
 
-- ADMIN banner (shield pill + "you and N other moderators" from a small `identity/listAdmins`
-  query with stacked avatars).
+- ADMIN banner: shield pill + static subtitle. (Amended during implementation: the design's
+  "you and N other moderators" roster needs a `listAdmins` query, but adminship lives only in
+  each caller's Clerk JWT — no role is synced to the `users` table. Building webhook role-sync
+  for a decorative line failed YAGNI; the roster is cut. Follow-up option: sync
+  `publicMetadata.role` via the Clerk webhook if a real need appears.)
 - KPI row: four stat tiles (approved / rejected / flags cleared / avg review time, "this week").
 - Underline tabs with count pills — shadcn `tabs` added via the CLI (currently absent).
 - Submissions tab: 360px queue list (active row: violet left rule + tint; "Possible dup" badge
