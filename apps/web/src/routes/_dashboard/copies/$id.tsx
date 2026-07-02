@@ -18,7 +18,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import {
   ArrowLeftRight,
@@ -71,16 +72,18 @@ export function CopyInstanceScreen({
   owned: boolean;
 }) {
   const router = useRouter();
-  const copy = useQuery(gateway.library.getCopyInstanceView, {
-    copyId: copyId as Id<"ownedPuzzles">,
-  });
+  const { data: copy, isPending: copyPending } = useQuery(
+    convexQuery(gateway.library.getCopyInstanceView, {
+      copyId: copyId as Id<"ownedPuzzles">,
+    }),
+  );
 
   const notOwner = owned && copy != null && copy.viewerIsOwner === false;
   useEffect(() => {
     if (notOwner) router.push(`/copies/${copyId}`);
   }, [notOwner, copyId, router]);
 
-  if (copy === undefined || notOwner) {
+  if (copyPending || copy === undefined || notOwner) {
     return <CopyInstanceSkeleton />;
   }
 
@@ -171,14 +174,16 @@ function CopyInstanceDetail({
   // copy editor (also reachable from the page-head Edit button registered below).
   const [logOpen, setLogOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const updateSharing = useMutation(gateway.library.updateSharing);
+  const updateSharing = useMutation({
+    mutationFn: useConvexMutation(gateway.library.updateSharing),
+  });
 
   // Toggle a single sharing flag on the copy. Optimistic from the user's view via Convex
   // reactivity; on failure we surface a toast and the next query refresh restores the real state.
   const toggleSharing = async (flag: "forTrade" | "forLend") => {
     if (!copy.viewerIsOwner || copy.aggregateId == null) return;
     try {
-      await updateSharing(
+      await updateSharing.mutateAsync(
         availabilityToSharing(copy.aggregateId, {
           ...availability,
           [flag]: !availability[flag],
@@ -700,8 +705,12 @@ function PhotoStrip({
   const [uploading, setUploading] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
-  const generateUploadUrl = useMutation(gateway.library.generateUploadUrl);
-  const addCopyPhoto = useMutation(gateway.library.addCopyPhoto);
+  const generateUploadUrl = useMutation({
+    mutationFn: useConvexMutation(gateway.library.generateUploadUrl),
+  });
+  const addCopyPhoto = useMutation({
+    mutationFn: useConvexMutation(gateway.library.addCopyPhoto),
+  });
 
   const openLightbox = (index: number) => {
     setActiveIndex(index);
@@ -714,7 +723,7 @@ function PhotoStrip({
   const handleFile = async (file: File) => {
     setUploading(true);
     try {
-      const uploadUrl = await generateUploadUrl();
+      const uploadUrl = await generateUploadUrl.mutateAsync({});
       const res = await fetch(uploadUrl, {
         method: "POST",
         headers: { "Content-Type": file.type },
@@ -722,7 +731,7 @@ function PhotoStrip({
       });
       if (!res.ok) throw new Error("upload failed");
       const { storageId } = (await res.json()) as { storageId: string };
-      await addCopyPhoto({
+      await addCopyPhoto.mutateAsync({
         copyId: copyId as Id<"ownedPuzzles">,
         fileId: storageId as Id<"_storage">,
       });
@@ -966,15 +975,19 @@ function StarGlyph() {
 function CommentsSection({ copyId }: { copyId: string }) {
   const t = useTranslations("copyInstance");
   const format = useFormatter();
-  const comments = useQuery(gateway.social.listPuzzleComments, {
-    copyId: copyId as Id<"ownedPuzzles">,
+  const { data: comments } = useQuery(
+    convexQuery(gateway.social.listPuzzleComments, {
+      copyId: copyId as Id<"ownedPuzzles">,
+    }),
+  );
+  const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
+  const postComment = useMutation({
+    mutationFn: useConvexMutation(gateway.social.postPuzzleComment),
   });
-  const me = useQuery(gateway.identity.currentUser, {});
-  const postComment = useMutation(gateway.social.postPuzzleComment);
 
   const [text, setText] = useState("");
   const [rating, setRating] = useState(0);
-  const [posting, setPosting] = useState(false);
+  const posting = postComment.isPending;
   const [now] = useState(() => Date.now());
 
   const list = comments ?? [];
@@ -985,9 +998,8 @@ function CommentsSection({ copyId }: { copyId: string }) {
   const submit = async () => {
     const trimmed = text.trim();
     if (!trimmed) return;
-    setPosting(true);
     try {
-      await postComment({
+      await postComment.mutateAsync({
         copyId: copyId as Id<"ownedPuzzles">,
         text: trimmed,
         ...(rating > 0 ? { rating } : {}),
@@ -996,8 +1008,6 @@ function CommentsSection({ copyId }: { copyId: string }) {
       setRating(0);
     } catch {
       toast.error(t("commentFailed"));
-    } finally {
-      setPosting(false);
     }
   };
 

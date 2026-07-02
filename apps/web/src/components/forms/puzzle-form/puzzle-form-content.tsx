@@ -19,7 +19,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useFeatureFlagEnabled } from "posthog-js/react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
@@ -40,7 +41,9 @@ export const PuzzleFormContent = () => {
   );
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const categories = useQuery(gateway.adminCatalog.listAll);
+  const { data: categories, isPending } = useQuery(
+    convexQuery(gateway.adminCatalog.listAll, {}),
+  );
 
   const t = useTranslations("forms.puzzle-form");
 
@@ -53,7 +56,7 @@ export const PuzzleFormContent = () => {
 
   const isFileEnabled = useFeatureFlagEnabled("file-upload");
 
-  if (categories === undefined) {
+  if (isPending || categories === undefined) {
     return <LoadingState message={t("loading")} />;
   }
 

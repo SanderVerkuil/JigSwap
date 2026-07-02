@@ -8,7 +8,8 @@ import {
 import { PushDeviceSection } from "@/components/notifications/push-device-section";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
@@ -25,11 +26,12 @@ export function NotificationPreferencesPanel() {
   const tCommon = useTranslations("common");
 
   const preferences = useQuery(
-    gateway.notifications.preferences,
-    user?.id ? {} : "skip",
-  ) as Toggles | undefined;
+    convexQuery(gateway.notifications.preferences, user?.id ? {} : "skip"),
+  ).data as Toggles | undefined;
 
-  const updatePreference = useMutation(gateway.notifications.updatePreference);
+  const updatePreference = useMutation({
+    mutationFn: useConvexMutation(gateway.notifications.updatePreference),
+  });
 
   if (!user || preferences === undefined) {
     return <PageLoading message={tCommon("loading")} />;
@@ -47,7 +49,7 @@ export function NotificationPreferencesPanel() {
     enabled: boolean,
   ) => {
     try {
-      await updatePreference({ type, channel, enabled });
+      await updatePreference.mutateAsync({ type, channel, enabled });
     } catch {
       toast.error(t("preferencesError"));
     }

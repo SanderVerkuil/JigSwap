@@ -7,7 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import { ArrowLeftRight, Bell, Package, Target } from "lucide-react";
 import { useFormatter, useTranslations } from "use-intl";
@@ -310,9 +311,11 @@ function ActivityRow({
   const isMe = entry.memberId === me._id;
   // The feed entry only carries the member id; resolve the display identity
   // here (Convex dedupes the subscription across rows for the same member).
-  const other = useQuery(
-    gateway.identity.byId,
-    isMe ? "skip" : { userId: entry.memberId as Id<"users"> },
+  const { data: other } = useQuery(
+    convexQuery(
+      gateway.identity.byId,
+      isMe ? "skip" : { userId: entry.memberId as Id<"users"> },
+    ),
   );
   const actor = isMe ? me : other;
 
@@ -397,14 +400,17 @@ function PulseSkeleton() {
 export function PulseSection() {
   const { member, isMemberLoading } = useCurrentMember();
 
-  const exchanges = useQuery(
-    gateway.exchange.forUser,
-    member?._id ? {} : "skip",
+  const { data: exchanges } = useQuery(
+    convexQuery(gateway.exchange.forUser, member?._id ? {} : "skip"),
   );
-  const goals = useQuery(gateway.solving.myGoals, member?._id ? {} : "skip");
-  const feed = useQuery(
-    gateway.social.activityFeed,
-    member?._id ? { limit: 8 } : "skip",
+  const { data: goals } = useQuery(
+    convexQuery(gateway.solving.myGoals, member?._id ? {} : "skip"),
+  );
+  const { data: feed } = useQuery(
+    convexQuery(
+      gateway.social.activityFeed,
+      member?._id ? { limit: 8 } : "skip",
+    ),
   );
 
   const loading =

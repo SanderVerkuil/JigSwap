@@ -8,7 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
 import { useDateFnsLocale } from "@/lib/date-locale";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { HandHelping, Package, User } from "lucide-react";
 import { useState } from "react";
@@ -34,11 +35,17 @@ function BorrowedPage() {
   const dateLocale = useDateFnsLocale();
 
   // Source of truth for "copies I'm holding on loan"; open loans where the caller is the borrower.
-  const borrowed = useQuery(gateway.lending.borrowed);
-  const returnLoan = useMutation(gateway.lending.returnLoan);
+  const { data: borrowed, isPending } = useQuery(
+    convexQuery(gateway.lending.borrowed, {}),
+  );
+  const returnLoan = useMutation({
+    mutationFn: useConvexMutation(gateway.lending.returnLoan),
+  });
 
   // The loan currently being returned, so we can disable just its button while the mutation runs.
-  const [returningId, setReturningId] = useState<string | null>(null);
+  const returningId = returnLoan.isPending
+    ? (returnLoan.variables?.loanId ?? null)
+    : null;
   // The loan for which we are logging a solve (null = dialog closed).
   const [solveFor, setSolveFor] = useState<{
     copyId: string;
@@ -46,17 +53,14 @@ function BorrowedPage() {
   } | null>(null);
 
   const handleReturn = async (loanId: string) => {
-    setReturningId(loanId);
     try {
-      await returnLoan({ loanId });
+      await returnLoan.mutateAsync({ loanId });
     } catch (error) {
       console.error("Failed to return loan:", error);
-    } finally {
-      setReturningId(null);
     }
   };
 
-  if (borrowed === undefined) {
+  if (isPending || borrowed === undefined) {
     return <PageLoading message={tCommon("loading")} />;
   }
 

@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import { CircleCheck, Plus, Search } from "lucide-react";
 import type { ReactNode } from "react";
@@ -194,11 +195,12 @@ function QuickActions() {
 export function BriefingHero() {
   const { member, isMemberLoading } = useCurrentMember();
 
-  const exchanges = useQuery(
-    gateway.exchange.forUser,
-    member?._id ? {} : "skip",
+  const { data: exchanges } = useQuery(
+    convexQuery(gateway.exchange.forUser, member?._id ? {} : "skip"),
   );
-  const goals = useQuery(gateway.solving.myGoals, member?._id ? {} : "skip");
+  const { data: goals } = useQuery(
+    convexQuery(gateway.solving.myGoals, member?._id ? {} : "skip"),
+  );
 
   const loading =
     isMemberLoading ||

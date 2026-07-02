@@ -2,7 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { gateway, Id } from "@/gateway";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import { ArrowRight, History, User } from "lucide-react";
 import { useTranslations } from "use-intl";
@@ -21,9 +22,11 @@ type ProjectedMember = CustodyTimelineView["currentOwner"];
 // each settled transfer -> current owner) from the custody read-model via the gateway.
 export function CustodyTimeline({ copyId }: CustodyTimelineProps) {
   const t = useTranslations("custody");
-  const timeline = useQuery(gateway.custody.timeline, { copyId });
+  const { data: timeline, isPending } = useQuery(
+    convexQuery(gateway.custody.timeline, { copyId }),
+  );
 
-  if (timeline === undefined) {
+  if (isPending || timeline === undefined) {
     return (
       <Card>
         <CardHeader>

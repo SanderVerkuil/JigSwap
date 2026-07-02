@@ -20,7 +20,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, Id } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { useMutation } from "convex/react";
+import { useConvexMutation } from "@convex-dev/react-query";
+import { useMutation } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import { Check, ImageOff } from "lucide-react";
 import { useState } from "react";
@@ -51,10 +52,18 @@ export function EditCopyDialog({
   const t = useTranslations("copyInstance");
   const tPuzzles = useTranslations("puzzles");
 
-  const changeCondition = useMutation(gateway.library.changeCondition);
-  const updateSharing = useMutation(gateway.library.updateSharing);
-  const updateDetails = useMutation(gateway.library.updateDetails);
-  const setCopyCover = useMutation(gateway.library.setCopyCover);
+  const changeCondition = useMutation({
+    mutationFn: useConvexMutation(gateway.library.changeCondition),
+  });
+  const updateSharing = useMutation({
+    mutationFn: useConvexMutation(gateway.library.updateSharing),
+  });
+  const updateDetails = useMutation({
+    mutationFn: useConvexMutation(gateway.library.updateDetails),
+  });
+  const setCopyCover = useMutation({
+    mutationFn: useConvexMutation(gateway.library.setCopyCover),
+  });
 
   const { snapshot, gallery } = copy;
   const aggregateId = copy.aggregateId;
@@ -69,7 +78,11 @@ export function EditCopyDialog({
   const [coverImageId, setCoverImageId] = useState<string | null>(
     snapshot.coverImageId,
   );
-  const [saving, setSaving] = useState(false);
+  const saving =
+    changeCondition.isPending ||
+    updateSharing.isPending ||
+    updateDetails.isPending ||
+    setCopyCover.isPending;
 
   const conditionOptions = CONDITION_OPTIONS.map((o) => ({
     value: o.value,
@@ -77,12 +90,13 @@ export function EditCopyDialog({
   }));
 
   const save = async () => {
-    setSaving(true);
     try {
       const ops: Array<Promise<unknown>> = [];
 
       if (domainEditable && condition !== snapshot.condition) {
-        ops.push(changeCondition({ copyId: aggregateId, condition }));
+        ops.push(
+          changeCondition.mutateAsync({ copyId: aggregateId, condition }),
+        );
       }
 
       const availabilityChanged =
@@ -91,18 +105,25 @@ export function EditCopyDialog({
         availability.forSale !== snapshot.availability.forSale;
       if (domainEditable && availabilityChanged) {
         ops.push(
-          updateSharing(availabilityToSharing(aggregateId, availability)),
+          updateSharing.mutateAsync(
+            availabilityToSharing(aggregateId, availability),
+          ),
         );
       }
 
       const trimmedNotes = notes.trim();
       if (domainEditable && trimmedNotes !== (snapshot.notes ?? "")) {
-        ops.push(updateDetails({ copyId: aggregateId, notes: trimmedNotes }));
+        ops.push(
+          updateDetails.mutateAsync({
+            copyId: aggregateId,
+            notes: trimmedNotes,
+          }),
+        );
       }
 
       if (coverImageId !== snapshot.coverImageId) {
         ops.push(
-          setCopyCover({
+          setCopyCover.mutateAsync({
             copyId: copy.copyId as Id<"ownedPuzzles">,
             ...(coverImageId
               ? { coverImageId: coverImageId as Id<"ownedPuzzleImages"> }
@@ -116,8 +137,6 @@ export function EditCopyDialog({
       onOpenChange(false);
     } catch {
       toast.error(t("editCopy.editFailed"));
-    } finally {
-      setSaving(false);
     }
   };
 

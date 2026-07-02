@@ -11,7 +11,8 @@ import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { gateway, Id } from "@/gateway";
 import { pageTitle } from "@/lib/page-title";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
@@ -35,16 +36,20 @@ function NewCompletionPage() {
     title: string;
   } | null>(null);
 
-  const convexUser = useQuery(
-    gateway.identity.byClerkId,
-    user?.id ? { clerkId: user.id } : "skip",
+  const { data: convexUser, isPending: convexUserPending } = useQuery(
+    convexQuery(
+      gateway.identity.byClerkId,
+      user?.id ? { clerkId: user.id } : "skip",
+    ),
   );
 
-  const ownedPuzzles = useQuery(
-    gateway.library.ownedByOwner,
-    convexUser?._id
-      ? { ownerId: convexUser._id as Id<"users">, includeUnavailable: true }
-      : "skip",
+  const { data: ownedPuzzles, isPending: ownedPuzzlesPending } = useQuery(
+    convexQuery(
+      gateway.library.ownedByOwner,
+      convexUser?._id
+        ? { ownerId: convexUser._id as Id<"users">, includeUnavailable: true }
+        : "skip",
+    ),
   );
 
   usePageHeader(
@@ -69,7 +74,13 @@ function NewCompletionPage() {
     [t, tShell, tCommon],
   );
 
-  if (!user || convexUser === undefined || ownedPuzzles === undefined) {
+  if (
+    !user ||
+    convexUserPending ||
+    convexUser === undefined ||
+    ownedPuzzlesPending ||
+    ownedPuzzles === undefined
+  ) {
     return <PageLoading message={tCommon("loading")} />;
   }
 

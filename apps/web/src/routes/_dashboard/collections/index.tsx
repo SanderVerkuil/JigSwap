@@ -36,7 +36,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, Id } from "@/gateway";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { FolderOpen, Globe, Lock, Plus, Settings } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
@@ -71,22 +72,30 @@ function CollectionsPage() {
     icon: "📦",
   });
 
-  const convexUser = useQuery(
-    gateway.identity.byClerkId,
-    user?.id ? { clerkId: user.id } : "skip",
+  const { data: convexUser, isPending: convexUserPending } = useQuery(
+    convexQuery(
+      gateway.identity.byClerkId,
+      user?.id ? { clerkId: user.id } : "skip",
+    ),
   );
 
-  const collections = useQuery(
-    gateway.collections.listForUser,
-    convexUser?._id ? { userId: convexUser._id as Id<"users"> } : "skip",
+  const { data: collections, isPending: collectionsPending } = useQuery(
+    convexQuery(
+      gateway.collections.listForUser,
+      convexUser?._id ? { userId: convexUser._id as Id<"users"> } : "skip",
+    ),
   );
 
-  const createCollection = useMutation(gateway.collections.create);
-  const deleteCollection = useMutation(gateway.collections.delete);
+  const createCollection = useMutation({
+    mutationFn: useConvexMutation(gateway.collections.create),
+  });
+  const deleteCollection = useMutation({
+    mutationFn: useConvexMutation(gateway.collections.delete),
+  });
 
   const handleCreateCollection = async () => {
     try {
-      await createCollection({
+      await createCollection.mutateAsync({
         name: formData.name,
         description: formData.description,
         visibility: formData.visibility,
@@ -117,7 +126,7 @@ function CollectionsPage() {
     }
     if (confirm(t("deleteConfirm"))) {
       try {
-        await deleteCollection({
+        await deleteCollection.mutateAsync({
           collectionId: collectionAggregateId,
         });
       } catch (error) {
@@ -161,7 +170,13 @@ function CollectionsPage() {
     [headerMeta],
   );
 
-  if (!user || convexUser === undefined || collections === undefined) {
+  if (
+    !user ||
+    convexUserPending ||
+    convexUser === undefined ||
+    collectionsPending ||
+    collections === undefined
+  ) {
     return (
       <div className="flex flex-col gap-7">
         <Skeleton className="h-10 w-full" />

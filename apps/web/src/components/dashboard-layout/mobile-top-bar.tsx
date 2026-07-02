@@ -14,7 +14,8 @@ import { usePathname } from "@/compat/navigation";
 import logoIcon from "@/components/common/header-icon/logo.png";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Bell, ChevronLeft, Search } from "lucide-react";
 import { useTranslations } from "use-intl";
 import { getNavGroup, getRouteMeta } from "./route-meta";
@@ -31,8 +32,10 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const { user } = useUser();
 
   // Same reactive count the desktop bell subscribes to — Convex dedupes it.
-  const unread =
-    useQuery(gateway.notifications.unreadCount, user?.id ? {} : "skip") ?? 0;
+  const { data: unreadCount } = useQuery(
+    convexQuery(gateway.notifications.unreadCount, user?.id ? {} : "skip"),
+  );
+  const unread = unreadCount ?? 0;
 
   const meta = getRouteMeta(pathname);
   const isHome = meta?.variant === "dashboard";

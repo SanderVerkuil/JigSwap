@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Save } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -38,31 +39,33 @@ export function EditProfileForm({
 }) {
   const t = useTranslations("profile");
   const { user } = useUser();
-  const updateProfile = useMutation(gateway.identity.updateProfile);
-  const setProfileVisibility = useMutation(gateway.social.setProfileVisibility);
+  const updateProfile = useMutation({
+    mutationFn: useConvexMutation(gateway.identity.updateProfile),
+  });
+  const setProfileVisibility = useMutation({
+    mutationFn: useConvexMutation(gateway.social.setProfileVisibility),
+  });
 
   // The visibility setting lives on the Social profile (separate from the identity account fields
   // above). Treat an absent profile/value as the "public" default.
-  const socialProfile = useQuery(gateway.social.profile, {});
+  const { data: socialProfile } = useQuery(
+    convexQuery(gateway.social.profile, {}),
+  );
   const isPrivate = socialProfile?.visibility === "private";
 
   const [username, setUsername] = useState(member.username ?? "");
   const [location, setLocation] = useState(member.location ?? "");
   const [bio, setBio] = useState(member.bio ?? "");
   const [saving, setSaving] = useState(false);
-  const [visibilitySaving, setVisibilitySaving] = useState(false);
 
   const handleVisibilityChange = async (nextPrivate: boolean) => {
-    setVisibilitySaving(true);
     try {
-      await setProfileVisibility({
+      await setProfileVisibility.mutateAsync({
         visibility: nextPrivate ? "private" : "public",
       });
       toast.success(t("saved"));
     } catch {
       toast.error(t("saveError"));
-    } finally {
-      setVisibilitySaving(false);
     }
   };
 
@@ -76,7 +79,7 @@ export function EditProfileForm({
         await user.update({ username: nextUsername });
       }
       // Location/bio live only in Convex.
-      await updateProfile({
+      await updateProfile.mutateAsync({
         location: location.trim() || undefined,
         bio: bio.trim() || undefined,
       });
@@ -129,7 +132,9 @@ export function EditProfileForm({
         <Switch
           id="profile-visibility"
           checked={isPrivate}
-          disabled={visibilitySaving || socialProfile === undefined}
+          disabled={
+            setProfileVisibility.isPending || socialProfile === undefined
+          }
           onCheckedChange={handleVisibilityChange}
           aria-label={t("visibility.label")}
         />

@@ -39,7 +39,12 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, Id } from "@/gateway";
-import { useAction, useMutation, useQuery } from "convex/react";
+import {
+  convexQuery,
+  useConvexAction,
+  useConvexMutation,
+} from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -123,17 +128,29 @@ function AddPuzzlePage() {
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
   // Mutations & actions
-  const createPuzzle = useMutation(gateway.catalog.createPuzzle);
-  const createOwned = useMutation(gateway.library.createOwned);
-  const updateSharing = useMutation(gateway.library.updateSharing);
-  const generateUploadUrl = useMutation(gateway.library.generateUploadUrl);
-  const importImage = useAction(gateway.catalog.importPuzzleImage);
+  const createPuzzle = useMutation({
+    mutationFn: useConvexMutation(gateway.catalog.createPuzzle),
+  });
+  const createOwned = useMutation({
+    mutationFn: useConvexMutation(gateway.library.createOwned),
+  });
+  const updateSharing = useMutation({
+    mutationFn: useConvexMutation(gateway.library.updateSharing),
+  });
+  const generateUploadUrl = useMutation({
+    mutationFn: useConvexMutation(gateway.library.generateUploadUrl),
+  });
+  const importImage = useMutation({
+    mutationFn: useConvexAction(gateway.catalog.importPuzzleImage),
+  });
 
   // puzzleId from URL — pre-select an existing definition (copy mode).
   const puzzleIdFromUrl = searchParams.get("puzzleId") as Id<"puzzles"> | null;
-  const specificPuzzle = useQuery(
-    gateway.catalog.puzzleById,
-    puzzleIdFromUrl ? { puzzleId: puzzleIdFromUrl } : "skip",
+  const { data: specificPuzzle } = useQuery(
+    convexQuery(
+      gateway.catalog.puzzleById,
+      puzzleIdFromUrl ? { puzzleId: puzzleIdFromUrl } : "skip",
+    ),
   );
 
   useEffect(() => {
@@ -210,7 +227,7 @@ function AddPuzzlePage() {
   const buildImageId = async (): Promise<Id<"_storage"> | undefined> => {
     if (form.coverMode !== "photo") return undefined;
     if (form.coverFile) {
-      const uploadUrl = await generateUploadUrl();
+      const uploadUrl = await generateUploadUrl.mutateAsync({});
       const res = await fetch(uploadUrl, {
         method: "POST",
         headers: { "Content-Type": form.coverFile.type },
@@ -221,7 +238,7 @@ function AddPuzzlePage() {
       return storageId as Id<"_storage">;
     } else if (form.selectedImageUrl) {
       try {
-        return await importImage({ url: form.selectedImageUrl });
+        return await importImage.mutateAsync({ url: form.selectedImageUrl });
       } catch {
         // Non-fatal: proceed without the remote image
         return undefined;
@@ -261,13 +278,13 @@ function AddPuzzlePage() {
       let definitionId = selectedDefinitionId;
       if (!definitionId) {
         const imageId = await buildImageId();
-        definitionId = (await createPuzzle(
+        definitionId = (await createPuzzle.mutateAsync(
           buildCreatePuzzleArgs(imageId),
         )) as string;
       }
 
       // 2. Acquire a copy of that definition.
-      const copyId = (await createOwned({
+      const copyId = (await createOwned.mutateAsync({
         puzzleDefinitionId: definitionId,
         condition: form.condition,
         notes: form.notes || undefined,
@@ -275,7 +292,9 @@ function AddPuzzlePage() {
 
       // 3. Apply availability if any chip is on.
       if (hasAnyAvailability(form.availability)) {
-        await updateSharing(availabilityToSharing(copyId, form.availability));
+        await updateSharing.mutateAsync(
+          availabilityToSharing(copyId, form.availability),
+        );
       }
 
       toast.success(t("puzzleAdded"));
@@ -295,19 +314,21 @@ function AddPuzzlePage() {
       let definitionId = selectedDefinitionId;
       if (!definitionId) {
         const imageId = await buildImageId();
-        definitionId = (await createPuzzle(
+        definitionId = (await createPuzzle.mutateAsync(
           buildCreatePuzzleArgs(imageId),
         )) as string;
       }
 
-      const copyId = (await createOwned({
+      const copyId = (await createOwned.mutateAsync({
         puzzleDefinitionId: definitionId,
         condition: form.condition,
         notes: form.notes || undefined,
       })) as string;
 
       if (hasAnyAvailability(form.availability)) {
-        await updateSharing(availabilityToSharing(copyId, form.availability));
+        await updateSharing.mutateAsync(
+          availabilityToSharing(copyId, form.availability),
+        );
       }
 
       toast.success(t("puzzleAdded"));

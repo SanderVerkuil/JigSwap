@@ -25,7 +25,8 @@ import {
 } from "@/components/ui/sidebar";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "use-intl";
 import {
   ADMIN_GROUP,
@@ -41,7 +42,9 @@ export function AppSidebar() {
 
   // Backend-confirmed admin role — the same source the /admin route guard uses,
   // so the nav and the routes can't diverge. Convex dedupes the subscription.
-  const isAdmin = useQuery(gateway.identity.isAdmin, user?.id ? {} : "skip");
+  const { data: isAdmin } = useQuery(
+    convexQuery(gateway.identity.isAdmin, user?.id ? {} : "skip"),
+  );
 
   return (
     <Sidebar
@@ -112,11 +115,13 @@ function NavLink({ item }: { item: ShellNavItem }) {
   // other item skips). The backend caps the value at 50, so 50 genuinely
   // means "50 or more" and renders "50+".
   const { member } = useCurrentMember();
-  const unread =
-    useQuery(
+  const { data: unreadTotal } = useQuery(
+    convexQuery(
       gateway.conversation.getUnreadTotal,
       item.key === "messages" && member?._id ? {} : "skip",
-    ) ?? 0;
+    ),
+  );
+  const unread = unreadTotal ?? 0;
 
   return (
     <SidebarMenuItem>

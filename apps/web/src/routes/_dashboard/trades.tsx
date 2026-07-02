@@ -15,7 +15,8 @@ import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import {
   ArrowLeftRight,
@@ -100,18 +101,23 @@ function ExchangesPage() {
     "all",
   );
 
-  const convexUser = useQuery(
-    gateway.identity.byClerkId,
-    user?.id ? { clerkId: user.id } : "skip",
+  const { data: convexUser } = useQuery(
+    convexQuery(
+      gateway.identity.byClerkId,
+      user?.id ? { clerkId: user.id } : "skip",
+    ),
   );
 
   // Incoming = the viewer is the owner; outgoing = the viewer is the requester.
-  const incomingExchanges = useQuery(gateway.exchange.incoming);
-  const outgoingExchanges = useQuery(gateway.exchange.outgoing);
+  const { data: incomingExchanges } = useQuery(
+    convexQuery(gateway.exchange.incoming, {}),
+  );
+  const { data: outgoingExchanges } = useQuery(
+    convexQuery(gateway.exchange.outgoing, {}),
+  );
   // Open loans the viewer is holding, only fetched once the tab is opened.
-  const borrowed = useQuery(
-    gateway.lending.borrowed,
-    tab === "borrowed" ? {} : "skip",
+  const { data: borrowed } = useQuery(
+    convexQuery(gateway.lending.borrowed, tab === "borrowed" ? {} : "skip"),
   );
 
   if (
@@ -320,10 +326,18 @@ function ExchangeDetail({
   const t = useTranslations("trades");
   const [chatOpen, setChatOpen] = useState(false);
 
-  const acceptExchange = useMutation(gateway.exchange.accept);
-  const declineExchange = useMutation(gateway.exchange.decline);
-  const completeExchange = useMutation(gateway.exchange.complete);
-  const cancelExchange = useMutation(gateway.exchange.cancel);
+  const acceptExchange = useMutation({
+    mutationFn: useConvexMutation(gateway.exchange.accept),
+  });
+  const declineExchange = useMutation({
+    mutationFn: useConvexMutation(gateway.exchange.decline),
+  });
+  const completeExchange = useMutation({
+    mutationFn: useConvexMutation(gateway.exchange.complete),
+  });
+  const cancelExchange = useMutation({
+    mutationFn: useConvexMutation(gateway.exchange.cancel),
+  });
 
   // The lifecycle mutations key off the domain aggregateId, not the Convex
   // _id; guard against legacy rows lacking one so we never send undefined.
@@ -382,7 +396,7 @@ function ExchangeDetail({
             <Button
               size="sm"
               disabled={!exchange.aggregateId}
-              onClick={run((args) => acceptExchange(args))}
+              onClick={run((args) => acceptExchange.mutateAsync(args))}
             >
               <CheckCircle className="h-4 w-4" />
               {t("accept")}
@@ -391,7 +405,7 @@ function ExchangeDetail({
               variant="outline"
               size="sm"
               disabled={!exchange.aggregateId}
-              onClick={run((args) => declineExchange(args))}
+              onClick={run((args) => declineExchange.mutateAsync(args))}
             >
               <XCircle className="h-4 w-4" />
               {t("decline")}
@@ -404,7 +418,7 @@ function ExchangeDetail({
             variant="outline"
             size="sm"
             disabled={!exchange.aggregateId}
-            onClick={run((args) => cancelExchange(args))}
+            onClick={run((args) => cancelExchange.mutateAsync(args))}
           >
             <XCircle className="h-4 w-4" />
             {t("cancel")}
@@ -415,7 +429,7 @@ function ExchangeDetail({
           <Button
             size="sm"
             disabled={!exchange.aggregateId}
-            onClick={run((args) => completeExchange(args))}
+            onClick={run((args) => completeExchange.mutateAsync(args))}
           >
             <CheckCircle className="h-4 w-4" />
             {t("markComplete")}
@@ -457,9 +471,11 @@ function ExchangeDetail({
 function ExchangeChat({ exchangeId }: { exchangeId: string }) {
   const t = useTranslations("messages");
   const { member } = useCurrentMember();
-  const threadId = useQuery(
-    gateway.conversation.getThreadByExchange,
-    member ? { exchangeId } : "skip",
+  const { data: threadId } = useQuery(
+    convexQuery(
+      gateway.conversation.getThreadByExchange,
+      member ? { exchangeId } : "skip",
+    ),
   );
 
   if (threadId === undefined) {
@@ -513,17 +529,20 @@ function PuzzleSummary({
 function BorrowedList({ borrowed }: { borrowed: BorrowedLoan[] | undefined }) {
   const t = useTranslations("lending");
   const format = useFormatter();
-  const returnLoan = useMutation(gateway.lending.returnLoan);
-  const [returningId, setReturningId] = useState<string | null>(null);
+  const returnLoan = useMutation({
+    mutationFn: useConvexMutation(gateway.lending.returnLoan),
+  });
+  // Scope the pending state to the loan being returned so only that row's
+  // button disables, exactly as the old per-id busy flag did.
+  const returningId = returnLoan.isPending
+    ? (returnLoan.variables?.loanId ?? null)
+    : null;
 
   const handleReturn = async (loanId: string) => {
-    setReturningId(loanId);
     try {
-      await returnLoan({ loanId });
+      await returnLoan.mutateAsync({ loanId });
     } catch (error) {
       console.error("Failed to return loan:", error);
-    } finally {
-      setReturningId(null);
     }
   };
 

@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { useMutation } from "convex/react";
+import { useConvexMutation } from "@convex-dev/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { LifeBuoy, Mail, MapPin, Shield } from "lucide-react";
 import * as React from "react";
 import { useLocale, useTranslations } from "use-intl";
@@ -103,7 +104,9 @@ const SUBJECT_KEY: Record<Subject, string> = {
 function ContactForm() {
   const t = useTranslations("marketing.contactPage");
   const locale = useLocale();
-  const submitMessage = useMutation(gateway.contact.submit);
+  const submitMessage = useMutation({
+    mutationFn: useConvexMutation(gateway.contact.submit),
+  });
 
   const [form, setForm] = React.useState({
     name: "",
@@ -117,7 +120,6 @@ function ContactForm() {
     message?: string;
     submit?: string;
   }>({});
-  const [sending, setSending] = React.useState(false);
   const [sent, setSent] = React.useState(false);
 
   const set =
@@ -137,9 +139,8 @@ function ContactForm() {
     setErrors(er);
     if (Object.keys(er).length > 0) return;
 
-    setSending(true);
     try {
-      await submitMessage({
+      await submitMessage.mutateAsync({
         name: form.name,
         email: form.email,
         subject: form.subject,
@@ -149,8 +150,6 @@ function ContactForm() {
       setSent(true);
     } catch {
       setErrors({ submit: t("errorSubmit") });
-    } finally {
-      setSending(false);
     }
   };
 
@@ -262,7 +261,7 @@ function ContactForm() {
       <Button
         type="submit"
         variant="brand"
-        disabled={sending}
+        disabled={submitMessage.isPending}
         className="mt-[22px] w-full h-11 text-[15px]"
       >
         {t("submit")}

@@ -5,7 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { gateway, Id } from "@/gateway";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { AtSign, Calendar, MapPin, Pencil, Star, X } from "lucide-react";
 import { useTranslations } from "use-intl";
 import type { Member } from "./member-view";
@@ -26,9 +27,11 @@ export function IdentityHeader({
 }) {
   const t = useTranslations("profile");
   const { user } = useUser();
-  const reputation = useQuery(gateway.reputation.profile, {
-    memberId: member._id as Id<"users">,
-  });
+  const { data: reputation } = useQuery(
+    convexQuery(gateway.reputation.profile, {
+      memberId: member._id as Id<"users">,
+    }),
+  );
 
   const avatarSrc = member.avatar ?? user?.imageUrl;
   const initials = (member.name ?? "?")

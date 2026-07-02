@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Sparkles } from "lucide-react";
 import { useTranslations } from "use-intl";
 import { SectionHead } from "./section-head";
@@ -18,11 +19,13 @@ export function FreshSection() {
   const t = useTranslations("dashboard.fresh");
   const { member, isMemberLoading } = useCurrentMember();
 
-  const copies = useQuery(
-    gateway.library.ownedByOwner,
-    member?._id
-      ? { ownerId: member._id as Id<"users">, includeUnavailable: true }
-      : "skip",
+  const { data: copies } = useQuery(
+    convexQuery(
+      gateway.library.ownedByOwner,
+      member?._id
+        ? { ownerId: member._id as Id<"users">, includeUnavailable: true }
+        : "skip",
+    ),
   );
 
   const loading = isMemberLoading || (member != null && copies === undefined);

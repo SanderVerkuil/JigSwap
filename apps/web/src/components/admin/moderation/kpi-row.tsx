@@ -6,7 +6,8 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   CircleCheck,
   CircleX,
@@ -53,7 +54,9 @@ function KpiTile({
 
 export function KpiRow() {
   const t = useTranslations("admin.moderation.kpis");
-  const stats = useQuery(gateway.admin.getModerationStats);
+  const { data: stats } = useQuery(
+    convexQuery(gateway.admin.getModerationStats, {}),
+  );
   const thisWeek = t("thisWeek");
 
   return (

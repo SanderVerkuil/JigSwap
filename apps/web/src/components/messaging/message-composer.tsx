@@ -11,8 +11,9 @@ import { conversationErrorCode } from "@/components/messaging/format";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
+import { useConvexMutation } from "@convex-dev/react-query";
+import { useMutation } from "@tanstack/react-query";
 import type { OptimisticUpdate } from "convex/browser";
-import { useMutation } from "convex/react";
 import type { FunctionArgs } from "convex/server";
 import { Send } from "lucide-react";
 import { useState } from "react";
@@ -59,9 +60,11 @@ export function MessageComposer({ threadId }: { threadId: string }) {
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const postMessage = useMutation(
-    gateway.conversation.postMessage,
-  ).withOptimisticUpdate(optimisticAppend(me));
+  const postMessage = useMutation({
+    mutationFn: useConvexMutation(
+      gateway.conversation.postMessage,
+    ).withOptimisticUpdate(optimisticAppend(me)),
+  });
 
   const send = async () => {
     const trimmed = body.trim();
@@ -70,7 +73,7 @@ export function MessageComposer({ threadId }: { threadId: string }) {
     // Clear immediately — the optimistic append already shows the message.
     setBody("");
     try {
-      await postMessage({ threadId, kind: "text", body: trimmed });
+      await postMessage.mutateAsync({ threadId, kind: "text", body: trimmed });
     } catch (err) {
       // Give the text back unless the user already started typing a new one.
       setBody((current) => current || trimmed);

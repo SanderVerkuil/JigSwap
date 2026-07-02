@@ -20,7 +20,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
-import { useMutation } from "convex/react";
+import { useConvexMutation } from "@convex-dev/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { Globe, Lock } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
@@ -89,7 +90,9 @@ function EditCollectionForm({
   const t = useTranslations("collections");
   const tCommon = useTranslations("common");
 
-  const updateCollection = useMutation(gateway.collections.update);
+  const updateCollection = useMutation({
+    mutationFn: useConvexMutation(gateway.collections.update),
+  });
 
   const [formData, setFormData] = useState<FormData>(() =>
     collectionToForm(collection),
@@ -101,7 +104,7 @@ function EditCollectionForm({
       return;
     }
     try {
-      await updateCollection({
+      await updateCollection.mutateAsync({
         collectionId: collection.aggregateId,
         name: formData.name,
         description: formData.description,

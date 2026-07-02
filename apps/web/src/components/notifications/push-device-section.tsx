@@ -8,7 +8,8 @@ import {
   unsubscribeFromPush,
   withTimeout,
 } from "@/lib/web-push";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { BellOff, BellRing, Smartphone } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -21,11 +22,14 @@ import { useTranslations } from "use-intl";
 // subscription. The UI follows the ACTUAL browser subscription; the server sync is best-effort.
 export function PushDeviceSection() {
   const t = useTranslations("notifications");
-  const pushConfig = useQuery(gateway.notifications.pushConfig, {}) as
-    | { vapidPublicKey: string | null }
-    | undefined;
-  const registerPush = useMutation(gateway.notifications.registerPush);
-  const unregisterPush = useMutation(gateway.notifications.unregisterPush);
+  const pushConfig = useQuery(convexQuery(gateway.notifications.pushConfig, {}))
+    .data as { vapidPublicKey: string | null } | undefined;
+  const registerPush = useMutation({
+    mutationFn: useConvexMutation(gateway.notifications.registerPush),
+  });
+  const unregisterPush = useMutation({
+    mutationFn: useConvexMutation(gateway.notifications.unregisterPush),
+  });
 
   // `mounted` defers all browser-only reads (pushSupported, Notification.permission, the existing
   // subscription) to the client, so the server render and first client render agree (no hydration
@@ -72,7 +76,11 @@ export function PushDeviceSection() {
       // (the browser is already subscribed and must remain turn-off-able). Timed out so a stalled
       // mutation can't hang the button either.
       console.log("[push] register subscription with server…");
-      await withTimeout(registerPush(payload), 15000, "register subscription");
+      await withTimeout(
+        registerPush.mutateAsync(payload),
+        15000,
+        "register subscription",
+      );
       console.log("[push] done");
       toast.success(t("pushEnabled"));
     } catch (error) {
@@ -102,7 +110,7 @@ export function PushDeviceSection() {
       // failing unregister can't leave the device stuck "on".
       const ep = await unsubscribeFromPush();
       setEndpoint(null);
-      if (ep) await unregisterPush({ endpoint: ep });
+      if (ep) await unregisterPush.mutateAsync({ endpoint: ep });
       toast.success(t("pushDisabled"));
     } catch (error) {
       console.error("[push] disable failed:", error);

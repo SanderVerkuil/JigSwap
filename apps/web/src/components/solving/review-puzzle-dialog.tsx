@@ -13,7 +13,8 @@ import { Label } from "@/components/ui/label";
 import { StarRating } from "@/components/ui/star-rating";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
-import { useMutation } from "convex/react";
+import { useConvexMutation } from "@convex-dev/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
@@ -36,11 +37,12 @@ export function ReviewPuzzleDialog({
   initialText,
 }: ReviewPuzzleDialogProps) {
   const t = useTranslations("solving.review");
-  const reviewPuzzle = useMutation(gateway.solving.reviewPuzzle);
+  const reviewPuzzle = useMutation({
+    mutationFn: useConvexMutation(gateway.solving.reviewPuzzle),
+  });
 
   const [rating, setRating] = useState(initialRating ?? 0);
   const [text, setText] = useState(initialText ?? "");
-  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
     // The domain validates 1–5; block the call early so the user gets an inline hint instead.
@@ -48,9 +50,8 @@ export function ReviewPuzzleDialog({
       toast.error(t("ratingRequired"));
       return;
     }
-    setSubmitting(true);
     try {
-      await reviewPuzzle({
+      await reviewPuzzle.mutateAsync({
         completionId,
         rating,
         text: text.trim() || undefined,
@@ -60,8 +61,6 @@ export function ReviewPuzzleDialog({
     } catch (error) {
       console.error("Failed to save review:", error);
       toast.error(t("saveError"));
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -95,7 +94,7 @@ export function ReviewPuzzleDialog({
         </div>
 
         <DialogFooter>
-          <Button onClick={handleSubmit} disabled={submitting}>
+          <Button onClick={handleSubmit} disabled={reviewPuzzle.isPending}>
             {t("submit")}
           </Button>
         </DialogFooter>

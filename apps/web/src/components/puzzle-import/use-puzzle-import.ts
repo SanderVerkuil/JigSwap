@@ -1,5 +1,6 @@
 import { gateway } from "@/gateway";
-import { useAction } from "convex/react";
+import { useConvexAction } from "@convex-dev/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import type { ImportedDraft } from "./draft-to-form-defaults";
 
@@ -19,13 +20,15 @@ export type ImportState =
   | { status: "ready"; draft: ImportedDraft; match: ImportedMatch | null };
 
 export const usePuzzleImport = () => {
-  const extract = useAction(gateway.catalog.extractPuzzleFromUrl);
+  const extract = useMutation({
+    mutationFn: useConvexAction(gateway.catalog.extractPuzzleFromUrl),
+  });
   const [state, setState] = useState<ImportState>({ status: "idle" });
 
   const run = async (url: string) => {
     setState({ status: "loading" });
     try {
-      const result = await extract({ url });
+      const result = await extract.mutateAsync({ url });
       if (!result.ok) {
         setState({ status: "error" });
         return;

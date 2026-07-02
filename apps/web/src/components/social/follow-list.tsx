@@ -3,7 +3,8 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { gateway } from "@/gateway";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "use-intl";
 
 // A followers or following list for the acting member. The query resolves each counterparty's
@@ -16,11 +17,13 @@ export function FollowList({
   emptyHint: string;
 }) {
   const tCommon = useTranslations("common");
-  const edges = useQuery(
-    variant === "followers"
-      ? gateway.social.followers
-      : gateway.social.following,
-    {},
+  const { data: edges } = useQuery(
+    convexQuery(
+      variant === "followers"
+        ? gateway.social.followers
+        : gateway.social.following,
+      {},
+    ),
   );
 
   if (edges === undefined) {

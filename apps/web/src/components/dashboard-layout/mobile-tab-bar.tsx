@@ -12,7 +12,8 @@ import { usePathname } from "@/compat/navigation";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeftRight,
   BookOpen,
@@ -60,9 +61,8 @@ export function MobileTabBar() {
   // Incoming swap requests still awaiting an answer — the same definition the
   // dashboard's pending banner uses; Convex dedupes the shared subscription.
   const { member } = useCurrentMember();
-  const exchanges = useQuery(
-    gateway.exchange.forUser,
-    member?._id ? {} : "skip",
+  const { data: exchanges } = useQuery(
+    convexQuery(gateway.exchange.forUser, member?._id ? {} : "skip"),
   );
   const pending = (exchanges ?? []).filter(
     (exchange) =>

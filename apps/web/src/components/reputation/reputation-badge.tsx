@@ -3,7 +3,8 @@
 import type { Id } from "@/gateway";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Star } from "lucide-react";
 import { useTranslations } from "use-intl";
 
@@ -17,9 +18,8 @@ interface ReputationBadgeProps {
 
 export function ReputationBadge({ memberId, className }: ReputationBadgeProps) {
   const t = useTranslations("reputation");
-  const profile = useQuery(
-    gateway.reputation.profile,
-    memberId ? { memberId } : "skip",
+  const { data: profile } = useQuery(
+    convexQuery(gateway.reputation.profile, memberId ? { memberId } : "skip"),
   );
 
   if (profile === undefined) return null;

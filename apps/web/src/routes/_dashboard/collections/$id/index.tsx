@@ -29,7 +29,8 @@ import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { gateway, Id } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   ChevronRight,
   Edit,
@@ -64,16 +65,20 @@ function CollectionDetailPage() {
   const tCommon = useTranslations("common");
   const tPuzzles = useTranslations("puzzles");
 
-  const collection = useQuery(gateway.collections.byId, {
-    collectionId: id as Id<"collections">,
-  });
-
-  const removeFromCollection = useMutation(
-    gateway.collections.removeOwnedPuzzle,
+  const { data: collection, isPending: collectionPending } = useQuery(
+    convexQuery(gateway.collections.byId, {
+      collectionId: id as Id<"collections">,
+    }),
   );
-  const updateCollection = useMutation(gateway.collections.update);
+
+  const removeFromCollection = useMutation({
+    mutationFn: useConvexMutation(gateway.collections.removeOwnedPuzzle),
+  });
+  const updateCollection = useMutation({
+    mutationFn: useConvexMutation(gateway.collections.update),
+  });
   const [shareOpen, setShareOpen] = useState(false);
-  const [sharing, setSharing] = useState(false);
+  const sharing = updateCollection.isPending;
   const [editOpen, setEditOpen] = useState(false);
 
   // Publish only the collection name as the page-head title so the chrome
@@ -100,7 +105,7 @@ function CollectionDetailPage() {
       return;
     }
     try {
-      await removeFromCollection({
+      await removeFromCollection.mutateAsync({
         collectionId: collection.aggregateId,
         copyId: copy.aggregateId,
       });
@@ -138,9 +143,8 @@ function CollectionDetailPage() {
       console.error("Cannot share: collection is missing its aggregateId.");
       return;
     }
-    setSharing(true);
     try {
-      await updateCollection({
+      await updateCollection.mutateAsync({
         collectionId: collection.aggregateId,
         visibility: "public",
       });
@@ -152,8 +156,6 @@ function CollectionDetailPage() {
     } catch (error) {
       console.error("Failed to make collection public:", error);
       toast.error(t("shareDialog.error"));
-    } finally {
-      setSharing(false);
     }
   };
 
@@ -162,7 +164,7 @@ function CollectionDetailPage() {
     setShareOpen(false);
   };
 
-  if (collection === undefined) {
+  if (collectionPending || collection === undefined) {
     return <PageLoading message={tCommon("loading")} />;
   }
 

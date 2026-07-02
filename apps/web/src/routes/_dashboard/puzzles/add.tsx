@@ -34,7 +34,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { gateway, Id } from "@/gateway";
-import { useAction, useMutation } from "convex/react";
+import { useConvexAction, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -101,9 +102,15 @@ function ContributePuzzlePage() {
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
   // Mutations & actions
-  const createPuzzle = useMutation(gateway.catalog.createPuzzle);
-  const generateUploadUrl = useMutation(gateway.library.generateUploadUrl);
-  const importImage = useAction(gateway.catalog.importPuzzleImage);
+  const createPuzzle = useMutation({
+    mutationFn: useConvexMutation(gateway.catalog.createPuzzle),
+  });
+  const generateUploadUrl = useMutation({
+    mutationFn: useConvexMutation(gateway.library.generateUploadUrl),
+  });
+  const importImage = useMutation({
+    mutationFn: useConvexAction(gateway.catalog.importPuzzleImage),
+  });
 
   // Object URL for the cover file preview — create and revoke in one effect
   const [coverFileUrl, setCoverFileUrl] = useState<string | undefined>(
@@ -155,7 +162,7 @@ function ContributePuzzlePage() {
       let imageId: Id<"_storage"> | undefined;
       if (form.coverMode === "photo") {
         if (form.coverFile) {
-          const uploadUrl = await generateUploadUrl();
+          const uploadUrl = await generateUploadUrl.mutateAsync({});
           const res = await fetch(uploadUrl, {
             method: "POST",
             headers: { "Content-Type": form.coverFile.type },
@@ -166,7 +173,9 @@ function ContributePuzzlePage() {
           imageId = storageId as Id<"_storage">;
         } else if (form.selectedImageUrl) {
           try {
-            imageId = await importImage({ url: form.selectedImageUrl });
+            imageId = await importImage.mutateAsync({
+              url: form.selectedImageUrl,
+            });
           } catch {
             // Non-fatal: proceed without the remote image
             imageId = undefined;
@@ -174,7 +183,7 @@ function ContributePuzzlePage() {
         }
       }
 
-      await createPuzzle({
+      await createPuzzle.mutateAsync({
         title: form.title,
         brand: form.brand || undefined,
         pieceCount: form.pieceCount!,

@@ -17,7 +17,10 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import { gateway } from "@/gateway";
-import { useConvexAuth, useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
+// sanctioned convex/react exception: useConvexAuth (see tanstack-query migration spec)
+import { useConvexAuth } from "convex/react";
 import {
   CircleCheck,
   FolderOpen,
@@ -89,9 +92,11 @@ export function CommandPalette({
   }, [value]);
 
   const hasTerm = term.length >= MIN_TERM_LENGTH;
-  const results = useQuery(
-    gateway.search.global,
-    hasTerm && isAuthenticated ? { term } : "skip",
+  const { data: results } = useQuery(
+    convexQuery(
+      gateway.search.global,
+      hasTerm && isAuthenticated ? { term } : "skip",
+    ),
   );
   const isSearching = hasTerm && results === undefined;
   const totalHits = results
@@ -103,7 +108,9 @@ export function CommandPalette({
 
   // Backend-confirmed admin role — same source as the /admin route guard and
   // the sidebar's gated group; Convex dedupes the shared subscription.
-  const isAdmin = useQuery(gateway.identity.isAdmin, user?.id ? {} : "skip");
+  const { data: isAdmin } = useQuery(
+    convexQuery(gateway.identity.isAdmin, user?.id ? {} : "skip"),
+  );
 
   const go = (href: string) => {
     handleOpenChange(false);

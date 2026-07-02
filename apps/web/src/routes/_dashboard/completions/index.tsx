@@ -25,7 +25,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { CircleCheck, Clock, Pencil, Plus, Star, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -80,26 +81,31 @@ function CompletionsPage() {
   const t = useTranslations("solving.completions");
   const tCommon = useTranslations("common");
   const [dialog, setDialog] = useState<DialogState>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const deleteCompletion = useMutation(gateway.solving.deleteCompletion);
+  const deleteCompletion = useMutation({
+    mutationFn: useConvexMutation(gateway.solving.deleteCompletion),
+  });
+  const isDeleting = deleteCompletion.isPending;
 
-  const convexUser = useQuery(
-    gateway.identity.byClerkId,
-    user?.id ? { clerkId: user.id } : "skip",
+  const { data: convexUser, isPending: convexUserPending } = useQuery(
+    convexQuery(
+      gateway.identity.byClerkId,
+      user?.id ? { clerkId: user.id } : "skip",
+    ),
   );
 
-  const completions = useQuery(
-    gateway.solving.myCompletions,
-    convexUser?._id ? {} : "skip",
+  const { data: completions, isPending: completionsPending } = useQuery(
+    convexQuery(gateway.solving.myCompletions, convexUser?._id ? {} : "skip"),
   );
 
   // The completion rows reference an owned copy by FK id only; join the member's library to
   // resolve a human title and the piece count. Built once per library load.
-  const ownedPuzzles = useQuery(
-    gateway.library.ownedByOwner,
-    convexUser?._id
-      ? { ownerId: convexUser._id as Id<"users">, includeUnavailable: true }
-      : "skip",
+  const { data: ownedPuzzles } = useQuery(
+    convexQuery(
+      gateway.library.ownedByOwner,
+      convexUser?._id
+        ? { ownerId: convexUser._id as Id<"users">, includeUnavailable: true }
+        : "skip",
+    ),
   );
 
   const infoByCopyId = useMemo(() => {
@@ -134,7 +140,13 @@ function CompletionsPage() {
     [t],
   );
 
-  if (!user || convexUser === undefined || completions === undefined) {
+  if (
+    !user ||
+    convexUserPending ||
+    convexUser === undefined ||
+    completionsPending ||
+    completions === undefined
+  ) {
     return <CompletionsSkeleton />;
   }
 
@@ -427,17 +439,14 @@ function CompletionsPage() {
                 disabled={isDeleting}
                 onClick={async () => {
                   if (!dialog.completionId) return;
-                  setIsDeleting(true);
                   try {
-                    await deleteCompletion({
+                    await deleteCompletion.mutateAsync({
                       completionId: dialog.completionId,
                     });
                     toast.success(t("deleteSuccess"));
                     setDialog(null);
                   } catch {
                     toast.error(t("deleteError"));
-                  } finally {
-                    setIsDeleting(false);
                   }
                 }}
               >

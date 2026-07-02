@@ -14,7 +14,8 @@ import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Grid, List, Plus, Undo2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslations } from "use-intl";
@@ -111,37 +112,47 @@ function PuzzlesPage() {
   const tLending = useTranslations("lending");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  // The loan currently being recalled, so we disable only that copy's Recall button.
-  const [recallingId, setRecallingId] = useState<string | null>(null);
   // The copy a solve is being logged against; null when the dialog is closed.
   const [solveTarget, setSolveTarget] = useState<{
     copyId: string;
     title: string;
   } | null>(null);
 
-  const convexUser = useQuery(
-    gateway.identity.byClerkId,
-    user?.id ? { clerkId: user.id } : "skip",
+  const { data: convexUser } = useQuery(
+    convexQuery(
+      gateway.identity.byClerkId,
+      user?.id ? { clerkId: user.id } : "skip",
+    ),
   );
 
-  const userownedPuzzles = useQuery(
-    gateway.library.ownedByOwner,
-    convexUser?._id
-      ? { ownerId: convexUser._id as Id<"users">, includeUnavailable: true }
-      : "skip",
-  );
+  const { data: userownedPuzzles, isPending: userownedPuzzlesPending } =
+    useQuery(
+      convexQuery(
+        gateway.library.ownedByOwner,
+        convexUser?._id
+          ? { ownerId: convexUser._id as Id<"users">, includeUnavailable: true }
+          : "skip",
+      ),
+    );
 
-  const deletePuzzle = useMutation(gateway.library.deleteOwned);
+  const deletePuzzle = useMutation({
+    mutationFn: useConvexMutation(gateway.library.deleteOwned),
+  });
 
   // Open loans where the caller is the lender; the source of truth for "which of my copies are out".
-  const lentOut = useQuery(gateway.lending.lentOut);
-  const recallLoan = useMutation(gateway.lending.recallLoan);
+  const { data: lentOut } = useQuery(convexQuery(gateway.lending.lentOut, {}));
+  const recallLoan = useMutation({
+    mutationFn: useConvexMutation(gateway.lending.recallLoan),
+  });
+  // The loan currently being recalled, so we disable only that copy's Recall button.
+  const recallingId = recallLoan.isPending
+    ? (recallLoan.variables?.loanId ?? null)
+    : null;
 
   // The member's solve log powers the In Progress / Completed pills; keyed by
   // the copy's ownedPuzzles _id so each card resolves its state in O(1).
-  const completions = useQuery(
-    gateway.solving.myCompletions,
-    convexUser?._id ? {} : "skip",
+  const { data: completions } = useQuery(
+    convexQuery(gateway.solving.myCompletions, convexUser?._id ? {} : "skip"),
   );
   const solveStateByCopyId = useMemo(() => {
     const map = new Map<string, { inProgress: boolean; completed: boolean }>();
@@ -166,13 +177,10 @@ function PuzzlesPage() {
   );
 
   const handleRecallLoan = async (loanId: string) => {
-    setRecallingId(loanId);
     try {
-      await recallLoan({ loanId });
+      await recallLoan.mutateAsync({ loanId });
     } catch (error) {
       console.error("Failed to recall loan:", error);
-    } finally {
-      setRecallingId(null);
     }
   };
 
@@ -186,7 +194,7 @@ function PuzzlesPage() {
     }
     if (confirm(t("deleteConfirm"))) {
       try {
-        await deletePuzzle({
+        await deletePuzzle.mutateAsync({
           copyId: copy.aggregateId,
         });
       } catch (error) {
@@ -256,7 +264,12 @@ function PuzzlesPage() {
     [headerMeta],
   );
 
-  if (!user || !convexUser || userownedPuzzles === undefined) {
+  if (
+    !user ||
+    !convexUser ||
+    userownedPuzzlesPending ||
+    userownedPuzzles === undefined
+  ) {
     return <PuzzlesGridSkeleton />;
   }
 

@@ -11,7 +11,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { gateway } from "@/gateway";
 import { useDateFnsLocale } from "@/lib/date-locale";
 import { cn } from "@/lib/utils";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { ArrowLeftRight, MessageSquare, User } from "lucide-react";
 import { useTranslations } from "use-intl";
@@ -56,9 +57,8 @@ export function ThreadSubjectAvatar({
 export function ThreadList({ activeThreadId }: { activeThreadId?: string }) {
   const t = useTranslations("messages");
   const { member } = useCurrentMember();
-  const inbox = useQuery(
-    gateway.conversation.getMyInbox,
-    member?._id ? {} : "skip",
+  const { data: inbox } = useQuery(
+    convexQuery(gateway.conversation.getMyInbox, member?._id ? {} : "skip"),
   );
 
   if (inbox === undefined) {

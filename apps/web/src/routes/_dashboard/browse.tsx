@@ -14,7 +14,8 @@ import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { gateway, Id } from "@/gateway";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Grid, List } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "use-intl";
@@ -51,28 +52,34 @@ function BrowsePage() {
     return () => clearTimeout(handle);
   }, [query.text]);
 
-  const convexUser = useQuery(
-    gateway.identity.byClerkId,
-    user?.id ? { clerkId: user.id } : "skip",
+  const { data: convexUser } = useQuery(
+    convexQuery(
+      gateway.identity.byClerkId,
+      user?.id ? { clerkId: user.id } : "skip",
+    ),
   );
 
   // Server-side filters: category, condition, difficulty, piece range, and the
   // free-text searchTerm (which the browse query matches over title / brand /
   // description / tags) are all honoured by gateway.library.browseOwned.
-  const browseOwnedPuzzlesResult = useQuery(gateway.library.browseOwned, {
-    category: query.category
-      ? (query.category as Id<"adminCategories">)
-      : undefined,
-    difficulty: query.difficulty || undefined,
-    condition: query.condition || undefined,
-    minPieceCount: query.minPieces ? parseInt(query.minPieces) : undefined,
-    maxPieceCount: query.maxPieces ? parseInt(query.maxPieces) : undefined,
-    searchTerm: debouncedText || undefined,
-    includeOwnPuzzles: false,
-    limit: 50,
-  });
+  const { data: browseOwnedPuzzlesResult } = useQuery(
+    convexQuery(gateway.library.browseOwned, {
+      category: query.category
+        ? (query.category as Id<"adminCategories">)
+        : undefined,
+      difficulty: query.difficulty || undefined,
+      condition: query.condition || undefined,
+      minPieceCount: query.minPieces ? parseInt(query.minPieces) : undefined,
+      maxPieceCount: query.maxPieces ? parseInt(query.maxPieces) : undefined,
+      searchTerm: debouncedText || undefined,
+      includeOwnPuzzles: false,
+      limit: 50,
+    }),
+  );
 
-  const categoriesRaw = useQuery(gateway.catalog.puzzleCategories);
+  const { data: categoriesRaw } = useQuery(
+    convexQuery(gateway.catalog.puzzleCategories, {}),
+  );
 
   const categories: CategoryOption[] = useMemo(
     () =>

@@ -4,7 +4,8 @@ import { SectionHead } from "@/components/dashboard-home/section-head";
 import { StarRating } from "@/components/ui/star-rating";
 import type { Id } from "@/gateway";
 import { gateway } from "@/gateway";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ShieldCheck } from "lucide-react";
 import { useTranslations } from "use-intl";
 
@@ -27,13 +28,14 @@ function credibilityKey(credibility: number): "low" | "medium" | "high" {
 export function ReputationSection({ memberId }: ReputationSectionProps) {
   const t = useTranslations("reputation");
 
-  const profile = useQuery(
-    gateway.reputation.profile,
-    memberId ? { memberId } : "skip",
+  const { data: profile } = useQuery(
+    convexQuery(gateway.reputation.profile, memberId ? { memberId } : "skip"),
   );
-  const reviews = useQuery(
-    gateway.reputation.reviewsForMember,
-    memberId ? { memberId } : "skip",
+  const { data: reviews } = useQuery(
+    convexQuery(
+      gateway.reputation.reviewsForMember,
+      memberId ? { memberId } : "skip",
+    ),
   );
 
   if (profile === undefined || reviews === undefined) {

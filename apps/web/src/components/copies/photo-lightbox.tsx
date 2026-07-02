@@ -12,7 +12,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { gateway, Id } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import {
   ChevronLeft,
@@ -63,10 +64,14 @@ export function PhotoLightbox({
 }) {
   const t = useTranslations("copyInstance.photoLightbox");
   const format = useFormatter();
-  const setCopyCover = useMutation(gateway.library.setCopyCover);
-  const removeCopyPhoto = useMutation(gateway.library.removeCopyPhoto);
-  const [settingCover, setSettingCover] = useState(false);
-  const [removing, setRemoving] = useState(false);
+  const setCopyCover = useMutation({
+    mutationFn: useConvexMutation(gateway.library.setCopyCover),
+  });
+  const removeCopyPhoto = useMutation({
+    mutationFn: useConvexMutation(gateway.library.removeCopyPhoto),
+  });
+  const settingCover = setCopyCover.isPending;
+  const removing = removeCopyPhoto.isPending;
   const [confirmRemove, setConfirmRemove] = useState(false);
 
   const count = gallery.length;
@@ -80,44 +85,38 @@ export function PhotoLightbox({
 
   const setAsCover = async () => {
     if (!photo) return;
-    setSettingCover(true);
     try {
-      await setCopyCover({
+      await setCopyCover.mutateAsync({
         copyId: copyId as Id<"ownedPuzzles">,
         coverImageId: photo.id as Id<"ownedPuzzleImages">,
       });
       toast.success(t("coverUpdated"));
     } catch {
       toast.error(t("coverFailed"));
-    } finally {
-      setSettingCover(false);
     }
   };
 
   // Clear the cover (omit coverImageId) so the copy falls back to the catalogue image.
   const unsetCover = async () => {
-    setSettingCover(true);
     try {
-      await setCopyCover({ copyId: copyId as Id<"ownedPuzzles"> });
+      await setCopyCover.mutateAsync({ copyId: copyId as Id<"ownedPuzzles"> });
       toast.success(t("coverUpdated"));
     } catch {
       toast.error(t("coverFailed"));
-    } finally {
-      setSettingCover(false);
     }
   };
 
   const removePhoto = async () => {
     if (!photo) return;
-    setRemoving(true);
     try {
-      await removeCopyPhoto({ imageId: photo.id as Id<"ownedPuzzleImages"> });
+      await removeCopyPhoto.mutateAsync({
+        imageId: photo.id as Id<"ownedPuzzleImages">,
+      });
       toast.success(t("photoRemoved"));
       onOpenChange(false); // close; the gallery refetches via Convex reactivity
     } catch {
       toast.error(t("removeFailed"));
     } finally {
-      setRemoving(false);
       setConfirmRemove(false);
     }
   };
@@ -317,12 +316,16 @@ function PhotoComments({ photoId }: { photoId: Id<"ownedPuzzleImages"> }) {
 
   // Keyed on the ACTIVE photo's id: navigating in the lightbox swaps `photoId`, which re-runs
   // this Convex query and re-renders the list for the newly shown photo.
-  const comments = useQuery(gateway.library.listPhotoComments, { photoId });
-  const me = useQuery(gateway.identity.currentUser, {});
-  const postComment = useMutation(gateway.library.postPhotoComment);
+  const { data: comments } = useQuery(
+    convexQuery(gateway.library.listPhotoComments, { photoId }),
+  );
+  const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
+  const postComment = useMutation({
+    mutationFn: useConvexMutation(gateway.library.postPhotoComment),
+  });
 
   const [text, setText] = useState("");
-  const [posting, setPosting] = useState(false);
+  const posting = postComment.isPending;
   const [now] = useState(() => Date.now());
 
   const list = comments ?? [];
@@ -332,14 +335,11 @@ function PhotoComments({ photoId }: { photoId: Id<"ownedPuzzleImages"> }) {
   const submit = async () => {
     const trimmed = text.trim();
     if (!trimmed) return;
-    setPosting(true);
     try {
-      await postComment({ photoId, text: trimmed });
+      await postComment.mutateAsync({ photoId, text: trimmed });
       setText("");
     } catch {
       toast.error(t("commentFailed"));
-    } finally {
-      setPosting(false);
     }
   };
 

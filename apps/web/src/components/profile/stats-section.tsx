@@ -3,7 +3,8 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "use-intl";
 import type { Member } from "./member-view";
 
@@ -22,9 +23,11 @@ function trustLevelKey(
 // slim centered strip.
 export function ProfileStatsSection({ member }: { member: Member }) {
   const t = useTranslations("profile");
-  const stats = useQuery(gateway.identity.userStats, {
-    userId: member._id as Id<"users">,
-  });
+  const { data: stats } = useQuery(
+    convexQuery(gateway.identity.userStats, {
+      userId: member._id as Id<"users">,
+    }),
+  );
 
   if (stats === undefined) {
     return (

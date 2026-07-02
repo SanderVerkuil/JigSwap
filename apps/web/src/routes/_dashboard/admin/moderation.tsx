@@ -25,7 +25,8 @@ import { PageLoading } from "@/components/ui/loading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Flag, History, Inbox } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -62,19 +63,38 @@ function ModerationPage() {
   const tAdmin = useTranslations("admin");
   const format = useFormatter();
 
-  const pending = useQuery(gateway.catalog.pending);
+  const { data: pending } = useQuery(convexQuery(gateway.catalog.pending, {}));
   // One subscription serves both the tab's count pill and the tab body.
-  const flagged = useQuery(gateway.admin.listRejectedPhotos);
-  const approve = useMutation(gateway.catalog.approve);
-  const reject = useMutation(gateway.catalog.reject);
-  const update = useMutation(gateway.catalog.updatePuzzle);
-  const confirmRemoval = useMutation(gateway.admin.confirmPhotoRemoval);
-  const restorePhoto = useMutation(gateway.admin.restorePhoto);
+  const { data: flagged } = useQuery(
+    convexQuery(gateway.admin.listRejectedPhotos, {}),
+  );
+  const approve = useMutation({
+    mutationFn: useConvexMutation(gateway.catalog.approve),
+  });
+  const reject = useMutation({
+    mutationFn: useConvexMutation(gateway.catalog.reject),
+  });
+  const update = useMutation({
+    mutationFn: useConvexMutation(gateway.catalog.updatePuzzle),
+  });
+  const confirmRemoval = useMutation({
+    mutationFn: useConvexMutation(gateway.admin.confirmPhotoRemoval),
+  });
+  const restorePhoto = useMutation({
+    mutationFn: useConvexMutation(gateway.admin.restorePhoto),
+  });
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedFlagId, setSelectedFlagId] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
+  // The old code shared one busy flag across every moderation action to
+  // disable the group; compose the mutations' pending states instead.
+  const busy =
+    approve.isPending ||
+    reject.isPending ||
+    update.isPending ||
+    confirmRemoval.isPending ||
+    restorePhoto.isPending;
 
   // A pre-domain pending row has no aggregateId; it still lists (keyed by _id)
   // but its actions stay disabled — same rule as the previous queue.
@@ -97,10 +117,9 @@ function ModerationPage() {
 
   const moderate = async (action: "approve" | "reject") => {
     if (!selected?.aggregateId || !pending) return;
-    setBusy(true);
     try {
       const run = action === "approve" ? approve : reject;
-      await run({ puzzleDefinitionId: selected.aggregateId });
+      await run.mutateAsync({ puzzleDefinitionId: selected.aggregateId });
       toast.success(
         t(action === "approve" ? "toast.approved" : "toast.rejected", {
           title: selected.title,
@@ -110,16 +129,13 @@ function ModerationPage() {
       selectNext(selected);
     } catch {
       toast.error(t("error"));
-    } finally {
-      setBusy(false);
     }
   };
 
   const editApprove = async (values: EditApproveValues) => {
     if (!selected?.aggregateId || !pending) return;
-    setBusy(true);
     try {
-      await update({
+      await update.mutateAsync({
         puzzleDefinitionId: selected.aggregateId,
         title: values.title,
         description: values.description || undefined,
@@ -128,7 +144,7 @@ function ModerationPage() {
         difficulty: values.difficulty,
         tags: values.tags,
       });
-      await approve({
+      await approve.mutateAsync({
         puzzleDefinitionId: selected.aggregateId,
         edited: true,
       });
@@ -142,8 +158,6 @@ function ModerationPage() {
       selectNext(selected);
     } catch {
       toast.error(t("error"));
-    } finally {
-      setBusy(false);
     }
   };
 
@@ -164,10 +178,9 @@ function ModerationPage() {
 
   const moderateFlag = async (action: "remove" | "restore") => {
     if (!selectedFlag || !flagged) return;
-    setBusy(true);
     try {
       const run = action === "remove" ? confirmRemoval : restorePhoto;
-      await run({ imageId: selectedFlag.imageId });
+      await run.mutateAsync({ imageId: selectedFlag.imageId });
       toast.success(
         t(action === "remove" ? "toast.removed" : "toast.restored", {
           title: selectedFlag.puzzleTitle,
@@ -177,8 +190,6 @@ function ModerationPage() {
       selectNextFlag(selectedFlag);
     } catch {
       toast.error(t("error"));
-    } finally {
-      setBusy(false);
     }
   };
 

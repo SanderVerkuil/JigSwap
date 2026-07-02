@@ -20,7 +20,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Plus, Target, Trophy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -42,19 +43,21 @@ function GoalsPage() {
   const [description, setDescription] = useState("");
   const [target, setTarget] = useState("");
   const [targetDate, setTargetDate] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
-  const convexUser = useQuery(
-    gateway.identity.byClerkId,
-    user?.id ? { clerkId: user.id } : "skip",
+  const { data: convexUser } = useQuery(
+    convexQuery(
+      gateway.identity.byClerkId,
+      user?.id ? { clerkId: user.id } : "skip",
+    ),
   );
 
-  const goals = useQuery(
-    gateway.solving.myGoals,
-    convexUser?._id ? {} : "skip",
+  const { data: goals } = useQuery(
+    convexQuery(gateway.solving.myGoals, convexUser?._id ? {} : "skip"),
   );
 
-  const createGoal = useMutation(gateway.solving.createGoal);
+  const createGoal = useMutation({
+    mutationFn: useConvexMutation(gateway.solving.createGoal),
+  });
 
   const reset = () => {
     setTitle("");
@@ -74,9 +77,8 @@ function GoalsPage() {
     }
     const dueMs = targetDate ? new Date(targetDate).getTime() : undefined;
 
-    setSubmitting(true);
     try {
-      await createGoal({
+      await createGoal.mutateAsync({
         title: title.trim(),
         description: description.trim() || undefined,
         targetCompletions,
@@ -89,8 +91,6 @@ function GoalsPage() {
     } catch (error) {
       console.error("Failed to create goal:", error);
       toast.error(t("createError"));
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -179,7 +179,7 @@ function GoalsPage() {
           <DialogFooter>
             <Button
               onClick={handleCreate}
-              disabled={submitting || !title.trim() || !target}
+              disabled={createGoal.isPending || !title.trim() || !target}
             >
               {t("submit")}
             </Button>

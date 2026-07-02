@@ -14,7 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { gateway } from "@/gateway";
 import { useUserSettings } from "@/hooks/use-user-settings";
-import { useMutation } from "convex/react";
+import { useConvexMutation } from "@convex-dev/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
@@ -37,14 +38,16 @@ export function FinishSolveDialog({
   completionId,
 }: FinishSolveDialogProps) {
   const t = useTranslations("solving.logSolve");
-  const finishCompletion = useMutation(gateway.solving.finishCompletion);
+  const finishCompletion = useMutation({
+    mutationFn: useConvexMutation(gateway.solving.finishCompletion),
+  });
   const { trackCompletionDuration } = useUserSettings();
 
   const [endDate, setEndDate] = useState(todayInputValue);
   const [hours, setHours] = useState("");
   const [minutes, setMinutes] = useState("");
   const [allPiecesPresent, setAllPiecesPresent] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  const submitting = finishCompletion.isPending;
 
   const showDuration = trackCompletionDuration === true;
 
@@ -54,9 +57,8 @@ export function FinishSolveDialog({
     const totalMinutes =
       (Number(hours) || 0) * 60 + (Number(minutes) || 0) || undefined;
 
-    setSubmitting(true);
     try {
-      await finishCompletion({
+      await finishCompletion.mutateAsync({
         completionId,
         endDate: end,
         completionTimeMinutes: showDuration ? totalMinutes : undefined,
@@ -67,8 +69,6 @@ export function FinishSolveDialog({
     } catch (error) {
       console.error("Failed to finish solve:", error);
       toast.error(t("saveError"));
-    } finally {
-      setSubmitting(false);
     }
   };
 

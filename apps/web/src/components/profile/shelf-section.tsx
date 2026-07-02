@@ -7,7 +7,8 @@ import { SectionHead } from "@/components/dashboard-home/section-head";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import { BookOpen, Settings2 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -59,18 +60,22 @@ export function ProfileShelfSection({ member }: { member: Member }) {
   const [arrangeOpen, setArrangeOpen] = useState(false);
 
   // Determine whether the signed-in user is the profile owner.
-  const me = useQuery(gateway.identity.currentUser);
+  const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
   const isOwner = me?._id === member._id;
 
-  const copies = useQuery(gateway.library.ownedByOwner, {
-    ownerId: member._id as Id<"users">,
-    includeUnavailable: true,
-  });
+  const { data: copies } = useQuery(
+    convexQuery(gateway.library.ownedByOwner, {
+      ownerId: member._id as Id<"users">,
+      includeUnavailable: true,
+    }),
+  );
 
   // The curated shelf — empty list means uncurated (fall back to recent-6 below).
-  const featuredCopies = useQuery(gateway.social.featuredShelf, {
-    userId: member._id as Id<"users">,
-  });
+  const { data: featuredCopies } = useQuery(
+    convexQuery(gateway.social.featuredShelf, {
+      userId: member._id as Id<"users">,
+    }),
+  );
 
   const firstName = member.name?.split(/\s+/)[0] ?? member.name;
   const title = t("title", { name: firstName });

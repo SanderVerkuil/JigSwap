@@ -32,7 +32,8 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Plus, Settings, Trash2, Users } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
@@ -84,13 +85,17 @@ function CirclesPage() {
   const [name, setName] = useState("");
   const [manageCircleId, setManageCircleId] = useState<string | null>(null);
 
-  const circles = useQuery(gateway.sharing.myCircles, {});
-  const createCircle = useMutation(gateway.sharing.createCircle);
+  const { data: circles, isPending: circlesPending } = useQuery(
+    convexQuery(gateway.sharing.myCircles, {}),
+  );
+  const createCircle = useMutation({
+    mutationFn: useConvexMutation(gateway.sharing.createCircle),
+  });
 
   const handleCreate = async () => {
     if (!name.trim()) return;
     try {
-      await createCircle({ name: name.trim() });
+      await createCircle.mutateAsync({ name: name.trim() });
       setName("");
       setIsCreateOpen(false);
     } catch (error) {
@@ -115,7 +120,7 @@ function CirclesPage() {
     [t],
   );
 
-  if (!user || circles === undefined) {
+  if (!user || circlesPending || circles === undefined) {
     return <PageLoading message={t("loading")} />;
   }
 
@@ -240,9 +245,11 @@ function CircleRow({
 // from the (member-gated) circle detail read; while it loads we hold the space
 // with a skeleton so rows don't jump.
 function CircleAvatarStack({ circleId }: { circleId: string }) {
-  const detail = useQuery(gateway.sharing.circle, { circleId });
+  const { data: detail, isPending } = useQuery(
+    convexQuery(gateway.sharing.circle, { circleId }),
+  );
 
-  if (detail === undefined) {
+  if (isPending || detail === undefined) {
     return <Skeleton className="hidden h-8 w-20 rounded-full sm:block" />;
   }
   if (!detail || detail.members.length === 0) {
@@ -279,10 +286,14 @@ function ManageCircleDialog({
   onClose: () => void;
 }) {
   const t = useTranslations("circles");
-  const detail = useQuery(gateway.sharing.circle, { circleId });
-  const convexUser = useQuery(
-    gateway.identity.byClerkId,
-    viewerId ? { clerkId: viewerId } : "skip",
+  const { data: detail, isPending: detailPending } = useQuery(
+    convexQuery(gateway.sharing.circle, { circleId }),
+  );
+  const { data: convexUser } = useQuery(
+    convexQuery(
+      gateway.identity.byClerkId,
+      viewerId ? { clerkId: viewerId } : "skip",
+    ),
   );
 
   const [search, setSearch] = useState("");
@@ -290,25 +301,37 @@ function ManageCircleDialog({
     useState<CirclePermissionLevel>("ViewOnly");
   const [shareCopyId, setShareCopyId] = useState<string>("");
 
-  const searchResults = useQuery(
-    gateway.identity.search,
-    search.trim().length >= 2 ? { searchTerm: search.trim() } : "skip",
+  const { data: searchResults } = useQuery(
+    convexQuery(
+      gateway.identity.search,
+      search.trim().length >= 2 ? { searchTerm: search.trim() } : "skip",
+    ),
   );
-  const myCopies = useQuery(
-    gateway.library.ownedByOwner,
-    convexUser?._id
-      ? { ownerId: convexUser._id as Id<"users">, includeUnavailable: true }
-      : "skip",
+  const { data: myCopies } = useQuery(
+    convexQuery(
+      gateway.library.ownedByOwner,
+      convexUser?._id
+        ? { ownerId: convexUser._id as Id<"users">, includeUnavailable: true }
+        : "skip",
+    ),
   );
 
-  const addMember = useMutation(gateway.sharing.addMember);
-  const removeMember = useMutation(gateway.sharing.removeMember);
-  const changePermission = useMutation(gateway.sharing.changePermission);
-  const shareCopy = useMutation(gateway.sharing.shareCopyToCircle);
+  const addMember = useMutation({
+    mutationFn: useConvexMutation(gateway.sharing.addMember),
+  });
+  const removeMember = useMutation({
+    mutationFn: useConvexMutation(gateway.sharing.removeMember),
+  });
+  const changePermission = useMutation({
+    mutationFn: useConvexMutation(gateway.sharing.changePermission),
+  });
+  const shareCopy = useMutation({
+    mutationFn: useConvexMutation(gateway.sharing.shareCopyToCircle),
+  });
 
   const handleAdd = async (memberId: string) => {
     try {
-      await addMember({
+      await addMember.mutateAsync({
         circleId,
         memberId: memberId as Id<"users">,
         permission: addPermission,
@@ -321,7 +344,7 @@ function ManageCircleDialog({
 
   const handleRemove = async (member: CircleMemberView) => {
     try {
-      await removeMember({
+      await removeMember.mutateAsync({
         circleId,
         memberId: member.memberId as Id<"users">,
       });
@@ -335,7 +358,7 @@ function ManageCircleDialog({
     permission: CirclePermissionLevel,
   ) => {
     try {
-      await changePermission({
+      await changePermission.mutateAsync({
         circleId,
         memberId: member.memberId as Id<"users">,
         permission,
@@ -348,7 +371,7 @@ function ManageCircleDialog({
   const handleShare = async () => {
     if (!shareCopyId) return;
     try {
-      await shareCopy({ circleId, copyId: shareCopyId });
+      await shareCopy.mutateAsync({ circleId, copyId: shareCopyId });
       setShareCopyId("");
     } catch (error) {
       console.error("Failed to share copy:", error);
@@ -367,7 +390,7 @@ function ManageCircleDialog({
           <DialogDescription>{t("manage.description")}</DialogDescription>
         </DialogHeader>
 
-        {detail === undefined ? (
+        {detailPending || detail === undefined ? (
           <PageLoading message={t("manage.loadingCircle")} />
         ) : detail === null ? (
           <p className="text-sm text-muted-foreground">

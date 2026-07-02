@@ -13,7 +13,8 @@ import {
 import { gateway } from "@/gateway";
 import { useDateFnsLocale } from "@/lib/date-locale";
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery } from "convex/react";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { Bell, CheckCheck } from "lucide-react";
 import { useState } from "react";
@@ -41,17 +42,19 @@ export function NotificationBell() {
   // Both reactive: the badge and the preview update live as events land. Gated on a signed-in
   // member so we never fire the query unauthenticated (and to mirror the existing "skip" pattern).
   const signedIn = Boolean(user?.id);
-  const unread = useQuery(
-    gateway.notifications.unreadCount,
-    signedIn ? {} : "skip",
+  const { data: unread } = useQuery(
+    convexQuery(gateway.notifications.unreadCount, signedIn ? {} : "skip"),
   );
   const notifications = useQuery(
-    gateway.notifications.list,
-    signedIn && open ? {} : "skip",
-  ) as NotificationRow[] | undefined;
+    convexQuery(gateway.notifications.list, signedIn && open ? {} : "skip"),
+  ).data as NotificationRow[] | undefined;
 
-  const markRead = useMutation(gateway.notifications.markRead);
-  const markAllRead = useMutation(gateway.notifications.markAllRead);
+  const markRead = useMutation({
+    mutationFn: useConvexMutation(gateway.notifications.markRead),
+  });
+  const markAllRead = useMutation({
+    mutationFn: useConvexMutation(gateway.notifications.markAllRead),
+  });
 
   const unreadCount = unread ?? 0;
   const preview = (notifications ?? []).slice(0, PREVIEW_COUNT);
@@ -60,9 +63,11 @@ export function NotificationBell() {
     setOpen(false);
     // Optimistic-feeling: fire the read mutation but don't block navigation on it.
     if (!row.isRead) {
-      markRead({ notificationId: notificationId(row) }).catch(() => {
-        toast.error(t("markError"));
-      });
+      markRead
+        .mutateAsync({ notificationId: notificationId(row) })
+        .catch(() => {
+          toast.error(t("markError"));
+        });
     }
     const href = notificationHref(row);
     if (href) router.push(href);
@@ -70,7 +75,7 @@ export function NotificationBell() {
 
   const handleMarkAll = async () => {
     try {
-      const count = await markAllRead({});
+      const count = await markAllRead.mutateAsync({});
       toast.success(t("markedAllRead", { count: count ?? 0 }));
     } catch {
       toast.error(t("markError"));

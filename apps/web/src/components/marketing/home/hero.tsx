@@ -7,8 +7,8 @@ import { useStartHref } from "@/components/marketing/use-start-href";
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
 import { globalStatsQuery } from "@/lib/marketing-queries";
-import { useQuery as useStatsQuery } from "@tanstack/react-query";
-import { useQuery } from "convex/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
 import * as React from "react";
 import { useFormatter, useTranslations } from "use-intl";
@@ -189,17 +189,20 @@ function TrustRow() {
   const t = useTranslations("marketing.home");
   const format = useFormatter();
   // Prefetched in the home route loader, so the count is present on first paint.
-  const { data: stats } = useStatsQuery(globalStatsQuery);
+  const { data: stats } = useQuery(globalStatsQuery);
 
   // Stable per-visit seed: generated client-side after mount (SSR-safe).
   // The query is skipped until the seed is ready; FALLBACK_AVATARS fills the
   // cluster meanwhile as a decorative placeholder.
   const [seed, setSeed] = React.useState<number | null>(null);
   React.useEffect(() => setSeed(Math.floor(Math.random() * 0xffffffff)), []);
-  const communityAvatars: CommunityAvatar[] | undefined = useQuery(
-    gateway.insights.communityAvatars,
-    seed === null ? "skip" : { limit: 4, seed },
+  const { data } = useQuery(
+    convexQuery(
+      gateway.insights.communityAvatars,
+      seed === null ? "skip" : { limit: 4, seed },
+    ),
   );
+  const communityAvatars: CommunityAvatar[] | undefined = data;
 
   // Only render the avatar cluster once real community members are loaded — never
   // fake placeholder users. Until then (loading or no members) the cluster is hidden.
@@ -283,11 +286,13 @@ export function Hero() {
   // meanwhile as a loading fallback.
   const [seed, setSeed] = React.useState<number | null>(null);
   React.useEffect(() => setSeed(Math.floor(Math.random() * 0xffffffff)), []);
-  const livePuzzles = useQuery(
-    gateway.insights.plankPuzzles,
-    // 12 is the backend's clamp ceiling — enough for ~4 unique boxes per
-    // shelf row before the scene starts cycling them.
-    seed === null ? "skip" : { limit: 12, seed },
+  const { data: livePuzzles } = useQuery(
+    convexQuery(
+      gateway.insights.plankPuzzles,
+      // 12 is the backend's clamp ceiling — enough for ~4 unique boxes per
+      // shelf row before the scene starts cycling them.
+      seed === null ? "skip" : { limit: 12, seed },
+    ),
   );
   const rows = React.useMemo(
     () =>
