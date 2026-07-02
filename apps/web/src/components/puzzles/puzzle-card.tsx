@@ -3,8 +3,10 @@
 import { Link } from "@/compat/link";
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
+import { useFavorites } from "@/hooks/use-favorites";
+import { cn } from "@/lib/utils";
 import type { FunctionReturnType } from "convex/server";
-import { Eye, Plus } from "lucide-react";
+import { Eye, Heart, Plus } from "lucide-react";
 import { useTranslations } from "use-intl";
 import { PuzzleCardShell } from "./puzzle-card-shell";
 
@@ -21,6 +23,11 @@ export function PuzzleCard({ puzzle }: PuzzleCardProps) {
   // Catalog-card strings ("view details") live under the nested
   // `puzzles.puzzles.*` namespace, not the flat `puzzles.*` one used by `t`.
   const tCat = useTranslations("puzzles.puzzles");
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const favorited = isFavorite(puzzle._id);
+  const favoriteLabel = favorited
+    ? tCat("removeFromFavorites")
+    : tCat("addToFavorites");
 
   return (
     <PuzzleCardShell
@@ -51,6 +58,22 @@ export function PuzzleCard({ puzzle }: PuzzleCardProps) {
               <Eye className="h-4 w-4 shrink-0" />
               <span className="truncate">{tCat("viewDetails")}</span>
             </Link>
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label={favoriteLabel}
+            aria-pressed={favorited}
+            title={favoriteLabel}
+            className="shrink-0"
+            onClick={() => void toggleFavorite(puzzle._id)}
+          >
+            <Heart
+              className={cn(
+                "h-4 w-4",
+                favorited && "fill-red-500 text-red-500",
+              )}
+            />
           </Button>
           <Button
             size="icon"

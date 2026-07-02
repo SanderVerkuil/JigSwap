@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
+import { useFavorites } from "@/hooks/use-favorites";
 import { usePaginatedQuery } from "convex/react";
-import { Filter, Grid, List, Plus, Search, X } from "lucide-react";
+import { Filter, Grid, Heart, List, Plus, Search, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 import { PuzzleCard } from "./puzzle-card";
@@ -24,6 +25,10 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
+  // Favorites narrowing is a lightweight toggle beside the advanced-filter panel: it filters the
+  // already-loaded pages client-side against the member's favorite ids, like the other filters.
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const { isFavorite } = useFavorites();
   const [filters, setFilters] = useState({
     searchTerm: "",
     brand: "",
@@ -102,6 +107,8 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
       filters.tags.length === 0 ||
       (puzzle.tags && filters.tags.some((tag) => puzzle.tags!.includes(tag)));
 
+    const matchesFavorites = !favoritesOnly || isFavorite(puzzle._id);
+
     return (
       matchesSearch &&
       matchesBrand &&
@@ -109,7 +116,8 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
       matchesMaxPieces &&
       matchesDifficulty &&
       matchesCategory &&
-      matchesTags
+      matchesTags &&
+      matchesFavorites
     );
   });
 
@@ -123,11 +131,14 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
       category: "",
       tags: [],
     });
+    setFavoritesOnly(false);
   };
 
-  const hasActiveFilters = Object.values(filters).some((value) =>
-    Array.isArray(value) ? value.length > 0 : value !== "",
-  );
+  const hasActiveFilters =
+    favoritesOnly ||
+    Object.values(filters).some((value) =>
+      Array.isArray(value) ? value.length > 0 : value !== "",
+    );
 
   // The title/subtitle live in the shared shell page head (via route-meta); publish only the
   // result count + the "contribute to catalogue" action there so the body carries no own header.
@@ -174,6 +185,17 @@ export function PuzzlesClient({ className = "" }: PuzzlesClientProps) {
                 className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
+
+            {/* Favorites Toggle */}
+            <Button
+              variant={favoritesOnly ? "default" : "outline"}
+              aria-pressed={favoritesOnly}
+              onClick={() => setFavoritesOnly(!favoritesOnly)}
+              className="flex items-center gap-2"
+            >
+              <Heart className="h-4 w-4" />
+              {t("favoritesOnly")}
+            </Button>
 
             {/* Filter Toggle */}
             <Button

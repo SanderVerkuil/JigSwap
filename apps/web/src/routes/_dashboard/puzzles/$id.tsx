@@ -20,12 +20,14 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
+import { useFavorites } from "@/hooks/use-favorites";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import {
   ArrowLeftRight,
   ChevronRight,
+  Heart,
   MessageCircle,
   Plus,
   Star,
@@ -103,9 +105,16 @@ function PuzzleDefinitionDetail({
   const router = useRouter();
   const t = useTranslations("puzzleDefinition");
   const tPuzzles = useTranslations("puzzles");
+  const tCatalog = useTranslations("puzzles.puzzles");
   const tDifficulty = useTranslations("puzzles.puzzles.difficulty");
   const tCondition = useTranslations("puzzles.puzzles.condition");
   const tCopyCondition = useTranslations("copyInstance.conditionLabel");
+
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const favorited = isFavorite(puzzleId);
+  const favoriteLabel = favorited
+    ? tCatalog("removeFromFavorites")
+    : tCatalog("addToFavorites");
 
   const {
     definition,
@@ -255,6 +264,19 @@ function PuzzleDefinitionDetail({
             <Button variant="outline" onClick={focusComposer}>
               <Star className="h-4 w-4" />
               {t("writeReview")}
+            </Button>
+            <Button
+              variant="outline"
+              aria-pressed={favorited}
+              onClick={() => void toggleFavorite(puzzleId)}
+            >
+              <Heart
+                className={cn(
+                  "h-4 w-4",
+                  favorited && "fill-red-500 text-red-500",
+                )}
+              />
+              {favoriteLabel}
             </Button>
           </div>
         </div>

@@ -454,6 +454,8 @@
       "updated": "Updated",
       "actions": "Actions",
       "addToFavorites": "Add to Favorites",
+      "removeFromFavorites": "Remove from Favorites",
+      "favoritesOnly": "Favorites",
       "notFound": "Puzzle not found"
     },
     "filters": {
