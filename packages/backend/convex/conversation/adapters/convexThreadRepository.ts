@@ -128,6 +128,9 @@ export const convexThreadRepository = (ctx: MutationCtx): ThreadRepository => {
       else await ctx.db.insert("threads", row);
 
       // Messages are append-only companion rows: insert only the ones not yet persisted.
+      // TODO(threshold): full-history scan per save — fine for v1 pair threads; if threads
+      // approach thousands of messages, diff on sentAt >= stored max instead. Read models must
+      // paginate by_thread_sent directly, never hydrate the aggregate.
       const storedIds = new Set(
         (await messagesOf(aggregateId)).map((m) => m.messageId),
       );

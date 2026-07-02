@@ -164,6 +164,77 @@ describe("convexThreadRepository", () => {
     expect(row?.lastMessageAt).toBe(2_000);
   });
 
+  test("system message round-trips: null author, kind survives, no stored authorId", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+    const thread = openDm(toMemberId(alice), toMemberId(bob));
+
+    const posted = thread.postSystemMessage({
+      id: toMessageId(crypto.randomUUID()),
+      body: "exchange shipped",
+      sentAt: new Date(4_000),
+    });
+    expect(posted.isOk).toBe(true);
+    await t.run((ctx) => convexThreadRepository(ctx).save(thread));
+
+    // The raw row must have NO authorId column value (system = service-authored).
+    const raw = await t.run((ctx) =>
+      ctx.db
+        .query("threadMessages")
+        .withIndex("by_thread_sent", (q) =>
+          q.eq("threadAggregateId", thread.id as string),
+        )
+        .collect(),
+    );
+    expect(raw).toHaveLength(1);
+    expect(raw[0].kind).toBe("system");
+    expect(raw[0].authorId).toBeUndefined();
+
+    // t.run results must be Convex values, so unwrap the aggregate to plain data inside.
+    const roundTripped = await t.run(async (ctx) => {
+      const found = await convexThreadRepository(ctx).findById(thread.id);
+      return found === null
+        ? null
+        : found.messages.map((m) => ({
+            authorId: m.authorId,
+            kind: m.kind,
+            body: m.body,
+          }));
+    });
+    expect(roundTripped).toEqual([
+      { authorId: null, kind: "system", body: "exchange shipped" },
+    ]);
+  });
+
+  test("re-saving prunes a stale hand-inserted participant row back to the aggregate's set", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+    const thread = openDm(toMemberId(alice), toMemberId(bob));
+
+    await t.run((ctx) => convexThreadRepository(ctx).save(thread));
+    // A stale duplicate row (e.g. from a crashed partial write) must be pruned on the next save.
+    await t.run((ctx) =>
+      ctx.db.insert("threadParticipants", {
+        threadAggregateId: thread.id as string,
+        memberId: alice,
+      }),
+    );
+    await t.run((ctx) => convexThreadRepository(ctx).save(thread));
+
+    const participantRows = await t.run((ctx) =>
+      ctx.db
+        .query("threadParticipants")
+        .withIndex("by_thread", (q) =>
+          q.eq("threadAggregateId", thread.id as string),
+        )
+        .collect(),
+    );
+    expect(participantRows).toHaveLength(2);
+    expect(participantRows.map((p) => p.memberId).sort()).toEqual(
+      [alice, bob].sort(),
+    );
+  });
+
   test("re-saving with unchanged participants does not duplicate participant rows", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob } = await seed(t);
