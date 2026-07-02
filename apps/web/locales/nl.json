@@ -654,15 +654,31 @@
     }
   },
   "messages": {
-    "sendMessage": "Bericht Versturen",
-    "typeMessage": "Type je bericht...",
+    "anonymous": "Anonieme gebruiker",
+    "backToInbox": "Terug naar berichten",
+    "empty": "Nog geen gesprekken",
+    "emptyHint": "Stuur een lid een bericht via hun profiel of begin er een vanuit een uitwisseling.",
+    "exchangeThread": "{type}: {title}",
+    "exchangeType": {
+      "trade": "Ruil",
+      "sale": "Verkoop",
+      "loan": "Uitleen"
+    },
+    "messageButton": "Bericht",
     "noMessages": "Nog geen berichten",
-    "newMessage": "Nieuw Bericht",
-    "searchUsers": "Zoek gebruikers...",
-    "online": "Online",
-    "offline": "Offline",
+    "noMessagesHint": "Zeg hallo om het gesprek op gang te brengen.",
+    "noThreadYet": "Nog geen gesprek voor deze uitwisseling.",
+    "notConnected": "Je kunt alleen berichten sturen naar leden met wie je verbonden bent",
+    "openError": "Het gesprek kon niet worden geopend. Probeer het opnieuw.",
     "selectConversation": "Selecteer een gesprek",
-    "selectConversationHint": "Kies een gebruiker in de zijbalk om te beginnen met chatten"
+    "selectConversationHint": "Kies een gesprek uit de lijst om te beginnen met chatten",
+    "sendError": "Je bericht kon niet worden verzonden. Probeer het opnieuw.",
+    "sendMessage": "Bericht Versturen",
+    "threadFallbackTitle": "Gesprek",
+    "tooLong": "Dat bericht is te lang (maximaal 4.000 tekens).",
+    "typeMessage": "Type je bericht...",
+    "unreadCount": "{count, plural, one {# ongelezen bericht} other {# ongelezen berichten}}",
+    "untitledPuzzle": "Naamloze puzzel"
   },
   "profile": {
     "title": "Profiel",

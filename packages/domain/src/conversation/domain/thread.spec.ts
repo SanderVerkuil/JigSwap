@@ -5,8 +5,10 @@ import {
   toMessageId,
   toThreadId,
 } from "../../shared-kernel";
-import { ExchangeId, MemberId, MessageId, ThreadId } from "./ids";
-import { Thread } from "./thread";
+import { MAX_MESSAGE_LENGTH } from "./errors";
+import { MessagePosted } from "./events";
+import { MemberId, MessageId, ThreadId } from "./ids";
+import { Thread, ThreadSubject } from "./thread";
 
 const alice = toMemberId("alice");
 const bob = toMemberId("bob");
@@ -18,7 +20,8 @@ const msg2 = toMessageId("message-2");
 const NOW = new Date("2026-06-08T10:00:00Z");
 const LATER = new Date("2026-06-08T11:00:00Z");
 
-const openThread = () => Thread.open(threadId, exchangeId, [alice, bob]);
+const openThread = () =>
+  Thread.openForExchange(threadId, exchangeId, [alice, bob]);
 
 describe("Thread.postMessage", () => {
   it("appends a participant's text message and records MessagePosted", () => {
@@ -42,13 +45,13 @@ describe("Thread.postMessage", () => {
     expect(events.map((e) => e.name)).toEqual(["MessagePosted"]);
     const posted = events[0] as unknown as {
       threadId: ThreadId;
-      exchangeId: ExchangeId;
+      subject: ThreadSubject;
       authorId: MemberId | null;
       messageId: MessageId;
       kind: string;
     };
     expect(posted.threadId).toBe(threadId);
-    expect(posted.exchangeId).toBe(exchangeId);
+    expect(posted.subject).toEqual({ kind: "exchange", exchangeId });
     expect(posted.authorId).toBe(alice);
     expect(posted.messageId).toBe(msg1);
     expect(posted.kind).toBe("text");
@@ -100,6 +103,68 @@ describe("Thread.postMessage", () => {
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("EmptyMessage");
     expect(thread.messages).toHaveLength(0);
+  });
+
+  it("rejects a whitespace-only body", () => {
+    const thread = openThread();
+
+    const result = thread.postMessage({
+      id: msg1,
+      authorId: alice,
+      kind: "text",
+      body: " \n\t ",
+      sentAt: NOW,
+    });
+
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("EmptyMessage");
+    expect(thread.messages).toHaveLength(0);
+  });
+
+  it("stores the body as-given (trim is only for the emptiness check)", () => {
+    const thread = openThread();
+
+    const result = thread.postMessage({
+      id: msg1,
+      authorId: alice,
+      kind: "text",
+      body: "  padded  ",
+      sentAt: NOW,
+    });
+
+    expect(result.isOk).toBe(true);
+    if (result.isOk) expect(result.value.body).toBe("  padded  ");
+  });
+
+  it("rejects a body longer than MAX_MESSAGE_LENGTH with MessageTooLong", () => {
+    const thread = openThread();
+
+    const result = thread.postMessage({
+      id: msg1,
+      authorId: alice,
+      kind: "text",
+      body: "x".repeat(MAX_MESSAGE_LENGTH + 1),
+      sentAt: NOW,
+    });
+
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("MessageTooLong");
+    expect(thread.messages).toHaveLength(0);
+  });
+
+  it("accepts a body of exactly MAX_MESSAGE_LENGTH", () => {
+    const thread = openThread();
+
+    const result = thread.postMessage({
+      id: msg1,
+      authorId: alice,
+      kind: "text",
+      body: "x".repeat(MAX_MESSAGE_LENGTH),
+      sentAt: NOW,
+    });
+
+    expect(result.isOk).toBe(true);
+    expect(thread.messages).toHaveLength(1);
   });
 
   it("keeps messages in send order", () => {
@@ -169,6 +234,38 @@ describe("Thread.postSystemMessage", () => {
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("EmptyMessage");
   });
+
+  it("rejects a whitespace-only system body", () => {
+    const thread = openThread();
+    const result = thread.postSystemMessage({
+      id: msg1,
+      body: "   ",
+      sentAt: NOW,
+    });
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("EmptyMessage");
+  });
+
+  it("rejects an over-long system body with MessageTooLong", () => {
+    const thread = openThread();
+    const result = thread.postSystemMessage({
+      id: msg1,
+      body: "x".repeat(MAX_MESSAGE_LENGTH + 1),
+      sentAt: NOW,
+    });
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("MessageTooLong");
+  });
+
+  it("accepts a system body of exactly MAX_MESSAGE_LENGTH", () => {
+    const thread = openThread();
+    const result = thread.postSystemMessage({
+      id: msg1,
+      body: "x".repeat(MAX_MESSAGE_LENGTH),
+      sentAt: NOW,
+    });
+    expect(result.isOk).toBe(true);
+  });
 });
 
 describe("Thread.markRead", () => {
@@ -204,6 +301,45 @@ describe("Thread.markRead", () => {
   });
 });
 
+describe("Thread subjects", () => {
+  it("openForExchange yields an exchange-subject thread", () => {
+    const thread = Thread.openForExchange(threadId, exchangeId, [alice, bob]);
+    expect(thread.subject).toEqual({ kind: "exchange", exchangeId });
+  });
+
+  it("openDm yields a dm-subject thread with exactly two participants", () => {
+    const result = Thread.openDm(threadId, [alice, bob]);
+    expect(result.isOk).toBe(true);
+    if (result.isOk) {
+      expect(result.value.subject).toEqual({ kind: "dm" });
+      expect(result.value.participants).toEqual([alice, bob]);
+    }
+  });
+
+  it("openDm rejects duplicate participants", () => {
+    const result = Thread.openDm(threadId, [alice, alice]);
+    expect(result.isErr).toBe(true);
+    if (result.isErr)
+      expect(result.error.code).toBe("DmRequiresTwoParticipants");
+  });
+
+  it("MessagePosted carries the subject", () => {
+    const result = Thread.openDm(threadId, [alice, bob]);
+    expect(result.isOk).toBe(true);
+    if (!result.isOk) return;
+    const thread = result.value;
+    thread.postMessage({
+      id: msg1,
+      authorId: alice,
+      kind: "text",
+      body: "hi",
+      sentAt: NOW,
+    });
+    const [event] = thread.pullEvents() as readonly MessagePosted[];
+    expect(event.subject).toEqual({ kind: "dm" });
+  });
+});
+
 describe("Thread persistence", () => {
   it("round-trips messages and receipts through toState/rehydrate", () => {
     const thread = openThread();
@@ -219,10 +355,21 @@ describe("Thread persistence", () => {
     const rehydrated = Thread.rehydrate(thread.toState());
 
     expect(rehydrated.id).toBe(threadId);
-    expect(rehydrated.exchangeId).toBe(exchangeId);
+    expect(rehydrated.subject).toEqual({ kind: "exchange", exchangeId });
     expect(rehydrated.messages.map((m) => m.id)).toEqual([msg1]);
     expect(rehydrated.lastReadAt(bob)).toEqual(NOW);
     // Rehydration does not re-emit events.
     expect(rehydrated.pullEvents()).toHaveLength(0);
+  });
+
+  it("round-trips a dm-subject thread through toState/rehydrate", () => {
+    const result = Thread.openDm(threadId, [alice, bob]);
+    expect(result.isOk).toBe(true);
+    if (!result.isOk) return;
+
+    const rehydrated = Thread.rehydrate(result.value.toState());
+
+    expect(rehydrated.subject).toEqual({ kind: "dm" });
+    expect(rehydrated.participants).toEqual([alice, bob]);
   });
 });

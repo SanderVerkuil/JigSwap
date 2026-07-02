@@ -1,4 +1,4 @@
-import { ExchangeId, Thread, ThreadId } from "../../domain";
+import { ExchangeId, MemberId, Thread, ThreadId } from "../../domain";
 import { ThreadRepository } from "../ports/out/thread.repository";
 
 // In-memory ThreadRepository for use-case tests, keyed by thread id. Stores persisted state and
@@ -8,7 +8,24 @@ export class InMemoryThreadRepository implements ThreadRepository {
 
   async findByExchange(exchangeId: ExchangeId): Promise<Thread | null> {
     for (const state of this.store.values()) {
-      if (state.exchangeId === exchangeId) {
+      if (
+        state.subject.kind === "exchange" &&
+        state.subject.exchangeId === exchangeId
+      ) {
+        return Thread.rehydrate(state);
+      }
+    }
+    return null;
+  }
+
+  async findDmByParticipants(a: MemberId, b: MemberId): Promise<Thread | null> {
+    for (const state of this.store.values()) {
+      if (
+        state.subject.kind === "dm" &&
+        state.participants.length === 2 &&
+        state.participants.includes(a) &&
+        state.participants.includes(b)
+      ) {
         return Thread.rehydrate(state);
       }
     }

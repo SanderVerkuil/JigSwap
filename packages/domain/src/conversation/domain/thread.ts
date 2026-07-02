@@ -1,8 +1,14 @@
 import { DomainEvent, err, ok, Result } from "../../shared-kernel";
-import { ConversationError } from "./errors";
+import { ConversationError, MAX_MESSAGE_LENGTH } from "./errors";
 import { MessagePosted } from "./events";
 import { ExchangeId, MemberId, MessageId, ThreadId } from "./ids";
 import { Message, MessageState } from "./message";
+
+// A thread's subject: what the conversation is about. Exchange threads are opened by the
+// system when an exchange is proposed; DM threads are member-opened, exactly two participants.
+export type ThreadSubject =
+  | { readonly kind: "exchange"; readonly exchangeId: ExchangeId }
+  | { readonly kind: "dm" };
 
 // A participant's read position: the instant up to which they have read the thread. Absent until
 // a participant marks read for the first time.
@@ -33,23 +39,24 @@ export interface PostSystemMessageProps {
 // field-for-field translation. Messages and receipts are stored as their own flat state arrays.
 export interface ThreadState {
   readonly id: ThreadId;
-  readonly exchangeId: ExchangeId;
+  readonly subject: ThreadSubject;
   readonly participants: readonly MemberId[];
   readonly messages: readonly MessageState[];
   readonly readReceipts: readonly ReadReceipt[];
 }
 
-// Thread: the Conversation aggregate root, one per ExchangeId. It owns the participant set, the
-// ordered message log, and a per-participant ReadReceipt. Every invariant it enforces is decided
-// from its own data: a non-participant cannot post; a member cannot author a system message;
-// bodies are non-empty; marking read touches only the caller's receipt.
+// Thread: the Conversation aggregate root, scoped by its subject (one per ExchangeId for
+// exchange threads; a member pair for DMs). It owns the participant set, the ordered message log,
+// and a per-participant ReadReceipt. Every invariant it enforces is decided from its own data: a
+// non-participant cannot post; a member cannot author a system message; bodies are non-empty;
+// marking read touches only the caller's receipt.
 export class Thread {
   private events: DomainEvent[] = [];
 
   private constructor(
     private readonly state: {
       readonly id: ThreadId;
-      readonly exchangeId: ExchangeId;
+      readonly subject: ThreadSubject;
       readonly participants: readonly MemberId[];
       messages: MessageState[];
       readReceipts: ReadReceipt[];
@@ -60,8 +67,8 @@ export class Thread {
     return this.state.id;
   }
 
-  get exchangeId(): ExchangeId {
-    return this.state.exchangeId;
+  get subject(): ThreadSubject {
+    return this.state.subject;
   }
 
   get participants(): readonly MemberId[] {
@@ -79,29 +86,48 @@ export class Thread {
   // Open a fresh thread scoped to an exchange between its participants. No window/uniqueness
   // checks live here — ensuring one thread per exchange is an application concern (the use case
   // looks up by exchange first), so opening is a pure constructor.
-  static open(
+  static openForExchange(
     id: ThreadId,
     exchangeId: ExchangeId,
     participants: readonly MemberId[],
   ): Thread {
     return new Thread({
       id,
-      exchangeId,
+      subject: { kind: "exchange", exchangeId },
       participants: [...participants],
       messages: [],
       readReceipts: [],
     });
   }
 
-  // Append a member-authored text/image message. Rejects a non-participant author and an empty
-  // body; records MessagePosted on success.
+  // Open a member-to-member DM. The pair rule (exactly two distinct members) is the aggregate's
+  // own invariant; the connection gate is an application concern (see makeOpenDmThread).
+  static openDm(
+    id: ThreadId,
+    participants: readonly [MemberId, MemberId],
+  ): Result<Thread, ConversationError> {
+    if (participants[0] === participants[1]) {
+      return err(ConversationError.dmRequiresTwoParticipants());
+    }
+    return ok(
+      new Thread({
+        id,
+        subject: { kind: "dm" },
+        participants: [...participants],
+        messages: [],
+        readReceipts: [],
+      }),
+    );
+  }
+
+  // Append a member-authored text/image message. Rejects a non-participant author, a body that
+  // is empty after trimming, and an over-long body; records MessagePosted on success.
   postMessage(props: PostMessageProps): Result<Message, ConversationError> {
     if (!this.isParticipant(props.authorId)) {
       return err(ConversationError.notParticipant());
     }
-    if (props.body.length === 0) {
-      return err(ConversationError.emptyMessage());
-    }
+    const bodyError = Thread.validateBody(props.body);
+    if (bodyError) return err(bodyError);
 
     return ok(
       this.append(
@@ -118,14 +144,13 @@ export class Thread {
   }
 
   // Append a service-authored system message. There is no member author and no participant check
-  // (the service is trusted); only the non-empty-body rule applies. This is the ONLY path that
-  // creates a `system` message — a member can never author one (see postMessage's kind type).
+  // (the service is trusted); only the body rules apply. This is the ONLY path that creates a
+  // `system` message — a member can never author one (see postMessage's kind type).
   postSystemMessage(
     props: PostSystemMessageProps,
   ): Result<Message, ConversationError> {
-    if (props.body.length === 0) {
-      return err(ConversationError.emptyMessage());
-    }
+    const bodyError = Thread.validateBody(props.body);
+    if (bodyError) return err(bodyError);
 
     return ok(
       this.append(
@@ -174,7 +199,7 @@ export class Thread {
   static rehydrate(state: ThreadState): Thread {
     return new Thread({
       id: state.id,
-      exchangeId: state.exchangeId,
+      subject: state.subject,
       participants: [...state.participants],
       messages: [...state.messages],
       readReceipts: [...state.readReceipts],
@@ -184,7 +209,7 @@ export class Thread {
   toState(): ThreadState {
     return {
       id: this.state.id,
-      exchangeId: this.state.exchangeId,
+      subject: this.state.subject,
       participants: [...this.state.participants],
       messages: [...this.state.messages],
       readReceipts: [...this.state.readReceipts],
@@ -195,13 +220,24 @@ export class Thread {
     return this.state.participants.includes(memberId);
   }
 
+  // Shared body rules for both post paths: a body must be non-empty AFTER trimming (whitespace-
+  // only is empty) and at most MAX_MESSAGE_LENGTH characters. The trim is only for the emptiness
+  // check — the body itself is stored as-given, never mutated.
+  private static validateBody(body: string): ConversationError | null {
+    if (body.trim().length === 0) return ConversationError.emptyMessage();
+    if (body.length > MAX_MESSAGE_LENGTH) {
+      return ConversationError.messageTooLong();
+    }
+    return null;
+  }
+
   // Shared tail of both post paths: append the validated message and record MessagePosted.
   private append(messageState: MessageState, occurredAt: Date): Message {
     this.state.messages.push(messageState);
     this.record(
       new MessagePosted(
         this.state.id,
-        this.state.exchangeId,
+        this.state.subject,
         messageState.authorId,
         messageState.id,
         messageState.kind,

@@ -18,7 +18,7 @@ export const makeOpenThread =
     const existing = await deps.threads.findByExchange(cmd.exchangeId);
     if (existing) return ok(existing.id);
 
-    const thread = Thread.open(
+    const thread = Thread.openForExchange(
       deps.threadIds.next(),
       cmd.exchangeId,
       cmd.participants,

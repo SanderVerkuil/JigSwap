@@ -9,7 +9,13 @@ import { DomainError } from "../../shared-kernel";
 export type ConversationErrorCode =
   | "NotParticipant"
   | "EmptyMessage"
-  | "SystemMessageNotAuthorable";
+  | "MessageTooLong"
+  | "SystemMessageNotAuthorable"
+  | "DmRequiresTwoParticipants";
+
+// The maximum accepted message body length in characters (text, or an image's storage
+// reference). Exported so transports/UI can enforce the same bound client-side.
+export const MAX_MESSAGE_LENGTH = 4000;
 
 export class ConversationError extends DomainError {
   override readonly name = "ConversationError";
@@ -37,12 +43,28 @@ export class ConversationError extends DomainError {
     );
   }
 
+  // A message body may not exceed MAX_MESSAGE_LENGTH characters.
+  static messageTooLong(): ConversationError {
+    return new ConversationError(
+      "MessageTooLong",
+      `A message body must be at most ${MAX_MESSAGE_LENGTH} characters`,
+    );
+  }
+
   // System messages are service-authored: a member may not author one. They are created only
   // via the explicit system-post path, never by a participant posting `kind: "system"`.
   static systemMessageNotAuthorable(): ConversationError {
     return new ConversationError(
       "SystemMessageNotAuthorable",
       "System messages are service-authored and cannot be posted by a member",
+    );
+  }
+
+  // A DM thread is a pair: exactly two distinct members. (Group DMs are out of scope.)
+  static dmRequiresTwoParticipants(): ConversationError {
+    return new ConversationError(
+      "DmRequiresTwoParticipants",
+      "A DM thread requires exactly two distinct participants",
     );
   }
 }

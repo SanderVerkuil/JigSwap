@@ -4,7 +4,8 @@
 // uses): large avatar, bold name, muted map-pin location, and a mini-stat row
 // of owned copies, completed swaps and trade rating — everything sourced from
 // the existing identity reads (getUserById + getUserStats). A "Follows you"
-// badge and the follow/unfollow toggle keep the social actions on the tile.
+// badge plus the follow/unfollow toggle and the connection-gated Message
+// button keep the social actions on the tile.
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +16,7 @@ import { useQuery } from "convex/react";
 import { MapPin, Star } from "lucide-react";
 import { useTranslations } from "use-intl";
 import { FollowButton } from "./follow-button";
+import { MessageButton } from "./message-button";
 
 export function MemberTileSkeleton() {
   return (
@@ -98,7 +100,10 @@ export function MemberTile({
         </div>
       </div>
 
-      <FollowButton memberId={memberId} size="sm" />
+      <div className="flex shrink-0 flex-col items-stretch gap-1.5">
+        <FollowButton memberId={memberId} size="sm" />
+        <MessageButton memberId={memberId} size="sm" />
+      </div>
     </Card>
   );
 }

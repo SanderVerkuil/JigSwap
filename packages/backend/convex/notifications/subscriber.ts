@@ -49,6 +49,16 @@ const loadGoal = (
     .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", aggregateId))
     .unique();
 
+// Resolve a thread's participants from its ThreadId aggregateId.
+const loadThread = (
+  ctx: MutationCtx,
+  aggregateId: string,
+): Promise<Doc<"threads"> | null> =>
+  ctx.db
+    .query("threads")
+    .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", aggregateId))
+    .unique();
+
 // Resolve a puzzle definition's submitter + relatedId from its PuzzleDefinitionId aggregateId.
 const loadPuzzle = (
   ctx: MutationCtx,
@@ -161,6 +171,27 @@ const translate = async (
           row._id,
         ),
       ];
+    }
+
+    // --- Conversation ---
+    case "MessagePosted": {
+      // System messages (authorId null) mirror an exchange lifecycle event that already notified
+      // through its own case above — notifying here would double up every lifecycle transition.
+      const authorId = p.authorId as string | null;
+      if (authorId === null || authorId === undefined) return [];
+      const thread = await loadThread(ctx, p.threadId as string);
+      if (!thread) return [];
+      return thread.participants
+        .filter((participant) => (participant as string) !== authorId)
+        .map((participant) =>
+          cmd(
+            participant,
+            "message_received",
+            "New message",
+            "You have a new message",
+            thread.aggregateId,
+          ),
+        );
     }
 
     // --- Solving ---

@@ -21,7 +21,9 @@ describe("makeMarkThreadRead", () => {
     threads = new InMemoryThreadRepository();
     clock = new FixedClock(NOW);
     mark = makeMarkThreadRead({ threads, clock });
-    await threads.save(Thread.open(threadId, exchangeId, [alice, bob]));
+    await threads.save(
+      Thread.openForExchange(threadId, exchangeId, [alice, bob]),
+    );
   });
 
   it("records only the caller's read receipt at the clock's now", async () => {

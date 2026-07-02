@@ -30,7 +30,9 @@ describe("makePostSystemMessage", () => {
       events,
       clock: new FixedClock(NOW),
     });
-    await threads.save(Thread.open(threadId, exchangeId, [alice, bob]));
+    await threads.save(
+      Thread.openForExchange(threadId, exchangeId, [alice, bob]),
+    );
   });
 
   it("posts a service-authored system message with no member author and publishes MessagePosted", async () => {

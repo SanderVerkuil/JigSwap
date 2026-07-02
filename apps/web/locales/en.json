@@ -654,15 +654,31 @@
     }
   },
   "messages": {
-    "sendMessage": "Send Message",
-    "typeMessage": "Type your message...",
+    "anonymous": "Anonymous user",
+    "backToInbox": "Back to messages",
+    "empty": "No conversations yet",
+    "emptyHint": "Message a member from their profile or start one from an exchange.",
+    "exchangeThread": "{type}: {title}",
+    "exchangeType": {
+      "trade": "Trade",
+      "sale": "Sale",
+      "loan": "Loan"
+    },
+    "messageButton": "Message",
     "noMessages": "No messages yet",
-    "newMessage": "New Message",
-    "searchUsers": "Search users...",
-    "online": "Online",
-    "offline": "Offline",
+    "noMessagesHint": "Say hello to get the conversation going.",
+    "noThreadYet": "No conversation for this exchange yet.",
+    "notConnected": "You can only message members you're connected with",
+    "openError": "Couldn't open the conversation. Please try again.",
     "selectConversation": "Select a conversation",
-    "selectConversationHint": "Choose a user from the sidebar to start messaging"
+    "selectConversationHint": "Choose a conversation from the list to start messaging",
+    "sendError": "Your message couldn't be sent. Please try again.",
+    "sendMessage": "Send Message",
+    "threadFallbackTitle": "Conversation",
+    "tooLong": "That message is too long (4,000 characters max).",
+    "typeMessage": "Type your message...",
+    "unreadCount": "{count, plural, one {# unread message} other {# unread messages}}",
+    "untitledPuzzle": "Untitled puzzle"
   },
   "profile": {
     "title": "Profile",
