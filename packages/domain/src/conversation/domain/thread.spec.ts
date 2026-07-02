@@ -5,6 +5,7 @@ import {
   toMessageId,
   toThreadId,
 } from "../../shared-kernel";
+import { MAX_MESSAGE_LENGTH } from "./errors";
 import { MessagePosted } from "./events";
 import { MemberId, MessageId, ThreadId } from "./ids";
 import { Thread, ThreadSubject } from "./thread";
@@ -104,6 +105,68 @@ describe("Thread.postMessage", () => {
     expect(thread.messages).toHaveLength(0);
   });
 
+  it("rejects a whitespace-only body", () => {
+    const thread = openThread();
+
+    const result = thread.postMessage({
+      id: msg1,
+      authorId: alice,
+      kind: "text",
+      body: " \n\t ",
+      sentAt: NOW,
+    });
+
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("EmptyMessage");
+    expect(thread.messages).toHaveLength(0);
+  });
+
+  it("stores the body as-given (trim is only for the emptiness check)", () => {
+    const thread = openThread();
+
+    const result = thread.postMessage({
+      id: msg1,
+      authorId: alice,
+      kind: "text",
+      body: "  padded  ",
+      sentAt: NOW,
+    });
+
+    expect(result.isOk).toBe(true);
+    if (result.isOk) expect(result.value.body).toBe("  padded  ");
+  });
+
+  it("rejects a body longer than MAX_MESSAGE_LENGTH with MessageTooLong", () => {
+    const thread = openThread();
+
+    const result = thread.postMessage({
+      id: msg1,
+      authorId: alice,
+      kind: "text",
+      body: "x".repeat(MAX_MESSAGE_LENGTH + 1),
+      sentAt: NOW,
+    });
+
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("MessageTooLong");
+    expect(thread.messages).toHaveLength(0);
+  });
+
+  it("accepts a body of exactly MAX_MESSAGE_LENGTH", () => {
+    const thread = openThread();
+
+    const result = thread.postMessage({
+      id: msg1,
+      authorId: alice,
+      kind: "text",
+      body: "x".repeat(MAX_MESSAGE_LENGTH),
+      sentAt: NOW,
+    });
+
+    expect(result.isOk).toBe(true);
+    expect(thread.messages).toHaveLength(1);
+  });
+
   it("keeps messages in send order", () => {
     const thread = openThread();
     thread.postMessage({
@@ -170,6 +233,38 @@ describe("Thread.postSystemMessage", () => {
     });
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("EmptyMessage");
+  });
+
+  it("rejects a whitespace-only system body", () => {
+    const thread = openThread();
+    const result = thread.postSystemMessage({
+      id: msg1,
+      body: "   ",
+      sentAt: NOW,
+    });
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("EmptyMessage");
+  });
+
+  it("rejects an over-long system body with MessageTooLong", () => {
+    const thread = openThread();
+    const result = thread.postSystemMessage({
+      id: msg1,
+      body: "x".repeat(MAX_MESSAGE_LENGTH + 1),
+      sentAt: NOW,
+    });
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("MessageTooLong");
+  });
+
+  it("accepts a system body of exactly MAX_MESSAGE_LENGTH", () => {
+    const thread = openThread();
+    const result = thread.postSystemMessage({
+      id: msg1,
+      body: "x".repeat(MAX_MESSAGE_LENGTH),
+      sentAt: NOW,
+    });
+    expect(result.isOk).toBe(true);
   });
 });
 

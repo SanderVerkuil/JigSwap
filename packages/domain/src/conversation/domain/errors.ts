@@ -9,8 +9,13 @@ import { DomainError } from "../../shared-kernel";
 export type ConversationErrorCode =
   | "NotParticipant"
   | "EmptyMessage"
+  | "MessageTooLong"
   | "SystemMessageNotAuthorable"
   | "DmRequiresTwoParticipants";
+
+// The maximum accepted message body length in characters (text, or an image's storage
+// reference). Exported so transports/UI can enforce the same bound client-side.
+export const MAX_MESSAGE_LENGTH = 4000;
 
 export class ConversationError extends DomainError {
   override readonly name = "ConversationError";
@@ -35,6 +40,14 @@ export class ConversationError extends DomainError {
     return new ConversationError(
       "EmptyMessage",
       "A message body must be non-empty",
+    );
+  }
+
+  // A message body may not exceed MAX_MESSAGE_LENGTH characters.
+  static messageTooLong(): ConversationError {
+    return new ConversationError(
+      "MessageTooLong",
+      `A message body must be at most ${MAX_MESSAGE_LENGTH} characters`,
     );
   }
 

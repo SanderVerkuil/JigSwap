@@ -1,5 +1,5 @@
 import { DomainEvent, err, ok, Result } from "../../shared-kernel";
-import { ConversationError } from "./errors";
+import { ConversationError, MAX_MESSAGE_LENGTH } from "./errors";
 import { MessagePosted } from "./events";
 import { ExchangeId, MemberId, MessageId, ThreadId } from "./ids";
 import { Message, MessageState } from "./message";
@@ -120,15 +120,14 @@ export class Thread {
     );
   }
 
-  // Append a member-authored text/image message. Rejects a non-participant author and an empty
-  // body; records MessagePosted on success.
+  // Append a member-authored text/image message. Rejects a non-participant author, a body that
+  // is empty after trimming, and an over-long body; records MessagePosted on success.
   postMessage(props: PostMessageProps): Result<Message, ConversationError> {
     if (!this.isParticipant(props.authorId)) {
       return err(ConversationError.notParticipant());
     }
-    if (props.body.length === 0) {
-      return err(ConversationError.emptyMessage());
-    }
+    const bodyError = Thread.validateBody(props.body);
+    if (bodyError) return err(bodyError);
 
     return ok(
       this.append(
@@ -145,14 +144,13 @@ export class Thread {
   }
 
   // Append a service-authored system message. There is no member author and no participant check
-  // (the service is trusted); only the non-empty-body rule applies. This is the ONLY path that
-  // creates a `system` message — a member can never author one (see postMessage's kind type).
+  // (the service is trusted); only the body rules apply. This is the ONLY path that creates a
+  // `system` message — a member can never author one (see postMessage's kind type).
   postSystemMessage(
     props: PostSystemMessageProps,
   ): Result<Message, ConversationError> {
-    if (props.body.length === 0) {
-      return err(ConversationError.emptyMessage());
-    }
+    const bodyError = Thread.validateBody(props.body);
+    if (bodyError) return err(bodyError);
 
     return ok(
       this.append(
@@ -220,6 +218,17 @@ export class Thread {
 
   private isParticipant(memberId: MemberId): boolean {
     return this.state.participants.includes(memberId);
+  }
+
+  // Shared body rules for both post paths: a body must be non-empty AFTER trimming (whitespace-
+  // only is empty) and at most MAX_MESSAGE_LENGTH characters. The trim is only for the emptiness
+  // check — the body itself is stored as-given, never mutated.
+  private static validateBody(body: string): ConversationError | null {
+    if (body.trim().length === 0) return ConversationError.emptyMessage();
+    if (body.length > MAX_MESSAGE_LENGTH) {
+      return ConversationError.messageTooLong();
+    }
+    return null;
   }
 
   // Shared tail of both post paths: append the validated message and record MessagePosted.

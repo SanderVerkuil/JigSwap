@@ -131,6 +131,8 @@ export const convexThreadRepository = (ctx: MutationCtx): ThreadRepository => {
       // TODO(threshold): full-history scan per save — fine for v1 pair threads; if threads
       // approach thousands of messages, diff on sentAt >= stored max instead. Read models must
       // paginate by_thread_sent directly, never hydrate the aggregate.
+      // markThreadRead is the hottest path and should become a receipt-only patch when the
+      // threshold work happens.
       const storedIds = new Set(
         (await messagesOf(aggregateId)).map((m) => m.messageId),
       );

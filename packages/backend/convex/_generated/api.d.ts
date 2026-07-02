@@ -61,6 +61,7 @@ import type * as conversation_errors from "../conversation/errors.js";
 import type * as conversation_markThreadRead from "../conversation/markThreadRead.js";
 import type * as conversation_openDmThread from "../conversation/openDmThread.js";
 import type * as conversation_postMessage from "../conversation/postMessage.js";
+import type * as conversation_subscriber from "../conversation/subscriber.js";
 import type * as custody_getCopyCustodyTimeline from "../custody/getCopyCustodyTimeline.js";
 import type * as custody_subscriber from "../custody/subscriber.js";
 import type * as docs_listDocFeedback from "../docs/listDocFeedback.js";
@@ -331,6 +332,7 @@ declare const fullApi: ApiFromModules<{
   "conversation/markThreadRead": typeof conversation_markThreadRead;
   "conversation/openDmThread": typeof conversation_openDmThread;
   "conversation/postMessage": typeof conversation_postMessage;
+  "conversation/subscriber": typeof conversation_subscriber;
   "custody/getCopyCustodyTimeline": typeof custody_getCopyCustodyTimeline;
   "custody/subscriber": typeof custody_subscriber;
   "docs/listDocFeedback": typeof docs_listDocFeedback;
