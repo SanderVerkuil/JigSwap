@@ -5,7 +5,9 @@ import { ExchangeId, ThreadId } from "../domain";
 // world (which threads exist) rather than the Thread's own data. Like ConversationError, the
 // `code` is the stable, machine-readable discriminant a transport adapter maps to; the message is
 // for logs/tests only.
-export type ConversationApplicationErrorCode = "ThreadNotFound";
+export type ConversationApplicationErrorCode =
+  | "ThreadNotFound"
+  | "NotConnected";
 
 export class ConversationApplicationError extends DomainError {
   override readonly name = "ConversationApplicationError";
@@ -24,6 +26,14 @@ export class ConversationApplicationError extends DomainError {
     return new ConversationApplicationError(
       "ThreadNotFound",
       `No thread found for ${ref}`,
+    );
+  }
+
+  // The ConnectionPolicy denied the pair: the initiator may not open a DM with the recipient.
+  static notConnected(): ConversationApplicationError {
+    return new ConversationApplicationError(
+      "NotConnected",
+      "You can only message members you are connected with",
     );
   }
 }

@@ -215,7 +215,10 @@ describe("Thread subjects", () => {
   it("openDm yields a dm-subject thread with exactly two participants", () => {
     const result = Thread.openDm(threadId, [alice, bob]);
     expect(result.isOk).toBe(true);
-    if (result.isOk) expect(result.value.subject).toEqual({ kind: "dm" });
+    if (result.isOk) {
+      expect(result.value.subject).toEqual({ kind: "dm" });
+      expect(result.value.participants).toEqual([alice, bob]);
+    }
   });
 
   it("openDm rejects duplicate participants", () => {
@@ -262,5 +265,16 @@ describe("Thread persistence", () => {
     expect(rehydrated.lastReadAt(bob)).toEqual(NOW);
     // Rehydration does not re-emit events.
     expect(rehydrated.pullEvents()).toHaveLength(0);
+  });
+
+  it("round-trips a dm-subject thread through toState/rehydrate", () => {
+    const result = Thread.openDm(threadId, [alice, bob]);
+    expect(result.isOk).toBe(true);
+    if (!result.isOk) return;
+
+    const rehydrated = Thread.rehydrate(result.value.toState());
+
+    expect(rehydrated.subject).toEqual({ kind: "dm" });
+    expect(rehydrated.participants).toEqual([alice, bob]);
   });
 });

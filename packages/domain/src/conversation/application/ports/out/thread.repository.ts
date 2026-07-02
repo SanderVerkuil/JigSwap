@@ -1,4 +1,4 @@
-import { ExchangeId, Thread, ThreadId } from "../../../domain";
+import { ExchangeId, MemberId, Thread, ThreadId } from "../../../domain";
 
 // Outbound port: persistence for the Thread aggregate. The 1b-convex adapter implements this over
 // `ctx.db` behind a mapper; the domain never sees a row. `findByExchange` backs the one-thread-
@@ -6,5 +6,8 @@ import { ExchangeId, Thread, ThreadId } from "../../../domain";
 export interface ThreadRepository {
   findByExchange(exchangeId: ExchangeId): Promise<Thread | null>;
   findById(threadId: ThreadId): Promise<Thread | null>;
+  // The dm-subject thread between the pair, order-insensitive: (a, b) and (b, a) find the same
+  // thread. Backs the one-DM-per-pair rule the OpenDmThread use case enforces.
+  findDmByParticipants(a: MemberId, b: MemberId): Promise<Thread | null>;
   save(thread: Thread): Promise<void>;
 }
