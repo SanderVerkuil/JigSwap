@@ -139,6 +139,19 @@ export const gateway = {
     messages: api.exchange.getExchangeMessages.getExchangeMessages,
   },
 
+  // Conversation: threads, DMs, exchange chat, inbox.
+  conversation: {
+    openDmThread: api.conversation.openDmThread.openDmThread,
+    postMessage: api.conversation.postMessage.postMessage,
+    markThreadRead: api.conversation.markThreadRead.markThreadRead,
+    getMyInbox: api.conversation.getMyInbox.getMyInbox,
+    getThreadMessages: api.conversation.getThreadMessages.getThreadMessages,
+    getThreadByExchange:
+      api.conversation.getThreadByExchange.getThreadByExchange,
+    canMessage: api.conversation.canMessage.canMessage,
+    getUnreadTotal: api.conversation.getUnreadTotal.getUnreadTotal,
+  },
+
   // Chain-of-Custody: a Copy's provenance (original owner -> each settled transfer -> current
   // owner), read from the custody projection folded off Exchange's OwnershipTransferred events.
   custody: {
