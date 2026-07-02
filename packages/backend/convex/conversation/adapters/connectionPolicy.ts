@@ -1,13 +1,15 @@
 import type { ConnectionPolicy, MemberId } from "@jigswap/domain";
 import type { Id } from "../../_generated/dataModel";
-import type { MutationCtx } from "../../_generated/server";
+import type { QueryCtx } from "../../_generated/server";
 import { participantsKeyOf } from "./threadMapper";
 
 // Driven adapter for the ConnectionPolicy port. "Connected" = mutual follow, shared circle, or
 // any existing thread between the pair (exchange threads are opened on proposal, so "we have an
 // exchange together" reduces to a pair lookup). The pair-thread clause also keeps an existing DM
 // reachable after an unfollow: the use case consults this policy BEFORE its idempotency lookup.
-export const convexConnectionPolicy = (ctx: MutationCtx): ConnectionPolicy => ({
+// The policy only READS, so it is typed over QueryCtx; mutation callers pass their MutationCtx
+// unchanged (structurally assignable) and the canMessage read model can share the adapter.
+export const convexConnectionPolicy = (ctx: QueryCtx): ConnectionPolicy => ({
   async canMessage(initiator: MemberId, recipient: MemberId) {
     const a = initiator as unknown as Id<"users">;
     const b = recipient as unknown as Id<"users">;

@@ -1,4 +1,5 @@
 export * from "./catalog";
+export * from "./conversation";
 export * from "./custody";
 export * from "./exchange";
 export * from "./identity";
