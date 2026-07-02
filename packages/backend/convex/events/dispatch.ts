@@ -7,7 +7,8 @@ import { handleDomainEvent as handleLibraryTransferEvent } from "../library/tran
 import { handleDomainEvent as handleNotificationEvent } from "../notifications/subscriber";
 
 // The central async dispatcher. Scheduled once per recorded domain event; it loads the row, routes
-// it to every registered ASYNC subscriber (currently only Notifications), then stamps processedAt.
+// it to every registered ASYNC subscriber (Notifications, Conversation, Custody, the Library
+// transfer + open-loan reactions), then stamps processedAt.
 //
 // Resilience: subscriber work runs in THIS mutation's transaction. If a subscriber throws, the
 // whole mutation rolls back (processedAt stays unset) and Convex retries the scheduled function —

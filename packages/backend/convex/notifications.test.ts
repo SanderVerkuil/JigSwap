@@ -77,6 +77,25 @@ const asAlice = (t: ReturnType<typeof convexTest>) =>
 const asBob = (t: ReturnType<typeof convexTest>) =>
   t.withIdentity({ subject: "clerk_bob" });
 
+// Seed a mutual follow between the pair so the DM ConnectionPolicy's first clause passes.
+const followMutually = (
+  t: ReturnType<typeof convexTest>,
+  a: Id<"users">,
+  b: Id<"users">,
+) =>
+  t.run(async (ctx) => {
+    await ctx.db.insert("follows", {
+      followerId: a,
+      followeeId: b,
+      createdAt: 1,
+    });
+    await ctx.db.insert("follows", {
+      followerId: b,
+      followeeId: a,
+      createdAt: 2,
+    });
+  });
+
 // Alice proposes a sale to Bob; returns the exchange aggregateId + the seeded ids.
 const proposeSale = async (t: ReturnType<typeof convexTest>) => {
   const { alice, bob, puzzleId } = await seed(t);
@@ -142,6 +161,71 @@ describe("end-to-end async dispatch", () => {
     expect(notes.filter((n) => n.type === "trade_request")).toHaveLength(2);
     const event = await t.run((ctx) => ctx.db.get(eventId));
     expect(event?.processedAt).toBeDefined();
+  });
+});
+
+describe("message_received notifications", () => {
+  const messageNotesFor = async (
+    t: ReturnType<typeof convexTest>,
+    userId: Id<"users">,
+  ) =>
+    (await notificationsFor(t, userId)).filter(
+      (n) => n.type === "message_received",
+    );
+
+  test("a member-authored DM message notifies the other participant only", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+    await followMutually(t, alice, bob);
+    const threadId = await asAlice(t).mutation(
+      api.conversation.openDmThread.openDmThread,
+      { recipientId: bob },
+    );
+
+    await asAlice(t).mutation(api.conversation.postMessage.postMessage, {
+      threadId,
+      kind: "text",
+      body: "hi",
+    });
+    await flushScheduled(t);
+
+    const bobNotes = await messageNotesFor(t, bob);
+    expect(bobNotes).toHaveLength(1);
+    expect(bobNotes[0].title).toBe("New message");
+    expect(bobNotes[0].message).toBe("You have a new message");
+    expect(bobNotes[0].relatedId).toBe(threadId);
+    // The author never gets notified about their own message.
+    expect(await messageNotesFor(t, alice)).toHaveLength(0);
+  });
+
+  test("system lifecycle messages produce zero message_received notifications", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await proposeSale(t);
+    // Settling the dispatch chain posts the "Exchange proposed" system message, whose own
+    // MessagePosted (authorId null) must NOT notify — the lifecycle event already did.
+    await flushScheduled(t);
+
+    expect(await messageNotesFor(t, alice)).toHaveLength(0);
+    expect(await messageNotesFor(t, bob)).toHaveLength(0);
+  });
+
+  test("posting to an exchange thread notifies the counterparty, not the author", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await proposeSale(t);
+    await flushScheduled(t); // opens the exchange thread via the conversation subscriber
+
+    const thread = await t.run((ctx) => ctx.db.query("threads").unique());
+    await asAlice(t).mutation(api.conversation.postMessage.postMessage, {
+      threadId: thread!.aggregateId,
+      kind: "text",
+      body: "When can we meet?",
+    });
+    await flushScheduled(t);
+
+    const bobNotes = await messageNotesFor(t, bob);
+    expect(bobNotes).toHaveLength(1);
+    expect(bobNotes[0].relatedId).toBe(thread!.aggregateId);
+    expect(await messageNotesFor(t, alice)).toHaveLength(0);
   });
 });
 

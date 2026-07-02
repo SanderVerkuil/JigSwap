@@ -21,6 +21,9 @@ import { toConvexError } from "./errors";
 //
 // WHY here and not inline in Exchange: Conversation is a decoupled subscriber — Exchange only
 // publishes its domain events and knows nothing about threads.
+//
+// Message idempotency relies on Exchange emitting each lifecycle transition exactly once; the
+// dispatcher's processedAt guard covers re-scheduling of the same event row.
 const LIFECYCLE_BODIES: Partial<Record<string, string>> = {
   ExchangeProposed: "Exchange proposed",
   ExchangeAccepted: "Exchange accepted",
@@ -44,8 +47,8 @@ export const handleDomainEvent = async (
   ctx: MutationCtx,
   event: Doc<"domainEvents">,
 ): Promise<void> => {
-  const body = LIFECYCLE_BODIES[event.name];
-  if (body === undefined) return;
+  if (!Object.hasOwn(LIFECYCLE_BODIES, event.name)) return;
+  const body = LIFECYCLE_BODIES[event.name] as string;
 
   const p = event.payload as Record<string, unknown>;
   const row = await loadExchange(ctx, p.exchangeId as string);
