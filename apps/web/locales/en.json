@@ -1885,6 +1885,15 @@
     "file-upload": {
       "error": "Error compressing image. Please select a different file.",
       "compressing": "Compressing..."
+    },
+    "translatable-field": {
+      "toggleLabel": "Language for {field}",
+      "locales": {
+        "en": "English",
+        "nl": "Dutch"
+      },
+      "translated": "Translated",
+      "missing": "Missing translation"
     }
   },
   "custody": {
@@ -2757,12 +2766,12 @@
         "createDescription": "Add a new category to the catalog. It becomes active immediately.",
         "editTitle": "Edit Category",
         "editDescription": "Update the names, descriptions, and color of this category.",
-        "nameEn": "Name (English)",
-        "nameNl": "Name (Dutch)",
+        "name": "Name",
+        "description": "Description",
         "nameRequired": "Name is required",
-        "descriptionEn": "Description (English)",
-        "descriptionNl": "Description (Dutch)",
         "color": "Color",
+        "colorAuto": "Auto",
+        "colorAutoHint": "Color follows the English name until you pick one manually",
         "create": "Create",
         "update": "Update",
         "createSuccess": "Category created successfully",
@@ -2771,6 +2780,8 @@
       },
       "list": {
         "statusInactive": "Inactive",
+        "translationTooltip": "{language}: “{value}”",
+        "missingTranslationTooltip": "{language}: missing translation",
         "edit": "Edit",
         "deactivate": "Deactivate",
         "deactivateConfirmTitle": "Deactivate “{name}”?",

@@ -1885,6 +1885,15 @@
     "file-upload": {
       "error": "Fout bij comprimeren van afbeelding. Selecteer een ander bestand.",
       "compressing": "Comprimeren..."
+    },
+    "translatable-field": {
+      "toggleLabel": "Taal voor {field}",
+      "locales": {
+        "en": "Engels",
+        "nl": "Nederlands"
+      },
+      "translated": "Vertaald",
+      "missing": "Vertaling ontbreekt"
     }
   },
   "custody": {
@@ -2757,12 +2766,12 @@
         "createDescription": "Voeg een nieuwe categorie toe aan de catalogus. Ze is direct actief.",
         "editTitle": "Categorie bewerken",
         "editDescription": "Werk de namen, beschrijvingen en kleur van deze categorie bij.",
-        "nameEn": "Naam (Engels)",
-        "nameNl": "Naam (Nederlands)",
+        "name": "Naam",
+        "description": "Beschrijving",
         "nameRequired": "Naam is verplicht",
-        "descriptionEn": "Beschrijving (Engels)",
-        "descriptionNl": "Beschrijving (Nederlands)",
         "color": "Kleur",
+        "colorAuto": "Auto",
+        "colorAutoHint": "De kleur volgt de Engelse naam totdat je zelf een kleur kiest",
         "create": "Aanmaken",
         "update": "Bijwerken",
         "createSuccess": "Categorie aangemaakt",
@@ -2771,6 +2780,8 @@
       },
       "list": {
         "statusInactive": "Inactief",
+        "translationTooltip": "{language}: “{value}”",
+        "missingTranslationTooltip": "{language}: vertaling ontbreekt",
         "edit": "Bewerken",
         "deactivate": "Deactiveren",
         "deactivateConfirmTitle": "“{name}” deactiveren?",

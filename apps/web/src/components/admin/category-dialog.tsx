@@ -6,7 +6,16 @@
 // create/update mutations. sortOrder is not a form field — a new category is
 // appended at the end of the list (nextSortOrder) and order is managed by
 // drag-reorder in the list; activation is a row-level action there too.
+// Name and description are TranslatableFields (one locale visible at a time,
+// synced across fields); in create mode the color live-follows the English
+// name until the picker is touched.
 
+import {
+  TranslatableField,
+  TranslatableFieldsProvider,
+  useTranslatableFields,
+} from "@/components/forms/translatable-field";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ColorPicker } from "@/components/ui/color-picker";
 import {
@@ -25,18 +34,27 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { gateway } from "@/gateway";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "convex/react";
 import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import {
+  useForm,
+  useWatch,
+  type FieldErrors,
+  type UseFormReturn,
+} from "react-hook-form";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { z } from "zod";
 
 import type { Category } from "./category-list";
+import { deriveColorFromName } from "./derive-color";
 
 const DEFAULT_COLOR = "#3B82F6";
 
@@ -74,6 +92,9 @@ export function CategoryDialog({
   const createCategory = useMutation(gateway.adminCatalog.create);
   const updateCategory = useMutation(gateway.adminCatalog.update);
   const [busy, setBusy] = useState(false);
+  // Name-derived color stops once the picker is used; editing an existing
+  // category counts as touched so a stored color is never overwritten.
+  const [colorTouched, setColorTouched] = useState(Boolean(category));
 
   const schema = useMemo(
     () =>
@@ -95,7 +116,10 @@ export function CategoryDialog({
 
   // Re-seed when the dialog opens for a (possibly different) category.
   useEffect(() => {
-    if (open) form.reset(toDefaults(category));
+    if (open) {
+      form.reset(toDefaults(category));
+      setColorTouched(Boolean(category));
+    }
   }, [open, category, form]);
 
   const onSubmit = async (values: CategoryFormValues) => {
@@ -139,84 +163,14 @@ export function CategoryDialog({
             {isEdit ? t("editDescription") : t("createDescription")}
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4"
-            id="category-form"
-          >
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="name.en"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("nameEn")}</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="name.nl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("nameNl")}</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <FormField
-              control={form.control}
-              name="description.en"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("descriptionEn")}</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} rows={2} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description.nl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("descriptionNl")}</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} rows={2} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="color"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("color")}</FormLabel>
-                  <FormControl>
-                    <ColorPicker
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </form>
-        </Form>
+        <TranslatableFieldsProvider>
+          <CategoryForm
+            form={form}
+            onSubmit={onSubmit}
+            colorTouched={colorTouched}
+            onColorTouched={() => setColorTouched(true)}
+          />
+        </TranslatableFieldsProvider>
         <DialogFooter>
           <Button
             type="button"
@@ -232,5 +186,106 @@ export function CategoryDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// The form body lives under the TranslatableFieldsProvider so it can drive the
+// synced locale toggle (onInvalid auto-switch below).
+function CategoryForm({
+  form,
+  onSubmit,
+  colorTouched,
+  onColorTouched,
+}: {
+  form: UseFormReturn<CategoryFormValues>;
+  onSubmit: (values: CategoryFormValues) => Promise<void>;
+  colorTouched: boolean;
+  onColorTouched: () => void;
+}) {
+  const t = useTranslations("admin.categories.form");
+  const { locales, setActiveLocale } = useTranslatableFields();
+
+  // While the picker is untouched (create mode), the color live-follows the
+  // English name. A blank name derives nothing and keeps the current color.
+  const nameEn = useWatch({ control: form.control, name: "name.en" });
+  useEffect(() => {
+    if (colorTouched) return;
+    const derived = deriveColorFromName(nameEn ?? "");
+    if (derived) form.setValue("color", derived);
+  }, [nameEn, colorTouched, form]);
+
+  // Submitting with an error hidden behind a non-visible locale would look
+  // like a dead button: switch to the first errored locale and focus it.
+  const onInvalid = (errors: FieldErrors<CategoryFormValues>) => {
+    for (const fieldName of ["name", "description"] as const) {
+      const fieldErrors = errors[fieldName];
+      if (!fieldErrors) continue;
+      for (const locale of locales) {
+        if (fieldErrors[locale]) {
+          setActiveLocale(locale);
+          // Focus once the newly active input is visible — hidden
+          // (display:none) inputs cannot take focus.
+          requestAnimationFrame(() => form.setFocus(`${fieldName}.${locale}`));
+          return;
+        }
+      }
+    }
+  };
+
+  return (
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit, onInvalid)}
+        className="space-y-4"
+        id="category-form"
+      >
+        <TranslatableField
+          control={form.control}
+          name="name"
+          label={t("name")}
+          required
+        />
+        <TranslatableField
+          control={form.control}
+          name="description"
+          label={t("description")}
+          multiline
+        />
+        <FormField
+          control={form.control}
+          name="color"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("color")}</FormLabel>
+              <FormControl>
+                <ColorPicker
+                  value={field.value}
+                  onChange={(color) => {
+                    onColorTouched();
+                    field.onChange(color);
+                  }}
+                  badge={
+                    !colorTouched ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge
+                            variant="secondary"
+                            aria-label={t("colorAutoHint")}
+                          >
+                            {t("colorAuto")}
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>{t("colorAutoHint")}</TooltipContent>
+                      </Tooltip>
+                    ) : undefined
+                  }
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </form>
+    </Form>
   );
 }

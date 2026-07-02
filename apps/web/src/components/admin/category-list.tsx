@@ -21,7 +21,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Flag } from "@/components/ui/flag";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { gateway } from "@/gateway";
+import { locales, type Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
   closestCenter,
@@ -45,7 +52,7 @@ import { useMutation } from "convex/react";
 import { Edit, Eye, EyeOff, GripVertical } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "use-intl";
+import { useLocale, useTranslations } from "use-intl";
 
 export interface Category {
   _id: string;
@@ -69,6 +76,7 @@ export function CategoryList({
 }) {
   const t = useTranslations("admin.categories.list");
   const tCommon = useTranslations("common");
+  const uiLocale = useLocale() as Locale;
   // The domain soft-deactivates; there is no hard delete, so "delete" hides a node via setActive.
   const setCategoryActive = useMutation(gateway.adminCatalog.delete);
   // Optimistically renumber the listAll rows so the drop lands instantly; Convex
@@ -187,7 +195,7 @@ export function CategoryList({
           <AlertDialogHeader>
             <AlertDialogTitle>
               {t("deactivateConfirmTitle", {
-                name: confirming?.name.en ?? "",
+                name: confirming?.name[uiLocale] ?? "",
               })}
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -231,6 +239,12 @@ function CategoryRow({
   onReactivate: () => void;
 }) {
   const t = useTranslations("admin.categories.list");
+  const tField = useTranslations("forms.translatable-field");
+  const uiLocale = useLocale() as Locale;
+  // The row shows the current UI locale; the other locales collapse into small
+  // flags whose tooltips carry the translation (or expose the gap — visible
+  // gaps are the point of an admin QA surface).
+  const otherLocales = locales.filter((locale) => locale !== uiLocale);
   // Legacy rows without an aggregateId cannot be reordered (or edited) via the domain API.
   const sortable = category.aggregateId !== undefined;
   const {
@@ -257,7 +271,7 @@ function CategoryRow({
         {...attributes}
         {...listeners}
         disabled={!sortable}
-        aria-label={t("dragHandle", { name: category.name.en })}
+        aria-label={t("dragHandle", { name: category.name[uiLocale] })}
         className="shrink-0 cursor-grab touch-none rounded text-muted-foreground outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-40"
       >
         <GripVertical className="h-4 w-4" aria-hidden />
@@ -269,16 +283,43 @@ function CategoryRow({
       />
       <div className="min-w-0 flex-1 space-y-0.5">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-          <span className="font-semibold">{category.name.en}</span>
-          <span className="text-muted-foreground">{category.name.nl}</span>
+          <span className="font-semibold">{category.name[uiLocale]}</span>
+          {otherLocales.map((locale) => {
+            const translation = category.name[locale]?.trim();
+            const tooltip = translation
+              ? t("translationTooltip", {
+                  language: tField(`locales.${locale}`),
+                  value: translation,
+                })
+              : t("missingTranslationTooltip", {
+                  language: tField(`locales.${locale}`),
+                });
+            return (
+              <Tooltip key={locale}>
+                <TooltipTrigger asChild>
+                  <span
+                    aria-label={tooltip}
+                    className={cn(
+                      "inline-flex",
+                      translation
+                        ? "opacity-50 hover:opacity-100"
+                        : "opacity-25",
+                    )}
+                  >
+                    <Flag locale={locale} className="h-2.5 w-3.5" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>{tooltip}</TooltipContent>
+              </Tooltip>
+            );
+          })}
           {!category.isActive && (
             <Badge variant="secondary">{t("statusInactive")}</Badge>
           )}
         </div>
-        {category.description && (
+        {category.description?.[uiLocale] && (
           <p className="truncate text-sm text-muted-foreground">
-            {category.description.en}
-            {category.description.nl && ` • ${category.description.nl}`}
+            {category.description[uiLocale]}
           </p>
         )}
       </div>

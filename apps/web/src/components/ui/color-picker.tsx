@@ -31,6 +31,8 @@ interface ColorPickerProps {
   placeholder?: string;
   /** Swatches shown above the raw picker; pass [] to hide them. */
   presets?: string[];
+  /** Optional adornment rendered inside the trigger, before the chevron. */
+  badge?: React.ReactNode;
 }
 
 export function ColorPicker({
@@ -40,6 +42,7 @@ export function ColorPicker({
   disabled = false,
   placeholder = "Pick a color",
   presets = DEFAULT_COLOR_PRESETS,
+  badge,
 }: ColorPickerProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   // HSVA is the working space while the popover is open: round-tripping through hex
@@ -77,7 +80,10 @@ export function ColorPicker({
             />
             <span className="text-sm">{value || placeholder}</span>
           </div>
-          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <div className="ml-2 flex shrink-0 items-center gap-1.5">
+            {badge}
+            <ChevronDown className="h-4 w-4 opacity-50" />
+          </div>
         </Button>
       </Popover.Trigger>
       <Popover.Portal>
