@@ -2677,6 +2677,38 @@
       "helpful": "Nuttig",
       "notHelpful": "Niet nuttig"
     },
+    "categories": {
+      "loading": "Categorieën laden…",
+      "add": "Categorie toevoegen",
+      "form": {
+        "createTitle": "Nieuwe categorie aanmaken",
+        "editTitle": "Categorie bewerken",
+        "nameEn": "Naam (Engels)",
+        "nameNl": "Naam (Nederlands)",
+        "descriptionEn": "Beschrijving (Engels)",
+        "descriptionNl": "Beschrijving (Nederlands)",
+        "color": "Kleur",
+        "sortOrder": "Sorteervolgorde",
+        "active": "Actief",
+        "create": "Aanmaken",
+        "update": "Bijwerken",
+        "cancel": "Annuleren",
+        "createSuccess": "Categorie aangemaakt",
+        "updateSuccess": "Categorie bijgewerkt",
+        "saveError": "Categorie opslaan mislukt"
+      },
+      "list": {
+        "sortOrder": "Sorteervolgorde: {order}",
+        "statusActive": "Actief",
+        "statusInactive": "Inactief",
+        "noDescription": "Geen beschrijving",
+        "edit": "Bewerken",
+        "deactivate": "Deactiveren",
+        "deactivateConfirm": "Deze categorie deactiveren? Ze wordt verborgen, maar niet verwijderd.",
+        "deactivateSuccess": "Categorie gedeactiveerd",
+        "deactivateError": "Categorie deactiveren mislukt"
+      }
+    },
     "queueEmpty": {
       "title": "Alles afgehandeld"
     }

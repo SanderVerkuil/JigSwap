@@ -2677,6 +2677,38 @@
       "helpful": "Helpful",
       "notHelpful": "Not helpful"
     },
+    "categories": {
+      "loading": "Loading categories…",
+      "add": "Add Category",
+      "form": {
+        "createTitle": "Create New Category",
+        "editTitle": "Edit Category",
+        "nameEn": "Name (English)",
+        "nameNl": "Name (Dutch)",
+        "descriptionEn": "Description (English)",
+        "descriptionNl": "Description (Dutch)",
+        "color": "Color",
+        "sortOrder": "Sort Order",
+        "active": "Active",
+        "create": "Create",
+        "update": "Update",
+        "cancel": "Cancel",
+        "createSuccess": "Category created successfully",
+        "updateSuccess": "Category updated successfully",
+        "saveError": "Failed to save category"
+      },
+      "list": {
+        "sortOrder": "Sort order: {order}",
+        "statusActive": "Active",
+        "statusInactive": "Inactive",
+        "noDescription": "No description",
+        "edit": "Edit",
+        "deactivate": "Deactivate",
+        "deactivateConfirm": "Deactivate this category? It will be hidden but not deleted.",
+        "deactivateSuccess": "Category deactivated successfully",
+        "deactivateError": "Failed to deactivate category"
+      }
+    },
     "queueEmpty": {
       "title": "All clear"
     }
