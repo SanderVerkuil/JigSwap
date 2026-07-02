@@ -45,9 +45,12 @@ import type * as catalog_setCatalogCategoryActive from "../catalog/setCatalogCat
 import type * as catalog_submitPuzzleDefinition from "../catalog/submitPuzzleDefinition.js";
 import type * as catalog_updateCatalogCategory from "../catalog/updateCatalogCategory.js";
 import type * as catalog_updatePuzzleDefinition from "../catalog/updatePuzzleDefinition.js";
+import type * as contact_listContactMessages from "../contact/listContactMessages.js";
+import type * as contact_markContactMessageHandled from "../contact/markContactMessageHandled.js";
 import type * as contact_submitContactMessage from "../contact/submitContactMessage.js";
 import type * as custody_getCopyCustodyTimeline from "../custody/getCopyCustodyTimeline.js";
 import type * as custody_subscriber from "../custody/subscriber.js";
+import type * as docs_listDocFeedback from "../docs/listDocFeedback.js";
 import type * as docs_submitDocFeedback from "../docs/submitDocFeedback.js";
 import type * as events_dispatch from "../events/dispatch.js";
 import type * as events_makeEventPublisher from "../events/makeEventPublisher.js";
@@ -81,6 +84,7 @@ import type * as identity_getUserByClerkId from "../identity/getUserByClerkId.js
 import type * as identity_getUserById from "../identity/getUserById.js";
 import type * as identity_getUserStats from "../identity/getUserStats.js";
 import type * as identity_isAdmin from "../identity/isAdmin.js";
+import type * as identity_isCurrentUserAdmin from "../identity/isCurrentUserAdmin.js";
 import type * as identity_requireMember from "../identity/requireMember.js";
 import type * as identity_searchUsers from "../identity/searchUsers.js";
 import type * as identity_toMemberView from "../identity/toMemberView.js";
@@ -298,9 +302,12 @@ declare const fullApi: ApiFromModules<{
   "catalog/submitPuzzleDefinition": typeof catalog_submitPuzzleDefinition;
   "catalog/updateCatalogCategory": typeof catalog_updateCatalogCategory;
   "catalog/updatePuzzleDefinition": typeof catalog_updatePuzzleDefinition;
+  "contact/listContactMessages": typeof contact_listContactMessages;
+  "contact/markContactMessageHandled": typeof contact_markContactMessageHandled;
   "contact/submitContactMessage": typeof contact_submitContactMessage;
   "custody/getCopyCustodyTimeline": typeof custody_getCopyCustodyTimeline;
   "custody/subscriber": typeof custody_subscriber;
+  "docs/listDocFeedback": typeof docs_listDocFeedback;
   "docs/submitDocFeedback": typeof docs_submitDocFeedback;
   "events/dispatch": typeof events_dispatch;
   "events/makeEventPublisher": typeof events_makeEventPublisher;
@@ -334,6 +341,7 @@ declare const fullApi: ApiFromModules<{
   "identity/getUserById": typeof identity_getUserById;
   "identity/getUserStats": typeof identity_getUserStats;
   "identity/isAdmin": typeof identity_isAdmin;
+  "identity/isCurrentUserAdmin": typeof identity_isCurrentUserAdmin;
   "identity/requireMember": typeof identity_requireMember;
   "identity/searchUsers": typeof identity_searchUsers;
   "identity/toMemberView": typeof identity_toMemberView;
