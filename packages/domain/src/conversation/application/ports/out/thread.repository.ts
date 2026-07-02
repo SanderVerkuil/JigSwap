@@ -7,7 +7,9 @@ export interface ThreadRepository {
   findByExchange(exchangeId: ExchangeId): Promise<Thread | null>;
   findById(threadId: ThreadId): Promise<Thread | null>;
   // The dm-subject thread between the pair, order-insensitive: (a, b) and (b, a) find the same
-  // thread. Backs the one-DM-per-pair rule the OpenDmThread use case enforces.
+  // thread. Backs the one-DM-per-pair rule the OpenDmThread use case enforces. Precondition:
+  // callers must pass two DISTINCT members — a self-pair query is undefined (the use case
+  // rejects self-DMs before ever looking up).
   findDmByParticipants(a: MemberId, b: MemberId): Promise<Thread | null>;
   save(thread: Thread): Promise<void>;
 }

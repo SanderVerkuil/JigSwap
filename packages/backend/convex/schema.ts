@@ -497,6 +497,47 @@ export default defineSchema({
     .index("by_receiver", ["receiverId"])
     .index("by_created_at", ["createdAt"]),
 
+  // Conversation context. One row per Thread aggregate; messages are companion rows (long chats
+  // must not brush the document size limit). participantsKey = the two user _ids sorted and
+  // joined with "|" — every thread is a pair in v1, and this backs both the one-DM-per-pair rule
+  // and the ConnectionPolicy's "existing thread between the pair" check.
+  threads: defineTable({
+    aggregateId: v.string(),
+    subjectKind: v.union(v.literal("exchange"), v.literal("dm")),
+    exchangeId: v.optional(v.id("exchanges")), // set iff subjectKind === "exchange"
+    participants: v.array(v.id("users")),
+    participantsKey: v.string(),
+    readReceipts: v.array(
+      v.object({ memberId: v.id("users"), lastReadAt: v.number() }),
+    ),
+    lastMessageAt: v.optional(v.number()), // denormalized for inbox ordering
+    createdAt: v.number(),
+  })
+    .index("by_aggregate_id", ["aggregateId"])
+    .index("by_exchange", ["exchangeId"])
+    .index("by_subject_participants", ["subjectKind", "participantsKey"])
+    .index("by_participants_key", ["participantsKey"]),
+
+  threadMessages: defineTable({
+    threadAggregateId: v.string(),
+    messageId: v.string(),
+    authorId: v.optional(v.id("users")), // absent for system messages
+    kind: v.union(v.literal("text"), v.literal("image"), v.literal("system")),
+    body: v.string(),
+    sentAt: v.number(),
+  })
+    .index("by_thread_sent", ["threadAggregateId", "sentAt"])
+    .index("by_message_id", ["messageId"]),
+
+  // Member-lookup projection of threads.participants, kept in sync by the repository on every
+  // save (same pattern as circleMembers — Convex cannot index embedded arrays).
+  threadParticipants: defineTable({
+    threadAggregateId: v.string(),
+    memberId: v.id("users"),
+  })
+    .index("by_member", ["memberId"])
+    .index("by_thread", ["threadAggregateId"]),
+
   reviews: defineTable({
     // PartnerReview aggregate identity. Optional so pre-existing rows still validate; the new
     // Reputation functions set+use it (backfill stamps legacy rows). Legacy code ignores it.

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toMemberId } from "../../../shared-kernel";
+import { toExchangeId, toMemberId, toThreadId } from "../../../shared-kernel";
+import { Thread } from "../../domain";
 import { ConnectionPolicy } from "../ports/out/connection-policy";
 import {
   InMemoryThreadRepository,
@@ -60,6 +61,22 @@ describe("makeOpenDmThread", () => {
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("NotConnected");
     expect(threads.size()).toBe(0);
+  });
+
+  it("opens a new DM even when an exchange thread exists for the pair", async () => {
+    const exchangeThread = Thread.openForExchange(
+      toThreadId("exchange-thread"),
+      toExchangeId("ex-1"),
+      [alice, bob],
+    );
+    await threads.save(exchangeThread);
+    const open = make(allow);
+
+    const result = await open({ initiatorId: alice, recipientId: bob });
+
+    expect(result.isOk).toBe(true);
+    if (result.isOk) expect(result.value).not.toBe(exchangeThread.id);
+    expect(threads.size()).toBe(2);
   });
 
   it("rejects a self-DM without consulting the policy", async () => {
