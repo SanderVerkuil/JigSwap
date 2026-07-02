@@ -40,8 +40,8 @@ export interface InboxThreadView {
   /** The newest message, null while the thread is empty. */
   readonly lastMessage: ThreadMessageView | null;
   /**
-   * Messages newer than the caller's read receipt, authored by someone else. Counted over at
-   * most the 50 newest messages, so 50 reads as "50+".
+   * Messages newer than the caller's read receipt, authored by someone else. Counting stops at
+   * 50 qualifying messages, so 50 genuinely means "50 or more" and reads as "50+".
    */
   readonly unreadCount: number;
   /** Inbox ordering instant: the newest message's sentAt, or the thread's creation. */

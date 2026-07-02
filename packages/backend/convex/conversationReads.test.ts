@@ -222,6 +222,73 @@ describe("getMyInbox", () => {
   });
 });
 
+describe("unread cap", () => {
+  test("more than 50 qualifying unread messages count as exactly 50 (reads as 50+)", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+    await followMutually(t, alice, bob);
+    const threadId = await asAlice(t).mutation(
+      api.conversation.openDmThread.openDmThread,
+      { recipientId: bob },
+    );
+    // 55 qualifying (other-authored, post-receipt) messages; same-ms sentAt is fine — every one
+    // is newer than bob's absent receipt, so no ticks are needed.
+    for (let i = 1; i <= 55; i++) {
+      await asAlice(t).mutation(api.conversation.postMessage.postMessage, {
+        threadId,
+        kind: "text",
+        body: `message ${i}`,
+      });
+    }
+
+    const inbox = await asBob(t).query(
+      api.conversation.getMyInbox.getMyInbox,
+      {},
+    );
+    expect(inbox[0].unreadCount).toBe(50);
+    expect(
+      await asBob(t).query(api.conversation.getUnreadTotal.getUnreadTotal, {}),
+    ).toBe(50);
+  });
+});
+
+describe("corrupt exchange subject", () => {
+  test("a thread whose exchange row is gone is absent from the inbox AND excluded from the unread total", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+    const copy = await seedSaleCopy(t, bob);
+    const exchangeId = await asAlice(t).mutation(api.exchange.propose.propose, {
+      recipientId: bob,
+      type: "sale",
+      requestedPuzzleId: copy,
+      salePrice: 1000,
+    });
+    await flushScheduled(t);
+
+    // Sanity: the system message is unread for bob while the exchange row exists.
+    expect(
+      await asBob(t).query(api.conversation.getUnreadTotal.getUnreadTotal, {}),
+    ).toBe(1);
+
+    // Corrupt the subject: delete the exchange row out from under the thread.
+    await t.run(async (ctx) => {
+      const exchange = await ctx.db
+        .query("exchanges")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", exchangeId))
+        .unique();
+      if (!exchange) throw new Error("expected the seeded exchange row");
+      await ctx.db.delete(exchange._id);
+    });
+
+    expect(
+      await asBob(t).query(api.conversation.getMyInbox.getMyInbox, {}),
+    ).toEqual([]);
+    expect(
+      await asBob(t).query(api.conversation.getUnreadTotal.getUnreadTotal, {}),
+    ).toBe(0);
+  });
+});
+
 describe("non-participant access", () => {
   test("a non-participant sees an empty inbox and is rejected from thread reads", async () => {
     const t = convexTest(schema, modules);

@@ -85,6 +85,8 @@ export const getMyInbox = query({
       .withIndex("by_member", (q) => q.eq("memberId", me))
       .collect();
 
+    // v1 scaling assumption: per-thread point reads + a capped unread scan per inbox render;
+    // when this gets hot, denormalize unreadCount onto threadParticipants instead.
     const views: InboxThreadView[] = [];
     for (const membership of memberships) {
       const thread = await threadRowByAggregateId(
@@ -93,7 +95,13 @@ export const getMyInbox = query({
       );
       if (!thread) continue;
       const view = await toInboxThreadView(ctx, thread, me);
-      if (view) views.push(view);
+      if (view) {
+        views.push(view);
+      } else {
+        console.warn(
+          `getMyInbox: dropping thread ${thread.aggregateId} — exchange subject no longer resolves`,
+        );
+      }
     }
     return views.sort((a, b) => b.updatedAt - a.updatedAt);
   },

@@ -27,15 +27,16 @@ export const toThreadMessageView = (
   sentAt: row.sentAt,
 });
 
-// Unread counting is capped at the 50 newest qualifying messages so an inbox render never scans
-// an unbounded history: a badge past 50 carries no more signal than "50+", and the UI can render
-// it that way. The cap bounds BOTH getMyInbox (per thread) and getUnreadTotal (per summand).
+// Unread counting stops once 50 QUALIFYING (post-receipt, not-own-authored) messages are found,
+// so a count of 50 genuinely means "50 or more" and the UI can render it as "50+" — a badge past
+// 50 carries no more signal. The cap bounds BOTH getMyInbox (per thread) and getUnreadTotal (per
+// summand).
 export const UNREAD_SCAN_CAP = 50;
 
 /**
  * The caller's unread count for one thread: messages with `sentAt` strictly after their read
- * receipt (no receipt = everything) that they did not author, counted over at most the
- * {@link UNREAD_SCAN_CAP} newest such messages.
+ * receipt (no receipt = everything) that they did not author, counted newest-first until
+ * {@link UNREAD_SCAN_CAP} qualifying messages are found — a return of 50 means "50 or more".
  */
 export const unreadCountOf = async (
   ctx: QueryCtx,
@@ -45,12 +46,31 @@ export const unreadCountOf = async (
   const lastReadAt =
     thread.readReceipts.find((receipt) => receipt.memberId === me)
       ?.lastReadAt ?? 0;
-  const newest = await ctx.db
+  const newestFirst = ctx.db
     .query("threadMessages")
     .withIndex("by_thread_sent", (q) =>
       q.eq("threadAggregateId", thread.aggregateId).gt("sentAt", lastReadAt),
     )
-    .order("desc")
-    .take(UNREAD_SCAN_CAP);
-  return newest.filter((message) => message.authorId !== me).length;
+    .order("desc");
+  let count = 0;
+  for await (const message of newestFirst) {
+    if (message.authorId === me) continue;
+    count += 1;
+    if (count >= UNREAD_SCAN_CAP) break;
+  }
+  return count;
 };
+
+/**
+ * Whether a thread's subject would render in the inbox: DMs always do; an exchange thread's
+ * subject resolves only while its exchange row exists. getMyInbox drops threads failing this,
+ * so getUnreadTotal must skip the same threads — otherwise the shell badge would count unread
+ * the inbox never shows.
+ */
+export const subjectRenders = async (
+  ctx: QueryCtx,
+  thread: Doc<"threads">,
+): Promise<boolean> =>
+  thread.subjectKind !== "exchange" ||
+  (thread.exchangeId !== undefined &&
+    (await ctx.db.get(thread.exchangeId)) !== null);
