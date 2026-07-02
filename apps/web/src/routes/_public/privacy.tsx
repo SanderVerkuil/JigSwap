@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { pageTitle } from "@/lib/page-title";
 
+import { Link } from "@/compat/link";
 import { LegalDoc, type LegalSection } from "@/components/marketing/legal-doc";
 import { PageHero } from "@/components/marketing/page-hero";
 import { useTranslations } from "use-intl";
@@ -14,8 +15,7 @@ export const Route = createFileRoute("/_public/privacy")({
 });
 
 // Privacy policy in the marketing LegalDoc layout (sticky TOC + reading
-// column). Content keeps the existing, substantive `privacy` catalog —
-// the design bundle shipped placeholder legal text.
+// column). The `privacy` catalog holds real copy tailored to what JigSwap does.
 function PrivacyPolicyPage() {
   const t = useTranslations("privacy");
   const tm = useTranslations("marketing.legal");
@@ -52,6 +52,9 @@ function PrivacyPolicyPage() {
       blocks: [
         { type: "p", text: t("howWeUseInformation.description") },
         { type: "list", items: list("howWeUseInformation.purposes") },
+        { type: "sub", text: t("howWeUseInformation.lawfulBasis.title") },
+        { type: "p", text: t("howWeUseInformation.lawfulBasis.description") },
+        { type: "list", items: list("howWeUseInformation.lawfulBasis.items") },
       ],
     },
     {
@@ -61,8 +64,18 @@ function PrivacyPolicyPage() {
         { type: "p", text: t("dataStorage.description") },
         { type: "sub", text: t("dataStorage.convex.title") },
         { type: "p", text: t("dataStorage.convex.description") },
+        { type: "sub", text: t("dataStorage.clerk.title") },
+        { type: "p", text: t("dataStorage.clerk.description") },
         { type: "sub", text: t("dataStorage.vercel.title") },
         { type: "p", text: t("dataStorage.vercel.description") },
+      ],
+    },
+    {
+      id: "p-photos",
+      heading: t("photos.title"),
+      blocks: [
+        { type: "p", text: t("photos.description") },
+        { type: "list", items: list("photos.steps") },
       ],
     },
     {
@@ -146,6 +159,14 @@ function PrivacyPolicyPage() {
         >
           {t("contact.emailAddress")}
         </a>
+        . {t("contact.formNote")}{" "}
+        <Link
+          href="/contact"
+          className="text-mk-violet-600 font-medium hover:underline"
+        >
+          {t("contact.linkLabel")}
+        </Link>
+        .
       </LegalDoc>
     </main>
   );

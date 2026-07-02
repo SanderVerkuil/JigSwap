@@ -15,7 +15,9 @@ export function PostHogPageView(): null {
   const { user } = useUser();
 
   useEffect(() => {
-    if (pathname && posthog) {
+    // Consent gate: posthog only has __loaded once initPostHog ran (i.e. the
+    // visitor accepted the cookie notice). Without it, capture is a no-op.
+    if (pathname && posthog && posthog.__loaded) {
       let url = window.origin + pathname;
       const query = searchParams.toString();
       if (query) {
@@ -29,7 +31,7 @@ export function PostHogPageView(): null {
   }, [pathname, searchParams, posthog]);
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated && user && posthog) {
+    if (!isLoading && isAuthenticated && user && posthog && posthog.__loaded) {
       posthog.identify(user.id, {
         email: user.primaryEmailAddress?.emailAddress,
         username: user.username,

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { pageTitle } from "@/lib/page-title";
 
+import { Link } from "@/compat/link";
 import { LegalDoc, type LegalSection } from "@/components/marketing/legal-doc";
 import { PageHero } from "@/components/marketing/page-hero";
 import { useTranslations } from "use-intl";
@@ -14,8 +15,7 @@ export const Route = createFileRoute("/_public/terms")({
 });
 
 // Terms of service in the marketing LegalDoc layout (sticky TOC + reading
-// column). Content keeps the existing, substantive `terms` catalog —
-// the design bundle shipped placeholder legal text.
+// column). The `terms` catalog holds real copy tailored to what JigSwap does.
 function TermsOfServicePage() {
   const t = useTranslations("terms");
   const tm = useTranslations("marketing.legal");
@@ -67,7 +67,13 @@ function TermsOfServicePage() {
     {
       id: "t-ip",
       heading: t("intellectualProperty.title"),
-      blocks: [{ type: "p", text: t("intellectualProperty.description") }],
+      blocks: [
+        { type: "p", text: t("intellectualProperty.description") },
+        { type: "sub", text: t("intellectualProperty.yourContent.title") },
+        { type: "p", text: t("intellectualProperty.yourContent.description") },
+        { type: "sub", text: t("intellectualProperty.platform.title") },
+        { type: "p", text: t("intellectualProperty.platform.description") },
+      ],
     },
     {
       id: "t-privacy",
@@ -115,6 +121,14 @@ function TermsOfServicePage() {
         >
           {t("contact.emailAddress")}
         </a>
+        . {t("contact.formNote")}{" "}
+        <Link
+          href="/contact"
+          className="text-mk-violet-600 font-medium hover:underline"
+        >
+          {t("contact.linkLabel")}
+        </Link>
+        .
       </LegalDoc>
     </main>
   );

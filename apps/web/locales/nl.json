@@ -897,108 +897,133 @@
   "privacy": {
     "title": "Privacybeleid",
     "lastUpdated": "Laatst bijgewerkt",
-    "introduction": "Dit privacybeleid beschrijft hoe JigSwap ('we', 'ons' of 'onze') je persoonsgegevens verzamelt, gebruikt en beschermt wanneer je ons platform voor het ruilen van legpuzzels gebruikt.",
-    "effectiveDate": "20 juli 2025",
+    "effectiveDate": "2 juli 2026",
+    "introduction": "Dit privacybeleid legt uit welke persoonsgegevens JigSwap verzamelt, waarom we dat doen en welke rechten je hebt. JigSwap wordt beheerd door Sander Verkuil, die de verwerkingsverantwoordelijke is voor de verwerking die hier wordt beschreven. We willen zo min mogelijk verzamelen en transparant zijn over de rest.",
     "informationWeCollect": {
       "title": "Welke gegevens we verzamelen",
-      "description": "We verzamelen gegevens die je rechtstreeks aan ons verstrekt en gegevens die we automatisch verzamelen wanneer je onze dienst gebruikt.",
+      "description": "We verzamelen gegevens die je ons zelf geeft, plus een beperkte hoeveelheid gegevens die automatisch wordt verzameld terwijl je JigSwap gebruikt.",
       "personalInformation": {
-        "title": "Persoonsgegevens",
+        "title": "Gegevens die je zelf geeft",
         "items": [
-          "Accountgegevens (naam, e-mailadres, gebruikersnaam)",
-          "Profielgegevens (bio, woonplaats, interesses)",
-          "Gegevens en foto's van je puzzelcollectie",
-          "Ruilgeschiedenis en communicatie",
-          "Beoordelingen en waarderingen die je geeft"
+          "Accountgegevens via Clerk, onze inlogprovider: naam, e-mailadres, gebruikersnaam en avatar",
+          "Je profiel: weergavenaam, bio en andere gegevens die je wilt delen",
+          "Je puzzelbibliotheek: de exemplaren die je bezit, hun staat, foto's die je uploadt, voltooiingen en collecties",
+          "Uitwisselingsactiviteit: ruil-, verkoop- en leenverzoeken, de berichten die je stuurt om ze te regelen, en beoordelingen",
+          "Community-activiteit: de kringen waar je lid van bent, leden die je volgt en reacties die je plaatst",
+          "Berichten via het contactformulier: je naam, e-mailadres en bericht"
         ]
       },
       "automaticallyCollected": {
-        "title": "Automatisch verzamelde gegevens",
+        "title": "Automatisch verzameld",
         "items": [
-          "Apparaatgegevens (IP-adres, browsertype, besturingssysteem)",
-          "Gebruiksgegevens (bezochte pagina's, gebruikte functies, bestede tijd)",
-          "Analytische gegevens (interactiepatronen, voorkeuren)",
-          "Technische logbestanden en foutrapporten"
+          "Productanalyse-events, zoals bezochte pagina's en gebruikte functies (via PostHog, alleen nadat je de cookiemelding hebt geaccepteerd)",
+          "Foutrapportages en operationele logs om de dienst draaiend te houden",
+          "Je taalvoorkeur en je keuze bij de cookiemelding, opgeslagen in cookies",
+          "Een pushnotificatie-abonnement — alleen als je pushmeldingen aanzet"
         ]
       }
     },
     "howWeUseInformation": {
       "title": "Hoe we je gegevens gebruiken",
-      "description": "We gebruiken de verzamelde gegevens om onze diensten te leveren, te verbeteren en te beveiligen.",
+      "description": "We gebruiken je gegevens om JigSwap te laten draaien — meer niet:",
       "purposes": [
-        "Ons puzzelruilplatform leveren en onderhouden",
-        "Ruilen verwerken en uitwisselingen tussen gebruikers mogelijk maken",
-        "Je ervaring personaliseren en relevante inhoud tonen",
-        "Belangrijke service-updates en meldingen versturen",
-        "Gebruikspatronen analyseren om onze dienst te verbeteren",
-        "Fraude voorkomen en de veiligheid van het platform waarborgen",
-        "Je vragen en supportverzoeken beantwoorden"
-      ]
+        "Je bibliotheek, voltooiingen, collecties en inzichten aanbieden",
+        "Uitwisselingen tussen leden mogelijk maken, inclusief berichten en het bijhouden van uitleningen",
+        "Je profiel en puzzels tonen aan de leden met wie je ze hebt gedeeld",
+        "Je meldingen sturen over activiteit die jou aangaat",
+        "De dienst veilig houden en misbruik voorkomen, inclusief automatische controle van geüploade foto's",
+        "Begrijpen hoe JigSwap wordt gebruikt zodat we het kunnen verbeteren",
+        "Reageren als je contact met ons opneemt"
+      ],
+      "lawfulBasis": {
+        "title": "Onze rechtsgrond, in gewone taal",
+        "description": "Onder de AVG hebben we voor elk gebruik van je gegevens een wettelijke grondslag nodig. Dit zijn de onze:",
+        "items": [
+          "Uitvoering van onze overeenkomst met jou: alles wat nodig is voor de dienst waarvoor je je hebt aangemeld — je account, bibliotheek, uitwisselingen en berichten",
+          "Gerechtvaardigd belang: JigSwap veilig houden, misbruik voorkomen, geüploade foto's controleren, operationele logging en begrijpen hoe de dienst wordt gebruikt zodat we die kunnen verbeteren",
+          "Toestemming: waar we je eerst om toestemming vragen, zoals bij pushmeldingen in je browser",
+          "Wettelijke verplichting: de zeldzame gevallen waarin we gegevens moeten bewaren of delen omdat de wet dat vereist"
+        ]
+      }
     },
     "dataStorage": {
-      "title": "Gegevensopslag en hosting",
-      "description": "Je gegevens worden veilig opgeslagen en beheerd door vertrouwde externe diensten:",
+      "title": "Waar je gegevens staan",
+      "description": "JigSwap heeft geen eigen servers. Je gegevens worden in de Europese Unie opgeslagen bij een klein aantal dienstverleners:",
       "convex": {
         "title": "Convex",
-        "description": "Onze primaire database en backenddiensten worden gehost door Convex. Zij verzorgen gegevensopslag, gebruikersauthenticatie en realtime-functies."
+        "description": "Onze database en bestandsopslag, op de EU-hosting van Convex. Je bibliotheek, uitwisselingen, berichten en geüploade foto's worden opgeslagen in de Europese Unie."
+      },
+      "clerk": {
+        "title": "Clerk",
+        "description": "Onze authenticatieprovider, met EU-dataresidentie. Clerk bewaart je inloggegevens en basisaccountgegevens (naam, e-mailadres, avatar) en verzorgt het inloggen. Als je je account verwijdert, krijgen wij daar bericht van via Clerk en verwijderen we je accountrecord."
       },
       "vercel": {
         "title": "Vercel",
-        "description": "Onze webapplicatie wordt gehost op de infrastructuur van Vercel, die snelle, betrouwbare en veilige hosting biedt."
+        "description": "Onze hostingprovider. De JigSwap-webapplicatie wordt geleverd via het wereldwijde edge-netwerk van Vercel. Vercel bezorgt de site bij je browser; je persoonsgegevens zelf staan in de EU-gehoste diensten hierboven."
       }
     },
+    "photos": {
+      "title": "Foto's die je uploadt",
+      "description": "Foto's die je aan je bibliotheek toevoegt doorlopen een automatisch proces voordat andere leden ze kunnen zien:",
+      "steps": [
+        "De afbeelding wordt opnieuw gecodeerd, waardoor verborgen metadata zoals EXIF-gegevens — inclusief een eventuele locatie — wordt verwijderd",
+        "Een automatische veiligheidscontrole beoordeelt de afbeelding; hiervoor gebruiken we op dit moment een model dat wordt gehost door Hugging Face, dat de afbeelding uitsluitend voor dit doel verwerkt",
+        "Totdat dit klaar is, is de foto alleen voor jou zichtbaar"
+      ]
+    },
     "analytics": {
-      "title": "Analyse en tracking",
-      "description": "We gebruiken analyses om te begrijpen hoe onze dienst wordt gebruikt en om de gebruikerservaring te verbeteren.",
+      "title": "Analyse en foutrapportage",
+      "description": "We gebruiken analyse om te begrijpen hoe JigSwap wordt gebruikt en om fouten op te sporen voordat ze het plezier bederven.",
       "posthog": {
-        "title": "PostHog Analytics",
-        "description": "We gebruiken PostHog om anonieme gebruiksstatistieken te verzamelen. Dit helpt ons gebruikersgedrag te begrijpen en ons platform te verbeteren. PostHog-gegevens worden uitsluitend gebruikt voor verbetering van de dienst en worden niet verkocht aan derden."
+        "title": "PostHog",
+        "description": "We gebruiken PostHog, gehost in de Europese Unie, voor productanalyse en foutrapportage. Analyseverzoeken lopen via ons eigen domein. PostHog start pas nadat je de cookiemelding hebt geaccepteerd — weiger je, dan wordt het nooit geladen. Deze gegevens gebruiken we alleen om JigSwap te verbeteren."
       },
-      "noAdvertising": "We gebruiken je gegevens niet voor advertentiedoeleinden. Je gegevens worden nooit verkocht aan adverteerders of derden voor marketingdoeleinden."
+      "noAdvertising": "We tonen geen advertenties, we gebruiken je gegevens niet voor reclame en we verkopen je gegevens nooit."
     },
     "dataSharing": {
-      "title": "Gegevens delen en derden",
-      "description": "We beschermen je privacy en verkopen je persoonsgegevens niet.",
-      "noSale": "We verkopen, verhuren of verhandelen je persoonsgegevens niet aan derden voor advertentie- of marketingdoeleinden.",
-      "limitedSharing": "We delen je gegevens alleen in deze beperkte gevallen:",
+      "title": "Gegevens delen",
+      "description": "We delen persoonsgegevens alleen met de dienstverleners die JigSwap laten draaien, en alleen wat zij nodig hebben voor hun taak.",
+      "noSale": "We verkopen, verhuren of verhandelen je persoonsgegevens niet. Nooit.",
+      "limitedSharing": "Gegevens worden alleen in deze gevallen gedeeld:",
       "circumstances": [
-        "Met jouw uitdrukkelijke toestemming",
-        "Om aan wettelijke verplichtingen te voldoen",
-        "Om onze rechten te beschermen en fraude te voorkomen",
-        "Met dienstverleners die helpen bij het beheer van het platform (onder strikte geheimhoudingsafspraken)"
+        "Met de dienstverleners uit dit beleid, als verwerkers namens ons: Convex (database en bestanden), Clerk (inloggen), Vercel (hosting), PostHog (analyse en foutrapportage), Axiom (operationele logs, gehost in de EU) en Hugging Face (automatische fotocontrole)",
+        "Met andere leden, voor zover jij dat kiest — je profiel en de delen van je bibliotheek die je deelt zijn zichtbaar volgens jouw instellingen",
+        "Wanneer de wet dat vereist, of om de dienst en haar leden te beschermen tegen fraude of misbruik",
+        "Voor al het andere: alleen met jouw uitdrukkelijke toestemming"
       ]
     },
     "dataSecurity": {
-      "title": "Gegevensbeveiliging",
-      "description": "We nemen passende beveiligingsmaatregelen om je persoonsgegevens te beschermen:",
+      "title": "Beveiliging",
+      "description": "We nemen redelijke maatregelen om je gegevens te beschermen:",
       "measures": [
-        "Versleuteling van gegevens tijdens verzending en opslag",
-        "Regelmatige beveiligingsaudits en updates",
-        "Toegangscontrole en authenticatie",
-        "Veilige hostinginfrastructuur"
+        "Al het verkeer tussen je browser en JigSwap is versleuteld (TLS)",
+        "Elke lees- en schrijfactie wordt op de server gecontroleerd: leden zien alleen wat de zichtbaarheidsregels toestaan",
+        "Geüploade foto's worden ontdaan van verborgen metadata en gecontroleerd voordat anderen ze kunnen zien",
+        "Toegang tot productiegegevens is beperkt tot wat nodig is om de dienst te laten draaien"
       ]
     },
     "yourRights": {
-      "title": "Jouw rechten en keuzes",
-      "description": "Jij houdt de controle over je persoonsgegevens:",
+      "title": "Jouw rechten",
+      "description": "Onder de AVG heb je de volgende rechten, en voor de meeste heeft JigSwap ingebouwde hulpmiddelen:",
       "rights": [
-        "Je persoonsgegevens inzien en controleren",
-        "Je gegevens bijwerken of corrigeren",
-        "Je account en bijbehorende gegevens verwijderen",
-        "Je afmelden voor bepaalde gegevensverzameling",
-        "Je gegevens exporteren in een overdraagbaar formaat",
-        "Contact met ons opnemen bij privacyvragen"
+        "Inzage: bekijk de gegevens die we over je hebben — het meeste is direct zichtbaar in de app",
+        "Overdraagbaarheid: download je gegevens als bestand via de export op je Inzichten-pagina",
+        "Rectificatie: corrigeer je profiel en bibliotheek zelf op elk moment, of vraag ons iets recht te zetten",
+        "Verwijdering: verwijder je account, waarmee je accountrecord wordt verwijderd — en vraag ons om resterende content die eraan gekoppeld is te verwijderen",
+        "Bezwaar en beperking: maak bezwaar tegen verwerking op basis van ons gerechtvaardigd belang",
+        "Klacht: dien een klacht in bij je toezichthouder — in Nederland de Autoriteit Persoonsgegevens"
       ]
     },
     "cookies": {
-      "title": "Cookies en tracking",
-      "description": "We gebruiken cookies en vergelijkbare technieken om je ervaring te verbeteren:",
+      "title": "Cookies",
+      "description": "JigSwap gebruikt een klein aantal cookies en vergelijkbare technieken:",
       "types": [
-        "Essentiële cookies voor de werking van het platform",
-        "Analytische cookies om gebruikspatronen te begrijpen",
-        "Voorkeurscookies om je instellingen te onthouden"
+        "Inlogcookies van Clerk die je ingelogd houden (strikt noodzakelijk)",
+        "Een taalcookie die je voorkeur voor Engels of Nederlands onthoudt",
+        "Een cookie die onthoudt dat je de cookiemelding hebt gezien",
+        "Analyse-identifiers van PostHog, opgeslagen in cookies en local storage — alleen nadat je de cookiemelding hebt geaccepteerd"
       ],
-      "control": "Je kunt cookie-instellingen beheren via de voorkeuren van je browser."
+      "control": "Analyse is opt-in: die draait alleen nadat je de cookiemelding hebt geaccepteerd, en weiger je, dan wordt die nooit geladen. Je kunt cookies ook blokkeren of verwijderen via je browserinstellingen; JigSwap blijft werken, al moet je dan opnieuw inloggen en kunnen je voorkeuren worden gereset."
     },
     "cookieConsent": {
       "title": "We gebruiken cookies",
@@ -1009,114 +1034,125 @@
       "acceptanceText": "Door op \"Accepteren\" te klikken ga je akkoord met ons gebruik van cookies."
     },
     "children": {
-      "title": "Privacy van kinderen",
-      "description": "Onze dienst is niet bedoeld voor kinderen onder de 13 jaar. We verzamelen niet bewust persoonsgegevens van kinderen onder de 13."
+      "title": "Kinderen",
+      "description": "JigSwap is niet bedoeld voor kinderen onder de 16 en we verzamelen niet bewust persoonsgegevens van hen. Denk je dat een kind onder de 16 een account heeft, neem dan contact met ons op."
     },
     "international": {
-      "title": "Internationale gegevensoverdracht",
-      "description": "Je gegevens kunnen worden verwerkt in andere landen dan het jouwe. We zorgen voor passende waarborgen om je gegevens te beschermen."
+      "title": "Internationale doorgifte van gegevens",
+      "description": "Je persoonsgegevens worden opgeslagen in de Europese Unie: we gebruiken de EU-gehoste varianten van Convex, Clerk, PostHog en Axiom. Onze hostingprovider Vercel levert de website via een wereldwijd edge-netwerk, waardoor verzoeken onderweg servers buiten de EU kunnen passeren, maar de persoonsgegevens zelf blijven in de EU opgeslagen. Waar een dienstverlener beperkte gegevens buiten de EU/EER verwerkt, gebeurt de doorgifte onder AVG-waarborgen zoals de EU-standaardcontractbepalingen."
     },
     "changes": {
       "title": "Wijzigingen in dit beleid",
-      "description": "We kunnen dit privacybeleid van tijd tot tijd bijwerken. Bij belangrijke wijzigingen informeren we je door het nieuwe beleid op onze website te plaatsen en de datum bij 'Laatst bijgewerkt' aan te passen."
+      "description": "We kunnen dit beleid bijwerken naarmate JigSwap zich ontwikkelt. Belangrijke wijzigingen kondigen we aan door het nieuwe beleid op deze pagina te plaatsen en de datum bovenaan bij te werken."
     },
     "contact": {
       "title": "Contact",
-      "description": "Heb je vragen over dit privacybeleid of over hoe we met gegevens omgaan? Neem dan contact met ons op:",
-      "email": "E-mail",
+      "description": "Vragen over privacy of je gegevens? Mail ons via",
       "emailAddress": "privacy@jigswap.site",
-      "questions": "We hechten aan transparantie en beantwoorden je privacyvragen zo snel mogelijk."
+      "formNote": "Je kunt ook terecht bij het",
+      "linkLabel": "contactformulier"
     }
   },
   "terms": {
-    "title": "Algemene voorwaarden",
+    "title": "Algemene Voorwaarden",
     "lastUpdated": "Laatst bijgewerkt",
-    "introduction": "Deze algemene voorwaarden ('Voorwaarden') zijn van toepassing op je gebruik van JigSwap, ons platform voor het ruilen van legpuzzels. Door onze dienst te gebruiken ga je akkoord met deze voorwaarden.",
-    "effectiveDate": "20 juli 2025",
+    "effectiveDate": "2 juli 2026",
+    "introduction": "Deze algemene voorwaarden ('Voorwaarden') zijn van toepassing op je gebruik van JigSwap, een communityplatform voor legpuzzelliefhebbers, beheerd door Sander Verkuil. JigSwap is een hobbyproject, geen commerciële marktplaats. Door een account aan te maken of JigSwap te gebruiken ga je akkoord met deze Voorwaarden.",
     "acceptance": {
-      "title": "Akkoord met de voorwaarden",
-      "description": "Door JigSwap te bezoeken of te gebruiken ga je akkoord met deze Voorwaarden. Ben je het met een deel van deze voorwaarden oneens, dan mag je onze dienst niet gebruiken."
+      "title": "Akkoord met de Voorwaarden",
+      "description": "Door JigSwap te bezoeken of te gebruiken ga je akkoord met deze Voorwaarden. Ben je het met een deel ervan niet eens, gebruik de dienst dan niet."
     },
     "serviceDescription": {
-      "title": "Beschrijving van de dienst",
-      "description": "JigSwap is een platform waarmee gebruikers legpuzzels kunnen ruilen, uitwisselen en beheren. Onze dienst omvat:",
+      "title": "Wat JigSwap is",
+      "description": "JigSwap helpt legpuzzelverzamelaars hun puzzels bij te houden en te ruilen met andere leden. De dienst omvat:",
       "features": [
-        "Beheer en registratie van je puzzelcollectie",
-        "Ruil- en uitwisselfunctionaliteit",
-        "Communityfuncties en beoordelingen",
-        "Statistieken en voortgangsregistratie"
+        "Een door de community onderhouden puzzelcatalogus waar leden puzzels aan kunnen toevoegen",
+        "Een persoonlijke bibliotheek om je exemplaren, hun staat en foto's ervan bij te houden",
+        "Het loggen van voltooiingen (wanneer je een puzzel af had en hoe lang je erover deed) en het ordenen van exemplaren in collecties",
+        "Uitwisselingen tussen leden — ruilen, verkopen en uitlenen — met berichten om ze te regelen",
+        "Kringen (besloten vriendengroepen) om een deel van je bibliotheek te delen, plus profielen en volgen",
+        "Persoonlijke inzichten en statistieken over je puzzelen, inclusief een download van je eigen gegevens"
       ]
     },
     "userAccounts": {
-      "title": "Gebruikersaccounts",
-      "description": "Voor bepaalde functies van onze dienst moet je een account aanmaken. Je bent verantwoordelijk voor:",
+      "title": "Je account",
+      "description": "Voor de meeste functies heb je een account nodig. Inloggen en accountbeheer verlopen via Clerk, onze authenticatieprovider. Jij bent verantwoordelijk voor:",
       "responsibilities": [
-        "Het beveiligen van je account",
-        "Het verstrekken van juiste en volledige gegevens",
-        "Het melden van ongeoorloofd gebruik",
-        "Minimaal 13 jaar oud zijn om de dienst te gebruiken"
+        "Het beveiligen van de toegang tot je account",
+        "Het geven van juiste informatie in je profiel en over je puzzels",
+        "Het melden van vermoedelijk ongeoorloofd gebruik van je account",
+        "Minimaal 16 jaar oud zijn om een account aan te maken"
       ]
     },
     "userConduct": {
-      "title": "Gedragsregels",
-      "description": "Je gaat ermee akkoord onze dienst verantwoord en volgens deze voorwaarden te gebruiken:",
-      "prohibitedTitle": "Niet toegestaan:",
-      "expectedTitle": "Verwacht gedrag:",
-      "prohibited": [
-        "Het overtreden van toepasselijke wet- en regelgeving",
-        "Inbreuk maken op intellectuele-eigendomsrechten",
-        "Het lastigvallen of benadelen van andere gebruikers",
-        "Proberen ongeoorloofd toegang te krijgen tot onze systemen",
-        "De dienst zonder toestemming commercieel gebruiken"
-      ],
+      "title": "Gedrag in de community",
+      "description": "JigSwap draait op vertrouwen tussen puzzelliefhebbers. Gebruik de dienst verantwoordelijk:",
+      "expectedTitle": "Wat we verwachten:",
       "expected": [
-        "Andere gebruikers met respect behandelen",
-        "Juiste informatie over puzzels verstrekken",
-        "Ruilafspraken en toezeggingen nakomen",
-        "Verdacht of ongepast gedrag melden"
+        "Behandel andere leden met respect",
+        "Beschrijf je puzzels eerlijk, inclusief de staat en ontbrekende stukjes",
+        "Kom uitwisselingen na die je bent aangegaan",
+        "Meld problemen of verdacht gedrag via het contactformulier"
+      ],
+      "prohibitedTitle": "Wat niet mag:",
+      "prohibited": [
+        "De wet overtreden of inbreuk maken op de rechten van anderen",
+        "Andere leden intimideren, bedreigen of misleiden",
+        "Onrechtmatige, inbreukmakende of seksueel expliciete content uploaden",
+        "Spam of ongevraagd commercieel gebruik van het platform",
+        "De dienst scrapen of proberen ongeoorloofd toegang te krijgen tot accounts of systemen",
+        "Je voordoen als een andere persoon of een ander lid"
       ]
     },
     "trading": {
-      "title": "Ruilen en uitwisselingen",
-      "description": "Ons platform maakt het ruilen van puzzels tussen gebruikers mogelijk. Door deel te nemen aan ruilen ga je ermee akkoord om:",
+      "title": "Ruilen, verkopen en uitlenen",
+      "description": "Via JigSwap kunnen leden onderling puzzels ruilen, verkopen en uitlenen. Elke uitwisseling is een afspraak tussen de twee betrokken leden — niet met JigSwap. Als je meedoet aan een uitwisseling, ga je ermee akkoord dat je:",
       "agreements": [
-        "De conditie en volledigheid van puzzels eerlijk te omschrijven",
-        "Afgesproken ruilvoorwaarden na te komen",
-        "Vlot en eerlijk te communiceren",
-        "Geschillen waar mogelijk onderling op te lossen"
+        "De staat en compleetheid van je puzzels eerlijk beschrijft",
+        "De gemaakte afspraken nakomt, inclusief het terugbezorgen van geleende puzzels",
+        "Betaling en verzending onderling regelt — JigSwap verwerkt geen betalingen",
+        "Vlot communiceert en meningsverschillen respectvol probeert op te lossen"
       ],
-      "disclaimer": "JigSwap faciliteert ruilen, maar is niet verantwoordelijk voor de kwaliteit, conditie of volledigheid van geruilde puzzels. Ruilen gebeurt op eigen risico."
+      "disclaimer": "JigSwap brengt leden alleen met elkaar in contact en houdt een administratie van de uitwisseling bij. We zijn geen partij bij een uitwisseling en zijn niet verantwoordelijk voor betaling, verzending of de kwaliteit, staat of compleetheid van geruilde puzzels. Uitwisselen doe je op eigen risico."
     },
     "intellectualProperty": {
-      "title": "Intellectueel eigendom",
-      "description": "Onze dienst en de oorspronkelijke inhoud, functies en functionaliteit zijn eigendom van JigSwap en worden beschermd door internationale auteursrechten, merkenrechten en andere intellectuele-eigendomswetten."
+      "title": "Content en intellectueel eigendom",
+      "description": "Verschillende dingen op JigSwap zijn van verschillende mensen:",
+      "yourContent": {
+        "title": "Jouw content",
+        "description": "Foto's, beoordelingen, reacties en andere content die je plaatst blijven van jou. Door iets te plaatsen geef je ons een niet-exclusieve licentie om die content op te slaan en te tonen zodat de dienst kan werken — bijvoorbeeld om je puzzelfoto's te laten zien aan de leden met wie je ze hebt gedeeld. Puzzels die je aan de gedeelde catalogus toevoegt, worden onderdeel van de communitycatalogus die alle leden kunnen gebruiken. Geüploade foto's doorlopen een automatische veiligheidscontrole voordat andere leden ze kunnen zien (zie het privacybeleid voor details)."
+      },
+      "platform": {
+        "title": "Het platform en puzzelillustraties",
+        "description": "De JigSwap-software is open source onder de MIT-licentie. Puzzelafbeeldingen en illustraties in de catalogus zijn van de betreffende uitgevers en rechthebbenden en worden gebruikt om puzzels te identificeren. Heb je rechten op content die op JigSwap wordt getoond en wil je dat die wordt aangepast of verwijderd, neem dan contact met ons op."
+      }
     },
     "privacy": {
       "title": "Privacy",
-      "description": "Je privacy is belangrijk voor ons. Lees ook ons privacybeleid, dat eveneens van toepassing is op je gebruik van de dienst."
+      "description": "Hoe we met je persoonsgegevens omgaan staat in ons privacybeleid, dat naast deze Voorwaarden geldt."
     },
     "termination": {
-      "title": "Beëindiging van je account",
-      "description": "We kunnen je account per direct en zonder voorafgaande kennisgeving beëindigen of schorsen, om welke reden dan ook, waaronder schending van deze Voorwaarden."
+      "title": "Je account beëindigen",
+      "description": "Je kunt op elk moment stoppen met JigSwap en je account verwijderen. Wij kunnen accounts schorsen of verwijderen die deze Voorwaarden schenden — bijvoorbeeld bij oplichting, intimidatie of onrechtmatige content. Waar redelijkerwijs mogelijk vertellen we je waarom."
     },
     "disclaimer": {
-      "title": "Uitsluiting van garanties",
-      "description": "De dienst wordt geleverd 'zoals die is', zonder enige vorm van garantie. We garanderen niet dat de dienst ononderbroken of foutloos werkt."
+      "title": "Disclaimer",
+      "description": "JigSwap is een hobbyproject dat gratis en 'as is' wordt aangeboden. We doen ons best om alles goed te laten draaien, maar we kunnen niet beloven dat de dienst altijd beschikbaar of foutloos is."
     },
     "limitation": {
       "title": "Beperking van aansprakelijkheid",
-      "description": "JigSwap is niet aansprakelijk voor indirecte, incidentele, bijzondere of gevolgschade, of voor schadevergoedingen met een bestraffend karakter, voortvloeiend uit je gebruik van de dienst."
+      "description": "Voor zover toegestaan door het toepasselijke recht zijn JigSwap en de beheerder niet aansprakelijk voor indirecte schade of gevolgschade door je gebruik van de dienst of door uitwisselingen tussen leden. Niets in deze Voorwaarden beperkt aansprakelijkheid die volgens het toepasselijke recht niet beperkt of uitgesloten kan worden."
     },
     "changes": {
-      "title": "Wijzigingen in de voorwaarden",
-      "description": "We behouden ons het recht voor deze voorwaarden op elk moment te wijzigen. Bij belangrijke wijzigingen informeren we gebruikers door de nieuwe voorwaarden op onze website te plaatsen."
+      "title": "Wijzigingen in deze Voorwaarden",
+      "description": "We kunnen deze Voorwaarden van tijd tot tijd bijwerken. Belangrijke wijzigingen kondigen we aan door de nieuwe Voorwaarden op deze pagina te plaatsen en de datum bovenaan bij te werken. Blijf je JigSwap na een wijziging gebruiken, dan gelden de bijgewerkte Voorwaarden."
     },
     "contact": {
-      "title": "Contactgegevens",
-      "description": "Heb je vragen over deze algemene voorwaarden? Neem dan contact met ons op:",
-      "email": "E-mail",
+      "title": "Contact",
+      "description": "Vragen over deze Voorwaarden? Mail ons via",
       "emailAddress": "legal@jigswap.site",
-      "questions": "We hechten aan transparantie en beantwoorden je vragen zo snel mogelijk."
+      "formNote": "Je kunt ook terecht bij het",
+      "linkLabel": "contactformulier"
     }
   },
   "about": {

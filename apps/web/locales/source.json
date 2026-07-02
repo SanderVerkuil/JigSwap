@@ -897,108 +897,133 @@
   "privacy": {
     "title": "Privacy Policy",
     "lastUpdated": "Last Updated",
-    "introduction": "This Privacy Policy describes how JigSwap ('we', 'our', or 'us') collects, uses, and protects your personal information when you use our jigsaw puzzle trading platform.",
-    "effectiveDate": "July 20, 2025",
+    "effectiveDate": "2 July 2026",
+    "introduction": "This Privacy Policy explains what personal data JigSwap collects, why we collect it, and what your rights are. JigSwap is run by Sander Verkuil, who is the controller for the processing described here. We aim to collect as little as possible and to be transparent about the rest.",
     "informationWeCollect": {
       "title": "Information We Collect",
-      "description": "We collect information you provide directly to us and information we collect automatically when you use our service.",
+      "description": "We collect information you give us directly, plus a limited amount of information collected automatically while you use JigSwap.",
       "personalInformation": {
-        "title": "Personal Information",
+        "title": "Information you provide",
         "items": [
-          "Account information (name, email address, username)",
-          "Profile information (bio, location, interests)",
-          "Puzzle collection data and photos",
-          "Exchange history and communications",
-          "Reviews and ratings you provide"
+          "Account details via Clerk, our sign-in provider: name, email address, username, and avatar",
+          "Your profile: display name, bio, and other details you choose to share",
+          "Your puzzle library: the copies you own, their condition, photos you upload, completions, and collections",
+          "Exchange activity: swap, sale, and loan requests, the messages you send to arrange them, and reviews",
+          "Community activity: the circles you belong to, members you follow, and comments you post",
+          "Messages you send through the contact form: your name, email address, and message"
         ]
       },
       "automaticallyCollected": {
-        "title": "Automatically Collected Information",
+        "title": "Collected automatically",
         "items": [
-          "Device information (IP address, browser type, operating system)",
-          "Usage data (pages visited, features used, time spent)",
-          "Analytics data (interaction patterns, preferences)",
-          "Technical logs and error reports"
+          "Product analytics events, such as pages visited and features used (via PostHog, only after you accept the cookie notice)",
+          "Error reports and operational logs used to keep the service running",
+          "Your language preference and cookie-notice choice, stored in cookies",
+          "A push notification subscription — only if you turn push notifications on"
         ]
       }
     },
     "howWeUseInformation": {
       "title": "How We Use Your Information",
-      "description": "We use the information we collect to provide, improve, and secure our services.",
+      "description": "We use your data to run JigSwap — nothing more:",
       "purposes": [
-        "Provide and maintain our puzzle trading platform",
-        "Process trades and facilitate exchanges between users",
-        "Personalize your experience and show relevant content",
-        "Send important service updates and notifications",
-        "Analyze usage patterns to improve our service",
-        "Prevent fraud and ensure platform security",
-        "Respond to your questions and support requests"
-      ]
+        "Provide your library, completions, collections, and insights",
+        "Facilitate exchanges between members, including messaging and loan tracking",
+        "Show your profile and puzzles to the members you have chosen to share them with",
+        "Send you notifications about activity that concerns you",
+        "Keep the service secure and prevent abuse, including automated screening of uploaded photos",
+        "Understand how JigSwap is used so we can improve it",
+        "Respond when you contact us"
+      ],
+      "lawfulBasis": {
+        "title": "Our lawful basis, in plain terms",
+        "description": "Under the GDPR we need a legal reason for each use of your data. Ours are:",
+        "items": [
+          "Performing our agreement with you: everything needed to run the service you signed up for — your account, library, exchanges, and messages",
+          "Legitimate interests: keeping JigSwap secure, preventing abuse, screening uploaded photos, operational logging, and understanding usage so we can improve the service",
+          "Consent: where we ask you first, such as browser push notifications",
+          "Legal obligations: the rare cases where we must keep or share data because the law requires it"
+        ]
+      }
     },
     "dataStorage": {
-      "title": "Data Storage and Hosting",
-      "description": "Your data is securely stored and managed by trusted third-party services:",
+      "title": "Where Your Data Lives",
+      "description": "JigSwap does not run its own servers. Your data is stored in the European Union with a small number of service providers:",
       "convex": {
         "title": "Convex",
-        "description": "Our primary database and backend services are hosted by Convex. They handle data storage, user authentication, and real-time features."
+        "description": "Our database and file storage, on Convex's EU hosting. Your library, exchanges, messages, and uploaded photos are stored in the European Union."
+      },
+      "clerk": {
+        "title": "Clerk",
+        "description": "Our authentication provider, with EU data residency. Clerk stores your sign-in credentials and core account details (name, email address, avatar) and handles signing in. When you delete your account, Clerk notifies us and we remove your account record."
       },
       "vercel": {
         "title": "Vercel",
-        "description": "Our web application is hosted on Vercel's infrastructure, which provides fast, reliable, and secure hosting services."
+        "description": "Our hosting provider. The JigSwap web application is served through Vercel's global edge network. Vercel delivers the site to your browser; your personal data itself lives in the EU-hosted services above."
       }
     },
+    "photos": {
+      "title": "Photos You Upload",
+      "description": "Photos you add to your library go through an automatic pipeline before other members can see them:",
+      "steps": [
+        "The image is re-encoded, which strips hidden metadata such as EXIF data — including any embedded location",
+        "An automated content-safety check screens the image; for this we currently use a model hosted by Hugging Face, which processes the image for this purpose only",
+        "Until this finishes, the photo is visible only to you"
+      ]
+    },
     "analytics": {
-      "title": "Analytics and Tracking",
-      "description": "We use analytics to understand how our service is used and improve user experience.",
+      "title": "Analytics and Error Reporting",
+      "description": "We use analytics to understand how JigSwap is used and to catch errors before they spoil the fun.",
       "posthog": {
-        "title": "PostHog Analytics",
-        "description": "We use PostHog to collect anonymous usage analytics. This helps us understand user behavior and improve our platform. PostHog data is used solely for service improvement and is not sold to third parties."
+        "title": "PostHog",
+        "description": "We use PostHog, hosted in the European Union, for product analytics and error reporting. Analytics requests are routed through our own domain. PostHog only starts after you accept the cookie notice — if you decline, it is never loaded. This data is used only to improve JigSwap."
       },
-      "noAdvertising": "We do not use your data for advertising purposes. Your information will never be sold to advertisers or third parties for marketing purposes."
+      "noAdvertising": "We do not show ads, we do not use your data for advertising, and we never sell your data."
     },
     "dataSharing": {
-      "title": "Data Sharing and Third Parties",
-      "description": "We are committed to protecting your privacy and do not sell your personal information.",
-      "noSale": "We do not sell, rent, or trade your personal information to third parties for advertising or marketing purposes.",
-      "limitedSharing": "We may share your information only in these limited circumstances:",
+      "title": "Data Sharing",
+      "description": "We share personal data only with the providers that run JigSwap, and only what they need to do their job.",
+      "noSale": "We do not sell, rent, or trade your personal data. Ever.",
+      "limitedSharing": "Data is shared only in these cases:",
       "circumstances": [
-        "With your explicit consent",
-        "To comply with legal obligations",
-        "To protect our rights and prevent fraud",
-        "With service providers who assist in platform operations (under strict confidentiality agreements)"
+        "With the providers named in this policy, as processors on our behalf: Convex (database and files), Clerk (sign-in), Vercel (hosting), PostHog (analytics and error reporting), Axiom (operational logs, EU-hosted), and Hugging Face (automated photo screening)",
+        "With other members, to the extent you choose — your profile and the parts of your library you share are visible according to your settings",
+        "When the law requires it, or to protect the service and its members against fraud or abuse",
+        "For anything else: only with your explicit consent"
       ]
     },
     "dataSecurity": {
       "title": "Data Security",
-      "description": "We implement appropriate security measures to protect your personal information:",
+      "description": "We take reasonable measures to protect your data:",
       "measures": [
-        "Encryption of data in transit and at rest",
-        "Regular security audits and updates",
-        "Access controls and authentication",
-        "Secure hosting infrastructure"
+        "All traffic between your browser and JigSwap is encrypted (TLS)",
+        "Every read and write is checked on the server: members only see what the visibility rules allow",
+        "Uploaded photos are stripped of hidden metadata and screened before they become visible to others",
+        "Access to production data is limited to what is needed to run the service"
       ]
     },
     "yourRights": {
-      "title": "Your Rights and Choices",
-      "description": "You have control over your personal information:",
+      "title": "Your Rights",
+      "description": "Under the GDPR you have the following rights, and JigSwap has built-in tools for most of them:",
       "rights": [
-        "Access and review your personal data",
-        "Update or correct your information",
-        "Delete your account and associated data",
-        "Opt out of certain data collection",
-        "Export your data in a portable format",
-        "Contact us with privacy concerns"
+        "Access: see the data we hold about you — most of it is directly visible in the app",
+        "Portability: download your data as a file via the export on your Insights page",
+        "Rectification: correct your profile and library yourself at any time, or ask us to fix something",
+        "Erasure: delete your account, which removes your account record — and ask us to remove any remaining content tied to it",
+        "Objection and restriction: object to processing we base on our legitimate interests",
+        "Complaint: lodge a complaint with your data protection authority — in the Netherlands, the Autoriteit Persoonsgegevens"
       ]
     },
     "cookies": {
-      "title": "Cookies and Tracking",
-      "description": "We use cookies and similar technologies to enhance your experience:",
+      "title": "Cookies",
+      "description": "JigSwap uses a small number of cookies and similar technologies:",
       "types": [
-        "Essential cookies for platform functionality",
-        "Analytics cookies to understand usage patterns",
-        "Preference cookies to remember your settings"
+        "Sign-in cookies from Clerk that keep you logged in (strictly necessary)",
+        "A language cookie that remembers your English/Dutch preference",
+        "A cookie that remembers that you have seen the cookie notice",
+        "Analytics identifiers from PostHog, stored in cookies and local storage — only after you accept the cookie notice"
       ],
-      "control": "You can control cookie settings through your browser preferences."
+      "control": "Analytics is opt-in: it only runs after you accept the cookie notice, and declining means it is never loaded. You can also block or delete cookies in your browser settings; JigSwap keeps working, though you will need to sign in again and your preferences may reset."
     },
     "cookieConsent": {
       "title": "We use cookies",
@@ -1009,114 +1034,125 @@
       "acceptanceText": "By clicking \"Accept\", you agree to our use of cookies."
     },
     "children": {
-      "title": "Children's Privacy",
-      "description": "Our service is not intended for children under 13. We do not knowingly collect personal information from children under 13."
+      "title": "Children",
+      "description": "JigSwap is not intended for children under 16, and we do not knowingly collect personal data from them. If you believe a child under 16 has an account, please contact us."
     },
     "international": {
       "title": "International Data Transfers",
-      "description": "Your data may be processed in countries other than your own. We ensure appropriate safeguards are in place to protect your information."
+      "description": "Your personal data is stored in the European Union: we use the EU-hosted variants of Convex, Clerk, PostHog, and Axiom. Our hosting provider Vercel serves the website through a global edge network, so requests may pass through servers outside the EU on their way to you, but the personal data itself stays stored in the EU. Where a provider processes limited data outside the EU/EEA, transfers take place under GDPR safeguards such as the EU standard contractual clauses."
     },
     "changes": {
       "title": "Changes to This Policy",
-      "description": "We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new policy on our website and updating the 'Last Updated' date."
+      "description": "We may update this policy as JigSwap evolves. Material changes are announced by posting the new policy on this page and updating the date at the top."
     },
     "contact": {
-      "title": "Contact Us",
-      "description": "If you have any questions about this Privacy Policy or our data practices, please contact us:",
-      "email": "Email",
+      "title": "Contact",
+      "description": "Questions about privacy or your data? Email us at",
       "emailAddress": "privacy@jigswap.site",
-      "questions": "We're committed to transparency and will respond to your privacy inquiries promptly."
+      "formNote": "You can also use the",
+      "linkLabel": "contact form"
     }
   },
   "terms": {
     "title": "Terms of Service",
     "lastUpdated": "Last Updated",
-    "introduction": "These Terms of Service ('Terms') govern your use of JigSwap, our jigsaw puzzle trading platform. By using our service, you agree to these terms.",
-    "effectiveDate": "July 20, 2025",
+    "effectiveDate": "2 July 2026",
+    "introduction": "These Terms of Service ('Terms') govern your use of JigSwap, a community platform for jigsaw puzzle enthusiasts, run by Sander Verkuil. JigSwap is a hobby project, not a commercial marketplace. By creating an account or using JigSwap, you agree to these Terms.",
     "acceptance": {
       "title": "Acceptance of Terms",
-      "description": "By accessing or using JigSwap, you agree to be bound by these Terms. If you disagree with any part of these terms, you may not access our service."
+      "description": "By accessing or using JigSwap you agree to be bound by these Terms. If you do not agree with any part of them, please do not use the service."
     },
     "serviceDescription": {
-      "title": "Service Description",
-      "description": "JigSwap is a platform that enables users to trade, exchange, and manage jigsaw puzzles. Our service includes:",
+      "title": "What JigSwap Is",
+      "description": "JigSwap helps jigsaw puzzle collectors keep track of their puzzles and exchange them with other members. The service includes:",
       "features": [
-        "Puzzle collection management and tracking",
-        "Trading and exchange functionality",
-        "Community features and reviews",
-        "Analytics and progress tracking"
+        "A community-maintained puzzle catalog that members can add puzzles to",
+        "A personal library to track the copies you own, their condition, and photos of them",
+        "Logging completions (when you finished a puzzle and how long it took) and organising copies into collections",
+        "Exchanges between members — swaps, sales, and loans — with messaging to arrange them",
+        "Circles (private groups of friends) for sharing part of your library, plus member profiles and follows",
+        "Personal insights and statistics about your puzzling, including a download of your own data"
       ]
     },
     "userAccounts": {
-      "title": "User Accounts",
-      "description": "To use certain features of our service, you must create an account. You are responsible for:",
+      "title": "Your Account",
+      "description": "You need an account for most features. Sign-in and account management are handled by Clerk, our authentication provider. You are responsible for:",
       "responsibilities": [
-        "Maintaining the security of your account",
-        "Providing accurate and complete information",
-        "Notifying us of any unauthorized use",
-        "Being at least 13 years old to use the service"
+        "Keeping access to your account secure",
+        "Providing accurate information in your profile and about your puzzles",
+        "Letting us know if you suspect unauthorised use of your account",
+        "Being at least 16 years old to create an account"
       ]
     },
     "userConduct": {
-      "title": "User Conduct",
-      "description": "You agree to use our service responsibly and in accordance with these terms:",
-      "prohibitedTitle": "Prohibited Activities:",
-      "expectedTitle": "Expected Behavior:",
-      "prohibited": [
-        "Violating any applicable laws or regulations",
-        "Infringing on intellectual property rights",
-        "Harassing or harming other users",
-        "Attempting to gain unauthorized access to our systems",
-        "Using the service for commercial purposes without permission"
-      ],
+      "title": "Community Conduct",
+      "description": "JigSwap runs on trust between puzzle lovers. Use the service responsibly:",
+      "expectedTitle": "What we expect:",
       "expected": [
-        "Treating other users with respect",
-        "Providing accurate information about puzzles",
-        "Honoring trade agreements and commitments",
-        "Reporting suspicious or inappropriate behavior"
+        "Treat other members with respect",
+        "Describe your puzzles honestly, including condition and missing pieces",
+        "Follow through on exchanges you agree to",
+        "Report problems or suspicious behaviour via the contact form"
+      ],
+      "prohibitedTitle": "What is not allowed:",
+      "prohibited": [
+        "Breaking the law or infringing other people's rights",
+        "Harassing, threatening, or deceiving other members",
+        "Uploading unlawful, infringing, or sexually explicit content",
+        "Spam or unsolicited commercial use of the platform",
+        "Scraping the service or attempting to gain unauthorised access to accounts or systems",
+        "Impersonating another person or member"
       ]
     },
     "trading": {
-      "title": "Trading and Exchanges",
-      "description": "Our platform facilitates puzzle trading between users. By participating in trades, you agree to:",
+      "title": "Swaps, Sales, and Loans",
+      "description": "JigSwap lets members arrange swaps, sales, and loans of puzzles with each other. Every exchange is an agreement between the two members involved — not with JigSwap. When you take part in an exchange, you agree to:",
       "agreements": [
-        "Accurately describe puzzle condition and completeness",
-        "Honor agreed-upon trade terms",
-        "Communicate promptly and honestly",
-        "Resolve disputes amicably when possible"
+        "Accurately describe the condition and completeness of your puzzles",
+        "Honour the terms you agreed on, including returning borrowed puzzles",
+        "Arrange payment and shipping between yourselves — JigSwap does not process payments",
+        "Communicate promptly and try to resolve disagreements respectfully"
       ],
-      "disclaimer": "JigSwap acts as a facilitator for trades but is not responsible for the quality, condition, or completeness of traded puzzles. Users trade at their own risk."
+      "disclaimer": "JigSwap only brings members into contact and keeps a record of the exchange. We are not a party to any exchange and are not responsible for payment, shipping, or the quality, condition, or completeness of exchanged puzzles. Exchanges are at your own risk."
     },
     "intellectualProperty": {
-      "title": "Intellectual Property",
-      "description": "Our service and its original content, features, and functionality are owned by JigSwap and are protected by international copyright, trademark, and other intellectual property laws."
+      "title": "Content and Intellectual Property",
+      "description": "Different things on JigSwap belong to different people:",
+      "yourContent": {
+        "title": "Your content",
+        "description": "Photos, reviews, comments, and other content you post remain yours. By posting, you give us a non-exclusive licence to store and display that content so the service can work — for example, showing your puzzle photos to the members you have shared them with. Puzzles you add to the shared catalog become part of the community catalog that all members can use. Uploaded photos pass through an automated safety check before other members can see them (see the Privacy Policy for details)."
+      },
+      "platform": {
+        "title": "The platform and puzzle artwork",
+        "description": "The JigSwap software is open source under the MIT licence. Puzzle images and artwork in the catalog belong to their respective publishers and rights holders and are used to identify puzzles. If you hold rights to content shown on JigSwap and want it corrected or removed, please contact us."
+      }
     },
     "privacy": {
       "title": "Privacy",
-      "description": "Your privacy is important to us. Please review our Privacy Policy, which also governs your use of the service."
+      "description": "How we handle your personal data is described in our Privacy Policy, which applies alongside these Terms."
     },
     "termination": {
-      "title": "Account Termination",
-      "description": "We may terminate or suspend your account immediately, without prior notice, for any reason, including breach of these Terms."
+      "title": "Ending Your Account",
+      "description": "You can stop using JigSwap and delete your account at any time. We may suspend or remove accounts that break these Terms — for example for scams, harassment, or unlawful content. Where reasonably possible, we will tell you why."
     },
     "disclaimer": {
-      "title": "Disclaimer of Warranties",
-      "description": "The service is provided 'as is' without warranties of any kind. We do not guarantee that the service will be uninterrupted or error-free."
+      "title": "Disclaimer",
+      "description": "JigSwap is a hobby project provided free of charge and 'as is'. We do our best to keep it running well, but we cannot promise that the service will always be available or error-free."
     },
     "limitation": {
       "title": "Limitation of Liability",
-      "description": "JigSwap shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of the service."
+      "description": "To the extent permitted by applicable law, JigSwap and its operator are not liable for indirect or consequential damage arising from your use of the service or from exchanges between members. Nothing in these Terms limits liability that cannot be limited or excluded under applicable law."
     },
     "changes": {
-      "title": "Changes to Terms",
-      "description": "We reserve the right to modify these terms at any time. We will notify users of any material changes by posting the new terms on our website."
+      "title": "Changes to These Terms",
+      "description": "We may update these Terms from time to time. Material changes are announced by posting the new Terms on this page and updating the date at the top. If you keep using JigSwap after a change, the updated Terms apply."
     },
     "contact": {
-      "title": "Contact Information",
-      "description": "If you have any questions about these Terms of Service, please contact us:",
-      "email": "Email",
+      "title": "Contact",
+      "description": "Questions about these Terms? Email us at",
       "emailAddress": "legal@jigswap.site",
-      "questions": "We're committed to transparency and will respond to your inquiries promptly."
+      "formNote": "You can also use the",
+      "linkLabel": "contact form"
     }
   },
   "about": {
