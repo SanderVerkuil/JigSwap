@@ -400,6 +400,25 @@ export default defineSchema({
     .index("by_sort_order", ["sortOrder"])
     .index("by_aggregate_id", ["aggregateId"]),
 
+  // Admin moderation audit trail: one row per decision, stamped directly by the admin
+  // composition roots (catalog approve/reject domain events carry no actor) and by the
+  // photo pipeline's auto-rejections (actorId absent = system). Powers the moderation
+  // console's KPI week-stats and activity log.
+  moderationActions: defineTable({
+    actorId: v.optional(v.id("users")), // absent = automated pipeline
+    kind: v.union(
+      v.literal("definition_approved"),
+      v.literal("definition_rejected"),
+      v.literal("definition_edited_approved"),
+      v.literal("photo_restored"),
+      v.literal("photo_removal_confirmed"),
+      v.literal("photo_auto_rejected"),
+    ),
+    targetLabel: v.string(), // denormalized display title at decision time
+    targetId: v.string(),
+    at: v.number(),
+  }).index("by_at", ["at"]),
+
   // User goals for puzzle completion
   goals: defineTable({
     // Solving GoalId. Optional so legacy rows still validate; the domain-driven solving
