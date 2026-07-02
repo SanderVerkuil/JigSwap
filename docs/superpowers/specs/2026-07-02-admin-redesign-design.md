@@ -109,6 +109,21 @@ Supersedes the categories portion above after the initial de-carding landed:
 - Follow-up recorded, not in scope: migrate `language-switcher.tsx` off emoji flags to
   `ui/flag.tsx`.
 
+### TranslatableField v2 refinements (approved 2026-07-02, evening)
+
+- **Pills** (reference-image style): segments show a presence dot + text code ("EN"/"NL"), not
+  flags — filled dot = translated, hollow outline dot = empty, destructive dot = invalid;
+  active segment inverted (`bg-foreground text-background`), inactive outlined muted. Flags
+  stay on LIST rows only. Tooltips (language name) remain on hover+focus but are no longer
+  load-bearing.
+- **Open focus:** DialogContent `onOpenAutoFocus` focuses the Name input — never a toggle
+  (prevents a tooltip popping on dialog open).
+- **Tab order:** only the FIRST field's toggle is keyboard-reachable (roving tabindex);
+  later fields' toggles are pointer-only duplicates (`tabIndex=-1`, `aria-hidden`) so Tab
+  goes input → input.
+- **Base preview:** while a non-base locale is active and the base (en) value is non-blank,
+  a muted truncated `EN: <value>` line renders under the field.
+
 ## Moderation backend
 
 - **`moderationActions` table** (additive): `actorId` (`v.id("users")` or the literal `"system"`),
