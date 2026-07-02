@@ -157,7 +157,9 @@ export function notificationHref(row: NotificationRow): string | null {
     case "exchange_disputed":
       return "/trades";
     case "message_received":
-      return "/messages";
+      // relatedId carries the thread aggregateId (see the contracts docstring),
+      // which is exactly what /messages/$threadId resolves.
+      return relatedId ? `/messages/${relatedId}` : "/messages";
     case "review_received":
       return "/profile";
     case "goal_achieved":

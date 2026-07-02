@@ -664,8 +664,12 @@
       "sale": "Sale",
       "loan": "Loan"
     },
+    "messageButton": "Message",
     "noMessages": "No messages yet",
     "noMessagesHint": "Say hello to get the conversation going.",
+    "noThreadYet": "No conversation for this exchange yet.",
+    "notConnected": "You can only message members you're connected with",
+    "openError": "Couldn't open the conversation. Please try again.",
     "selectConversation": "Select a conversation",
     "selectConversationHint": "Choose a conversation from the list to start messaging",
     "sendError": "Your message couldn't be sent. Please try again.",

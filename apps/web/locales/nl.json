@@ -664,8 +664,12 @@
       "sale": "Verkoop",
       "loan": "Uitleen"
     },
+    "messageButton": "Bericht",
     "noMessages": "Nog geen berichten",
     "noMessagesHint": "Zeg hallo om het gesprek op gang te brengen.",
+    "noThreadYet": "Nog geen gesprek voor deze uitwisseling.",
+    "notConnected": "Je kunt alleen berichten sturen naar leden met wie je verbonden bent",
+    "openError": "Het gesprek kon niet worden geopend. Probeer het opnieuw.",
     "selectConversation": "Selecteer een gesprek",
     "selectConversationHint": "Kies een gesprek uit de lijst om te beginnen met chatten",
     "sendError": "Je bericht kon niet worden verzonden. Probeer het opnieuw.",

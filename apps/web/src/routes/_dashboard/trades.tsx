@@ -7,6 +7,8 @@ import {
   EmptyState,
   FilterBar,
 } from "@/components/community/primitives";
+import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
+import { ThreadView } from "@/components/messaging/thread-view";
 import { LeaveReviewDialog } from "@/components/reputation/leave-review-dialog";
 import { ReputationBadge } from "@/components/reputation/reputation-badge";
 import { Button } from "@/components/ui/button";
@@ -316,6 +318,7 @@ function ExchangeDetail({
   viewerId?: string;
 }) {
   const t = useTranslations("trades");
+  const [chatOpen, setChatOpen] = useState(false);
 
   const acceptExchange = useMutation(gateway.exchange.accept);
   const declineExchange = useMutation(gateway.exchange.decline);
@@ -429,11 +432,47 @@ function ExchangeDetail({
           />
         )}
 
-        <Button variant="ghost" size="sm">
+        <Button
+          variant="ghost"
+          size="sm"
+          aria-expanded={chatOpen}
+          onClick={() => setChatOpen((value) => !value)}
+        >
           <MessageCircle className="h-4 w-4" />
           {t("message")}
         </Button>
       </div>
+
+      {chatOpen && (
+        <ExchangeChat exchangeId={exchange.aggregateId ?? exchange._id} />
+      )}
+    </div>
+  );
+}
+
+// The exchange's conversation thread, inline under the detail: resolved via
+// the conversation gateway (the thread the subscriber opened on propose) and
+// rendered headerless — the surrounding card already names the trade. Null
+// means a legacy pre-backfill exchange without a thread.
+function ExchangeChat({ exchangeId }: { exchangeId: string }) {
+  const t = useTranslations("messages");
+  const { member } = useCurrentMember();
+  const threadId = useQuery(
+    gateway.conversation.getThreadByExchange,
+    member ? { exchangeId } : "skip",
+  );
+
+  if (threadId === undefined) {
+    return (
+      <div className="bg-muted h-24 animate-pulse rounded-lg" aria-hidden />
+    );
+  }
+  if (threadId === null) {
+    return <p className="text-muted-foreground text-sm">{t("noThreadYet")}</p>;
+  }
+  return (
+    <div className="flex h-80 flex-col rounded-lg border px-3 pb-3">
+      <ThreadView threadId={threadId} hideHeader />
     </div>
   );
 }
