@@ -7,6 +7,7 @@
 
 import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";
+import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import {
   Sidebar,
   SidebarContent,
@@ -14,10 +15,13 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
+import { useQuery } from "convex/react";
 import { useTranslations } from "use-intl";
 import { DASHBOARD_ITEM, NAV_GROUPS, type ShellNavItem } from "./route-meta";
 import { UserFooter } from "./user-footer";
@@ -85,6 +89,27 @@ function NavLink({ item }: { item: ShellNavItem }) {
           <span>{title}</span>
         </Link>
       </SidebarMenuButton>
+      {item.key === "messages" && <MessagesUnreadBadge />}
     </SidebarMenuItem>
+  );
+}
+
+// Live unread-messages count on the Messages nav item. The backend caps the
+// total at 50, so a value of 50 genuinely means "50 or more" and reads "50+".
+function MessagesUnreadBadge() {
+  const t = useTranslations("messages");
+  const { member } = useCurrentMember();
+  const unread =
+    useQuery(gateway.conversation.getUnreadTotal, member?._id ? {} : "skip") ??
+    0;
+
+  if (unread === 0) return null;
+  return (
+    <SidebarMenuBadge
+      className="bg-jigsaw-primary-accent rounded-full text-white"
+      aria-label={t("unreadCount", { count: unread })}
+    >
+      {unread >= 50 ? "50+" : unread}
+    </SidebarMenuBadge>
   );
 }
