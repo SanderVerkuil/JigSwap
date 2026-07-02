@@ -29,7 +29,7 @@ Replace the hard-wired `exchangeId` with a subject discriminator:
 ```ts
 type ThreadSubject =
   | { kind: "exchange"; exchangeId: ExchangeId } // opened by the system on exchange proposal
-  | { kind: "dm" };                              // opened by a member; exactly 2 participants
+  | { kind: "dm" }; // opened by a member; exactly 2 participants
 ```
 
 - `ThreadState.exchangeId` → `ThreadState.subject`. All existing invariants stay (only
@@ -69,11 +69,11 @@ query over `follows`, `circleMembers`, `exchanges`), `conversation/postMessage.t
 
 **Events, both directions:**
 
-- *Inbound:* a conversation subscriber on the `domainEvents` dispatcher reacts to exchange
+- _Inbound:_ a conversation subscriber on the `domainEvents` dispatcher reacts to exchange
   lifecycle events — proposal opens the thread with both participants plus a system message;
   accepted/completed/cancelled post system messages. Exchange adapters never call conversation
   code directly.
-- *Outbound:* `MessagePosted` → the Notifications subscriber notifies the other participant(s),
+- _Outbound:_ `MessagePosted` → the Notifications subscriber notifies the other participant(s),
   honoring `notificationPreferences`. Requires one new notification `type` value (`"message"`) in
   the schema union and the preference matrix.
 
