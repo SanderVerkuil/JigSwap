@@ -8,7 +8,10 @@ export class InMemoryThreadRepository implements ThreadRepository {
 
   async findByExchange(exchangeId: ExchangeId): Promise<Thread | null> {
     for (const state of this.store.values()) {
-      if (state.exchangeId === exchangeId) {
+      if (
+        state.subject.kind === "exchange" &&
+        state.subject.exchangeId === exchangeId
+      ) {
         return Thread.rehydrate(state);
       }
     }

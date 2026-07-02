@@ -9,7 +9,8 @@ import { DomainError } from "../../shared-kernel";
 export type ConversationErrorCode =
   | "NotParticipant"
   | "EmptyMessage"
-  | "SystemMessageNotAuthorable";
+  | "SystemMessageNotAuthorable"
+  | "DmRequiresTwoParticipants";
 
 export class ConversationError extends DomainError {
   override readonly name = "ConversationError";
@@ -43,6 +44,14 @@ export class ConversationError extends DomainError {
     return new ConversationError(
       "SystemMessageNotAuthorable",
       "System messages are service-authored and cannot be posted by a member",
+    );
+  }
+
+  // A DM thread is a pair: exactly two distinct members. (Group DMs are out of scope.)
+  static dmRequiresTwoParticipants(): ConversationError {
+    return new ConversationError(
+      "DmRequiresTwoParticipants",
+      "A DM thread requires exactly two distinct participants",
     );
   }
 }

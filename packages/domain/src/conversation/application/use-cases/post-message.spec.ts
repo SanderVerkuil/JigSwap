@@ -31,7 +31,9 @@ describe("makePostMessage", () => {
       events,
       clock: new FixedClock(NOW),
     });
-    await threads.save(Thread.open(threadId, exchangeId, [alice, bob]));
+    await threads.save(
+      Thread.openForExchange(threadId, exchangeId, [alice, bob]),
+    );
   });
 
   const cmd = (over: Partial<Parameters<typeof post>[0]> = {}) => ({
