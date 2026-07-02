@@ -112,6 +112,11 @@ export function ColorPicker({
             <ShadeSlider
               hsva={hsva}
               direction="vertical"
+              // ShadeSlider paints its gradient light-top→dark-bottom but Alpha's
+              // vertical pointer math assumes the opposite; `reverse` realigns the
+              // handle (and keyboard arrows) with the gradient. Verified against
+              // @uiw/react-color-alpha's alphaToOffset in 2.10.3.
+              reverse
               style={{ height: 180, width: 16 }}
               onChange={(newShade) => applyHsva({ ...hsva, ...newShade })}
             />
