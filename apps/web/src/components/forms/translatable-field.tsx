@@ -1,14 +1,16 @@
 "use client";
 
 // RHF-integrated field for Record<locale, string> values (e.g. { en, nl }).
-// Each field renders a segmented flag toggle in its label row (presence dots
-// are per-field information), but the selected locale is SYNCED across all
-// fields through TranslatableFieldsProvider — switching one toggle visibly
-// flips every field, which is what reveals the sync. All locale inputs stay
-// mounted; non-active ones are display:none (`hidden`), so nothing typed is
-// ever lost and hidden inputs are untabbable.
+// Each field renders a segmented pill toggle (presence dot + locale code) in
+// its label row (presence dots are per-field information), but the selected
+// locale is SYNCED across all fields through TranslatableFieldsProvider —
+// switching one toggle visibly flips every field, which is what reveals the
+// sync. All locale inputs stay mounted; non-active ones are display:none
+// (`hidden`), so nothing typed is ever lost and hidden inputs are untabbable.
+// Only the field marked `primaryToggle` exposes its toggle to keyboard and
+// screen readers; the other toggles are pointer-only duplicates, so Tab goes
+// input → input instead of stopping at every copy of the same control.
 
-import { Flag } from "@/components/ui/flag";
 import { FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -95,12 +97,17 @@ function getError(errors: FieldErrors, path: string): unknown {
     );
 }
 
+// The base locale every other translation is authored against; its value
+// previews under the field while a non-base locale is active.
+const BASE_LOCALE: Locale = "en";
+
 export function TranslatableField<TFieldValues extends FieldValues>({
   control,
   name,
   label,
   required = false,
   multiline = false,
+  primaryToggle = false,
 }: {
   control: Control<TFieldValues>;
   /** Base path of the Record<locale, string> object (e.g. "name"). */
@@ -108,6 +115,12 @@ export function TranslatableField<TFieldValues extends FieldValues>({
   label: string;
   required?: boolean;
   multiline?: boolean;
+  /**
+   * Marks this field's toggle as THE keyboard/screen-reader locale switch
+   * (roving-tabindex radiogroup). Set it on the first TranslatableField of a
+   * form; the other fields' toggles become pointer-only duplicates.
+   */
+  primaryToggle?: boolean;
 }) {
   const t = useTranslations("forms.translatable-field");
   const { locales, activeLocale, setActiveLocale } = useTranslatableFields();
@@ -147,17 +160,24 @@ export function TranslatableField<TFieldValues extends FieldValues>({
         <Label htmlFor={`${id}-${activeLocale}`}>{label}</Label>
         <div
           ref={toggleRef}
-          role="radiogroup"
-          aria-label={t("toggleLabel", { field: label })}
-          onKeyDown={handleToggleKeyDown}
-          className="inline-flex rounded-md border bg-muted p-0.5"
+          // Radiogroup semantics live on the primary toggle only; the other
+          // toggles are pointer-only duplicates hidden from assistive tech so
+          // screen readers hear ONE locale switch, not one per field.
+          {...(primaryToggle
+            ? {
+                role: "radiogroup" as const,
+                "aria-label": t("toggleLabel", { field: label }),
+              }
+            : { "aria-hidden": true })}
+          onKeyDown={primaryToggle ? handleToggleKeyDown : undefined}
+          className="inline-flex items-center gap-0.5 rounded-full border p-0.5"
         >
           {locales.map((locale) => {
             const active = locale === activeLocale;
             const error = getError(errors, localePath(locale));
             const filled = Boolean(values[locale]?.trim());
             // Dot per segment: error (after touch/submit) beats presence;
-            // blank + no error shows nothing.
+            // blank + no error renders a hollow outline dot.
             const state = error ? "error" : filled ? "filled" : "empty";
             const languageName = t(`locales.${locale}`);
             return (
@@ -170,28 +190,28 @@ export function TranslatableField<TFieldValues extends FieldValues>({
                     aria-label={`${languageName} — ${
                       state === "filled" ? t("translated") : t("missing")
                     }`}
-                    tabIndex={active ? 0 : -1}
+                    tabIndex={primaryToggle && active ? 0 : -1}
                     data-locale={locale}
                     onClick={() => setActiveLocale(locale)}
                     className={cn(
-                      "relative inline-flex h-6 items-center justify-center rounded-sm px-1.5 outline-none transition focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                      "inline-flex h-6 items-center gap-1.5 rounded-full px-2 text-xs font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
                       active
-                        ? "bg-background shadow-sm"
-                        : "opacity-60 hover:opacity-100",
+                        ? "bg-foreground text-background"
+                        : "text-muted-foreground hover:bg-muted",
                     )}
                   >
-                    <Flag locale={locale} />
-                    {state !== "empty" && (
-                      <span
-                        aria-hidden
-                        className={cn(
-                          "absolute -top-0.5 -right-0.5 size-1.5 rounded-full ring-2 ring-background",
-                          state === "error"
-                            ? "bg-destructive"
-                            : "bg-jigsaw-success",
-                        )}
-                      />
-                    )}
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "size-1.5 rounded-full",
+                        state === "error" && "bg-destructive",
+                        state === "filled" && "bg-jigsaw-success",
+                        // Hollow dot; currentColor keeps it visible on the
+                        // inverted active segment.
+                        state === "empty" && "border border-current opacity-50",
+                      )}
+                    />
+                    {locale.toUpperCase()}
                   </button>
                 </TooltipTrigger>
                 <TooltipContent>{languageName}</TooltipContent>
@@ -226,6 +246,13 @@ export function TranslatableField<TFieldValues extends FieldValues>({
                 />
               )}
               <FormMessage />
+              {/* While translating, keep the base (en) text in view. */}
+              {locale !== BASE_LOCALE &&
+                Boolean(values[BASE_LOCALE]?.trim()) && (
+                  <p className="text-muted-foreground mt-1 truncate text-xs">
+                    {BASE_LOCALE.toUpperCase()}: {values[BASE_LOCALE]}
+                  </p>
+                )}
             </FormItem>
           )}
         />

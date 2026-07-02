@@ -42,7 +42,7 @@ import {
 import { gateway } from "@/gateway";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "convex/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import {
   useForm,
   useWatch,
@@ -152,9 +152,20 @@ export function CategoryDialog({
 
   const isEdit = Boolean(category);
 
+  // Filled in by CategoryForm (it knows the active locale): focuses the name
+  // input for the visible locale. Radix would otherwise focus the first
+  // tabbable element — the locale toggle — and pop its tooltip on open.
+  const initialFocusRef = useRef<(() => void) | null>(null);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        className="sm:max-w-md"
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          initialFocusRef.current?.();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>
             {isEdit ? t("editTitle") : t("createTitle")}
@@ -169,6 +180,7 @@ export function CategoryDialog({
             onSubmit={onSubmit}
             colorTouched={colorTouched}
             onColorTouched={() => setColorTouched(true)}
+            initialFocusRef={initialFocusRef}
           />
         </TranslatableFieldsProvider>
         <DialogFooter>
@@ -196,14 +208,24 @@ function CategoryForm({
   onSubmit,
   colorTouched,
   onColorTouched,
+  initialFocusRef,
 }: {
   form: UseFormReturn<CategoryFormValues>;
   onSubmit: (values: CategoryFormValues) => Promise<void>;
   colorTouched: boolean;
   onColorTouched: () => void;
+  // Written here, called by DialogContent's onOpenAutoFocus above.
+  initialFocusRef: RefObject<(() => void) | null>;
 }) {
   const t = useTranslations("admin.categories.form");
-  const { locales, setActiveLocale } = useTranslatableFields();
+  const { locales, activeLocale, setActiveLocale } = useTranslatableFields();
+
+  // Keep the dialog's open-focus callback pointed at the visible name input.
+  // This effect runs before Radix's autofocus effect (child effects run before
+  // the parent FocusScope mounts), so the ref is set by the time it's called.
+  useEffect(() => {
+    initialFocusRef.current = () => form.setFocus(`name.${activeLocale}`);
+  }, [initialFocusRef, form, activeLocale]);
 
   // While the picker is untouched (create mode), the color live-follows the
   // English name. A blank name derives nothing and keeps the current color.
@@ -244,6 +266,7 @@ function CategoryForm({
           name="name"
           label={t("name")}
           required
+          primaryToggle
         />
         <TranslatableField
           control={form.control}
