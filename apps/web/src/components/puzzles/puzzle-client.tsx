@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
 import { useFavorites } from "@/hooks/use-favorites";
+// sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
 import { Filter, Grid, Heart, List, Plus, Search, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";

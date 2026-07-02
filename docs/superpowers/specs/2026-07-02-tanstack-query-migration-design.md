@@ -32,7 +32,8 @@ reject.isPending || ...`. No new shared flags.
 
 **Sanctioned exceptions (stay on `convex/react`, one-line comment each):**
 `usePaginatedQuery` (2 files — no bridge equivalent), `useConvexAuth` (4 files — auth state),
-raw `useConvex` client (1 file).
+raw `useConvex` client (1 file), and the `Authenticated`/`Unauthenticated` auth-state components
+(marketing header).
 
 **Cache posture:** foundation task reads the installed bridge README and locks the recommended
 `staleTime`/`gcTime` defaults in `router.tsx` (subscription-backed queryFn; unmounted data kept

@@ -37,12 +37,16 @@ export function ThreadView({
   const { member } = useCurrentMember();
   const me = member?._id;
 
-  const { data: messages } = useQuery(
-    convexQuery(
+  const { data: messages } = useQuery({
+    ...convexQuery(
       gateway.conversation.getThreadMessages,
       me ? { threadId } : "skip",
     ),
-  );
+    // Stale/foreign thread ids must THROW so the $threadId route's
+    // errorComponent renders AppNotFound (TanStack returns errors in .error
+    // by default, which would leave the skeleton up forever).
+    throwOnError: true,
+  });
   const { data: inbox } = useQuery(
     convexQuery(gateway.conversation.getMyInbox, me ? {} : "skip"),
   );
