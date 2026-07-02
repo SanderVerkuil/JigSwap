@@ -24,6 +24,13 @@ live — cache-and-invalidate semantics without manual invalidation.
 | `.withOptimisticUpdate(...)` (3 files) | `useConvexMutation(fn).withOptimisticUpdate(...)` as the mutationFn (existing messaging pattern)  |
 | `useAction(fn)`                        | `useMutation({ mutationFn: useConvexAction(fn) })`                                                |
 
+**Busy-state rule v2 (owner refinement, 2026-07-02 late):** multi-step async sequences
+(Clerk calls, raw fetch uploads, browser permission flows around mutations) are wrapped WHOLE
+as the `mutationFn` of one `useMutation` — `isPending` then spans the entire sequence natively,
+eliminating the previously-sanctioned manual flags. Per-row busy states use the
+`mutation.variables`-while-pending idiom (see trades.tsx). The only justified survivor is a
+state machine that carries result data as exported API (use-puzzle-import), assessed on merit.
+
 **Busy-state rule (owner decision):** ALL manual busy flags (`busy`, `saving`, `isSubmitting`
 useState around mutations) are removed in favor of `isPending`. Each distinct action gets its own
 `useMutation` object; where a shared disable is genuinely wanted (e.g. the moderation console
