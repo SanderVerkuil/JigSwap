@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">81.81% </span>
+                <span class="strong">83.33% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>9/11</span>
+                <span class='fraction'>10/12</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>9/9</span>
+                <span class='fraction'>10/10</span>
             </div>
         
             
@@ -96,7 +96,11 @@
 <a name='L31'></a><a href='#L31'>31</a>
 <a name='L32'></a><a href='#L32'>32</a>
 <a name='L33'></a><a href='#L33'>33</a>
-<a name='L34'></a><a href='#L34'>34</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -110,34 +114,40 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">335x</span>
-<span class="cline-any cline-yes">335x</span>
-<span class="cline-any cline-yes">335x</span>
+<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">510x</span>
+<span class="cline-any cline-yes">510x</span>
+<span class="cline-any cline-yes">510x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">335x</span>
+<span class="cline-any cline-yes">510x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">335x</span>
-<span class="cline-any cline-yes">335x</span>
+<span class="cline-any cline-yes">510x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">335x</span>
+<span class="cline-any cline-yes">510x</span>
+<span class="cline-any cline-yes">510x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">335x</span>
+<span class="cline-any cline-yes">510x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">510x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { v } from "convex/values";
 import { internalMutation } from "../_generated/server";
+import { handleDomainEvent as handleConversationEvent } from "../conversation/subscriber";
 import { handleDomainEvent as handleCustodyEvent } from "../custody/subscriber";
 import { handleDomainEvent as handleOpenLoanEvent } from "../library/openLoanOnSettlement";
 import { handleDomainEvent as handleLibraryTransferEvent } from "../library/transferOnSettlement";
 import { handleDomainEvent as handleNotificationEvent } from "../notifications/subscriber";
 &nbsp;
 // The central async dispatcher. Scheduled once per recorded domain event; it loads the row, routes
-// it to every registered ASYNC subscriber (currently only Notifications), then stamps processedAt.
+// it to every registered ASYNC subscriber (Notifications, Conversation, Custody, the Library
+// transfer + open-loan reactions), then stamps processedAt.
 //
 // Resilience: subscriber work runs in THIS mutation's transaction. If a subscriber throws, the
 // whole mutation rolls back (processedAt stays unset) and Convex retries the scheduled function —
@@ -153,6 +163,8 @@ export const dispatch = internalMutation({
     // Fan out to every async subscriber. A throw in any propagates so the scheduler retries the
     // whole mutation (see module comment); both run in this transaction.
     await handleNotificationEvent(ctx, event);
+    // Conversation opens the exchange thread + appends the lifecycle system message.
+    await handleConversationEvent(ctx, event);
     // Custody records the pre-transfer owner, so it MUST run before the library transfer reassigns it.
     await handleCustodyEvent(ctx, event);
     await handleLibraryTransferEvent(ctx, event);
@@ -169,7 +181,7 @@ export const dispatch = internalMutation({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-07-02T15:14:01.226Z
+                at 2026-07-02T15:16:40.022Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
