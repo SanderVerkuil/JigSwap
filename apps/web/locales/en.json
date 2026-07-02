@@ -2676,6 +2676,9 @@
       "empty": "No feedback yet.",
       "helpful": "Helpful",
       "notHelpful": "Not helpful"
+    },
+    "queueEmpty": {
+      "title": "All clear"
     }
   }
 }

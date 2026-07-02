@@ -1,15 +1,9 @@
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
+import { QueueEmpty } from "@/components/admin/queue-empty";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import type { Id } from "@/gateway";
 import { gateway } from "@/gateway";
@@ -31,6 +25,7 @@ export const Route = createFileRoute("/_dashboard/admin/contact")({
 // the transition are admin-gated server-side in the Convex functions.
 function ContactTriagePage() {
   const t = useTranslations("admin.contact");
+  const tAdmin = useTranslations("admin");
   const format = useFormatter();
   const messages = useQuery(gateway.adminTriage.contactMessages);
   const markHandled = useMutation(gateway.adminTriage.markContactHandled);
@@ -52,63 +47,58 @@ function ContactTriagePage() {
     return <PageLoading message={t("loading")} />;
   }
 
+  if (messages.length === 0) {
+    return <QueueEmpty title={tAdmin("queueEmpty.title")} label={t("empty")} />;
+  }
+
   return (
-    <div className="space-y-6">
-      {messages.length === 0 ? (
-        <Card>
-          <CardContent className="py-10 text-center text-muted-foreground">
-            {t("empty")}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {messages.map((message) => (
-            <Card key={message._id}>
-              <CardHeader>
-                <div className="flex items-center justify-between gap-2">
-                  <CardTitle>{message.name}</CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">
-                      {t(`subject.${message.subject}`)}
-                    </Badge>
-                    {message.status === "new" ? (
-                      <Badge variant="default">{t("statusNew")}</Badge>
-                    ) : (
-                      <Badge variant="secondary">{t("statusHandled")}</Badge>
-                    )}
-                  </div>
-                </div>
-                <CardDescription>
-                  <a href={`mailto:${message.email}`} className="underline">
-                    {message.email}
-                  </a>
-                  {" • "}
-                  {format.dateTime(new Date(message.createdAt), {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })}
-                  {message.locale && ` • ${message.locale}`}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-sm whitespace-pre-wrap">{message.message}</p>
-                {message.status === "new" && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handle(message._id)}
-                    disabled={busyId === message._id}
-                    className="flex items-center gap-1"
-                  >
-                    <Check className="h-3 w-3" />
-                    {t("markHandled")}
-                  </Button>
+    <div className="rounded-xl border bg-card">
+      {messages.map((message) => (
+        <div
+          key={message._id}
+          className="flex flex-col gap-3 border-b px-4 py-3 last:border-0"
+        >
+          <div className="space-y-1">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-semibold">{message.name}</span>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline">
+                  {t(`subject.${message.subject}`)}
+                </Badge>
+                {message.status === "new" ? (
+                  <Badge variant="default">{t("statusNew")}</Badge>
+                ) : (
+                  <Badge variant="secondary">{t("statusHandled")}</Badge>
                 )}
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              <a href={`mailto:${message.email}`} className="underline">
+                {message.email}
+              </a>
+              {" • "}
+              {format.dateTime(new Date(message.createdAt), {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}
+              {message.locale && ` • ${message.locale}`}
+            </p>
+          </div>
+          <p className="text-sm whitespace-pre-wrap">{message.message}</p>
+          {message.status === "new" && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handle(message._id)}
+              disabled={busyId === message._id}
+              className="flex items-center gap-1 self-start"
+            >
+              <Check className="h-3 w-3" />
+              {t("markHandled")}
+            </Button>
+          )}
         </div>
-      )}
+      ))}
     </div>
   );
 }

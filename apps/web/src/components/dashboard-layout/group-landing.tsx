@@ -1,6 +1,6 @@
 "use client";
 
-// Landing page for a sidebar nav group (/library, /community): a card-free
+// Landing page for a sidebar nav group (/library, /community, /admin): a card-free
 // directory of the group's surfaces as full-width rows — violet-tint icon
 // chip, title, one-line description, chevron — separated by thin dividers,
 // per the design handoff's GroupLanding. Driven entirely by the route-meta

@@ -2390,7 +2390,7 @@
       },
       "adminModeration": {
         "title": "Moderatie",
-        "subtitle": "Beoordeel inzendingen voordat ze in de openbare catalogus verschijnen.",
+        "subtitle": "Beoordeel openstaande inzendingen voordat ze in de openbare catalogus verschijnen.",
         "description": "Keur ingediende puzzels goed of af"
       },
       "adminCategories": {
@@ -2676,6 +2676,9 @@
       "empty": "Nog geen feedback.",
       "helpful": "Nuttig",
       "notHelpful": "Niet nuttig"
+    },
+    "queueEmpty": {
+      "title": "Alles afgehandeld"
     }
   }
 }

@@ -5,6 +5,7 @@
 // While a term is typed, live result groups render above the nav fallback; with an empty input the
 // palette is a pure jump-to navigator. Opened from the top-bar search pill or Cmd/Ctrl+K.
 
+import { useUser } from "@/compat/clerk";
 import { useRouter } from "@/compat/navigation";
 import {
   CommandDialog,
@@ -51,6 +52,7 @@ export function CommandPalette({
   const t = useTranslations("shell");
   const router = useRouter();
   const { isAuthenticated } = useConvexAuth();
+  const { user } = useUser();
 
   // Raw input value (drives cmdk) and the debounced term we actually search on.
   const [value, setValue] = useState("");
@@ -101,10 +103,7 @@ export function CommandPalette({
 
   // Backend-confirmed admin role — same source as the /admin route guard and
   // the sidebar's gated group; Convex dedupes the shared subscription.
-  const isAdmin = useQuery(
-    gateway.identity.isAdmin,
-    isAuthenticated ? {} : "skip",
-  );
+  const isAdmin = useQuery(gateway.identity.isAdmin, user?.id ? {} : "skip");
 
   const go = (href: string) => {
     handleOpenChange(false);
