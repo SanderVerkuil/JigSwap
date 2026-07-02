@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { CategoryDialog } from "@/components/admin/category-dialog";
 import { CategoryList, type Category } from "@/components/admin/category-list";
+import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
@@ -48,6 +49,22 @@ function CategoriesPage() {
   const nextSortOrder =
     sorted.length > 0 ? Math.max(...sorted.map((c) => c.sortOrder)) + 1 : 0;
 
+  // The Add button lives in the shell page header (desktop head + mobile
+  // actions row), like the collections page — the list keeps the full width.
+  usePageHeaderActions(
+    () => (
+      <Button
+        variant="brand"
+        size="sm"
+        onClick={() => setDialog({ mode: "create" })}
+      >
+        <Plus className="h-4 w-4" />
+        {t("add")}
+      </Button>
+    ),
+    [t],
+  );
+
   if (categories === undefined) {
     return <PageLoading message={t("loading")} />;
   }
@@ -72,15 +89,6 @@ function CategoriesPage() {
         </div>
       ) : (
         <>
-          <div className="flex justify-end">
-            <Button
-              onClick={() => setDialog({ mode: "create" })}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              {t("add")}
-            </Button>
-          </div>
           <CategoryList
             categories={sorted}
             onEdit={(category) => {
