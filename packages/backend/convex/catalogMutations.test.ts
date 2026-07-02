@@ -200,6 +200,32 @@ const submitPending = async (t: ReturnType<typeof convexTest>) => {
 };
 
 describe("catalog moderation lifecycle", () => {
+  // Authz audit: moderation is admin-only server-side; a plain member (route
+  // guards aside) must be rejected before any state transition happens.
+  test("approve rejects a non-admin member (Forbidden)", async () => {
+    const t = convexTest(schema, modules);
+    const id = await submitPending(t);
+    await expect(
+      asAlice(t).mutation(
+        api.catalog.approvePuzzleDefinition.approvePuzzleDefinition,
+        { puzzleDefinitionId: id },
+      ),
+    ).rejects.toThrow(/Forbidden/);
+    expect((await puzzleRow(t, id))?.status).toBe("pending");
+  });
+
+  test("reject rejects a non-admin member (Forbidden)", async () => {
+    const t = convexTest(schema, modules);
+    const id = await submitPending(t);
+    await expect(
+      asAlice(t).mutation(
+        api.catalog.rejectPuzzleDefinition.rejectPuzzleDefinition,
+        { puzzleDefinitionId: id },
+      ),
+    ).rejects.toThrow(/Forbidden/);
+    expect((await puzzleRow(t, id))?.status).toBe("pending");
+  });
+
   test("approve moves pending -> approved", async () => {
     const t = convexTest(schema, modules);
     const id = await submitPending(t);
@@ -305,6 +331,18 @@ describe("catalog category management", () => {
       api.catalog.createCatalogCategory.createCatalogCategory,
       { name, sortOrder },
     )) as string;
+
+  // Authz audit: taxonomy writes are admin-only server-side.
+  test("create rejects a non-admin member (Forbidden)", async () => {
+    const t = convexTest(schema, modules);
+    await seedMember(t);
+    await expect(
+      asAlice(t).mutation(
+        api.catalog.createCatalogCategory.createCatalogCategory,
+        { name: NAME, sortOrder: 0 },
+      ),
+    ).rejects.toThrow(/Forbidden/);
+  });
 
   test("create starts active with the given sortOrder", async () => {
     const t = convexTest(schema, modules);

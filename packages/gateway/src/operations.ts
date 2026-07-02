@@ -150,6 +150,9 @@ export const gateway = {
     updateProfile: api.users.updateUserProfile,
     userStats: api.identity.getUserStats.getUserStats,
     search: api.identity.searchUsers.searchUsers,
+    // Whether the acting caller is an admin (fails closed). Backs the web /admin
+    // route guard; the server-side gate on every admin function stays authoritative.
+    isAdmin: api.identity.isCurrentUserAdmin.isCurrentUserAdmin,
   },
 
   // Solving: solve tracking, puzzle reviews, goals. Ownership / 24h edit window / rating are
@@ -287,6 +290,16 @@ export const gateway = {
   // Collections. Empty/short terms and unauthenticated callers return empty groups.
   search: {
     global: api.search.globalSearch.global,
+  },
+
+  // Admin triage: the operational/support inboxes written by the public contact
+  // form and docs-feedback widget. Reads and the handled-transition are admin-only
+  // (enforced server-side in the Convex functions).
+  adminTriage: {
+    contactMessages: api.contact.listContactMessages.listContactMessages,
+    markContactHandled:
+      api.contact.markContactMessageHandled.markContactMessageHandled,
+    docFeedback: api.docs.listDocFeedback.listDocFeedback,
   },
 
   // Catalog moderation: the global, moderated category taxonomy (admin). Writes go through the
