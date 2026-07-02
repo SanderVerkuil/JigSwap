@@ -6,6 +6,7 @@ export * from "./errors";
 export * from "./events";
 export * from "./extract-puzzle-draft";
 export * from "./ids";
+export * from "./image-format";
 export * from "./is-private-ip";
 export * from "./normalize-store-url";
 export * from "./piece-count";

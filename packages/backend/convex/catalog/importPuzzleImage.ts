@@ -1,5 +1,5 @@
 "use node";
-import { isPrivateIp } from "@jigswap/domain";
+import { isPrivateIp, sniffImageType } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
 import { lookup as dnsLookup } from "node:dns/promises";
 import type { Id } from "../_generated/dataModel";
@@ -80,10 +80,6 @@ export const importPuzzleImage = action({
     if (!response.ok)
       throw new ConvexError(`Image fetch failed: ${response.status}`);
 
-    const contentType = response.headers.get("content-type") ?? "";
-    if (!ALLOWED_TYPES.some((t) => contentType.startsWith(t))) {
-      throw new ConvexError("Unsupported image type");
-    }
     const declaredLength = Number(
       response.headers.get("content-length") ?? "0",
     );
@@ -92,6 +88,17 @@ export const importPuzzleImage = action({
     const buffer = await response.arrayBuffer();
     if (buffer.byteLength > MAX_BYTES) throw new ConvexError("Image too large");
 
-    return await ctx.storage.store(new Blob([buffer], { type: contentType }));
+    // Effective type: trust an allowed content-type header; otherwise fall back to magic-byte
+    // sniffing — CDNs routinely serve real JPEGs as application/octet-stream (or nothing). The
+    // sniffer only ever yields the allowed raster formats, so a mislabeled SVG/HTML body can
+    // never smuggle through: it sniffs to null and is rejected.
+    const contentType = response.headers.get("content-type") ?? "";
+    const headerAllowed = ALLOWED_TYPES.some((t) => contentType.startsWith(t));
+    const effectiveType = headerAllowed
+      ? contentType
+      : sniffImageType(new Uint8Array(buffer));
+    if (!effectiveType) throw new ConvexError("Unsupported image type");
+
+    return await ctx.storage.store(new Blob([buffer], { type: effectiveType }));
   },
 });
