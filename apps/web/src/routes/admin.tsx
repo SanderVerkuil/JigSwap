@@ -18,20 +18,28 @@ import {
 } from "@/components/ui/sidebar";
 import { requireAdmin } from "@/lib/require-admin";
 import { Home } from "lucide-react";
+import { useTranslations } from "use-intl";
 
-// Path layout for /admin. The Next admin layout was an async server component doing
-// auth()+redirect with a TODO admin check; that becomes a beforeLoad (requireAdmin:
-// authenticated AND publicMetadata.role === "admin"). Renders the admin sidebar chrome
-// + Outlet; children are routes/admin/{index,categories,moderation}.tsx.
+// Path layout for /admin. beforeLoad (requireAdmin) requires an authenticated user AND
+// the backend-confirmed admin role (gateway.identity.isAdmin); non-admins are redirected.
+// The guard is cosmetic — every admin Convex function re-checks isAdmin server-side.
+// Renders the admin sidebar chrome + Outlet; children are
+// routes/admin/{index,categories,moderation,contact,feedback}.tsx.
 export const Route = createFileRoute("/admin")({
   beforeLoad: ({ location }) => requireAdmin({ location }),
-  pendingComponent: () => <PageLoading message="Loading admin panel..." />,
+  pendingComponent: AdminPending,
   // 404 inside /admin renders within the admin shell (this layout's Outlet).
   notFoundComponent: AdminNotFound,
   component: AdminLayout,
 });
 
+function AdminPending() {
+  const t = useTranslations("admin.layout");
+  return <PageLoading message={t("loading")} />;
+}
+
 function AdminLayout() {
+  const t = useTranslations("admin.layout");
   return (
     <div className="min-h-screen bg-background">
       <SidebarProvider>
@@ -47,7 +55,7 @@ function AdminLayout() {
                 <SidebarMenuButton asChild>
                   <Link href="/dashboard">
                     <Home />
-                    Home
+                    {t("home")}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

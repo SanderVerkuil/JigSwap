@@ -2178,6 +2178,8 @@
     "admin": "Admin — JigSwap",
     "adminCategories": "Category management — JigSwap",
     "adminModeration": "Moderation — JigSwap",
+    "adminContact": "Contact messages — JigSwap",
+    "adminFeedback": "Docs feedback — JigSwap",
     "signIn": "Sign in — JigSwap",
     "signUp": "Sign up — JigSwap",
     "library": "My Library — JigSwap",
@@ -2557,6 +2559,74 @@
       "objects": "Objects",
       "symbols": "Symbols",
       "flags": "Flags"
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Admin Dashboard",
+      "subtitle": "Manage your application settings and content.",
+      "categories": {
+        "title": "Categories",
+        "description": "Manage puzzle categories with localization support",
+        "cta": "Manage Categories"
+      },
+      "moderation": {
+        "title": "Puzzle Moderation",
+        "description": "Review and approve or reject pending puzzle submissions",
+        "cta": "Review Submissions"
+      },
+      "contact": {
+        "title": "Contact Messages",
+        "description": "Read and triage messages sent through the contact form",
+        "cta": "View Messages"
+      },
+      "docFeedback": {
+        "title": "Docs Feedback",
+        "description": "Review “Was this page helpful?” votes from the documentation",
+        "cta": "View Feedback"
+      }
+    },
+    "moderation": {
+      "title": "Puzzle Moderation",
+      "subtitle": "Review pending submissions before they appear in the public catalog.",
+      "loading": "Loading submissions…",
+      "empty": "No pending submissions.",
+      "pending": "Pending",
+      "pieces": "{count} pieces",
+      "approve": "Approve",
+      "reject": "Reject",
+      "approveSuccess": "Puzzle approved",
+      "rejectSuccess": "Puzzle rejected",
+      "error": "Failed to update submission"
+    },
+    "contact": {
+      "title": "Contact Messages",
+      "subtitle": "Messages sent through the contact form, newest first.",
+      "loading": "Loading messages…",
+      "empty": "No contact messages yet.",
+      "statusNew": "New",
+      "statusHandled": "Handled",
+      "subject": {
+        "swap": "Lending or swapping",
+        "account": "My account",
+        "idea": "Idea or feedback",
+        "other": "Something else"
+      },
+      "markHandled": "Mark as handled",
+      "markHandledSuccess": "Message marked as handled",
+      "markHandledError": "Failed to update message"
+    },
+    "docFeedback": {
+      "title": "Docs Feedback",
+      "subtitle": "“Was this page helpful?” votes from the documentation, newest first.",
+      "loading": "Loading feedback…",
+      "empty": "No feedback yet.",
+      "helpful": "Helpful",
+      "notHelpful": "Not helpful"
+    },
+    "layout": {
+      "home": "Home",
+      "loading": "Loading admin panel…"
     }
   }
 }

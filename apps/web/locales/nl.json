@@ -2178,6 +2178,8 @@
     "admin": "Beheer — JigSwap",
     "adminCategories": "Categoriebeheer — JigSwap",
     "adminModeration": "Moderatie — JigSwap",
+    "adminContact": "Contactberichten — JigSwap",
+    "adminFeedback": "Documentatiefeedback — JigSwap",
     "signIn": "Inloggen — JigSwap",
     "signUp": "Registreren — JigSwap",
     "library": "Mijn Bibliotheek — JigSwap",
@@ -2557,6 +2559,74 @@
       "objects": "Objecten",
       "symbols": "Symbolen",
       "flags": "Vlaggen"
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Beheerdersdashboard",
+      "subtitle": "Beheer je applicatie-instellingen en inhoud.",
+      "categories": {
+        "title": "Categorieën",
+        "description": "Beheer puzzelcategorieën met ondersteuning voor vertalingen",
+        "cta": "Categorieën beheren"
+      },
+      "moderation": {
+        "title": "Puzzelmoderatie",
+        "description": "Beoordeel ingediende puzzels en keur ze goed of af",
+        "cta": "Inzendingen beoordelen"
+      },
+      "contact": {
+        "title": "Contactberichten",
+        "description": "Lees en verwerk berichten die via het contactformulier zijn verstuurd",
+        "cta": "Berichten bekijken"
+      },
+      "docFeedback": {
+        "title": "Documentatiefeedback",
+        "description": "Bekijk “Was deze pagina nuttig?”-stemmen uit de documentatie",
+        "cta": "Feedback bekijken"
+      }
+    },
+    "moderation": {
+      "title": "Puzzelmoderatie",
+      "subtitle": "Beoordeel inzendingen voordat ze in de openbare catalogus verschijnen.",
+      "loading": "Inzendingen laden…",
+      "empty": "Geen openstaande inzendingen.",
+      "pending": "In afwachting",
+      "pieces": "{count} stukjes",
+      "approve": "Goedkeuren",
+      "reject": "Afkeuren",
+      "approveSuccess": "Puzzel goedgekeurd",
+      "rejectSuccess": "Puzzel afgekeurd",
+      "error": "Inzending bijwerken mislukt"
+    },
+    "contact": {
+      "title": "Contactberichten",
+      "subtitle": "Berichten die via het contactformulier zijn verstuurd, nieuwste eerst.",
+      "loading": "Berichten laden…",
+      "empty": "Nog geen contactberichten.",
+      "statusNew": "Nieuw",
+      "statusHandled": "Afgehandeld",
+      "subject": {
+        "swap": "Lenen of ruilen",
+        "account": "Mijn account",
+        "idea": "Idee of feedback",
+        "other": "Iets anders"
+      },
+      "markHandled": "Markeren als afgehandeld",
+      "markHandledSuccess": "Bericht gemarkeerd als afgehandeld",
+      "markHandledError": "Bericht bijwerken mislukt"
+    },
+    "docFeedback": {
+      "title": "Documentatiefeedback",
+      "subtitle": "“Was deze pagina nuttig?”-stemmen uit de documentatie, nieuwste eerst.",
+      "loading": "Feedback laden…",
+      "empty": "Nog geen feedback.",
+      "helpful": "Nuttig",
+      "notHelpful": "Niet nuttig"
+    },
+    "layout": {
+      "home": "Home",
+      "loading": "Beheerpaneel laden…"
     }
   }
 }

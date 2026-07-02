@@ -16,6 +16,7 @@ import { useMutation, useQuery } from "convex/react";
 import { Check, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/admin/moderation")({
   head: ({ match }) => ({
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/admin/moderation")({
 // Minimal moderation queue: list pending puzzle submissions with approve/reject, wired to the
 // domain-driven catalog mutations. Submissions become public only once approved.
 function ModerationPage() {
+  const t = useTranslations("admin.moderation");
   const pending = useQuery(gateway.catalog.pending);
   const approve = useMutation(gateway.catalog.approve);
   const reject = useMutation(gateway.catalog.reject);
@@ -43,34 +45,30 @@ function ModerationPage() {
       const run = action === "approve" ? approve : reject;
       await run({ puzzleDefinitionId: aggregateId });
       toast.success(
-        action === "approve" ? "Puzzle approved" : "Puzzle rejected",
+        action === "approve" ? t("approveSuccess") : t("rejectSuccess"),
       );
     } catch {
-      toast.error("Failed to update submission");
+      toast.error(t("error"));
     } finally {
       setBusyId(null);
     }
   };
 
   if (pending === undefined) {
-    return <PageLoading message="Loading submissions..." />;
+    return <PageLoading message={t("loading")} />;
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">
-          Puzzle Moderation
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Review pending submissions before they appear in the public catalog.
-        </p>
+        <h1 className="text-3xl font-bold text-foreground">{t("title")}</h1>
+        <p className="text-muted-foreground mt-2">{t("subtitle")}</p>
       </div>
 
       {pending.length === 0 ? (
         <Card>
           <CardContent className="py-10 text-center text-muted-foreground">
-            No pending submissions.
+            {t("empty")}
           </CardContent>
         </Card>
       ) : (
@@ -80,11 +78,11 @@ function ModerationPage() {
               <CardHeader>
                 <div className="flex items-center justify-between gap-2">
                   <CardTitle>{puzzle.title}</CardTitle>
-                  <Badge variant="secondary">Pending</Badge>
+                  <Badge variant="secondary">{t("pending")}</Badge>
                 </div>
                 <CardDescription>
                   {puzzle.brand && `${puzzle.brand} • `}
-                  {puzzle.pieceCount} pieces
+                  {t("pieces", { count: puzzle.pieceCount })}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -111,7 +109,7 @@ function ModerationPage() {
                     className="flex items-center gap-1"
                   >
                     <Check className="h-3 w-3" />
-                    Approve
+                    {t("approve")}
                   </Button>
                   <Button
                     size="sm"
@@ -120,10 +118,10 @@ function ModerationPage() {
                     disabled={
                       !puzzle.aggregateId || busyId === puzzle.aggregateId
                     }
-                    className="flex items-center gap-1 text-red-600 hover:text-red-700"
+                    className="flex items-center gap-1 text-destructive hover:text-destructive"
                   >
                     <X className="h-3 w-3" />
-                    Reject
+                    {t("reject")}
                   </Button>
                 </div>
               </CardContent>
