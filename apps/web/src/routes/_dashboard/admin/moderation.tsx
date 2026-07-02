@@ -18,7 +18,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
-export const Route = createFileRoute("/admin/moderation")({
+export const Route = createFileRoute("/_dashboard/admin/moderation")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "adminModeration") }],
   }),
@@ -60,11 +60,6 @@ function ModerationPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">{t("title")}</h1>
-        <p className="text-muted-foreground mt-2">{t("subtitle")}</p>
-      </div>
-
       {pending.length === 0 ? (
         <Card>
           <CardContent className="py-10 text-center text-muted-foreground">

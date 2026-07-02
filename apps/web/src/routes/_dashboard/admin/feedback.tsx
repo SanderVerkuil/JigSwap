@@ -15,7 +15,7 @@ import { useQuery } from "convex/react";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 import { useFormatter, useTranslations } from "use-intl";
 
-export const Route = createFileRoute("/admin/feedback")({
+export const Route = createFileRoute("/_dashboard/admin/feedback")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "adminFeedback") }],
   }),
@@ -35,11 +35,6 @@ function DocFeedbackPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">{t("title")}</h1>
-        <p className="text-muted-foreground mt-2">{t("subtitle")}</p>
-      </div>
-
       {feedback.length === 0 ? (
         <Card>
           <CardContent className="py-10 text-center text-muted-foreground">

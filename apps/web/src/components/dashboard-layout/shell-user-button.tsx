@@ -6,12 +6,14 @@
 // inside Clerk's profile modal. Shared by the desktop sidebar footer and the mobile
 // top bar so both open the same menu instead of hard-navigating to /profile.
 
-import { UserButton } from "@/compat/clerk";
+import { UserButton, useUser } from "@/compat/clerk";
 import { NotificationPreferencesPanel } from "@/components/notifications/notification-preferences-panel";
 import { Switch } from "@/components/ui/switch";
+import { gateway } from "@/gateway";
 import { useUserSettings } from "@/hooks/use-user-settings";
 import { cn } from "@/lib/utils";
-import { Bell, SlidersHorizontal, User } from "lucide-react";
+import { useQuery } from "convex/react";
+import { Bell, Shield, SlidersHorizontal, User } from "lucide-react";
 import { useTranslations } from "use-intl";
 import { useShellPreferences } from "./preferences";
 
@@ -24,6 +26,12 @@ export function ShellUserButton({
   tapTarget?: boolean;
 }) {
   const t = useTranslations("shell");
+  const { user } = useUser();
+
+  // Backend-confirmed admin role — same source as the /admin route guard and
+  // the sidebar's gated group; Convex dedupes the shared subscription. This
+  // menu item is the mobile path to /admin (no admin tab in the tab bar).
+  const isAdmin = useQuery(gateway.identity.isAdmin, user?.id ? {} : "skip");
 
   return (
     <UserButton
@@ -48,6 +56,13 @@ export function ShellUserButton({
           labelIcon={<User className="size-4" />}
           href="/profile"
         />
+        {isAdmin && (
+          <UserButton.Link
+            label={t("user.admin")}
+            labelIcon={<Shield className="size-4" />}
+            href="/admin"
+          />
+        )}
         <UserButton.Action label="manageAccount" />
         <UserButton.Action label="signOut" />
       </UserButton.MenuItems>

@@ -28,8 +28,7 @@
     "message": "De pagina die je probeert te openen is mogelijk verplaatst, verwijderd, of je hebt een verkeerde URL ingevoerd.",
     "backToHome": "Terug naar Home",
     "browsePuzzles": "Puzzels Bladeren",
-    "backToDashboard": "Terug naar dashboard",
-    "backToAdmin": "Terug naar beheer"
+    "backToDashboard": "Terug naar dashboard"
   },
   "navigation": {
     "home": "Home",
@@ -2272,6 +2271,10 @@
       "community": {
         "label": "Community",
         "blurb": "Ontdek, ruil en maak contact."
+      },
+      "admin": {
+        "label": "Beheer",
+        "blurb": "Modereer en beheer JigSwap."
       }
     },
     "pages": {
@@ -2379,6 +2382,31 @@
       "notificationPreferences": {
         "title": "Meldingsvoorkeuren",
         "subtitle": "Kies hoe je over elk soort activiteit wilt horen."
+      },
+      "admin": {
+        "title": "Beheer",
+        "subtitle": "Modereer en beheer JigSwap.",
+        "description": "Moderatie, categorieën, contact en documentatiefeedback"
+      },
+      "adminModeration": {
+        "title": "Moderatie",
+        "subtitle": "Beoordeel inzendingen voordat ze in de openbare catalogus verschijnen.",
+        "description": "Keur ingediende puzzels goed of af"
+      },
+      "adminCategories": {
+        "title": "Categorieën",
+        "subtitle": "Beheer puzzelcategorieën met ondersteuning voor vertalingen.",
+        "description": "Beheer vertaalde puzzelcategorieën"
+      },
+      "adminContact": {
+        "title": "Contact",
+        "subtitle": "Berichten die via het contactformulier zijn verstuurd, nieuwste eerst.",
+        "description": "Verwerk berichten uit het contactformulier"
+      },
+      "adminFeedback": {
+        "title": "Feedback",
+        "subtitle": "“Was deze pagina nuttig?”-stemmen uit de documentatie, nieuwste eerst.",
+        "description": "Bekijk stemmen over de documentatie"
       }
     },
     "user": {
@@ -2617,33 +2645,7 @@
     }
   },
   "admin": {
-    "dashboard": {
-      "title": "Beheerdersdashboard",
-      "subtitle": "Beheer je applicatie-instellingen en inhoud.",
-      "categories": {
-        "title": "Categorieën",
-        "description": "Beheer puzzelcategorieën met ondersteuning voor vertalingen",
-        "cta": "Categorieën beheren"
-      },
-      "moderation": {
-        "title": "Puzzelmoderatie",
-        "description": "Beoordeel ingediende puzzels en keur ze goed of af",
-        "cta": "Inzendingen beoordelen"
-      },
-      "contact": {
-        "title": "Contactberichten",
-        "description": "Lees en verwerk berichten die via het contactformulier zijn verstuurd",
-        "cta": "Berichten bekijken"
-      },
-      "docFeedback": {
-        "title": "Documentatiefeedback",
-        "description": "Bekijk “Was deze pagina nuttig?”-stemmen uit de documentatie",
-        "cta": "Feedback bekijken"
-      }
-    },
     "moderation": {
-      "title": "Puzzelmoderatie",
-      "subtitle": "Beoordeel inzendingen voordat ze in de openbare catalogus verschijnen.",
       "loading": "Inzendingen laden…",
       "empty": "Geen openstaande inzendingen.",
       "pending": "In afwachting",
@@ -2655,8 +2657,6 @@
       "error": "Inzending bijwerken mislukt"
     },
     "contact": {
-      "title": "Contactberichten",
-      "subtitle": "Berichten die via het contactformulier zijn verstuurd, nieuwste eerst.",
       "loading": "Berichten laden…",
       "empty": "Nog geen contactberichten.",
       "statusNew": "Nieuw",
@@ -2672,16 +2672,10 @@
       "markHandledError": "Bericht bijwerken mislukt"
     },
     "docFeedback": {
-      "title": "Documentatiefeedback",
-      "subtitle": "“Was deze pagina nuttig?”-stemmen uit de documentatie, nieuwste eerst.",
       "loading": "Feedback laden…",
       "empty": "Nog geen feedback.",
       "helpful": "Nuttig",
       "notHelpful": "Niet nuttig"
-    },
-    "layout": {
-      "home": "Home",
-      "loading": "Beheerpaneel laden…"
     }
   }
 }

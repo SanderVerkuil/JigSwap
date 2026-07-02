@@ -3,8 +3,10 @@
 // Grouped navigation sidebar. It sits transparently on the tinted chrome
 // surface below the global top bar — no brand lockup (that lives in the top
 // bar) and no border walls. Group labels are small uppercase mono labels
-// that link to their landing pages (/library, /community).
+// that link to their landing pages (/library, /community, /admin — the admin
+// group renders only for backend-confirmed admins).
 
+import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
@@ -19,17 +21,27 @@ import {
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
 import { useTranslations } from "use-intl";
-import { DASHBOARD_ITEM, NAV_GROUPS, type ShellNavItem } from "./route-meta";
+import {
+  ADMIN_GROUP,
+  DASHBOARD_ITEM,
+  NAV_GROUPS,
+  type ShellNavGroup,
+  type ShellNavItem,
+} from "./route-meta";
 import { UserFooter } from "./user-footer";
 
 export function AppSidebar() {
-  const t = useTranslations("shell");
-  const pathname = usePathname();
+  const { user } = useUser();
+
+  // Backend-confirmed admin role — the same source the /admin route guard uses,
+  // so the nav and the routes can't diverge. Convex dedupes the subscription.
+  const isAdmin = useQuery(gateway.identity.isAdmin, user?.id ? {} : "skip");
 
   return (
     <Sidebar
@@ -44,35 +56,48 @@ export function AppSidebar() {
             <NavLink item={DASHBOARD_ITEM} />
           </SidebarMenu>
         </SidebarGroup>
-        {NAV_GROUPS.map((group) => {
-          const groupActive = pathname === group.href;
-          return (
-            <SidebarGroup key={group.key}>
-              <SidebarGroupLabel asChild>
-                <Link
-                  href={group.href}
-                  className={cn(
-                    "font-mono text-[10px] font-medium tracking-[0.09em] uppercase transition-colors hover:text-sidebar-accent-foreground",
-                    groupActive && "text-sidebar-accent-foreground",
-                  )}
-                >
-                  {t(`groups.${group.key}.label`)}
-                </Link>
-              </SidebarGroupLabel>
-              <SidebarMenu>
-                {group.items.map((item) => (
-                  <NavLink key={item.key} item={item} />
-                ))}
-              </SidebarMenu>
-            </SidebarGroup>
-          );
-        })}
+        {NAV_GROUPS.map((group) => (
+          <NavGroup key={group.key} group={group} />
+        ))}
+        {isAdmin && (
+          <>
+            <SidebarSeparator />
+            <NavGroup group={ADMIN_GROUP} />
+          </>
+        )}
       </SidebarContent>
 
       <SidebarFooter>
         <UserFooter />
       </SidebarFooter>
     </Sidebar>
+  );
+}
+
+function NavGroup({ group }: { group: ShellNavGroup }) {
+  const t = useTranslations("shell");
+  const pathname = usePathname();
+  const groupActive = pathname === group.href;
+
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel asChild>
+        <Link
+          href={group.href}
+          className={cn(
+            "font-mono text-[10px] font-medium tracking-[0.09em] uppercase transition-colors hover:text-sidebar-accent-foreground",
+            groupActive && "text-sidebar-accent-foreground",
+          )}
+        >
+          {t(`groups.${group.key}.label`)}
+        </Link>
+      </SidebarGroupLabel>
+      <SidebarMenu>
+        {group.items.map((item) => (
+          <NavLink key={item.key} item={item} />
+        ))}
+      </SidebarMenu>
+    </SidebarGroup>
   );
 }
 

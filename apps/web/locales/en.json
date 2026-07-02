@@ -28,8 +28,7 @@
     "message": "The page you're trying to access might have been moved, deleted, or you entered the wrong URL.",
     "backToHome": "Back to Home",
     "browsePuzzles": "Browse Puzzles",
-    "backToDashboard": "Back to Dashboard",
-    "backToAdmin": "Back to Admin"
+    "backToDashboard": "Back to Dashboard"
   },
   "navigation": {
     "home": "Home",
@@ -2272,6 +2271,10 @@
       "community": {
         "label": "Community",
         "blurb": "Discover, swap and connect."
+      },
+      "admin": {
+        "label": "Admin",
+        "blurb": "Moderate and manage JigSwap."
       }
     },
     "pages": {
@@ -2379,6 +2382,31 @@
       "notificationPreferences": {
         "title": "Notification preferences",
         "subtitle": "Choose how you want to hear about each kind of activity."
+      },
+      "admin": {
+        "title": "Admin",
+        "subtitle": "Moderate and manage JigSwap.",
+        "description": "Moderation, categories, contact and docs feedback"
+      },
+      "adminModeration": {
+        "title": "Moderation",
+        "subtitle": "Review pending submissions before they appear in the public catalog.",
+        "description": "Approve or reject pending puzzle submissions"
+      },
+      "adminCategories": {
+        "title": "Categories",
+        "subtitle": "Manage puzzle categories with localization support.",
+        "description": "Manage localized puzzle categories"
+      },
+      "adminContact": {
+        "title": "Contact",
+        "subtitle": "Messages sent through the contact form, newest first.",
+        "description": "Triage messages from the contact form"
+      },
+      "adminFeedback": {
+        "title": "Feedback",
+        "subtitle": "“Was this page helpful?” votes from the documentation, newest first.",
+        "description": "Review docs helpfulness votes"
       }
     },
     "user": {
@@ -2617,33 +2645,7 @@
     }
   },
   "admin": {
-    "dashboard": {
-      "title": "Admin Dashboard",
-      "subtitle": "Manage your application settings and content.",
-      "categories": {
-        "title": "Categories",
-        "description": "Manage puzzle categories with localization support",
-        "cta": "Manage Categories"
-      },
-      "moderation": {
-        "title": "Puzzle Moderation",
-        "description": "Review and approve or reject pending puzzle submissions",
-        "cta": "Review Submissions"
-      },
-      "contact": {
-        "title": "Contact Messages",
-        "description": "Read and triage messages sent through the contact form",
-        "cta": "View Messages"
-      },
-      "docFeedback": {
-        "title": "Docs Feedback",
-        "description": "Review “Was this page helpful?” votes from the documentation",
-        "cta": "View Feedback"
-      }
-    },
     "moderation": {
-      "title": "Puzzle Moderation",
-      "subtitle": "Review pending submissions before they appear in the public catalog.",
       "loading": "Loading submissions…",
       "empty": "No pending submissions.",
       "pending": "Pending",
@@ -2655,8 +2657,6 @@
       "error": "Failed to update submission"
     },
     "contact": {
-      "title": "Contact Messages",
-      "subtitle": "Messages sent through the contact form, newest first.",
       "loading": "Loading messages…",
       "empty": "No contact messages yet.",
       "statusNew": "New",
@@ -2672,16 +2672,10 @@
       "markHandledError": "Failed to update message"
     },
     "docFeedback": {
-      "title": "Docs Feedback",
-      "subtitle": "“Was this page helpful?” votes from the documentation, newest first.",
       "loading": "Loading feedback…",
       "empty": "No feedback yet.",
       "helpful": "Helpful",
       "notHelpful": "Not helpful"
-    },
-    "layout": {
-      "home": "Home",
-      "loading": "Loading admin panel…"
     }
   }
 }

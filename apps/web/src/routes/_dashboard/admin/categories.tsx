@@ -22,7 +22,7 @@ import { Edit, Plus, Save, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/admin/categories")({
+export const Route = createFileRoute("/_dashboard/admin/categories")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "adminCategories") }],
   }),
@@ -173,13 +173,7 @@ function CategoriesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Categories</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage puzzle categories with localization support
-          </p>
-        </div>
+      <div className="flex justify-end">
         <Button
           onClick={() => setIsCreating(true)}
           className="flex items-center gap-2"

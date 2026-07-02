@@ -15,18 +15,23 @@ import {
   BookOpen,
   CircleCheck,
   FolderOpen,
+  Gavel,
   Globe,
   LayoutDashboard,
   type LucideIcon,
+  Mail,
   MessageSquare,
   Puzzle,
   Search,
   Shapes,
+  Shield,
+  Tags,
   Target,
+  ThumbsUp,
   Users,
 } from "lucide-react";
 
-export type ShellGroupKey = "library" | "community";
+export type ShellGroupKey = "library" | "community" | "admin";
 
 export type ShellNavItem = {
   /** i18n key under `shell.pages.*` (title/subtitle/description). */
@@ -82,9 +87,28 @@ export const NAV_GROUPS: ShellNavGroup[] = [
   },
 ];
 
+// The admin group is deliberately NOT in NAV_GROUPS: nothing renders it
+// unconditionally. The sidebar and command palette render it only when the
+// backend confirms the caller's admin role (gateway.identity.isAdmin).
+export const ADMIN_GROUP: ShellNavGroup = {
+  key: "admin",
+  href: "/admin",
+  icon: Shield,
+  items: [
+    { key: "adminModeration", href: "/admin/moderation", icon: Gavel },
+    { key: "adminCategories", href: "/admin/categories", icon: Tags },
+    { key: "adminContact", href: "/admin/contact", icon: Mail },
+    { key: "adminFeedback", href: "/admin/feedback", icon: ThumbsUp },
+  ],
+};
+
 export function getNavGroup(key: ShellGroupKey): ShellNavGroup {
-  // Both keys are statically present in NAV_GROUPS.
-  return NAV_GROUPS.find((group) => group.key === key) as ShellNavGroup;
+  const group = [...NAV_GROUPS, ADMIN_GROUP].find((g) => g.key === key);
+  if (!group) {
+    // Unreachable: every ShellGroupKey has exactly one group defined above.
+    throw new Error(`Unknown nav group: ${key}`);
+  }
+  return group;
 }
 
 export type ShellRouteMeta = {
@@ -136,6 +160,13 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   "/trades": { pageKey: "exchanges", group: "community" },
   "/messages": { pageKey: "messages", group: "community" },
   "/people": { pageKey: "people", group: "community" },
+
+  // Admin (gated: the group renders only for backend-confirmed admins).
+  "/admin": { pageKey: "admin", variant: "landing" },
+  "/admin/moderation": { pageKey: "adminModeration", group: "admin" },
+  "/admin/categories": { pageKey: "adminCategories", group: "admin" },
+  "/admin/contact": { pageKey: "adminContact", group: "admin" },
+  "/admin/feedback": { pageKey: "adminFeedback", group: "admin" },
 
   // Routes removed from the nav but still alive.
   "/borrowed": { pageKey: "borrowed", group: "library" },
