@@ -762,7 +762,6 @@
       "displayNamePlaceholder": "Your display name",
       "bio": "Bio",
       "bioPlaceholder": "Tell other members about yourself",
-      "notSetUp": "You have not set up a public profile yet.",
       "emptyNameError": "Display name cannot be empty",
       "saved": "Profile saved",
       "saveError": "Could not save profile"

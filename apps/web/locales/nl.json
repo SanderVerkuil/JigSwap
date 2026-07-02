@@ -762,7 +762,6 @@
       "displayNamePlaceholder": "Je weergavenaam",
       "bio": "Bio",
       "bioPlaceholder": "Vertel andere leden iets over jezelf",
-      "notSetUp": "Je hebt nog geen openbaar profiel ingesteld.",
       "emptyNameError": "Weergavenaam mag niet leeg zijn",
       "saved": "Profiel opgeslagen",
       "saveError": "Kon profiel niet opslaan"
