@@ -11,9 +11,21 @@ import {
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { BellOff, BellRing, Smartphone } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
+
+// A subscribe that never fires: with `useSyncExternalStore` this yields the client snapshot on the
+// first client render and the server snapshot during SSR — the canonical hydration-safe way to read
+// browser-only values without a mount effect.
+const emptySubscribe = () => () => {};
+
+// Snapshot of the browser's notification permission. Re-read on every render (the store never
+// pushes), so it refreshes whenever something else re-renders the component — e.g. the enable
+// mutation settling after `Notification.requestPermission()` resolves.
+const getPermissionSnapshot = (): NotificationPermission | null =>
+  typeof Notification !== "undefined" ? Notification.permission : null;
+const getServerPermissionSnapshot = () => null;
 
 // Per-device Web Push control: a browser subscription is global to this device, separate from the
 // per-type push preference toggles (which decide WHICH notifications go to push). This card-free
@@ -31,11 +43,18 @@ export function PushDeviceSection() {
 
   // `mounted` defers all browser-only reads (pushSupported, Notification.permission, the existing
   // subscription) to the client, so the server render and first client render agree (no hydration
-  // mismatch) and we never touch `Notification`/`navigator` during SSR.
-  const [mounted, setMounted] = useState(false);
+  // mismatch) and we never touch `Notification`/`navigator` during SSR. false during SSR/hydration,
+  // true from the first client render after.
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
   const [endpoint, setEndpoint] = useState<string | null>(null);
-  const [permission, setPermission] = useState<NotificationPermission | null>(
-    null,
+  const permission = useSyncExternalStore(
+    emptySubscribe,
+    getPermissionSnapshot,
+    getServerPermissionSnapshot,
   );
   const supported = mounted && pushSupported();
 
@@ -48,11 +67,9 @@ export function PushDeviceSection() {
       .catch(() => setEndpoint(null));
   };
 
+  // Seed the endpoint from the browser's actual subscription once, on the client.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- pre-existing mount/hydration sync; surfaced once this component became compiler-analyzable
-    setMounted(true);
     if (!pushSupported()) return;
-    setPermission(Notification.permission);
     currentSubscriptionEndpoint()
       .then(setEndpoint)
       .catch(() => {});
@@ -62,8 +79,9 @@ export function PushDeviceSection() {
   // runs as one mutationFn so isPending spans the entire sequence natively (busy-state rule v2).
   const enableDevice = useMutation({
     mutationFn: async () => {
+      // `permission` (the useSyncExternalStore snapshot above) picks the new value up on the
+      // re-render this mutation triggers when it settles — no manual setState needed.
       const perm = await Notification.requestPermission();
-      setPermission(perm);
       if (perm !== "granted") return;
       const key = pushConfig?.vapidPublicKey;
       if (!key) return;

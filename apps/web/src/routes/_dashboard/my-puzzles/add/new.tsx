@@ -46,7 +46,7 @@ import {
 } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
@@ -144,19 +144,28 @@ function AddPuzzlePage() {
     ),
   );
 
-  useEffect(() => {
-    if (!puzzleIdFromUrl || !specificPuzzle) return;
-    // Only pre-fill once (when selectedDefinitionId is still null)
-    if (selectedDefinitionId) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- pre-existing pre-fill sync; surfaced once this component became compiler-analyzable
-    setSelectedDefinitionId(specificPuzzle.aggregateId ?? null);
-    setForm((f) => ({
-      ...f,
-      title: specificPuzzle.title,
-      brand: specificPuzzle.brand ?? "",
-      pieceCount: specificPuzzle.pieceCount,
-    }));
-  }, [puzzleIdFromUrl, specificPuzzle, selectedDefinitionId]);
+  // Pre-fill from the loaded definition using the derive-state-during-render pattern: track the
+  // previously seen puzzle (keyed by id, not object identity — the query may re-emit new objects)
+  // and seed the selection + form fields during the render where it first appears. Only pre-fill
+  // while nothing is selected yet, matching the old once-only effect.
+  const specificPuzzleKey = specificPuzzle
+    ? (specificPuzzle.aggregateId ?? specificPuzzle._id)
+    : null;
+  const [prevSpecificPuzzleKey, setPrevSpecificPuzzleKey] = useState<
+    string | null
+  >(null);
+  if (specificPuzzleKey !== prevSpecificPuzzleKey) {
+    setPrevSpecificPuzzleKey(specificPuzzleKey);
+    if (puzzleIdFromUrl && specificPuzzle && !selectedDefinitionId) {
+      setSelectedDefinitionId(specificPuzzle.aggregateId ?? null);
+      setForm((f) => ({
+        ...f,
+        title: specificPuzzle.title,
+        brand: specificPuzzle.brand ?? "",
+        pieceCount: specificPuzzle.pieceCount,
+      }));
+    }
+  }
 
   // "Copy mode": the form is acquiring a copy of an existing catalogue
   // definition reached via ?puzzleId. We hide the import + definition-editing
@@ -166,20 +175,18 @@ function AddPuzzlePage() {
   const isCopyMode = !!puzzleIdFromUrl;
   const copyLoading = isCopyMode && specificPuzzle === undefined;
 
-  // Object URL for the cover file preview — create and revoke in one effect
-  const [coverFileUrl, setCoverFileUrl] = useState<string | undefined>(
-    undefined,
+  // Object URL for the cover file preview — derived from the file; the effect only revokes the
+  // previous URL when the file changes (or on unmount), so no setState runs inside an effect.
+  const coverFileUrl = useMemo(
+    () => (form.coverFile ? URL.createObjectURL(form.coverFile) : undefined),
+    [form.coverFile],
   );
-  useEffect(() => {
-    if (!form.coverFile) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- pre-existing object-URL lifecycle; surfaced once this component became compiler-analyzable
-      setCoverFileUrl(undefined);
-      return;
-    }
-    const url = URL.createObjectURL(form.coverFile);
-    setCoverFileUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [form.coverFile]);
+  useEffect(
+    () => () => {
+      if (coverFileUrl) URL.revokeObjectURL(coverFileUrl);
+    },
+    [coverFileUrl],
+  );
 
   // The photo URL used for the live preview: uploaded file takes priority, else selected import
   const previewPhotoUrl =

@@ -37,7 +37,7 @@ import { gateway, Id } from "@/gateway";
 import { useConvexAction, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
@@ -107,20 +107,18 @@ function ContributePuzzlePage() {
   );
   const importImage = useConvexAction(gateway.catalog.importPuzzleImage);
 
-  // Object URL for the cover file preview — create and revoke in one effect
-  const [coverFileUrl, setCoverFileUrl] = useState<string | undefined>(
-    undefined,
+  // Object URL for the cover file preview — derived from the file; the effect only revokes the
+  // previous URL when the file changes (or on unmount), so no setState runs inside an effect.
+  const coverFileUrl = useMemo(
+    () => (form.coverFile ? URL.createObjectURL(form.coverFile) : undefined),
+    [form.coverFile],
   );
-  useEffect(() => {
-    if (!form.coverFile) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- pre-existing object-URL lifecycle; surfaced once this component became compiler-analyzable
-      setCoverFileUrl(undefined);
-      return;
-    }
-    const url = URL.createObjectURL(form.coverFile);
-    setCoverFileUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [form.coverFile]);
+  useEffect(
+    () => () => {
+      if (coverFileUrl) URL.revokeObjectURL(coverFileUrl);
+    },
+    [coverFileUrl],
+  );
 
   // The preview shows the photo only when mode is "photo"
   const previewPhotoUrl =
