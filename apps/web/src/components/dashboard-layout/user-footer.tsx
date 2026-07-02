@@ -9,16 +9,12 @@
 //
 // The shell preferences (content width, hide email) live INSIDE Clerk's own
 // profile UI as a custom <UserButton.UserProfilePage> ("Preferences"), persisted
-// to the Clerk user (see preferences.tsx). Admin users get a Shield badge that
-// deep-links to /admin.
+// to the Clerk user (see preferences.tsx). Admins reach /admin via the gated
+// sidebar group and the user menu's Admin link (shell-user-button.tsx).
 
 import { useUser } from "@/compat/clerk";
-import { Link } from "@/compat/link";
-import { CheckRole } from "@/components/utils/check-role/server";
 import { cn } from "@/lib/utils";
-import { Shield } from "lucide-react";
 import { useRef } from "react";
-import { useTranslations } from "use-intl";
 import { useShellPreferences } from "./preferences";
 import { ShellUserButton } from "./shell-user-button";
 
@@ -84,26 +80,6 @@ export function UserFooter() {
           {email}
         </span>
       </button>
-      <AdminBadge />
     </div>
-  );
-}
-
-// Admin-only quick link to /admin. Non-admins render nothing here (CheckRole
-// gates on the Clerk session's publicMetadata.role).
-function AdminBadge() {
-  const t = useTranslations("shell.user");
-
-  return (
-    <CheckRole role="admin">
-      <Link
-        href="/admin"
-        aria-label={t("admin")}
-        title={t("admin")}
-        className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground group-data-[collapsible=icon]:hidden"
-      >
-        <Shield className="size-4" />
-      </Link>
-    </CheckRole>
   );
 }

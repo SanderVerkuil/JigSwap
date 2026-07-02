@@ -8,6 +8,11 @@
  * @module
  */
 
+import type * as admin_confirmPhotoRemoval from "../admin/confirmPhotoRemoval.js";
+import type * as admin_getModerationActivity from "../admin/getModerationActivity.js";
+import type * as admin_getModerationStats from "../admin/getModerationStats.js";
+import type * as admin_listRejectedPhotos from "../admin/listRejectedPhotos.js";
+import type * as admin_restorePhoto from "../admin/restorePhoto.js";
 import type * as adminCategories from "../adminCategories.js";
 import type * as catalog_adapters_assertPublicUrl from "../catalog/adapters/assertPublicUrl.js";
 import type * as catalog_adapters_browserStorePageFetcher from "../catalog/adapters/browserStorePageFetcher.js";
@@ -22,6 +27,7 @@ import type * as catalog_adapters_ogieRawProductPage from "../catalog/adapters/o
 import type * as catalog_adapters_ogieStorePageFetcher from "../catalog/adapters/ogieStorePageFetcher.js";
 import type * as catalog_adapters_systemClock from "../catalog/adapters/systemClock.js";
 import type * as catalog_approvePuzzleDefinition from "../catalog/approvePuzzleDefinition.js";
+import type * as catalog_backfillCategories from "../catalog/backfillCategories.js";
 import type * as catalog_createCatalogCategory from "../catalog/createCatalogCategory.js";
 import type * as catalog_errors from "../catalog/errors.js";
 import type * as catalog_extractFromUrl from "../catalog/extractFromUrl.js";
@@ -284,6 +290,11 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "admin/confirmPhotoRemoval": typeof admin_confirmPhotoRemoval;
+  "admin/getModerationActivity": typeof admin_getModerationActivity;
+  "admin/getModerationStats": typeof admin_getModerationStats;
+  "admin/listRejectedPhotos": typeof admin_listRejectedPhotos;
+  "admin/restorePhoto": typeof admin_restorePhoto;
   adminCategories: typeof adminCategories;
   "catalog/adapters/assertPublicUrl": typeof catalog_adapters_assertPublicUrl;
   "catalog/adapters/browserStorePageFetcher": typeof catalog_adapters_browserStorePageFetcher;
@@ -298,6 +309,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/adapters/ogieStorePageFetcher": typeof catalog_adapters_ogieStorePageFetcher;
   "catalog/adapters/systemClock": typeof catalog_adapters_systemClock;
   "catalog/approvePuzzleDefinition": typeof catalog_approvePuzzleDefinition;
+  "catalog/backfillCategories": typeof catalog_backfillCategories;
   "catalog/createCatalogCategory": typeof catalog_createCatalogCategory;
   "catalog/errors": typeof catalog_errors;
   "catalog/extractFromUrl": typeof catalog_extractFromUrl;

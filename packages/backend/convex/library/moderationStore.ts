@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
+import { stampModerationAction } from "../admin/stampModerationAction";
 
 // DB-facing helpers for the moderatePhoto Node action. A Node action (`"use node"`) has no direct
 // `ctx.db` access, so it reads/writes the `ownedPuzzleImages` row through these internal functions.
@@ -56,5 +57,23 @@ export const setModerationVerdict = internalMutation({
       moderationLabel: args.moderationLabel,
       updatedAt: Date.now(),
     });
+    // Audit trail: this is the single place the pipeline writes "rejected", so the automated
+    // decision is stamped here (no actorId = system). Only on the transition INTO rejected, so a
+    // re-run cannot double-stamp. The label is the puzzle title via the copy's cached snapshot
+    // (falling back to the puzzle row, then the image id).
+    if (
+      args.moderationStatus === "rejected" &&
+      row.moderationStatus !== "rejected"
+    ) {
+      const copy = await ctx.db.get(row.ownedPuzzleId);
+      const title =
+        copy?.snapshot?.title ??
+        (copy ? (await ctx.db.get(copy.puzzleId))?.title : undefined);
+      await stampModerationAction(ctx, {
+        kind: "photo_auto_rejected",
+        targetLabel: title ?? args.imageId,
+        targetId: args.imageId,
+      });
+    }
   },
 });

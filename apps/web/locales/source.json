@@ -28,8 +28,7 @@
     "message": "The page you're trying to access might have been moved, deleted, or you entered the wrong URL.",
     "backToHome": "Back to Home",
     "browsePuzzles": "Browse Puzzles",
-    "backToDashboard": "Back to Dashboard",
-    "backToAdmin": "Back to Admin"
+    "backToDashboard": "Back to Dashboard"
   },
   "navigation": {
     "home": "Home",
@@ -763,7 +762,6 @@
       "displayNamePlaceholder": "Your display name",
       "bio": "Bio",
       "bioPlaceholder": "Tell other members about yourself",
-      "notSetUp": "You have not set up a public profile yet.",
       "emptyNameError": "Display name cannot be empty",
       "saved": "Profile saved",
       "saveError": "Could not save profile"
@@ -1453,6 +1451,7 @@
       "puzzle_favorited": "Puzzle favorited",
       "puzzle_approved": "Puzzle approved",
       "puzzle_rejected": "Puzzle rejected",
+      "photo_removed": "Photo removed",
       "goal_achieved": "Goal achieved"
     },
     "copy": {
@@ -1504,6 +1503,10 @@
         "title": "Puzzle rejected",
         "message": "Your puzzle submission was rejected."
       },
+      "photo_removed": {
+        "title": "Photo removed",
+        "message": "One of your puzzle photos was removed by a moderator."
+      },
       "goal_achieved": {
         "title": "Goal achieved",
         "message": "You reached one of your goals!"
@@ -1535,6 +1538,7 @@
       "puzzle_favorited": "When someone favourites a puzzle you added.",
       "puzzle_approved": "When a puzzle you submitted is approved for the catalogue.",
       "puzzle_rejected": "When a puzzle you submitted is rejected.",
+      "photo_removed": "When a moderator removes one of your puzzle photos.",
       "goal_achieved": "When you reach a solving goal."
     },
     "pushServiceUnreachable": "Your browser couldn't reach its push service. Some privacy browsers block or remove it — Brave disables it by default (enable 'Use Google services for push messaging' in Settings), and de-Googled Chromium builds like Helium strip it out. Firefox, Chrome, or Edge will work."
@@ -1881,6 +1885,15 @@
     "file-upload": {
       "error": "Error compressing image. Please select a different file.",
       "compressing": "Compressing..."
+    },
+    "translatable-field": {
+      "toggleLabel": "Language for {field}",
+      "locales": {
+        "en": "English",
+        "nl": "Dutch"
+      },
+      "translated": "Translated",
+      "missing": "Missing translation"
     }
   },
   "custody": {
@@ -2272,6 +2285,10 @@
       "community": {
         "label": "Community",
         "blurb": "Discover, swap and connect."
+      },
+      "admin": {
+        "label": "Admin",
+        "blurb": "Moderate and manage JigSwap."
       }
     },
     "pages": {
@@ -2361,7 +2378,8 @@
       },
       "puzzles": {
         "title": "Puzzles catalogue",
-        "subtitle": "The shared puzzle catalogue."
+        "subtitle": "The shared puzzle catalogue.",
+        "description": "The shared puzzle catalogue"
       },
       "borrowed": {
         "title": "Borrowed",
@@ -2378,6 +2396,31 @@
       "notificationPreferences": {
         "title": "Notification preferences",
         "subtitle": "Choose how you want to hear about each kind of activity."
+      },
+      "admin": {
+        "title": "Admin",
+        "subtitle": "Moderate and manage JigSwap.",
+        "description": "Moderation, categories, contact and docs feedback"
+      },
+      "adminModeration": {
+        "title": "Moderation",
+        "subtitle": "Review pending submissions before they appear in the public catalog.",
+        "description": "Approve or reject pending puzzle submissions"
+      },
+      "adminCategories": {
+        "title": "Categories",
+        "subtitle": "Manage puzzle categories with localization support.",
+        "description": "Manage localized puzzle categories"
+      },
+      "adminContact": {
+        "title": "Contact",
+        "subtitle": "Messages sent through the contact form, newest first.",
+        "description": "Triage messages from the contact form"
+      },
+      "adminFeedback": {
+        "title": "Feedback",
+        "subtitle": "“Was this page helpful?” votes from the documentation, newest first.",
+        "description": "Review docs helpfulness votes"
       }
     },
     "user": {
@@ -2616,46 +2659,81 @@
     }
   },
   "admin": {
-    "dashboard": {
-      "title": "Admin Dashboard",
-      "subtitle": "Manage your application settings and content.",
-      "categories": {
-        "title": "Categories",
-        "description": "Manage puzzle categories with localization support",
-        "cta": "Manage Categories"
-      },
-      "moderation": {
-        "title": "Puzzle Moderation",
-        "description": "Review and approve or reject pending puzzle submissions",
-        "cta": "Review Submissions"
-      },
-      "contact": {
-        "title": "Contact Messages",
-        "description": "Read and triage messages sent through the contact form",
-        "cta": "View Messages"
-      },
-      "docFeedback": {
-        "title": "Docs Feedback",
-        "description": "Review “Was this page helpful?” votes from the documentation",
-        "cta": "View Feedback"
-      }
-    },
     "moderation": {
-      "title": "Puzzle Moderation",
-      "subtitle": "Review pending submissions before they appear in the public catalog.",
       "loading": "Loading submissions…",
       "empty": "No pending submissions.",
-      "pending": "Pending",
       "pieces": "{count} pieces",
-      "approve": "Approve",
       "reject": "Reject",
-      "approveSuccess": "Puzzle approved",
-      "rejectSuccess": "Puzzle rejected",
-      "error": "Failed to update submission"
+      "error": "Failed to update submission",
+      "toast": {
+        "approved": "Approved “{title}” — {count} left in queue.",
+        "edited": "Approved (edited) “{title}” — {count} left in queue.",
+        "rejected": "Rejected “{title}” — {count} left in queue.",
+        "removed": "Removed image on “{title}” — {count} left in queue.",
+        "restored": "Restored photo on “{title}” — {count} left in queue."
+      },
+      "banner": {
+        "pill": "ADMIN",
+        "subtitle": "Moderation console"
+      },
+      "kpis": {
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "flagsCleared": "Flags cleared",
+        "avgReview": "Avg. review time",
+        "thisWeek": "this week"
+      },
+      "tabs": {
+        "submissions": "Submissions",
+        "flagged": "Flagged Images",
+        "activity": "Activity Log"
+      },
+      "detail": {
+        "submitted": "Submitted",
+        "difficulty": "Difficulty",
+        "note": "Submitter note"
+      },
+      "dupWarning": "Possible duplicate of <strong>{title}</strong> already in the catalog. Review before approving.",
+      "actions": {
+        "approve": "Approve & Publish",
+        "edit": "Edit & Approve"
+      },
+      "editDialog": {
+        "title": "Edit & Approve",
+        "description": "Fix the submission's details, then save to approve and publish it in one step.",
+        "save": "Save & Approve"
+      },
+      "flag": {
+        "loading": "Loading flagged images…",
+        "unlabeled": "Flagged image",
+        "reveal": "Hover or tap to reveal flagged image",
+        "severity": {
+          "high": "High severity",
+          "medium": "Medium severity",
+          "low": "Low severity"
+        },
+        "onPuzzle": "On puzzle",
+        "uploadedBy": "Uploaded by",
+        "label": "Label",
+        "score": "Score",
+        "confirm": "Confirm Removal",
+        "confirmArm": "Are you sure?",
+        "restore": "Restore Photo"
+      },
+      "flaggedEmpty": "No flagged images. The community's happy.",
+      "activity": {
+        "loading": "Loading activity…",
+        "system": "System",
+        "definition_approved": "<strong>{actor}</strong> approved <strong>{target}</strong>",
+        "definition_edited_approved": "<strong>{actor}</strong> edited & approved <strong>{target}</strong>",
+        "definition_rejected": "<strong>{actor}</strong> rejected <strong>{target}</strong>",
+        "photo_removal_confirmed": "<strong>{actor}</strong> removed a photo on <strong>{target}</strong>",
+        "photo_auto_rejected": "<strong>{actor}</strong> auto-flagged a photo on <strong>{target}</strong>",
+        "photo_restored": "<strong>{actor}</strong> restored a photo on <strong>{target}</strong>"
+      },
+      "activityEmpty": "No moderation activity yet."
     },
     "contact": {
-      "title": "Contact Messages",
-      "subtitle": "Messages sent through the contact form, newest first.",
       "loading": "Loading messages…",
       "empty": "No contact messages yet.",
       "statusNew": "New",
@@ -2671,16 +2749,54 @@
       "markHandledError": "Failed to update message"
     },
     "docFeedback": {
-      "title": "Docs Feedback",
-      "subtitle": "“Was this page helpful?” votes from the documentation, newest first.",
       "loading": "Loading feedback…",
       "empty": "No feedback yet.",
       "helpful": "Helpful",
       "notHelpful": "Not helpful"
     },
-    "layout": {
-      "home": "Home",
-      "loading": "Loading admin panel…"
+    "categories": {
+      "loading": "Loading categories…",
+      "add": "Add Category",
+      "empty": {
+        "title": "No categories yet",
+        "description": "Create the first category to organize the catalog."
+      },
+      "form": {
+        "createTitle": "Create New Category",
+        "createDescription": "Add a new category to the catalog. It becomes active immediately.",
+        "editTitle": "Edit Category",
+        "editDescription": "Update the names, descriptions, and color of this category.",
+        "name": "Name",
+        "description": "Description",
+        "nameRequired": "Name is required",
+        "color": "Color",
+        "colorAuto": "Auto",
+        "colorAutoHint": "Color follows the English name until you pick one manually",
+        "create": "Create",
+        "update": "Update",
+        "createSuccess": "Category created successfully",
+        "updateSuccess": "Category updated successfully",
+        "saveError": "Failed to save category"
+      },
+      "list": {
+        "statusInactive": "Inactive",
+        "translationTooltip": "{language}: “{value}”",
+        "missingTranslationTooltip": "{language}: missing translation",
+        "edit": "Edit",
+        "deactivate": "Deactivate",
+        "deactivateConfirmTitle": "Deactivate “{name}”?",
+        "deactivateConfirmBody": "The category is hidden from members but not deleted; existing puzzles keep it. You can reactivate it from this list at any time.",
+        "deactivateSuccess": "Category deactivated successfully",
+        "deactivateError": "Failed to deactivate category",
+        "reactivate": "Reactivate",
+        "reactivateSuccess": "Category reactivated successfully",
+        "reactivateError": "Failed to reactivate category",
+        "reorderError": "Failed to reorder categories",
+        "dragHandle": "Drag to reorder {name}"
+      }
+    },
+    "queueEmpty": {
+      "title": "All clear"
     }
   }
 }

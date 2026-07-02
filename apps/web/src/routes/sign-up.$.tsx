@@ -15,8 +15,11 @@ function SignUpPage() {
   return (
     <div className="flex items-center justify-center bg-background min-h-svh">
       <div className="w-full max-w-md">
+        {/* Explicit redirect_url query params (set by lib/require-auth.ts) still
+            win; this only changes the no-param fallback from / to /dashboard. */}
         <SignUp
           appearance={{ elements: { rootBox: "mx-auto", card: "shadow-lg" } }}
+          fallbackRedirectUrl="/dashboard"
         />
       </div>
     </div>

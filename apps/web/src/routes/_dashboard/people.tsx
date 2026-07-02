@@ -9,7 +9,7 @@ import {
   MemberTile,
   MemberTileSkeleton,
 } from "@/components/social/member-tile";
-import { ProfileEditor } from "@/components/social/profile-editor";
+import { ProfileEditDialog } from "@/components/social/profile-edit-dialog";
 import { gateway, Id } from "@/gateway";
 import { useQuery } from "convex/react";
 import { Bell } from "lucide-react";
@@ -24,8 +24,9 @@ export const Route = createFileRoute("/_dashboard/people")({
 
 // People (the Community social hub): the members in your network — everyone
 // you follow plus everyone following you, deduplicated — as a grid of member
-// tiles, then the activity feed of you + the people you follow, with your
-// public profile editor alongside. The page title renders in the shell head.
+// tiles, then the full-width activity feed of you + the people you follow,
+// with a profile-edit dialog trigger beside the activity heading. The page
+// title renders in the shell head.
 function PeoplePage() {
   const t = useTranslations("people");
 
@@ -87,15 +88,14 @@ function PeoplePage() {
         )}
       </section>
 
-      <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
-        <section className="lg:col-span-2">
-          <SectionHead title={t("activity")} icon={Bell} />
-          <ActivityFeed />
-        </section>
-        <div>
-          <ProfileEditor />
-        </div>
-      </div>
+      <section>
+        <SectionHead
+          title={t("activity")}
+          icon={Bell}
+          action={<ProfileEditDialog />}
+        />
+        <ActivityFeed />
+      </section>
     </div>
   );
 }

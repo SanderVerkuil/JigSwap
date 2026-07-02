@@ -13,7 +13,7 @@ import type { ReactNode } from "react";
 import { useTranslations } from "use-intl";
 
 // The shared 404 card — chrome-free. TanStack renders a route's notFoundComponent
-// inside that route's layout <Outlet />, so each context (marketing / app / admin)
+// inside that route's layout <Outlet />, so each context (marketing / app)
 // supplies its own shell around this; only the action row differs per context.
 export function NotFoundContent({ actions }: { actions?: ReactNode }) {
   const t = useTranslations("notFound");
@@ -62,7 +62,8 @@ export function NotFound() {
 }
 
 // App 404 — rendered inside the dashboard shell (the _dashboard layout's Outlet),
-// so it needs no chrome of its own; just app-appropriate actions.
+// so it needs no chrome of its own; just app-appropriate actions. Covers the
+// /admin subtree too, which lives inside the same shell.
 export function AppNotFound() {
   const t = useTranslations("notFound");
   return (
@@ -76,20 +77,6 @@ export function AppNotFound() {
             <Link href="/browse">{t("browsePuzzles")}</Link>
           </Button>
         </>
-      }
-    />
-  );
-}
-
-// Admin 404 — rendered inside the admin shell's Outlet.
-export function AdminNotFound() {
-  const t = useTranslations("notFound");
-  return (
-    <NotFoundContent
-      actions={
-        <Button asChild>
-          <Link href="/admin">{t("backToAdmin")}</Link>
-        </Button>
       }
     />
   );

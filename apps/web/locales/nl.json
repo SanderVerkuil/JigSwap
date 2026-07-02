@@ -28,8 +28,7 @@
     "message": "De pagina die je probeert te openen is mogelijk verplaatst, verwijderd, of je hebt een verkeerde URL ingevoerd.",
     "backToHome": "Terug naar Home",
     "browsePuzzles": "Puzzels Bladeren",
-    "backToDashboard": "Terug naar dashboard",
-    "backToAdmin": "Terug naar beheer"
+    "backToDashboard": "Terug naar dashboard"
   },
   "navigation": {
     "home": "Home",
@@ -763,7 +762,6 @@
       "displayNamePlaceholder": "Je weergavenaam",
       "bio": "Bio",
       "bioPlaceholder": "Vertel andere leden iets over jezelf",
-      "notSetUp": "Je hebt nog geen openbaar profiel ingesteld.",
       "emptyNameError": "Weergavenaam mag niet leeg zijn",
       "saved": "Profiel opgeslagen",
       "saveError": "Kon profiel niet opslaan"
@@ -1453,6 +1451,7 @@
       "puzzle_favorited": "Puzzel favoriet gemaakt",
       "puzzle_approved": "Puzzel goedgekeurd",
       "puzzle_rejected": "Puzzel afgewezen",
+      "photo_removed": "Foto verwijderd",
       "goal_achieved": "Doel behaald"
     },
     "copy": {
@@ -1504,6 +1503,10 @@
         "title": "Puzzel afgewezen",
         "message": "Je puzzelinzending is afgewezen."
       },
+      "photo_removed": {
+        "title": "Foto verwijderd",
+        "message": "Een van je puzzelfoto's is door een moderator verwijderd."
+      },
       "goal_achieved": {
         "title": "Doel behaald",
         "message": "Je hebt een van je doelen bereikt!"
@@ -1535,6 +1538,7 @@
       "puzzle_favorited": "Wanneer iemand een puzzel die je hebt toegevoegd als favoriet markeert.",
       "puzzle_approved": "Wanneer een puzzel die je hebt ingediend is goedgekeurd voor de catalogus.",
       "puzzle_rejected": "Wanneer een puzzel die je hebt ingediend is afgewezen.",
+      "photo_removed": "Wanneer een moderator een van je puzzelfoto's verwijdert.",
       "goal_achieved": "Wanneer je een puzzeldoel behaalt."
     },
     "pushServiceUnreachable": "Je browser kon zijn pushdienst niet bereiken. Sommige privacybrowsers blokkeren of verwijderen die — Brave schakelt het standaard uit (zet 'Google-services voor pushberichten gebruiken' aan in Instellingen), en de-Googled Chromium-browsers zoals Helium verwijderen het. Firefox, Chrome of Edge werkt wel."
@@ -1881,6 +1885,15 @@
     "file-upload": {
       "error": "Fout bij comprimeren van afbeelding. Selecteer een ander bestand.",
       "compressing": "Comprimeren..."
+    },
+    "translatable-field": {
+      "toggleLabel": "Taal voor {field}",
+      "locales": {
+        "en": "Engels",
+        "nl": "Nederlands"
+      },
+      "translated": "Vertaald",
+      "missing": "Vertaling ontbreekt"
     }
   },
   "custody": {
@@ -2272,6 +2285,10 @@
       "community": {
         "label": "Community",
         "blurb": "Ontdek, ruil en maak contact."
+      },
+      "admin": {
+        "label": "Beheer",
+        "blurb": "Modereer en beheer JigSwap."
       }
     },
     "pages": {
@@ -2361,7 +2378,8 @@
       },
       "puzzles": {
         "title": "Puzzelcatalogus",
-        "subtitle": "De gedeelde puzzelcatalogus."
+        "subtitle": "De gedeelde puzzelcatalogus.",
+        "description": "De gedeelde puzzelcatalogus"
       },
       "borrowed": {
         "title": "Geleend",
@@ -2378,6 +2396,31 @@
       "notificationPreferences": {
         "title": "Meldingsvoorkeuren",
         "subtitle": "Kies hoe je over elk soort activiteit wilt horen."
+      },
+      "admin": {
+        "title": "Beheer",
+        "subtitle": "Modereer en beheer JigSwap.",
+        "description": "Moderatie, categorieën, contact en documentatiefeedback"
+      },
+      "adminModeration": {
+        "title": "Moderatie",
+        "subtitle": "Beoordeel openstaande inzendingen voordat ze in de openbare catalogus verschijnen.",
+        "description": "Keur ingediende puzzels goed of af"
+      },
+      "adminCategories": {
+        "title": "Categorieën",
+        "subtitle": "Beheer puzzelcategorieën met ondersteuning voor vertalingen.",
+        "description": "Beheer vertaalde puzzelcategorieën"
+      },
+      "adminContact": {
+        "title": "Contact",
+        "subtitle": "Berichten die via het contactformulier zijn verstuurd, nieuwste eerst.",
+        "description": "Verwerk berichten uit het contactformulier"
+      },
+      "adminFeedback": {
+        "title": "Feedback",
+        "subtitle": "“Was deze pagina nuttig?”-stemmen uit de documentatie, nieuwste eerst.",
+        "description": "Bekijk stemmen over de documentatie"
       }
     },
     "user": {
@@ -2616,46 +2659,81 @@
     }
   },
   "admin": {
-    "dashboard": {
-      "title": "Beheerdersdashboard",
-      "subtitle": "Beheer je applicatie-instellingen en inhoud.",
-      "categories": {
-        "title": "Categorieën",
-        "description": "Beheer puzzelcategorieën met ondersteuning voor vertalingen",
-        "cta": "Categorieën beheren"
-      },
-      "moderation": {
-        "title": "Puzzelmoderatie",
-        "description": "Beoordeel ingediende puzzels en keur ze goed of af",
-        "cta": "Inzendingen beoordelen"
-      },
-      "contact": {
-        "title": "Contactberichten",
-        "description": "Lees en verwerk berichten die via het contactformulier zijn verstuurd",
-        "cta": "Berichten bekijken"
-      },
-      "docFeedback": {
-        "title": "Documentatiefeedback",
-        "description": "Bekijk “Was deze pagina nuttig?”-stemmen uit de documentatie",
-        "cta": "Feedback bekijken"
-      }
-    },
     "moderation": {
-      "title": "Puzzelmoderatie",
-      "subtitle": "Beoordeel inzendingen voordat ze in de openbare catalogus verschijnen.",
       "loading": "Inzendingen laden…",
       "empty": "Geen openstaande inzendingen.",
-      "pending": "In afwachting",
       "pieces": "{count} stukjes",
-      "approve": "Goedkeuren",
       "reject": "Afkeuren",
-      "approveSuccess": "Puzzel goedgekeurd",
-      "rejectSuccess": "Puzzel afgekeurd",
-      "error": "Inzending bijwerken mislukt"
+      "error": "Inzending bijwerken mislukt",
+      "toast": {
+        "approved": "“{title}” goedgekeurd — nog {count} in de wachtrij.",
+        "edited": "“{title}” goedgekeurd (bewerkt) — nog {count} in de wachtrij.",
+        "rejected": "“{title}” afgewezen — nog {count} in de wachtrij.",
+        "removed": "Afbeelding verwijderd bij “{title}” — nog {count} in de wachtrij.",
+        "restored": "Foto hersteld bij “{title}” — nog {count} in de wachtrij."
+      },
+      "banner": {
+        "pill": "ADMIN",
+        "subtitle": "Moderatieconsole"
+      },
+      "kpis": {
+        "approved": "Goedgekeurd",
+        "rejected": "Afgekeurd",
+        "flagsCleared": "Meldingen afgehandeld",
+        "avgReview": "Gem. beoordelingstijd",
+        "thisWeek": "deze week"
+      },
+      "tabs": {
+        "submissions": "Inzendingen",
+        "flagged": "Gemarkeerde afbeeldingen",
+        "activity": "Activiteitenlog"
+      },
+      "detail": {
+        "submitted": "Ingezonden",
+        "difficulty": "Moeilijkheid",
+        "note": "Notitie van inzender"
+      },
+      "dupWarning": "Mogelijk duplicaat van <strong>{title}</strong> dat al in de catalogus staat. Controleer voor het goedkeuren.",
+      "actions": {
+        "approve": "Goedkeuren & publiceren",
+        "edit": "Bewerken & goedkeuren"
+      },
+      "editDialog": {
+        "title": "Bewerken & goedkeuren",
+        "description": "Corrigeer de gegevens van de inzending en sla op om deze in één stap goed te keuren en te publiceren.",
+        "save": "Opslaan & goedkeuren"
+      },
+      "flag": {
+        "loading": "Gemarkeerde afbeeldingen laden…",
+        "unlabeled": "Gemarkeerde afbeelding",
+        "reveal": "Beweeg eroverheen of tik om de gemarkeerde afbeelding te tonen",
+        "severity": {
+          "high": "Hoge ernst",
+          "medium": "Gemiddelde ernst",
+          "low": "Lage ernst"
+        },
+        "onPuzzle": "Op puzzel",
+        "uploadedBy": "Geüpload door",
+        "label": "Label",
+        "score": "Score",
+        "confirm": "Verwijdering bevestigen",
+        "confirmArm": "Weet je het zeker?",
+        "restore": "Foto herstellen"
+      },
+      "flaggedEmpty": "Geen gemarkeerde afbeeldingen. De community is tevreden.",
+      "activity": {
+        "loading": "Activiteit laden…",
+        "system": "Systeem",
+        "definition_approved": "<strong>{actor}</strong> keurde <strong>{target}</strong> goed",
+        "definition_edited_approved": "<strong>{actor}</strong> bewerkte en keurde <strong>{target}</strong> goed",
+        "definition_rejected": "<strong>{actor}</strong> wees <strong>{target}</strong> af",
+        "photo_removal_confirmed": "<strong>{actor}</strong> verwijderde een foto bij <strong>{target}</strong>",
+        "photo_auto_rejected": "<strong>{actor}</strong> markeerde automatisch een foto bij <strong>{target}</strong>",
+        "photo_restored": "<strong>{actor}</strong> herstelde een foto bij <strong>{target}</strong>"
+      },
+      "activityEmpty": "Nog geen moderatieactiviteit."
     },
     "contact": {
-      "title": "Contactberichten",
-      "subtitle": "Berichten die via het contactformulier zijn verstuurd, nieuwste eerst.",
       "loading": "Berichten laden…",
       "empty": "Nog geen contactberichten.",
       "statusNew": "Nieuw",
@@ -2671,16 +2749,54 @@
       "markHandledError": "Bericht bijwerken mislukt"
     },
     "docFeedback": {
-      "title": "Documentatiefeedback",
-      "subtitle": "“Was deze pagina nuttig?”-stemmen uit de documentatie, nieuwste eerst.",
       "loading": "Feedback laden…",
       "empty": "Nog geen feedback.",
       "helpful": "Nuttig",
       "notHelpful": "Niet nuttig"
     },
-    "layout": {
-      "home": "Home",
-      "loading": "Beheerpaneel laden…"
+    "categories": {
+      "loading": "Categorieën laden…",
+      "add": "Categorie toevoegen",
+      "empty": {
+        "title": "Nog geen categorieën",
+        "description": "Maak de eerste categorie aan om de catalogus te ordenen."
+      },
+      "form": {
+        "createTitle": "Nieuwe categorie aanmaken",
+        "createDescription": "Voeg een nieuwe categorie toe aan de catalogus. Ze is direct actief.",
+        "editTitle": "Categorie bewerken",
+        "editDescription": "Werk de namen, beschrijvingen en kleur van deze categorie bij.",
+        "name": "Naam",
+        "description": "Beschrijving",
+        "nameRequired": "Naam is verplicht",
+        "color": "Kleur",
+        "colorAuto": "Auto",
+        "colorAutoHint": "De kleur volgt de Engelse naam totdat je zelf een kleur kiest",
+        "create": "Aanmaken",
+        "update": "Bijwerken",
+        "createSuccess": "Categorie aangemaakt",
+        "updateSuccess": "Categorie bijgewerkt",
+        "saveError": "Categorie opslaan mislukt"
+      },
+      "list": {
+        "statusInactive": "Inactief",
+        "translationTooltip": "{language}: “{value}”",
+        "missingTranslationTooltip": "{language}: vertaling ontbreekt",
+        "edit": "Bewerken",
+        "deactivate": "Deactiveren",
+        "deactivateConfirmTitle": "“{name}” deactiveren?",
+        "deactivateConfirmBody": "De categorie wordt verborgen voor leden, maar niet verwijderd; bestaande puzzels behouden haar. Je kunt haar op elk moment vanuit deze lijst reactiveren.",
+        "deactivateSuccess": "Categorie gedeactiveerd",
+        "deactivateError": "Categorie deactiveren mislukt",
+        "reactivate": "Reactiveren",
+        "reactivateSuccess": "Categorie gereactiveerd",
+        "reactivateError": "Categorie reactiveren mislukt",
+        "reorderError": "Categorieën herordenen mislukt",
+        "dragHandle": "Sleep om {name} te herordenen"
+      }
+    },
+    "queueEmpty": {
+      "title": "Alles afgehandeld"
     }
   }
 }

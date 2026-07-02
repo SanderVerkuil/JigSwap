@@ -15,6 +15,7 @@ describe("NOTIFICATION_TYPES", () => {
       "goal_achieved",
       "puzzle_approved",
       "puzzle_rejected",
+      "photo_removed",
       "exchange_proposed",
       "exchange_disputed",
     ]);

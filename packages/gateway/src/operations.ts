@@ -309,6 +309,18 @@ export const gateway = {
     global: api.search.globalSearch.global,
   },
 
+  // Moderation console: KPI/activity read models over the moderationActions audit
+  // trail plus the flagged-photo review queue (auto-rejected copy photos an admin
+  // restores or confirms). Every function is admin-gated server-side.
+  admin: {
+    getModerationStats: api.admin.getModerationStats.getModerationStats,
+    getModerationActivity:
+      api.admin.getModerationActivity.getModerationActivity,
+    listRejectedPhotos: api.admin.listRejectedPhotos.listRejectedPhotos,
+    restorePhoto: api.admin.restorePhoto.restorePhoto,
+    confirmPhotoRemoval: api.admin.confirmPhotoRemoval.confirmPhotoRemoval,
+  },
+
   // Admin triage: the operational/support inboxes written by the public contact
   // form and docs-feedback widget. Reads and the handled-transition are admin-only
   // (enforced server-side in the Convex functions).

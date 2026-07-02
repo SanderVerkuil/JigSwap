@@ -5,6 +5,7 @@
 // While a term is typed, live result groups render above the nav fallback; with an empty input the
 // palette is a pure jump-to navigator. Opened from the top-bar search pill or Cmd/Ctrl+K.
 
+import { useUser } from "@/compat/clerk";
 import { useRouter } from "@/compat/navigation";
 import {
   CommandDialog,
@@ -28,7 +29,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslations } from "use-intl";
-import { DASHBOARD_ITEM, NAV_GROUPS } from "./route-meta";
+import { ADMIN_GROUP, DASHBOARD_ITEM, NAV_GROUPS } from "./route-meta";
 
 const QUICK_ACTIONS = [
   { key: "addAPuzzle", href: "/my-puzzles/add", icon: Plus },
@@ -51,6 +52,7 @@ export function CommandPalette({
   const t = useTranslations("shell");
   const router = useRouter();
   const { isAuthenticated } = useConvexAuth();
+  const { user } = useUser();
 
   // Raw input value (drives cmdk) and the debounced term we actually search on.
   const [value, setValue] = useState("");
@@ -99,15 +101,20 @@ export function CommandPalette({
       results.collections.length
     : 0;
 
+  // Backend-confirmed admin role — same source as the /admin route guard and
+  // the sidebar's gated group; Convex dedupes the shared subscription.
+  const isAdmin = useQuery(gateway.identity.isAdmin, user?.id ? {} : "skip");
+
   const go = (href: string) => {
     handleOpenChange(false);
     router.push(href);
   };
 
-  // Group landings included so every destination in the IA is reachable.
+  // Group landings included so every destination in the IA is reachable. The
+  // admin group's destinations appear only for admins.
   const destinations = [
     DASHBOARD_ITEM,
-    ...NAV_GROUPS.flatMap((group) => [
+    ...[...NAV_GROUPS, ...(isAdmin ? [ADMIN_GROUP] : [])].flatMap((group) => [
       { key: group.key, href: group.href, icon: group.icon },
       ...group.items,
     ]),
