@@ -454,6 +454,8 @@
       "updated": "Bijgewerkt",
       "actions": "Acties",
       "addToFavorites": "Toevoegen aan Favorieten",
+      "removeFromFavorites": "Verwijderen uit Favorieten",
+      "favoritesOnly": "Favorieten",
       "notFound": "Puzzel niet gevonden"
     },
     "filters": {

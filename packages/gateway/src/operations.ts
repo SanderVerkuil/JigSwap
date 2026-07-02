@@ -30,6 +30,12 @@ export const gateway = {
     // a copy of a puzzle they contributed before it is approved.
     myContributedPuzzles:
       api.catalog.listMyContributedPuzzles.listMyContributedPuzzles,
+    // Favorites: the member's own hearts on catalog definitions. The member is derived from auth
+    // server-side; toggleFavorite flips the state, myFavoritePuzzleIds is the batch isFavorite
+    // read (one subscription drives every heart), listMyFavorites returns summary DTOs for cards.
+    toggleFavorite: api.catalog.toggleFavorite.toggleFavorite,
+    myFavoritePuzzleIds: api.catalog.myFavoritePuzzleIds.myFavoritePuzzleIds,
+    listMyFavorites: api.catalog.listMyFavorites.listMyFavorites,
     allBrands: api.catalog.getAllBrands.getAllBrands,
     allTags: api.catalog.getAllTags.getAllTags,
     puzzleCategories: api.catalog.getPuzzleCategories.getPuzzleCategories,
