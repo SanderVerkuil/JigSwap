@@ -192,4 +192,241 @@ describe("photo pipeline stamps", () => {
 
     expect(await allActions(t)).toHaveLength(0);
   });
+
+  test("a rejected→rejected re-run stamps nothing new", async () => {
+    const t = convexTest(schema, modules);
+    const imageId = await seedPendingPhoto(t);
+
+    await t.mutation(internal.library.moderationStore.setModerationVerdict, {
+      imageId,
+      moderationStatus: "rejected",
+      moderationScore: 0.97,
+      moderationLabel: "nsfw",
+    });
+    // Retry of the pipeline: the row is already rejected, so the guard must skip the stamp.
+    await t.mutation(internal.library.moderationStore.setModerationVerdict, {
+      imageId,
+      moderationStatus: "rejected",
+      moderationScore: 0.98,
+      moderationLabel: "nsfw",
+    });
+
+    const actions = await allActions(t);
+    expect(actions).toHaveLength(1);
+    expect(actions[0].kind).toBe("photo_auto_rejected");
+  });
+});
+
+// Seed one moderationActions row directly with a controlled timestamp.
+const seedAction = (
+  t: ReturnType<typeof convexTest>,
+  action: {
+    kind:
+      | "definition_approved"
+      | "definition_rejected"
+      | "definition_edited_approved"
+      | "photo_restored"
+      | "photo_removal_confirmed"
+      | "photo_auto_rejected";
+    at: number;
+    actorId?: Awaited<ReturnType<typeof seedMember>>;
+    targetLabel?: string;
+    targetId?: string;
+  },
+) =>
+  t.run((ctx) =>
+    ctx.db.insert("moderationActions", {
+      kind: action.kind,
+      targetLabel: action.targetLabel ?? "Some Puzzle",
+      targetId: action.targetId ?? "target-1",
+      at: action.at,
+      ...(action.actorId ? { actorId: action.actorId } : {}),
+    }),
+  );
+
+describe("getModerationStats", () => {
+  test("buckets this week's decisions and excludes rows older than 7 days", async () => {
+    const t = convexTest(schema, modules);
+    await seedMember(t);
+    const now = Date.now();
+    await seedAction(t, { kind: "definition_approved", at: now - 1000 });
+    await seedAction(t, { kind: "definition_edited_approved", at: now - 2000 });
+    await seedAction(t, { kind: "definition_rejected", at: now - 3000 });
+    await seedAction(t, { kind: "photo_removal_confirmed", at: now - 4000 });
+    await seedAction(t, { kind: "photo_auto_rejected", at: now - 5000 });
+    // 8 days old: outside the week window, excluded from every count.
+    await seedAction(t, {
+      kind: "definition_approved",
+      at: now - 8 * 24 * 3600 * 1000,
+    });
+
+    const stats = await asAdmin(t).query(
+      api.admin.getModerationStats.getModerationStats,
+      {},
+    );
+    expect(stats).toMatchObject({
+      approved: 2,
+      rejected: 1,
+      flagsCleared: 2,
+    });
+    // The definition rows' targetIds resolve to no puzzle, so avg has no samples.
+    expect(stats.avgReviewMins).toBeNull();
+  });
+
+  test("avgReviewMins is the rounded mean of decision-time minus submission-time", async () => {
+    const t = convexTest(schema, modules);
+    const alice = await seedMember(t);
+    const now = Date.now();
+    const decidedAt = now - 60_000;
+    await t.run(async (ctx) => {
+      await ctx.db.insert("puzzles", {
+        aggregateId: "agg-a",
+        title: "Puzzle A",
+        pieceCount: 500,
+        status: "approved",
+        submittedBy: alice,
+        createdAt: decidedAt - 10 * 60_000, // reviewed after 10 minutes
+        updatedAt: now,
+      });
+      await ctx.db.insert("puzzles", {
+        aggregateId: "agg-b",
+        title: "Puzzle B",
+        pieceCount: 500,
+        status: "rejected",
+        submittedBy: alice,
+        createdAt: decidedAt - 21 * 60_000, // reviewed after 21 minutes
+        updatedAt: now,
+      });
+    });
+    await seedAction(t, {
+      kind: "definition_approved",
+      at: decidedAt,
+      targetId: "agg-a",
+    });
+    await seedAction(t, {
+      kind: "definition_rejected",
+      at: decidedAt,
+      targetId: "agg-b",
+    });
+
+    const stats = await asAdmin(t).query(
+      api.admin.getModerationStats.getModerationStats,
+      {},
+    );
+    expect(stats.avgReviewMins).toBe(16); // round((10 + 21) / 2) = round(15.5)
+  });
+
+  test("avgReviewMins is null when no definition decisions happened this week", async () => {
+    const t = convexTest(schema, modules);
+    await seedMember(t);
+    await seedAction(t, {
+      kind: "photo_auto_rejected",
+      at: Date.now() - 1000,
+    });
+
+    const stats = await asAdmin(t).query(
+      api.admin.getModerationStats.getModerationStats,
+      {},
+    );
+    expect(stats.avgReviewMins).toBeNull();
+    expect(stats.flagsCleared).toBe(1);
+  });
+});
+
+describe("getModerationActivity", () => {
+  test("returns newest-first with the actor's display name joined in", async () => {
+    const t = convexTest(schema, modules);
+    const alice = await seedMember(t);
+    const now = Date.now();
+    await seedAction(t, {
+      kind: "definition_approved",
+      at: now - 3000,
+      actorId: alice,
+      targetLabel: "Older",
+      targetId: "t-old",
+    });
+    await seedAction(t, {
+      kind: "photo_auto_rejected",
+      at: now - 1000,
+      targetLabel: "Newer",
+      targetId: "t-new",
+    });
+
+    const rows = await asAdmin(t).query(
+      api.admin.getModerationActivity.getModerationActivity,
+      {},
+    );
+    expect(rows).toEqual([
+      {
+        kind: "photo_auto_rejected",
+        actorName: null, // system action: no actorId
+        targetLabel: "Newer",
+        targetId: "t-new",
+        at: now - 1000,
+      },
+      {
+        kind: "definition_approved",
+        actorName: "Alice",
+        targetLabel: "Older",
+        targetId: "t-old",
+        at: now - 3000,
+      },
+    ]);
+  });
+
+  test("respects limit and defaults to 30", async () => {
+    const t = convexTest(schema, modules);
+    await seedMember(t);
+    const now = Date.now();
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 35; i++) {
+        await ctx.db.insert("moderationActions", {
+          kind: "definition_approved",
+          targetLabel: `Puzzle ${i}`,
+          targetId: `t-${i}`,
+          at: now - i * 1000,
+        });
+      }
+    });
+
+    const admin = asAdmin(t);
+    expect(
+      await admin.query(
+        api.admin.getModerationActivity.getModerationActivity,
+        {},
+      ),
+    ).toHaveLength(30);
+    const limited = await admin.query(
+      api.admin.getModerationActivity.getModerationActivity,
+      { limit: 5 },
+    );
+    expect(limited).toHaveLength(5);
+    expect(limited[0].targetLabel).toBe("Puzzle 0"); // newest first
+  });
+});
+
+describe("moderation read models are admin-gated", () => {
+  test("a signed-in non-admin member is Forbidden", async () => {
+    const t = convexTest(schema, modules);
+    await seedMember(t);
+    await expect(
+      asAlice(t).query(api.admin.getModerationStats.getModerationStats, {}),
+    ).rejects.toThrow(/Forbidden/);
+    await expect(
+      asAlice(t).query(
+        api.admin.getModerationActivity.getModerationActivity,
+        {},
+      ),
+    ).rejects.toThrow(/Forbidden/);
+  });
+
+  test("an unauthenticated caller is rejected", async () => {
+    const t = convexTest(schema, modules);
+    await expect(
+      t.query(api.admin.getModerationStats.getModerationStats, {}),
+    ).rejects.toThrow(/Unauthenticated/);
+    await expect(
+      t.query(api.admin.getModerationActivity.getModerationActivity, {}),
+    ).rejects.toThrow(/Unauthenticated/);
+  });
 });

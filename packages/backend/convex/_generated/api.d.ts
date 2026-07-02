@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as admin_getModerationActivity from "../admin/getModerationActivity.js";
+import type * as admin_getModerationStats from "../admin/getModerationStats.js";
 import type * as adminCategories from "../adminCategories.js";
 import type * as catalog_adapters_assertPublicUrl from "../catalog/adapters/assertPublicUrl.js";
 import type * as catalog_adapters_browserStorePageFetcher from "../catalog/adapters/browserStorePageFetcher.js";
@@ -284,6 +286,8 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "admin/getModerationActivity": typeof admin_getModerationActivity;
+  "admin/getModerationStats": typeof admin_getModerationStats;
   adminCategories: typeof adminCategories;
   "catalog/adapters/assertPublicUrl": typeof catalog_adapters_assertPublicUrl;
   "catalog/adapters/browserStorePageFetcher": typeof catalog_adapters_browserStorePageFetcher;
