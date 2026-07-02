@@ -1,7 +1,9 @@
 import * as Popover from "@radix-ui/react-popover";
+import { hexToHsva, hsvaToHex, type HsvaColor } from "@uiw/color-convert";
+import ShadeSlider from "@uiw/react-color-shade-slider";
+import Wheel from "@uiw/react-color-wheel";
 import { ChevronDown } from "lucide-react";
 import * as React from "react";
-import { HexColorPicker } from "react-colorful";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -40,9 +42,22 @@ export function ColorPicker({
   presets = DEFAULT_COLOR_PRESETS,
 }: ColorPickerProps) {
   const [isOpen, setIsOpen] = React.useState(false);
+  // HSVA is the working space while the popover is open: round-tripping through hex
+  // collapses hue at black/white, so the wheel would jump if we derived from `value`
+  // on every render. Re-seed from `value` each time the popover opens.
+  const [hsva, setHsva] = React.useState<HsvaColor>(() => hexToHsva(value));
+
+  const applyHsva = (next: HsvaColor) => {
+    setHsva(next);
+    onChange?.(hsvaToHex(next));
+  };
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) setHsva(hexToHsva(value));
+    setIsOpen(nextOpen);
+  };
 
   return (
-    <Popover.Root open={isOpen} onOpenChange={setIsOpen}>
+    <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
       <Popover.Trigger asChild>
         <Button
           variant="outline"
@@ -77,7 +92,10 @@ export function ColorPicker({
                   key={preset}
                   type="button"
                   aria-label={preset}
-                  onClick={() => onChange?.(preset)}
+                  onClick={() => {
+                    setHsva(hexToHsva(preset));
+                    onChange?.(preset);
+                  }}
                   className={cn(
                     "size-7 rounded-md border border-border transition-transform hover:scale-110",
                     value.toLowerCase() === preset.toLowerCase() &&
@@ -88,7 +106,22 @@ export function ColorPicker({
               ))}
             </div>
           )}
-          <HexColorPicker color={value} onChange={onChange} />
+          {/* The reference layout: hue/saturation wheel (all hues at once, white
+              centre) with a vertical brightness bar beside it. */}
+          <div className="flex items-center gap-3">
+            <ShadeSlider
+              hsva={hsva}
+              direction="vertical"
+              style={{ height: 180, width: 16 }}
+              onChange={(newShade) => applyHsva({ ...hsva, ...newShade })}
+            />
+            <Wheel
+              color={hsva}
+              width={180}
+              height={180}
+              onChange={(color) => applyHsva({ ...hsva, ...color.hsva })}
+            />
+          </div>
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>
