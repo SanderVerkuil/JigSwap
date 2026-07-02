@@ -11,8 +11,9 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 // (false positive) or confirm the removal (deletes row + blob, stamps the audit trail, and
 // notifies the uploader).
 
-// Seed the uploader + an approved puzzle + a copy carrying a snapshot title. The Clerk subject
-// maps to the user via by_clerk_id.
+// Seed the uploader, a DISTINCT admin user, an approved puzzle, and a copy carrying a snapshot
+// title. The two users keep the "stamp actor is the admin, notification goes to the uploader"
+// assertions load-bearing. The Clerk subject maps to the user via by_clerk_id.
 const seedWorld = (t: ReturnType<typeof convexTest>) =>
   t.run(async (ctx) => {
     const now = Date.now();
@@ -20,6 +21,14 @@ const seedWorld = (t: ReturnType<typeof convexTest>) =>
       clerkId: "clerk_alice",
       email: "alice@example.com",
       name: "Alice",
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    });
+    const adminId = await ctx.db.insert("users", {
+      clerkId: "clerk_ada",
+      email: "ada@example.com",
+      name: "Ada Admin",
       isActive: true,
       createdAt: now,
       updatedAt: now,
@@ -41,7 +50,7 @@ const seedWorld = (t: ReturnType<typeof convexTest>) =>
       createdAt: now,
       updatedAt: now,
     });
-    return { userId, puzzleId, copyId };
+    return { userId, adminId, puzzleId, copyId };
   });
 
 // Seed one photo row with a REAL stored blob so ctx.storage.getUrl/delete operate on it.
@@ -70,7 +79,7 @@ const seedPhoto = (
 const asAlice = (t: ReturnType<typeof convexTest>) =>
   t.withIdentity({ subject: "clerk_alice" });
 const asAdmin = (t: ReturnType<typeof convexTest>) =>
-  t.withIdentity({ subject: "clerk_alice", metadata: { role: "admin" } });
+  t.withIdentity({ subject: "clerk_ada", metadata: { role: "admin" } });
 
 const allActions = (t: ReturnType<typeof convexTest>) =>
   t.run((ctx) => ctx.db.query("moderationActions").collect());
@@ -106,7 +115,7 @@ describe("listRejectedPhotos", () => {
 describe("restorePhoto", () => {
   test("flips a rejected photo to approved and stamps photo_restored with the acting admin", async () => {
     const t = convexTest(schema, modules);
-    const { userId, copyId } = await seedWorld(t);
+    const { userId, adminId, copyId } = await seedWorld(t);
     const { imageId } = await seedPhoto(t, copyId, userId, "rejected", {
       moderationScore: 0.97,
       moderationLabel: "nsfw",
@@ -120,8 +129,9 @@ describe("restorePhoto", () => {
     expect(row?.moderationStatus).toBe("approved");
     const actions = await allActions(t);
     expect(actions).toHaveLength(1);
+    // The stamp's actor is the ADMIN, not the uploader.
     expect(actions[0]).toMatchObject({
-      actorId: userId,
+      actorId: adminId,
       kind: "photo_restored",
       targetLabel: "Starry Night",
       targetId: imageId,
@@ -146,7 +156,7 @@ describe("restorePhoto", () => {
 describe("confirmPhotoRemoval", () => {
   test("deletes row + blob, stamps photo_removal_confirmed, and notifies the uploader once", async () => {
     const t = convexTest(schema, modules);
-    const { userId, copyId } = await seedWorld(t);
+    const { userId, adminId, copyId } = await seedWorld(t);
     const { imageId, fileId } = await seedPhoto(t, copyId, userId, "rejected", {
       moderationScore: 0.97,
       moderationLabel: "nsfw",
@@ -163,14 +173,16 @@ describe("confirmPhotoRemoval", () => {
 
     const actions = await allActions(t);
     expect(actions).toHaveLength(1);
+    // The stamp's actor is the ADMIN, not the uploader.
     expect(actions[0]).toMatchObject({
-      actorId: userId,
+      actorId: adminId,
       kind: "photo_removal_confirmed",
       targetLabel: "Starry Night",
       targetId: imageId,
     });
 
-    // Exactly one photo_removed notification for the uploader (default prefs: inApp only).
+    // Exactly one photo_removed notification for the UPLOADER, not the acting admin
+    // (default prefs: inApp only).
     const notifications = await t.run((ctx) =>
       ctx.db.query("notifications").collect(),
     );

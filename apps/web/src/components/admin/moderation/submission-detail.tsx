@@ -154,6 +154,17 @@ export function SubmissionDetail({
         ))}
       </div>
 
+      {submission.description && (
+        <div>
+          <div className="text-xs tracking-wider text-muted-foreground uppercase">
+            {t("detail.note")}
+          </div>
+          <p className="mt-1 text-sm leading-relaxed italic">
+            “{submission.description}”
+          </p>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-2.5 pt-1">
         <Button onClick={onApprove} disabled={busy}>
           <Check aria-hidden />

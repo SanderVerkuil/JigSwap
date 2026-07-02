@@ -1452,6 +1452,7 @@
       "puzzle_favorited": "Puzzel favoriet gemaakt",
       "puzzle_approved": "Puzzel goedgekeurd",
       "puzzle_rejected": "Puzzel afgewezen",
+      "photo_removed": "Foto verwijderd",
       "goal_achieved": "Doel behaald"
     },
     "copy": {
@@ -1503,6 +1504,10 @@
         "title": "Puzzel afgewezen",
         "message": "Je puzzelinzending is afgewezen."
       },
+      "photo_removed": {
+        "title": "Foto verwijderd",
+        "message": "Een van je puzzelfoto's is door een moderator verwijderd."
+      },
       "goal_achieved": {
         "title": "Doel behaald",
         "message": "Je hebt een van je doelen bereikt!"
@@ -1534,6 +1539,7 @@
       "puzzle_favorited": "Wanneer iemand een puzzel die je hebt toegevoegd als favoriet markeert.",
       "puzzle_approved": "Wanneer een puzzel die je hebt ingediend is goedgekeurd voor de catalogus.",
       "puzzle_rejected": "Wanneer een puzzel die je hebt ingediend is afgewezen.",
+      "photo_removed": "Wanneer een moderator een van je puzzelfoto's verwijdert.",
       "goal_achieved": "Wanneer je een puzzeldoel behaalt."
     },
     "pushServiceUnreachable": "Je browser kon zijn pushdienst niet bereiken. Sommige privacybrowsers blokkeren of verwijderen die — Brave schakelt het standaard uit (zet 'Google-services voor pushberichten gebruiken' aan in Instellingen), en de-Googled Chromium-browsers zoals Helium verwijderen het. Firefox, Chrome of Edge werkt wel."
@@ -2650,9 +2656,14 @@
       "empty": "Geen openstaande inzendingen.",
       "pieces": "{count} stukjes",
       "reject": "Afkeuren",
-      "approveSuccess": "Puzzel goedgekeurd",
-      "rejectSuccess": "Puzzel afgekeurd",
       "error": "Inzending bijwerken mislukt",
+      "toast": {
+        "approved": "“{title}” goedgekeurd — nog {count} in de wachtrij.",
+        "edited": "“{title}” goedgekeurd (bewerkt) — nog {count} in de wachtrij.",
+        "rejected": "“{title}” afgewezen — nog {count} in de wachtrij.",
+        "removed": "Afbeelding verwijderd bij “{title}” — nog {count} in de wachtrij.",
+        "restored": "Foto hersteld bij “{title}” — nog {count} in de wachtrij."
+      },
       "banner": {
         "pill": "ADMIN",
         "subtitle": "Moderatieconsole"
@@ -2671,7 +2682,8 @@
       },
       "detail": {
         "submitted": "Ingezonden",
-        "difficulty": "Moeilijkheid"
+        "difficulty": "Moeilijkheid",
+        "note": "Notitie van inzender"
       },
       "dupWarning": "Mogelijk duplicaat van <strong>{title}</strong> dat al in de catalogus staat. Controleer voor het goedkeuren.",
       "actions": {
@@ -2683,8 +2695,34 @@
         "description": "Corrigeer de gegevens van de inzending en sla op om deze in één stap goed te keuren en te publiceren.",
         "save": "Opslaan & goedkeuren"
       },
-      "editApproveSuccess": "Puzzel bijgewerkt en goedgekeurd",
+      "flag": {
+        "loading": "Gemarkeerde afbeeldingen laden…",
+        "unlabeled": "Gemarkeerde afbeelding",
+        "reveal": "Beweeg eroverheen of tik om de gemarkeerde afbeelding te tonen",
+        "severity": {
+          "high": "Hoge ernst",
+          "medium": "Gemiddelde ernst",
+          "low": "Lage ernst"
+        },
+        "onPuzzle": "Op puzzel",
+        "uploadedBy": "Geüpload door",
+        "label": "Label",
+        "score": "Score",
+        "confirm": "Verwijdering bevestigen",
+        "confirmArm": "Weet je het zeker?",
+        "restore": "Foto herstellen"
+      },
       "flaggedEmpty": "Geen gemarkeerde afbeeldingen. De community is tevreden.",
+      "activity": {
+        "loading": "Activiteit laden…",
+        "system": "Systeem",
+        "definition_approved": "<strong>{actor}</strong> keurde <strong>{target}</strong> goed",
+        "definition_edited_approved": "<strong>{actor}</strong> bewerkte en keurde <strong>{target}</strong> goed",
+        "definition_rejected": "<strong>{actor}</strong> wees <strong>{target}</strong> af",
+        "photo_removal_confirmed": "<strong>{actor}</strong> verwijderde een foto bij <strong>{target}</strong>",
+        "photo_auto_rejected": "<strong>{actor}</strong> markeerde automatisch een foto bij <strong>{target}</strong>",
+        "photo_restored": "<strong>{actor}</strong> herstelde een foto bij <strong>{target}</strong>"
+      },
       "activityEmpty": "Nog geen moderatieactiviteit."
     },
     "contact": {

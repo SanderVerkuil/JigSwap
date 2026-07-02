@@ -1,9 +1,10 @@
 "use client";
 
 // Edit & Approve: a minimal pre-filled subset of the definition form (title /
-// brand / pieceCount / difficulty / tags — validation reused from the puzzle
-// form schema) that saves the update mutation and then approves with
-// `edited: true` so the audit stamp records definition_edited_approved.
+// description / brand / pieceCount / difficulty / tags — validation reused
+// from the puzzle form schema) that saves the update mutation and then
+// approves with `edited: true` so the audit stamp records
+// definition_edited_approved.
 
 import { puzzleFormSchema } from "@/components/forms/puzzle-form/puzzle-form-schema";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -41,6 +43,7 @@ import type { PendingSubmission } from "./submission-detail";
 
 const editApproveSchema = puzzleFormSchema.pick({
   title: true,
+  description: true,
   brand: true,
   pieceCount: true,
   difficulty: true,
@@ -52,6 +55,7 @@ export type EditApproveValues = z.infer<typeof editApproveSchema>;
 function toDefaults(submission: PendingSubmission): EditApproveValues {
   return {
     title: submission.title,
+    description: submission.description ?? "",
     brand: submission.brand ?? "",
     pieceCount: submission.pieceCount,
     difficulty: submission.difficulty,
@@ -109,6 +113,22 @@ export function EditApproveDialog({
                     <Input
                       {...field}
                       placeholder={tForm("title.placeholder")}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{tForm("description.label")}</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder={tForm("description.placeholder")}
                     />
                   </FormControl>
                   <FormMessage />

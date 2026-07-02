@@ -1452,6 +1452,7 @@
       "puzzle_favorited": "Puzzle favorited",
       "puzzle_approved": "Puzzle approved",
       "puzzle_rejected": "Puzzle rejected",
+      "photo_removed": "Photo removed",
       "goal_achieved": "Goal achieved"
     },
     "copy": {
@@ -1503,6 +1504,10 @@
         "title": "Puzzle rejected",
         "message": "Your puzzle submission was rejected."
       },
+      "photo_removed": {
+        "title": "Photo removed",
+        "message": "One of your puzzle photos was removed by a moderator."
+      },
       "goal_achieved": {
         "title": "Goal achieved",
         "message": "You reached one of your goals!"
@@ -1534,6 +1539,7 @@
       "puzzle_favorited": "When someone favourites a puzzle you added.",
       "puzzle_approved": "When a puzzle you submitted is approved for the catalogue.",
       "puzzle_rejected": "When a puzzle you submitted is rejected.",
+      "photo_removed": "When a moderator removes one of your puzzle photos.",
       "goal_achieved": "When you reach a solving goal."
     },
     "pushServiceUnreachable": "Your browser couldn't reach its push service. Some privacy browsers block or remove it — Brave disables it by default (enable 'Use Google services for push messaging' in Settings), and de-Googled Chromium builds like Helium strip it out. Firefox, Chrome, or Edge will work."
@@ -2650,9 +2656,14 @@
       "empty": "No pending submissions.",
       "pieces": "{count} pieces",
       "reject": "Reject",
-      "approveSuccess": "Puzzle approved",
-      "rejectSuccess": "Puzzle rejected",
       "error": "Failed to update submission",
+      "toast": {
+        "approved": "Approved “{title}” — {count} left in queue.",
+        "edited": "Approved (edited) “{title}” — {count} left in queue.",
+        "rejected": "Rejected “{title}” — {count} left in queue.",
+        "removed": "Removed image on “{title}” — {count} left in queue.",
+        "restored": "Restored photo on “{title}” — {count} left in queue."
+      },
       "banner": {
         "pill": "ADMIN",
         "subtitle": "Moderation console"
@@ -2671,7 +2682,8 @@
       },
       "detail": {
         "submitted": "Submitted",
-        "difficulty": "Difficulty"
+        "difficulty": "Difficulty",
+        "note": "Submitter note"
       },
       "dupWarning": "Possible duplicate of <strong>{title}</strong> already in the catalog. Review before approving.",
       "actions": {
@@ -2683,8 +2695,34 @@
         "description": "Fix the submission's details, then save to approve and publish it in one step.",
         "save": "Save & Approve"
       },
-      "editApproveSuccess": "Puzzle updated and approved",
+      "flag": {
+        "loading": "Loading flagged images…",
+        "unlabeled": "Flagged image",
+        "reveal": "Hover or tap to reveal flagged image",
+        "severity": {
+          "high": "High severity",
+          "medium": "Medium severity",
+          "low": "Low severity"
+        },
+        "onPuzzle": "On puzzle",
+        "uploadedBy": "Uploaded by",
+        "label": "Label",
+        "score": "Score",
+        "confirm": "Confirm Removal",
+        "confirmArm": "Are you sure?",
+        "restore": "Restore Photo"
+      },
       "flaggedEmpty": "No flagged images. The community's happy.",
+      "activity": {
+        "loading": "Loading activity…",
+        "system": "System",
+        "definition_approved": "<strong>{actor}</strong> approved <strong>{target}</strong>",
+        "definition_edited_approved": "<strong>{actor}</strong> edited & approved <strong>{target}</strong>",
+        "definition_rejected": "<strong>{actor}</strong> rejected <strong>{target}</strong>",
+        "photo_removal_confirmed": "<strong>{actor}</strong> removed a photo on <strong>{target}</strong>",
+        "photo_auto_rejected": "<strong>{actor}</strong> auto-flagged a photo on <strong>{target}</strong>",
+        "photo_restored": "<strong>{actor}</strong> restored a photo on <strong>{target}</strong>"
+      },
       "activityEmpty": "No moderation activity yet."
     },
     "contact": {

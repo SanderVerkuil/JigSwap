@@ -3,6 +3,7 @@ import {
   Bell,
   CheckCircle2,
   Heart,
+  ImageOff,
   type LucideIcon,
   MessageSquare,
   Star,
@@ -25,6 +26,7 @@ export type NotificationType =
   | "goal_achieved"
   | "puzzle_approved"
   | "puzzle_rejected"
+  | "photo_removed"
   | "exchange_proposed"
   | "exchange_disputed";
 
@@ -41,6 +43,7 @@ export const NOTIFICATION_TYPES: NotificationType[] = [
   "puzzle_favorited",
   "puzzle_approved",
   "puzzle_rejected",
+  "photo_removed",
   "goal_achieved",
 ];
 
@@ -112,6 +115,8 @@ export function notificationIcon(type: string): LucideIcon {
       return CheckCircle2;
     case "puzzle_rejected":
       return XCircle;
+    case "photo_removed":
+      return ImageOff;
     default:
       return Bell;
   }
@@ -129,6 +134,7 @@ export function notificationAccent(type: string): string {
     case "trade_cancelled":
     case "exchange_disputed":
     case "puzzle_rejected":
+    case "photo_removed":
       return "text-destructive";
     case "review_received":
     case "goal_achieved":
@@ -169,6 +175,10 @@ export function notificationHref(row: NotificationRow): string | null {
       return relatedId ? `/puzzles/${relatedId}` : "/puzzles";
     case "puzzle_rejected":
       return "/puzzles";
+    // relatedId is the copy the photo belonged to; /my-puzzles/$id is the
+    // owner's view of that copy.
+    case "photo_removed":
+      return relatedId ? `/my-puzzles/${relatedId}` : "/my-puzzles";
     default:
       return null;
   }

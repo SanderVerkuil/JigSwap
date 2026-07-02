@@ -1,13 +1,20 @@
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
+import { ActivityLog } from "@/components/admin/moderation/activity-log";
 import { AdminBanner } from "@/components/admin/moderation/admin-banner";
 import {
   EditApproveDialog,
   type EditApproveValues,
 } from "@/components/admin/moderation/edit-approve-dialog";
+import {
+  FlagDetail,
+  SEVERITY_DOT,
+  type FlaggedPhoto,
+} from "@/components/admin/moderation/flag-detail";
 import { KpiRow } from "@/components/admin/moderation/kpi-row";
 import { QueueList } from "@/components/admin/moderation/queue-list";
+import { severityBand } from "@/components/admin/moderation/severity";
 import {
   SubmissionCover,
   SubmissionDetail,
@@ -17,6 +24,7 @@ import { QueueEmpty } from "@/components/admin/queue-empty";
 import { PageLoading } from "@/components/ui/loading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { gateway } from "@/gateway";
+import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "convex/react";
 import { Flag, History, Inbox } from "lucide-react";
 import { useState } from "react";
@@ -46,21 +54,25 @@ function TabCount({ count }: { count: number | undefined }) {
 }
 
 // The moderation console: KPI week row + three underline tabs. Submissions is
-// the live queue (list+detail split with approve / edit&approve / reject);
-// Flagged Images and Activity Log land in the follow-up task.
+// the live queue (list+detail split with approve / edit&approve / reject),
+// Flagged Images reviews the auto-rejected photos (restore / confirm removal),
+// and Activity Log lists the recent moderation stamps.
 function ModerationPage() {
   const t = useTranslations("admin.moderation");
   const tAdmin = useTranslations("admin");
   const format = useFormatter();
 
   const pending = useQuery(gateway.catalog.pending);
-  // Queried here only for the tab's count pill; the tab body is Task 9's.
+  // One subscription serves both the tab's count pill and the tab body.
   const flagged = useQuery(gateway.admin.listRejectedPhotos);
   const approve = useMutation(gateway.catalog.approve);
   const reject = useMutation(gateway.catalog.reject);
   const update = useMutation(gateway.catalog.updatePuzzle);
+  const confirmRemoval = useMutation(gateway.admin.confirmPhotoRemoval);
+  const restorePhoto = useMutation(gateway.admin.restorePhoto);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedFlagId, setSelectedFlagId] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -84,13 +96,16 @@ function ModerationPage() {
   };
 
   const moderate = async (action: "approve" | "reject") => {
-    if (!selected?.aggregateId) return;
+    if (!selected?.aggregateId || !pending) return;
     setBusy(true);
     try {
       const run = action === "approve" ? approve : reject;
       await run({ puzzleDefinitionId: selected.aggregateId });
       toast.success(
-        action === "approve" ? t("approveSuccess") : t("rejectSuccess"),
+        t(action === "approve" ? "toast.approved" : "toast.rejected", {
+          title: selected.title,
+          count: pending.length - 1,
+        }),
       );
       selectNext(selected);
     } catch {
@@ -101,12 +116,13 @@ function ModerationPage() {
   };
 
   const editApprove = async (values: EditApproveValues) => {
-    if (!selected?.aggregateId) return;
+    if (!selected?.aggregateId || !pending) return;
     setBusy(true);
     try {
       await update({
         puzzleDefinitionId: selected.aggregateId,
         title: values.title,
+        description: values.description || undefined,
         brand: values.brand || undefined,
         pieceCount: values.pieceCount,
         difficulty: values.difficulty,
@@ -116,9 +132,49 @@ function ModerationPage() {
         puzzleDefinitionId: selected.aggregateId,
         edited: true,
       });
-      toast.success(t("editApproveSuccess"));
+      toast.success(
+        t("toast.edited", {
+          title: values.title,
+          count: pending.length - 1,
+        }),
+      );
       setEditOpen(false);
       selectNext(selected);
+    } catch {
+      toast.error(t("error"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // The flagged queue mirrors the submissions flow: act on the selection,
+  // toast with the remaining count, and pre-select the neighbour so the
+  // reviewer keeps flowing down the queue after the row disappears.
+  const selectedFlag =
+    flagged?.find((photo) => photo.imageId === selectedFlagId) ?? flagged?.[0];
+
+  const selectNextFlag = (current: FlaggedPhoto) => {
+    if (!flagged) return;
+    const index = flagged.findIndex(
+      (photo) => photo.imageId === current.imageId,
+    );
+    const next = flagged[index + 1] ?? flagged[index - 1];
+    setSelectedFlagId(next ? next.imageId : null);
+  };
+
+  const moderateFlag = async (action: "remove" | "restore") => {
+    if (!selectedFlag || !flagged) return;
+    setBusy(true);
+    try {
+      const run = action === "remove" ? confirmRemoval : restorePhoto;
+      await run({ imageId: selectedFlag.imageId });
+      toast.success(
+        t(action === "remove" ? "toast.removed" : "toast.restored", {
+          title: selectedFlag.puzzleTitle,
+          count: flagged.length - 1,
+        }),
+      );
+      selectNextFlag(selectedFlag);
     } catch {
       toast.error(t("error"));
     } finally {
@@ -197,19 +253,62 @@ function ModerationPage() {
         </TabsContent>
 
         <TabsContent value="flagged">
-          {/* Task 9 */}
-          <QueueEmpty
-            title={tAdmin("queueEmpty.title")}
-            label={t("flaggedEmpty")}
-          />
+          {flagged === undefined ? (
+            <PageLoading message={t("flag.loading")} />
+          ) : flagged.length === 0 ? (
+            <QueueEmpty
+              title={tAdmin("queueEmpty.title")}
+              label={t("flaggedEmpty")}
+            />
+          ) : (
+            <QueueList
+              items={flagged}
+              selectedId={selectedFlag ? selectedFlag.imageId : null}
+              onSelect={setSelectedFlagId}
+              getId={(photo) => photo.imageId}
+              renderRow={(photo) => (
+                <>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "size-2 shrink-0 rounded-full",
+                          SEVERITY_DOT[severityBand(photo.score)],
+                        )}
+                        aria-hidden
+                      />
+                      <span className="truncate text-sm font-semibold">
+                        {photo.label ?? t("flag.unlabeled")}
+                      </span>
+                    </span>
+                    <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                      {photo.puzzleTitle}
+                      {photo.uploaderName && ` · ${photo.uploaderName}`}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {format.relativeTime(photo.uploadedAt)}
+                  </span>
+                </>
+              )}
+              detail={
+                selectedFlag && (
+                  // Keyed so reveal/armed state never carries over to another photo.
+                  <FlagDetail
+                    key={selectedFlag.imageId}
+                    photo={selectedFlag}
+                    busy={busy}
+                    onConfirmRemoval={() => moderateFlag("remove")}
+                    onRestore={() => moderateFlag("restore")}
+                  />
+                )
+              }
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="activity">
-          {/* Task 9 */}
-          <QueueEmpty
-            title={tAdmin("queueEmpty.title")}
-            label={t("activityEmpty")}
-          />
+          <ActivityLog emptyTitle={tAdmin("queueEmpty.title")} />
         </TabsContent>
       </Tabs>
 
