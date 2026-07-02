@@ -440,3 +440,25 @@ describe("extractPuzzleDraft", () => {
     });
   });
 });
+
+describe("buildImages format filtering", () => {
+  it("drops candidates with extensions the import action always rejects", () => {
+    const draft = extractPuzzleDraft(
+      {
+        ...empty,
+        ogImages: [
+          "https://cdn.shop.example/logo.svg",
+          "https://cdn.shop.example/box.jpg",
+          "https://cdn.shop.example/fav.ico?v=3",
+          "https://cdn.shop.example/i/no-extension",
+        ],
+      },
+      "https://shop.example/puzzle",
+    );
+    expect(draft.images).toEqual([
+      "https://cdn.shop.example/box.jpg",
+      "https://cdn.shop.example/i/no-extension",
+    ]);
+    expect(draft.imageUrl).toBe("https://cdn.shop.example/box.jpg");
+  });
+});

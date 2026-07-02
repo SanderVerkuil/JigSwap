@@ -1,5 +1,6 @@
 // packages/domain/src/catalog/domain/extract-puzzle-draft.ts
 import { cleanPuzzleTitle } from "./clean-puzzle-title";
+import { hasUnsupportedImageExtension } from "./image-format";
 import type {
   JsonLdProduct,
   PuzzleImportDraft,
@@ -44,6 +45,9 @@ const buildImages = (raw: RawProductPage): readonly string[] => {
       // entries in untrusted JSON-LD. Equivalent under the static string[] type, but real defense.
       typeof url === "string" &&
       HTTP_RE.test(url) &&
+      // Never offer a candidate the import action is guaranteed to reject (e.g. .svg logos
+      // JSON-LD/OG frequently carry). Extension-less URLs pass — the action stays authoritative.
+      !hasUnsupportedImageExtension(url) &&
       !seen.has(url) &&
       result.length < MAX_IMAGES
     ) {
