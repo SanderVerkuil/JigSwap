@@ -17,6 +17,7 @@ export type NotificationType =
   | "goal_achieved" // Solving: GoalAchieved
   | "puzzle_approved" // Catalog: PuzzleDefinitionApproved (member's submission accepted)
   | "puzzle_rejected" // Catalog: submission rejected
+  | "photo_removed" // Library: a moderator confirmed removal of an uploaded copy photo
   | "exchange_proposed" // Exchange: ExchangeProposed (distinct generic exchange, not only "trade")
   | "exchange_disputed"; // Exchange: DisputeRaised
 
@@ -34,6 +35,7 @@ export const NOTIFICATION_TYPES: readonly NotificationType[] = [
   "goal_achieved",
   "puzzle_approved",
   "puzzle_rejected",
+  "photo_removed",
   "exchange_proposed",
   "exchange_disputed",
 ];

@@ -262,7 +262,9 @@ export default defineSchema({
     // --- Timestamps ---
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_owned_puzzle", ["ownedPuzzleId"]),
+  })
+    .index("by_owned_puzzle", ["ownedPuzzleId"])
+    .index("by_moderation_status", ["moderationStatus"]),
 
   // Named collections for organizing puzzles
   collections: defineTable({
@@ -623,6 +625,7 @@ export default defineSchema({
       v.literal("goal_achieved"),
       v.literal("puzzle_approved"),
       v.literal("puzzle_rejected"),
+      v.literal("photo_removed"),
       v.literal("exchange_proposed"),
       v.literal("exchange_disputed"),
     ),

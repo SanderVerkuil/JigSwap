@@ -27,6 +27,7 @@ const notificationType = v.union(
   v.literal("goal_achieved"),
   v.literal("puzzle_approved"),
   v.literal("puzzle_rejected"),
+  v.literal("photo_removed"),
   v.literal("exchange_proposed"),
   v.literal("exchange_disputed"),
 );
