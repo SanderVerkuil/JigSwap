@@ -2361,7 +2361,8 @@
       },
       "puzzles": {
         "title": "Puzzles catalogue",
-        "subtitle": "The shared puzzle catalogue."
+        "subtitle": "The shared puzzle catalogue.",
+        "description": "The shared puzzle catalogue"
       },
       "borrowed": {
         "title": "Borrowed",

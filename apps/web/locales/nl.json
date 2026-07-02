@@ -2361,7 +2361,8 @@
       },
       "puzzles": {
         "title": "Puzzelcatalogus",
-        "subtitle": "De gedeelde puzzelcatalogus."
+        "subtitle": "De gedeelde puzzelcatalogus.",
+        "description": "De gedeelde puzzelcatalogus"
       },
       "borrowed": {
         "title": "Geleend",
