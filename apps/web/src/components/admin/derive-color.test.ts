@@ -43,3 +43,16 @@ describe("deriveColorFromName", () => {
     expect(deriveColorFromName("   ")).toBeNull();
   });
 });
+
+it("falls back through the candidate chain to the first non-blank name", () => {
+  expect(deriveColorFromName(["", "Dieren"])).toBe(
+    deriveColorFromName("Dieren"),
+  );
+  expect(deriveColorFromName(["  ", "dieren"])).toBe(
+    deriveColorFromName("Dieren"),
+  );
+  expect(deriveColorFromName(["Animals", "Dieren"])).toBe(
+    deriveColorFromName("Animals"),
+  );
+  expect(deriveColorFromName(["", "   "])).toBeNull();
+});

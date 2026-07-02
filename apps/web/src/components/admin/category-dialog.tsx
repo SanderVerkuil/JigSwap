@@ -228,13 +228,15 @@ function CategoryForm({
   }, [initialFocusRef, form, activeLocale]);
 
   // While the picker is untouched (create mode), the color live-follows the
-  // English name. A blank name derives nothing and keeps the current color.
+  // name — English first, Dutch when English is still blank. Both blank
+  // derives nothing and keeps the current color.
   const nameEn = useWatch({ control: form.control, name: "name.en" });
+  const nameNl = useWatch({ control: form.control, name: "name.nl" });
   useEffect(() => {
     if (colorTouched) return;
-    const derived = deriveColorFromName(nameEn ?? "");
+    const derived = deriveColorFromName([nameEn ?? "", nameNl ?? ""]);
     if (derived) form.setValue("color", derived);
-  }, [nameEn, colorTouched, form]);
+  }, [nameEn, nameNl, colorTouched, form]);
 
   // Submitting with an error hidden behind a non-visible locale would look
   // like a dead button: switch to the first errored locale and focus it.
