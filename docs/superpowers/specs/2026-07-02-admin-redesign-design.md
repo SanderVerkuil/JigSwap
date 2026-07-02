@@ -52,6 +52,32 @@ TanStack routes, never shipped as-is — same convention as the add-puzzle hando
   bordered list rows (activity-log style, not Cards); categories keeps its form but the category
   grid becomes a list, and the ~360-line file splits into form + list components.
 
+## Categories page v2 (amendment, approved 2026-07-02)
+
+Supersedes the categories portion above after the initial de-carding landed:
+
+- **Page:** header (title + description + primary "Add category") over one bordered list panel.
+- **Rows:** drag handle (GripVertical, dnd-kit sortable — new deps `@dnd-kit/core` +
+  `@dnd-kit/sortable`; keyboard-accessible, no sortOrder number shown), 9x9 color swatch, both
+  locale names (EN semibold, NL muted), truncated description line; inactive rows dimmed with an
+  "Inactive" badge (active rows get no badge); actions: Edit, Deactivate (destructive tone,
+  active rows) or Reactivate (no confirm — safe direction, inactive rows). Legacy rows without
+  aggregateId keep actions disabled.
+- **Reorder:** drag commits via the existing `gateway.adminCatalog.reorder` op (full
+  {catalogCategoryId, sortOrder} list); optimistic order during drag, revert + toast on error.
+- **CategoryDialog:** one Dialog, create/edit modes (edit-approve-dialog pattern, RHF + zod,
+  re-seed on open); 2-col EN/NL names (required), stacked optional descriptions, ColorPicker.
+  `sortOrder` and `isActive` removed from the form — create appends at max+1; activation is a
+  row-level action only, so deactivation always passes the confirm.
+- **Deactivate confirm:** new shadcn `ui/alert-dialog.tsx` primitive (+
+  `@radix-ui/react-alert-dialog`) — no-outside-dismiss semantics for destructive confirms,
+  reusable. Copy names the effect and the escape hatch. Replaces window.confirm and the
+  page's raw `text-red-600` class.
+- **Empty state:** dashed panel, Shapes icon, inline Add button.
+- **Future consideration (recorded, not built):** at tens/hundreds of categories the page needs
+  search; drag-reorder must be disabled while a search filter is active (reordering a filtered
+  subset is ambiguous).
+
 ## Moderation backend
 
 - **`moderationActions` table** (additive): `actorId` (`v.id("users")` or the literal `"system"`),
