@@ -60,6 +60,11 @@ describe("sniffImageType", () => {
     expect(sniffImageType(bytes("RIFF", 0, 0, 0, 0, "WEBP"))).toBe(
       "image/webp",
     );
+    // Real-world regression: ravensburger.cloud serves valid WebP with NO
+    // content-type + nosniff (first 16 observed bytes: RIFF: ..WEBPVP8 ).
+    expect(
+      sniffImageType(bytes("RIFF", 0x3a, 0x20, 0x02, 0x00, "WEBPVP8 ")),
+    ).toBe("image/webp");
     expect(sniffImageType(bytes(0, 0, 0, 0x20, "ftypavif", 0, 0, 0, 0))).toBe(
       "image/avif",
     );
