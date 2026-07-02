@@ -155,7 +155,7 @@ export function TranslatableField<TFieldValues extends FieldValues>({
   };
 
   return (
-    <div className="grid gap-2">
+    <div className="grid gap-1">
       <div className="flex items-center justify-between gap-2">
         <Label htmlFor={`${id}-${activeLocale}`}>{label}</Label>
         <div
@@ -196,7 +196,7 @@ export function TranslatableField<TFieldValues extends FieldValues>({
                     className={cn(
                       "inline-flex h-6 items-center gap-1.5 rounded-full px-2 text-xs font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
                       active
-                        ? "bg-foreground text-background"
+                        ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:bg-muted",
                     )}
                   >
@@ -204,8 +204,18 @@ export function TranslatableField<TFieldValues extends FieldValues>({
                       aria-hidden
                       className={cn(
                         "size-1.5 rounded-full",
-                        state === "error" && "bg-destructive",
-                        state === "filled" && "bg-jigsaw-success",
+                        // jigsaw-success fails 3:1 against primary, so the
+                        // filled dot flips to primary-foreground when active;
+                        // the error dot gains a contrasting ring instead.
+                        state === "error" &&
+                          cn(
+                            "bg-destructive",
+                            active && "ring-1 ring-primary-foreground",
+                          ),
+                        state === "filled" &&
+                          (active
+                            ? "bg-primary-foreground"
+                            : "bg-jigsaw-success"),
                         // Hollow dot; currentColor keeps it visible on the
                         // inverted active segment.
                         state === "empty" && "border border-current opacity-50",
@@ -246,17 +256,18 @@ export function TranslatableField<TFieldValues extends FieldValues>({
                 />
               )}
               <FormMessage />
-              {/* While translating, keep the base (en) text in view. */}
-              {locale !== BASE_LOCALE &&
-                Boolean(values[BASE_LOCALE]?.trim()) && (
-                  <p className="text-muted-foreground mt-1 truncate text-xs">
-                    {BASE_LOCALE.toUpperCase()}: {values[BASE_LOCALE]}
-                  </p>
-                )}
             </FormItem>
           )}
         />
       ))}
+      {/* While translating, keep the base (en) text in view. The slot is
+          always rendered at line height (min-h-4) so switching locales or
+          typing never shifts the dialog's layout. */}
+      <p className="text-muted-foreground min-h-4 truncate text-xs">
+        {activeLocale !== BASE_LOCALE && values[BASE_LOCALE]?.trim()
+          ? `${BASE_LOCALE.toUpperCase()}: ${values[BASE_LOCALE]}`
+          : null}
+      </p>
     </div>
   );
 }
