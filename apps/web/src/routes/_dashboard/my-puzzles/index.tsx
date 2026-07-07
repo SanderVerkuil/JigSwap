@@ -8,8 +8,18 @@ import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-
 import { EmptyState } from "@/components/library/empty-state";
 import { FilterBar, FilterOption } from "@/components/library/filter-bar";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -105,10 +115,16 @@ function PuzzlesPage() {
   const router = useRouter();
   const t = useTranslations("puzzles");
   const tLending = useTranslations("lending");
+  const tCommon = useTranslations("common");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   // The copy a solve is being logged against; null when the dialog is closed.
   const [solveTarget, setSolveTarget] = useState<{
+    copyId: string;
+    title: string;
+  } | null>(null);
+  // The copy awaiting the destructive delete confirm; null when the dialog is closed.
+  const [deleteTarget, setDeleteTarget] = useState<{
     copyId: string;
     title: string;
   } | null>(null);
@@ -179,7 +195,7 @@ function PuzzlesPage() {
     }
   };
 
-  const handleDeletePuzzle = async (ownedPuzzleId: Id<"ownedPuzzles">) => {
+  const handleDeletePuzzle = (ownedPuzzleId: Id<"ownedPuzzles">) => {
     // The domain delete takes the Copy aggregateId; resolve it from the loaded row. Guard rows
     // that predate the backfill (no aggregateId) rather than send an unresolvable id.
     const copy = userownedPuzzles?.find((p) => p._id === ownedPuzzleId);
@@ -187,14 +203,17 @@ function PuzzlesPage() {
       console.error("Cannot delete: copy is missing its aggregateId.");
       return;
     }
-    if (confirm(t("deleteConfirm"))) {
-      try {
-        await deletePuzzle.mutateAsync({
-          copyId: copy.aggregateId,
-        });
-      } catch (error) {
-        console.error("Failed to delete puzzle:", error);
-      }
+    setDeleteTarget({
+      copyId: copy.aggregateId,
+      title: copy.puzzle?.title ?? "",
+    });
+  };
+
+  const confirmDeletePuzzle = async (copyId: string) => {
+    try {
+      await deletePuzzle.mutateAsync({ copyId });
+    } catch (error) {
+      console.error("Failed to delete puzzle:", error);
     }
   };
 
@@ -380,6 +399,38 @@ function PuzzlesPage() {
           viewerIsOwner={true}
         />
       )}
+
+      <AlertDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("deleteConfirmTitle", { title: deleteTarget?.title ?? "" })}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("deleteConfirmBody")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              className={buttonVariants({ variant: "destructive" })}
+              onClick={() => {
+                if (deleteTarget) {
+                  void confirmDeletePuzzle(deleteTarget.copyId);
+                }
+                setDeleteTarget(null);
+              }}
+            >
+              {t("deleteConfirmAction")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
