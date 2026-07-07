@@ -6,10 +6,7 @@ import { DomainError } from "../../shared-kernel";
 // Result interchangeably. Cross-aggregate failures (clerkId uniqueness, member-not-found) are
 // orchestration concerns and live in the application layer, not here.
 export type IdentityErrorCode =
-  | "InvalidEmail"
-  | "InvalidUsername"
-  | "InvalidRole"
-  | "ClerkIdImmutable";
+  "InvalidEmail" | "InvalidUsername" | "InvalidRole" | "ClerkIdImmutable";
 
 export class IdentityError extends DomainError {
   override readonly name = "IdentityError";

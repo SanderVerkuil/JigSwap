@@ -7,9 +7,4 @@
 //   cancelled -> initiator withdrew the deal
 //   disputed  -> a party flagged a problem
 export type ExchangeStatus =
-  | "proposed"
-  | "accepted"
-  | "completed"
-  | "rejected"
-  | "cancelled"
-  | "disputed";
+  "proposed" | "accepted" | "completed" | "rejected" | "cancelled" | "disputed";

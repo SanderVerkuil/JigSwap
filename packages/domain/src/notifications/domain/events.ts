@@ -42,6 +42,4 @@ export class PreferenceChanged implements DomainEvent {
 }
 
 export type NotificationDomainEvent =
-  | NotificationCreated
-  | NotificationRead
-  | PreferenceChanged;
+  NotificationCreated | NotificationRead | PreferenceChanged;

@@ -6,8 +6,7 @@ import { ExchangeId, ThreadId } from "../domain";
 // `code` is the stable, machine-readable discriminant a transport adapter maps to; the message is
 // for logs/tests only.
 export type ConversationApplicationErrorCode =
-  | "ThreadNotFound"
-  | "NotConnected";
+  "ThreadNotFound" | "NotConnected";
 
 export class ConversationApplicationError extends DomainError {
   override readonly name = "ConversationApplicationError";

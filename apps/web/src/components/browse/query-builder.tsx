@@ -85,12 +85,7 @@ export const EMPTY_QUERY: QueryBuilderState = {
 // single condition that exposes two inputs; availability is a single condition
 // that exposes a multi-toggle.
 type FieldKey =
-  | "text"
-  | "category"
-  | "condition"
-  | "difficulty"
-  | "pieces"
-  | "availability";
+  "text" | "category" | "condition" | "difficulty" | "pieces" | "availability";
 
 export interface CategoryOption {
   id: string;

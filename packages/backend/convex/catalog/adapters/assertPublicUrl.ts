@@ -31,8 +31,7 @@ import { lookup as dnsLookup } from "node:dns/promises";
 //   - firecrawlStorePageFetcher: our egress only reaches api.firecrawl.dev (a public host); the
 //     target page is fetched by Firecrawl's infra, not ours, so it is not an SSRF vector here.
 export type PublicUrlCheck =
-  | { ok: true }
-  | { ok: false; code: "InvalidUrl" | "Blocked"; reason: string };
+  { ok: true } | { ok: false; code: "InvalidUrl" | "Blocked"; reason: string };
 
 export const assertPublicUrl = async (url: string): Promise<PublicUrlCheck> => {
   let parsed: URL;

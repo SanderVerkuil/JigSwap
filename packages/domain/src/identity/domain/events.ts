@@ -47,7 +47,4 @@ export class RoleRevoked implements DomainEvent {
 }
 
 export type IdentityDomainEvent =
-  | MemberRegistered
-  | MemberDeactivated
-  | RoleAssigned
-  | RoleRevoked;
+  MemberRegistered | MemberDeactivated | RoleAssigned | RoleRevoked;

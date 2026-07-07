@@ -35,11 +35,7 @@ export const hasUnsupportedImageExtension = (url: string): boolean => {
 };
 
 export type SniffedImageType =
-  | "image/jpeg"
-  | "image/png"
-  | "image/webp"
-  | "image/gif"
-  | "image/avif";
+  "image/jpeg" | "image/png" | "image/webp" | "image/gif" | "image/avif";
 
 const ascii = (bytes: Uint8Array, start: number, text: string): boolean => {
   if (bytes.length < start + text.length) return false;

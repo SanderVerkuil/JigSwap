@@ -6,8 +6,7 @@ import { MemberId, NotificationId } from "../domain";
 // is the stable, machine-readable discriminant a transport adapter maps to; the message is for
 // logs/tests only.
 export type NotificationApplicationErrorCode =
-  | "NotificationNotFound"
-  | "PreferenceNotFound";
+  "NotificationNotFound" | "PreferenceNotFound";
 
 export class NotificationApplicationError extends DomainError {
   override readonly name = "NotificationApplicationError";

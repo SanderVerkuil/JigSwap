@@ -18,12 +18,7 @@ export interface CopyStatInput {
 
 // One exchange the member took part in, reduced to its lifecycle status.
 export type ExchangeStatStatus =
-  | "proposed"
-  | "accepted"
-  | "completed"
-  | "rejected"
-  | "cancelled"
-  | "disputed";
+  "proposed" | "accepted" | "completed" | "rejected" | "cancelled" | "disputed";
 
 export interface ExchangeStatInput {
   readonly status: ExchangeStatStatus;

@@ -14,7 +14,6 @@ export function pageTitle(context: unknown, key: string): string {
   const intl = (context as { intl?: IntlPayload } | undefined)?.intl;
   const titles = intl?.messages?.titles as Record<string, string> | undefined;
   const marketing = intl?.messages?.marketing as
-    | { titles?: Record<string, string> }
-    | undefined;
+    { titles?: Record<string, string> } | undefined;
   return titles?.[key] ?? marketing?.titles?.[key] ?? FALLBACK;
 }
