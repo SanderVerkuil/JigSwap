@@ -6,9 +6,7 @@ import { MemberId } from "../domain";
 // SocialError, the `code` is the stable, machine-readable discriminant a transport adapter maps
 // to; the message is for logs/tests only.
 export type SocialApplicationErrorCode =
-  | "AlreadyFollowing"
-  | "NotFollowing"
-  | "ProfileNotFound";
+  "AlreadyFollowing" | "NotFollowing" | "ProfileNotFound";
 
 export class SocialApplicationError extends DomainError {
   override readonly name = "SocialApplicationError";

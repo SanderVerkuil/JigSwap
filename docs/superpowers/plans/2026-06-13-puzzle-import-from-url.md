@@ -1445,9 +1445,7 @@ const toJsonLdProducts = (jsonLd: unknown): JsonLdProduct[] => {
       description:
         typeof node.description === "string" ? node.description : undefined,
       image: (Array.isArray(node.image) ? node.image : node.image) as
-        | string
-        | string[]
-        | undefined,
+        string | string[] | undefined,
       gtin13: typeof node.gtin13 === "string" ? node.gtin13 : undefined,
       gtin12: typeof node.gtin12 === "string" ? node.gtin12 : undefined,
       gtin: typeof node.gtin === "string" ? node.gtin : undefined,

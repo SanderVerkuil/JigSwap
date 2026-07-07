@@ -36,12 +36,7 @@ function PuzzlesPending() {
 // Status pills mapped onto what the data actually carries: the availability
 // flags on each owned copy, and the member's solve log for progress states.
 type StatusFilter =
-  | "all"
-  | "available"
-  | "forTrade"
-  | "forLend"
-  | "inProgress"
-  | "completed";
+  "all" | "available" | "forTrade" | "forLend" | "inProgress" | "completed";
 
 function PuzzlesGridSkeleton() {
   return (

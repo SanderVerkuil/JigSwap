@@ -38,6 +38,4 @@ export class CopySharedToCircle implements DomainEvent {
 }
 
 export type SharingDomainEvent =
-  | CircleCreated
-  | MemberJoinedCircle
-  | CopySharedToCircle;
+  CircleCreated | MemberJoinedCircle | CopySharedToCircle;

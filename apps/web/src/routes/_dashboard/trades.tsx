@@ -31,12 +31,7 @@ import { useState } from "react";
 import { useFormatter, useTranslations } from "use-intl";
 
 type ExchangeStatus =
-  | "proposed"
-  | "accepted"
-  | "rejected"
-  | "completed"
-  | "cancelled"
-  | "disputed";
+  "proposed" | "accepted" | "rejected" | "completed" | "cancelled" | "disputed";
 
 type ExchangeRow = FunctionReturnType<typeof gateway.exchange.incoming>[number];
 type BorrowedLoan = FunctionReturnType<typeof gateway.lending.borrowed>[number];

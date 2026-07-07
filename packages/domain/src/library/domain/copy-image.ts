@@ -6,11 +6,7 @@ export type FileId = Id<"FileId">;
 
 // The kind of photo, matching the persisted `ownedPuzzleImages.tag` union.
 export type CopyImageTag =
-  | "box_front"
-  | "box_back"
-  | "pieces"
-  | "completed"
-  | "damage_detail";
+  "box_front" | "box_back" | "pieces" | "completed" | "damage_detail";
 
 // A photo of a physical Copy. Value object owned by the Copy aggregate (images belong to the
 // Copy, per §1.4). Mirrors the user-provided metadata on `ownedPuzzleImages`.

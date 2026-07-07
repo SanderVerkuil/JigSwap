@@ -40,10 +40,7 @@ export interface RecommendationInput {
 // Why a candidate surfaced. Machine-readable so the UI can render a localised chip; the strongest
 // contributing facet wins, falling back to "popular" for the cold-start / no-overlap case.
 export type RecommendationReason =
-  | "sameBrand"
-  | "similarPieceCount"
-  | "sharedCategory"
-  | "popular";
+  "sameBrand" | "similarPieceCount" | "sharedCategory" | "popular";
 
 export interface PuzzleRecommendation {
   readonly key: string;
@@ -186,13 +183,11 @@ export const recommendPuzzles = (
           (b.candidate.recencyRank ?? Number.MAX_SAFE_INTEGER) ||
         a.candidate.key.localeCompare(b.candidate.key),
     )
-    .map(
-      (r): PuzzleRecommendation => ({
-        key: r.candidate.key,
-        score: r.score,
-        reason: r.reason,
-      }),
-    );
+    .map((r): PuzzleRecommendation => ({
+      key: r.candidate.key,
+      score: r.score,
+      reason: r.reason,
+    }));
 
   const limit = input.limit;
   return typeof limit === "number" && limit > 0

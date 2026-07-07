@@ -7,12 +7,7 @@ import type {
 } from "./puzzleSnapshots";
 
 export type ExchangeStatus =
-  | "proposed"
-  | "accepted"
-  | "completed"
-  | "rejected"
-  | "cancelled"
-  | "disputed";
+  "proposed" | "accepted" | "completed" | "rejected" | "cancelled" | "disputed";
 
 /**
  * The raw exchange document fields (the `exchanges` table). Every exchange view spreads these, so

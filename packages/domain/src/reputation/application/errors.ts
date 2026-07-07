@@ -6,9 +6,7 @@ import { ExchangeId, MemberId } from "../domain";
 // ReputationError, the `code` is the stable, machine-readable discriminant a transport
 // adapter maps to; the message is for logs/tests only.
 export type ReputationApplicationErrorCode =
-  | "ExchangeNotCompleted"
-  | "NotExchangeParticipant"
-  | "DuplicatePartnerReview";
+  "ExchangeNotCompleted" | "NotExchangeParticipant" | "DuplicatePartnerReview";
 
 export class ReputationApplicationError extends DomainError {
   override readonly name = "ReputationApplicationError";

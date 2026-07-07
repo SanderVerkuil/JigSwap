@@ -6,9 +6,7 @@ import { CatalogCategoryId, PuzzleDefinitionId } from "../domain";
 // is the stable, machine-readable discriminant a transport adapter maps to; the message is for
 // logs/tests only.
 export type CatalogApplicationErrorCode =
-  | "DuplicateBarcode"
-  | "PuzzleDefinitionNotFound"
-  | "CatalogCategoryNotFound";
+  "DuplicateBarcode" | "PuzzleDefinitionNotFound" | "CatalogCategoryNotFound";
 
 export class CatalogApplicationError extends DomainError {
   override readonly name = "CatalogApplicationError";

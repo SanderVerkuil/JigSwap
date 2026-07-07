@@ -7,10 +7,7 @@ import { ExchangeStatus } from "./exchange-status";
 // logs/tests only). Modelled as a DomainError subclass so it can be thrown or carried
 // in a Result interchangeably.
 export type ExchangeErrorCode =
-  | "SelfExchange"
-  | "MissingTerms"
-  | "IllegalTransition"
-  | "WrongParty";
+  "SelfExchange" | "MissingTerms" | "IllegalTransition" | "WrongParty";
 
 export class ExchangeError extends DomainError {
   override readonly name = "ExchangeError";

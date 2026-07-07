@@ -6,8 +6,7 @@ import { MemberId } from "../domain";
 // IdentityError, the `code` is the stable, machine-readable discriminant a transport adapter
 // maps to; the message is for logs/tests only.
 export type IdentityApplicationErrorCode =
-  | "MemberNotFound"
-  | "AlreadyRegistered";
+  "MemberNotFound" | "AlreadyRegistered";
 
 export class IdentityApplicationError extends DomainError {
   override readonly name = "IdentityApplicationError";
