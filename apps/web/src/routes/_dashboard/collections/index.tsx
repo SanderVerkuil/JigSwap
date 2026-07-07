@@ -11,8 +11,18 @@ import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-
 import { CoverChip } from "@/components/library/cover-chip";
 import { EmptyState } from "@/components/library/empty-state";
 import { chipColor } from "@/components/library/palette";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { ColorPicker } from "@/components/ui/color-picker";
 import {
   Dialog,
@@ -64,6 +74,10 @@ function CollectionsPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingCollection, setEditingCollection] =
     useState<EditableCollection | null>(null);
+  // The collection aggregateId awaiting the destructive delete confirm; null
+  // when the dialog is closed. Nothing sets it yet — the delete affordance
+  // lands in a follow-up — but the confirm flow is already in its final shape.
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -118,20 +132,20 @@ function CollectionsPage() {
 
   // Wired to a delete affordance in a follow-up; kept to preserve the intended flow.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleDeleteCollection = async (collectionAggregateId?: string) => {
+  const handleDeleteCollection = (collectionAggregateId?: string) => {
     // The domain delete takes the CollectionId (aggregateId); guard rows missing it.
     if (!collectionAggregateId) {
       console.error("Cannot delete: collection is missing its aggregateId.");
       return;
     }
-    if (confirm(t("deleteConfirm"))) {
-      try {
-        await deleteCollection.mutateAsync({
-          collectionId: collectionAggregateId,
-        });
-      } catch (error) {
-        console.error("Failed to delete collection:", error);
-      }
+    setDeleteTarget(collectionAggregateId);
+  };
+
+  const confirmDeleteCollection = async (collectionId: string) => {
+    try {
+      await deleteCollection.mutateAsync({ collectionId });
+    } catch (error) {
+      console.error("Failed to delete collection:", error);
     }
   };
 
@@ -375,6 +389,36 @@ function CollectionsPage() {
         onOpenChange={setIsEditDialogOpen}
         collection={editingCollection}
       />
+
+      <AlertDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("deleteConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("deleteConfirmBody")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              className={buttonVariants({ variant: "destructive" })}
+              onClick={() => {
+                if (deleteTarget) {
+                  void confirmDeleteCollection(deleteTarget);
+                }
+                setDeleteTarget(null);
+              }}
+            >
+              {t("deleteConfirmAction")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
