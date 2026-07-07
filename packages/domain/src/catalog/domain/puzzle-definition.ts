@@ -4,6 +4,8 @@ import { BarcodesInput, validateBarcodes } from "./barcode";
 import { CatalogError } from "./errors";
 import {
   PuzzleDefinitionApproved,
+  PuzzleDefinitionDisabled,
+  PuzzleDefinitionReenabled,
   PuzzleDefinitionRejected,
   PuzzleDefinitionSubmitted,
   PuzzleDefinitionUpdated,
@@ -145,6 +147,30 @@ export class PuzzleDefinition {
     const moved = this.transition("rejected", now);
     if (moved.isErr) return moved;
     this.record(new PuzzleDefinitionRejected(this.id, now));
+    return ok(undefined);
+  }
+
+  // Admin reversibly disables an approved definition, hiding it from public browse/search.
+  // Nothing is deleted; existing copies keep rendering from their cached snapshots.
+  disable(now: Date): Result<void, CatalogError> {
+    const moved = this.transition("disabled", now);
+    if (moved.isErr) return moved;
+    this.record(new PuzzleDefinitionDisabled(this.id, now));
+    return ok(undefined);
+  }
+
+  // Admin re-enables a disabled definition, restoring it to approved. Guarded on the CURRENT
+  // status (not just the table): pending → approved is a legal table move reserved for
+  // approve(), so reenable() must never act as a backdoor approval.
+  reenable(now: Date): Result<void, CatalogError> {
+    if (this.state.status !== "disabled") {
+      return err(
+        CatalogError.illegalApprovalTransition(this.state.status, "approved"),
+      );
+    }
+    const moved = this.transition("approved", now);
+    if (moved.isErr) return moved;
+    this.record(new PuzzleDefinitionReenabled(this.id, now));
     return ok(undefined);
   }
 

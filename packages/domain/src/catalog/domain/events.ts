@@ -38,6 +38,25 @@ export class PuzzleDefinitionUpdated implements DomainEvent {
   ) {}
 }
 
+// Reversible admin lifecycle: a disabled definition is hidden from public browse/search but
+// never deleted. No actor on the event — the acting admin is stamped at the composition root
+// (moderationActions), same as approve/reject.
+export class PuzzleDefinitionDisabled implements DomainEvent {
+  readonly name = "PuzzleDefinitionDisabled";
+  constructor(
+    readonly puzzleDefinitionId: PuzzleDefinitionId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+export class PuzzleDefinitionReenabled implements DomainEvent {
+  readonly name = "PuzzleDefinitionReenabled";
+  constructor(
+    readonly puzzleDefinitionId: PuzzleDefinitionId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
 export class CatalogCategoryCreated implements DomainEvent {
   readonly name = "CatalogCategoryCreated";
   constructor(
@@ -78,6 +97,8 @@ export type CatalogDomainEvent =
   | PuzzleDefinitionApproved
   | PuzzleDefinitionRejected
   | PuzzleDefinitionUpdated
+  | PuzzleDefinitionDisabled
+  | PuzzleDefinitionReenabled
   | CatalogCategoryCreated
   | CatalogCategoryUpdated
   | CatalogCategoryActiveChanged
