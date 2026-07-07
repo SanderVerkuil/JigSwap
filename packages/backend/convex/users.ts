@@ -14,6 +14,16 @@ import { requireMember } from "./identity/requireMember";
 const toSearchableName = (name: string, username?: string): string =>
   [name, username].filter(Boolean).join(" ").toLowerCase();
 
+// The Clerk publicMetadata.role, mirrored onto the users row for display (admin users page).
+// Display-only: authorization stays JWT-based (identity/isAdmin) and never reads this field.
+// UserPublicMetadata is an open record, so read the claim defensively.
+const roleOf = (clerkUser: UserJSON): string | undefined => {
+  const role = (
+    clerkUser.public_metadata as Record<string, unknown> | null | undefined
+  )?.role;
+  return typeof role === "string" ? role : undefined;
+};
+
 // Create or update user from Clerk. Internal only: the canonical user sync happens via the Clerk
 // webhook (updateOrCreateUser). Exposing this publicly would let any client upsert a `users` row
 // keyed by a client-supplied clerkId (account takeover).
@@ -113,6 +123,7 @@ export const updateOrCreateUser = internalMutation({
         username,
         avatar: clerkUser.image_url,
         searchableName: toSearchableName(name, username),
+        role: roleOf(clerkUser),
         bio: undefined,
         isActive: true,
         createdAt: clerkUser.created_at,
@@ -126,6 +137,7 @@ export const updateOrCreateUser = internalMutation({
         username,
         avatar: clerkUser.image_url,
         searchableName: toSearchableName(name, username),
+        role: roleOf(clerkUser),
         updatedAt: clerkUser.updated_at,
       });
     }

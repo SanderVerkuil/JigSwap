@@ -12,6 +12,10 @@ export default defineSchema({
     location: v.optional(v.string()),
     preferredLanguage: v.optional(v.string()),
     isActive: v.boolean(),
+    // Mirror of the Clerk publicMetadata.role claim, synced by the user webhook
+    // (users.updateOrCreateUser) and the one-shot backfillUserRoles action. DISPLAY-ONLY:
+    // authorization always reads the JWT via identity/isAdmin — never gate on this field.
+    role: v.optional(v.string()),
     // Absent or false means the user's avatar image must never appear on public
     // marketing surfaces — initials only. Opt-in; defaults to NOT consented.
     shareAvatarPublicly: v.optional(v.boolean()),
