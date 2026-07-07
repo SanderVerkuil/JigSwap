@@ -174,6 +174,21 @@ export const backfillSearchableName = internalMutation({
   },
 });
 
+// Backfill write for backfillUserRoles: patch the mirrored display role onto ONE user row by
+// clerkId. Internal-only (never wired to a public endpoint). Patching `role: undefined` clears
+// the field. Display-only: authorization stays JWT-based (identity/isAdmin).
+export const patchUserRole = internalMutation({
+  args: { clerkId: v.string(), role: v.optional(v.string()) },
+  async handler(ctx, { clerkId, role }) {
+    const userRecord = await userQuery(ctx, clerkId);
+    if (userRecord === null) {
+      console.warn("backfillUserRoles: no users row for", clerkId);
+      return;
+    }
+    await ctx.db.patch(userRecord._id, { role });
+  },
+});
+
 /** Delete a user by clerk user ID. */
 export const deleteUser = internalMutation({
   args: { id: v.string() },

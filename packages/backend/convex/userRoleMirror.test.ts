@@ -80,3 +80,39 @@ describe("users/updateOrCreateUser role mirror", () => {
     expect(row?.role).toBeUndefined();
   });
 });
+
+describe("users/patchUserRole (backfill write)", () => {
+  test("patches the mirrored role onto the row matching the clerkId", async () => {
+    const t = convexTest(schema, modules);
+    await t.mutation(internal.users.updateOrCreateUser, {
+      clerkUser: clerkUser({}),
+    });
+    await t.mutation(internal.users.patchUserRole, {
+      clerkId: "clerk_mara",
+      role: "admin",
+    });
+    const row = await findMara(t);
+    expect(row?.role).toBe("admin");
+  });
+
+  test("clears the mirror when called without a role", async () => {
+    const t = convexTest(schema, modules);
+    await t.mutation(internal.users.updateOrCreateUser, {
+      clerkUser: clerkUser({ role: "admin" }),
+    });
+    await t.mutation(internal.users.patchUserRole, { clerkId: "clerk_mara" });
+    const row = await findMara(t);
+    expect(row?.role).toBeUndefined();
+  });
+
+  test("is a no-op for an unknown clerkId", async () => {
+    const t = convexTest(schema, modules);
+    // A void mutation return crosses the Convex wire as null.
+    await expect(
+      t.mutation(internal.users.patchUserRole, {
+        clerkId: "clerk_ghost",
+        role: "admin",
+      }),
+    ).resolves.toBeNull();
+  });
+});
