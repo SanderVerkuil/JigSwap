@@ -2735,7 +2735,9 @@
         "definition_rejected": "<strong>{actor}</strong> wees <strong>{target}</strong> af",
         "photo_removal_confirmed": "<strong>{actor}</strong> verwijderde een foto bij <strong>{target}</strong>",
         "photo_auto_rejected": "<strong>{actor}</strong> markeerde automatisch een foto bij <strong>{target}</strong>",
-        "photo_restored": "<strong>{actor}</strong> herstelde een foto bij <strong>{target}</strong>"
+        "photo_restored": "<strong>{actor}</strong> herstelde een foto bij <strong>{target}</strong>",
+        "role_granted": "<strong>{actor}</strong> maakte <strong>{target}</strong> beheerder",
+        "role_revoked": "<strong>{actor}</strong> trok de beheerdersrol van <strong>{target}</strong> in"
       },
       "activityEmpty": "Nog geen moderatieactiviteit."
     },
@@ -2815,12 +2817,23 @@
         "joined": "Lid sinds",
         "status": "Status",
         "role": "Rol",
-        "copies": "Exemplaren"
+        "copies": "Exemplaren",
+        "actions": "Acties"
       },
       "active": "Actief",
       "inactive": "Inactief",
       "adminBadge": "Beheerder",
-      "loadMore": "Meer laden"
+      "loadMore": "Meer laden",
+      "makeAdmin": "Beheerder maken",
+      "removeAdmin": "Beheerder verwijderen",
+      "grantConfirmTitle": "{name} beheerder maken?",
+      "grantConfirmBody": "Dit geeft volledige toegang tot de beheerconsole, inclusief moderatie en ledenbeheer. De wijziging wordt vastgelegd in het auditlogboek.",
+      "revokeConfirmTitle": "Beheerdersrechten van {name} intrekken?",
+      "revokeConfirmBody": "Zij verliezen toegang tot de beheerconsole zodra hun sessie ververst. De wijziging wordt vastgelegd in het auditlogboek.",
+      "grantSuccess": "{name} is nu beheerder.",
+      "grantError": "Kon de beheerdersrol niet toekennen.",
+      "revokeSuccess": "{name} is geen beheerder meer.",
+      "revokeError": "Kon de beheerdersrol niet intrekken."
     }
   }
 }

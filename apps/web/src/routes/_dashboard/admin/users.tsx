@@ -2,16 +2,29 @@ import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { QueueEmpty } from "@/components/admin/queue-empty";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoading } from "@/components/ui/loading";
-import { gateway } from "@/gateway";
+import { gateway, type Id } from "@/gateway";
+import { convexQuery, useConvexAction } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
 import { Search, UserX } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/admin/users")({
@@ -23,11 +36,15 @@ export const Route = createFileRoute("/_dashboard/admin/users")({
 
 const PAGE_SIZE = 25;
 
-// Read-only admin directory of every member (no user actions in v1). The role badge renders
-// the DISPLAY-ONLY mirrored Clerk role (users.role); authorization is enforced server-side
-// from the JWT (identity/isAdmin) in admin/listUsers — this page never gates on the mirror.
+// Admin directory of every member. The role badge renders the DISPLAY-ONLY mirrored Clerk
+// role (users.role); authorization is enforced server-side from the JWT (identity/isAdmin)
+// in admin/listUsers — this page never gates on the mirror. Role management: a per-row
+// grant/revoke behind an AlertDialog confirm, calling the setUserRole ACTION (Clerk write +
+// mirror fast-path + audit stamp). The caller's own row shows no affordance — the server's
+// CannotChangeOwnRole gate is the real enforcement, the UI just doesn't offer the foot-gun.
 function AdminUsersPage() {
   const t = useTranslations("admin.users");
+  const tCommon = useTranslations("common");
   const format = useFormatter();
 
   const [searchInput, setSearchInput] = useState("");
@@ -47,6 +64,43 @@ function AdminUsersPage() {
   } = usePaginatedQuery(gateway.admin.listUsers, search ? { search } : {}, {
     initialNumItems: PAGE_SIZE,
   });
+
+  // The signed-in admin's own row is identified by _id (CurrentMemberView shares the
+  // users table _id) so its role affordance can be hidden.
+  const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
+
+  const setRole = useMutation({
+    mutationFn: useConvexAction(gateway.admin.setUserRole),
+  });
+  // Per-row busy state derived from the in-flight mutation's variables (the
+  // category-list busyId idiom) — the row's button disables while its call runs.
+  const busyUserId = setRole.isPending
+    ? (setRole.variables?.userId ?? null)
+    : null;
+
+  // The row awaiting the role-change confirm (grant when role !== "admin", revoke otherwise).
+  const [confirming, setConfirming] = useState<(typeof users)[number] | null>(
+    null,
+  );
+
+  const changeRole = async (user: (typeof users)[number]) => {
+    const granting = user.role !== "admin";
+    try {
+      await setRole.mutateAsync({
+        userId: user._id as Id<"users">,
+        role: granting ? "admin" : null,
+      });
+      toast.success(
+        granting
+          ? t("grantSuccess", { name: user.name })
+          : t("revokeSuccess", { name: user.name }),
+      );
+    } catch {
+      // Covers Clerk failures and the server self-guard (unreachable via this UI,
+      // which hides the own-row affordance).
+      toast.error(granting ? t("grantError") : t("revokeError"));
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -76,6 +130,9 @@ function AdminUsersPage() {
                 <th className="px-4 py-3 font-medium">{t("columns.role")}</th>
                 <th className="px-4 py-3 text-right font-medium">
                   {t("columns.copies")}
+                </th>
+                <th className="px-4 py-3">
+                  <span className="sr-only">{t("columns.actions")}</span>
                 </th>
               </tr>
             </thead>
@@ -126,6 +183,25 @@ function AdminUsersPage() {
                   <td className="px-4 py-3 text-right tabular-nums">
                     {user.ownedCopyCount}
                   </td>
+                  <td className="px-4 py-3 text-right">
+                    {me && me._id !== user._id && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setConfirming(user)}
+                        disabled={busyUserId === user._id}
+                        className={
+                          user.role === "admin"
+                            ? "text-destructive hover:text-destructive"
+                            : undefined
+                        }
+                      >
+                        {user.role === "admin"
+                          ? t("removeAdmin")
+                          : t("makeAdmin")}
+                      </Button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -144,6 +220,44 @@ function AdminUsersPage() {
           </Button>
         </div>
       )}
+
+      <AlertDialog
+        open={confirming !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirming(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirming?.role === "admin"
+                ? t("revokeConfirmTitle", { name: confirming?.name ?? "" })
+                : t("grantConfirmTitle", { name: confirming?.name ?? "" })}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirming?.role === "admin"
+                ? t("revokeConfirmBody")
+                : t("grantConfirmBody")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              className={
+                confirming?.role === "admin"
+                  ? buttonVariants({ variant: "destructive" })
+                  : undefined
+              }
+              onClick={() => {
+                if (confirming) void changeRole(confirming);
+                setConfirming(null);
+              }}
+            >
+              {confirming?.role === "admin" ? t("removeAdmin") : t("makeAdmin")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

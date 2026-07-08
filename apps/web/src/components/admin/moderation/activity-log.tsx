@@ -15,6 +15,8 @@ import {
   CheckCircle,
   Flag,
   type LucideIcon,
+  ShieldCheck,
+  ShieldOff,
   Trash2,
   Undo2,
   XCircle,
@@ -32,6 +34,8 @@ const KIND_META: Record<ActivityRow["kind"], [LucideIcon, string]> = {
   photo_removal_confirmed: [Trash2, "text-destructive"],
   photo_auto_rejected: [Flag, "text-jigsaw-warning"],
   photo_restored: [Undo2, "text-muted-foreground"],
+  role_granted: [ShieldCheck, "text-jigsaw-success"],
+  role_revoked: [ShieldOff, "text-destructive"],
 };
 
 export function ActivityLog({ emptyTitle }: { emptyTitle: string }) {

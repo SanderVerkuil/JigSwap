@@ -2735,7 +2735,9 @@
         "definition_rejected": "<strong>{actor}</strong> rejected <strong>{target}</strong>",
         "photo_removal_confirmed": "<strong>{actor}</strong> removed a photo on <strong>{target}</strong>",
         "photo_auto_rejected": "<strong>{actor}</strong> auto-flagged a photo on <strong>{target}</strong>",
-        "photo_restored": "<strong>{actor}</strong> restored a photo on <strong>{target}</strong>"
+        "photo_restored": "<strong>{actor}</strong> restored a photo on <strong>{target}</strong>",
+        "role_granted": "<strong>{actor}</strong> made <strong>{target}</strong> an admin",
+        "role_revoked": "<strong>{actor}</strong> removed the admin role from <strong>{target}</strong>"
       },
       "activityEmpty": "No moderation activity yet."
     },
@@ -2815,12 +2817,23 @@
         "joined": "Joined",
         "status": "Status",
         "role": "Role",
-        "copies": "Copies"
+        "copies": "Copies",
+        "actions": "Actions"
       },
       "active": "Active",
       "inactive": "Inactive",
       "adminBadge": "Admin",
-      "loadMore": "Load more"
+      "loadMore": "Load more",
+      "makeAdmin": "Make admin",
+      "removeAdmin": "Remove admin",
+      "grantConfirmTitle": "Make {name} an admin?",
+      "grantConfirmBody": "This grants full access to the admin console, including moderation and member management. The change is audit-logged.",
+      "revokeConfirmTitle": "Remove admin from {name}?",
+      "revokeConfirmBody": "They lose access to the admin console once their session refreshes. The change is audit-logged.",
+      "grantSuccess": "{name} is now an admin.",
+      "grantError": "Could not grant the admin role.",
+      "revokeSuccess": "{name} is no longer an admin.",
+      "revokeError": "Could not remove the admin role."
     }
   }
 }
