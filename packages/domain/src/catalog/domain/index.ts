@@ -10,6 +10,7 @@ export * from "./image-format";
 export * from "./is-private-ip";
 export * from "./normalize-store-url";
 export * from "./piece-count";
+export * from "./proposal-status";
 export * from "./puzzle-definition";
 export * from "./puzzle-import-draft";
 export * from "./store-page-fetch-error";
