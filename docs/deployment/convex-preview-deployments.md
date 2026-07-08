@@ -60,29 +60,41 @@ snapshot can sign in on previews). Everything else is optional on previews.
 ### 3. Vercel: point preview frontends at their branch's preview backend
 
 Per the [Convex + Vercel guide](https://docs.convex.dev/production/hosting/vercel),
-override the Vercel **build command** so the frontend build runs through
-`npx convex deploy`, which (with the Preview-scoped `CONVEX_DEPLOY_KEY` from step 1)
-targets the branch-named preview deployment and injects its URL into the build:
+override the Vercel **build command** so preview builds run through `npx convex deploy`,
+which (with the Preview-scoped `CONVEX_DEPLOY_KEY` from step 1) targets the branch-named
+preview deployment and injects its URL into the build.
 
+The Vercel project's root directory is **`apps/web`** (build cwd = `apps/web`, plain
+`vite build`). Vercel has ONE build command for all environments, and the production
+Convex deploy is deliberately CI-gated (`convex-deploy.yml` deploys prod only after CI
+passes on main) — so branch on `VERCEL_ENV` to keep production builds exactly as they
+are today:
+
+```bash
+if [ "$VERCEL_ENV" = "preview" ]; then cd ../../packages/backend && npx convex deploy --cmd-url-env-var-name VITE_CONVEX_URL --cmd 'pnpm --filter @jigswap/web build'; else pnpm build; fi
 ```
-npx convex deploy --cmd-url-env-var-name VITE_CONVEX_URL --cmd '<existing build command>'
-```
 
-Notes for this repo:
+How it resolves on previews: the deploy runs from `packages/backend`, auto-detects the
+branch from `VERCEL_GIT_COMMIT_REF` (landing on the **same** branch-named preview the
+GitHub Action creates/seeds), then runs `pnpm --filter @jigswap/web build` with
+`VITE_CONVEX_URL` injected. The filter flag works from any directory in the workspace
+and output still lands in `apps/web/.output`, so the Output Directory setting stays
+valid. (`VITE_CONVEX_URL` is read in `apps/web/src/router.tsx` and
+`apps/web/src/lib/require-admin.ts`; Vite inlines it at build time for both client and
+SSR bundles.)
 
-- It's a pnpm monorepo — backend in `packages/backend`, web app in `apps/web`.
-  `VITE_CONVEX_URL` is read in `apps/web/src/router.tsx` and
-  `apps/web/src/lib/require-admin.ts`.
-- The exact command shape depends on the Vercel project's **root directory** setting
-  (not visible from the repo). If the root directory is `apps/web`, `npx convex deploy`
-  must still run against `packages/backend`, e.g.:
-  `cd ../.. && pnpm exec convex deploy --cmd-url-env-var-name VITE_CONVEX_URL --cmd 'pnpm --filter web build'`
-  (run from `packages/backend` via `pnpm --dir packages/backend exec …` if needed) —
-  verify against the project's current build command.
-- Vercel infers the same Git branch name Convex uses, so the frontend preview and the
-  GitHub-Actions-created backend preview land on the **same** deployment.
-- Afterward, **remove the static Preview-scoped `VITE_CONVEX_URL`** env var from Vercel —
-  it would otherwise pin every frontend preview to one fixed backend.
+Vercel env-var scoping:
+
+| Variable                     | Preview scope         | Production scope                    |
+| ---------------------------- | --------------------- | ----------------------------------- |
+| `CONVEX_DEPLOY_KEY`          | the `preview:…` key   | _not set — prod deploys stay in CI_ |
+| `VITE_CONVEX_URL`            | **remove** (injected) | keep the static prod URL            |
+| `VITE_CLERK_PUBLISHABLE_KEY` | `pk_test…`            | prod key later                      |
+| `CLERK_SECRET_KEY`           | `sk_test…`            | prod key later                      |
+
+Also confirm Settings → Root Directory → **"Include source files outside of the Root
+Directory"** is enabled (default for monorepos) so `packages/backend` exists in the
+build container.
 
 ## Behavior
 
