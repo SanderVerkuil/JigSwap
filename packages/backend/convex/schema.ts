@@ -419,6 +419,8 @@ export default defineSchema({
       v.literal("photo_restored"),
       v.literal("photo_removal_confirmed"),
       v.literal("photo_auto_rejected"),
+      v.literal("role_granted"),
+      v.literal("role_revoked"),
     ),
     targetLabel: v.string(), // denormalized display title at decision time
     targetId: v.string(),

@@ -227,7 +227,9 @@ const seedAction = (
       | "definition_edited_approved"
       | "photo_restored"
       | "photo_removal_confirmed"
-      | "photo_auto_rejected";
+      | "photo_auto_rejected"
+      | "role_granted"
+      | "role_revoked";
     at: number;
     actorId?: Awaited<ReturnType<typeof seedMember>>;
     targetLabel?: string;
@@ -428,5 +430,77 @@ describe("moderation read models are admin-gated", () => {
     await expect(
       t.query(api.admin.getModerationActivity.getModerationActivity, {}),
     ).rejects.toThrow(/Unauthenticated/);
+  });
+});
+
+describe("role-change kinds in moderation read models", () => {
+  test("weekly stats ignore role_granted / role_revoked rows", async () => {
+    const t = convexTest(schema, modules);
+    const alice = await seedMember(t);
+    const now = Date.now();
+    await seedAction(t, { kind: "definition_approved", at: now - 1000 });
+    await seedAction(t, {
+      kind: "role_granted",
+      at: now - 2000,
+      actorId: alice,
+      targetLabel: "Bob",
+      targetId: "clerk_bob",
+    });
+    await seedAction(t, {
+      kind: "role_revoked",
+      at: now - 3000,
+      actorId: alice,
+      targetLabel: "Cleo",
+      targetId: "clerk_cleo",
+    });
+
+    const stats = await asAdmin(t).query(
+      api.admin.getModerationStats.getModerationStats,
+      {},
+    );
+    // Role rows are audit-only: they must not leak into ANY weekly KPI bucket.
+    expect(stats).toMatchObject({ approved: 1, rejected: 0, flagsCleared: 0 });
+    expect(stats.avgReviewMins).toBeNull();
+  });
+
+  test("the activity feed surfaces role kinds with the actor joined in", async () => {
+    const t = convexTest(schema, modules);
+    const alice = await seedMember(t);
+    const now = Date.now();
+    await seedAction(t, {
+      kind: "role_granted",
+      at: now - 1000,
+      actorId: alice,
+      targetLabel: "Bob",
+      targetId: "clerk_bob",
+    });
+    await seedAction(t, {
+      kind: "role_revoked",
+      at: now - 2000,
+      actorId: alice,
+      targetLabel: "Cleo",
+      targetId: "clerk_cleo",
+    });
+
+    const rows = await asAdmin(t).query(
+      api.admin.getModerationActivity.getModerationActivity,
+      {},
+    );
+    expect(rows).toEqual([
+      {
+        kind: "role_granted",
+        actorName: "Alice",
+        targetLabel: "Bob",
+        targetId: "clerk_bob",
+        at: now - 1000,
+      },
+      {
+        kind: "role_revoked",
+        actorName: "Alice",
+        targetLabel: "Cleo",
+        targetId: "clerk_cleo",
+        at: now - 2000,
+      },
+    ]);
   });
 });
