@@ -23,7 +23,7 @@ export interface ExchangePuzzleView extends ConvexSystemFields {
   tags?: string[];
   image?: string;
   searchableText?: string;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "disabled";
   submittedBy: string;
   createdAt: number;
   updatedAt: number;
