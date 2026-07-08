@@ -34,6 +34,7 @@ import type * as catalog_adapters_systemClock from "../catalog/adapters/systemCl
 import type * as catalog_approvePuzzleDefinition from "../catalog/approvePuzzleDefinition.js";
 import type * as catalog_backfillCategories from "../catalog/backfillCategories.js";
 import type * as catalog_createCatalogCategory from "../catalog/createCatalogCategory.js";
+import type * as catalog_disablePuzzleDefinition from "../catalog/disablePuzzleDefinition.js";
 import type * as catalog_errors from "../catalog/errors.js";
 import type * as catalog_extractFromUrl from "../catalog/extractFromUrl.js";
 import type * as catalog_findPuzzleByBarcode from "../catalog/findPuzzleByBarcode.js";
@@ -51,6 +52,7 @@ import type * as catalog_listMyFavorites from "../catalog/listMyFavorites.js";
 import type * as catalog_listPendingPuzzleDefinitions from "../catalog/listPendingPuzzleDefinitions.js";
 import type * as catalog_mappers from "../catalog/mappers.js";
 import type * as catalog_myFavoritePuzzleIds from "../catalog/myFavoritePuzzleIds.js";
+import type * as catalog_reenablePuzzleDefinition from "../catalog/reenablePuzzleDefinition.js";
 import type * as catalog_rejectPuzzleDefinition from "../catalog/rejectPuzzleDefinition.js";
 import type * as catalog_reorderCatalogCategories from "../catalog/reorderCatalogCategories.js";
 import type * as catalog_runDefinitionAction from "../catalog/runDefinitionAction.js";
@@ -321,6 +323,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/approvePuzzleDefinition": typeof catalog_approvePuzzleDefinition;
   "catalog/backfillCategories": typeof catalog_backfillCategories;
   "catalog/createCatalogCategory": typeof catalog_createCatalogCategory;
+  "catalog/disablePuzzleDefinition": typeof catalog_disablePuzzleDefinition;
   "catalog/errors": typeof catalog_errors;
   "catalog/extractFromUrl": typeof catalog_extractFromUrl;
   "catalog/findPuzzleByBarcode": typeof catalog_findPuzzleByBarcode;
@@ -338,6 +341,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/listPendingPuzzleDefinitions": typeof catalog_listPendingPuzzleDefinitions;
   "catalog/mappers": typeof catalog_mappers;
   "catalog/myFavoritePuzzleIds": typeof catalog_myFavoritePuzzleIds;
+  "catalog/reenablePuzzleDefinition": typeof catalog_reenablePuzzleDefinition;
   "catalog/rejectPuzzleDefinition": typeof catalog_rejectPuzzleDefinition;
   "catalog/reorderCatalogCategories": typeof catalog_reorderCatalogCategories;
   "catalog/runDefinitionAction": typeof catalog_runDefinitionAction;

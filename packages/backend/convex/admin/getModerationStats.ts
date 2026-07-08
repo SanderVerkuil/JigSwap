@@ -38,9 +38,15 @@ export const getModerationStats = query({
       ) {
         flagsCleared += 1;
       }
-      // role_granted / role_revoked are audit-only: surfaced in the activity
-      // feed, never counted in the weekly moderation KPIs.
-      if (row.kind.startsWith("definition_")) {
+      // role_granted / role_revoked are audit-only, and definition_disabled /
+      // definition_reenabled are reversible lifecycle toggles, not review decisions:
+      // all four appear in the Activity Log but feed no KPI bucket and no
+      // review-time sample.
+      if (
+        row.kind === "definition_approved" ||
+        row.kind === "definition_edited_approved" ||
+        row.kind === "definition_rejected"
+      ) {
         // Approximation: review time = decision time minus the submission's createdAt.
         // The decision row's targetId is the puzzle's Catalog aggregateId; a since-deleted
         // puzzle simply contributes no sample.

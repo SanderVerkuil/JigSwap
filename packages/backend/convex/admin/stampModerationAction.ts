@@ -5,6 +5,8 @@ type ModerationKind =
   | "definition_approved"
   | "definition_rejected"
   | "definition_edited_approved"
+  | "definition_disabled"
+  | "definition_reenabled"
   | "photo_restored"
   | "photo_removal_confirmed"
   | "photo_auto_rejected"
