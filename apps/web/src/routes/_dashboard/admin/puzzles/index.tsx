@@ -1,5 +1,5 @@
 import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 
 import {
   AlertDialog,
@@ -25,7 +25,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
 
-export const Route = createFileRoute("/_dashboard/admin/puzzles")({
+export const Route = createFileRoute("/_dashboard/admin/puzzles/")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "adminPuzzles") }],
   }),
@@ -118,34 +118,42 @@ function AdminPuzzlesPage() {
               key={row._id}
               className="flex items-center gap-3 border-b px-4 py-3 last:border-0"
             >
-              {row.image ? (
-                <img
-                  src={row.image}
-                  alt=""
-                  className="size-11 shrink-0 rounded-lg border object-cover"
-                />
-              ) : (
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-lg border bg-muted">
-                  <PuzzleIcon
-                    className="size-5 text-muted-foreground"
-                    aria-hidden
+              <Link
+                to="/admin/puzzles/$puzzleId"
+                params={{ puzzleId: row._id }}
+                className="flex min-w-0 flex-1 items-center gap-3"
+              >
+                {row.image ? (
+                  <img
+                    src={row.image}
+                    alt=""
+                    className="size-11 shrink-0 rounded-lg border object-cover"
                   />
-                </span>
-              )}
-              <div className="min-w-0 flex-1 space-y-0.5">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                  <span className="truncate font-semibold">{row.title}</span>
-                  <Badge variant={STATUS_VARIANT[row.status]}>
-                    {t(`status.${row.status}`)}
-                  </Badge>
+                ) : (
+                  <span className="flex size-11 shrink-0 items-center justify-center rounded-lg border bg-muted">
+                    <PuzzleIcon
+                      className="size-5 text-muted-foreground"
+                      aria-hidden
+                    />
+                  </span>
+                )}
+                <div className="min-w-0 flex-1 space-y-0.5">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                    <span className="truncate font-semibold underline-offset-4 hover:underline">
+                      {row.title}
+                    </span>
+                    <Badge variant={STATUS_VARIANT[row.status]}>
+                      {t(`status.${row.status}`)}
+                    </Badge>
+                  </div>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {row.brand && `${row.brand} · `}
+                    {t("pieces", { count: row.pieceCount })}
+                    {row.submitterName &&
+                      ` · ${t("submittedBy", { name: row.submitterName })}`}
+                  </p>
                 </div>
-                <p className="truncate text-xs text-muted-foreground">
-                  {row.brand && `${row.brand} · `}
-                  {t("pieces", { count: row.pieceCount })}
-                  {row.submitterName &&
-                    ` · ${t("submittedBy", { name: row.submitterName })}`}
-                </p>
-              </div>
+              </Link>
               <div className="hidden shrink-0 flex-col items-end gap-0.5 text-xs text-muted-foreground sm:flex">
                 <span>
                   {format.dateTime(row.createdAt, { dateStyle: "medium" })}

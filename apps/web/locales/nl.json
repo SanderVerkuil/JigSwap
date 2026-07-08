@@ -2840,7 +2840,26 @@
       "disableError": "Kon de puzzel niet uitschakelen. Probeer het opnieuw.",
       "reenableSuccess": "“{title}” weer ingeschakeld",
       "reenableError": "Kon de puzzel niet weer inschakelen. Probeer het opnieuw.",
-      "loadMore": "Meer laden"
+      "loadMore": "Meer laden",
+      "detail": {
+        "notFoundTitle": "Puzzeldefinitie niet gevonden",
+        "notFound": "Deze puzzeldefinitie bestaat niet of is verwijderd.",
+        "submittedByLabel": "Ingediend door",
+        "created": "Aangemaakt op {date}",
+        "updated": "Bijgewerkt op {date}",
+        "stats": {
+          "owners": "Eigenaren",
+          "copies": "Exemplaren",
+          "forTrade": "Te ruil",
+          "forSale": "Te koop",
+          "forLend": "Te leen"
+        },
+        "ownersTitle": "Eigenaren",
+        "ownersEmpty": "Nog geen lid bezit een exemplaar van deze puzzel.",
+        "copyCount": "{count, plural, one {# exemplaar} other {# exemplaren}}",
+        "auditTitle": "Moderatie-activiteit",
+        "auditEmpty": "Nog geen moderatie-activiteit voor deze puzzel."
+      }
     },
     "queueEmpty": {
       "title": "Alles afgehandeld"

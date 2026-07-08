@@ -2840,7 +2840,26 @@
       "disableError": "Could not disable the puzzle. Please try again.",
       "reenableSuccess": "“{title}” re-enabled",
       "reenableError": "Could not re-enable the puzzle. Please try again.",
-      "loadMore": "Load more"
+      "loadMore": "Load more",
+      "detail": {
+        "notFoundTitle": "Puzzle definition not found",
+        "notFound": "This puzzle definition does not exist or was deleted.",
+        "submittedByLabel": "Submitted by",
+        "created": "Created {date}",
+        "updated": "Updated {date}",
+        "stats": {
+          "owners": "Owners",
+          "copies": "Copies",
+          "forTrade": "For trade",
+          "forSale": "For sale",
+          "forLend": "For lending"
+        },
+        "ownersTitle": "Owners",
+        "ownersEmpty": "No member owns a copy of this puzzle yet.",
+        "copyCount": "{count, plural, one {# copy} other {# copies}}",
+        "auditTitle": "Moderation activity",
+        "auditEmpty": "No moderation activity for this puzzle yet."
+      }
     },
     "queueEmpty": {
       "title": "All clear"

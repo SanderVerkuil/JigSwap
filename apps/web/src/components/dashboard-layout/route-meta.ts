@@ -167,6 +167,9 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   "/admin": { pageKey: "admin", variant: "landing" },
   "/admin/moderation": { pageKey: "adminModeration", group: "admin" },
   "/admin/puzzles": { pageKey: "adminPuzzles", group: "admin" },
+  // Definition detail: nav-highlights Puzzles; the page publishes the
+  // definition's title as the leaf crumb at runtime.
+  "/admin/puzzles/$puzzleId": { pageKey: "adminPuzzles", group: "admin" },
   "/admin/categories": { pageKey: "adminCategories", group: "admin" },
   "/admin/users": { pageKey: "adminUsers", group: "admin" },
   // Member detail: nav-highlights Members; the page publishes the member's
