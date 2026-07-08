@@ -323,6 +323,12 @@ export const gateway = {
     // `search` arg switches to the by_searchable_name index. Rows are AdminUserView
     // DTOs whose `role` is the display-only Clerk mirror (authz stays JWT-based).
     listUsers: api.admin.listUsers.listUsers,
+    // Role management WRITE path: a "use node" ACTION (Clerk network write), not
+    // a mutation — call it with useConvexAction (the extractPuzzleFromUrl
+    // pattern). Grants/revokes the Clerk publicMetadata.role (the authz source
+    // of truth), fast-paths the users.role display mirror and stamps a
+    // role_granted/role_revoked audit row. Self-changes are refused server-side.
+    setUserRole: api.admin.setUserRole.setUserRole,
   },
 
   // Admin triage: the operational/support inboxes written by the public contact
