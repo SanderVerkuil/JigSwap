@@ -1,6 +1,7 @@
 export * from "./approve-puzzle-definition";
 export * from "./create-catalog-category";
 export * from "./disable-puzzle-definition";
+export * from "./edit-change-proposal";
 export * from "./file-change-proposal";
 export * from "./import-puzzle-from-url";
 export * from "./proposal-baseline";
@@ -12,3 +13,4 @@ export * from "./set-catalog-category-active";
 export * from "./submit-puzzle-definition";
 export * from "./update-catalog-category";
 export * from "./update-puzzle-definition";
+export * from "./withdraw-change-proposal";

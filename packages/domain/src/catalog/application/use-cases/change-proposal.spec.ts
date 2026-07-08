@@ -8,7 +8,9 @@ import {
   RecordingEventPublisher,
   SequentialIdGenerator,
 } from "../testing";
+import { makeEditChangeProposal } from "./edit-change-proposal";
 import { makeFileChangeProposal } from "./file-change-proposal";
+import { makeWithdrawChangeProposal } from "./withdraw-change-proposal";
 
 const NOW = new Date("2026-07-08T10:00:00Z");
 const alice = toSubmitterId("alice");
@@ -138,5 +140,135 @@ describe("makeFileChangeProposal", () => {
     if (r.isErr) expect(r.error.code).toBe("EmptyProposal");
     expect(proposals.size()).toBe(0);
     expect(events.published).toEqual([]);
+  });
+
+  it("snapshots the grouped barcode baseline from the definition's flat fields", async () => {
+    const r = PuzzleDefinition.submit({
+      id: toPuzzleDefinitionId("pd-barcoded"),
+      title: "Barcoded",
+      pieceCount: 500,
+      submittedBy: bob,
+      now: NOW,
+      barcodes: { ean: "4006381333931", modelNumber: "RV-1" },
+    });
+    if (!r.isOk) throw new Error("seed failed");
+    r.value.approve(NOW);
+    r.value.pullEvents();
+    await definitions.save(r.value);
+
+    const file = makeFileChangeProposal(deps());
+    const filed = await file({
+      puzzleDefinitionId: toPuzzleDefinitionId("pd-barcoded"),
+      proposedBy: alice,
+      changes: { barcodes: { ean: "4006381333931", upc: "036000291452" } },
+    });
+
+    expect(filed.isOk).toBe(true);
+    if (!filed.isOk) return;
+    const state = (await proposals.findById(filed.value))!.toState();
+    expect(state.baseline).toEqual({
+      barcodes: { ean: "4006381333931", upc: undefined, modelNumber: "RV-1" },
+    });
+  });
+});
+
+describe("makeEditChangeProposal", () => {
+  it("replaces changes/comment and re-derives the baseline against the CURRENT definition", async () => {
+    await seedDefinition();
+    const file = makeFileChangeProposal(deps());
+    const filed = await file({
+      puzzleDefinitionId: definitionId,
+      proposedBy: alice,
+      changes: { title: "First idea" },
+    });
+    if (!filed.isOk) throw new Error("setup failed");
+    events.published.length = 0;
+
+    const edit = makeEditChangeProposal(deps());
+    const r = await edit({
+      changeProposalId: filed.value,
+      changes: { pieceCount: 500 },
+      comment: "recount",
+    });
+
+    expect(r.isOk).toBe(true);
+    const state = (await proposals.findById(filed.value))!.toState();
+    expect(state.changes).toEqual({ pieceCount: 500 });
+    expect(state.baseline).toEqual({ pieceCount: 1000 });
+    expect(state.comment).toBe("recount");
+    expect(events.names()).toEqual(["ChangeProposalEdited"]);
+  });
+
+  it("fails with ChangeProposalNotFound for an unknown id", async () => {
+    await seedDefinition();
+    const edit = makeEditChangeProposal(deps());
+    const r = await edit({
+      changeProposalId: ids.nextChangeProposalId(),
+      changes: { title: "X" },
+    });
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("ChangeProposalNotFound");
+  });
+
+  it("propagates ProposalNotPending from the aggregate", async () => {
+    await seedDefinition();
+    const file = makeFileChangeProposal(deps());
+    const filed = await file({
+      puzzleDefinitionId: definitionId,
+      proposedBy: alice,
+      changes: { title: "X" },
+    });
+    if (!filed.isOk) throw new Error("setup failed");
+    const withdraw = makeWithdrawChangeProposal(deps());
+    await withdraw({ changeProposalId: filed.value });
+
+    const edit = makeEditChangeProposal(deps());
+    const r = await edit({
+      changeProposalId: filed.value,
+      changes: { title: "Y" },
+    });
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("ProposalNotPending");
+  });
+});
+
+describe("makeWithdrawChangeProposal", () => {
+  it("moves a pending proposal to withdrawn and publishes ChangeProposalWithdrawn", async () => {
+    await seedDefinition();
+    const file = makeFileChangeProposal(deps());
+    const filed = await file({
+      puzzleDefinitionId: definitionId,
+      proposedBy: alice,
+      changes: { title: "X" },
+    });
+    if (!filed.isOk) throw new Error("setup failed");
+    events.published.length = 0;
+
+    const withdraw = makeWithdrawChangeProposal(deps());
+    const r = await withdraw({ changeProposalId: filed.value });
+
+    expect(r.isOk).toBe(true);
+    expect((await proposals.findById(filed.value))!.status).toBe("withdrawn");
+    expect(events.names()).toEqual(["ChangeProposalWithdrawn"]);
+  });
+
+  it("after withdrawing, the same member may file a fresh proposal", async () => {
+    await seedDefinition();
+    const file = makeFileChangeProposal(deps());
+    const filed = await file({
+      puzzleDefinitionId: definitionId,
+      proposedBy: alice,
+      changes: { title: "X" },
+    });
+    if (!filed.isOk) throw new Error("setup failed");
+    const withdraw = makeWithdrawChangeProposal(deps());
+    await withdraw({ changeProposalId: filed.value });
+
+    const again = await file({
+      puzzleDefinitionId: definitionId,
+      proposedBy: alice,
+      changes: { title: "Y" },
+    });
+    expect(again.isOk).toBe(true);
   });
 });
