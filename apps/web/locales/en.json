@@ -2833,7 +2833,35 @@
       "grantSuccess": "{name} is now an admin.",
       "grantError": "Could not grant the admin role.",
       "revokeSuccess": "{name} is no longer an admin.",
-      "revokeError": "Could not remove the admin role."
+      "revokeError": "Could not remove the admin role.",
+      "detail": {
+        "loading": "Loading member…",
+        "notFoundTitle": "Member not found",
+        "notFound": "This member does not exist (or was deleted).",
+        "joined": "Joined {date}",
+        "updated": "Updated {date}",
+        "location": "Location",
+        "language": "Language",
+        "stats": {
+          "copies": "Copies",
+          "forTrade": "For trade",
+          "forSale": "For sale",
+          "forLend": "For lend",
+          "collections": "Collections",
+          "solves": "Solves"
+        },
+        "submissionsTitle": "Catalog submissions",
+        "submissionsEmpty": "No catalog submissions yet.",
+        "status": {
+          "pending": "Pending",
+          "approved": "Approved",
+          "rejected": "Rejected"
+        },
+        "auditPerformedTitle": "Moderation actions performed",
+        "auditPerformedEmpty": "No moderation actions performed.",
+        "auditReceivedTitle": "Audit trail",
+        "auditReceivedEmpty": "No audit entries target this member."
+      }
     }
   }
 }

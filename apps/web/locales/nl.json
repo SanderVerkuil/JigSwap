@@ -2833,7 +2833,35 @@
       "grantSuccess": "{name} is nu beheerder.",
       "grantError": "Kon de beheerdersrol niet toekennen.",
       "revokeSuccess": "{name} is geen beheerder meer.",
-      "revokeError": "Kon de beheerdersrol niet intrekken."
+      "revokeError": "Kon de beheerdersrol niet intrekken.",
+      "detail": {
+        "loading": "Lid laden…",
+        "notFoundTitle": "Lid niet gevonden",
+        "notFound": "Dit lid bestaat niet (of is verwijderd).",
+        "joined": "Lid sinds {date}",
+        "updated": "Bijgewerkt {date}",
+        "location": "Locatie",
+        "language": "Taal",
+        "stats": {
+          "copies": "Exemplaren",
+          "forTrade": "Te ruil",
+          "forSale": "Te koop",
+          "forLend": "Te leen",
+          "collections": "Collecties",
+          "solves": "Gelegd"
+        },
+        "submissionsTitle": "Catalogusinzendingen",
+        "submissionsEmpty": "Nog geen catalogusinzendingen.",
+        "status": {
+          "pending": "In afwachting",
+          "approved": "Goedgekeurd",
+          "rejected": "Afgewezen"
+        },
+        "auditPerformedTitle": "Uitgevoerde moderatieacties",
+        "auditPerformedEmpty": "Geen uitgevoerde moderatieacties.",
+        "auditReceivedTitle": "Auditlogboek",
+        "auditReceivedEmpty": "Geen auditvermeldingen voor dit lid."
+      }
     }
   }
 }
