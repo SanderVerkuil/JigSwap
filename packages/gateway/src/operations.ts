@@ -322,6 +322,12 @@ export const gateway = {
     // Every catalog definition regardless of status, for the /admin/puzzles console.
     listPuzzleDefinitions:
       api.admin.listPuzzleDefinitions.listPuzzleDefinitions,
+    // Per-definition admin detail read model: definition facts + submitter,
+    // ownership stats, capped distinct-owners rollup, and the definition's
+    // moderation trail (by_target on the Catalog aggregateId). Gated
+    // server-side like listPuzzleDefinitions.
+    getPuzzleDefinitionDetail:
+      api.admin.getPuzzleDefinitionDetail.getPuzzleDefinitionDetail,
     listRejectedPhotos: api.admin.listRejectedPhotos.listRejectedPhotos,
     restorePhoto: api.admin.restorePhoto.restorePhoto,
     confirmPhotoRemoval: api.admin.confirmPhotoRemoval.confirmPhotoRemoval,
