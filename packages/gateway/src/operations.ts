@@ -319,6 +319,10 @@ export const gateway = {
     listRejectedPhotos: api.admin.listRejectedPhotos.listRejectedPhotos,
     restorePhoto: api.admin.restorePhoto.restorePhoto,
     confirmPhotoRemoval: api.admin.confirmPhotoRemoval.confirmPhotoRemoval,
+    // Admin users directory (read-only v1 — no user actions). Paginated; an optional
+    // `search` arg switches to the by_searchable_name index. Rows are AdminUserView
+    // DTOs whose `role` is the display-only Clerk mirror (authz stays JWT-based).
+    listUsers: api.admin.listUsers.listUsers,
   },
 
   // Admin triage: the operational/support inboxes written by the public contact

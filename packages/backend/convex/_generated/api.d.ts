@@ -12,6 +12,7 @@ import type * as admin_confirmPhotoRemoval from "../admin/confirmPhotoRemoval.js
 import type * as admin_getModerationActivity from "../admin/getModerationActivity.js";
 import type * as admin_getModerationStats from "../admin/getModerationStats.js";
 import type * as admin_listRejectedPhotos from "../admin/listRejectedPhotos.js";
+import type * as admin_listUsers from "../admin/listUsers.js";
 import type * as admin_restorePhoto from "../admin/restorePhoto.js";
 import type * as adminCategories from "../adminCategories.js";
 import type * as backfillUserRoles from "../backfillUserRoles.js";
@@ -295,6 +296,7 @@ declare const fullApi: ApiFromModules<{
   "admin/getModerationActivity": typeof admin_getModerationActivity;
   "admin/getModerationStats": typeof admin_getModerationStats;
   "admin/listRejectedPhotos": typeof admin_listRejectedPhotos;
+  "admin/listUsers": typeof admin_listUsers;
   "admin/restorePhoto": typeof admin_restorePhoto;
   adminCategories: typeof adminCategories;
   backfillUserRoles: typeof backfillUserRoles;
