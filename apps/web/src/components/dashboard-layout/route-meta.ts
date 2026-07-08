@@ -167,6 +167,9 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   "/admin/moderation": { pageKey: "adminModeration", group: "admin" },
   "/admin/categories": { pageKey: "adminCategories", group: "admin" },
   "/admin/users": { pageKey: "adminUsers", group: "admin" },
+  // Member detail: nav-highlights Members; the page publishes the member's
+  // name as the leaf crumb at runtime.
+  "/admin/users/$userId": { pageKey: "adminUsers", group: "admin" },
   "/admin/contact": { pageKey: "adminContact", group: "admin" },
   "/admin/feedback": { pageKey: "adminFeedback", group: "admin" },
 
