@@ -425,7 +425,13 @@ export default defineSchema({
     targetLabel: v.string(), // denormalized display title at decision time
     targetId: v.string(),
     at: v.number(),
-  }).index("by_at", ["at"]),
+  })
+    .index("by_at", ["at"])
+    // Back the admin user-detail audit trail: actions a member PERFORMED as
+    // admin, and actions TARGETING them (targetId = clerkId for role rows).
+    // Additive — Convex indexes existing rows automatically, no backfill.
+    .index("by_actor", ["actorId", "at"])
+    .index("by_target", ["targetId", "at"]),
 
   // User goals for puzzle completion
   goals: defineTable({
