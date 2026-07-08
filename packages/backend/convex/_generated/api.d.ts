@@ -12,6 +12,7 @@ import type * as admin_confirmPhotoRemoval from "../admin/confirmPhotoRemoval.js
 import type * as admin_getModerationActivity from "../admin/getModerationActivity.js";
 import type * as admin_getModerationStats from "../admin/getModerationStats.js";
 import type * as admin_getUserDetail from "../admin/getUserDetail.js";
+import type * as admin_listPuzzleDefinitions from "../admin/listPuzzleDefinitions.js";
 import type * as admin_listRejectedPhotos from "../admin/listRejectedPhotos.js";
 import type * as admin_listUsers from "../admin/listUsers.js";
 import type * as admin_restorePhoto from "../admin/restorePhoto.js";
@@ -301,6 +302,7 @@ declare const fullApi: ApiFromModules<{
   "admin/getModerationActivity": typeof admin_getModerationActivity;
   "admin/getModerationStats": typeof admin_getModerationStats;
   "admin/getUserDetail": typeof admin_getUserDetail;
+  "admin/listPuzzleDefinitions": typeof admin_listPuzzleDefinitions;
   "admin/listRejectedPhotos": typeof admin_listRejectedPhotos;
   "admin/listUsers": typeof admin_listUsers;
   "admin/restorePhoto": typeof admin_restorePhoto;

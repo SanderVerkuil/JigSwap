@@ -77,6 +77,25 @@ export interface PuzzleCategoryView {
   updatedAt: number;
 }
 
+/**
+ * One row of the admin puzzle-definitions console (`admin.listPuzzleDefinitions`): catalog
+ * facts plus admin metadata (submitter display name, distinct-owner count, resolved thumbnail
+ * URL). Unlike the public views it carries EVERY moderation status. Disable/re-enable actions
+ * key on `aggregateId`; legacy rows without one still render but their actions are disabled.
+ */
+export interface AdminPuzzleDefinitionRowView {
+  _id: DocId;
+  aggregateId?: string;
+  title: string;
+  brand?: string;
+  pieceCount: number;
+  status: "pending" | "approved" | "rejected" | "disabled";
+  createdAt: number;
+  submitterName: string | null;
+  image: string | null;
+  ownerCount: number;
+}
+
 /** A distinct brand name from the Catalog. Optional because the underlying column is optional. */
 export type BrandView = string | undefined;
 

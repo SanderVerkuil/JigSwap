@@ -18,6 +18,9 @@ export const gateway = {
     updatePuzzle: api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
     approve: api.catalog.approvePuzzleDefinition.approvePuzzleDefinition,
     reject: api.catalog.rejectPuzzleDefinition.rejectPuzzleDefinition,
+    // Reversible admin lifecycle on an approved definition (audit-stamped; nothing deleted).
+    disable: api.catalog.disablePuzzleDefinition.disablePuzzleDefinition,
+    reenable: api.catalog.reenablePuzzleDefinition.reenablePuzzleDefinition,
     // Reads go through the domain-driven catalog module (file.export namespacing); each is a thin
     // Convex query returning a typed @jigswap/contracts view DTO, not a raw row. Public
     // lists/suggestions already filter to approved definitions only.
@@ -316,6 +319,9 @@ export const gateway = {
     getModerationStats: api.admin.getModerationStats.getModerationStats,
     getModerationActivity:
       api.admin.getModerationActivity.getModerationActivity,
+    // Every catalog definition regardless of status, for the /admin/puzzles console.
+    listPuzzleDefinitions:
+      api.admin.listPuzzleDefinitions.listPuzzleDefinitions,
     listRejectedPhotos: api.admin.listRejectedPhotos.listRejectedPhotos,
     restorePhoto: api.admin.restorePhoto.restorePhoto,
     confirmPhotoRemoval: api.admin.confirmPhotoRemoval.confirmPhotoRemoval,
