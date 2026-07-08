@@ -28,16 +28,26 @@ overrides:
   # Security patches for transitive deps flagged by Dependabot — each pins only
   # the vulnerable range to its first patched version (selective overrides).
   # Vite 8 accepts esbuild ^0.27.0 || ^0.28.0, so 0.28.1 is in range.
-  # Not forced: js-yaml (gray-matter parses only trusted repo frontmatter, and
-  # the 4.2.0 fix is a major bump that breaks gray-matter's js-yaml v3 API) and
-  # uuid (dev-only via webpack-dev-server>sockjs; v11 is ESM-only, breaks it).
+  # js-yaml is now patched on the v3 line (3.15.0), so gray-matter's js-yaml v3
+  # API keeps working; 4.x resolutions are untouched.
+  # webpack-dev-server is only an optional peer of @nx/webpack 23 (>=5.2.5), so
+  # re-resolving dropped it — and its http-proxy-middleware 2.x / sockjs / uuid
+  # subtree — from the lockfile entirely. Their overrides below stay as guards
+  # so any future resolution lands on a patched version (uuid 11 still ships
+  # CJS; only v13 dropped it).
   esbuild@<0.28.1: ^0.28.1
   form-data@<4.0.6: ^4.0.6
   tmp@<0.2.7: ^0.2.7
   ws@>=8.0.0 <8.21.0: ^8.21.0
-  dompurify@<3.4.9: ^3.4.9
+  dompurify@<3.4.11: ^3.4.11
   postcss@<8.5.10: ^8.5.10
   qs@>=6.11.1 <6.15.2: ^6.15.2
+  undici@>=7.0.0 <7.28.0: ^7.28.0
+  http-proxy-middleware@>=3.0.0 <3.0.7: ^3.0.7
+  http-proxy-middleware@>=0.16.0 <2.0.10: ^2.0.10
+  js-yaml@>=3.0.0 <3.15.0: ^3.15.0
+  webpack-dev-server@>=5.0.0 <5.2.5: ^5.2.5
+  uuid@<11.1.1: ^11.1.1
 
 onlyBuiltDependencies:
   - "@clerk/shared"
