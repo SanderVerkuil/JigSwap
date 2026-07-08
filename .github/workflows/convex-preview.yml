@@ -1,5 +1,8 @@
 name: Convex Preview
 
+permissions:
+  contents: read
+
 # Per-PR Convex preview deployments (docs/deployment/convex-preview-deployments.md).
 #
 #   - Every PR push deploys the branch's code to a preview deployment named after the
