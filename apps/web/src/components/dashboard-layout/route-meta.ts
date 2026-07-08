@@ -97,6 +97,7 @@ export const ADMIN_GROUP: ShellNavGroup = {
   items: [
     { key: "adminModeration", href: "/admin/moderation", icon: Gavel },
     { key: "adminCategories", href: "/admin/categories", icon: Tags },
+    { key: "adminUsers", href: "/admin/users", icon: Users },
     { key: "adminContact", href: "/admin/contact", icon: Mail },
     { key: "adminFeedback", href: "/admin/feedback", icon: ThumbsUp },
   ],
@@ -165,6 +166,10 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   "/admin": { pageKey: "admin", variant: "landing" },
   "/admin/moderation": { pageKey: "adminModeration", group: "admin" },
   "/admin/categories": { pageKey: "adminCategories", group: "admin" },
+  "/admin/users": { pageKey: "adminUsers", group: "admin" },
+  // Member detail: nav-highlights Members; the page publishes the member's
+  // name as the leaf crumb at runtime.
+  "/admin/users/$userId": { pageKey: "adminUsers", group: "admin" },
   "/admin/contact": { pageKey: "adminContact", group: "admin" },
   "/admin/feedback": { pageKey: "adminFeedback", group: "admin" },
 

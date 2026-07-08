@@ -31,10 +31,15 @@ export const getModerationStats = query({
         approved += 1;
       } else if (row.kind === "definition_rejected") {
         rejected += 1;
-      } else {
-        // photo_restored | photo_removal_confirmed | photo_auto_rejected
+      } else if (
+        row.kind === "photo_restored" ||
+        row.kind === "photo_removal_confirmed" ||
+        row.kind === "photo_auto_rejected"
+      ) {
         flagsCleared += 1;
       }
+      // role_granted / role_revoked are audit-only: surfaced in the activity
+      // feed, never counted in the weekly moderation KPIs.
       if (row.kind.startsWith("definition_")) {
         // Approximation: review time = decision time minus the submission's createdAt.
         // The decision row's targetId is the puzzle's Catalog aggregateId; a since-deleted
