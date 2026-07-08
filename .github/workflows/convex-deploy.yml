@@ -1,9 +1,10 @@
 name: Convex Deploy
 
 # Convex backend deploys from CI:
-#   - dev: pushes to the single shared development deployment on every PR and on main
-#     (preview deployments need Convex Pro; the free plan has one shared dev deployment,
-#     so PRs deploy to it directly — fine as long as PRs are rarely schema-destructive).
+#   - dev: tracks main only — every push to main updates the single shared development
+#     deployment. Pull requests no longer deploy here; each PR gets its own isolated
+#     preview deployment instead (see convex-preview.yml — preview deployments are
+#     available on every Convex plan, including Free/Starter).
 #   - production: only after the CI workflow succeeds on main (workflow_run gate), so prod
 #     never deploys code that failed lint/type-check/test/build.
 # _generated/* is committed, so a deploy only needs the deploy-key secrets.
@@ -13,7 +14,6 @@ name: Convex Deploy
 on:
   push:
     branches: [main]
-  pull_request:
   workflow_run:
     workflows: [CI]
     types: [completed]
@@ -22,12 +22,12 @@ on:
 jobs:
   dev:
     name: Deploy dev deployment
-    # Direct triggers only (PRs + pushes to main); the workflow_run event is for prod.
-    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    # Direct trigger only (pushes to main); the workflow_run event is for prod.
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # One shared dev deployment: serialize all deploys into a single global queue and let the
-    # newest supersede an in-flight one, so concurrent PRs don't race to push the same target.
+    # One shared dev deployment: serialize deploys and let a newer main push supersede an
+    # in-flight one, so dev always converges on the latest main.
     concurrency:
       group: convex-dev-deploy
       cancel-in-progress: true

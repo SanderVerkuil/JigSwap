@@ -1,0 +1,137 @@
+name: Convex Preview
+
+permissions:
+  contents: read
+
+# Per-PR Convex preview deployments (docs/deployment/convex-preview-deployments.md).
+#
+#   - Every PR push deploys the branch's code to a preview deployment named after the
+#     branch. `--preview-name` REUSES an existing preview (and its data) across pushes,
+#     so data created on the preview survives `synchronize` events.
+#   - Seeding is STATE-based, not event-based: every run checks whether the preview's
+#     database is empty and imports a snapshot of the shared dev deployment only then.
+#     A non-empty preview is never clobbered, and a preview that comes back empty (it
+#     expired and was recreated, or the Vercel build created it first) self-heals on
+#     the next run instead of staying blank.
+#   - Previews auto-expire after 5 days on Free/Starter (14 on Pro+). There is no CLI
+#     command to delete one, so expiry IS the cleanup. To revive one on demand, run
+#     this workflow manually via workflow_dispatch with the branch name; check `force`
+#     to re-clone the dev snapshot over a preview that still has data.
+#
+# Key-scoping guard: each step exposes exactly ONE deploy key. With a preview deploy key
+# (`preview:team:project|…`) the CLI honors `--preview-name` and can ONLY target preview
+# deployments; with a deployment-scoped key (dev:/prod:) the CLI IGNORES `--preview-name`
+# and targets the key's deployment — so the dev key must never reach the import step.
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "PR branch whose preview deployment should be (re)created and, if its database is empty, seeded from a dev snapshot"
+        required: true
+        type: string
+      force:
+        description: "Seed even if the preview database is NOT empty (replaces its data with a fresh dev snapshot)"
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  preview:
+    name: Deploy + seed preview deployment
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Per-branch queue: a newer push to the same branch supersedes an in-flight run;
+    # different branches deploy to different previews and run in parallel.
+    concurrency:
+      group: convex-preview-${{ github.event_name == 'workflow_dispatch' && inputs.branch || github.head_ref }}
+      cancel-in-progress: true
+    env:
+      # The preview deployment's name. Convex could infer it from the Git branch, but
+      # being explicit keeps pull_request and workflow_dispatch runs on the same name.
+      BRANCH_NAME: ${{ github.event_name == 'workflow_dispatch' && inputs.branch || github.head_ref }}
+      # How to seed: "if-empty" (the default on every event) seeds only when the
+      # emptiness check below finds no data, so an already-seeded preview is never
+      # clobbered; "force" (manual runs with the `force` input) re-imports the dev
+      # snapshot unconditionally.
+      SEED_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.force && 'force' || 'if-empty' }}
+      # Whether the one-time owner setup (preview deploy key secret) has happened yet.
+      # Until it has, the job succeeds as a documented no-op instead of failing red.
+      HAS_PREVIEW_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_PREVIEW != '' }}
+    steps:
+      - name: Skip when the preview deploy key is not configured
+        if: env.HAS_PREVIEW_KEY != 'true'
+        run: echo "::notice::CONVEX_DEPLOY_KEY_PREVIEW secret not configured — skipping preview deployment (see docs/deployment/convex-preview-deployments.md)"
+
+      - uses: actions/checkout@v4
+        if: env.HAS_PREVIEW_KEY == 'true'
+        with:
+          # workflow_dispatch runs from main's ref; check out the PR branch instead so
+          # the recreated preview runs that branch's code. Empty = event's own ref.
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.branch || '' }}
+
+      - uses: pnpm/action-setup@v4
+        if: env.HAS_PREVIEW_KEY == 'true'
+
+      - uses: actions/setup-node@v4
+        if: env.HAS_PREVIEW_KEY == 'true'
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        if: env.HAS_PREVIEW_KEY == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Deploy to preview deployment
+        if: env.HAS_PREVIEW_KEY == 'true'
+        working-directory: packages/backend
+        env:
+          # A preview deploy key (project-scoped) makes `convex deploy` target a preview
+          # deployment; `--preview-name` creates it if needed and reuses it otherwise.
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_PREVIEW }}
+        run: pnpm exec convex deploy --preview-name "$BRANCH_NAME"
+
+      - name: Check whether the preview database is empty
+        id: db-state
+        if: env.HAS_PREVIEW_KEY == 'true' && env.SEED_MODE != 'force'
+        working-directory: packages/backend
+        env:
+          # Preview key only (see guard above): `--preview-name` is honored, and the
+          # check can only read preview deployments.
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_PREVIEW }}
+        # `users` is the sentinel table: every dev snapshot contains users, so zero
+        # rows means this preview was never seeded (fresh, or recreated after expiry).
+        # `convex data` prints matching documents to stdout and exits 0 even when the
+        # table is empty or has never been written; a real failure (bad key, missing
+        # deployment) exits non-zero and fails this step instead of mis-detecting.
+        run: |
+          rows="$(pnpm exec convex data users --limit 1 --format jsonl --preview-name "$BRANCH_NAME")"
+          if [ -z "$rows" ]; then
+            echo "empty=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Preview database is empty — seeding it from a dev snapshot"
+          else
+            echo "empty=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Preview database already has data — leaving it untouched"
+          fi
+
+      - name: Export snapshot from dev
+        if: env.HAS_PREVIEW_KEY == 'true' && (env.SEED_MODE == 'force' || steps.db-state.outputs.empty == 'true')
+        working-directory: packages/backend
+        env:
+          # The dev deploy key is deployment-scoped, so this export can only read dev.
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_DEV }}
+        run: pnpm exec convex export --include-file-storage --path "$RUNNER_TEMP/dev-snapshot.zip"
+
+      - name: Seed preview from dev snapshot
+        if: env.HAS_PREVIEW_KEY == 'true' && (env.SEED_MODE == 'force' || steps.db-state.outputs.empty == 'true')
+        working-directory: packages/backend
+        env:
+          # Preview key only (see guard above): with it, `--preview-name` is honored and
+          # the import cannot land on dev or prod.
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_PREVIEW }}
+        run: >-
+          pnpm exec convex import --preview-name "$BRANCH_NAME"
+          --replace -y "$RUNNER_TEMP/dev-snapshot.zip"

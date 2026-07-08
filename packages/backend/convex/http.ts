@@ -4,18 +4,20 @@ import { Webhook } from "svix";
 import { internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
 
-function ensureEnvironmentVariable(name: string): string {
-  const value = process.env[name];
-  if (value === undefined) {
-    throw new Error(`missing environment variable ${name}`);
-  }
-  return value;
-}
-
-const webhookSecret = ensureEnvironmentVariable("CLERK_WEBHOOK_SECRET");
-
 const handleClerkWebhook = httpAction(async (ctx, request) => {
-  const event = await validateRequest(request);
+  // Read the secret per-request (NOT at module scope) so a deployment without it — e.g. a preview
+  // deployment, which never receives Clerk webhooks and is seeded from a dev snapshot instead —
+  // still deploys and serves everything else.
+  const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
+  if (webhookSecret === undefined) {
+    console.warn(
+      "CLERK_WEBHOOK_SECRET not set — Clerk webhook ignored (expected on preview deployments)",
+    );
+    return new Response("Clerk webhook not configured", {
+      status: 503,
+    });
+  }
+  const event = await validateRequest(request, webhookSecret);
   if (!event) {
     return new Response("Error occured", {
       status: 400,
@@ -60,6 +62,7 @@ http.route({
 
 async function validateRequest(
   req: Request,
+  webhookSecret: string,
 ): Promise<WebhookEvent | undefined> {
   const payloadString = await req.text();
 
