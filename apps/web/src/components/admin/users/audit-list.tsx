@@ -5,8 +5,11 @@
 // interpolated from its kind under admin.moderation.activity.* (which already
 // includes the role_granted/role_revoked labels). Kinds arrive typed as plain
 // strings via the contracts DTO, so an unknown future kind falls back to a raw
-// "kind — target" line instead of crashing on a missing message.
+// "kind — target" line instead of crashing on a missing message. The known-kind
+// list is derived from the Activity Log's exhaustively-typed KIND_META, so new
+// kinds added there flow through without a second hand-maintained list.
 
+import { MODERATION_ACTIVITY_KINDS } from "@/components/admin/moderation/activity-log";
 import { gateway } from "@/gateway";
 import type { FunctionReturnType } from "convex/server";
 import { useFormatter, useTranslations } from "use-intl";
@@ -15,17 +18,6 @@ import { useFormatter, useTranslations } from "use-intl";
 type AuditEntry = FunctionReturnType<
   typeof gateway.admin.getUserDetail
 >["audit"]["performed"][number];
-
-const KNOWN_KINDS: readonly string[] = [
-  "definition_approved",
-  "definition_edited_approved",
-  "definition_rejected",
-  "photo_removal_confirmed",
-  "photo_auto_rejected",
-  "photo_restored",
-  "role_granted",
-  "role_revoked",
-];
 
 export function AuditList({
   entries,
@@ -53,7 +45,7 @@ export function AuditList({
           className="flex items-center gap-3 border-b py-3 last:border-b-0"
         >
           <p className="min-w-0 flex-1 text-sm">
-            {KNOWN_KINDS.includes(row.kind)
+            {MODERATION_ACTIVITY_KINDS.includes(row.kind)
               ? t.rich(`activity.${row.kind}`, {
                   actor: row.actorName ?? t("activity.system"),
                   target: row.targetLabel,

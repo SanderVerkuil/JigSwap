@@ -38,6 +38,13 @@ const KIND_META: Record<ActivityRow["kind"], [LucideIcon, string]> = {
   role_revoked: [ShieldOff, "text-destructive"],
 };
 
+// Single source of truth for "kinds with an admin.moderation.activity.* message":
+// KIND_META's Record type is exhaustive over the read model's kind union, so a
+// new kind fails typecheck here and this derived list follows automatically
+// (consumed by the user-detail AuditList, whose kinds arrive as plain strings).
+export const MODERATION_ACTIVITY_KINDS: readonly string[] =
+  Object.keys(KIND_META);
+
 export function ActivityLog({ emptyTitle }: { emptyTitle: string }) {
   const t = useTranslations("admin.moderation");
   const format = useFormatter();
