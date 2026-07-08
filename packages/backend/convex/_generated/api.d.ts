@@ -14,6 +14,7 @@ import type * as admin_getModerationStats from "../admin/getModerationStats.js";
 import type * as admin_listRejectedPhotos from "../admin/listRejectedPhotos.js";
 import type * as admin_listUsers from "../admin/listUsers.js";
 import type * as admin_restorePhoto from "../admin/restorePhoto.js";
+import type * as admin_roleChange from "../admin/roleChange.js";
 import type * as adminCategories from "../adminCategories.js";
 import type * as backfillUserRoles from "../backfillUserRoles.js";
 import type * as catalog_adapters_assertPublicUrl from "../catalog/adapters/assertPublicUrl.js";
@@ -298,6 +299,7 @@ declare const fullApi: ApiFromModules<{
   "admin/listRejectedPhotos": typeof admin_listRejectedPhotos;
   "admin/listUsers": typeof admin_listUsers;
   "admin/restorePhoto": typeof admin_restorePhoto;
+  "admin/roleChange": typeof admin_roleChange;
   adminCategories: typeof adminCategories;
   backfillUserRoles: typeof backfillUserRoles;
   "catalog/adapters/assertPublicUrl": typeof catalog_adapters_assertPublicUrl;
