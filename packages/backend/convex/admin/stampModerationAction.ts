@@ -7,7 +7,9 @@ type ModerationKind =
   | "definition_edited_approved"
   | "photo_restored"
   | "photo_removal_confirmed"
-  | "photo_auto_rejected";
+  | "photo_auto_rejected"
+  | "role_granted"
+  | "role_revoked";
 
 // One-liner used by every moderation decision point so the audit trail can't drift.
 export const stampModerationAction = (

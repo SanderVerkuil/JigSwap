@@ -2248,6 +2248,7 @@
     "borrowed": "Borrowed — JigSwap",
     "admin": "Admin — JigSwap",
     "adminCategories": "Category management — JigSwap",
+    "adminUsers": "Users — JigSwap",
     "adminModeration": "Moderation — JigSwap",
     "adminContact": "Contact messages — JigSwap",
     "adminFeedback": "Docs feedback — JigSwap",
@@ -2415,6 +2416,11 @@
         "title": "Categories",
         "subtitle": "Manage puzzle categories with localization support.",
         "description": "Manage localized puzzle categories"
+      },
+      "adminUsers": {
+        "title": "Users",
+        "subtitle": "Every member of JigSwap, newest first.",
+        "description": "Browse and search all members"
       },
       "adminContact": {
         "title": "Contact",
@@ -2733,7 +2739,9 @@
         "definition_rejected": "<strong>{actor}</strong> rejected <strong>{target}</strong>",
         "photo_removal_confirmed": "<strong>{actor}</strong> removed a photo on <strong>{target}</strong>",
         "photo_auto_rejected": "<strong>{actor}</strong> auto-flagged a photo on <strong>{target}</strong>",
-        "photo_restored": "<strong>{actor}</strong> restored a photo on <strong>{target}</strong>"
+        "photo_restored": "<strong>{actor}</strong> restored a photo on <strong>{target}</strong>",
+        "role_granted": "<strong>{actor}</strong> made <strong>{target}</strong> an admin",
+        "role_revoked": "<strong>{actor}</strong> removed the admin role from <strong>{target}</strong>"
       },
       "activityEmpty": "No moderation activity yet."
     },
@@ -2801,6 +2809,63 @@
     },
     "queueEmpty": {
       "title": "All clear"
+    },
+    "users": {
+      "loading": "Loading members…",
+      "searchPlaceholder": "Search by name or username…",
+      "emptyTitle": "No members found",
+      "empty": "No members match this search.",
+      "columns": {
+        "member": "Member",
+        "email": "Email",
+        "joined": "Joined",
+        "status": "Status",
+        "role": "Role",
+        "copies": "Copies",
+        "actions": "Actions"
+      },
+      "active": "Active",
+      "inactive": "Inactive",
+      "adminBadge": "Admin",
+      "loadMore": "Load more",
+      "makeAdmin": "Make admin",
+      "removeAdmin": "Remove admin",
+      "grantConfirmTitle": "Make {name} an admin?",
+      "grantConfirmBody": "This grants full access to the admin console, including moderation and member management. The change is audit-logged.",
+      "revokeConfirmTitle": "Remove admin from {name}?",
+      "revokeConfirmBody": "They lose access to the admin console once their session refreshes. The change is audit-logged.",
+      "grantSuccess": "{name} is now an admin.",
+      "grantError": "Could not grant the admin role.",
+      "revokeSuccess": "{name} is no longer an admin.",
+      "revokeError": "Could not remove the admin role.",
+      "detail": {
+        "loading": "Loading member…",
+        "notFoundTitle": "Member not found",
+        "notFound": "This member does not exist (or was deleted).",
+        "joined": "Joined {date}",
+        "updated": "Updated {date}",
+        "location": "Location",
+        "language": "Language",
+        "stats": {
+          "copies": "Copies",
+          "forTrade": "For trade",
+          "forSale": "For sale",
+          "forLend": "For lend",
+          "collections": "Collections",
+          "solves": "Solves"
+        },
+        "submissionsTitle": "Catalog submissions",
+        "submissionsEmpty": "No catalog submissions yet.",
+        "status": {
+          "pending": "Pending",
+          "approved": "Approved",
+          "rejected": "Rejected"
+        },
+        "auditPerformedTitle": "Moderation actions performed",
+        "auditPerformedEmpty": "No moderation actions performed.",
+        "auditReceivedTitle": "Audit trail",
+        "auditReceivedEmpty": "No audit entries target this member."
+      }
     }
   }
 }
