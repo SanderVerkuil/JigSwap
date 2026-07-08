@@ -2250,6 +2250,7 @@
     "adminCategories": "Category management — JigSwap",
     "adminUsers": "Users — JigSwap",
     "adminModeration": "Moderation — JigSwap",
+    "adminPuzzles": "Puzzles — JigSwap",
     "adminContact": "Contact messages — JigSwap",
     "adminFeedback": "Docs feedback — JigSwap",
     "signIn": "Sign in — JigSwap",
@@ -2411,6 +2412,11 @@
         "title": "Moderation",
         "subtitle": "Review pending submissions before they appear in the public catalog.",
         "description": "Approve or reject pending puzzle submissions"
+      },
+      "adminPuzzles": {
+        "title": "Puzzles",
+        "subtitle": "Every catalog definition with its moderation status; disable or re-enable approved definitions.",
+        "description": "Browse all puzzle definitions and manage their lifecycle"
       },
       "adminCategories": {
         "title": "Categories",
@@ -2737,6 +2743,8 @@
         "definition_approved": "<strong>{actor}</strong> approved <strong>{target}</strong>",
         "definition_edited_approved": "<strong>{actor}</strong> edited & approved <strong>{target}</strong>",
         "definition_rejected": "<strong>{actor}</strong> rejected <strong>{target}</strong>",
+        "definition_disabled": "<strong>{actor}</strong> disabled <strong>{target}</strong>",
+        "definition_reenabled": "<strong>{actor}</strong> re-enabled <strong>{target}</strong>",
         "photo_removal_confirmed": "<strong>{actor}</strong> removed a photo on <strong>{target}</strong>",
         "photo_auto_rejected": "<strong>{actor}</strong> auto-flagged a photo on <strong>{target}</strong>",
         "photo_restored": "<strong>{actor}</strong> restored a photo on <strong>{target}</strong>",
@@ -2805,6 +2813,52 @@
         "reactivateError": "Failed to reactivate category",
         "reorderError": "Failed to reorder categories",
         "dragHandle": "Drag to reorder {name}"
+      }
+    },
+    "puzzles": {
+      "loading": "Loading puzzle definitions…",
+      "empty": {
+        "title": "No puzzle definitions yet",
+        "description": "Submitted puzzle definitions will appear here with their moderation status."
+      },
+      "pieces": "{count} pieces",
+      "submittedBy": "by {name}",
+      "ownerCount": "{count, plural, one {# owner} other {# owners}}",
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "disabled": "Disabled"
+      },
+      "disable": "Disable",
+      "reenable": "Re-enable",
+      "disableConfirmTitle": "Disable “{title}”?",
+      "disableConfirmBody": "The puzzle disappears from browse and search and can no longer be added to collections. Existing copies are not affected. You can re-enable it at any time.",
+      "reenableConfirmTitle": "Re-enable “{title}”?",
+      "reenableConfirmBody": "The puzzle becomes publicly visible and acquirable again.",
+      "disableSuccess": "“{title}” disabled",
+      "disableError": "Could not disable the puzzle. Please try again.",
+      "reenableSuccess": "“{title}” re-enabled",
+      "reenableError": "Could not re-enable the puzzle. Please try again.",
+      "loadMore": "Load more",
+      "detail": {
+        "notFoundTitle": "Puzzle definition not found",
+        "notFound": "This puzzle definition does not exist or was deleted.",
+        "submittedByLabel": "Submitted by",
+        "created": "Created {date}",
+        "updated": "Updated {date}",
+        "stats": {
+          "owners": "Owners",
+          "copies": "Copies",
+          "forTrade": "For trade",
+          "forSale": "For sale",
+          "forLend": "For lending"
+        },
+        "ownersTitle": "Owners",
+        "ownersEmpty": "No member owns a copy of this puzzle yet.",
+        "copyCount": "{count, plural, one {# copy} other {# copies}}",
+        "auditTitle": "Moderation activity",
+        "auditEmpty": "No moderation activity for this puzzle yet."
       }
     },
     "queueEmpty": {

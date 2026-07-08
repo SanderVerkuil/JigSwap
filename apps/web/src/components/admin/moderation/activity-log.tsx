@@ -13,6 +13,8 @@ import { useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import {
   CheckCircle,
+  Eye,
+  EyeOff,
   Flag,
   type LucideIcon,
   ShieldCheck,
@@ -31,6 +33,8 @@ const KIND_META: Record<ActivityRow["kind"], [LucideIcon, string]> = {
   definition_approved: [CheckCircle, "text-jigsaw-success"],
   definition_edited_approved: [CheckCircle, "text-jigsaw-success"],
   definition_rejected: [XCircle, "text-destructive"],
+  definition_disabled: [EyeOff, "text-jigsaw-warning"],
+  definition_reenabled: [Eye, "text-jigsaw-success"],
   photo_removal_confirmed: [Trash2, "text-destructive"],
   photo_auto_rejected: [Flag, "text-jigsaw-warning"],
   photo_restored: [Undo2, "text-muted-foreground"],

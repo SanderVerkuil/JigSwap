@@ -2,7 +2,7 @@ import { Result } from "../../../../shared-kernel";
 import { CatalogError, PuzzleDefinitionId } from "../../../domain";
 import { CatalogApplicationError } from "../../errors";
 
-// Both moderation use cases (approve/reject) act on an existing definition by id; `now` comes
+// The moderation use cases (approve/reject/disable/re-enable) act on an existing definition by id; `now` comes
 // from the Clock port, not the command. The aggregate enforces the legal approval transition.
 export interface ModeratePuzzleDefinitionCommand {
   readonly puzzleDefinitionId: PuzzleDefinitionId;
@@ -22,6 +22,18 @@ export interface ApprovePuzzleDefinition {
 }
 
 export interface RejectPuzzleDefinition {
+  (
+    cmd: ModeratePuzzleDefinitionCommand,
+  ): Promise<ModeratePuzzleDefinitionResult>;
+}
+
+export interface DisablePuzzleDefinition {
+  (
+    cmd: ModeratePuzzleDefinitionCommand,
+  ): Promise<ModeratePuzzleDefinitionResult>;
+}
+
+export interface ReenablePuzzleDefinition {
   (
     cmd: ModeratePuzzleDefinitionCommand,
   ): Promise<ModeratePuzzleDefinitionResult>;

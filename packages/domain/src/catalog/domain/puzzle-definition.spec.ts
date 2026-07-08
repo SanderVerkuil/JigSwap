@@ -136,6 +136,77 @@ describe("approval lifecycle", () => {
   });
 });
 
+describe("disable / re-enable lifecycle", () => {
+  const approved = (): PuzzleDefinition => {
+    const def = submit();
+    def.approve(NOW);
+    def.pullEvents();
+    return def;
+  };
+
+  it("disables an approved definition, recording PuzzleDefinitionDisabled", () => {
+    const def = approved();
+    const r = def.disable(LATER);
+    expect(r.isOk).toBe(true);
+    expect(def.status).toBe("disabled");
+    expect(names(def.pullEvents())).toEqual(["PuzzleDefinitionDisabled"]);
+    expect(def.toState().updatedAt).toBe(LATER);
+  });
+
+  it("re-enables a disabled definition back to approved, recording PuzzleDefinitionReenabled", () => {
+    const def = approved();
+    def.disable(NOW);
+    def.pullEvents();
+    const r = def.reenable(LATER);
+    expect(r.isOk).toBe(true);
+    expect(def.status).toBe("approved");
+    expect(names(def.pullEvents())).toEqual(["PuzzleDefinitionReenabled"]);
+    expect(def.toState().updatedAt).toBe(LATER);
+  });
+
+  it("cannot disable a pending or rejected definition (illegal transition)", () => {
+    const pending = submit();
+    const r1 = pending.disable(LATER);
+    expect(r1.isErr).toBe(true);
+    if (r1.isErr) expect(r1.error.code).toBe("IllegalApprovalTransition");
+
+    const rejected = submit();
+    rejected.reject(NOW);
+    const r2 = rejected.disable(LATER);
+    expect(r2.isErr).toBe(true);
+    if (r2.isErr) expect(r2.error.code).toBe("IllegalApprovalTransition");
+  });
+
+  it("cannot disable twice", () => {
+    const def = approved();
+    def.disable(NOW);
+    const again = def.disable(LATER);
+    expect(again.isErr).toBe(true);
+    if (again.isErr) expect(again.error.code).toBe("IllegalApprovalTransition");
+  });
+
+  // reenable is NOT a backdoor approve: even though pending → approved is a legal TABLE move,
+  // reenable() itself must only act on a disabled definition.
+  it("cannot re-enable a definition that is not disabled", () => {
+    const r1 = approved().reenable(LATER);
+    expect(r1.isErr).toBe(true);
+    if (r1.isErr) expect(r1.error.code).toBe("IllegalApprovalTransition");
+
+    const pending = submit();
+    const r2 = pending.reenable(LATER);
+    expect(r2.isErr).toBe(true);
+    if (r2.isErr) expect(r2.error.code).toBe("IllegalApprovalTransition");
+  });
+
+  it("a re-enabled definition can be disabled again (full round-trip)", () => {
+    const def = approved();
+    expect(def.disable(NOW).isOk).toBe(true);
+    expect(def.reenable(NOW).isOk).toBe(true);
+    expect(def.disable(LATER).isOk).toBe(true);
+    expect(def.status).toBe("disabled");
+  });
+});
+
 describe("update", () => {
   it("patches descriptive fields and records PuzzleDefinitionUpdated", () => {
     const def = submit();

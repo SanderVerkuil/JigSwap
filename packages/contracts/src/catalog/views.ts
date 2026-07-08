@@ -3,6 +3,8 @@
 // read cutover is behaviour-preserving. Ids are carried as branded-ish string aliases (the Convex
 // `Id<...>` is a string at runtime); the web app re-casts them to its own `Id<...>` at the edge.
 
+import type { AdminAuditEntryView } from "../identity/admin-user";
+
 export type PuzzleDifficulty = "easy" | "medium" | "hard" | "expert";
 
 /** A reference to a Convex document id, surfaced to the UI as the opaque string it is at runtime. */
@@ -36,7 +38,7 @@ export interface PuzzleDefinitionView {
   category?: DocId;
   tags?: string[];
   image?: string | null;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "disabled";
   createdAt: number;
   updatedAt: number;
 }
@@ -58,7 +60,7 @@ export interface PuzzleSummaryView {
   category?: DocId;
   tags?: string[];
   image?: string | null;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "disabled";
   createdAt: number;
   updatedAt: number;
 }
@@ -77,8 +79,84 @@ export interface PuzzleCategoryView {
   updatedAt: number;
 }
 
+/**
+ * One row of the admin puzzle-definitions console (`admin.listPuzzleDefinitions`): catalog
+ * facts plus admin metadata (submitter display name, distinct-owner count, resolved thumbnail
+ * URL). Unlike the public views it carries EVERY moderation status. Disable/re-enable actions
+ * key on `aggregateId`; legacy rows without one still render but their actions are disabled.
+ */
+export interface AdminPuzzleDefinitionRowView {
+  _id: DocId;
+  aggregateId?: string;
+  title: string;
+  brand?: string;
+  pieceCount: number;
+  status: "pending" | "approved" | "rejected" | "disabled";
+  createdAt: number;
+  submitterName: string | null;
+  image: string | null;
+  ownerCount: number;
+}
+
 /** A distinct brand name from the Catalog. Optional because the underlying column is optional. */
 export type BrandView = string | undefined;
 
 /** A distinct tag from the Catalog. */
 export type TagView = string;
+
+/**
+ * One distinct owner of copies of a definition, on the admin puzzle-definition detail page
+ * (`admin.getPuzzleDefinitionDetail`). Availability flags are a rollup: true when ANY of the
+ * member's copies carries the flag.
+ */
+export interface AdminPuzzleDefinitionOwnerView {
+  _id: DocId;
+  name: string;
+  username?: string;
+  avatar?: string;
+  copyCount: number;
+  forTrade: boolean;
+  forSale: boolean;
+  forLend: boolean;
+}
+
+/**
+ * The admin puzzle-definition detail read model (`admin.getPuzzleDefinitionDetail`), the
+ * catalog counterpart of `AdminUserDetailView`: definition facts, ownership stats, a capped
+ * owners list, and the definition's moderation/audit trail (moderationActions.by_target on
+ * the Catalog aggregateId — legacy rows without one get an empty trail). Admin-gated
+ * server-side (requireMember + JWT isAdmin).
+ */
+export interface AdminPuzzleDefinitionDetailView {
+  definition: {
+    _id: DocId;
+    aggregateId?: string;
+    title: string;
+    brand?: string;
+    pieceCount: number;
+    status: "pending" | "approved" | "rejected" | "disabled";
+    createdAt: number;
+    updatedAt: number;
+    /** Resolved box-art URL (null when unset), NOT the raw storage id. */
+    image: string | null;
+    /**
+     * Null when the submitter row was deleted. Unlike the row view's flat submitterName,
+     * carries the id so the detail page can link to /admin/users/$userId.
+     */
+    submitter: { _id: DocId; name: string } | null;
+  };
+  stats: {
+    /** Distinct members owning at least one copy. */
+    ownerCount: number;
+    copies: {
+      total: number;
+      forTrade: number;
+      forSale: number;
+      forLend: number;
+    };
+  };
+  /** Distinct owners, capped at 50, in copy insertion order. */
+  owners: AdminPuzzleDefinitionOwnerView[];
+  /** Newest first, capped at 20. The same entry type the user detail's audit lists render. */
+  audit: AdminAuditEntryView[];
+}

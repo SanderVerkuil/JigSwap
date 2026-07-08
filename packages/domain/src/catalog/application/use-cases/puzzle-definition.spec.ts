@@ -8,6 +8,8 @@ import {
   SequentialIdGenerator,
 } from "../testing";
 import { makeApprovePuzzleDefinition } from "./approve-puzzle-definition";
+import { makeDisablePuzzleDefinition } from "./disable-puzzle-definition";
+import { makeReenablePuzzleDefinition } from "./reenable-puzzle-definition";
 import { makeRejectPuzzleDefinition } from "./reject-puzzle-definition";
 import { makeSubmitPuzzleDefinition } from "./submit-puzzle-definition";
 import { makeUpdatePuzzleDefinition } from "./update-puzzle-definition";
@@ -162,6 +164,51 @@ describe("Catalog PuzzleDefinition use cases", () => {
     const again = await approve({ puzzleDefinitionId: id });
     expect(again.isErr).toBe(true);
     if (again.isErr) expect(again.error.code).toBe("IllegalApprovalTransition");
+  });
+
+  it("disables a stored approved definition and publishes PuzzleDefinitionDisabled", async () => {
+    const id = await submitOk();
+    const approve = makeApprovePuzzleDefinition(deps);
+    await approve({ puzzleDefinitionId: id });
+    events.published.length = 0;
+
+    const disable = makeDisablePuzzleDefinition(deps);
+    const r = await disable({ puzzleDefinitionId: id });
+    expect(r.isOk).toBe(true);
+    expect(events.names()).toEqual(["PuzzleDefinitionDisabled"]);
+    const stored = await repo.findById(id);
+    expect(stored?.status).toBe("disabled");
+  });
+
+  it("re-enables a disabled definition and publishes PuzzleDefinitionReenabled", async () => {
+    const id = await submitOk();
+    await makeApprovePuzzleDefinition(deps)({ puzzleDefinitionId: id });
+    await makeDisablePuzzleDefinition(deps)({ puzzleDefinitionId: id });
+    events.published.length = 0;
+
+    const reenable = makeReenablePuzzleDefinition(deps);
+    const r = await reenable({ puzzleDefinitionId: id });
+    expect(r.isOk).toBe(true);
+    expect(events.names()).toEqual(["PuzzleDefinitionReenabled"]);
+    const stored = await repo.findById(id);
+    expect(stored?.status).toBe("approved");
+  });
+
+  it("surfaces the aggregate's illegal-transition when disabling a pending definition", async () => {
+    const id = await submitOk();
+    const disable = makeDisablePuzzleDefinition(deps);
+    const r = await disable({ puzzleDefinitionId: id });
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("IllegalApprovalTransition");
+  });
+
+  it("rejects disabling an unknown definition (PuzzleDefinitionNotFound)", async () => {
+    const disable = makeDisablePuzzleDefinition(deps);
+    const r = await disable({
+      puzzleDefinitionId: toPuzzleDefinitionId("missing"),
+    });
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("PuzzleDefinitionNotFound");
   });
 
   it("rejects a definition and publishes PuzzleDefinitionRejected", async () => {
