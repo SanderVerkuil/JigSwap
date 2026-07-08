@@ -1,8 +1,10 @@
 import {
   type CatalogCategoryId,
   type CatalogIdGenerator,
+  type ChangeProposalId,
   type PuzzleDefinitionId,
   toCatalogCategoryId,
+  toChangeProposalId,
   toPuzzleDefinitionId,
 } from "@jigswap/domain";
 
@@ -13,4 +15,6 @@ export const catalogIdGenerator: CatalogIdGenerator = {
     toPuzzleDefinitionId(crypto.randomUUID()),
   nextCatalogCategoryId: (): CatalogCategoryId =>
     toCatalogCategoryId(crypto.randomUUID()),
+  nextChangeProposalId: (): ChangeProposalId =>
+    toChangeProposalId(crypto.randomUUID()),
 };

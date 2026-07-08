@@ -2,6 +2,7 @@ export * from "./fake-puzzle-match-lookup";
 export * from "./fake-store-page-fetcher";
 export * from "./fixed-clock";
 export * from "./in-memory-catalog-category.repository";
+export * from "./in-memory-change-proposal.repository";
 export * from "./in-memory-import-draft-cache";
 export * from "./in-memory-puzzle-definition.repository";
 export * from "./recording-event-publisher";
