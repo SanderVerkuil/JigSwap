@@ -323,6 +323,12 @@ export const gateway = {
     // `search` arg switches to the by_searchable_name index. Rows are AdminUserView
     // DTOs whose `role` is the display-only Clerk mirror (authz stays JWT-based).
     listUsers: api.admin.listUsers.listUsers,
+    // Per-member admin detail read model: full profile (email + clerkId —
+    // admin-only by design), indexed library/activity stats, capped catalog
+    // submissions, and the capped moderation audit trail (performed via
+    // by_actor / received via by_target). Gated server-side like listUsers;
+    // profile.role stays the display-only Clerk mirror.
+    getUserDetail: api.admin.getUserDetail.getUserDetail,
     // Role management WRITE path: a "use node" ACTION (Clerk network write), not
     // a mutation — call it with useConvexAction (the extractPuzzleFromUrl
     // pattern). Grants/revokes the Clerk publicMetadata.role (the authz source
