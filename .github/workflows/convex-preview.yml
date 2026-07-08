@@ -47,24 +47,36 @@ jobs:
       # Seed only when the preview is (re)created — never on synchronize, which would
       # clobber data created on the preview since the initial seed.
       SEED: ${{ (github.event_name == 'workflow_dispatch' || github.event.action == 'opened' || github.event.action == 'reopened') && 'true' || 'false' }}
+      # Whether the one-time owner setup (preview deploy key secret) has happened yet.
+      # Until it has, the job succeeds as a documented no-op instead of failing red.
+      HAS_PREVIEW_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_PREVIEW != '' }}
     steps:
+      - name: Skip when the preview deploy key is not configured
+        if: env.HAS_PREVIEW_KEY != 'true'
+        run: echo "::notice::CONVEX_DEPLOY_KEY_PREVIEW secret not configured — skipping preview deployment (see docs/deployment/convex-preview-deployments.md)"
+
       - uses: actions/checkout@v4
+        if: env.HAS_PREVIEW_KEY == 'true'
         with:
           # workflow_dispatch runs from main's ref; check out the PR branch instead so
           # the recreated preview runs that branch's code. Empty = event's own ref.
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.branch || '' }}
 
       - uses: pnpm/action-setup@v4
+        if: env.HAS_PREVIEW_KEY == 'true'
 
       - uses: actions/setup-node@v4
+        if: env.HAS_PREVIEW_KEY == 'true'
         with:
           node-version: 22
           cache: pnpm
 
       - name: Install dependencies
+        if: env.HAS_PREVIEW_KEY == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Deploy to preview deployment
+        if: env.HAS_PREVIEW_KEY == 'true'
         working-directory: packages/backend
         env:
           # A preview deploy key (project-scoped) makes `convex deploy` target a preview
@@ -73,7 +85,7 @@ jobs:
         run: pnpm exec convex deploy --preview-name "$BRANCH_NAME"
 
       - name: Export snapshot from dev
-        if: env.SEED == 'true'
+        if: env.HAS_PREVIEW_KEY == 'true' && env.SEED == 'true'
         working-directory: packages/backend
         env:
           # The dev deploy key is deployment-scoped, so this export can only read dev.
@@ -81,7 +93,7 @@ jobs:
         run: pnpm exec convex export --include-file-storage --path "$RUNNER_TEMP/dev-snapshot.zip"
 
       - name: Seed preview from dev snapshot
-        if: env.SEED == 'true'
+        if: env.HAS_PREVIEW_KEY == 'true' && env.SEED == 'true'
         working-directory: packages/backend
         env:
           # Preview key only (see guard above): with it, `--preview-name` is honored and
