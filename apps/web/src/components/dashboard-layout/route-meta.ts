@@ -96,6 +96,7 @@ export const ADMIN_GROUP: ShellNavGroup = {
   icon: Shield,
   items: [
     { key: "adminModeration", href: "/admin/moderation", icon: Gavel },
+    { key: "adminPuzzles", href: "/admin/puzzles", icon: Puzzle },
     { key: "adminCategories", href: "/admin/categories", icon: Tags },
     { key: "adminUsers", href: "/admin/users", icon: Users },
     { key: "adminContact", href: "/admin/contact", icon: Mail },
@@ -165,6 +166,7 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   // Admin (gated: the group renders only for backend-confirmed admins).
   "/admin": { pageKey: "admin", variant: "landing" },
   "/admin/moderation": { pageKey: "adminModeration", group: "admin" },
+  "/admin/puzzles": { pageKey: "adminPuzzles", group: "admin" },
   "/admin/categories": { pageKey: "adminCategories", group: "admin" },
   "/admin/users": { pageKey: "adminUsers", group: "admin" },
   // Member detail: nav-highlights Members; the page publishes the member's

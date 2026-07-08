@@ -2250,6 +2250,7 @@
     "adminCategories": "Categoriebeheer — JigSwap",
     "adminUsers": "Gebruikers — JigSwap",
     "adminModeration": "Moderatie — JigSwap",
+    "adminPuzzles": "Puzzels — JigSwap",
     "adminContact": "Contactberichten — JigSwap",
     "adminFeedback": "Documentatiefeedback — JigSwap",
     "signIn": "Inloggen — JigSwap",
@@ -2411,6 +2412,11 @@
         "title": "Moderatie",
         "subtitle": "Beoordeel openstaande inzendingen voordat ze in de openbare catalogus verschijnen.",
         "description": "Keur ingediende puzzels goed of af"
+      },
+      "adminPuzzles": {
+        "title": "Puzzels",
+        "subtitle": "Alle catalogusdefinities met hun moderatiestatus; schakel goedgekeurde definities uit of weer in.",
+        "description": "Blader door alle puzzeldefinities en beheer hun levenscyclus"
       },
       "adminCategories": {
         "title": "Categorieën",
@@ -2808,6 +2814,33 @@
         "reorderError": "Categorieën herordenen mislukt",
         "dragHandle": "Sleep om {name} te herordenen"
       }
+    },
+    "puzzles": {
+      "loading": "Puzzeldefinities laden…",
+      "empty": {
+        "title": "Nog geen puzzeldefinities",
+        "description": "Ingediende puzzeldefinities verschijnen hier met hun moderatiestatus."
+      },
+      "pieces": "{count} stukjes",
+      "submittedBy": "door {name}",
+      "ownerCount": "{count, plural, one {# eigenaar} other {# eigenaren}}",
+      "status": {
+        "pending": "In afwachting",
+        "approved": "Goedgekeurd",
+        "rejected": "Afgewezen",
+        "disabled": "Uitgeschakeld"
+      },
+      "disable": "Uitschakelen",
+      "reenable": "Weer inschakelen",
+      "disableConfirmTitle": "“{title}” uitschakelen?",
+      "disableConfirmBody": "De puzzel verdwijnt uit bladeren en zoeken en kan niet meer aan collecties worden toegevoegd. Bestaande exemplaren blijven onaangetast. Je kunt de puzzel altijd weer inschakelen.",
+      "reenableConfirmTitle": "“{title}” weer inschakelen?",
+      "reenableConfirmBody": "De puzzel wordt weer openbaar zichtbaar en kan weer worden toegevoegd.",
+      "disableSuccess": "“{title}” uitgeschakeld",
+      "disableError": "Kon de puzzel niet uitschakelen. Probeer het opnieuw.",
+      "reenableSuccess": "“{title}” weer ingeschakeld",
+      "reenableError": "Kon de puzzel niet weer inschakelen. Probeer het opnieuw.",
+      "loadMore": "Meer laden"
     },
     "queueEmpty": {
       "title": "Alles afgehandeld"

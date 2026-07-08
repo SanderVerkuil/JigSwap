@@ -2250,6 +2250,7 @@
     "adminCategories": "Category management — JigSwap",
     "adminUsers": "Users — JigSwap",
     "adminModeration": "Moderation — JigSwap",
+    "adminPuzzles": "Puzzles — JigSwap",
     "adminContact": "Contact messages — JigSwap",
     "adminFeedback": "Docs feedback — JigSwap",
     "signIn": "Sign in — JigSwap",
@@ -2411,6 +2412,11 @@
         "title": "Moderation",
         "subtitle": "Review pending submissions before they appear in the public catalog.",
         "description": "Approve or reject pending puzzle submissions"
+      },
+      "adminPuzzles": {
+        "title": "Puzzles",
+        "subtitle": "Every catalog definition with its moderation status; disable or re-enable approved definitions.",
+        "description": "Browse all puzzle definitions and manage their lifecycle"
       },
       "adminCategories": {
         "title": "Categories",
@@ -2808,6 +2814,33 @@
         "reorderError": "Failed to reorder categories",
         "dragHandle": "Drag to reorder {name}"
       }
+    },
+    "puzzles": {
+      "loading": "Loading puzzle definitions…",
+      "empty": {
+        "title": "No puzzle definitions yet",
+        "description": "Submitted puzzle definitions will appear here with their moderation status."
+      },
+      "pieces": "{count} pieces",
+      "submittedBy": "by {name}",
+      "ownerCount": "{count, plural, one {# owner} other {# owners}}",
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "disabled": "Disabled"
+      },
+      "disable": "Disable",
+      "reenable": "Re-enable",
+      "disableConfirmTitle": "Disable “{title}”?",
+      "disableConfirmBody": "The puzzle disappears from browse and search and can no longer be added to collections. Existing copies are not affected. You can re-enable it at any time.",
+      "reenableConfirmTitle": "Re-enable “{title}”?",
+      "reenableConfirmBody": "The puzzle becomes publicly visible and acquirable again.",
+      "disableSuccess": "“{title}” disabled",
+      "disableError": "Could not disable the puzzle. Please try again.",
+      "reenableSuccess": "“{title}” re-enabled",
+      "reenableError": "Could not re-enable the puzzle. Please try again.",
+      "loadMore": "Load more"
     },
     "queueEmpty": {
       "title": "All clear"
