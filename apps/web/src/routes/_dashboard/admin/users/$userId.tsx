@@ -2,6 +2,7 @@ import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { QueueEmpty } from "@/components/admin/queue-empty";
+import { StatTile } from "@/components/admin/stat-tile";
 import { AuditList } from "@/components/admin/users/audit-list";
 import { UserRoleAction } from "@/components/admin/users/user-role-action";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
@@ -217,15 +218,6 @@ function AdminUserDetailPage() {
           />
         </section>
       </div>
-    </div>
-  );
-}
-
-function StatTile({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-xl border bg-card px-4 py-3">
-      <div className="text-2xl font-semibold tabular-nums">{value}</div>
-      <div className="text-xs text-muted-foreground">{label}</div>
     </div>
   );
 }

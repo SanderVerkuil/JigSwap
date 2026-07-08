@@ -1,28 +1,15 @@
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { PuzzleLifecycleAction } from "@/components/admin/puzzles/puzzle-lifecycle-action";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
-import { useConvexMutation } from "@convex-dev/react-query";
-import { useMutation } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
 import { Puzzle as PuzzleIcon } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/admin/puzzles/")({
@@ -37,8 +24,6 @@ export const Route = createFileRoute("/_dashboard/admin/puzzles/")({
 type Row = FunctionReturnType<
   typeof gateway.admin.listPuzzleDefinitions
 >["page"][number];
-// The row + action awaiting the AlertDialog confirm (the category-list pattern).
-type PendingAction = { row: Row; action: "disable" | "reenable" };
 
 const STATUS_VARIANT: Record<
   Row["status"],
@@ -51,12 +36,11 @@ const STATUS_VARIANT: Record<
 };
 
 // Admin console over EVERY catalog definition (all moderation statuses), newest first with
-// load-more pagination. Approved rows can be reversibly disabled and disabled rows re-enabled,
-// each behind an inline AlertDialog confirm; the audit trail lands in the moderation Activity
-// Log via the mutations' moderationActions stamps.
+// load-more pagination. Approved rows can be reversibly disabled and disabled rows re-enabled
+// via the shared PuzzleLifecycleAction (button + AlertDialog confirm); the audit trail lands
+// in the moderation Activity Log via the mutations' moderationActions stamps.
 function AdminPuzzlesPage() {
   const t = useTranslations("admin.puzzles");
-  const tCommon = useTranslations("common");
   const format = useFormatter();
 
   const {
@@ -69,33 +53,6 @@ function AdminPuzzlesPage() {
     {},
     { initialNumItems: 25 },
   );
-
-  const disable = useMutation({
-    mutationFn: useConvexMutation(gateway.catalog.disable),
-  });
-  const reenable = useMutation({
-    mutationFn: useConvexMutation(gateway.catalog.reenable),
-  });
-
-  const [confirming, setConfirming] = useState<PendingAction | null>(null);
-  const busy = disable.isPending || reenable.isPending;
-
-  const runConfirmed = async () => {
-    if (!confirming?.row.aggregateId) return;
-    const { row, action } = confirming;
-    setConfirming(null);
-    try {
-      const run = action === "disable" ? disable : reenable;
-      await run.mutateAsync({ puzzleDefinitionId: row.aggregateId! });
-      toast.success(
-        t(action === "disable" ? "disableSuccess" : "reenableSuccess", {
-          title: row.title,
-        }),
-      );
-    } catch {
-      toast.error(t(action === "disable" ? "disableError" : "reenableError"));
-    }
-  };
 
   if (isLoading && rows.length === 0) {
     return <PageLoading message={t("loading")} />;
@@ -161,27 +118,11 @@ function AdminPuzzlesPage() {
                 <span>{t("ownerCount", { count: row.ownerCount })}</span>
               </div>
               <div className="flex shrink-0 items-center">
-                {row.status === "approved" && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-destructive hover:text-destructive"
-                    disabled={busy || !row.aggregateId}
-                    onClick={() => setConfirming({ row, action: "disable" })}
-                  >
-                    {t("disable")}
-                  </Button>
-                )}
-                {row.status === "disabled" && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={busy || !row.aggregateId}
-                    onClick={() => setConfirming({ row, action: "reenable" })}
-                  >
-                    {t("reenable")}
-                  </Button>
-                )}
+                <PuzzleLifecycleAction
+                  aggregateId={row.aggregateId}
+                  title={row.title}
+                  status={row.status}
+                />
               </div>
             </div>
           ))}
@@ -200,43 +141,6 @@ function AdminPuzzlesPage() {
           </Button>
         </div>
       )}
-
-      <AlertDialog
-        open={confirming !== null}
-        onOpenChange={(open) => {
-          if (!open) setConfirming(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {confirming?.action === "reenable"
-                ? t("reenableConfirmTitle", { title: confirming.row.title })
-                : t("disableConfirmTitle", {
-                    title: confirming?.row.title ?? "",
-                  })}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirming?.action === "reenable"
-                ? t("reenableConfirmBody")
-                : t("disableConfirmBody")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              className={
-                confirming?.action === "disable"
-                  ? buttonVariants({ variant: "destructive" })
-                  : undefined
-              }
-              onClick={() => void runConfirmed()}
-            >
-              {confirming?.action === "reenable" ? t("reenable") : t("disable")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

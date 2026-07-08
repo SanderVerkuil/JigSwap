@@ -1,29 +1,18 @@
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
+import { PuzzleLifecycleAction } from "@/components/admin/puzzles/puzzle-lifecycle-action";
 import { QueueEmpty } from "@/components/admin/queue-empty";
+import { StatTile } from "@/components/admin/stat-tile";
 import { AuditList } from "@/components/admin/users/audit-list";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, type Id } from "@/gateway";
-import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Puzzle as PuzzleIcon } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/admin/puzzles/$puzzleId")({
@@ -46,12 +35,11 @@ const STATUS_VARIANT: Record<
 // Everything the backend knows about one catalog definition that is
 // admin-relevant, from the single admin/getPuzzleDefinitionDetail read model
 // (gated server-side: requireMember + JWT isAdmin). Carries the same
-// reversible disable/re-enable lifecycle action as the list console, behind
-// the inline AlertDialog confirm.
+// reversible disable/re-enable lifecycle action as the list console via the
+// shared PuzzleLifecycleAction (button + AlertDialog confirm).
 function AdminPuzzleDetailPage() {
   const { puzzleId } = Route.useParams();
   const t = useTranslations("admin.puzzles");
-  const tCommon = useTranslations("common");
   const format = useFormatter();
 
   const { data, isPending, isError } = useQuery(
@@ -59,17 +47,6 @@ function AdminPuzzleDetailPage() {
       puzzleId: puzzleId as Id<"puzzles">,
     }),
   );
-
-  const disable = useMutation({
-    mutationFn: useConvexMutation(gateway.catalog.disable),
-  });
-  const reenable = useMutation({
-    mutationFn: useConvexMutation(gateway.catalog.reenable),
-  });
-  const [confirming, setConfirming] = useState<"disable" | "reenable" | null>(
-    null,
-  );
-  const busy = disable.isPending || reenable.isPending;
 
   // Publish the definition title as the page-head leaf: the shell renders the
   // route's static title as the middle crumb (Admin › Puzzles › <title>).
@@ -91,23 +68,6 @@ function AdminPuzzleDetailPage() {
   }
 
   const { definition, stats, owners, audit } = data;
-
-  const runConfirmed = async () => {
-    if (!confirming || !definition.aggregateId) return;
-    const action = confirming;
-    setConfirming(null);
-    try {
-      const run = action === "disable" ? disable : reenable;
-      await run.mutateAsync({ puzzleDefinitionId: definition.aggregateId });
-      toast.success(
-        t(action === "disable" ? "disableSuccess" : "reenableSuccess", {
-          title: definition.title,
-        }),
-      );
-    } catch {
-      toast.error(t(action === "disable" ? "disableError" : "reenableError"));
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -157,27 +117,11 @@ function AdminPuzzleDetailPage() {
             )}
           </div>
           <div className="flex shrink-0 items-center">
-            {definition.status === "approved" && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-destructive hover:text-destructive"
-                disabled={busy || !definition.aggregateId}
-                onClick={() => setConfirming("disable")}
-              >
-                {t("disable")}
-              </Button>
-            )}
-            {definition.status === "disabled" && (
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={busy || !definition.aggregateId}
-                onClick={() => setConfirming("reenable")}
-              >
-                {t("reenable")}
-              </Button>
-            )}
+            <PuzzleLifecycleAction
+              aggregateId={definition.aggregateId}
+              title={definition.title}
+              status={definition.status}
+            />
           </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-4 border-t pt-4 text-xs text-muted-foreground">
@@ -284,50 +228,6 @@ function AdminPuzzleDetailPage() {
         <h2 className="text-sm font-semibold">{t("detail.auditTitle")}</h2>
         <AuditList entries={audit} emptyLabel={t("detail.auditEmpty")} />
       </section>
-
-      <AlertDialog
-        open={confirming !== null}
-        onOpenChange={(open) => {
-          if (!open) setConfirming(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {confirming === "reenable"
-                ? t("reenableConfirmTitle", { title: definition.title })
-                : t("disableConfirmTitle", { title: definition.title })}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirming === "reenable"
-                ? t("reenableConfirmBody")
-                : t("disableConfirmBody")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              className={
-                confirming === "disable"
-                  ? buttonVariants({ variant: "destructive" })
-                  : undefined
-              }
-              onClick={() => void runConfirmed()}
-            >
-              {confirming === "reenable" ? t("reenable") : t("disable")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
-  );
-}
-
-function StatTile({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-xl border bg-card px-4 py-3">
-      <div className="text-2xl font-semibold tabular-nums">{value}</div>
-      <div className="text-xs text-muted-foreground">{label}</div>
     </div>
   );
 }
