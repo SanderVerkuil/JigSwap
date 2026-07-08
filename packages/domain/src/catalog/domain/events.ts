@@ -1,5 +1,10 @@
 import { DomainEvent } from "../../shared-kernel";
-import { CatalogCategoryId, PuzzleDefinitionId, SubmitterId } from "./ids";
+import {
+  CatalogCategoryId,
+  ChangeProposalId,
+  PuzzleDefinitionId,
+  SubmitterId,
+} from "./ids";
 
 // All Catalog domain events implement DomainEvent (name + occurredAt). They are plain
 // immutable records: the aggregate records them; an outbound publisher (Phase 2c) serialises
@@ -57,6 +62,60 @@ export class PuzzleDefinitionReenabled implements DomainEvent {
   ) {}
 }
 
+// Community change-proposal lifecycle. Approve/Reject carry the proposer so the Notifications
+// subscriber can address the outcome without an extra lookup; per existing convention no ACTOR
+// is on any event — the deciding admin is stamped into moderationActions at the composition root.
+export class ChangeProposalFiled implements DomainEvent {
+  readonly name = "ChangeProposalFiled";
+  constructor(
+    readonly changeProposalId: ChangeProposalId,
+    readonly puzzleDefinitionId: PuzzleDefinitionId,
+    readonly proposedBy: SubmitterId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+export class ChangeProposalEdited implements DomainEvent {
+  readonly name = "ChangeProposalEdited";
+  constructor(
+    readonly changeProposalId: ChangeProposalId,
+    readonly puzzleDefinitionId: PuzzleDefinitionId,
+    readonly proposedBy: SubmitterId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+export class ChangeProposalWithdrawn implements DomainEvent {
+  readonly name = "ChangeProposalWithdrawn";
+  constructor(
+    readonly changeProposalId: ChangeProposalId,
+    readonly puzzleDefinitionId: PuzzleDefinitionId,
+    readonly proposedBy: SubmitterId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+export class ChangeProposalApproved implements DomainEvent {
+  readonly name = "ChangeProposalApproved";
+  constructor(
+    readonly changeProposalId: ChangeProposalId,
+    readonly puzzleDefinitionId: PuzzleDefinitionId,
+    readonly proposedBy: SubmitterId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+export class ChangeProposalRejected implements DomainEvent {
+  readonly name = "ChangeProposalRejected";
+  constructor(
+    readonly changeProposalId: ChangeProposalId,
+    readonly puzzleDefinitionId: PuzzleDefinitionId,
+    readonly proposedBy: SubmitterId,
+    readonly reason: string | undefined,
+    readonly occurredAt: Date,
+  ) {}
+}
+
 export class CatalogCategoryCreated implements DomainEvent {
   readonly name = "CatalogCategoryCreated";
   constructor(
@@ -99,6 +158,11 @@ export type CatalogDomainEvent =
   | PuzzleDefinitionUpdated
   | PuzzleDefinitionDisabled
   | PuzzleDefinitionReenabled
+  | ChangeProposalFiled
+  | ChangeProposalEdited
+  | ChangeProposalWithdrawn
+  | ChangeProposalApproved
+  | ChangeProposalRejected
   | CatalogCategoryCreated
   | CatalogCategoryUpdated
   | CatalogCategoryActiveChanged
