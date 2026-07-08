@@ -2244,6 +2244,7 @@
     "borrowed": "Geleend — JigSwap",
     "admin": "Beheer — JigSwap",
     "adminCategories": "Categoriebeheer — JigSwap",
+    "adminUsers": "Gebruikers — JigSwap",
     "adminModeration": "Moderatie — JigSwap",
     "adminContact": "Contactberichten — JigSwap",
     "adminFeedback": "Documentatiefeedback — JigSwap",
@@ -2411,6 +2412,11 @@
         "title": "Categorieën",
         "subtitle": "Beheer puzzelcategorieën met ondersteuning voor vertalingen.",
         "description": "Beheer vertaalde puzzelcategorieën"
+      },
+      "adminUsers": {
+        "title": "Gebruikers",
+        "subtitle": "Alle leden van JigSwap, nieuwste eerst.",
+        "description": "Bekijk en doorzoek alle leden"
       },
       "adminContact": {
         "title": "Contact",
@@ -2797,6 +2803,24 @@
     },
     "queueEmpty": {
       "title": "Alles afgehandeld"
+    },
+    "users": {
+      "loading": "Leden laden…",
+      "searchPlaceholder": "Zoek op naam of gebruikersnaam…",
+      "emptyTitle": "Geen leden gevonden",
+      "empty": "Geen leden gevonden voor deze zoekopdracht.",
+      "columns": {
+        "member": "Lid",
+        "email": "E-mail",
+        "joined": "Lid sinds",
+        "status": "Status",
+        "role": "Rol",
+        "copies": "Exemplaren"
+      },
+      "active": "Actief",
+      "inactive": "Inactief",
+      "adminBadge": "Beheerder",
+      "loadMore": "Meer laden"
     }
   }
 }

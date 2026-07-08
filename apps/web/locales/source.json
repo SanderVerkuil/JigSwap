@@ -2244,6 +2244,7 @@
     "borrowed": "Borrowed — JigSwap",
     "admin": "Admin — JigSwap",
     "adminCategories": "Category management — JigSwap",
+    "adminUsers": "Users — JigSwap",
     "adminModeration": "Moderation — JigSwap",
     "adminContact": "Contact messages — JigSwap",
     "adminFeedback": "Docs feedback — JigSwap",
@@ -2411,6 +2412,11 @@
         "title": "Categories",
         "subtitle": "Manage puzzle categories with localization support.",
         "description": "Manage localized puzzle categories"
+      },
+      "adminUsers": {
+        "title": "Users",
+        "subtitle": "Every member of JigSwap, newest first.",
+        "description": "Browse and search all members"
       },
       "adminContact": {
         "title": "Contact",
@@ -2797,6 +2803,24 @@
     },
     "queueEmpty": {
       "title": "All clear"
+    },
+    "users": {
+      "loading": "Loading members…",
+      "searchPlaceholder": "Search by name or username…",
+      "emptyTitle": "No members found",
+      "empty": "No members match this search.",
+      "columns": {
+        "member": "Member",
+        "email": "Email",
+        "joined": "Joined",
+        "status": "Status",
+        "role": "Role",
+        "copies": "Copies"
+      },
+      "active": "Active",
+      "inactive": "Inactive",
+      "adminBadge": "Admin",
+      "loadMore": "Load more"
     }
   }
 }
