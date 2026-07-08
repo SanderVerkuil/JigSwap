@@ -36,7 +36,7 @@ export interface PuzzleDefinitionView {
   category?: DocId;
   tags?: string[];
   image?: string | null;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "disabled";
   createdAt: number;
   updatedAt: number;
 }
@@ -58,7 +58,7 @@ export interface PuzzleSummaryView {
   category?: DocId;
   tags?: string[];
   image?: string | null;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "disabled";
   createdAt: number;
   updatedAt: number;
 }
