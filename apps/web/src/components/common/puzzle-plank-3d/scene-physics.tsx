@@ -27,6 +27,7 @@ import {
 import { easing } from "maath";
 import * as React from "react";
 import * as THREE from "three";
+import { reconcileBodyRefs } from "./body-refs";
 import { clampThrowVelocity } from "./drag-math";
 import { layoutRow } from "./layout";
 import type { PlankSceneProps } from "./scene";
@@ -438,12 +439,17 @@ function PhysicsArrangement({
   const visibleW = contentH * aspect;
   const shelfW = Math.max(visibleW * 0.95, rowWidth + 0.4);
 
-  // Per-box rigid body refs for the drag hook
-  const rigidBodyRefs = React.useMemo(
-    () => boxes.map(() => React.createRef<RapierRigidBody>()),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [boxes.length],
-  );
+  // Per-box rigid body refs for the drag hook. Rapier writes a forwarded ref
+  // only at body creation, so when the box count changes (arrange-shelf), the
+  // refs of already-mounted bodies must be kept by IDENTITY — a rebuilt ref
+  // would stay null forever and its box would silently become ungrabbable.
+  // Render-time reconcile is idempotent; the array identity changes exactly
+  // when the count does, which is what the drag hook's deps key on.
+  const refsStore = React.useRef<React.RefObject<RapierRigidBody | null>[]>([]);
+  if (refsStore.current.length !== boxes.length) {
+    refsStore.current = reconcileBodyRefs(refsStore.current, boxes.length);
+  }
+  const rigidBodyRefs = refsStore.current;
 
   // Lowest each box center may be dragged (its half-height), so a held box never
   // sinks below the shelf top (y = 0).
