@@ -126,6 +126,32 @@ describe("makeAcquireCopy", () => {
     expect(events.published).toHaveLength(0);
     expect(copies.size()).toBe(0);
   });
+
+  it("refuses to acquire someone else's DISABLED definition (PuzzleNotAcquirable)", async () => {
+    snapshots.seed(snapshot(), { status: "disabled", submitterId: bob });
+    const result = await acquire()({
+      ownerId: alice,
+      puzzleDefinitionId: definitionId,
+      condition: "good",
+    });
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("PuzzleNotAcquirable");
+    expect(events.published).toHaveLength(0);
+    expect(copies.size()).toBe(0);
+  });
+
+  // Existing carve-out preserved: like pending/rejected, the SUBMITTER may still log a copy
+  // of their own disabled submission.
+  it("lets a member acquire their OWN disabled submission", async () => {
+    snapshots.seed(snapshot(), { status: "disabled", submitterId: alice });
+    const result = await acquire()({
+      ownerId: alice,
+      puzzleDefinitionId: definitionId,
+      condition: "good",
+    });
+    expect(result.isOk).toBe(true);
+    expect(events.names()).toEqual(["CopyAcquired"]);
+  });
 });
 
 describe("copy mutation use cases", () => {

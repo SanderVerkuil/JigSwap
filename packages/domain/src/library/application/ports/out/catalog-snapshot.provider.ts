@@ -3,7 +3,8 @@ import { CatalogSnapshot, OwnerId, PuzzleDefinitionId } from "../../../domain";
 // The moderation status a Catalog definition can be in. Mirrors the Catalog's own lifecycle
 // but is held here (not in the snapshot) so the Library can authorise acquisition WITHOUT
 // persisting moderation state into the display-only Copy snapshot.
-export type PuzzleApprovalStatus = "pending" | "approved" | "rejected";
+export type PuzzleApprovalStatus =
+  "pending" | "approved" | "rejected" | "disabled";
 
 // The acquisition context the use case needs to decide IF a member may acquire a definition,
 // plus the snapshot to cache once it may. `submitterId` is the Member who contributed the
