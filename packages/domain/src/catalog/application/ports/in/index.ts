@@ -1,3 +1,4 @@
+export * from "./decide-change-proposal.port";
 export * from "./edit-change-proposal.port";
 export * from "./file-change-proposal.port";
 export * from "./import-puzzle-from-url.port";

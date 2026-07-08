@@ -1,3 +1,4 @@
+export * from "./approve-change-proposal";
 export * from "./approve-puzzle-definition";
 export * from "./create-catalog-category";
 export * from "./disable-puzzle-definition";
@@ -6,6 +7,7 @@ export * from "./file-change-proposal";
 export * from "./import-puzzle-from-url";
 export * from "./proposal-baseline";
 export * from "./reenable-puzzle-definition";
+export * from "./reject-change-proposal";
 export * from "./reject-puzzle-definition";
 export * from "./reorder-catalog-categories";
 export * from "./run-definition-action";

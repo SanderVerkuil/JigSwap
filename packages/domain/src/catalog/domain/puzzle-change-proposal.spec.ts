@@ -125,6 +125,14 @@ describe("edit", () => {
     if (r.isErr) expect(r.error.code).toBe("EmptyProposal");
   });
 
+  it("clears the comment when the edit omits it", () => {
+    const proposal = file({ comment: "original rationale" });
+    proposal.pullEvents();
+    const r = proposal.edit({ title: "X" }, { title: "Old" }, undefined, LATER);
+    expect(r.isOk).toBe(true);
+    expect(proposal.toState().comment).toBeUndefined();
+  });
+
   it("cannot edit a decided or withdrawn proposal", () => {
     const approved = file();
     approved.approve(NOW);

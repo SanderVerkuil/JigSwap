@@ -8,8 +8,10 @@ import {
   RecordingEventPublisher,
   SequentialIdGenerator,
 } from "../testing";
+import { makeApproveChangeProposal } from "./approve-change-proposal";
 import { makeEditChangeProposal } from "./edit-change-proposal";
 import { makeFileChangeProposal } from "./file-change-proposal";
+import { makeRejectChangeProposal } from "./reject-change-proposal";
 import { makeWithdrawChangeProposal } from "./withdraw-change-proposal";
 
 const NOW = new Date("2026-07-08T10:00:00Z");
@@ -270,5 +272,105 @@ describe("makeWithdrawChangeProposal", () => {
       changes: { title: "Y" },
     });
     expect(again.isOk).toBe(true);
+  });
+});
+
+describe("makeApproveChangeProposal", () => {
+  const fileOne = async (
+    changes: Parameters<
+      ReturnType<typeof makeFileChangeProposal>
+    >[0]["changes"],
+  ) => {
+    const filed = await makeFileChangeProposal(deps())({
+      puzzleDefinitionId: definitionId,
+      proposedBy: alice,
+      changes,
+    });
+    if (!filed.isOk) throw new Error("setup failed");
+    events.published.length = 0;
+    return filed.value;
+  };
+
+  it("approves the proposal AND applies the patch to the definition, publishing both batches", async () => {
+    await seedDefinition();
+    const proposalId = await fileOne({ title: "Corrected", pieceCount: 500 });
+
+    const approve = makeApproveChangeProposal(deps());
+    const r = await approve({ changeProposalId: proposalId });
+
+    expect(r.isOk).toBe(true);
+    const proposal = (await proposals.findById(proposalId))!;
+    expect(proposal.status).toBe("approved");
+    const definition = (await definitions.findById(definitionId))!.toState();
+    expect(definition.title).toBe("Corrected");
+    expect(definition.pieceCount).toBe(500);
+    // Both aggregates' events land in one publish sequence: proposal first, then definition.
+    expect(events.names()).toEqual([
+      "ChangeProposalApproved",
+      "PuzzleDefinitionUpdated",
+    ]);
+  });
+
+  it("fails with ChangeProposalNotFound for an unknown id", async () => {
+    await seedDefinition();
+    const approve = makeApproveChangeProposal(deps());
+    const r = await approve({ changeProposalId: ids.nextChangeProposalId() });
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("ChangeProposalNotFound");
+  });
+
+  it("cannot approve twice — and does not double-apply the patch", async () => {
+    await seedDefinition();
+    const proposalId = await fileOne({ title: "Corrected" });
+    const approve = makeApproveChangeProposal(deps());
+    await approve({ changeProposalId: proposalId });
+
+    const again = await approve({ changeProposalId: proposalId });
+    expect(again.isErr).toBe(true);
+    if (again.isErr) expect(again.error.code).toBe("IllegalProposalTransition");
+  });
+
+  it("saves NOTHING when applying the patch fails on the definition", async () => {
+    await seedDefinition();
+    const proposalId = await fileOne({ title: "Corrected" });
+    // Sabotage: the definition disappears between filing and approval.
+    definitions = new InMemoryPuzzleDefinitionRepository();
+
+    const approve = makeApproveChangeProposal(deps());
+    const r = await approve({ changeProposalId: proposalId });
+
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("PuzzleDefinitionNotFound");
+    // The proposal is untouched (still pending) and nothing was published.
+    expect((await proposals.findById(proposalId))!.status).toBe("pending");
+    expect(events.published).toEqual([]);
+  });
+});
+
+describe("makeRejectChangeProposal", () => {
+  it("rejects with a reason, leaves the definition untouched, publishes ChangeProposalRejected", async () => {
+    await seedDefinition();
+    const filed = await makeFileChangeProposal(deps())({
+      puzzleDefinitionId: definitionId,
+      proposedBy: alice,
+      changes: { title: "Wrong idea" },
+    });
+    if (!filed.isOk) throw new Error("setup failed");
+    events.published.length = 0;
+
+    const reject = makeRejectChangeProposal(deps());
+    const r = await reject({
+      changeProposalId: filed.value,
+      reason: "title matches the box",
+    });
+
+    expect(r.isOk).toBe(true);
+    const state = (await proposals.findById(filed.value))!.toState();
+    expect(state.status).toBe("rejected");
+    expect(state.rejectionReason).toBe("title matches the box");
+    expect((await definitions.findById(definitionId))!.toState().title).toBe(
+      "Starry Night",
+    );
+    expect(events.names()).toEqual(["ChangeProposalRejected"]);
   });
 });
