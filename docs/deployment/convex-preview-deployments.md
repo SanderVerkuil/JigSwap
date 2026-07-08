@@ -6,8 +6,9 @@ available on every Convex plan, including Free/Starter (they expire faster there
 [Behavior](#behavior)).
 
 - `.github/workflows/convex-preview.yml` deploys the branch's backend to its preview on
-  every PR push, and seeds it once from a snapshot of the shared dev deployment when the
-  PR is opened or reopened.
+  every PR push, then checks whether the preview's database is empty and seeds it from
+  a snapshot of the shared dev deployment only if so (state-based seeding — a non-empty
+  preview is never touched).
 - `.github/workflows/convex-deploy.yml`'s `dev` job now runs **only on pushes to main** —
   the shared dev deployment tracks main.
 
@@ -100,11 +101,16 @@ build container.
 
 - **Branch-named, reused**: `convex deploy --preview-name <branch>` creates the preview
   if needed and _reuses_ the existing deployment **and its data** on subsequent pushes.
-- **Seeded once**: on PR `opened`/`reopened`, CI exports a snapshot of the shared dev
-  deployment (`convex export --include-file-storage`, dev deploy key) and imports it
-  into the preview (`convex import --preview-name <branch> --replace -y`, preview deploy
-  key). Pushes (`synchronize`) only redeploy code — they never re-import, so data
-  created on the preview survives.
+- **Seeded when empty (state-based)**: every run checks the preview's database with
+  `convex data users --limit 1 --format jsonl --preview-name <branch>` (the `users`
+  table is the sentinel — every dev snapshot contains users; `--preview-name` is
+  accepted by `convex data` even though `--help` hides it). Only when that returns zero
+  rows does CI export a snapshot of the shared dev deployment
+  (`convex export --include-file-storage`, dev deploy key) and import it into the
+  preview (`convex import --preview-name <branch> --replace -y`, preview deploy key).
+  A preview that already has data is left untouched, so data created on the preview
+  survives pushes — and a preview first created empty by the Vercel build, or recreated
+  empty after expiry, gets seeded by the next run automatically.
 - **Seeding cannot hit dev/prod**: the import step only has the preview deploy key,
   with which the CLI resolves `--preview-name` project-scoped to preview deployments;
   the dev key (which would make the CLI ignore `--preview-name`) is only exposed to the
@@ -113,10 +119,12 @@ build container.
   Free/Starter (**14 days** on Pro+). The Convex CLI has **no delete command** for
   preview deployments (verified against the CLI reference and `convex deployment
 --help`), so there is no PR-close cleanup job.
-- **Re-seed / revive after expiry**: run the **Convex Preview** workflow manually
-  (Actions → Convex Preview → Run workflow) with the PR branch name. It recreates the
-  preview from that branch and re-imports a fresh dev snapshot. Note this **replaces**
-  data in the imported tables.
+- **Revive after expiry is automatic**: the next workflow run (any PR push, or a manual
+  run with the branch name) recreates the expired preview, finds it empty, and seeds it
+  — no special event needed. To deliberately **re-seed a preview that still has data**,
+  run the workflow manually (Actions → Convex Preview → Run workflow) with the branch
+  name and the **force** checkbox enabled; this replaces the preview's data with a
+  fresh dev snapshot.
 - **No-op until configured**: while the `CONVEX_DEPLOY_KEY_PREVIEW` secret is missing,
   the workflow emits a GitHub notice and skips all steps, so PRs stay green during the
   one-time owner setup window.
