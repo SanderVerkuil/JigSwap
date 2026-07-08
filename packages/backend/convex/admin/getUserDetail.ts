@@ -87,7 +87,9 @@ export const getUserDetail = query({
           forLend: copies.filter((c) => c.availability.forLend).length,
         },
         collections: collections.length,
-        completions: completions.length,
+        // Solves = finished puzzles only; the table also holds in-progress
+        // sessions (isCompleted: false).
+        completions: completions.filter((c) => c.isCompleted).length,
       },
       submissions: submissions.map((p) => ({
         _id: p._id,

@@ -89,6 +89,17 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
       createdAt: now,
       updatedAt: now,
     });
+    // An in-progress session (isCompleted: false, no endDate yet): the solves
+    // stat counts finished puzzles only, so this row must NOT be counted.
+    await ctx.db.insert("completions", {
+      userId: bob,
+      puzzleId: puzzle,
+      startDate: now - 1000,
+      photos: [],
+      isCompleted: false,
+      createdAt: now,
+      updatedAt: now,
+    });
 
     // Bob's submissions, inserted oldest-first: the read model returns newest first
     // (by_submitted_by + _creationTime descending).
