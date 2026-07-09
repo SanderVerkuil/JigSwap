@@ -2671,6 +2671,36 @@
       "sale": "Sale"
     }
   },
+  "suggestEdit": {
+    "title": "Suggest an edit",
+    "editTitle": "Edit your suggestion",
+    "subtitle": "Propose corrections to “{title}”. An admin reviews your suggestion before it goes live.",
+    "comment": {
+      "label": "Why this change?",
+      "placeholder": "e.g. the box says 500 pieces"
+    },
+    "currentImage": "Current image",
+    "proposedImage": "Proposed image",
+    "replaceImage": "Replace image",
+    "keepCategory": "Keep current category",
+    "submit": "Submit suggestion",
+    "update": "Update suggestion",
+    "submitting": "Submitting…",
+    "cancel": "Cancel",
+    "noChanges": "Change at least one field to suggest an edit",
+    "submitted": "Suggestion submitted for review",
+    "updated": "Suggestion updated",
+    "notFound": "This puzzle can't be edited",
+    "notFoundSub": "Only approved catalogue puzzles accept suggestions.",
+    "errors": {
+      "openExists": "You already have an open suggestion for this puzzle — edit that one instead.",
+      "notProposable": "Only approved catalogue puzzles accept suggestions.",
+      "notPending": "This suggestion was already decided — file a new one.",
+      "empty": "Change at least one field to suggest an edit",
+      "invalidBarcode": "One of the barcodes is not valid",
+      "generic": "Couldn't submit your suggestion"
+    }
+  },
   "emojiPicker": {
     "search": "Search emoji",
     "notFound": "No emoji found",

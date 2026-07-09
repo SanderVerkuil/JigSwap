@@ -2671,6 +2671,36 @@
       "sale": "Verkoop"
     }
   },
+  "suggestEdit": {
+    "title": "Wijziging voorstellen",
+    "editTitle": "Je voorstel bewerken",
+    "subtitle": "Stel correcties voor aan “{title}”. Een beheerder beoordeelt je voorstel voordat het live gaat.",
+    "comment": {
+      "label": "Waarom deze wijziging?",
+      "placeholder": "bijv. op de doos staat 500 stukjes"
+    },
+    "currentImage": "Huidige afbeelding",
+    "proposedImage": "Voorgestelde afbeelding",
+    "replaceImage": "Afbeelding vervangen",
+    "keepCategory": "Huidige categorie behouden",
+    "submit": "Voorstel indienen",
+    "update": "Voorstel bijwerken",
+    "submitting": "Indienen…",
+    "cancel": "Annuleren",
+    "noChanges": "Wijzig minstens één veld om een voorstel in te dienen",
+    "submitted": "Voorstel ingediend ter beoordeling",
+    "updated": "Voorstel bijgewerkt",
+    "notFound": "Deze puzzel kan niet worden bewerkt",
+    "notFoundSub": "Alleen goedgekeurde cataloguspuzzels accepteren voorstellen.",
+    "errors": {
+      "openExists": "Je hebt al een open voorstel voor deze puzzel — bewerk dat voorstel.",
+      "notProposable": "Alleen goedgekeurde cataloguspuzzels accepteren voorstellen.",
+      "notPending": "Dit voorstel is al beoordeeld — dien een nieuw voorstel in.",
+      "empty": "Wijzig minstens één veld om een voorstel in te dienen",
+      "invalidBarcode": "Een van de barcodes is ongeldig",
+      "generic": "Voorstel indienen mislukt"
+    }
+  },
   "emojiPicker": {
     "search": "Zoek emoji",
     "notFound": "Geen emoji gevonden",
