@@ -305,6 +305,7 @@
     "sale": "Te Koop",
     "completed": "Voltooid",
     "addPuzzle": "Puzzel Toevoegen",
+    "mySuggestions": "Mijn voorstellen",
     "editPuzzle": "Puzzel Bewerken",
     "deletePuzzle": "Puzzel Verwijderen",
     "requestExchange": "Uitwisseling Aanvragen",
@@ -1455,6 +1456,8 @@
       "puzzle_favorited": "Puzzel favoriet gemaakt",
       "puzzle_approved": "Puzzel goedgekeurd",
       "puzzle_rejected": "Puzzel afgewezen",
+      "proposal_approved": "Wijzigingsvoorstel goedgekeurd",
+      "proposal_rejected": "Wijzigingsvoorstel afgewezen",
       "photo_removed": "Foto verwijderd",
       "goal_achieved": "Doel behaald"
     },
@@ -1507,6 +1510,14 @@
         "title": "Puzzel afgewezen",
         "message": "Je puzzelinzending is afgewezen."
       },
+      "proposal_approved": {
+        "title": "Wijzigingsvoorstel goedgekeurd",
+        "message": "Jouw voorgestelde wijziging is goedgekeurd en staat nu live."
+      },
+      "proposal_rejected": {
+        "title": "Wijzigingsvoorstel afgewezen",
+        "message": "Jouw voorgestelde wijziging is afgewezen."
+      },
       "photo_removed": {
         "title": "Foto verwijderd",
         "message": "Een van je puzzelfoto's is door een moderator verwijderd."
@@ -1542,6 +1553,8 @@
       "puzzle_favorited": "Wanneer iemand een puzzel die je hebt toegevoegd als favoriet markeert.",
       "puzzle_approved": "Wanneer een puzzel die je hebt ingediend is goedgekeurd voor de catalogus.",
       "puzzle_rejected": "Wanneer een puzzel die je hebt ingediend is afgewezen.",
+      "proposal_approved": "Wanneer een wijziging die je voor een cataloguspuzzel voorstelde wordt goedgekeurd.",
+      "proposal_rejected": "Wanneer een wijziging die je voor een cataloguspuzzel voorstelde wordt afgewezen.",
       "photo_removed": "Wanneer een moderator een van je puzzelfoto's verwijdert.",
       "goal_achieved": "Wanneer je een puzzeldoel behaalt."
     },
@@ -2629,6 +2642,7 @@
   "puzzleDefinition": {
     "notFound": "Puzzel niet gevonden",
     "notFoundSub": "Deze puzzel is mogelijk uit de catalogus verwijderd, of de link klopt niet.",
+    "suggestEdit": "Wijziging voorstellen",
     "eyebrow": "Catalogus · Puzzeldefinitie",
     "communityOwners": "eigenaren in community",
     "totalCompletions": "keer voltooid",
@@ -2657,6 +2671,59 @@
       "lend": "Lenen",
       "sale": "Verkoop"
     }
+  },
+  "suggestEdit": {
+    "title": "Wijziging voorstellen",
+    "editTitle": "Je voorstel bewerken",
+    "subtitle": "Stel correcties voor aan “{title}”. Een beheerder beoordeelt je voorstel voordat het live gaat.",
+    "comment": {
+      "label": "Waarom deze wijziging?",
+      "placeholder": "bijv. op de doos staat 500 stukjes"
+    },
+    "currentImage": "Huidige afbeelding",
+    "proposedImage": "Voorgestelde afbeelding",
+    "replaceImage": "Afbeelding vervangen",
+    "keepCategory": "Huidige categorie behouden",
+    "submit": "Voorstel indienen",
+    "update": "Voorstel bijwerken",
+    "submitting": "Indienen…",
+    "cancel": "Annuleren",
+    "noChanges": "Wijzig minstens één veld om een voorstel in te dienen",
+    "submitted": "Voorstel ingediend ter beoordeling",
+    "updated": "Voorstel bijgewerkt",
+    "notFound": "Deze puzzel kan niet worden bewerkt",
+    "notFoundSub": "Alleen goedgekeurde cataloguspuzzels accepteren voorstellen.",
+    "errors": {
+      "openExists": "Je hebt al een open voorstel voor deze puzzel — bewerk dat voorstel.",
+      "notProposable": "Alleen goedgekeurde cataloguspuzzels accepteren voorstellen.",
+      "notPending": "Dit voorstel is al beoordeeld — dien een nieuw voorstel in.",
+      "empty": "Wijzig minstens één veld om een voorstel in te dienen",
+      "invalidBarcode": "Een van de barcodes is ongeldig",
+      "generic": "Voorstel indienen mislukt"
+    }
+  },
+  "mySuggestions": {
+    "title": "Mijn voorstellen",
+    "subtitle": "Wijzigingen die je voor cataloguspuzzels hebt voorgesteld.",
+    "empty": {
+      "title": "Nog geen voorstellen",
+      "description": "Gebruik “Wijziging voorstellen” bij een cataloguspuzzel om een correctie voor te stellen."
+    },
+    "status": {
+      "pending": "In behandeling",
+      "approved": "Goedgekeurd",
+      "rejected": "Afgewezen",
+      "withdrawn": "Ingetrokken"
+    },
+    "fieldsChanged": "{count, plural, one {# veld gewijzigd} other {# velden gewijzigd}}",
+    "comment": "Jouw toelichting",
+    "rejectionReason": "Reden van de beheerder",
+    "edit": "Bewerken",
+    "withdraw": "Intrekken",
+    "withdrawConfirmTitle": "Dit voorstel intrekken?",
+    "withdrawConfirmBody": "Je voorgestelde wijziging voor “{title}” wordt ingetrokken. Je kunt later een nieuw voorstel indienen.",
+    "withdrawn": "Voorstel ingetrokken",
+    "withdrawFailed": "Voorstel intrekken mislukt"
   },
   "emojiPicker": {
     "search": "Zoek emoji",

@@ -74,6 +74,13 @@ describe("notificationUrl", () => {
   test("falls back to the in-app feed for unknown types", () => {
     expect(notificationUrl("totally_unknown")).toBe("/notifications");
   });
+
+  test("deep-links a proposal outcome to the targeted definition, else the catalog", () => {
+    expect(notificationUrl("proposal_approved", "pz-1")).toBe("/puzzles/pz-1");
+    expect(notificationUrl("proposal_rejected", "pz-1")).toBe("/puzzles/pz-1");
+    expect(notificationUrl("proposal_approved")).toBe("/puzzles");
+    expect(notificationUrl("proposal_rejected")).toBe("/puzzles");
+  });
 });
 
 describe("toWebPushPayload", () => {

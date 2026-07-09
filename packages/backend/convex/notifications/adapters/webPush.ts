@@ -104,6 +104,10 @@ export const notificationUrl = (type: string, relatedId?: string): string => {
       return relatedId ? `/puzzles/${relatedId}` : "/puzzles";
     case "puzzle_rejected":
       return "/puzzles";
+    // Change-proposal outcomes deep-link to the definition the suggestion targeted.
+    case "proposal_approved":
+    case "proposal_rejected":
+      return relatedId ? `/puzzles/${relatedId}` : "/puzzles";
     default:
       return "/notifications";
   }

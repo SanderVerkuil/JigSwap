@@ -305,6 +305,7 @@
     "sale": "For Sale",
     "completed": "Completed",
     "addPuzzle": "Add Puzzle",
+    "mySuggestions": "My suggestions",
     "editPuzzle": "Edit Puzzle",
     "deletePuzzle": "Delete Puzzle",
     "requestExchange": "Request Exchange",
@@ -1455,6 +1456,8 @@
       "puzzle_favorited": "Puzzle favorited",
       "puzzle_approved": "Puzzle approved",
       "puzzle_rejected": "Puzzle rejected",
+      "proposal_approved": "Suggestion approved",
+      "proposal_rejected": "Suggestion declined",
       "photo_removed": "Photo removed",
       "goal_achieved": "Goal achieved"
     },
@@ -1507,6 +1510,14 @@
         "title": "Puzzle rejected",
         "message": "Your puzzle submission was rejected."
       },
+      "proposal_approved": {
+        "title": "Suggestion approved",
+        "message": "Your suggested edit was approved and is now live."
+      },
+      "proposal_rejected": {
+        "title": "Suggestion declined",
+        "message": "Your suggested edit was declined."
+      },
       "photo_removed": {
         "title": "Photo removed",
         "message": "One of your puzzle photos was removed by a moderator."
@@ -1542,6 +1553,8 @@
       "puzzle_favorited": "When someone favourites a puzzle you added.",
       "puzzle_approved": "When a puzzle you submitted is approved for the catalogue.",
       "puzzle_rejected": "When a puzzle you submitted is rejected.",
+      "proposal_approved": "When an edit you suggested to a catalogue puzzle is approved.",
+      "proposal_rejected": "When an edit you suggested to a catalogue puzzle is declined.",
       "photo_removed": "When a moderator removes one of your puzzle photos.",
       "goal_achieved": "When you reach a solving goal."
     },
@@ -2629,6 +2642,7 @@
   "puzzleDefinition": {
     "notFound": "Puzzle not found",
     "notFoundSub": "This puzzle may have been removed from the catalog, or the link is wrong.",
+    "suggestEdit": "Suggest an edit",
     "eyebrow": "Catalog · Puzzle Definition",
     "communityOwners": "community owners",
     "totalCompletions": "total completions",
@@ -2657,6 +2671,59 @@
       "lend": "Lend",
       "sale": "Sale"
     }
+  },
+  "suggestEdit": {
+    "title": "Suggest an edit",
+    "editTitle": "Edit your suggestion",
+    "subtitle": "Propose corrections to “{title}”. An admin reviews your suggestion before it goes live.",
+    "comment": {
+      "label": "Why this change?",
+      "placeholder": "e.g. the box says 500 pieces"
+    },
+    "currentImage": "Current image",
+    "proposedImage": "Proposed image",
+    "replaceImage": "Replace image",
+    "keepCategory": "Keep current category",
+    "submit": "Submit suggestion",
+    "update": "Update suggestion",
+    "submitting": "Submitting…",
+    "cancel": "Cancel",
+    "noChanges": "Change at least one field to suggest an edit",
+    "submitted": "Suggestion submitted for review",
+    "updated": "Suggestion updated",
+    "notFound": "This puzzle can't be edited",
+    "notFoundSub": "Only approved catalogue puzzles accept suggestions.",
+    "errors": {
+      "openExists": "You already have an open suggestion for this puzzle — edit that one instead.",
+      "notProposable": "Only approved catalogue puzzles accept suggestions.",
+      "notPending": "This suggestion was already decided — file a new one.",
+      "empty": "Change at least one field to suggest an edit",
+      "invalidBarcode": "One of the barcodes is not valid",
+      "generic": "Couldn't submit your suggestion"
+    }
+  },
+  "mySuggestions": {
+    "title": "My suggestions",
+    "subtitle": "Edits you proposed to catalogue puzzles.",
+    "empty": {
+      "title": "No suggestions yet",
+      "description": "Use “Suggest an edit” on any catalogue puzzle to propose a correction."
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Declined",
+      "withdrawn": "Withdrawn"
+    },
+    "fieldsChanged": "{count, plural, one {# field changed} other {# fields changed}}",
+    "comment": "Your note",
+    "rejectionReason": "Admin's reason",
+    "edit": "Edit",
+    "withdraw": "Withdraw",
+    "withdrawConfirmTitle": "Withdraw this suggestion?",
+    "withdrawConfirmBody": "Your proposed edit to “{title}” will be withdrawn. You can file a new one later.",
+    "withdrawn": "Suggestion withdrawn",
+    "withdrawFailed": "Couldn't withdraw the suggestion"
   },
   "emojiPicker": {
     "search": "Search emoji",

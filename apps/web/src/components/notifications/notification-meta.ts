@@ -28,7 +28,9 @@ export type NotificationType =
   | "puzzle_rejected"
   | "photo_removed"
   | "exchange_proposed"
-  | "exchange_disputed";
+  | "exchange_disputed"
+  | "proposal_approved"
+  | "proposal_rejected";
 
 export const NOTIFICATION_TYPES: NotificationType[] = [
   "trade_request",
@@ -45,6 +47,8 @@ export const NOTIFICATION_TYPES: NotificationType[] = [
   "puzzle_rejected",
   "photo_removed",
   "goal_achieved",
+  "proposal_approved",
+  "proposal_rejected",
 ];
 
 export type NotificationChannel = "inApp" | "email" | "push";
@@ -117,6 +121,10 @@ export function notificationIcon(type: string): LucideIcon {
       return XCircle;
     case "photo_removed":
       return ImageOff;
+    case "proposal_approved":
+      return CheckCircle2;
+    case "proposal_rejected":
+      return XCircle;
     default:
       return Bell;
   }
@@ -129,12 +137,14 @@ export function notificationAccent(type: string): string {
     case "trade_completed":
     case "trade_accepted":
     case "puzzle_approved":
+    case "proposal_approved":
       return "text-green-600";
     case "trade_declined":
     case "trade_cancelled":
     case "exchange_disputed":
     case "puzzle_rejected":
     case "photo_removed":
+    case "proposal_rejected":
       return "text-destructive";
     case "review_received":
     case "goal_achieved":
@@ -179,6 +189,9 @@ export function notificationHref(row: NotificationRow): string | null {
     // owner's view of that copy.
     case "photo_removed":
       return relatedId ? `/my-puzzles/${relatedId}` : "/my-puzzles";
+    case "proposal_approved":
+    case "proposal_rejected":
+      return relatedId ? `/puzzles/${relatedId}` : "/puzzles";
     default:
       return null;
   }
