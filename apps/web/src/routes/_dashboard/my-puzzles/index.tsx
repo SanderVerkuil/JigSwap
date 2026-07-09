@@ -26,7 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Grid, List, Plus, Undo2, X } from "lucide-react";
+import { Grid, Lightbulb, List, Plus, Undo2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslations } from "use-intl";
 
@@ -267,6 +267,12 @@ function PuzzlesPage() {
         <span className="text-muted-foreground hidden text-sm sm:inline">
           {headerMeta}
         </span>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/my-puzzles/suggestions">
+            <Lightbulb className="h-4 w-4" />
+            {t("mySuggestions")}
+          </Link>
+        </Button>
         <Button variant="brand" size="sm" asChild>
           <Link href="/my-puzzles/add">
             <Plus className="h-4 w-4" />

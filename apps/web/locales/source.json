@@ -305,6 +305,7 @@
     "sale": "For Sale",
     "completed": "Completed",
     "addPuzzle": "Add Puzzle",
+    "mySuggestions": "My suggestions",
     "editPuzzle": "Edit Puzzle",
     "deletePuzzle": "Delete Puzzle",
     "requestExchange": "Request Exchange",
@@ -2700,6 +2701,29 @@
       "invalidBarcode": "One of the barcodes is not valid",
       "generic": "Couldn't submit your suggestion"
     }
+  },
+  "mySuggestions": {
+    "title": "My suggestions",
+    "subtitle": "Edits you proposed to catalogue puzzles.",
+    "empty": {
+      "title": "No suggestions yet",
+      "description": "Use “Suggest an edit” on any catalogue puzzle to propose a correction."
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Declined",
+      "withdrawn": "Withdrawn"
+    },
+    "fieldsChanged": "{count, plural, one {# field changed} other {# fields changed}}",
+    "comment": "Your note",
+    "rejectionReason": "Admin's reason",
+    "edit": "Edit",
+    "withdraw": "Withdraw",
+    "withdrawConfirmTitle": "Withdraw this suggestion?",
+    "withdrawConfirmBody": "Your proposed edit to “{title}” will be withdrawn. You can file a new one later.",
+    "withdrawn": "Suggestion withdrawn",
+    "withdrawFailed": "Couldn't withdraw the suggestion"
   },
   "emojiPicker": {
     "search": "Search emoji",

@@ -305,6 +305,7 @@
     "sale": "Te Koop",
     "completed": "Voltooid",
     "addPuzzle": "Puzzel Toevoegen",
+    "mySuggestions": "Mijn voorstellen",
     "editPuzzle": "Puzzel Bewerken",
     "deletePuzzle": "Puzzel Verwijderen",
     "requestExchange": "Uitwisseling Aanvragen",
@@ -2700,6 +2701,29 @@
       "invalidBarcode": "Een van de barcodes is ongeldig",
       "generic": "Voorstel indienen mislukt"
     }
+  },
+  "mySuggestions": {
+    "title": "Mijn voorstellen",
+    "subtitle": "Wijzigingen die je voor cataloguspuzzels hebt voorgesteld.",
+    "empty": {
+      "title": "Nog geen voorstellen",
+      "description": "Gebruik “Wijziging voorstellen” bij een cataloguspuzzel om een correctie voor te stellen."
+    },
+    "status": {
+      "pending": "In behandeling",
+      "approved": "Goedgekeurd",
+      "rejected": "Afgewezen",
+      "withdrawn": "Ingetrokken"
+    },
+    "fieldsChanged": "{count, plural, one {# veld gewijzigd} other {# velden gewijzigd}}",
+    "comment": "Jouw toelichting",
+    "rejectionReason": "Reden van de beheerder",
+    "edit": "Bewerken",
+    "withdraw": "Intrekken",
+    "withdrawConfirmTitle": "Dit voorstel intrekken?",
+    "withdrawConfirmBody": "Je voorgestelde wijziging voor “{title}” wordt ingetrokken. Je kunt later een nieuw voorstel indienen.",
+    "withdrawn": "Voorstel ingetrokken",
+    "withdrawFailed": "Voorstel intrekken mislukt"
   },
   "emojiPicker": {
     "search": "Zoek emoji",
