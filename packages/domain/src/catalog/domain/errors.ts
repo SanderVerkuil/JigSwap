@@ -1,5 +1,6 @@
 import { DomainError } from "../../shared-kernel";
 import { ApprovalStatus } from "./approval";
+import { ProposalStatus } from "./proposal-status";
 
 // A closed set of reasons a Catalog operation can fail. The `code` is the stable,
 // machine-readable discriminant a transport adapter maps to (the human message is for
@@ -10,7 +11,10 @@ export type CatalogErrorCode =
   | "InvalidPieceCount"
   | "InvalidBarcode"
   | "IllegalApprovalTransition"
-  | "EmptyCategoryName";
+  | "EmptyCategoryName"
+  | "IllegalProposalTransition"
+  | "EmptyProposal"
+  | "ProposalNotPending";
 
 export class CatalogError extends DomainError {
   override readonly name = "CatalogError";
@@ -59,6 +63,33 @@ export class CatalogError extends DomainError {
     return new CatalogError(
       "EmptyCategoryName",
       "A catalog category requires a non-empty name in each locale",
+    );
+  }
+
+  // The requested proposal move is not allowed from the current status.
+  static illegalProposalTransition(
+    from: ProposalStatus,
+    to: ProposalStatus,
+  ): CatalogError {
+    return new CatalogError(
+      "IllegalProposalTransition",
+      `Cannot transition proposal from ${from} to ${to}`,
+    );
+  }
+
+  // A change proposal must alter at least one field.
+  static emptyProposal(): CatalogError {
+    return new CatalogError(
+      "EmptyProposal",
+      "A change proposal requires at least one changed field",
+    );
+  }
+
+  // Only a pending proposal can be edited in place.
+  static proposalNotPending(status: ProposalStatus): CatalogError {
+    return new CatalogError(
+      "ProposalNotPending",
+      `Only a pending proposal can be edited, got ${status}`,
     );
   }
 }

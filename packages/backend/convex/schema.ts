@@ -1,6 +1,51 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+// The proposable field diff, shared by puzzleChangeProposals.changes and .baseline. Mirrors the
+// domain PuzzleDefinitionChanges shape exactly (barcodes grouped: supplying the group replaces
+// all three values, same as updatePuzzleDefinition).
+const proposalFields = v.object({
+  title: v.optional(v.string()),
+  description: v.optional(v.string()),
+  brand: v.optional(v.string()),
+  pieceCount: v.optional(v.number()),
+  artist: v.optional(v.string()),
+  series: v.optional(v.string()),
+  barcodes: v.optional(
+    v.object({
+      ean: v.optional(v.string()),
+      upc: v.optional(v.string()),
+      modelNumber: v.optional(v.string()),
+    }),
+  ),
+  dimensions: v.optional(
+    v.object({
+      width: v.number(),
+      height: v.number(),
+      unit: v.union(v.literal("cm"), v.literal("in")),
+    }),
+  ),
+  shape: v.optional(
+    v.union(
+      v.literal("rectangular"),
+      v.literal("panoramic"),
+      v.literal("round"),
+      v.literal("shaped"),
+    ),
+  ),
+  difficulty: v.optional(
+    v.union(
+      v.literal("easy"),
+      v.literal("medium"),
+      v.literal("hard"),
+      v.literal("expert"),
+    ),
+  ),
+  category: v.optional(v.string()), // CatalogCategoryId aggregate id string
+  tags: v.optional(v.array(v.string())),
+  image: v.optional(v.string()), // _storage id as plain string (domain-owned shape)
+});
+
 export default defineSchema({
   users: defineTable({
     clerkId: v.string(),
@@ -419,6 +464,8 @@ export default defineSchema({
       v.literal("definition_edited_approved"),
       v.literal("definition_disabled"),
       v.literal("definition_reenabled"),
+      v.literal("proposal_approved"),
+      v.literal("proposal_rejected"),
       v.literal("photo_restored"),
       v.literal("photo_removal_confirmed"),
       v.literal("photo_auto_rejected"),
@@ -435,6 +482,35 @@ export default defineSchema({
     // Additive — Convex indexes existing rows automatically, no backfill.
     .index("by_actor", ["actorId", "at"])
     .index("by_target", ["targetId", "at"]),
+
+  // Community change proposals against APPROVED catalog definitions. `changes` is the exact
+  // patch the definition receives on approval; `baseline` snapshots the changed fields' values
+  // at file/edit time so review UIs can derive "changed since proposed" markers (derived at
+  // read time — never stored, never enforced). One PENDING proposal per (definition, proposer);
+  // decided/withdrawn rows are kept as history. Domain-owned: `puzzleDefinitionId` and
+  // `changes.category` are Catalog aggregate-id strings, `changes.image` a storage id string.
+  puzzleChangeProposals: defineTable({
+    aggregateId: v.string(), // ChangeProposalId
+    puzzleDefinitionId: v.string(), // Catalog PuzzleDefinitionId (aggregate id, not puzzles._id)
+    proposedBy: v.id("users"),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("rejected"),
+      v.literal("withdrawn"),
+    ),
+    changes: proposalFields,
+    baseline: proposalFields,
+    comment: v.optional(v.string()),
+    rejectionReason: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    decidedAt: v.optional(v.number()),
+  })
+    .index("by_aggregate_id", ["aggregateId"])
+    .index("by_status", ["status"])
+    .index("by_definition", ["puzzleDefinitionId"])
+    .index("by_proposer", ["proposedBy", "status"]),
 
   // User goals for puzzle completion
   goals: defineTable({
@@ -643,6 +719,8 @@ export default defineSchema({
       v.literal("photo_removed"),
       v.literal("exchange_proposed"),
       v.literal("exchange_disputed"),
+      v.literal("proposal_approved"),
+      v.literal("proposal_rejected"),
     ),
     title: v.string(),
     message: v.string(),

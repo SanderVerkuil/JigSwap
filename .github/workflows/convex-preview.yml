@@ -22,10 +22,12 @@ permissions:
 # (`preview:team:project|…`) the CLI honors `--preview-name` and can ONLY target preview
 # deployments; with a deployment-scoped key (dev:/prod:) the CLI IGNORES `--preview-name`
 # and targets the key's deployment — so the dev key must never reach the import step.
+# No base-branch filter: stacked PRs (base = another feature branch) get a Vercel web
+# preview like any other PR — and the Vercel build creates the branch's Convex preview —
+# so they need the same deploy + seed or their preview backend stays empty.
 on:
   pull_request:
     types: [opened, reopened, synchronize]
-    branches: [main]
   workflow_dispatch:
     inputs:
       branch:
@@ -132,6 +134,12 @@ jobs:
           # Preview key only (see guard above): with it, `--preview-name` is honored and
           # the import cannot land on dev or prod.
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_PREVIEW }}
+        # `--replace-all`, not `--replace`: the deploy step already pushed this BRANCH's
+        # schema, so a table the branch adds exists (empty) on the preview but not in the
+        # dev snapshot — `--replace` then aborts on a table-ID conflict ("New table X has
+        # IDs that conflict with existing table Y"). Deleting all tables first is safe in
+        # both reachable paths: the if-empty path only runs when the sentinel check found
+        # no data, and the force path is documented as replacing the preview's data.
         run: >-
           pnpm exec convex import --preview-name "$BRANCH_NAME"
-          --replace -y "$RUNNER_TEMP/dev-snapshot.zip"
+          --replace-all -y "$RUNNER_TEMP/dev-snapshot.zip"

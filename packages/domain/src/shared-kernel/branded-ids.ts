@@ -57,3 +57,5 @@ export const toSubmitterId = (value: string): Id<"SubmitterId"> =>
   toId<"SubmitterId">(value);
 export const toMessageId = (value: string): Id<"MessageId"> =>
   toId<"MessageId">(value);
+export const toChangeProposalId = (value: string): Id<"ChangeProposalId"> =>
+  toId<"ChangeProposalId">(value);

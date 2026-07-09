@@ -249,6 +249,35 @@ const translate = async (
         ),
       ];
     }
+    case "ChangeProposalApproved": {
+      const puzzle = await loadPuzzle(ctx, p.puzzleDefinitionId as string);
+      if (!puzzle) return [];
+      return [
+        cmd(
+          p.proposedBy as string,
+          "proposal_approved",
+          "Suggestion Applied",
+          `Your suggested edit to "${puzzle.title}" was approved`,
+          puzzle._id,
+        ),
+      ];
+    }
+    case "ChangeProposalRejected": {
+      const puzzle = await loadPuzzle(ctx, p.puzzleDefinitionId as string);
+      if (!puzzle) return [];
+      const reason = p.reason as string | undefined;
+      return [
+        cmd(
+          p.proposedBy as string,
+          "proposal_rejected",
+          "Suggestion Declined",
+          reason
+            ? `Your suggested edit to "${puzzle.title}" was declined: ${reason}`
+            : `Your suggested edit to "${puzzle.title}" was declined`,
+          puzzle._id,
+        ),
+      ];
+    }
 
     default:
       return [];

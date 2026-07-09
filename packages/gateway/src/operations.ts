@@ -21,6 +21,17 @@ export const gateway = {
     // Reversible admin lifecycle on an approved definition (audit-stamped; nothing deleted).
     disable: api.catalog.disablePuzzleDefinition.disablePuzzleDefinition,
     reenable: api.catalog.reenablePuzzleDefinition.reenablePuzzleDefinition,
+    // Community change proposals against approved definitions: any member proposes a field
+    // diff; the proposer edits/withdraws their pending one; admins decide from the queue.
+    proposeChange: api.catalog.proposeDefinitionChange.proposeDefinitionChange,
+    editChangeProposal: api.catalog.editChangeProposal.editChangeProposal,
+    withdrawChangeProposal:
+      api.catalog.withdrawChangeProposal.withdrawChangeProposal,
+    approveChangeProposal:
+      api.catalog.approveChangeProposal.approveChangeProposal,
+    rejectChangeProposal: api.catalog.rejectChangeProposal.rejectChangeProposal,
+    listMyChangeProposals:
+      api.catalog.listMyChangeProposals.listMyChangeProposals,
     // Reads go through the domain-driven catalog module (file.export namespacing); each is a thin
     // Convex query returning a typed @jigswap/contracts view DTO, not a raw row. Public
     // lists/suggestions already filter to approved definitions only.
@@ -328,6 +339,12 @@ export const gateway = {
     // server-side like listPuzzleDefinitions.
     getPuzzleDefinitionDetail:
       api.admin.getPuzzleDefinitionDetail.getPuzzleDefinitionDetail,
+    // Community change-proposal review: the pending queue (with derived conflict flags) and
+    // the per-definition history for the detail page.
+    listPendingChangeProposals:
+      api.catalog.listPendingChangeProposals.listPendingChangeProposals,
+    listProposalsForDefinition:
+      api.catalog.listProposalsForDefinition.listProposalsForDefinition,
     listRejectedPhotos: api.admin.listRejectedPhotos.listRejectedPhotos,
     restorePhoto: api.admin.restorePhoto.restorePhoto,
     confirmPhotoRemoval: api.admin.confirmPhotoRemoval.confirmPhotoRemoval,

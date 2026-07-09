@@ -35,6 +35,8 @@ const KIND_META: Record<ActivityRow["kind"], [LucideIcon, string]> = {
   definition_rejected: [XCircle, "text-destructive"],
   definition_disabled: [EyeOff, "text-jigsaw-warning"],
   definition_reenabled: [Eye, "text-jigsaw-success"],
+  proposal_approved: [CheckCircle, "text-jigsaw-success"],
+  proposal_rejected: [XCircle, "text-destructive"],
   photo_removal_confirmed: [Trash2, "text-destructive"],
   photo_auto_rejected: [Flag, "text-jigsaw-warning"],
   photo_restored: [Undo2, "text-muted-foreground"],
