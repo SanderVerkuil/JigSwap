@@ -1455,6 +1455,8 @@
       "puzzle_favorited": "Puzzel favoriet gemaakt",
       "puzzle_approved": "Puzzel goedgekeurd",
       "puzzle_rejected": "Puzzel afgewezen",
+      "proposal_approved": "Wijzigingsvoorstel goedgekeurd",
+      "proposal_rejected": "Wijzigingsvoorstel afgewezen",
       "photo_removed": "Foto verwijderd",
       "goal_achieved": "Doel behaald"
     },
@@ -1507,6 +1509,14 @@
         "title": "Puzzel afgewezen",
         "message": "Je puzzelinzending is afgewezen."
       },
+      "proposal_approved": {
+        "title": "Wijzigingsvoorstel goedgekeurd",
+        "message": "Jouw voorgestelde wijziging is goedgekeurd en staat nu live."
+      },
+      "proposal_rejected": {
+        "title": "Wijzigingsvoorstel afgewezen",
+        "message": "Jouw voorgestelde wijziging is afgewezen."
+      },
       "photo_removed": {
         "title": "Foto verwijderd",
         "message": "Een van je puzzelfoto's is door een moderator verwijderd."
@@ -1542,6 +1552,8 @@
       "puzzle_favorited": "Wanneer iemand een puzzel die je hebt toegevoegd als favoriet markeert.",
       "puzzle_approved": "Wanneer een puzzel die je hebt ingediend is goedgekeurd voor de catalogus.",
       "puzzle_rejected": "Wanneer een puzzel die je hebt ingediend is afgewezen.",
+      "proposal_approved": "Wanneer een wijziging die je voor een cataloguspuzzel voorstelde wordt goedgekeurd.",
+      "proposal_rejected": "Wanneer een wijziging die je voor een cataloguspuzzel voorstelde wordt afgewezen.",
       "photo_removed": "Wanneer een moderator een van je puzzelfoto's verwijdert.",
       "goal_achieved": "Wanneer je een puzzeldoel behaalt."
     },

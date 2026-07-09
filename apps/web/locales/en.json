@@ -1455,6 +1455,8 @@
       "puzzle_favorited": "Puzzle favorited",
       "puzzle_approved": "Puzzle approved",
       "puzzle_rejected": "Puzzle rejected",
+      "proposal_approved": "Suggestion approved",
+      "proposal_rejected": "Suggestion declined",
       "photo_removed": "Photo removed",
       "goal_achieved": "Goal achieved"
     },
@@ -1507,6 +1509,14 @@
         "title": "Puzzle rejected",
         "message": "Your puzzle submission was rejected."
       },
+      "proposal_approved": {
+        "title": "Suggestion approved",
+        "message": "Your suggested edit was approved and is now live."
+      },
+      "proposal_rejected": {
+        "title": "Suggestion declined",
+        "message": "Your suggested edit was declined."
+      },
       "photo_removed": {
         "title": "Photo removed",
         "message": "One of your puzzle photos was removed by a moderator."
@@ -1542,6 +1552,8 @@
       "puzzle_favorited": "When someone favourites a puzzle you added.",
       "puzzle_approved": "When a puzzle you submitted is approved for the catalogue.",
       "puzzle_rejected": "When a puzzle you submitted is rejected.",
+      "proposal_approved": "When an edit you suggested to a catalogue puzzle is approved.",
+      "proposal_rejected": "When an edit you suggested to a catalogue puzzle is declined.",
       "photo_removed": "When a moderator removes one of your puzzle photos.",
       "goal_achieved": "When you reach a solving goal."
     },
