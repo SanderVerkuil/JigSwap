@@ -200,6 +200,34 @@ describe("catalog.listPendingChangeProposals", () => {
       baseline: { barcodes: {} },
     });
   });
+
+  test("a POPULATED unchanged barcode group does not report a false conflict", async () => {
+    const t = convexTest(schema, modules);
+    await seedMembers(t);
+    const definitionId = await submitApproved(t);
+    // Populate all three barcode members so the stored baseline group is non-empty
+    // (Convex sorts object keys on write; this pins key-order-insensitive comparison).
+    await asAdmin(t).mutation(
+      api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+      {
+        puzzleDefinitionId: definitionId,
+        ean: "4006381333931",
+        upc: "036000291452",
+        modelNumber: "RV-1",
+      },
+    );
+
+    await asBob(t).mutation(
+      api.catalog.proposeDefinitionChange.proposeDefinitionChange,
+      { puzzleDefinitionId: definitionId, ean: "5901234123457" },
+    );
+
+    const queue = await asAdmin(t).query(
+      api.catalog.listPendingChangeProposals.listPendingChangeProposals,
+      {},
+    );
+    expect(queue[0]).toMatchObject({ hasConflict: false, conflictFields: [] });
+  });
 });
 
 describe("catalog.listMyChangeProposals", () => {

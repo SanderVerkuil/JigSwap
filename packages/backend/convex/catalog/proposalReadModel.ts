@@ -6,10 +6,23 @@ import type { QueryCtx } from "../_generated/server";
 
 type Fields = Doc<"puzzleChangeProposals">["changes"];
 
-// Structural equality good enough for these value shapes (scalars, one flat object, one array
-// built with stable key order by toRow/currentFieldsFor).
+// Key-order-insensitive structural equality. Convex sorts object keys on write while the
+// read-time snapshots are built in literal key order, so a naive JSON.stringify would report
+// false conflicts on populated nested groups (barcodes). Canonicalise: strip undefined
+// members and sort keys recursively before serialising. Arrays intentionally stay
+// order-sensitive (tags order is meaningful).
+const canonical = (value: unknown): unknown =>
+  value !== null && typeof value === "object" && !Array.isArray(value)
+    ? Object.fromEntries(
+        Object.entries(value as Record<string, unknown>)
+          .filter(([, member]) => member !== undefined)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([key, member]) => [key, canonical(member)]),
+      )
+    : value;
+
 const same = (a: unknown, b: unknown): boolean =>
-  JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+  JSON.stringify(canonical(a) ?? null) === JSON.stringify(canonical(b) ?? null);
 
 // Snapshot the definition row's CURRENT values in the proposal field shape, for exactly the
 // fields the diff touches — the review UI's "current → proposed" left-hand side. `category` is
