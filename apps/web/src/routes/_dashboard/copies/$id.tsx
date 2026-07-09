@@ -215,6 +215,10 @@ function CopyInstanceDetail({
           {t("actions.edit")}
         </Button>
       ) : null,
+      // Neither /copies/$id nor /my-puzzles/$id matches a nav item's href, so the
+      // sidebar's pathname-prefix match would highlight nothing; override with the
+      // nav item that frames this copy for the current viewer.
+      activeNavKey: copy.viewerIsOwner ? "myPuzzles" : "browse",
     }),
     [snapshot.title, owned, copy.viewerIsOwner, t, tShell],
   );

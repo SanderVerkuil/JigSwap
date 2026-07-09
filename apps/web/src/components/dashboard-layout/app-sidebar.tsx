@@ -10,6 +10,7 @@ import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
+import { usePageHeaderContent } from "@/components/dashboard-layout/page-header-slot";
 import { formatUnreadCount } from "@/components/messaging/format";
 import {
   Sidebar,
@@ -108,7 +109,12 @@ function NavLink({ item }: { item: ShellNavItem }) {
   const t = useTranslations("shell");
   const tMessages = useTranslations("messages");
   const pathname = usePathname();
-  const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+  // A page can override the pathname-derived highlight (e.g. a copy page highlights
+  // My Puzzles or Browse depending on ownership, neither of which matches /copies/$id).
+  const { activeNavKey } = usePageHeaderContent();
+  const active = activeNavKey
+    ? activeNavKey === item.key
+    : pathname === item.href || pathname.startsWith(`${item.href}/`);
   const title = t(`pages.${item.key}.title`);
 
   // Live unread-messages total, subscribed for the Messages item only (every
