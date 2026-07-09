@@ -1,5 +1,6 @@
 import { Link } from "@/compat/link";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import { ChangedFieldChips } from "@/components/suggest-edit/changed-field-chips";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -137,6 +138,7 @@ function MySuggestionsPage() {
                       {t("rejectionReason")}: {row.rejectionReason}
                     </p>
                   )}
+                  <ChangedFieldChips changes={row.changes} />
                 </div>
                 {row.status === "pending" && (
                   <div className="flex shrink-0 items-center gap-1">

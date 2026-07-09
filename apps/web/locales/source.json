@@ -2675,7 +2675,6 @@
   "suggestEdit": {
     "title": "Suggest an edit",
     "editTitle": "Edit your suggestion",
-    "subtitle": "Propose corrections to “{title}”. An admin reviews your suggestion before it goes live.",
     "comment": {
       "label": "Why this change?",
       "placeholder": "e.g. the box says 500 pieces"
@@ -2704,7 +2703,6 @@
   },
   "mySuggestions": {
     "title": "My suggestions",
-    "subtitle": "Edits you proposed to catalogue puzzles.",
     "empty": {
       "title": "No suggestions yet",
       "description": "Use “Suggest an edit” on any catalogue puzzle to propose a correction."
@@ -2914,7 +2912,6 @@
       "edit": {
         "button": "Edit",
         "title": "Edit definition",
-        "subtitle": "Direct edit of “{title}”. Changes apply immediately and are audit-logged.",
         "save": "Save changes",
         "saving": "Saving…",
         "saved": "Definition updated",
@@ -2951,7 +2948,6 @@
     },
     "proposals": {
       "title": "Suggested edits",
-      "subtitle": "Community-proposed changes awaiting review.",
       "empty": {
         "title": "No open suggestions",
         "description": "Community-proposed edits to catalogue puzzles will appear here."

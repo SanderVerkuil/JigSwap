@@ -1,5 +1,6 @@
 import { Link } from "@/compat/link";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import { ChangedFieldChips } from "@/components/suggest-edit/changed-field-chips";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
@@ -100,6 +101,7 @@ function ProposalsQueuePage() {
                       {t("comment")}: {row.comment}
                     </p>
                   )}
+                  <ChangedFieldChips changes={row.changes} />
                 </div>
                 <div className="flex shrink-0 items-center">
                   <Button variant="outline" size="sm" asChild>

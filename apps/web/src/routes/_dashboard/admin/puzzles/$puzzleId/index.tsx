@@ -6,6 +6,7 @@ import { QueueEmpty } from "@/components/admin/queue-empty";
 import { StatTile } from "@/components/admin/stat-tile";
 import { AuditList } from "@/components/admin/users/audit-list";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import { ChangedFieldChips } from "@/components/suggest-edit/changed-field-chips";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -285,6 +286,7 @@ function AdminPuzzleDetailPage() {
                         {row.rejectionReason}
                       </p>
                     )}
+                    <ChangedFieldChips changes={row.changes} />
                   </div>
                   <span className="text-muted-foreground shrink-0 text-xs">
                     {format.dateTime(row.createdAt, { dateStyle: "medium" })}

@@ -2675,7 +2675,6 @@
   "suggestEdit": {
     "title": "Wijziging voorstellen",
     "editTitle": "Je voorstel bewerken",
-    "subtitle": "Stel correcties voor aan “{title}”. Een beheerder beoordeelt je voorstel voordat het live gaat.",
     "comment": {
       "label": "Waarom deze wijziging?",
       "placeholder": "bijv. op de doos staat 500 stukjes"
@@ -2704,7 +2703,6 @@
   },
   "mySuggestions": {
     "title": "Mijn voorstellen",
-    "subtitle": "Wijzigingen die je voor cataloguspuzzels hebt voorgesteld.",
     "empty": {
       "title": "Nog geen voorstellen",
       "description": "Gebruik “Wijziging voorstellen” bij een cataloguspuzzel om een correctie voor te stellen."
@@ -2914,7 +2912,6 @@
       "edit": {
         "button": "Bewerken",
         "title": "Definitie bewerken",
-        "subtitle": "Directe bewerking van “{title}”. Wijzigingen gelden direct en worden gelogd.",
         "save": "Wijzigingen opslaan",
         "saving": "Opslaan…",
         "saved": "Definitie bijgewerkt",
@@ -2951,7 +2948,6 @@
     },
     "proposals": {
       "title": "Wijzigingsvoorstellen",
-      "subtitle": "Door de community voorgestelde wijzigingen die op beoordeling wachten.",
       "empty": {
         "title": "Geen open voorstellen",
         "description": "Door de community voorgestelde wijzigingen aan cataloguspuzzels verschijnen hier."
