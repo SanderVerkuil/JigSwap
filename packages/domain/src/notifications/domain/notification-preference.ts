@@ -58,9 +58,15 @@ export class NotificationPreference {
     });
   }
 
-  // Does this member accept a notification of `type` on `channel`? Absent ⇒ false.
+  // Does this member accept a notification of `type` on `channel`? A type absent from the stored
+  // map falls back to that type's default toggles (see `defaultToggles`) -- absent means "never
+  // asked", not "opted out". An explicitly stored value, even a disabled one, always wins.
   allows(type: NotificationType, channel: Channel): boolean {
-    return this.state.toggles[type]?.[channel] === true;
+    const stored = this.state.toggles[type];
+    if (stored) {
+      return stored[channel] === true;
+    }
+    return defaultToggles()[type][channel] === true;
   }
 
   // Turn a (type, channel) delivery on. Records PreferenceChanged only when it actually changed.
