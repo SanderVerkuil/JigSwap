@@ -237,15 +237,32 @@ export function ImageEditorDialog({
 
         <div className="bg-muted relative max-h-[60vh] w-full overflow-auto rounded-lg">
           {rotatedSrc ? (
+            // Zoom is applied as a layout width on the ReactCrop ROOT: its percentage
+            // resolves against the scroll pane (definite, no cyclic sizing), overriding
+            // the library's `max-width: 100%` so the root outgrows the pane and pans via
+            // scroll. The img then fills the root with w-full, so the ReactCrop child
+            // wrapper (overflow: hidden) never clips and the overlay stays aligned.
+            // Zooming the img itself would NOT work: percentage children count as auto
+            // in the inline-block root's shrink-to-fit width, so the enlarged img would
+            // overflow the child wrapper and be clipped. At zoom 1 the whole image fits
+            // the pane unscrolled, as before zoom existed.
             <ReactCrop
               crop={crop}
               onChange={(_pixelCrop, percentCrop) => setCrop(percentCrop)}
+              style={
+                zoom > 1
+                  ? { width: `${zoom * 100}%`, maxWidth: "none" }
+                  : undefined
+              }
             >
               <img
                 src={rotatedSrc}
                 alt=""
-                className="block"
-                style={{ width: `${zoom * 100}%`, maxWidth: "none" }}
+                className={
+                  zoom > 1
+                    ? "block w-full"
+                    : "block max-h-[60vh] w-full object-contain"
+                }
               />
             </ReactCrop>
           ) : (

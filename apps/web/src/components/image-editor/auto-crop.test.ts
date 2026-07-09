@@ -114,6 +114,14 @@ describe("contentBoundingBox", () => {
     );
   });
 
+  it("finds a non-square block in a non-square frame (axes not interchangeable)", () => {
+    const block = { x: 2, y: 1, width: 3, height: 4 };
+    const data = paint(12, 8, (x, y) =>
+      isInBlock(x, y, block) ? [255, 0, 0, 255] : [255, 255, 255, 255],
+    );
+    expect(contentBoundingBox(data, 12, 8)).toEqual(block);
+  });
+
   it("detects a mid-gray block on a white background (gray is content, not background)", () => {
     const block = { x: 2, y: 2, width: 5, height: 3 };
     const data = paint(10, 10, (x, y) =>
