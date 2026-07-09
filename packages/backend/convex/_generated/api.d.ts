@@ -37,6 +37,7 @@ import type * as catalog_approvePuzzleDefinition from "../catalog/approvePuzzleD
 import type * as catalog_backfillCategories from "../catalog/backfillCategories.js";
 import type * as catalog_createCatalogCategory from "../catalog/createCatalogCategory.js";
 import type * as catalog_disablePuzzleDefinition from "../catalog/disablePuzzleDefinition.js";
+import type * as catalog_editChangeProposal from "../catalog/editChangeProposal.js";
 import type * as catalog_errors from "../catalog/errors.js";
 import type * as catalog_extractFromUrl from "../catalog/extractFromUrl.js";
 import type * as catalog_findPuzzleByBarcode from "../catalog/findPuzzleByBarcode.js";
@@ -54,6 +55,7 @@ import type * as catalog_listMyFavorites from "../catalog/listMyFavorites.js";
 import type * as catalog_listPendingPuzzleDefinitions from "../catalog/listPendingPuzzleDefinitions.js";
 import type * as catalog_mappers from "../catalog/mappers.js";
 import type * as catalog_myFavoritePuzzleIds from "../catalog/myFavoritePuzzleIds.js";
+import type * as catalog_proposeDefinitionChange from "../catalog/proposeDefinitionChange.js";
 import type * as catalog_reenablePuzzleDefinition from "../catalog/reenablePuzzleDefinition.js";
 import type * as catalog_rejectPuzzleDefinition from "../catalog/rejectPuzzleDefinition.js";
 import type * as catalog_reorderCatalogCategories from "../catalog/reorderCatalogCategories.js";
@@ -63,6 +65,7 @@ import type * as catalog_submitPuzzleDefinition from "../catalog/submitPuzzleDef
 import type * as catalog_toggleFavorite from "../catalog/toggleFavorite.js";
 import type * as catalog_updateCatalogCategory from "../catalog/updateCatalogCategory.js";
 import type * as catalog_updatePuzzleDefinition from "../catalog/updatePuzzleDefinition.js";
+import type * as catalog_withdrawChangeProposal from "../catalog/withdrawChangeProposal.js";
 import type * as contact_listContactMessages from "../contact/listContactMessages.js";
 import type * as contact_markContactMessageHandled from "../contact/markContactMessageHandled.js";
 import type * as contact_submitContactMessage from "../contact/submitContactMessage.js";
@@ -328,6 +331,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/backfillCategories": typeof catalog_backfillCategories;
   "catalog/createCatalogCategory": typeof catalog_createCatalogCategory;
   "catalog/disablePuzzleDefinition": typeof catalog_disablePuzzleDefinition;
+  "catalog/editChangeProposal": typeof catalog_editChangeProposal;
   "catalog/errors": typeof catalog_errors;
   "catalog/extractFromUrl": typeof catalog_extractFromUrl;
   "catalog/findPuzzleByBarcode": typeof catalog_findPuzzleByBarcode;
@@ -345,6 +349,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/listPendingPuzzleDefinitions": typeof catalog_listPendingPuzzleDefinitions;
   "catalog/mappers": typeof catalog_mappers;
   "catalog/myFavoritePuzzleIds": typeof catalog_myFavoritePuzzleIds;
+  "catalog/proposeDefinitionChange": typeof catalog_proposeDefinitionChange;
   "catalog/reenablePuzzleDefinition": typeof catalog_reenablePuzzleDefinition;
   "catalog/rejectPuzzleDefinition": typeof catalog_rejectPuzzleDefinition;
   "catalog/reorderCatalogCategories": typeof catalog_reorderCatalogCategories;
@@ -354,6 +359,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/toggleFavorite": typeof catalog_toggleFavorite;
   "catalog/updateCatalogCategory": typeof catalog_updateCatalogCategory;
   "catalog/updatePuzzleDefinition": typeof catalog_updatePuzzleDefinition;
+  "catalog/withdrawChangeProposal": typeof catalog_withdrawChangeProposal;
   "contact/listContactMessages": typeof contact_listContactMessages;
   "contact/markContactMessageHandled": typeof contact_markContactMessageHandled;
   "contact/submitContactMessage": typeof contact_submitContactMessage;
