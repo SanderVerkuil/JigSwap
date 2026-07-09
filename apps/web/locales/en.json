@@ -2920,6 +2920,11 @@
         "saved": "Definition updated",
         "noChanges": "Change at least one field",
         "failed": "Couldn't save the definition",
+        "errors": {
+          "emptyTitle": "The title can't be empty",
+          "invalidBarcode": "One of the barcodes is not valid",
+          "invalidPieceCount": "The piece count must be a positive number"
+        },
         "cancel": "Cancel"
       },
       "detail": {

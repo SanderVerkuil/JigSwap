@@ -2920,6 +2920,11 @@
         "saved": "Definitie bijgewerkt",
         "noChanges": "Wijzig minstens één veld",
         "failed": "Definitie opslaan mislukt",
+        "errors": {
+          "emptyTitle": "De titel mag niet leeg zijn",
+          "invalidBarcode": "Een van de barcodes is ongeldig",
+          "invalidPieceCount": "Het aantal stukjes moet een positief getal zijn"
+        },
         "cancel": "Annuleren"
       },
       "detail": {
