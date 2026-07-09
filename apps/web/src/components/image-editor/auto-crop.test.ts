@@ -38,6 +38,7 @@ describe("isBackgroundPixel", () => {
     whiteThreshold: 245,
     blackThreshold: 10,
     noiseFraction: 0.005,
+    fuzz: 24,
   };
 
   it("treats nearly-transparent pixels as background", () => {
@@ -58,6 +59,16 @@ describe("isBackgroundPixel", () => {
   it("treats mid-tone opaque pixels as content", () => {
     expect(isBackgroundPixel(255, 0, 0, 255, opts)).toBe(false);
     expect(isBackgroundPixel(128, 128, 128, 255, opts)).toBe(false);
+  });
+
+  it("treats pixels within fuzz of a background reference as background", () => {
+    const references = [{ r: 240, g: 240, b: 240 }];
+    // 235 is below whiteThreshold, but within fuzz of the sampled reference.
+    expect(isBackgroundPixel(235, 236, 238, 255, opts, references)).toBe(true);
+    // Saturated content stays content even with a reference present.
+    expect(isBackgroundPixel(180, 60, 60, 255, opts, references)).toBe(false);
+    // Outside the fuzz distance from the reference.
+    expect(isBackgroundPixel(210, 210, 210, 255, opts, references)).toBe(false);
   });
 });
 
@@ -126,6 +137,42 @@ describe("contentBoundingBox", () => {
     const block = { x: 2, y: 2, width: 5, height: 3 };
     const data = paint(10, 10, (x, y) =>
       isInBlock(x, y, block) ? [128, 128, 128, 255] : [255, 255, 255, 255],
+    );
+    expect(contentBoundingBox(data, 10, 10)).toEqual(block);
+  });
+
+  it("trims a white background with a lighting gradient on all four sides", () => {
+    // Real photo backgrounds are rarely uniform white: the side away from the
+    // light sits below whiteThreshold (245). Background luminance here runs
+    // 230 at the top-left corner up to 252 at the bottom-right — the top/left
+    // half fails the absolute white test but matches the sampled corner
+    // reference within fuzz.
+    const block = { x: 4, y: 4, width: 4, height: 4 };
+    const data = paint(12, 12, (x, y) => {
+      if (isInBlock(x, y, block)) return [200, 30, 30, 255];
+      const v = 230 + x + y > 255 ? 255 : 230 + x + y;
+      return [v, v, v, 255];
+    });
+    expect(contentBoundingBox(data, 12, 12)).toEqual(block);
+  });
+
+  it("does not treat a colored background as trimmable via corner sampling", () => {
+    // Corner references only activate for background-like corners (near-neutral
+    // light, near-black, or transparent). A saturated blue frame stays content,
+    // so nothing is trimmed even though every corner has a consistent color.
+    const block = { x: 3, y: 3, width: 4, height: 4 };
+    const data = paint(10, 10, (x, y) =>
+      isInBlock(x, y, block) ? [200, 30, 30, 255] : [40, 60, 200, 255],
+    );
+    expect(contentBoundingBox(data, 10, 10)).toBeNull();
+  });
+
+  it("trims a near-black background darker than pure black threshold via corner sampling", () => {
+    // A dim photo background (e.g. 25,25,25) is above blackThreshold(10) but
+    // should still be trimmed once the corners establish it as the background.
+    const block = { x: 3, y: 3, width: 4, height: 4 };
+    const data = paint(10, 10, (x, y) =>
+      isInBlock(x, y, block) ? [200, 30, 30, 255] : [25, 25, 25, 255],
     );
     expect(contentBoundingBox(data, 10, 10)).toEqual(block);
   });
