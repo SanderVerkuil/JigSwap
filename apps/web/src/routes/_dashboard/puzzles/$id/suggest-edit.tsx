@@ -96,6 +96,8 @@ function SuggestEditPage() {
     return <EmptyState title={t("notFound")} sub={t("notFoundSub")} />;
   }
 
+  // Snapshot-at-open trade-off: if a pending proposal appears via live update after mount,
+  // submit routes to edit mode but the form intentionally keeps its opened state (no re-overlay).
   const openProposal = myProposals.find(
     (proposal) =>
       proposal.status === "pending" &&
@@ -139,8 +141,13 @@ function SuggestEditForm({
   const t = useTranslations("suggestEdit");
   const tf = useTranslations("forms.puzzle-form");
 
+  // Freeze the diff baseline at mount (mirrors the backend's frozen-baseline model): the form
+  // snapshot must diff against the definition AS THE MEMBER OPENED IT — if an admin changes the
+  // definition mid-edit, diffing untouched fields against the live view would silently propose
+  // a revert. The live `view` stays in use for display only.
+  const [baseline] = useState(() => view);
   const [form, setForm] = useState<ProposalFormState>(() => {
-    const base = formFromView(view);
+    const base = formFromView(baseline);
     return openProposal
       ? overlayProposal(
           base,
@@ -171,7 +178,7 @@ function SuggestEditForm({
   const propose = useConvexMutation(gateway.catalog.proposeChange);
   const editProposal = useConvexMutation(gateway.catalog.editChangeProposal);
 
-  const pendingArgs = buildProposalArgs(view, form, categories);
+  const pendingArgs = buildProposalArgs(baseline, form, categories);
   const canSubmit = pendingArgs !== null || coverFile !== undefined;
 
   const submit = useMutation({
@@ -190,7 +197,7 @@ function SuggestEditForm({
         imageId = storageId;
       }
       const args = buildProposalArgs(
-        view,
+        baseline,
         { ...form, newImageStorageId: imageId },
         categories,
       );
@@ -230,8 +237,7 @@ function SuggestEditForm({
   const currentImageUrl =
     coverPreview ??
     (form.newImageStorageId ? openProposal?.proposedImageUrl : undefined) ??
-    view.image ??
-    undefined;
+    view.image;
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
@@ -334,12 +340,12 @@ function SuggestEditForm({
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label>{tf("category.label")}</Label>
+        <Label htmlFor="se-category">{tf("category.label")}</Label>
         <Select
           value={form.categoryId || undefined}
           onValueChange={(v) => set("categoryId", v)}
         >
-          <SelectTrigger>
+          <SelectTrigger id="se-category">
             <SelectValue placeholder={t("keepCategory")} />
           </SelectTrigger>
           <SelectContent>
