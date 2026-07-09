@@ -2947,6 +2947,44 @@
         "auditEmpty": "No moderation activity for this puzzle yet."
       }
     },
+    "proposals": {
+      "title": "Suggested edits",
+      "subtitle": "Community-proposed changes awaiting review.",
+      "empty": {
+        "title": "No open suggestions",
+        "description": "Community-proposed edits to catalogue puzzles will appear here."
+      },
+      "conflict": "Conflict",
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Declined",
+        "withdrawn": "Withdrawn"
+      },
+      "conflictBanner": "The puzzle changed since this was proposed. Marked fields no longer match what the proposer saw.",
+      "fieldsChanged": "{count, plural, one {# field changed} other {# fields changed}}",
+      "proposedBy": "by {name}",
+      "comment": "Proposer's note",
+      "current": "Current",
+      "proposed": "Proposed",
+      "wasWhenProposed": "Was {value} when proposed",
+      "none": "—",
+      "review": "Review",
+      "approve": "Approve",
+      "approveConfirmTitle": "Approve this suggestion?",
+      "approveConfirmBody": "The proposed changes to “{title}” are applied immediately.",
+      "approved": "Suggestion approved and applied",
+      "reject": "Decline",
+      "rejectTitle": "Decline this suggestion?",
+      "rejectBody": "The proposer is notified of the decision. You can add an optional reason.",
+      "reasonLabel": "Reason (optional)",
+      "reasonPlaceholder": "e.g. the current title matches the box",
+      "rejected": "Suggestion declined",
+      "alreadyDecided": "This suggestion was already decided",
+      "alreadyDecidedSub": "Another admin handled it, or the proposer withdrew it.",
+      "actionFailed": "Couldn't complete the action",
+      "backToQueue": "Back to suggestions"
+    },
     "queueEmpty": {
       "title": "All clear"
     },

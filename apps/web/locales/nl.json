@@ -2947,6 +2947,44 @@
         "auditEmpty": "Nog geen moderatie-activiteit voor deze puzzel."
       }
     },
+    "proposals": {
+      "title": "Wijzigingsvoorstellen",
+      "subtitle": "Door de community voorgestelde wijzigingen die op beoordeling wachten.",
+      "empty": {
+        "title": "Geen open voorstellen",
+        "description": "Door de community voorgestelde wijzigingen aan cataloguspuzzels verschijnen hier."
+      },
+      "conflict": "Conflict",
+      "status": {
+        "pending": "In behandeling",
+        "approved": "Goedgekeurd",
+        "rejected": "Afgewezen",
+        "withdrawn": "Ingetrokken"
+      },
+      "conflictBanner": "De puzzel is gewijzigd sinds dit voorstel werd ingediend. Gemarkeerde velden komen niet meer overeen met wat de indiener zag.",
+      "fieldsChanged": "{count, plural, one {# veld gewijzigd} other {# velden gewijzigd}}",
+      "proposedBy": "door {name}",
+      "comment": "Toelichting van de indiener",
+      "current": "Huidig",
+      "proposed": "Voorgesteld",
+      "wasWhenProposed": "Was {value} bij indienen",
+      "none": "—",
+      "review": "Beoordelen",
+      "approve": "Goedkeuren",
+      "approveConfirmTitle": "Dit voorstel goedkeuren?",
+      "approveConfirmBody": "De voorgestelde wijzigingen aan “{title}” worden direct toegepast.",
+      "approved": "Voorstel goedgekeurd en toegepast",
+      "reject": "Afwijzen",
+      "rejectTitle": "Dit voorstel afwijzen?",
+      "rejectBody": "De indiener wordt op de hoogte gebracht. Je kunt optioneel een reden toevoegen.",
+      "reasonLabel": "Reden (optioneel)",
+      "reasonPlaceholder": "bijv. de huidige titel komt overeen met de doos",
+      "rejected": "Voorstel afgewezen",
+      "alreadyDecided": "Dit voorstel is al beoordeeld",
+      "alreadyDecidedSub": "Een andere beheerder heeft het afgehandeld, of de indiener heeft het ingetrokken.",
+      "actionFailed": "Actie kon niet worden uitgevoerd",
+      "backToQueue": "Terug naar voorstellen"
+    },
     "queueEmpty": {
       "title": "Alles afgehandeld"
     },
