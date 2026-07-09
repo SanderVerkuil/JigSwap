@@ -1,4 +1,5 @@
 import { Link } from "@/compat/link";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
@@ -19,9 +20,21 @@ export const Route = createFileRoute("/_dashboard/admin/puzzles/proposals/")({
 
 function ProposalsQueuePage() {
   const t = useTranslations("admin.proposals");
+  const tShell = useTranslations("shell");
   const format = useFormatter();
   const { data: rows } = useQuery(
     convexQuery(gateway.admin.listPendingChangeProposals, {}),
+  );
+
+  usePageHeader(
+    () => ({
+      title: t("title"),
+      crumbs: [
+        { label: tShell("groups.admin.label"), href: "/admin" },
+        { label: tShell("pages.adminPuzzles.title"), href: "/admin/puzzles" },
+      ],
+    }),
+    [t, tShell],
   );
 
   if (rows === undefined) {
@@ -30,11 +43,6 @@ function ProposalsQueuePage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="font-heading text-2xl font-bold">{t("title")}</h1>
-        <p className="text-muted-foreground text-sm">{t("subtitle")}</p>
-      </div>
-
       {rows.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed px-6 py-12 text-center">
           <Lightbulb className="text-muted-foreground size-8" aria-hidden />

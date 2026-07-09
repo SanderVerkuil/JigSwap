@@ -18,6 +18,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { Bell, ChevronLeft, Search } from "lucide-react";
 import { useTranslations } from "use-intl";
+import { usePageHeaderContent } from "./page-header-slot";
 import { getNavGroup, getRouteMeta } from "./route-meta";
 import { ShellUserButton } from "./shell-user-button";
 
@@ -45,7 +46,12 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
     meta?.group && meta.variant === undefined
       ? getNavGroup(meta.group)
       : undefined;
-  const title = meta && !isHome ? t(`pages.${meta.pageKey}.title`) : undefined;
+  // A page-published title (dynamic routes) overrides the static route title,
+  // same precedence as the desktop page head.
+  const { title: publishedTitle } = usePageHeaderContent();
+  const title =
+    publishedTitle ??
+    (meta && !isHome ? t(`pages.${meta.pageKey}.title`) : undefined);
 
   return (
     <header className="sticky top-0 z-30 shrink-0 border-b bg-card pt-[env(safe-area-inset-top)] md:hidden">

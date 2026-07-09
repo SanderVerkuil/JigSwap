@@ -1,5 +1,6 @@
 import { useRouter } from "@/compat/navigation";
 import { SectionDivider } from "@/components/add-puzzle";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
 import { PuzzleDefinitionFields } from "@/components/suggest-edit/definition-fields";
 import {
@@ -122,6 +123,19 @@ function SuggestEditForm({
   const { id } = Route.useParams();
   const router = useRouter();
   const t = useTranslations("suggestEdit");
+  const tShell = useTranslations("shell");
+
+  usePageHeader(
+    () => ({
+      title: t(openProposal ? "editTitle" : "title"),
+      crumbs: [
+        { label: tShell("groups.community.label"), href: "/community" },
+        { label: tShell("pages.puzzles.title"), href: "/puzzles" },
+        { label: view.title, href: `/puzzles/${id}` },
+      ],
+    }),
+    [t, tShell, view.title, id, openProposal],
+  );
 
   // Freeze the diff baseline at mount (mirrors the backend's frozen-baseline model): the form
   // snapshot must diff against the definition AS THE MEMBER OPENED IT — if an admin changes the
@@ -221,15 +235,6 @@ function SuggestEditForm({
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-      <div>
-        <h1 className="font-heading text-2xl font-bold">
-          {t(openProposal ? "editTitle" : "title")}
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          {t("subtitle", { title: view.title })}
-        </p>
-      </div>
-
       <PuzzleDefinitionFields
         form={form}
         set={set}

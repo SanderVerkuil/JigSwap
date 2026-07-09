@@ -1,4 +1,5 @@
 import { Link } from "@/compat/link";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,17 +63,14 @@ function MySuggestionsPage() {
     onError: () => toast.error(t("withdrawFailed")),
   });
 
+  usePageHeader(() => ({ title: t("title") }), [t]);
+
   if (rows === undefined) {
     return <PageLoading message={t("title")} />;
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="font-heading text-2xl font-bold">{t("title")}</h1>
-        <p className="text-muted-foreground text-sm">{t("subtitle")}</p>
-      </div>
-
       {rows.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed px-6 py-12 text-center">
           <Lightbulb className="text-muted-foreground size-8" aria-hidden />

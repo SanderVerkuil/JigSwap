@@ -4,6 +4,7 @@ import {
   fieldDiffRows,
   type FieldDiffRow,
 } from "@/components/admin/proposals/field-diff";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
 import {
   AlertDialog,
@@ -90,8 +91,21 @@ function ProposalReview({
   const t = useTranslations("admin.proposals");
   const tCommon = useTranslations("common");
   const tf = useTranslations("forms.puzzle-form");
+  const tShell = useTranslations("shell");
   const format = useFormatter();
   const locale = useLocale();
+
+  usePageHeader(
+    () => ({
+      title: proposal.definitionTitle ?? t("title"),
+      crumbs: [
+        { label: tShell("groups.admin.label"), href: "/admin" },
+        { label: tShell("pages.adminPuzzles.title"), href: "/admin/puzzles" },
+        { label: t("title"), href: "/admin/puzzles/proposals" },
+      ],
+    }),
+    [proposal.definitionTitle, t, tShell],
+  );
 
   const [confirmingApprove, setConfirmingApprove] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
@@ -182,9 +196,6 @@ function ProposalReview({
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
       <div>
-        <h1 className="font-heading text-2xl font-bold">
-          {proposal.definitionTitle}
-        </h1>
         <p className="text-muted-foreground text-sm">
           {proposal.proposerName &&
             `${t("proposedBy", { name: proposal.proposerName })} · `}

@@ -1,5 +1,6 @@
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
 import { PuzzleDefinitionFields } from "@/components/suggest-edit/definition-fields";
 import {
@@ -96,6 +97,19 @@ function AdminEditForm({
   const router = useRouter();
   const t = useTranslations("admin.puzzles");
   const tSuggest = useTranslations("suggestEdit");
+  const tShell = useTranslations("shell");
+
+  usePageHeader(
+    () => ({
+      title: t("edit.title"),
+      crumbs: [
+        { label: tShell("groups.admin.label"), href: "/admin" },
+        { label: tShell("pages.adminPuzzles.title"), href: "/admin/puzzles" },
+        { label: view.title, href: `/admin/puzzles/${puzzleId}` },
+      ],
+    }),
+    [t, tShell, view.title, puzzleId],
+  );
 
   // Frozen diff baseline (same rationale as the member form): a concurrent change to the
   // definition must not turn untouched fields into diffs.
@@ -158,13 +172,6 @@ function AdminEditForm({
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-      <div>
-        <h1 className="font-heading text-2xl font-bold">{t("edit.title")}</h1>
-        <p className="text-muted-foreground text-sm">
-          {t("edit.subtitle", { title: view.title })}
-        </p>
-      </div>
-
       <PuzzleDefinitionFields
         form={form}
         set={set}
