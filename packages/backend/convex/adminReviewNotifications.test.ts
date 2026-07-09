@@ -31,6 +31,10 @@ const seedMembers = async (t: ReturnType<typeof convexTest>) =>
       // impersonates the JWT claim, it never touches this row, and the fan-out reads the mirror
       // via by_role.
       admin: await mkUser("clerk_admin", "Admin", "admin"),
+      // A second admin, used as a positive control in the actor-exclusion test: it proves
+      // the fan-out actually fired (admin2 gets notified) rather than the whole dispatch
+      // silently no-oping, while confirming the acting admin specifically was dropped.
+      admin2: await mkUser("clerk_admin2", "Admin Two", "admin"),
     };
   });
 
@@ -126,20 +130,23 @@ describe("admin review notifications", () => {
     expect((await notificationsFor(t, bob)).filter(isSubmitted)).toEqual([]);
   });
 
-  test("actor exclusion: the admin submitting a definition does not self-notify", async () => {
+  test("actor exclusion: the admin submitting a definition does not self-notify, but another admin does", async () => {
     const t = convexTest(schema, modules);
-    const { admin } = await seedMembers(t);
+    const { admin, admin2 } = await seedMembers(t);
     await asAdmin(t).mutation(
       api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
       { title: "Admin's Own Submission", pieceCount: 300 },
     );
     await flushScheduled(t);
 
+    const isSubmitted = (n: { type: string }) =>
+      n.type === "admin_definition_submitted";
+    // Positive control: admin2 DID receive it, proving the fan-out fired.
     expect(
-      (await notificationsFor(t, admin)).filter(
-        (n) => n.type === "admin_definition_submitted",
-      ),
-    ).toEqual([]);
+      (await notificationsFor(t, admin2)).filter(isSubmitted),
+    ).toHaveLength(1);
+    // The acting admin specifically was excluded.
+    expect((await notificationsFor(t, admin)).filter(isSubmitted)).toEqual([]);
   });
 
   test("editing a pending proposal produces no admin notification", async () => {

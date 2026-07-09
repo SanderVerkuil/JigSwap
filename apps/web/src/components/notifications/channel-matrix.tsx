@@ -1,13 +1,18 @@
+import { useUser } from "@/compat/clerk";
 import {
-  type NotificationChannel,
+  ADMIN_NOTIFICATION_TYPES,
   NOTIFICATION_CHANNELS,
   NOTIFICATION_TYPES,
   notificationAccent,
   notificationIcon,
+  type NotificationChannel,
 } from "@/components/notifications/notification-meta";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "use-intl";
 
 type Toggles = Record<string, Partial<Record<NotificationChannel, boolean>>>;
@@ -37,6 +42,17 @@ export function ChannelMatrix({
   onToggle,
 }: ChannelMatrixProps) {
   const t = useTranslations("notifications");
+  const { user } = useUser();
+
+  // Admin-only types (e.g. "a proposal awaits review") are hidden from members who
+  // aren't admins — they'd never receive them. While isAdmin is loading, treat as
+  // false so the admin rows simply appear once it resolves rather than flashing.
+  const { data: isAdmin } = useQuery(
+    convexQuery(gateway.identity.isAdmin, user?.id ? {} : "skip"),
+  );
+  const visibleTypes = NOTIFICATION_TYPES.filter(
+    (type) => !ADMIN_NOTIFICATION_TYPES.has(type) || isAdmin === true,
+  );
 
   return (
     <>
@@ -69,7 +85,7 @@ export function ChannelMatrix({
         </div>
 
         <div className="divide-border divide-y">
-          {NOTIFICATION_TYPES.map((type) => {
+          {visibleTypes.map((type) => {
             const Icon = notificationIcon(type);
             const row = preferences[type] ?? {};
             return (
@@ -120,7 +136,7 @@ export function ChannelMatrix({
 
       {/* Mobile: stacked per-type groups with labelled switches */}
       <div className="divide-border divide-y sm:hidden">
-        {NOTIFICATION_TYPES.map((type) => {
+        {visibleTypes.map((type) => {
           const Icon = notificationIcon(type);
           const row = preferences[type] ?? {};
           return (

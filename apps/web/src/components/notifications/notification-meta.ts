@@ -4,6 +4,8 @@ import {
   CheckCircle2,
   Heart,
   ImageOff,
+  Inbox,
+  Lightbulb,
   type LucideIcon,
   MessageSquare,
   Star,
@@ -30,7 +32,9 @@ export type NotificationType =
   | "exchange_proposed"
   | "exchange_disputed"
   | "proposal_approved"
-  | "proposal_rejected";
+  | "proposal_rejected"
+  | "admin_proposal_filed"
+  | "admin_definition_submitted";
 
 export const NOTIFICATION_TYPES: NotificationType[] = [
   "trade_request",
@@ -49,7 +53,15 @@ export const NOTIFICATION_TYPES: NotificationType[] = [
   "goal_achieved",
   "proposal_approved",
   "proposal_rejected",
+  "admin_proposal_filed",
+  "admin_definition_submitted",
 ];
+
+// Types only admins ever receive; hidden from non-admin preference matrices.
+export const ADMIN_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = new Set([
+  "admin_proposal_filed",
+  "admin_definition_submitted",
+]);
 
 export type NotificationChannel = "inApp" | "email" | "push";
 
@@ -125,6 +137,10 @@ export function notificationIcon(type: string): LucideIcon {
       return CheckCircle2;
     case "proposal_rejected":
       return XCircle;
+    case "admin_proposal_filed":
+      return Lightbulb;
+    case "admin_definition_submitted":
+      return Inbox;
     default:
       return Bell;
   }
@@ -153,6 +169,9 @@ export function notificationAccent(type: string): string {
       return "text-pink-500";
     case "message_received":
       return "text-blue-500";
+    case "admin_proposal_filed":
+    case "admin_definition_submitted":
+      return "text-primary";
     default:
       return "text-primary";
   }
@@ -192,6 +211,12 @@ export function notificationHref(row: NotificationRow): string | null {
     case "proposal_approved":
     case "proposal_rejected":
       return relatedId ? `/puzzles/${relatedId}` : "/puzzles";
+    case "admin_proposal_filed":
+      return relatedId
+        ? `/admin/puzzles/proposals/${relatedId}`
+        : "/admin/puzzles/proposals";
+    case "admin_definition_submitted":
+      return "/admin/moderation";
     default:
       return null;
   }
