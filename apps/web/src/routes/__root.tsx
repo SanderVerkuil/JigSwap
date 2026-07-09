@@ -70,6 +70,16 @@ export const Route = createRootRouteWithContext<{
       { title: "JigSwap" },
     ],
     links: [
+      // Favicon set generated from the JigSwap puzzle-piece mark (source:
+      // components/common/header-icon/logo.png); served from apps/web/public.
+      { rel: "icon", href: "/favicon.ico", sizes: "48x48" },
+      {
+        rel: "icon",
+        type: "image/png",
+        href: "/icon-512.png",
+        sizes: "512x512",
+      },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       { rel: "stylesheet", href: appCss },
       // Fonts that next/font loaded in the web app, now via Google Fonts so
       // globals.css --font-sans (Poppins) / --font-heading (Baloo 2) resolve.
