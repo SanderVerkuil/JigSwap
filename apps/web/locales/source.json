@@ -2682,6 +2682,7 @@
     "currentImage": "Current image",
     "proposedImage": "Proposed image",
     "replaceImage": "Replace image",
+    "editImage": "Edit photo",
     "keepCategory": "Keep current category",
     "submit": "Submit suggestion",
     "update": "Update suggestion",
@@ -2700,6 +2701,19 @@
       "invalidBarcode": "One of the barcodes is not valid",
       "generic": "Couldn't submit your suggestion"
     }
+  },
+  "imageEditor": {
+    "title": "Edit photo",
+    "description": "Drag to move, scroll or pinch to zoom, and resize the frame to crop. The edited photo replaces the original when you save the form.",
+    "rotation": "Rotation",
+    "rotate90": "Rotate 90°",
+    "autoCrop": "Auto crop",
+    "apply": "Apply",
+    "applying": "Applying…",
+    "cancel": "Cancel",
+    "bakeFailed": "Couldn't process this image",
+    "autoCropNothing": "No uniform border to trim",
+    "autoCropFailed": "Couldn't analyse this image"
   },
   "mySuggestions": {
     "title": "My suggestions",

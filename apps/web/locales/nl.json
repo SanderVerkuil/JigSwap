@@ -2682,6 +2682,7 @@
     "currentImage": "Huidige afbeelding",
     "proposedImage": "Voorgestelde afbeelding",
     "replaceImage": "Afbeelding vervangen",
+    "editImage": "Foto bewerken",
     "keepCategory": "Huidige categorie behouden",
     "submit": "Voorstel indienen",
     "update": "Voorstel bijwerken",
@@ -2700,6 +2701,19 @@
       "invalidBarcode": "Een van de barcodes is ongeldig",
       "generic": "Voorstel indienen mislukt"
     }
+  },
+  "imageEditor": {
+    "title": "Foto bewerken",
+    "description": "Sleep om te verplaatsen, scroll of knijp om te zoomen en versleep het kader om bij te snijden. De bewerkte foto vervangt het origineel zodra je het formulier opslaat.",
+    "rotation": "Rotatie",
+    "rotate90": "90° draaien",
+    "autoCrop": "Automatisch bijsnijden",
+    "apply": "Toepassen",
+    "applying": "Toepassen…",
+    "cancel": "Annuleren",
+    "bakeFailed": "Deze afbeelding kon niet worden verwerkt",
+    "autoCropNothing": "Geen egale rand om bij te snijden",
+    "autoCropFailed": "Deze afbeelding kon niet worden geanalyseerd"
   },
   "mySuggestions": {
     "title": "Mijn voorstellen",

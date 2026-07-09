@@ -5,6 +5,7 @@ import {
   SegmentedPills,
   TagInput,
 } from "@/components/add-puzzle";
+import { ImageEditorDialog } from "@/components/image-editor/image-editor-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Pencil } from "lucide-react";
+import { useState } from "react";
 import { useLocale, useTranslations } from "use-intl";
 import type { ProposalFormState } from "./proposal-diff";
 
@@ -63,6 +66,20 @@ export function PuzzleDefinitionFields({
 
   const categoryName = (c: (typeof categories)[number]) =>
     locale === "nl" ? c.name.nl : c.name.en;
+
+  // Both the file-pick and the "Edit photo" (re-edit current image) paths route through
+  // the same editor dialog. `revoke` marks whether `src` is an object URL we created (fresh
+  // pick) that must be released, vs. the existing stored image URL (re-edit), which we don't own.
+  const [editing, setEditing] = useState<{
+    src: string;
+    fileName: string;
+    revoke: boolean;
+  } | null>(null);
+
+  const closeEditor = () => {
+    if (editing?.revoke) URL.revokeObjectURL(editing.src);
+    setEditing(null);
+  };
 
   return (
     <>
@@ -277,19 +294,58 @@ export function PuzzleDefinitionFields({
           <span className="text-muted-foreground text-xs">
             {imageStateLabel}
           </span>
-          <Button variant="outline" size="sm" asChild>
-            <label className="cursor-pointer">
-              {t("replaceImage")}
-              <input
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                onChange={(e) => onPickFile(e.target.files?.[0])}
-              />
-            </label>
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <label className="cursor-pointer">
+                {t("replaceImage")}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setEditing({
+                        src: URL.createObjectURL(file),
+                        fileName: file.name,
+                        revoke: true,
+                      });
+                    }
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+            </Button>
+            {currentImageUrl && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setEditing({
+                    src: currentImageUrl,
+                    fileName: "cover.jpg",
+                    revoke: false,
+                  })
+                }
+              >
+                <Pencil className="h-4 w-4" />
+                {t("editImage")}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
+
+      <ImageEditorDialog
+        src={editing?.src ?? null}
+        fileName={editing?.fileName ?? "cover.jpg"}
+        onApply={(file) => {
+          onPickFile(file);
+          closeEditor();
+        }}
+        onClose={closeEditor}
+      />
     </>
   );
 }
