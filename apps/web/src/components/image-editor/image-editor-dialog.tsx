@@ -17,6 +17,7 @@ import ReactCrop, { type Crop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
+import { contentBoundingBox } from "./auto-crop";
 import { bakeImage, loadEditorImage } from "./bake-image";
 import { rotateSize } from "./crop-math";
 import { fullCrop, percentCropToPixelArea } from "./crop-select";
@@ -73,6 +74,7 @@ export function ImageEditorDialog({
   const t = useTranslations("imageEditor");
   const [crop, setCrop] = useState<Crop>({ unit: "%", ...fullCrop() });
   const [rotation, setRotation] = useState(0);
+  const [zoom, setZoom] = useState(1);
   const [rotatedSrc, setRotatedSrc] = useState<string | null>(null);
   const [naturalSize, setNaturalSize] = useState<{
     width: number;
@@ -84,16 +86,67 @@ export function ImageEditorDialog({
   const reset = () => {
     setCrop({ unit: "%", ...fullCrop() });
     setRotation(0);
+    setZoom(1);
     setRotatedSrc(null);
     setNaturalSize(null);
     imageRef.current = null;
   };
 
   // Rotation change invalidates the old selection's coordinates, so every rotation update
-  // also resets the crop to the full frame.
+  // also resets the crop to the full frame. The rotated preview re-renders at new
+  // dimensions too, so the zoom level resets rather than pointing at a stale region.
   const applyRotation = (next: number) => {
     setRotation(next);
     setCrop({ unit: "%", ...fullCrop() });
+    setZoom(1);
+  };
+
+  // Downsample the cached original (max dimension 512px) through the SAME rotate
+  // transform the preview/bake use, scan it for a uniform border, and turn the
+  // detected content box into a percent crop (resolution-independent, so the
+  // downsampling doesn't affect the result).
+  const runAutoCrop = async () => {
+    const image = imageRef.current;
+    if (!image) return;
+    try {
+      const rotated = rotateSize(
+        image.naturalWidth,
+        image.naturalHeight,
+        rotation,
+      );
+      const maxDimension = 512;
+      const scale = Math.min(
+        1,
+        maxDimension / Math.max(rotated.width, rotated.height),
+      );
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.ceil(rotated.width * scale);
+      canvas.height = Math.ceil(rotated.height * scale);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("canvas 2d unavailable");
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.scale(scale, scale);
+      ctx.translate(-image.naturalWidth / 2, -image.naturalHeight / 2);
+      ctx.drawImage(image, 0, 0);
+
+      const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const bbox = contentBoundingBox(data, canvas.width, canvas.height);
+      if (!bbox) {
+        toast.info(t("autoCropNothing"));
+        return;
+      }
+      setCrop({
+        unit: "%",
+        x: (bbox.x / canvas.width) * 100,
+        y: (bbox.y / canvas.height) * 100,
+        width: (bbox.width / canvas.width) * 100,
+        height: (bbox.height / canvas.height) * 100,
+      });
+    } catch {
+      // Tainted canvas (non-CORS remote) or decode failure.
+      toast.error(t("autoCropFailed"));
+    }
   };
 
   // Load the original once per `src` (network fetch / decode), cached in imageRef so
@@ -182,7 +235,7 @@ export function ImageEditorDialog({
           <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
-        <div className="bg-muted relative w-full overflow-hidden rounded-lg">
+        <div className="bg-muted relative max-h-[60vh] w-full overflow-auto rounded-lg">
           {rotatedSrc ? (
             <ReactCrop
               crop={crop}
@@ -191,7 +244,8 @@ export function ImageEditorDialog({
               <img
                 src={rotatedSrc}
                 alt=""
-                className="max-h-72 w-full object-contain"
+                className="block"
+                style={{ width: `${zoom * 100}%`, maxWidth: "none" }}
               />
             </ReactCrop>
           ) : (
@@ -221,6 +275,27 @@ export function ImageEditorDialog({
             }
           >
             <RotateCw className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Label className="w-16 shrink-0 text-xs">{t("zoom")}</Label>
+          <Slider
+            aria-label={t("zoom")}
+            min={1}
+            max={4}
+            step={0.1}
+            value={[zoom]}
+            onValueChange={([value]) => setZoom(value)}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={rotatedSrc === null || baking}
+            onClick={() => void runAutoCrop()}
+          >
+            {t("autoCrop")}
           </Button>
         </div>
 

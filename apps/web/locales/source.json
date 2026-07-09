@@ -2707,10 +2707,14 @@
     "description": "Drag to select the crop area; rotate as needed. The edited photo replaces the original when you save the form.",
     "rotation": "Rotation",
     "rotate90": "Rotate 90°",
+    "zoom": "Zoom",
+    "autoCrop": "Auto crop",
     "apply": "Apply",
     "applying": "Applying…",
     "cancel": "Cancel",
-    "bakeFailed": "Couldn't process this image"
+    "bakeFailed": "Couldn't process this image",
+    "autoCropNothing": "No uniform border to trim",
+    "autoCropFailed": "Couldn't analyse this image"
   },
   "mySuggestions": {
     "title": "My suggestions",

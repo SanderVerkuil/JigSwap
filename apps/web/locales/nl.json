@@ -2707,10 +2707,14 @@
     "description": "Sleep om het bij te snijden gebied te kiezen; draai indien nodig. De bewerkte foto vervangt het origineel zodra je het formulier opslaat.",
     "rotation": "Rotatie",
     "rotate90": "90° draaien",
+    "zoom": "Zoom",
+    "autoCrop": "Automatisch bijsnijden",
     "apply": "Toepassen",
     "applying": "Toepassen…",
     "cancel": "Annuleren",
-    "bakeFailed": "Deze afbeelding kon niet worden verwerkt"
+    "bakeFailed": "Deze afbeelding kon niet worden verwerkt",
+    "autoCropNothing": "Geen egale rand om bij te snijden",
+    "autoCropFailed": "Deze afbeelding kon niet worden geanalyseerd"
   },
   "mySuggestions": {
     "title": "Mijn voorstellen",
