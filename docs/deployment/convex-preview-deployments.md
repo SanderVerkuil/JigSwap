@@ -107,7 +107,11 @@ build container.
   accepted by `convex data` even though `--help` hides it). Only when that returns zero
   rows does CI export a snapshot of the shared dev deployment
   (`convex export --include-file-storage`, dev deploy key) and import it into the
-  preview (`convex import --preview-name <branch> --replace -y`, preview deploy key).
+  preview (`convex import --preview-name <branch> --replace-all -y`, preview deploy
+  key). It is `--replace-all` (delete every existing table first) rather than
+  `--replace` because the deploy step already pushed the branch's schema: a table the
+  branch newly adds exists empty on the preview but is absent from the dev snapshot,
+  and `--replace` aborts on the resulting table-ID conflict.
   A preview that already has data is left untouched, so data created on the preview
   survives pushes — and a preview first created empty by the Vercel build, or recreated
   empty after expiry, gets seeded by the next run automatically.

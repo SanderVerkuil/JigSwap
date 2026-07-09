@@ -132,6 +132,12 @@ jobs:
           # Preview key only (see guard above): with it, `--preview-name` is honored and
           # the import cannot land on dev or prod.
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_PREVIEW }}
+        # `--replace-all`, not `--replace`: the deploy step already pushed this BRANCH's
+        # schema, so a table the branch adds exists (empty) on the preview but not in the
+        # dev snapshot — `--replace` then aborts on a table-ID conflict ("New table X has
+        # IDs that conflict with existing table Y"). Deleting all tables first is safe in
+        # both reachable paths: the if-empty path only runs when the sentinel check found
+        # no data, and the force path is documented as replacing the preview's data.
         run: >-
           pnpm exec convex import --preview-name "$BRANCH_NAME"
-          --replace -y "$RUNNER_TEMP/dev-snapshot.zip"
+          --replace-all -y "$RUNNER_TEMP/dev-snapshot.zip"
