@@ -719,6 +719,8 @@ export default defineSchema({
       v.literal("photo_removed"),
       v.literal("exchange_proposed"),
       v.literal("exchange_disputed"),
+      v.literal("proposal_approved"),
+      v.literal("proposal_rejected"),
     ),
     title: v.string(),
     message: v.string(),

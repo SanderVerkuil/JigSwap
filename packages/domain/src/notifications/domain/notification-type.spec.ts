@@ -18,6 +18,8 @@ describe("NOTIFICATION_TYPES", () => {
       "photo_removed",
       "exchange_proposed",
       "exchange_disputed",
+      "proposal_approved",
+      "proposal_rejected",
     ]);
   });
 });

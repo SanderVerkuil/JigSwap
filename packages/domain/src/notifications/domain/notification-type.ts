@@ -19,7 +19,9 @@ export type NotificationType =
   | "puzzle_rejected" // Catalog: submission rejected
   | "photo_removed" // Library: a moderator confirmed removal of an uploaded copy photo
   | "exchange_proposed" // Exchange: ExchangeProposed (distinct generic exchange, not only "trade")
-  | "exchange_disputed"; // Exchange: DisputeRaised
+  | "exchange_disputed" // Exchange: DisputeRaised
+  | "proposal_approved" // Catalog: ChangeProposalApproved (member's suggested edit applied)
+  | "proposal_rejected"; // Catalog: suggested edit declined
 
 // All notification types, for iteration (e.g. seeding default preferences). Kept in sync with the
 // union above by construction.
@@ -38,4 +40,6 @@ export const NOTIFICATION_TYPES: readonly NotificationType[] = [
   "photo_removed",
   "exchange_proposed",
   "exchange_disputed",
+  "proposal_approved",
+  "proposal_rejected",
 ];
