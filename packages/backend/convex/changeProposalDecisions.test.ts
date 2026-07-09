@@ -143,7 +143,7 @@ describe("catalog.approveChangeProposal", () => {
     const stamp = actions.find((a) => a.kind === "proposal_approved");
     expect(stamp).toMatchObject({
       actorId: alice,
-      targetId: proposalId,
+      targetId: definitionId,
       targetLabel: "Mountain Vista (Panorama)",
     });
   });

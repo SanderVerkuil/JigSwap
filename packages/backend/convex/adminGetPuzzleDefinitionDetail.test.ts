@@ -220,6 +220,50 @@ describe("admin/getPuzzleDefinitionDetail", () => {
     expect(result.owners).toEqual([]);
   });
 
+  test("includes a proposal_approved row when a change proposal targeting this definition was approved", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const asBob = (t: ReturnType<typeof convexTest>) =>
+      t.withIdentity({ subject: "clerk_bob" });
+
+    const definitionAggregateId = (await asMember(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "Coastal Village", pieceCount: 750 },
+    )) as string;
+    await asAdmin(t).mutation(
+      api.catalog.approvePuzzleDefinition.approvePuzzleDefinition,
+      { puzzleDefinitionId: definitionAggregateId },
+    );
+    const proposalId = (await asBob(t).mutation(
+      api.catalog.proposeDefinitionChange.proposeDefinitionChange,
+      {
+        puzzleDefinitionId: definitionAggregateId,
+        title: "Coastal Village II",
+      },
+    )) as string;
+    await asAdmin(t).mutation(
+      api.catalog.approveChangeProposal.approveChangeProposal,
+      { changeProposalId: proposalId },
+    );
+
+    const definitionRow = await t.run((ctx) =>
+      ctx.db
+        .query("puzzles")
+        .withIndex("by_aggregate_id", (q) =>
+          q.eq("aggregateId", definitionAggregateId),
+        )
+        .unique(),
+    );
+
+    const result = await asAdmin(t).query(
+      api.admin.getPuzzleDefinitionDetail.getPuzzleDefinitionDetail,
+      { puzzleId: definitionRow!._id },
+    );
+    expect(result.audit.some((row) => row.kind === "proposal_approved")).toBe(
+      true,
+    );
+  });
+
   test("caps the owners list at 50 but counts every distinct owner in stats", async () => {
     const t = convexTest(schema, modules);
     const { puzzle } = await seed(t);
