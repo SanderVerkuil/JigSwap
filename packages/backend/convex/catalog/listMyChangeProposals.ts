@@ -17,8 +17,11 @@ export const listMyChangeProposals = query({
         // The domain MemberId is the user's Convex _id.
         q.eq("proposedBy", memberId as unknown as Id<"users">),
       )
-      .order("desc")
       .collect();
+
+    // `by_proposer` is (proposedBy, status), so index order groups by status —
+    // sort in memory for true newest-first.
+    mine.sort((a, b) => b.createdAt - a.createdAt);
 
     return Promise.all(mine.map((row) => enrichProposal(ctx, row)));
   },

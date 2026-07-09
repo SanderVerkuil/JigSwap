@@ -149,6 +149,57 @@ describe("catalog.listPendingChangeProposals", () => {
       rejectionReason: "no",
     });
   });
+
+  test("derives a conflict on the GROUPED barcodes field when a barcode moved underneath", async () => {
+    const t = convexTest(schema, modules);
+    await seedMembers(t);
+    const definitionId = await submitApproved(t);
+    await asBob(t).mutation(
+      api.catalog.proposeDefinitionChange.proposeDefinitionChange,
+      { puzzleDefinitionId: definitionId, ean: "4006381333931" },
+    );
+
+    // A direct edit changes the barcode group after filing.
+    await asAdmin(t).mutation(
+      api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+      {
+        puzzleDefinitionId: definitionId,
+        ean: "4006381333931",
+        upc: "036000291452",
+      },
+    );
+
+    const queue = await asAdmin(t).query(
+      api.catalog.listPendingChangeProposals.listPendingChangeProposals,
+      {},
+    );
+    expect(queue[0]).toMatchObject({
+      hasConflict: true,
+      conflictFields: ["barcodes"],
+    });
+  });
+
+  test("a barcode-group proposal shows NO conflict while the group is unchanged", async () => {
+    const t = convexTest(schema, modules);
+    await seedMembers(t);
+    const definitionId = await submitApproved(t);
+    await asBob(t).mutation(
+      api.catalog.proposeDefinitionChange.proposeDefinitionChange,
+      { puzzleDefinitionId: definitionId, ean: "4006381333931" },
+    );
+
+    const queue = await asAdmin(t).query(
+      api.catalog.listPendingChangeProposals.listPendingChangeProposals,
+      {},
+    );
+    expect(queue[0]).toMatchObject({
+      hasConflict: false,
+      conflictFields: [],
+      changes: { barcodes: { ean: "4006381333931" } },
+      // Convex strips undefined members on write: a no-barcodes snapshot persists as {}.
+      baseline: { barcodes: {} },
+    });
+  });
 });
 
 describe("catalog.listMyChangeProposals", () => {
