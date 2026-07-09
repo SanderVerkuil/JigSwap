@@ -32,6 +32,8 @@ const notificationType = v.union(
   v.literal("exchange_disputed"),
   v.literal("proposal_approved"),
   v.literal("proposal_rejected"),
+  v.literal("admin_proposal_filed"),
+  v.literal("admin_definition_submitted"),
 );
 
 const channel = v.union(

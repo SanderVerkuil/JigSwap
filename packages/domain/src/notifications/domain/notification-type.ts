@@ -21,7 +21,9 @@ export type NotificationType =
   | "exchange_proposed" // Exchange: ExchangeProposed (distinct generic exchange, not only "trade")
   | "exchange_disputed" // Exchange: DisputeRaised
   | "proposal_approved" // Catalog: ChangeProposalApproved (member's suggested edit applied)
-  | "proposal_rejected"; // Catalog: suggested edit declined
+  | "proposal_rejected" // Catalog: suggested edit declined
+  | "admin_proposal_filed" // Catalog: ChangeProposalFiled — admins are asked to review a suggested edit
+  | "admin_definition_submitted"; // Catalog: PuzzleDefinitionSubmitted — admins are asked to moderate a new submission
 
 // All notification types, for iteration (e.g. seeding default preferences). Kept in sync with the
 // union above by construction.
@@ -42,4 +44,6 @@ export const NOTIFICATION_TYPES: readonly NotificationType[] = [
   "exchange_disputed",
   "proposal_approved",
   "proposal_rejected",
+  "admin_proposal_filed",
+  "admin_definition_submitted",
 ];
