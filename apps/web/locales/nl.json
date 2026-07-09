@@ -2991,6 +2991,14 @@
       "comment": "Toelichting van de indiener",
       "current": "Huidig",
       "proposed": "Voorgesteld",
+      "imageCompare": {
+        "title": "Afbeeldingen vergelijken",
+        "description": "Links de huidige afbeelding, rechts de voorgestelde vervanging.",
+        "open": "Vergelijken",
+        "sideBySide": "Naast elkaar",
+        "overlay": "Overlappend",
+        "handleAria": "Sleep om huidige en voorgestelde afbeelding te vergelijken"
+      },
       "wasWhenProposed": "Was {value} bij indienen",
       "none": "—",
       "review": "Beoordelen",

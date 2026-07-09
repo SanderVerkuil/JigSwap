@@ -4,6 +4,7 @@ import {
   fieldDiffRows,
   type FieldDiffRow,
 } from "@/components/admin/proposals/field-diff";
+import { ImageDiffDialog } from "@/components/admin/proposals/image-diff-dialog";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
 import {
@@ -119,6 +120,7 @@ function ProposalReview({
   const [confirmingApprove, setConfirmingApprove] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [reason, setReason] = useState("");
+  const [compareOpen, setCompareOpen] = useState(false);
 
   const approve = useMutation({
     mutationFn: useConvexMutation(gateway.catalog.approveChangeProposal),
@@ -277,6 +279,14 @@ function ProposalReview({
                     <div className="bg-muted size-24 rounded-lg border" />
                   )}
                 </figure>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCompareOpen(true)}
+                >
+                  {t("imageCompare.open")}
+                </Button>
               </div>
             </div>
           ) : (
@@ -402,6 +412,14 @@ function ProposalReview({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ImageDiffDialog
+        open={compareOpen}
+        onOpenChange={setCompareOpen}
+        currentUrl={proposal.definitionImage}
+        proposedUrl={proposal.proposedImageUrl}
+        title={proposal.definitionTitle ?? ""}
+      />
     </div>
   );
 }

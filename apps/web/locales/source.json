@@ -2991,6 +2991,14 @@
       "comment": "Proposer's note",
       "current": "Current",
       "proposed": "Proposed",
+      "imageCompare": {
+        "title": "Compare images",
+        "description": "Left is the current image, right is the proposed replacement.",
+        "open": "Compare",
+        "sideBySide": "Side by side",
+        "overlay": "Overlay",
+        "handleAria": "Drag to compare current and proposed image"
+      },
       "wasWhenProposed": "Was {value} when proposed",
       "none": "—",
       "review": "Review",
