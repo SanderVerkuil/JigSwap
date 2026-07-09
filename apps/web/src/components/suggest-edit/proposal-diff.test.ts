@@ -1,29 +1,22 @@
-import type { PuzzleDefinitionView } from "@jigswap/contracts";
 import { describe, expect, it } from "vitest";
 import {
   buildProposalArgs,
   formFromView,
   overlayProposal,
   type ProposalFormState,
+  type ProposalTargetView,
 } from "./proposal-diff";
 
 const view = (
-  overrides: Partial<PuzzleDefinitionView> = {},
-): PuzzleDefinitionView =>
-  ({
-    _id: "p1",
-    _creationTime: 0,
-    aggregateId: "pd-1",
-    title: "Starry Night",
-    pieceCount: 1000,
-    brand: "Ravensburger",
-    ean: "4006381333931",
-    tags: ["art", "van gogh"],
-    status: "approved",
-    createdAt: 0,
-    updatedAt: 0,
-    ...overrides,
-  }) as PuzzleDefinitionView;
+  overrides: Partial<ProposalTargetView> = {},
+): ProposalTargetView => ({
+  title: "Starry Night",
+  pieceCount: 1000,
+  brand: "Ravensburger",
+  ean: "4006381333931",
+  tags: ["art", "van gogh"],
+  ...overrides,
+});
 
 const categories = [
   { _id: "cat-doc-1", aggregateId: "cat-agg-1" },
@@ -39,7 +32,7 @@ describe("formFromView", () => {
         dimensions: { width: 70, height: 50, unit: "cm" },
         shape: "panoramic",
         difficulty: "hard",
-        category: "cat-doc-1" as PuzzleDefinitionView["category"],
+        category: "cat-doc-1",
       }),
     );
     expect(form).toMatchObject({

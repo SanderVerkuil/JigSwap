@@ -1,5 +1,3 @@
-import type { PuzzleDefinitionView } from "@jigswap/contracts";
-
 // Pure diff logic for the "Suggest an edit" form: the raw PuzzleDefinitionView is the baseline;
 // buildProposalArgs produces the MINIMAL changed-fields args for gateway.catalog.proposeChange /
 // editChangeProposal (every arg is optional server-side — omitted means unchanged).
@@ -12,6 +10,27 @@ import type { PuzzleDefinitionView } from "@jigswap/contracts";
 
 export type ProposalShape = "rectangular" | "panoramic" | "round" | "shaped";
 export type ProposalDifficulty = "easy" | "medium" | "hard" | "expert";
+
+// The subset of the raw definition DTO this helper reads, declared structurally so the pure
+// module needs no dependency on @jigswap/contracts (the web tier derives view types from the
+// gateway). The suggest-edit page passes the gateway-derived `puzzleById` result, which
+// satisfies this shape (branded ids assign to string; mutable arrays to readonly).
+export interface ProposalTargetView {
+  readonly title: string;
+  readonly description?: string;
+  readonly brand?: string;
+  readonly pieceCount: number;
+  readonly artist?: string;
+  readonly series?: string;
+  readonly ean?: string;
+  readonly upc?: string;
+  readonly modelNumber?: string;
+  readonly dimensions?: { width: number; height: number; unit: "cm" | "in" };
+  readonly shape?: ProposalShape;
+  readonly difficulty?: ProposalDifficulty;
+  readonly category?: string;
+  readonly tags?: readonly string[];
+}
 
 export interface ProposalFormState {
   title: string;
@@ -75,9 +94,7 @@ export interface CategoryOption {
   readonly aggregateId?: string;
 }
 
-export const formFromView = (
-  view: PuzzleDefinitionView,
-): ProposalFormState => ({
+export const formFromView = (view: ProposalTargetView): ProposalFormState => ({
   title: view.title,
   description: view.description ?? "",
   brand: view.brand ?? "",
@@ -96,7 +113,7 @@ export const formFromView = (
     : { width: "", height: "", unit: "cm" },
   shape: view.shape ?? "",
   difficulty: view.difficulty ?? "",
-  categoryId: (view.category as string | undefined) ?? "",
+  categoryId: view.category ?? "",
   tags: view.tags ? [...view.tags] : [],
   newImageStorageId: undefined,
   comment: "",
@@ -154,7 +171,7 @@ const textChange = (
 };
 
 export const buildProposalArgs = (
-  view: PuzzleDefinitionView,
+  view: ProposalTargetView,
   form: ProposalFormState,
   categories: readonly CategoryOption[],
 ): ProposalArgs | null => {
@@ -210,10 +227,7 @@ export const buildProposalArgs = (
     args.difficulty = form.difficulty;
   }
 
-  if (
-    form.categoryId &&
-    form.categoryId !== ((view.category as string | undefined) ?? "")
-  ) {
+  if (form.categoryId && form.categoryId !== (view.category ?? "")) {
     const option = categories.find((c) => c._id === form.categoryId);
     if (option) args.category = option.aggregateId ?? option._id;
   }
