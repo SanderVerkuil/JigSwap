@@ -194,12 +194,15 @@ export const buildProposalArgs = (
     modelNumber: form.modelNumber.trim() || undefined,
   };
   const groupChanged =
-    desired.ean !== (view.ean ?? undefined) ||
-    desired.upc !== (view.upc ?? undefined) ||
-    desired.modelNumber !== (view.modelNumber ?? undefined);
-  // Caveat: if ALL desired members are undefined the backend sees no barcode arg and the group
-  // stays unchanged — clearing the entire group is not supported (parity with updatePuzzleDefinition).
-  if (groupChanged) {
+    desired.ean !== view.ean ||
+    desired.upc !== view.upc ||
+    desired.modelNumber !== view.modelNumber;
+  const hasDesired = Boolean(desired.ean || desired.upc || desired.modelNumber);
+  // Caveat: clearing the entire group is not supported by the backend (parity with
+  // updatePuzzleDefinition), so an all-empty desired group is treated as no change — the
+  // helper returns null instead of a diff the server would reject.
+  const sendGroup = groupChanged && hasDesired;
+  if (sendGroup) {
     args.ean = desired.ean;
     args.upc = desired.upc;
     args.modelNumber = desired.modelNumber;
@@ -241,9 +244,9 @@ export const buildProposalArgs = (
   if (form.newImageStorageId) args.image = form.newImageStorageId;
 
   // Drop undefined members EXCEPT inside a sent barcode group (an undefined group member is
-  // meaningful: it clears that barcode). groupChanged decides the group's presence wholesale.
+  // meaningful: it clears that barcode). sendGroup decides the group's presence wholesale.
   const entries = Object.entries(args).filter(([key, value]) =>
-    groupChanged && (key === "ean" || key === "upc" || key === "modelNumber")
+    sendGroup && (key === "ean" || key === "upc" || key === "modelNumber")
       ? true
       : value !== undefined,
   );

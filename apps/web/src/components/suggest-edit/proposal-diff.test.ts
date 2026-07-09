@@ -112,6 +112,11 @@ describe("buildProposalArgs", () => {
     expect(buildProposalArgs(view(), form, categories)).toBeNull();
   });
 
+  it("clearing ALL barcodes as the sole change yields null (backend cannot clear the whole group)", () => {
+    const form = { ...unchanged(), ean: "" }; // view has only ean set
+    expect(buildProposalArgs(view(), form, categories)).toBeNull();
+  });
+
   it("includes dimensions only when parsed values differ", () => {
     const base = view({ dimensions: { width: 70, height: 50, unit: "cm" } });
     const same = { ...formFromView(base) };
@@ -123,6 +128,16 @@ describe("buildProposalArgs", () => {
     };
     expect(buildProposalArgs(base, changed, categories)).toEqual({
       dimensions: { width: 70, height: 50, unit: "in" },
+    });
+  });
+
+  it("includes dimensions when the definition previously had none", () => {
+    const form = {
+      ...unchanged(),
+      dimensions: { width: "70", height: "50", unit: "cm" as const },
+    };
+    expect(buildProposalArgs(view(), form, categories)).toEqual({
+      dimensions: { width: 70, height: 50, unit: "cm" },
     });
   });
 
@@ -184,6 +199,21 @@ describe("overlayProposal", () => {
       categoryId: "cat-doc-1", // aggregate id resolved back to the select's doc id
       newImageStorageId: "storage-xyz",
       comment: "box says so",
+    });
+  });
+
+  it("keeps the base's barcodes when the stored changes have no barcode group", () => {
+    const base = formFromView(view());
+    const overlaid = overlayProposal(
+      base,
+      { title: "X" },
+      undefined,
+      categories,
+    );
+    expect(overlaid).toMatchObject({
+      ean: "4006381333931",
+      upc: "",
+      modelNumber: "",
     });
   });
 });
