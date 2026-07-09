@@ -33,6 +33,29 @@ const asAlice = (t: ReturnType<typeof convexTest>) =>
 const asAdmin = (t: ReturnType<typeof convexTest>) =>
   t.withIdentity({ subject: "clerk_alice", metadata: { role: "admin" } });
 
+// Seed two members (alice + bob); mirrors changeProposalDecisions.test.ts's helper, needed for
+// tests where the acting admin must be a DIFFERENT member than the submitter.
+const seedMembers = async (t: ReturnType<typeof convexTest>) =>
+  t.run(async (ctx) => {
+    const now = Date.now();
+    const mkUser = (clerkId: string, name: string) =>
+      ctx.db.insert("users", {
+        clerkId,
+        email: `${clerkId}@example.com`,
+        name,
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    return {
+      alice: await mkUser("clerk_alice", "Alice"),
+      bob: await mkUser("clerk_bob", "Bob"),
+    };
+  });
+
+const asBob = (t: ReturnType<typeof convexTest>) =>
+  t.withIdentity({ subject: "clerk_bob" });
+
 const puzzleRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
   t.run(async (ctx) =>
     ctx.db
@@ -316,6 +339,50 @@ describe("catalog.updatePuzzleDefinition", () => {
       ),
       "EmptyTitle",
     );
+  });
+
+  test("an admin editing someone else's definition stamps definition_edited with the post-edit title", async () => {
+    const t = convexTest(schema, modules);
+    // Seed: bob submits; admin (a DIFFERENT member) edits.
+    const { alice } = await seedMembers(t);
+    const id = await asBob(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "Mountain Vista", pieceCount: 1000 },
+    );
+
+    await asAdmin(t).mutation(
+      api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+      { puzzleDefinitionId: id as string, title: "Mountain Vista II" },
+    );
+
+    const actions = await t.run((ctx) =>
+      ctx.db.query("moderationActions").collect(),
+    );
+    const stamp = actions.find((a) => a.kind === "definition_edited");
+    expect(stamp).toMatchObject({
+      actorId: alice,
+      targetId: id,
+      targetLabel: "Mountain Vista II", // post-edit title, matching the sibling stamps' convention
+    });
+  });
+
+  test("a submitter self-edit does NOT stamp definition_edited", async () => {
+    const t = convexTest(schema, modules);
+    await seedMembers(t);
+    const id = await asBob(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "Mountain Vista", pieceCount: 1000 },
+    );
+
+    await asBob(t).mutation(
+      api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+      { puzzleDefinitionId: id as string, title: "Renamed By Owner" },
+    );
+
+    const actions = await t.run((ctx) =>
+      ctx.db.query("moderationActions").collect(),
+    );
+    expect(actions.some((a) => a.kind === "definition_edited")).toBe(false);
   });
 });
 

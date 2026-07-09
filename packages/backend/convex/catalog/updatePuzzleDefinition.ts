@@ -5,7 +5,9 @@ import {
   toPuzzleDefinitionId,
 } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
+import { stampModerationAction } from "../admin/stampModerationAction";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
 import { convexPuzzleDefinitionRepository } from "./adapters/convexPuzzleDefinitionRepository";
@@ -69,6 +71,11 @@ export const updatePuzzleDefinition = mutation({
     if (submittedBy !== (actingMember as unknown as string)) {
       if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
     }
+    // An admin editing someone ELSE's definition is a moderation act; stamp it after success.
+    // Submitter self-edits stay un-audited (unchanged behavior). The ACL above already
+    // guaranteed that a non-submitter actor IS an admin.
+    const isAdminEditingOthers =
+      submittedBy !== (actingMember as unknown as string);
 
     const update = makeUpdatePuzzleDefinition({
       definitions,
@@ -103,5 +110,20 @@ export const updatePuzzleDefinition = mutation({
       changes,
     });
     if (result.isErr) throw toConvexError(result.error);
+
+    if (isAdminEditingOthers) {
+      const row = await ctx.db
+        .query("puzzles")
+        .withIndex("by_aggregate_id", (q) =>
+          q.eq("aggregateId", args.puzzleDefinitionId),
+        )
+        .unique();
+      await stampModerationAction(ctx, {
+        actorId: actingMember as unknown as Id<"users">,
+        kind: "definition_edited",
+        targetLabel: row?.title ?? args.puzzleDefinitionId,
+        targetId: args.puzzleDefinitionId,
+      });
+    }
   },
 });

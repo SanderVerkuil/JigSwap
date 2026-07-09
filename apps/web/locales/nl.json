@@ -2812,6 +2812,7 @@
         "definition_rejected": "<strong>{actor}</strong> wees <strong>{target}</strong> af",
         "definition_disabled": "<strong>{actor}</strong> schakelde <strong>{target}</strong> uit",
         "definition_reenabled": "<strong>{actor}</strong> schakelde <strong>{target}</strong> weer in",
+        "definition_edited": "<strong>{actor}</strong> bewerkte <strong>{target}</strong>",
         "proposal_approved": "<strong>{actor}</strong> keurde een wijzigingsvoorstel voor <strong>{target}</strong> goed",
         "proposal_rejected": "<strong>{actor}</strong> wees een wijzigingsvoorstel voor <strong>{target}</strong> af",
         "photo_removal_confirmed": "<strong>{actor}</strong> verwijderde een foto bij <strong>{target}</strong>",

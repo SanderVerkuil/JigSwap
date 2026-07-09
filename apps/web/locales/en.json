@@ -2812,6 +2812,7 @@
         "definition_rejected": "<strong>{actor}</strong> rejected <strong>{target}</strong>",
         "definition_disabled": "<strong>{actor}</strong> disabled <strong>{target}</strong>",
         "definition_reenabled": "<strong>{actor}</strong> re-enabled <strong>{target}</strong>",
+        "definition_edited": "<strong>{actor}</strong> edited <strong>{target}</strong>",
         "proposal_approved": "<strong>{actor}</strong> approved a suggested edit to <strong>{target}</strong>",
         "proposal_rejected": "<strong>{actor}</strong> rejected a suggested edit to <strong>{target}</strong>",
         "photo_removal_confirmed": "<strong>{actor}</strong> removed a photo on <strong>{target}</strong>",
