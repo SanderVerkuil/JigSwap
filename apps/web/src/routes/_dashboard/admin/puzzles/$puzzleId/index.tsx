@@ -3,7 +3,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { PuzzleLifecycleAction } from "@/components/admin/puzzles/puzzle-lifecycle-action";
 import { QueueEmpty } from "@/components/admin/queue-empty";
-import { StatTile } from "@/components/admin/stat-tile";
 import { AuditList } from "@/components/admin/users/audit-list";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { ChangedFieldChips } from "@/components/suggest-edit/changed-field-chips";
@@ -96,7 +95,7 @@ function AdminPuzzleDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border bg-card p-6">
+      <div>
         <div className="flex flex-wrap items-start gap-4">
           {definition.image ? (
             <img
@@ -173,21 +172,49 @@ function AdminPuzzleDetailPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <StatTile label={t("detail.stats.owners")} value={stats.ownerCount} />
-        <StatTile label={t("detail.stats.copies")} value={stats.copies.total} />
-        <StatTile
-          label={t("detail.stats.forTrade")}
-          value={stats.copies.forTrade}
-        />
-        <StatTile
-          label={t("detail.stats.forSale")}
-          value={stats.copies.forSale}
-        />
-        <StatTile
-          label={t("detail.stats.forLend")}
-          value={stats.copies.forLend}
-        />
+      <div className="rounded-xl border bg-card p-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          <div>
+            <div className="text-2xl font-semibold tabular-nums">
+              {stats.ownerCount}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {t("detail.stats.owners")}
+            </div>
+          </div>
+          <div>
+            <div className="text-2xl font-semibold tabular-nums">
+              {stats.copies.total}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {t("detail.stats.copies")}
+            </div>
+          </div>
+          <div>
+            <div className="text-2xl font-semibold tabular-nums">
+              {stats.copies.forTrade}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {t("detail.stats.forTrade")}
+            </div>
+          </div>
+          <div>
+            <div className="text-2xl font-semibold tabular-nums">
+              {stats.copies.forSale}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {t("detail.stats.forSale")}
+            </div>
+          </div>
+          <div>
+            <div className="text-2xl font-semibold tabular-nums">
+              {stats.copies.forLend}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {t("detail.stats.forLend")}
+            </div>
+          </div>
+        </div>
       </div>
 
       <section className="space-y-2">
