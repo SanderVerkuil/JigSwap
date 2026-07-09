@@ -211,6 +211,7 @@ describe("catalog.editChangeProposal / withdrawChangeProposal", () => {
       { changeProposalId: proposalId },
     );
     expect((await proposalRow(t, proposalId))?.status).toBe("withdrawn");
+    expect(await outboxNames(t)).toContain("ChangeProposalWithdrawn");
 
     // A withdrawn proposal no longer blocks a fresh one.
     const again = await asBob(t).mutation(

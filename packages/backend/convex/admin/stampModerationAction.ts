@@ -7,6 +7,8 @@ type ModerationKind =
   | "definition_edited_approved"
   | "definition_disabled"
   | "definition_reenabled"
+  | "proposal_approved"
+  | "proposal_rejected"
   | "photo_restored"
   | "photo_removal_confirmed"
   | "photo_auto_rejected"
