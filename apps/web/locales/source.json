@@ -2911,6 +2911,17 @@
       "reenableSuccess": "“{title}” re-enabled",
       "reenableError": "Could not re-enable the puzzle. Please try again.",
       "loadMore": "Load more",
+      "edit": {
+        "button": "Edit",
+        "title": "Edit definition",
+        "subtitle": "Direct edit of “{title}”. Changes apply immediately and are audit-logged.",
+        "save": "Save changes",
+        "saving": "Saving…",
+        "saved": "Definition updated",
+        "noChanges": "Change at least one field",
+        "failed": "Couldn't save the definition",
+        "cancel": "Cancel"
+      },
       "detail": {
         "notFoundTitle": "Puzzle definition not found",
         "notFound": "This puzzle definition does not exist or was deleted.",

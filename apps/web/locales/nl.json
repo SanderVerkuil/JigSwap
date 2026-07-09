@@ -2911,6 +2911,17 @@
       "reenableSuccess": "“{title}” weer ingeschakeld",
       "reenableError": "Kon de puzzel niet weer inschakelen. Probeer het opnieuw.",
       "loadMore": "Meer laden",
+      "edit": {
+        "button": "Bewerken",
+        "title": "Definitie bewerken",
+        "subtitle": "Directe bewerking van “{title}”. Wijzigingen gelden direct en worden gelogd.",
+        "save": "Wijzigingen opslaan",
+        "saving": "Opslaan…",
+        "saved": "Definitie bijgewerkt",
+        "noChanges": "Wijzig minstens één veld",
+        "failed": "Definitie opslaan mislukt",
+        "cancel": "Annuleren"
+      },
       "detail": {
         "notFoundTitle": "Puzzeldefinitie niet gevonden",
         "notFound": "Deze puzzeldefinitie bestaat niet of is verwijderd.",

@@ -8,14 +8,15 @@ import { AuditList } from "@/components/admin/users/audit-list";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, type Id } from "@/gateway";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { Puzzle as PuzzleIcon } from "lucide-react";
+import { Pencil, Puzzle as PuzzleIcon } from "lucide-react";
 import { useFormatter, useTranslations } from "use-intl";
 
-export const Route = createFileRoute("/_dashboard/admin/puzzles/$puzzleId")({
+export const Route = createFileRoute("/_dashboard/admin/puzzles/$puzzleId/")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "adminPuzzles") }],
   }),
@@ -116,7 +117,13 @@ function AdminPuzzleDetailPage() {
               </p>
             )}
           </div>
-          <div className="flex shrink-0 items-center">
+          <div className="flex shrink-0 items-center gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/admin/puzzles/$puzzleId/edit" params={{ puzzleId }}>
+                <Pencil className="h-4 w-4" />
+                {t("edit.button")}
+              </Link>
+            </Button>
             <PuzzleLifecycleAction
               aggregateId={definition.aggregateId}
               title={definition.title}
