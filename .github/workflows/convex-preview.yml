@@ -22,10 +22,12 @@ permissions:
 # (`preview:team:project|…`) the CLI honors `--preview-name` and can ONLY target preview
 # deployments; with a deployment-scoped key (dev:/prod:) the CLI IGNORES `--preview-name`
 # and targets the key's deployment — so the dev key must never reach the import step.
+# No base-branch filter: stacked PRs (base = another feature branch) get a Vercel web
+# preview like any other PR — and the Vercel build creates the branch's Convex preview —
+# so they need the same deploy + seed or their preview backend stays empty.
 on:
   pull_request:
     types: [opened, reopened, synchronize]
-    branches: [main]
   workflow_dispatch:
     inputs:
       branch:
