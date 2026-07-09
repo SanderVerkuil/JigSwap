@@ -2944,7 +2944,9 @@
         "ownersEmpty": "No member owns a copy of this puzzle yet.",
         "copyCount": "{count, plural, one {# copy} other {# copies}}",
         "auditTitle": "Moderation activity",
-        "auditEmpty": "No moderation activity for this puzzle yet."
+        "auditEmpty": "No moderation activity for this puzzle yet.",
+        "proposalsTitle": "Suggested edits",
+        "proposalsEmpty": "No suggested edits for this puzzle."
       }
     },
     "proposals": {

@@ -13,6 +13,7 @@ import { PageLoading } from "@/components/ui/loading";
 import { gateway, type Id } from "@/gateway";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
+import type { FunctionReturnType } from "convex/server";
 import { Pencil, Puzzle as PuzzleIcon } from "lucide-react";
 import { useFormatter, useTranslations } from "use-intl";
 
@@ -33,6 +34,18 @@ const STATUS_VARIANT: Record<
   disabled: "outline",
 };
 
+const PROPOSAL_STATUS_VARIANT: Record<
+  FunctionReturnType<
+    typeof gateway.admin.listProposalsForDefinition
+  >[number]["status"],
+  "default" | "secondary" | "destructive" | "outline"
+> = {
+  pending: "secondary",
+  approved: "default",
+  rejected: "destructive",
+  withdrawn: "outline",
+};
+
 // Everything the backend knows about one catalog definition that is
 // admin-relevant, from the single admin/getPuzzleDefinitionDetail read model
 // (gated server-side: requireMember + JWT isAdmin). Carries the same
@@ -41,11 +54,21 @@ const STATUS_VARIANT: Record<
 function AdminPuzzleDetailPage() {
   const { puzzleId } = Route.useParams();
   const t = useTranslations("admin.puzzles");
+  const tp = useTranslations("admin.proposals");
   const format = useFormatter();
 
   const { data, isPending, isError } = useQuery(
     convexQuery(gateway.admin.getPuzzleDefinitionDetail, {
       puzzleId: puzzleId as Id<"puzzles">,
+    }),
+  );
+
+  // `definition` (and its aggregateId) is only available after `data` loads below, but hooks
+  // must stay unconditional — query with the aggregateId once known, or "" while pending/on
+  // error, which the backend's by_definition index lookup simply matches nothing against.
+  const { data: proposals } = useQuery(
+    convexQuery(gateway.admin.listProposalsForDefinition, {
+      puzzleDefinitionId: data?.definition.aggregateId ?? "",
     }),
   );
 
@@ -227,6 +250,58 @@ function AdminPuzzleDetailPage() {
                 </span>
               </div>
             ))}
+          </div>
+        )}
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold">{t("detail.proposalsTitle")}</h2>
+        {!proposals || proposals.length === 0 ? (
+          <p className="text-muted-foreground text-sm">
+            {t("detail.proposalsEmpty")}
+          </p>
+        ) : (
+          <div className="bg-card divide-y rounded-xl border">
+            {proposals.map((row) => {
+              const changedCount = Object.values(row.changes).filter(
+                (value) => value !== undefined,
+              ).length;
+              return (
+                <div
+                  key={row._id}
+                  className="flex items-center gap-3 px-4 py-2.5"
+                >
+                  <Badge variant={PROPOSAL_STATUS_VARIANT[row.status]}>
+                    {tp(`status.${row.status}`)}
+                  </Badge>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm">
+                      {row.proposerName &&
+                        `${tp("proposedBy", { name: row.proposerName })} · `}
+                      {tp("fieldsChanged", { count: changedCount })}
+                    </p>
+                    {row.status === "rejected" && row.rejectionReason && (
+                      <p className="text-muted-foreground truncate text-xs">
+                        {row.rejectionReason}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-muted-foreground shrink-0 text-xs">
+                    {format.dateTime(row.createdAt, { dateStyle: "medium" })}
+                  </span>
+                  {row.status === "pending" && (
+                    <Button variant="outline" size="sm" asChild>
+                      <Link
+                        to="/admin/puzzles/proposals/$proposalId"
+                        params={{ proposalId: row.aggregateId }}
+                      >
+                        {tp("review")}
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </section>

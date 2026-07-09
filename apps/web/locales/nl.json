@@ -2944,7 +2944,9 @@
         "ownersEmpty": "Nog geen lid bezit een exemplaar van deze puzzel.",
         "copyCount": "{count, plural, one {# exemplaar} other {# exemplaren}}",
         "auditTitle": "Moderatie-activiteit",
-        "auditEmpty": "Nog geen moderatie-activiteit voor deze puzzel."
+        "auditEmpty": "Nog geen moderatie-activiteit voor deze puzzel.",
+        "proposalsTitle": "Wijzigingsvoorstellen",
+        "proposalsEmpty": "Geen wijzigingsvoorstellen voor deze puzzel."
       }
     },
     "proposals": {
