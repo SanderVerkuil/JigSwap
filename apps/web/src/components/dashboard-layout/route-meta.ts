@@ -170,6 +170,11 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   // Definition detail: nav-highlights Puzzles; the page publishes the
   // definition's title as the leaf crumb at runtime.
   "/admin/puzzles/$puzzleId": { pageKey: "adminPuzzles", group: "admin" },
+  "/admin/puzzles/proposals": { pageKey: "adminPuzzles", group: "admin" },
+  "/admin/puzzles/proposals/$proposalId": {
+    pageKey: "adminPuzzles",
+    group: "admin",
+  },
   "/admin/categories": { pageKey: "adminCategories", group: "admin" },
   "/admin/users": { pageKey: "adminUsers", group: "admin" },
   // Member detail: nav-highlights Members; the page publishes the member's

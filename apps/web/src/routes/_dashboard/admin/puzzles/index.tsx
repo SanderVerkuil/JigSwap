@@ -1,7 +1,10 @@
 import { pageTitle } from "@/lib/page-title";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { PuzzleLifecycleAction } from "@/components/admin/puzzles/puzzle-lifecycle-action";
+import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
@@ -9,7 +12,7 @@ import { gateway } from "@/gateway";
 import type { FunctionReturnType } from "convex/server";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
-import { Puzzle as PuzzleIcon } from "lucide-react";
+import { Lightbulb, Puzzle as PuzzleIcon } from "lucide-react";
 import { useFormatter, useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/admin/puzzles/")({
@@ -41,6 +44,7 @@ const STATUS_VARIANT: Record<
 // in the moderation Activity Log via the mutations' moderationActions stamps.
 function AdminPuzzlesPage() {
   const t = useTranslations("admin.puzzles");
+  const t2 = useTranslations("admin.proposals");
   const format = useFormatter();
 
   const {
@@ -52,6 +56,22 @@ function AdminPuzzlesPage() {
     gateway.admin.listPuzzleDefinitions,
     {},
     { initialNumItems: 25 },
+  );
+
+  const { data: pending } = useQuery(
+    convexQuery(gateway.admin.listPendingChangeProposals, {}),
+  );
+  usePageHeaderActions(
+    () => (
+      <Button variant="outline" size="sm" asChild>
+        <Link to="/admin/puzzles/proposals">
+          <Lightbulb className="h-4 w-4" />
+          {t2("title")}
+          {pending && pending.length > 0 ? ` (${pending.length})` : ""}
+        </Link>
+      </Button>
+    ),
+    [pending?.length],
   );
 
   if (isLoading && rows.length === 0) {

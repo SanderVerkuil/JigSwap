@@ -1,12 +1,8 @@
 import { useRouter } from "@/compat/navigation";
-import {
-  DIFFICULTY_OPTIONS,
-  PieceCountField,
-  SectionDivider,
-  SegmentedPills,
-  TagInput,
-} from "@/components/add-puzzle";
+import { SectionDivider } from "@/components/add-puzzle";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
+import { PuzzleDefinitionFields } from "@/components/suggest-edit/definition-fields";
 import {
   buildProposalArgs,
   formFromView,
@@ -15,16 +11,7 @@ import {
   type StoredProposalChanges,
 } from "@/components/suggest-edit/proposal-diff";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { PageLoading } from "@/components/ui/loading";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, Id } from "@/gateway";
 import { pageTitle } from "@/lib/page-title";
@@ -35,7 +22,7 @@ import type { FunctionReturnType } from "convex/server";
 import { ConvexError } from "convex/values";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useLocale, useTranslations } from "use-intl";
+import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/puzzles/$id/suggest-edit")({
   head: ({ match }) => ({
@@ -43,8 +30,6 @@ export const Route = createFileRoute("/_dashboard/puzzles/$id/suggest-edit")({
   }),
   component: SuggestEditPage,
 });
-
-const SHAPE_VALUES = ["rectangular", "panoramic", "round", "shaped"] as const;
 
 // Map a thrown ConvexError's stable domain code to a user-facing i18n key.
 const errorKeyFor = (error: unknown): string => {
@@ -137,9 +122,20 @@ function SuggestEditForm({
 }) {
   const { id } = Route.useParams();
   const router = useRouter();
-  const locale = useLocale();
   const t = useTranslations("suggestEdit");
-  const tf = useTranslations("forms.puzzle-form");
+  const tShell = useTranslations("shell");
+
+  usePageHeader(
+    () => ({
+      title: t(openProposal ? "editTitle" : "title"),
+      crumbs: [
+        { label: tShell("groups.community.label"), href: "/community" },
+        { label: tShell("pages.puzzles.title"), href: "/puzzles" },
+        { label: view.title, href: `/puzzles/${id}` },
+      ],
+    }),
+    [t, tShell, view.title, id, openProposal],
+  );
 
   // Freeze the diff baseline at mount (mirrors the backend's frozen-baseline model): the form
   // snapshot must diff against the definition AS THE MEMBER OPENED IT — if an admin changes the
@@ -231,246 +227,29 @@ function SuggestEditForm({
     value: ProposalFormState[K],
   ) => setForm((f) => ({ ...f, [key]: value }));
 
-  const categoryName = (c: (typeof categories)[number]) =>
-    locale === "nl" ? c.name.nl : c.name.en;
-
   const currentImageUrl =
     coverPreview ??
     (form.newImageStorageId ? openProposal?.proposedImageUrl : undefined) ??
-    view.image;
+    view.image ??
+    undefined;
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-      <div>
-        <h1 className="font-heading text-2xl font-bold">
-          {t(openProposal ? "editTitle" : "title")}
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          {t("subtitle", { title: view.title })}
-        </p>
-      </div>
-
-      <SectionDivider label={tf("formTitle")} />
-
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="se-title">{tf("title.label")}</Label>
-        <Input
-          id="se-title"
-          value={form.title}
-          onChange={(e) => set("title", e.target.value)}
-          placeholder={tf("title.placeholder")}
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="se-description">{tf("description.label")}</Label>
-        <Textarea
-          id="se-description"
-          value={form.description}
-          onChange={(e) => set("description", e.target.value)}
-          placeholder={tf("description.placeholder")}
-          rows={3}
-        />
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="se-brand">{tf("brand.label")}</Label>
-          <Input
-            id="se-brand"
-            value={form.brand}
-            onChange={(e) => set("brand", e.target.value)}
-            placeholder={tf("brand.placeholder")}
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="se-pieces">{tf("pieceCount.label")}</Label>
-          <PieceCountField
-            id="se-pieces"
-            value={form.pieceCount}
-            onChange={(n) => set("pieceCount", n)}
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="se-artist">{tf("artist.label")}</Label>
-          <Input
-            id="se-artist"
-            value={form.artist}
-            onChange={(e) => set("artist", e.target.value)}
-            placeholder={tf("artist.placeholder")}
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="se-series">{tf("series.label")}</Label>
-          <Input
-            id="se-series"
-            value={form.series}
-            onChange={(e) => set("series", e.target.value)}
-            placeholder={tf("series.placeholder")}
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label>{tf("difficulty.label")}</Label>
-        <SegmentedPills
-          options={DIFFICULTY_OPTIONS.map((o) => ({
-            ...o,
-            label: tf(`difficulty.${o.value}`),
-          }))}
-          value={form.difficulty || view.difficulty || "medium"}
-          onChange={(v) =>
-            set("difficulty", v as ProposalFormState["difficulty"])
-          }
-          ariaLabel={tf("difficulty.label")}
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label>{tf("shape.label")}</Label>
-        <SegmentedPills
-          options={SHAPE_VALUES.map((value) => ({
-            value,
-            label: tf(`shape.${value}`),
-          }))}
-          value={form.shape || view.shape || "rectangular"}
-          onChange={(v) => set("shape", v as ProposalFormState["shape"])}
-          ariaLabel={tf("shape.label")}
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="se-category">{tf("category.label")}</Label>
-        <Select
-          value={form.categoryId || undefined}
-          onValueChange={(v) => set("categoryId", v)}
-        >
-          <SelectTrigger id="se-category">
-            <SelectValue placeholder={t("keepCategory")} />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map((c) => (
-              <SelectItem key={c._id} value={c._id}>
-                {categoryName(c)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label>{tf("tags.label")}</Label>
-        <TagInput
-          value={form.tags}
-          onChange={(tags) => set("tags", tags)}
-          placeholder={tf("tags.placeholder")}
-        />
-      </div>
-
-      <SectionDivider label={tf("ean.label") + " / " + tf("upc.label")} />
-
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="se-ean">{tf("ean.label")}</Label>
-          <Input
-            id="se-ean"
-            value={form.ean}
-            onChange={(e) => set("ean", e.target.value)}
-            placeholder={tf("ean.placeholder")}
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="se-upc">{tf("upc.label")}</Label>
-          <Input
-            id="se-upc"
-            value={form.upc}
-            onChange={(e) => set("upc", e.target.value)}
-            placeholder={tf("upc.placeholder")}
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="se-model">{tf("modelNumber.label")}</Label>
-          <Input
-            id="se-model"
-            value={form.modelNumber}
-            onChange={(e) => set("modelNumber", e.target.value)}
-            placeholder={tf("modelNumber.placeholder")}
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label>{tf("dimensions.label")}</Label>
-        <div className="flex flex-wrap items-center gap-2">
-          <Input
-            aria-label={tf("dimensions.width.label")}
-            className="w-24"
-            type="number"
-            value={form.dimensions.width}
-            onChange={(e) =>
-              set("dimensions", { ...form.dimensions, width: e.target.value })
-            }
-            placeholder={tf("dimensions.width.placeholder")}
-          />
-          <span className="text-muted-foreground">×</span>
-          <Input
-            aria-label={tf("dimensions.height.label")}
-            className="w-24"
-            type="number"
-            value={form.dimensions.height}
-            onChange={(e) =>
-              set("dimensions", { ...form.dimensions, height: e.target.value })
-            }
-            placeholder={tf("dimensions.height.placeholder")}
-          />
-          <SegmentedPills
-            options={[
-              { value: "cm", label: tf("dimensions.unit.cm") },
-              { value: "in", label: tf("dimensions.unit.in") },
-            ]}
-            value={form.dimensions.unit}
-            onChange={(unit) =>
-              set("dimensions", {
-                ...form.dimensions,
-                unit: unit as "cm" | "in",
-              })
-            }
-            ariaLabel={tf("dimensions.unit.label")}
-          />
-        </div>
-      </div>
-
-      <SectionDivider label={tf("image.label")} />
-
-      <div className="flex items-center gap-4">
-        {currentImageUrl ? (
-          <img
-            src={currentImageUrl}
-            alt=""
-            className="size-24 rounded-lg border object-cover"
-          />
-        ) : (
-          <div className="bg-muted size-24 rounded-lg border" />
-        )}
-        <div className="flex flex-col gap-1">
-          <span className="text-muted-foreground text-xs">
-            {coverFile || form.newImageStorageId
-              ? t("proposedImage")
-              : t("currentImage")}
-          </span>
-          <Button variant="outline" size="sm" asChild>
-            <label className="cursor-pointer">
-              {t("replaceImage")}
-              <input
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                onChange={(e) => setCoverFile(e.target.files?.[0])}
-              />
-            </label>
-          </Button>
-        </div>
-      </div>
+      <PuzzleDefinitionFields
+        form={form}
+        set={set}
+        categories={categories}
+        difficultySeed={view.difficulty ?? ""}
+        shapeSeed={view.shape ?? ""}
+        currentImageUrl={currentImageUrl}
+        imageStateLabel={
+          coverFile || form.newImageStorageId
+            ? t("proposedImage")
+            : t("currentImage")
+        }
+        onPickFile={setCoverFile}
+        idPrefix="se"
+      />
 
       <SectionDivider label={t("comment.label")} />
 

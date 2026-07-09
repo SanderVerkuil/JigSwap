@@ -345,6 +345,8 @@ export const gateway = {
       api.catalog.listPendingChangeProposals.listPendingChangeProposals,
     listProposalsForDefinition:
       api.catalog.listProposalsForDefinition.listProposalsForDefinition,
+    // One proposal by id, any status — backs the review screen (renders read-only once decided).
+    getChangeProposal: api.catalog.getChangeProposal.getChangeProposal,
     listRejectedPhotos: api.admin.listRejectedPhotos.listRejectedPhotos,
     restorePhoto: api.admin.restorePhoto.restorePhoto,
     confirmPhotoRemoval: api.admin.confirmPhotoRemoval.confirmPhotoRemoval,

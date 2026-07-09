@@ -2675,7 +2675,6 @@
   "suggestEdit": {
     "title": "Wijziging voorstellen",
     "editTitle": "Je voorstel bewerken",
-    "subtitle": "Stel correcties voor aan “{title}”. Een beheerder beoordeelt je voorstel voordat het live gaat.",
     "comment": {
       "label": "Waarom deze wijziging?",
       "placeholder": "bijv. op de doos staat 500 stukjes"
@@ -2704,7 +2703,6 @@
   },
   "mySuggestions": {
     "title": "Mijn voorstellen",
-    "subtitle": "Wijzigingen die je voor cataloguspuzzels hebt voorgesteld.",
     "empty": {
       "title": "Nog geen voorstellen",
       "description": "Gebruik “Wijziging voorstellen” bij een cataloguspuzzel om een correctie voor te stellen."
@@ -2812,6 +2810,7 @@
         "definition_rejected": "<strong>{actor}</strong> wees <strong>{target}</strong> af",
         "definition_disabled": "<strong>{actor}</strong> schakelde <strong>{target}</strong> uit",
         "definition_reenabled": "<strong>{actor}</strong> schakelde <strong>{target}</strong> weer in",
+        "definition_edited": "<strong>{actor}</strong> bewerkte <strong>{target}</strong>",
         "proposal_approved": "<strong>{actor}</strong> keurde een wijzigingsvoorstel voor <strong>{target}</strong> goed",
         "proposal_rejected": "<strong>{actor}</strong> wees een wijzigingsvoorstel voor <strong>{target}</strong> af",
         "photo_removal_confirmed": "<strong>{actor}</strong> verwijderde een foto bij <strong>{target}</strong>",
@@ -2910,6 +2909,21 @@
       "reenableSuccess": "“{title}” weer ingeschakeld",
       "reenableError": "Kon de puzzel niet weer inschakelen. Probeer het opnieuw.",
       "loadMore": "Meer laden",
+      "edit": {
+        "button": "Bewerken",
+        "title": "Definitie bewerken",
+        "save": "Wijzigingen opslaan",
+        "saving": "Opslaan…",
+        "saved": "Definitie bijgewerkt",
+        "noChanges": "Wijzig minstens één veld",
+        "failed": "Definitie opslaan mislukt",
+        "errors": {
+          "emptyTitle": "De titel mag niet leeg zijn",
+          "invalidBarcode": "Een van de barcodes is ongeldig",
+          "invalidPieceCount": "Het aantal stukjes moet een positief getal zijn"
+        },
+        "cancel": "Annuleren"
+      },
       "detail": {
         "notFoundTitle": "Puzzeldefinitie niet gevonden",
         "notFound": "Deze puzzeldefinitie bestaat niet of is verwijderd.",
@@ -2927,8 +2941,50 @@
         "ownersEmpty": "Nog geen lid bezit een exemplaar van deze puzzel.",
         "copyCount": "{count, plural, one {# exemplaar} other {# exemplaren}}",
         "auditTitle": "Moderatie-activiteit",
-        "auditEmpty": "Nog geen moderatie-activiteit voor deze puzzel."
+        "auditEmpty": "Nog geen moderatie-activiteit voor deze puzzel.",
+        "proposalsTitle": "Wijzigingsvoorstellen",
+        "proposalsEmpty": "Geen wijzigingsvoorstellen voor deze puzzel."
       }
+    },
+    "proposals": {
+      "title": "Wijzigingsvoorstellen",
+      "empty": {
+        "title": "Geen open voorstellen",
+        "description": "Door de community voorgestelde wijzigingen aan cataloguspuzzels verschijnen hier."
+      },
+      "conflict": "Conflict",
+      "status": {
+        "pending": "In behandeling",
+        "approved": "Goedgekeurd",
+        "rejected": "Afgewezen",
+        "withdrawn": "Ingetrokken"
+      },
+      "conflictBanner": "De puzzel is gewijzigd sinds dit voorstel werd ingediend. Gemarkeerde velden komen niet meer overeen met wat de indiener zag.",
+      "fieldsChanged": "{count, plural, one {# veld gewijzigd} other {# velden gewijzigd}}",
+      "proposedBy": "door {name}",
+      "comment": "Toelichting van de indiener",
+      "current": "Huidig",
+      "proposed": "Voorgesteld",
+      "wasWhenProposed": "Was {value} bij indienen",
+      "none": "—",
+      "review": "Beoordelen",
+      "approve": "Goedkeuren",
+      "approveConfirmTitle": "Dit voorstel goedkeuren?",
+      "approveConfirmBody": "De voorgestelde wijzigingen aan “{title}” worden direct toegepast.",
+      "approved": "Voorstel goedgekeurd en toegepast",
+      "reject": "Afwijzen",
+      "rejectTitle": "Dit voorstel afwijzen?",
+      "rejectBody": "De indiener wordt op de hoogte gebracht. Je kunt optioneel een reden toevoegen.",
+      "reasonLabel": "Reden (optioneel)",
+      "reasonPlaceholder": "bijv. de huidige titel komt overeen met de doos",
+      "rejected": "Voorstel afgewezen",
+      "alreadyDecided": "Dit voorstel is al beoordeeld",
+      "alreadyDecidedSub": "Een andere beheerder heeft het afgehandeld, of de indiener heeft het ingetrokken.",
+      "notFound": "Voorstel niet gevonden",
+      "notFoundSub": "Dit voorstel bestaat niet of de link klopt niet.",
+      "rejectionReason": "Reden",
+      "actionFailed": "Actie kon niet worden uitgevoerd",
+      "backToQueue": "Terug naar voorstellen"
     },
     "queueEmpty": {
       "title": "Alles afgehandeld"

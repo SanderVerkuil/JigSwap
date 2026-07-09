@@ -230,6 +230,70 @@ describe("catalog.listPendingChangeProposals", () => {
   });
 });
 
+describe("catalog.getChangeProposal", () => {
+  test("is admin-gated", async () => {
+    const t = convexTest(schema, modules);
+    await seedMembers(t);
+    const { proposalId } = await fileAsBob(t);
+    await expect(
+      t.query(api.catalog.getChangeProposal.getChangeProposal, {
+        changeProposalId: proposalId,
+      }),
+    ).rejects.toThrow(/Unauthenticated/);
+    await expect(
+      asBob(t).query(api.catalog.getChangeProposal.getChangeProposal, {
+        changeProposalId: proposalId,
+      }),
+    ).rejects.toThrow(/Forbidden/);
+  });
+
+  test("returns the enriched pending proposal by id", async () => {
+    const t = convexTest(schema, modules);
+    await seedMembers(t);
+    const { proposalId } = await fileAsBob(t);
+
+    const proposal = await asAdmin(t).query(
+      api.catalog.getChangeProposal.getChangeProposal,
+      { changeProposalId: proposalId },
+    );
+    expect(proposal).toMatchObject({
+      aggregateId: proposalId,
+      status: "pending",
+      definitionTitle: "Mountain Vista",
+      proposerName: "Bob",
+    });
+  });
+
+  test("returns a DECIDED proposal after rejection", async () => {
+    const t = convexTest(schema, modules);
+    await seedMembers(t);
+    const { proposalId } = await fileAsBob(t);
+    await asAdmin(t).mutation(
+      api.catalog.rejectChangeProposal.rejectChangeProposal,
+      { changeProposalId: proposalId, reason: "not needed" },
+    );
+
+    const proposal = await asAdmin(t).query(
+      api.catalog.getChangeProposal.getChangeProposal,
+      { changeProposalId: proposalId },
+    );
+    expect(proposal).toMatchObject({
+      status: "rejected",
+      rejectionReason: "not needed",
+    });
+  });
+
+  test("returns null for an unknown id", async () => {
+    const t = convexTest(schema, modules);
+    await seedMembers(t);
+    const proposal = await asAdmin(t).query(
+      api.catalog.getChangeProposal.getChangeProposal,
+      { changeProposalId: "does-not-exist" },
+    );
+    expect(proposal).toBeNull();
+  });
+});
+
 describe("catalog.listMyChangeProposals", () => {
   test("requires auth and returns ONLY the caller's proposals across statuses", async () => {
     const t = convexTest(schema, modules);

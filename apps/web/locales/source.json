@@ -2675,7 +2675,6 @@
   "suggestEdit": {
     "title": "Suggest an edit",
     "editTitle": "Edit your suggestion",
-    "subtitle": "Propose corrections to “{title}”. An admin reviews your suggestion before it goes live.",
     "comment": {
       "label": "Why this change?",
       "placeholder": "e.g. the box says 500 pieces"
@@ -2704,7 +2703,6 @@
   },
   "mySuggestions": {
     "title": "My suggestions",
-    "subtitle": "Edits you proposed to catalogue puzzles.",
     "empty": {
       "title": "No suggestions yet",
       "description": "Use “Suggest an edit” on any catalogue puzzle to propose a correction."
@@ -2812,6 +2810,7 @@
         "definition_rejected": "<strong>{actor}</strong> rejected <strong>{target}</strong>",
         "definition_disabled": "<strong>{actor}</strong> disabled <strong>{target}</strong>",
         "definition_reenabled": "<strong>{actor}</strong> re-enabled <strong>{target}</strong>",
+        "definition_edited": "<strong>{actor}</strong> edited <strong>{target}</strong>",
         "proposal_approved": "<strong>{actor}</strong> approved a suggested edit to <strong>{target}</strong>",
         "proposal_rejected": "<strong>{actor}</strong> rejected a suggested edit to <strong>{target}</strong>",
         "photo_removal_confirmed": "<strong>{actor}</strong> removed a photo on <strong>{target}</strong>",
@@ -2910,6 +2909,21 @@
       "reenableSuccess": "“{title}” re-enabled",
       "reenableError": "Could not re-enable the puzzle. Please try again.",
       "loadMore": "Load more",
+      "edit": {
+        "button": "Edit",
+        "title": "Edit definition",
+        "save": "Save changes",
+        "saving": "Saving…",
+        "saved": "Definition updated",
+        "noChanges": "Change at least one field",
+        "failed": "Couldn't save the definition",
+        "errors": {
+          "emptyTitle": "The title can't be empty",
+          "invalidBarcode": "One of the barcodes is not valid",
+          "invalidPieceCount": "The piece count must be a positive number"
+        },
+        "cancel": "Cancel"
+      },
       "detail": {
         "notFoundTitle": "Puzzle definition not found",
         "notFound": "This puzzle definition does not exist or was deleted.",
@@ -2927,8 +2941,50 @@
         "ownersEmpty": "No member owns a copy of this puzzle yet.",
         "copyCount": "{count, plural, one {# copy} other {# copies}}",
         "auditTitle": "Moderation activity",
-        "auditEmpty": "No moderation activity for this puzzle yet."
+        "auditEmpty": "No moderation activity for this puzzle yet.",
+        "proposalsTitle": "Suggested edits",
+        "proposalsEmpty": "No suggested edits for this puzzle."
       }
+    },
+    "proposals": {
+      "title": "Suggested edits",
+      "empty": {
+        "title": "No open suggestions",
+        "description": "Community-proposed edits to catalogue puzzles will appear here."
+      },
+      "conflict": "Conflict",
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Declined",
+        "withdrawn": "Withdrawn"
+      },
+      "conflictBanner": "The puzzle changed since this was proposed. Marked fields no longer match what the proposer saw.",
+      "fieldsChanged": "{count, plural, one {# field changed} other {# fields changed}}",
+      "proposedBy": "by {name}",
+      "comment": "Proposer's note",
+      "current": "Current",
+      "proposed": "Proposed",
+      "wasWhenProposed": "Was {value} when proposed",
+      "none": "—",
+      "review": "Review",
+      "approve": "Approve",
+      "approveConfirmTitle": "Approve this suggestion?",
+      "approveConfirmBody": "The proposed changes to “{title}” are applied immediately.",
+      "approved": "Suggestion approved and applied",
+      "reject": "Decline",
+      "rejectTitle": "Decline this suggestion?",
+      "rejectBody": "The proposer is notified of the decision. You can add an optional reason.",
+      "reasonLabel": "Reason (optional)",
+      "reasonPlaceholder": "e.g. the current title matches the box",
+      "rejected": "Suggestion declined",
+      "alreadyDecided": "This suggestion was already decided",
+      "alreadyDecidedSub": "Another admin handled it, or the proposer withdrew it.",
+      "notFound": "Suggestion not found",
+      "notFoundSub": "This suggestion does not exist or the link is wrong.",
+      "rejectionReason": "Reason",
+      "actionFailed": "Couldn't complete the action",
+      "backToQueue": "Back to suggestions"
     },
     "queueEmpty": {
       "title": "All clear"

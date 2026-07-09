@@ -32,7 +32,9 @@ export const approveChangeProposal = mutation({
     if (result.isErr) throw toConvexError(result.error);
 
     // Audit stamp: label with the (now updated) definition title. The action succeeded, so
-    // both rows exist.
+    // both rows exist. targetId is the DEFINITION aggregate id — this stamp joins the
+    // definition's own audit trail (moderationActions.by_target) alongside every
+    // definition_* stamp; the proposal id remains visible via targetLabel context.
     const proposal = await ctx.db
       .query("puzzleChangeProposals")
       .withIndex("by_aggregate_id", (q) =>
@@ -51,7 +53,7 @@ export const approveChangeProposal = mutation({
       actorId: memberId as unknown as Id<"users">,
       kind: "proposal_approved",
       targetLabel: puzzle?.title ?? args.changeProposalId,
-      targetId: args.changeProposalId,
+      targetId: proposal?.puzzleDefinitionId ?? args.changeProposalId,
     });
   },
 });

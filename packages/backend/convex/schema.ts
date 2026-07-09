@@ -464,6 +464,7 @@ export default defineSchema({
       v.literal("definition_edited_approved"),
       v.literal("definition_disabled"),
       v.literal("definition_reenabled"),
+      v.literal("definition_edited"),
       v.literal("proposal_approved"),
       v.literal("proposal_rejected"),
       v.literal("photo_restored"),
