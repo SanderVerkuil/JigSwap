@@ -108,6 +108,13 @@ export const notificationUrl = (type: string, relatedId?: string): string => {
     case "proposal_approved":
     case "proposal_rejected":
       return relatedId ? `/puzzles/${relatedId}` : "/puzzles";
+    // Admin review deep links (first /admin destinations in this switch).
+    case "admin_proposal_filed":
+      return relatedId
+        ? `/admin/puzzles/proposals/${relatedId}`
+        : "/admin/puzzles/proposals";
+    case "admin_definition_submitted":
+      return "/admin/moderation";
     default:
       return "/notifications";
   }

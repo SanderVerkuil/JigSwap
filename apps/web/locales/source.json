@@ -1458,6 +1458,8 @@
       "puzzle_rejected": "Puzzle rejected",
       "proposal_approved": "Suggestion approved",
       "proposal_rejected": "Suggestion declined",
+      "admin_proposal_filed": "Suggestion to review",
+      "admin_definition_submitted": "Submission to moderate",
       "photo_removed": "Photo removed",
       "goal_achieved": "Goal achieved"
     },
@@ -1518,6 +1520,14 @@
         "title": "Suggestion declined",
         "message": "Your suggested edit was declined."
       },
+      "admin_proposal_filed": {
+        "title": "Suggestion to review",
+        "message": "A member suggested an edit to a catalogue puzzle."
+      },
+      "admin_definition_submitted": {
+        "title": "Submission to moderate",
+        "message": "A new puzzle submission awaits moderation."
+      },
       "photo_removed": {
         "title": "Photo removed",
         "message": "One of your puzzle photos was removed by a moderator."
@@ -1555,6 +1565,8 @@
       "puzzle_rejected": "When a puzzle you submitted is rejected.",
       "proposal_approved": "When an edit you suggested to a catalogue puzzle is approved.",
       "proposal_rejected": "When an edit you suggested to a catalogue puzzle is declined.",
+      "admin_proposal_filed": "When a member suggests an edit that needs review (admins only).",
+      "admin_definition_submitted": "When a new puzzle submission awaits moderation (admins only).",
       "photo_removed": "When a moderator removes one of your puzzle photos.",
       "goal_achieved": "When you reach a solving goal."
     },

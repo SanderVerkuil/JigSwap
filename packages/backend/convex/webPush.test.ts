@@ -75,6 +75,24 @@ describe("notificationUrl", () => {
     expect(notificationUrl("totally_unknown")).toBe("/notifications");
   });
 
+  test("deep-links an admin proposal review by relatedId, else the proposals queue", () => {
+    expect(notificationUrl("admin_proposal_filed", "cp-1")).toBe(
+      "/admin/puzzles/proposals/cp-1",
+    );
+    expect(notificationUrl("admin_proposal_filed")).toBe(
+      "/admin/puzzles/proposals",
+    );
+  });
+
+  test("routes an admin submission review to the moderation console", () => {
+    expect(notificationUrl("admin_definition_submitted", "pz-1")).toBe(
+      "/admin/moderation",
+    );
+    expect(notificationUrl("admin_definition_submitted")).toBe(
+      "/admin/moderation",
+    );
+  });
+
   test("deep-links a proposal outcome to the targeted definition, else the catalog", () => {
     expect(notificationUrl("proposal_approved", "pz-1")).toBe("/puzzles/pz-1");
     expect(notificationUrl("proposal_rejected", "pz-1")).toBe("/puzzles/pz-1");

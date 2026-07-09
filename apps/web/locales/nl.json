@@ -1458,6 +1458,8 @@
       "puzzle_rejected": "Puzzel afgewezen",
       "proposal_approved": "Wijzigingsvoorstel goedgekeurd",
       "proposal_rejected": "Wijzigingsvoorstel afgewezen",
+      "admin_proposal_filed": "Voorstel om te beoordelen",
+      "admin_definition_submitted": "Inzending om te modereren",
       "photo_removed": "Foto verwijderd",
       "goal_achieved": "Doel behaald"
     },
@@ -1518,6 +1520,14 @@
         "title": "Wijzigingsvoorstel afgewezen",
         "message": "Jouw voorgestelde wijziging is afgewezen."
       },
+      "admin_proposal_filed": {
+        "title": "Voorstel om te beoordelen",
+        "message": "Een lid heeft een wijziging voor een cataloguspuzzel voorgesteld."
+      },
+      "admin_definition_submitted": {
+        "title": "Inzending om te modereren",
+        "message": "Een nieuwe puzzelinzending wacht op moderatie."
+      },
       "photo_removed": {
         "title": "Foto verwijderd",
         "message": "Een van je puzzelfoto's is door een moderator verwijderd."
@@ -1555,6 +1565,8 @@
       "puzzle_rejected": "Wanneer een puzzel die je hebt ingediend is afgewezen.",
       "proposal_approved": "Wanneer een wijziging die je voor een cataloguspuzzel voorstelde wordt goedgekeurd.",
       "proposal_rejected": "Wanneer een wijziging die je voor een cataloguspuzzel voorstelde wordt afgewezen.",
+      "admin_proposal_filed": "Wanneer een lid een wijziging voorstelt die beoordeling vereist (alleen beheerders).",
+      "admin_definition_submitted": "Wanneer een nieuwe puzzelinzending op moderatie wacht (alleen beheerders).",
       "photo_removed": "Wanneer een moderator een van je puzzelfoto's verwijdert.",
       "goal_achieved": "Wanneer je een puzzeldoel behaalt."
     },

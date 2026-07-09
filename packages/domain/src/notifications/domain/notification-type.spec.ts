@@ -20,6 +20,8 @@ describe("NOTIFICATION_TYPES", () => {
       "exchange_disputed",
       "proposal_approved",
       "proposal_rejected",
+      "admin_proposal_filed",
+      "admin_definition_submitted",
     ]);
   });
 });

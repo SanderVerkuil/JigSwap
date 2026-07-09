@@ -91,10 +91,24 @@ describe("NotificationPreference with a sparse (rehydrated) toggle map", () => {
       updatedAt: NOW,
     });
 
-  it("treats an absent type as disabled without throwing (allows reads safely)", () => {
+  it("falls back to the type's default toggles when the type is absent from the stored map", () => {
     const pref = sparse();
-    expect(pref.allows("trade_request", "inApp")).toBe(false);
+    // A type added after this preference row was created has no stored entry; absent means
+    // "never asked", not "opted out" -- trade_request's default toggles apply (inApp on, off elsewhere).
+    expect(pref.allows("trade_request", "inApp")).toBe(true);
     expect(pref.allows("trade_request", "email")).toBe(false);
+  });
+
+  it("still honours an explicitly stored disablement even though it disagrees with the default", () => {
+    const pref = NotificationPreference.rehydrate({
+      id,
+      memberId: alice,
+      toggles: {
+        puzzle_approved: { inApp: false, email: false, push: false },
+      },
+      updatedAt: NOW,
+    });
+    expect(pref.allows("puzzle_approved", "inApp")).toBe(false);
   });
 
   it("seeds an all-off channel map when first toggling an absent type", () => {

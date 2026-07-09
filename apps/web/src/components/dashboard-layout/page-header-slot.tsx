@@ -34,6 +34,8 @@ export type PageHeaderContent = {
   crumbs?: PageHeaderCrumb[];
   /** Meta + primary action node shown to the right of the title. */
   actions?: ReactNode;
+  /** Overrides the sidebar's pathname-based highlight with this nav item key. */
+  activeNavKey?: string;
 };
 
 type PageHeaderSlot = {

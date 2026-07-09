@@ -69,6 +69,20 @@ const loadPuzzle = (
     .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", aggregateId))
     .unique();
 
+// Fan a review-request out to every admin except the acting member. Reads the users table's Clerk
+// role MIRROR via by_role — acceptable for informational notifications (authorization stays
+// JWT-only); a drifted mirror can only mis-route a notification, never grant access.
+const adminRecipients = async (
+  ctx: MutationCtx,
+  excludeUserId: string,
+): Promise<Doc<"users">[]> => {
+  const admins = await ctx.db
+    .query("users")
+    .withIndex("by_role", (q) => q.eq("role", "admin"))
+    .collect();
+  return admins.filter((admin) => (admin._id as string) !== excludeUserId);
+};
+
 // Map a recorded event to zero or more NotifyMember commands. Unmapped events are a no-op (most
 // events have no member-facing notification yet). The `payload` carries the event's data fields
 // (branded id strings + epoch-millis dates) as serialised by recordAndSchedule.
@@ -277,6 +291,36 @@ const translate = async (
           puzzle._id,
         ),
       ];
+    }
+    case "ChangeProposalFiled": {
+      const puzzle = await loadPuzzle(ctx, p.puzzleDefinitionId as string);
+      const admins = await adminRecipients(ctx, p.proposedBy as string);
+      return admins.map((admin) =>
+        cmd(
+          admin._id,
+          "admin_proposal_filed",
+          "Suggestion to Review",
+          puzzle
+            ? `A member suggested an edit to "${puzzle.title}"`
+            : "A member suggested an edit to a catalogue puzzle",
+          p.changeProposalId as string, // the review route's param — no lookup needed
+        ),
+      );
+    }
+    case "PuzzleDefinitionSubmitted": {
+      const admins = await adminRecipients(ctx, p.submittedBy as string);
+      const puzzle = await loadPuzzle(ctx, p.puzzleDefinitionId as string);
+      return admins.map((admin) =>
+        cmd(
+          admin._id,
+          "admin_definition_submitted",
+          "Submission to Moderate",
+          puzzle
+            ? `"${puzzle.title}" awaits moderation`
+            : "A new puzzle submission awaits moderation",
+          puzzle?._id ?? (p.puzzleDefinitionId as string),
+        ),
+      );
     }
 
     default:
