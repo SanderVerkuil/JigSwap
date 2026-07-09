@@ -2701,6 +2701,17 @@
       "generic": "Voorstel indienen mislukt"
     }
   },
+  "imageEditor": {
+    "title": "Foto bewerken",
+    "description": "Bijsnijden, zoomen en draaien. De bewerkte foto vervangt het origineel zodra je het formulier opslaat.",
+    "zoom": "Zoom",
+    "rotation": "Rotatie",
+    "rotate90": "90° draaien",
+    "apply": "Toepassen",
+    "applying": "Toepassen…",
+    "cancel": "Annuleren",
+    "bakeFailed": "Deze afbeelding kon niet worden verwerkt"
+  },
   "mySuggestions": {
     "title": "Mijn voorstellen",
     "empty": {

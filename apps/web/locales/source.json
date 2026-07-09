@@ -2701,6 +2701,17 @@
       "generic": "Couldn't submit your suggestion"
     }
   },
+  "imageEditor": {
+    "title": "Edit photo",
+    "description": "Crop, zoom and rotate. The edited photo replaces the original when you save the form.",
+    "zoom": "Zoom",
+    "rotation": "Rotation",
+    "rotate90": "Rotate 90°",
+    "apply": "Apply",
+    "applying": "Applying…",
+    "cancel": "Cancel",
+    "bakeFailed": "Couldn't process this image"
+  },
   "mySuggestions": {
     "title": "My suggestions",
     "empty": {
