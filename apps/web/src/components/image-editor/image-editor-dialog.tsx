@@ -149,7 +149,9 @@ export function ImageEditorDialog({
         }
       }}
     >
-      <DialogContent className="sm:max-w-lg">
+      {/* Wide editing surface (the canvas is the UI); max-h + scroll keeps the
+          footer reachable on short viewports. */}
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl lg:max-w-4xl">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>
@@ -161,11 +163,11 @@ export function ImageEditorDialog({
               ref={cropperRef}
               src={src}
               crossOrigin="anonymous"
-              className="h-[60vh] max-h-[60vh] w-full"
+              className="h-[min(65vh,600px)] w-full"
               onReady={() => setLoaded(true)}
             />
           ) : (
-            <div className="h-72 w-full" />
+            <div className="h-[min(65vh,600px)] w-full" />
           )}
         </div>
 
