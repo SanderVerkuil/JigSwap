@@ -2984,6 +2984,9 @@
       "rejected": "Voorstel afgewezen",
       "alreadyDecided": "Dit voorstel is al beoordeeld",
       "alreadyDecidedSub": "Een andere beheerder heeft het afgehandeld, of de indiener heeft het ingetrokken.",
+      "notFound": "Voorstel niet gevonden",
+      "notFoundSub": "Dit voorstel bestaat niet of de link klopt niet.",
+      "rejectionReason": "Reden",
       "actionFailed": "Actie kon niet worden uitgevoerd",
       "backToQueue": "Terug naar voorstellen"
     },

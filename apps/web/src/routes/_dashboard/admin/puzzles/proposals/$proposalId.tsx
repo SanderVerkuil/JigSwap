@@ -52,29 +52,38 @@ export const Route = createFileRoute(
 function ProposalReviewPage() {
   const { proposalId } = Route.useParams();
   const t = useTranslations("admin.proposals");
-  const { data: rows } = useQuery(
-    convexQuery(gateway.admin.listPendingChangeProposals, {}),
+  const { data: proposal } = useQuery(
+    convexQuery(gateway.admin.getChangeProposal, {
+      changeProposalId: proposalId,
+    }),
   );
   const { data: categories } = useQuery(
     convexQuery(gateway.catalog.puzzleCategories, {}),
   );
 
-  if (rows === undefined || categories === undefined) {
+  if (proposal === undefined || categories === undefined) {
     return <PageLoading message={t("title")} />;
   }
-  const proposal = rows.find((row) => row.aggregateId === proposalId);
-  if (!proposal) {
-    // Decided or withdrawn since the queue was rendered (or a bad link).
-    return (
-      <EmptyState title={t("alreadyDecided")} sub={t("alreadyDecidedSub")} />
-    );
+  if (proposal === null) {
+    // Unknown id — no such proposal was ever filed, or the link is wrong.
+    return <EmptyState title={t("notFound")} sub={t("notFoundSub")} />;
   }
   return <ProposalReview proposal={proposal} categories={categories} />;
 }
 
-type ProposalRow = FunctionReturnType<
-  typeof gateway.admin.listPendingChangeProposals
->[number];
+type ProposalRow = NonNullable<
+  FunctionReturnType<typeof gateway.admin.getChangeProposal>
+>;
+
+const PROPOSAL_STATUS_VARIANT: Record<
+  ProposalRow["status"],
+  "default" | "secondary" | "destructive" | "outline"
+> = {
+  pending: "secondary",
+  approved: "default",
+  rejected: "destructive",
+  withdrawn: "outline",
+};
 
 function ProposalReview({
   proposal,
@@ -193,13 +202,20 @@ function ProposalReview({
     conflictFields: proposal.conflictFields,
   });
 
+  const isDecided = proposal.status !== "pending";
+
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
       <div>
-        <p className="text-muted-foreground text-sm">
-          {proposal.proposerName &&
-            `${t("proposedBy", { name: proposal.proposerName })} · `}
-          {format.dateTime(proposal.createdAt, { dateStyle: "medium" })}
+        <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+          <span>
+            {proposal.proposerName &&
+              `${t("proposedBy", { name: proposal.proposerName })} · `}
+            {format.dateTime(proposal.createdAt, { dateStyle: "medium" })}
+          </span>
+          <Badge variant={PROPOSAL_STATUS_VARIANT[proposal.status]}>
+            {t(`status.${proposal.status}`)}
+          </Badge>
         </p>
         {proposal.comment && (
           <p className="mt-2 text-sm">
@@ -207,9 +223,17 @@ function ProposalReview({
             {proposal.comment}
           </p>
         )}
+        {proposal.status === "rejected" && proposal.rejectionReason && (
+          <p className="text-destructive mt-2 text-sm">
+            <span className="text-muted-foreground">
+              {t("rejectionReason")}:{" "}
+            </span>
+            {proposal.rejectionReason}
+          </p>
+        )}
       </div>
 
-      {proposal.hasConflict && (
+      {!isDecided && proposal.hasConflict && (
         <div className="border-destructive/50 bg-destructive/10 flex items-start gap-2 rounded-lg border p-3 text-sm">
           <AlertTriangle
             className="text-destructive mt-0.5 h-4 w-4 shrink-0"
@@ -259,7 +283,7 @@ function ProposalReview({
             <div key={row.key} className="space-y-1 p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="text-sm font-semibold">{fieldLabel(row.key)}</p>
-                {row.conflict && (
+                {!isDecided && row.conflict && (
                   <Badge variant="destructive">
                     <AlertTriangle className="h-3 w-3" aria-hidden />
                     {t("conflict")}
@@ -276,7 +300,7 @@ function ProposalReview({
                   {formatValue(row.key, row.proposed)}
                 </span>
               </p>
-              {row.conflict && (
+              {!isDecided && row.conflict && (
                 <p className="text-destructive text-xs">
                   {t("wasWhenProposed", {
                     value: formatValue(row.key, row.baseline),
@@ -292,20 +316,24 @@ function ProposalReview({
         <Button variant="outline" asChild>
           <Link href="/admin/puzzles/proposals">{t("backToQueue")}</Link>
         </Button>
-        <Button
-          variant="outline"
-          disabled={busy}
-          onClick={() => setRejectOpen(true)}
-        >
-          {t("reject")}
-        </Button>
-        <Button
-          variant="brand"
-          disabled={busy}
-          onClick={() => setConfirmingApprove(true)}
-        >
-          {t("approve")}
-        </Button>
+        {!isDecided && (
+          <>
+            <Button
+              variant="outline"
+              disabled={busy}
+              onClick={() => setRejectOpen(true)}
+            >
+              {t("reject")}
+            </Button>
+            <Button
+              variant="brand"
+              disabled={busy}
+              onClick={() => setConfirmingApprove(true)}
+            >
+              {t("approve")}
+            </Button>
+          </>
+        )}
       </div>
 
       <AlertDialog open={confirmingApprove} onOpenChange={setConfirmingApprove}>

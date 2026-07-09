@@ -2984,6 +2984,9 @@
       "rejected": "Suggestion declined",
       "alreadyDecided": "This suggestion was already decided",
       "alreadyDecidedSub": "Another admin handled it, or the proposer withdrew it.",
+      "notFound": "Suggestion not found",
+      "notFoundSub": "This suggestion does not exist or the link is wrong.",
+      "rejectionReason": "Reason",
       "actionFailed": "Couldn't complete the action",
       "backToQueue": "Back to suggestions"
     },
