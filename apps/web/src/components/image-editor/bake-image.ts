@@ -4,7 +4,7 @@ import { clampCropArea, type PixelArea, rotateSize } from "./crop-math";
 // crossOrigin="anonymous" BEFORE setting src (the box-art precedent in
 // marketing/plank-3d/box-art.ts — drawImage works on a tainted canvas but
 // toBlob/getImageData throw SecurityError, so remote sources MUST be CORS-served).
-const loadEditorImage = (src: string): Promise<HTMLImageElement> =>
+export const loadEditorImage = (src: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
     const image = new Image();
     image.crossOrigin = "anonymous";

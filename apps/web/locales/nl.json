@@ -2704,8 +2704,7 @@
   },
   "imageEditor": {
     "title": "Foto bewerken",
-    "description": "Bijsnijden, zoomen en draaien. De bewerkte foto vervangt het origineel zodra je het formulier opslaat.",
-    "zoom": "Zoom",
+    "description": "Sleep om het bij te snijden gebied te kiezen; draai indien nodig. De bewerkte foto vervangt het origineel zodra je het formulier opslaat.",
     "rotation": "Rotatie",
     "rotate90": "90° draaien",
     "apply": "Toepassen",

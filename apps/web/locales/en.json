@@ -2704,8 +2704,7 @@
   },
   "imageEditor": {
     "title": "Edit photo",
-    "description": "Crop, zoom and rotate. The edited photo replaces the original when you save the form.",
-    "zoom": "Zoom",
+    "description": "Drag to select the crop area; rotate as needed. The edited photo replaces the original when you save the form.",
     "rotation": "Rotation",
     "rotate90": "Rotate 90°",
     "apply": "Apply",
