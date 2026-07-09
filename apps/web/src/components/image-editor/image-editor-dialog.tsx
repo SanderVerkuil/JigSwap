@@ -12,21 +12,19 @@ import {
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { RotateCw } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import ReactCrop, { type Crop } from "react-image-crop";
-import "react-image-crop/dist/ReactCrop.css";
+import { useRef, useState } from "react";
+import { Cropper, type CropperRef } from "react-advanced-cropper";
+import "react-advanced-cropper/dist/style.css";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { contentBoundingBox } from "./auto-crop";
-import { bakeImage, loadEditorImage } from "./bake-image";
 import { rotateSize } from "./crop-math";
-import { fullCrop, percentCropToPixelArea } from "./crop-select";
 
 // Reusable crop/rotate editor. `src` may be an object URL (fresh pick) or a CORS-served
 // storage URL (re-editing the stored image); onApply receives the baked File. The user
-// drags a free-form crop rectangle on a rotated PREVIEW of the image (react-image-crop),
-// which is mapped back to pixel coordinates in the rotated-canvas space that the existing
-// bakeImage pipeline cuts from.
+// pans/zooms the image under a free-form, resizable crop stencil (react-advanced-cropper
+// handles wheel/pinch/drag gestures natively) and Apply reads the result straight off the
+// library's own canvas — no custom transform math.
 export interface ImageEditorDialogProps {
   src: string | null; // null = closed
   fileName: string;
@@ -34,36 +32,18 @@ export interface ImageEditorDialogProps {
   onClose: () => void;
 }
 
-// Draws the ORIGINAL image rotated around its center onto a bounding canvas — the exact
-// same transform bakeImage uses — and returns an object URL for the live preview.
-const renderRotatedPreview = (
-  image: HTMLImageElement,
-  rotationDeg: number,
-): Promise<string> => {
-  const rotated = rotateSize(
-    image.naturalWidth,
-    image.naturalHeight,
-    rotationDeg,
-  );
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.ceil(rotated.width);
-  canvas.height = Math.ceil(rotated.height);
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("canvas 2d unavailable");
-  ctx.translate(canvas.width / 2, canvas.height / 2);
-  ctx.rotate((rotationDeg * Math.PI) / 180);
-  ctx.translate(-image.naturalWidth / 2, -image.naturalHeight / 2);
-  ctx.drawImage(image, 0, 0);
-  return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        reject(new Error("preview render produced no blob"));
-        return;
-      }
-      resolve(URL.createObjectURL(blob));
-    }, "image/png");
+// Load an image element for pixel analysis (auto-crop only — the cropper itself loads
+// `src` internally). crossOrigin="anonymous" must be set BEFORE `src` for CORS-served
+// remote images — the box-art precedent in marketing/plank-3d/box-art.ts — drawImage
+// works on a tainted canvas but getImageData throws SecurityError otherwise.
+const loadImage = (src: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("image load failed"));
+    image.src = src;
   });
-};
 
 export function ImageEditorDialog({
   src,
@@ -72,43 +52,34 @@ export function ImageEditorDialog({
   onClose,
 }: ImageEditorDialogProps) {
   const t = useTranslations("imageEditor");
-  const [crop, setCrop] = useState<Crop>({ unit: "%", ...fullCrop() });
+  const cropperRef = useRef<CropperRef>(null);
   const [rotation, setRotation] = useState(0);
-  const [zoom, setZoom] = useState(1);
-  const [rotatedSrc, setRotatedSrc] = useState<string | null>(null);
-  const [naturalSize, setNaturalSize] = useState<{
-    width: number;
-    height: number;
-  } | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const [baking, setBaking] = useState(false);
-  const imageRef = useRef<HTMLImageElement | null>(null);
 
   const reset = () => {
-    setCrop({ unit: "%", ...fullCrop() });
     setRotation(0);
-    setZoom(1);
-    setRotatedSrc(null);
-    setNaturalSize(null);
-    imageRef.current = null;
+    setLoaded(false);
   };
 
-  // Rotation change invalidates the old selection's coordinates, so every rotation update
-  // also resets the crop to the full frame. The rotated preview re-renders at new
-  // dimensions too, so the zoom level resets rather than pointing at a stale region.
+  // cropperRef.rotateImage() rotates BY the given amount, not to an absolute angle, so
+  // every update is driven by the delta against the angle we last told the cropper.
+  // Rotation state resets on close along with everything else.
   const applyRotation = (next: number) => {
+    cropperRef.current?.rotateImage(next - rotation);
     setRotation(next);
-    setCrop({ unit: "%", ...fullCrop() });
-    setZoom(1);
   };
 
-  // Downsample the cached original (max dimension 512px) through the SAME rotate
-  // transform the preview/bake use, scan it for a uniform border, and turn the
-  // detected content box into a percent crop (resolution-independent, so the
-  // downsampling doesn't affect the result).
+  // Analyze the ORIGINAL image pixels (not the live, zoomed cropper view) for a uniform
+  // border to trim. advanced-cropper keeps stencil `coordinates` in the space of the
+  // image rotated around its center into a bounding box (the same transform its own
+  // getCanvas() bake uses internally), so replicate that transform here — downsampled to
+  // <=512px for speed — and hand the detected box straight to setCoordinates() scaled
+  // back up. This is exact at any rotation, not just 0.
   const runAutoCrop = async () => {
-    const image = imageRef.current;
-    if (!image) return;
+    if (!src) return;
     try {
+      const image = await loadImage(src);
       const rotated = rotateSize(
         image.naturalWidth,
         image.naturalHeight,
@@ -136,12 +107,11 @@ export function ImageEditorDialog({
         toast.info(t("autoCropNothing"));
         return;
       }
-      setCrop({
-        unit: "%",
-        x: (bbox.x / canvas.width) * 100,
-        y: (bbox.y / canvas.height) * 100,
-        width: (bbox.width / canvas.width) * 100,
-        height: (bbox.height / canvas.height) * 100,
+      cropperRef.current?.setCoordinates({
+        left: bbox.x / scale,
+        top: bbox.y / scale,
+        width: bbox.width / scale,
+        height: bbox.height / scale,
       });
     } catch {
       // Tainted canvas (non-CORS remote) or decode failure.
@@ -149,67 +119,17 @@ export function ImageEditorDialog({
     }
   };
 
-  // Load the original once per `src` (network fetch / decode), cached in imageRef so
-  // rotation changes redraw from the already-loaded element instead of reloading.
-  useEffect(() => {
-    if (!src) return;
-    let cancelled = false;
-    void loadEditorImage(src).then((image) => {
-      if (cancelled) return;
-      imageRef.current = image;
-      setNaturalSize({
-        width: image.naturalWidth,
-        height: image.naturalHeight,
-      });
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [src]);
-
-  // Regenerate the rotated preview whenever the loaded image or rotation changes, debounced
-  // so dragging the rotation slider doesn't re-render a canvas on every tick. The previous
-  // preview keeps showing while a new one renders (rotatedSrc only updates on success).
-  useEffect(() => {
-    const image = imageRef.current;
-    if (!image || !naturalSize) return;
-    let cancelled = false;
-    const timer = setTimeout(() => {
-      void renderRotatedPreview(image, rotation).then((url) => {
-        if (cancelled) return;
-        setRotatedSrc(url);
-      });
-    }, 200);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [naturalSize, rotation]);
-
-  // Revoke the previous object URL whenever rotatedSrc changes (including on unmount) —
-  // the cleanup below runs with the OLD value right before the effect re-fires.
-  useEffect(() => {
-    return () => {
-      if (rotatedSrc) URL.revokeObjectURL(rotatedSrc);
-    };
-  }, [rotatedSrc]);
-
   const apply = async () => {
-    if (!src || !naturalSize) return;
+    if (!src) return;
     setBaking(true);
     try {
-      const rotated = rotateSize(
-        naturalSize.width,
-        naturalSize.height,
-        rotation,
+      const canvas = cropperRef.current?.getCanvas();
+      if (!canvas) throw new Error("no canvas");
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, "image/jpeg", 0.9),
       );
-      const area = percentCropToPixelArea(
-        { x: crop.x, y: crop.y, width: crop.width, height: crop.height },
-        rotated.width,
-        rotated.height,
-      );
-      const file = await bakeImage(src, area, rotation, fileName);
-      onApply(file);
+      if (!blob) throw new Error("bake produced no blob");
+      onApply(new File([blob], fileName, { type: "image/jpeg" }));
       reset();
     } catch {
       // Tainted canvas (non-CORS remote), decode failure, or toBlob failure.
@@ -235,36 +155,15 @@ export function ImageEditorDialog({
           <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
-        <div className="bg-muted relative max-h-[60vh] w-full overflow-auto rounded-lg">
-          {rotatedSrc ? (
-            // Zoom is applied as a layout width on the ReactCrop ROOT: its percentage
-            // resolves against the scroll pane (definite, no cyclic sizing), overriding
-            // the library's `max-width: 100%` so the root outgrows the pane and pans via
-            // scroll. The img then fills the root with w-full, so the ReactCrop child
-            // wrapper (overflow: hidden) never clips and the overlay stays aligned.
-            // Zooming the img itself would NOT work: percentage children count as auto
-            // in the inline-block root's shrink-to-fit width, so the enlarged img would
-            // overflow the child wrapper and be clipped. At zoom 1 the whole image fits
-            // the pane unscrolled, as before zoom existed.
-            <ReactCrop
-              crop={crop}
-              onChange={(_pixelCrop, percentCrop) => setCrop(percentCrop)}
-              style={
-                zoom > 1
-                  ? { width: `${zoom * 100}%`, maxWidth: "none" }
-                  : undefined
-              }
-            >
-              <img
-                src={rotatedSrc}
-                alt=""
-                className={
-                  zoom > 1
-                    ? "block w-full"
-                    : "block max-h-[60vh] w-full object-contain"
-                }
-              />
-            </ReactCrop>
+        <div className="bg-muted overflow-hidden rounded-lg">
+          {src ? (
+            <Cropper
+              ref={cropperRef}
+              src={src}
+              crossOrigin="anonymous"
+              className="h-[60vh] max-h-[60vh] w-full"
+              onReady={() => setLoaded(true)}
+            />
           ) : (
             <div className="h-72 w-full" />
           )}
@@ -295,21 +194,12 @@ export function ImageEditorDialog({
           </Button>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Label className="w-16 shrink-0 text-xs">{t("zoom")}</Label>
-          <Slider
-            aria-label={t("zoom")}
-            min={1}
-            max={4}
-            step={0.1}
-            value={[zoom]}
-            onValueChange={([value]) => setZoom(value)}
-          />
+        <div className="flex justify-end">
           <Button
             type="button"
             variant="outline"
             size="sm"
-            disabled={rotatedSrc === null || baking}
+            disabled={!loaded || baking}
             onClick={() => void runAutoCrop()}
           >
             {t("autoCrop")}
@@ -331,7 +221,7 @@ export function ImageEditorDialog({
           <Button
             type="button"
             variant="brand"
-            disabled={baking || rotatedSrc === null}
+            disabled={baking || !loaded}
             onClick={() => void apply()}
           >
             {baking ? t("applying") : t("apply")}

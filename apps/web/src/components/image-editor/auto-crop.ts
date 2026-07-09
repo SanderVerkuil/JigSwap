@@ -1,9 +1,14 @@
-import type { PixelArea } from "./crop-math";
-
 // Border-trim detection for the image editor's "Auto crop": given RGBA pixel data
 // (ImageData.data layout), find the bounding box of CONTENT — pixels that are not
 // background, where background = (nearly) transparent, near-white, or near-black.
 // Returns null when there is no content or nothing would be trimmed.
+
+export interface PixelArea {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 export interface AutoCropOptions {
   alphaThreshold: number; // a < this ⇒ background (default 8)

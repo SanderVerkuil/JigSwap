@@ -2704,10 +2704,9 @@
   },
   "imageEditor": {
     "title": "Foto bewerken",
-    "description": "Sleep om het bij te snijden gebied te kiezen; draai indien nodig. De bewerkte foto vervangt het origineel zodra je het formulier opslaat.",
+    "description": "Sleep om te verplaatsen, scroll of knijp om te zoomen en versleep het kader om bij te snijden. De bewerkte foto vervangt het origineel zodra je het formulier opslaat.",
     "rotation": "Rotatie",
     "rotate90": "90° draaien",
-    "zoom": "Zoom",
     "autoCrop": "Automatisch bijsnijden",
     "apply": "Toepassen",
     "applying": "Toepassen…",
