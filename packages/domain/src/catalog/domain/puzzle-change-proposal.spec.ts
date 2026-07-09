@@ -208,3 +208,36 @@ describe("rehydrate/toState round-trip", () => {
     expect(back.pullEvents()).toEqual([]);
   });
 });
+
+describe("getters", () => {
+  it("expose id, puzzleDefinitionId, proposedBy, status and changes", () => {
+    const proposal = file();
+    expect(proposal.id).toBe(id);
+    expect(proposal.puzzleDefinitionId).toBe(definitionId);
+    expect(proposal.proposedBy).toBe(proposer);
+    expect(proposal.status).toBe("pending");
+    expect(proposal.changes).toEqual({ title: "Corrected Title" });
+  });
+});
+
+describe("hasAnyChange with only explicitly-undefined members", () => {
+  it("rejects filing a diff whose only keys are explicitly undefined", () => {
+    const r = PuzzleChangeProposal.file({
+      id,
+      puzzleDefinitionId: definitionId,
+      proposedBy: proposer,
+      changes: { title: undefined, brand: undefined },
+      baseline: {},
+      now: NOW,
+    });
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("EmptyProposal");
+  });
+
+  it("rejects editing to a diff whose only keys are explicitly undefined", () => {
+    const proposal = file();
+    const r = proposal.edit({ title: undefined }, {}, undefined, LATER);
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("EmptyProposal");
+  });
+});

@@ -5,6 +5,7 @@ import {
   toPuzzleDefinitionId,
   toSubmitterId,
 } from "../../shared-kernel";
+import { ALLOWED_APPROVAL_TRANSITIONS } from "./approval";
 import { PuzzleDefinitionSubmitted } from "./events";
 
 import {
@@ -133,6 +134,10 @@ describe("approval lifecycle", () => {
     const rejected = submit();
     rejected.reject(NOW);
     expect(rejected.approve(LATER).isErr).toBe(true);
+  });
+
+  it("rejected is a terminal approval status with no outgoing moves", () => {
+    expect(ALLOWED_APPROVAL_TRANSITIONS.rejected).toEqual([]);
   });
 });
 

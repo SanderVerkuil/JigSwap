@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toPuzzleDefinitionId, toSubmitterId } from "../../../shared-kernel";
-import { PuzzleDefinition } from "../../domain";
+import {
+  toChangeProposalId,
+  toPuzzleDefinitionId,
+  toSubmitterId,
+} from "../../../shared-kernel";
+import { PuzzleChangeProposal, PuzzleDefinition } from "../../domain";
 import {
   FixedClock,
   InMemoryChangeProposalRepository,
@@ -232,6 +236,27 @@ describe("makeEditChangeProposal", () => {
     expect(r.isErr).toBe(true);
     if (r.isErr) expect(r.error.code).toBe("ProposalNotPending");
   });
+
+  it("fails with PuzzleDefinitionNotFound when the target definition has disappeared", async () => {
+    await seedDefinition();
+    const file = makeFileChangeProposal(deps());
+    const filed = await file({
+      puzzleDefinitionId: definitionId,
+      proposedBy: alice,
+      changes: { title: "First idea" },
+    });
+    if (!filed.isOk) throw new Error("setup failed");
+    // Sabotage: the definition disappears between filing and editing.
+    definitions = new InMemoryPuzzleDefinitionRepository();
+
+    const edit = makeEditChangeProposal(deps());
+    const r = await edit({
+      changeProposalId: filed.value,
+      changes: { pieceCount: 500 },
+    });
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("PuzzleDefinitionNotFound");
+  });
 });
 
 describe("makeWithdrawChangeProposal", () => {
@@ -272,6 +297,33 @@ describe("makeWithdrawChangeProposal", () => {
       changes: { title: "Y" },
     });
     expect(again.isOk).toBe(true);
+  });
+
+  it("fails with ChangeProposalNotFound for an unknown id", async () => {
+    const withdraw = makeWithdrawChangeProposal(deps());
+    const r = await withdraw({ changeProposalId: ids.nextChangeProposalId() });
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("ChangeProposalNotFound");
+  });
+
+  it("cannot withdraw a proposal twice, and publishes nothing on the second attempt", async () => {
+    await seedDefinition();
+    const file = makeFileChangeProposal(deps());
+    const filed = await file({
+      puzzleDefinitionId: definitionId,
+      proposedBy: alice,
+      changes: { title: "X" },
+    });
+    if (!filed.isOk) throw new Error("setup failed");
+
+    const withdraw = makeWithdrawChangeProposal(deps());
+    await withdraw({ changeProposalId: filed.value });
+    events.published.length = 0;
+
+    const again = await withdraw({ changeProposalId: filed.value });
+    expect(again.isErr).toBe(true);
+    if (again.isErr) expect(again.error.code).toBe("IllegalProposalTransition");
+    expect(events.published).toEqual([]);
   });
 });
 
@@ -345,6 +397,36 @@ describe("makeApproveChangeProposal", () => {
     expect((await proposals.findById(proposalId))!.status).toBe("pending");
     expect(events.published).toEqual([]);
   });
+
+  it("saves NOTHING when the definition rejects the patch (invalid stored proposal)", async () => {
+    await seedDefinition();
+    // Bypass file()'s own validation to get an invalid diff into storage — rehydrate a
+    // proposal directly rather than going through PuzzleChangeProposal.file(), so
+    // definition.update() is the one that fails, not the proposal aggregate.
+    const badProposal = PuzzleChangeProposal.rehydrate({
+      id: toChangeProposalId("cp-bad"),
+      puzzleDefinitionId: definitionId,
+      proposedBy: alice,
+      status: "pending",
+      changes: { title: "   " },
+      baseline: {},
+      createdAt: NOW,
+      updatedAt: NOW,
+    });
+    await proposals.save(badProposal);
+
+    const approve = makeApproveChangeProposal(deps());
+    const r = await approve({ changeProposalId: badProposal.id });
+
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("EmptyTitle");
+    // The proposal is untouched (still pending), the definition untouched, nothing published.
+    expect((await proposals.findById(badProposal.id))!.status).toBe("pending");
+    expect((await definitions.findById(definitionId))!.toState().title).toBe(
+      "Starry Night",
+    );
+    expect(events.published).toEqual([]);
+  });
 });
 
 describe("makeRejectChangeProposal", () => {
@@ -372,5 +454,29 @@ describe("makeRejectChangeProposal", () => {
       "Starry Night",
     );
     expect(events.names()).toEqual(["ChangeProposalRejected"]);
+  });
+
+  it("fails with ChangeProposalNotFound for an unknown id", async () => {
+    const reject = makeRejectChangeProposal(deps());
+    const r = await reject({ changeProposalId: ids.nextChangeProposalId() });
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("ChangeProposalNotFound");
+  });
+
+  it("cannot reject an already-withdrawn proposal", async () => {
+    await seedDefinition();
+    const filed = await makeFileChangeProposal(deps())({
+      puzzleDefinitionId: definitionId,
+      proposedBy: alice,
+      changes: { title: "Wrong idea" },
+    });
+    if (!filed.isOk) throw new Error("setup failed");
+    const withdraw = makeWithdrawChangeProposal(deps());
+    await withdraw({ changeProposalId: filed.value });
+
+    const reject = makeRejectChangeProposal(deps());
+    const r = await reject({ changeProposalId: filed.value });
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("IllegalProposalTransition");
   });
 });
