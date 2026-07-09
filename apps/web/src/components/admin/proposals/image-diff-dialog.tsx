@@ -68,7 +68,7 @@ export function ImageDiffDialog({
             ]}
             value={mode}
             onChange={setMode}
-            ariaLabel={title}
+            ariaLabel={t("imageCompare.title")}
           />
         )}
 
