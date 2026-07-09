@@ -8,6 +8,7 @@ import { availabilityToSharing } from "@/components/add-puzzle";
 import { EditCopyDialog } from "@/components/copies/edit-copy-dialog";
 import { PhotoLightbox } from "@/components/copies/photo-lightbox";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import { ImageEditorDialog } from "@/components/image-editor/image-editor-dialog";
 import { EmptyState } from "@/components/library/empty-state";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -704,6 +705,10 @@ function PhotoStrip({
   const inputRef = useRef<HTMLInputElement>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [editing, setEditing] = useState<{
+    src: string;
+    fileName: string;
+  } | null>(null);
   const generateUploadUrl = useConvexMutation(
     gateway.library.generateUploadUrl,
   );
@@ -712,6 +717,15 @@ function PhotoStrip({
   const openLightbox = (index: number) => {
     setActiveIndex(index);
     setLightboxOpen(true);
+  };
+
+  // Edit-before-upload: a picked file opens the editor on an object URL instead of
+  // uploading directly; onApply forwards the baked File to the existing upload
+  // pipeline below. The object URL is only ever used for the editor preview, so it's
+  // safe to revoke as soon as the dialog closes (cancel) or apply hands off a baked File.
+  const closeEditor = () => {
+    if (editing) URL.revokeObjectURL(editing.src);
+    setEditing(null);
   };
 
   // Photo upload: ask Convex for a one-shot upload URL, POST the blob to it, then
@@ -798,7 +812,13 @@ function PhotoStrip({
             disabled={uploading}
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) uploadPhoto.mutate(file);
+              if (file) {
+                setEditing({
+                  src: URL.createObjectURL(file),
+                  fileName: file.name,
+                });
+              }
+              e.target.value = "";
             }}
           />
         </label>
@@ -818,6 +838,15 @@ function PhotoStrip({
           coverImageId={coverImageId}
         />
       )}
+      <ImageEditorDialog
+        src={editing?.src ?? null}
+        fileName={editing?.fileName ?? "photo.jpg"}
+        onApply={(file) => {
+          uploadPhoto.mutate(file);
+          closeEditor();
+        }}
+        onClose={closeEditor}
+      />
     </div>
   );
 }
