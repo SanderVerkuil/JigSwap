@@ -30,6 +30,7 @@ import {
   ChevronRight,
   Heart,
   MessageCircle,
+  Pencil,
   Plus,
   Star,
 } from "lucide-react";
@@ -46,7 +47,7 @@ type PuzzleReview = FunctionReturnType<
   typeof gateway.social.listPuzzleReviews
 >[number];
 
-export const Route = createFileRoute("/_dashboard/puzzles/$id")({
+export const Route = createFileRoute("/_dashboard/puzzles/$id/")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "puzzle") }],
   }),
@@ -280,6 +281,13 @@ function PuzzleDefinitionDetail({
                 )}
               />
               {favoriteLabel}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => router.push(`/puzzles/${puzzleId}/suggest-edit`)}
+            >
+              <Pencil className="h-4 w-4" />
+              {t("suggestEdit")}
             </Button>
           </div>
         </div>

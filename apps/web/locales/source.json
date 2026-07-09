@@ -2641,6 +2641,7 @@
   "puzzleDefinition": {
     "notFound": "Puzzle not found",
     "notFoundSub": "This puzzle may have been removed from the catalog, or the link is wrong.",
+    "suggestEdit": "Suggest an edit",
     "eyebrow": "Catalog · Puzzle Definition",
     "communityOwners": "community owners",
     "totalCompletions": "total completions",
