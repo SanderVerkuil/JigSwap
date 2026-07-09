@@ -66,6 +66,8 @@ interface PuzzleCardProps {
    * "/my-puzzles" so the owner sees their own gated copy route.
    */
   viewBasePath?: string;
+  /** Appended verbatim to the view link (e.g. `?from=collection:<id>`) for contextual breadcrumbs. */
+  viewSearch?: string;
   /** Cover image fit: "cover" crops (default), "contain" shows the full image. */
   imageFit?: "cover" | "contain";
   onDelete?: (puzzleId: Id<"ownedPuzzles">) => void;
@@ -243,6 +245,7 @@ export function PuzzleCard({
   onEdit,
   onView: _onView,
   viewBasePath = "/copies",
+  viewSearch,
   imageFit,
   onDelete,
   onRemove,
@@ -456,7 +459,7 @@ export function PuzzleCard({
       // selection action, so a navigating cover link would hijack it.
       imageHref={
         variant !== "selection" && variant !== "pick" && viewBasePath && ownedId
-          ? `${viewBasePath}/${ownedId}`
+          ? `${viewBasePath}/${ownedId}${viewSearch ?? ""}`
           : undefined
       }
       imageFit={imageFit}

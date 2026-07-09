@@ -7,6 +7,10 @@ import { useRouter } from "@/compat/navigation";
 import { availabilityToSharing } from "@/components/add-puzzle";
 import { EditCopyDialog } from "@/components/copies/edit-copy-dialog";
 import { PhotoLightbox } from "@/components/copies/photo-lightbox";
+import {
+  parseNavContext,
+  type NavContext,
+} from "@/components/dashboard-layout/nav-context";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { ImageEditorDialog } from "@/components/image-editor/image-editor-dialog";
 import { EmptyState } from "@/components/library/empty-state";
@@ -53,12 +57,26 @@ export const Route = createFileRoute("/_dashboard/copies/$id")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "copyInstance") }],
   }),
+  // The page reads ?from off the URL — a typed navigation-context param set by
+  // links that want contextual breadcrumbs (e.g. a collection's puzzle grid).
+  // Unknown/malformed values parse to null downstream and the page falls back
+  // to its canonical breadcrumb trail.
+  validateSearch: (search: Record<string, unknown>): { from?: string } => ({
+    from: typeof search.from === "string" ? search.from : undefined,
+  }),
   component: CopyInstancePage,
 });
 
 function CopyInstancePage() {
   const { id } = Route.useParams();
-  return <CopyInstanceScreen copyId={id} owned={false} />;
+  const { from } = Route.useSearch();
+  return (
+    <CopyInstanceScreen
+      copyId={id}
+      owned={false}
+      navContext={parseNavContext(from)}
+    />
+  );
 }
 
 // Shared copy-detail screen used by BOTH the public route (/copies/$id, owned=false)
@@ -68,9 +86,12 @@ function CopyInstancePage() {
 export function CopyInstanceScreen({
   copyId,
   owned,
+  navContext = null,
 }: {
   copyId: string;
   owned: boolean;
+  /** Parsed `?from=` context (e.g. arrived from a collection); null when absent/malformed. */
+  navContext?: NavContext | null;
 }) {
   const router = useRouter();
   const { data: copy, isPending: copyPending } = useQuery(
@@ -92,7 +113,14 @@ export function CopyInstanceScreen({
     return <CopyInstanceNotFound />;
   }
 
-  return <CopyInstanceDetail copy={copy} copyId={copyId} owned={owned} />;
+  return (
+    <CopyInstanceDetail
+      copy={copy}
+      copyId={copyId}
+      owned={owned}
+      navContext={navContext}
+    />
+  );
 }
 
 function CopyInstanceSkeleton() {
@@ -151,10 +179,12 @@ function CopyInstanceDetail({
   copy,
   copyId,
   owned,
+  navContext,
 }: {
   copy: CopyInstanceView;
   copyId: string;
   owned: boolean;
+  navContext: NavContext | null;
 }) {
   const router = useRouter();
   const t = useTranslations("copyInstance");
@@ -195,20 +225,45 @@ function CopyInstanceDetail({
     }
   };
 
+  // When the arriving link carried `?from=collection:<id>`, resolve that collection so the
+  // page head can show contextual breadcrumbs instead of the canonical trail below. Skipped
+  // (no query) when there's no context; unreadable/missing collections resolve to null and
+  // the canonical trail applies exactly as if there were no context at all.
+  const { data: navCollection } = useQuery(
+    convexQuery(
+      gateway.collections.byId,
+      navContext
+        ? { collectionId: navContext.id as Id<"collections"> }
+        : "skip",
+    ),
+  );
+
   // Publish the page head: the puzzle name as the title (replacing the generic
   // "Owned copy"), the breadcrumb trail, and the owner-only Edit action. For the
   // owner route (owned) the crumbs are left to the shell's auto trail (My Library ›
   // My Puzzles › <name>, since /my-puzzles/$id's pageKey matches the nav item);
   // the public route publishes an explicit Community › Owned Copies › <name> trail.
+  // A readable `?from=collection:<id>` context overrides both with My Library ›
+  // Collections › <name> and highlights Collections in the sidebar; no context (or an
+  // unreadable/malformed one) falls back to the behavior above, byte-identical.
   usePageHeader(
     () => ({
       title: snapshot.title,
-      crumbs: owned
-        ? undefined
-        : [
-            { label: tShell("groups.community.label"), href: "/community" },
-            { label: tShell("crumbs.ownedCopies"), href: "/browse" },
-          ],
+      crumbs: navCollection
+        ? [
+            { label: tShell("groups.library.label"), href: "/library" },
+            { label: tShell("pages.collections.title"), href: "/collections" },
+            {
+              label: navCollection.name,
+              href: `/collections/${navContext?.id}`,
+            },
+          ]
+        : owned
+          ? undefined
+          : [
+              { label: tShell("groups.community.label"), href: "/community" },
+              { label: tShell("crumbs.ownedCopies"), href: "/browse" },
+            ],
       actions: copy.viewerIsOwner ? (
         <Button variant="outline" onClick={() => setEditOpen(true)}>
           <Edit className="h-4 w-4" />
@@ -217,10 +272,23 @@ function CopyInstanceDetail({
       ) : null,
       // Neither /copies/$id nor /my-puzzles/$id matches a nav item's href, so the
       // sidebar's pathname-prefix match would highlight nothing; override with the
-      // nav item that frames this copy for the current viewer.
-      activeNavKey: copy.viewerIsOwner ? "myPuzzles" : "browse",
+      // nav item that frames this copy for the current viewer (or Collections when
+      // arriving from one via the resolved nav context).
+      activeNavKey: navCollection
+        ? "collections"
+        : copy.viewerIsOwner
+          ? "myPuzzles"
+          : "browse",
     }),
-    [snapshot.title, owned, copy.viewerIsOwner, t, tShell],
+    [
+      snapshot.title,
+      owned,
+      copy.viewerIsOwner,
+      t,
+      tShell,
+      navContext?.id,
+      navCollection,
+    ],
   );
 
   const formatDay = (timestamp: number) =>

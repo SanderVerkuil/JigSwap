@@ -378,6 +378,7 @@ function CollectionDetailPage() {
               puzzle={puzzle}
               variant="collection"
               onRemove={handleRemovePuzzle}
+              viewSearch={`?from=collection:${id}`}
             />
           ))}
         </PuzzleViewProvider>
