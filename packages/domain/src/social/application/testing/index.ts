@@ -1,5 +1,6 @@
 export * from "./fixed-clock";
 export * from "./in-memory-comment.repository";
+export * from "./in-memory-follow-request.repository";
 export * from "./in-memory-follow.repository";
 export * from "./in-memory-photo-comment.repository";
 export * from "./in-memory-profile.repository";

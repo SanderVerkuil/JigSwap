@@ -1,6 +1,7 @@
 import {
   CommentId,
   FollowId,
+  FollowRequestId,
   PhotoCommentId,
   ProfileId,
 } from "../../../domain";
@@ -22,4 +23,8 @@ export interface CommentIdGenerator {
 
 export interface PhotoCommentIdGenerator {
   next(): PhotoCommentId;
+}
+
+export interface FollowRequestIdGenerator {
+  next(): FollowRequestId;
 }
