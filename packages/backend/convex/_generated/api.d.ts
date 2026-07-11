@@ -128,6 +128,7 @@ import type * as identity_getUserById from "../identity/getUserById.js";
 import type * as identity_getUserStats from "../identity/getUserStats.js";
 import type * as identity_isAdmin from "../identity/isAdmin.js";
 import type * as identity_isCurrentUserAdmin from "../identity/isCurrentUserAdmin.js";
+import type * as identity_optionalActingMember from "../identity/optionalActingMember.js";
 import type * as identity_requireMember from "../identity/requireMember.js";
 import type * as identity_searchUsers from "../identity/searchUsers.js";
 import type * as identity_toMemberView from "../identity/toMemberView.js";
@@ -429,6 +430,7 @@ declare const fullApi: ApiFromModules<{
   "identity/getUserStats": typeof identity_getUserStats;
   "identity/isAdmin": typeof identity_isAdmin;
   "identity/isCurrentUserAdmin": typeof identity_isCurrentUserAdmin;
+  "identity/optionalActingMember": typeof identity_optionalActingMember;
   "identity/requireMember": typeof identity_requireMember;
   "identity/searchUsers": typeof identity_searchUsers;
   "identity/toMemberView": typeof identity_toMemberView;

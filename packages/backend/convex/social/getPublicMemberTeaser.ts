@@ -1,22 +1,8 @@
 import type { PublicMemberTeaserView } from "@jigswap/contracts";
 import { v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
-import { query, type QueryCtx } from "../_generated/server";
+import { query } from "../_generated/server";
+import { optionalActingMember } from "../identity/optionalActingMember";
 import { profileVisibilityOf } from "./privacy";
-
-// Resolve the acting member from auth WITHOUT throwing (mirrors catalog/getPuzzleById): an
-// unauthenticated caller simply yields null. Used only to decide avatar disclosure below.
-const optionalActingMember = async (
-  ctx: QueryCtx,
-): Promise<Id<"users"> | null> => {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) return null;
-  const user = await ctx.db
-    .query("users")
-    .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-    .unique();
-  return user?._id ?? null;
-};
 
 // The UNAUTHENTICATED read behind /members/$handle. Deliberately tiny: identity fields only —
 // never bio, shelf, stats, or location. A private member IS disclosed by name on their own direct

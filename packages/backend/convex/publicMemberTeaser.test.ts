@@ -139,6 +139,16 @@ describe("getPublicMemberTeaser", () => {
     ).toBeNull();
   });
 
+  test("inactive member is also hidden when resolved by id (fallback branch)", async () => {
+    const t = convexTest(schema, modules);
+    const { dave } = await seed(t);
+    expect(
+      await t.query(api.social.getPublicMemberTeaser.getPublicMemberTeaser, {
+        handle: dave,
+      }),
+    ).toBeNull();
+  });
+
   test("private member: named, but no puzzleCount and no unconsented avatar (anonymous caller)", async () => {
     const t = convexTest(schema, modules);
     await seed(t);

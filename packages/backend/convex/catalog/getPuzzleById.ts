@@ -1,24 +1,9 @@
 import type { PuzzleDefinitionView } from "@jigswap/contracts";
 import { v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
-import { query, type QueryCtx } from "../_generated/server";
+import { query } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
+import { optionalActingMember } from "../identity/optionalActingMember";
 import { toPuzzleDefinitionView } from "./mappers";
-
-// Resolve the acting member from auth WITHOUT throwing (unlike requireMember): an unauthenticated
-// caller, or one whose Clerk subject has no user row, simply yields null. Used only to decide
-// whether a NON-approved definition may be disclosed to its submitter.
-const optionalActingMember = async (
-  ctx: QueryCtx,
-): Promise<Id<"users"> | null> => {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) return null;
-  const user = await ctx.db
-    .query("users")
-    .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-    .unique();
-  return user?._id ?? null;
-};
 
 // Catalog read: a single puzzle definition by Convex id, with its box-art URL resolved. Returns a
 // typed DTO instead of the raw row.
