@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { toMemberId } from "../../../shared-kernel";
-import { Follow } from "../../domain";
+import { Follow, FollowRequest } from "../../domain";
 import {
   FixedClock,
   InMemoryFollowRepository,
@@ -121,6 +121,35 @@ describe("makeRequestFollow", () => {
     if (again.isOk) expect(again.value).not.toBe(first.value);
     const fresh = await requests.findByPair(alice, bob);
     expect(fresh?.status).toBe("pending");
+  });
+
+  it("replaces a stale approved row immediately (cooldown applies only to declines)", async () => {
+    // An approved request whose Follow edge was later removed by an unfollow: the follows
+    // repo is EMPTY (otherwise the already-following rejection fires first), only the stale
+    // approved row remains. Seeded directly so the event recorder stays clean.
+    const seeded = FollowRequest.request({
+      id: requestIds.next(),
+      requesterId: alice,
+      targetId: bob,
+      now: NOW,
+    });
+    if (seeded.isErr) throw new Error("setup");
+    if (seeded.value.approve(NOW).isErr) throw new Error("setup");
+    await requests.save(seeded.value);
+
+    build(new Date(NOW.getTime() + 1000)); // well within COOLDOWN_MS
+    const again = await request({ requesterId: alice, targetId: bob });
+    expect(again.isOk).toBe(true);
+    if (again.isOk) expect(again.value).not.toBe(seeded.value.id);
+    expect(requests.size()).toBe(1); // old approved row gone, fresh row in its place
+    const fresh = await requests.findByPair(alice, bob);
+    expect(fresh?.status).toBe("pending");
+    expect(events.names()).toEqual(["FollowRequested"]);
+  });
+
+  it("pins the cooldown constant at exactly 7 days", () => {
+    // Literal on the expected side so an arithmetic mutant in the formula cannot survive.
+    expect(COOLDOWN_MS).toBe(604_800_000);
   });
 
   it("rejects a self-request", async () => {
