@@ -1423,6 +1423,16 @@
     "yourNetwork": "Jouw Netwerk",
     "memberCount": "{count, plural, one {# lid} other {# leden}}",
     "followsYou": "Volgt jou",
+    "requests": {
+      "title": "Volgverzoeken",
+      "subtitle": "{count, plural, one {# lid wil} other {# leden willen}} je volgen",
+      "approve": "Goedkeuren",
+      "approveAndFollowBack": "Goedkeuren & terugvolgen",
+      "decline": "Weigeren",
+      "approved": "Verzoek goedgekeurd",
+      "declined": "Verzoek geweigerd",
+      "error": "Er ging iets mis. Probeer het opnieuw."
+    },
     "ownedLabel": "in bezit",
     "swapsLabel": "ruilen",
     "activity": "Activiteit",

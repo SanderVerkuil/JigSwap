@@ -1423,6 +1423,16 @@
     "yourNetwork": "Your Network",
     "memberCount": "{count, plural, one {# member} other {# members}}",
     "followsYou": "Follows you",
+    "requests": {
+      "title": "Follow requests",
+      "subtitle": "{count, plural, one {# member wants} other {# members want}} to follow you",
+      "approve": "Approve",
+      "approveAndFollowBack": "Approve & follow back",
+      "decline": "Decline",
+      "approved": "Request approved",
+      "declined": "Request declined",
+      "error": "Something went wrong. Please try again."
+    },
     "ownedLabel": "owned",
     "swapsLabel": "swaps",
     "activity": "Activity",
