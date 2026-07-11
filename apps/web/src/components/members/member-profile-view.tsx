@@ -11,6 +11,7 @@ import { MessageButton } from "@/components/social/message-button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
+import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
@@ -54,15 +55,18 @@ export function MemberProfileView({ member }: { member: MemberView }) {
       {stats === undefined ? (
         <Skeleton className="h-16 w-full" />
       ) : stats === null ? null : (
-        <div className="grid grid-cols-3 divide-x rounded-lg border">
+        // Open, card-free stat row (matches ProfileStatsSection / StatsBar): big
+        // font-heading figures straight on the page ground, hairline dividers.
+        <div className="grid grid-cols-3">
           <StatCell value={stats.puzzlesOwned} label={tPeople("ownedLabel")} />
           <StatCell
             value={stats.tradesCompleted}
             label={tPeople("swapsLabel")}
+            className="border-l"
           />
-          <div className="flex flex-col items-center gap-0.5 p-4">
-            <span className="inline-flex items-center gap-1 text-xl font-bold">
-              <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+          <div className="border-l px-3 text-center">
+            <span className="font-heading text-jigsaw-primary inline-flex items-center gap-1.5 text-4xl leading-none font-bold">
+              <Star className="size-6 fill-amber-400 text-amber-400" />
               {stats.totalReviews > 0 ? stats.averageRating.toFixed(1) : "–"}
             </span>
           </div>
@@ -105,11 +109,21 @@ export function MemberProfileView({ member }: { member: MemberView }) {
   );
 }
 
-function StatCell({ value, label }: { value: number; label: string }) {
+function StatCell({
+  value,
+  label,
+  className,
+}: {
+  value: number;
+  label: string;
+  className?: string;
+}) {
   return (
-    <div className="flex flex-col items-center gap-0.5 p-4">
-      <span className="text-xl font-bold">{value}</span>
-      <span className="text-muted-foreground text-xs">{label}</span>
+    <div className={cn("px-3 text-center", className)}>
+      <div className="font-heading text-jigsaw-primary text-4xl leading-none font-bold">
+        {value}
+      </div>
+      <div className="text-muted-foreground mt-2 text-sm">{label}</div>
     </div>
   );
 }

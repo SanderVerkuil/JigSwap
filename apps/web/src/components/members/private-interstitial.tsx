@@ -6,11 +6,9 @@
 // replaces this button in Phase 2. No Message button — messaging is
 // connection-gated anyway.
 
-import {
-  PrivateProfileCard,
-  type PublicMemberTeaserView,
-} from "@/components/members/logged-out-teaser";
+import { type PublicMemberTeaserView } from "@/components/members/logged-out-teaser";
 import { MemberIdentityHeader } from "@/components/members/member-identity-header";
+import { PrivateProfileCard } from "@/components/members/private-profile-card";
 import { FollowButton } from "@/components/social/follow-button";
 import { Id } from "@/gateway";
 
