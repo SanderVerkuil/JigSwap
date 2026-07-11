@@ -3,6 +3,7 @@ import { Id } from "../../shared-kernel";
 // This context's own aggregate identities.
 export type ProfileId = Id<"ProfileId">;
 export type FollowId = Id<"FollowId">;
+export type FollowRequestId = Id<"FollowRequestId">;
 export type CommentId = Id<"CommentId">;
 export type PhotoCommentId = Id<"PhotoCommentId">;
 

@@ -7,6 +7,7 @@ import { DomainError } from "../../shared-kernel";
 // the repository and are orchestration concerns that live in the application layer, not here.
 export type SocialErrorCode =
   | "SelfFollow"
+  | "RequestNotPending"
   | "InvalidDisplayName"
   | "EmptyCommentText"
   | "InvalidCommentRating";
@@ -24,6 +25,14 @@ export class SocialError extends DomainError {
   // A member cannot follow themselves: follower and followee must differ.
   static selfFollow(): SocialError {
     return new SocialError("SelfFollow", "A member cannot follow themselves");
+  }
+
+  // A follow request can only be approved or declined while it is still pending.
+  static requestNotPending(): SocialError {
+    return new SocialError(
+      "RequestNotPending",
+      "This follow request has already been resolved",
+    );
   }
 
   // A profile display name was empty or whitespace-only after trimming.
