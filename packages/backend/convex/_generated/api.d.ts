@@ -266,6 +266,7 @@ import type * as social_featuredShelf from "../social/featuredShelf.js";
 import type * as social_followMember from "../social/followMember.js";
 import type * as social_getActivityFeed from "../social/getActivityFeed.js";
 import type * as social_getProfile from "../social/getProfile.js";
+import type * as social_getPublicMemberTeaser from "../social/getPublicMemberTeaser.js";
 import type * as social_isFollowing from "../social/isFollowing.js";
 import type * as social_listFollowees from "../social/listFollowees.js";
 import type * as social_listFollowers from "../social/listFollowers.js";
@@ -566,6 +567,7 @@ declare const fullApi: ApiFromModules<{
   "social/followMember": typeof social_followMember;
   "social/getActivityFeed": typeof social_getActivityFeed;
   "social/getProfile": typeof social_getProfile;
+  "social/getPublicMemberTeaser": typeof social_getPublicMemberTeaser;
   "social/isFollowing": typeof social_isFollowing;
   "social/listFollowees": typeof social_listFollowees;
   "social/listFollowers": typeof social_listFollowers;

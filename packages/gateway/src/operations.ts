@@ -253,6 +253,7 @@ export const gateway = {
     follow: api.social.followMember.followMember,
     unfollow: api.social.unfollowMember.unfollowMember,
     profile: api.social.getProfile.getProfile,
+    publicMemberTeaser: api.social.getPublicMemberTeaser.getPublicMemberTeaser,
     followers: api.social.listFollowers.listFollowers,
     following: api.social.listFollowees.listFollowees,
     isFollowing: api.social.isFollowing.isFollowing,
