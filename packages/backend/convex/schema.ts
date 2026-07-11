@@ -891,6 +891,30 @@ export default defineSchema({
     .index("by_follower_followee", ["followerId", "followeeId"])
     .index("by_aggregate_id", ["aggregateId"]),
 
+  // Social: a member's shareable invite link. One ACTIVE row per member (revokedAt undefined);
+  // resets revoke the old row and insert a new one so historical counters survive. The token rides
+  // on the profile URL as ?invite=<token> (QR + share). Counters are the growth-loop metrics.
+  inviteLinks: defineTable({
+    ownerId: v.id("users"),
+    token: v.string(),
+    createdAt: v.number(),
+    revokedAt: v.optional(v.number()),
+    landingViews: v.number(),
+    signupsAttributed: v.number(),
+    followsEstablished: v.number(),
+  })
+    .index("by_owner", ["ownerId"])
+    .index("by_token", ["token"]),
+
+  // Social: one row per redeemed invite — makes redeemInvite idempotent per new member
+  // (by_new_member is checked before establishing the mutual follow).
+  inviteRedemptions: defineTable({
+    inviteLinkId: v.id("inviteLinks"),
+    inviterId: v.id("users"),
+    newMemberId: v.id("users"),
+    createdAt: v.number(),
+  }).index("by_new_member", ["newMemberId"]),
+
   // FollowRequest aggregate rows: a member asking to follow a private-profile member.
   // status pending → approved | declined; respondedAt backs the 7-day decline cooldown.
   // Declined rows are kept (not deleted) so a re-request inside the cooldown can be
