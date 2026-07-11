@@ -45,6 +45,7 @@ import type * as catalog_findPuzzleByBarcode from "../catalog/findPuzzleByBarcod
 import type * as catalog_getAllBrands from "../catalog/getAllBrands.js";
 import type * as catalog_getAllTags from "../catalog/getAllTags.js";
 import type * as catalog_getChangeProposal from "../catalog/getChangeProposal.js";
+import type * as catalog_getPublicDefinitionView from "../catalog/getPublicDefinitionView.js";
 import type * as catalog_getPuzzleById from "../catalog/getPuzzleById.js";
 import type * as catalog_getPuzzleCategories from "../catalog/getPuzzleCategories.js";
 import type * as catalog_getPuzzleSuggestions from "../catalog/getPuzzleSuggestions.js";
@@ -365,6 +366,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/getAllBrands": typeof catalog_getAllBrands;
   "catalog/getAllTags": typeof catalog_getAllTags;
   "catalog/getChangeProposal": typeof catalog_getChangeProposal;
+  "catalog/getPublicDefinitionView": typeof catalog_getPublicDefinitionView;
   "catalog/getPuzzleById": typeof catalog_getPuzzleById;
   "catalog/getPuzzleCategories": typeof catalog_getPuzzleCategories;
   "catalog/getPuzzleSuggestions": typeof catalog_getPuzzleSuggestions;
