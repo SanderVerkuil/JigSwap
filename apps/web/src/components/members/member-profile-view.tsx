@@ -6,9 +6,11 @@
 // All reads are the existing privacy-gated identity/social queries.
 
 import { MemberIdentityHeader } from "@/components/members/member-identity-header";
+import { SectionHead } from "@/components/puzzles/catalog-detail-parts";
+import { PuzzleCardShell } from "@/components/puzzles/puzzle-card-shell";
+import { PuzzleViewProvider } from "@/components/puzzles/puzzle-view-provider";
 import { FollowButton } from "@/components/social/follow-button";
 import { MessageButton } from "@/components/social/message-button";
-import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
 import { cn } from "@/lib/utils";
@@ -69,31 +71,37 @@ export function MemberProfileView({ member }: { member: MemberView }) {
               <Star className="size-6 fill-amber-400 text-amber-400" />
               {stats.totalReviews > 0 ? stats.averageRating.toFixed(1) : "–"}
             </span>
+            <div className="text-muted-foreground mt-2 text-sm">
+              {t("ratingLabel")}
+            </div>
           </div>
         </div>
       )}
 
       {shelf && shelf.length > 0 && (
-        <section className="flex flex-col gap-3">
-          <h2 className="font-heading text-xl">{t("shelfTitle")}</h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <section>
+          <SectionHead
+            icon={<Star className="size-5" />}
+            title={t("shelfTitle")}
+          />
+          {/* App idiom: the shared PuzzleCardShell in the auto-fill puzzle grid,
+              so featured copies read exactly like the catalogue/library cards. */}
+          <PuzzleViewProvider viewMode="grid">
             {shelf.map((copy) => (
-              <Card key={copy._id} className="overflow-hidden p-0">
-                {copy.coverUrl ? (
-                  <img
-                    src={copy.coverUrl}
-                    alt={copy.puzzle?.title ?? copy.snapshot?.title ?? ""}
-                    className="aspect-square w-full object-cover"
-                  />
-                ) : (
-                  <div className="bg-muted aspect-square w-full" />
-                )}
-                <p className="truncate p-2 text-sm font-medium">
-                  {copy.puzzle?.title ?? copy.snapshot?.title}
-                </p>
-              </Card>
+              <PuzzleCardShell
+                key={copy._id}
+                puzzle={{
+                  id: copy._id,
+                  title: copy.puzzle?.title ?? copy.snapshot?.title ?? "",
+                  brand: copy.puzzle?.brand,
+                  pieceCount: copy.puzzle?.pieceCount,
+                  difficulty: copy.puzzle?.difficulty,
+                  imageUrl: copy.coverUrl,
+                }}
+                imageHref={`/copies/${copy._id}`}
+              />
             ))}
-          </div>
+          </PuzzleViewProvider>
         </section>
       )}
 

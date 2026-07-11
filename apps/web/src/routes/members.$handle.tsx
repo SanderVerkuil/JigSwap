@@ -1,3 +1,4 @@
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { DashboardShell } from "@/components/dashboard-layout/shell";
 import { MarketingFooter } from "@/components/marketing/footer";
 import { MarketingHeader } from "@/components/marketing/header";
@@ -125,26 +126,48 @@ function AuthedMemberPage({
   memberId: Id<"users">;
   teaser: PublicMemberTeaserView;
 }) {
+  const tShell = useTranslations("shell");
   const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
   // Privacy-gated tier discriminator: getUserById returns null for a private
   // non-mutual target (and only then, for an existing active member). The hook
   // call stays unconditional (hook order); only its args become "skip" — while
-  // `me` is unresolved (can't tell self from other yet) and permanently on the
-  // self path, which redirects to /profile instead of rendering.
+  // `me` is still unresolved: either loading (undefined) or a Clerk session whose
+  // users row isn't provisioned yet (null, the post-signup race on the join CTA
+  // path — querying byId then would flood requireMember errors) — and permanently
+  // on the self path, which redirects to /profile instead of rendering.
   const { data: member } = useQuery(
     convexQuery(
       gateway.identity.byId,
-      me === undefined || me?._id === memberId ? "skip" : { userId: memberId },
+      !me || me._id === memberId ? "skip" : { userId: memberId },
     ),
   );
 
-  if (me === undefined) {
+  // Publish the shell page head for the authed full-profile surface: the member's
+  // display name as the leaf title under a Community › Members trail. The marketing
+  // shell (signed-out) path doesn't mount the page-header slot, so this is scoped to
+  // AuthedMemberPage. Hook stays above the early returns (hook order).
+  usePageHeader(
+    () => ({
+      title: teaser.displayName,
+      crumbs: [
+        { label: tShell("groups.community.label"), href: "/community" },
+        { label: tShell("pages.members.title"), href: "/people" },
+      ],
+      activeNavKey: "people",
+    }),
+    [teaser.displayName, tShell],
+  );
+
+  // `me` unresolved -> loading OR the post-signup provisioning race (null): both
+  // render pending (byId is skipped, so `member` stays undefined and resolves once
+  // `me` does); neither hangs.
+  if (!me) {
     return <MemberPending />;
   }
   // Own handle -> the single own-profile surface. Client-side (unlike the
   // loader's canonical username redirect): self-detection needs the authed
   // currentUser, which the public unauthenticated SSR loader doesn't have.
-  if (me && me._id === memberId) {
+  if (me._id === memberId) {
     return <Navigate to="/profile" replace />;
   }
   if (member === undefined) {
