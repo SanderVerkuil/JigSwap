@@ -1,6 +1,8 @@
+import { COOLDOWN_MS } from "@jigswap/domain";
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
@@ -31,6 +33,35 @@ const asAlice = (t: ReturnType<typeof convexTest>) =>
   t.withIdentity({ subject: "clerk_alice" });
 const asNewbie = (t: ReturnType<typeof convexTest>) =>
   t.withIdentity({ subject: "clerk_newbie" });
+
+const mutualEdges = (
+  t: ReturnType<typeof convexTest>,
+  a: Id<"users">,
+  b: Id<"users">,
+) =>
+  t.run(async (ctx) => {
+    const ab = await ctx.db
+      .query("follows")
+      .withIndex("by_follower_followee", (q) =>
+        q.eq("followerId", a).eq("followeeId", b),
+      )
+      .unique();
+    const ba = await ctx.db
+      .query("follows")
+      .withIndex("by_follower_followee", (q) =>
+        q.eq("followerId", b).eq("followeeId", a),
+      )
+      .unique();
+    return { ab: ab !== null, ba: ba !== null };
+  });
+
+const linkFor = (t: ReturnType<typeof convexTest>, token: string) =>
+  t.run((ctx) =>
+    ctx.db
+      .query("inviteLinks")
+      .withIndex("by_token", (q) => q.eq("token", token))
+      .unique(),
+  );
 
 describe("redeemInvite", () => {
   test("first redemption attributes signup and establishes the mutual follow", async () => {
@@ -122,5 +153,92 @@ describe("redeemInvite", () => {
         token,
       }),
     ).toEqual({ redeemed: false });
+  });
+
+  test("a forwarded token cannot bypass a declined-in-cooldown request (no mutual edge)", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, newbie } = await seedUsers(t);
+    const { token } = await asAlice(t).mutation(
+      api.social.getMyInviteLink.getMyInviteLink,
+      {},
+    );
+
+    // redeemInvite is normally new-member-only, but Convex mutations are PUBLIC endpoints: an
+    // existing member holding a forwarded token could call it directly. Here "newbie" stands in
+    // for that existing member who asked to follow private Alice and was DECLINED, still inside
+    // the cooldown. The structural gate in establishMutualFollow must refuse the follow.
+    const declinedAt = Date.now();
+    await t.run(async (ctx) => {
+      await ctx.db.insert("followRequests", {
+        aggregateId: crypto.randomUUID(),
+        requesterId: newbie,
+        targetId: alice,
+        status: "declined",
+        createdAt: declinedAt,
+        respondedAt: declinedAt,
+      });
+    });
+
+    const result = await asNewbie(t).mutation(
+      api.social.redeemInvite.redeemInvite,
+      { token },
+    );
+    // Redemption ledger + signup attribution still recorded (idempotency), but NO mutual edge and
+    // NO followsEstablished bump — so no mutual follow, which is exactly what gates access to
+    // Alice's private profile (areMutualFollowers stays false).
+    expect(result).toEqual({ redeemed: true, inviterId: alice });
+    expect(await mutualEdges(t, alice, newbie)).toEqual({
+      ab: false,
+      ba: false,
+    });
+
+    // The declined row is untouched (still blocking).
+    const request = await t.run((ctx) =>
+      ctx.db
+        .query("followRequests")
+        .withIndex("by_requester_target", (q) =>
+          q.eq("requesterId", newbie).eq("targetId", alice),
+        )
+        .unique(),
+    );
+    expect(request?.status).toBe("declined");
+    expect(request?.respondedAt).toBe(declinedAt);
+
+    const link = await linkFor(t, token);
+    expect(link?.signupsAttributed).toBe(1);
+    expect(link?.followsEstablished).toBe(0);
+  });
+
+  test("once the decline cooldown has expired, the same token establishes the follow", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, newbie } = await seedUsers(t);
+    const { token } = await asAlice(t).mutation(
+      api.social.getMyInviteLink.getMyInviteLink,
+      {},
+    );
+
+    // Decline whose cooldown has already elapsed no longer protects anyone.
+    const expiredAt = Date.now() - COOLDOWN_MS - 1000;
+    await t.run(async (ctx) => {
+      await ctx.db.insert("followRequests", {
+        aggregateId: crypto.randomUUID(),
+        requesterId: newbie,
+        targetId: alice,
+        status: "declined",
+        createdAt: expiredAt,
+        respondedAt: expiredAt,
+      });
+    });
+
+    const result = await asNewbie(t).mutation(
+      api.social.redeemInvite.redeemInvite,
+      { token },
+    );
+    expect(result).toEqual({ redeemed: true, inviterId: alice });
+    expect(await mutualEdges(t, alice, newbie)).toEqual({ ab: true, ba: true });
+
+    const link = await linkFor(t, token);
+    expect(link?.signupsAttributed).toBe(1);
+    expect(link?.followsEstablished).toBe(1);
   });
 });

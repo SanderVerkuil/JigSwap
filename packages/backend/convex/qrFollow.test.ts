@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import schema from "./schema";
+import { establishMutualFollow } from "./social/establishMutualFollow";
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
@@ -53,6 +54,26 @@ const followEdges = (
       .unique();
     return { ab: ab !== null, ba: ba !== null };
   });
+
+// Event dispatch (MemberFollowed -> Notifications subscriber) runs via scheduled functions;
+// yield + drain repeatedly so the notification rows land before we assert on them.
+const flushScheduled = async (t: ReturnType<typeof convexTest>) => {
+  for (let i = 0; i < 10; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await t.finishInProgressScheduledFunctions();
+  }
+};
+
+const notificationsFor = (
+  t: ReturnType<typeof convexTest>,
+  userId: Id<"users">,
+) =>
+  t.run((ctx) =>
+    ctx.db
+      .query("notifications")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect(),
+  );
 
 describe("acceptQrFollow", () => {
   test("valid foreign token establishes the mutual follow and bumps the counter", async () => {
@@ -267,5 +288,103 @@ describe("acceptQrFollow", () => {
     );
     expect(request?.status).toBe("approved");
     expect(request?.respondedAt).toBeGreaterThan(eightDaysAgo);
+  });
+
+  test("a repeat tap when already mutual reports established:false and does not bump the counter", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seedUsers(t);
+    const { token } = await asAlice(t).mutation(
+      api.social.getMyInviteLink.getMyInviteLink,
+      {},
+    );
+
+    // First tap establishes the mutual follow and bumps the counter to 1.
+    const first = await asBob(t).mutation(
+      api.social.acceptQrFollow.acceptQrFollow,
+      { token },
+    );
+    expect(first).toEqual({ established: true });
+
+    // Second tap: both edges already exist, so nothing new is established — no lying success
+    // toast, and no inflating the followsEstablished counter (S2).
+    const second = await asBob(t).mutation(
+      api.social.acceptQrFollow.acceptQrFollow,
+      { token },
+    );
+    expect(second).toEqual({ established: false });
+    expect(await followEdges(t, alice, bob)).toEqual({ ab: true, ba: true });
+
+    const link = await t.run((ctx) =>
+      ctx.db
+        .query("inviteLinks")
+        .withIndex("by_token", (q) => q.eq("token", token))
+        .unique(),
+    );
+    expect(link?.followsEstablished).toBe(1);
+  });
+
+  test("token flow over a pending incoming request still notifies the target (S1)", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seedUsers(t);
+    const { token } = await asAlice(t).mutation(
+      api.social.getMyInviteLink.getMyInviteLink,
+      {},
+    );
+
+    // Alice (private-profile owner) has a pending INCOMING request from Bob.
+    await t.run(async (ctx) => {
+      await ctx.db.insert("followRequests", {
+        aggregateId: crypto.randomUUID(),
+        requesterId: bob,
+        targetId: alice,
+        status: "pending",
+        createdAt: Date.now(),
+      });
+    });
+
+    // Bob taps Alice's QR — the token flow auto-approves the pending row WITHOUT Alice acting.
+    await asBob(t).mutation(api.social.acceptQrFollow.acceptQrFollow, {
+      token,
+    });
+    await flushScheduled(t);
+
+    // Alice never clicked "approve", so the post-approval suppression must NOT eat her
+    // new_follower: she gained Bob as a follower and deserves to learn it.
+    const aliceNotifications = await notificationsFor(t, alice);
+    expect(aliceNotifications.map((n) => n.type)).toEqual(["new_follower"]);
+  });
+});
+
+describe("establishMutualFollow", () => {
+  test("refuses with established:false / edgesCreated:0 when a decline is inside the cooldown", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seedUsers(t);
+
+    const declinedAt = Date.now();
+    await t.run(async (ctx) => {
+      await ctx.db.insert("followRequests", {
+        aggregateId: crypto.randomUUID(),
+        requesterId: bob,
+        targetId: alice,
+        status: "declined",
+        createdAt: declinedAt,
+        respondedAt: declinedAt,
+      });
+    });
+
+    const result = await t.run((ctx) => establishMutualFollow(ctx, alice, bob));
+    expect(result).toEqual({ established: false, edgesCreated: 0 });
+    expect(await followEdges(t, alice, bob)).toEqual({ ab: false, ba: false });
+  });
+
+  test("reports edgesCreated:2 for a fresh pair and edgesCreated:0 on a repeat", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seedUsers(t);
+
+    const first = await t.run((ctx) => establishMutualFollow(ctx, alice, bob));
+    expect(first).toEqual({ established: true, edgesCreated: 2 });
+
+    const second = await t.run((ctx) => establishMutualFollow(ctx, alice, bob));
+    expect(second).toEqual({ established: true, edgesCreated: 0 });
   });
 });

@@ -36,10 +36,16 @@ export const redeemInvite = mutation({
       newMemberId: memberId,
       createdAt: Date.now(),
     });
-    await establishMutualFollow(ctx, link.ownerId, memberId);
+    const result = await establishMutualFollow(ctx, link.ownerId, memberId);
+    // A brand-new member (the only real redeemInvite case) has no prior request rows, so the
+    // decline-cooldown gate can never refuse them — a refusal here is purely defensive against a
+    // forwarded token wielded by an existing member. Keep the redemption ledger row + the signup
+    // attribution regardless (a signup genuinely happened, and the ledger keeps it idempotent),
+    // but only count a follow when an edge was actually created.
     await ctx.db.patch(link._id, {
       signupsAttributed: link.signupsAttributed + 1,
-      followsEstablished: link.followsEstablished + 1,
+      followsEstablished:
+        link.followsEstablished + (result.edgesCreated > 0 ? 1 : 0),
     });
     return { redeemed: true, inviterId: link.ownerId };
   },

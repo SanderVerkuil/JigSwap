@@ -934,6 +934,11 @@ export default defineSchema({
     createdAt: v.number(),
     respondedAt: v.optional(v.number()),
     cancelledAt: v.optional(v.number()),
+    // Set when a token flow (QR scan / invite redemption) auto-approved this request instead of
+    // the target clicking "approve". The Notifications subscriber reads it so its post-approval
+    // suppression does NOT eat the target's new_follower — in a token flow the target never
+    // approved, so they still deserve to learn they gained a follower (S1).
+    approvedViaToken: v.optional(v.boolean()),
   })
     .index("by_requester", ["requesterId"])
     .index("by_target", ["targetId"])
