@@ -67,8 +67,11 @@ export function InviteRedeemer() {
       toast(t("didSomeoneInviteTitle"), {
         description: t("didSomeoneInviteBody"),
         action: (
-          // Phase 4 will deep-link this to /people?tab=find; plain /people for now.
-          <Link to="/people" className="text-sm font-medium underline">
+          <Link
+            to="/people"
+            search={{ tab: "find" }}
+            className="text-sm font-medium underline"
+          >
             {t("findThem")}
           </Link>
         ),
