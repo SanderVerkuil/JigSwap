@@ -1438,7 +1438,26 @@
     "swapsLabel": "swaps",
     "activity": "Activity",
     "emptyTitle": "No members in your network yet",
-    "emptySub": "Follow fellow puzzlers to build your network."
+    "emptySub": "Follow fellow puzzlers to build your network.",
+    "tabs": {
+      "network": "Your network",
+      "find": "Find people"
+    },
+    "find": {
+      "searchPlaceholder": "Search by name or @username",
+      "minChars": "Type at least 2 characters to search for members.",
+      "resultsLabel": "Search results",
+      "recentlyJoined": "Recently joined",
+      "recentlyJoinedEmptyTitle": "No new members to show yet",
+      "recentlyJoinedEmptySub": "Know a fellow puzzler? Show them your QR code.",
+      "noResultsTitle": "Can't find them?",
+      "noResultsSub": "Ask for their profile link — or scan their QR."
+    },
+    "discoverableNotice": {
+      "body": "Your profile is discoverable — other members can find you by name in Find people.",
+      "review": "Review visibility",
+      "dismiss": "Dismiss"
+    }
   },
   "follow": {
     "follow": "Follow",

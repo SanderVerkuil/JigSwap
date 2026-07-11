@@ -1438,7 +1438,26 @@
     "swapsLabel": "ruilen",
     "activity": "Activiteit",
     "emptyTitle": "Nog geen leden in je netwerk",
-    "emptySub": "Volg medepuzzelaars om je netwerk op te bouwen."
+    "emptySub": "Volg medepuzzelaars om je netwerk op te bouwen.",
+    "tabs": {
+      "network": "Jouw netwerk",
+      "find": "Mensen vinden"
+    },
+    "find": {
+      "searchPlaceholder": "Zoek op naam of @gebruikersnaam",
+      "minChars": "Typ minstens 2 tekens om leden te zoeken.",
+      "resultsLabel": "Zoekresultaten",
+      "recentlyJoined": "Recent lid geworden",
+      "recentlyJoinedEmptyTitle": "Nog geen nieuwe leden om te tonen",
+      "recentlyJoinedEmptySub": "Ken je een medepuzzelaar? Laat je QR-code zien.",
+      "noResultsTitle": "Kun je ze niet vinden?",
+      "noResultsSub": "Vraag om hun profiellink — of scan hun QR-code."
+    },
+    "discoverableNotice": {
+      "body": "Je profiel is vindbaar — andere leden kunnen je op naam vinden via Mensen vinden.",
+      "review": "Zichtbaarheid bekijken",
+      "dismiss": "Sluiten"
+    }
   },
   "follow": {
     "follow": "Volgen",
