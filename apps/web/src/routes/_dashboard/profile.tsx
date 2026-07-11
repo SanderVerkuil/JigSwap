@@ -1,11 +1,13 @@
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
+import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { EditProfileForm } from "@/components/profile/edit-profile-form";
 import { IdentityHeader } from "@/components/profile/identity-header";
 import { ProfileShelfSection } from "@/components/profile/shelf-section";
 import { ProfileStatsSection } from "@/components/profile/stats-section";
 import { ReputationSection } from "@/components/reputation/reputation-section";
+import { QrDialog } from "@/components/social/qr-dialog";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
 import { convexQuery } from "@convex-dev/react-query";
@@ -31,6 +33,19 @@ function ProfilePage() {
 
   const { data: member } = useQuery(
     convexQuery(gateway.identity.currentUser, {}),
+  );
+
+  usePageHeaderActions(
+    () =>
+      member ? (
+        <QrDialog
+          memberId={member._id}
+          displayName={member.name}
+          username={member.username}
+          avatarUrl={member.avatar}
+        />
+      ) : null,
+    [member],
   );
 
   if (member === undefined) {

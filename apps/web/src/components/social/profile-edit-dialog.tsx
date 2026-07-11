@@ -28,9 +28,14 @@ import { useTranslations } from "use-intl";
 // unchanged here to avoid clobbering it.
 export function ProfileEditDialog() {
   const t = useTranslations("profile.editor");
+  const tInvite = useTranslations("invite");
   const { data: profile } = useQuery(convexQuery(gateway.social.profile, {}));
   const editProfile = useMutation({
     mutationFn: useConvexMutation(gateway.social.editProfile),
+  });
+  const { mutate: resetLink } = useMutation({
+    mutationFn: useConvexMutation(gateway.social.resetInviteLink),
+    onSuccess: () => toast.success(tInvite("resetLink")),
   });
   const saving = editProfile.isPending;
 
@@ -84,6 +89,18 @@ export function ProfileEditDialog() {
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder={t("displayNamePlaceholder")}
             />
+          </div>
+          <div className="border-border border-t pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (window.confirm(tInvite("resetConfirm"))) resetLink({});
+              }}
+            >
+              {tInvite("resetLink")}
+            </Button>
           </div>
         </div>
         <DialogFooter>
