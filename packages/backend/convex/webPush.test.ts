@@ -75,6 +75,12 @@ describe("notificationUrl", () => {
     expect(notificationUrl("totally_unknown")).toBe("/notifications");
   });
 
+  test("routes the follow family to /people (requests strip)", () => {
+    expect(notificationUrl("new_follower")).toBe("/people");
+    expect(notificationUrl("follow_request_received")).toBe("/people");
+    expect(notificationUrl("follow_request_approved")).toBe("/people");
+  });
+
   test("deep-links an admin proposal review by relatedId, else the proposals queue", () => {
     expect(notificationUrl("admin_proposal_filed", "cp-1")).toBe(
       "/admin/puzzles/proposals/cp-1",

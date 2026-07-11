@@ -115,6 +115,11 @@ export const notificationUrl = (type: string, relatedId?: string): string => {
         : "/admin/puzzles/proposals";
     case "admin_definition_submitted":
       return "/admin/moderation";
+    // Follow notifications land on the People page, where the requests strip lives.
+    case "new_follower":
+    case "follow_request_received":
+    case "follow_request_approved":
+      return "/people";
     default:
       return "/notifications";
   }
