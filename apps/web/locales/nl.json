@@ -1429,6 +1429,21 @@
     "emptyTitle": "Nog geen leden in je netwerk",
     "emptySub": "Volg medepuzzelaars om je netwerk op te bouwen."
   },
+  "follow": {
+    "follow": "Volgen",
+    "unfollow": "Ontvolgen",
+    "requestToFollow": "Volgverzoek sturen",
+    "requested": "Aangevraagd",
+    "requestedStale": "Aangevraagd — {name} heeft nog niet gereageerd",
+    "requestedStaleNoName": "Aangevraagd — nog geen reactie",
+    "cancelRequest": "Verzoek annuleren",
+    "toastFollowing": "Je volgt nu",
+    "toastRequestSent": "Verzoek verstuurd",
+    "toastUnfollowed": "Ontvolgd",
+    "toastRequestCancelled": "Verzoek geannuleerd",
+    "errorUpdate": "Kon de volgstatus niet bijwerken",
+    "errorCancel": "Kon het verzoek niet annuleren"
+  },
   "members": {
     "memberSince": "Lid sinds {date}",
     "loading": "Lid laden...",

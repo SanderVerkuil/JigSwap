@@ -13,6 +13,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronDown, Clock, UserMinus, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "use-intl";
 
 const STALE_REQUEST_MS = 48 * 60 * 60 * 1000;
 
@@ -31,6 +32,7 @@ export function FollowButton({
   size?: "default" | "sm";
   memberName?: string;
 }) {
+  const t = useTranslations("follow");
   const { data: relation } = useQuery(
     convexQuery(gateway.social.followRelation, { memberId }),
   );
@@ -53,7 +55,7 @@ export function FollowButton({
     return (
       <Button variant="outline" size={size} disabled>
         <UserPlus className="mr-2 h-4 w-4" />
-        Follow
+        {t("follow")}
       </Button>
     );
   }
@@ -61,18 +63,22 @@ export function FollowButton({
   const handleFollow = async () => {
     try {
       const result = await follow.mutateAsync({ followeeId: memberId });
-      toast.success(result.kind === "requested" ? "Request sent" : "Following");
+      toast.success(
+        result.kind === "requested"
+          ? t("toastRequestSent")
+          : t("toastFollowing"),
+      );
     } catch {
-      toast.error("Could not update follow status");
+      toast.error(t("errorUpdate"));
     }
   };
 
   const handleUnfollow = async () => {
     try {
       await unfollow.mutateAsync({ followeeId: memberId });
-      toast.success("Unfollowed");
+      toast.success(t("toastUnfollowed"));
     } catch {
-      toast.error("Could not update follow status");
+      toast.error(t("errorUpdate"));
     }
   };
 
@@ -82,9 +88,9 @@ export function FollowButton({
       await cancelRequest.mutateAsync({
         requestId: relation.pendingRequest.requestId,
       });
-      toast.success("Request cancelled");
+      toast.success(t("toastRequestCancelled"));
     } catch {
-      toast.error("Could not cancel the request");
+      toast.error(t("errorCancel"));
     }
   };
 
@@ -97,7 +103,7 @@ export function FollowButton({
         disabled={pending}
       >
         <UserMinus className="mr-2 h-4 w-4" />
-        Unfollow
+        {t("unfollow")}
       </Button>
     );
   }
@@ -105,8 +111,10 @@ export function FollowButton({
   if (relation.pendingRequest) {
     const stale = now - relation.pendingRequest.requestedAt > STALE_REQUEST_MS;
     const label = stale
-      ? `Requested — ${memberName ?? "they"} hasn't responded yet`
-      : "Requested";
+      ? memberName
+        ? t("requestedStale", { name: memberName })
+        : t("requestedStaleNoName")
+      : t("requested");
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -118,7 +126,7 @@ export function FollowButton({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={handleCancel}>
-            Cancel request
+            {t("cancelRequest")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -134,7 +142,7 @@ export function FollowButton({
       disabled={pending}
     >
       <UserPlus className="mr-2 h-4 w-4" />
-      {requestMode ? "Request to follow" : "Follow"}
+      {requestMode ? t("requestToFollow") : t("follow")}
     </Button>
   );
 }

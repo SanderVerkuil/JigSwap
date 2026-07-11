@@ -1429,6 +1429,21 @@
     "emptyTitle": "No members in your network yet",
     "emptySub": "Follow fellow puzzlers to build your network."
   },
+  "follow": {
+    "follow": "Follow",
+    "unfollow": "Unfollow",
+    "requestToFollow": "Request to follow",
+    "requested": "Requested",
+    "requestedStale": "Requested — {name} hasn't responded yet",
+    "requestedStaleNoName": "Requested — no response yet",
+    "cancelRequest": "Cancel request",
+    "toastFollowing": "Following",
+    "toastRequestSent": "Request sent",
+    "toastUnfollowed": "Unfollowed",
+    "toastRequestCancelled": "Request cancelled",
+    "errorUpdate": "Could not update follow status",
+    "errorCancel": "Could not cancel the request"
+  },
   "members": {
     "memberSince": "Member since {date}",
     "loading": "Loading member...",
