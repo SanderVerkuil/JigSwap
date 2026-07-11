@@ -1,4 +1,4 @@
-import { Outlet, createFileRoute } from "@tanstack/react-router";
+import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 
 import { AppNotFound } from "@/components/NotFound";
 import { DashboardShell } from "@/components/dashboard-layout/shell";
@@ -14,7 +14,18 @@ import { requireAuth } from "@/lib/require-auth";
 // components/dashboard-layout — page titles/subtitles/breadcrumbs come from
 // the central route-meta map there, so leaf routes don't touch the shell.
 export const Route = createFileRoute("/_dashboard")({
-  beforeLoad: ({ context, location }) => requireAuth({ context, location }),
+  beforeLoad: ({ context, location }) => {
+    // Public-catalog handoff (Phase 5 spec): an unauthenticated visit to a member puzzle page has a
+    // public equivalent — send it there instead of the sign-in wall so member-shared puzzle links
+    // work for everyone. All other dashboard paths keep the sign-in redirect.
+    if (!context.userId) {
+      const puzzleDetail = location.pathname.match(/^\/puzzles\/([^/]+)\/?$/);
+      if (puzzleDetail) {
+        throw redirect({ to: "/catalog/$id", params: { id: puzzleDetail[1] } });
+      }
+    }
+    return requireAuth({ context, location });
+  },
   pendingComponent: () => <PageLoading message="Loading dashboard..." />,
   // 404 inside the app renders within the dashboard shell (this layout's Outlet).
   notFoundComponent: AppNotFound,

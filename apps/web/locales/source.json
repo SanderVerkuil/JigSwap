@@ -2836,6 +2836,7 @@
     "reviews": "Reviews",
     "reviewPlaceholder": "Review {title}…",
     "rateOptional": "Rate this puzzle (optional)",
+    "reviewPublicNote": "Reviews also appear on the public puzzle catalogue.",
     "post": "Post",
     "reviewFailed": "Couldn't post review",
     "noReviews": "No reviews yet. Be the first.",

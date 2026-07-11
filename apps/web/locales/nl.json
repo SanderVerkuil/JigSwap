@@ -2836,6 +2836,7 @@
     "reviews": "Reviews",
     "reviewPlaceholder": "Beoordeel {title}…",
     "rateOptional": "Beoordeel deze puzzel (optioneel)",
+    "reviewPublicNote": "Reviews verschijnen ook in de openbare puzzelcatalogus.",
     "post": "Plaatsen",
     "reviewFailed": "Kon review niet plaatsen",
     "noReviews": "Nog geen reviews. Wees de eerste.",
