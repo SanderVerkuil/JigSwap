@@ -6,6 +6,7 @@ export * from "./display-name";
 export * from "./errors";
 export * from "./events";
 export * from "./follow";
+export * from "./follow-request";
 export * from "./ids";
 export * from "./photo-comment";
 export * from "./profile";
