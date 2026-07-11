@@ -1417,6 +1417,20 @@
     "emptyTitle": "No members in your network yet",
     "emptySub": "Follow fellow puzzlers to build your network."
   },
+  "members": {
+    "memberSince": "Member since {date}",
+    "collects": "Collects ~{count, plural, one {# puzzle} other {# puzzles}} on JigSwap",
+    "privateTitle": "{name}'s profile is private",
+    "privateSub": "Follow each other to see their collection and swap.",
+    "joinCta": "Join JigSwap to follow {name}",
+    "logIn": "Log in",
+    "shelfTitle": "Featured shelf",
+    "bioTitle": "About",
+    "notFoundTitle": "Member not found",
+    "notFoundSub": "This link may be outdated, or the member may have changed their username.",
+    "findPeople": "Find people",
+    "backHome": "Back to home"
+  },
   "notifications": {
     "title": "Notifications",
     "subtitle": "Stay on top of trades, reviews, and milestones.",
@@ -2385,6 +2399,10 @@
         "title": "Messages",
         "subtitle": "Conversations with fellow puzzlers.",
         "description": "Conversations with fellow puzzlers"
+      },
+      "members": {
+        "title": "Members",
+        "subtitle": "Community member profiles"
       },
       "people": {
         "title": "People",
