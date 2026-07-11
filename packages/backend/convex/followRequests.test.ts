@@ -289,6 +289,9 @@ describe("follow request lifecycle", () => {
     await asAlice(t).mutation(api.social.followMember.followMember, {
       followeeId: bob,
     });
+    // Force a strictly later createdAt for Carol's request so the newest-first
+    // assertion below is deterministic (back-to-back mutations can tie on ms).
+    await new Promise((resolve) => setTimeout(resolve, 5));
     await asCarol(t).mutation(api.social.followMember.followMember, {
       followeeId: bob,
     });
@@ -298,10 +301,11 @@ describe("follow request lifecycle", () => {
       {},
     );
     expect(incoming).toHaveLength(2);
-    expect(incoming.map((r) => r.requester.name).sort()).toEqual([
-      "Alice",
-      "Carol",
-    ]);
+    // Newest first: Carol requested after Alice, so she must lead the list.
+    expect(incoming.map((r) => r.requester.name)).toEqual(["Carol", "Alice"]);
+    expect(incoming[0].requestedAt).toBeGreaterThanOrEqual(
+      incoming[1].requestedAt,
+    );
     expect(incoming[0].alreadyFollowing).toBe(false);
   });
 });

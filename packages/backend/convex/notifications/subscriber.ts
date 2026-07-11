@@ -329,6 +329,9 @@ const translate = async (
       // followee IS the approver — they already got follow_request_received and just acted
       // on it. Suppress only when the approval is fresh (10 min) so a stale approved row
       // never permanently mutes a later, genuine re-follow of the same pair.
+      // Accepted tradeoff: an unfollow + instant re-follow landing inside that same
+      // 10-minute post-approval window is also suppressed — indistinguishable here, and
+      // rare enough that we prefer it over ever double-notifying an approver.
       const followerId = p.followerId as string;
       const followeeId = p.followeeId as string;
       const request = await ctx.db
