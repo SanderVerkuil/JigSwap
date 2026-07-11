@@ -1,4 +1,7 @@
+export * from "./approve-follow-request.port";
 export * from "./arrange-shelf.port";
+export * from "./cancel-follow-request.port";
+export * from "./decline-follow-request.port";
 export * from "./edit-profile.port";
 export * from "./follow-member.port";
 export * from "./post-comment.port";
