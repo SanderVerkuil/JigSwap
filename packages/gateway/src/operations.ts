@@ -181,6 +181,9 @@ export const gateway = {
     updateProfile: api.users.updateUserProfile,
     userStats: api.identity.getUserStats.getUserStats,
     search: api.identity.searchUsers.searchUsers,
+    // "Recently joined" seed for the Find-people tab: up to 5 newest PUBLIC members.
+    recentPublicMembers:
+      api.identity.listRecentPublicMembers.listRecentPublicMembers,
     // Whether the acting caller is an admin (fails closed). Backs the web /admin
     // route guard; the server-side gate on every admin function stays authoritative.
     isAdmin: api.identity.isCurrentUserAdmin.isCurrentUserAdmin,

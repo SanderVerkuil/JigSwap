@@ -128,6 +128,7 @@ import type * as identity_getUserById from "../identity/getUserById.js";
 import type * as identity_getUserStats from "../identity/getUserStats.js";
 import type * as identity_isAdmin from "../identity/isAdmin.js";
 import type * as identity_isCurrentUserAdmin from "../identity/isCurrentUserAdmin.js";
+import type * as identity_listRecentPublicMembers from "../identity/listRecentPublicMembers.js";
 import type * as identity_optionalActingMember from "../identity/optionalActingMember.js";
 import type * as identity_requireMember from "../identity/requireMember.js";
 import type * as identity_resolveMemberByHandle from "../identity/resolveMemberByHandle.js";
@@ -447,6 +448,7 @@ declare const fullApi: ApiFromModules<{
   "identity/getUserStats": typeof identity_getUserStats;
   "identity/isAdmin": typeof identity_isAdmin;
   "identity/isCurrentUserAdmin": typeof identity_isCurrentUserAdmin;
+  "identity/listRecentPublicMembers": typeof identity_listRecentPublicMembers;
   "identity/optionalActingMember": typeof identity_optionalActingMember;
   "identity/requireMember": typeof identity_requireMember;
   "identity/resolveMemberByHandle": typeof identity_resolveMemberByHandle;
