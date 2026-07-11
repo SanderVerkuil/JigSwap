@@ -20,7 +20,7 @@ import { gateway, Id } from "@/gateway";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { Bell, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useTranslations } from "use-intl";
 
 type PeopleTab = "network" | "find";
@@ -44,28 +44,32 @@ export const Route = createFileRoute("/_dashboard/people")({
 // Info-toned (not a warning): tells members the directory can now surface
 // their (public-by-default) profile, with an inline path to the existing
 // visibility setting. Dismissal persists via safeStorage (bare localStorage
-// throws in private mode); lazy-initialised so it never reads storage during
-// SSR render.
+// throws in private mode).
 // ---------------------------------------------------------------------------
 const NOTICE_KEY = "jigswap.notice.discoverable";
+
+// Read the dismissal flag through useSyncExternalStore rather than an effect:
+// the server snapshot is "dismissed" (banner hidden), so SSR and the hydration
+// pass agree (no mismatch, no flash for a returning user), and the client
+// snapshot reads the real flag right after hydration. Reading storage in an
+// effect + setState would trip react-hooks/set-state-in-effect and re-render.
+const noopSubscribe = () => () => {};
 
 function DiscoverabilityNotice() {
   const t = useTranslations("people.discoverableNotice");
 
-  // Read the dismissal flag after mount, not during render: on the server
-  // safeStorage returns null (no window), so rendering the banner in the
-  // initial HTML and then reconciling on the client would flash for a user who
-  // already dismissed it. Start hidden; reveal only if still undismissed.
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    if (safeStorage.getItem("local", NOTICE_KEY) !== "1") setVisible(true);
-  }, []);
+  const dismissedInStorage = useSyncExternalStore(
+    noopSubscribe,
+    () => safeStorage.getItem("local", NOTICE_KEY) === "1",
+    () => true,
+  );
+  const [dismissedNow, setDismissedNow] = useState(false);
 
-  if (!visible) return null;
+  if (dismissedInStorage || dismissedNow) return null;
 
   const handleDismiss = () => {
     safeStorage.setItem("local", NOTICE_KEY, "1");
-    setVisible(false);
+    setDismissedNow(true);
   };
 
   return (
