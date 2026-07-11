@@ -28,7 +28,7 @@ export function InviteRedeemer() {
     mutationFn: useConvexMutation(gateway.social.redeemInvite),
     // A transient failure must not lose attribution: restore the token so the
     // next page load retries (redeemInvite itself is idempotent server-side).
-    onError: (_error, variables) => {
+    onError: (_error, variables: { token: string }) => {
       window.localStorage.setItem(INVITE_KEY, variables.token);
     },
     onSuccess: (
