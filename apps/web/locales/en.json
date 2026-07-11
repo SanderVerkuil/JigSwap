@@ -1856,6 +1856,29 @@
       "swapsPerMonth": "Swaps / month"
     }
   },
+  "invite": {
+    "showMyQr": "Show my QR",
+    "dialogTitle": "My QR code",
+    "scanHint": "Have a friend scan this to follow each other",
+    "copyLink": "Copy link",
+    "copied": "Copied!",
+    "share": "Share",
+    "resetLink": "Reset invite link",
+    "resetConfirm": "Old links and QR codes will stop working. Reset?",
+    "needUsernameTitle": "Set a username first",
+    "needUsernameBody": "Your QR caption and profile link use your username. Set one in your account settings, then come back.",
+    "openSettings": "Open account settings",
+    "invitedYou": "{name} invited you to JigSwap",
+    "followEachOther": "{name} shared their code with you — follow each other?",
+    "followEachOtherCta": "Follow each other",
+    "followEstablished": "You and {name} now follow each other",
+    "didSomeoneInviteTitle": "Did someone invite you?",
+    "didSomeoneInviteBody": "Find them by name and follow each other.",
+    "findThem": "Find them",
+    "loopTitle": "Anyone else here?",
+    "loopBody": "Show them this code so they can follow you too.",
+    "loopSkip": "Not now"
+  },
   "forms": {
     "owned-puzzle-form": {
       "title": "Add New Puzzle",

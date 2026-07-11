@@ -1856,6 +1856,29 @@
       "swapsPerMonth": "Ruilacties / maand"
     }
   },
+  "invite": {
+    "showMyQr": "Toon mijn QR",
+    "dialogTitle": "Mijn QR-code",
+    "scanHint": "Laat een vriend dit scannen om elkaar te volgen",
+    "copyLink": "Link kopiëren",
+    "copied": "Gekopieerd!",
+    "share": "Delen",
+    "resetLink": "Uitnodigingslink resetten",
+    "resetConfirm": "Oude links en QR-codes werken dan niet meer. Resetten?",
+    "needUsernameTitle": "Stel eerst een gebruikersnaam in",
+    "needUsernameBody": "Je QR-bijschrift en profiellink gebruiken je gebruikersnaam. Stel er een in bij je accountinstellingen en kom dan terug.",
+    "openSettings": "Accountinstellingen openen",
+    "invitedYou": "{name} heeft je uitgenodigd voor JigSwap",
+    "followEachOther": "{name} heeft hun code met je gedeeld — elkaar volgen?",
+    "followEachOtherCta": "Elkaar volgen",
+    "followEstablished": "Jij en {name} volgen elkaar nu",
+    "didSomeoneInviteTitle": "Heeft iemand je uitgenodigd?",
+    "didSomeoneInviteBody": "Zoek ze op naam en volg elkaar.",
+    "findThem": "Zoek ze",
+    "loopTitle": "Nog iemand hier?",
+    "loopBody": "Laat ze deze code zien zodat ze jou ook kunnen volgen.",
+    "loopSkip": "Niet nu"
+  },
   "forms": {
     "owned-puzzle-form": {
       "title": "Nieuwe Puzzel Toevoegen",
