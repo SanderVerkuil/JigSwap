@@ -1454,7 +1454,7 @@
       "noResultsSub": "Ask for their profile link — or scan their QR."
     },
     "discoverableNotice": {
-      "body": "Your profile is discoverable — other members can find you by name in Find people.",
+      "body": "JigSwap now has a Find people directory. Members with a public profile can be found by name — check or change who can find you.",
       "review": "Review visibility",
       "dismiss": "Dismiss"
     }

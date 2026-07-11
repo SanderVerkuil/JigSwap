@@ -20,7 +20,7 @@ import { gateway, Id } from "@/gateway";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { Bell, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "use-intl";
 
 type PeopleTab = "network" | "find";
@@ -52,15 +52,20 @@ const NOTICE_KEY = "jigswap.notice.discoverable";
 function DiscoverabilityNotice() {
   const t = useTranslations("people.discoverableNotice");
 
-  const [dismissed, setDismissed] = useState<boolean>(
-    () => safeStorage.getItem("local", NOTICE_KEY) === "1",
-  );
+  // Read the dismissal flag after mount, not during render: on the server
+  // safeStorage returns null (no window), so rendering the banner in the
+  // initial HTML and then reconciling on the client would flash for a user who
+  // already dismissed it. Start hidden; reveal only if still undismissed.
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    if (safeStorage.getItem("local", NOTICE_KEY) !== "1") setVisible(true);
+  }, []);
 
-  if (dismissed) return null;
+  if (!visible) return null;
 
   const handleDismiss = () => {
     safeStorage.setItem("local", NOTICE_KEY, "1");
-    setDismissed(true);
+    setVisible(false);
   };
 
   return (
