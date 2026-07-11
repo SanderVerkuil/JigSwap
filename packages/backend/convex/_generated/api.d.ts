@@ -36,6 +36,7 @@ import type * as catalog_adapters_systemClock from "../catalog/adapters/systemCl
 import type * as catalog_approveChangeProposal from "../catalog/approveChangeProposal.js";
 import type * as catalog_approvePuzzleDefinition from "../catalog/approvePuzzleDefinition.js";
 import type * as catalog_backfillCategories from "../catalog/backfillCategories.js";
+import type * as catalog_browsePublicCatalog from "../catalog/browsePublicCatalog.js";
 import type * as catalog_createCatalogCategory from "../catalog/createCatalogCategory.js";
 import type * as catalog_disablePuzzleDefinition from "../catalog/disablePuzzleDefinition.js";
 import type * as catalog_editChangeProposal from "../catalog/editChangeProposal.js";
@@ -358,6 +359,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/approveChangeProposal": typeof catalog_approveChangeProposal;
   "catalog/approvePuzzleDefinition": typeof catalog_approvePuzzleDefinition;
   "catalog/backfillCategories": typeof catalog_backfillCategories;
+  "catalog/browsePublicCatalog": typeof catalog_browsePublicCatalog;
   "catalog/createCatalogCategory": typeof catalog_createCatalogCategory;
   "catalog/disablePuzzleDefinition": typeof catalog_disablePuzzleDefinition;
   "catalog/editChangeProposal": typeof catalog_editChangeProposal;

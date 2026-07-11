@@ -305,3 +305,90 @@ describe("listPublicPuzzleReviews", () => {
     expect(raw).not.toContain("email");
   });
 });
+
+describe("browsePublicCatalog", () => {
+  const firstPage = { numItems: 20, cursor: null };
+
+  test("lists approved definitions only, newest first, with card aggregates", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+
+    const result = await t.query(
+      api.catalog.browsePublicCatalog.browsePublicCatalog,
+      { paginationOpts: firstPage },
+    );
+    expect(result.page).toHaveLength(1); // pending stays hidden
+    const card = result.page[0];
+    expect(card.title).toBe("Mountain Vista");
+    expect(card.rating).toEqual({ value: 4, count: 2 });
+    expect(card.availableToSwap).toBe(2); // public-owner open copies only
+  });
+
+  test("search term restricts via the search index (approved-only)", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+
+    const hit = await t.query(
+      api.catalog.browsePublicCatalog.browsePublicCatalog,
+      { paginationOpts: firstPage, searchTerm: "mountain" },
+    );
+    expect(hit.page.map((p) => p.title)).toEqual(["Mountain Vista"]);
+
+    // The pending puzzle's terms must not surface.
+    const miss = await t.query(
+      api.catalog.browsePublicCatalog.browsePublicCatalog,
+      { paginationOpts: firstPage, searchTerm: "secret ocean" },
+    );
+    expect(miss.page).toHaveLength(0);
+  });
+
+  test("brand and piece-count filters narrow the list", async () => {
+    const t = convexTest(schema, modules);
+    const { pia } = await seed(t);
+    await t.run(async (ctx) => {
+      await ctx.db.insert("puzzles", {
+        aggregateId: "def-small",
+        title: "Tiny Meadow",
+        brand: "Jumbo",
+        pieceCount: 300,
+        searchableText: "tiny meadow jumbo",
+        status: "approved",
+        submittedBy: pia,
+        createdAt: NOW + 5,
+        updatedAt: NOW + 5,
+      });
+    });
+
+    const byBrand = await t.query(
+      api.catalog.browsePublicCatalog.browsePublicCatalog,
+      { paginationOpts: firstPage, brand: "Jumbo" },
+    );
+    expect(byBrand.page.map((p) => p.title)).toEqual(["Tiny Meadow"]);
+
+    const byPieces = await t.query(
+      api.catalog.browsePublicCatalog.browsePublicCatalog,
+      { paginationOpts: firstPage, pieceMin: 1000, pieceMax: 1499 },
+    );
+    expect(byPieces.page.map((p) => p.title)).toEqual(["Mountain Vista"]);
+
+    const under500 = await t.query(
+      api.catalog.browsePublicCatalog.browsePublicCatalog,
+      { paginationOpts: firstPage, pieceMax: 499 },
+    );
+    expect(under500.page.map((p) => p.title)).toEqual(["Tiny Meadow"]);
+  });
+
+  test("card payload leaks no owner or member data", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+
+    const raw = JSON.stringify(
+      await t.query(api.catalog.browsePublicCatalog.browsePublicCatalog, {
+        paginationOpts: firstPage,
+      }),
+    );
+    expect(raw).not.toContain("ownerId");
+    expect(raw).not.toContain("submittedBy");
+    expect(raw).not.toContain("clerk_");
+  });
+});
