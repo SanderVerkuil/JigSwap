@@ -1,5 +1,4 @@
 import type {
-  CopyOfferSwapType,
   CopyOfferView,
   PuzzleDefinitionDetailView,
 } from "@jigswap/contracts";
@@ -9,57 +8,13 @@ import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { profileVisibilityOf } from "../social/privacy";
 import { collectCircleSharedCopies } from "./circleSharedCopies";
-
-const MS_PER_DAY = 86_400_000;
-
-// Round to 1 decimal place.
-const round1 = (n: number): number => Math.round(n * 10) / 10;
-
-// Whole-day solve duration: prefer (endDate - startDate) rounded to whole days; else fall back to
-// completionTimeMinutes / 1440 rounded; else null when neither is recorded. Mirrors getCopyInstanceView.
-const finishDaysOf = (c: {
-  startDate: number;
-  endDate?: number;
-  completionTimeMinutes?: number;
-}): number | null => {
-  if (c.endDate != null) {
-    return Math.round((c.endDate - c.startDate) / MS_PER_DAY);
-  }
-  if (c.completionTimeMinutes != null) {
-    return Math.round(c.completionTimeMinutes / 1440);
-  }
-  return null;
-};
-
-// A copy is "open" iff at least one exchange-availability flag is set (identical to browseOwnedPuzzles).
-const isOpen = (copy: Doc<"ownedPuzzles">): boolean =>
-  copy.availability.forTrade ||
-  copy.availability.forSale ||
-  copy.availability.forLend;
-
-// Availability priority -> swapType, matching the contract: forTrade -> "swap", forLend -> "lend",
-// forSale -> "sale" (first set wins). A reachable available copy always has at least one flag set.
-const swapTypeOf = (copy: Doc<"ownedPuzzles">): CopyOfferSwapType => {
-  if (copy.availability.forTrade) return "swap";
-  if (copy.availability.forLend) return "lend";
-  return "sale";
-};
-
-// The category name is a localized object `{ en, nl }` on adminCategories; the catalog reads carry it
-// whole. Here the detail page wants a single string, so we pick English. Defensive against legacy/raw
-// string shapes.
-const categoryNameOf = (
-  row: Doc<"adminCategories"> | null,
-): string | undefined => {
-  if (!row) return undefined;
-  const name = row.name as unknown;
-  if (typeof name === "string") return name;
-  if (name && typeof name === "object" && "en" in name) {
-    const en = (name as { en?: unknown }).en;
-    if (typeof en === "string") return en;
-  }
-  return undefined;
-};
+import {
+  categoryNameOf,
+  completionStatsOf,
+  isOpen,
+  ratingBreakdownOf,
+  swapTypeOf,
+} from "./definitionAggregates";
 
 // Auth-gated catalog detail read for a puzzle DEFINITION (not a single copy). Aggregates the
 // community's review-rating distribution, ownership/completion stats, the viewer's own ownership, and
@@ -94,40 +49,7 @@ export const getPuzzleDefinitionView = query({
     };
 
     // --- rating (over `puzzleComments` that carry a rating — these ARE the reviews) ------------
-    const comments = await ctx.db
-      .query("puzzleComments")
-      .withIndex("by_puzzle", (q) => q.eq("puzzleId", args.puzzleId))
-      .collect();
-    // Community rating draws on DEFINITION-level reviews only; copy-scoped comments (copyId set) are
-    // a copy owner's private rating and never feed the shared community score.
-    const ratedReviews = comments.filter(
-      (c) => c.rating != null && c.copyId == null,
-    );
-    // breakdown index 0..4 == [5★,4★,3★,2★,1★].
-    const breakdown: [number, number, number, number, number] = [0, 0, 0, 0, 0];
-    let ratingSum = 0;
-    for (const c of ratedReviews) {
-      const r = c.rating as number;
-      ratingSum += r;
-      const bucket = 5 - r; // r=5 -> 0, r=1 -> 4
-      if (bucket >= 0 && bucket <= 4) breakdown[bucket] += 1;
-    }
-    const ratingCount = ratedReviews.length;
-    const pct = (n: number): number =>
-      ratingCount > 0 ? Math.round((n / ratingCount) * 100) : 0;
-    const percentages: [number, number, number, number, number] = [
-      pct(breakdown[0]),
-      pct(breakdown[1]),
-      pct(breakdown[2]),
-      pct(breakdown[3]),
-      pct(breakdown[4]),
-    ];
-    const rating = {
-      rating: ratingCount > 0 ? round1(ratingSum / ratingCount) : 0,
-      count: ratingCount,
-      breakdown,
-      percentages,
-    };
+    const rating = await ratingBreakdownOf(ctx, args.puzzleId);
 
     // --- ownedPuzzles for this definition (drives owners count, viewer ownership, copies) -------
     const owned = await ctx.db
@@ -140,41 +62,11 @@ export const getPuzzleDefinitionView = query({
     );
 
     // --- completions of the definition (totalCompletions, avgCompletionDays) --------------------
-    // A solve can be recorded against the puzzle DEFINITION (puzzleId) OR against a specific COPY
-    // of it (ownedPuzzleId, with no puzzleId — that's how "mark my copy complete" stores it). Count
-    // both so completing your own copy still shows in the catalogue total; dedupe by _id in case a
-    // row carries both FKs.
-    const byDefinition = await ctx.db
-      .query("completions")
-      .withIndex("by_puzzle", (q) => q.eq("puzzleId", args.puzzleId))
-      .collect();
-    const byCopy = (
-      await Promise.all(
-        owned.map((copy) =>
-          ctx.db
-            .query("completions")
-            .withIndex("by_owned_puzzle", (q) =>
-              q.eq("ownedPuzzleId", copy._id),
-            )
-            .collect(),
-        ),
-      )
-    ).flat();
-    const dedupedCompletions = new Map<string, (typeof byDefinition)[number]>();
-    for (const c of [...byDefinition, ...byCopy]) {
-      dedupedCompletions.set(c._id as unknown as string, c);
-    }
-    const completions = [...dedupedCompletions.values()];
-    const completed = completions.filter((c) => c.isCompleted);
-    const finishDaysList = completed
-      .map(finishDaysOf)
-      .filter((d): d is number => d != null);
-    const avgCompletionDays =
-      finishDaysList.length > 0
-        ? round1(
-            finishDaysList.reduce((s, d) => s + d, 0) / finishDaysList.length,
-          )
-        : null;
+    const { totalCompletions, avgCompletionDays } = await completionStatsOf(
+      ctx,
+      args.puzzleId,
+      owned,
+    );
 
     // --- reachability gate (replicated from browseOwnedPuzzles/circleSharedCopies) --------------
     // An available copy is shown iff its owner's profile is PUBLIC, OR the copy is shared into a
@@ -285,7 +177,7 @@ export const getPuzzleDefinitionView = query({
       rating,
       stats: {
         communityOwners: distinctOwners.size,
-        totalCompletions: completed.length,
+        totalCompletions,
         avgCompletionDays,
         availableToSwap,
       },
