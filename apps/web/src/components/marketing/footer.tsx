@@ -38,6 +38,7 @@ export function MarketingFooter() {
           </div>
           {col(t("footer.product"), [
             { href: "/how-it-works", label: t("nav.howItWorks") },
+            { href: "/catalog", label: t("nav.catalog") },
             { href: "/features", label: t("nav.features") },
             { href: "/docs", label: t("nav.docs") },
             { href: "/sign-up", label: t("nav.startTrading") },

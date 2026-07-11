@@ -2118,6 +2118,7 @@
   "marketing": {
     "nav": {
       "howItWorks": "Hoe het werkt",
+      "catalog": "Puzzels bekijken",
       "features": "Functies",
       "about": "Over ons",
       "docs": "Documentatie",
@@ -3242,6 +3243,42 @@
     }
   },
   "publicCatalog": {
-    "toSwap": "{count} te ruil"
+    "title": "Puzzelcatalogus",
+    "subtitle": "Elke puzzel die de JigSwap-community verzamelt, ruilt en uitleent.",
+    "searchPlaceholder": "Zoek puzzels…",
+    "allBrands": "Alle merken",
+    "allPieces": "Elk aantal stukjes",
+    "piecesLt500": "Minder dan 500 stukjes",
+    "pieces500": "500 – 999 stukjes",
+    "pieces1000": "1.000 – 1.499 stukjes",
+    "pieces1500": "1.500+ stukjes",
+    "toSwap": "{count} te ruilen",
+    "loadMore": "Meer laden",
+    "noResults": "Geen puzzels gevonden voor \"{query}\"",
+    "noResultsSub": "Probeer een merknaam of minder woorden",
+    "clearSearch": "Zoekopdracht wissen",
+    "empty": "De catalogus is net begonnen",
+    "emptySub": "Leden voegen dagelijks puzzels toe — kom snel terug.",
+    "joinCta": "Word lid van JigSwap om te ruilen",
+    "logIn": "Inloggen",
+    "availabilityTitle": "Beschikbaar in de community",
+    "copiesAvailableNow": "{count, plural, one {exemplaar nu beschikbaar om te ruilen} other {exemplaren nu beschikbaar om te ruilen}}",
+    "joinToSeeWho": "Word lid om te zien wie",
+    "ownersHaveIt": "{count, plural, one {# lid heeft deze in de verzameling} other {# leden hebben deze in hun verzameling}}",
+    "chipSwap": "{count} ruilen",
+    "chipLend": "{count} lenen",
+    "chipSale": "{count} kopen",
+    "statAvailable": "Beschikbaar om te ruilen",
+    "statOwners": "Eigenaren in de community",
+    "statCompletions": "Keer gelegd",
+    "statAvgDays": "Gem. dagen om te leggen",
+    "communityRating": "Communitybeoordeling",
+    "ratingsCount": "{count} beoordelingen",
+    "reviews": "Reviews",
+    "noReviews": "Nog geen reviews.",
+    "anonymousReviewer": "Een JigSwap-lid",
+    "logInToReview": "Log in om een review te schrijven",
+    "notFound": "Puzzel niet gevonden",
+    "notFoundSub": "Deze puzzel is mogelijk uit de catalogus verwijderd."
   }
 }
