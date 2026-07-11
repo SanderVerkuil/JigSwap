@@ -24,8 +24,10 @@ export const searchUsers = query({
   handler: async (ctx, args): Promise<MemberView[]> => {
     const viewerId = (await requireMember(ctx)) as unknown as Id<"users">;
     const limit = args.limit ?? 20;
+    // Server-enforced minimum (mirrors the Find-people UI): sub-2-character probes return
+    // nothing and never touch the search index — the cheap guard against enumeration scans.
     const searchTerm = args.searchTerm.trim().toLowerCase();
-    if (searchTerm.length === 0) return [];
+    if (searchTerm.length < 2) return [];
 
     const candidates = await ctx.db
       .query("users")
