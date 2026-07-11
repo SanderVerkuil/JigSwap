@@ -4,6 +4,11 @@ import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { establishMutualFollow } from "./establishMutualFollow";
 
+// Redemption is a one-time POST-SIGNUP action, so only a freshly created account may redeem. Mirrors
+// the client's NEW_MEMBER_WINDOW_MS (invite-redeemer.tsx); a genuine post-signup redeem lands well
+// inside 15 min. Enforced server-side because Convex mutations are public endpoints.
+const NEW_MEMBER_WINDOW_MS = 15 * 60 * 1000;
+
 // Post-signup invite redemption: called once by the client (InviteRedeemer) when a localStorage
 // token survives the Clerk redirect. Idempotent per member via inviteRedemptions.by_new_member —
 // a member can only ever be attributed to one inviter. Revoked/self/unknown tokens no-op.
@@ -11,6 +16,15 @@ export const redeemInvite = mutation({
   args: { token: v.string() },
   handler: async (ctx, { token }) => {
     const memberId = (await requireMember(ctx)) as unknown as Id<"users">;
+
+    // Newness guard: an EXISTING member could log out, open an invite link, and log back in —
+    // without this they'd be recorded as signupsAttributed +1 and permanently attributed. A real
+    // signup redeems within the window; anything older is not a new-member redemption. No ledger
+    // row, no counters, no follow.
+    const me = await ctx.db.get(memberId);
+    if (me === null || Date.now() - me.createdAt >= NEW_MEMBER_WINDOW_MS) {
+      return { redeemed: false };
+    }
 
     const prior = await ctx.db
       .query("inviteRedemptions")

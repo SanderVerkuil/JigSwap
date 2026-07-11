@@ -241,4 +241,73 @@ describe("redeemInvite", () => {
     expect(link?.signupsAttributed).toBe(1);
     expect(link?.followsEstablished).toBe(1);
   });
+
+  test("an existing (old) account cannot redeem — no attribution, no follow (S1b)", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, newbie } = await seedUsers(t);
+    const { token } = await asAlice(t).mutation(
+      api.social.getMyInviteLink.getMyInviteLink,
+      {},
+    );
+
+    // "newbie" is actually an OLD account here (logged out, opened the invite, logged back in):
+    // its createdAt is well outside the new-member window, so redemption must no-op entirely.
+    await t.run(async (ctx) => {
+      await ctx.db.patch(newbie, {
+        createdAt: Date.now() - 16 * 60 * 1000,
+      });
+    });
+
+    const result = await asNewbie(t).mutation(
+      api.social.redeemInvite.redeemInvite,
+      { token },
+    );
+    expect(result).toEqual({ redeemed: false });
+
+    // No ledger row, no counters, no follow.
+    const ledger = await t.run((ctx) =>
+      ctx.db
+        .query("inviteRedemptions")
+        .withIndex("by_new_member", (q) => q.eq("newMemberId", newbie))
+        .unique(),
+    );
+    expect(ledger).toBeNull();
+    expect(await mutualEdges(t, alice, newbie)).toEqual({
+      ab: false,
+      ba: false,
+    });
+    const link = await linkFor(t, token);
+    expect(link?.signupsAttributed).toBe(0);
+    expect(link?.followsEstablished).toBe(0);
+  });
+
+  test("accept-then-redeem: the natural new-member sequence bumps followsEstablished exactly once (S4)", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, newbie } = await seedUsers(t);
+    const { token } = await asAlice(t).mutation(
+      api.social.getMyInviteLink.getMyInviteLink,
+      {},
+    );
+
+    // 1. New member taps QrFollowPrompt on the return landing → acceptQrFollow creates the edges
+    //    and bumps the counter to 1.
+    const accepted = await asNewbie(t).mutation(
+      api.social.acceptQrFollow.acceptQrFollow,
+      { token },
+    );
+    expect(accepted).toEqual({ established: true });
+
+    // 2. redeemInvite then runs on first dashboard visit. The edges already exist, so
+    //    edgesCreated is 0 and it must NOT bump followsEstablished again (signup is still attributed).
+    const redeemed = await asNewbie(t).mutation(
+      api.social.redeemInvite.redeemInvite,
+      { token },
+    );
+    expect(redeemed).toEqual({ redeemed: true, inviterId: alice });
+
+    expect(await mutualEdges(t, alice, newbie)).toEqual({ ab: true, ba: true });
+    const link = await linkFor(t, token);
+    expect(link?.signupsAttributed).toBe(1);
+    expect(link?.followsEstablished).toBe(1);
+  });
 });

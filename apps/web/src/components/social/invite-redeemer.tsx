@@ -1,5 +1,6 @@
 import { QrDialogAutoOpen } from "@/components/social/qr-dialog";
 import { gateway } from "@/gateway";
+import { safeStorage } from "@/lib/safe-storage";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -29,16 +30,16 @@ export function InviteRedeemer() {
     // A transient failure must not lose attribution: restore the token so the
     // next page load retries (redeemInvite itself is idempotent server-side).
     onError: (_error, variables: { token: string }) => {
-      window.localStorage.setItem(INVITE_KEY, variables.token);
+      safeStorage.setItem("local", INVITE_KEY, variables.token);
     },
     onSuccess: (
       result: FunctionReturnType<typeof gateway.social.redeemInvite>,
     ) => {
       if (
         result.redeemed &&
-        window.localStorage.getItem(LOOP_SHOWN_KEY) === null
+        safeStorage.getItem("local", LOOP_SHOWN_KEY) === null
       ) {
-        window.localStorage.setItem(LOOP_SHOWN_KEY, "1");
+        safeStorage.setItem("local", LOOP_SHOWN_KEY, "1");
         setShowLoopQr(true);
       }
     },
@@ -52,17 +53,17 @@ export function InviteRedeemer() {
     if (!me || ran.current) return;
     ran.current = true;
 
-    const token = window.localStorage.getItem(INVITE_KEY);
+    const token = safeStorage.getItem("local", INVITE_KEY);
     if (token !== null) {
-      window.localStorage.removeItem(INVITE_KEY);
+      safeStorage.removeItem("local", INVITE_KEY);
       redeem({ token });
       return;
     }
 
     // Fallback nudge: only for members created in the last 15 minutes, once ever.
     const isNew = Date.now() - me.createdAt < NEW_MEMBER_WINDOW_MS;
-    if (isNew && window.localStorage.getItem(FALLBACK_SHOWN_KEY) === null) {
-      window.localStorage.setItem(FALLBACK_SHOWN_KEY, "1");
+    if (isNew && safeStorage.getItem("local", FALLBACK_SHOWN_KEY) === null) {
+      safeStorage.setItem("local", FALLBACK_SHOWN_KEY, "1");
       toast(t("didSomeoneInviteTitle"), {
         description: t("didSomeoneInviteBody"),
         action: (

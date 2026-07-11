@@ -32,7 +32,9 @@ type QrDialogProps = {
 // copy/share actions. Fetches (and caches for the lifetime of this mount) the member's invite
 // token — mounted fresh each time the dialog opens (Radix unmounts DialogContent while closed), so
 // a plain mount effect is enough; no `open` prop needed here.
-function QrDialogContent(props: QrDialogProps) {
+// `onNavigate` closes the enclosing dialog when the username-gate link routes away — otherwise the
+// dialog lingers open over the settings page (whose route can be the same one it navigates to).
+function QrDialogContent(props: QrDialogProps & { onNavigate?: () => void }) {
   const t = useTranslations("invite");
   const [copied, setCopied] = useState(false);
 
@@ -69,7 +71,9 @@ function QrDialogContent(props: QrDialogProps) {
         <h2 className="font-heading text-xl">{t("needUsernameTitle")}</h2>
         <p className="text-muted-foreground text-sm">{t("needUsernameBody")}</p>
         <Button asChild variant="brand">
-          <Link to="/profile">{t("openSettings")}</Link>
+          <Link to="/profile" onClick={props.onNavigate}>
+            {t("openSettings")}
+          </Link>
         </Button>
       </div>
     );
@@ -129,9 +133,12 @@ function QrDialogContent(props: QrDialogProps) {
 // Self-contained trigger button + dialog: `Show my QR` opens the fullscreen QR view.
 export function QrDialog(props: QrDialogProps) {
   const t = useTranslations("invite");
+  // Controlled so the username-gate link can close the dialog before it routes to /profile —
+  // otherwise it would linger open over the settings page.
+  const [open, setOpen] = useState(false);
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <QrCode className="size-4" />
@@ -140,7 +147,7 @@ export function QrDialog(props: QrDialogProps) {
       </DialogTrigger>
       <DialogContent className={DIALOG_CONTENT_CLASS}>
         <DialogTitle className="sr-only">{t("dialogTitle")}</DialogTitle>
-        <QrDialogContent {...props} />
+        <QrDialogContent {...props} onNavigate={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );
@@ -165,7 +172,7 @@ export function QrDialogAutoOpen(
           {props.title}
         </DialogTitle>
         <p className="text-muted-foreground text-sm">{props.body}</p>
-        <QrDialogContent {...props} />
+        <QrDialogContent {...props} onNavigate={props.onClose} />
         <Button variant="ghost" onClick={props.onClose}>
           {t("loopSkip")}
         </Button>
