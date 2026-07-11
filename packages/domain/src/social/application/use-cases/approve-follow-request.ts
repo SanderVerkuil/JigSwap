@@ -1,5 +1,6 @@
 import {
   Clock,
+  DomainEvent,
   DomainEventPublisher,
   err,
   ok,
@@ -50,7 +51,7 @@ export const makeApproveFollowRequest =
       request.requesterId,
       request.targetId,
     );
-    let edgeEvents: readonly unknown[] = [];
+    let edgeEvents: readonly DomainEvent[] = [];
     if (!existingEdge) {
       const edge = Follow.establish({
         id: deps.followIds.next(),
@@ -64,10 +65,7 @@ export const makeApproveFollowRequest =
     }
 
     await deps.requests.save(request);
-    await deps.events.publish([
-      ...request.pullEvents(),
-      ...(edgeEvents as never[]),
-    ]);
+    await deps.events.publish([...request.pullEvents(), ...edgeEvents]);
 
     const alreadyFollowsBack =
       (await deps.follows.find(request.targetId, request.requesterId)) !== null;
