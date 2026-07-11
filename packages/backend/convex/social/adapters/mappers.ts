@@ -2,11 +2,14 @@ import {
   type Comment,
   DisplayName,
   Follow,
+  FollowRequest,
+  type FollowRequestState,
   type FollowState,
   type PhotoComment,
   Profile,
   type ProfileState,
   toFollowId,
+  toFollowRequestId,
   toMemberId,
   toProfileId,
 } from "@jigswap/domain";
@@ -87,6 +90,42 @@ export const followToRow = (follow: Follow): FollowRow => {
     followerId: state.followerId as unknown as Id<"users">,
     followeeId: state.followeeId as unknown as Id<"users">,
     createdAt: state.createdAt.getTime(),
+  };
+};
+
+export type FollowRequestRow = Omit<
+  Doc<"followRequests">,
+  "_id" | "_creationTime"
+>;
+
+// Row -> FollowRequest aggregate.
+export const followRequestToDomain = (
+  row: Doc<"followRequests">,
+): FollowRequest => {
+  const state: FollowRequestState = {
+    id: toFollowRequestId(row.aggregateId),
+    requesterId: toMemberId(row.requesterId),
+    targetId: toMemberId(row.targetId),
+    status: row.status,
+    createdAt: new Date(row.createdAt),
+    respondedAt:
+      row.respondedAt !== undefined ? new Date(row.respondedAt) : undefined,
+  };
+  return FollowRequest.rehydrate(state);
+};
+
+// FollowRequest aggregate -> row payload.
+export const followRequestToRow = (
+  request: FollowRequest,
+): FollowRequestRow => {
+  const state = request.toState();
+  return {
+    aggregateId: state.id as string,
+    requesterId: state.requesterId as unknown as Id<"users">,
+    targetId: state.targetId as unknown as Id<"users">,
+    status: state.status,
+    createdAt: state.createdAt.getTime(),
+    respondedAt: state.respondedAt?.getTime(),
   };
 };
 
