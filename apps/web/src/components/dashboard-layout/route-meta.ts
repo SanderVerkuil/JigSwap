@@ -162,6 +162,10 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   "/trades": { pageKey: "exchanges", group: "community" },
   "/messages": { pageKey: "messages", group: "community" },
   "/people": { pageKey: "people", group: "community" },
+  // Public member profile: nav-highlights Community for signed-in viewers; the
+  // anonymous tier renders the marketing shell instead (no shell meta needed).
+  "/members": { pageKey: "members", group: "community" },
+  "/members/$handle": { pageKey: "members", group: "community" },
 
   // Admin (gated: the group renders only for backend-confirmed admins).
   "/admin": { pageKey: "admin", variant: "landing" },
