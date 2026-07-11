@@ -308,4 +308,167 @@ describe("follow request lifecycle", () => {
     );
     expect(incoming[0].alreadyFollowing).toBe(false);
   });
+
+  test("listIncomingFollowRequests excludes approved and declined requests", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seedMembers(t);
+    // Both alice and carol request to follow bob (private).
+    const aliceReq = await asAlice(t).mutation(
+      api.social.followMember.followMember,
+      { followeeId: bob },
+    );
+    const carolReq = await asCarol(t).mutation(
+      api.social.followMember.followMember,
+      { followeeId: bob },
+    );
+    // Bob approves alice, declines carol — no request is left pending.
+    await asBob(t).mutation(
+      api.social.approveFollowRequest.approveFollowRequest,
+      { requestId: aliceReq.id },
+    );
+    await asBob(t).mutation(
+      api.social.declineFollowRequest.declineFollowRequest,
+      { requestId: carolReq.id },
+    );
+
+    const incoming = await asBob(t).query(
+      api.social.listIncomingFollowRequests.listIncomingFollowRequests,
+      {},
+    );
+    // Approved and declined rows are kept but must never surface as incoming requests.
+    expect(incoming).toHaveLength(0);
+  });
+});
+
+// The central anti-abuse invariant: a decline starts a 7-day cooldown that a cancel-then-
+// re-request must NOT be able to defeat. Cancelling keeps the decline record (masked off the
+// read side); a re-request inside the cooldown silently resumes the mask without re-notifying.
+describe("silent-decline cooldown cannot be bypassed by cancel + re-request", () => {
+  const EIGHT_DAYS = 8 * 24 * 60 * 60 * 1000;
+
+  const followRequestRows = (t: ReturnType<typeof convexTest>) =>
+    t.run((ctx) => ctx.db.query("followRequests").collect());
+
+  test("cancel then re-request within the cooldown: mask resumes, one row, no new notification", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seedMembers(t);
+
+    const requested = await asAlice(t).mutation(
+      api.social.followMember.followMember,
+      { followeeId: bob },
+    );
+    await asBob(t).mutation(
+      api.social.declineFollowRequest.declineFollowRequest,
+      { requestId: requested.id },
+    );
+    await flushScheduled(t);
+    // Bob's only notification is the original follow_request_received.
+    const bobBefore = (await notificationsFor(t, bob)).length;
+    expect(bobBefore).toBe(1);
+
+    // Cancel: the decline record must SURVIVE (row retained), and the relation must now read
+    // as no pending request (the requester withdrew).
+    await asAlice(t).mutation(
+      api.social.cancelFollowRequest.cancelFollowRequest,
+      { requestId: requested.id },
+    );
+    expect(await followRequestRows(t)).toHaveLength(1);
+    const afterCancel = await asAlice(t).query(
+      api.social.getFollowRelation.getFollowRelation,
+      { memberId: bob },
+    );
+    expect(afterCancel.pendingRequest).toBeNull();
+
+    // Re-request inside the cooldown: same id returned, mask resumes, still exactly one row.
+    const reRequested = await asAlice(t).mutation(
+      api.social.followMember.followMember,
+      { followeeId: bob },
+    );
+    expect(reRequested.id).toBe(requested.id);
+    await flushScheduled(t);
+
+    expect(await followRequestRows(t)).toHaveLength(1);
+    const relation = await asAlice(t).query(
+      api.social.getFollowRelation.getFollowRelation,
+      { memberId: bob },
+    );
+    expect(relation.pendingRequest).not.toBeNull();
+    expect(relation.pendingRequest?.requestId).toBe(requested.id);
+
+    // The whole point: Bob was NOT re-notified seconds after declining.
+    const bobAfter = await notificationsFor(t, bob);
+    expect(bobAfter).toHaveLength(bobBefore);
+  });
+
+  test("re-request after the cooldown expires creates a fresh request and re-notifies the target", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seedMembers(t);
+
+    const requested = await asAlice(t).mutation(
+      api.social.followMember.followMember,
+      { followeeId: bob },
+    );
+    await asBob(t).mutation(
+      api.social.declineFollowRequest.declineFollowRequest,
+      { requestId: requested.id },
+    );
+    await flushScheduled(t);
+
+    // Simulate the cooldown lapsing by pushing respondedAt back 8 days.
+    await t.run(async (ctx) => {
+      const row = await ctx.db.query("followRequests").first();
+      if (!row) throw new Error("setup");
+      await ctx.db.patch(row._id, { respondedAt: Date.now() - EIGHT_DAYS });
+    });
+
+    const reRequested = await asAlice(t).mutation(
+      api.social.followMember.followMember,
+      { followeeId: bob },
+    );
+    expect(reRequested.id).not.toBe(requested.id);
+    await flushScheduled(t);
+
+    const rows = await followRequestRows(t);
+    expect(rows).toHaveLength(1); // stale declined row replaced
+    expect(rows[0].status).toBe("pending");
+
+    const bobNotifications = await notificationsFor(t, bob);
+    // Original + fresh post-cooldown request → two follow_request_received notifications.
+    expect(
+      bobNotifications.filter((n) => n.type === "follow_request_received"),
+    ).toHaveLength(2);
+  });
+
+  test("getFollowRelation stops masking a decline once the cooldown has expired (no re-request)", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seedMembers(t);
+    const requested = await asAlice(t).mutation(
+      api.social.followMember.followMember,
+      { followeeId: bob },
+    );
+    await asBob(t).mutation(
+      api.social.declineFollowRequest.declineFollowRequest,
+      { requestId: requested.id },
+    );
+
+    // Fresh decline: still masked as pending.
+    const masked = await asAlice(t).query(
+      api.social.getFollowRelation.getFollowRelation,
+      { memberId: bob },
+    );
+    expect(masked.pendingRequest).not.toBeNull();
+
+    // Push respondedAt beyond the cooldown; with no re-request the mask must lift.
+    await t.run(async (ctx) => {
+      const row = await ctx.db.query("followRequests").first();
+      if (!row) throw new Error("setup");
+      await ctx.db.patch(row._id, { respondedAt: Date.now() - EIGHT_DAYS });
+    });
+
+    const unmasked = await asAlice(t).query(
+      api.social.getFollowRelation.getFollowRelation,
+      { memberId: bob },
+    );
+    expect(unmasked.pendingRequest).toBeNull();
+  });
 });

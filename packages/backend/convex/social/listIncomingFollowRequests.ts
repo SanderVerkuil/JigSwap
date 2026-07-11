@@ -12,11 +12,12 @@ export const listIncomingFollowRequests = query({
   handler: async (ctx) => {
     const me = (await requireMember(ctx)) as unknown as Id<"users">;
 
-    const rows = await ctx.db
+    const pending = await ctx.db
       .query("followRequests")
-      .withIndex("by_target", (q) => q.eq("targetId", me))
+      .withIndex("by_target_status", (q) =>
+        q.eq("targetId", me).eq("status", "pending"),
+      )
       .collect();
-    const pending = rows.filter((r) => r.status === "pending");
 
     const result = [];
     for (const row of pending) {

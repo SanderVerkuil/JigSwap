@@ -110,6 +110,8 @@ export const followRequestToDomain = (
     createdAt: new Date(row.createdAt),
     respondedAt:
       row.respondedAt !== undefined ? new Date(row.respondedAt) : undefined,
+    cancelledAt:
+      row.cancelledAt !== undefined ? new Date(row.cancelledAt) : undefined,
   };
   return FollowRequest.rehydrate(state);
 };
@@ -126,6 +128,7 @@ export const followRequestToRow = (
     status: state.status,
     createdAt: state.createdAt.getTime(),
     respondedAt: state.respondedAt?.getTime(),
+    cancelledAt: state.cancelledAt?.getTime(),
   };
 };
 

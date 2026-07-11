@@ -57,6 +57,12 @@ export const makeRequestFollow =
       ) {
         // Silent decline: inside the cooldown a re-request is swallowed and the old id
         // returned, exactly as if the target simply hadn't answered yet.
+        if (state.cancelledAt !== undefined) {
+          // The requester had cancelled during the cooldown (which un-masked the row on the
+          // read side). Re-requesting resumes the mask: clear the cancel, no event, same id.
+          existing.reopenAfterCancel();
+          await deps.requests.save(existing);
+        }
         return ok(existing.id);
       }
       // Cooldown passed, or a stale approved row whose edge was later unfollowed: replace.

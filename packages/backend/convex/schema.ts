@@ -894,7 +894,10 @@ export default defineSchema({
   // FollowRequest aggregate rows: a member asking to follow a private-profile member.
   // status pending → approved | declined; respondedAt backs the 7-day decline cooldown.
   // Declined rows are kept (not deleted) so a re-request inside the cooldown can be
-  // silently swallowed — deleting them would make a decline observable.
+  // silently swallowed — deleting them would make a decline observable. cancelledAt is
+  // stamped when the requester cancels a declined-in-cooldown request: the row is retained
+  // (never destroying the cooldown record) but stops masking as pending on the read side; a
+  // re-request within the cooldown clears it and silently resumes the mask.
   followRequests: defineTable({
     aggregateId: v.string(),
     requesterId: v.id("users"),
@@ -906,9 +909,11 @@ export default defineSchema({
     ),
     createdAt: v.number(),
     respondedAt: v.optional(v.number()),
+    cancelledAt: v.optional(v.number()),
   })
     .index("by_requester", ["requesterId"])
     .index("by_target", ["targetId"])
+    .index("by_target_status", ["targetId", "status"])
     .index("by_requester_target", ["requesterId", "targetId"])
     .index("by_aggregate_id", ["aggregateId"]),
 

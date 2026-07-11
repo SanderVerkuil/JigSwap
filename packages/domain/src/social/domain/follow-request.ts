@@ -29,6 +29,10 @@ export interface FollowRequestState {
   readonly status: FollowRequestStatus;
   readonly createdAt: Date;
   readonly respondedAt?: Date;
+  // Set when the requester cancels a still-declined (in-cooldown) request. The row is kept so the
+  // decline record survives, but the read side stops masking it as pending; a re-request inside
+  // the cooldown clears it again. Only ever set on a declined request.
+  readonly cancelledAt?: Date;
 }
 
 // FollowRequest: a member asks to follow a private-profile member. Lifecycle is
@@ -113,6 +117,24 @@ export class FollowRequest {
       ),
     );
     return ok(undefined);
+  }
+
+  // Requester cancels while the request is still a declined-in-cooldown record. Retains the row
+  // (the cooldown must survive a cancel) but stamps cancelledAt so the read side stops masking it
+  // as pending. Records NO event — nothing subscribes to a cancel. Only valid on a declined
+  // request; any other status is a caller error surfaced as RequestNotPending.
+  markCancelledWhileDeclined(now: Date): Result<void, SocialError> {
+    if (this.state.status !== "declined") {
+      return err(SocialError.requestNotPending());
+    }
+    this.state = { ...this.state, cancelledAt: now };
+    return ok(undefined);
+  }
+
+  // Clears the cancelled mark so a re-request inside the cooldown silently resumes the pending
+  // mask. Records no event. The caller only ever invokes this on a cancelled declined request.
+  reopenAfterCancel(): void {
+    this.state = { ...this.state, cancelledAt: undefined };
   }
 
   // Drain recorded events for the publisher; clears the buffer so a save can't double-emit.

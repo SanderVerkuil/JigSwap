@@ -60,7 +60,7 @@ describe("resolving follow requests", () => {
     };
     approve = makeApproveFollowRequest(deps);
     decline = makeDeclineFollowRequest({ requests, events, clock });
-    cancel = makeCancelFollowRequest({ requests });
+    cancel = makeCancelFollowRequest({ requests, clock });
   });
 
   it("approve: creates the requester→target edge and publishes both events", async () => {
@@ -185,6 +185,22 @@ describe("resolving follow requests", () => {
     const result = await cancel({ requestId, actorId: alice });
     expect(result.isOk).toBe(true);
     expect(await requests.findById(requestId)).toBeNull();
+    expect(events.published).toHaveLength(0);
+  });
+
+  it("cancel: a declined-in-cooldown request is retained with cancelledAt set (row kept, no events)", async () => {
+    const declineResult = await decline({ requestId, actorId: bob });
+    expect(declineResult.isOk).toBe(true);
+    events.published.length = 0; // discard the FollowRequestDeclined from the decline
+
+    const result = await cancel({ requestId, actorId: alice });
+    expect(result.isOk).toBe(true);
+    // The decline record must survive a cancel, so the row is kept (not removed) and carries
+    // the cancelled mark that stops the read side masking it as pending.
+    const row = await requests.findById(requestId);
+    expect(row).not.toBeNull();
+    expect(row?.status).toBe("declined");
+    expect(row?.toState().cancelledAt).toEqual(NOW);
     expect(events.published).toHaveLength(0);
   });
 

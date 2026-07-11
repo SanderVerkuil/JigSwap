@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { toMemberId } from "../../../shared-kernel";
 import { Follow, FollowRequest } from "../../domain";
 import {
@@ -83,11 +83,56 @@ describe("makeRequestFollow", () => {
     row.decline(NOW);
     await requests.save(row);
 
+    // A non-cancelled cooldown request must be a PURE read: the row is left exactly as-is, so
+    // the use case must not re-save it (only the cancelled-row reopen path saves).
+    const saveSpy = vi.spyOn(requests, "save");
     build(new Date(NOW.getTime() + COOLDOWN_MS - 1000)); // still inside cooldown
     const again = await request({ requesterId: alice, targetId: bob });
     expect(again.isOk).toBe(true);
     if (again.isOk) expect(again.value).toBe(first.value);
     expect(requests.size()).toBe(1); // no new row
+    expect(saveSpy).not.toHaveBeenCalled();
+  });
+
+  it("re-request inside the cooldown after a cancel resumes the mask: same id, no new row, cancelledAt cleared, no event", async () => {
+    const first = await request({ requesterId: alice, targetId: bob });
+    if (!first.isOk) throw new Error("setup");
+    const row = await requests.findByPair(alice, bob);
+    if (!row) throw new Error("setup");
+    row.decline(NOW);
+    if (row.markCancelledWhileDeclined(NOW).isErr) throw new Error("setup");
+    await requests.save(row);
+    events.published.length = 0; // only assert on events the re-request itself publishes
+
+    build(new Date(NOW.getTime() + COOLDOWN_MS - 1000)); // still inside cooldown
+    const again = await request({ requesterId: alice, targetId: bob });
+    expect(again.isOk).toBe(true);
+    if (again.isOk) expect(again.value).toBe(first.value); // same id, silent
+    expect(requests.size()).toBe(1); // no new row
+    const reopened = await requests.findByPair(alice, bob);
+    expect(reopened?.toState().cancelledAt).toBeUndefined(); // mask resumed
+    expect(events.names()).toEqual([]); // silent: no event
+  });
+
+  it("re-request after the cooldown expires on a cancelled decline creates a fresh request", async () => {
+    const first = await request({ requesterId: alice, targetId: bob });
+    if (!first.isOk) throw new Error("setup");
+    const row = await requests.findByPair(alice, bob);
+    if (!row) throw new Error("setup");
+    row.decline(NOW);
+    if (row.markCancelledWhileDeclined(NOW).isErr) throw new Error("setup");
+    await requests.save(row);
+    events.published.length = 0;
+
+    build(new Date(NOW.getTime() + COOLDOWN_MS + 1000)); // past cooldown
+    const again = await request({ requesterId: alice, targetId: bob });
+    expect(again.isOk).toBe(true);
+    if (again.isOk) expect(again.value).not.toBe(first.value); // fresh id
+    expect(requests.size()).toBe(1); // stale cancelled row replaced
+    const fresh = await requests.findByPair(alice, bob);
+    expect(fresh?.status).toBe("pending");
+    expect(fresh?.toState().cancelledAt).toBeUndefined();
+    expect(events.names()).toEqual(["FollowRequested"]);
   });
 
   it("re-opens with a fresh request after the cooldown has passed", async () => {

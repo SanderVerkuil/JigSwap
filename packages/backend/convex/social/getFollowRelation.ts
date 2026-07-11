@@ -47,7 +47,11 @@ export const getFollowRelation = query({
     const pendingRequest =
       request &&
       (request.status === "pending" ||
+        // A declined request masks as pending ONLY while it is still in cooldown AND has not
+        // been cancelled. A cancel stamps cancelledAt: the requester withdrew, so the relation
+        // must read as no pending request (until a re-request inside the cooldown resumes it).
         (request.status === "declined" &&
+          request.cancelledAt === undefined &&
           request.respondedAt !== undefined &&
           now - request.respondedAt < COOLDOWN_MS))
         ? { requestId: request.aggregateId, requestedAt: request.createdAt }
