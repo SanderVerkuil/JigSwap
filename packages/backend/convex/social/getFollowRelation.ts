@@ -1,13 +1,9 @@
+import { COOLDOWN_MS } from "@jigswap/domain";
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { profileVisibilityOf } from "./privacy";
-
-// Re-declared here rather than imported from the domain: the read side is outside the
-// hexagon and must not couple to application-layer constants. Keep in sync with
-// COOLDOWN_MS in request-follow.ts (7 days).
-const COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 
 // Read side: the composite relation state the FollowButton needs for a target member.
 // SILENT-DECLINE MASKING: a declined request still inside its cooldown is reported as
