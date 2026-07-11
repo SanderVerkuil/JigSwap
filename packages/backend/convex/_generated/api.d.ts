@@ -60,6 +60,7 @@ import type * as catalog_listMyFavorites from "../catalog/listMyFavorites.js";
 import type * as catalog_listPendingChangeProposals from "../catalog/listPendingChangeProposals.js";
 import type * as catalog_listPendingPuzzleDefinitions from "../catalog/listPendingPuzzleDefinitions.js";
 import type * as catalog_listProposalsForDefinition from "../catalog/listProposalsForDefinition.js";
+import type * as catalog_listSitemapEntries from "../catalog/listSitemapEntries.js";
 import type * as catalog_mappers from "../catalog/mappers.js";
 import type * as catalog_myFavoritePuzzleIds from "../catalog/myFavoritePuzzleIds.js";
 import type * as catalog_proposeDefinitionChange from "../catalog/proposeDefinitionChange.js";
@@ -383,6 +384,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/listPendingChangeProposals": typeof catalog_listPendingChangeProposals;
   "catalog/listPendingPuzzleDefinitions": typeof catalog_listPendingPuzzleDefinitions;
   "catalog/listProposalsForDefinition": typeof catalog_listProposalsForDefinition;
+  "catalog/listSitemapEntries": typeof catalog_listSitemapEntries;
   "catalog/mappers": typeof catalog_mappers;
   "catalog/myFavoritePuzzleIds": typeof catalog_myFavoritePuzzleIds;
   "catalog/proposeDefinitionChange": typeof catalog_proposeDefinitionChange;

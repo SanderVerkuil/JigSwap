@@ -392,3 +392,16 @@ describe("browsePublicCatalog", () => {
     expect(raw).not.toContain("clerk_");
   });
 });
+
+describe("listSitemapEntries", () => {
+  test("returns approved definition ids + updatedAt only", async () => {
+    const t = convexTest(schema, modules);
+    const { approved } = await seed(t);
+
+    const entries = await t.query(
+      api.catalog.listSitemapEntries.listSitemapEntries,
+      {},
+    );
+    expect(entries).toEqual([{ id: approved, updatedAt: NOW }]);
+  });
+});
