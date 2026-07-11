@@ -19,14 +19,14 @@ export const approveFollowRequest = mutation({
     args,
   ): Promise<{ requesterId: string; alreadyFollowsBack: boolean }> => {
     const actorId = await requireMember(ctx);
-    const useCase = makeApproveFollowRequest({
+    const approveFollowRequestUseCase = makeApproveFollowRequest({
       requests: convexFollowRequestRepository(ctx),
       follows: convexFollowRepository(ctx),
       followIds: followIdGenerator,
       events: inProcessEventPublisher(ctx),
       clock: systemClock,
     });
-    const result = await useCase({
+    const result = await approveFollowRequestUseCase({
       requestId: toFollowRequestId(args.requestId),
       actorId,
     });

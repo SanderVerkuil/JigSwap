@@ -13,12 +13,12 @@ export const declineFollowRequest = mutation({
   args: { requestId: v.string() },
   handler: async (ctx, args): Promise<void> => {
     const actorId = await requireMember(ctx);
-    const useCase = makeDeclineFollowRequest({
+    const declineFollowRequestUseCase = makeDeclineFollowRequest({
       requests: convexFollowRequestRepository(ctx),
       events: inProcessEventPublisher(ctx),
       clock: systemClock,
     });
-    const result = await useCase({
+    const result = await declineFollowRequestUseCase({
       requestId: toFollowRequestId(args.requestId),
       actorId,
     });

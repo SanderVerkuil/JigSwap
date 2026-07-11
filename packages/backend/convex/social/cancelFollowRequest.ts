@@ -10,10 +10,10 @@ export const cancelFollowRequest = mutation({
   args: { requestId: v.string() },
   handler: async (ctx, args): Promise<void> => {
     const actorId = await requireMember(ctx);
-    const useCase = makeCancelFollowRequest({
+    const cancelFollowRequestUseCase = makeCancelFollowRequest({
       requests: convexFollowRequestRepository(ctx),
     });
-    const result = await useCase({
+    const result = await cancelFollowRequestUseCase({
       requestId: toFollowRequestId(args.requestId),
       actorId,
     });
