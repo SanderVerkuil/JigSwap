@@ -10,6 +10,8 @@ import {
   MessageSquare,
   Star,
   Target,
+  UserCheck,
+  UserPlus,
   XCircle,
 } from "lucide-react";
 
@@ -34,7 +36,10 @@ export type NotificationType =
   | "proposal_approved"
   | "proposal_rejected"
   | "admin_proposal_filed"
-  | "admin_definition_submitted";
+  | "admin_definition_submitted"
+  | "new_follower"
+  | "follow_request_received"
+  | "follow_request_approved";
 
 export const NOTIFICATION_TYPES: NotificationType[] = [
   "trade_request",
@@ -55,6 +60,9 @@ export const NOTIFICATION_TYPES: NotificationType[] = [
   "proposal_rejected",
   "admin_proposal_filed",
   "admin_definition_submitted",
+  "new_follower",
+  "follow_request_received",
+  "follow_request_approved",
 ];
 
 // Types only admins ever receive; hidden from non-admin preference matrices.
@@ -141,6 +149,11 @@ export function notificationIcon(type: string): LucideIcon {
       return Lightbulb;
     case "admin_definition_submitted":
       return Inbox;
+    case "new_follower":
+    case "follow_request_received":
+      return UserPlus;
+    case "follow_request_approved":
+      return UserCheck;
     default:
       return Bell;
   }
@@ -154,6 +167,7 @@ export function notificationAccent(type: string): string {
     case "trade_accepted":
     case "puzzle_approved":
     case "proposal_approved":
+    case "follow_request_approved":
       return "text-green-600";
     case "trade_declined":
     case "trade_cancelled":
@@ -168,6 +182,9 @@ export function notificationAccent(type: string): string {
     case "puzzle_favorited":
       return "text-pink-500";
     case "message_received":
+      return "text-blue-500";
+    case "new_follower":
+    case "follow_request_received":
       return "text-blue-500";
     case "admin_proposal_filed":
     case "admin_definition_submitted":
@@ -217,6 +234,11 @@ export function notificationHref(row: NotificationRow): string | null {
         : "/admin/puzzles/proposals";
     case "admin_definition_submitted":
       return "/admin/moderation";
+    // Follow activity resolves on the People page (requests strip + network grid).
+    case "new_follower":
+    case "follow_request_received":
+    case "follow_request_approved":
+      return "/people";
     default:
       return null;
   }

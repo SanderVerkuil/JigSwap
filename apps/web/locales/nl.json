@@ -1520,7 +1520,10 @@
       "admin_proposal_filed": "Voorstel om te beoordelen",
       "admin_definition_submitted": "Inzending om te modereren",
       "photo_removed": "Foto verwijderd",
-      "goal_achieved": "Doel behaald"
+      "goal_achieved": "Doel behaald",
+      "new_follower": "Nieuwe volgers",
+      "follow_request_received": "Volgverzoeken",
+      "follow_request_approved": "Volgverzoek goedgekeurd"
     },
     "copy": {
       "trade_request": {
@@ -1594,6 +1597,18 @@
       "goal_achieved": {
         "title": "Doel behaald",
         "message": "Je hebt een van je doelen bereikt!"
+      },
+      "new_follower": {
+        "title": "Nieuwe volger",
+        "message": "Iemand volgt je nu."
+      },
+      "follow_request_received": {
+        "title": "Volgverzoek",
+        "message": "Iemand wil je graag volgen."
+      },
+      "follow_request_approved": {
+        "title": "Verzoek goedgekeurd",
+        "message": "Je volgverzoek is goedgekeurd."
       }
     },
     "pushDeviceTitle": "Push op dit apparaat",
@@ -1627,7 +1642,10 @@
       "admin_proposal_filed": "Wanneer een lid een wijziging voorstelt die beoordeling vereist (alleen beheerders).",
       "admin_definition_submitted": "Wanneer een nieuwe puzzelinzending op moderatie wacht (alleen beheerders).",
       "photo_removed": "Wanneer een moderator een van je puzzelfoto's verwijdert.",
-      "goal_achieved": "Wanneer je een puzzeldoel behaalt."
+      "goal_achieved": "Wanneer je een puzzeldoel behaalt.",
+      "new_follower": "Wanneer iemand je begint te volgen.",
+      "follow_request_received": "Wanneer iemand vraagt om je te volgen.",
+      "follow_request_approved": "Wanneer een volgverzoek dat je stuurde wordt goedgekeurd."
     },
     "pushServiceUnreachable": "Je browser kon zijn pushdienst niet bereiken. Sommige privacybrowsers blokkeren of verwijderen die — Brave schakelt het standaard uit (zet 'Google-services voor pushberichten gebruiken' aan in Instellingen), en de-Googled Chromium-browsers zoals Helium verwijderen het. Firefox, Chrome of Edge werkt wel."
   },
