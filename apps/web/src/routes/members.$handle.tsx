@@ -10,6 +10,7 @@ import { PrivateInterstitial } from "@/components/members/private-interstitial";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
+import { pageTitle } from "@/lib/page-title";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -52,24 +53,37 @@ export const Route = createFileRoute("/members/$handle")({
     }
     return { teaser };
   },
-  // head runs after the loader on the SSR pass, which is the pass crawlers
-  // see — so the private-profile noindex is reliably in the served HTML.
-  head: ({ loaderData }) => ({
+  // `loaderData` is safe to read here despite the page-title helper's caveat:
+  // on the SSR pass TanStack Start resolves every loader before executeHead
+  // runs (router-core's loadMatches awaits the matchPromises before its
+  // headMaxIndex loop), and SSR is the pass crawlers/social scrapers see — so
+  // the member's name in <title> and the private-profile noindex are reliably
+  // in the served HTML. On client navigations a momentarily stale title is
+  // possible and acceptable. The dynamic entity title is intentional (public
+  // member pages are shareable/indexable per the spec); the pre-load fallback
+  // reuses the localized page-title machinery instead of hand-rolling one.
+  head: ({ loaderData, match }) => ({
     meta: [
       {
         title: loaderData?.teaser
           ? `${loaderData.teaser.displayName} — JigSwap`
-          : "JigSwap",
+          : pageTitle(match.context, "members"),
       },
       ...(loaderData?.teaser?.visibility === "private"
         ? [{ name: "robots", content: "noindex" }]
         : []),
     ],
   }),
-  pendingComponent: () => <PageLoading message="Loading member..." />,
+  pendingComponent: MemberPending,
   notFoundComponent: MemberNotFound,
   component: MemberPage,
 });
+
+// Shared localized loading state (route pending + in-page query waits).
+function MemberPending() {
+  const t = useTranslations("members");
+  return <PageLoading message={t("loading")} />;
+}
 
 function MemberPage() {
   const { userId } = useRouteContext({ from: "__root__" });
@@ -79,7 +93,7 @@ function MemberPage() {
     convexQuery(gateway.social.publicMemberTeaser, { handle }),
   );
 
-  if (!teaser) return <PageLoading message="Loading member..." />;
+  if (!teaser) return <MemberPending />;
 
   if (!userId) {
     const returnToHref = `/members/${handle}${invite ? `?invite=${encodeURIComponent(invite)}` : ""}`;
@@ -113,17 +127,28 @@ function AuthedMemberPage({
 }) {
   const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
   // Privacy-gated tier discriminator: getUserById returns null for a private
-  // non-mutual target (and only then, for an existing active member).
+  // non-mutual target (and only then, for an existing active member). The hook
+  // call stays unconditional (hook order); only its args become "skip" — while
+  // `me` is unresolved (can't tell self from other yet) and permanently on the
+  // self path, which redirects to /profile instead of rendering.
   const { data: member } = useQuery(
-    convexQuery(gateway.identity.byId, { userId: memberId }),
+    convexQuery(
+      gateway.identity.byId,
+      me === undefined || me?._id === memberId ? "skip" : { userId: memberId },
+    ),
   );
 
-  if (me === undefined || member === undefined) {
-    return <PageLoading message="Loading member..." />;
+  if (me === undefined) {
+    return <MemberPending />;
   }
-  // Own handle -> the single own-profile surface.
+  // Own handle -> the single own-profile surface. Client-side (unlike the
+  // loader's canonical username redirect): self-detection needs the authed
+  // currentUser, which the public unauthenticated SSR loader doesn't have.
   if (me && me._id === memberId) {
     return <Navigate to="/profile" replace />;
+  }
+  if (member === undefined) {
+    return <MemberPending />;
   }
   if (member === null) {
     return <PrivateInterstitial teaser={teaser} />;
@@ -149,7 +174,9 @@ function MemberNotFound() {
       )}
     </div>
   );
-  if (userId) return body;
+  // App convention: 404 inside the authed app renders within the dashboard
+  // shell (see _dashboard/route.tsx's notFoundComponent).
+  if (userId) return <DashboardShell>{body}</DashboardShell>;
   return (
     <div className="mk-root font-mk-sans min-h-screen overflow-x-clip">
       <MarketingHeader />
