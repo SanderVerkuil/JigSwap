@@ -161,3 +161,147 @@ describe("follow notifications", () => {
     expect(await followEdges(t)).toHaveLength(0);
   });
 });
+
+describe("follow request lifecycle", () => {
+  test("re-following a private member while a request is pending is idempotent (one row)", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seedMembers(t);
+
+    const first = await asAlice(t).mutation(
+      api.social.followMember.followMember,
+      { followeeId: bob },
+    );
+    const second = await asAlice(t).mutation(
+      api.social.followMember.followMember,
+      { followeeId: bob },
+    );
+    expect(second).toEqual(first);
+    const rows = await t.run((ctx) => ctx.db.query("followRequests").collect());
+    expect(rows).toHaveLength(1);
+  });
+
+  test("private target that already follows the actor gets an INSTANT follow (follow-back exception)", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seedMembers(t);
+    // Bob (private) follows alice first (alice is public → instant).
+    await asBob(t).mutation(api.social.followMember.followMember, {
+      followeeId: alice,
+    });
+
+    const result = await asAlice(t).mutation(
+      api.social.followMember.followMember,
+      { followeeId: bob },
+    );
+    expect(result.kind).toBe("followed");
+    expect(await followEdges(t)).toHaveLength(2);
+  });
+
+  test("cancel removes the pending request", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seedMembers(t);
+    const requested = await asAlice(t).mutation(
+      api.social.followMember.followMember,
+      { followeeId: bob },
+    );
+
+    await asAlice(t).mutation(
+      api.social.cancelFollowRequest.cancelFollowRequest,
+      { requestId: requested.id },
+    );
+    const rows = await t.run((ctx) => ctx.db.query("followRequests").collect());
+    expect(rows).toHaveLength(0);
+  });
+
+  test("only the target can approve/decline; only the requester can cancel", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seedMembers(t);
+    const requested = await asAlice(t).mutation(
+      api.social.followMember.followMember,
+      { followeeId: bob },
+    );
+
+    await expect(
+      asCarol(t).mutation(
+        api.social.approveFollowRequest.approveFollowRequest,
+        { requestId: requested.id },
+      ),
+    ).rejects.toThrow();
+    await expect(
+      asCarol(t).mutation(
+        api.social.declineFollowRequest.declineFollowRequest,
+        { requestId: requested.id },
+      ),
+    ).rejects.toThrow();
+    await expect(
+      asBob(t).mutation(api.social.cancelFollowRequest.cancelFollowRequest, {
+        requestId: requested.id,
+      }),
+    ).rejects.toThrow();
+  });
+
+  test("getFollowRelation masks a fresh decline as still-pending (silent decline)", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seedMembers(t);
+    const requested = await asAlice(t).mutation(
+      api.social.followMember.followMember,
+      { followeeId: bob },
+    );
+    await asBob(t).mutation(
+      api.social.declineFollowRequest.declineFollowRequest,
+      { requestId: requested.id },
+    );
+
+    const relation = await asAlice(t).query(
+      api.social.getFollowRelation.getFollowRelation,
+      { memberId: bob },
+    );
+    expect(relation.pendingRequest).not.toBeNull();
+    expect(relation.pendingRequest?.requestId).toBe(requested.id);
+    expect(relation.following).toBe(false);
+    expect(relation.targetIsPrivate).toBe(true);
+  });
+
+  test("going private does not retroactively remove followers", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, carol } = await seedMembers(t);
+    // Alice follows carol while carol is public (instant edge).
+    await asAlice(t).mutation(api.social.followMember.followMember, {
+      followeeId: carol,
+    });
+    // Carol then goes private.
+    await asCarol(t).mutation(
+      api.social.setProfileVisibility.setProfileVisibility,
+      { visibility: "private" },
+    );
+
+    expect(await followEdges(t)).toHaveLength(1);
+    const relation = await asAlice(t).query(
+      api.social.getFollowRelation.getFollowRelation,
+      { memberId: carol },
+    );
+    expect(relation.following).toBe(true);
+    expect(relation.targetIsPrivate).toBe(true);
+  });
+
+  test("incoming list shows pending requests with requester view, newest first", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seedMembers(t);
+    await asAlice(t).mutation(api.social.followMember.followMember, {
+      followeeId: bob,
+    });
+    await asCarol(t).mutation(api.social.followMember.followMember, {
+      followeeId: bob,
+    });
+
+    const incoming = await asBob(t).query(
+      api.social.listIncomingFollowRequests.listIncomingFollowRequests,
+      {},
+    );
+    expect(incoming).toHaveLength(2);
+    expect(incoming.map((r) => r.requester.name).sort()).toEqual([
+      "Alice",
+      "Carol",
+    ]);
+    expect(incoming[0].alreadyFollowing).toBe(false);
+  });
+});
