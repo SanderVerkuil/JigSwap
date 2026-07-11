@@ -179,4 +179,55 @@ describe("getPublicMemberTeaser", () => {
     expect(teaser).not.toBeNull();
     expect(teaser!.avatar).toBe("https://img.example/carol.png");
   });
+
+  test("authenticated non-mutual viewer of a private member still gets no puzzleCount", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    // Alice is signed in but is NOT a mutual follower of the private member Carol.
+    const asAlice = t.withIdentity({ subject: "clerk_alice" });
+    const teaser = await asAlice.query(
+      api.social.getPublicMemberTeaser.getPublicMemberTeaser,
+      { handle: "carol" },
+    );
+    expect(teaser).not.toBeNull();
+    // puzzleCount is gated by visibility === "public" alone, regardless of auth.
+    expect(teaser!.visibility).toBe("private");
+    expect(teaser!.puzzleCount).toBeNull();
+  });
+
+  test("id URL is immune to username shadowing (id-first precedence)", async () => {
+    const t = convexTest(schema, modules);
+    // Two members: `target` is reachable by its id string; `shadower` sets its
+    // username to `target`'s id string in an attempt to hijack the id URL.
+    const { target, shadower } = await t.run(async (ctx) => {
+      const now = Date.now();
+      const target = await ctx.db.insert("users", {
+        clerkId: "clerk_target",
+        email: "target@example.com",
+        name: "Target",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      const shadower = await ctx.db.insert("users", {
+        clerkId: "clerk_shadower",
+        email: "shadower@example.com",
+        name: "Shadower",
+        username: target, // username equals the other member's id string
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      return { target, shadower };
+    });
+
+    const teaser = await t.query(
+      api.social.getPublicMemberTeaser.getPublicMemberTeaser,
+      { handle: target },
+    );
+    expect(teaser).not.toBeNull();
+    // Id resolution wins: the target member, never the username holder.
+    expect(teaser!.memberId).toBe(target);
+    expect(teaser!.memberId).not.toBe(shadower);
+  });
 });
