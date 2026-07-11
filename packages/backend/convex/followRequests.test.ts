@@ -309,6 +309,25 @@ describe("follow request lifecycle", () => {
     expect(incoming[0].alreadyFollowing).toBe(false);
   });
 
+  test("listIncomingFollowRequests skips requesters who have been deactivated", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seedMembers(t);
+    await asAlice(t).mutation(api.social.followMember.followMember, {
+      followeeId: bob,
+    });
+    // Alice's account is deactivated while her request is still pending: the request must
+    // not surface as an actionable row pointing at a dead profile.
+    await t.run(async (ctx) => {
+      await ctx.db.patch(alice, { isActive: false });
+    });
+
+    const incoming = await asBob(t).query(
+      api.social.listIncomingFollowRequests.listIncomingFollowRequests,
+      {},
+    );
+    expect(incoming).toHaveLength(0);
+  });
+
   test("listIncomingFollowRequests excludes approved and declined requests", async () => {
     const t = convexTest(schema, modules);
     const { bob } = await seedMembers(t);

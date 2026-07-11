@@ -1430,6 +1430,7 @@
       "approveAndFollowBack": "Goedkeuren & terugvolgen",
       "decline": "Weigeren",
       "approved": "Verzoek goedgekeurd",
+      "approvedFollowBackFailed": "Goedgekeurd — maar terugvolgen is niet gelukt, gebruik de Volgen-knop op hun tegel",
       "declined": "Verzoek geweigerd",
       "error": "Er ging iets mis. Probeer het opnieuw."
     },

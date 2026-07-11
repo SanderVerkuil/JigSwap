@@ -1430,6 +1430,7 @@
       "approveAndFollowBack": "Approve & follow back",
       "decline": "Decline",
       "approved": "Request approved",
+      "approvedFollowBackFailed": "Approved — but following them back failed, use the Follow button on their tile",
       "declined": "Request declined",
       "error": "Something went wrong. Please try again."
     },

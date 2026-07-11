@@ -113,7 +113,7 @@ export function MemberTile({
       </div>
 
       <div className="flex shrink-0 flex-col items-stretch gap-1.5">
-        <FollowButton memberId={memberId} size="sm" />
+        <FollowButton memberId={memberId} size="sm" memberName={member.name} />
         <MessageButton memberId={memberId} size="sm" />
       </div>
     </Card>

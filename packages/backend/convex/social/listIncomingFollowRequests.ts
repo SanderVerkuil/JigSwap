@@ -21,8 +21,10 @@ export const listIncomingFollowRequests = query({
 
     const result = [];
     for (const row of pending) {
+      // Skip deleted AND deactivated requesters (mirrors the teaser's gate): a deactivated
+      // member must not render as an actionable request with a dead profile link.
       const user = await ctx.db.get(row.requesterId);
-      if (!user) continue;
+      if (!user || !user.isActive) continue;
       const requester = toMemberView(user);
       const followsBack = await ctx.db
         .query("follows")

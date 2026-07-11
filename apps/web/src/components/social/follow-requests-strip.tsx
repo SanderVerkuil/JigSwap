@@ -34,18 +34,30 @@ export function FollowRequestsStrip() {
 
   if (!requests || requests.length === 0) return null;
 
+  // Approve and follow-back are two mutations with independent outcomes: once the approve
+  // has committed, a follow-back failure must not be reported as a total failure (the
+  // approval stuck). Each gets its own try/catch and its own toast.
   const handleApprove = async (requestId: string, alsoFollowBack: boolean) => {
+    let result;
     try {
-      const result = await approve.mutateAsync({ requestId });
-      if (alsoFollowBack && !result.alreadyFollowsBack) {
+      result = await approve.mutateAsync({ requestId });
+    } catch {
+      toast.error(t("requests.error"));
+      return;
+    }
+    if (alsoFollowBack && !result.alreadyFollowsBack) {
+      try {
         await followBack.mutateAsync({
           followeeId: result.requesterId as Id<"users">,
         });
+      } catch {
+        // The approval succeeded; only the follow-back failed. Softer message with a
+        // recovery hint rather than a blanket error.
+        toast.warning(t("requests.approvedFollowBackFailed"));
+        return;
       }
-      toast.success(t("requests.approved"));
-    } catch {
-      toast.error(t("requests.error"));
     }
+    toast.success(t("requests.approved"));
   };
 
   const handleDecline = async (requestId: string) => {
