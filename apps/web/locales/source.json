@@ -3240,5 +3240,8 @@
         "auditReceivedEmpty": "No audit entries target this member."
       }
     }
+  },
+  "publicCatalog": {
+    "toSwap": "{count} to swap"
   }
 }

@@ -3240,5 +3240,8 @@
         "auditReceivedEmpty": "Geen auditvermeldingen voor dit lid."
       }
     }
+  },
+  "publicCatalog": {
+    "toSwap": "{count} te ruil"
   }
 }
