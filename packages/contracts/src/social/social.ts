@@ -83,3 +83,23 @@ export interface PhotoCommentView {
 export type ProjectedMember =
   | { anonymous: false; member: MemberView }
   | { anonymous: true; anonRef: string };
+
+/**
+ * The unauthenticated "who is this member" read behind /members/$handle. Deliberately tiny:
+ * identity fields only — never bio, shelf, stats, or location. A private member IS named here:
+ * reachable by direct link (the spec's Instagram-style interstitial) but not enumerable (search
+ * stays visibility-gated) and not indexable (the page renders a robots noindex for private
+ * profiles). `avatar` is consent-gated for anonymous callers (users.shareAvatarPublicly);
+ * `puzzleCount` is only disclosed for public profiles.
+ */
+export interface PublicMemberTeaserView {
+  memberId: string;
+  displayName: string;
+  username?: string;
+  avatar?: string;
+  /** users.createdAt (ms). */
+  memberSince: number;
+  visibility: "public" | "private";
+  /** Owned-copy count; null for private profiles. */
+  puzzleCount: number | null;
+}
