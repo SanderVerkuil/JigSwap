@@ -106,3 +106,28 @@ export const projectMemberIdentity = async (
 
   return { anonymous: true, anonRef: anonRefOf(targetId, salt) };
 };
+
+/** The public projection of a review author: name + (consent-gated) avatar, or null. */
+export type PublicAuthorView = { name: string; avatar: string | null } | null;
+
+/**
+ * UNAUTHENTICATED identity projection for public (logged-out, indexable) surfaces — the public
+ * catalog's review authors. There is no viewer, so projectMemberIdentity's self/mutual-follower
+ * reveals cannot apply: reveal iff the member's profile is PUBLIC, else null (the UI renders a
+ * generic "A JigSwap member"). Deliberately far narrower than toMemberView — no username, bio,
+ * location, or member id ever leaves the server for a public page, and the avatar additionally
+ * requires the member's explicit `shareAvatarPublicly` consent (the existing flag for public
+ * marketing surfaces).
+ */
+export const projectPublicAuthor = async (
+  ctx: QueryCtx,
+  memberId: Id<"users">,
+): Promise<PublicAuthorView> => {
+  const user = await ctx.db.get(memberId);
+  if (!user) return null;
+  if ((await profileVisibilityOf(ctx, memberId)) !== "public") return null;
+  return {
+    name: user.name,
+    avatar: user.shareAvatarPublicly === true ? (user.avatar ?? null) : null,
+  };
+};

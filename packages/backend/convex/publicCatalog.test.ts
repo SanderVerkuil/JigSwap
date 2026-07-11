@@ -21,7 +21,7 @@ const mkUser = (
     email: `${clerkId}@example.com`,
     name,
     username: clerkId,
-    avatar: `https://avatars/${clerkId}.png`,
+    avatar: `https://avatars/${clerkId.replace("clerk_", "")}.png`,
     location: "Utrecht",
     shareAvatarPublicly: extra.shareAvatarPublicly,
     isActive: true,
@@ -233,5 +233,75 @@ describe("getPublicDefinitionView", () => {
     expect(raw).not.toContain("clerk_");
     expect(raw).not.toContain("Utrecht");
     expect(raw).not.toContain("condition");
+  });
+});
+
+describe("listPublicPuzzleReviews", () => {
+  test("names public-profile authors, anonymizes private-profile authors", async () => {
+    const t = convexTest(schema, modules);
+    const { approved } = await seed(t);
+
+    const reviews = await t.query(
+      api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
+      { puzzleId: approved },
+    );
+    // Newest first: rev-priya (private author), then rev-pia (public author).
+    expect(reviews).toHaveLength(2);
+    expect(reviews[0].author).toBeNull(); // Priya: private profile -> "A JigSwap member"
+    expect(reviews[0].text).toBe("Tough edges!");
+    expect(reviews[1].author?.name).toBe("Pia Public");
+    // Pia consented (shareAvatarPublicly: true) -> avatar included.
+    expect(reviews[1].author?.avatar).toBe("https://avatars/pia.png");
+  });
+
+  test("withholds the avatar without shareAvatarPublicly consent, even for public profiles", async () => {
+    const t = convexTest(schema, modules);
+    const { approved, paul } = await seed(t);
+    await t.run(async (ctx) => {
+      await ctx.db.insert("puzzleComments", {
+        aggregateId: "rev-paul",
+        puzzleId: approved,
+        authorId: paul,
+        text: "Great fit.",
+        rating: 4,
+        createdAt: NOW + 10,
+      });
+    });
+
+    const reviews = await t.query(
+      api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
+      { puzzleId: approved },
+    );
+    const paulsReview = reviews.find((r) => r.text === "Great fit.");
+    expect(paulsReview?.author?.name).toBe("Paul Public");
+    expect(paulsReview?.author?.avatar).toBeNull();
+  });
+
+  test("returns [] for a non-approved definition (reviews must not leak)", async () => {
+    const t = convexTest(schema, modules);
+    const { pending } = await seed(t);
+
+    expect(
+      await t.query(
+        api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
+        { puzzleId: pending },
+      ),
+    ).toEqual([]);
+  });
+
+  test("payload never carries username/location/bio/member ids", async () => {
+    const t = convexTest(schema, modules);
+    const { approved } = await seed(t);
+
+    const raw = JSON.stringify(
+      await t.query(
+        api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
+        { puzzleId: approved },
+      ),
+    );
+    expect(raw).not.toContain("clerk_"); // usernames equal clerk ids in the seed
+    expect(raw).not.toContain("Utrecht");
+    expect(raw).not.toContain("authorId");
+    expect(raw).not.toContain("email");
   });
 });
