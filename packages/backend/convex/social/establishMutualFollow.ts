@@ -1,4 +1,4 @@
-import { makeFollowMember, toMemberId } from "@jigswap/domain";
+import { COOLDOWN_MS, makeFollowMember, toMemberId } from "@jigswap/domain";
 import { Id } from "../_generated/dataModel";
 import { MutationCtx } from "../_generated/server";
 import { convexFollowRepository } from "./adapters/convexFollowRepository";
@@ -7,10 +7,11 @@ import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
 
 // Establish follow edges in BOTH directions between two members, tolerating edges that already
-// exist, and resolve any outstanding follow request between the pair. Used by QR scan + invite
-// redemption, where physically sharing your code is mutual intent — so this deliberately bypasses
-// the private-profile request gate that the followMember ENDPOINT applies (Phase 2). It still goes
-// through the domain use case so MemberFollowed events reach the activity feed and notifications.
+// exist, and resolve any RESOLVABLE follow request between the pair. Used by QR scan + invite
+// redemption — these flows bypass the private-profile request gate that the followMember ENDPOINT
+// applies (Phase 2), so callers are responsible for verifying consent first (in particular the
+// decline cooldown; see acceptQrFollow). It still goes through the domain use case so
+// MemberFollowed events reach the activity feed and notifications.
 export async function establishMutualFollow(
   ctx: MutationCtx,
   a: Id<"users">,
@@ -46,10 +47,12 @@ export async function establishMutualFollow(
     }
   }
 
-  // Resolve any outstanding request between the pair — the edge now exists either way, and a stale
-  // "pending" row would keep the requester's UI stuck on "Requested". A prior DECLINE is also
-  // cleared here: physically sharing your QR (or redeeming an invite) is explicit mutual intent that
-  // overrides a past decline-in-cooldown, so the requester is no longer blocked.
+  // Consistency bookkeeping once the edges legitimately exist: a stale "pending" row would keep
+  // the requester's UI stuck on "Requested", and a declined row whose cooldown has EXPIRED no
+  // longer protects anyone — flip both to approved. In-cooldown declines are NEVER overridden by
+  // token flows (tokens are forwardable, so possession is not consent); callers must gate on the
+  // cooldown BEFORE calling this helper, as acceptQrFollow does.
+  const now = Date.now();
   for (const [requesterId, targetId] of [
     [a, b],
     [b, a],
@@ -62,11 +65,14 @@ export async function establishMutualFollow(
       .unique();
     if (
       request !== null &&
-      (request.status === "pending" || request.status === "declined")
+      (request.status === "pending" ||
+        (request.status === "declined" &&
+          (request.respondedAt === undefined ||
+            now - request.respondedAt >= COOLDOWN_MS)))
     ) {
       await ctx.db.patch(request._id, {
         status: "approved",
-        respondedAt: Date.now(),
+        respondedAt: now,
       });
     }
   }

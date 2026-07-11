@@ -179,7 +179,7 @@ describe("acceptQrFollow", () => {
     expect(await followEdges(t, alice, bob)).toEqual({ ab: true, ba: true });
   });
 
-  test("overrides a prior decline-in-cooldown for the requester (QR = explicit mutual intent)", async () => {
+  test("respects the decline cooldown: a declined-in-cooldown scanner is silently refused", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob } = await seedUsers(t);
     const { token } = await asAlice(t).mutation(
@@ -187,25 +187,75 @@ describe("acceptQrFollow", () => {
       {},
     );
 
-    // Bob asked to follow private Alice, Alice declined — row kept for the cooldown.
+    // Bob asked to follow private Alice, Alice declined — still inside the 7-day cooldown.
+    const declinedAt = Date.now();
     await t.run(async (ctx) => {
-      const now = Date.now();
       await ctx.db.insert("followRequests", {
         aggregateId: crypto.randomUUID(),
         requesterId: bob,
         targetId: alice,
         status: "declined",
-        createdAt: now,
-        respondedAt: now,
+        createdAt: declinedAt,
+        respondedAt: declinedAt,
       });
     });
 
-    // Bob physically scans Alice's QR — this overrides the past decline.
+    // Bob scans Alice's QR (or a forwarded link) — the anti-pester invariant holds: no path
+    // lets a declined requester force a connection during the cooldown.
+    const result = await asBob(t).mutation(
+      api.social.acceptQrFollow.acceptQrFollow,
+      { token },
+    );
+    expect(result).toEqual({ established: false });
+    expect(await followEdges(t, alice, bob)).toEqual({ ab: false, ba: false });
+
+    // No counter bump, and the declined row is untouched.
+    const link = await t.run((ctx) =>
+      ctx.db
+        .query("inviteLinks")
+        .withIndex("by_token", (q) => q.eq("token", token))
+        .unique(),
+    );
+    expect(link?.followsEstablished).toBe(0);
+    const request = await t.run((ctx) =>
+      ctx.db
+        .query("followRequests")
+        .withIndex("by_requester_target", (q) =>
+          q.eq("requesterId", bob).eq("targetId", alice),
+        )
+        .unique(),
+    );
+    expect(request?.status).toBe("declined");
+    expect(request?.respondedAt).toBe(declinedAt);
+  });
+
+  test("an EXPIRED decline no longer blocks the scan and the stale row flips to approved", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seedUsers(t);
+    const { token } = await asAlice(t).mutation(
+      api.social.getMyInviteLink.getMyInviteLink,
+      {},
+    );
+
+    // Alice declined Bob 8 days ago — the 7-day cooldown has expired.
+    const eightDaysAgo = Date.now() - 8 * 24 * 60 * 60 * 1000;
+    await t.run(async (ctx) => {
+      await ctx.db.insert("followRequests", {
+        aggregateId: crypto.randomUUID(),
+        requesterId: bob,
+        targetId: alice,
+        status: "declined",
+        createdAt: eightDaysAgo,
+        respondedAt: eightDaysAgo,
+      });
+    });
+
     const result = await asBob(t).mutation(
       api.social.acceptQrFollow.acceptQrFollow,
       { token },
     );
     expect(result).toEqual({ established: true });
+    expect(await followEdges(t, alice, bob)).toEqual({ ab: true, ba: true });
 
     const request = await t.run((ctx) =>
       ctx.db
@@ -216,7 +266,6 @@ describe("acceptQrFollow", () => {
         .unique(),
     );
     expect(request?.status).toBe("approved");
-    expect(request?.respondedAt).toBeTypeOf("number");
-    expect(await followEdges(t, alice, bob)).toEqual({ ab: true, ba: true });
+    expect(request?.respondedAt).toBeGreaterThan(eightDaysAgo);
   });
 });
