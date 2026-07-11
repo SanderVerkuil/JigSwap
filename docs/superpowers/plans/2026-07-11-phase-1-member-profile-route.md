@@ -446,7 +446,7 @@ In `apps/web/locales/nl.json`, after its `"people": { ... }` block:
   "shelfTitle": "Uitgelichte plank",
   "bioTitle": "Over",
   "notFoundTitle": "Lid niet gevonden",
-  "notFoundSub": "Deze link is mogelijk verouderd, of het lid heeft zijn gebruikersnaam gewijzigd.",
+  "notFoundSub": "Deze link is mogelijk verouderd, of het lid heeft hun gebruikersnaam gewijzigd.",
   "findPeople": "Mensen vinden",
   "backHome": "Terug naar home"
 },
