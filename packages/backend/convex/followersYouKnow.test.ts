@@ -144,15 +144,23 @@ describe("followersYouKnow", () => {
     const { viewer, a, b, c, target } = await seed(t);
     await wireIntersection(t, a, b, c, target);
     await makePrivate(t, target);
-    // Make viewer<->target mutual: viewer follows target and target follows viewer back.
-    await asClerk(t, "clerk_viewer").mutation(
-      api.social.followMember.followMember,
-      { followeeId: target },
-    );
-    await asClerk(t, "clerk_target").mutation(
-      api.social.followMember.followMember,
-      { followeeId: viewer },
-    );
+    // Make viewer<->target mutual by inserting both follow edges directly. We can't
+    // route viewer->target through followMember here because the target is already
+    // private, and the visibility-aware mutation converts a follow of a private member
+    // into a pending request (no edge), which would leave the pair non-mutual.
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("follows", {
+        followerId: viewer as never,
+        followeeId: target as never,
+        createdAt: now,
+      });
+      await ctx.db.insert("follows", {
+        followerId: target as never,
+        followeeId: viewer as never,
+        createdAt: now,
+      });
+    });
 
     const result = await asClerk(t, "clerk_viewer").query(
       api.social.followersYouKnow.followersYouKnow,
