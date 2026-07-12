@@ -1467,6 +1467,13 @@
       "previewBannerPrivate": "Preview — this is how visitors see your profile. Approved followers see everything.",
       "editProfile": "Edit profile",
       "backToApp": "Back to app"
+    },
+    "followersYouKnow": {
+      "title": "Followers you know",
+      "one": "Followed by {name}",
+      "two": "Followed by {name1} and {name2}",
+      "more": "Followed by {name1}, {name2} and {count, plural, one {# other} other {# others}}",
+      "andMore": "and {count, plural, one {# more} other {# more}}"
     }
   },
   "notifications": {

@@ -1467,6 +1467,13 @@
       "previewBannerPrivate": "Voorbeeld — zo zien bezoekers jouw profiel. Goedgekeurde volgers zien alles.",
       "editProfile": "Profiel bewerken",
       "backToApp": "Terug naar app"
+    },
+    "followersYouKnow": {
+      "title": "Volgers die je kent",
+      "one": "Gevolgd door {name}",
+      "two": "Gevolgd door {name1} en {name2}",
+      "more": "Gevolgd door {name1}, {name2} en {count, plural, one {# ander} other {# anderen}}",
+      "andMore": "en {count, plural, one {# meer} other {# meer}}"
     }
   },
   "notifications": {

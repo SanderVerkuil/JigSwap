@@ -16,8 +16,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { gateway, Id } from "@/gateway";
 import { cn } from "@/lib/utils";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import {
@@ -34,7 +42,7 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "use-intl";
 
 // The web tier derives Convex view types from the gateway (not @jigswap/contracts directly).
@@ -69,7 +77,12 @@ export function ProfileBody({
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-4 py-10">
-      <HeroSection hero={hero} viewer={viewer} returnToHref={returnToHref} />
+      <HeroSection
+        hero={hero}
+        viewer={viewer}
+        locked={profile.locked}
+        returnToHref={returnToHref}
+      />
 
       {profile.locked ? (
         <LockedCard
@@ -96,10 +109,12 @@ export function ProfileBody({
 function HeroSection({
   hero,
   viewer,
+  locked,
   returnToHref,
 }: {
   hero: Hero;
   viewer: ProfileViewer;
+  locked: boolean;
   returnToHref?: string;
 }) {
   const t = useTranslations("members.profile");
@@ -167,6 +182,10 @@ function HeroSection({
               {t("following")}
             </span>
           </div>
+
+          {viewer === "member" && !locked && (
+            <FollowersYouKnowRow memberId={hero.memberId as Id<"users">} />
+          )}
         </div>
       </div>
 
@@ -217,6 +236,116 @@ function HeroActions({
         <SignUpLink returnToHref={returnToHref}>{t("follow")}</SignUpLink>
       </Button>
     </div>
+  );
+}
+
+// ── Followers you know ──────────────────────────────────────────────────────
+// Social proof: accounts the VIEWER follows who also follow this member (see
+// backend social/knownFollowers.ts) — personalized, so only ever fetched for a
+// logged-in viewer on someone else's unlocked profile (guarded by the caller).
+type FollowersYouKnowMember = NonNullable<
+  FunctionReturnType<typeof gateway.social.followersYouKnow>
+>["members"][number];
+
+function FollowersYouKnowRow({ memberId }: { memberId: Id<"users"> }) {
+  const t = useTranslations("members.followersYouKnow");
+  const [open, setOpen] = useState(false);
+  const { data } = useQuery(
+    convexQuery(gateway.social.followersYouKnow, { memberId }),
+  );
+
+  if (!data || data.total === 0) return null;
+
+  const [first, second] = data.members;
+  const stack = data.members.slice(0, 3);
+  const extraCount = data.total - data.members.length;
+
+  let copy: string;
+  if (data.total === 1) {
+    copy = t("one", { name: first.displayName });
+  } else if (data.total === 2) {
+    copy = t("two", { name1: first.displayName, name2: second.displayName });
+  } else {
+    copy = t("more", {
+      name1: first.displayName,
+      name2: second.displayName,
+      count: data.total - 2,
+    });
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="text-muted-foreground hover:text-foreground mt-3 flex items-center gap-2 text-left text-sm transition-colors"
+      >
+        <span className="flex items-center">
+          {stack.map((member, i) => (
+            <Avatar
+              key={member.memberId}
+              title={member.displayName}
+              className={cn(
+                "border-background size-7 border-2",
+                i > 0 && "-ml-2",
+              )}
+            >
+              {member.avatar && (
+                <AvatarImage src={member.avatar} alt={member.displayName} />
+              )}
+              <AvatarFallback className="text-xs">
+                {member.displayName.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          ))}
+        </span>
+        <span>{copy}</span>
+      </button>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("title")}</DialogTitle>
+          </DialogHeader>
+          <ul className="flex flex-col gap-3">
+            {data.members.map((member) => (
+              <FollowersYouKnowListItem key={member.memberId} member={member} />
+            ))}
+          </ul>
+          {extraCount > 0 && (
+            <p className="text-muted-foreground text-sm">
+              {t("andMore", { count: extraCount })}
+            </p>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+function FollowersYouKnowListItem({
+  member,
+}: {
+  member: FollowersYouKnowMember;
+}) {
+  return (
+    <li>
+      <Link
+        to="/members/$handle"
+        params={{ handle: member.slug ?? member.username ?? member.memberId }}
+        className="flex items-center gap-3 hover:underline"
+      >
+        <Avatar className="size-8">
+          {member.avatar && (
+            <AvatarImage src={member.avatar} alt={member.displayName} />
+          )}
+          <AvatarFallback className="text-xs">
+            {member.displayName.charAt(0).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+        <span className="font-medium">{member.displayName}</span>
+      </Link>
+    </li>
   );
 }
 

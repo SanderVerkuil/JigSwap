@@ -85,6 +85,25 @@ export type ProjectedMember =
   | { anonymous: true; anonRef: string };
 
 /**
+ * "Followers you know" social proof for a member profile: accounts the VIEWER follows who also
+ * follow the target member (viewer's following ∩ target's followers) — deliberately NOT plain
+ * mutual followers. Personalized (the read is requireMember-gated) and one direction only.
+ * `total` is the full intersection size; `members` is a short preview (capped, currently 8) with
+ * just enough identity to render an avatar stack + name and link to /members/$handle
+ * (slug ?? username ?? memberId).
+ */
+export interface FollowersYouKnowView {
+  total: number;
+  members: {
+    memberId: string;
+    displayName: string;
+    avatar?: string;
+    username?: string;
+    slug?: string;
+  }[];
+}
+
+/**
  * The unauthenticated "who is this member" read behind /members/$handle. Deliberately tiny:
  * identity fields only — never bio, shelf, stats, or location. A private member IS named here:
  * reachable by direct link (the spec's Instagram-style interstitial) but not enumerable (search

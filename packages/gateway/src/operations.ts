@@ -262,6 +262,9 @@ export const gateway = {
     followers: api.social.listFollowers.listFollowers,
     following: api.social.listFollowees.listFollowees,
     isFollowing: api.social.isFollowing.isFollowing,
+    // "Followers you know" social proof for a member's profile — the viewer's own following
+    // intersected with the target's followers (see social/knownFollowers.ts). Personalized.
+    followersYouKnow: api.social.followersYouKnow.followersYouKnow,
     // The feed is scoped server-side to the acting member + the people they follow.
     activityFeed: api.social.getActivityFeed.getActivityFeed,
     // Community comments on a puzzle definition, keyed by a copy id for the UI's convenience
