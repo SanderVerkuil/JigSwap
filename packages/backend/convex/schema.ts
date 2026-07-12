@@ -52,6 +52,10 @@ export default defineSchema({
     email: v.string(),
     name: v.string(),
     username: v.optional(v.string()),
+    // Member-chosen, Convex-owned profile handle (e.g. "sander-verkuil"). Unlike `username`
+    // (Clerk-owned, synced by the webhook), this is set directly via identity/setSlug and
+    // enforced unique in-mutation (Convex has no unique constraint). Optional: most rows have none.
+    slug: v.optional(v.string()),
     avatar: v.optional(v.string()),
     bio: v.optional(v.string()),
     location: v.optional(v.string()),
@@ -75,6 +79,7 @@ export default defineSchema({
     .index("by_clerk_id", ["clerkId"])
     .index("by_email", ["email"])
     .index("by_username", ["username"])
+    .index("by_slug", ["slug"])
     .index("by_role", ["role"])
     .searchIndex("by_searchable_name", {
       searchField: "searchableName",

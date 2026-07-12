@@ -184,6 +184,8 @@ export const gateway = {
     // Whether the acting caller is an admin (fails closed). Backs the web /admin
     // route guard; the server-side gate on every admin function stays authoritative.
     isAdmin: api.identity.isCurrentUserAdmin.isCurrentUserAdmin,
+    // Set (or clear, via null) the caller's Convex-owned profile handle.
+    setSlug: api.identity.setSlug.setSlug,
   },
 
   // Solving: solve tracking, puzzle reviews, goals. Ownership / 24h edit window / rating are

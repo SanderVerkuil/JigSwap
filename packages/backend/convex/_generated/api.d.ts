@@ -131,6 +131,7 @@ import type * as identity_isCurrentUserAdmin from "../identity/isCurrentUserAdmi
 import type * as identity_optionalActingMember from "../identity/optionalActingMember.js";
 import type * as identity_requireMember from "../identity/requireMember.js";
 import type * as identity_searchUsers from "../identity/searchUsers.js";
+import type * as identity_setSlug from "../identity/setSlug.js";
 import type * as identity_toMemberView from "../identity/toMemberView.js";
 import type * as insights_exportUserData from "../insights/exportUserData.js";
 import type * as insights_getCollectionBreakdown from "../insights/getCollectionBreakdown.js";
@@ -433,6 +434,7 @@ declare const fullApi: ApiFromModules<{
   "identity/optionalActingMember": typeof identity_optionalActingMember;
   "identity/requireMember": typeof identity_requireMember;
   "identity/searchUsers": typeof identity_searchUsers;
+  "identity/setSlug": typeof identity_setSlug;
   "identity/toMemberView": typeof identity_toMemberView;
   "insights/exportUserData": typeof insights_exportUserData;
   "insights/getCollectionBreakdown": typeof insights_getCollectionBreakdown;

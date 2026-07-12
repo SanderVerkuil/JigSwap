@@ -9,11 +9,12 @@ import { profileVisibilityOf } from "./privacy";
 // link (spec: Instagram-style interstitial; the page renders robots-noindex for private profiles),
 // while enumeration stays blocked because search remains visibility-gated.
 //
-// Handle resolution is ID-FIRST: if the handle resolves to an existing users id we use that member
-// and NEVER consult by_username for it. This makes id-based URLs (which Phase 3 QR codes encode)
-// immune to username shadowing — Clerk usernames are user-controlled and can be shaped like a
-// Convex id, so a username-first order would let one member's username hijack another member's
-// id URL. Only when the handle is not an existing user id do we fall back to the by_username lookup.
+// Handle resolution is ID-FIRST, then slug, then username: if the handle resolves to an existing
+// users id we use that member and NEVER consult by_slug/by_username for it. This makes id-based
+// URLs (which Phase 3 QR codes encode) immune to slug/username shadowing — both are user-chosen
+// and can be shaped like a Convex id, so an id-last order would let one member hijack another
+// member's id URL. Only when the handle is not an existing user id do we fall back to the
+// Convex-owned by_slug lookup, then the Clerk-owned by_username lookup.
 export const getPublicMemberTeaser = query({
   args: { handle: v.string() },
   handler: async (ctx, args): Promise<PublicMemberTeaserView | null> => {
@@ -23,6 +24,12 @@ export const getPublicMemberTeaser = query({
     let user = null;
     const id = ctx.db.normalizeId("users", handle);
     if (id) user = await ctx.db.get(id);
+    if (!user) {
+      user = await ctx.db
+        .query("users")
+        .withIndex("by_slug", (q) => q.eq("slug", handle))
+        .unique();
+    }
     if (!user) {
       user = await ctx.db
         .query("users")
@@ -62,6 +69,7 @@ export const getPublicMemberTeaser = query({
       memberId,
       displayName: profile?.displayName ?? user.name,
       username: user.username,
+      slug: user.slug,
       avatar,
       memberSince: user.createdAt,
       visibility,

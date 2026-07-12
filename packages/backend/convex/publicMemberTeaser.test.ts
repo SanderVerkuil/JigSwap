@@ -230,4 +230,67 @@ describe("getPublicMemberTeaser", () => {
     expect(teaser!.memberId).toBe(target);
     expect(teaser!.memberId).not.toBe(shadower);
   });
+
+  test("resolves a slug for an anonymous caller and includes it in the payload", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(alice, { slug: "gridmaster" });
+    });
+
+    const teaser = await t.query(
+      api.social.getPublicMemberTeaser.getPublicMemberTeaser,
+      { handle: "gridmaster" },
+    );
+    expect(teaser).not.toBeNull();
+    expect(teaser!.memberId).toBe(alice);
+    expect(teaser!.slug).toBe("gridmaster");
+  });
+
+  test("slug resolution wins over a username lookup when both could match different members", async () => {
+    const t = convexTest(schema, modules);
+    // slugHolder's slug and usernameHolder's username are the SAME string ("shared"); resolving
+    // that handle must return the slug holder, never fall through to the username holder.
+    const { slugHolder, usernameHolder } = await t.run(async (ctx) => {
+      const now = Date.now();
+      const slugHolder = await ctx.db.insert("users", {
+        clerkId: "clerk_slug_holder",
+        email: "sluggy@example.com",
+        name: "Sluggy",
+        slug: "shared",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      const usernameHolder = await ctx.db.insert("users", {
+        clerkId: "clerk_username_holder",
+        email: "namey@example.com",
+        name: "Namey",
+        username: "shared",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      return { slugHolder, usernameHolder };
+    });
+
+    const teaser = await t.query(
+      api.social.getPublicMemberTeaser.getPublicMemberTeaser,
+      { handle: "shared" },
+    );
+    expect(teaser).not.toBeNull();
+    expect(teaser!.memberId).toBe(slugHolder);
+    expect(teaser!.memberId).not.toBe(usernameHolder);
+  });
+
+  test("username-only members have an undefined slug in the payload", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const teaser = await t.query(
+      api.social.getPublicMemberTeaser.getPublicMemberTeaser,
+      { handle: "alice" },
+    );
+    expect(teaser).not.toBeNull();
+    expect(teaser!.slug).toBeUndefined();
+  });
 });

@@ -96,6 +96,8 @@ export interface PublicMemberTeaserView {
   memberId: string;
   displayName: string;
   username?: string;
+  /** The member's Convex-owned profile handle (identity/setSlug), if they've chosen one. */
+  slug?: string;
   avatar?: string;
   /** users.createdAt (ms). */
   memberSince: number;
