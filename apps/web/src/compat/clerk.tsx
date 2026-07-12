@@ -33,6 +33,11 @@ export {
   useAuth,
   useClerk,
   UserButton,
+  useReverification,
   UserProfile,
   useUser,
 } from "@clerk/tanstack-react-start";
+
+// Reverification helpers live on the /errors subpath. `isReverificationCancelledError`
+// distinguishes the user closing the step-up modal from a genuine failure.
+export { isReverificationCancelledError } from "@clerk/tanstack-react-start/errors";

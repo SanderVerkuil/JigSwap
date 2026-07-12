@@ -1,6 +1,10 @@
 "use client";
 
-import { useUser } from "@/compat/clerk";
+import {
+  isReverificationCancelledError,
+  useReverification,
+  useUser,
+} from "@/compat/clerk";
 import { ProfileEditDialog } from "@/components/social/profile-edit-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -131,6 +135,13 @@ function EditProfileFormLoaded({
 }) {
   const t = useTranslations("profile");
   const { user } = useUser();
+  // Wrap the Clerk username change so a session that needs step-up
+  // reverification triggers Clerk's built-in modal and the update retries
+  // automatically once verified — no sign-out/in required. If the member
+  // cancels the modal, the wrapped call rejects with a cancellation error.
+  const updateUsername = useReverification((name: string) =>
+    user?.update({ username: name }),
+  );
   const updateProfile = useConvexMutation(gateway.identity.updateProfile);
   const editProfile = useConvexMutation(gateway.social.editProfile);
   const setSlug = useConvexMutation(gateway.identity.setSlug);
@@ -183,17 +194,22 @@ function EditProfileFormLoaded({
       const nextUsername = username.trim();
       if (user && nextUsername !== (member.username ?? "")) {
         try {
-          await user.update({ username: nextUsername });
+          // Reverification (if the session needs stepping up) is handled inline
+          // by Clerk's modal via useReverification; on success the update retries.
+          await updateUsername(nextUsername);
         } catch (err) {
-          // Instance has Username disabled outright (an admin-level config the
-          // member can't fix) -> the friendly "use your slug instead" notice;
-          // a step-up-auth requirement -> a re-verify notice; any other Clerk
+          // The member closed the reverification modal -> username left unchanged;
+          // instance has Username disabled outright (admin-level config they can't
+          // fix) -> the "use your slug instead" notice; a step-up requirement that
+          // somehow escaped the modal -> a re-verify notice; any other Clerk
           // rejection (taken, too short, ...) -> its own message.
-          errors.username = isUsernameDisabledError(err)
-            ? t("usernameUnavailable")
-            : isSessionReverificationRequired(err)
-              ? t("usernameReverify")
-              : (clerkErrorMessage(err) ?? t("saveError"));
+          errors.username = isReverificationCancelledError(err)
+            ? t("usernameReverifyCancelled")
+            : isUsernameDisabledError(err)
+              ? t("usernameUnavailable")
+              : isSessionReverificationRequired(err)
+                ? t("usernameReverify")
+                : (clerkErrorMessage(err) ?? t("saveError"));
         }
       }
       // Location lives on the identity user row.

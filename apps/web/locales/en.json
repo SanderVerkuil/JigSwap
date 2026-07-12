@@ -723,6 +723,7 @@
     "usernamePlaceholder": "your-username",
     "usernameUnavailable": "Username changes aren't available right now — set a custom link (slug) below to share your profile.",
     "usernameReverify": "For your security, changing your username needs a freshly verified session — sign out and back in, then try again, or use your profile link (slug) below.",
+    "usernameReverifyCancelled": "Username not changed — you cancelled the verification step.",
     "locationPlaceholder": "City, Country",
     "bioPlaceholder": "Tell other members about yourself…",
     "slug": {
