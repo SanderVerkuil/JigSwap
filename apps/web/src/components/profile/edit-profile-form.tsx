@@ -131,6 +131,12 @@ function EditProfileFormLoaded({
   const [location, setLocation] = useState(member.location ?? "");
   const [bio, setBio] = useState(socialProfile?.bio ?? "");
 
+  // Server-side, per-field save errors mapped back onto the inputs. The form
+  // stays open and keeps every value while these are set — nothing is lost on a
+  // failed save; the member reads the error, adjusts, and retries.
+  const [usernameError, setUsernameError] = useState<string | undefined>();
+  const [slugServerError, setSlugServerError] = useState<string | undefined>();
+
   const trimmedSlug = slug.trim();
   const slugFormatError = trimmedSlug !== "" && !isValidSlugFormat(trimmedSlug);
   // What `/members/<handle>` would resolve to right now — mirrors the
@@ -141,57 +147,79 @@ function EditProfileFormLoaded({
 
   // The WHOLE save — the Clerk username update, the slug write and the Convex
   // profile write — runs as one mutationFn so isPending spans every step with
-  // no gap (busy-state rule v2).
+  // no gap. Each independent write is attempted and its failure captured
+  // per-field rather than aborting the rest, so a rejected username never
+  // discards the location/slug/bio the member also changed. The form is closed
+  // ONLY when the whole save comes back clean (see onSuccess) — on any error it
+  // stays open with every value intact and the message mapped onto its field.
   const saveProfile = useMutation({
     mutationFn: async () => {
+      const errors: {
+        username?: string;
+        slug?: string;
+        general?: string;
+      } = {};
+
       // Username -> Clerk (the source of truth); the user.updated webhook mirrors
       // it into the Convex `users` cache. Only call when it actually changed.
-      let usernameUnavailable = false;
       const nextUsername = username.trim();
       if (user && nextUsername !== (member.username ?? "")) {
         try {
           await user.update({ username: nextUsername });
         } catch (err) {
-          // The Clerk instance has Username disabled outright — not a per-value
-          // rejection. Skip it (other fields still save) and flag it for a
-          // friendly notice; any other Clerk error (taken, too short, ...)
-          // still surfaces as before.
-          if (isUsernameDisabledError(err)) {
-            usernameUnavailable = true;
-          } else {
-            throw err;
-          }
+          // Instance has Username disabled outright (an admin-level config the
+          // member can't fix) -> the friendly "use your slug instead" notice;
+          // any other Clerk rejection (taken, too short, ...) -> its own message.
+          errors.username = isUsernameDisabledError(err)
+            ? t("usernameUnavailable")
+            : (clerkErrorMessage(err) ?? t("saveError"));
         }
       }
       // Location lives on the identity user row.
-      await updateProfile({
-        location: location.trim() || undefined,
-      });
+      try {
+        await updateProfile({ location: location.trim() || undefined });
+      } catch {
+        errors.general = t("saveError");
+      }
       // The slug is Convex-owned and validated/uniqueness-checked server-side;
       // only call when it actually changed.
       if (trimmedSlug !== (member.slug ?? "")) {
-        await setSlug({ slug: trimmedSlug === "" ? null : trimmedSlug });
+        try {
+          await setSlug({ slug: trimmedSlug === "" ? null : trimmedSlug });
+        } catch (err) {
+          errors.slug = convexErrorMessage(err) ?? t("saveError");
+        }
       }
       // Bio lives on the Social profile (the public "story"). editProfile always
       // writes displayName + bio together (a full replace), so the current
       // displayName is sent through unchanged to avoid clobbering it.
       const trimmedBio = bio.trim();
       if (trimmedBio !== (socialProfile?.bio ?? "")) {
-        await editProfile({
-          displayName: socialProfile?.displayName ?? member.name,
-          bio: trimmedBio === "" ? undefined : trimmedBio,
-        });
+        try {
+          await editProfile({
+            displayName: socialProfile?.displayName ?? member.name,
+            bio: trimmedBio === "" ? undefined : trimmedBio,
+          });
+        } catch (err) {
+          errors.general = convexErrorMessage(err) ?? t("saveError");
+        }
       }
-      return { usernameUnavailable };
+      return errors;
     },
-    onSuccess: ({ usernameUnavailable }) => {
-      if (usernameUnavailable) {
-        toast.warning(t("usernameUnavailable"));
-      } else {
-        toast.success(t("saved"));
+    onSuccess: (errors) => {
+      // Reflect (or clear) the per-field messages every save.
+      setUsernameError(errors.username);
+      setSlugServerError(errors.slug);
+      if (errors.username || errors.slug || errors.general) {
+        // Something failed — keep the form open with all input intact. A general
+        // (non-field) failure still gets a toast; field ones show inline.
+        if (errors.general) toast.error(errors.general);
+        return;
       }
+      toast.success(t("saved"));
       onDone();
     },
+    // Only reached for a genuinely unexpected throw outside the per-field guards.
     onError: (err) => {
       toast.error(
         clerkErrorMessage(err) ?? convexErrorMessage(err) ?? t("saveError"),
@@ -217,9 +245,16 @@ function EditProfileFormLoaded({
         <Input
           id="profile-username"
           value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          onChange={(e) => {
+            setUsername(e.target.value);
+            if (usernameError) setUsernameError(undefined);
+          }}
           placeholder={t("usernamePlaceholder")}
+          aria-invalid={usernameError !== undefined}
         />
+        {usernameError && (
+          <p className="text-destructive text-xs">{usernameError}</p>
+        )}
       </div>
       <div className="space-y-2">
         <Label htmlFor="profile-location">{t("location")}</Label>
@@ -235,18 +270,22 @@ function EditProfileFormLoaded({
         <Input
           id="profile-slug"
           value={slug}
-          onChange={(e) => setSlugValue(e.target.value)}
+          onChange={(e) => {
+            setSlugValue(e.target.value);
+            if (slugServerError) setSlugServerError(undefined);
+          }}
           placeholder={t("slug.placeholder")}
-          aria-invalid={slugFormatError}
+          aria-invalid={slugFormatError || slugServerError !== undefined}
         />
         <p
           className={
-            slugFormatError
+            slugFormatError || slugServerError
               ? "text-destructive text-xs"
               : "text-muted-foreground text-xs"
           }
         >
-          {slugFormatError ? t("slug.formatError") : t("slug.hint")}
+          {slugServerError ??
+            (slugFormatError ? t("slug.formatError") : t("slug.hint"))}
         </p>
         <p className="text-muted-foreground truncate text-xs">
           {t("slug.preview")}{" "}
