@@ -721,8 +721,20 @@
     "saved": "Profiel opgeslagen",
     "saveError": "Je profiel kon niet worden opgeslagen. Probeer het opnieuw.",
     "usernamePlaceholder": "jouw-gebruikersnaam",
+    "usernameUnavailable": "Gebruikersnaam wijzigen kan nu even niet — stel hieronder een eigen link (slug) in om je profiel te delen.",
     "locationPlaceholder": "Plaats, Land",
     "bioPlaceholder": "Vertel andere leden iets over jezelf…",
+    "slug": {
+      "label": "Eigen link",
+      "placeholder": "jouw-naam",
+      "hint": "Kleine letters, cijfers en streepjes · 3-30 tekens. Laat leeg om te wissen.",
+      "formatError": "Een slug moet 3-30 kleine letters, cijfers of losse streepjes zijn (geen streepje vooraan, achteraan of dubbel).",
+      "preview": "Je profiellink:"
+    },
+    "displayName": {
+      "label": "Weergavenaam",
+      "helper": "Andere leden zien je als \"{name}\". Pas dit aan via je openbare profielkaart."
+    },
     "visibility": {
       "label": "Privéprofiel",
       "helper": "Privéprofielen verschijnen als 'Anonieme gebruiker' voor leden met wie je geen connectie hebt."

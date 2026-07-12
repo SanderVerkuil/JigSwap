@@ -721,8 +721,20 @@
     "saved": "Profile saved",
     "saveError": "Could not save your profile. Please try again.",
     "usernamePlaceholder": "your-username",
+    "usernameUnavailable": "Username changes aren't available right now — set a custom link (slug) below to share your profile.",
     "locationPlaceholder": "City, Country",
     "bioPlaceholder": "Tell other members about yourself…",
+    "slug": {
+      "label": "Custom link",
+      "placeholder": "your-handle",
+      "hint": "Lowercase letters, numbers, and hyphens · 3-30 characters. Leave blank to clear it.",
+      "formatError": "Slugs must be 3-30 lowercase letters, numbers, or single hyphens (no leading, trailing, or double hyphens).",
+      "preview": "Your profile link:"
+    },
+    "displayName": {
+      "label": "Display name",
+      "helper": "Shown to other members as \"{name}\". Edit it from your public profile card."
+    },
     "visibility": {
       "label": "Private profile",
       "helper": "Private profiles appear as 'Anonymous user' to members you're not connected with."

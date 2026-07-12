@@ -21,12 +21,14 @@ export interface MemberView extends ConvexSystemFields {
 
 /**
  * The signed-in member's own view (the `getCurrentUser` query only). Superset of {@link MemberView}
- * that re-adds the member's own `email` and `clerkId` — safe because it is only ever returned for
- * the caller's own account, never for another member.
+ * that re-adds the member's own `email` and `clerkId`, plus the raw `slug` (the profile editor needs
+ * the caller's own current value to pre-fill the slug editor) — safe because it is only ever
+ * returned for the caller's own account, never for another member.
  */
 export interface CurrentMemberView extends MemberView {
   clerkId: string;
   email: string;
+  slug?: string;
 }
 
 /**
