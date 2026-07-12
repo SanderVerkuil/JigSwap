@@ -1433,8 +1433,6 @@
     "memberSince": "Member since {date}",
     "loading": "Loading member...",
     "collects": "Collects ~{count, plural, one {# puzzle} other {# puzzles}} on JigSwap",
-    "privateTitle": "{name}'s profile is private",
-    "privateSub": "Follow each other to see their collection and swap.",
     "joinCta": "Join JigSwap to follow {name}",
     "logIn": "Log in",
     "shelfTitle": "Featured shelf",

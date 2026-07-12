@@ -1433,8 +1433,6 @@
     "memberSince": "Lid sinds {date}",
     "loading": "Lid laden...",
     "collects": "Verzamelt ~{count, plural, one {# puzzel} other {# puzzels}} op JigSwap",
-    "privateTitle": "Het profiel van {name} is privé",
-    "privateSub": "Volg elkaar om hun collectie te zien en te ruilen.",
     "joinCta": "Word lid van JigSwap om {name} te volgen",
     "logIn": "Inloggen",
     "shelfTitle": "Uitgelichte plank",
