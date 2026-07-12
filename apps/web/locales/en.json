@@ -281,9 +281,18 @@
     "createNewAccount": "Create a new account"
   },
   "activity": {
-    "completion": "A member completed a puzzle",
-    "acquisition": "A member added a puzzle",
-    "exchange": "A member settled an exchange",
+    "completion": {
+      "you": "You finished a puzzle",
+      "other": "<strong>{name}</strong> finished a puzzle"
+    },
+    "acquisition": {
+      "you": "You added a puzzle to your shelf",
+      "other": "<strong>{name}</strong> added a puzzle to their shelf"
+    },
+    "exchange": {
+      "you": "You completed a swap",
+      "other": "<strong>{name}</strong> completed a swap"
+    },
     "empty": "No recent activity yet",
     "emptyHint": "Follow other members to see what they are up to."
   },
@@ -1441,7 +1450,8 @@
     "emptySub": "Follow fellow puzzlers to build your network.",
     "tabs": {
       "network": "Your network",
-      "find": "Find people"
+      "find": "Find people",
+      "activity": "Activity"
     },
     "find": {
       "searchPlaceholder": "Search by name or @username",

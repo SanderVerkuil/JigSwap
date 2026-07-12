@@ -281,9 +281,18 @@
     "createNewAccount": "Maak een nieuw account"
   },
   "activity": {
-    "completion": "Een lid heeft een puzzel voltooid",
-    "acquisition": "Een lid heeft een puzzel toegevoegd",
-    "exchange": "Een lid heeft een ruil afgerond",
+    "completion": {
+      "you": "Je hebt een puzzel afgemaakt",
+      "other": "<strong>{name}</strong> heeft een puzzel afgemaakt"
+    },
+    "acquisition": {
+      "you": "Je hebt een puzzel op je plank gezet",
+      "other": "<strong>{name}</strong> heeft een puzzel op de plank gezet"
+    },
+    "exchange": {
+      "you": "Je hebt een ruil afgerond",
+      "other": "<strong>{name}</strong> heeft een ruil afgerond"
+    },
     "empty": "Nog geen recente activiteit",
     "emptyHint": "Volg andere leden om te zien wat zij doen."
   },
@@ -1441,7 +1450,8 @@
     "emptySub": "Volg medepuzzelaars om je netwerk op te bouwen.",
     "tabs": {
       "network": "Jouw netwerk",
-      "find": "Mensen vinden"
+      "find": "Mensen vinden",
+      "activity": "Activiteit"
     },
     "find": {
       "searchPlaceholder": "Zoek op naam of @gebruikersnaam",

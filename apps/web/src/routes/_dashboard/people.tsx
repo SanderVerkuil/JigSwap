@@ -12,26 +12,34 @@ import {
   MemberTile,
   MemberTileSkeleton,
 } from "@/components/social/member-tile";
-import { ProfileEditDialog } from "@/components/social/profile-edit-dialog";
 import { QrDialog } from "@/components/social/qr-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  TAB_TRIGGER_CLASS,
+  TabCount,
+  UNDERLINE_TABS_LIST_CLASS,
+} from "@/components/ui/underline-tabs";
 import { gateway, Id } from "@/gateway";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, X } from "lucide-react";
+import { Bell, Search, Users, X } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
 import { useTranslations } from "use-intl";
 
-type PeopleTab = "network" | "find";
+type PeopleTab = "network" | "find" | "activity";
 
 export const Route = createFileRoute("/_dashboard/people")({
   // URL-addressable tabs: /people?tab=find deep-links straight into discovery
   // (used by notifications and QR empty states). `tab` is optional so the
   // default (network) keeps a clean /people URL and existing bare `to="/people"`
   // links stay valid — the UI falls back to "network" when it's absent.
-  validateSearch: (search: Record<string, unknown>): { tab?: "find" } => ({
-    tab: search.tab === "find" ? "find" : undefined,
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { tab?: "find" | "activity" } => ({
+    tab:
+      search.tab === "find" || search.tab === "activity"
+        ? search.tab
+        : undefined,
   }),
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "people") }],
@@ -100,10 +108,10 @@ function DiscoverabilityNotice() {
 }
 
 // Your-network tab body: the pending follow-request strip above the deduped
-// follower/following grid, then the activity feed — the pre-tabs page content.
-// The network is computed by the parent (which also publishes the count into
-// the page header) and passed down, so the count and grid stay in sync without
-// duplicating the follow queries.
+// follower/following grid — the pre-tabs page content. The network is computed
+// by the parent (which also publishes the count into the page header) and
+// passed down, so the count and grid stay in sync without duplicating the
+// follow queries.
 function NetworkTab({
   members,
   loading,
@@ -114,39 +122,43 @@ function NetworkTab({
   const t = useTranslations("people");
 
   return (
-    <div className="flex flex-col gap-10">
-      <section className="flex flex-col gap-4">
-        <FollowRequestsStrip />
-        {loading ? (
-          <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <MemberTileSkeleton key={i} />
-            ))}
-          </div>
-        ) : members.length === 0 ? (
-          <EmptyState title={t("emptyTitle")} sub={t("emptySub")} />
-        ) : (
-          <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
-            {members.map(([memberId, { followsYou }]) => (
-              <MemberTile
-                key={memberId}
-                memberId={memberId as Id<"users">}
-                followsYou={followsYou}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+    <section className="flex flex-col gap-4">
+      <FollowRequestsStrip />
+      {loading ? (
+        <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <MemberTileSkeleton key={i} />
+          ))}
+        </div>
+      ) : members.length === 0 ? (
+        <EmptyState title={t("emptyTitle")} sub={t("emptySub")} />
+      ) : (
+        <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
+          {members.map(([memberId, { followsYou }]) => (
+            <MemberTile
+              key={memberId}
+              memberId={memberId as Id<"users">}
+              followsYou={followsYou}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
 
-      <section>
-        <SectionHead
-          title={t("activity")}
-          icon={Bell}
-          action={<ProfileEditDialog />}
-        />
-        <ActivityFeed />
-      </section>
-    </div>
+// Activity tab body: its own top-level tab (promoted out of NetworkTab so the
+// activity feed isn't buried under the network grid, and so the misplaced
+// profile-edit action that used to sit on this SectionHead is gone for good —
+// profile editing lives on /profile).
+function ActivityTab() {
+  const t = useTranslations("people");
+
+  return (
+    <section>
+      <SectionHead title={t("activity")} icon={Bell} />
+      <ActivityFeed />
+    </section>
   );
 }
 
@@ -216,7 +228,9 @@ function PeoplePage() {
 
   const handleTabChange = (value: string) => {
     void navigate({
-      search: { tab: value === "find" ? "find" : undefined },
+      search: {
+        tab: value === "find" || value === "activity" ? value : undefined,
+      },
       replace: true,
     });
   };
@@ -226,16 +240,20 @@ function PeoplePage() {
       <DiscoverabilityNotice />
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList>
-          <TabsTrigger value="network">
+        <TabsList className={UNDERLINE_TABS_LIST_CLASS}>
+          <TabsTrigger value="network" className={TAB_TRIGGER_CLASS}>
+            <Users aria-hidden />
             {t("tabs.network")}
-            {pendingCount > 0 && (
-              <Badge variant="secondary" className="ml-1">
-                {pendingCount}
-              </Badge>
-            )}
+            <TabCount count={pendingCount > 0 ? pendingCount : undefined} />
           </TabsTrigger>
-          <TabsTrigger value="find">{t("tabs.find")}</TabsTrigger>
+          <TabsTrigger value="find" className={TAB_TRIGGER_CLASS}>
+            <Search aria-hidden />
+            {t("tabs.find")}
+          </TabsTrigger>
+          <TabsTrigger value="activity" className={TAB_TRIGGER_CLASS}>
+            <Bell aria-hidden />
+            {t("tabs.activity")}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="network" className="mt-4">
@@ -243,6 +261,9 @@ function PeoplePage() {
         </TabsContent>
         <TabsContent value="find" className="mt-4">
           <FindPeople />
+        </TabsContent>
+        <TabsContent value="activity" className="mt-4">
+          <ActivityTab />
         </TabsContent>
       </Tabs>
     </div>

@@ -317,6 +317,9 @@ describe("activity feed projection", () => {
     expect(feed[0].kind).toBe("acquisition");
     expect(feed[0].memberId).toBe(bob as string);
     expect(feed[1].kind).toBe("completion");
+    // Neither Alice nor Bob has a Social profile, so actorName falls back to the account name.
+    expect(feed[0].actorName).toBe("clerk_bob");
+    expect(feed[1].actorName).toBe("clerk_alice");
   });
 
   test("ExchangeCompleted is attributed to both parties via the exchange row", async () => {
@@ -370,6 +373,7 @@ describe("activity feed projection", () => {
     expect(feed[0].kind).toBe("exchange");
     expect(feed[0].ref).toBe(exchangeAggregateId);
     expect(feed[0].memberId).toBe(alice as string);
+    expect(feed[0].actorName).toBe("clerk_alice");
   });
 
   test("a completed exchange appears once when the viewer is a party AND follows the counterparty", async () => {

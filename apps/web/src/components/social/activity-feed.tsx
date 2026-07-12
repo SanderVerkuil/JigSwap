@@ -27,6 +27,7 @@ export function ActivityFeed() {
   const t = useTranslations("activity");
   const format = useFormatter();
   const { data: feed } = useQuery(convexQuery(gateway.social.activityFeed, {}));
+  const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
 
   if (feed === undefined) {
     return (
@@ -47,6 +48,7 @@ export function ActivityFeed() {
       {feed.map((entry, index) => {
         const meta = META[entry.kind as ActivityKind];
         const Icon = meta.icon;
+        const isYou = me != null && entry.memberId === me._id;
         return (
           <div
             key={`${entry.ref}-${entry.memberId}-${entry.occurredAt}`}
@@ -60,7 +62,12 @@ export function ActivityFeed() {
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium">
-                {t(entry.kind as ActivityKind)}
+                {isYou
+                  ? t(`${entry.kind}.you`)
+                  : t.rich(`${entry.kind}.other`, {
+                      name: entry.actorName,
+                      strong: (chunks) => <strong>{chunks}</strong>,
+                    })}
               </p>
               <p className="text-muted-foreground text-xs">
                 {format.relativeTime(new Date(entry.occurredAt))}
