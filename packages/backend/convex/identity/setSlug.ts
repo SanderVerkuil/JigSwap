@@ -80,6 +80,17 @@ export const setSlug = mutation({
       throw new ConvexError(`"${trimmed}" is already taken.`);
     }
 
+    // Handle resolution is id -> slug -> username (see resolveMemberByHandle), so a slug that
+    // matches another member's USERNAME would hijack their `/username` link. A member may freely
+    // set their slug equal to their OWN username — that's a no-op for resolution.
+    const usernameHolder = await ctx.db
+      .query("users")
+      .withIndex("by_username", (q) => q.eq("username", trimmed))
+      .unique();
+    if (usernameHolder && usernameHolder._id !== userId) {
+      throw new ConvexError("that handle is taken");
+    }
+
     await ctx.db.patch(userId, { slug: trimmed, updatedAt: Date.now() });
   },
 });

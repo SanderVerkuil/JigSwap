@@ -477,4 +477,27 @@ describe("getPublicProfile", () => {
     expect(json).not.toContain("31415"); // gated stat/record piece count
     expect(json).not.toContain("Should Not Leak"); // gated record title
   });
+
+  // Follower/following counts and the completions scan (backing stats/records) are now bounded
+  // reads (.take(1001) / .take(2000)) instead of unbounded .collect() — this asserts that, for a
+  // normal-sized fixture, capping is behavior-preserving: identical output to the uncapped read.
+  test("bounded reads (follower/following/completions caps) are behavior-preserving at normal fixture size", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const view = await t.query(api.social.getPublicProfile.getPublicProfile, {
+      handle: "alice",
+    });
+    expect(view).not.toBeNull();
+    if (!view || view.locked) throw new Error("expected unlocked");
+
+    expect(view.hero.followerCount).toBe(1);
+    expect(view.hero.followingCount).toBe(1);
+    expect(view.stats.completions).toBe(3);
+    expect(view.stats.piecesPlaced).toBe(2500);
+    expect(view.records.fastest).toEqual({ title: "Small Scene", minutes: 60 });
+    expect(view.records.hardest).toEqual({
+      title: "Mega Vista",
+      pieceCount: 1200,
+    });
+  });
 });

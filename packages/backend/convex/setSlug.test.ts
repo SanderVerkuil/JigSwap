@@ -151,4 +151,31 @@ describe("setSlug", () => {
     });
     expect(await getSlug(t, bob)).toBe("puzzler");
   });
+
+  test("a member cannot set their slug to another member's username (handle-shadowing)", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    // Give alice a Clerk-owned username so bob can attempt to shadow it.
+    await t.run(async (ctx) => {
+      await ctx.db.patch(alice, { username: "alice" });
+    });
+
+    await expect(
+      asBob(t).mutation(api.identity.setSlug.setSlug, { slug: "alice" }),
+    ).rejects.toThrow(ConvexError);
+  });
+
+  test("a member CAN set their slug equal to their own username", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(alice, { username: "alice" });
+    });
+
+    await asAlice(t).mutation(api.identity.setSlug.setSlug, {
+      slug: "alice",
+    });
+
+    expect(await getSlug(t, alice)).toBe("alice");
+  });
 });

@@ -6,6 +6,13 @@ import { query } from "../_generated/server";
 import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
 import { requireMember } from "./requireMember";
 
+// Bound for the per-collection reads below. Now reached from the UNAUTHENTICATED getPublicProfile
+// (in addition to the auth-gated getUserStats), so an uncapped .collect() could be pointed at an
+// arbitrarily large collection and blow the Convex read limit / 500 the page. No real member comes
+// close to 5000 owned copies, completed exchanges, or reviews; past that the counts undercount
+// rather than erroring.
+const STATS_COLLECTION_CAP = 5000;
+
 // Shared aggregate-stat computation, factored out so other reads (getPublicProfile) can reuse the
 // exact same owned/trades/rating math without duplicating a whole query or re-deriving the
 // visibility ACL, which stays the caller's responsibility.
@@ -21,24 +28,24 @@ export const computeMemberStats = async (
   const puzzlesOwned = await ctx.db
     .query("ownedPuzzles")
     .withIndex("by_owner", (q) => q.eq("ownerId", userId))
-    .collect();
+    .take(STATS_COLLECTION_CAP);
 
   const tradesAsRequester = await ctx.db
     .query("exchanges")
     .withIndex("by_initiator", (q) => q.eq("initiatorId", userId))
     .filter((q) => q.eq(q.field("status"), "completed"))
-    .collect();
+    .take(STATS_COLLECTION_CAP);
 
   const tradesAsOwner = await ctx.db
     .query("exchanges")
     .withIndex("by_recipient", (q) => q.eq("recipientId", userId))
     .filter((q) => q.eq(q.field("status"), "completed"))
-    .collect();
+    .take(STATS_COLLECTION_CAP);
 
   const reviews = await ctx.db
     .query("reviews")
     .withIndex("by_reviewee", (q) => q.eq("revieweeId", userId))
-    .collect();
+    .take(STATS_COLLECTION_CAP);
 
   const averageRating =
     reviews.length > 0

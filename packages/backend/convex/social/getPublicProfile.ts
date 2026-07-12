@@ -50,14 +50,16 @@ export const getPublicProfile = query({
       following,
     ] = await Promise.all([
       computeMemberStats(ctx, memberId),
+      // Coarse, capped count — same spirit as getPublicMemberTeaser's puzzleCount: a huge
+      // follower/following list can't blow the Convex read limit and 500 this unauthenticated page.
       ctx.db
         .query("follows")
         .withIndex("by_followee", (q) => q.eq("followeeId", memberId))
-        .collect(),
+        .take(1001),
       ctx.db
         .query("follows")
         .withIndex("by_follower", (q) => q.eq("followerId", memberId))
-        .collect(),
+        .take(1001),
     ]);
 
     const hero = {
@@ -85,11 +87,14 @@ export const getPublicProfile = query({
     const story = profile?.bio ? profile.bio : undefined;
 
     // Single pass over the member's completions backs both `stats` and `records`. Legacy rows may
-    // lack a copySnapshot piece count/title; fall back to the joined puzzle definition.
+    // lack a copySnapshot piece count/title; fall back to the joined puzzle definition. Capped —
+    // this read is UNAUTHENTICATED, so an uncapped .collect() could be pointed at an arbitrarily
+    // large collection and blow the Convex read limit / 500 the page. No real member comes close to
+    // 2000 completions; past that the count/piecesPlaced/records undercount rather than erroring.
     const completions = await ctx.db
       .query("completions")
       .withIndex("by_user", (q) => q.eq("userId", memberId))
-      .collect();
+      .take(2000);
     const completed = completions.filter((c) => c.isCompleted);
 
     let piecesPlaced = 0;
