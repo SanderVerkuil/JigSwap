@@ -61,8 +61,8 @@ export function FindPeople() {
   ) : null;
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-      <div className="flex items-center gap-2">
+    <div className="flex w-full flex-col gap-6">
+      <div className="flex max-w-xl items-center gap-2">
         <div className="relative flex-1">
           <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
@@ -80,7 +80,7 @@ export function FindPeople() {
         <p className="text-muted-foreground text-sm">{t("minChars")}</p>
       ) : searching ? (
         results === undefined ? (
-          <div className="flex flex-col gap-4">
+          <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
             {Array.from({ length: 3 }).map((_, i) => (
               <MemberTileSkeleton key={i} />
             ))}
@@ -93,7 +93,7 @@ export function FindPeople() {
           />
         ) : (
           <div
-            className="flex flex-col gap-4"
+            className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]"
             role="list"
             aria-label={t("resultsLabel")}
           >
@@ -111,7 +111,7 @@ export function FindPeople() {
         <section>
           <SectionHead title={t("recentlyJoined")} icon={UserPlus} />
           {recent === undefined ? (
-            <div className="flex flex-col gap-4">
+            <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
               {Array.from({ length: 3 }).map((_, i) => (
                 <MemberTileSkeleton key={i} />
               ))}
@@ -123,7 +123,7 @@ export function FindPeople() {
               action={qrButton}
             />
           ) : (
-            <div className="flex flex-col gap-4">
+            <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
               {recent.map((member) => (
                 <MemberTile
                   key={member._id}
