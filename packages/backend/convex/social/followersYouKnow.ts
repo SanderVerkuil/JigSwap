@@ -4,6 +4,7 @@ import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { knownFollowerIds } from "./knownFollowers";
+import { areMutualFollowers, profileVisibilityOf } from "./privacy";
 
 // The preview + short modal list are capped to the same small number — a profile row doesn't
 // need (or want) to resolve a full intersection, just enough names to feel like social proof.
@@ -16,11 +17,26 @@ const PREVIEW_LIMIT = 8;
 // memberId === viewer short-circuits to empty. The resolved preview members are drawn from the
 // viewer's OWN following list, so no additional visibility gating is needed to show their
 // identity to this particular viewer.
+//
+// SECURITY: this leaks a personalized SLICE of the target's follower set, which a private
+// profile otherwise only exposes as an aggregate followerCount (getPublicProfile). So it follows
+// the SAME follow-graph visibility model as social/listFollowers: a private target's followers
+// are disclosed only to the target themself (already short-circuited above) and to mutual
+// followers — every other viewer gets empty, even if they'd otherwise have an intersection. This
+// stops an authed member who knows a private member's id from bypassing the unlocked-only UI to
+// enumerate which of their followees follow that private member.
 export const followersYouKnow = query({
   args: { memberId: v.id("users") },
   handler: async (ctx, args): Promise<FollowersYouKnowView> => {
     const viewer = (await requireMember(ctx)) as unknown as Id<"users">;
     if (args.memberId === viewer) return { total: 0, members: [] };
+
+    if (
+      (await profileVisibilityOf(ctx, args.memberId)) === "private" &&
+      !(await areMutualFollowers(ctx, viewer, args.memberId))
+    ) {
+      return { total: 0, members: [] };
+    }
 
     const ids = await knownFollowerIds(ctx, viewer, args.memberId);
     const preview = ids.slice(0, PREVIEW_LIMIT);

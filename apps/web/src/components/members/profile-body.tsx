@@ -254,14 +254,19 @@ function FollowersYouKnowRow({ memberId }: { memberId: Id<"users"> }) {
     convexQuery(gateway.social.followersYouKnow, { memberId }),
   );
 
-  if (!data || data.total === 0) return null;
+  // `total > 0` but an empty `members` preview is only reachable if every previewed followee
+  // became unresolvable (e.g. a hard-deleted user) — guard so the copy below never dereferences
+  // an undefined member.
+  if (!data || data.total === 0 || data.members.length === 0) return null;
 
   const [first, second] = data.members;
   const stack = data.members.slice(0, 3);
   const extraCount = data.total - data.members.length;
 
+  // The 2+ copy needs two names; if only one previewed member resolved (unresolvable followees),
+  // fall back to the single-name copy rather than interpolating an undefined name.
   let copy: string;
-  if (data.total === 1) {
+  if (data.total === 1 || !second) {
     copy = t("one", { name: first.displayName });
   } else if (data.total === 2) {
     copy = t("two", { name1: first.displayName, name2: second.displayName });
