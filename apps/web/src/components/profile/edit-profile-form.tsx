@@ -42,6 +42,24 @@ function isUsernameDisabledError(err: unknown): boolean {
   return /username.*not a valid parameter/i.test(message);
 }
 
+// Reads the machine-readable `code` off a Clerk API error (each entry in its
+// `errors` array carries one), independent of the human message/locale.
+function hasClerkErrorCode(err: unknown, code: string): boolean {
+  if (err && typeof err === "object" && "errors" in err) {
+    const errs = (err as { errors?: Array<{ code?: string }> }).errors;
+    return errs?.some((e) => e.code === code) ?? false;
+  }
+  return false;
+}
+
+// Clerk requires a freshly re-verified session (step-up auth) before some
+// sensitive changes like username. We don't have a reverification UI wired in
+// this SDK build, so we surface an actionable notice rather than a raw error;
+// the member can re-authenticate and retry, or just use their slug.
+function isSessionReverificationRequired(err: unknown): boolean {
+  return hasClerkErrorCode(err, "session_reverification_required");
+}
+
 // Extract the plain-string message a Convex mutation throws via `new ConvexError("...")`
 // (setSlug's shape) — as opposed to a structured `{ code }` payload.
 function convexErrorMessage(err: unknown): string | undefined {
@@ -169,10 +187,13 @@ function EditProfileFormLoaded({
         } catch (err) {
           // Instance has Username disabled outright (an admin-level config the
           // member can't fix) -> the friendly "use your slug instead" notice;
-          // any other Clerk rejection (taken, too short, ...) -> its own message.
+          // a step-up-auth requirement -> a re-verify notice; any other Clerk
+          // rejection (taken, too short, ...) -> its own message.
           errors.username = isUsernameDisabledError(err)
             ? t("usernameUnavailable")
-            : (clerkErrorMessage(err) ?? t("saveError"));
+            : isSessionReverificationRequired(err)
+              ? t("usernameReverify")
+              : (clerkErrorMessage(err) ?? t("saveError"));
         }
       }
       // Location lives on the identity user row.

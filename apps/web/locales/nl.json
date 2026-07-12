@@ -722,6 +722,7 @@
     "saveError": "Je profiel kon niet worden opgeslagen. Probeer het opnieuw.",
     "usernamePlaceholder": "jouw-gebruikersnaam",
     "usernameUnavailable": "Gebruikersnaam wijzigen kan nu even niet — stel hieronder een eigen link (slug) in om je profiel te delen.",
+    "usernameReverify": "Voor je veiligheid moet je sessie opnieuw geverifieerd worden om je gebruikersnaam te wijzigen — log uit en weer in en probeer het opnieuw, of gebruik hieronder je profiellink (slug).",
     "locationPlaceholder": "Plaats, Land",
     "bioPlaceholder": "Vertel andere leden iets over jezelf…",
     "slug": {
