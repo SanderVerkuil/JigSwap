@@ -2,6 +2,7 @@ import type { PublicMemberTeaserView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { optionalActingMember } from "../identity/optionalActingMember";
+import { resolveMemberByHandle } from "../identity/resolveMemberByHandle";
 import { profileVisibilityOf } from "./privacy";
 
 // The UNAUTHENTICATED read behind /members/$handle. Deliberately tiny: identity fields only —
@@ -9,34 +10,13 @@ import { profileVisibilityOf } from "./privacy";
 // link (spec: Instagram-style interstitial; the page renders robots-noindex for private profiles),
 // while enumeration stays blocked because search remains visibility-gated.
 //
-// Handle resolution is ID-FIRST, then slug, then username: if the handle resolves to an existing
-// users id we use that member and NEVER consult by_slug/by_username for it. This makes id-based
-// URLs (which Phase 3 QR codes encode) immune to slug/username shadowing — both are user-chosen
-// and can be shaped like a Convex id, so an id-last order would let one member hijack another
-// member's id URL. Only when the handle is not an existing user id do we fall back to the
-// Convex-owned by_slug lookup, then the Clerk-owned by_username lookup.
+// Handle resolution (id-first, then slug, then username — see identity/resolveMemberByHandle,
+// the single source of this SECURITY-critical precedence) is shared with getPublicProfile.
 export const getPublicMemberTeaser = query({
   args: { handle: v.string() },
   handler: async (ctx, args): Promise<PublicMemberTeaserView | null> => {
-    const handle = args.handle.trim();
-    if (!handle) return null;
-
-    let user = null;
-    const id = ctx.db.normalizeId("users", handle);
-    if (id) user = await ctx.db.get(id);
-    if (!user) {
-      user = await ctx.db
-        .query("users")
-        .withIndex("by_slug", (q) => q.eq("slug", handle))
-        .unique();
-    }
-    if (!user) {
-      user = await ctx.db
-        .query("users")
-        .withIndex("by_username", (q) => q.eq("username", handle))
-        .unique();
-    }
-    if (!user || !user.isActive) return null;
+    const user = await resolveMemberByHandle(ctx, args.handle);
+    if (!user) return null;
 
     const memberId = user._id;
     const [visibility, profile, viewer] = await Promise.all([

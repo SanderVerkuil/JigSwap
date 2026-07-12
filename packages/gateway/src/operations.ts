@@ -256,6 +256,9 @@ export const gateway = {
     unfollow: api.social.unfollowMember.unfollowMember,
     profile: api.social.getProfile.getProfile,
     publicMemberTeaser: api.social.getPublicMemberTeaser.getPublicMemberTeaser,
+    // The visibility-gated read behind the redesigned public member profile page. Unauthenticated-
+    // capable; returns a discriminated { locked } payload (see PublicProfileView).
+    publicProfile: api.social.getPublicProfile.getPublicProfile,
     followers: api.social.listFollowers.listFollowers,
     following: api.social.listFollowees.listFollowees,
     isFollowing: api.social.isFollowing.isFollowing,

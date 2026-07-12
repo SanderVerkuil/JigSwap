@@ -1,9 +1,57 @@
 import type { MemberStatsView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
+import type { QueryCtx } from "../_generated/server";
 import { query } from "../_generated/server";
 import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
 import { requireMember } from "./requireMember";
+
+// Shared aggregate-stat computation, factored out so other reads (getPublicProfile) can reuse the
+// exact same owned/trades/rating math without duplicating a whole query or re-deriving the
+// visibility ACL, which stays the caller's responsibility.
+export const computeMemberStats = async (
+  ctx: QueryCtx,
+  userId: Id<"users">,
+): Promise<{
+  puzzlesOwned: number;
+  tradesCompleted: number;
+  averageRating: number;
+  totalReviews: number;
+}> => {
+  const puzzlesOwned = await ctx.db
+    .query("ownedPuzzles")
+    .withIndex("by_owner", (q) => q.eq("ownerId", userId))
+    .collect();
+
+  const tradesAsRequester = await ctx.db
+    .query("exchanges")
+    .withIndex("by_initiator", (q) => q.eq("initiatorId", userId))
+    .filter((q) => q.eq(q.field("status"), "completed"))
+    .collect();
+
+  const tradesAsOwner = await ctx.db
+    .query("exchanges")
+    .withIndex("by_recipient", (q) => q.eq("recipientId", userId))
+    .filter((q) => q.eq(q.field("status"), "completed"))
+    .collect();
+
+  const reviews = await ctx.db
+    .query("reviews")
+    .withIndex("by_reviewee", (q) => q.eq("revieweeId", userId))
+    .collect();
+
+  const averageRating =
+    reviews.length > 0
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+      : 0;
+
+  return {
+    puzzlesOwned: puzzlesOwned.length,
+    tradesCompleted: tradesAsRequester.length + tradesAsOwner.length,
+    averageRating: Math.round(averageRating * 10) / 10,
+    totalReviews: reviews.length,
+  };
+};
 
 // Identity read (thin adapter): a member's public stat card. Counts owned copies, completed
 // exchanges (as initiator + recipient) and averages received review ratings. Math, rounding and
@@ -26,40 +74,15 @@ export const getUserStats = query({
       return null;
     }
 
-    const puzzlesOwned = await ctx.db
-      .query("ownedPuzzles")
-      .withIndex("by_owner", (q) => q.eq("ownerId", args.userId))
-      .collect();
-
-    const tradesAsRequester = await ctx.db
-      .query("exchanges")
-      .withIndex("by_initiator", (q) => q.eq("initiatorId", args.userId))
-      .filter((q) => q.eq(q.field("status"), "completed"))
-      .collect();
-
-    const tradesAsOwner = await ctx.db
-      .query("exchanges")
-      .withIndex("by_recipient", (q) => q.eq("recipientId", args.userId))
-      .filter((q) => q.eq(q.field("status"), "completed"))
-      .collect();
-
-    const reviews = await ctx.db
-      .query("reviews")
-      .withIndex("by_reviewee", (q) => q.eq("revieweeId", args.userId))
-      .collect();
-
-    const averageRating =
-      reviews.length > 0
-        ? reviews.reduce((sum, review) => sum + review.rating, 0) /
-          reviews.length
-        : 0;
+    const { puzzlesOwned, tradesCompleted, averageRating, totalReviews } =
+      await computeMemberStats(ctx, args.userId);
 
     return {
-      puzzlesOwned: puzzlesOwned.length,
-      puzzlesAvailable: puzzlesOwned.length,
-      tradesCompleted: tradesAsRequester.length + tradesAsOwner.length,
-      averageRating: Math.round(averageRating * 10) / 10,
-      totalReviews: reviews.length,
+      puzzlesOwned,
+      puzzlesAvailable: puzzlesOwned,
+      tradesCompleted,
+      averageRating,
+      totalReviews,
     };
   },
 });

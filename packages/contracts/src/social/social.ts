@@ -105,3 +105,65 @@ export interface PublicMemberTeaserView {
   /** Owned-copy count; null for private profiles. */
   puzzleCount: number | null;
 }
+
+/**
+ * The identity card shown on the public member profile, disclosed regardless of lock state (an
+ * Instagram-style private-account header: name, avatar, follow counts, and rating are always
+ * visible; only the deeper `story`/`stats`/`records` are gated). `avatar` is consent-gated for
+ * anonymous callers exactly like PublicMemberTeaserView (users.shareAvatarPublicly). `location` is
+ * the strict exception: it is included ONLY when `visibility === "public"`, in BOTH the locked and
+ * unlocked payload — a private profile never discloses location to a non-owner, even a mutual
+ * follower, and the rule does not special-case the owner viewing their own profile either.
+ */
+export interface PublicProfileHero {
+  memberId: string;
+  displayName: string;
+  username?: string;
+  slug?: string;
+  avatar?: string;
+  /** users.createdAt (ms). */
+  memberSince: number;
+  rating: number;
+  reviewCount: number;
+  followerCount: number;
+  followingCount: number;
+  visibility: "public" | "private";
+  /** Only present when visibility === "public" — see class doc. */
+  location?: string;
+}
+
+/** Coarse collection/activity aggregates, UNLOCKED only. */
+export interface PublicProfileStats {
+  puzzlesOwned: number;
+  completions: number;
+  piecesPlaced: number;
+  swaps: number;
+}
+
+/** Standout completions, UNLOCKED only. Either entry is null when the member has no completions
+ * carrying the relevant field (no timed completion for `fastest`, no sized completion for
+ * `hardest`). */
+export interface PublicProfileRecords {
+  fastest: { title: string; minutes: number } | null;
+  hardest: { title: string; pieceCount: number } | null;
+}
+
+/**
+ * The visibility-gated read behind the redesigned public member profile page. A discriminated
+ * union on `locked`: UNLOCKED (visibility public, viewer is the owner, or viewer is a mutual
+ * follower) carries the full `story`/`stats`/`records`; LOCKED (private + non-mutual viewer,
+ * including logged-out) carries only `hero` — never story, stats, or records. This is the public,
+ * unauthenticated-capable surface: the payload must never leak another member's raw id, name,
+ * copy ids/conditions/prices, clerkIds, emails, or (per PublicProfileHero) location for a private
+ * profile.
+ */
+export type PublicProfileView =
+  | {
+      locked: false;
+      hero: PublicProfileHero;
+      /** profiles.bio; omitted when the member has none. UNLOCKED only. */
+      story?: string;
+      stats: PublicProfileStats;
+      records: PublicProfileRecords;
+    }
+  | { locked: true; hero: PublicProfileHero };
