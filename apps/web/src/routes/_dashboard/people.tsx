@@ -3,7 +3,6 @@ import { safeStorage } from "@/lib/safe-storage";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 
 import { EmptyState } from "@/components/community/primitives";
-import { SectionHead } from "@/components/dashboard-home/section-head";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { ActivityFeed } from "@/components/social/activity-feed";
 import { FindPeople } from "@/components/social/find-people";
@@ -152,14 +151,8 @@ function NetworkTab({
 // profile-edit action that used to sit on this SectionHead is gone for good —
 // profile editing lives on /profile).
 function ActivityTab() {
-  const t = useTranslations("people");
-
-  return (
-    <section>
-      <SectionHead title={t("activity")} icon={Bell} />
-      <ActivityFeed />
-    </section>
-  );
+  // No inner heading: the "Activity" tab trigger already labels this view.
+  return <ActivityFeed />;
 }
 
 function PeoplePage() {
