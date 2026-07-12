@@ -99,11 +99,11 @@ function isValidSlugFormat(value: string): boolean {
 // form. Display name stays on the Social profile editor (ProfileEditDialog,
 // embedded below) rather than being duplicated here.
 //
-// Wrapper: waits for the Social profile to load before mounting the actual
-// form, so the Bio field's initial value can be seeded from it without a
-// setState-in-effect sync. In practice this is rarely visible — IdentityHeader
-// (always mounted) queries the same profile, so it's usually already cached
-// by the time the member opens the editor.
+// Wrapper: waits for BOTH Clerk (the username source of truth) and the Social
+// profile to load before mounting the actual form, so every field's initial
+// value can be seeded from the live value at mount without a setState-in-effect
+// sync. In practice this is rarely visible — IdentityHeader (always mounted)
+// queries the same profile, and Clerk loads early for auth.
 export function EditProfileForm({
   member,
   onDone,
@@ -111,10 +111,11 @@ export function EditProfileForm({
   member: Member;
   onDone: () => void;
 }) {
+  const { isLoaded } = useUser();
   const { data: socialProfile } = useQuery(
     convexQuery(gateway.social.profile, {}),
   );
-  if (socialProfile === undefined) return null;
+  if (!isLoaded || socialProfile === undefined) return null;
   return (
     <EditProfileFormLoaded
       member={member}
@@ -155,7 +156,13 @@ function EditProfileFormLoaded({
   // "public" default.
   const isPrivate = socialProfile?.visibility === "private";
 
-  const [username, setUsername] = useState(member.username ?? "");
+  // Seed from Clerk (the username's source of truth), not the Convex mirror
+  // (member.username) — the mirror is populated by the user.updated webhook,
+  // which may be unconfigured in a review/preview environment and thus stale
+  // or empty. Clerk's live value is always correct here.
+  const [username, setUsername] = useState(
+    user?.username ?? member.username ?? "",
+  );
   const [slug, setSlugValue] = useState(member.slug ?? "");
   const [location, setLocation] = useState(member.location ?? "");
   const [bio, setBio] = useState(socialProfile?.bio ?? "");
