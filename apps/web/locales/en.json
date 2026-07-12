@@ -769,14 +769,12 @@
     },
     "editor": {
       "title": "Public profile",
-      "description": "Your display name and bio as other members see them.",
+      "description": "Your display name as other members see them.",
       "edit": "Edit",
       "save": "Save",
       "cancel": "Cancel",
       "displayName": "Display name",
       "displayNamePlaceholder": "Your display name",
-      "bio": "Bio",
-      "bioPlaceholder": "Tell other members about yourself",
       "emptyNameError": "Display name cannot be empty",
       "saved": "Profile saved",
       "saveError": "Could not save profile"

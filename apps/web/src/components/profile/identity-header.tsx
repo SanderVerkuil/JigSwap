@@ -32,6 +32,13 @@ export function IdentityHeader({
       memberId: member._id as Id<"users">,
     }),
   );
+  // The bio shown here is the Social profile's bio — the same field
+  // getPublicProfile reads for the public "story" — so the owner's own
+  // /profile shows exactly what other members see. users.bio (identity) is
+  // no longer surfaced.
+  const { data: socialProfile } = useQuery(
+    convexQuery(gateway.social.profile, {}),
+  );
 
   const avatarSrc = member.avatar ?? user?.imageUrl;
   const initials = (member.name ?? "?")
@@ -73,9 +80,9 @@ export function IdentityHeader({
             {t("memberSince")} {memberYear}
           </span>
         </div>
-        {member.bio && (
+        {socialProfile?.bio && (
           <p className="text-muted-foreground mt-2 max-w-prose text-sm">
-            {member.bio}
+            {socialProfile.bio}
           </p>
         )}
       </div>

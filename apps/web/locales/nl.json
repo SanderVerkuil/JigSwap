@@ -769,14 +769,12 @@
     },
     "editor": {
       "title": "Openbaar profiel",
-      "description": "Je weergavenaam en bio zoals andere leden ze zien.",
+      "description": "Je weergavenaam zoals andere leden hem zien.",
       "edit": "Bewerken",
       "save": "Opslaan",
       "cancel": "Annuleren",
       "displayName": "Weergavenaam",
       "displayNamePlaceholder": "Je weergavenaam",
-      "bio": "Bio",
-      "bioPlaceholder": "Vertel andere leden iets over jezelf",
       "emptyNameError": "Weergavenaam mag niet leeg zijn",
       "saved": "Profiel opgeslagen",
       "saveError": "Kon profiel niet opslaan"

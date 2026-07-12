@@ -10,12 +10,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import type { FunctionReturnType } from "convex/server";
 import { ConvexError } from "convex/values";
 import { Save } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import type { Member } from "./member-view";
+
+// The Social profile as returned by gateway.social.profile — undefined while loading, null when
+// the member has never saved one yet.
+type SocialProfile = FunctionReturnType<typeof gateway.social.profile>;
 
 // Best-effort extraction of a human message from a Clerk API error (e.g. an
 // already-taken or too-short username), falling back to undefined.
@@ -64,10 +69,19 @@ function isValidSlugFormat(value: string): boolean {
 // entirely, that specific rejection is swallowed into a friendly notice
 // instead of blocking the rest of the save. The slug is Convex-owned
 // (identity.setSlug) and is this form's primary shareable-handle control.
-// Location/bio are saved straight to Convex via the identity gateway. Display
-// name stays on the Social profile editor (ProfileEditDialog, embedded below)
-// rather than being duplicated here, since that mutation also owns the
-// Social-profile bio and always requires both fields together.
+// Location is saved to Convex via the identity gateway (users.location).
+// Bio is the member's PUBLIC "story" shown on their profile — it lives on
+// the Social profile (profiles.bio, gateway.social.editProfile), the same
+// field getPublicProfile reads, so editing it here is what actually changes
+// what other members see. users.bio (identity) is no longer surfaced by this
+// form. Display name stays on the Social profile editor (ProfileEditDialog,
+// embedded below) rather than being duplicated here.
+//
+// Wrapper: waits for the Social profile to load before mounting the actual
+// form, so the Bio field's initial value can be seeded from it without a
+// setState-in-effect sync. In practice this is rarely visible — IdentityHeader
+// (always mounted) queries the same profile, so it's usually already cached
+// by the time the member opens the editor.
 export function EditProfileForm({
   member,
   onDone,
@@ -75,9 +89,32 @@ export function EditProfileForm({
   member: Member;
   onDone: () => void;
 }) {
+  const { data: socialProfile } = useQuery(
+    convexQuery(gateway.social.profile, {}),
+  );
+  if (socialProfile === undefined) return null;
+  return (
+    <EditProfileFormLoaded
+      member={member}
+      socialProfile={socialProfile}
+      onDone={onDone}
+    />
+  );
+}
+
+function EditProfileFormLoaded({
+  member,
+  socialProfile,
+  onDone,
+}: {
+  member: Member;
+  socialProfile: SocialProfile;
+  onDone: () => void;
+}) {
   const t = useTranslations("profile");
   const { user } = useUser();
   const updateProfile = useConvexMutation(gateway.identity.updateProfile);
+  const editProfile = useConvexMutation(gateway.social.editProfile);
   const setSlug = useConvexMutation(gateway.identity.setSlug);
   const setProfileVisibility = useMutation({
     mutationFn: useConvexMutation(gateway.social.setProfileVisibility),
@@ -87,15 +124,12 @@ export function EditProfileForm({
   // ProfileEditDialog below) live on the Social profile, separate from the
   // identity account fields above. Treat an absent profile/value as the
   // "public" default.
-  const { data: socialProfile } = useQuery(
-    convexQuery(gateway.social.profile, {}),
-  );
   const isPrivate = socialProfile?.visibility === "private";
 
   const [username, setUsername] = useState(member.username ?? "");
   const [slug, setSlugValue] = useState(member.slug ?? "");
   const [location, setLocation] = useState(member.location ?? "");
-  const [bio, setBio] = useState(member.bio ?? "");
+  const [bio, setBio] = useState(socialProfile?.bio ?? "");
 
   const trimmedSlug = slug.trim();
   const slugFormatError = trimmedSlug !== "" && !isValidSlugFormat(trimmedSlug);
@@ -129,15 +163,24 @@ export function EditProfileForm({
           }
         }
       }
-      // Location/bio live only in Convex.
+      // Location lives on the identity user row.
       await updateProfile({
         location: location.trim() || undefined,
-        bio: bio.trim() || undefined,
       });
       // The slug is Convex-owned and validated/uniqueness-checked server-side;
       // only call when it actually changed.
       if (trimmedSlug !== (member.slug ?? "")) {
         await setSlug({ slug: trimmedSlug === "" ? null : trimmedSlug });
+      }
+      // Bio lives on the Social profile (the public "story"). editProfile always
+      // writes displayName + bio together (a full replace), so the current
+      // displayName is sent through unchanged to avoid clobbering it.
+      const trimmedBio = bio.trim();
+      if (trimmedBio !== (socialProfile?.bio ?? "")) {
+        await editProfile({
+          displayName: socialProfile?.displayName ?? member.name,
+          bio: trimmedBio === "" ? undefined : trimmedBio,
+        });
       }
       return { usernameUnavailable };
     },
@@ -243,9 +286,7 @@ export function EditProfileForm({
         <Switch
           id="profile-visibility"
           checked={isPrivate}
-          disabled={
-            setProfileVisibility.isPending || socialProfile === undefined
-          }
+          disabled={setProfileVisibility.isPending}
           onCheckedChange={handleVisibilityChange}
           aria-label={t("visibility.label")}
         />
