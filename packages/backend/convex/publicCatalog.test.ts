@@ -277,6 +277,36 @@ describe("listPublicPuzzleReviews", () => {
     expect(paulsReview?.author?.avatar).toBeNull();
   });
 
+  test("anonymizes an author with NO profile row (fail-closed), while still naming an explicit-public author", async () => {
+    const t = convexTest(schema, modules);
+    const { approved } = await seed(t);
+    // A member who never opened profile settings has no `profiles` row. profileVisibilityOf would
+    // default them to "public", but the indexable public surface must fail closed and anonymize them.
+    await t.run(async (ctx) => {
+      const norow = await mkUser(ctx, "clerk_norow", "Nora NoRow");
+      await ctx.db.insert("puzzleComments", {
+        aggregateId: "rev-norow",
+        puzzleId: approved,
+        authorId: norow,
+        text: "No profile row here.",
+        rating: 2,
+        createdAt: NOW + 20,
+      });
+    });
+
+    const reviews = await t.query(
+      api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
+      { puzzleId: approved },
+    );
+    const norowReview = reviews.find((r) => r.text === "No profile row here.");
+    expect(norowReview?.author).toBeNull(); // fail-closed: no row -> "A JigSwap member"
+    // The explicit-public author is still named — the reveal path is unbroken.
+    const piaReview = reviews.find((r) => r.text === "Lovely gradient sky.");
+    expect(piaReview?.author?.name).toBe("Pia Public");
+    // Nora's real name never leaves the server on this indexable surface.
+    expect(JSON.stringify(reviews)).not.toContain("Nora NoRow");
+  });
+
   test("returns [] for a non-approved definition (reviews must not leak)", async () => {
     const t = convexTest(schema, modules);
     const { pending } = await seed(t);

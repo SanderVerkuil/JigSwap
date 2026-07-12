@@ -1,6 +1,9 @@
 import { gateway } from "@/gateway";
 import { createFileRoute } from "@tanstack/react-router";
 import { ConvexHttpClient } from "convex/browser";
+import type { FunctionReturnType } from "convex/server";
+
+type SitemapEntries = FunctionReturnType<typeof gateway.catalog.sitemapEntries>;
 
 // Catalog URLs ONLY (Phase 5 spec): public member profiles are indexable but never sitemap-listed;
 // private member teasers carry noindex. Data comes from the unauthenticated listSitemapEntries
@@ -13,7 +16,14 @@ export const Route = createFileRoute("/sitemap.xml")({
         const convex = new ConvexHttpClient(
           import.meta.env.VITE_CONVEX_URL as string,
         );
-        const entries = await convex.query(gateway.catalog.sitemapEntries, {});
+        // Never 500 a public SEO route: if Convex is unreachable, still emit a valid sitemap with
+        // at least the /catalog root, so crawlers keep the catalogue indexed.
+        let entries: SitemapEntries = [];
+        try {
+          entries = await convex.query(gateway.catalog.sitemapEntries, {});
+        } catch {
+          entries = [];
+        }
         const urls = [
           `  <url><loc>${origin}/catalog</loc></url>`,
           ...entries.map(

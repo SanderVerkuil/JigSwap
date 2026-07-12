@@ -48,11 +48,18 @@ export const Route = createFileRoute("/_public/catalog/$id")({
     }
   },
   loader: async ({ context, params }) => {
-    const [view] = await Promise.all([
-      context.queryClient.ensureQueryData(viewQuery(params.id)),
-      context.queryClient.ensureQueryData(reviewsQuery(params.id)),
-    ]);
-    return { view };
+    // A malformed id fails `v.id("puzzles")` arg validation and rejects here. Rather than crash to
+    // the root error boundary, swallow it and let the component render the same friendly not-found
+    // a well-formed-but-nonexistent id shows (which resolves to `null`).
+    try {
+      const [view] = await Promise.all([
+        context.queryClient.ensureQueryData(viewQuery(params.id)),
+        context.queryClient.ensureQueryData(reviewsQuery(params.id)),
+      ]);
+      return { view };
+    } catch {
+      return { view: null };
+    }
   },
   head: ({ loaderData }) => {
     const d = loaderData?.view?.definition;
@@ -77,10 +84,11 @@ export const Route = createFileRoute("/_public/catalog/$id")({
 function PublicPuzzlePage() {
   const { id } = Route.useParams();
   const t = useTranslations("publicCatalog");
-  const { data: view } = useQuery(viewQuery(id));
+  const { data: view, isError } = useQuery(viewQuery(id));
 
-  if (view === undefined) return null; // loader-prefetched; only a hard refetch passes here
-  if (view === null) {
+  // A malformed id makes the query error (arg validation); treat it exactly like a nonexistent id.
+  if (view === undefined && !isError) return null; // loader-prefetched; only a hard refetch passes here
+  if (view === null || isError) {
     return (
       <main className="mx-auto w-full max-w-[1200px] px-6 py-10">
         <EmptyState title={t("notFound")} sub={t("notFoundSub")} />

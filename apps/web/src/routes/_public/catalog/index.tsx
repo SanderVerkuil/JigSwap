@@ -108,6 +108,12 @@ function CatalogListPage() {
     setPrevFilterKey(filterKey);
     setExtraPages([]);
   }
+  // Mirror the current filterKey into a ref so an in-flight loadMore can read the LATEST value
+  // after its await (the handler's closed-over `filterKey` is stale by then).
+  const filterKeyRef = React.useRef(filterKey);
+  React.useEffect(() => {
+    filterKeyRef.current = filterKey;
+  }, [filterKey]);
 
   const { data: brands } = useQuery(convexQuery(gateway.catalog.allBrands, {}));
 
@@ -119,6 +125,10 @@ function CatalogListPage() {
 
   const loadMore = async () => {
     if (!lastPage || lastPage.isDone) return;
+    // Capture the filter this page is being fetched under. If the filter changes mid-flight, the
+    // awaited page (and its continueCursor) belong to the OLD filter — drop it rather than append a
+    // foreign page onto the reset list.
+    const requestedFilterKey = filterKey;
     setLoadingMore(true);
     try {
       const next = await convexClient.query(gateway.catalog.publicBrowse, {
@@ -128,6 +138,7 @@ function CatalogListPage() {
         },
         ...filterArgs,
       });
+      if (requestedFilterKey !== filterKeyRef.current) return;
       setExtraPages((pages) => [...pages, next]);
     } finally {
       setLoadingMore(false);
