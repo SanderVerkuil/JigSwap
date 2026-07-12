@@ -11,8 +11,9 @@ import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
 import { pageTitle } from "@/lib/page-title";
-import { convexQuery } from "@convex-dev/react-query";
-import { useQuery } from "@tanstack/react-query";
+import { safeStorage } from "@/lib/safe-storage";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   createFileRoute,
   Link,
@@ -20,7 +21,10 @@ import {
   redirect,
   useRouteContext,
 } from "@tanstack/react-router";
+import type { FunctionReturnType } from "convex/server";
 import { Eye } from "lucide-react";
+import { useEffect } from "react";
+import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 // The canonical member page (spec Phase 1): one URL for every viewer tier.
@@ -95,6 +99,34 @@ function MemberPage() {
     convexQuery(gateway.social.publicProfile, { handle }),
   );
 
+  // Does `?invite=<token>` point at a live invite for THIS profile? The query
+  // returns only a validity boolean (no owner data). Phase 3 growth loop.
+  const { data: inviteContext } = useQuery({
+    ...convexQuery(gateway.social.inviteContext, {
+      token: invite ?? "",
+      memberId: (profile?.hero.memberId ?? "") as Id<"users">,
+    }),
+    enabled: invite !== undefined && profile !== undefined,
+  });
+  const inviteValid = inviteContext?.valid === true;
+
+  const { mutate: recordLanding } = useMutation({
+    mutationFn: useConvexMutation(gateway.social.recordInviteLanding),
+  });
+
+  // Persist the token for post-signup redemption (the sign-up CTA also carries
+  // it in redirect_url; InviteRedeemer redeems it) and count the landing once
+  // per browser session per token. Only for a logged-out visitor on a live
+  // invite. safeStorage degrades gracefully when storage is blocked.
+  useEffect(() => {
+    if (!invite || !inviteValid || userId) return;
+    safeStorage.setItem("local", "jigswap.invite", invite);
+    const sessionKey = `jigswap.inviteLanded.${invite}`;
+    if (safeStorage.getItem("session", sessionKey)) return;
+    safeStorage.setItem("session", sessionKey, "1");
+    recordLanding({ token: invite });
+  }, [invite, inviteValid, userId, recordLanding]);
+
   if (!profile) return <MemberPending />;
 
   // Logged-out: marketing chrome + the public profile body. The bottom sign-up
@@ -110,6 +142,7 @@ function MemberPage() {
             profile={profile}
             viewer="public"
             returnToHref={returnToHref}
+            invitedName={inviteValid ? profile.hero.displayName : undefined}
           />
           {!profile.locked && <ProfileCtaBand returnToHref={returnToHref} />}
         </main>
@@ -120,12 +153,24 @@ function MemberPage() {
 
   return (
     <DashboardShell>
-      <AuthedMemberPage profile={profile} />
+      <AuthedMemberPage
+        profile={profile}
+        invite={invite}
+        inviteValid={inviteValid}
+      />
     </DashboardShell>
   );
 }
 
-function AuthedMemberPage({ profile }: { profile: PublicProfileView }) {
+function AuthedMemberPage({
+  profile,
+  invite,
+  inviteValid,
+}: {
+  profile: PublicProfileView;
+  invite: string | undefined;
+  inviteValid: boolean;
+}) {
   const tShell = useTranslations("shell");
   const memberId = profile.hero.memberId as Id<"users">;
 
@@ -162,12 +207,45 @@ function AuthedMemberPage({ profile }: { profile: PublicProfileView }) {
   return (
     <>
       {isSelf && <OwnerPreviewBanner locked={profile.locked} />}
+      {!isSelf && invite && inviteValid && (
+        <QrFollowPrompt token={invite} name={profile.hero.displayName} />
+      )}
       <ProfileBody
         profile={profile}
         shelf={shelf}
         viewer={isSelf ? "owner" : "member"}
       />
     </>
+  );
+}
+
+// Logged-in one-tap mutual follow, shown when a foreign viewer lands via a live
+// invite token (the meetup QR-scan case). acceptQrFollow no-ops silently for
+// own/invalid/cooldown tokens; on established === true both edges now exist.
+function QrFollowPrompt({ token, name }: { token: string; name: string }) {
+  const t = useTranslations("invite");
+  const { mutate, isPending } = useMutation({
+    mutationFn: useConvexMutation(gateway.social.acceptQrFollow),
+    onSuccess: (
+      result: FunctionReturnType<typeof gateway.social.acceptQrFollow>,
+    ) => {
+      if (result.established) toast.success(t("followEstablished", { name }));
+    },
+  });
+  return (
+    <div className="border-jigsaw-primary/20 bg-jigsaw-primary/5 mx-auto mb-6 flex w-full max-w-3xl flex-col gap-3 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-muted-foreground text-sm">
+        {t("followEachOther", { name })}
+      </p>
+      <Button
+        size="sm"
+        disabled={isPending}
+        onClick={() => mutate({ token })}
+        className="shrink-0"
+      >
+        {t("followEachOtherCta")}
+      </Button>
+    </div>
   );
 }
 
