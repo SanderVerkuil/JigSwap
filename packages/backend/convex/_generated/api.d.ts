@@ -44,6 +44,8 @@ import type * as catalog_errors from "../catalog/errors.js";
 import type * as catalog_extractFromUrl from "../catalog/extractFromUrl.js";
 import type * as catalog_findPuzzleByBarcode from "../catalog/findPuzzleByBarcode.js";
 import type * as catalog_getAllBrands from "../catalog/getAllBrands.js";
+import type * as catalog_getAllPublishers from "../catalog/getAllPublishers.js";
+import type * as catalog_getAllSeries from "../catalog/getAllSeries.js";
 import type * as catalog_getAllTags from "../catalog/getAllTags.js";
 import type * as catalog_getChangeProposal from "../catalog/getChangeProposal.js";
 import type * as catalog_getPublicDefinitionView from "../catalog/getPublicDefinitionView.js";
@@ -369,6 +371,8 @@ declare const fullApi: ApiFromModules<{
   "catalog/extractFromUrl": typeof catalog_extractFromUrl;
   "catalog/findPuzzleByBarcode": typeof catalog_findPuzzleByBarcode;
   "catalog/getAllBrands": typeof catalog_getAllBrands;
+  "catalog/getAllPublishers": typeof catalog_getAllPublishers;
+  "catalog/getAllSeries": typeof catalog_getAllSeries;
   "catalog/getAllTags": typeof catalog_getAllTags;
   "catalog/getChangeProposal": typeof catalog_getChangeProposal;
   "catalog/getPublicDefinitionView": typeof catalog_getPublicDefinitionView;

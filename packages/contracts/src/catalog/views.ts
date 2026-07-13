@@ -102,6 +102,12 @@ export interface AdminPuzzleDefinitionRowView {
 /** A distinct brand name from the Catalog. Optional because the underlying column is optional. */
 export type BrandView = string | undefined;
 
+/** A distinct publisher (company) name suggestion from the Catalog + curated allowlist. */
+export type PublisherView = string;
+
+/** A distinct series name suggestion from the Catalog. */
+export type SeriesView = string;
+
 /** A distinct tag from the Catalog. */
 export type TagView = string;
 
