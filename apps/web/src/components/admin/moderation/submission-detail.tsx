@@ -109,7 +109,10 @@ export function SubmissionDetail({
         <div className="min-w-0 flex-1">
           <h3 className="text-xl font-bold">{submission.title}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            {submission.brand && `${submission.brand} · `}
+            {[submission.brand, submission.publisher]
+              .filter(Boolean)
+              .map((part) => `${part} · `)
+              .join("")}
             {t("pieces", { count: submission.pieceCount })}
             {submission.difficulty &&
               ` · ${tDifficulty(submission.difficulty)}`}
