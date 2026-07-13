@@ -17,9 +17,14 @@ export default [
             // so the check would otherwise demand its vitest import be a runtime dependency.
             "{projectRoot}/test-setup.ts",
           ],
-          // @jigswap/domain and @jigswap/contracts are consumed by the Convex source (convex/**),
-          // which sits outside the nx build `src` root the check scans, so it cannot see the usage.
-          ignoredDependencies: ["@jigswap/domain", "@jigswap/contracts"],
+          // @jigswap/domain, @jigswap/contracts, and @jigswap/email are consumed by the Convex
+          // source (convex/**), which sits outside the nx build `src` root the check scans, so it
+          // cannot see the usage.
+          ignoredDependencies: [
+            "@jigswap/domain",
+            "@jigswap/contracts",
+            "@jigswap/email",
+          ],
         },
       ],
     },
