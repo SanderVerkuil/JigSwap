@@ -53,3 +53,23 @@ export const NOTIFICATION_TYPES: readonly NotificationType[] = [
   "follow_request_received",
   "follow_request_approved",
 ];
+
+// Types that may be delivered by EMAIL. Deliberately a subset: only high-value, act-on-it
+// notifications (trade lifecycle, messages, social) earn an inbox interruption; moderation and
+// admin outcomes stay in-app/push. NotifyMember gates the email channel on this set REGARDLESS of
+// stored preferences, so widening email coverage is an explicit product decision here — the web
+// preference matrix mirrors this set (apps/web notification-meta.ts) to grey out the switches.
+export const EMAIL_ELIGIBLE_TYPES: ReadonlySet<NotificationType> = new Set([
+  "trade_request",
+  "trade_accepted",
+  "trade_declined",
+  "trade_completed",
+  "trade_cancelled",
+  "message_received",
+  "review_received",
+  "puzzle_favorited",
+  "goal_achieved",
+  "new_follower",
+  "follow_request_received",
+  "follow_request_approved",
+]);
