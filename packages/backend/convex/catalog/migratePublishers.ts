@@ -7,7 +7,10 @@ import { internalMutation } from "../_generated/server";
 // `brand` is cleared; product lines ("Jan van Haasteren", "Wasgij") and unknowns are untouched.
 // searchableText is recomputed via the same domain projection the aggregate uses, so a search
 // for "ravensburger" keeps matching after the value leaves `brand`.
-// Idempotent: rows that already carry a publisher are skipped.
+// Idempotent: rows that already carry a publisher are skipped. `updatedAt` is deliberately NOT
+// stamped: this is a data-model cleanup, not a content edit (it would only shift sitemap
+// <lastmod>). Full-table collect is fine at catalog scale (same pattern as backfillCategories);
+// batch if this ever trips Convex read limits.
 // Run manually (dry run FIRST, eyeball `changes`, then for real):
 //   npx convex run catalog/migratePublishers:run
 //   npx convex run catalog/migratePublishers:run '{"dryRun": false}'
