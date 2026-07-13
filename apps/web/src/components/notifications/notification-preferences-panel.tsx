@@ -33,6 +33,10 @@ export function NotificationPreferencesPanel() {
     mutationFn: useConvexMutation(gateway.notifications.updatePreference),
   });
 
+  const setPreferences = useMutation({
+    mutationFn: useConvexMutation(gateway.notifications.setPreferences),
+  });
+
   if (!user || preferences === undefined) {
     return <PageLoading message={tCommon("loading")} />;
   }
@@ -55,6 +59,20 @@ export function NotificationPreferencesPanel() {
     }
   };
 
+  const handleToggleCategory = async (
+    types: readonly (typeof NOTIFICATION_TYPES)[number][],
+    channel: NotificationChannel,
+    enabled: boolean,
+  ) => {
+    try {
+      await setPreferences.mutateAsync({
+        updates: types.map((type) => ({ type, channel, enabled })),
+      });
+    } catch {
+      toast.error(t("preferencesError"));
+    }
+  };
+
   return (
     <div className="flex w-full flex-col gap-10 md:gap-12">
       <PushDeviceSection />
@@ -68,6 +86,7 @@ export function NotificationPreferencesPanel() {
           preferences={preferences}
           channelLabel={channelLabel}
           onToggle={handleToggle}
+          onToggleCategory={handleToggleCategory}
         />
       </section>
     </div>
