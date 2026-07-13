@@ -504,18 +504,22 @@
     "coverColourHint": "Kies een kleur of upload een foto — zo verschijnt je puzzel op de plank.",
     "addToLibrary": "Toevoegen aan bibliotheek",
     "saveAndAddAnother": "Opslaan & nog een toevoegen",
-    "addReadyHint": "Vul titel, merk en aantal stukken in om door te gaan.",
+    "addReadyHint": "Vul titel, uitgever en aantal stukken in om door te gaan.",
     "livePreview": "Live voorbeeld",
     "livePreviewCaption": "Zo ziet je puzzelkaart eruit voor anderen op je plank.",
     "checkTitle": "Titel ingevuld",
     "checkBrand": "Merk ingevuld",
+    "checkPublisher": "Uitgever",
     "checkPieces": "Aantal stukken ingevuld",
     "checkAvailability": "Beschikbaarheid ingesteld",
     "contributePuzzle": "Een puzzel bijdragen",
     "fieldTitle": "Puzzeltitel",
     "fieldTitlePlaceholder": "bijv. Sterrennacht",
     "fieldBrand": "Merk",
-    "fieldBrandPlaceholder": "bijv. Ravensburger",
+    "fieldBrandPlaceholder": "bijv. Jan van Haasteren, Wasgij",
+    "brandOptionalHint": "De productlijn, zoals Jan van Haasteren of Wasgij. Laat leeg als die hetzelfde is als de uitgever.",
+    "fieldPublisher": "Uitgever",
+    "fieldPublisherPlaceholder": "bijv. Jumbo, Ravensburger",
     "fieldPieceCount": "Aantal stukjes",
     "fieldDifficulty": "Moeilijkheid",
     "fieldCondition": "Conditie",
@@ -1984,7 +1988,11 @@
       },
       "brand": {
         "label": "Merk",
-        "placeholder": "bijv. Ravensburger, Clementoni"
+        "placeholder": "bijv. Jan van Haasteren, Wasgij"
+      },
+      "publisher": {
+        "label": "Uitgever",
+        "placeholder": "bijv. Jumbo, Ravensburger"
       },
       "artist": {
         "label": "Kunstenaar",
