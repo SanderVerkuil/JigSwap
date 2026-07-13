@@ -62,8 +62,6 @@ export const makeNotifyMember =
         id: deps.notificationIds.next(),
         userId: cmd.memberId,
         type: cmd.type,
-        title: cmd.title,
-        message: cmd.message,
         params: cmd.params,
         relatedId: cmd.relatedId,
         channel,

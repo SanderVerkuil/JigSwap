@@ -46,8 +46,7 @@ const cmd = (
 ) => ({
   memberId: alice,
   type: "trade_request" as const,
-  title: "New trade request",
-  message: "Bob wants your puzzle",
+  params: { actorName: "Bob" },
   ...overrides,
 });
 

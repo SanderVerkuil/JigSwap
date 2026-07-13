@@ -191,11 +191,12 @@ describe("confirmPhotoRemoval", () => {
     expect(removed[0]).toMatchObject({
       userId,
       type: "photo_removed",
-      title: "Photo removed",
-      message: "One of your puzzle photos was removed by a moderator.",
       relatedId: copyId,
       isRead: false,
     });
+    // No pre-rendered copy on the create path — renderers use type + params (photo_removed takes none).
+    expect(removed[0]?.title).toBeUndefined();
+    expect(removed[0]?.message).toBeUndefined();
   });
 
   test("a non-rejected photo is refused: row stays, nothing stamped, nobody notified", async () => {

@@ -9,15 +9,11 @@ import {
 // The command the backend subscriber calls after translating an upstream domain event into a
 // notification request. `params` carries render-ready values (e.g. actorName, puzzleTitle) for this
 // type's copy; rendering happens at the edges (web, email), not in Notifications (Notifications owns
-// delivery + preferences, not copywriting policy of other contexts). `title`/`message` are
-// transitional legacy pre-rendered copy, kept until the backend subscriber emits params instead.
-// `channels` optionally narrows the fan-out to a subset; omitted ⇒ consider all channels, gated by
-// the member's preference.
+// delivery + preferences, not copywriting policy of other contexts). `channels` optionally narrows
+// the fan-out to a subset; omitted ⇒ consider all channels, gated by the member's preference.
 export interface NotifyMemberCommand {
   readonly memberId: MemberId;
   readonly type: NotificationType;
-  readonly title?: string;
-  readonly message?: string;
   readonly params?: Readonly<Record<string, string>>;
   readonly relatedId?: string;
   readonly channels?: readonly Channel[];
