@@ -120,7 +120,10 @@ describe("catalog.submitPuzzleDefinition", () => {
     expect(row?.status).toBe("pending"); // DIVERGENCE vs legacy auto-approve
     expect(row?.submittedBy).toBe(alice); // from auth, not args
     expect(row?.publisher).toBe("Jumbo");
-    expect(row?.searchableText).toContain("Jumbo");
+    // Exact match pins the derivation order: title, brand, publisher, artist, series, tags.
+    expect(row?.searchableText).toBe(
+      "Mountain Vista Ravensburger Jumbo Jane Doe Nature landscape mountains",
+    );
   });
 
   test("rejects a duplicate barcode against a seeded definition", async () => {
