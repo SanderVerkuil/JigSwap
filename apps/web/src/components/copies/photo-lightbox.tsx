@@ -1,5 +1,6 @@
 "use client";
 
+import { ImageZoom } from "@/components/common/image-zoom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -172,11 +173,11 @@ export function PhotoLightbox({
 
         {/* Image stage */}
         <div className="relative flex min-h-0 items-center justify-center bg-neutral-950">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <ImageZoom
             src={photo.url}
             alt={photo.caption ?? ""}
             className="max-h-full max-w-full object-contain"
+            wrapperClassName="flex h-full w-full items-center justify-center"
           />
 
           {count > 1 && (

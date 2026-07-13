@@ -2,9 +2,9 @@ import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { Image } from "@/compat/image";
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
+import { ImageZoom } from "@/components/common/image-zoom";
 import { EmptyState } from "@/components/library/empty-state";
 import {
   difficultyClasses,
@@ -56,18 +56,21 @@ export const Route = createFileRoute("/_dashboard/puzzles/$id/")({
 
 function PuzzlePage() {
   const { id } = Route.useParams();
-  const { data: view } = useQuery(
+  const { data: view, isError } = useQuery(
     convexQuery(gateway.library.getPuzzleDefinitionView, {
       puzzleId: id as Id<"puzzles">,
     }),
   );
 
-  if (view === undefined) {
-    return <PuzzleDefinitionSkeleton />;
+  // A missing puzzle resolves to `null`; a malformed id (fails `v.id("puzzles")` validation) or any
+  // other query failure surfaces as `isError` with `view` stuck at `undefined`. Treat both as
+  // not-found so an unresolvable puzzle never hangs on the loading skeleton.
+  if (view === null || isError) {
+    return <PuzzleDefinitionNotFound />;
   }
 
-  if (view === null) {
-    return <PuzzleDefinitionNotFound />;
+  if (view === undefined) {
+    return <PuzzleDefinitionSkeleton />;
   }
 
   return <PuzzleDefinitionDetail view={view} puzzleId={id} />;
@@ -170,15 +173,12 @@ function PuzzleDefinitionDetail({
     <div className="flex w-full flex-col gap-10">
       {/* Hero */}
       <section className="grid items-start gap-7 lg:grid-cols-[300px_minmax(0,1fr)]">
-        {/* Cover */}
-        <div className="bg-muted relative aspect-square w-full max-w-[300px] overflow-hidden rounded-2xl shadow-sm">
+        {/* Cover — full width on mobile, capped beside the info column at lg. object-contain (via
+            ImageZoom) shows the whole puzzle; hovering opens a side panel that magnifies where the
+            cursor points. */}
+        <div className="bg-muted relative aspect-square w-full overflow-hidden rounded-2xl shadow-sm lg:max-w-[300px]">
           {definition.image ? (
-            <Image
-              src={definition.image}
-              alt={definition.title}
-              fill
-              className="object-cover"
-            />
+            <ImageZoom src={definition.image} alt={definition.title} fill />
           ) : (
             <PuzzleCoverFallback />
           )}

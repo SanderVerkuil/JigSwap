@@ -2,9 +2,9 @@ import { durationParts } from "@/lib/humanize-duration";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { Image } from "@/compat/image";
 import { useRouter } from "@/compat/navigation";
 import { availabilityToSharing } from "@/components/add-puzzle";
+import { ImageZoom } from "@/components/common/image-zoom";
 import { EditCopyDialog } from "@/components/copies/edit-copy-dialog";
 import { PhotoLightbox } from "@/components/copies/photo-lightbox";
 import {
@@ -94,7 +94,11 @@ export function CopyInstanceScreen({
   navContext?: NavContext | null;
 }) {
   const router = useRouter();
-  const { data: copy, isPending: copyPending } = useQuery(
+  const {
+    data: copy,
+    isPending: copyPending,
+    isError,
+  } = useQuery(
     convexQuery(gateway.library.getCopyInstanceView, {
       copyId: copyId as Id<"ownedPuzzles">,
     }),
@@ -105,12 +109,15 @@ export function CopyInstanceScreen({
     if (notOwner) router.push(`/copies/${copyId}`);
   }, [notOwner, copyId, router]);
 
-  if (copyPending || copy === undefined || notOwner) {
-    return <CopyInstanceSkeleton />;
+  // A missing copy resolves to `null`; a malformed id or any other query failure surfaces as
+  // `isError` with `copy` stuck at `undefined`. Treat both as not-found so an unresolvable copy
+  // never hangs on the loading skeleton.
+  if (copy === null || isError) {
+    return <CopyInstanceNotFound />;
   }
 
-  if (copy === null) {
-    return <CopyInstanceNotFound />;
+  if (copyPending || copy === undefined || notOwner) {
+    return <CopyInstanceSkeleton />;
   }
 
   return (
@@ -344,22 +351,18 @@ function CopyInstanceDetail({
     <div className="flex w-full flex-col gap-10">
       {/* Hero */}
       <section className="grid items-start gap-7 lg:grid-cols-[300px_minmax(0,1fr)]">
-        {/* Cover */}
-        <div className="bg-muted relative aspect-square w-full max-w-[300px] overflow-hidden rounded-2xl shadow-sm">
+        {/* Cover — full width on mobile, capped beside the info column at lg. Hovering opens a side
+            panel that magnifies where the cursor points. */}
+        <div className="bg-muted relative aspect-square w-full overflow-hidden rounded-2xl shadow-sm lg:max-w-[300px]">
           {snapshot.image ? (
-            <Image
-              src={snapshot.image}
-              alt={snapshot.title}
-              fill
-              className="object-contain"
-            />
+            <ImageZoom src={snapshot.image} alt={snapshot.title} fill />
           ) : (
             <div className="from-jigsaw-primary/20 to-jigsaw-primary text-jigsaw-primary-foreground/70 absolute inset-0 flex items-center justify-center bg-gradient-to-br">
               <Puzzle className="h-1/3 w-1/3" />
             </div>
           )}
           {isAvailable && (
-            <span className="bg-jigsaw-secondary absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold text-white shadow-sm">
+            <span className="bg-jigsaw-secondary absolute left-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold text-white shadow-sm">
               <span className="h-1.5 w-1.5 rounded-full bg-white" />
               {t("available")}
             </span>
