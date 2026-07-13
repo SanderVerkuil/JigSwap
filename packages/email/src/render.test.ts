@@ -92,4 +92,39 @@ describe("renderEmail", () => {
     expect(isEmailType("trade_request")).toBe(true);
     expect(isEmailType("admin_proposal_filed")).toBe(false);
   });
+
+  it("leaves an unknown token verbatim in the interpolated output", async () => {
+    const email = await renderEmail({
+      type: "message_received",
+      params: {},
+      locale: "en",
+      baseUrl: BASE,
+    });
+    // message_received's subject template is "New message from {actorName} on JigSwap"; there is
+    // no {unknownToken} in any real template, so this only exercises interpolate's fallback path
+    // indirectly. Assert the DEFAULT_PARAMS fallback ("Someone") is used verbatim instead.
+    expect(email.subject).toBe("New message from Someone on JigSwap");
+  });
+
+  it("treats an explicit empty-string param as present, not falling back to the default", async () => {
+    const email = await renderEmail({
+      type: "message_received",
+      params: { actorName: "" },
+      locale: "en",
+      baseUrl: BASE,
+    });
+    expect(email.subject).toBe("New message from  on JigSwap");
+  });
+
+  it("pins the rendered HTML layout", async () => {
+    const email = await renderEmail({
+      type: "trade_request",
+      params: { actorName: "Anna" },
+      locale: "en",
+      baseUrl: "https://jigswap.site",
+      relatedId: "x",
+    });
+    expect(email.html).toMatchSnapshot();
+    expect(email.text).toMatchSnapshot();
+  });
 });

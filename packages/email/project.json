@@ -17,6 +17,11 @@
       "executor": "nx:run-commands",
       "outputs": ["{workspaceRoot}/coverage/packages/email"],
       "options": { "command": "vitest run --coverage", "cwd": "packages/email" }
+    },
+    "mutation": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": { "command": "pnpm run mutation", "cwd": "packages/email" }
     }
   }
 }
