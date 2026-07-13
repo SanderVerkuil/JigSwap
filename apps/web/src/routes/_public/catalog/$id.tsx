@@ -1,5 +1,5 @@
-import { Image } from "@/compat/image";
 import { Link } from "@/compat/link";
+import { ImageZoom } from "@/components/common/image-zoom";
 import { EmptyState } from "@/components/library/empty-state";
 import {
   difficultyClasses,
@@ -134,14 +134,9 @@ function PublicPuzzleDetail({
     <main className="mx-auto flex w-full max-w-[1200px] flex-col gap-10 px-6 py-10">
       {/* Hero — mirrors the dashboard detail skeleton, minus member actions. */}
       <section className="grid items-start gap-7 lg:grid-cols-[300px_minmax(0,1fr)]">
-        <div className="bg-muted relative aspect-square w-full max-w-[300px] overflow-hidden rounded-2xl shadow-sm">
+        <div className="bg-muted relative aspect-square w-full overflow-hidden rounded-2xl shadow-sm lg:max-w-[300px]">
           {definition.image ? (
-            <Image
-              src={definition.image}
-              alt={definition.title}
-              fill
-              className="object-cover"
-            />
+            <ImageZoom src={definition.image} alt={definition.title} fill />
           ) : (
             <PuzzleCoverFallback />
           )}
