@@ -1,8 +1,9 @@
-// Publisher companies (not product lines) for the one-shot brand→publisher migration and any
-// future guidance UI. "Brand" values matching one of these are really the puzzle's PUBLISHER;
-// lines like "Jan van Haasteren" or "Wasgij" are deliberately absent. Extend before re-running
-// the migration — matching is exact (case-insensitive), never fuzzy.
-const KNOWN_PUBLISHERS = [
+// Publisher companies (not product lines) for the one-shot brand→publisher migration and for
+// seeding publisher autocomplete suggestions (via getAllPublishers). "Brand" values matching one
+// of these are really the puzzle's PUBLISHER; lines like "Jan van Haasteren" or "Wasgij" are
+// deliberately absent. Extend before re-running the migration — matching is exact
+// (case-insensitive), never fuzzy.
+export const KNOWN_PUBLISHERS = [
   "Jumbo",
   "Ravensburger",
   "Falcon",
