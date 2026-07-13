@@ -26,7 +26,11 @@ export interface SuggestInputProps {
   id?: string;
   value: string;
   onChange: (value: string) => void;
-  /** Must be duplicate-free — entries are React keys and cmdk values. */
+  /**
+   * Must be duplicate-free — entries are React keys and cmdk values. Brand/series pools
+   * are exact-deduped only, so case-variants ("Jumbo"/"jumbo") may both appear; cmdk
+   * collapses them internally but selection still writes the exact entry clicked.
+   */
   suggestions: readonly string[];
   placeholder?: string;
 }
