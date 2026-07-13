@@ -738,8 +738,13 @@ export default defineSchema({
       v.literal("follow_request_received"),
       v.literal("follow_request_approved"),
     ),
-    title: v.string(),
-    message: v.string(),
+    // Legacy pre-rendered English copy. Optional since notifications went structured: new rows
+    // store `params` and the edges render copy (web via i18n keys, email via @jigswap/email).
+    title: v.optional(v.string()),
+    message: v.optional(v.string()),
+    // Render-ready values for the type's copy (e.g. actorName, puzzleTitle). Flat string map;
+    // the per-type key contract lives with the subscriber (notifications/copy.ts documents it).
+    params: v.optional(v.record(v.string(), v.string())),
     relatedId: v.optional(v.string()), // ID of related entity (trade, puzzle, etc.)
     // Delivery channel. Optional so legacy rows validate; defaults to "inApp" (backfill stamps it).
     channel: v.optional(v.string()),
