@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchKnownPublisher } from "./known-publishers";
+import { KNOWN_PUBLISHERS, matchKnownPublisher } from "./known-publishers";
 
 describe("matchKnownPublisher", () => {
   it("matches case-insensitively and returns canonical casing", () => {
@@ -15,5 +15,11 @@ describe("matchKnownPublisher", () => {
     expect(matchKnownPublisher("Jan van Haasteren")).toBeUndefined();
     expect(matchKnownPublisher("Wasgij")).toBeUndefined();
     expect(matchKnownPublisher("")).toBeUndefined();
+  });
+
+  it("exposes the allowlist for suggestion seeding", () => {
+    expect(KNOWN_PUBLISHERS).toContain("Jumbo");
+    expect(KNOWN_PUBLISHERS).toContain("Ravensburger");
+    expect(KNOWN_PUBLISHERS.length).toBeGreaterThanOrEqual(12);
   });
 });

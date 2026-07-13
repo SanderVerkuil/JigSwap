@@ -6,6 +6,7 @@
 // approves with `edited: true` so the audit stamp records
 // definition_edited_approved.
 
+import { SuggestInput } from "@/components/add-puzzle";
 import { puzzleFormSchema } from "@/components/forms/puzzle-form/puzzle-form-schema";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,7 +35,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { gateway } from "@/gateway";
+import { convexQuery } from "@convex-dev/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslations } from "use-intl";
@@ -92,6 +96,14 @@ export function EditApproveDialog({
     if (open) form.reset(toDefaults(submission));
   }, [open, submission, form]);
 
+  // Maker-field autocomplete suggestion pools
+  const { data: publisherSuggestions } = useQuery(
+    convexQuery(gateway.catalog.allPublishers, {}),
+  );
+  const { data: brandSuggestions } = useQuery(
+    convexQuery(gateway.catalog.allBrands, {}),
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -145,8 +157,14 @@ export function EditApproveDialog({
                   <FormItem>
                     <FormLabel>{tForm("brand.label")}</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
+                      <SuggestInput
+                        id={field.name}
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        suggestions={
+                          brandSuggestions?.filter((b): b is string => !!b) ??
+                          []
+                        }
                         placeholder={tForm("brand.placeholder")}
                       />
                     </FormControl>
@@ -161,8 +179,11 @@ export function EditApproveDialog({
                   <FormItem>
                     <FormLabel>{tForm("publisher.label")}</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
+                      <SuggestInput
+                        id={field.name}
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        suggestions={publisherSuggestions ?? []}
                         placeholder={tForm("publisher.placeholder")}
                       />
                     </FormControl>

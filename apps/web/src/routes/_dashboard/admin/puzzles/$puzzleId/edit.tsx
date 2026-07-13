@@ -132,6 +132,20 @@ function AdminEditForm({
   );
   const updatePuzzle = useConvexMutation(gateway.catalog.updatePuzzle);
 
+  // Maker-field autocomplete suggestion pools
+  const { data: publisherSuggestions } = useQuery(
+    convexQuery(gateway.catalog.allPublishers, {}),
+  );
+  const { data: brandSuggestions } = useQuery(
+    convexQuery(gateway.catalog.allBrands, {}),
+  );
+  const { data: seriesSuggestions } = useQuery(
+    convexQuery(gateway.catalog.allSeries, {
+      brand: form.brand.trim() || undefined,
+      publisher: form.publisher.trim() || undefined,
+    }),
+  );
+
   const pendingArgs = buildProposalArgs(baseline, form, categories);
   const canSubmit = pendingArgs !== null || coverFile !== undefined;
 
@@ -184,6 +198,11 @@ function AdminEditForm({
         }
         onPickFile={setCoverFile}
         idPrefix="ae"
+        publisherSuggestions={publisherSuggestions ?? []}
+        brandSuggestions={
+          brandSuggestions?.filter((b): b is string => !!b) ?? []
+        }
+        seriesSuggestions={seriesSuggestions ?? []}
       />
 
       <div className="flex items-center justify-end gap-2">

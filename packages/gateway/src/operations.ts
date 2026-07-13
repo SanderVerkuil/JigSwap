@@ -52,6 +52,8 @@ export const gateway = {
     listMyFavorites: api.catalog.listMyFavorites.listMyFavorites,
     allBrands: api.catalog.getAllBrands.getAllBrands,
     allTags: api.catalog.getAllTags.getAllTags,
+    allPublishers: api.catalog.getAllPublishers.getAllPublishers,
+    allSeries: api.catalog.getAllSeries.getAllSeries,
     puzzleCategories: api.catalog.getPuzzleCategories.getPuzzleCategories,
     puzzleSuggestions: api.catalog.getPuzzleSuggestions.getPuzzleSuggestions,
     // Unauthenticated public-catalog reads (the /catalog pages; approved-only, member-free).

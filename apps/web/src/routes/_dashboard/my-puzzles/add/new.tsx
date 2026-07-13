@@ -18,6 +18,7 @@ import {
   ReadinessChecklist,
   SectionDivider,
   SegmentedPills,
+  SuggestInput,
   TagInput,
 } from "@/components/add-puzzle";
 import type { ImportedDraft } from "@/components/puzzle-import/draft-to-form-defaults";
@@ -144,6 +145,20 @@ function AddPuzzlePage() {
       gateway.catalog.puzzleById,
       puzzleIdFromUrl ? { puzzleId: puzzleIdFromUrl } : "skip",
     ),
+  );
+
+  // Maker-field autocomplete suggestion pools
+  const { data: publisherSuggestions } = useQuery(
+    convexQuery(gateway.catalog.allPublishers, {}),
+  );
+  const { data: brandSuggestions } = useQuery(
+    convexQuery(gateway.catalog.allBrands, {}),
+  );
+  const { data: seriesSuggestions } = useQuery(
+    convexQuery(gateway.catalog.allSeries, {
+      brand: form.brand.trim() || undefined,
+      publisher: form.publisher.trim() || undefined,
+    }),
   );
 
   // Pre-fill from the loaded definition using the derive-state-during-render pattern: track the
@@ -586,13 +601,14 @@ function AddPuzzlePage() {
                 {t("optional")}
               </span>
             </Label>
-            <Input
+            <SuggestInput
               id="ap-publisher"
               value={form.publisher}
-              onChange={(e) => {
+              onChange={(value) => {
                 setSelectedDefinitionId(null);
-                setForm((f) => ({ ...f, publisher: e.target.value }));
+                setForm((f) => ({ ...f, publisher: value }));
               }}
+              suggestions={publisherSuggestions ?? []}
               placeholder={t("fieldPublisherPlaceholder")}
             />
           </div>
@@ -618,13 +634,16 @@ function AddPuzzlePage() {
                 {t("optional")}
               </span>
             </Label>
-            <Input
+            <SuggestInput
               id="ap-brand"
               value={form.brand}
-              onChange={(e) => {
+              onChange={(value) => {
                 setSelectedDefinitionId(null);
-                setForm((f) => ({ ...f, brand: e.target.value }));
+                setForm((f) => ({ ...f, brand: value }));
               }}
+              suggestions={
+                brandSuggestions?.filter((b): b is string => !!b) ?? []
+              }
               placeholder={t("fieldBrandPlaceholder")}
             />
             <p className="text-xs text-muted-foreground">
@@ -633,13 +652,14 @@ function AddPuzzlePage() {
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="ap-series">{tf("series.label")}</Label>
-            <Input
+            <SuggestInput
               id="ap-series"
               value={form.series}
-              onChange={(e) => {
+              onChange={(value) => {
                 setSelectedDefinitionId(null);
-                setForm((f) => ({ ...f, series: e.target.value }));
+                setForm((f) => ({ ...f, series: value }));
               }}
+              suggestions={seriesSuggestions ?? []}
               placeholder={tf("series.placeholder")}
             />
           </div>
