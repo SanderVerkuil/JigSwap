@@ -14,7 +14,8 @@ export const getAllSeries = query({
     publisher: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<SeriesView[]> => {
-    // Scoped path: one maker's puzzles are few, so collect + dedupe in JS.
+    // Scoped path: collect + dedupe in JS. A brand's puzzles are few; a big publisher's
+    // catalog is larger but still fine at this app's scale — revisit if that changes.
     if (args.brand || args.publisher) {
       const rows = args.brand
         ? await ctx.db
@@ -35,6 +36,8 @@ export const getAllSeries = query({
       ].sort((a, b) => a.localeCompare(b));
       if (scoped.length > 0) return scoped;
       // Unknown maker (or no series recorded for it yet): fall through to the global list.
+      // Deliberately global, not the next scope tier — a brand typo with a valid publisher
+      // supplied still gets broad suggestions rather than none.
     }
 
     const rows = await stream(ctx.db, schema)
