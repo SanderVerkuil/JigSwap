@@ -64,6 +64,26 @@ describe("renderEmail", () => {
     expect(email.html).toContain(`${BASE}/notifications`);
   });
 
+  it("uses the actor in the from name when present", async () => {
+    const email = await renderEmail({
+      type: "follow_request_received",
+      params: { actorName: "Sander Verkuil" },
+      locale: "en",
+      baseUrl: BASE,
+    });
+    expect(email.fromName).toBe("Sander Verkuil | JigSwap");
+  });
+
+  it("falls back to the plain brand from name without an actor (never the Someone placeholder)", async () => {
+    const email = await renderEmail({
+      type: "new_follower",
+      params: {},
+      locale: "nl",
+      baseUrl: BASE,
+    });
+    expect(email.fromName).toBe("JigSwap");
+  });
+
   it("stays in sync with the domain's EMAIL_ELIGIBLE_TYPES", () => {
     expect(new Set(EMAIL_TYPES)).toEqual(EMAIL_ELIGIBLE_TYPES);
   });

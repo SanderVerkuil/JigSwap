@@ -2091,6 +2091,8 @@ git commit -m "feat(web): email column gated to eligible types; notifications ca
 
 ### Task 12: Config, docs, full verification, live sandbox check
 
+> **Superseded (2026-07-13 follow-up):** EMAIL_FROM now defaults to no-reply@jigswap.site (optional), AHASEND_SANDBOX defaults to true — production sets AHASEND_SANDBOX=false. The env commands below reflect the original design.
+
 **Files:**
 
 - Modify: `packages/backend/.env.example`

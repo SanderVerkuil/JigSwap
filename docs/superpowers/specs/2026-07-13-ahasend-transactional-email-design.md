@@ -108,6 +108,8 @@ text_content }`.
 
 ### Configuration
 
+> **Superseded (2026-07-13 follow-up):** EMAIL_FROM now defaults to no-reply@jigswap.site (optional), AHASEND_SANDBOX defaults to true — production sets AHASEND_SANDBOX=false. The env commands below reflect the original design.
+
 Env vars set via `npx convex env set`, documented in
 `packages/backend/.env.example` (stale `KNOCK_*` entries removed):
 

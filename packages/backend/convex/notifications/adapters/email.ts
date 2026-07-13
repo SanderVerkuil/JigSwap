@@ -2,8 +2,8 @@ import { ahaSendEmailSender } from "./ahasendEmailSender";
 
 // Pluggable email-sender port. The message arrives fully RENDERED (subject/html/text via
 // @jigswap/email) so adapters stay render-agnostic. The configured adapter is AhaSend
-// (EU provider, jigswap.site domain); with the env unset this is a fail-open no-op so dev and
-// preview deployments drop email harmlessly while the in-app feed keeps working.
+// (EU provider, jigswap.site domain); with the API key/account id unset this is a fail-open
+// no-op so dev and preview deployments drop email harmlessly while the in-app feed keeps working.
 
 export interface EmailMessage {
   readonly to: string;
@@ -11,6 +11,9 @@ export interface EmailMessage {
   readonly subject: string;
   readonly html: string;
   readonly text: string;
+  // Per-message From display name (e.g. "Sander Verkuil | JigSwap"); falls back to the
+  // configured default.
+  readonly fromName?: string;
   // Stable per-notification key (the Notification aggregateId): a replayed send is deduplicated
   // by the provider instead of double-delivering.
   readonly idempotencyKey: string;
@@ -33,23 +36,29 @@ export const noopEmailSender = (reason: string): EmailSender => ({
 });
 
 // Select the email adapter from env (read lazily per repo convention — never at module scope).
-// AHASEND_SANDBOX=true keeps real API calls but suppresses delivery (AhaSend accepts and discards).
+// `fetchImpl` is a test seam only, threaded through to ahaSendEmailSender.
+// SANDBOX BY DEFAULT — AhaSend accepts but does not deliver; production must explicitly set
+// AHASEND_SANDBOX=false to send real email. Fail-safe: a missing var can never cause accidental
+// live email.
 export const makeEmailSenderFromEnv = (
   env: Record<string, string | undefined> = process.env,
+  fetchImpl?: typeof fetch,
 ): EmailSender => {
   const apiKey = env["AHASEND_API_KEY"];
   const accountId = env["AHASEND_ACCOUNT_ID"];
-  const from = env["EMAIL_FROM"];
-  if (!apiKey || !accountId || !from) {
+  if (!apiKey || !accountId) {
     return noopEmailSender(
-      "AhaSend not configured: set AHASEND_API_KEY, AHASEND_ACCOUNT_ID, EMAIL_FROM",
+      "AhaSend not configured: set AHASEND_API_KEY and AHASEND_ACCOUNT_ID",
     );
   }
   return ahaSendEmailSender({
     apiKey,
     accountId,
-    from,
+    // Sensible default — the from address is environment-invariant; EMAIL_FROM overrides if
+    // ever needed.
+    from: env["EMAIL_FROM"] ?? "no-reply@jigswap.site",
     fromName: env["EMAIL_FROM_NAME"] ?? "JigSwap",
-    sandbox: env["AHASEND_SANDBOX"] === "true",
+    sandbox: env["AHASEND_SANDBOX"] !== "false",
+    fetchImpl,
   });
 };

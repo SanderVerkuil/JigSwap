@@ -10,10 +10,11 @@ export interface AhaSendConfig {
   readonly fetchImpl?: typeof fetch;
 }
 
-// ★ Header-injection guard: subjects are interpolated from member-provided names/titles, so any
-// CR/LF is collapsed to a space before the value goes anywhere near a mail header.
-const sanitizeSubject = (subject: string): string =>
-  subject.replace(/[\r\n]+/g, " ");
+// ★ Header-injection guard: subjects and display names are interpolated from member-provided
+// values, so any CR/LF is collapsed to a space before the value goes anywhere near a mail
+// header. AhaSend builds MIME server-side from JSON today, but a future adapter might not —
+// sanitize at the choke point.
+const stripCrlf = (value: string): string => value.replace(/[\r\n]+/g, " ");
 
 // The REAL email adapter: one fetch to AhaSend's v2 create-message endpoint
 // (https://ahasend.com/docs/api-reference/messages/create-message). The Idempotency-Key header
@@ -33,9 +34,12 @@ export const ahaSendEmailSender = (cfg: AhaSendConfig): EmailSender => ({
           "Idempotency-Key": message.idempotencyKey,
         },
         body: JSON.stringify({
-          from: { email: cfg.from, name: cfg.fromName },
-          recipients: [{ email: message.to, name: message.toName }],
-          subject: sanitizeSubject(message.subject),
+          from: {
+            email: cfg.from,
+            name: stripCrlf(message.fromName ?? cfg.fromName),
+          },
+          recipients: [{ email: message.to, name: stripCrlf(message.toName) }],
+          subject: stripCrlf(message.subject),
           html_content: message.html,
           text_content: message.text,
           ...(cfg.sandbox ? { sandbox: true } : {}),

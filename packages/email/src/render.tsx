@@ -25,6 +25,7 @@ export interface RenderedEmail {
   readonly subject: string;
   readonly html: string;
   readonly text: string;
+  readonly fromName: string;
 }
 
 const interpolate = (
@@ -56,9 +57,15 @@ export const renderEmail = async (
     />
   );
 
+  // The From display name carries the actor so the inbox line reads "Sander Verkuil | JigSwap"
+  // instead of a bare brand; falls back to the brand when the event has no actor (never the
+  // localized "Someone"/"Iemand" placeholder). Use the RAW param, not the DEFAULT_PARAMS fallback.
+  const actorName = input.params["actorName"];
+
   return {
     subject: interpolate(copy.subject, values),
     html: await render(element),
     text: await render(element, { plainText: true }),
+    fromName: actorName ? `${actorName} | JigSwap` : "JigSwap",
   };
 };

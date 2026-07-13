@@ -67,6 +67,30 @@ describe("ahaSendEmailSender", () => {
     expect(body.subject).toBe("Hi Bcc: evil@example.com X: y");
   });
 
+  it("strips CR/LF from display names (header-injection guard)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(okResponse());
+    await sender(fetchMock).send({ ...MESSAGE, fromName: "Evil\r\nBcc: x" });
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(body.from.name).toBe("Evil Bcc: x");
+  });
+
+  it("prefers the message's fromName over the configured default", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(okResponse());
+    await sender(fetchMock).send({
+      ...MESSAGE,
+      fromName: "Sander Verkuil | JigSwap",
+    });
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(body.from).toEqual({
+      email: "notifications@jigswap.site",
+      name: "Sander Verkuil | JigSwap",
+    });
+  });
+
   it("propagates a network-level fetch rejection", async () => {
     const fetchMock = vi.fn().mockRejectedValue(new Error("boom"));
     await expect(sender(fetchMock).send(MESSAGE)).rejects.toThrow("boom");
@@ -95,9 +119,40 @@ describe("makeEmailSenderFromEnv", () => {
     const configured = makeEmailSenderFromEnv({
       AHASEND_API_KEY: "aha-sk-test",
       AHASEND_ACCOUNT_ID: "acc-1",
-      EMAIL_FROM: "notifications@jigswap.site",
     });
     expect(configured).not.toBeNull();
     expect(typeof configured.send).toBe("function");
+  });
+
+  it("defaults: no-reply from address and sandbox ON unless explicitly disabled", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(okResponse());
+    await makeEmailSenderFromEnv(
+      { AHASEND_API_KEY: "aha-sk-test", AHASEND_ACCOUNT_ID: "acc-1" },
+      fetchMock,
+    ).send(MESSAGE);
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(body.from).toEqual({
+      email: "no-reply@jigswap.site",
+      name: "JigSwap",
+    });
+    expect(body.sandbox).toBe(true);
+  });
+
+  it("production disables sandbox with AHASEND_SANDBOX=false", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(okResponse());
+    await makeEmailSenderFromEnv(
+      {
+        AHASEND_API_KEY: "aha-sk-test",
+        AHASEND_ACCOUNT_ID: "acc-1",
+        AHASEND_SANDBOX: "false",
+      },
+      fetchMock,
+    ).send(MESSAGE);
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(body.sandbox).toBeUndefined();
   });
 });

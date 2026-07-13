@@ -49,9 +49,7 @@ export const send = internalAction({
       event.locale = locale;
 
       const configured = !!(
-        process.env["AHASEND_API_KEY"] &&
-        process.env["AHASEND_ACCOUNT_ID"] &&
-        process.env["EMAIL_FROM"]
+        process.env["AHASEND_API_KEY"] && process.env["AHASEND_ACCOUNT_ID"]
       );
       event.configured = configured;
       if (!configured) {
@@ -76,6 +74,7 @@ export const send = internalAction({
         subject: rendered.subject,
         html: rendered.html,
         text: rendered.text,
+        fromName: rendered.fromName,
         idempotencyKey: args.idempotencyKey,
       });
     } catch (error) {
