@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>8/8</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>9/9</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
@@ -118,7 +118,16 @@
 <a name='L53'></a><a href='#L53'>53</a>
 <a name='L54'></a><a href='#L54'>54</a>
 <a name='L55'></a><a href='#L55'>55</a>
-<a name='L56'></a><a href='#L56'>56</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -134,6 +143,22 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -146,26 +171,19 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -177,8 +195,8 @@
 &nbsp;
 // Pluggable email-sender port. The message arrives fully RENDERED (subject/html/text via
 // @jigswap/email) so adapters stay render-agnostic. The configured adapter is AhaSend
-// (EU provider, jigswap.site domain); with the env unset this is a fail-open no-op so dev and
-// preview deployments drop email harmlessly while the in-app feed keeps working.
+// (EU provider, jigswap.site domain); with the API key/account id unset this is a fail-open
+// no-op so dev and preview deployments drop email harmlessly while the in-app feed keeps working.
 &nbsp;
 export interface EmailMessage {
   readonly to: string;
@@ -186,6 +204,9 @@ export interface EmailMessage {
   readonly subject: string;
   readonly html: string;
   readonly text: string;
+  // Per-message From display name (e.g. "Sander Verkuil | JigSwap"); falls back to the
+  // configured default.
+  readonly fromName?: string;
   // Stable per-notification key (the Notification aggregateId): a replayed send is deduplicated
   // by the provider instead of double-delivering.
   readonly idempotencyKey: string;
@@ -208,24 +229,30 @@ export const noopEmailSender = (reason: string): EmailSender =&gt; ({
 });
 &nbsp;
 // Select the email adapter from env (read lazily per repo convention — never at module scope).
-// AHASEND_SANDBOX=true keeps real API calls but suppresses delivery (AhaSend accepts and discards).
+// `fetchImpl` is a test seam only, threaded through to ahaSendEmailSender.
+// SANDBOX BY DEFAULT — AhaSend accepts but does not deliver; production must explicitly set
+// AHASEND_SANDBOX=false to send real email. Fail-safe: a missing var can never cause accidental
+// live email.
 export const makeEmailSenderFromEnv = (
   env: Record&lt;string, string | undefined&gt; = process.env,
+  fetchImpl?: typeof fetch,
 ): EmailSender =&gt; {
   const apiKey = env["AHASEND_API_KEY"];
   const accountId = env["AHASEND_ACCOUNT_ID"];
-  const from = env["EMAIL_FROM"];
-  if (!apiKey || !accountId || !from) {
+  if (!apiKey || !accountId) {
     return noopEmailSender(
-      "AhaSend not configured: set AHASEND_API_KEY, AHASEND_ACCOUNT_ID, EMAIL_FROM",
+      "AhaSend not configured: set AHASEND_API_KEY and AHASEND_ACCOUNT_ID",
     );
   }
   return ahaSendEmailSender({
     apiKey,
     accountId,
-    from,
+    // Sensible default — the from address is environment-invariant; EMAIL_FROM overrides if
+    // ever needed.
+    from: env["EMAIL_FROM"] ?? "no-reply@jigswap.site",
     fromName: env["EMAIL_FROM_NAME"] ?? "JigSwap",
-    sandbox: env["AHASEND_SANDBOX"] === "true",
+    sandbox: env["AHASEND_SANDBOX"] !== "false",
+    fetchImpl,
   });
 };
 &nbsp;</pre></td></tr></table></pre>
@@ -235,7 +262,7 @@ export const makeEmailSenderFromEnv = (
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-07-13T20:53:25.575Z
+                at 2026-07-13T21:37:16.805Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
