@@ -19,6 +19,7 @@ export interface ProposalTargetView {
   readonly title: string;
   readonly description?: string;
   readonly brand?: string;
+  readonly publisher?: string;
   readonly pieceCount: number;
   readonly artist?: string;
   readonly series?: string;
@@ -36,6 +37,7 @@ export interface ProposalFormState {
   title: string;
   description: string;
   brand: string;
+  publisher: string;
   pieceCount: number | undefined;
   artist: string;
   series: string;
@@ -57,6 +59,7 @@ export interface StoredProposalChanges {
   title?: string;
   description?: string;
   brand?: string;
+  publisher?: string;
   pieceCount?: number;
   artist?: string;
   series?: string;
@@ -75,6 +78,7 @@ export interface ProposalArgs {
   title?: string;
   description?: string;
   brand?: string;
+  publisher?: string;
   pieceCount?: number;
   artist?: string;
   series?: string;
@@ -98,6 +102,7 @@ export const formFromView = (view: ProposalTargetView): ProposalFormState => ({
   title: view.title,
   description: view.description ?? "",
   brand: view.brand ?? "",
+  publisher: view.publisher ?? "",
   pieceCount: view.pieceCount,
   artist: view.artist ?? "",
   series: view.series ?? "",
@@ -132,6 +137,7 @@ export const overlayProposal = (
   title: changes.title ?? base.title,
   description: changes.description ?? base.description,
   brand: changes.brand ?? base.brand,
+  publisher: changes.publisher ?? base.publisher,
   pieceCount: changes.pieceCount ?? base.pieceCount,
   artist: changes.artist ?? base.artist,
   series: changes.series ?? base.series,
@@ -179,6 +185,7 @@ export const buildProposalArgs = (
     title: textChange(form.title, view.title),
     description: textChange(form.description, view.description),
     brand: textChange(form.brand, view.brand),
+    publisher: textChange(form.publisher, view.publisher),
     artist: textChange(form.artist, view.artist),
     series: textChange(form.series, view.series),
   };

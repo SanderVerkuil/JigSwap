@@ -66,7 +66,7 @@ export const Route = createFileRoute("/_public/catalog/$id")({
     if (!d) return { meta: [{ title: "JigSwap" }] };
     const title = `${d.title} — JigSwap`;
     // English-only meta template: head() runs outside the intl render tree; acceptable for SEO.
-    const description = `${d.title}${d.brand ? ` by ${d.brand}` : ""} — ${d.pieceCount.toLocaleString("en")}-piece jigsaw puzzle. Community rating, reviews and swap availability on JigSwap.`;
+    const description = `${d.title}${d.brand || d.publisher ? ` by ${d.brand || d.publisher}` : ""} — ${d.pieceCount.toLocaleString("en")}-piece jigsaw puzzle. Community rating, reviews and swap availability on JigSwap.`;
     return {
       meta: [
         { title },
@@ -149,7 +149,10 @@ function PublicPuzzleDetail({
             {definition.title}
           </h1>
           <p className="text-muted-foreground mt-1 text-base">
-            {definition.brand ? `${definition.brand} · ` : ""}
+            {[definition.brand, definition.publisher]
+              .filter(Boolean)
+              .map((part) => `${part} · `)
+              .join("")}
             <span className="font-mono">
               {definition.pieceCount.toLocaleString()}
             </span>{" "}

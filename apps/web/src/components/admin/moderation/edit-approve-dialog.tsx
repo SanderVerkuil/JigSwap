@@ -45,6 +45,7 @@ const editApproveSchema = puzzleFormSchema.pick({
   title: true,
   description: true,
   brand: true,
+  publisher: true,
   pieceCount: true,
   difficulty: true,
   tags: true,
@@ -57,6 +58,7 @@ function toDefaults(submission: PendingSubmission): EditApproveValues {
     title: submission.title,
     description: submission.description ?? "",
     brand: submission.brand ?? "",
+    publisher: submission.publisher ?? "",
     pieceCount: submission.pieceCount,
     difficulty: submission.difficulty,
     tags: submission.tags ?? [],
@@ -146,6 +148,22 @@ export function EditApproveDialog({
                       <Input
                         {...field}
                         placeholder={tForm("brand.placeholder")}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="publisher"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{tForm("publisher.label")}</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder={tForm("publisher.placeholder")}
                       />
                     </FormControl>
                     <FormMessage />

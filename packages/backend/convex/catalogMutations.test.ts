@@ -107,6 +107,7 @@ describe("catalog.submitPuzzleDefinition", () => {
       {
         title: "Mountain Vista",
         brand: "Ravensburger",
+        publisher: "Jumbo",
         artist: "Jane Doe",
         series: "Nature",
         pieceCount: 1000,
@@ -118,9 +119,10 @@ describe("catalog.submitPuzzleDefinition", () => {
     const row = await puzzleRow(t, id);
     expect(row?.status).toBe("pending"); // DIVERGENCE vs legacy auto-approve
     expect(row?.submittedBy).toBe(alice); // from auth, not args
-    // Domain searchableText() = title + brand + artist + series + tags (NOT description/barcodes).
+    expect(row?.publisher).toBe("Jumbo");
+    // Exact match pins the derivation order: title, brand, publisher, artist, series, tags.
     expect(row?.searchableText).toBe(
-      "Mountain Vista Ravensburger Jane Doe Nature landscape mountains",
+      "Mountain Vista Ravensburger Jumbo Jane Doe Nature landscape mountains",
     );
   });
 
@@ -383,6 +385,23 @@ describe("catalog.updatePuzzleDefinition", () => {
       ctx.db.query("moderationActions").collect(),
     );
     expect(actions.some((a) => a.kind === "definition_edited")).toBe(false);
+  });
+
+  test("patches publisher and re-materialises searchableText", async () => {
+    const t = convexTest(schema, modules);
+    await seedMember(t);
+    const id = await asAlice(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "Roadworks", brand: "Jan van Haasteren", pieceCount: 1000 },
+    );
+    await asAlice(t).mutation(
+      api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+      { puzzleDefinitionId: id as string, publisher: "Jumbo" },
+    );
+    const row = await puzzleRow(t, id as string);
+    expect(row?.publisher).toBe("Jumbo");
+    expect(row?.searchableText).toContain("Jumbo");
+    expect(row?.brand).toBe("Jan van Haasteren"); // untouched
   });
 });
 

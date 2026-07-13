@@ -171,6 +171,23 @@ describe("buildProposalArgs", () => {
       image: "storage-123",
     });
   });
+
+  it("publisher round-trips: view → form, changed value → args, unchanged → omitted", () => {
+    const target = view({ publisher: "Jumbo" });
+    const form = formFromView(target);
+    expect(form.publisher).toBe("Jumbo");
+
+    expect(
+      buildProposalArgs(target, { ...form, publisher: "Jumbo" }, categories),
+    ).toBeNull();
+
+    const args = buildProposalArgs(
+      target,
+      { ...form, publisher: "Ravensburger" },
+      categories,
+    );
+    expect(args).toEqual({ publisher: "Ravensburger" });
+  });
 });
 
 describe("overlayProposal", () => {
@@ -215,5 +232,16 @@ describe("overlayProposal", () => {
       upc: "",
       modelNumber: "",
     });
+  });
+
+  it("prefers the stored publisher change", () => {
+    const base = formFromView(view({ publisher: "Jumbo" }));
+    const overlaid = overlayProposal(
+      base,
+      { publisher: "Falcon" },
+      undefined,
+      categories,
+    );
+    expect(overlaid.publisher).toBe("Falcon");
   });
 });

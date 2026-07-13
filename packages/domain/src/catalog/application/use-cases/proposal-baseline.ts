@@ -15,6 +15,7 @@ export const baselineFor = (
     description:
       changes.description !== undefined ? state.description : undefined,
     brand: changes.brand !== undefined ? state.brand : undefined,
+    publisher: changes.publisher !== undefined ? state.publisher : undefined,
     pieceCount: changes.pieceCount !== undefined ? state.pieceCount : undefined,
     artist: changes.artist !== undefined ? state.artist : undefined,
     series: changes.series !== undefined ? state.series : undefined,

@@ -19,6 +19,7 @@ export interface SubmitPuzzleDefinitionCommand {
   readonly submittedBy: SubmitterId;
   readonly description?: string;
   readonly brand?: string;
+  readonly publisher?: string;
   readonly artist?: string;
   readonly series?: string;
   readonly barcodes?: BarcodesInput;

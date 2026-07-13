@@ -96,6 +96,17 @@ describe("PuzzleDefinition.submit", () => {
     expect(state.modelNumber).toBe("RV-1");
     expect(state.upc).toBeUndefined();
   });
+
+  // publisher (the company, e.g. Jumbo) is distinct from brand (the product line, e.g. Jan
+  // van Haasteren) and is copied through the same way.
+  it("carries publisher through alongside brand", () => {
+    const state = submit({
+      brand: "Jan van Haasteren",
+      publisher: "Jumbo",
+    }).toState();
+    expect(state.publisher).toBe("Jumbo");
+    expect(state.brand).toBe("Jan van Haasteren");
+  });
 });
 
 describe("approval lifecycle", () => {
@@ -328,6 +339,17 @@ describe("update", () => {
     def.update({ brand: "X" }, LATER);
     expect(def.status).toBe("approved");
   });
+
+  // publisher patches independently via `changes.publisher ?? state.publisher`, same as brand:
+  // an omitted publisher on a later update leaves the previously set value unchanged.
+  it("sets publisher from a patch, then leaves it unchanged when a later update omits it", () => {
+    const def = submit();
+    def.update({ publisher: "Jumbo" }, LATER);
+    expect(def.toState().publisher).toBe("Jumbo");
+
+    def.update({ title: "Renamed" }, LATER);
+    expect(def.toState().publisher).toBe("Jumbo");
+  });
 });
 
 describe("searchableText (derived projection)", () => {
@@ -368,6 +390,16 @@ describe("searchableText (derived projection)", () => {
     def.update({ brand: "B" }, LATER);
     expect(def.searchableText()).toBe("A B");
     expect("searchableText" in def.toState()).toBe(false);
+  });
+
+  it("includes publisher alongside brand", () => {
+    const def = submit({
+      title: "Roadworks",
+      publisher: "Jumbo",
+      brand: "Jan van Haasteren",
+    });
+    expect(def.searchableText()).toContain("Jumbo");
+    expect(def.searchableText()).toContain("Jan van Haasteren");
   });
 });
 

@@ -22,6 +22,7 @@ export interface PuzzleDefinitionView {
   title: string;
   description?: string;
   brand?: string;
+  publisher?: string;
   pieceCount: number;
   artist?: string;
   series?: string;

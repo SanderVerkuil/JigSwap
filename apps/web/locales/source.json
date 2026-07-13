@@ -504,7 +504,7 @@
     "coverColourHint": "Pick a colour or upload a photo — this is how your puzzle appears on the shelf.",
     "addToLibrary": "Add to Library",
     "saveAndAddAnother": "Save & Add Another",
-    "addReadyHint": "Fill in title, brand, and piece count to continue.",
+    "addReadyHint": "Fill in title and piece count to continue.",
     "livePreview": "Live preview",
     "livePreviewCaption": "This is how your puzzle card will look to others on your shelf.",
     "checkTitle": "Title filled in",
@@ -515,7 +515,10 @@
     "fieldTitle": "Puzzle Title",
     "fieldTitlePlaceholder": "e.g. Starry Night",
     "fieldBrand": "Brand",
-    "fieldBrandPlaceholder": "e.g. Ravensburger",
+    "fieldBrandPlaceholder": "e.g. Jan van Haasteren, Wasgij",
+    "brandOptionalHint": "The product line, like Jan van Haasteren or Wasgij. Leave empty when it's the same as the publisher.",
+    "fieldPublisher": "Publisher",
+    "fieldPublisherPlaceholder": "e.g. Jumbo, Ravensburger",
     "fieldPieceCount": "Piece Count",
     "fieldDifficulty": "Difficulty",
     "fieldCondition": "Condition",
@@ -1984,7 +1987,11 @@
       },
       "brand": {
         "label": "Brand",
-        "placeholder": "e.g. Ravensburger, Clementoni"
+        "placeholder": "e.g. Jan van Haasteren, Wasgij"
+      },
+      "publisher": {
+        "label": "Publisher",
+        "placeholder": "e.g. Jumbo, Ravensburger"
       },
       "artist": {
         "label": "Artist",

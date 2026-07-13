@@ -21,6 +21,7 @@ const fullDefinition = (): PuzzleDefinition => {
     now: NOW,
     description: "A swirling night sky over a village.",
     brand: "Ravensburger",
+    publisher: "Jumbo",
     artist: "Van Gogh",
     series: "Masterpieces",
     barcodes: {
@@ -45,6 +46,7 @@ const ALL_FIELD_CHANGES: PuzzleDefinitionChanges = {
   title: "New Title",
   description: "New description",
   brand: "New Brand",
+  publisher: "New Publisher",
   pieceCount: 2000,
   artist: "New Artist",
   series: "New Series",
@@ -68,6 +70,7 @@ describe("baselineFor", () => {
       title: "Starry Night",
       description: "A swirling night sky over a village.",
       brand: "Ravensburger",
+      publisher: "Jumbo",
       pieceCount: 1000,
       artist: "Van Gogh",
       series: "Masterpieces",

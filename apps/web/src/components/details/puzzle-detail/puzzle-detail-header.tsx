@@ -27,9 +27,11 @@ export function PuzzleDetailHeader({ puzzle }: PuzzleDetailHeaderProps) {
       <div className="flex items-start justify-between">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">{puzzle.puzzle.title}</h1>
-          {puzzle.puzzle.brand && (
+          {(puzzle.puzzle.brand || puzzle.puzzle.publisher) && (
             <p className="text-lg text-muted-foreground">
-              {puzzle.puzzle.brand}
+              {[puzzle.puzzle.brand, puzzle.puzzle.publisher]
+                .filter(Boolean)
+                .join(" · ")}
             </p>
           )}
         </div>

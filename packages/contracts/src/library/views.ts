@@ -27,6 +27,7 @@ export interface OwnedCopyPuzzleView {
   title: string;
   description?: string;
   brand?: string;
+  publisher?: string;
   pieceCount: number;
   difficulty?: PuzzleDifficulty;
   category?: DocId;

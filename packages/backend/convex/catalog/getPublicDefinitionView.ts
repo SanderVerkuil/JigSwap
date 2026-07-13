@@ -48,6 +48,7 @@ export const getPublicDefinitionView = query({
         title: puzzle.title,
         description: puzzle.description,
         brand: puzzle.brand,
+        publisher: puzzle.publisher,
         artist: puzzle.artist,
         series: puzzle.series,
         pieceCount: puzzle.pieceCount,

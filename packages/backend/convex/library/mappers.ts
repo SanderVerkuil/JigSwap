@@ -23,6 +23,7 @@ export const toOwnedCopyPuzzleView = (
   title: row.title,
   description: row.description,
   brand: row.brand,
+  publisher: row.publisher,
   pieceCount: row.pieceCount,
   difficulty: row.difficulty,
   category: row.category,

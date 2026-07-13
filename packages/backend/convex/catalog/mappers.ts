@@ -19,6 +19,7 @@ export const toPuzzleDefinitionView = (
   title: row.title,
   description: row.description,
   brand: row.brand,
+  publisher: row.publisher,
   pieceCount: row.pieceCount,
   artist: row.artist,
   series: row.series,
