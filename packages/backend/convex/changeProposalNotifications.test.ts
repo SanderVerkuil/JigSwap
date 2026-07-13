@@ -97,7 +97,7 @@ describe("change-proposal outcome notifications", () => {
     const rows = await notificationsFor(t, bob);
     const outcome = rows.find((n) => n.type === "proposal_approved");
     expect(outcome).toBeDefined();
-    expect(outcome?.message).toContain("Mountain Vista");
+    expect(outcome?.params?.puzzleTitle).toContain("Mountain Vista");
   });
 
   test("rejection notifies the proposer including the reason", async () => {
@@ -115,7 +115,7 @@ describe("change-proposal outcome notifications", () => {
     const rows = await notificationsFor(t, bob);
     const outcome = rows.find((n) => n.type === "proposal_rejected");
     expect(outcome).toBeDefined();
-    expect(outcome?.message).toContain("matches the box");
+    expect(outcome?.params?.reason).toBe("matches the box");
   });
 
   test("filing/editing/withdrawing produce NO notifications", async () => {
