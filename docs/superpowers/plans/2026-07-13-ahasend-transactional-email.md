@@ -15,7 +15,7 @@
 - Backend has NO `test` Nx target — its vitest target is `coverage`. Single-file runs: `pnpm --filter @jigswap/backend exec vitest run <file>`.
 - Backend tsconfig has `noPropertyAccessFromIndexSignature`: access `Record<string, string>` values with brackets (`p["actorName"]`), never dots.
 - Never name a backend local `use[A-Z]…` (trips react-hooks lint).
-- All work happens in this worktree: `/home/sander/Documenten/Projects/SanderVerkuil/JigSwap/.claude/worktrees/phase-1-member-profile`.
+- Do the work on a fresh feature branch off `main` (in an isolated worktree if executing via superpowers workflows).
 
 **Deviation from spec, agreed rationale:** instead of 12 near-identical react-email component files, `packages/email` has ONE shared `NotificationEmail` component + a per-type/per-locale copy catalog. Same per-type output, far less duplication.
 
