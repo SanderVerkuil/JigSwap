@@ -130,6 +130,7 @@ function ModerationPage() {
         title: values.title,
         description: values.description || undefined,
         brand: values.brand || undefined,
+        publisher: values.publisher || undefined,
         pieceCount: values.pieceCount,
         difficulty: values.difficulty,
         tags: values.tags,

@@ -14,6 +14,11 @@ export const puzzleFormSchema = z.object({
 
   brand: z.string().max(50, "Brand must be less than 50 characters").optional(),
 
+  publisher: z
+    .string()
+    .max(50, "Publisher must be less than 50 characters")
+    .optional(),
+
   artist: z
     .string()
     .max(100, "Artist must be less than 100 characters")

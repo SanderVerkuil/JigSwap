@@ -119,6 +119,17 @@ export function PuzzleDefinitionFields({
           />
         </div>
         <div className="flex flex-col gap-2">
+          <Label htmlFor={`${idPrefix}-publisher`}>
+            {tf("publisher.label")}
+          </Label>
+          <Input
+            id={`${idPrefix}-publisher`}
+            value={form.publisher}
+            onChange={(e) => set("publisher", e.target.value)}
+            placeholder={tf("publisher.placeholder")}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
           <Label htmlFor={`${idPrefix}-pieces`}>{tf("pieceCount.label")}</Label>
           <PieceCountField
             id={`${idPrefix}-pieces`}
