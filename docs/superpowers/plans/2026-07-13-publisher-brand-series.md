@@ -11,6 +11,7 @@
 **Spec:** `docs/superpowers/specs/2026-07-13-publisher-brand-series-design.md`
 
 **Conventions that bite (from project memory):**
+
 - Run tests/CI mirrors with `--skip-nx-cache` (Nx cache hides fresh failures).
 - Run `pnpm prettier --write <changed files>` before every commit (CI `format:check` runs first).
 - New Convex function **files** need a hand-edit to `packages/backend/convex/_generated/api.d.ts` (codegen needs a deployment we don't have in worktrees). Changed args of existing functions need nothing.
@@ -24,6 +25,7 @@
 ### Task 1: Domain — searchable-text helper + `publisher` on the aggregate
 
 **Files:**
+
 - Create: `packages/domain/src/catalog/domain/puzzle-searchable-text.ts`
 - Modify: `packages/domain/src/catalog/domain/puzzle-definition.ts`
 - Modify: `packages/domain/src/catalog/domain/index.ts`
@@ -100,6 +102,7 @@ export const puzzleSearchableText = (parts: PuzzleSearchableParts): string =>
 ```
 
 In `puzzle-definition.ts`:
+
 1. Add `readonly publisher?: string;` right after the `brand` line in ALL THREE interfaces: `SubmitPuzzleDefinitionProps` (line ~25), `PuzzleDefinitionChanges` (line ~43), `PuzzleDefinitionState` (line ~62).
 2. In `submit()`'s state literal, add `publisher: props.publisher,` after `brand: props.brand,` (line ~112).
 3. In `update()`'s state merge, add `publisher: changes.publisher ?? this.state.publisher,` after the `brand` line (line ~221).
@@ -145,6 +148,7 @@ git commit -m "feat(domain): publisher field on PuzzleDefinition + shared search
 ### Task 2: Domain — known-publishers matcher
 
 **Files:**
+
 - Create: `packages/domain/src/catalog/domain/known-publishers.ts`
 - Create: `packages/domain/src/catalog/domain/known-publishers.spec.ts`
 - Modify: `packages/domain/src/catalog/domain/index.ts`
@@ -229,6 +233,7 @@ git commit -m "feat(domain): known-publishers allowlist matcher for the brand→
 ### Task 3: Backend + contracts — schema, adapters, mutations, read views
 
 **Files:**
+
 - Modify: `packages/backend/convex/schema.ts`
 - Modify: `packages/backend/convex/catalog/adapters/mapper.ts`
 - Modify: `packages/backend/convex/catalog/submitPuzzleDefinition.ts`
@@ -280,6 +285,7 @@ Expected: FAIL — validator rejects unknown `publisher` arg / `row.publisher` t
 - [ ] **Step 3: Implement**, file by file:
 
 `schema.ts` — two spots:
+
 1. In the `proposalFields` object (line ~10), after `brand: v.optional(v.string()),` add `publisher: v.optional(v.string()),`.
 2. In the `puzzles` table (line ~97), after `brand: v.optional(v.string()),` add `publisher: v.optional(v.string()),`. After `.index("by_brand", ["brand"])` (line ~160) add `.index("by_publisher", ["publisher"])`.
 
@@ -323,6 +329,7 @@ git commit -m "feat(backend): publisher field through schema, catalog mutations,
 ### Task 4: Backend — one-shot brand→publisher migration
 
 **Files:**
+
 - Create: `packages/backend/convex/catalog/migratePublishers.ts`
 - Modify: `packages/backend/convex/_generated/api.d.ts` (hand-edit — codegen needs a deployment)
 - Test: `packages/backend/convex/migratePublishers.test.ts` (new, at `convex/` root per convention)
@@ -369,10 +376,7 @@ describe("catalog.migratePublishers", () => {
   test("dry run reports moves without writing", async () => {
     const t = convexTest(schema, modules);
     const id = await seedPuzzle(t, { title: "Alpine", brand: "ravensburger" });
-    const report = await t.mutation(
-      internal.catalog.migratePublishers.run,
-      {},
-    );
+    const report = await t.mutation(internal.catalog.migratePublishers.run, {});
     expect(report.moved).toBe(1);
     expect(report.changes[0]).toEqual({
       title: "Alpine",
@@ -386,8 +390,14 @@ describe("catalog.migratePublishers", () => {
 
   test("real run moves known publishers, clears brand, recomputes searchableText", async () => {
     const t = convexTest(schema, modules);
-    const moved = await seedPuzzle(t, { title: "Alpine", brand: "ravensburger" });
-    const line = await seedPuzzle(t, { title: "Roadworks", brand: "Jan van Haasteren" });
+    const moved = await seedPuzzle(t, {
+      title: "Alpine",
+      brand: "ravensburger",
+    });
+    const line = await seedPuzzle(t, {
+      title: "Roadworks",
+      brand: "Jan van Haasteren",
+    });
     const already = await seedPuzzle(t, {
       title: "Ocean",
       brand: "Jumbo",
@@ -499,6 +509,7 @@ git commit -m "feat(backend): one-shot brand→publisher migration with dry-run 
 ### Task 5: Locales — publisher keys in en/nl/source
 
 **Files:**
+
 - Modify: `apps/web/locales/en.json`
 - Modify: `apps/web/locales/nl.json`
 - Modify: `apps/web/locales/source.json`
@@ -584,11 +595,13 @@ git commit -m "feat(web): publisher locale strings; brand narrowed to product li
 ### Task 6: Web — contribute page (`/puzzles/add`)
 
 **Files:**
+
 - Modify: `apps/web/src/routes/_dashboard/puzzles/add.tsx`
 
 New key-info layout: Title → [Publisher (required) | Piece count] → [Brand (optional, with hint) | Series] → Difficulty. Series MOVES out of the advanced collapsible (user request: series is key info); artist stays advanced.
 
 - [ ] **Step 1: Implement.**
+
 1. `FormState` (line ~51): add `publisher: string;` after `brand: string;`. `DEFAULT_FORM`: add `publisher: "",`.
 2. `applyDraft` (line ~130): leave draft.brand → brand mapping as is (scraped drafts stay brand-only per spec; the user fills publisher manually).
 3. `contribute` mutationFn `createPuzzle({...})` args (line ~178): add `publisher: form.publisher || undefined,` after the `brand` line.
@@ -602,16 +615,16 @@ const isReady =
 5. Replace the "Brand + Piece Count" grid (lines ~259–280) with two grids — Publisher+PieceCount, then Brand+Series (Series JSX moves up from the advanced section; delete it there and keep Artist alone in its grid):
 
 ```tsx
-{/* Publisher + Piece Count */}
+{
+  /* Publisher + Piece Count */
+}
 <div className="grid grid-cols-2 gap-4">
   <div className="flex flex-col gap-1.5">
     <Label htmlFor="cp-publisher">{t("fieldPublisher")}</Label>
     <Input
       id="cp-publisher"
       value={form.publisher}
-      onChange={(e) =>
-        setForm((f) => ({ ...f, publisher: e.target.value }))
-      }
+      onChange={(e) => setForm((f) => ({ ...f, publisher: e.target.value }))}
       placeholder={t("fieldPublisherPlaceholder")}
     />
   </div>
@@ -623,9 +636,11 @@ const isReady =
       onChange={(n) => setForm((f) => ({ ...f, pieceCount: n }))}
     />
   </div>
-</div>
+</div>;
 
-{/* Brand (product line) + Series — both optional */}
+{
+  /* Brand (product line) + Series — both optional */
+}
 <div className="grid grid-cols-2 gap-4">
   <div className="flex flex-col gap-1.5">
     <Label htmlFor="cp-brand">
@@ -651,12 +666,10 @@ const isReady =
       placeholder={tf("series.placeholder")}
     />
   </div>
-</div>
+</div>;
 ```
 
-In the advanced collapsible, the old "Artist + Series" grid becomes Artist only (keep the grid wrapper with one child, or drop to a single full-width field — match the Model Number single-field pattern above it).
-6. `LivePreviewCard` (line ~562): `brand={form.brand || form.publisher}` (the card shows one maker line; fall back to publisher when no line).
-7. `ReadinessChecklist` (line ~575): change the brand item to `{ ok: !!form.publisher.trim(), label: t("checkPublisher") }`.
+In the advanced collapsible, the old "Artist + Series" grid becomes Artist only (keep the grid wrapper with one child, or drop to a single full-width field — match the Model Number single-field pattern above it). 6. `LivePreviewCard` (line ~562): `brand={form.brand || form.publisher}` (the card shows one maker line; fall back to publisher when no line). 7. `ReadinessChecklist` (line ~575): change the brand item to `{ ok: !!form.publisher.trim(), label: t("checkPublisher") }`.
 
 - [ ] **Step 2: Verify**
 
@@ -676,11 +689,13 @@ git commit -m "feat(web): contribute form asks publisher (required) + brand/seri
 ### Task 7: Web — quick-add page (`/my-puzzles/add/new`)
 
 **Files:**
+
 - Modify: `apps/web/src/routes/_dashboard/my-puzzles/add/new.tsx`
 
 Same field treatment as Task 6, plus the prefill paths and a deliberate `isReady` fix.
 
 - [ ] **Step 1: Implement.**
+
 1. `FormState`/`DEFAULT_FORM` (lines ~67/92): add `publisher: string;` / `publisher: "",` after brand.
 2. Definition prefill from `?puzzleId` (line ~161): in the `setForm` call add `publisher: specificPuzzle.publisher ?? "",` after the brand line (available on `PuzzleDefinitionView` since Task 3).
 3. `applyDraft` (line ~206): unchanged (draft stays brand-only).
@@ -707,10 +722,7 @@ const handleSaveAndAddAnother = () => {
 const isReady = isCopyMode ? !!selectedDefinitionId : definitionReady;
 ```
 
-(This is safe: every definition-field `onChange` already calls `setSelectedDefinitionId(null)`.)
-7. Form fields (lines ~567–592): same restructure as Task 6 but with the `ap-` id prefix and the extra `setSelectedDefinitionId(null)` in each new field's onChange (publisher, brand, series — copy the existing brand onChange pattern). Layout: [Publisher | Piece count], then [Brand+hint | Series]. Remove Series from the advanced "Artist + Series" grid, leaving Artist.
-8. Chosen-definition panel (line ~362) and `LivePreviewCard` (line ~898): where brand renders, fall back to publisher: `{specificPuzzle?.brand ?? specificPuzzle?.publisher ?? form.brand}` for the panel line (keep the surrounding conditional in sync: `(specificPuzzle?.brand || specificPuzzle?.publisher || form.brand)`), and `brand={(specificPuzzle?.brand || specificPuzzle?.publisher) ?? (form.brand || form.publisher)}` for the preview.
-9. `ReadinessChecklist` (line ~913): brand item → `{ ok: !!form.publisher.trim(), label: t("checkPublisher") }`.
+(This is safe: every definition-field `onChange` already calls `setSelectedDefinitionId(null)`.) 7. Form fields (lines ~567–592): same restructure as Task 6 but with the `ap-` id prefix and the extra `setSelectedDefinitionId(null)` in each new field's onChange (publisher, brand, series — copy the existing brand onChange pattern). Layout: [Publisher | Piece count], then [Brand+hint | Series]. Remove Series from the advanced "Artist + Series" grid, leaving Artist. 8. Chosen-definition panel (line ~362) and `LivePreviewCard` (line ~898): where brand renders, fall back to publisher: `{specificPuzzle?.brand ?? specificPuzzle?.publisher ?? form.brand}` for the panel line (keep the surrounding conditional in sync: `(specificPuzzle?.brand || specificPuzzle?.publisher || form.brand)`), and `brand={(specificPuzzle?.brand || specificPuzzle?.publisher) ?? (form.brand || form.publisher)}` for the preview. 9. `ReadinessChecklist` (line ~913): brand item → `{ ok: !!form.publisher.trim(), label: t("checkPublisher") }`.
 
 - [ ] **Step 2: Verify**
 
@@ -730,6 +742,7 @@ git commit -m "feat(web): quick-add asks publisher (required) + optional brand/s
 ### Task 8: Web — suggest-edit, admin edit forms, proposal diff
 
 **Files:**
+
 - Modify: `apps/web/src/components/suggest-edit/proposal-diff.ts`
 - Modify: `apps/web/src/components/suggest-edit/definition-fields.tsx`
 - Modify: `apps/web/src/components/forms/puzzle-form/puzzle-form-schema.ts`
@@ -744,15 +757,26 @@ test("publisher round-trips: view → form, changed value → args, unchanged �
   const form = formFromView(view);
   expect(form.publisher).toBe("Jumbo");
 
-  expect(buildProposalArgs(view, { ...form, publisher: "Jumbo" }, [])).toBeNull();
+  expect(
+    buildProposalArgs(view, { ...form, publisher: "Jumbo" }, []),
+  ).toBeNull();
 
-  const args = buildProposalArgs(view, { ...form, publisher: "Ravensburger" }, []);
+  const args = buildProposalArgs(
+    view,
+    { ...form, publisher: "Ravensburger" },
+    [],
+  );
   expect(args).toEqual({ publisher: "Ravensburger" });
 });
 
 test("overlayProposal prefers the stored publisher change", () => {
   const base = formFromView({ ...baseView, publisher: "Jumbo" });
-  const overlaid = overlayProposal(base, { publisher: "Falcon" }, undefined, []);
+  const overlaid = overlayProposal(
+    base,
+    { publisher: "Falcon" },
+    undefined,
+    [],
+  );
   expect(overlaid.publisher).toBe("Falcon");
 });
 ```
@@ -802,6 +826,7 @@ git commit -m "feat(web): publisher in suggest-edit and admin definition edit fl
 ### Task 9: Web — detail displays + full verification
 
 **Files:**
+
 - Modify: `apps/web/src/routes/_public/catalog/$id.tsx`
 - Modify: `apps/web/src/components/details/puzzle-detail/puzzle-detail-header.tsx`
 - Modify: `apps/web/src/components/admin/moderation/submission-detail.tsx`
@@ -811,16 +836,20 @@ Display rule everywhere: brand first, then publisher, dot-separated — "Jan van
 - [ ] **Step 1: Public catalog detail** (`$id.tsx` line ~152). Replace:
 
 ```tsx
-{definition.brand ? `${definition.brand} · ` : ""}
+{
+  definition.brand ? `${definition.brand} · ` : "";
+}
 ```
 
 with:
 
 ```tsx
-{[definition.brand, definition.publisher]
-  .filter(Boolean)
-  .map((part) => `${part} · `)
-  .join("")}
+{
+  [definition.brand, definition.publisher]
+    .filter(Boolean)
+    .map((part) => `${part} · `)
+    .join("");
+}
 ```
 
 Also line ~69 (SEO description): change `${d.brand ? ` by ${d.brand}` : ""}` to prefer the line but fall back to the company: `${d.brand || d.publisher ? ` by ${d.brand ?? d.publisher}` : ""}`.
@@ -828,13 +857,15 @@ Also line ~69 (SEO description): change `${d.brand ? ` by ${d.brand}` : ""}` to 
 - [ ] **Step 2: Dashboard copy detail header** (`puzzle-detail-header.tsx` line ~30). The component renders `puzzle.puzzle.brand` under the title. First trace the `puzzle` prop's type to its contract (it is a library/legacy view — check whether `puzzle.puzzle` is typed as a raw `Doc<"puzzles">`-shaped view or a contracts type in `packages/contracts/src/library/views.ts`). If the type carries `publisher` already (raw row), just render; if it's a contracts view with an explicit `brand?: string`, add `publisher?: string` beside it and add the field in the corresponding backend read mapper (grep the view type name in `packages/backend/convex` to find where brand is copied). Then replace the brand paragraph with:
 
 ```tsx
-{(puzzle.puzzle.brand || puzzle.puzzle.publisher) && (
-  <p className="text-lg text-muted-foreground">
-    {[puzzle.puzzle.brand, puzzle.puzzle.publisher]
-      .filter(Boolean)
-      .join(" · ")}
-  </p>
-)}
+{
+  (puzzle.puzzle.brand || puzzle.puzzle.publisher) && (
+    <p className="text-lg text-muted-foreground">
+      {[puzzle.puzzle.brand, puzzle.puzzle.publisher]
+        .filter(Boolean)
+        .join(" · ")}
+    </p>
+  );
+}
 ```
 
 - [ ] **Step 3: Admin submission detail** (`submission-detail.tsx` line ~112) — same pattern: `{submission.brand && `${submission.brand} · `}` becomes the filter/join form above with `submission.publisher`. Same type-tracing rule as Step 2 if `submission` is a contracts view rather than a row.
