@@ -362,7 +362,15 @@ function SidebarSeparator({
     <Separator
       data-slot="sidebar-separator"
       data-sidebar="separator"
-      className={cn("bg-sidebar-border mx-2 w-auto", className)}
+      // Base Separator sets horizontal width via the `data-[orientation=horizontal]:w-full`
+      // variant. A plain `w-auto` is a different tailwind-merge key, so it wouldn't override
+      // the variant (which also wins on CSS specificity) — the separator would stay 100% wide
+      // and `mx-2` would push it past the sidebar edge, causing horizontal scroll. Overriding
+      // with the matching variant lets tailwind-merge drop `w-full` so the margins fit.
+      className={cn(
+        "bg-sidebar-border mx-2 data-[orientation=horizontal]:w-auto",
+        className,
+      )}
       {...props}
     />
   );
