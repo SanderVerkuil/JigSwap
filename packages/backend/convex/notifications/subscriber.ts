@@ -6,6 +6,7 @@ import {
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { makeNotify } from "./adapters/makeNotify";
+import { isViewingMessages } from "./presenceGate";
 
 // The Notifications subscriber: the bridge from other contexts' event LANGUAGE to member-facing
 // notifications. Given a recorded domainEvents row, it enriches via DB reads (to resolve the right
@@ -161,11 +162,21 @@ const translate = async (
       const thread = await loadThread(ctx, p.threadId as string);
       if (!thread) return [];
       const author = await memberName(ctx, authorId);
-      return thread.participants
-        .filter((participant) => (participant as string) !== authorId)
-        .map((participant) =>
-          cmd(participant, "message_received", thread.aggregateId, author),
-        );
+      const recipients = thread.participants.filter(
+        (participant) => (participant as string) !== authorId,
+      );
+      // Presence suppression: a recipient already on /messages sees the message live (plus an
+      // in-tab toast) — creating a bell row or emailing them would double-notify. Fail-open:
+      // a presence error delivers normally.
+      const absent: typeof recipients = [];
+      for (const participant of recipients) {
+        if (!(await isViewingMessages(ctx, participant as string))) {
+          absent.push(participant);
+        }
+      }
+      return absent.map((participant) =>
+        cmd(participant, "message_received", thread.aggregateId, author),
+      );
     }
 
     // --- Solving ---
