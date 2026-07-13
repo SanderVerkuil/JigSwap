@@ -53,10 +53,13 @@ jobs:
           deployments="$(curl -sSf "${auth[@]}" \
             "$CONVEX_API/projects/$project_id/list_deployments")"
 
-          # The preview created by `convex deploy --preview-name "$BRANCH_NAME"`
-          # carries the branch as its unique in-project reference. Local dev
-          # deployments in the response lack `reference`; select() skips them.
-          name="$(jq -r --arg ref "$BRANCH_NAME" \
+          # The preview created by `convex deploy --preview-name "$BRANCH_NAME"` gets the
+          # in-project reference `preview/<branch>` with slashes in the branch name replaced
+          # by dashes (observed live: branch fix/sidebar-separator-overflow -> reference
+          # preview/fix-sidebar-separator-overflow). Local dev deployments in the response
+          # lack `reference`; select() skips them.
+          expected_ref="preview/${BRANCH_NAME//\//-}"
+          name="$(jq -r --arg ref "$expected_ref" \
             '[.[] | select(.deploymentType == "preview" and .reference == $ref)][0].name // empty' \
             <<<"$deployments")"
 
