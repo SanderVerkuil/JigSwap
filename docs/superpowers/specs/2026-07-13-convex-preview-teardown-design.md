@@ -31,20 +31,24 @@ workflow needs event-type guards on every job).
 
 - Trigger: `pull_request: types: [closed]`.
 - Permissions: `contents: read` (the job only talks to the Convex API).
-- Single job, no checkout:
-  1. `GET https://api.convex.dev/v1/projects/$CONVEX_PROJECT_ID/list_deployments`
-     with `Authorization: Bearer $CONVEX_MANAGEMENT_TOKEN`.
-  2. Select the deployment with `deploymentType == "preview"` whose `reference`
+- Single job, no checkout. All calls carry
+  `Authorization: Bearer $CONVEX_MANAGEMENT_TOKEN`:
+  1. `GET https://api.convex.dev/v1/teams/$CONVEX_TEAM_SLUG/projects/$CONVEX_PROJECT_SLUG`
+     ("get project by slug") to resolve the numeric project id — the API's other
+     project endpoints take the int64 id, but slugs are what humans have (they're
+     both in every dashboard URL: `dashboard.convex.dev/t/<team-slug>/<project-slug>/…`).
+  2. `GET https://api.convex.dev/v1/projects/{id}/list_deployments`.
+  3. Select the deployment with `deploymentType == "preview"` whose `reference`
      equals the closed PR's branch (`github.head_ref` — the same value
      `--preview-name` used to create it). Log the candidate previews when no match
      is found so a reference-format surprise is diagnosable rather than silent.
-  3. `POST https://api.convex.dev/v1/deployments/{name}/delete` for the match,
+  4. `POST https://api.convex.dev/v1/deployments/{name}/delete` for the match,
      where `{name}` is the deployment's readable name (e.g. `playful-otter-123`).
 
 ### Failure modes (all deliberate)
 
-- **Token or project id not configured** → the job succeeds as a documented no-op
-  with a `::notice::`, mirroring `convex-preview.yml`'s `HAS_PREVIEW_KEY` pattern.
+- **Token or either slug variable not configured** → the job succeeds as a documented
+  no-op with a `::notice::`, mirroring `convex-preview.yml`'s `HAS_PREVIEW_KEY` pattern.
 - **No matching preview** (already expired, or the PR never created one) → success
   with a notice, not a failure.
 - **API error on list or delete** → the job fails loudly. A red teardown check on a
@@ -60,11 +64,14 @@ existing preview-key setup:
 1. Convex dashboard → team settings → access tokens → create a **team token** → add
    as GitHub Actions secret **`CONVEX_MANAGEMENT_TOKEN`**. (The existing deploy keys
    cannot call the Management API — it requires a team token or PAT.)
-2. Set the GitHub Actions repo **variable** `CONVEX_PROJECT_ID` (numeric project id;
-   visible via the dashboard or one `curl` to
-   `GET /v1/teams/{team_id}/list_projects`).
+2. Set two GitHub Actions repo **variables**, both readable off any dashboard URL
+   (`dashboard.convex.dev/t/<team-slug>/<project-slug>/…`):
+   - `CONVEX_TEAM_SLUG` — the team slug
+   - `CONVEX_PROJECT_SLUG` — the project slug (e.g. `jig-swap-35697`)
 
-Until both exist, the workflow is a green no-op.
+The workflow resolves the numeric project id from the slugs at runtime, so no
+internal ids need to be copied around. Until the secret and both variables exist,
+the workflow is a green no-op.
 
 ## Doc/comment updates
 
