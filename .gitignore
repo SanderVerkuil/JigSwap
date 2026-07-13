@@ -74,3 +74,6 @@ vitest.config.*.timestamp*
 .env
 .env.*
 !.env.example
+
+# Brainstorming visual-companion sessions (superpowers plugin)
+.superpowers/
