@@ -1549,6 +1549,8 @@
     "empty": "Nog geen meldingen",
     "emptyHint": "Ruilactiviteit, beoordelingen en doelmijlpalen verschijnen hier.",
     "unread": "Ongelezen",
+    "newMessageToast": "Nieuw bericht van {name}",
+    "newMessageToastOpen": "Openen",
     "preferences": "Meldingsvoorkeuren",
     "preferencesTitle": "Meldingsvoorkeuren",
     "preferencesSubtitle": "Kies hoe je over elk soort activiteit op de hoogte wilt blijven.",

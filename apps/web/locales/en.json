@@ -1549,6 +1549,8 @@
     "empty": "No notifications yet",
     "emptyHint": "Trade activity, reviews, and goal milestones will show up here.",
     "unread": "Unread",
+    "newMessageToast": "New message from {name}",
+    "newMessageToastOpen": "Open",
     "preferences": "Notification preferences",
     "preferencesTitle": "Notification preferences",
     "preferencesSubtitle": "Choose how you want to hear about each kind of activity.",
