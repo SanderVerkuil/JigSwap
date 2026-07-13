@@ -73,11 +73,17 @@ import accept `--deployment <name>` (and cross-project references like
 workflow's secrets already point at them — then data follows. Run from
 `packages/backend`.
 
-7. [ ] Push code to BOTH new deployments by re-running the latest **Convex Deploy**
+7. [x] Push code to BOTH new deployments ✅ 2026-07-13 — rerun deploy runs landed on
+       `giddy-octopus-727.eu-west-1` and `spotted-scorpion-690.eu-west-1`; original dev
+       run had failed on a GitHub 'Service Unavailable' flake.
+       Original text: push code to BOTH new deployments by re-running the latest **Convex Deploy**
        workflow runs (dev job + CI-gated prod job); confirm the logged URLs are
        `eu-west-1` hosts (`giddy-octopus-727`, `spotted-scorpion-690`).
 
-8. [ ] Import the data (old → new), logged-in CLI, no keys:
+8. [x] Import the data ✅ 2026-07-13 — dev and prod each imported (96 documents +
+       10 stored files); the two-part `project-slug:reference` form fails with 'No
+       CONVEX_DEPLOYMENT set', use the THREE-part `team:project:reference` form.
+       Import the data (old → new), logged-in CLI, no keys:
 
 ```bash
 # dev (old shared dev tame-jackal-979 → new dev):
@@ -93,8 +99,10 @@ pnpm exec convex import --deployment spotted-scorpion-690 --replace-all -y /tmp/
 writes are lost. If prod gets no traffic right now, treat this as the cutover
 import and skip the re-run.)
 
-9. [ ] Sanity check the new prod in the dashboard: row counts look right, files
-       present, crons registered (they register from the deployed code).
+9. [~] Sanity check: `users` data confirmed present on both new deployments via
+   `convex data`; dashboard eyeball (row counts, files, crons) still open.
+   Sanity check the new prod in the dashboard: row counts look right, files
+   present, crons registered (they register from the deployed code).
 
 ## Phase 3 — Cutover (short prod write-freeze)
 
