@@ -51,6 +51,7 @@ export const Route = createFileRoute("/_dashboard/puzzles/add")({
 interface FormState {
   title: string;
   brand: string;
+  publisher: string;
   pieceCount: number | undefined;
   difficulty: "easy" | "medium" | "hard" | "expert";
   coverColor: string;
@@ -73,6 +74,7 @@ interface FormState {
 const DEFAULT_FORM: FormState = {
   title: "",
   brand: "",
+  publisher: "",
   pieceCount: undefined,
   difficulty: "medium",
   coverColor: COVER_SWATCHES[0],
@@ -178,6 +180,7 @@ function ContributePuzzlePage() {
       await createPuzzle({
         title: form.title,
         brand: form.brand || undefined,
+        publisher: form.publisher || undefined,
         pieceCount: form.pieceCount!,
         difficulty: form.difficulty,
         tags: form.tags,
@@ -209,12 +212,13 @@ function ContributePuzzlePage() {
   });
 
   const handleContribute = () => {
-    if (!form.title.trim() || !form.brand.trim() || !form.pieceCount) return;
+    if (!form.title.trim() || !form.publisher.trim() || !form.pieceCount)
+      return;
     contribute.mutate();
   };
 
   const isReady =
-    !!form.title.trim() && !!form.brand.trim() && !!form.pieceCount;
+    !!form.title.trim() && !!form.publisher.trim() && !!form.pieceCount;
 
   const difficultyOptions = DIFFICULTY_OPTIONS.map((o) => ({
     ...o,
@@ -256,17 +260,17 @@ function ContributePuzzlePage() {
           />
         </div>
 
-        {/* Brand + Piece Count */}
+        {/* Publisher + Piece Count */}
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="cp-brand">{t("fieldBrand")}</Label>
+            <Label htmlFor="cp-publisher">{t("fieldPublisher")}</Label>
             <Input
-              id="cp-brand"
-              value={form.brand}
+              id="cp-publisher"
+              value={form.publisher}
               onChange={(e) =>
-                setForm((f) => ({ ...f, brand: e.target.value }))
+                setForm((f) => ({ ...f, publisher: e.target.value }))
               }
-              placeholder={t("fieldBrandPlaceholder")}
+              placeholder={t("fieldPublisherPlaceholder")}
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -275,6 +279,40 @@ function ContributePuzzlePage() {
               id="cp-pieces"
               value={form.pieceCount}
               onChange={(n) => setForm((f) => ({ ...f, pieceCount: n }))}
+            />
+          </div>
+        </div>
+
+        {/* Brand (product line) + Series — both optional */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="cp-brand">
+              {t("fieldBrand")}{" "}
+              <span className="text-xs font-normal text-muted-foreground">
+                {t("optional")}
+              </span>
+            </Label>
+            <Input
+              id="cp-brand"
+              value={form.brand}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, brand: e.target.value }))
+              }
+              placeholder={t("fieldBrandPlaceholder")}
+            />
+            <p className="text-xs text-muted-foreground">
+              {t("brandOptionalHint")}
+            </p>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="cp-series">{tf("series.label")}</Label>
+            <Input
+              id="cp-series"
+              value={form.series}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, series: e.target.value }))
+              }
+              placeholder={tf("series.placeholder")}
             />
           </div>
         </div>
@@ -413,30 +451,17 @@ function ContributePuzzlePage() {
               />
             </div>
 
-            {/* Artist + Series */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="cp-artist">{tf("artist.label")}</Label>
-                <Input
-                  id="cp-artist"
-                  value={form.artist}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, artist: e.target.value }))
-                  }
-                  placeholder={tf("artist.placeholder")}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="cp-series">{tf("series.label")}</Label>
-                <Input
-                  id="cp-series"
-                  value={form.series}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, series: e.target.value }))
-                  }
-                  placeholder={tf("series.placeholder")}
-                />
-              </div>
+            {/* Artist */}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="cp-artist">{tf("artist.label")}</Label>
+              <Input
+                id="cp-artist"
+                value={form.artist}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, artist: e.target.value }))
+                }
+                placeholder={tf("artist.placeholder")}
+              />
             </div>
 
             {/* Shape */}
@@ -559,7 +584,7 @@ function ContributePuzzlePage() {
       </div>
       <LivePreviewCard
         title={form.title}
-        brand={form.brand}
+        brand={form.brand || form.publisher}
         pieceCount={form.pieceCount}
         difficulty={form.difficulty}
         coverColor={form.coverColor}
@@ -572,7 +597,7 @@ function ContributePuzzlePage() {
       <ReadinessChecklist
         items={[
           { ok: !!form.title.trim(), label: t("checkTitle") },
-          { ok: !!form.brand.trim(), label: t("checkBrand") },
+          { ok: !!form.publisher.trim(), label: t("checkPublisher") },
           { ok: !!form.pieceCount, label: t("checkPieces") },
         ]}
       />
