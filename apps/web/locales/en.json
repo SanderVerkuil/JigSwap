@@ -2118,6 +2118,7 @@
   "marketing": {
     "nav": {
       "howItWorks": "How it works",
+      "catalog": "Browse puzzles",
       "features": "Features",
       "about": "About",
       "docs": "Docs",
@@ -2835,6 +2836,7 @@
     "reviews": "Reviews",
     "reviewPlaceholder": "Review {title}…",
     "rateOptional": "Rate this puzzle (optional)",
+    "reviewPublicNote": "Reviews also appear on the public puzzle catalogue.",
     "post": "Post",
     "reviewFailed": "Couldn't post review",
     "noReviews": "No reviews yet. Be the first.",
@@ -3240,5 +3242,44 @@
         "auditReceivedEmpty": "No audit entries target this member."
       }
     }
+  },
+  "publicCatalog": {
+    "title": "Puzzle catalogue",
+    "subtitle": "Every puzzle the JigSwap community collects, swaps and lends.",
+    "searchPlaceholder": "Search puzzles…",
+    "allBrands": "All brands",
+    "allPieces": "Any piece count",
+    "piecesLt500": "Under 500 pieces",
+    "pieces500": "500 – 999 pieces",
+    "pieces1000": "1,000 – 1,499 pieces",
+    "pieces1500": "1,500+ pieces",
+    "toSwap": "{count} to swap",
+    "loadMore": "Load more",
+    "noResults": "No puzzles match \"{query}\"",
+    "noResultsSub": "Try a brand name or fewer words",
+    "clearSearch": "Clear search",
+    "empty": "The catalogue is just getting started",
+    "emptySub": "Members add puzzles every day — check back soon.",
+    "joinCta": "Join JigSwap to request a swap",
+    "logIn": "Log in",
+    "availabilityTitle": "Available in the community",
+    "copiesAvailableNow": "{count, plural, one {copy available to swap right now} other {copies available to swap right now}}",
+    "joinToSeeWho": "Join to see who",
+    "ownersHaveIt": "{count, plural, one {# member has this in their collection} other {# members have this in their collection}}",
+    "chipSwap": "{count} swap",
+    "chipLend": "{count} lend",
+    "chipSale": "{count} sale",
+    "statAvailable": "Available to swap",
+    "statOwners": "Community owners",
+    "statCompletions": "Times completed",
+    "statAvgDays": "Avg. days to finish",
+    "communityRating": "Community rating",
+    "ratingsCount": "{count} ratings",
+    "reviews": "Reviews",
+    "noReviews": "No reviews yet.",
+    "anonymousReviewer": "A JigSwap member",
+    "logInToReview": "Log in to write a review",
+    "notFound": "Puzzle not found",
+    "notFoundSub": "This puzzle may have been removed from the catalogue."
   }
 }

@@ -36,6 +36,7 @@ import type * as catalog_adapters_systemClock from "../catalog/adapters/systemCl
 import type * as catalog_approveChangeProposal from "../catalog/approveChangeProposal.js";
 import type * as catalog_approvePuzzleDefinition from "../catalog/approvePuzzleDefinition.js";
 import type * as catalog_backfillCategories from "../catalog/backfillCategories.js";
+import type * as catalog_browsePublicCatalog from "../catalog/browsePublicCatalog.js";
 import type * as catalog_createCatalogCategory from "../catalog/createCatalogCategory.js";
 import type * as catalog_disablePuzzleDefinition from "../catalog/disablePuzzleDefinition.js";
 import type * as catalog_editChangeProposal from "../catalog/editChangeProposal.js";
@@ -45,6 +46,7 @@ import type * as catalog_findPuzzleByBarcode from "../catalog/findPuzzleByBarcod
 import type * as catalog_getAllBrands from "../catalog/getAllBrands.js";
 import type * as catalog_getAllTags from "../catalog/getAllTags.js";
 import type * as catalog_getChangeProposal from "../catalog/getChangeProposal.js";
+import type * as catalog_getPublicDefinitionView from "../catalog/getPublicDefinitionView.js";
 import type * as catalog_getPuzzleById from "../catalog/getPuzzleById.js";
 import type * as catalog_getPuzzleCategories from "../catalog/getPuzzleCategories.js";
 import type * as catalog_getPuzzleSuggestions from "../catalog/getPuzzleSuggestions.js";
@@ -58,6 +60,7 @@ import type * as catalog_listMyFavorites from "../catalog/listMyFavorites.js";
 import type * as catalog_listPendingChangeProposals from "../catalog/listPendingChangeProposals.js";
 import type * as catalog_listPendingPuzzleDefinitions from "../catalog/listPendingPuzzleDefinitions.js";
 import type * as catalog_listProposalsForDefinition from "../catalog/listProposalsForDefinition.js";
+import type * as catalog_listSitemapEntries from "../catalog/listSitemapEntries.js";
 import type * as catalog_mappers from "../catalog/mappers.js";
 import type * as catalog_myFavoritePuzzleIds from "../catalog/myFavoritePuzzleIds.js";
 import type * as catalog_proposeDefinitionChange from "../catalog/proposeDefinitionChange.js";
@@ -286,6 +289,7 @@ import type * as social_knownFollowers from "../social/knownFollowers.js";
 import type * as social_listFollowees from "../social/listFollowees.js";
 import type * as social_listFollowers from "../social/listFollowers.js";
 import type * as social_listIncomingFollowRequests from "../social/listIncomingFollowRequests.js";
+import type * as social_listPublicPuzzleReviews from "../social/listPublicPuzzleReviews.js";
 import type * as social_listPuzzleComments from "../social/listPuzzleComments.js";
 import type * as social_listPuzzleReviews from "../social/listPuzzleReviews.js";
 import type * as social_postPuzzleComment from "../social/postPuzzleComment.js";
@@ -356,6 +360,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/approveChangeProposal": typeof catalog_approveChangeProposal;
   "catalog/approvePuzzleDefinition": typeof catalog_approvePuzzleDefinition;
   "catalog/backfillCategories": typeof catalog_backfillCategories;
+  "catalog/browsePublicCatalog": typeof catalog_browsePublicCatalog;
   "catalog/createCatalogCategory": typeof catalog_createCatalogCategory;
   "catalog/disablePuzzleDefinition": typeof catalog_disablePuzzleDefinition;
   "catalog/editChangeProposal": typeof catalog_editChangeProposal;
@@ -365,6 +370,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/getAllBrands": typeof catalog_getAllBrands;
   "catalog/getAllTags": typeof catalog_getAllTags;
   "catalog/getChangeProposal": typeof catalog_getChangeProposal;
+  "catalog/getPublicDefinitionView": typeof catalog_getPublicDefinitionView;
   "catalog/getPuzzleById": typeof catalog_getPuzzleById;
   "catalog/getPuzzleCategories": typeof catalog_getPuzzleCategories;
   "catalog/getPuzzleSuggestions": typeof catalog_getPuzzleSuggestions;
@@ -378,6 +384,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/listPendingChangeProposals": typeof catalog_listPendingChangeProposals;
   "catalog/listPendingPuzzleDefinitions": typeof catalog_listPendingPuzzleDefinitions;
   "catalog/listProposalsForDefinition": typeof catalog_listProposalsForDefinition;
+  "catalog/listSitemapEntries": typeof catalog_listSitemapEntries;
   "catalog/mappers": typeof catalog_mappers;
   "catalog/myFavoritePuzzleIds": typeof catalog_myFavoritePuzzleIds;
   "catalog/proposeDefinitionChange": typeof catalog_proposeDefinitionChange;
@@ -606,6 +613,7 @@ declare const fullApi: ApiFromModules<{
   "social/listFollowees": typeof social_listFollowees;
   "social/listFollowers": typeof social_listFollowers;
   "social/listIncomingFollowRequests": typeof social_listIncomingFollowRequests;
+  "social/listPublicPuzzleReviews": typeof social_listPublicPuzzleReviews;
   "social/listPuzzleComments": typeof social_listPuzzleComments;
   "social/listPuzzleReviews": typeof social_listPuzzleReviews;
   "social/postPuzzleComment": typeof social_postPuzzleComment;

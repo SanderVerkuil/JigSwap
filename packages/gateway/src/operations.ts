@@ -54,6 +54,11 @@ export const gateway = {
     allTags: api.catalog.getAllTags.getAllTags,
     puzzleCategories: api.catalog.getPuzzleCategories.getPuzzleCategories,
     puzzleSuggestions: api.catalog.getPuzzleSuggestions.getPuzzleSuggestions,
+    // Unauthenticated public-catalog reads (the /catalog pages; approved-only, member-free).
+    publicBrowse: api.catalog.browsePublicCatalog.browsePublicCatalog,
+    publicDefinitionView:
+      api.catalog.getPublicDefinitionView.getPublicDefinitionView,
+    sitemapEntries: api.catalog.listSitemapEntries.listSitemapEntries,
   },
 
   // Personal Library: a member's owned copies and their organisation. Writes go through the
@@ -292,6 +297,8 @@ export const gateway = {
     // Same `puzzleComments` table + post-comment use case as the copy-keyed variants above.
     postPuzzleReview: api.social.postPuzzleReview.postPuzzleReview,
     listPuzzleReviews: api.social.listPuzzleReviews.listPuzzleReviews,
+    listPublicPuzzleReviews:
+      api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
   },
 
   // Insights: read-side aggregate stats. globalStats is platform-wide; the rest are the signed-in

@@ -19,6 +19,7 @@ import { useLocale, useTranslations } from "use-intl";
 
 const NAV = [
   { href: "/how-it-works", key: "howItWorks" },
+  { href: "/catalog", key: "catalog" },
   { href: "/features", key: "features" },
   { href: "/about", key: "about" },
   { href: "/docs", key: "docs" },

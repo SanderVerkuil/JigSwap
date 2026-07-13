@@ -544,6 +544,9 @@ function ReviewsSection({
             size="sm"
             label={t("rateOptional")}
           />
+          <p className="text-muted-foreground text-xs">
+            {t("reviewPublicNote")}
+          </p>
         </div>
       </div>
 

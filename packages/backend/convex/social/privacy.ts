@@ -106,3 +106,39 @@ export const projectMemberIdentity = async (
 
   return { anonymous: true, anonRef: anonRefOf(targetId, salt) };
 };
+
+/** The public projection of a review author: name + (consent-gated) avatar, or null. */
+export type PublicAuthorView = { name: string; avatar: string | null } | null;
+
+/**
+ * UNAUTHENTICATED identity projection for public (logged-out, indexable) surfaces — the public
+ * catalog's review authors. There is no viewer, so projectMemberIdentity's self/mutual-follower
+ * reveals cannot apply: reveal iff the member has an EXPLICITLY public profile, else null (the UI
+ * renders a generic "A JigSwap member"). Deliberately far narrower than toMemberView — no username,
+ * bio, location, or member id ever leaves the server for a public page, and the avatar additionally
+ * requires the member's explicit `shareAvatarPublicly` consent (the existing flag for public
+ * marketing surfaces).
+ *
+ * FAIL-CLOSED on a missing profile row: unlike `profileVisibilityOf` (which defaults absent rows to
+ * "public" — correct for the in-app auth-gated surfaces it gates), this indexable surface reads the
+ * profile row directly and reveals ONLY when it exists and is explicitly `visibility: "public"`. A
+ * member who never opened profile settings has no row and is anonymized here, so a real display name
+ * reaches a Google-indexable page only after an affirmative public choice — not by lazy-creation
+ * default. Profiles are created lazily (setProfileVisibility / arrangeShelf), so this matters.
+ */
+export const projectPublicAuthor = async (
+  ctx: QueryCtx,
+  memberId: Id<"users">,
+): Promise<PublicAuthorView> => {
+  const user = await ctx.db.get(memberId);
+  if (!user) return null;
+  const profile = await ctx.db
+    .query("profiles")
+    .withIndex("by_member", (q) => q.eq("memberId", memberId))
+    .unique();
+  if (profile?.visibility !== "public") return null;
+  return {
+    name: user.name,
+    avatar: user.shareAvatarPublicly === true ? (user.avatar ?? null) : null,
+  };
+};
