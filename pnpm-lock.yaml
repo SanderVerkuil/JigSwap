@@ -393,6 +393,9 @@ importers:
       '@jigswap/domain':
         specifier: workspace:^
         version: link:../domain
+      '@jigswap/email':
+        specifier: workspace:^
+        version: link:../email
       cheerio:
         specifier: ^1.2.0
         version: 1.2.0

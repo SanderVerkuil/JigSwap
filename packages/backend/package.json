@@ -9,6 +9,7 @@
     "@clerk/backend": "^3.11.1",
     "@jigswap/contracts": "workspace:^",
     "@jigswap/domain": "workspace:^",
+    "@jigswap/email": "workspace:^",
     "cheerio": "^1.2.0",
     "convex": "^1.42.1",
     "convex-helpers": "0.1.120",
