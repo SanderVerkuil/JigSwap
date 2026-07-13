@@ -35,9 +35,13 @@ export function MemberTileSkeleton() {
 export function MemberTile({
   memberId,
   followsYou,
+  hideLocation = false,
 }: {
   memberId: Id<"users">;
   followsYou: boolean;
+  // Discovery surfaces (Find people) omit the location line: stats build trust with
+  // strangers, street-level context doesn't. Defaults off so network tiles are unchanged.
+  hideLocation?: boolean;
 }) {
   const t = useTranslations("people");
   const { data: member } = useQuery(
@@ -76,7 +80,7 @@ export function MemberTile({
             </Badge>
           )}
         </div>
-        {member.location && (
+        {!hideLocation && member.location && (
           <div className="text-muted-foreground mt-0.5 flex items-center gap-1 text-xs">
             <MapPin className="h-3 w-3 shrink-0" />
             <span className="truncate">{member.location}</span>

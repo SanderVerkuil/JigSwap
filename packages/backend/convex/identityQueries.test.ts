@@ -452,6 +452,111 @@ describe("identity.searchUsers profile-visibility gating", () => {
   });
 });
 
+// Ranking (UX research): match-quality bucket (exact > prefix > fuzzy) is PRIMARY;
+// known-follower count only breaks ties WITHIN a bucket. See identity/searchUsers.ts.
+describe("identity.searchUsers ranking", () => {
+  const insertUser = (
+    t: ReturnType<typeof convexTest>,
+    clerkId: string,
+    name: string,
+    username: string,
+  ) =>
+    t.run(async (ctx) => {
+      const now = Date.now();
+      return ctx.db.insert("users", {
+        clerkId,
+        email: `${clerkId}@example.com`,
+        name,
+        username,
+        searchableName: `${name} ${username}`.toLowerCase(),
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+  const follow = (
+    t: ReturnType<typeof convexTest>,
+    followerId: Id<"users">,
+    followeeId: Id<"users">,
+  ) =>
+    t.run(async (ctx) => {
+      await ctx.db.insert("follows", { followerId, followeeId, createdAt: 1 });
+    });
+
+  const asClerk = (t: ReturnType<typeof convexTest>, clerkId: string) =>
+    t.withIdentity({ subject: clerkId });
+
+  test("within the same match bucket, more known-followers ranks first", async () => {
+    const t = convexTest(schema, modules);
+    const viewer = await insertUser(t, "clerk_viewer", "Vera Viewer", "vera");
+    const connectorA = await insertUser(t, "clerk_ca", "Connector A", "conna");
+    const connectorB = await insertUser(t, "clerk_cb", "Connector B", "connb");
+    // Both are exact matches for "henk" (same bucket) - henkA has 2 known-followers
+    // (two accounts the viewer follows also follow henkA), henkB has none.
+    const henkA = await insertUser(t, "clerk_henka", "Henk", "henka");
+    const henkB = await insertUser(t, "clerk_henkb", "Henk", "henkb");
+
+    await follow(t, viewer, connectorA);
+    await follow(t, viewer, connectorB);
+    await follow(t, connectorA, henkA);
+    await follow(t, connectorB, henkA);
+
+    const res = await asClerk(t, "clerk_viewer").query(
+      api.identity.searchUsers.searchUsers,
+      { searchTerm: "henk" },
+    );
+    const ids = res.map((u) => u._id);
+    expect(ids.indexOf(henkA)).toBeLessThan(ids.indexOf(henkB));
+  });
+
+  test("bucket dominates: an exact match with zero known-followers outranks a fuzzy match with many", async () => {
+    const t = convexTest(schema, modules);
+    const viewer = await insertUser(t, "clerk_viewer2", "Vera Viewer", "vera2");
+    const connectors = [
+      await insertUser(t, "clerk_c1", "Connector One", "conn1"),
+      await insertUser(t, "clerk_c2", "Connector Two", "conn2"),
+      await insertUser(t, "clerk_c3", "Connector Three", "conn3"),
+    ];
+    // Exact match on "henk", zero known-followers.
+    const exactHenk = await insertUser(t, "clerk_exact", "Henk", "henkexact");
+    // Fuzzy match only (neither name nor username equals/starts-with "henk" - "henk" is a
+    // middle search-index token of "Van Henk"/"vanhenk92"), but has 3 known-followers.
+    const fuzzyVanHenk = await insertUser(
+      t,
+      "clerk_fuzzy",
+      "Van Henk",
+      "vanhenk92",
+    );
+
+    for (const connector of connectors) {
+      await follow(t, viewer, connector);
+      await follow(t, connector, fuzzyVanHenk);
+    }
+
+    const res = await asClerk(t, "clerk_viewer2").query(
+      api.identity.searchUsers.searchUsers,
+      { searchTerm: "henk" },
+    );
+    const ids = res.map((u) => u._id);
+    expect(ids).toContain(exactHenk);
+    expect(ids).toContain(fuzzyVanHenk);
+    expect(ids.indexOf(exactHenk)).toBeLessThan(ids.indexOf(fuzzyVanHenk));
+  });
+
+  test("a zero-connection new member is still returned for an exact-name search", async () => {
+    const t = convexTest(schema, modules);
+    await insertUser(t, "clerk_viewer3", "Vera Viewer", "vera3");
+    const newMember = await insertUser(t, "clerk_new", "Zoltan", "zoltan");
+
+    const res = await asClerk(t, "clerk_viewer3").query(
+      api.identity.searchUsers.searchUsers,
+      { searchTerm: "zoltan" },
+    );
+    expect(res.map((u) => u._id)).toContain(newMember);
+  });
+});
+
 describe("insights.getGlobalStats", () => {
   test("counts members, catalog definitions and owned copies", async () => {
     const t = convexTest(schema, modules);

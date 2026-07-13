@@ -23,6 +23,11 @@ import {
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { PageLoading } from "@/components/ui/loading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  TAB_TRIGGER_CLASS,
+  TabCount,
+  UNDERLINE_TABS_LIST_CLASS,
+} from "@/components/ui/underline-tabs";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -38,21 +43,6 @@ export const Route = createFileRoute("/_dashboard/admin/moderation")({
   }),
   component: ModerationPage,
 });
-
-// Underline-style restyle of the boxed shadcn tabs primitive (transparent list
-// with a bottom border; the active trigger gets a primary underline).
-const TAB_TRIGGER_CLASS =
-  "group -mb-px flex-none gap-2 rounded-none border-0 border-b-2 border-transparent px-4 py-2.5 font-semibold text-muted-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none dark:data-[state=active]:border-primary dark:data-[state=active]:bg-transparent";
-
-// Count pill on the queue tabs; follows the trigger's active state.
-function TabCount({ count }: { count: number | undefined }) {
-  if (count === undefined) return null;
-  return (
-    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 text-xs font-bold text-muted-foreground group-data-[state=active]:bg-primary group-data-[state=active]:text-primary-foreground">
-      {count}
-    </span>
-  );
-}
 
 // The moderation console: KPI week row + three underline tabs. Submissions is
 // the live queue (list+detail split with approve / edit&approve / reject),
@@ -199,7 +189,7 @@ function ModerationPage() {
       <KpiRow />
 
       <Tabs defaultValue="submissions" className="gap-4">
-        <TabsList className="h-auto w-full justify-start gap-1 rounded-none border-b bg-transparent p-0">
+        <TabsList className={UNDERLINE_TABS_LIST_CLASS}>
           <TabsTrigger value="submissions" className={TAB_TRIGGER_CLASS}>
             <Inbox aria-hidden />
             {t("tabs.submissions")}

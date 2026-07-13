@@ -34,13 +34,17 @@ export interface FollowEdgeView {
 /**
  * One entry in a member's activity feed, mapped at the backend seam from foreign domain events
  * (CompletionRecorded / CopyAcquired / ExchangeCompleted) into Social's anti-corruption shape.
- * `ref` is an opaque pointer back to the originating record for the UI to deep-link.
+ * `ref` is an opaque pointer back to the originating record for the UI to deep-link. `actorName` is
+ * the actor's display name (their Social profile displayName, falling back to their account name) —
+ * resolved server-side so the UI can render "You"/"{name}" without an extra per-row lookup; the
+ * feed's audience is always self + followees, so every actor here is already visible to the viewer.
  */
 export interface ActivityEntryView {
   memberId: string;
   kind: "completion" | "acquisition" | "exchange";
   occurredAt: number;
   ref: string;
+  actorName: string;
 }
 
 /**

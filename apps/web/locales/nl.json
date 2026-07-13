@@ -281,9 +281,18 @@
     "createNewAccount": "Maak een nieuw account"
   },
   "activity": {
-    "completion": "Een lid heeft een puzzel voltooid",
-    "acquisition": "Een lid heeft een puzzel toegevoegd",
-    "exchange": "Een lid heeft een ruil afgerond",
+    "completion": {
+      "you": "Je hebt een puzzel afgemaakt",
+      "other": "<strong>{name}</strong> heeft een puzzel afgemaakt"
+    },
+    "acquisition": {
+      "you": "Je hebt een puzzel op je plank gezet",
+      "other": "<strong>{name}</strong> heeft een puzzel op de plank gezet"
+    },
+    "exchange": {
+      "you": "Je hebt een ruil afgerond",
+      "other": "<strong>{name}</strong> heeft een ruil afgerond"
+    },
     "empty": "Nog geen recente activiteit",
     "emptyHint": "Volg andere leden om te zien wat zij doen."
   },
@@ -1438,7 +1447,27 @@
     "swapsLabel": "ruilen",
     "activity": "Activiteit",
     "emptyTitle": "Nog geen leden in je netwerk",
-    "emptySub": "Volg medepuzzelaars om je netwerk op te bouwen."
+    "emptySub": "Volg medepuzzelaars om je netwerk op te bouwen.",
+    "tabs": {
+      "network": "Jouw netwerk",
+      "find": "Mensen vinden",
+      "activity": "Activiteit"
+    },
+    "find": {
+      "searchPlaceholder": "Zoek op naam of @gebruikersnaam",
+      "minChars": "Typ minstens 2 tekens om leden te zoeken.",
+      "resultsLabel": "Zoekresultaten",
+      "recentlyJoined": "Recent lid geworden",
+      "recentlyJoinedEmptyTitle": "Nog geen nieuwe leden om te tonen",
+      "recentlyJoinedEmptySub": "Ken je een medepuzzelaar? Laat je QR-code zien.",
+      "noResultsTitle": "Kun je ze niet vinden?",
+      "noResultsSub": "Vraag om hun profiellink — of scan hun QR-code."
+    },
+    "discoverableNotice": {
+      "body": "JigSwap heeft nu een Mensen vinden-overzicht. Leden met een openbaar profiel zijn op naam te vinden — bekijk of wijzig wie jou kan vinden.",
+      "review": "Zichtbaarheid bekijken",
+      "dismiss": "Sluiten"
+    }
   },
   "follow": {
     "follow": "Volgen",

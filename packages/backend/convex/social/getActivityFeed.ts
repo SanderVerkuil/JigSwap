@@ -97,9 +97,42 @@ export const getActivityFeed = query({
     const feed = buildActivityFeed(deduped, {
       limit: args.limit ?? DEFAULT_LIMIT,
     });
-    return feed.map(toActivityEntryView);
+
+    // Resolve each distinct actor's display name once (not per-entry) so a feed with repeat actors
+    // doesn't re-query the same profile/user rows.
+    const distinctActorIds = [
+      ...new Set(feed.map((e) => e.memberId as string)),
+    ];
+    const actorNames = new Map(
+      await Promise.all(
+        distinctActorIds.map(
+          async (id) => [id, await resolveActorName(ctx, id)] as const,
+        ),
+      ),
+    );
+
+    return feed.map((entry) =>
+      toActivityEntryView(entry, actorNames.get(entry.memberId as string)!),
+    );
   },
 });
+
+// Prefer the actor's Social profile display name, falling back to their account name (mirrors
+// `toFollowEdgeView`'s counterparty-name resolution) so an actor without a profile still renders.
+const resolveActorName = async (
+  ctx: QueryCtx,
+  memberId: string,
+): Promise<string> => {
+  const id = memberId as unknown as Id<"users">;
+  const [profile, user] = await Promise.all([
+    ctx.db
+      .query("profiles")
+      .withIndex("by_member", (q) => q.eq("memberId", id))
+      .unique(),
+    ctx.db.get(id),
+  ]);
+  return profile?.displayName ?? user?.name ?? "Member";
+};
 
 const asMember = (id: string): MemberId => toMemberId(id);
 
@@ -153,9 +186,13 @@ const loadExchange = (
     .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", aggregateId))
     .unique();
 
-const toActivityEntryView = (entry: ActivityEntry): ActivityEntryView => ({
+const toActivityEntryView = (
+  entry: ActivityEntry,
+  actorName: string,
+): ActivityEntryView => ({
   memberId: entry.memberId as string,
   kind: entry.kind,
   occurredAt: entry.occurredAt.getTime(),
   ref: entry.ref,
+  actorName,
 });
