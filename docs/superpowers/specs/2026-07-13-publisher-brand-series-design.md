@@ -21,8 +21,8 @@ land in `brand`, the data is ambiguous and inconsistent.
 1. **Structure**: stay free-text with guidance (labels, placeholders, help text). No
    curated entities, no autocomplete for now.
 2. **Semantics**:
-   - `publisher` *(new field)* — the company.
-   - `brand` *(existing, meaning narrowed)* — the product line. Left empty when the
+   - `publisher` _(new field)_ — the company.
+   - `brand` _(existing, meaning narrowed)_ — the product line. Left empty when the
      puzzle has no distinct line (e.g. a plain Ravensburger puzzle has publisher
      "Ravensburger" and no brand).
    - `series` and `artist` keep their current meaning.
@@ -30,8 +30,10 @@ land in `brand`, the data is ambiguous and inconsistent.
    allowlist of publisher names; matching `brand` values move to `publisher` and
    `brand` is cleared. Everything else is left untouched.
 4. **Full form**: `publisher` joins the key-info section next to `brand`.
-5. **Quick-add wizard** (`/my-puzzles/add`): the single required Brand field becomes a
-   required **Publisher** field plus an optional **Brand** field.
+5. **Quick-add wizard** (`/my-puzzles/add`): the single required Brand field becomes an
+   optional **Publisher** field plus an optional **Brand** field. (Amended 2026-07-13:
+   publisher was initially required; the user decided both maker fields stay optional —
+   only title and piece count gate submission.)
 
 ## Data model
 
@@ -76,7 +78,7 @@ Internal Convex mutation, run once per deployment:
 
 **Quick-add wizard** (`apps/web/src/components/add-puzzle/`):
 
-- Required `brand` field becomes required `publisher` (same validation, new label and
+- Required `brand` field becomes optional `publisher` (new label and
   placeholder).
 - New optional `brand` field below/next to it.
 - The create path (library createOwned → catalog definition creation) passes both.

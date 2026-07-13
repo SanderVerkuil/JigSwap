@@ -315,11 +315,10 @@ function AddPuzzlePage() {
     },
   });
 
-  // A chosen existing definition needs no definition fields; otherwise publisher (the
-  // company) is the required maker field, not brand (the optional product line).
+  // A chosen existing definition needs no definition fields; otherwise only title and
+  // piece count are required — publisher (company) and brand (product line) are optional.
   const definitionReady =
-    !!selectedDefinitionId ||
-    (!!form.title.trim() && !!form.publisher.trim() && !!form.pieceCount);
+    !!selectedDefinitionId || (!!form.title.trim() && !!form.pieceCount);
 
   const handleAdd = () => {
     if (!definitionReady) return;
@@ -581,7 +580,12 @@ function AddPuzzlePage() {
         {/* Publisher + Piece Count */}
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="ap-publisher">{t("fieldPublisher")}</Label>
+            <Label htmlFor="ap-publisher">
+              {t("fieldPublisher")}{" "}
+              <span className="text-xs font-normal text-muted-foreground">
+                {t("optional")}
+              </span>
+            </Label>
             <Input
               id="ap-publisher"
               value={form.publisher}
@@ -953,12 +957,6 @@ function AddPuzzlePage() {
         <ReadinessChecklist
           items={[
             { ok: !!form.title.trim(), label: t("checkTitle") },
-            // A selected existing definition satisfies the maker requirement even though
-            // the publisher input stays empty (match/prefill doesn't carry publisher).
-            {
-              ok: !!selectedDefinitionId || !!form.publisher.trim(),
-              label: t("checkPublisher"),
-            },
             { ok: !!form.pieceCount, label: t("checkPieces") },
             {
               ok: hasAnyAvailability(form.availability),

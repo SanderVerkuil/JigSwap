@@ -212,13 +212,11 @@ function ContributePuzzlePage() {
   });
 
   const handleContribute = () => {
-    if (!form.title.trim() || !form.publisher.trim() || !form.pieceCount)
-      return;
+    if (!form.title.trim() || !form.pieceCount) return;
     contribute.mutate();
   };
 
-  const isReady =
-    !!form.title.trim() && !!form.publisher.trim() && !!form.pieceCount;
+  const isReady = !!form.title.trim() && !!form.pieceCount;
 
   const difficultyOptions = DIFFICULTY_OPTIONS.map((o) => ({
     ...o,
@@ -263,7 +261,12 @@ function ContributePuzzlePage() {
         {/* Publisher + Piece Count */}
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="cp-publisher">{t("fieldPublisher")}</Label>
+            <Label htmlFor="cp-publisher">
+              {t("fieldPublisher")}{" "}
+              <span className="text-xs font-normal text-muted-foreground">
+                {t("optional")}
+              </span>
+            </Label>
             <Input
               id="cp-publisher"
               value={form.publisher}
@@ -597,7 +600,6 @@ function ContributePuzzlePage() {
       <ReadinessChecklist
         items={[
           { ok: !!form.title.trim(), label: t("checkTitle") },
-          { ok: !!form.publisher.trim(), label: t("checkPublisher") },
           { ok: !!form.pieceCount, label: t("checkPieces") },
         ]}
       />
