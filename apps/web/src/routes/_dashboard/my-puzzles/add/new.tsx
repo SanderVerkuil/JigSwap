@@ -67,6 +67,7 @@ export const Route = createFileRoute("/_dashboard/my-puzzles/add/new")({
 interface FormState {
   title: string;
   brand: string;
+  publisher: string;
   pieceCount: number | undefined;
   difficulty: "easy" | "medium" | "hard" | "expert";
   condition: "new_sealed" | "like_new" | "good" | "fair" | "poor";
@@ -92,6 +93,7 @@ interface FormState {
 const DEFAULT_FORM: FormState = {
   title: "",
   brand: "",
+  publisher: "",
   pieceCount: undefined,
   difficulty: "medium",
   condition: "good",
@@ -162,6 +164,7 @@ function AddPuzzlePage() {
         ...f,
         title: specificPuzzle.title,
         brand: specificPuzzle.brand ?? "",
+        publisher: specificPuzzle.publisher ?? "",
         pieceCount: specificPuzzle.pieceCount,
       }));
     }
@@ -250,6 +253,7 @@ function AddPuzzlePage() {
   const buildCreatePuzzleArgs = (imageId: Id<"_storage"> | undefined) => ({
     title: form.title,
     brand: form.brand || undefined,
+    publisher: form.publisher || undefined,
     pieceCount: form.pieceCount!,
     difficulty: form.difficulty,
     tags: form.tags,
@@ -311,20 +315,24 @@ function AddPuzzlePage() {
     },
   });
 
+  // A chosen existing definition needs no definition fields; otherwise publisher (the
+  // company) is the required maker field, not brand (the optional product line).
+  const definitionReady =
+    !!selectedDefinitionId ||
+    (!!form.title.trim() && !!form.publisher.trim() && !!form.pieceCount);
+
   const handleAdd = () => {
-    if (!form.title.trim() || !form.brand.trim() || !form.pieceCount) return;
+    if (!definitionReady) return;
     submitPuzzle.mutate({ andAnother: false });
   };
 
   const handleSaveAndAddAnother = () => {
-    if (!form.title.trim() || !form.brand.trim() || !form.pieceCount) return;
+    if (!definitionReady) return;
     submitPuzzle.mutate({ andAnother: true });
   };
 
   // In copy mode the definition is fixed, so only the copy fields gate submit.
-  const isReady = isCopyMode
-    ? !!selectedDefinitionId
-    : !!form.title.trim() && !!form.brand.trim() && !!form.pieceCount;
+  const isReady = isCopyMode ? !!selectedDefinitionId : definitionReady;
 
   const difficultyOptions = DIFFICULTY_OPTIONS.map((o) => ({
     ...o,
@@ -359,9 +367,14 @@ function AddPuzzlePage() {
         <div className="mt-1 truncate font-semibold">
           {specificPuzzle?.title ?? form.title}
         </div>
-        {(specificPuzzle?.brand || form.brand) && (
+        {(specificPuzzle?.brand ||
+          specificPuzzle?.publisher ||
+          form.brand ||
+          form.publisher) && (
           <div className="truncate text-sm text-muted-foreground">
-            {specificPuzzle?.brand ?? form.brand}
+            {specificPuzzle?.brand ??
+              specificPuzzle?.publisher ??
+              (form.brand || form.publisher)}
           </div>
         )}
         {(specificPuzzle?.pieceCount ?? form.pieceCount) != null && (
@@ -564,18 +577,18 @@ function AddPuzzlePage() {
           />
         </div>
 
-        {/* Brand + Piece Count */}
+        {/* Publisher + Piece Count */}
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="ap-brand">{t("fieldBrand")}</Label>
+            <Label htmlFor="ap-publisher">{t("fieldPublisher")}</Label>
             <Input
-              id="ap-brand"
-              value={form.brand}
+              id="ap-publisher"
+              value={form.publisher}
               onChange={(e) => {
                 setSelectedDefinitionId(null);
-                setForm((f) => ({ ...f, brand: e.target.value }));
+                setForm((f) => ({ ...f, publisher: e.target.value }));
               }}
-              placeholder={t("fieldBrandPlaceholder")}
+              placeholder={t("fieldPublisherPlaceholder")}
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -587,6 +600,42 @@ function AddPuzzlePage() {
                 setSelectedDefinitionId(null);
                 setForm((f) => ({ ...f, pieceCount: n }));
               }}
+            />
+          </div>
+        </div>
+
+        {/* Brand (product line) + Series — both optional */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="ap-brand">
+              {t("fieldBrand")}{" "}
+              <span className="text-xs font-normal text-muted-foreground">
+                {t("optional")}
+              </span>
+            </Label>
+            <Input
+              id="ap-brand"
+              value={form.brand}
+              onChange={(e) => {
+                setSelectedDefinitionId(null);
+                setForm((f) => ({ ...f, brand: e.target.value }));
+              }}
+              placeholder={t("fieldBrandPlaceholder")}
+            />
+            <p className="text-xs text-muted-foreground">
+              {t("brandOptionalHint")}
+            </p>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="ap-series">{tf("series.label")}</Label>
+            <Input
+              id="ap-series"
+              value={form.series}
+              onChange={(e) => {
+                setSelectedDefinitionId(null);
+                setForm((f) => ({ ...f, series: e.target.value }));
+              }}
+              placeholder={tf("series.placeholder")}
             />
           </div>
         </div>
@@ -770,30 +819,17 @@ function AddPuzzlePage() {
               />
             </div>
 
-            {/* Artist + Series */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="ap-artist">{tf("artist.label")}</Label>
-                <Input
-                  id="ap-artist"
-                  value={form.artist}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, artist: e.target.value }))
-                  }
-                  placeholder={tf("artist.placeholder")}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="ap-series">{tf("series.label")}</Label>
-                <Input
-                  id="ap-series"
-                  value={form.series}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, series: e.target.value }))
-                  }
-                  placeholder={tf("series.placeholder")}
-                />
-              </div>
+            {/* Artist */}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="ap-artist">{tf("artist.label")}</Label>
+              <Input
+                id="ap-artist"
+                value={form.artist}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, artist: e.target.value }))
+                }
+                placeholder={tf("artist.placeholder")}
+              />
             </div>
 
             {/* Shape */}
@@ -895,7 +931,10 @@ function AddPuzzlePage() {
       </div>
       <LivePreviewCard
         title={specificPuzzle?.title ?? form.title}
-        brand={specificPuzzle?.brand ?? form.brand}
+        brand={
+          (specificPuzzle?.brand || specificPuzzle?.publisher) ??
+          (form.brand || form.publisher)
+        }
         pieceCount={specificPuzzle?.pieceCount ?? form.pieceCount}
         difficulty={specificPuzzle?.difficulty ?? form.difficulty}
         coverColor={form.coverColor}
@@ -913,7 +952,7 @@ function AddPuzzlePage() {
         <ReadinessChecklist
           items={[
             { ok: !!form.title.trim(), label: t("checkTitle") },
-            { ok: !!form.brand.trim(), label: t("checkBrand") },
+            { ok: !!form.publisher.trim(), label: t("checkPublisher") },
             { ok: !!form.pieceCount, label: t("checkPieces") },
             {
               ok: hasAnyAvailability(form.availability),
