@@ -42,6 +42,7 @@ export const currentFieldsFor = async (
     description:
       changes.description !== undefined ? puzzle.description : undefined,
     brand: changes.brand !== undefined ? puzzle.brand : undefined,
+    publisher: changes.publisher !== undefined ? puzzle.publisher : undefined,
     pieceCount:
       changes.pieceCount !== undefined ? puzzle.pieceCount : undefined,
     artist: changes.artist !== undefined ? puzzle.artist : undefined,

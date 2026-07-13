@@ -21,6 +21,7 @@ export const proposalFieldArgs = {
   title: v.optional(v.string()),
   description: v.optional(v.string()),
   brand: v.optional(v.string()),
+  publisher: v.optional(v.string()),
   pieceCount: v.optional(v.number()),
   artist: v.optional(v.string()),
   series: v.optional(v.string()),
@@ -59,6 +60,7 @@ type ProposalFieldArgs = {
   title?: string;
   description?: string;
   brand?: string;
+  publisher?: string;
   pieceCount?: number;
   artist?: string;
   series?: string;
@@ -84,6 +86,7 @@ export const toChanges = (args: ProposalFieldArgs): PuzzleDefinitionChanges => {
     title: args.title,
     description: args.description,
     brand: args.brand,
+    publisher: args.publisher,
     pieceCount: args.pieceCount,
     artist: args.artist,
     series: args.series,

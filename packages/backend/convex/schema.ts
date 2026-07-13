@@ -8,6 +8,7 @@ const proposalFields = v.object({
   title: v.optional(v.string()),
   description: v.optional(v.string()),
   brand: v.optional(v.string()),
+  publisher: v.optional(v.string()),
   pieceCount: v.optional(v.number()),
   artist: v.optional(v.string()),
   series: v.optional(v.string()),
@@ -95,6 +96,7 @@ export default defineSchema({
     title: v.string(),
     description: v.optional(v.string()),
     brand: v.optional(v.string()),
+    publisher: v.optional(v.string()),
     pieceCount: v.number(),
     artist: v.optional(v.string()),
     series: v.optional(v.string()),
@@ -158,6 +160,7 @@ export default defineSchema({
     .index("by_category", ["category"])
     .index("by_difficulty", ["difficulty"])
     .index("by_brand", ["brand"])
+    .index("by_publisher", ["publisher"])
     .index("by_tags", ["tags"])
     .index("by_aggregate_id", ["aggregateId"])
     // Lets a contributor list their own submissions (e.g. own not-yet-approved puzzles).

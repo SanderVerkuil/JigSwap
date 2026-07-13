@@ -30,6 +30,7 @@ export interface PublicDefinitionDetailView {
     title: string;
     description?: string;
     brand?: string;
+    publisher?: string;
     artist?: string;
     series?: string;
     pieceCount: number;
