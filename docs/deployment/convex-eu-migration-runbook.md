@@ -35,14 +35,14 @@ Rules of the road:
      `https://spotted-scorpion-690.eu-west-1.convex.site`)
    - New dev deployment: **`giddy-octopus-727`**
      (`https://giddy-octopus-727.eu-west-1.convex.cloud`)
-3. [ ] Dashboard: on the NEW project, set environment variables for **production**
+3. [x] Dashboard: on the NEW project, set environment variables for **production**
        and **development**, and the **preview defaults** — copy values from the old
        project. The full variable table lives in
        `docs/deployment/convex-preview-deployments.md` § "Default environment variables
        for previews". Minimum for prod: `CLERK_WEBHOOK_SECRET`,
        `NEXT_PUBLIC_CLERK_FRONTEND_API_URL`; copy the Axiom/VAPID/Firecrawl/moderation
        ones you use.
-4. [ ] Dashboard: generate NEW deploy keys on the new project:
+4. [x] Dashboard: generate NEW deploy keys on the new project:
    - Production deploy key → will replace GitHub secret `CONVEX_DEPLOY_KEY_PROD`
      and Vercel's Production `CONVEX_DEPLOY_KEY`.
    - Dev deploy key (for the shared dev deployment) → replaces
@@ -52,7 +52,7 @@ Rules of the road:
 
 ## Phase 1 — Repo/CI config (no user impact)
 
-5. [ ] GitHub secrets updated with the three new keys (owner pastes values, or runs
+5. [x] GitHub secrets updated (2026-07-13, verified via timestamps) — Vercel keys were also already swapped (part of step 12) with the three new keys (owner pastes values, or runs
        `gh secret set CONVEX_DEPLOY_KEY_{PROD,DEV,PREVIEW}`).
 6. [x] GitHub repo variable `CONVEX_PROJECT_SLUG` → `jigswap`. ✅ 2026-07-13
        `CONVEX_TEAM_SLUG` stays `sander-verkuil`; `CONVEX_MANAGEMENT_TOKEN` is
