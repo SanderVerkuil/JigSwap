@@ -3,12 +3,15 @@ import {
   type CommentIdGenerator,
   type FollowId,
   type FollowIdGenerator,
+  type FollowRequestId,
+  type FollowRequestIdGenerator,
   type PhotoCommentId,
   type PhotoCommentIdGenerator,
   type ProfileId,
   type ProfileIdGenerator,
   toCommentId,
   toFollowId,
+  toFollowRequestId,
   toPhotoCommentId,
   toProfileId,
 } from "@jigswap/domain";
@@ -17,6 +20,10 @@ import {
 // runtime; the values are branded and persisted as each aggregate's `aggregateId`.
 export const followIdGenerator: FollowIdGenerator = {
   next: (): FollowId => toFollowId(crypto.randomUUID()),
+};
+
+export const followRequestIdGenerator: FollowRequestIdGenerator = {
+  next: (): FollowRequestId => toFollowRequestId(crypto.randomUUID()),
 };
 
 export const profileIdGenerator: ProfileIdGenerator = {

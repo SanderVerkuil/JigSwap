@@ -1423,11 +1423,37 @@
     "yourNetwork": "Jouw Netwerk",
     "memberCount": "{count, plural, one {# lid} other {# leden}}",
     "followsYou": "Volgt jou",
+    "requests": {
+      "title": "Volgverzoeken",
+      "subtitle": "{count, plural, one {# lid wil} other {# leden willen}} je volgen",
+      "approve": "Goedkeuren",
+      "approveAndFollowBack": "Goedkeuren & terugvolgen",
+      "decline": "Weigeren",
+      "approved": "Verzoek goedgekeurd",
+      "approvedFollowBackFailed": "Goedgekeurd — maar terugvolgen is niet gelukt, gebruik de Volgen-knop op hun tegel",
+      "declined": "Verzoek geweigerd",
+      "error": "Er ging iets mis. Probeer het opnieuw."
+    },
     "ownedLabel": "in bezit",
     "swapsLabel": "ruilen",
     "activity": "Activiteit",
     "emptyTitle": "Nog geen leden in je netwerk",
     "emptySub": "Volg medepuzzelaars om je netwerk op te bouwen."
+  },
+  "follow": {
+    "follow": "Volgen",
+    "unfollow": "Ontvolgen",
+    "requestToFollow": "Volgverzoek sturen",
+    "requested": "Aangevraagd",
+    "requestedStale": "Aangevraagd — {name} heeft nog niet gereageerd",
+    "requestedStaleNoName": "Aangevraagd — nog geen reactie",
+    "cancelRequest": "Verzoek annuleren",
+    "toastFollowing": "Je volgt nu",
+    "toastRequestSent": "Verzoek verstuurd",
+    "toastUnfollowed": "Ontvolgd",
+    "toastRequestCancelled": "Verzoek geannuleerd",
+    "errorUpdate": "Kon de volgstatus niet bijwerken",
+    "errorCancel": "Kon het verzoek niet annuleren"
   },
   "members": {
     "memberSince": "Lid sinds {date}",
@@ -1520,7 +1546,10 @@
       "admin_proposal_filed": "Voorstel om te beoordelen",
       "admin_definition_submitted": "Inzending om te modereren",
       "photo_removed": "Foto verwijderd",
-      "goal_achieved": "Doel behaald"
+      "goal_achieved": "Doel behaald",
+      "new_follower": "Nieuwe volgers",
+      "follow_request_received": "Volgverzoeken",
+      "follow_request_approved": "Volgverzoek goedgekeurd"
     },
     "copy": {
       "trade_request": {
@@ -1594,6 +1623,18 @@
       "goal_achieved": {
         "title": "Doel behaald",
         "message": "Je hebt een van je doelen bereikt!"
+      },
+      "new_follower": {
+        "title": "Nieuwe volger",
+        "message": "Iemand volgt je nu."
+      },
+      "follow_request_received": {
+        "title": "Volgverzoek",
+        "message": "Iemand wil je graag volgen."
+      },
+      "follow_request_approved": {
+        "title": "Verzoek goedgekeurd",
+        "message": "Je volgverzoek is goedgekeurd."
       }
     },
     "pushDeviceTitle": "Push op dit apparaat",
@@ -1627,7 +1668,10 @@
       "admin_proposal_filed": "Wanneer een lid een wijziging voorstelt die beoordeling vereist (alleen beheerders).",
       "admin_definition_submitted": "Wanneer een nieuwe puzzelinzending op moderatie wacht (alleen beheerders).",
       "photo_removed": "Wanneer een moderator een van je puzzelfoto's verwijdert.",
-      "goal_achieved": "Wanneer je een puzzeldoel behaalt."
+      "goal_achieved": "Wanneer je een puzzeldoel behaalt.",
+      "new_follower": "Wanneer iemand je begint te volgen.",
+      "follow_request_received": "Wanneer iemand vraagt om je te volgen.",
+      "follow_request_approved": "Wanneer een volgverzoek dat je stuurde wordt goedgekeurd."
     },
     "pushServiceUnreachable": "Je browser kon zijn pushdienst niet bereiken. Sommige privacybrowsers blokkeren of verwijderen die — Brave schakelt het standaard uit (zet 'Google-services voor pushberichten gebruiken' aan in Instellingen), en de-Googled Chromium-browsers zoals Helium verwijderen het. Firefox, Chrome of Edge werkt wel."
   },

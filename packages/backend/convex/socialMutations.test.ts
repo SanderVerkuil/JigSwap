@@ -35,11 +35,13 @@ describe("follow / unfollow", () => {
     const t = convexTest(schema, modules);
     const { alice, bob } = await seed(t);
 
-    const followId = await asAlice(t).mutation(
+    const followResult = await asAlice(t).mutation(
       api.social.followMember.followMember,
       { followeeId: bob },
     );
-    expect(typeof followId).toBe("string");
+    // Public target → instant follow: the composition root now returns { kind, id }.
+    expect(followResult.kind).toBe("followed");
+    expect(typeof followResult.id).toBe("string");
 
     expect(
       await asAlice(t).query(api.social.isFollowing.isFollowing, {

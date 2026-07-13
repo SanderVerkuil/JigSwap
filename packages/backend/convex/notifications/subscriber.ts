@@ -323,6 +323,66 @@ const translate = async (
       );
     }
 
+    // --- Social ---
+    case "MemberFollowed": {
+      // Approval suppression: when this edge came from approving a follow request, the
+      // followee IS the approver — they already got follow_request_received and just acted
+      // on it. Suppress only when the approval is fresh (10 min) so a stale approved row
+      // never permanently mutes a later, genuine re-follow of the same pair.
+      // Accepted tradeoff: an unfollow + instant re-follow landing inside that same
+      // 10-minute post-approval window is also suppressed — indistinguishable here, and
+      // rare enough that we prefer it over ever double-notifying an approver.
+      const followerId = p.followerId as string;
+      const followeeId = p.followeeId as string;
+      const request = await ctx.db
+        .query("followRequests")
+        .withIndex("by_requester_target", (q) =>
+          q
+            .eq("requesterId", followerId as Id<"users">)
+            .eq("targetId", followeeId as Id<"users">),
+        )
+        .first();
+      if (
+        request?.status === "approved" &&
+        request.respondedAt !== undefined &&
+        Math.abs(event.occurredAt - request.respondedAt) < 10 * 60 * 1000
+      ) {
+        return [];
+      }
+      return [
+        cmd(
+          followeeId,
+          "new_follower",
+          "New follower",
+          "Someone started following you",
+          followerId, // the follower's users _id; the UI deep-links to /people
+        ),
+      ];
+    }
+    case "FollowRequested": {
+      return [
+        cmd(
+          p.targetId as string,
+          "follow_request_received",
+          "Follow request",
+          "Someone asked to follow you",
+          p.requesterId as string,
+        ),
+      ];
+    }
+    case "FollowRequestApproved": {
+      return [
+        cmd(
+          p.requesterId as string,
+          "follow_request_approved",
+          "Request approved",
+          "Your follow request was approved",
+          p.targetId as string,
+        ),
+      ];
+    }
+    // FollowRequestDeclined: DELIBERATELY unmapped — decline is silent (spec).
+
     default:
       return [];
   }

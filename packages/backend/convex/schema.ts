@@ -731,6 +731,9 @@ export default defineSchema({
       v.literal("proposal_rejected"),
       v.literal("admin_proposal_filed"),
       v.literal("admin_definition_submitted"),
+      v.literal("new_follower"),
+      v.literal("follow_request_received"),
+      v.literal("follow_request_approved"),
     ),
     title: v.string(),
     message: v.string(),
@@ -886,6 +889,32 @@ export default defineSchema({
     .index("by_follower", ["followerId"])
     .index("by_followee", ["followeeId"])
     .index("by_follower_followee", ["followerId", "followeeId"])
+    .index("by_aggregate_id", ["aggregateId"]),
+
+  // FollowRequest aggregate rows: a member asking to follow a private-profile member.
+  // status pending → approved | declined; respondedAt backs the 7-day decline cooldown.
+  // Declined rows are kept (not deleted) so a re-request inside the cooldown can be
+  // silently swallowed — deleting them would make a decline observable. cancelledAt is
+  // stamped when the requester cancels a declined-in-cooldown request: the row is retained
+  // (never destroying the cooldown record) but stops masking as pending on the read side; a
+  // re-request within the cooldown clears it and silently resumes the mask.
+  followRequests: defineTable({
+    aggregateId: v.string(),
+    requesterId: v.id("users"),
+    targetId: v.id("users"),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("declined"),
+    ),
+    createdAt: v.number(),
+    respondedAt: v.optional(v.number()),
+    cancelledAt: v.optional(v.number()),
+  })
+    .index("by_requester", ["requesterId"])
+    .index("by_target", ["targetId"])
+    .index("by_target_status", ["targetId", "status"])
+    .index("by_requester_target", ["requesterId", "targetId"])
     .index("by_aggregate_id", ["aggregateId"]),
 
   // The durable domain-event log: every context's events are appended here, then an async

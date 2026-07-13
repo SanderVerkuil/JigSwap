@@ -6,7 +6,12 @@ import { MemberId } from "../domain";
 // SocialError, the `code` is the stable, machine-readable discriminant a transport adapter maps
 // to; the message is for logs/tests only.
 export type SocialApplicationErrorCode =
-  "AlreadyFollowing" | "NotFollowing" | "ProfileNotFound";
+  | "AlreadyFollowing"
+  | "NotFollowing"
+  | "ProfileNotFound"
+  | "RequestNotFound"
+  | "NotRequestTarget"
+  | "NotRequestOwner";
 
 export class SocialApplicationError extends DomainError {
   override readonly name = "SocialApplicationError";
@@ -45,6 +50,30 @@ export class SocialApplicationError extends DomainError {
     return new SocialApplicationError(
       "ProfileNotFound",
       `No profile exists for member ${memberId}`,
+    );
+  }
+
+  // No follow request exists with the given id.
+  static requestNotFound(): SocialApplicationError {
+    return new SocialApplicationError(
+      "RequestNotFound",
+      "No such follow request",
+    );
+  }
+
+  // Only the member the request targets may approve or decline it.
+  static notRequestTarget(): SocialApplicationError {
+    return new SocialApplicationError(
+      "NotRequestTarget",
+      "Only the requested member can resolve this follow request",
+    );
+  }
+
+  // Only the member who sent the request may cancel it.
+  static notRequestOwner(): SocialApplicationError {
+    return new SocialApplicationError(
+      "NotRequestOwner",
+      "Only the requesting member can cancel this follow request",
     );
   }
 }

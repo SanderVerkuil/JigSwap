@@ -1,6 +1,7 @@
 import { DomainEvent } from "../../shared-kernel";
 import {
   CommentId,
+  FollowRequestId,
   MemberId,
   PhotoCommentId,
   PhotoId,
@@ -29,6 +30,39 @@ export class MemberUnfollowed implements DomainEvent {
   constructor(
     readonly followerId: MemberId,
     readonly followeeId: MemberId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+// A member asked to follow a private-profile member; the target must approve.
+export class FollowRequested implements DomainEvent {
+  readonly name = "FollowRequested";
+  constructor(
+    readonly requestId: FollowRequestId,
+    readonly requesterId: MemberId,
+    readonly targetId: MemberId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+// The target approved a pending follow request; the follow edge is established alongside.
+export class FollowRequestApproved implements DomainEvent {
+  readonly name = "FollowRequestApproved";
+  constructor(
+    readonly requestId: FollowRequestId,
+    readonly requesterId: MemberId,
+    readonly targetId: MemberId,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+// The target declined a pending follow request. Deliberately never notified (silent decline).
+export class FollowRequestDeclined implements DomainEvent {
+  readonly name = "FollowRequestDeclined";
+  constructor(
+    readonly requestId: FollowRequestId,
+    readonly requesterId: MemberId,
+    readonly targetId: MemberId,
     readonly occurredAt: Date,
   ) {}
 }
@@ -100,6 +134,9 @@ export class ProfileShelfArranged implements DomainEvent {
 export type SocialDomainEvent =
   | MemberFollowed
   | MemberUnfollowed
+  | FollowRequested
+  | FollowRequestApproved
+  | FollowRequestDeclined
   | ProfileUpdated
   | ProfileVisibilityChanged
   | CommentPosted

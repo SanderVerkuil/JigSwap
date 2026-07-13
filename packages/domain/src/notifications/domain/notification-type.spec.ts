@@ -22,6 +22,9 @@ describe("NOTIFICATION_TYPES", () => {
       "proposal_rejected",
       "admin_proposal_filed",
       "admin_definition_submitted",
+      "new_follower",
+      "follow_request_received",
+      "follow_request_approved",
     ]);
   });
 });

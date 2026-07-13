@@ -34,6 +34,9 @@ const notificationType = v.union(
   v.literal("proposal_rejected"),
   v.literal("admin_proposal_filed"),
   v.literal("admin_definition_submitted"),
+  v.literal("new_follower"),
+  v.literal("follow_request_received"),
+  v.literal("follow_request_approved"),
 );
 
 const channel = v.union(

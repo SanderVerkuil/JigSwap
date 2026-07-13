@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/community/primitives";
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { ActivityFeed } from "@/components/social/activity-feed";
+import { FollowRequestsStrip } from "@/components/social/follow-requests-strip";
 import {
   MemberTile,
   MemberTileSkeleton,
@@ -71,6 +72,8 @@ function PeoplePage() {
 
   return (
     <div className="flex flex-col gap-10">
+      <FollowRequestsStrip />
+
       <section>
         {loading ? (
           <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">

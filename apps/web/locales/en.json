@@ -1423,11 +1423,37 @@
     "yourNetwork": "Your Network",
     "memberCount": "{count, plural, one {# member} other {# members}}",
     "followsYou": "Follows you",
+    "requests": {
+      "title": "Follow requests",
+      "subtitle": "{count, plural, one {# member wants} other {# members want}} to follow you",
+      "approve": "Approve",
+      "approveAndFollowBack": "Approve & follow back",
+      "decline": "Decline",
+      "approved": "Request approved",
+      "approvedFollowBackFailed": "Approved — but following them back failed, use the Follow button on their tile",
+      "declined": "Request declined",
+      "error": "Something went wrong. Please try again."
+    },
     "ownedLabel": "owned",
     "swapsLabel": "swaps",
     "activity": "Activity",
     "emptyTitle": "No members in your network yet",
     "emptySub": "Follow fellow puzzlers to build your network."
+  },
+  "follow": {
+    "follow": "Follow",
+    "unfollow": "Unfollow",
+    "requestToFollow": "Request to follow",
+    "requested": "Requested",
+    "requestedStale": "Requested — {name} hasn't responded yet",
+    "requestedStaleNoName": "Requested — no response yet",
+    "cancelRequest": "Cancel request",
+    "toastFollowing": "Following",
+    "toastRequestSent": "Request sent",
+    "toastUnfollowed": "Unfollowed",
+    "toastRequestCancelled": "Request cancelled",
+    "errorUpdate": "Could not update follow status",
+    "errorCancel": "Could not cancel the request"
   },
   "members": {
     "memberSince": "Member since {date}",
@@ -1520,7 +1546,10 @@
       "admin_proposal_filed": "Suggestion to review",
       "admin_definition_submitted": "Submission to moderate",
       "photo_removed": "Photo removed",
-      "goal_achieved": "Goal achieved"
+      "goal_achieved": "Goal achieved",
+      "new_follower": "New followers",
+      "follow_request_received": "Follow requests",
+      "follow_request_approved": "Follow request approved"
     },
     "copy": {
       "trade_request": {
@@ -1594,6 +1623,18 @@
       "goal_achieved": {
         "title": "Goal achieved",
         "message": "You reached one of your goals!"
+      },
+      "new_follower": {
+        "title": "New follower",
+        "message": "Someone started following you."
+      },
+      "follow_request_received": {
+        "title": "Follow request",
+        "message": "Someone asked to follow you."
+      },
+      "follow_request_approved": {
+        "title": "Request approved",
+        "message": "Your follow request was approved."
       }
     },
     "pushDeviceTitle": "Push on this device",
@@ -1627,7 +1668,10 @@
       "admin_proposal_filed": "When a member suggests an edit that needs review (admins only).",
       "admin_definition_submitted": "When a new puzzle submission awaits moderation (admins only).",
       "photo_removed": "When a moderator removes one of your puzzle photos.",
-      "goal_achieved": "When you reach a solving goal."
+      "goal_achieved": "When you reach a solving goal.",
+      "new_follower": "When someone starts following you.",
+      "follow_request_received": "When someone asks to follow you.",
+      "follow_request_approved": "When a follow request you sent is approved."
     },
     "pushServiceUnreachable": "Your browser couldn't reach its push service. Some privacy browsers block or remove it — Brave disables it by default (enable 'Use Google services for push messaging' in Settings), and de-Googled Chromium builds like Helium strip it out. Firefox, Chrome, or Edge will work."
   },

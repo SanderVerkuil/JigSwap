@@ -1,13 +1,21 @@
 import {
   toCommentId,
   toFollowId,
+  toFollowRequestId,
   toPhotoCommentId,
   toProfileId,
 } from "../../../shared-kernel";
-import { CommentId, FollowId, PhotoCommentId, ProfileId } from "../../domain";
+import {
+  CommentId,
+  FollowId,
+  FollowRequestId,
+  PhotoCommentId,
+  ProfileId,
+} from "../../domain";
 import {
   CommentIdGenerator,
   FollowIdGenerator,
+  FollowRequestIdGenerator,
   PhotoCommentIdGenerator,
   ProfileIdGenerator,
 } from "../ports/out/id-generators";
@@ -49,5 +57,15 @@ export class SequentialPhotoCommentIdGenerator implements PhotoCommentIdGenerato
   next(): PhotoCommentId {
     this.counter += 1;
     return toPhotoCommentId(`photo-comment-${this.counter}`);
+  }
+}
+
+// Deterministic FollowRequestIdGenerator for tests: follow-request-1, follow-request-2, ...
+export class SequentialFollowRequestIdGenerator implements FollowRequestIdGenerator {
+  private counter = 0;
+
+  next(): FollowRequestId {
+    this.counter += 1;
+    return toFollowRequestId(`follow-request-${this.counter}`);
   }
 }
