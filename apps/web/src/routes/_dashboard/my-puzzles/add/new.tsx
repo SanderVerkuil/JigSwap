@@ -372,9 +372,10 @@ function AddPuzzlePage() {
           form.brand ||
           form.publisher) && (
           <div className="truncate text-sm text-muted-foreground">
-            {specificPuzzle?.brand ??
-              specificPuzzle?.publisher ??
-              (form.brand || form.publisher)}
+            {specificPuzzle?.brand ||
+              specificPuzzle?.publisher ||
+              form.brand ||
+              form.publisher}
           </div>
         )}
         {(specificPuzzle?.pieceCount ?? form.pieceCount) != null && (
@@ -952,7 +953,12 @@ function AddPuzzlePage() {
         <ReadinessChecklist
           items={[
             { ok: !!form.title.trim(), label: t("checkTitle") },
-            { ok: !!form.publisher.trim(), label: t("checkPublisher") },
+            // A selected existing definition satisfies the maker requirement even though
+            // the publisher input stays empty (match/prefill doesn't carry publisher).
+            {
+              ok: !!selectedDefinitionId || !!form.publisher.trim(),
+              label: t("checkPublisher"),
+            },
             { ok: !!form.pieceCount, label: t("checkPieces") },
             {
               ok: hasAnyAvailability(form.availability),
