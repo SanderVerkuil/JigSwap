@@ -721,8 +721,22 @@
     "saved": "Profiel opgeslagen",
     "saveError": "Je profiel kon niet worden opgeslagen. Probeer het opnieuw.",
     "usernamePlaceholder": "jouw-gebruikersnaam",
+    "usernameUnavailable": "Gebruikersnaam wijzigen kan nu even niet — stel hieronder een eigen link (slug) in om je profiel te delen.",
+    "usernameReverify": "Voor je veiligheid moet je sessie opnieuw geverifieerd worden om je gebruikersnaam te wijzigen — log uit en weer in en probeer het opnieuw, of gebruik hieronder je profiellink (slug).",
+    "usernameReverifyCancelled": "Gebruikersnaam niet gewijzigd — je hebt de verificatiestap geannuleerd.",
     "locationPlaceholder": "Plaats, Land",
     "bioPlaceholder": "Vertel andere leden iets over jezelf…",
+    "slug": {
+      "label": "Eigen link",
+      "placeholder": "jouw-naam",
+      "hint": "Kleine letters, cijfers en streepjes · 3-30 tekens. Laat leeg om te wissen.",
+      "formatError": "Een slug moet 3-30 kleine letters, cijfers of losse streepjes zijn (geen streepje vooraan, achteraan of dubbel).",
+      "preview": "Je profiellink:"
+    },
+    "displayName": {
+      "label": "Weergavenaam",
+      "helper": "Andere leden zien je als \"{name}\". Pas dit aan via je openbare profielkaart."
+    },
     "visibility": {
       "label": "Privéprofiel",
       "helper": "Privéprofielen verschijnen als 'Anonieme gebruiker' voor leden met wie je geen connectie hebt."
@@ -757,14 +771,12 @@
     },
     "editor": {
       "title": "Openbaar profiel",
-      "description": "Je weergavenaam en bio zoals andere leden ze zien.",
+      "description": "Je weergavenaam zoals andere leden hem zien.",
       "edit": "Bewerken",
       "save": "Opslaan",
       "cancel": "Annuleren",
       "displayName": "Weergavenaam",
       "displayNamePlaceholder": "Je weergavenaam",
-      "bio": "Bio",
-      "bioPlaceholder": "Vertel andere leden iets over jezelf",
       "emptyNameError": "Weergavenaam mag niet leeg zijn",
       "saved": "Profiel opgeslagen",
       "saveError": "Kon profiel niet opslaan"
@@ -1416,6 +1428,53 @@
     "activity": "Activiteit",
     "emptyTitle": "Nog geen leden in je netwerk",
     "emptySub": "Volg medepuzzelaars om je netwerk op te bouwen."
+  },
+  "members": {
+    "memberSince": "Lid sinds {date}",
+    "loading": "Lid laden...",
+    "collects": "Verzamelt ~{count, plural, one {# puzzel} other {# puzzels}} op JigSwap",
+    "joinCta": "Word lid van JigSwap om {name} te volgen",
+    "logIn": "Inloggen",
+    "shelfTitle": "Uitgelichte plank",
+    "ratingLabel": "Gem. rating",
+    "bioTitle": "Over",
+    "notFoundTitle": "Lid niet gevonden",
+    "notFoundSub": "Deze link is mogelijk verouderd, of het lid heeft hun gebruikersnaam gewijzigd.",
+    "findPeople": "Mensen vinden",
+    "backHome": "Terug naar home",
+    "profile": {
+      "ratingPill": "{rating} · {reviewCount, plural, one {# review} other {# reviews}}",
+      "privateBadge": "Privé",
+      "memberSinceYear": "Lid sinds {year}",
+      "followers": "{count, plural, one {volger} other {volgers}}",
+      "following": "volgend",
+      "follow": "Volgen",
+      "storyTitle": "Waarom {name} puzzelt",
+      "statOwned": "puzzels in bezit",
+      "statCompletions": "voltooid",
+      "statPieces": "stukjes gelegd",
+      "statSwaps": "ruilen",
+      "fastestLabel": "Snelste voltooiing",
+      "hardestLabel": "Moeilijkste oplossing",
+      "minutesValue": "{minutes} min",
+      "piecesValue": "{count, number} stukjes",
+      "privateBody": "Deze plank is privé — {name} deelt hun puzzels, voltooiingen en verhaal alleen met goedgekeurde volgers.",
+      "signUpToFollow": "Meld je aan om een volgverzoek te sturen",
+      "ctaTitle": "Hou jij ook van puzzels?",
+      "ctaSub": "Word lid van JigSwap om je eigen plank te bouwen, je voltooiingen bij te houden en puzzels te ruilen met andere verzamelaars.",
+      "ctaButton": "Gratis aanmelden",
+      "previewBanner": "Voorbeeld — zo zien bezoekers jouw profiel.",
+      "previewBannerPrivate": "Voorbeeld — zo zien bezoekers jouw profiel. Goedgekeurde volgers zien alles.",
+      "editProfile": "Profiel bewerken",
+      "backToApp": "Terug naar app"
+    },
+    "followersYouKnow": {
+      "title": "Volgers die je kent",
+      "one": "Gevolgd door {name}",
+      "two": "Gevolgd door {name1} en {name2}",
+      "more": "Gevolgd door {name1}, {name2} en {count, plural, one {# ander} other {# anderen}}",
+      "andMore": "en {count, plural, one {# meer} other {# meer}}"
+    }
   },
   "notifications": {
     "title": "Meldingen",
@@ -2282,6 +2341,7 @@
     "signUp": "Registreren — JigSwap",
     "library": "Mijn Bibliotheek — JigSwap",
     "people": "Mensen — JigSwap",
+    "members": "Leden — JigSwap",
     "copyInstance": "Exemplaar in bezit — JigSwap"
   },
   "shell": {
@@ -2385,6 +2445,10 @@
         "title": "Berichten",
         "subtitle": "Gesprekken met medepuzzelaars.",
         "description": "Gesprekken met medepuzzelaars"
+      },
+      "members": {
+        "title": "Leden",
+        "subtitle": "Profielen van communityleden"
       },
       "people": {
         "title": "Mensen",

@@ -23,4 +23,5 @@ export const toCurrentMemberView = (user: Doc<"users">): CurrentMemberView => ({
   ...toMemberView(user),
   clerkId: user.clerkId,
   email: user.email,
+  slug: user.slug,
 });

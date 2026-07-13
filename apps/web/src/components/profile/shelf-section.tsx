@@ -1,52 +1,19 @@
 "use client";
 
 import { Link } from "@/compat/link";
-import { PuzzlePlankBox } from "@/components/common/puzzle-plank";
 import { PuzzlePlank3D } from "@/components/common/puzzle-plank-3d";
 import { SectionHead } from "@/components/dashboard-home/section-head";
+import { toPlankBox } from "@/components/profile/to-plank-box";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import type { FunctionReturnType } from "convex/server";
 import { BookOpen, Settings2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslations } from "use-intl";
 import { ArrangeShelfDialog } from "./arrange-shelf-dialog";
 import type { Member } from "./member-view";
-
-type OwnedCopy = FunctionReturnType<
-  typeof gateway.library.ownedByOwner
->[number];
-
-// Same warm gradient fallbacks as the dashboard shelf — never an empty gray box.
-const BOX_GRADIENTS: ReadonlyArray<readonly [string, string]> = [
-  ["#6048e8", "#494e92"],
-  ["#3fae3c", "#157a13"],
-  ["#ec4899", "#b22d6e"],
-  ["#f5a623", "#cf7911"],
-];
-
-// Varied box heights so the shelf reads like a real, lived-in collection.
-const BOX_HEIGHTS = [148, 130, 156, 126, 142];
-
-function toPlankBox(copy: OwnedCopy, index: number): PuzzlePlankBox {
-  // Prefer the copy's resolved cover (a user-uploaded/pinned photo) over the
-  // catalogue image so a copy with its own cover shows it, not placeholder art.
-  const cover =
-    copy.coverUrl ?? copy.puzzle?.images?.[0] ?? copy.snapshot?.thumbnail;
-  const [c1, c2] = BOX_GRADIENTS[index % BOX_GRADIENTS.length];
-  return {
-    title: copy.puzzle?.title ?? copy.snapshot?.title,
-    series: copy.puzzle?.brand ?? copy.snapshot?.brand,
-    pieceCount: copy.puzzle?.pieceCount ?? copy.snapshot?.pieceCount,
-    cover,
-    c1,
-    c2,
-    height: cover ? undefined : BOX_HEIGHTS[index % BOX_HEIGHTS.length],
-  };
-}
 
 // "{FirstName}'s Shelf": the signature puzzle plank rendering the member's
 // real copies on their profile, capped at six boxes so the plank stays a

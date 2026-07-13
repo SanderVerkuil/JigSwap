@@ -11,7 +11,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -20,9 +19,13 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
-// Dialog for editing the acting member's public Social profile (display name +
-// bio). First-time editors create the profile via the same mutation; the server
-// enforces a non-empty display name.
+// Dialog for editing the acting member's display name — the Social profile's
+// other editable field (bio) is edited from the main profile editor's Bio
+// field instead (that's the one that shows on the public profile). First-time
+// editors create the profile via the same mutation; the server enforces a
+// non-empty display name. editProfile always writes displayName + bio
+// together (a full replace), so the currently loaded bio is sent through
+// unchanged here to avoid clobbering it.
 export function ProfileEditDialog() {
   const t = useTranslations("profile.editor");
   const { data: profile } = useQuery(convexQuery(gateway.social.profile, {}));
@@ -33,14 +36,12 @@ export function ProfileEditDialog() {
 
   const [open, setOpen] = useState(false);
   const [displayName, setDisplayName] = useState("");
-  const [bio, setBio] = useState("");
 
   // Reseed the form from the loaded profile every time the dialog opens, so a
-  // reopen always starts from the saved values rather than a stale draft.
+  // reopen always starts from the saved value rather than a stale draft.
   const handleOpenChange = (nextOpen: boolean) => {
     if (nextOpen) {
       setDisplayName(profile?.displayName ?? "");
-      setBio(profile?.bio ?? "");
     }
     setOpen(nextOpen);
   };
@@ -53,7 +54,7 @@ export function ProfileEditDialog() {
     try {
       await editProfile.mutateAsync({
         displayName: displayName.trim(),
-        bio: bio.trim() === "" ? undefined : bio.trim(),
+        bio: profile?.bio,
       });
       toast.success(t("saved"));
       setOpen(false);
@@ -82,15 +83,6 @@ export function ProfileEditDialog() {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder={t("displayNamePlaceholder")}
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">{t("bio")}</label>
-            <Textarea
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder={t("bioPlaceholder")}
-              rows={3}
             />
           </div>
         </div>

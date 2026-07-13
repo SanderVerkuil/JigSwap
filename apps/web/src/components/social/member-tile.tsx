@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { MapPin, Star } from "lucide-react";
 import { useTranslations } from "use-intl";
 import { FollowButton } from "./follow-button";
@@ -62,7 +63,13 @@ export function MemberTile({
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="truncate text-base font-bold">{member.name}</span>
+          <Link
+            to="/members/$handle"
+            params={{ handle: member.username ?? member._id }}
+            className="truncate text-base font-bold hover:underline"
+          >
+            {member.name}
+          </Link>
           {followsYou && (
             <Badge variant="secondary" className="shrink-0">
               {t("followsYou")}

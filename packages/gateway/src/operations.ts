@@ -184,6 +184,8 @@ export const gateway = {
     // Whether the acting caller is an admin (fails closed). Backs the web /admin
     // route guard; the server-side gate on every admin function stays authoritative.
     isAdmin: api.identity.isCurrentUserAdmin.isCurrentUserAdmin,
+    // Set (or clear, via null) the caller's Convex-owned profile handle.
+    setSlug: api.identity.setSlug.setSlug,
   },
 
   // Solving: solve tracking, puzzle reviews, goals. Ownership / 24h edit window / rating are
@@ -253,9 +255,16 @@ export const gateway = {
     follow: api.social.followMember.followMember,
     unfollow: api.social.unfollowMember.unfollowMember,
     profile: api.social.getProfile.getProfile,
+    publicMemberTeaser: api.social.getPublicMemberTeaser.getPublicMemberTeaser,
+    // The visibility-gated read behind the redesigned public member profile page. Unauthenticated-
+    // capable; returns a discriminated { locked } payload (see PublicProfileView).
+    publicProfile: api.social.getPublicProfile.getPublicProfile,
     followers: api.social.listFollowers.listFollowers,
     following: api.social.listFollowees.listFollowees,
     isFollowing: api.social.isFollowing.isFollowing,
+    // "Followers you know" social proof for a member's profile — the viewer's own following
+    // intersected with the target's followers (see social/knownFollowers.ts). Personalized.
+    followersYouKnow: api.social.followersYouKnow.followersYouKnow,
     // The feed is scoped server-side to the acting member + the people they follow.
     activityFeed: api.social.getActivityFeed.getActivityFeed,
     // Community comments on a puzzle definition, keyed by a copy id for the UI's convenience

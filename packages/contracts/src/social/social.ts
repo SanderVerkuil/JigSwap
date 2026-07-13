@@ -83,3 +83,106 @@ export interface PhotoCommentView {
 export type ProjectedMember =
   | { anonymous: false; member: MemberView }
   | { anonymous: true; anonRef: string };
+
+/**
+ * "Followers you know" social proof for a member profile: accounts the VIEWER follows who also
+ * follow the target member (viewer's following ∩ target's followers) — deliberately NOT plain
+ * mutual followers. Personalized (the read is requireMember-gated) and one direction only.
+ * `total` is the full intersection size; `members` is a short preview (capped, currently 8) with
+ * just enough identity to render an avatar stack + name and link to /members/$handle
+ * (slug ?? username ?? memberId).
+ */
+export interface FollowersYouKnowView {
+  total: number;
+  members: {
+    memberId: string;
+    displayName: string;
+    avatar?: string;
+    username?: string;
+    slug?: string;
+  }[];
+}
+
+/**
+ * The unauthenticated "who is this member" read behind /members/$handle. Deliberately tiny:
+ * identity fields only — never bio, shelf, stats, or location. A private member IS named here:
+ * reachable by direct link (the spec's Instagram-style interstitial) but not enumerable (search
+ * stays visibility-gated) and not indexable (the page renders a robots noindex for private
+ * profiles). `avatar` is consent-gated for anonymous callers (users.shareAvatarPublicly);
+ * `puzzleCount` is only disclosed for public profiles.
+ */
+export interface PublicMemberTeaserView {
+  memberId: string;
+  displayName: string;
+  username?: string;
+  /** The member's Convex-owned profile handle (identity/setSlug), if they've chosen one. */
+  slug?: string;
+  avatar?: string;
+  /** users.createdAt (ms). */
+  memberSince: number;
+  visibility: "public" | "private";
+  /** Owned-copy count; null for private profiles. */
+  puzzleCount: number | null;
+}
+
+/**
+ * The identity card shown on the public member profile, disclosed regardless of lock state (an
+ * Instagram-style private-account header: name, avatar, follow counts, and rating are always
+ * visible; only the deeper `story`/`stats`/`records` are gated). `avatar` is consent-gated for
+ * anonymous callers exactly like PublicMemberTeaserView (users.shareAvatarPublicly). `location` is
+ * the strict exception: it is included ONLY when `visibility === "public"`, in BOTH the locked and
+ * unlocked payload — a private profile never discloses location to a non-owner, even a mutual
+ * follower, and the rule does not special-case the owner viewing their own profile either.
+ */
+export interface PublicProfileHero {
+  memberId: string;
+  displayName: string;
+  username?: string;
+  slug?: string;
+  avatar?: string;
+  /** users.createdAt (ms). */
+  memberSince: number;
+  rating: number;
+  reviewCount: number;
+  followerCount: number;
+  followingCount: number;
+  visibility: "public" | "private";
+  /** Only present when visibility === "public" — see class doc. */
+  location?: string;
+}
+
+/** Coarse collection/activity aggregates, UNLOCKED only. */
+export interface PublicProfileStats {
+  puzzlesOwned: number;
+  completions: number;
+  piecesPlaced: number;
+  swaps: number;
+}
+
+/** Standout completions, UNLOCKED only. Either entry is null when the member has no completions
+ * carrying the relevant field (no timed completion for `fastest`, no sized completion for
+ * `hardest`). */
+export interface PublicProfileRecords {
+  fastest: { title: string; minutes: number } | null;
+  hardest: { title: string; pieceCount: number } | null;
+}
+
+/**
+ * The visibility-gated read behind the redesigned public member profile page. A discriminated
+ * union on `locked`: UNLOCKED (visibility public, viewer is the owner, or viewer is a mutual
+ * follower) carries the full `story`/`stats`/`records`; LOCKED (private + non-mutual viewer,
+ * including logged-out) carries only `hero` — never story, stats, or records. This is the public,
+ * unauthenticated-capable surface: the payload must never leak another member's raw id, name,
+ * copy ids/conditions/prices, clerkIds, emails, or (per PublicProfileHero) location for a private
+ * profile.
+ */
+export type PublicProfileView =
+  | {
+      locked: false;
+      hero: PublicProfileHero;
+      /** profiles.bio; omitted when the member has none. UNLOCKED only. */
+      story?: string;
+      stats: PublicProfileStats;
+      records: PublicProfileRecords;
+    }
+  | { locked: true; hero: PublicProfileHero };

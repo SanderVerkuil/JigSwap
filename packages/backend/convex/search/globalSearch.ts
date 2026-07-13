@@ -88,7 +88,9 @@ export const global = query({
         id: u._id,
         name: u.name,
         image: u.avatar ?? null,
-        href: "/people",
+        // Canonical member page; username-first, id fallback (matches the
+        // /members/$handle resolution rules).
+        href: `/members/${u.username ?? u._id}`,
       });
     }
 
