@@ -52,8 +52,12 @@ Rules of the road:
 
 ## Phase 1 — Repo/CI config (no user impact)
 
-5. [x] GitHub secrets updated (2026-07-13, verified via timestamps) — Vercel keys were also already swapped (part of step 12) with the three new keys (owner pastes values, or runs
-       `gh secret set CONVEX_DEPLOY_KEY_{PROD,DEV,PREVIEW}`).
+5. [x] GitHub secrets `CONVEX_DEPLOY_KEY_{PROD,DEV,PREVIEW}` updated with the new
+       keys. ✅ 2026-07-13 (verified via secret timestamps). The Vercel **Preview**
+       `CONVEX_DEPLOY_KEY` was swapped at the same time, which is safe pre-cutover:
+       it only moves _preview_ creation to the new project. Production Vercel builds
+       don't use a deploy key at all (prod deploys are CI-gated; see the env-scoping
+       table in `convex-preview-deployments.md`).
 6. [x] GitHub repo variable `CONVEX_PROJECT_SLUG` → `jigswap`. ✅ 2026-07-13
        `CONVEX_TEAM_SLUG` stays `sander-verkuil`; `CONVEX_MANAGEMENT_TOKEN` is
        team-scoped and keeps working. Transient note: until the preview deploy
@@ -104,9 +108,12 @@ Do these back-to-back; the freeze lasts from step 10's export until step 12.
         `.convex.site` host to the new one (`https://<new-prod>.eu-west-1.convex.site/…`,
         same path). Missing this silently stops user signup sync. If dev has its own
         Clerk webhook, update that too.
-12. [ ] Vercel: update **Production** env `NEXT_PUBLIC_CONVEX_URL` → new prod
-        `.convex.cloud` URL, and `CONVEX_DEPLOY_KEY` (Production) → new prod key;
-        **Preview** env `CONVEX_DEPLOY_KEY` → new preview key. Redeploy production.
+12. [ ] Vercel: update the **Production**-scoped `VITE_CONVEX_URL` →
+        `https://spotted-scorpion-690.eu-west-1.convex.cloud` and **redeploy
+        production**. (Vite inlines the URL at build time, so the redeploy IS the
+        cutover moment.) Production keeps having NO `CONVEX_DEPLOY_KEY` in Vercel —
+        if one was added during key rotation, remove it to preserve the CI-gated
+        prod-deploy invariant. The Preview key is already swapped (step 5).
 13. [ ] Trigger the repo's **Convex Deploy** workflow (push to main or re-run) and
         confirm it deploys to the NEW dev/prod hosts (eu-west-1 in the logged URL).
 
