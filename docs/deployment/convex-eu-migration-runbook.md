@@ -137,7 +137,7 @@ Do these back-to-back; the freeze lasts from step 10's export until step 12.
 
 ## Rollback
 
-Until Phase 5: revert Vercel's `NEXT_PUBLIC_CONVEX_URL` + `CONVEX_DEPLOY_KEY`, the
-Clerk webhook URL, the three GitHub secrets, and `CONVEX_PROJECT_SLUG` — the old
-deployments were never modified. Data written to the NEW prod after cutover would
-need an export/import back.
+Until Phase 5: revert Vercel's Production `VITE_CONVEX_URL` (+ redeploy) and Preview
+`CONVEX_DEPLOY_KEY`, the Clerk webhook URL, the three GitHub secrets, and
+`CONVEX_PROJECT_SLUG` — the old deployments were never modified. Data written to the
+NEW prod after cutover would need an export/import back.
