@@ -1,0 +1,22 @@
+{
+  "name": "@jigswap/email",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/email/src",
+  "projectType": "library",
+  "tags": ["type:backend-adapter", "scope:backend"],
+  "targets": {
+    "type-check": {
+      "executor": "nx:run-commands",
+      "options": { "command": "pnpm run type-check", "cwd": "packages/email" }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": { "command": "pnpm run test", "cwd": "packages/email" }
+    },
+    "coverage": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/coverage/packages/email"],
+      "options": { "command": "vitest run --coverage", "cwd": "packages/email" }
+    }
+  }
+}
