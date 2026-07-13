@@ -1,6 +1,7 @@
 import { useUser } from "@/compat/clerk";
 import {
   ADMIN_NOTIFICATION_TYPES,
+  EMAIL_ELIGIBLE_TYPES,
   NOTIFICATION_CHANNELS,
   NOTIFICATION_TYPES,
   notificationAccent,
@@ -113,21 +114,29 @@ export function ChannelMatrix({
                     </span>
                   </span>
                 </span>
-                {NOTIFICATION_CHANNELS.map((channel) => (
-                  <div
-                    role="gridcell"
-                    key={channel}
-                    className="flex justify-center"
-                  >
-                    <Switch
-                      checked={row[channel] === true}
-                      onCheckedChange={(checked) =>
-                        onToggle(type, channel, checked)
-                      }
-                      aria-labelledby={`row-${type} col-${channel}`}
-                    />
-                  </div>
-                ))}
+                {NOTIFICATION_CHANNELS.map((channel) => {
+                  const emailUnavailable =
+                    channel === "email" && !EMAIL_ELIGIBLE_TYPES.has(type);
+                  return (
+                    <div
+                      role="gridcell"
+                      key={channel}
+                      className="flex justify-center"
+                    >
+                      <Switch
+                        checked={!emailUnavailable && row[channel] === true}
+                        disabled={emailUnavailable}
+                        onCheckedChange={(checked) =>
+                          onToggle(type, channel, checked)
+                        }
+                        aria-labelledby={`row-${type} col-${channel}`}
+                        title={
+                          emailUnavailable ? t("emailUnavailable") : undefined
+                        }
+                      />
+                    </div>
+                  );
+                })}
               </div>
             );
           })}
@@ -168,6 +177,8 @@ export function ChannelMatrix({
               <div className="flex flex-col gap-3 pl-11">
                 {NOTIFICATION_CHANNELS.map((channel) => {
                   const id = `${type}-${channel}-m`;
+                  const emailUnavailable =
+                    channel === "email" && !EMAIL_ELIGIBLE_TYPES.has(type);
                   return (
                     <div
                       key={channel}
@@ -181,9 +192,13 @@ export function ChannelMatrix({
                       </Label>
                       <Switch
                         id={id}
-                        checked={row[channel] === true}
+                        checked={!emailUnavailable && row[channel] === true}
+                        disabled={emailUnavailable}
                         onCheckedChange={(checked) =>
                           onToggle(type, channel, checked)
+                        }
+                        title={
+                          emailUnavailable ? t("emailUnavailable") : undefined
                         }
                       />
                     </div>

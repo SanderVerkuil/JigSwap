@@ -71,6 +71,25 @@ export const ADMIN_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = new Set([
   "admin_definition_submitted",
 ]);
 
+// Types the backend will actually deliver by email (mirror of the domain's EMAIL_ELIGIBLE_TYPES —
+// packages/domain/src/notifications/domain/notification-type.ts; keep in sync by hand). The matrix
+// greys out the email switch for everything else: the server ignores the toggle regardless, this
+// just keeps the UI honest.
+export const EMAIL_ELIGIBLE_TYPES: ReadonlySet<NotificationType> = new Set([
+  "trade_request",
+  "trade_accepted",
+  "trade_declined",
+  "trade_completed",
+  "trade_cancelled",
+  "message_received",
+  "review_received",
+  "puzzle_favorited",
+  "goal_achieved",
+  "new_follower",
+  "follow_request_received",
+  "follow_request_approved",
+]);
+
 export type NotificationChannel = "inApp" | "email" | "push";
 
 export const NOTIFICATION_CHANNELS: NotificationChannel[] = [
@@ -85,8 +104,9 @@ export interface NotificationRow {
   _id: string;
   aggregateId?: string;
   type: string;
-  title: string;
-  message: string;
+  title?: string;
+  message?: string;
+  params?: Record<string, string>;
   relatedId?: string;
   channel?: string;
   isRead: boolean;
@@ -100,8 +120,8 @@ export function notificationId(row: NotificationRow): string {
 }
 
 // Localized title + message for a notification, rendered from its `type` via the
-// `notifications.copy.<type>` i18n keys. The stored `title`/`message` are pre-rendered English (the
-// subscriber writes them for email/push), so they're only a fallback for an unknown/legacy type.
+// `notifications.copy.<type>` i18n keys. The stored `title`/`message` only exist on legacy rows
+// (predating the type+params model), so they're only a fallback for an unknown/legacy type.
 // `t` is a `useTranslations("notifications")` translator.
 export function notificationCopy(
   row: NotificationRow,
@@ -113,7 +133,7 @@ export function notificationCopy(
       message: t(`copy.${row.type}.message`),
     };
   }
-  return { title: row.title, message: row.message };
+  return { title: row.title ?? "", message: row.message ?? "" };
 }
 
 export function notificationIcon(type: string): LucideIcon {

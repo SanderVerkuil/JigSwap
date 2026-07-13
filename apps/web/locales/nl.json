@@ -1558,7 +1558,8 @@
     "channelInApp": "In-app",
     "channelEmail": "E-mail",
     "channelPush": "Push",
-    "channelsNote": "In-app meldingen worden direct bezorgd. Push wordt naar je browser gestuurd (je wordt om toestemming gevraagd). E-mailbezorging is nog niet beschikbaar.",
+    "channelsNote": "In-app meldingen worden direct bezorgd. Push wordt naar je browser gestuurd (je wordt om toestemming gevraagd). E-mail is beschikbaar voor geselecteerde meldingstypen.",
+    "emailUnavailable": "E-mail is niet beschikbaar voor dit meldingstype",
     "notificationType": "Melding",
     "types": {
       "trade_request": "Ruilverzoeken",
