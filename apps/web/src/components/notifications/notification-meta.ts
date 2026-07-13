@@ -71,6 +71,58 @@ export const ADMIN_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = new Set([
   "admin_definition_submitted",
 ]);
 
+export type NotificationCategoryKey =
+  "trades" | "messages" | "social" | "submissions" | "admin";
+
+export interface NotificationCategory {
+  readonly key: NotificationCategoryKey;
+  readonly types: readonly NotificationType[];
+}
+
+// Display grouping for the preferences matrix. Every NotificationType appears in EXACTLY one
+// category (pinned by notification-meta.test.ts). `admin` stays hidden for non-admins via the
+// existing ADMIN_NOTIFICATION_TYPES filtering.
+export const NOTIFICATION_CATEGORIES: readonly NotificationCategory[] = [
+  {
+    key: "trades",
+    types: [
+      "trade_request",
+      "trade_accepted",
+      "trade_declined",
+      "trade_completed",
+      "trade_cancelled",
+      "exchange_proposed",
+      "exchange_disputed",
+    ],
+  },
+  { key: "messages", types: ["message_received"] },
+  {
+    key: "social",
+    types: [
+      "new_follower",
+      "follow_request_received",
+      "follow_request_approved",
+      "puzzle_favorited",
+      "review_received",
+      "goal_achieved",
+    ],
+  },
+  {
+    key: "submissions",
+    types: [
+      "puzzle_approved",
+      "puzzle_rejected",
+      "proposal_approved",
+      "proposal_rejected",
+      "photo_removed",
+    ],
+  },
+  {
+    key: "admin",
+    types: ["admin_proposal_filed", "admin_definition_submitted"],
+  },
+];
+
 // Types the backend will actually deliver by email (mirror of the domain's EMAIL_ELIGIBLE_TYPES —
 // packages/domain/src/notifications/domain/notification-type.ts; keep in sync by hand). The matrix
 // greys out the email switch for everything else: the server ignores the toggle regardless, this

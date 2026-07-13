@@ -1584,6 +1584,28 @@
       "follow_request_received": "Follow requests",
       "follow_request_approved": "Follow request approved"
     },
+    "categories": {
+      "trades": {
+        "title": "Trades",
+        "description": "Requests, accepts, declines, completions and disputes"
+      },
+      "messages": {
+        "title": "Messages",
+        "description": "Direct messages from other members"
+      },
+      "social": {
+        "title": "Social",
+        "description": "Followers, follow requests, reviews, favorites and goals"
+      },
+      "submissions": {
+        "title": "My submissions",
+        "description": "Outcomes of your puzzle submissions and suggested edits"
+      },
+      "admin": {
+        "title": "Admin",
+        "description": "Items awaiting moderation or review"
+      }
+    },
     "copy": {
       "trade_request": {
         "title": "New exchange request",

@@ -1584,6 +1584,28 @@
       "follow_request_received": "Volgverzoeken",
       "follow_request_approved": "Volgverzoek goedgekeurd"
     },
+    "categories": {
+      "trades": {
+        "title": "Uitwisselingen",
+        "description": "Verzoeken, acceptaties, afwijzingen, afrondingen en geschillen"
+      },
+      "messages": {
+        "title": "Berichten",
+        "description": "Directe berichten van andere leden"
+      },
+      "social": {
+        "title": "Sociaal",
+        "description": "Volgers, volgverzoeken, beoordelingen, favorieten en doelen"
+      },
+      "submissions": {
+        "title": "Mijn inzendingen",
+        "description": "Uitkomsten van je puzzelinzendingen en voorgestelde wijzigingen"
+      },
+      "admin": {
+        "title": "Beheer",
+        "description": "Items die wachten op moderatie of beoordeling"
+      }
+    },
     "copy": {
       "trade_request": {
         "title": "Nieuw ruilverzoek",
