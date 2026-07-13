@@ -105,8 +105,20 @@ until expiry. It calls the
 [Convex Management API](https://docs.convex.dev/management-api) directly (the CLI
 has no `deployment delete` — see
 [convex-backend#455](https://github.com/get-convex/convex-backend/issues/455)):
-slug → project id → list deployments → delete the preview whose `reference` is the
-PR branch. Auto-expiry remains the fallback for anything the teardown misses.
+slug → project id → list deployments → delete the preview whose `reference` matches
+the PR branch (references are `preview/<branch>` with slashes replaced by dashes).
+Auto-expiry is nominally the fallback for anything the teardown misses, but it has
+proven unreliable in practice — hence the sweep below.
+
+### Sweeping stale previews
+
+The same workflow has a manual **sweep** (Actions → Convex Preview Teardown → Run
+workflow): it deletes every preview deployment whose branch has no open PR. The
+keep-set is computed from open PRs with the same branch→reference mapping, so a
+reference never needs to be reverse-parsed. `dryRun` is checked by default and only
+lists what would be deleted — eyeball that list, then re-dispatch with `dryRun`
+unchecked to actually delete. If listing open PRs fails, the job aborts rather than
+treating the failure as "no open PRs".
 
 ### One-time owner setup (teardown)
 
