@@ -28,11 +28,13 @@ Rules of the road:
 
 1. [ ] Dashboard: team settings → set the **default region** to EU West so every
        future deployment inherits it.
-2. [ ] Dashboard: create the new **project** in EU West (suggested name: keep
-       "JigSwap"; the slug will differ from `jig-swap-35697`).
-   - New project slug: `________________`
-   - Confirm in the project's deployment picker that **production** shows
-     eu-west-1.
+2. [x] Dashboard: create the new **project** in EU West. ✅ 2026-07-13
+   - New project slug: **`jigswap`**
+   - New production deployment: **`spotted-scorpion-690`**
+     (`https://spotted-scorpion-690.eu-west-1.convex.cloud`, site
+     `https://spotted-scorpion-690.eu-west-1.convex.site`)
+   - New dev deployment: **`giddy-octopus-727`**
+     (`https://giddy-octopus-727.eu-west-1.convex.cloud`)
 3. [ ] Dashboard: on the NEW project, set environment variables for **production**
        and **development**, and the **preview defaults** — copy values from the old
        project. The full variable table lives in
@@ -52,9 +54,12 @@ Rules of the road:
 
 5. [ ] GitHub secrets updated with the three new keys (owner pastes values, or runs
        `gh secret set CONVEX_DEPLOY_KEY_{PROD,DEV,PREVIEW}`).
-6. [ ] GitHub repo variable `CONVEX_PROJECT_SLUG` → new project slug (Claude, once
-       step 2's slug is known). `CONVEX_TEAM_SLUG` stays `sander-verkuil`;
-       `CONVEX_MANAGEMENT_TOKEN` is team-scoped and keeps working.
+6. [x] GitHub repo variable `CONVEX_PROJECT_SLUG` → `jigswap`. ✅ 2026-07-13
+       `CONVEX_TEAM_SLUG` stays `sander-verkuil`; `CONVEX_MANAGEMENT_TOKEN` is
+       team-scoped and keeps working. Transient note: until the preview deploy
+       key flips (step 5), previews are still CREATED on the old project while
+       the teardown LOOKS in the new one — a harmless no-op notice; old-project
+       previews die with the old project in Phase 5.
 
 ## Phase 2 — Populate the new deployments (no user impact)
 
