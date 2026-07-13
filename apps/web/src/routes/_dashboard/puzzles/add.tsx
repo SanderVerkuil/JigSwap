@@ -14,6 +14,7 @@ import {
   ReadinessChecklist,
   SectionDivider,
   SegmentedPills,
+  SuggestInput,
   TagInput,
 } from "@/components/add-puzzle";
 import type { ImportedDraft } from "@/components/puzzle-import/draft-to-form-defaults";
@@ -34,8 +35,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { gateway, Id } from "@/gateway";
-import { useConvexAction, useConvexMutation } from "@convex-dev/react-query";
-import { useMutation } from "@tanstack/react-query";
+import {
+  convexQuery,
+  useConvexAction,
+  useConvexMutation,
+} from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -108,6 +113,20 @@ function ContributePuzzlePage() {
     gateway.library.generateUploadUrl,
   );
   const importImage = useConvexAction(gateway.catalog.importPuzzleImage);
+
+  // Maker-field autocomplete suggestion pools
+  const { data: publisherSuggestions } = useQuery(
+    convexQuery(gateway.catalog.allPublishers, {}),
+  );
+  const { data: brandSuggestions } = useQuery(
+    convexQuery(gateway.catalog.allBrands, {}),
+  );
+  const { data: seriesSuggestions } = useQuery(
+    convexQuery(gateway.catalog.allSeries, {
+      brand: form.brand.trim() || undefined,
+      publisher: form.publisher.trim() || undefined,
+    }),
+  );
 
   // Object URL for the cover file preview — derived from the file; the effect only revokes the
   // previous URL when the file changes (or on unmount), so no setState runs inside an effect.
@@ -267,12 +286,11 @@ function ContributePuzzlePage() {
                 {t("optional")}
               </span>
             </Label>
-            <Input
+            <SuggestInput
               id="cp-publisher"
               value={form.publisher}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, publisher: e.target.value }))
-              }
+              onChange={(value) => setForm((f) => ({ ...f, publisher: value }))}
+              suggestions={publisherSuggestions ?? []}
               placeholder={t("fieldPublisherPlaceholder")}
             />
           </div>
@@ -295,11 +313,12 @@ function ContributePuzzlePage() {
                 {t("optional")}
               </span>
             </Label>
-            <Input
+            <SuggestInput
               id="cp-brand"
               value={form.brand}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, brand: e.target.value }))
+              onChange={(value) => setForm((f) => ({ ...f, brand: value }))}
+              suggestions={
+                brandSuggestions?.filter((b): b is string => !!b) ?? []
               }
               placeholder={t("fieldBrandPlaceholder")}
             />
@@ -309,12 +328,11 @@ function ContributePuzzlePage() {
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="cp-series">{tf("series.label")}</Label>
-            <Input
+            <SuggestInput
               id="cp-series"
               value={form.series}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, series: e.target.value }))
-              }
+              onChange={(value) => setForm((f) => ({ ...f, series: value }))}
+              suggestions={seriesSuggestions ?? []}
               placeholder={tf("series.placeholder")}
             />
           </div>
