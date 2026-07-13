@@ -97,6 +97,31 @@ Also confirm Settings → Root Directory → **"Include source files outside of 
 Directory"** is enabled (default for monorepos) so `packages/backend` exists in the
 build container.
 
+## Teardown on PR close
+
+`.github/workflows/convex-preview-teardown.yml` deletes the branch's preview
+deployment when its PR is merged or closed, so review environments don't linger
+until expiry. It calls the
+[Convex Management API](https://docs.convex.dev/management-api) directly (the CLI
+has no `deployment delete` — see
+[convex-backend#455](https://github.com/get-convex/convex-backend/issues/455)):
+slug → project id → list deployments → delete the preview whose `reference` is the
+PR branch. Auto-expiry remains the fallback for anything the teardown misses.
+
+### One-time owner setup (teardown)
+
+1. Convex dashboard → team settings → access tokens → create a **team token** →
+   add it as the GitHub Actions secret **`CONVEX_MANAGEMENT_TOKEN`**. (Deploy keys
+   cannot call the Management API.)
+2. Set two GitHub Actions repository **variables**, both visible in any dashboard
+   URL (`dashboard.convex.dev/t/<team-slug>/<project-slug>/…`):
+   - **`CONVEX_TEAM_SLUG`** — the team slug
+   - **`CONVEX_PROJECT_SLUG`** — the project slug
+
+Until the secret and both variables exist, the teardown workflow succeeds as a
+documented no-op (a notice in the job log), exactly like the preview deploy
+workflow before its key is configured.
+
 ## Behavior
 
 - **Branch-named, reused**: `convex deploy --preview-name <branch>` creates the preview
@@ -119,10 +144,11 @@ build container.
   with which the CLI resolves `--preview-name` project-scoped to preview deployments;
   the dev key (which would make the CLI ignore `--preview-name`) is only exposed to the
   read-only export step.
-- **Expiry is the cleanup**: previews are deleted automatically after **5 days** on
-  Free/Starter (**14 days** on Pro+). The Convex CLI has **no delete command** for
-  preview deployments (verified against the CLI reference and `convex deployment
---help`), so there is no PR-close cleanup job.
+- **Teardown on close, expiry as fallback**: the teardown workflow (above) deletes a
+  PR's preview when the PR closes; previews it misses are deleted automatically after
+  **5 days** on Free/Starter (**14 days** on Pro+). The Convex CLI has **no delete
+  command** for preview deployments (verified against the CLI reference and
+  `convex deployment --help`), which is why the teardown uses the Management API.
 - **Revive after expiry is automatic**: the next workflow run (any PR push, or a manual
   run with the branch name) recreates the expired preview, finds it empty, and seeds it
   — no special event needed. To deliberately **re-seed a preview that still has data**,

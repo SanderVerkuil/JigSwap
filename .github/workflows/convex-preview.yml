@@ -13,10 +13,11 @@ permissions:
 #     A non-empty preview is never clobbered, and a preview that comes back empty (it
 #     expired and was recreated, or the Vercel build created it first) self-heals on
 #     the next run instead of staying blank.
-#   - Previews auto-expire after 5 days on Free/Starter (14 on Pro+). There is no CLI
-#     command to delete one, so expiry IS the cleanup. To revive one on demand, run
-#     this workflow manually via workflow_dispatch with the branch name; check `force`
-#     to re-clone the dev snapshot over a preview that still has data.
+#   - convex-preview-teardown.yml deletes a PR's preview when the PR closes (via the
+#     Management API — the CLI still has no delete command). Auto-expiry (5 days on
+#     Free/Starter, 14 on Pro+) remains the fallback cleanup. To revive a preview on
+#     demand, run this workflow manually via workflow_dispatch with the branch name;
+#     check `force` to re-clone the dev snapshot over a preview that still has data.
 #
 # Key-scoping guard: each step exposes exactly ONE deploy key. With a preview deploy key
 # (`preview:team:project|…`) the CLI honors `--preview-name` and can ONLY target preview

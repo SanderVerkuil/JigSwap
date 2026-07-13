@@ -1,0 +1,71 @@
+name: Convex Preview Teardown
+
+permissions:
+  contents: read
+
+# Deletes a PR's Convex preview deployment when the PR is merged or closed
+# (docs/deployment/convex-preview-deployments.md → "Teardown on PR close").
+#
+# Uses the Convex Management API (https://docs.convex.dev/management-api) over curl:
+# the pinned Convex CLI has no `deployment delete`/`deployment list` commands
+# (https://github.com/get-convex/convex-backend/issues/455). Once that feature
+# request ships, simplify this job to the CLI. curl also keeps the job
+# dependency-free — no checkout, no pnpm, no Node setup.
+#
+# Auth: the Management API requires a team token (or PAT) — the deploy keys used by
+# convex-preview.yml cannot call it. Until the owner configures the secret and both
+# slug variables (see the docs above), every run is a documented green no-op.
+# Auto-expiry (5 days Free/Starter, 14 Pro+) remains the fallback cleanup for any
+# preview this job misses (e.g. a re-created one after a stray late synchronize run).
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  teardown:
+    name: Delete preview deployment
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CONVEX_API: https://api.convex.dev/v1
+      BRANCH_NAME: ${{ github.head_ref }}
+      TEAM_SLUG: ${{ vars.CONVEX_TEAM_SLUG }}
+      PROJECT_SLUG: ${{ vars.CONVEX_PROJECT_SLUG }}
+      # Whether the one-time owner setup (management token + slug variables) has
+      # happened yet. Until it has, the job succeeds as a documented no-op.
+      HAS_CONFIG: ${{ secrets.CONVEX_MANAGEMENT_TOKEN != '' && vars.CONVEX_TEAM_SLUG != '' && vars.CONVEX_PROJECT_SLUG != '' }}
+    steps:
+      - name: Skip when the management token or slugs are not configured
+        if: env.HAS_CONFIG != 'true'
+        run: echo "::notice::CONVEX_MANAGEMENT_TOKEN / CONVEX_TEAM_SLUG / CONVEX_PROJECT_SLUG not configured — skipping preview teardown (see docs/deployment/convex-preview-deployments.md)"
+
+      - name: Delete the branch's preview deployment
+        if: env.HAS_CONFIG == 'true'
+        env:
+          CONVEX_MANAGEMENT_TOKEN: ${{ secrets.CONVEX_MANAGEMENT_TOKEN }}
+        run: |
+          auth=(-H "Authorization: Bearer $CONVEX_MANAGEMENT_TOKEN")
+
+          # Slugs -> numeric project id (the other project endpoints take the id).
+          project_id="$(curl -sSf "${auth[@]}" \
+            "$CONVEX_API/teams/$TEAM_SLUG/projects/$PROJECT_SLUG" | jq -r '.id')"
+
+          deployments="$(curl -sSf "${auth[@]}" \
+            "$CONVEX_API/projects/$project_id/list_deployments")"
+
+          # The preview created by `convex deploy --preview-name "$BRANCH_NAME"`
+          # carries the branch as its unique in-project reference. Local dev
+          # deployments in the response lack `reference`; select() skips them.
+          name="$(jq -r --arg ref "$BRANCH_NAME" \
+            '[.[] | select(.deploymentType == "preview" and .reference == $ref)][0].name // empty' \
+            <<<"$deployments")"
+
+          if [ -z "$name" ]; then
+            echo "::notice::No preview deployment found for branch '$BRANCH_NAME' (already expired, or never created) — nothing to tear down"
+            echo "Existing previews were:"
+            jq -r '[.[] | select(.deploymentType == "preview")] | map("  \(.name) (reference: \(.reference))")[]' <<<"$deployments" || true
+            exit 0
+          fi
+
+          curl -sSf -X POST "${auth[@]}" "$CONVEX_API/deployments/$name/delete"
+          echo "::notice::Deleted preview deployment '$name' for branch '$BRANCH_NAME'"
