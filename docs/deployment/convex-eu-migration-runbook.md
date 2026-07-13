@@ -67,33 +67,31 @@ Rules of the road:
 
 ## Phase 2 — Populate the new deployments (no user impact)
 
-Run from `packages/backend`, with the keys from step 4 (each command's
-`CONVEX_DEPLOY_KEY` decides which deployment it targets — same key-scoping idea as
-the preview workflow).
+No deploy keys needed: with an interactive `npx convex login` session, export and
+import accept `--deployment <name>` (and cross-project references like
+`jig-swap-35697:prod`). Code lands on the new deployments via CI first — the deploy
+workflow's secrets already point at them — then data follows. Run from
+`packages/backend`.
 
-7. [ ] Deploy code to the new prod, then import the old prod's data:
+7. [ ] Push code to BOTH new deployments by re-running the latest **Convex Deploy**
+       workflow runs (dev job + CI-gated prod job); confirm the logged URLs are
+       `eu-west-1` hosts (`giddy-octopus-727`, `spotted-scorpion-690`).
 
-```bash
-# Export FROM old prod (old prod key):
-CONVEX_DEPLOY_KEY=<OLD prod key> pnpm exec convex export --include-file-storage --path /tmp/prod-snapshot.zip
-
-# Push code TO new prod (new prod key), then import:
-CONVEX_DEPLOY_KEY=<NEW prod key> pnpm exec convex deploy
-CONVEX_DEPLOY_KEY=<NEW prod key> pnpm exec convex import --replace-all -y /tmp/prod-snapshot.zip
-```
-
-(This is the rehearsal import — Phase 3 re-runs the export/import for the real
-cutover so no writes are lost. If prod truly gets no traffic right now, you can
-skip the re-run and treat this as the cutover import.)
-
-8. [ ] Same for dev (old dev key → export; new dev key → deploy + import). Dev has
-       no cutover-consistency concern; once is enough:
+8. [ ] Import the data (old → new), logged-in CLI, no keys:
 
 ```bash
-CONVEX_DEPLOY_KEY=<OLD dev key> pnpm exec convex export --include-file-storage --path /tmp/dev-snapshot.zip
-CONVEX_DEPLOY_KEY=<NEW dev key> npx convex dev --once
-CONVEX_DEPLOY_KEY=<NEW dev key> pnpm exec convex import --replace-all -y /tmp/dev-snapshot.zip
+# dev (old shared dev tame-jackal-979 → new dev):
+pnpm exec convex export --include-file-storage --deployment tame-jackal-979 --path /tmp/dev-snapshot.zip
+pnpm exec convex import --deployment giddy-octopus-727 --replace-all -y /tmp/dev-snapshot.zip
+
+# prod (old project's prod → new prod):
+pnpm exec convex export --include-file-storage --deployment jig-swap-35697:prod --path /tmp/prod-snapshot.zip
+pnpm exec convex import --deployment spotted-scorpion-690 --replace-all -y /tmp/prod-snapshot.zip
 ```
+
+(The prod import is the rehearsal — Phase 3 re-runs it for the real cutover so no
+writes are lost. If prod gets no traffic right now, treat this as the cutover
+import and skip the re-run.)
 
 9. [ ] Sanity check the new prod in the dashboard: row counts look right, files
        present, crons registered (they register from the deployed code).
