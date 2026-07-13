@@ -254,6 +254,14 @@ export const gateway = {
     featuredShelf: api.social.featuredShelf.featuredShelf,
     follow: api.social.followMember.followMember,
     unfollow: api.social.unfollowMember.unfollowMember,
+    // Invite links / QR growth loop (Phase 3). getInviteContext + recordInviteLanding are PUBLIC
+    // (unauthenticated landings); the rest require the acting member.
+    myInviteLink: api.social.getMyInviteLink.getMyInviteLink,
+    resetInviteLink: api.social.resetInviteLink.resetInviteLink,
+    inviteContext: api.social.getInviteContext.getInviteContext,
+    recordInviteLanding: api.social.recordInviteLanding.recordInviteLanding,
+    redeemInvite: api.social.redeemInvite.redeemInvite,
+    acceptQrFollow: api.social.acceptQrFollow.acceptQrFollow,
     profile: api.social.getProfile.getProfile,
     publicMemberTeaser: api.social.getPublicMemberTeaser.getPublicMemberTeaser,
     // The visibility-gated read behind the redesigned public member profile page. Unauthenticated-

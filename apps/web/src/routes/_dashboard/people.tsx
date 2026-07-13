@@ -11,6 +11,7 @@ import {
   MemberTileSkeleton,
 } from "@/components/social/member-tile";
 import { ProfileEditDialog } from "@/components/social/profile-edit-dialog";
+import { QrDialog } from "@/components/social/qr-dialog";
 import { gateway, Id } from "@/gateway";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
@@ -38,6 +39,7 @@ function PeoplePage() {
   const { data: followers } = useQuery(
     convexQuery(gateway.social.followers, {}),
   );
+  const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
 
   const loading = following === undefined || followers === undefined;
 
@@ -61,13 +63,24 @@ function PeoplePage() {
     ? undefined
     : t("memberCount", { count: members.length });
   usePageHeaderActions(
-    () =>
-      headerMeta ? (
-        <span className="text-muted-foreground hidden text-sm sm:inline">
-          {headerMeta}
-        </span>
-      ) : null,
-    [headerMeta],
+    () => (
+      <div className="flex items-center gap-3">
+        {me ? (
+          <QrDialog
+            memberId={me._id}
+            displayName={me.name}
+            username={me.username}
+            avatarUrl={me.avatar}
+          />
+        ) : null}
+        {headerMeta ? (
+          <span className="text-muted-foreground hidden text-sm sm:inline">
+            {headerMeta}
+          </span>
+        ) : null}
+      </div>
+    ),
+    [headerMeta, me],
   );
 
   return (

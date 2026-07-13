@@ -63,6 +63,7 @@ export function ProfileBody({
   shelf,
   viewer,
   returnToHref,
+  invitedName,
 }: {
   profile: PublicProfileView;
   // The auth-gated featured shelf (fetched only for logged-in viewers of an
@@ -71,12 +72,16 @@ export function ProfileBody({
   viewer: ProfileViewer;
   // Round-trip target for the logged-out sign-up CTAs (public viewer only).
   returnToHref?: string;
+  // When a logged-out visitor arrives via a live invite link, reframe the top
+  // of the page as "{name} invited you to JigSwap" (Phase 3 growth loop).
+  invitedName?: string;
 }) {
   const hero = profile.hero;
   const firstName = firstNameOf(hero.displayName);
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-4 py-10">
+      {invitedName && <InvitedBanner name={invitedName} />}
       <HeroSection
         hero={hero}
         viewer={viewer}
@@ -531,6 +536,17 @@ function LockedCard({
         </Button>
       )}
     </Card>
+  );
+}
+
+// ── Invited-you banner (logged-out visitor via a live invite link) ───────────
+function InvitedBanner({ name }: { name: string }) {
+  const t = useTranslations("invite");
+  return (
+    <div className="border-jigsaw-primary/20 bg-jigsaw-primary/5 text-jigsaw-primary flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-center text-sm font-medium">
+      <Sparkles className="size-4 shrink-0" />
+      {t("invitedYou", { name })}
+    </div>
   );
 }
 

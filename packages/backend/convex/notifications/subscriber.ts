@@ -325,13 +325,16 @@ const translate = async (
 
     // --- Social ---
     case "MemberFollowed": {
-      // Approval suppression: when this edge came from approving a follow request, the
-      // followee IS the approver — they already got follow_request_received and just acted
+      // Approval suppression: when this edge came from the target APPROVING a follow request,
+      // the followee IS the approver — they already got follow_request_received and just acted
       // on it. Suppress only when the approval is fresh (10 min) so a stale approved row
       // never permanently mutes a later, genuine re-follow of the same pair.
       // Accepted tradeoff: an unfollow + instant re-follow landing inside that same
       // 10-minute post-approval window is also suppressed — indistinguishable here, and
       // rare enough that we prefer it over ever double-notifying an approver.
+      // BUT: a token flow (QR/invite) auto-approves the pending row WITHOUT the target acting —
+      // approvedViaToken marks those. There the target never approved, so we must NOT suppress:
+      // they still deserve to learn they gained a follower (S1).
       const followerId = p.followerId as string;
       const followeeId = p.followeeId as string;
       const request = await ctx.db
@@ -344,6 +347,7 @@ const translate = async (
         .first();
       if (
         request?.status === "approved" &&
+        request.approvedViaToken !== true &&
         request.respondedAt !== undefined &&
         Math.abs(event.occurredAt - request.respondedAt) < 10 * 60 * 1000
       ) {
