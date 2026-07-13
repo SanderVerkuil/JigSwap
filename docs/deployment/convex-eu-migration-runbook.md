@@ -129,9 +129,16 @@ Do these back-to-back; the freeze lasts from step 10's export until step 12.
         import), add a puzzle, upload a photo (file storage), notifications config.
 15. [ ] Clerk webhook: create a throwaway user; confirm it appears in the new prod
         `users` table.
-16. [ ] Previews: open a scrap PR; deploy + seed should target the NEW project
-        (log shows eu-west-1); close it and confirm the teardown deletes the preview
-        (teardown reads the updated `CONVEX_PROJECT_SLUG`).
+16. [x] Previews verified via scrap PRs #62/#63. ✅ 2026-07-13 Findings:
+    - First preview key pasted was dev-scoped → the CLI silently ignored
+      `--preview-name` and deployed to shared dev (the workflow's key-scoping
+      warning in action). Fixed with a real Preview key.
+    - Teardown then deleted the preview on PR close ('Deleted preview deployment
+      valiant-tapir-102') — the full cycle works.
+    - OPEN ITEM: the new `CONVEX_DEPLOY_KEY_DEV` lacks `deployment:backups:create`,
+      so the preview SEED step fails (export from dev denied). Regenerate the dev
+      key with full permissions; seeding self-heals on the next PR push (empty
+      preview → re-seed).
 17. [ ] Axiom: log events arriving from the new deployments (if used).
 
 ## Phase 5 — Cleanup (point of no return)
