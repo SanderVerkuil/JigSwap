@@ -3,6 +3,7 @@ import {
   PieceCountField,
   SectionDivider,
   SegmentedPills,
+  SuggestInput,
   TagInput,
 } from "@/components/add-puzzle";
 import { ImageEditorDialog } from "@/components/image-editor/image-editor-dialog";
@@ -45,6 +46,9 @@ export interface PuzzleDefinitionFieldsProps {
   imageStateLabel: string;
   onPickFile: (file: File | undefined) => void;
   idPrefix: string; // "se" (member) / "ae" (admin) — keeps htmlFor/id unique per page
+  publisherSuggestions?: readonly string[];
+  brandSuggestions?: readonly string[];
+  seriesSuggestions?: readonly string[];
 }
 
 const SHAPE_VALUES = ["rectangular", "panoramic", "round", "shaped"] as const;
@@ -59,6 +63,9 @@ export function PuzzleDefinitionFields({
   imageStateLabel,
   onPickFile,
   idPrefix,
+  publisherSuggestions,
+  brandSuggestions,
+  seriesSuggestions,
 }: PuzzleDefinitionFieldsProps) {
   const locale = useLocale();
   const t = useTranslations("suggestEdit");
@@ -111,10 +118,11 @@ export function PuzzleDefinitionFields({
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <Label htmlFor={`${idPrefix}-brand`}>{tf("brand.label")}</Label>
-          <Input
+          <SuggestInput
             id={`${idPrefix}-brand`}
             value={form.brand}
-            onChange={(e) => set("brand", e.target.value)}
+            onChange={(value) => set("brand", value)}
+            suggestions={brandSuggestions ?? []}
             placeholder={tf("brand.placeholder")}
           />
         </div>
@@ -122,10 +130,11 @@ export function PuzzleDefinitionFields({
           <Label htmlFor={`${idPrefix}-publisher`}>
             {tf("publisher.label")}
           </Label>
-          <Input
+          <SuggestInput
             id={`${idPrefix}-publisher`}
             value={form.publisher}
-            onChange={(e) => set("publisher", e.target.value)}
+            onChange={(value) => set("publisher", value)}
+            suggestions={publisherSuggestions ?? []}
             placeholder={tf("publisher.placeholder")}
           />
         </div>
@@ -148,10 +157,11 @@ export function PuzzleDefinitionFields({
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor={`${idPrefix}-series`}>{tf("series.label")}</Label>
-          <Input
+          <SuggestInput
             id={`${idPrefix}-series`}
             value={form.series}
-            onChange={(e) => set("series", e.target.value)}
+            onChange={(value) => set("series", value)}
+            suggestions={seriesSuggestions ?? []}
             placeholder={tf("series.placeholder")}
           />
         </div>

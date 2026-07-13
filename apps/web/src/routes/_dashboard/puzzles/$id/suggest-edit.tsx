@@ -174,6 +174,20 @@ function SuggestEditForm({
   const propose = useConvexMutation(gateway.catalog.proposeChange);
   const editProposal = useConvexMutation(gateway.catalog.editChangeProposal);
 
+  // Maker-field autocomplete suggestion pools
+  const { data: publisherSuggestions } = useQuery(
+    convexQuery(gateway.catalog.allPublishers, {}),
+  );
+  const { data: brandSuggestions } = useQuery(
+    convexQuery(gateway.catalog.allBrands, {}),
+  );
+  const { data: seriesSuggestions } = useQuery(
+    convexQuery(gateway.catalog.allSeries, {
+      brand: form.brand.trim() || undefined,
+      publisher: form.publisher.trim() || undefined,
+    }),
+  );
+
   const pendingArgs = buildProposalArgs(baseline, form, categories);
   const canSubmit = pendingArgs !== null || coverFile !== undefined;
 
@@ -249,6 +263,11 @@ function SuggestEditForm({
         }
         onPickFile={setCoverFile}
         idPrefix="se"
+        publisherSuggestions={publisherSuggestions ?? []}
+        brandSuggestions={
+          brandSuggestions?.filter((b): b is string => !!b) ?? []
+        }
+        seriesSuggestions={seriesSuggestions ?? []}
       />
 
       <SectionDivider label={t("comment.label")} />
