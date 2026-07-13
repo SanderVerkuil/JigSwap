@@ -252,6 +252,14 @@ export const gateway = {
       api.notifications.pushSubscriptions.unregisterPushSubscription,
   },
 
+  // Presence (messages page): heartbeat/list/disconnect consumed by @convex-dev/presence's
+  // usePresence hook; used to suppress message notifications for members already viewing.
+  presence: {
+    heartbeat: api.presence.heartbeat,
+    list: api.presence.list,
+    disconnect: api.presence.disconnect,
+  },
+
   // Community / Social: public profiles, follow relationships, and the activity feed. Writes go
   // through the domain-driven social module (file.export namespacing); the follower/member is
   // derived from auth, never the client. Reads return typed @jigswap/contracts view DTOs.

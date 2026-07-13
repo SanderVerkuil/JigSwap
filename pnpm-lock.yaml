@@ -387,6 +387,9 @@ importers:
       '@clerk/backend':
         specifier: ^3.11.1
         version: 3.11.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@convex-dev/presence':
+        specifier: ^0.3.2
+        version: 0.3.2(convex@1.42.1(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@clerk/react@6.12.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@jigswap/contracts':
         specifier: workspace:^
         version: link:../contracts
@@ -1132,6 +1135,20 @@ packages:
 
   '@colordx/core@5.4.3':
     resolution: {integrity: sha512-kIxYSfA5T8HXjav55UaaH/o/cKivF6jCCGIb8eqtcsfI46wsvlSiT8jMDyrl779qLec3c2c2oHBZo4oAhvbjrQ==}
+
+  '@convex-dev/presence@0.3.2':
+    resolution: {integrity: sha512-3Q4LOHW4hSDFWG8XZZv/xYya8WGbpFNEkyvxBYM6NLXTWSxc2ifw/8URRQziIhRx97v1VnSjrExntgXMGn4vLg==}
+    peerDependencies:
+      convex: ^1.24.8
+      expo-crypto: '>=14.1.0'
+      react: ~18.3.1 || ^19.0.0
+      react-dom: ~18.3.1 || ^19.0.0
+      react-native: '>=0.79.0'
+    peerDependenciesMeta:
+      expo-crypto:
+        optional: true
+      react-native:
+        optional: true
 
   '@convex-dev/react-query@0.1.0':
     resolution: {integrity: sha512-ULmBZCtAQDUePdBhUv7hj1Yy4QiCelhi6uEIOtMpjW8db6W9CFKvQwLt9heLngccFyMFfAZdOfSrT+cP4AH0Jw==}
@@ -10724,6 +10741,12 @@ snapshots:
       tslib: 2.8.1
 
   '@colordx/core@5.4.3': {}
+
+  '@convex-dev/presence@0.3.2(convex@1.42.1(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@clerk/react@6.12.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
+    dependencies:
+      convex: 1.42.1(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@clerk/react@6.12.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
+      react: 19.2.7
+      react-dom: 19.2.7(react@19.2.7)
 
   '@convex-dev/react-query@0.1.0(@tanstack/react-query@5.101.2(react@19.2.7))(convex@1.42.1(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@clerk/react@6.12.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7))':
     dependencies:
