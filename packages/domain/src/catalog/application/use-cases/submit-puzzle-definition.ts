@@ -46,6 +46,7 @@ export const makeSubmitPuzzleDefinition =
       now: deps.clock.now(),
       description: cmd.description,
       brand: cmd.brand,
+      publisher: cmd.publisher,
       artist: cmd.artist,
       series: cmd.series,
       barcodes: cmd.barcodes,

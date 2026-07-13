@@ -14,4 +14,5 @@ export * from "./proposal-status";
 export * from "./puzzle-change-proposal";
 export * from "./puzzle-definition";
 export * from "./puzzle-import-draft";
+export * from "./puzzle-searchable-text";
 export * from "./store-page-fetch-error";

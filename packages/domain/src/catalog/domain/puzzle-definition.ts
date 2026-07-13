@@ -12,6 +12,7 @@ import {
 } from "./events";
 import { CatalogCategoryId, PuzzleDefinitionId, SubmitterId } from "./ids";
 import { Difficulty, Dimensions, PieceCount, Shape } from "./piece-count";
+import { puzzleSearchableText } from "./puzzle-searchable-text";
 
 // Input to submit(): the authored product facts. Barcodes/pieceCount arrive raw and are
 // validated; the descriptive fields are plain optional strings copied straight through.
@@ -23,6 +24,7 @@ export interface SubmitPuzzleDefinitionProps {
   readonly now: Date;
   readonly description?: string;
   readonly brand?: string;
+  readonly publisher?: string;
   readonly artist?: string;
   readonly series?: string;
   readonly barcodes?: BarcodesInput;
@@ -41,6 +43,7 @@ export interface PuzzleDefinitionChanges {
   readonly pieceCount?: number;
   readonly description?: string;
   readonly brand?: string;
+  readonly publisher?: string;
   readonly artist?: string;
   readonly series?: string;
   readonly barcodes?: BarcodesInput;
@@ -60,6 +63,7 @@ export interface PuzzleDefinitionState {
   readonly title: string;
   readonly description?: string;
   readonly brand?: string;
+  readonly publisher?: string;
   readonly pieceCount: number;
   readonly artist?: string;
   readonly series?: string;
@@ -110,6 +114,7 @@ export class PuzzleDefinition {
       title: props.title.trim(),
       description: props.description,
       brand: props.brand,
+      publisher: props.publisher,
       pieceCount: pieceCount.value.value,
       artist: props.artist,
       series: props.series,
@@ -219,6 +224,7 @@ export class PuzzleDefinition {
       ...barcodeFields,
       description: changes.description ?? this.state.description,
       brand: changes.brand ?? this.state.brand,
+      publisher: changes.publisher ?? this.state.publisher,
       artist: changes.artist ?? this.state.artist,
       series: changes.series ?? this.state.series,
       dimensions: changes.dimensions ?? this.state.dimensions,
@@ -237,15 +243,7 @@ export class PuzzleDefinition {
   // demand from the searchable fields; the persistence adapter materialises it into the
   // `puzzles.searchableText` column.
   searchableText(): string {
-    return [
-      this.state.title,
-      this.state.brand,
-      this.state.artist,
-      this.state.series,
-      ...(this.state.tags ?? []),
-    ]
-      .filter((part): part is string => part !== undefined && part.length > 0)
-      .join(" ");
+    return puzzleSearchableText(this.state);
   }
 
   // Drain recorded events for the publisher; clears the buffer so a save can't double-emit.
