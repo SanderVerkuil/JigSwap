@@ -226,9 +226,11 @@ import type * as notifications_getPushConfig from "../notifications/getPushConfi
 import type * as notifications_listMyNotifications from "../notifications/listMyNotifications.js";
 import type * as notifications_markAllRead from "../notifications/markAllRead.js";
 import type * as notifications_markNotificationRead from "../notifications/markNotificationRead.js";
+import type * as notifications_preferenceValidators from "../notifications/preferenceValidators.js";
 import type * as notifications_pushSubscriptions from "../notifications/pushSubscriptions.js";
 import type * as notifications_sendEmail from "../notifications/sendEmail.js";
 import type * as notifications_sendWebPush from "../notifications/sendWebPush.js";
+import type * as notifications_setNotificationPreferences from "../notifications/setNotificationPreferences.js";
 import type * as notifications_subscriber from "../notifications/subscriber.js";
 import type * as notifications_unreadCount from "../notifications/unreadCount.js";
 import type * as notifications_updateNotificationPreference from "../notifications/updateNotificationPreference.js";
@@ -553,9 +555,11 @@ declare const fullApi: ApiFromModules<{
   "notifications/listMyNotifications": typeof notifications_listMyNotifications;
   "notifications/markAllRead": typeof notifications_markAllRead;
   "notifications/markNotificationRead": typeof notifications_markNotificationRead;
+  "notifications/preferenceValidators": typeof notifications_preferenceValidators;
   "notifications/pushSubscriptions": typeof notifications_pushSubscriptions;
   "notifications/sendEmail": typeof notifications_sendEmail;
   "notifications/sendWebPush": typeof notifications_sendWebPush;
+  "notifications/setNotificationPreferences": typeof notifications_setNotificationPreferences;
   "notifications/subscriber": typeof notifications_subscriber;
   "notifications/unreadCount": typeof notifications_unreadCount;
   "notifications/updateNotificationPreference": typeof notifications_updateNotificationPreference;
