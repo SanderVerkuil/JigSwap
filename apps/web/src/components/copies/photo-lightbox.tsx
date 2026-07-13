@@ -173,9 +173,12 @@ export function PhotoLightbox({
 
         {/* Image stage */}
         <div className="relative flex min-h-0 items-center justify-center bg-neutral-950">
+          {/* In-place magnifying glass (not a side panel): the photo is already large here, so the
+              cursor itself becomes the magnifier, confined to the image. */}
           <ImageZoom
             src={photo.url}
             alt={photo.caption ?? ""}
+            mode="lens"
             className="max-h-full max-w-full object-contain"
             wrapperClassName="flex h-full w-full items-center justify-center"
           />

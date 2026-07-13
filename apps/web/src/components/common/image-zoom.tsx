@@ -4,48 +4,63 @@ import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-// Side-panel hover zoom (e-commerce "product zoom"): hovering the image shows a lens over the
-// region under the cursor and a floating result panel — portalled to <body> so it escapes any
-// `overflow-hidden` / clipping ancestor — that renders that region magnified. Pointer-only: on
-// coarse pointers (touch) it degrades to a plain <img> with no lens/panel.
+// Hover zoom for an image, in two flavours (`mode`):
+//   - "panel" (default): e-commerce "product zoom" — a lens marks the region under the cursor and a
+//     floating result panel, portalled to <body> so it escapes any `overflow-hidden` ancestor,
+//     renders that region magnified beside the image. Good for a small cover next to other content.
+//   - "lens": an in-place magnifying glass — a circle follows the cursor over the image and shows
+//     that spot magnified under it, with no separate panel. Good when the image is already large
+//     (e.g. a lightbox) and a side panel would just get in the way.
+// Pointer-only: on coarse pointers (touch) it degrades to a plain <img>.
 //
 // object-contain aware: geometry is computed from the image's *rendered* (letterboxed) rect, so it
 // works both for a `fill` cover in a square box and for an intrinsically-sized image in a lightbox.
 
-type Active = {
-  // Lens rectangle, in px relative to the wrapper.
-  lens: { left: number; top: number; width: number; height: number };
-  // Result panel, position:fixed in viewport px + the background it paints.
-  panel: {
-    left: number;
-    top: number;
-    width: number;
-    height: number;
-    backgroundSize: string;
-    backgroundPosition: string;
-  };
-};
+const clamp = (v: number, min: number, max: number) =>
+  Math.max(min, Math.min(max, v));
+
+type Painted = { backgroundSize: string; backgroundPosition: string };
+
+type Active =
+  | {
+      mode: "panel";
+      // Region marker over the image, in px relative to the wrapper.
+      lens: { left: number; top: number; width: number; height: number };
+      // Result panel, position:fixed in viewport px.
+      panel: { left: number; top: number; size: number } & Painted;
+    }
+  | {
+      mode: "lens";
+      // Magnifier circle, in px relative to the wrapper.
+      glass: { left: number; top: number; size: number } & Painted;
+    };
 
 export function ImageZoom({
   src,
   alt,
+  mode = "panel",
   zoom = 2.5,
   panelSize = 360,
+  lensSize = 200,
   fill = false,
   className,
   wrapperClassName,
 }: {
   src: string;
   alt: string;
-  /** Magnification of the result panel relative to the displayed image. */
+  /** "panel" = side result panel; "lens" = in-place magnifying glass. */
+  mode?: "panel" | "lens";
+  /** Magnification relative to the displayed image. */
   zoom?: number;
-  /** Result panel edge length in px (square). */
+  /** Result-panel edge length in px (panel mode). */
   panelSize?: number;
+  /** Magnifier diameter in px (lens mode). */
+  lensSize?: number;
   /** Fill a positioned parent (absolute inset-0) — for cover images in an aspect box. */
   fill?: boolean;
   /** Extra classes on the <img>. */
   className?: string;
-  /** Extra classes on the relative wrapper. */
+  /** Extra classes on the wrapper. */
   wrapperClassName?: string;
 }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -92,21 +107,37 @@ export function ImageZoom({
     const fx = px / renderedW;
     const fy = py / renderedH;
 
-    // Lens covers exactly the area the panel magnifies: panel/zoom, in rendered px.
+    // The magnified backdrop: the whole rendered image scaled by `zoom`.
+    const bgW = renderedW * zoom;
+    const bgH = renderedH * zoom;
+    const wrapRect = wrapper.getBoundingClientRect();
+
+    if (mode === "lens") {
+      // Magnifying glass: a circle centred on the cursor, its content clamped so the glass is always
+      // full of image (near an edge the magnification "sticks" rather than showing empty space).
+      const posX = clamp(lensSize / 2 - fx * bgW, lensSize - bgW, 0);
+      const posY = clamp(lensSize / 2 - fy * bgH, lensSize - bgH, 0);
+      setActive({
+        mode: "lens",
+        glass: {
+          left: e.clientX - wrapRect.left - lensSize / 2,
+          top: e.clientY - wrapRect.top - lensSize / 2,
+          size: lensSize,
+          backgroundSize: `${bgW}px ${bgH}px`,
+          backgroundPosition: `${posX}px ${posY}px`,
+        },
+      });
+      return;
+    }
+
+    // Panel mode: a region marker over the image + a fixed result panel beside it.
     const lensW = Math.min(panelSize / zoom, renderedW);
     const lensH = Math.min(panelSize / zoom, renderedH);
-    const clamp = (v: number, min: number, max: number) =>
-      Math.max(min, Math.min(max, v));
     const lensCx = clamp(px, lensW / 2, renderedW - lensW / 2);
     const lensCy = clamp(py, lensH / 2, renderedH - lensH / 2);
-    const wrapRect = wrapper.getBoundingClientRect();
     const lensLeft = box.left + offsetX + lensCx - lensW / 2 - wrapRect.left;
     const lensTop = box.top + offsetY + lensCy - lensH / 2 - wrapRect.top;
 
-    // Background: paint the whole rendered image scaled by `zoom`, positioned so the point under the
-    // cursor sits at the panel centre (clamped so the panel never shows past the image edges).
-    const bgW = renderedW * zoom;
-    const bgH = renderedH * zoom;
     const posX = clamp(panelSize / 2 - fx * bgW, panelSize - bgW, 0);
     const posY = clamp(panelSize / 2 - fy * bgH, panelSize - bgH, 0);
 
@@ -120,17 +151,20 @@ export function ImageZoom({
     const panelTop = clamp(box.top, 8, Math.max(8, vh - panelSize - 8));
 
     setActive({
+      mode: "panel",
       lens: { left: lensLeft, top: lensTop, width: lensW, height: lensH },
       panel: {
         left: panelLeft,
         top: panelTop,
-        width: panelSize,
-        height: panelSize,
+        size: panelSize,
         backgroundSize: `${bgW}px ${bgH}px`,
         backgroundPosition: `${posX}px ${posY}px`,
       },
     });
   };
+
+  const cursorClass =
+    mode === "lens" ? "cursor-none" : finePointer && "cursor-zoom-in";
 
   return (
     <div
@@ -145,14 +179,15 @@ export function ImageZoom({
         decoding="async"
         className={cn(
           fill && "h-full w-full object-contain",
-          finePointer && "cursor-zoom-in",
+          finePointer && cursorClass,
           className,
         )}
         onMouseMove={finePointer ? onMove : undefined}
         onMouseLeave={clear}
       />
 
-      {active && (
+      {/* Panel mode: region marker over the image. */}
+      {active?.mode === "panel" && (
         <span
           aria-hidden
           className="border-jigsaw-primary/70 pointer-events-none absolute border bg-white/20"
@@ -165,7 +200,8 @@ export function ImageZoom({
         />
       )}
 
-      {active &&
+      {/* Panel mode: floating result panel, portalled past clipping ancestors. */}
+      {active?.mode === "panel" &&
         createPortal(
           <div
             aria-hidden
@@ -173,8 +209,8 @@ export function ImageZoom({
             style={{
               left: active.panel.left,
               top: active.panel.top,
-              width: active.panel.width,
-              height: active.panel.height,
+              width: active.panel.size,
+              height: active.panel.size,
               backgroundImage: `url(${src})`,
               backgroundSize: active.panel.backgroundSize,
               backgroundPosition: active.panel.backgroundPosition,
@@ -182,6 +218,23 @@ export function ImageZoom({
           />,
           document.body,
         )}
+
+      {/* Lens mode: in-place magnifying glass following the cursor. */}
+      {active?.mode === "lens" && (
+        <span
+          aria-hidden
+          className="border-border/80 pointer-events-none absolute rounded-full border-2 bg-no-repeat shadow-xl ring-1 ring-black/20"
+          style={{
+            left: active.glass.left,
+            top: active.glass.top,
+            width: active.glass.size,
+            height: active.glass.size,
+            backgroundImage: `url(${src})`,
+            backgroundSize: active.glass.backgroundSize,
+            backgroundPosition: active.glass.backgroundPosition,
+          }}
+        />
+      )}
     </div>
   );
 }
