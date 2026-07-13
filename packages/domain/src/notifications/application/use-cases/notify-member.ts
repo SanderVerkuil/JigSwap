@@ -61,6 +61,7 @@ export const makeNotifyMember =
         type: cmd.type,
         title: cmd.title,
         message: cmd.message,
+        params: cmd.params,
         relatedId: cmd.relatedId,
         channel,
         now,

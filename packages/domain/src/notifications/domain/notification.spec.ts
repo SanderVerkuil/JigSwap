@@ -65,6 +65,20 @@ describe("Notification.create", () => {
     // rehydrate must not re-emit creation events.
     expect(back.pullEvents()).toEqual([]);
   });
+
+  it("carries params through create/toState/rehydrate", () => {
+    const notification = Notification.create({
+      id: toNotificationId("n-1"),
+      userId: toMemberId("alice"),
+      type: "trade_request",
+      params: { actorName: "Bob" },
+      channel: "inApp",
+      now: new Date("2026-06-08T10:00:00Z"),
+    });
+    expect(notification.toState().params).toEqual({ actorName: "Bob" });
+    const rehydrated = Notification.rehydrate(notification.toState());
+    expect(rehydrated.toState().params).toEqual({ actorName: "Bob" });
+  });
 });
 
 describe("Notification.markRead", () => {
