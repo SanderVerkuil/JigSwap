@@ -8,6 +8,7 @@ export * from "./extract-puzzle-draft";
 export * from "./ids";
 export * from "./image-format";
 export * from "./is-private-ip";
+export * from "./known-publishers";
 export * from "./normalize-store-url";
 export * from "./piece-count";
 export * from "./proposal-status";
