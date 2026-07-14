@@ -6,10 +6,11 @@ import {
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { makeNotify } from "./adapters/makeNotify";
+import { isViewingMessages } from "./presenceGate";
 
 // The Notifications subscriber: the bridge from other contexts' event LANGUAGE to member-facing
 // notifications. Given a recorded domainEvents row, it enriches via DB reads (to resolve the right
-// recipient + relatedId), pre-renders title/message, and calls NotifyMember once per recipient.
+// recipient + relatedId + copy params), and calls NotifyMember once per recipient.
 // NotifyMember itself gates on the member's preferences (suppression lives there, not here).
 //
 // WHY here and not inline in each context: this keeps Notifications a decoupled subscriber — the
@@ -26,6 +27,16 @@ export const handleDomainEvent = async (
 };
 
 const asMember = (id: string): MemberId => toMemberId(id);
+
+// Resolve a member's display name for copy params. Missing user/name ⇒ no param (renderers have
+// locale-appropriate fallbacks), never a thrown error — copy must not break delivery.
+const memberName = async (
+  ctx: MutationCtx,
+  id: string | Id<"users">,
+): Promise<Record<string, string>> => {
+  const user = await ctx.db.get(id as Id<"users">);
+  return user?.name ? { actorName: user.name } : {};
+};
 
 // Resolve the persisted exchange row from its ExchangeId aggregateId so we can address the real
 // parties and use the Convex `_id` as the notification's relatedId (matching the old inline wording
@@ -101,70 +112,33 @@ const translate = async (
         cmd(
           row.recipientId,
           "trade_request",
-          "New Exchange Request",
-          "Someone wants to trade for one of your puzzles",
           row._id,
+          await memberName(ctx, row.initiatorId),
         ),
       ];
     }
     case "ExchangeAccepted": {
       const row = await loadExchange(ctx, p.exchangeId as string);
       if (!row) return [];
-      return [
-        cmd(
-          row.initiatorId,
-          "trade_accepted",
-          "Exchange Accepted",
-          "Your trade request has been accepted!",
-          row._id,
-        ),
-      ];
+      return [cmd(row.initiatorId, "trade_accepted", row._id)];
     }
     case "ExchangeRejected": {
       const row = await loadExchange(ctx, p.exchangeId as string);
       if (!row) return [];
-      return [
-        cmd(
-          row.initiatorId,
-          "trade_declined",
-          "Exchange Declined",
-          "Your trade request has been declined",
-          row._id,
-        ),
-      ];
+      return [cmd(row.initiatorId, "trade_declined", row._id)];
     }
     case "ExchangeCancelled": {
       const row = await loadExchange(ctx, p.exchangeId as string);
       if (!row) return [];
-      return [
-        cmd(
-          row.recipientId,
-          "trade_cancelled",
-          "Exchange Cancelled",
-          "Exchange request has been cancelled",
-          row._id,
-        ),
-      ];
+      return [cmd(row.recipientId, "trade_cancelled", row._id)];
     }
     case "ExchangeCompleted": {
       const row = await loadExchange(ctx, p.exchangeId as string);
       if (!row) return [];
       // The event carries no actor; notify both parties (each gets "the other party" signal).
       return [
-        cmd(
-          row.initiatorId,
-          "trade_completed",
-          "Exchange Completed",
-          "Exchange has been marked as completed",
-          row._id,
-        ),
-        cmd(
-          row.recipientId,
-          "trade_completed",
-          "Exchange Completed",
-          "Exchange has been marked as completed",
-          row._id,
-        ),
+        cmd(row.initiatorId, "trade_completed", row._id),
+        cmd(row.recipientId, "trade_completed", row._id),
       ];
     }
     case "DisputeRaised": {
@@ -176,15 +150,7 @@ const translate = async (
         (raisedBy as unknown as Id<"users">) === row.initiatorId
           ? row.recipientId
           : row.initiatorId;
-      return [
-        cmd(
-          counterparty,
-          "exchange_disputed",
-          "Exchange Disputed",
-          "The other party has flagged an issue with your exchange",
-          row._id,
-        ),
-      ];
+      return [cmd(counterparty, "exchange_disputed", row._id)];
     }
 
     // --- Conversation ---
@@ -195,17 +161,22 @@ const translate = async (
       if (authorId === null || authorId === undefined) return [];
       const thread = await loadThread(ctx, p.threadId as string);
       if (!thread) return [];
-      return thread.participants
-        .filter((participant) => (participant as string) !== authorId)
-        .map((participant) =>
-          cmd(
-            participant,
-            "message_received",
-            "New message",
-            "You have a new message",
-            thread.aggregateId,
-          ),
-        );
+      const author = await memberName(ctx, authorId);
+      const recipients = thread.participants.filter(
+        (participant) => (participant as string) !== authorId,
+      );
+      // Presence suppression: a recipient already on /messages sees the message live (plus an
+      // in-tab toast) — creating a bell row or emailing them would double-notify. Fail-open:
+      // a presence error delivers normally.
+      const absent: typeof recipients = [];
+      for (const participant of recipients) {
+        if (!(await isViewingMessages(ctx, participant as string))) {
+          absent.push(participant);
+        }
+      }
+      return absent.map((participant) =>
+        cmd(participant, "message_received", thread.aggregateId, author),
+      );
     }
 
     // --- Solving ---
@@ -213,26 +184,16 @@ const translate = async (
       const goal = await loadGoal(ctx, p.goalId as string);
       if (!goal) return [];
       return [
-        cmd(
-          goal.userId,
-          "goal_achieved",
-          "Goal Achieved",
-          `You reached your goal "${goal.title}"!`,
-          goal._id,
-        ),
+        cmd(goal.userId, "goal_achieved", goal._id, {
+          goalTitle: goal.title,
+        }),
       ];
     }
 
     // --- Reputation ---
     case "PartnerReviewSubmitted": {
       return [
-        cmd(
-          p.revieweeId as string,
-          "review_received",
-          "New Review",
-          "You received a new partner review",
-          p.reviewId as string,
-        ),
+        cmd(p.revieweeId as string, "review_received", p.reviewId as string),
       ];
     }
 
@@ -241,39 +202,27 @@ const translate = async (
       const puzzle = await loadPuzzle(ctx, p.puzzleDefinitionId as string);
       if (!puzzle) return [];
       return [
-        cmd(
-          puzzle.submittedBy,
-          "puzzle_approved",
-          "Puzzle Approved",
-          `Your submission "${puzzle.title}" was approved`,
-          puzzle._id,
-        ),
+        cmd(puzzle.submittedBy, "puzzle_approved", puzzle._id, {
+          puzzleTitle: puzzle.title,
+        }),
       ];
     }
     case "PuzzleDefinitionRejected": {
       const puzzle = await loadPuzzle(ctx, p.puzzleDefinitionId as string);
       if (!puzzle) return [];
       return [
-        cmd(
-          puzzle.submittedBy,
-          "puzzle_rejected",
-          "Puzzle Rejected",
-          `Your submission "${puzzle.title}" was rejected`,
-          puzzle._id,
-        ),
+        cmd(puzzle.submittedBy, "puzzle_rejected", puzzle._id, {
+          puzzleTitle: puzzle.title,
+        }),
       ];
     }
     case "ChangeProposalApproved": {
       const puzzle = await loadPuzzle(ctx, p.puzzleDefinitionId as string);
       if (!puzzle) return [];
       return [
-        cmd(
-          p.proposedBy as string,
-          "proposal_approved",
-          "Suggestion Applied",
-          `Your suggested edit to "${puzzle.title}" was approved`,
-          puzzle._id,
-        ),
+        cmd(p.proposedBy as string, "proposal_approved", puzzle._id, {
+          puzzleTitle: puzzle.title,
+        }),
       ];
     }
     case "ChangeProposalRejected": {
@@ -281,15 +230,10 @@ const translate = async (
       if (!puzzle) return [];
       const reason = p.reason as string | undefined;
       return [
-        cmd(
-          p.proposedBy as string,
-          "proposal_rejected",
-          "Suggestion Declined",
-          reason
-            ? `Your suggested edit to "${puzzle.title}" was declined: ${reason}`
-            : `Your suggested edit to "${puzzle.title}" was declined`,
-          puzzle._id,
-        ),
+        cmd(p.proposedBy as string, "proposal_rejected", puzzle._id, {
+          puzzleTitle: puzzle.title,
+          ...(reason ? { reason } : {}),
+        }),
       ];
     }
     case "ChangeProposalFiled": {
@@ -299,11 +243,8 @@ const translate = async (
         cmd(
           admin._id,
           "admin_proposal_filed",
-          "Suggestion to Review",
-          puzzle
-            ? `A member suggested an edit to "${puzzle.title}"`
-            : "A member suggested an edit to a catalogue puzzle",
           p.changeProposalId as string, // the review route's param — no lookup needed
+          puzzle ? { puzzleTitle: puzzle.title } : {},
         ),
       );
     }
@@ -314,11 +255,8 @@ const translate = async (
         cmd(
           admin._id,
           "admin_definition_submitted",
-          "Submission to Moderate",
-          puzzle
-            ? `"${puzzle.title}" awaits moderation`
-            : "A new puzzle submission awaits moderation",
           puzzle?._id ?? (p.puzzleDefinitionId as string),
+          puzzle ? { puzzleTitle: puzzle.title } : {},
         ),
       );
     }
@@ -357,9 +295,8 @@ const translate = async (
         cmd(
           followeeId,
           "new_follower",
-          "New follower",
-          "Someone started following you",
           followerId, // the follower's users _id; the UI deep-links to /people
+          await memberName(ctx, followerId),
         ),
       ];
     }
@@ -368,9 +305,8 @@ const translate = async (
         cmd(
           p.targetId as string,
           "follow_request_received",
-          "Follow request",
-          "Someone asked to follow you",
           p.requesterId as string,
+          await memberName(ctx, p.requesterId as string),
         ),
       ];
     }
@@ -379,9 +315,8 @@ const translate = async (
         cmd(
           p.requesterId as string,
           "follow_request_approved",
-          "Request approved",
-          "Your follow request was approved",
           p.targetId as string,
+          await memberName(ctx, p.targetId as string),
         ),
       ];
     }
@@ -393,17 +328,17 @@ const translate = async (
 };
 
 // Build a NotifyMemberCommand. `recipient` is a user id (string or Convex Id); relatedId points at
-// the upstream entity's Convex `_id` (opaque to Notifications).
+// the upstream entity's Convex `_id` (opaque to Notifications); `params` carries the render-ready
+// values for this type's copy (contract documented in notifications/copy.ts) — rendering happens at
+// the edges (web i18n, email templates, push copy table), never here.
 const cmd = (
   recipient: string | Id<"users">,
   type: NotifyMemberCommand["type"],
-  title: string,
-  message: string,
   relatedId: string,
+  params: Record<string, string> = {},
 ): NotifyMemberCommand => ({
   memberId: asMember(recipient as string),
   type,
-  title,
-  message,
+  params,
   relatedId,
 });

@@ -1,0 +1,23 @@
+{
+  "name": "@jigswap/email",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "mutation": "stryker run"
+  },
+  "dependencies": {
+    "@jigswap/domain": "workspace:^",
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.1.0",
+    "react": "19.2.7"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "vitest": "^4.1.10"
+  }
+}

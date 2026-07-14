@@ -1,12 +1,17 @@
 import { useRouter } from "@/compat/navigation";
 import { SectionDivider } from "@/components/add-puzzle";
+import { FormContextPanel } from "@/components/catalog/form-context-panel";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
-import { PuzzleDefinitionFields } from "@/components/suggest-edit/definition-fields";
+import {
+  CoverImageField,
+  PuzzleDefinitionFields,
+} from "@/components/suggest-edit/definition-fields";
 import {
   buildProposalArgs,
   formFromView,
   overlayProposal,
+  pendingChanges,
   type ProposalFormState,
   type StoredProposalChanges,
 } from "@/components/suggest-edit/proposal-diff";
@@ -246,59 +251,86 @@ function SuggestEditForm({
     (form.newImageStorageId ? openProposal?.proposedImageUrl : undefined) ??
     view.image ??
     undefined;
+  const imageStateLabel =
+    coverFile || form.newImageStorageId
+      ? t("proposedImage")
+      : t("currentImage");
+
+  // Rendered twice — inline below `lg:` (its position today) and again inside the sticky
+  // context panel at `lg:` — via the CSS-only hidden/visible split below, not two hand-written
+  // copies: same element, same handlers, mounted at two DOM positions.
+  const actionsRow = (
+    <div className="flex items-center justify-end gap-2">
+      {!canSubmit && (
+        <span className="text-muted-foreground text-sm">{t("noChanges")}</span>
+      )}
+      <Button variant="outline" onClick={() => router.push(`/puzzles/${id}`)}>
+        {t("cancel")}
+      </Button>
+      <Button
+        variant="brand"
+        disabled={!canSubmit || submit.isPending}
+        onClick={() => submit.mutate()}
+      >
+        {submit.isPending
+          ? t("submitting")
+          : t(openProposal ? "update" : "submit")}
+      </Button>
+    </div>
+  );
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-      <PuzzleDefinitionFields
-        form={form}
-        set={set}
-        categories={categories}
-        difficultySeed={view.difficulty ?? ""}
-        shapeSeed={view.shape ?? ""}
-        currentImageUrl={currentImageUrl}
-        imageStateLabel={
-          coverFile || form.newImageStorageId
-            ? t("proposedImage")
-            : t("currentImage")
-        }
-        onPickFile={setCoverFile}
-        idPrefix="se"
-        publisherSuggestions={publisherSuggestions ?? []}
-        brandSuggestions={
-          brandSuggestions?.filter((b): b is string => !!b) ?? []
-        }
-        seriesSuggestions={seriesSuggestions ?? []}
-      />
+    <div className="grid gap-10 lg:grid-cols-[minmax(0,42rem)_minmax(280px,22rem)]">
+      <div className="flex w-full flex-col gap-6">
+        <PuzzleDefinitionFields
+          form={form}
+          set={set}
+          categories={categories}
+          difficultySeed={view.difficulty ?? ""}
+          shapeSeed={view.shape ?? ""}
+          idPrefix="se"
+          publisherSuggestions={publisherSuggestions ?? []}
+          brandSuggestions={
+            brandSuggestions?.filter((b): b is string => !!b) ?? []
+          }
+          seriesSuggestions={seriesSuggestions ?? []}
+        />
 
-      <SectionDivider label={t("comment.label")} />
+        <div className="lg:hidden">
+          <CoverImageField
+            currentImageUrl={currentImageUrl}
+            imageStateLabel={imageStateLabel}
+            onPickFile={setCoverFile}
+          />
+        </div>
 
-      <Textarea
-        aria-label={t("comment.label")}
-        value={form.comment}
-        onChange={(e) => set("comment", e.target.value)}
-        placeholder={t("comment.placeholder")}
-        rows={2}
-      />
+        <SectionDivider label={t("comment.label")} />
 
-      <div className="flex items-center justify-end gap-2">
-        {!canSubmit && (
-          <span className="text-muted-foreground text-sm">
-            {t("noChanges")}
-          </span>
-        )}
-        <Button variant="outline" onClick={() => router.push(`/puzzles/${id}`)}>
-          {t("cancel")}
-        </Button>
-        <Button
-          variant="brand"
-          disabled={!canSubmit || submit.isPending}
-          onClick={() => submit.mutate()}
-        >
-          {submit.isPending
-            ? t("submitting")
-            : t(openProposal ? "update" : "submit")}
-        </Button>
+        <Textarea
+          aria-label={t("comment.label")}
+          value={form.comment}
+          onChange={(e) => set("comment", e.target.value)}
+          placeholder={t("comment.placeholder")}
+          rows={2}
+        />
+
+        <div className="lg:hidden">{actionsRow}</div>
       </div>
+
+      <aside className="hidden lg:sticky lg:top-2 lg:block lg:self-start">
+        <FormContextPanel
+          image={
+            <CoverImageField
+              variant="panel"
+              currentImageUrl={currentImageUrl}
+              imageStateLabel={imageStateLabel}
+              onPickFile={setCoverFile}
+            />
+          }
+          changes={pendingChanges(pendingArgs, coverFile !== undefined)}
+          actions={actionsRow}
+        />
+      </aside>
     </div>
   );
 }

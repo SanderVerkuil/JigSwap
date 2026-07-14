@@ -47,8 +47,6 @@ export const confirmPhotoRemoval = mutation({
     await notify({
       memberId: toMemberId(row.uploaderId),
       type: "photo_removed",
-      title: "Photo removed",
-      message: "One of your puzzle photos was removed by a moderator.",
       relatedId: row.ownedPuzzleId,
     });
   },

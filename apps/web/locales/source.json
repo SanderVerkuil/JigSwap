@@ -1549,16 +1549,30 @@
     "empty": "No notifications yet",
     "emptyHint": "Trade activity, reviews, and goal milestones will show up here.",
     "unread": "Unread",
+    "unreadStat": "Unread",
+    "filterAll": "All",
+    "unreadOnly": "Unread only",
+    "pushOnDevice": "Push on this device: {state}",
+    "pushStateOn": "On",
+    "pushStateOff": "Off",
+    "clearFilters": "Clear filters",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "earlier": "Earlier",
+    "newMessageToast": "New message from {name}",
+    "newMessageToastOpen": "Open",
     "preferences": "Notification preferences",
     "preferencesTitle": "Notification preferences",
     "preferencesSubtitle": "Choose how you want to hear about each kind of activity.",
     "preferencesUpdated": "Preferences updated",
     "preferencesError": "Could not update the preference. Please try again.",
     "backToNotifications": "Back to notifications",
+    "jumpTo": "Jump to",
     "channelInApp": "In-app",
     "channelEmail": "Email",
     "channelPush": "Push",
-    "channelsNote": "In-app notifications are delivered instantly. Push is delivered to your browser (you'll be asked for permission). Email delivery is not yet available.",
+    "channelsNote": "In-app notifications are delivered instantly. Push is delivered to your browser (you'll be asked for permission). Email is available for selected notification types.",
+    "emailUnavailable": "Email is not available for this notification type",
     "notificationType": "Notification",
     "types": {
       "trade_request": "Trade requests",
@@ -1582,6 +1596,28 @@
       "new_follower": "New followers",
       "follow_request_received": "Follow requests",
       "follow_request_approved": "Follow request approved"
+    },
+    "categories": {
+      "trades": {
+        "title": "Trades",
+        "description": "Requests, accepts, declines, completions and disputes"
+      },
+      "messages": {
+        "title": "Messages",
+        "description": "Direct messages from other members"
+      },
+      "social": {
+        "title": "Social",
+        "description": "Followers, follow requests, reviews, favorites and goals"
+      },
+      "submissions": {
+        "title": "My submissions",
+        "description": "Outcomes of your puzzle submissions and suggested edits"
+      },
+      "admin": {
+        "title": "Admin",
+        "description": "Items awaiting moderation or review"
+      }
     },
     "copy": {
       "trade_request": {
@@ -1817,6 +1853,7 @@
       "created": "Goal created",
       "createError": "Could not create the goal. Please try again.",
       "progress": "{current} of {target} completions",
+      "active": "Active",
       "achieved": "Achieved",
       "dueBy": "Due by {date}",
       "activeCount": "{count} active",
@@ -2864,6 +2901,8 @@
     "proposedImage": "Proposed image",
     "replaceImage": "Replace image",
     "editImage": "Edit photo",
+    "changesHeading": "Changes ({count})",
+    "noChangesYet": "No changes yet",
     "keepCategory": "Keep current category",
     "submit": "Submit suggestion",
     "update": "Update suggestion",
@@ -3155,9 +3194,11 @@
         "withdrawn": "Withdrawn"
       },
       "conflictBanner": "The puzzle changed since this was proposed. Marked fields no longer match what the proposer saw.",
+      "conflictCount": "{count, plural, one {# field has a conflict} other {# fields have conflicts}}",
       "fieldsChanged": "{count, plural, one {# field changed} other {# fields changed}}",
       "proposedBy": "by {name}",
       "comment": "Proposer's note",
+      "field": "Field",
       "current": "Current",
       "proposed": "Proposed",
       "imageCompare": {

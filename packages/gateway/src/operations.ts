@@ -242,12 +242,22 @@ export const gateway = {
     updatePreference:
       api.notifications.updateNotificationPreference
         .updateNotificationPreference,
+    setPreferences:
+      api.notifications.setNotificationPreferences.setNotificationPreferences,
     // Native Web Push: the client reads the (non-secret) VAPID public key, then registers /
     // unregisters its PushManager subscription as the member toggles push.
     pushConfig: api.notifications.getPushConfig.getPushConfig,
     registerPush: api.notifications.pushSubscriptions.registerPushSubscription,
     unregisterPush:
       api.notifications.pushSubscriptions.unregisterPushSubscription,
+  },
+
+  // Presence (messages page): heartbeat/list/disconnect consumed by @convex-dev/presence's
+  // usePresence hook; used to suppress message notifications for members already viewing.
+  presence: {
+    heartbeat: api.presence.heartbeat,
+    list: api.presence.list,
+    disconnect: api.presence.disconnect,
   },
 
   // Community / Social: public profiles, follow relationships, and the activity feed. Writes go

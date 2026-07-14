@@ -103,7 +103,7 @@ describe("admin review notifications", () => {
       isFiled,
     );
     expect(adminNotifications).toHaveLength(1);
-    expect(adminNotifications[0]?.message).toContain("Mountain Vista");
+    expect(adminNotifications[0]?.params?.puzzleTitle).toBe("Mountain Vista");
     expect(adminNotifications[0]?.relatedId).toBe(proposalId);
 
     expect((await notificationsFor(t, bob)).filter(isFiled)).toEqual([]);
@@ -125,7 +125,7 @@ describe("admin review notifications", () => {
       isSubmitted,
     );
     expect(adminNotifications).toHaveLength(1);
-    expect(adminNotifications[0]?.message).toContain("Desert Ruins");
+    expect(adminNotifications[0]?.params?.puzzleTitle).toBe("Desert Ruins");
 
     expect((await notificationsFor(t, bob)).filter(isSubmitted)).toEqual([]);
   });

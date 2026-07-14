@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { useLocale, useTranslations } from "use-intl";
@@ -28,7 +29,9 @@ import type { ProposalFormState } from "./proposal-diff";
 // the caller's ProposalFormState; labels come from the existing forms.puzzle-form namespace
 // (plus suggestEdit.replaceImage for the image control). The difficulty/shape pills are
 // SEEDED with the definition's current value for display, but only onChange writes form
-// state — an untouched pill therefore never produces a diff.
+// state — an untouched pill therefore never produces a diff. The cover-image field lives in
+// the sibling `CoverImageField` below (both pages render it separately so it can relocate
+// into their sticky context panel at `lg:`).
 export interface PuzzleDefinitionFieldsProps {
   form: ProposalFormState;
   set: <K extends keyof ProposalFormState>(
@@ -42,9 +45,6 @@ export interface PuzzleDefinitionFieldsProps {
   }[];
   difficultySeed: ProposalFormState["difficulty"];
   shapeSeed: ProposalFormState["shape"];
-  currentImageUrl: string | undefined;
-  imageStateLabel: string;
-  onPickFile: (file: File | undefined) => void;
   idPrefix: string; // "se" (member) / "ae" (admin) — keeps htmlFor/id unique per page
   publisherSuggestions?: readonly string[];
   brandSuggestions?: readonly string[];
@@ -59,9 +59,6 @@ export function PuzzleDefinitionFields({
   categories,
   difficultySeed,
   shapeSeed,
-  currentImageUrl,
-  imageStateLabel,
-  onPickFile,
   idPrefix,
   publisherSuggestions,
   brandSuggestions,
@@ -73,20 +70,6 @@ export function PuzzleDefinitionFields({
 
   const categoryName = (c: (typeof categories)[number]) =>
     locale === "nl" ? c.name.nl : c.name.en;
-
-  // Both the file-pick and the "Edit photo" (re-edit current image) paths route through
-  // the same editor dialog. `revoke` marks whether `src` is an object URL we created (fresh
-  // pick) that must be released, vs. the existing stored image URL (re-edit), which we don't own.
-  const [editing, setEditing] = useState<{
-    src: string;
-    fileName: string;
-    revoke: boolean;
-  } | null>(null);
-
-  const closeEditor = () => {
-    if (editing?.revoke) URL.revokeObjectURL(editing.src);
-    setEditing(null);
-  };
 
   return (
     <>
@@ -298,18 +281,74 @@ export function PuzzleDefinitionFields({
           />
         </div>
       </div>
+    </>
+  );
+}
 
+// The cover-image field, split out of PuzzleDefinitionFields so both edit pages can
+// position it independently: inline in the field stack below `lg:` (variant="inline",
+// today's size-24 thumbnail) and again inside the sticky context panel at `lg:`
+// (variant="panel", a larger preview) — same control, same dialog wiring, defined once.
+// Both instances are mounted simultaneously; only one is visible per breakpoint via the
+// caller's `hidden lg:block` / `lg:hidden` wrapper, so their independent `editing` state
+// never matters (the hidden instance's trigger is inert, being `display: none`).
+export interface CoverImageFieldProps {
+  currentImageUrl: string | undefined;
+  imageStateLabel: string;
+  onPickFile: (file: File | undefined) => void;
+  variant?: "inline" | "panel";
+}
+
+export function CoverImageField({
+  currentImageUrl,
+  imageStateLabel,
+  onPickFile,
+  variant = "inline",
+}: CoverImageFieldProps) {
+  const t = useTranslations("suggestEdit");
+  const tf = useTranslations("forms.puzzle-form");
+  const panel = variant === "panel";
+
+  // Both the file-pick and the "Edit photo" (re-edit current image) paths route through
+  // the same editor dialog. `revoke` marks whether `src` is an object URL we created (fresh
+  // pick) that must be released, vs. the existing stored image URL (re-edit), which we don't own.
+  const [editing, setEditing] = useState<{
+    src: string;
+    fileName: string;
+    revoke: boolean;
+  } | null>(null);
+
+  const closeEditor = () => {
+    if (editing?.revoke) URL.revokeObjectURL(editing.src);
+    setEditing(null);
+  };
+
+  return (
+    <>
       <SectionDivider label={tf("image.label")} />
 
-      <div className="flex items-center gap-4">
+      <div
+        className={cn(
+          "flex items-center gap-4",
+          panel && "flex-col items-start",
+        )}
+      >
         {currentImageUrl ? (
           <img
             src={currentImageUrl}
             alt=""
-            className="size-24 rounded-lg border object-cover"
+            className={cn(
+              "rounded-lg border object-cover",
+              panel ? "aspect-square w-full" : "size-24",
+            )}
           />
         ) : (
-          <div className="bg-muted size-24 rounded-lg border" />
+          <div
+            className={cn(
+              "bg-muted rounded-lg border",
+              panel ? "aspect-square w-full" : "size-24",
+            )}
+          />
         )}
         <div className="flex flex-col gap-1">
           <span className="text-muted-foreground text-xs">

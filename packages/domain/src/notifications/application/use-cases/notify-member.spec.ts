@@ -46,8 +46,7 @@ const cmd = (
 ) => ({
   memberId: alice,
   type: "trade_request" as const,
-  title: "New trade request",
-  message: "Bob wants your puzzle",
+  params: { actorName: "Bob" },
   ...overrides,
 });
 
@@ -154,6 +153,33 @@ describe("makeNotifyMember", () => {
     await notifyMember(cmd({ relatedId: "exchange-42" }));
     const [stored] = await notifications.listByUser(alice);
     expect(stored.toState().relatedId).toBe("exchange-42");
+  });
+
+  it("never delivers email for a type outside EMAIL_ELIGIBLE_TYPES, even when opted in", async () => {
+    const pref = NotificationPreference.createDefault(prefId(), alice, NOW);
+    pref.enable("puzzle_approved", "email", NOW);
+    pref.pullEvents();
+    await preferences.save(pref);
+
+    const notifyMember = makeNotifyMember(deps);
+    const result = await notifyMember(
+      cmd({ type: "puzzle_approved" as const }),
+    );
+
+    expect(result.isOk).toBe(true);
+    // Only inApp delivers — email is ineligible for moderation outcomes regardless of preference.
+    expect(delivery.channels()).toEqual(["inApp"]);
+  });
+
+  it("still delivers email for an eligible type when opted in", async () => {
+    const pref = NotificationPreference.createDefault(prefId(), alice, NOW);
+    pref.enable("message_received", "email", NOW);
+    pref.pullEvents();
+    await preferences.save(pref);
+
+    const notifyMember = makeNotifyMember(deps);
+    await notifyMember(cmd({ type: "message_received" as const }));
+    expect(delivery.channels().sort()).toEqual(["email", "inApp"]);
   });
 });
 

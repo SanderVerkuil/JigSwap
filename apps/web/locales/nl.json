@@ -1549,16 +1549,30 @@
     "empty": "Nog geen meldingen",
     "emptyHint": "Ruilactiviteit, beoordelingen en doelmijlpalen verschijnen hier.",
     "unread": "Ongelezen",
+    "unreadStat": "Ongelezen",
+    "filterAll": "Alle",
+    "unreadOnly": "Alleen ongelezen",
+    "pushOnDevice": "Push op dit apparaat: {state}",
+    "pushStateOn": "Aan",
+    "pushStateOff": "Uit",
+    "clearFilters": "Filters wissen",
+    "today": "Vandaag",
+    "yesterday": "Gisteren",
+    "earlier": "Eerder",
+    "newMessageToast": "Nieuw bericht van {name}",
+    "newMessageToastOpen": "Openen",
     "preferences": "Meldingsvoorkeuren",
     "preferencesTitle": "Meldingsvoorkeuren",
     "preferencesSubtitle": "Kies hoe je over elk soort activiteit op de hoogte wilt blijven.",
     "preferencesUpdated": "Voorkeuren bijgewerkt",
     "preferencesError": "Kon de voorkeur niet bijwerken. Probeer het opnieuw.",
     "backToNotifications": "Terug naar meldingen",
+    "jumpTo": "Ga naar",
     "channelInApp": "In-app",
     "channelEmail": "E-mail",
     "channelPush": "Push",
-    "channelsNote": "In-app meldingen worden direct bezorgd. Push wordt naar je browser gestuurd (je wordt om toestemming gevraagd). E-mailbezorging is nog niet beschikbaar.",
+    "channelsNote": "In-app meldingen worden direct bezorgd. Push wordt naar je browser gestuurd (je wordt om toestemming gevraagd). E-mail is beschikbaar voor geselecteerde meldingstypen.",
+    "emailUnavailable": "E-mail is niet beschikbaar voor dit meldingstype",
     "notificationType": "Melding",
     "types": {
       "trade_request": "Ruilverzoeken",
@@ -1582,6 +1596,28 @@
       "new_follower": "Nieuwe volgers",
       "follow_request_received": "Volgverzoeken",
       "follow_request_approved": "Volgverzoek goedgekeurd"
+    },
+    "categories": {
+      "trades": {
+        "title": "Uitwisselingen",
+        "description": "Verzoeken, acceptaties, afwijzingen, afrondingen en geschillen"
+      },
+      "messages": {
+        "title": "Berichten",
+        "description": "Directe berichten van andere leden"
+      },
+      "social": {
+        "title": "Sociaal",
+        "description": "Volgers, volgverzoeken, beoordelingen, favorieten en doelen"
+      },
+      "submissions": {
+        "title": "Mijn inzendingen",
+        "description": "Uitkomsten van je puzzelinzendingen en voorgestelde wijzigingen"
+      },
+      "admin": {
+        "title": "Beheer",
+        "description": "Items die wachten op moderatie of beoordeling"
+      }
     },
     "copy": {
       "trade_request": {
@@ -1817,6 +1853,7 @@
       "created": "Doel aangemaakt",
       "createError": "Kon het doel niet aanmaken. Probeer het opnieuw.",
       "progress": "{current} van {target} voltooiingen",
+      "active": "Actief",
       "achieved": "Behaald",
       "dueBy": "Vóór {date}",
       "activeCount": "{count} actief",
@@ -2864,6 +2901,8 @@
     "proposedImage": "Voorgestelde afbeelding",
     "replaceImage": "Afbeelding vervangen",
     "editImage": "Foto bewerken",
+    "changesHeading": "Wijzigingen ({count})",
+    "noChangesYet": "Nog geen wijzigingen",
     "keepCategory": "Huidige categorie behouden",
     "submit": "Voorstel indienen",
     "update": "Voorstel bijwerken",
@@ -3155,9 +3194,11 @@
         "withdrawn": "Ingetrokken"
       },
       "conflictBanner": "De puzzel is gewijzigd sinds dit voorstel werd ingediend. Gemarkeerde velden komen niet meer overeen met wat de indiener zag.",
+      "conflictCount": "{count, plural, one {# veld heeft een conflict} other {# velden hebben conflicten}}",
       "fieldsChanged": "{count, plural, one {# veld gewijzigd} other {# velden gewijzigd}}",
       "proposedBy": "door {name}",
       "comment": "Toelichting van de indiener",
+      "field": "Veld",
       "current": "Huidig",
       "proposed": "Voorgesteld",
       "imageCompare": {

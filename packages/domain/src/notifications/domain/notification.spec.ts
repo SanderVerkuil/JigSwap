@@ -18,8 +18,6 @@ const create = (): Notification =>
     id,
     userId: alice,
     type: "trade_request",
-    title: "New trade request",
-    message: "Bob wants your puzzle",
     relatedId: "exchange-7",
     channel: "inApp",
     now: NOW,
@@ -53,8 +51,6 @@ describe("Notification.create", () => {
       id,
       userId: alice,
       type: "trade_request",
-      title: "New trade request",
-      message: "Bob wants your puzzle",
       relatedId: "exchange-7",
       channel: "inApp",
       isRead: false,
@@ -64,6 +60,39 @@ describe("Notification.create", () => {
     expect(back.toState()).toEqual(state);
     // rehydrate must not re-emit creation events.
     expect(back.pullEvents()).toEqual([]);
+  });
+
+  it("rehydrates legacy state carrying pre-rendered title/message", () => {
+    // Legacy rows persisted before params existed; rehydrate must still round-trip them intact,
+    // even though Notification.create() never produces title/message itself anymore.
+    const legacyState = {
+      id,
+      userId: alice,
+      type: "trade_request" as const,
+      title: "New trade request",
+      message: "Bob wants your puzzle",
+      relatedId: "exchange-7",
+      channel: "inApp" as const,
+      isRead: false,
+      createdAt: NOW,
+    };
+    const n = Notification.rehydrate(legacyState);
+    expect(n.toState()).toEqual(legacyState);
+    expect(n.pullEvents()).toEqual([]);
+  });
+
+  it("carries params through create/toState/rehydrate", () => {
+    const notification = Notification.create({
+      id: toNotificationId("n-1"),
+      userId: toMemberId("alice"),
+      type: "trade_request",
+      params: { actorName: "Bob" },
+      channel: "inApp",
+      now: new Date("2026-06-08T10:00:00Z"),
+    });
+    expect(notification.toState().params).toEqual({ actorName: "Bob" });
+    const rehydrated = Notification.rehydrate(notification.toState());
+    expect(rehydrated.toState().params).toEqual({ actorName: "Bob" });
   });
 });
 

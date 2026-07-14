@@ -191,8 +191,7 @@ describe("message_received notifications", () => {
 
     const bobNotes = await messageNotesFor(t, bob);
     expect(bobNotes).toHaveLength(1);
-    expect(bobNotes[0].title).toBe("New message");
-    expect(bobNotes[0].message).toBe("You have a new message");
+    expect(bobNotes[0].params?.actorName).toBe("clerk_alice");
     expect(bobNotes[0].relatedId).toBe(threadId);
     // The author never gets notified about their own message.
     expect(await messageNotesFor(t, alice)).toHaveLength(0);

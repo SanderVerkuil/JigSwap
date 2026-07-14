@@ -1,0 +1,212 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`copy catalog > pins the copy catalog verbatim (mutation guard + copy change review gate) 1`] = `
+{
+  "DEFAULT_PARAMS": {
+    "en": {
+      "actorName": "Someone",
+      "goalTitle": "your goal",
+      "puzzleTitle": "a puzzle",
+    },
+    "nl": {
+      "actorName": "Iemand",
+      "goalTitle": "je doel",
+      "puzzleTitle": "een puzzel",
+    },
+  },
+  "EMAIL_COPY": {
+    "follow_request_approved": {
+      "en": {
+        "body": "{actorName} approved your follow request. You can now see their profile and puzzles.",
+        "cta": "View people",
+        "heading": "Follow request approved",
+        "subject": "Your follow request was approved",
+      },
+      "nl": {
+        "body": "{actorName} heeft je volgverzoek goedgekeurd. Je kunt nu hun profiel en puzzels bekijken.",
+        "cta": "Bekijk leden",
+        "heading": "Volgverzoek goedgekeurd",
+        "subject": "Je volgverzoek is goedgekeurd",
+      },
+    },
+    "follow_request_received": {
+      "en": {
+        "body": "{actorName} asked to follow you. You can approve or decline the request.",
+        "cta": "Review request",
+        "heading": "Follow request",
+        "subject": "{actorName} wants to follow you on JigSwap",
+      },
+      "nl": {
+        "body": "{actorName} heeft gevraagd om je te volgen. Je kunt het verzoek goedkeuren of afwijzen.",
+        "cta": "Beoordeel verzoek",
+        "heading": "Volgverzoek",
+        "subject": "{actorName} wil je volgen op JigSwap",
+      },
+    },
+    "goal_achieved": {
+      "en": {
+        "body": "You reached your goal “{goalTitle}”. Congratulations!",
+        "cta": "View goals",
+        "heading": "Goal achieved",
+        "subject": "Goal achieved on JigSwap",
+      },
+      "nl": {
+        "body": "Je hebt je doel “{goalTitle}” behaald. Gefeliciteerd!",
+        "cta": "Bekijk doelen",
+        "heading": "Doel behaald",
+        "subject": "Doel behaald op JigSwap",
+      },
+    },
+    "message_received": {
+      "en": {
+        "body": "{actorName} sent you a message on JigSwap.",
+        "cta": "Read message",
+        "heading": "New message",
+        "subject": "New message from {actorName} on JigSwap",
+      },
+      "nl": {
+        "body": "{actorName} heeft je een bericht gestuurd op JigSwap.",
+        "cta": "Lees bericht",
+        "heading": "Nieuw bericht",
+        "subject": "Nieuw bericht van {actorName} op JigSwap",
+      },
+    },
+    "new_follower": {
+      "en": {
+        "body": "{actorName} started following you on JigSwap.",
+        "cta": "View people",
+        "heading": "New follower",
+        "subject": "{actorName} started following you on JigSwap",
+      },
+      "nl": {
+        "body": "{actorName} is je gaan volgen op JigSwap.",
+        "cta": "Bekijk leden",
+        "heading": "Nieuwe volger",
+        "subject": "{actorName} volgt je nu op JigSwap",
+      },
+    },
+    "puzzle_favorited": {
+      "en": {
+        "body": "A member added one of your puzzles to their favorites.",
+        "cta": "View puzzle",
+        "heading": "Your puzzle was favorited",
+        "subject": "Someone favorited your puzzle",
+      },
+      "nl": {
+        "body": "Een lid heeft een van je puzzels aan hun favorieten toegevoegd.",
+        "cta": "Bekijk puzzel",
+        "heading": "Je puzzel is toegevoegd aan de favorieten",
+        "subject": "Iemand heeft je puzzel als favoriet gemarkeerd",
+      },
+    },
+    "review_received": {
+      "en": {
+        "body": "A trade partner left you a review.",
+        "cta": "View your profile",
+        "heading": "New review",
+        "subject": "You received a new review",
+      },
+      "nl": {
+        "body": "Een ruilpartner heeft een beoordeling voor je achtergelaten.",
+        "cta": "Bekijk je profiel",
+        "heading": "Nieuwe beoordeling",
+        "subject": "Je hebt een nieuwe beoordeling ontvangen",
+      },
+    },
+    "trade_accepted": {
+      "en": {
+        "body": "Good news — your trade request has been accepted! Time to arrange the exchange.",
+        "cta": "View trades",
+        "heading": "Trade request accepted",
+        "subject": "Your trade request was accepted",
+      },
+      "nl": {
+        "body": "Goed nieuws — je ruilverzoek is geaccepteerd! Tijd om de ruil te regelen.",
+        "cta": "Bekijk uitwisselingen",
+        "heading": "Ruilverzoek geaccepteerd",
+        "subject": "Je ruilverzoek is geaccepteerd",
+      },
+    },
+    "trade_cancelled": {
+      "en": {
+        "body": "A trade request involving you has been cancelled.",
+        "cta": "View trades",
+        "heading": "Trade cancelled",
+        "subject": "A trade was cancelled",
+      },
+      "nl": {
+        "body": "Een ruilverzoek waar jij bij betrokken bent is geannuleerd.",
+        "cta": "Bekijk uitwisselingen",
+        "heading": "Ruil geannuleerd",
+        "subject": "Een ruil is geannuleerd",
+      },
+    },
+    "trade_completed": {
+      "en": {
+        "body": "Your exchange has been marked as completed. Enjoy the puzzle!",
+        "cta": "View trades",
+        "heading": "Trade completed",
+        "subject": "Your trade is complete",
+      },
+      "nl": {
+        "body": "Je ruil is gemarkeerd als afgerond. Veel puzzelplezier!",
+        "cta": "Bekijk uitwisselingen",
+        "heading": "Ruil afgerond",
+        "subject": "Je ruil is afgerond",
+      },
+    },
+    "trade_declined": {
+      "en": {
+        "body": "Unfortunately your trade request has been declined.",
+        "cta": "View trades",
+        "heading": "Trade request declined",
+        "subject": "Your trade request was declined",
+      },
+      "nl": {
+        "body": "Helaas is je ruilverzoek afgewezen.",
+        "cta": "Bekijk uitwisselingen",
+        "heading": "Ruilverzoek afgewezen",
+        "subject": "Je ruilverzoek is afgewezen",
+      },
+    },
+    "trade_request": {
+      "en": {
+        "body": "{actorName} wants to trade for one of your puzzles.",
+        "cta": "View trade requests",
+        "heading": "New trade request",
+        "subject": "New trade request on JigSwap",
+      },
+      "nl": {
+        "body": "{actorName} wil ruilen voor een van je puzzels.",
+        "cta": "Bekijk ruilverzoeken",
+        "heading": "Nieuw ruilverzoek",
+        "subject": "Nieuw ruilverzoek op JigSwap",
+      },
+    },
+  },
+  "EMAIL_TYPES": [
+    "trade_request",
+    "trade_accepted",
+    "trade_declined",
+    "trade_completed",
+    "trade_cancelled",
+    "message_received",
+    "review_received",
+    "puzzle_favorited",
+    "goal_achieved",
+    "new_follower",
+    "follow_request_received",
+    "follow_request_approved",
+  ],
+  "FOOTER": {
+    "en": {
+      "linkLabel": "Manage notification preferences",
+      "text": "You are receiving this because email notifications are enabled for your JigSwap account.",
+    },
+    "nl": {
+      "linkLabel": "Meldingsvoorkeuren beheren",
+      "text": "Je ontvangt deze e-mail omdat e-mailmeldingen aanstaan voor je JigSwap-account.",
+    },
+  },
+}
+`;

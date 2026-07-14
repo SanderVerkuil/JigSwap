@@ -38,21 +38,22 @@ later does not update existing previews.
 
 Variables read by the backend (`packages/backend/convex`):
 
-| Variable                             | Required?    | Used by                                         | Notes                                                                                                                                                                                                                                                                             |
-| ------------------------------------ | ------------ | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CLERK_WEBHOOK_SECRET`               | Optional     | `convex/http.ts`                                | Read **per-request** inside the webhook handler; when unset the handler logs a warning and answers `503` — the preview deploys and works (Clerk webhooks never reach previews anyway). Still recommended on dev and **required in prod**, where Clerk actually delivers webhooks. |
-| `NEXT_PUBLIC_CLERK_FRONTEND_API_URL` | **Required** | `convex/auth.config.ts`                         | Clerk issuer domain; without it the preview deploys but rejects every authenticated request.                                                                                                                                                                                      |
-| `AXIOM_API_KEY`                      | Optional     | `convex/lib/axiom.ts`                           | Wide-event log shipping; logging is a no-op without it.                                                                                                                                                                                                                           |
-| `AXIOM_DATASET`                      | Optional     | `convex/lib/axiom.ts`                           | Defaults to `jigswap`. Consider a separate dataset so preview noise stays out of dev telemetry.                                                                                                                                                                                   |
-| `AXIOM_EDGE`                         | Optional     | `convex/lib/axiom.ts`                           | Defaults to `eu-central-1.aws.edge.axiom.co`.                                                                                                                                                                                                                                     |
-| `VAPID_PUBLIC_KEY`                   | Optional     | `notifications/getPushConfig.ts`, web push      | Web push is off (fails open) unless both keys are set.                                                                                                                                                                                                                            |
-| `VAPID_PRIVATE_KEY`                  | Optional     | `notifications/adapters/webPush.ts`             | See above.                                                                                                                                                                                                                                                                        |
-| `VAPID_SUBJECT`                      | Optional     | `notifications/adapters/webPush.ts`             | Defaults to `mailto:hello@jigswap.site`.                                                                                                                                                                                                                                          |
-| `FIRECRAWL_API_KEY`                  | Optional     | `catalog/adapters/firecrawlStorePageFetcher.ts` | Store-page fetching for catalog URL import; feature is off without it.                                                                                                                                                                                                            |
-| `MODERATION_PROVIDER`                | Optional     | `library/moderatePhoto.ts`                      | Defaults to `huggingface`; set `none` to disable photo moderation on previews.                                                                                                                                                                                                    |
-| `HF_MODERATION_TOKEN`                | Optional     | `library/adapters/photoModeration.ts`           | Hugging Face token; the adapter fails open (approves) without it.                                                                                                                                                                                                                 |
-| `MODERATION_NSFW_THRESHOLD`          | Optional     | `library/moderatePhoto.ts`                      | Numeric threshold override.                                                                                                                                                                                                                                                       |
-| `GIT_COMMIT`, `SERVICE_VERSION`      | Optional     | `convex/lib/logEvent.ts`                        | Log metadata only.                                                                                                                                                                                                                                                                |
+| Variable                             | Required?    | Used by                                         | Notes                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------------------ | ------------ | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLERK_WEBHOOK_SECRET`               | Optional     | `convex/http.ts`                                | Read **per-request** inside the webhook handler; when unset the handler logs a warning and answers `503` — the preview deploys and works (Clerk webhooks never reach previews anyway). Still recommended on dev and **required in prod**, where Clerk actually delivers webhooks.                                                     |
+| `NEXT_PUBLIC_CLERK_FRONTEND_API_URL` | **Required** | `convex/auth.config.ts`                         | Clerk issuer domain; without it the preview deploys but rejects every authenticated request.                                                                                                                                                                                                                                          |
+| `AXIOM_API_KEY`                      | Optional     | `convex/lib/axiom.ts`                           | Wide-event log shipping; logging is a no-op without it.                                                                                                                                                                                                                                                                               |
+| `AXIOM_DATASET`                      | Optional     | `convex/lib/axiom.ts`                           | Defaults to `jigswap`. Consider a separate dataset so preview noise stays out of dev telemetry.                                                                                                                                                                                                                                       |
+| `AXIOM_EDGE`                         | Optional     | `convex/lib/axiom.ts`                           | Defaults to `eu-central-1.aws.edge.axiom.co`.                                                                                                                                                                                                                                                                                         |
+| `EMAIL_BASE_URL`                     | Auto-set     | `notifications/sendEmail.ts`                    | **Not** a preview default — the Vercel build script sets it on every preview build (see [step 3](#3-vercel-point-preview-frontends-at-their-branchs-preview-backend)), so it always tracks the branch's current `VERCEL_BRANCH_URL`. Falls back to the code default (`https://jigswap.site`) only if the build script hasn't run yet. |
+| `VAPID_PUBLIC_KEY`                   | Optional     | `notifications/getPushConfig.ts`, web push      | Web push is off (fails open) unless both keys are set.                                                                                                                                                                                                                                                                                |
+| `VAPID_PRIVATE_KEY`                  | Optional     | `notifications/adapters/webPush.ts`             | See above.                                                                                                                                                                                                                                                                                                                            |
+| `VAPID_SUBJECT`                      | Optional     | `notifications/adapters/webPush.ts`             | Defaults to `mailto:hello@jigswap.site`.                                                                                                                                                                                                                                                                                              |
+| `FIRECRAWL_API_KEY`                  | Optional     | `catalog/adapters/firecrawlStorePageFetcher.ts` | Store-page fetching for catalog URL import; feature is off without it.                                                                                                                                                                                                                                                                |
+| `MODERATION_PROVIDER`                | Optional     | `library/moderatePhoto.ts`                      | Defaults to `huggingface`; set `none` to disable photo moderation on previews.                                                                                                                                                                                                                                                        |
+| `HF_MODERATION_TOKEN`                | Optional     | `library/adapters/photoModeration.ts`           | Hugging Face token; the adapter fails open (approves) without it.                                                                                                                                                                                                                                                                     |
+| `MODERATION_NSFW_THRESHOLD`          | Optional     | `library/moderatePhoto.ts`                      | Numeric threshold override.                                                                                                                                                                                                                                                                                                           |
+| `GIT_COMMIT`, `SERVICE_VERSION`      | Optional     | `convex/lib/logEvent.ts`                        | Log metadata only.                                                                                                                                                                                                                                                                                                                    |
 
 At minimum, set a preview default for **`NEXT_PUBLIC_CLERK_FRONTEND_API_URL`**
 (pointing at the same Clerk dev instance the dev deployment uses, so users from the dev
@@ -69,11 +70,15 @@ The Vercel project's root directory is **`apps/web`** (build cwd = `apps/web`, p
 `vite build`). Vercel has ONE build command for all environments, and the production
 Convex deploy is deliberately CI-gated (`convex-deploy.yml` deploys prod only after CI
 passes on main) — so branch on `VERCEL_ENV` to keep production builds exactly as they
-are today:
+are today. The dashboard Build Command is the versioned script
+[`scripts/vercel-build.sh`](../../scripts/vercel-build.sh):
 
 ```bash
-if [ "$VERCEL_ENV" = "preview" ]; then cd ../../packages/backend && npx convex deploy --cmd-url-env-var-name VITE_CONVEX_URL --cmd 'pnpm --filter @jigswap/web build'; else pnpm build; fi
+bash ../../scripts/vercel-build.sh
 ```
+
+If you previously pasted the inline one-liner as the Build Command, replace it with the
+line above.
 
 How it resolves on previews: the deploy runs from `packages/backend`, auto-detects the
 branch from `VERCEL_GIT_COMMIT_REF` (landing on the **same** branch-named preview the
@@ -83,6 +88,21 @@ and output still lands in `apps/web/.output`, so the Output Directory setting st
 valid. (`VITE_CONVEX_URL` is read in `apps/web/src/router.tsx` and
 `apps/web/src/lib/require-admin.ts`; Vite inlines it at build time for both client and
 SSR bundles.)
+
+After the Convex deploy, the script also sets `EMAIL_BASE_URL` on that same preview
+deployment: `npx convex env set --preview-name "$VERCEL_GIT_COMMIT_REF" EMAIL_BASE_URL
+"https://$VERCEL_BRANCH_URL"`. Email CTA/preferences links
+(`packages/backend/convex/notifications/sendEmail.ts`) need the web app's own origin,
+but on previews that origin is only known once Vercel assigns it — so it can't be a
+preview default env var (those apply only at deployment creation, see
+[step 2](#2-default-environment-variables-for-previews)) and must instead be set from
+inside the Vercel build, the one place that knows both the Convex preview and the web
+URL. `VERCEL_BRANCH_URL` is Vercel's stable per-branch alias (unlike the per-deployment
+URL, it doesn't change on every push), so the preview backend always links back to the
+branch's latest web preview. `--preview-name` is accepted by `convex env set` even
+though `--help` hides it (verified against the CLI source, same as the `convex data`
+precedent below). Production is untouched: prod's `EMAIL_BASE_URL` is a stable
+one-time `npx convex env set` (plus the `https://jigswap.site` code default).
 
 Vercel env-var scoping:
 

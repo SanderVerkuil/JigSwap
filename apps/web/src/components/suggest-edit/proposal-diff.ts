@@ -261,3 +261,15 @@ export const buildProposalArgs = (
     ? (Object.fromEntries(entries) as ProposalArgs)
     : null;
 };
+
+// For the edit forms' "Changes (N)" summary panel: buildProposalArgs only reports an
+// `image` change once `form.newImageStorageId` is set, which happens after upload at submit
+// time — a freshly picked (not-yet-uploaded) file must still count as a pending change, so a
+// chosen file synthesizes the `image` key here when the args don't already carry one.
+export const pendingChanges = (
+  args: ProposalArgs | null,
+  hasNewImage: boolean,
+): Record<string, unknown> => ({
+  ...(args ?? {}),
+  ...(hasNewImage && !args?.image ? { image: true } : {}),
+});

@@ -30,8 +30,6 @@ const seed = async (id: string, owner: MemberId): Promise<NotificationId> => {
     id: nid,
     userId: owner,
     type: "trade_request",
-    title: "t",
-    message: "m",
     channel: "inApp",
     now: NOW,
   });

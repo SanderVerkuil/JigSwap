@@ -8,6 +8,7 @@ import {
 import {
   Channel,
   CHANNELS,
+  EMAIL_ELIGIBLE_TYPES,
   MemberId,
   Notification,
   NotificationId,
@@ -46,8 +47,10 @@ export const makeNotifyMember =
     const preference = await loadPreference(deps, cmd.memberId);
 
     const candidates: readonly Channel[] = cmd.channels ?? CHANNELS;
-    const allowed = candidates.filter((channel) =>
-      preference.allows(cmd.type, channel),
+    const allowed = candidates.filter(
+      (channel) =>
+        (channel !== "email" || EMAIL_ELIGIBLE_TYPES.has(cmd.type)) &&
+        preference.allows(cmd.type, channel),
     );
 
     const created: NotificationId[] = [];
@@ -59,8 +62,7 @@ export const makeNotifyMember =
         id: deps.notificationIds.next(),
         userId: cmd.memberId,
         type: cmd.type,
-        title: cmd.title,
-        message: cmd.message,
+        params: cmd.params,
         relatedId: cmd.relatedId,
         channel,
         now,

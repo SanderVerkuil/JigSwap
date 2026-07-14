@@ -1,6 +1,7 @@
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
+import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -60,17 +61,26 @@ function BorrowedPage() {
     }
   };
 
+  // The page title/subtitle live in the shell page head (ROUTE_META
+  // `shell.pages.borrowed`); publish the borrowed-count meta there too so the
+  // page body carries no duplicate header.
+  const borrowedCount = (borrowed ?? []).length;
+  const headerMeta = t("borrowedCount", { count: borrowedCount });
+  usePageHeaderActions(
+    () => (
+      <span className="text-muted-foreground hidden text-sm sm:inline">
+        {headerMeta}
+      </span>
+    ),
+    [headerMeta],
+  );
+
   if (isPending || borrowed === undefined) {
     return <PageLoading message={tCommon("loading")} />;
   }
 
   return (
-    <div className="container mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">{t("borrowedTitle")}</h1>
-        <p className="text-muted-foreground">{t("borrowedSubtitle")}</p>
-      </div>
-
+    <div className="flex w-full flex-col gap-6">
       {borrowed.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center">
@@ -84,65 +94,68 @@ function BorrowedPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {borrowed.map((loan) => (
             <Card
               key={loan.loanId}
-              className="hover:shadow-md transition-shadow"
+              className="flex h-full flex-col hover:shadow-md transition-shadow"
             >
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3 flex-1">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <Package className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="space-y-1">
-                      <h3 className="font-semibold">{loan.puzzleTitle}</h3>
-                      <Badge variant="secondary" className="text-xs">
-                        {t("pieceCount", { count: loan.pieceCount })}
-                      </Badge>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <User className="h-4 w-4" />
-                        <span>
-                          {t("borrowedFrom", {
-                            name: loan.lender?.name ?? t("unknownMember"),
-                          })}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {t("openedRelative", {
-                          when: formatDistanceToNow(new Date(loan.openedAt), {
-                            addSuffix: true,
-                            locale: dateLocale,
-                          }),
-                        })}
-                      </p>
-                    </div>
+              <CardContent className="flex flex-1 flex-col gap-4 p-6">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <Package className="h-5 w-5 text-primary" />
                   </div>
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <h3 className="font-semibold truncate">
+                      {loan.puzzleTitle}
+                    </h3>
+                    <Badge variant="secondary" className="text-xs">
+                      {t("pieceCount", { count: loan.pieceCount })}
+                    </Badge>
+                  </div>
+                </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        setSolveFor({
-                          copyId: loan.copyId,
-                          title: loan.puzzleTitle,
-                        })
-                      }
-                    >
-                      {tSolve("trigger")}
-                    </Button>
-                    <Button
-                      size="sm"
-                      disabled={returningId === loan.loanId}
-                      onClick={() => handleReturn(loan.loanId)}
-                    >
-                      {returningId === loan.loanId
-                        ? t("returning")
-                        : t("returnAction")}
-                    </Button>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <User className="h-4 w-4" />
+                    <span>
+                      {t("borrowedFrom", {
+                        name: loan.lender?.name ?? t("unknownMember"),
+                      })}
+                    </span>
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    {t("openedRelative", {
+                      when: formatDistanceToNow(new Date(loan.openedAt), {
+                        addSuffix: true,
+                        locale: dateLocale,
+                      }),
+                    })}
+                  </p>
+                </div>
+
+                <div className="mt-auto flex items-center justify-end gap-2 border-t pt-4">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      setSolveFor({
+                        copyId: loan.copyId,
+                        title: loan.puzzleTitle,
+                      })
+                    }
+                  >
+                    {tSolve("trigger")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    disabled={returningId === loan.loanId}
+                    onClick={() => handleReturn(loan.loanId)}
+                  >
+                    {returningId === loan.loanId
+                      ? t("returning")
+                      : t("returnAction")}
+                  </Button>
                 </div>
               </CardContent>
             </Card>

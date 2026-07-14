@@ -5,15 +5,15 @@ import { NotificationCreated, NotificationRead } from "./events";
 import { MemberId, NotificationId } from "./ids";
 import { NotificationType } from "./notification-type";
 
-// Input to Notification.create(): the rendered message plus its addressing. `relatedId` points at
-// the upstream entity (an exchange, puzzle, thread, …) as an opaque string — Notifications does
-// not interpret it. `channel` defaults to inApp at the call site if unspecified.
+// Input to Notification.create(): the structured notification plus its addressing. `params` carries
+// the render-ready values for this type's copy (e.g. actorName, puzzleTitle); rendering happens at
+// the EDGES (web in the viewer's locale, email in the recipient's language) — never here.
+// `relatedId` points at the upstream entity as an opaque string.
 export interface CreateNotificationProps {
   readonly id: NotificationId;
   readonly userId: MemberId;
   readonly type: NotificationType;
-  readonly title: string;
-  readonly message: string;
+  readonly params?: Readonly<Record<string, string>>;
   readonly relatedId?: string;
   readonly channel: Channel;
   readonly now: Date;
@@ -21,13 +21,16 @@ export interface CreateNotificationProps {
 
 // The persistable shape, kept deliberately close to the `notifications` table columns so the
 // 4a-backend mapper is a trivial field-for-field translation. `channel` is the one column the
-// backend slice will add (defaulting existing rows to "inApp").
+// backend slice will add (defaulting existing rows to "inApp"). `title`/`message` are optional and
+// exist only to rehydrate legacy rows that carry pre-rendered strings; new rows carry `params`
+// instead and never populate them.
 export interface NotificationState {
   readonly id: NotificationId;
   readonly userId: MemberId;
   readonly type: NotificationType;
-  readonly title: string;
-  readonly message: string;
+  readonly title?: string;
+  readonly message?: string;
+  readonly params?: Readonly<Record<string, string>>;
   readonly relatedId?: string;
   readonly channel: Channel;
   readonly isRead: boolean;
@@ -66,8 +69,7 @@ export class Notification {
       id: props.id,
       userId: props.userId,
       type: props.type,
-      title: props.title,
-      message: props.message,
+      params: props.params,
       relatedId: props.relatedId,
       channel: props.channel,
       isRead: false,

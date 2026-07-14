@@ -205,54 +205,110 @@ function ProposalReview({
   });
 
   const isDecided = proposal.status !== "pending";
+  const conflictCount = isDecided
+    ? 0
+    : rows.filter((row) => row.conflict).length;
+
+  // Rendered twice — inline in the main column below `xl:` (today's position: meta above
+  // the table, actions at the bottom) and again inside the sticky review rail at `xl:` —
+  // via the hidden/visible mount points in the return below, not two hand-written copies:
+  // same JSX, same handlers, mounted at two DOM positions (only one visible at a time).
+  const metaBlock = (
+    <div>
+      <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+        <span>
+          {proposal.proposerName &&
+            `${t("proposedBy", { name: proposal.proposerName })} · `}
+          {format.dateTime(proposal.createdAt, { dateStyle: "medium" })}
+        </span>
+        <Badge variant={PROPOSAL_STATUS_VARIANT[proposal.status]}>
+          {t(`status.${proposal.status}`)}
+        </Badge>
+      </p>
+      {proposal.comment && (
+        <p className="mt-2 text-sm">
+          <span className="text-muted-foreground">{t("comment")}: </span>
+          {proposal.comment}
+        </p>
+      )}
+      {proposal.status === "rejected" && proposal.rejectionReason && (
+        <p className="text-destructive mt-2 text-sm">
+          <span className="text-muted-foreground">
+            {t("rejectionReason")}:{" "}
+          </span>
+          {proposal.rejectionReason}
+        </p>
+      )}
+      {!isDecided && conflictCount > 0 && (
+        <p className="text-destructive mt-2 text-sm">
+          {t("conflictCount", { count: conflictCount })}
+        </p>
+      )}
+    </div>
+  );
+
+  const actionsRow = (
+    <div className="flex items-center justify-end gap-2">
+      <Button variant="outline" asChild>
+        <Link href="/admin/puzzles/proposals">{t("backToQueue")}</Link>
+      </Button>
+      {!isDecided && (
+        <>
+          <Button
+            variant="outline"
+            disabled={busy}
+            onClick={() => setRejectOpen(true)}
+          >
+            {t("reject")}
+          </Button>
+          <Button
+            variant="brand"
+            disabled={busy}
+            onClick={() => setConfirmingApprove(true)}
+          >
+            {t("approve")}
+          </Button>
+        </>
+      )}
+    </div>
+  );
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
-      <div>
-        <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-          <span>
-            {proposal.proposerName &&
-              `${t("proposedBy", { name: proposal.proposerName })} · `}
-            {format.dateTime(proposal.createdAt, { dateStyle: "medium" })}
-          </span>
-          <Badge variant={PROPOSAL_STATUS_VARIANT[proposal.status]}>
-            {t(`status.${proposal.status}`)}
-          </Badge>
-        </p>
-        {proposal.comment && (
-          <p className="mt-2 text-sm">
-            <span className="text-muted-foreground">{t("comment")}: </span>
-            {proposal.comment}
-          </p>
+    <div className="grid gap-6 lg:gap-10 xl:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="flex min-w-0 flex-col gap-5">
+        <div className="xl:hidden">{metaBlock}</div>
+
+        {!isDecided && proposal.hasConflict && (
+          <div className="border-destructive/50 bg-destructive/10 flex items-start gap-2 rounded-lg border p-3 text-sm">
+            <AlertTriangle
+              className="text-destructive mt-0.5 h-4 w-4 shrink-0"
+              aria-hidden
+            />
+            {t("conflictBanner")}
+          </div>
         )}
-        {proposal.status === "rejected" && proposal.rejectionReason && (
-          <p className="text-destructive mt-2 text-sm">
-            <span className="text-muted-foreground">
-              {t("rejectionReason")}:{" "}
+
+        <div className="bg-card divide-y rounded-xl border">
+          <div className="hidden gap-4 px-4 py-2 md:grid md:grid-cols-[minmax(140px,200px)_1fr_1fr]">
+            <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+              {t("field")}
             </span>
-            {proposal.rejectionReason}
-          </p>
-        )}
-      </div>
-
-      {!isDecided && proposal.hasConflict && (
-        <div className="border-destructive/50 bg-destructive/10 flex items-start gap-2 rounded-lg border p-3 text-sm">
-          <AlertTriangle
-            className="text-destructive mt-0.5 h-4 w-4 shrink-0"
-            aria-hidden
-          />
-          {t("conflictBanner")}
-        </div>
-      )}
-
-      <div className="bg-card divide-y rounded-xl border">
-        {rows.map((row: FieldDiffRow) =>
-          row.key === "image" ? (
-            <div key={row.key} className="space-y-2 p-4">
-              <p className="text-sm font-semibold">{fieldLabel(row.key)}</p>
-              <div className="flex items-center gap-6">
+            <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+              {t("current")}
+            </span>
+            <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+              {t("proposed")}
+            </span>
+          </div>
+          {rows.map((row: FieldDiffRow) =>
+            row.key === "image" ? (
+              <div
+                key={row.key}
+                className="grid gap-3 p-4 md:grid-cols-[minmax(140px,200px)_1fr_1fr] md:items-start md:gap-4"
+              >
+                <p className="text-sm font-semibold">{fieldLabel(row.key)}</p>
                 <figure className="space-y-1">
-                  <figcaption className="text-muted-foreground text-xs">
+                  <figcaption className="text-muted-foreground text-xs md:hidden">
                     {t("current")}
                   </figcaption>
                   {proposal.definitionImage ? (
@@ -265,8 +321,8 @@ function ProposalReview({
                     <div className="bg-muted size-24 rounded-lg border" />
                   )}
                 </figure>
-                <figure className="space-y-1">
-                  <figcaption className="text-muted-foreground text-xs">
+                <figure className="space-y-2">
+                  <figcaption className="text-muted-foreground text-xs md:hidden">
                     {t("proposed")}
                   </figcaption>
                   {proposal.proposedImageUrl ? (
@@ -278,73 +334,63 @@ function ProposalReview({
                   ) : (
                     <div className="bg-muted size-24 rounded-lg border" />
                   )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCompareOpen(true)}
+                  >
+                    {t("imageCompare.open")}
+                  </Button>
                 </figure>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCompareOpen(true)}
-                >
-                  {t("imageCompare.open")}
-                </Button>
               </div>
-            </div>
-          ) : (
-            <div key={row.key} className="space-y-1 p-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="text-sm font-semibold">{fieldLabel(row.key)}</p>
+            ) : (
+              <div
+                key={row.key}
+                className="grid gap-1 p-4 md:grid-cols-[minmax(140px,200px)_1fr_1fr] md:items-start md:gap-4"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-semibold">{fieldLabel(row.key)}</p>
+                  {!isDecided && row.conflict && (
+                    <Badge variant="destructive">
+                      <AlertTriangle className="h-3 w-3" aria-hidden />
+                      {t("conflict")}
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-sm">
+                  <span className="text-muted-foreground md:hidden">
+                    {t("current")}:{" "}
+                  </span>
+                  {formatValue(row.key, row.current)}
+                </p>
+                <p className="text-sm font-medium">
+                  <span className="text-muted-foreground font-normal md:hidden">
+                    {t("proposed")}:{" "}
+                  </span>
+                  {formatValue(row.key, row.proposed)}
+                </p>
                 {!isDecided && row.conflict && (
-                  <Badge variant="destructive">
-                    <AlertTriangle className="h-3 w-3" aria-hidden />
-                    {t("conflict")}
-                  </Badge>
+                  <p className="text-destructive text-xs md:col-span-2 md:col-start-2">
+                    {t("wasWhenProposed", {
+                      value: formatValue(row.key, row.baseline),
+                    })}
+                  </p>
                 )}
               </div>
-              <p className="text-sm">
-                <span className="text-muted-foreground">{t("current")}: </span>
-                {formatValue(row.key, row.current)}
-              </p>
-              <p className="text-sm">
-                <span className="text-muted-foreground">{t("proposed")}: </span>
-                <span className="font-medium">
-                  {formatValue(row.key, row.proposed)}
-                </span>
-              </p>
-              {!isDecided && row.conflict && (
-                <p className="text-destructive text-xs">
-                  {t("wasWhenProposed", {
-                    value: formatValue(row.key, row.baseline),
-                  })}
-                </p>
-              )}
-            </div>
-          ),
-        )}
+            ),
+          )}
+        </div>
+
+        <div className="xl:hidden">{actionsRow}</div>
       </div>
 
-      <div className="flex items-center justify-end gap-2">
-        <Button variant="outline" asChild>
-          <Link href="/admin/puzzles/proposals">{t("backToQueue")}</Link>
-        </Button>
-        {!isDecided && (
-          <>
-            <Button
-              variant="outline"
-              disabled={busy}
-              onClick={() => setRejectOpen(true)}
-            >
-              {t("reject")}
-            </Button>
-            <Button
-              variant="brand"
-              disabled={busy}
-              onClick={() => setConfirmingApprove(true)}
-            >
-              {t("approve")}
-            </Button>
-          </>
-        )}
-      </div>
+      <aside className="hidden xl:sticky xl:top-2 xl:block xl:self-start">
+        <div className="flex flex-col gap-4">
+          {metaBlock}
+          {actionsRow}
+        </div>
+      </aside>
 
       <AlertDialog open={confirmingApprove} onOpenChange={setConfirmingApprove}>
         <AlertDialogContent>

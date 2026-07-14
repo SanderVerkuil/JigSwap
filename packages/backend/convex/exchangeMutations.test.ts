@@ -279,7 +279,7 @@ describe("exchange.propose", () => {
     const notes = await notificationsFor(t, bob);
     expect(notes).toHaveLength(1);
     expect(notes[0].type).toBe("trade_request");
-    expect(notes[0].title).toBe("New Exchange Request");
+    expect(notes[0].params?.actorName).toBe("clerk_alice");
     const row = await exchangeRow(t, id);
     expect(notes[0].relatedId).toBe(row?._id);
   });
