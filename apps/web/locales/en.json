@@ -2901,6 +2901,8 @@
     "proposedImage": "Proposed image",
     "replaceImage": "Replace image",
     "editImage": "Edit photo",
+    "changesHeading": "Changes ({count})",
+    "noChangesYet": "No changes yet",
     "keepCategory": "Keep current category",
     "submit": "Submit suggestion",
     "update": "Update suggestion",

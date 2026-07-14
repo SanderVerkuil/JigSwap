@@ -1,11 +1,16 @@
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
+import { FormContextPanel } from "@/components/catalog/form-context-panel";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
-import { PuzzleDefinitionFields } from "@/components/suggest-edit/definition-fields";
+import {
+  CoverImageField,
+  PuzzleDefinitionFields,
+} from "@/components/suggest-edit/definition-fields";
 import {
   buildProposalArgs,
   formFromView,
+  pendingChanges,
 } from "@/components/suggest-edit/proposal-diff";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
@@ -184,44 +189,76 @@ function AdminEditForm({
   const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
 
-  return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-      <PuzzleDefinitionFields
-        form={form}
-        set={set}
-        categories={categories}
-        difficultySeed={view.difficulty ?? ""}
-        shapeSeed={view.shape ?? ""}
-        currentImageUrl={coverPreview ?? view.image ?? undefined}
-        imageStateLabel={
-          coverFile ? tSuggest("proposedImage") : tSuggest("currentImage")
-        }
-        onPickFile={setCoverFile}
-        idPrefix="ae"
-        publisherSuggestions={publisherSuggestions ?? []}
-        brandSuggestions={
-          brandSuggestions?.filter((b): b is string => !!b) ?? []
-        }
-        seriesSuggestions={seriesSuggestions ?? []}
-      />
+  const currentImageUrl = coverPreview ?? view.image ?? undefined;
+  const imageStateLabel = coverFile
+    ? tSuggest("proposedImage")
+    : tSuggest("currentImage");
 
-      <div className="flex items-center justify-end gap-2">
-        {!canSubmit && (
-          <span className="text-muted-foreground text-sm">
-            {t("edit.noChanges")}
-          </span>
-        )}
-        <Button variant="outline" asChild>
-          <Link href={`/admin/puzzles/${puzzleId}`}>{t("edit.cancel")}</Link>
-        </Button>
-        <Button
-          variant="brand"
-          disabled={!canSubmit || submit.isPending}
-          onClick={() => submit.mutate()}
-        >
-          {submit.isPending ? t("edit.saving") : t("edit.save")}
-        </Button>
+  // Rendered twice — inline below `lg:` (its position today) and again inside the sticky
+  // context panel at `lg:` — via the CSS-only hidden/visible split below, not two hand-written
+  // copies: same element, same handlers, mounted at two DOM positions.
+  const actionsRow = (
+    <div className="flex items-center justify-end gap-2">
+      {!canSubmit && (
+        <span className="text-muted-foreground text-sm">
+          {t("edit.noChanges")}
+        </span>
+      )}
+      <Button variant="outline" asChild>
+        <Link href={`/admin/puzzles/${puzzleId}`}>{t("edit.cancel")}</Link>
+      </Button>
+      <Button
+        variant="brand"
+        disabled={!canSubmit || submit.isPending}
+        onClick={() => submit.mutate()}
+      >
+        {submit.isPending ? t("edit.saving") : t("edit.save")}
+      </Button>
+    </div>
+  );
+
+  return (
+    <div className="grid gap-10 lg:grid-cols-[minmax(0,42rem)_minmax(280px,22rem)]">
+      <div className="flex w-full flex-col gap-6">
+        <PuzzleDefinitionFields
+          form={form}
+          set={set}
+          categories={categories}
+          difficultySeed={view.difficulty ?? ""}
+          shapeSeed={view.shape ?? ""}
+          idPrefix="ae"
+          publisherSuggestions={publisherSuggestions ?? []}
+          brandSuggestions={
+            brandSuggestions?.filter((b): b is string => !!b) ?? []
+          }
+          seriesSuggestions={seriesSuggestions ?? []}
+        />
+
+        <div className="lg:hidden">
+          <CoverImageField
+            currentImageUrl={currentImageUrl}
+            imageStateLabel={imageStateLabel}
+            onPickFile={setCoverFile}
+          />
+        </div>
+
+        <div className="lg:hidden">{actionsRow}</div>
       </div>
+
+      <aside className="hidden lg:sticky lg:top-2 lg:block lg:self-start">
+        <FormContextPanel
+          image={
+            <CoverImageField
+              variant="panel"
+              currentImageUrl={currentImageUrl}
+              imageStateLabel={imageStateLabel}
+              onPickFile={setCoverFile}
+            />
+          }
+          changes={pendingChanges(pendingArgs, coverFile !== undefined)}
+          actions={actionsRow}
+        />
+      </aside>
     </div>
   );
 }

@@ -2901,6 +2901,8 @@
     "proposedImage": "Voorgestelde afbeelding",
     "replaceImage": "Afbeelding vervangen",
     "editImage": "Foto bewerken",
+    "changesHeading": "Wijzigingen ({count})",
+    "noChangesYet": "Nog geen wijzigingen",
     "keepCategory": "Huidige categorie behouden",
     "submit": "Voorstel indienen",
     "update": "Voorstel bijwerken",
