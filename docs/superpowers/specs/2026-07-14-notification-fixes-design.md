@@ -45,7 +45,7 @@ localize from `preferredLanguage` → everyone gets English.
 
 Fix: a `SyncPreferredLanguage` null-component mounted in the dashboard shell — when
 authenticated and `useLocale()` differs from the member's `preferredLanguage`, call
-`gateway.users.updateProfile({ preferredLanguage: locale })` once per mismatch
+`gateway.identity.updateProfile({ preferredLanguage: locale })` once per mismatch
 (guard against loops/spam with a ref). Switcher-agnostic; self-heals existing users
 on next app load.
 
