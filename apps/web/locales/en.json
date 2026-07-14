@@ -1567,6 +1567,7 @@
     "preferencesUpdated": "Preferences updated",
     "preferencesError": "Could not update the preference. Please try again.",
     "backToNotifications": "Back to notifications",
+    "jumpTo": "Jump to",
     "channelInApp": "In-app",
     "channelEmail": "Email",
     "channelPush": "Push",

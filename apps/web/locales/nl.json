@@ -1567,6 +1567,7 @@
     "preferencesUpdated": "Voorkeuren bijgewerkt",
     "preferencesError": "Kon de voorkeur niet bijwerken. Probeer het opnieuw.",
     "backToNotifications": "Terug naar meldingen",
+    "jumpTo": "Ga naar",
     "channelInApp": "In-app",
     "channelEmail": "E-mail",
     "channelPush": "Push",

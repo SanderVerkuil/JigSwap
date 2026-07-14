@@ -127,8 +127,12 @@ export function ChannelMatrix({
           return (
             <Fragment key={category.key}>
               <div
+                data-category-anchor={category.key}
                 role="row"
-                className={cn(COLS, "bg-muted/20 border-t px-4 py-2.5")}
+                className={cn(
+                  COLS,
+                  "bg-muted/20 scroll-mt-24 border-t px-4 py-2.5",
+                )}
               >
                 <span role="rowheader" className="pr-4">
                   <span className="block text-sm font-semibold">
@@ -246,7 +250,11 @@ export function ChannelMatrix({
           );
           if (visible.length === 0) return null;
           return (
-            <div key={category.key} className="py-4">
+            <div
+              key={category.key}
+              data-category-anchor={category.key}
+              className="scroll-mt-24 py-4"
+            >
               <div className="mb-3">
                 <p className="text-sm font-semibold">
                   {t(`categories.${category.key}.title`)}

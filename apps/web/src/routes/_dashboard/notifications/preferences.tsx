@@ -1,6 +1,5 @@
-import { Link } from "@/compat/link";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { NotificationPreferencesPanel } from "@/components/notifications/notification-preferences-panel";
-import { Button } from "@/components/ui/button";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 import { useTranslations } from "use-intl";
@@ -13,17 +12,22 @@ export const Route = createFileRoute("/_dashboard/notifications/preferences")({
 });
 
 function NotificationPreferencesPage() {
-  const t = useTranslations("notifications");
+  const tShell = useTranslations("shell");
+
+  // /notifications has no ShellGroupKey group of its own, so the shell can't derive
+  // a "Notifications › Notification preferences" crumb automatically — publish it
+  // explicitly (replaces the old "Back to notifications" button).
+  usePageHeader(
+    () => ({
+      crumbs: [
+        { label: tShell("pages.notifications.title"), href: "/notifications" },
+      ],
+    }),
+    [],
+  );
 
   return (
-    <div className="container mx-auto max-w-3xl space-y-6">
-      <Button variant="outline" asChild>
-        <Link href="/notifications">{t("backToNotifications")}</Link>
-      </Button>
-      <div>
-        <h1 className="text-3xl font-bold">{t("preferencesTitle")}</h1>
-        <p className="text-muted-foreground">{t("preferencesSubtitle")}</p>
-      </div>
+    <div className="flex w-full flex-col">
       <NotificationPreferencesPanel />
     </div>
   );
