@@ -6,11 +6,14 @@ import {
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { toDomain } from "./adapters/convexNotificationPreferenceRepository";
 
-// Read side: the caller's notification preference toggles (type -> channel -> enabled). If the
-// member has no stored preference yet, returns the sensible defaults (all types on inApp; email/
-// push off) WITHOUT persisting — reads stay side-effect-free; the row is materialised lazily on
-// the first toggle (updateNotificationPreference) or the first NotifyMember.
+// Read side: the caller's resolved notification preferences (type -> {inApp, email, push}), the
+// same per-channel stored-over-default merge `allows` uses for delivery. Every NOTIFICATION_TYPES
+// member is present: types absent from an older stored row (untouched, or added after the row was
+// written) resolve to their defaults; explicit stored values (including false) always win. Reads
+// stay side-effect-free — the row is materialised lazily on the first toggle
+// (updateNotificationPreference) or NotifyMember.
 export const getMyPreferences = query({
   args: {},
   handler: async (ctx) => {
@@ -22,7 +25,9 @@ export const getMyPreferences = query({
       )
       .unique();
 
-    if (row) return row.toggles;
+    // `toDomain` is the repository's mapper, reused here directly: this is a `query` (QueryCtx),
+    // while the repository itself is typed against MutationCtx for its write-capable `save`.
+    if (row) return toDomain(row).resolvedToggles();
 
     // No stored preference: derive the defaults in the domain so this query and NotifyMember agree.
     const fresh = NotificationPreference.createDefault(
@@ -30,6 +35,6 @@ export const getMyPreferences = query({
       toMemberId(memberId as string),
       new Date(),
     );
-    return fresh.toState().toggles;
+    return fresh.resolvedToggles();
   },
 });

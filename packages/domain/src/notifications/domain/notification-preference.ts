@@ -7,6 +7,10 @@ import { NOTIFICATION_TYPES, NotificationType } from "./notification-type";
 // The set of channels enabled for a single notification type. A missing channel means disabled.
 export type ChannelToggles = Readonly<Partial<Record<Channel, boolean>>>;
 
+// A channel toggle map with every channel explicitly resolved -- what `defaultToggles` and
+// `resolvedToggles` always produce (no absent keys to fall back on).
+type ResolvedChannelToggles = Readonly<Record<Channel, boolean>>;
+
 // The persistable shape: per (type, channel) enablement, plus the member it belongs to. We store
 // only the toggles that differ from "off" is NOT assumed — we store the full resolved map so the
 // 4a-backend mapper is a plain serialise; `allows` reads it directly without re-deriving defaults.
@@ -20,8 +24,8 @@ export interface NotificationPreferenceState {
 
 // Build the sensible default toggle map: every type enabled on inApp, email/push off. This is the
 // policy a member with no stored preference gets (the application layer materialises one of these).
-const defaultToggles = (): Record<NotificationType, ChannelToggles> => {
-  const map = {} as Record<NotificationType, ChannelToggles>;
+const defaultToggles = (): Record<NotificationType, ResolvedChannelToggles> => {
+  const map = {} as Record<NotificationType, ResolvedChannelToggles>;
   for (const type of NOTIFICATION_TYPES) {
     map[type] = { inApp: true, email: false, push: false };
   }
@@ -58,15 +62,29 @@ export class NotificationPreference {
     });
   }
 
-  // Does this member accept a notification of `type` on `channel`? A type absent from the stored
-  // map falls back to that type's default toggles (see `defaultToggles`) -- absent means "never
-  // asked", not "opted out". An explicitly stored value, even a disabled one, always wins.
+  // Does this member accept a notification of `type` on `channel`? Falls back PER CHANNEL: absent
+  // keys arise from type-level absence (untouched types, or types added after the row was written)
+  // or channels added later; an explicit stored value (including false) always wins.
   allows(type: NotificationType, channel: Channel): boolean {
-    const stored = this.state.toggles[type];
-    if (stored) {
-      return stored[channel] === true;
+    return (
+      this.state.toggles[type]?.[channel] ?? defaultToggles()[type][channel]
+    );
+  }
+
+  // The full 21-type read model: every NOTIFICATION_TYPES member resolved to its complete
+  // {inApp, email, push} triple, via the same per-channel stored-over-default merge as `allows`.
+  // This is the READ-side truth the preferences UI renders; `allows` is the delivery-side
+  // equivalent.
+  resolvedToggles(): Readonly<Record<NotificationType, ChannelToggles>> {
+    const resolved = {} as Record<NotificationType, ChannelToggles>;
+    for (const type of NOTIFICATION_TYPES) {
+      const triple = {} as Record<Channel, boolean>;
+      for (const channel of CHANNELS) {
+        triple[channel] = this.allows(type, channel);
+      }
+      resolved[type] = triple;
     }
-    return defaultToggles()[type][channel] === true;
+    return resolved;
   }
 
   // Turn a (type, channel) delivery on. Records PreferenceChanged only when it actually changed.
@@ -108,7 +126,7 @@ export class NotificationPreference {
     if (this.allows(type, channel) === enabled) {
       return;
     }
-    const current = this.state.toggles[type] ?? this.emptyChannelToggles();
+    const current = this.state.toggles[type] ?? defaultToggles()[type];
     const nextForType: ChannelToggles = { ...current, [channel]: enabled };
     this.state = {
       ...this.state,
@@ -118,14 +136,6 @@ export class NotificationPreference {
     this.record(
       new PreferenceChanged(this.state.memberId, type, channel, enabled, now),
     );
-  }
-
-  private emptyChannelToggles(): ChannelToggles {
-    const map: Partial<Record<Channel, boolean>> = {};
-    for (const channel of CHANNELS) {
-      map[channel] = false;
-    }
-    return map;
   }
 
   private record(event: DomainEvent): void {

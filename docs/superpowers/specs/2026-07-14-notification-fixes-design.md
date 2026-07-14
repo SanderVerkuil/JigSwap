@@ -12,8 +12,11 @@ and `packages/backend/convex/notifications/getMyPreferences.ts`):
 
 - `set()` seeds a missing type entry from `emptyChannelToggles()` (all-off), so the
   first email/push enable on an untouched type silently disables its in-app delivery.
+  Note: that seeding always wrote FULL triples with an explicit `inApp: false` — never
+  partial entries.
 - `allows()` gives stored entries absolute precedence with `stored[channel] === true`,
-  so the corrupted entries (absent `inApp` key) read as off.
+  so a channel key absent from a stored entry reads as off instead of falling back to
+  its default (a latent hazard for channels added after a row was written).
 - `getMyPreferences` returns RAW stored toggles: types absent from older rows render
   as all-off in the matrix while deliveries follow defaults — and clicking in-app on
   is a domain no-op, matching the reported "can only enable in-app after email/push".
@@ -21,8 +24,12 @@ and `packages/backend/convex/notifications/getMyPreferences.ts`):
 Fix (domain + one query; no migration):
 
 - `allows()` falls back PER CHANNEL: `stored[type]?.[channel] ?? defaultToggles()[type][channel]`.
-  Deliberate disables always wrote an explicit `false`, so an absent channel key only
-  exists via the seeding bug — this heals corrupted rows retroactively.
+  The fallback's genuine role is type-level absence (untouched types, or types added
+  after the row was written) and forward-compat for channels added later. Rows already
+  corrupted pre-fix carry an explicit `inApp: false` indistinguishable from a deliberate
+  email-only configuration, so NO migration can repair them without clobbering
+  legitimate choices — accepted loss, mitigated because the in-app toggle now works and
+  affected members can re-enable themselves.
 - `set()` seeds missing entries from `defaultToggles()[type]`.
 - New `resolvedToggles()` on the aggregate: full 21-type map, stored values winning
   per channel over defaults. `getMyPreferences` returns it in both branches (stored
@@ -51,5 +58,6 @@ implementation report for a later product decision; do not change them.
 
 ## Out of scope
 
-Data migration (fix 1 heals in place); changing other image surfaces; per-switcher
-locale wiring (the shell sync covers all of them).
+Data migration — corrupted rows are indistinguishable from deliberate email-only
+configs; self-service repair via the now-working toggle. Changing other image
+surfaces; per-switcher locale wiring (the shell sync covers all of them).
