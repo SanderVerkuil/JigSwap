@@ -330,7 +330,7 @@ describe("solving.recordCompletion", () => {
     expect(row?.endDate).toBeUndefined();
   });
 
-  test("same-day completion (startDate == endDate, no explicit time) succeeds with undefined duration", async () => {
+  test("same-day completion (startDate == endDate, no explicit time) counts one day (1440 minutes)", async () => {
     const t = convexTest(schema, modules);
     const { copyAggregateId } = await seed(t);
     const today = Date.now();
@@ -340,7 +340,7 @@ describe("solving.recordCompletion", () => {
     )) as string;
     const row = await completionRow(t, completionId);
     expect(row?.isCompleted).toBe(true);
-    expect(row?.completionTimeMinutes).toBeUndefined();
+    expect(row?.completionTimeMinutes).toBe(1440);
   });
 });
 

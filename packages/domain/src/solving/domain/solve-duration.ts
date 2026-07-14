@@ -10,17 +10,22 @@ export class SolveDuration {
   private constructor(readonly minutes: number) {}
 
   static ofMinutes(minutes: number): Result<SolveDuration, SolvingError> {
-    if (!Number.isFinite(minutes) || minutes <= 0) {
+    if (!Number.isFinite(minutes)) {
       return err(SolvingError.invalidDuration());
     }
-    return ok(new SolveDuration(Math.round(minutes)));
+    // Round FIRST, then validate the rounded value — a sub-30-second span must be rejected, never
+    // silently stored as 0 (which would violate the positive-minutes invariant).
+    const rounded = Math.round(minutes);
+    if (rounded <= 0) {
+      return err(SolvingError.invalidDuration());
+    }
+    return ok(new SolveDuration(rounded));
   }
 
-  // Derive a duration from a start/end pair (end must be on or after start). A zero-length span
-  // is not a valid solve, so equal instants are rejected as an invalid duration.
+  // Derive a duration from a start/end pair (end must be on or after start). A zero-length (or
+  // negative) span isn't a valid solve; ofMinutes rejects it since it rounds to <= 0 minutes.
   static between(start: Date, end: Date): Result<SolveDuration, SolvingError> {
     const ms = end.getTime() - start.getTime();
-    if (ms <= 0) return err(SolvingError.invalidDuration());
     return SolveDuration.ofMinutes(ms / MS_PER_MINUTE);
   }
 

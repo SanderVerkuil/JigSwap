@@ -1756,6 +1756,8 @@
       "finished": "Voltooid {date}",
       "time": "{hours} u {minutes} m",
       "timeMinutes": "{minutes} m",
+      "timeDays": "{days, plural, one {# dag} other {# dagen}}",
+      "timeDaysHours": "{days}d {hours} u {minutes} m",
       "noTime": "Geen tijd vastgelegd",
       "finish": "Oplossing afronden",
       "edit": "Bewerken",

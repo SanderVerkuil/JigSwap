@@ -152,8 +152,15 @@ function CompletionsPage() {
 
   const formatTime = (minutes?: number): string => {
     if (minutes === undefined) return t("noTime");
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
+    const days = Math.floor(minutes / 1440);
+    const rest = minutes % 1440;
+    const h = Math.floor(rest / 60);
+    const m = rest % 60;
+    if (days > 0) {
+      return h === 0 && m === 0
+        ? t("timeDays", { days })
+        : t("timeDaysHours", { days, hours: h, minutes: m });
+    }
     return h > 0
       ? t("time", { hours: h, minutes: m })
       : t("timeMinutes", { minutes: m });

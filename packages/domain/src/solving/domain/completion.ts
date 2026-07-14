@@ -18,6 +18,9 @@ export const MAX_PHOTOS = 5;
 // Edits are only allowed within this window after the completion was recorded (documented rule).
 export const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
+// A date-only same-day completion (start == end, no explicit duration) counts as one day.
+const MINUTES_PER_DAY = 1440;
+
 // Input to start(): an in-progress solve (no end yet).
 export interface StartCompletionProps {
   readonly id: CompletionId;
@@ -353,10 +356,10 @@ export class Completion {
 
   // --- internals ---
 
-  // Reconcile a supplied duration with the start/end span. Returns the resolved minutes (or
-  // undefined when the span is zero and no explicit minutes were given — duration is then unknown).
-  // An explicit minutes value must be a positive number. An explicit end-before-start is rejected
-  // before this helper is called, so the only "no duration" case is start == end.
+  // Reconcile a supplied duration with the start/end span. Returns the resolved minutes. An
+  // explicit minutes value must be a positive number. An explicit end-before-start is rejected
+  // before this helper is called, so the only span-derived cases are start < end (actual span)
+  // and start == end (date-only same-day completion, no explicit time given).
   private static resolveDuration(
     start: Date,
     end: Date,
@@ -372,8 +375,9 @@ export class Completion {
       if (duration.isErr) return err(duration.error);
       return ok(duration.value.minutes);
     }
-    // start == end: duration is unknown (same-day solve with no explicit time).
-    return ok(undefined);
+    // start == end: date-only same-day completions count as one day (product decision,
+    // spec 2026-07-14 Fix 4).
+    return ok(MINUTES_PER_DAY);
   }
 
   private record(event: DomainEvent): void {

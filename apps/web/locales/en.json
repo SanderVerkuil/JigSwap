@@ -1756,6 +1756,8 @@
       "finished": "Finished {date}",
       "time": "{hours}h {minutes}m",
       "timeMinutes": "{minutes}m",
+      "timeDays": "{days, plural, one {# day} other {# days}}",
+      "timeDaysHours": "{days}d {hours}h {minutes}m",
       "noTime": "No time recorded",
       "finish": "Finish solve",
       "edit": "Edit",
