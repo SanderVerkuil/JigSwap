@@ -42,6 +42,7 @@ export function PuzzleCard({ puzzle }: PuzzleCardProps) {
         imageUrl: puzzle.image,
       }}
       imageHref={`/puzzles/${puzzle._id}`}
+      imageFit="contain"
       actions={
         // The grid columns are ~212px wide, so the row must fit two buttons
         // without overflowing the card (which is `overflow-hidden`). The primary
