@@ -122,3 +122,23 @@ mobile variant looks off; the matrix renders as ONE table everywhere:
   the duplicate-id/offsetParent workaround is obsolete and removed).
 - A11y grid roles unchanged; the `@container/matrix` wrapper stays (it now
   only drives column widths).
+
+## Fix 8 — fastest-finish stats: stored duration wins; day-aware profile display
+
+`finishMinutesOf` (`packages/backend/convex/library/getCopyInstanceView.ts`)
+prefers `(endDate - startDate)` OVER the stored `completionTimeMinutes` —
+inverted precedence vs the domain (explicit/stored duration always wins).
+Same-day rows derive 0; post-Fix-4 rows storing 1440 are ignored.
+
+- Fix precedence: stored `completionTimeMinutes` first; date-diff fallback only
+  for legacy rows without one; a zero/negative fallback result returns null
+  (unknown), never 0. Applies to both consumers (per-solver `finishMinutes`
+  and `fastestFinishMinutes`).
+- Profile records display (`profile-body.tsx`, `members.profile.minutesValue`):
+  day-aware — whole-day values render as days ("1 dag"), mixed as day+hour,
+  sub-day unchanged (reuse the Fix 4 key pattern in the `members.profile`
+  namespace).
+- Backend test pinning: same-day row with stored 1440 → fastest = 1440;
+  legacy row without stored duration and equal dates → excluded (null).
+- NOT fixed by design: existing rows storing a literal 1 from pre-fix testing
+  (edit/delete the completion to clear them).
