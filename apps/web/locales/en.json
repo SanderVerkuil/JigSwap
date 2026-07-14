@@ -1853,6 +1853,7 @@
       "created": "Goal created",
       "createError": "Could not create the goal. Please try again.",
       "progress": "{current} of {target} completions",
+      "active": "Active",
       "achieved": "Achieved",
       "dueBy": "Due by {date}",
       "activeCount": "{count} active",

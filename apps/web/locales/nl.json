@@ -1853,6 +1853,7 @@
       "created": "Doel aangemaakt",
       "createError": "Kon het doel niet aanmaken. Probeer het opnieuw.",
       "progress": "{current} van {target} voltooiingen",
+      "active": "Actief",
       "achieved": "Behaald",
       "dueBy": "Vóór {date}",
       "activeCount": "{count} actief",

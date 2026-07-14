@@ -2,6 +2,7 @@ import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useUser } from "@/compat/clerk";
+import { SectionHead } from "@/components/dashboard-home/section-head";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
 import { Badge } from "@/components/ui/badge";
@@ -22,10 +23,15 @@ import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import type { FunctionReturnType } from "convex/server";
 import { Plus, Target, Trophy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
+
+type GoalRow = FunctionReturnType<typeof gateway.solving.myGoals>[number];
+
+const GOAL_GRID = "grid gap-x-10 gap-y-8 md:grid-cols-2 2xl:grid-cols-3";
 
 export const Route = createFileRoute("/_dashboard/goals")({
   head: ({ match }) => ({
@@ -117,15 +123,20 @@ function GoalsPage() {
     return (
       <div className="flex w-full flex-col gap-[26px]">
         <Skeleton className="h-10 w-full" />
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-16" />
-        ))}
+        <div className={GOAL_GRID}>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-16" />
+          ))}
+        </div>
       </div>
     );
   }
 
+  const active = goals.filter((goal) => !goal.isAchieved);
+  const achieved = goals.filter((goal) => goal.isAchieved);
+
   return (
-    <div className="mx-auto flex w-full max-w-[860px] flex-col gap-[26px]">
+    <div className="flex w-full flex-col gap-[26px]">
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
@@ -200,86 +211,105 @@ function GoalsPage() {
         />
       ) : (
         <div className="flex flex-col gap-[26px]">
-          {goals.map((goal) => {
-            // Progress is derived from the server-maintained counts; never recomputed beyond a
-            // clamped percentage for the bar width.
-            const pct =
-              goal.targetCompletions > 0
-                ? Math.min(
-                    100,
-                    Math.round(
-                      (goal.currentCompletions / goal.targetCompletions) * 100,
-                    ),
-                  )
-                : 0;
-            const GoalIcon = goal.isAchieved ? Trophy : Target;
-            return (
-              <div key={goal._id}>
-                <div className="mb-2.5 flex items-center gap-3">
-                  <span
-                    className={cn(
-                      "inline-flex size-9 shrink-0 items-center justify-center rounded-full",
-                      goal.isAchieved
-                        ? "bg-jigsaw-secondary/15 text-jigsaw-secondary"
-                        : "bg-jigsaw-primary/10 text-jigsaw-primary",
-                    )}
-                  >
-                    <GoalIcon className="size-[17px]" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-base font-semibold">
-                        {goal.title}
-                      </span>
-                      {goal.isAchieved && (
-                        <Badge className="shrink-0">
-                          <Trophy className="mr-1 h-3 w-3" />
-                          {t("achieved")}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="text-muted-foreground mt-px text-xs">
-                      {goal.targetDate !== undefined
-                        ? t("dueBy", {
-                            date: new Date(
-                              goal.targetDate,
-                            ).toLocaleDateString(),
-                          })
-                        : goal.description}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-heading text-xl leading-none font-bold">
-                      {pct}%
-                    </div>
-                    <div className="text-muted-foreground font-mono text-xs">
-                      {t("progressShort", {
-                        current: goal.currentCompletions,
-                        target: goal.targetCompletions,
-                      })}
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-muted h-2.5 w-full overflow-hidden rounded-full">
-                  <div
-                    className={cn(
-                      "h-full rounded-full transition-all",
-                      goal.isAchieved
-                        ? "bg-jigsaw-secondary"
-                        : "bg-jigsaw-primary",
-                    )}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-                {goal.targetDate !== undefined && goal.description && (
-                  <p className="text-muted-foreground mt-1.5 text-xs">
-                    {goal.description}
-                  </p>
-                )}
+          <section>
+            <SectionHead
+              title={t("active")}
+              icon={Target}
+              meta={t("activeCount", { count: active.length })}
+            />
+            <div className={GOAL_GRID}>
+              {active.map((goal) => (
+                <GoalTile key={goal._id} goal={goal} />
+              ))}
+            </div>
+          </section>
+
+          {achieved.length > 0 && (
+            <section>
+              <SectionHead title={t("achieved")} icon={Trophy} />
+              <div className={GOAL_GRID}>
+                {achieved.map((goal) => (
+                  <GoalTile key={goal._id} goal={goal} />
+                ))}
               </div>
-            );
-          })}
+            </section>
+          )}
         </div>
+      )}
+    </div>
+  );
+}
+
+function GoalTile({ goal }: { goal: GoalRow }) {
+  const t = useTranslations("solving.goals");
+
+  // Progress is derived from the server-maintained counts; never recomputed beyond a
+  // clamped percentage for the bar width.
+  const pct =
+    goal.targetCompletions > 0
+      ? Math.min(
+          100,
+          Math.round((goal.currentCompletions / goal.targetCompletions) * 100),
+        )
+      : 0;
+  const GoalIcon = goal.isAchieved ? Trophy : Target;
+
+  return (
+    <div>
+      <div className="mb-2.5 flex items-center gap-3">
+        <span
+          className={cn(
+            "inline-flex size-9 shrink-0 items-center justify-center rounded-full",
+            goal.isAchieved
+              ? "bg-jigsaw-secondary/15 text-jigsaw-secondary"
+              : "bg-jigsaw-primary/10 text-jigsaw-primary",
+          )}
+        >
+          <GoalIcon className="size-[17px]" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-base font-semibold">{goal.title}</span>
+            {goal.isAchieved && (
+              <Badge className="shrink-0">
+                <Trophy className="mr-1 h-3 w-3" />
+                {t("achieved")}
+              </Badge>
+            )}
+          </div>
+          <div className="text-muted-foreground mt-px text-xs">
+            {goal.targetDate !== undefined
+              ? t("dueBy", {
+                  date: new Date(goal.targetDate).toLocaleDateString(),
+                })
+              : goal.description}
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="font-heading text-xl leading-none font-bold">
+            {pct}%
+          </div>
+          <div className="text-muted-foreground font-mono text-xs">
+            {t("progressShort", {
+              current: goal.currentCompletions,
+              target: goal.targetCompletions,
+            })}
+          </div>
+        </div>
+      </div>
+      <div className="bg-muted h-2.5 w-full overflow-hidden rounded-full">
+        <div
+          className={cn(
+            "h-full rounded-full transition-all",
+            goal.isAchieved ? "bg-jigsaw-secondary" : "bg-jigsaw-primary",
+          )}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      {goal.targetDate !== undefined && goal.description && (
+        <p className="text-muted-foreground mt-1.5 text-xs">
+          {goal.description}
+        </p>
       )}
     </div>
   );
