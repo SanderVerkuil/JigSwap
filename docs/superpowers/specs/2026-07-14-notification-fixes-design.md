@@ -86,3 +86,21 @@ vastleggen", "Voltooiing afronden", "Moeilijkste voltooiing", "Voltooiingen
 per maand" — never a blind replace). `en.json`/`source.json` untouched except
 where a key is display-shared. Only genuinely solve-related strings change;
 unrelated uses of "oplossing" (if any) stay.
+
+## Fix 6 — preferences panel/matrix adapt to CONTAINER width
+
+The `NotificationPreferencesPanel` + `ChannelMatrix` render both on the
+dedicated page and inside the Clerk profile modal; their viewport breakpoints
+(`lg:` aside split, `sm:` matrix desktop/stacked split) overflow the narrow
+modal on wide screens. Fix with Tailwind v4 container queries (pattern already
+in the repo, `card.tsx`):
+
+- Panel root: named container `@container/prefs`; the aside grid + sticky
+  variants move from `lg:` to `@4xl/prefs:` (~56rem actual width).
+- Matrix: own named container `@container/matrix`; the desktop-grid vs stacked
+  split moves from `sm:`/`sm:hidden` to `@2xl/matrix:` (~42rem — what the
+  switch columns + labels genuinely need). Jump-to links already resolve the
+  visible branch at click time — unchanged.
+- Accepted consequence: layouts respond to actual available space (e.g. a
+  ~1024px window with the sidebar gets single-column on the dedicated page
+  until the aside genuinely fits).
