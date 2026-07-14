@@ -102,21 +102,12 @@ export function NotificationPreferencesPanel() {
           <ul className="flex flex-col gap-1.5">
             {visibleCategories.map((category) => (
               <li key={category.key}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    // Both matrix branches are DOM-resident (CSS display split); scroll the one that's visible.
-                    const el = [
-                      ...document.querySelectorAll(
-                        `[data-category-anchor="${category.key}"]`,
-                      ),
-                    ].find((n) => (n as HTMLElement).offsetParent !== null);
-                    el?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }}
+                <a
+                  href={`#category-${category.key}`}
                   className="text-muted-foreground hover:text-foreground text-sm hover:underline"
                 >
                   {t(`categories.${category.key}.title`)}
-                </button>
+                </a>
               </li>
             ))}
           </ul>
