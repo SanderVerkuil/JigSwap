@@ -26,6 +26,7 @@ import {
   usePageHeaderContent,
 } from "./page-header-slot";
 import { ShellPreferencesProvider, useShellPreferences } from "./preferences";
+import { SyncPreferredLanguage } from "./sync-preferred-language";
 import { TopBar } from "./top-bar";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
@@ -34,6 +35,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <ShellPreferencesProvider>
       <PageHeaderSlotProvider>
+        <SyncPreferredLanguage />
         {/* Mobile scrolls the document itself (no height cap, no overflow clip
             below md) so the browser's address bar auto-hides on scroll-down and
             returns on scroll-up — the regular-website behaviour. The mobile top

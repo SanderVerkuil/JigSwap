@@ -541,6 +541,89 @@ describe("getCopyInstanceView rich detail", () => {
     expect(view?.stats.yourAvgRating).toBe(4.5);
   });
 
+  test("stored completionTimeMinutes wins over date-diff: same-day row with stored 1440 -> fastest = 1440", async () => {
+    const t = convexTest(schema, modules);
+    const { now, viewer, copy } = await seedCopy(t);
+
+    await t.run(async (ctx) => {
+      // Same-day completion (startDate === endDate, post-Fix-4 same-day completions store 1440).
+      // A date-diff would derive 0; the stored duration must win.
+      await ctx.db.insert("completions", {
+        userId: viewer,
+        ownedPuzzleId: copy,
+        startDate: now,
+        endDate: now,
+        completionTimeMinutes: 1440,
+        photos: [],
+        isCompleted: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const view = await asViewer(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    expect(view?.stats.fastestFinishMinutes).toBe(1440);
+    expect(view?.completions[0]?.finishMinutes).toBe(1440);
+  });
+
+  test("legacy same-day row without a stored duration is excluded from fastest (unknown, never zero)", async () => {
+    const t = convexTest(schema, modules);
+    const { now, viewer, copy } = await seedCopy(t);
+
+    await t.run(async (ctx) => {
+      // Legacy row: same-day span, no completionTimeMinutes stored (predates Fix 4). A date-diff
+      // fallback would derive 0 minutes here — that must be treated as unknown (null), not a real
+      // 0-minute fastest finish, since it's the only completion.
+      await ctx.db.insert("completions", {
+        userId: viewer,
+        ownedPuzzleId: copy,
+        startDate: now,
+        endDate: now,
+        photos: [],
+        isCompleted: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const view = await asViewer(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    expect(view?.stats.fastestFinishMinutes).toBeNull();
+    expect(view?.completions[0]?.finishMinutes).toBeNull();
+  });
+
+  test("legacy multi-day row without a stored duration still derives the date diff", async () => {
+    const t = convexTest(schema, modules);
+    const { now, viewer, copy } = await seedCopy(t);
+
+    await t.run(async (ctx) => {
+      // Legacy row: a real 3-day span, no completionTimeMinutes stored — the date-diff fallback
+      // must still apply for rows that predate persisting an explicit duration.
+      await ctx.db.insert("completions", {
+        userId: viewer,
+        ownedPuzzleId: copy,
+        startDate: now,
+        endDate: now + 3 * DAY,
+        photos: [],
+        isCompleted: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const view = await asViewer(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    expect(view?.stats.fastestFinishMinutes).toBe(3 * 24 * 60);
+    expect(view?.completions[0]?.finishMinutes).toBe(3 * 24 * 60);
+  });
+
   test("stats with no completions: zeros and nulls", async () => {
     const t = convexTest(schema, modules);
     const { copy } = await seedCopy(t);

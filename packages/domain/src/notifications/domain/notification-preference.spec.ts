@@ -111,17 +111,89 @@ describe("NotificationPreference with a sparse (rehydrated) toggle map", () => {
     expect(pref.allows("puzzle_approved", "inApp")).toBe(false);
   });
 
-  it("seeds an all-off channel map when first toggling an absent type", () => {
+  it("seeds a type from its defaults when first toggling an absent type", () => {
     const pref = sparse();
     pref.enable("trade_request", "email", LATER);
     expect(pref.allows("trade_request", "email")).toBe(true);
-    // The freshly-seeded type's other channels stay off by default.
-    expect(pref.allows("trade_request", "inApp")).toBe(false);
+    // The freshly-seeded type keeps its default in-app delivery; only email was toggled on.
+    expect(pref.allows("trade_request", "inApp")).toBe(true);
     expect(pref.allows("trade_request", "push")).toBe(false);
-    // The persisted shape is the FULL resolved map (explicit falses), not just the toggled channel.
+    // The persisted shape is the FULL resolved map (defaults + the toggle), not just the toggled channel.
     expect(pref.toState().toggles.trade_request).toEqual({
+      inApp: true,
+      email: true,
+      push: false,
+    });
+  });
+
+  it("enabling email on an untouched type preserves its default in-app delivery", () => {
+    const pref = sparse();
+    pref.enable("trade_request", "email", LATER);
+    // Before this fix, seeding from an all-off map meant enabling email silently disabled inApp.
+    expect(pref.allows("trade_request", "inApp")).toBe(true);
+  });
+
+  it("a stored entry missing a channel key falls back to that channel's default", () => {
+    // Pins the fallback MECHANISM for absent keys (forward-compat for channels added after a row
+    // was written); persisted entries have always been full triples, so this shape is synthetic.
+    const pref = NotificationPreference.rehydrate({
+      id,
+      memberId: alice,
+      toggles: { trade_request: { email: true } },
+      updatedAt: NOW,
+    });
+    expect(pref.allows("trade_request", "inApp")).toBe(true);
+    expect(pref.allows("trade_request", "email")).toBe(true);
+    expect(pref.allows("trade_request", "push")).toBe(false);
+  });
+
+  it("an explicit stored false always wins over the default (deliberate opt-outs are never overridden)", () => {
+    const pref = NotificationPreference.rehydrate({
+      id,
+      memberId: alice,
+      toggles: { trade_request: { inApp: false, email: true, push: false } },
+      updatedAt: NOW,
+    });
+    expect(pref.allows("trade_request", "inApp")).toBe(false);
+    expect(pref.resolvedToggles().trade_request).toEqual({
       inApp: false,
       email: true,
+      push: false,
+    });
+  });
+});
+
+describe("NotificationPreference.resolvedToggles", () => {
+  it("covers every type with explicit triples, stored values winning", () => {
+    const pref = NotificationPreference.rehydrate({
+      id,
+      memberId: alice,
+      toggles: {
+        // Synthetic partial entry: no inApp key -- pins the per-channel fallback to the default.
+        trade_request: { email: true },
+      },
+      updatedAt: NOW,
+    });
+    const resolved = pref.resolvedToggles();
+
+    expect(Object.keys(resolved)).toHaveLength(NOTIFICATION_TYPES.length);
+    for (const type of NOTIFICATION_TYPES) {
+      expect(resolved[type]).toEqual({
+        inApp: pref.allows(type, "inApp"),
+        email: pref.allows(type, "email"),
+        push: pref.allows(type, "push"),
+      });
+    }
+    // The stored channel wins; the absent channel falls back to its default.
+    expect(resolved.trade_request).toEqual({
+      inApp: true,
+      email: true,
+      push: false,
+    });
+    // A type entirely absent from the stored map resolves to plain defaults.
+    expect(resolved.goal_achieved).toEqual({
+      inApp: true,
+      email: false,
       push: false,
     });
   });

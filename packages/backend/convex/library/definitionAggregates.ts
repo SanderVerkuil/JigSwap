@@ -12,18 +12,23 @@ const MS_PER_DAY = 86_400_000;
 /** Round to 1 decimal place. */
 export const round1 = (n: number): number => Math.round(n * 10) / 10;
 
-/** Whole-day solve duration: prefer (endDate - startDate) rounded to whole days; else fall back to
- * completionTimeMinutes / 1440 rounded; else null when neither is recorded. */
+/** Whole-day solve duration: the stored, explicit `completionTimeMinutes` ALWAYS wins (it's the
+ * domain's resolved duration — mirrors `Completion.resolveDuration`, which already picked
+ * explicit-vs-derived and applies the same-day => 1 day floor), converted to whole days. The
+ * (endDate - startDate) diff is only a FALLBACK for legacy rows that predate persisting a duration.
+ * A non-positive fallback result means the span is unusable as a duration (e.g. a legacy same-day
+ * row) and returns null (unknown) rather than a misleading 0. Null when neither is recorded. */
 export const finishDaysOf = (c: {
   startDate: number;
   endDate?: number;
   completionTimeMinutes?: number;
 }): number | null => {
-  if (c.endDate != null) {
-    return Math.round((c.endDate - c.startDate) / MS_PER_DAY);
-  }
   if (c.completionTimeMinutes != null) {
     return Math.round(c.completionTimeMinutes / 1440);
+  }
+  if (c.endDate != null) {
+    const days = Math.round((c.endDate - c.startDate) / MS_PER_DAY);
+    return days > 0 ? days : null;
   }
   return null;
 };

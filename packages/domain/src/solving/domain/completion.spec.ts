@@ -92,12 +92,12 @@ describe("Completion.record", () => {
     if (result.isErr) expect(result.error.code).toBe("InvalidTimeRange");
   });
 
-  it("allows equal start/end (same-day) and leaves completionTimeMinutes undefined", () => {
+  it("allows equal start/end (same-day) and counts one day (1440 minutes)", () => {
     const result = recordValid({ endDate: START });
     expect(result.isOk).toBe(true);
     if (!result.isOk) return;
     expect(result.value.isCompleted).toBe(true);
-    expect(result.value.toState().completionTimeMinutes).toBeUndefined();
+    expect(result.value.toState().completionTimeMinutes).toBe(1440);
   });
 
   it("allows equal start/end with an explicit positive time and stores that time", () => {
@@ -114,10 +114,33 @@ describe("Completion.record", () => {
       expect(result.value.toState().completionTimeMinutes).toBe(45);
   });
 
+  it("derives a multi-day span in minutes rather than the one-day fallback", () => {
+    const result = recordValid({
+      endDate: new Date("2026-06-03T10:00:00Z"), // 2 days after START
+    });
+    expect(result.isOk).toBe(true);
+    if (result.isOk)
+      expect(result.value.toState().completionTimeMinutes).toBe(2880);
+  });
+
   it("rejects more than five photos", () => {
     const result = recordValid({ photos: photos(6) });
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("TooManyPhotos");
+  });
+
+  it("rejects an explicit negative completionTimeMinutes with InvalidDuration", () => {
+    const result = recordValid({ completionTimeMinutes: -5 });
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("InvalidDuration");
+  });
+
+  it("rejects a derived sub-30-second span with InvalidDuration", () => {
+    const result = recordValid({
+      endDate: new Date(START.getTime() + 10_000), // 10s span, no explicit minutes
+    });
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("InvalidDuration");
   });
 
   it("records PuzzleReviewed when a review is supplied", () => {
@@ -172,6 +195,21 @@ describe("Completion.finish", () => {
     const outcome = started.value.finish(new Date("2026-06-01T09:00:00Z"), NOW);
     expect(outcome.isErr).toBe(true);
     if (outcome.isErr) expect(outcome.error.code).toBe("InvalidTimeRange");
+  });
+
+  it("finishes with equal end/start (same-day) and counts one day (1440 minutes)", () => {
+    const started = Completion.start({
+      id: ID,
+      userId: ALICE,
+      startDate: START,
+      now: NOW,
+    });
+    if (!started.isOk) throw new Error("setup failed");
+    started.value.pullEvents();
+
+    const outcome = started.value.finish(START, NOW);
+    expect(outcome.isOk).toBe(true);
+    expect(started.value.toState().completionTimeMinutes).toBe(1440);
   });
 
   it("accepts an equal end/start when an explicit duration is supplied", () => {
@@ -346,6 +384,14 @@ describe("Completion.edit", () => {
     );
     expect(outcome.isOk).toBe(true);
     expect(recorded.value.toState().completionTimeMinutes).toBe(15);
+  });
+
+  it("edits to equal end/start without explicit minutes and counts one day (1440 minutes)", () => {
+    const recorded = recordValid();
+    if (!recorded.isOk) throw new Error("setup failed");
+    const outcome = recorded.value.edit(ALICE, { endDate: START }, END);
+    expect(outcome.isOk).toBe(true);
+    expect(recorded.value.toState().completionTimeMinutes).toBe(1440);
   });
 
   it("recomputes duration when only the explicit minutes change", () => {

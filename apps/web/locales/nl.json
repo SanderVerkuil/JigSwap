@@ -110,7 +110,7 @@
       },
       "analytics": {
         "title": "Analyses",
-        "description": "Krijg inzicht in je oplossingspatronen, stel doelen en vergelijk met community trends."
+        "description": "Krijg inzicht in je voltooiingspatronen, stel doelen en vergelijk met community trends."
       }
     },
     "detailed": {
@@ -139,7 +139,7 @@
           "title": "Persoonlijke Analyses",
           "items": [
             "Bekijk voltooiingsstatistieken",
-            "Analyseer oplossingstijd trends",
+            "Analyseer oplostijd-trends",
             "Stel persoonlijke doelen in en volg ze",
             "Exporteer je gegevens"
           ]
@@ -536,7 +536,7 @@
       "collection": "Aan collectie toevoegen"
     },
     "coachmark": {
-      "body": "Snelle acties zoals een oplossing vastleggen vind je in het ⋯ menu op elke puzzelkaart.",
+      "body": "Snelle acties zoals een voltooiing vastleggen vind je in het ⋯ menu op elke puzzelkaart.",
       "dismiss": "Tip verbergen"
     },
     "dividerManual": "of vul de gegevens zelf in",
@@ -1513,8 +1513,10 @@
       "statPieces": "stukjes gelegd",
       "statSwaps": "ruilen",
       "fastestLabel": "Snelste voltooiing",
-      "hardestLabel": "Moeilijkste oplossing",
+      "hardestLabel": "Moeilijkste voltooiing",
       "minutesValue": "{minutes} min",
+      "daysValue": "{days, plural, one {# dag} other {# dagen}}",
+      "daysHoursValue": "{days}d {hours}u",
       "piecesValue": "{count, number} stukjes",
       "privateBody": "Deze plank is privé — {name} deelt hun puzzels, voltooiingen en verhaal alleen met goedgekeurde volgers.",
       "signUpToFollow": "Meld je aan om een volgverzoek te sturen",
@@ -1749,15 +1751,17 @@
       "title": "Voltooiingen",
       "subtitle": "Je oplosgeschiedenis van al je puzzels.",
       "empty": "Nog geen voltooiingen",
-      "emptyHint": "Leg een oplossing vast vanuit een van je puzzels om je geschiedenis bij te houden.",
+      "emptyHint": "Leg een voltooiing vast vanuit een van je puzzels om je geschiedenis bij te houden.",
       "inProgress": "Bezig",
       "completed": "Voltooid",
       "started": "Gestart {date}",
       "finished": "Voltooid {date}",
       "time": "{hours} u {minutes} m",
       "timeMinutes": "{minutes} m",
+      "timeDays": "{days, plural, one {# dag} other {# dagen}}",
+      "timeDaysHours": "{days}d {hours} u {minutes} m",
       "noTime": "Geen tijd vastgelegd",
-      "finish": "Oplossing afronden",
+      "finish": "Voltooiing afronden",
       "edit": "Bewerken",
       "editWindowClosed": "Deze voltooiing kan niet meer worden bewerkt (het venster van 24 uur is gesloten).",
       "yourReview": "Jouw review",
@@ -1778,7 +1782,7 @@
       "piecesMissing": "miste stukjes",
       "new": {
         "title": "Voltooiing vastleggen",
-        "subtitle": "Kies een puzzel om een oplossing tegen te registreren.",
+        "subtitle": "Kies een puzzel om een voltooiing voor te registreren.",
         "noPuzzles": "Nog geen puzzels",
         "noPuzzlesHint": "Voeg eerst puzzels toe aan je bibliotheek en log hier dan een voltooiing."
       },
@@ -1790,22 +1794,22 @@
       "deleteError": "Voltooiing kon niet worden verwijderd"
     },
     "logSolve": {
-      "trigger": "Oplossing vastleggen",
-      "title": "Oplossing vastleggen",
+      "trigger": "Voltooiing vastleggen",
+      "title": "Voltooiing vastleggen",
       "description": "Leg een voltooiing vast voor {puzzle}.",
       "startDate": "Startdatum",
       "endDate": "Einddatum",
-      "endDateHint": "Laat leeg om deze oplossing als bezig te markeren.",
+      "endDateHint": "Laat leeg om deze voltooiing als bezig te markeren.",
       "hours": "Uren",
       "minutes": "Minuten",
       "timeLabel": "Oplostijd",
       "notes": "Notities",
-      "notesPlaceholder": "Iets memorabels over deze oplossing?",
-      "submit": "Oplossing opslaan",
-      "saved": "Oplossing vastgelegd",
-      "savedInProgress": "Oplossing gestart",
-      "finished": "Oplossing afgerond",
-      "saveError": "Kon de oplossing niet opslaan. Probeer het opnieuw.",
+      "notesPlaceholder": "Iets memorabels over deze voltooiing?",
+      "submit": "Voltooiing opslaan",
+      "saved": "Voltooiing vastgelegd",
+      "savedInProgress": "Voltooiing gestart",
+      "finished": "Voltooiing afgerond",
+      "saveError": "Kon de voltooiing niet opslaan. Probeer het opnieuw.",
       "allPiecesPresent": "Alle stukjes waren aanwezig",
       "updateCopyPiecesTitle": "Dit exemplaar bijwerken?",
       "updateCopyPiecesBody": "Je gaf aan dat er stukjes ontbreken. Wil je het aantal ontbrekende stukjes van dit exemplaar ook bijwerken?",
@@ -1865,7 +1869,7 @@
     "subtitle": "Je puzzel- en ruilactiviteit in één oogopslag.",
     "nav": "Inzichten",
     "loading": "Je inzichten laden...",
-    "empty": "Nog geen gegevens — leg een oplossing vast om inzichten te zien.",
+    "empty": "Nog geen gegevens — leg een voltooiing vast om inzichten te zien.",
     "stats": {
       "completions": "Voltooiingen",
       "solveTime": "Totale oplostijd",
@@ -1879,14 +1883,16 @@
       "ratingReceived": "Gem. ontvangen beoordeling",
       "time": "{hours}u {minutes}m",
       "timeMinutes": "{minutes}m",
+      "timeDays": "{days, plural, one {# dag} other {# dagen}}",
+      "timeDaysHours": "{days}d {hours}u {minutes}m",
       "ratingNone": "—"
     },
     "trends": {
       "title": "Voltooiingstrends",
-      "description": "Voltooide oplossingen per maand over de laatste 12 maanden.",
+      "description": "Voltooiingen per maand over de laatste 12 maanden.",
       "count": "Voltooiingen",
       "minutes": "Oplosminuten",
-      "empty": "Nog geen voltooide oplossingen."
+      "empty": "Nog geen voltooiingen."
     },
     "breakdown": {
       "title": "Collectie-uitsplitsing",
@@ -1913,7 +1919,7 @@
     },
     "export": {
       "title": "Mijn gegevens exporteren",
-      "description": "Download een JSON-kopie van je puzzels, oplossingen, collecties, doelen en ruilen.",
+      "description": "Download een JSON-kopie van je puzzels, voltooiingen, collecties, doelen en ruilen.",
       "button": "Mijn gegevens exporteren",
       "preparing": "Voorbereiden...",
       "success": "Je gegevens zijn gedownload.",
@@ -2432,7 +2438,7 @@
       "helpfulSend": "Feedback versturen",
       "landingEyebrow": "Documentatie",
       "landingTitle": "JigSwap-handleiding",
-      "landingLead": "Alles wat je nodig hebt om je collectie op te bouwen, oplossingen vast te leggen en puzzels te ruilen met de community.",
+      "landingLead": "Alles wat je nodig hebt om je collectie op te bouwen, voltooiingen vast te leggen en puzzels te ruilen met de community.",
       "skipToContent": "Naar inhoud springen",
       "navSheetTitle": "Documentatienavigatie",
       "navSheetDescription": "Blader door de JigSwap-documentatie op onderwerp.",
@@ -2554,7 +2560,7 @@
       },
       "completionNew": {
         "title": "Voltooiing vastleggen",
-        "subtitle": "Kies een puzzel om een oplossing tegen te registreren.",
+        "subtitle": "Kies een puzzel om een voltooiing voor te registreren.",
         "description": "Nieuwe voltooiing vastleggen"
       },
       "goals": {
@@ -2753,7 +2759,7 @@
     },
     "actions": {
       "edit": "Bewerken",
-      "logSolve": "Oplossing vastleggen",
+      "logSolve": "Voltooiing vastleggen",
       "delete": "Verwijderen",
       "requestSwap": "Ruil aanvragen",
       "message": "Bericht",

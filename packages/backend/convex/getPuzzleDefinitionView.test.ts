@@ -318,6 +318,66 @@ describe("getPuzzleDefinitionView", () => {
     expect(view?.stats.avgCompletionDays).toBe(3);
   });
 
+  test("avgCompletionDays: stored completionTimeMinutes wins — same-day solve storing 1440 contributes 1 day, not 0", async () => {
+    const t = convexTest(schema, modules);
+    const { now, viewer, puzzleId } = await seed(t);
+
+    await t.run(async (ctx) => {
+      // Same-day completion (startDate === endDate) with the post-Fix-4 stored 1440. A date-diff
+      // would derive 0 days and drag the average toward 0; the stored duration must win.
+      await ctx.db.insert("completions", {
+        userId: viewer,
+        puzzleId,
+        startDate: now,
+        endDate: now,
+        completionTimeMinutes: 1440,
+        photos: [],
+        isCompleted: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      // A second, 3-day completion so the average is exercised: (1 + 3) / 2 = 2.
+      await ctx.db.insert("completions", {
+        userId: viewer,
+        puzzleId,
+        startDate: now,
+        endDate: now + 3 * DAY,
+        photos: [],
+        isCompleted: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const view = await get(t, puzzleId);
+    expect(view?.stats.totalCompletions).toBe(2);
+    expect(view?.stats.avgCompletionDays).toBe(2);
+  });
+
+  test("avgCompletionDays: legacy same-day row without a stored duration is excluded (null when it's the only one)", async () => {
+    const t = convexTest(schema, modules);
+    const { now, viewer, puzzleId } = await seed(t);
+
+    await t.run(async (ctx) => {
+      // Legacy row: same-day span, no completionTimeMinutes (predates Fix 4). The date-diff
+      // fallback derives 0 — unusable as a duration, so it must not enter the average.
+      await ctx.db.insert("completions", {
+        userId: viewer,
+        puzzleId,
+        startDate: now,
+        endDate: now,
+        photos: [],
+        isCompleted: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const view = await get(t, puzzleId);
+    expect(view?.stats.totalCompletions).toBe(1);
+    expect(view?.stats.avgCompletionDays).toBeNull();
+  });
+
   test("avgCompletionDays is null when no completed completions", async () => {
     const t = convexTest(schema, modules);
     const { puzzleId } = await seed(t);

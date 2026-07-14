@@ -10,7 +10,6 @@ import {
   type NotificationChannel,
 } from "@/components/notifications/notification-meta";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
@@ -62,13 +61,14 @@ function controllableTypes(
     : types;
 }
 
-// The 13×3 type×channel preference grid, card-free. Desktop (sm+) is an aligned matrix: one header
-// row names each channel once, then a divide-y row per type with the switches in fixed-width columns
-// that line up under the headers. Below sm it reflows to stacked per-type groups (each channel a
-// labelled switch), since 3 aligned columns don't fit a phone. role="grid"/row/columnheader/
-// rowheader/gridcell + aria-labelledby give the switches accessible names without visible per-cell
-// labels on desktop.
-const COLS = "grid grid-cols-[1fr_repeat(3,5.5rem)] items-center";
+// The 13×3 type×channel preference grid, card-free. It's a single aligned matrix at every
+// container width: one header row names each channel once, then a divide-y row per type with
+// the switches in fixed-width columns that line up under the headers. Channel columns are
+// narrower below the @2xl/matrix container threshold and widen once the container has room.
+// role="grid"/row/columnheader/rowheader/gridcell + aria-labelledby give the switches
+// accessible names without visible per-cell labels.
+const COLS =
+  "grid grid-cols-[minmax(0,1fr)_repeat(3,3rem)] @2xl/matrix:grid-cols-[minmax(0,1fr)_repeat(3,5.5rem)] items-center";
 
 export function ChannelMatrix({
   preferences,
@@ -90,12 +90,11 @@ export function ChannelMatrix({
   );
 
   return (
-    <>
-      {/* Desktop matrix */}
+    <div className="@container/matrix">
       <div
         role="grid"
         aria-label={t("matrixLabel")}
-        className="hidden overflow-hidden rounded-lg border sm:block"
+        className="overflow-hidden rounded-lg border"
       >
         <div
           role="row"
@@ -112,7 +111,7 @@ export function ChannelMatrix({
               key={channel}
               role="columnheader"
               id={`col-${channel}`}
-              className="text-muted-foreground text-center text-xs font-medium tracking-wide uppercase"
+              className="text-muted-foreground text-center text-[10px] font-medium tracking-wide uppercase @2xl/matrix:text-xs"
             >
               {channelLabel[channel]}
             </span>
@@ -127,7 +126,7 @@ export function ChannelMatrix({
           return (
             <Fragment key={category.key}>
               <div
-                data-category-anchor={category.key}
+                id={`category-${category.key}`}
                 role="row"
                 className={cn(
                   COLS,
@@ -185,7 +184,7 @@ export function ChannelMatrix({
                       <span
                         role="rowheader"
                         id={`row-${type}`}
-                        className="flex items-center gap-3 pr-4"
+                        className="flex min-w-0 items-center gap-3 pr-4"
                       >
                         <span
                           aria-hidden
@@ -200,7 +199,7 @@ export function ChannelMatrix({
                           <span className="text-sm font-medium">
                             {t(`types.${type}`)}
                           </span>
-                          <span className="text-muted-foreground text-xs">
+                          <span className="text-muted-foreground line-clamp-2 text-xs">
                             {t(`typeDesc.${type}`)}
                           </span>
                         </span>
@@ -241,135 +240,6 @@ export function ChannelMatrix({
           );
         })}
       </div>
-
-      {/* Mobile: stacked per-category groups with labelled switches */}
-      <div className="divide-border divide-y sm:hidden">
-        {NOTIFICATION_CATEGORIES.map((category) => {
-          const visible = category.types.filter((type) =>
-            visibleTypes.includes(type),
-          );
-          if (visible.length === 0) return null;
-          return (
-            <div
-              key={category.key}
-              data-category-anchor={category.key}
-              className="scroll-mt-24 py-4"
-            >
-              <div className="mb-3">
-                <p className="text-sm font-semibold">
-                  {t(`categories.${category.key}.title`)}
-                </p>
-                <p className="text-muted-foreground text-xs">
-                  {t(`categories.${category.key}.description`)}
-                </p>
-              </div>
-              <div className="mb-4 flex items-center gap-6">
-                {NOTIFICATION_CHANNELS.map((channel) => {
-                  const controllable = controllableTypes(visible, channel);
-                  const disabled = controllable.length === 0;
-                  const state = disabled
-                    ? false
-                    : headerState(controllable, channel, preferences);
-                  return (
-                    <label
-                      key={channel}
-                      className="text-muted-foreground flex flex-col items-center gap-1 text-xs"
-                    >
-                      <Checkbox
-                        checked={state}
-                        disabled={disabled}
-                        onCheckedChange={() =>
-                          onToggleCategory(
-                            controllable,
-                            channel,
-                            state !== true,
-                          )
-                        }
-                        aria-label={`${t(`categories.${category.key}.title`)} — ${channelLabel[channel]}`}
-                        title={disabled ? t("emailUnavailable") : undefined}
-                      />
-                      {channelLabel[channel]}
-                    </label>
-                  );
-                })}
-              </div>
-              <div className="divide-border divide-y">
-                {visible.map((type) => {
-                  const Icon = notificationIcon(type);
-                  const row = preferences[type] ?? {};
-                  return (
-                    <div
-                      role="group"
-                      aria-labelledby={`m-${type}`}
-                      key={type}
-                      className="py-4 first:pt-0"
-                    >
-                      <div
-                        id={`m-${type}`}
-                        className="mb-3 flex items-center gap-2.5"
-                      >
-                        <span
-                          aria-hidden
-                          className={cn(
-                            "bg-muted flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
-                            notificationAccent(type),
-                          )}
-                        >
-                          <Icon className="h-4 w-4" />
-                        </span>
-                        <span className="flex min-w-0 flex-col">
-                          <span className="text-sm font-medium">
-                            {t(`types.${type}`)}
-                          </span>
-                          <span className="text-muted-foreground text-xs">
-                            {t(`typeDesc.${type}`)}
-                          </span>
-                        </span>
-                      </div>
-                      <div className="flex flex-col gap-3 pl-11">
-                        {NOTIFICATION_CHANNELS.map((channel) => {
-                          const id = `${type}-${channel}-m`;
-                          const emailUnavailable =
-                            channel === "email" &&
-                            !EMAIL_ELIGIBLE_TYPES.has(type);
-                          return (
-                            <div
-                              key={channel}
-                              className="flex items-center justify-between"
-                            >
-                              <Label
-                                htmlFor={id}
-                                className="text-muted-foreground text-sm"
-                              >
-                                {channelLabel[channel]}
-                              </Label>
-                              <Switch
-                                id={id}
-                                checked={
-                                  !emailUnavailable && row[channel] === true
-                                }
-                                disabled={emailUnavailable}
-                                onCheckedChange={(checked) =>
-                                  onToggle(type, channel, checked)
-                                }
-                                title={
-                                  emailUnavailable
-                                    ? t("emailUnavailable")
-                                    : undefined
-                                }
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </>
+    </div>
   );
 }

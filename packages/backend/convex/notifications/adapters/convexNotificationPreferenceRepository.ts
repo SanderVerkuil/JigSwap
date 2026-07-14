@@ -13,7 +13,10 @@ import type { MutationCtx } from "../../_generated/server";
 // (`notificationPreferences`). One row per member, keyed by `memberId`. `toggles` is the resolved
 // type->channel->enabled map, plain JSON, stored as-is (v.any) so the mapping is a direct copy.
 
-const toDomain = (
+// Exported so read-only queries (which get a QueryCtx, not the MutationCtx this adapter's
+// `findByMember` requires) can still rehydrate a row into the aggregate without duplicating the
+// mapping (see notifications/getMyPreferences.ts).
+export const toDomain = (
   row: Doc<"notificationPreferences">,
 ): NotificationPreference => {
   const state: NotificationPreferenceState = {

@@ -14,6 +14,20 @@ describe("SolveDuration", () => {
     if (result.isOk) expect(result.value.minutes).toBe(90);
   });
 
+  it("rejects a sub-30-second span that would round down to zero", () => {
+    // Rounds to 0 before the fix's re-ordering — the positive-minutes invariant must reject it,
+    // never store a 0.
+    const result = SolveDuration.ofMinutes(0.2);
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("InvalidDuration");
+  });
+
+  it("rounds a span at the half-minute boundary up to one minute", () => {
+    const result = SolveDuration.ofMinutes(0.6);
+    expect(result.isOk).toBe(true);
+    if (result.isOk) expect(result.value.minutes).toBe(1);
+  });
+
   it.each([0, -5, Number.NaN, Number.POSITIVE_INFINITY])(
     "rejects %p with InvalidDuration",
     (value) => {
@@ -29,6 +43,14 @@ describe("SolveDuration", () => {
     const result = SolveDuration.between(start, end);
     expect(result.isOk).toBe(true);
     if (result.isOk) expect(result.value.minutes).toBe(90);
+  });
+
+  it("rounds a 45-second span up to one minute", () => {
+    const start = new Date("2026-06-01T10:00:00Z");
+    const end = new Date("2026-06-01T10:00:45Z");
+    const result = SolveDuration.between(start, end);
+    expect(result.isOk).toBe(true);
+    if (result.isOk) expect(result.value.minutes).toBe(1);
   });
 
   it("rejects a zero-length span", () => {

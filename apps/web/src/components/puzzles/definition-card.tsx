@@ -46,6 +46,7 @@ export function DefinitionCard({ card }: { card: CatalogCard }) {
       }}
       badges={badges}
       imageHref={`/catalog/${card._id}`}
+      imageFit="contain"
     />
   );
 }
