@@ -3194,9 +3194,11 @@
         "withdrawn": "Ingetrokken"
       },
       "conflictBanner": "De puzzel is gewijzigd sinds dit voorstel werd ingediend. Gemarkeerde velden komen niet meer overeen met wat de indiener zag.",
+      "conflictCount": "{count, plural, one {# veld heeft een conflict} other {# velden hebben conflicten}}",
       "fieldsChanged": "{count, plural, one {# veld gewijzigd} other {# velden gewijzigd}}",
       "proposedBy": "door {name}",
       "comment": "Toelichting van de indiener",
+      "field": "Veld",
       "current": "Huidig",
       "proposed": "Voorgesteld",
       "imageCompare": {

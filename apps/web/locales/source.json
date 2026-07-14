@@ -3194,9 +3194,11 @@
         "withdrawn": "Withdrawn"
       },
       "conflictBanner": "The puzzle changed since this was proposed. Marked fields no longer match what the proposer saw.",
+      "conflictCount": "{count, plural, one {# field has a conflict} other {# fields have conflicts}}",
       "fieldsChanged": "{count, plural, one {# field changed} other {# fields changed}}",
       "proposedBy": "by {name}",
       "comment": "Proposer's note",
+      "field": "Field",
       "current": "Current",
       "proposed": "Proposed",
       "imageCompare": {
