@@ -1881,6 +1881,8 @@
       "ratingReceived": "Avg rating received",
       "time": "{hours}h {minutes}m",
       "timeMinutes": "{minutes}m",
+      "timeDays": "{days, plural, one {# day} other {# days}}",
+      "timeDaysHours": "{days}d {hours}h {minutes}m",
       "ratingNone": "—"
     },
     "trends": {
