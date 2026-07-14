@@ -386,6 +386,14 @@ describe("Completion.edit", () => {
     expect(recorded.value.toState().completionTimeMinutes).toBe(15);
   });
 
+  it("edits to equal end/start without explicit minutes and counts one day (1440 minutes)", () => {
+    const recorded = recordValid();
+    if (!recorded.isOk) throw new Error("setup failed");
+    const outcome = recorded.value.edit(ALICE, { endDate: START }, END);
+    expect(outcome.isOk).toBe(true);
+    expect(recorded.value.toState().completionTimeMinutes).toBe(1440);
+  });
+
   it("recomputes duration when only the explicit minutes change", () => {
     const recorded = recordValid(); // span 90
     if (!recorded.isOk) throw new Error("setup failed");
