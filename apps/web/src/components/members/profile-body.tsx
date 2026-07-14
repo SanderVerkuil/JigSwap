@@ -413,6 +413,25 @@ function StatStrip({ stats }: { stats: UnlockedProfile["stats"] }) {
 }
 
 // ── Records ──────────────────────────────────────────────────────────────────
+// Day-aware fastest-finish display (mirrors the Fix 4 pattern): whole days render as "N day(s)",
+// a day+hour mix as "Nd Nh" (hour precision suffices for this profile badge), sub-day unchanged.
+function fastestFinishLabel(
+  t: ReturnType<typeof useTranslations<"members.profile">>,
+  minutes: number,
+): string {
+  if (minutes < 1440) return t("minutesValue", { minutes });
+  if (minutes % 1440 === 0) return t("daysValue", { days: minutes / 1440 });
+  let days = Math.floor(minutes / 1440);
+  let hours = Math.round((minutes % 1440) / 60);
+  if (hours === 24) {
+    days += 1;
+    hours = 0;
+  }
+  return hours === 0
+    ? t("daysValue", { days })
+    : t("daysHoursValue", { days, hours });
+}
+
 function RecordsRow({ records }: { records: UnlockedProfile["records"] }) {
   const t = useTranslations("members.profile");
   if (!records.fastest && !records.hardest) return null;
@@ -424,7 +443,7 @@ function RecordsRow({ records }: { records: UnlockedProfile["records"] }) {
           chipClass="bg-amber-500/10 text-amber-500"
           label={t("fastestLabel")}
           title={records.fastest.title}
-          sub={t("minutesValue", { minutes: records.fastest.minutes })}
+          sub={fastestFinishLabel(t, records.fastest.minutes)}
         />
       )}
       {records.hardest && (

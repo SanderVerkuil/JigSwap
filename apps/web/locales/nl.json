@@ -1515,6 +1515,8 @@
       "fastestLabel": "Snelste voltooiing",
       "hardestLabel": "Moeilijkste voltooiing",
       "minutesValue": "{minutes} min",
+      "daysValue": "{days, plural, one {# dag} other {# dagen}}",
+      "daysHoursValue": "{days}d {hours}u",
       "piecesValue": "{count, number} stukjes",
       "privateBody": "Deze plank is privé — {name} deelt hun puzzels, voltooiingen en verhaal alleen met goedgekeurde volgers.",
       "signUpToFollow": "Meld je aan om een volgverzoek te sturen",

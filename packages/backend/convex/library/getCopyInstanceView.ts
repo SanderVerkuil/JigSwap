@@ -15,19 +15,24 @@ import { toMemberView } from "../identity/toMemberView";
 import { projectMemberIdentity } from "../social/privacy";
 import { canViewCopy } from "./canViewCopy";
 
-// Solve duration in whole MINUTES: prefer (endDate - startDate); else completionTimeMinutes; else
-// null. Returned raw (not rounded to days) so the UI can humanize it (e.g. "2 hours", "1 day",
-// "4 days", "1 week") instead of collapsing a sub-day solve to "0 days".
+// Solve duration in whole MINUTES: the stored, explicit `completionTimeMinutes` ALWAYS wins (it's
+// the domain's resolved duration — mirrors `Completion.resolveDuration`, which already picked
+// explicit-vs-derived and applies the same-day => 1 day floor). The (endDate - startDate) diff is
+// only a FALLBACK for legacy rows that predate persisting a duration. A non-positive fallback
+// result means the span is unusable as a duration (e.g. a legacy same-day row) and returns null
+// (unknown) rather than a misleading 0. Returned raw (not rounded to days) so the UI can humanize it
+// (e.g. "2 hours", "1 day", "4 days", "1 week") instead of collapsing a sub-day solve to "0 days".
 const finishMinutesOf = (c: {
   startDate: number;
   endDate?: number;
   completionTimeMinutes?: number;
 }): number | null => {
-  if (c.endDate != null) {
-    return Math.round((c.endDate - c.startDate) / 60000);
-  }
   if (c.completionTimeMinutes != null) {
     return Math.round(c.completionTimeMinutes);
+  }
+  if (c.endDate != null) {
+    const diff = Math.round((c.endDate - c.startDate) / 60000);
+    return diff > 0 ? diff : null;
   }
   return null;
 };

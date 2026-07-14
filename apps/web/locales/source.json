@@ -1515,6 +1515,8 @@
       "fastestLabel": "Fastest finish",
       "hardestLabel": "Hardest solve",
       "minutesValue": "{minutes} min",
+      "daysValue": "{days, plural, one {# day} other {# days}}",
+      "daysHoursValue": "{days}d {hours}h",
       "piecesValue": "{count, number} pieces",
       "privateBody": "This shelf is private — {name} shares their puzzles, completions and story with approved followers only.",
       "signUpToFollow": "Sign up to request to follow",
