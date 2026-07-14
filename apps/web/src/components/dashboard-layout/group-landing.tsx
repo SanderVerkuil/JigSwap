@@ -1,10 +1,11 @@
 "use client";
 
-// Landing page for a sidebar nav group (/library, /community, /admin): a card-free
-// directory of the group's surfaces as full-width rows — violet-tint icon
-// chip, title, one-line description, chevron — separated by thin dividers,
-// per the design handoff's GroupLanding. Driven entirely by the route-meta
-// nav groups, so the IA stays defined in exactly one place.
+// Landing page for a sidebar nav group (/library, /community, /admin): a
+// launcher tile grid of the group's surfaces — violet-tint icon chip, title,
+// 2-line description, hover chevron — per the content-width conformance
+// design (tile grid deliberately chosen over a row directory so these pages
+// feel like a "home" surface). Driven entirely by the route-meta nav groups,
+// so the IA stays defined in exactly one place.
 
 import { Link } from "@/compat/link";
 import { ChevronRight } from "lucide-react";
@@ -16,30 +17,27 @@ export function GroupLanding({ group }: { group: ShellGroupKey }) {
   const { items } = getNavGroup(group);
 
   return (
-    <div className="flex max-w-[820px] flex-col">
-      {items.map((item, index) => (
+    <div className="grid w-full gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {items.map((item) => (
         <Link
           key={item.key}
           href={item.href}
-          className={
-            "group flex items-center gap-4 py-[17px] transition-colors" +
-            (index === items.length - 1 ? "" : " border-b border-border/70")
-          }
+          className="group flex flex-col gap-3 rounded-xl border p-5 transition-colors outline-none hover:bg-accent/50 focus-visible:ring-2 focus-visible:ring-ring"
         >
           <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-sidebar-accent text-sidebar-accent-foreground">
             <item.icon className="size-[19px]" />
           </span>
-          <span className="min-w-0 flex-1">
-            <span className="block font-semibold text-foreground group-hover:text-sidebar-accent-foreground">
+          <span className="flex flex-1 flex-col gap-1">
+            <span className="font-medium text-foreground">
               {t(`pages.${item.key}.title`)}
             </span>
-            <span className="mt-px block truncate text-sm text-muted-foreground">
+            <span className="line-clamp-2 text-sm text-muted-foreground">
               {t(`pages.${item.key}.description`)}
             </span>
           </span>
           <ChevronRight
             aria-hidden
-            className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+            className="size-4 shrink-0 self-end text-muted-foreground transition-transform group-hover:translate-x-0.5"
           />
         </Link>
       ))}
