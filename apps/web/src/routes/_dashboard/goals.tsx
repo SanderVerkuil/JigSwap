@@ -102,7 +102,7 @@ function GoalsPage() {
 
   // The page title lives in the shell page head; publish the count + primary
   // action there too so the page body carries no duplicate section header.
-  const activeCount = (goals ?? []).filter((goal) => goal.isActive).length;
+  const activeCount = (goals ?? []).filter((goal) => !goal.isAchieved).length;
   const headerMeta = t("activeCount", { count: activeCount });
   usePageHeaderActions(
     () => (
