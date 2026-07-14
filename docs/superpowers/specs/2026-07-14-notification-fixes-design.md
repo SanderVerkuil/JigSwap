@@ -61,3 +61,28 @@ implementation report for a later product decision; do not change them.
 Data migration — corrupted rows are indistinguishable from deliberate email-only
 configs; self-service repair via the now-working toggle. Changing other image
 surfaces; per-switcher locale wiring (the shell sync covers all of them).
+
+## Fix 4 — completion duration semantics (added same day)
+
+- `Completion.resolveDuration` (record/finish/edit paths): when no explicit
+  duration is given and `startDate.getTime() === endDate.getTime()` (date-only
+  inputs → same local midnight), derive 1 day (1440 minutes) instead of
+  `undefined`. Larger spans keep deriving the actual difference.
+- `SolveDuration.ofMinutes`: round BEFORE validating so a tiny positive span
+  yields 1 minute, never a stored 0 (current order can store 0 for <30s spans).
+  `between` inherits the fix.
+- Display (`completions/index.tsx` `formatTime` and any sibling formatter):
+  day-aware — whole days render as "N day(s)" (nl "dag(en)"), day+hour+minute
+  composition for mixed spans; sub-day formatting unchanged. New locale keys in
+  en/nl/source.
+- Existing rows are not migrated; a stray 1-minute row is user-editable.
+
+## Fix 5 — nl terminology: voltooiing, not oplossing
+
+Align the solve-logging/completions/insights/export strings in `nl.json`
+(~20 occurrences of "oplossing*") to the "voltooiing*" family the marketing
+pages already use. Per-string grammatical rewrites (e.g. "Voltooiing
+vastleggen", "Voltooiing afronden", "Moeilijkste voltooiing", "Voltooiingen
+per maand" — never a blind replace). `en.json`/`source.json` untouched except
+where a key is display-shared. Only genuinely solve-related strings change;
+unrelated uses of "oplossing" (if any) stay.
