@@ -53,7 +53,10 @@ export const renderEmail = async (
       ).toString()}
       footerText={footer.text}
       footerLinkLabel={footer.linkLabel}
-      footerLinkUrl={new URL("/notifications", input.baseUrl).toString()}
+      footerLinkUrl={new URL(
+        "/notifications/preferences",
+        input.baseUrl,
+      ).toString()}
     />
   );
 

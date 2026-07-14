@@ -61,7 +61,7 @@ describe("renderEmail", () => {
     });
     expect(email.html).toContain(`${BASE}/trades`);
     // Footer always links to notification preferences.
-    expect(email.html).toContain(`${BASE}/notifications`);
+    expect(email.html).toContain(`${BASE}/notifications/preferences`);
   });
 
   it("uses the actor in the from name when present", async () => {

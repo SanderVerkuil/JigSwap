@@ -1,7 +1,8 @@
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { useClerk, useUser } from "@/compat/clerk";
+import { useUser } from "@/compat/clerk";
+import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
 import {
   type NotificationRow,
@@ -35,7 +36,6 @@ export const Route = createFileRoute("/_dashboard/notifications/")({
 
 function NotificationsPage() {
   const { user } = useUser();
-  const { openUserProfile } = useClerk();
   const t = useTranslations("notifications");
   const tCommon = useTranslations("common");
   const dateLocale = useDateFnsLocale();
@@ -95,12 +95,11 @@ function NotificationsPage() {
           <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Preferences have moved into the profile modal (Notifications tab).
-              Clerk's openUserProfile doesn't support deep-linking to a named
-              custom page, so we open the modal and let the user pick the tab. */}
-          <Button variant="outline" onClick={() => openUserProfile()}>
-            <Settings2 className="mr-2 h-4 w-4" />
-            {t("preferences")}
+          <Button variant="outline" asChild>
+            <Link href="/notifications/preferences">
+              <Settings2 className="mr-2 h-4 w-4" />
+              {t("preferences")}
+            </Link>
           </Button>
           <Button onClick={handleMarkAll} disabled={unreadCount === 0}>
             <CheckCheck className="mr-2 h-4 w-4" />
