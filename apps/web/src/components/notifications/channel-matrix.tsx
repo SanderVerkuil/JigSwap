@@ -90,12 +90,12 @@ export function ChannelMatrix({
   );
 
   return (
-    <>
+    <div className="@container/matrix">
       {/* Desktop matrix */}
       <div
         role="grid"
         aria-label={t("matrixLabel")}
-        className="hidden overflow-hidden rounded-lg border sm:block"
+        className="hidden overflow-hidden rounded-lg border @2xl/matrix:block"
       >
         <div
           role="row"
@@ -243,7 +243,7 @@ export function ChannelMatrix({
       </div>
 
       {/* Mobile: stacked per-category groups with labelled switches */}
-      <div className="divide-border divide-y sm:hidden">
+      <div className="divide-border divide-y @2xl/matrix:hidden">
         {NOTIFICATION_CATEGORIES.map((category) => {
           const visible = category.types.filter((type) =>
             visibleTypes.includes(type),
@@ -370,6 +370,6 @@ export function ChannelMatrix({
           );
         })}
       </div>
-    </>
+    </div>
   );
 }

@@ -89,8 +89,8 @@ export function NotificationPreferencesPanel() {
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-10">
-      <aside className="flex flex-col gap-6 lg:sticky lg:top-2 lg:self-start">
+    <div className="@container/prefs grid gap-6 @4xl/prefs:grid-cols-[300px_minmax(0,1fr)] @4xl/prefs:gap-10">
+      <aside className="flex flex-col gap-6 @4xl/prefs:sticky @4xl/prefs:top-2 @4xl/prefs:self-start">
         <PushDeviceSection />
         <p className="text-muted-foreground max-w-prose text-sm">
           {t("channelsNote")}
