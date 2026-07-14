@@ -104,3 +104,21 @@ in the repo, `card.tsx`):
 - Accepted consequence: layouts respond to actual available space (e.g. a
   ~1024px window with the sidebar gets single-column on the dedicated page
   until the aside genuinely fits).
+
+## Fix 7 — matrix is a table at EVERY container width (supersedes the stacked variant)
+
+Owner decision after seeing Fix 6 on small viewports: the stacked per-type
+mobile variant looks off; the matrix renders as ONE table everywhere:
+
+| icon+name / description | In-app | Email | Push |
+
+- Single grid branch at all container sizes; the `@2xl/matrix:hidden` stacked
+  branch is DELETED (large net deletion). Category header rows unchanged.
+- Column recipe: name cell `minmax(0,1fr)` (icon + name, description beneath,
+  truncation-safe); channel columns `3rem` below the `@2xl/matrix` container
+  threshold, `5.5rem` above it. Channel header labels shrink accordingly
+  (smaller text size on narrow containers; never dropped).
+- Jump-to links revert to plain `id="category-<key>"` anchors (single branch —
+  the duplicate-id/offsetParent workaround is obsolete and removed).
+- A11y grid roles unchanged; the `@container/matrix` wrapper stays (it now
+  only drives column widths).
