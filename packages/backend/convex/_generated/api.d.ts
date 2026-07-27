@@ -329,6 +329,7 @@ import type * as solving_adapters_solvingSettingsProvider from "../solving/adapt
 import type * as solving_adapters_systemClock from "../solving/adapters/systemClock.js";
 import type * as solving_backfill from "../solving/backfill.js";
 import type * as solving_backfillCompletionPuzzleId from "../solving/backfillCompletionPuzzleId.js";
+import type * as solving_copySnapshot from "../solving/copySnapshot.js";
 import type * as solving_createGoal from "../solving/createGoal.js";
 import type * as solving_deleteCompletion from "../solving/deleteCompletion.js";
 import type * as solving_editCompletion from "../solving/editCompletion.js";
@@ -341,6 +342,7 @@ import type * as solving_recordCompletion from "../solving/recordCompletion.js";
 import type * as solving_reviewPuzzle from "../solving/reviewPuzzle.js";
 import type * as solving_setShareInProgress from "../solving/setShareInProgress.js";
 import type * as solving_setTrackCompletionDuration from "../solving/setTrackCompletionDuration.js";
+import type * as solving_startCompletion from "../solving/startCompletion.js";
 import type * as users from "../users.js";
 
 import type {
@@ -671,6 +673,7 @@ declare const fullApi: ApiFromModules<{
   "solving/adapters/systemClock": typeof solving_adapters_systemClock;
   "solving/backfill": typeof solving_backfill;
   "solving/backfillCompletionPuzzleId": typeof solving_backfillCompletionPuzzleId;
+  "solving/copySnapshot": typeof solving_copySnapshot;
   "solving/createGoal": typeof solving_createGoal;
   "solving/deleteCompletion": typeof solving_deleteCompletion;
   "solving/editCompletion": typeof solving_editCompletion;
@@ -683,6 +686,7 @@ declare const fullApi: ApiFromModules<{
   "solving/reviewPuzzle": typeof solving_reviewPuzzle;
   "solving/setShareInProgress": typeof solving_setShareInProgress;
   "solving/setTrackCompletionDuration": typeof solving_setTrackCompletionDuration;
+  "solving/startCompletion": typeof solving_startCompletion;
   users: typeof users;
 }>;
 

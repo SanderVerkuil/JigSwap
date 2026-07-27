@@ -50,6 +50,11 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
       condition: "good",
       availability: { forTrade: false, forSale: false, forLend: false },
       visibility: "private",
+      snapshot: {
+        title: "Mountain Vista",
+        brand: "Ravensburger",
+        pieceCount: 1000,
+      },
       createdAt: now,
       updatedAt: now,
     });
@@ -597,5 +602,85 @@ describe("solving read queries", () => {
     expect(
       (history[0] as { ownedPuzzleId?: Id<"ownedPuzzles"> }).ownedPuzzleId,
     ).toBeDefined();
+  });
+});
+
+describe("solving.startCompletion — first-class start", () => {
+  test("creates an in-progress row with the copy snapshot and puzzleId denormalized", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId, puzzleId } = await seed(t);
+
+    const completionId = (await asAlice(t).mutation(
+      api.solving.startCompletion.startCompletion,
+      {
+        copyId: copyAggregateId,
+        startDate: Date.now() - HOUR,
+        notes: "corner pieces first",
+      },
+    )) as string;
+
+    const row = await completionRow(t, completionId);
+    expect(row?.isCompleted).toBe(false);
+    expect(row?.endDate).toBeUndefined();
+    expect(row?.notes).toBe("corner pieces first");
+    // Review blocker: without this denormalization every downstream view is title-less.
+    expect(row?.puzzleId).toBe(puzzleId);
+    expect(row?.copySnapshot?.title).toBe("Mountain Vista");
+    expect(row?.copySnapshot?.wasBorrowed).toBe(false);
+  });
+
+  test("accepts backdated and future start dates", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+
+    const past = (await asAlice(t).mutation(
+      api.solving.startCompletion.startCompletion,
+      { copyId: copyAggregateId, startDate: Date.now() - 30 * 24 * HOUR },
+    )) as string;
+    const future = (await asAlice(t).mutation(
+      api.solving.startCompletion.startCompletion,
+      { copyId: copyAggregateId, startDate: Date.now() + 3 * 24 * HOUR },
+    )) as string;
+    expect(await completionRow(t, past)).not.toBeNull();
+    expect(await completionRow(t, future)).not.toBeNull();
+  });
+
+  test("rejects a member who neither owns nor holds the copy", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    await expect(
+      asBob(t).mutation(api.solving.startCompletion.startCompletion, {
+        copyId: copyAggregateId,
+        startDate: Date.now(),
+      }),
+    ).rejects.toThrow();
+  });
+
+  test("allows the borrower (current holder) and marks the snapshot borrowed", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, copyAggregateId, ownedPuzzleId } = await seed(t);
+    await lendToBob(t, ownedPuzzleId, bob);
+
+    const completionId = (await asBob(t).mutation(
+      api.solving.startCompletion.startCompletion,
+      { copyId: copyAggregateId, startDate: Date.now() },
+    )) as string;
+    const row = await completionRow(t, completionId);
+    expect(row?.copySnapshot?.wasBorrowed).toBe(true);
+  });
+
+  test("the started solve can be finished via the existing finish flow", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    const completionId = (await asAlice(t).mutation(
+      api.solving.startCompletion.startCompletion,
+      { copyId: copyAggregateId, startDate: Date.now() - 2 * HOUR },
+    )) as string;
+    await asAlice(t).mutation(api.solving.finishCompletion.finishCompletion, {
+      completionId,
+      endDate: Date.now(),
+    });
+    const row = await completionRow(t, completionId);
+    expect(row?.isCompleted).toBe(true);
   });
 });

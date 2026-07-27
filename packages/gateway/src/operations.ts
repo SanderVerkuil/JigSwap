@@ -201,6 +201,7 @@ export const gateway = {
   // Solving: solve tracking, puzzle reviews, goals. Ownership / 24h edit window / rating are
   // enforced in the domain; reads surface server-derived state (photo URLs, goal isAchieved).
   solving: {
+    startCompletion: api.solving.startCompletion.startCompletion,
     recordCompletion: api.solving.recordCompletion.recordCompletion,
     finishCompletion: api.solving.finishCompletion.finishCompletion,
     editCompletion: api.solving.editCompletion.editCompletion,

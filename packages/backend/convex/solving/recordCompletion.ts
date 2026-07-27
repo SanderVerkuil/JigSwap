@@ -14,6 +14,7 @@ import { convexCompletionRepository } from "./adapters/convexCompletionRepositor
 import { completionIdGenerator } from "./adapters/idGenerators";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
+import { denormalizeCopyOntoCompletion } from "./copySnapshot";
 import { toConvexError } from "./errors";
 
 // Composition root for logging a solve. Either a copy or a puzzle definition (or both) may be
@@ -98,27 +99,14 @@ export const recordCompletion = mutation({
       completionId = result.value as string;
     }
 
-    // Denormalize the durable puzzleId anchor + copy snapshot onto the just-written row.
     if (copy) {
-      const row = await ctx.db
-        .query("completions")
-        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", completionId))
-        .unique();
-      if (row) {
-        await ctx.db.patch(row._id, {
-          puzzleId: row.puzzleId ?? copy.puzzleId,
-          copySnapshot: {
-            copyId: args.copyId as string,
-            ownerId: copy.ownerId,
-            wasBorrowed: copy.ownerId !== me,
-            condition: copy.condition,
-            missingPiecesCount: copy.missingPiecesCount,
-            title: copy.snapshot?.title,
-            brand: copy.snapshot?.brand,
-            pieceCount: copy.snapshot?.pieceCount,
-          },
-        });
-      }
+      await denormalizeCopyOntoCompletion(
+        ctx,
+        completionId,
+        copy,
+        args.copyId as string,
+        me,
+      );
     }
 
     return completionId;
