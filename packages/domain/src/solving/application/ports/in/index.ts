@@ -6,5 +6,6 @@ export * from "./get-solving-preferences.port";
 export * from "./recompute-goal-progress.port";
 export * from "./record-completion.port";
 export * from "./review-puzzle.port";
+export * from "./set-share-in-progress.port";
 export * from "./set-track-completion-duration.port";
 export * from "./start-completion.port";
