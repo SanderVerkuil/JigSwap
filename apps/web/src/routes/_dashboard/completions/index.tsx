@@ -24,6 +24,12 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { gateway, Id } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -255,13 +261,40 @@ function CompletionsPage() {
           !isLast && "border-b",
         )}
       >
-        {completion.thumbnailUrl ? (
+        {completion.thumbnailUrl && completion.link ? (
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href={hrefForLink(completion.link)}
+                  aria-label={title}
+                  className="relative z-10 shrink-0"
+                >
+                  <Image
+                    src={completion.thumbnailUrl}
+                    alt=""
+                    width={44}
+                    height={44}
+                    className="h-11 w-11 shrink-0 rounded-lg border bg-muted object-contain"
+                  />
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="p-1.5">
+                <img
+                  src={completion.thumbnailUrl}
+                  alt=""
+                  className="max-h-[280px] max-w-[260px] rounded-md object-contain"
+                />
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ) : completion.thumbnailUrl ? (
           <Image
             src={completion.thumbnailUrl}
             alt=""
             width={44}
             height={44}
-            className="h-11 w-11 shrink-0 rounded-lg object-cover"
+            className="h-11 w-11 shrink-0 rounded-lg border bg-muted object-contain"
           />
         ) : (
           <CoverChip

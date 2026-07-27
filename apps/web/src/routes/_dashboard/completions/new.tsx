@@ -188,6 +188,7 @@ function NewCompletionPage() {
               puzzle={puzzle}
               variant="pick"
               onSelect={handleSelect}
+              imageFit="contain"
             />
           ))}
         </PuzzleViewProvider>

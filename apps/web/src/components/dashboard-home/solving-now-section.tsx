@@ -80,7 +80,7 @@ export function SolvingNowSection() {
                   alt=""
                   width={44}
                   height={44}
-                  className="h-11 w-11 shrink-0 rounded-md object-cover"
+                  className="h-11 w-11 shrink-0 rounded-md border bg-muted object-contain"
                 />
               ) : (
                 <span className="bg-muted flex h-11 w-11 shrink-0 items-center justify-center rounded-md">
