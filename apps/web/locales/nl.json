@@ -1815,6 +1815,7 @@
       "savedInProgress": "Voltooiing gestart",
       "finished": "Voltooiing afgerond",
       "saveError": "Kon de voltooiing niet opslaan. Probeer het opnieuw.",
+      "endBeforeStartError": "De einddatum kan niet vóór de startdatum liggen.",
       "allPiecesPresent": "Alle stukjes waren aanwezig",
       "updateCopyPiecesTitle": "Dit exemplaar bijwerken?",
       "updateCopyPiecesBody": "Je gaf aan dat er stukjes ontbreken. Wil je het aantal ontbrekende stukjes van dit exemplaar ook bijwerken?",

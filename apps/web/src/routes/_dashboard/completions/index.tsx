@@ -33,7 +33,7 @@ import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 type DialogState =
-  | { kind: "finish"; completionId: string }
+  | { kind: "finish"; completionId: string; startDate: number }
   | {
       kind: "edit";
       completionId: string;
@@ -316,6 +316,7 @@ function CompletionsPage() {
                           setDialog({
                             kind: "finish",
                             completionId: completion.aggregateId!,
+                            startDate: completion.startDate,
                           })
                         }
                       >
@@ -401,6 +402,7 @@ function CompletionsPage() {
           open
           onOpenChange={(open) => !open && setDialog(null)}
           completionId={dialog.completionId}
+          minEndDate={dialog.startDate}
         />
       )}
       {dialog?.kind === "review" && (

@@ -1815,6 +1815,7 @@
       "savedInProgress": "Solve started",
       "finished": "Solve finished",
       "saveError": "Could not save the solve. Please try again.",
+      "endBeforeStartError": "The finish date can't be before the start date.",
       "allPiecesPresent": "All pieces were present",
       "updateCopyPiecesTitle": "Update this copy?",
       "updateCopyPiecesBody": "You marked pieces missing. Update this copy's missing-pieces count too?",

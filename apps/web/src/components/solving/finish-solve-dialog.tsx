@@ -19,6 +19,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
+import { solvingErrorCode } from "./solving-error";
 
 function todayInputValue(): string {
   return new Date().toISOString().slice(0, 10);
@@ -28,6 +29,9 @@ interface FinishSolveDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   completionId: string;
+  /** The solve's startDate (epoch ms); floors the end-date input so a future-dated start can't
+   * produce an opaque domain rejection. Optional — call sites without the row omit it. */
+  minEndDate?: number;
 }
 
 // Marks an in-progress completion finished: captures an end date and an optional time, then
@@ -36,6 +40,7 @@ export function FinishSolveDialog({
   open,
   onOpenChange,
   completionId,
+  minEndDate,
 }: FinishSolveDialogProps) {
   const t = useTranslations("solving.logSolve");
   const finishCompletion = useMutation({
@@ -68,7 +73,11 @@ export function FinishSolveDialog({
       onOpenChange(false);
     } catch (error) {
       console.error("Failed to finish solve:", error);
-      toast.error(t("saveError"));
+      toast.error(
+        solvingErrorCode(error) === "InvalidTimeRange"
+          ? t("endBeforeStartError")
+          : t("saveError"),
+      );
     }
   };
 
@@ -87,6 +96,11 @@ export function FinishSolveDialog({
               id="finish-end"
               type="date"
               value={endDate}
+              min={
+                minEndDate !== undefined
+                  ? new Date(minEndDate).toISOString().slice(0, 10)
+                  : undefined
+              }
               onChange={(e) => setEndDate(e.target.value)}
             />
           </div>
