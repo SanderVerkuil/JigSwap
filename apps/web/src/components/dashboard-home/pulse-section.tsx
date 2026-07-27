@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@/compat/link";
+import { isKnownActivityKind } from "@/components/social/activity-feed-meta";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -366,14 +367,16 @@ function LatestColumn({
         <p className="text-muted-foreground text-sm">{t("empty")}</p>
       ) : (
         <div className="flex flex-col">
-          {shown.map((entry, i) => (
-            <ActivityRow
-              key={`${entry.kind}-${entry.ref}-${entry.occurredAt}`}
-              entry={entry}
-              me={me}
-              isLast={i === shown.length - 1}
-            />
-          ))}
+          {shown
+            .filter((entry) => isKnownActivityKind(entry.kind))
+            .map((entry, i, visible) => (
+              <ActivityRow
+                key={`${entry.kind}-${entry.ref}-${entry.occurredAt}`}
+                entry={entry}
+                me={me}
+                isLast={i === visible.length - 1}
+              />
+            ))}
         </div>
       )}
     </section>

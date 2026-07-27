@@ -293,6 +293,10 @@
       "you": "Je hebt een ruil afgerond",
       "other": "<strong>{name}</strong> heeft een ruil afgerond"
     },
+    "started": {
+      "you": "Je bent aan een puzzel begonnen",
+      "other": "<strong>{name}</strong> is aan een puzzel begonnen"
+    },
     "empty": "Nog geen recente activiteit",
     "emptyHint": "Volg andere leden om te zien wat zij doen."
   },
@@ -890,6 +894,7 @@
         "completion": "<strong>{name}</strong> heeft een puzzel afgemaakt",
         "acquisition": "<strong>{name}</strong> heeft een puzzel op de plank gezet",
         "exchange": "<strong>{name}</strong> heeft een ruil afgerond",
+        "started": "<strong>{name}</strong> is aan een puzzel begonnen",
         "empty": "Voorlopig alles rustig — volg medepuzzelaars en hun nieuwste stappen verschijnen hier. 🧩"
       }
     },
