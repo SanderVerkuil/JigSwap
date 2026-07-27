@@ -2,6 +2,10 @@ import { convexTest } from "convex-test";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
+import {
+  buildCopyViewContext,
+  canViewCopyWithContext,
+} from "./library/canViewCopy";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -695,5 +699,170 @@ describe("collection reads", () => {
       { ownedPuzzleId: available },
     );
     expect(collections.map((c) => c._id)).toEqual([collection]);
+  });
+});
+
+describe("canViewCopy — holder clause", () => {
+  test("the current holder can view a private, closed copy", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, unavailable } = await seed(t);
+
+    await t.run(async (ctx) => {
+      await ctx.db.patch(unavailable, { visibility: "private" });
+      await ctx.db.insert("profiles", {
+        memberId: alice,
+        displayName: "Alice",
+        visibility: "private",
+        updatedAt: Date.now(),
+      });
+      const now = Date.now();
+      await ctx.db.insert("users", {
+        clerkId: "clerk_bob",
+        email: "bob@example.com",
+        name: "Bob",
+        username: "bob",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+    const bob = await t.run(async (ctx) =>
+      ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", "clerk_bob"))
+        .unique(),
+    );
+    await t.run(async (ctx) => {
+      await ctx.db.patch(unavailable, { heldBy: bob?._id });
+    });
+
+    const asBob = t.withIdentity({ subject: "clerk_bob" });
+    const view = await asBob.query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: unavailable },
+    );
+    expect(view).not.toBeNull();
+  });
+
+  test("an ex-holder falls through to the old rules", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, unavailable } = await seed(t);
+
+    await t.run(async (ctx) => {
+      await ctx.db.patch(unavailable, { visibility: "private" });
+      await ctx.db.insert("profiles", {
+        memberId: alice,
+        displayName: "Alice",
+        visibility: "private",
+        updatedAt: Date.now(),
+      });
+      const now = Date.now();
+      await ctx.db.insert("users", {
+        clerkId: "clerk_bob",
+        email: "bob@example.com",
+        name: "Bob",
+        username: "bob",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+    const bob = await t.run(async (ctx) =>
+      ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", "clerk_bob"))
+        .unique(),
+    );
+    // Bob holds the copy...
+    await t.run(async (ctx) => {
+      await ctx.db.patch(unavailable, { heldBy: bob?._id });
+    });
+    // ...then it is returned to Alice (the owner).
+    await t.run(async (ctx) => {
+      await ctx.db.patch(unavailable, { heldBy: alice });
+    });
+
+    const asBob = t.withIdentity({ subject: "clerk_bob" });
+    const view = await asBob.query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: unavailable },
+    );
+    expect(view).toBeNull();
+  });
+
+  test("owner and public+open behavior unchanged", async () => {
+    const t = convexTest(schema, modules);
+    const { available } = await seed(t);
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("users", {
+        clerkId: "clerk_bob",
+        email: "bob@example.com",
+        name: "Bob",
+        username: "bob",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const ownerView = await asAlice(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: available },
+    );
+    expect(ownerView).not.toBeNull();
+
+    const asBob = t.withIdentity({ subject: "clerk_bob" });
+    const strangerView = await asBob.query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: available },
+    );
+    expect(strangerView).not.toBeNull();
+  });
+
+  test("context form honors the holder clause directly", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, unavailable } = await seed(t);
+
+    await t.run(async (ctx) => {
+      await ctx.db.patch(unavailable, { visibility: "private" });
+      await ctx.db.insert("profiles", {
+        memberId: alice,
+        displayName: "Alice",
+        visibility: "private",
+        updatedAt: Date.now(),
+      });
+      const now = Date.now();
+      await ctx.db.insert("users", {
+        clerkId: "clerk_bob",
+        email: "bob@example.com",
+        name: "Bob",
+        username: "bob",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+    const bob = await t.run(async (ctx) =>
+      ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", "clerk_bob"))
+        .unique(),
+    );
+    await t.run(async (ctx) => {
+      await ctx.db.patch(unavailable, { heldBy: bob?._id });
+    });
+
+    const bobId = bob?._id;
+    if (!bobId) throw new Error("bob not seeded");
+
+    await t.run(async (ctx) => {
+      const copyRow = await ctx.db.get(unavailable);
+      if (!copyRow) throw new Error("copy not seeded");
+      const context = await buildCopyViewContext(ctx, bobId);
+      expect(await canViewCopyWithContext(ctx, bobId, copyRow, context)).toBe(
+        true,
+      );
+    });
   });
 });
