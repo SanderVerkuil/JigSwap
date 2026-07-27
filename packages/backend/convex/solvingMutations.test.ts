@@ -89,6 +89,21 @@ const goalRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
       .unique(),
   );
 
+// A real stored blob so fileId is a valid `_storage` id.
+const storeBlob = (t: ReturnType<typeof convexTest>) =>
+  t.run((ctx) => ctx.storage.store(new Blob(["img"], { type: "image/png" })));
+
+const completionImagesFor = (
+  t: ReturnType<typeof convexTest>,
+  completionId: string,
+) =>
+  t.run(async (ctx) =>
+    ctx.db
+      .query("completionImages")
+      .withIndex("by_completion", (q) => q.eq("completionId", completionId))
+      .collect(),
+  );
+
 // Lend the seeded copy to Bob: ownership stays with Alice, possession (heldBy) moves to Bob.
 const lendToBob = async (
   t: ReturnType<typeof convexTest>,
@@ -413,6 +428,121 @@ describe("solving.editCompletion", () => {
   });
 });
 
+describe("solving.attachCompletionPhotos", () => {
+  test("the author attaches 2 photos: photos grows, sidecars pending, jobs scheduled", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    const completionId = await recordForAlice(t, copyAggregateId);
+    const fileId1 = (await storeBlob(t)) as Id<"_storage">;
+    const fileId2 = (await storeBlob(t)) as Id<"_storage">;
+
+    await asAlice(t).mutation(
+      api.solving.attachCompletionPhotos.attachCompletionPhotos,
+      { completionId, storageIds: [fileId1, fileId2] },
+    );
+
+    const row = await completionRow(t, completionId);
+    expect(row?.photos).toEqual([fileId1, fileId2]);
+
+    const images = await completionImagesFor(t, completionId);
+    expect(images).toHaveLength(2);
+    for (const img of images) {
+      expect(img.moderationStatus).toBe("pending");
+    }
+
+    const scheduled = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect(),
+    );
+    const jobs = scheduled.filter((s) =>
+      s.name.includes("moderateCompletionPhoto"),
+    );
+    expect(jobs).toHaveLength(2);
+  });
+
+  test("a non-author is rejected", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    const completionId = await recordForAlice(t, copyAggregateId);
+    const fileId = (await storeBlob(t)) as Id<"_storage">;
+
+    await expectConvexCode(
+      asBob(t).mutation(
+        api.solving.attachCompletionPhotos.attachCompletionPhotos,
+        { completionId, storageIds: [fileId] },
+      ),
+      "NotCompletionOwner",
+    );
+  });
+
+  test("duplicate ids within a call and an already-attached id are deduped", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    const completionId = await recordForAlice(t, copyAggregateId);
+    const fileId1 = (await storeBlob(t)) as Id<"_storage">;
+    const fileId2 = (await storeBlob(t)) as Id<"_storage">;
+
+    await asAlice(t).mutation(
+      api.solving.attachCompletionPhotos.attachCompletionPhotos,
+      { completionId, storageIds: [fileId1] },
+    );
+    // Re-attach fileId1 (already attached) alongside a within-call duplicate of fileId2.
+    await asAlice(t).mutation(
+      api.solving.attachCompletionPhotos.attachCompletionPhotos,
+      { completionId, storageIds: [fileId1, fileId2, fileId2] },
+    );
+
+    const row = await completionRow(t, completionId);
+    expect(row?.photos).toEqual([fileId1, fileId2]);
+    const images = await completionImagesFor(t, completionId);
+    expect(images).toHaveLength(2);
+  });
+
+  test("existing 4 plus 2 new exceeds the cap => TooManyPhotos", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    const completionId = await recordForAlice(t, copyAggregateId);
+    const existing: Id<"_storage">[] = [];
+    for (let i = 0; i < 4; i++) {
+      existing.push((await storeBlob(t)) as Id<"_storage">);
+    }
+    const seededRow = await completionRow(t, completionId);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(seededRow!._id, { photos: existing });
+    });
+    const newFileId1 = (await storeBlob(t)) as Id<"_storage">;
+    const newFileId2 = (await storeBlob(t)) as Id<"_storage">;
+
+    await expectConvexCode(
+      asAlice(t).mutation(
+        api.solving.attachCompletionPhotos.attachCompletionPhotos,
+        { completionId, storageIds: [newFileId1, newFileId2] },
+      ),
+      "TooManyPhotos",
+    );
+    const row = await completionRow(t, completionId);
+    expect(row?.photos).toHaveLength(4);
+  });
+
+  test("a backdated completion (endDate 10 days ago) can still attach photos", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    const tenDays = 10 * 24 * HOUR;
+    const completionId = await recordForAlice(t, copyAggregateId, {
+      startDate: Date.now() - tenDays - HOUR,
+      endDate: Date.now() - tenDays,
+    });
+    const fileId = (await storeBlob(t)) as Id<"_storage">;
+
+    await asAlice(t).mutation(
+      api.solving.attachCompletionPhotos.attachCompletionPhotos,
+      { completionId, storageIds: [fileId] },
+    );
+
+    const row = await completionRow(t, completionId);
+    expect(row?.photos).toEqual([fileId]);
+  });
+});
+
 describe("solving.reviewPuzzle", () => {
   test("attaches a rating and text to the completion", async () => {
     const t = convexTest(schema, modules);
@@ -570,6 +700,30 @@ describe("solving.deleteCompletion", () => {
     });
     row = await goalRow(t, goalId);
     expect(row?.currentCompletions).toBe(0);
+  });
+
+  test("deleting a completion removes photo sidecars and best-effort deletes their blobs", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    const completionId = await recordForAlice(t, copyAggregateId);
+    const fileId1 = (await storeBlob(t)) as Id<"_storage">;
+    const fileId2 = (await storeBlob(t)) as Id<"_storage">;
+    await asAlice(t).mutation(
+      api.solving.attachCompletionPhotos.attachCompletionPhotos,
+      { completionId, storageIds: [fileId1, fileId2] },
+    );
+
+    await asAlice(t).mutation(api.solving.deleteCompletion.deleteCompletion, {
+      completionId,
+    });
+
+    const images = await completionImagesFor(t, completionId);
+    expect(images).toHaveLength(0);
+
+    const url1 = await t.run((ctx) => ctx.storage.getUrl(fileId1));
+    const url2 = await t.run((ctx) => ctx.storage.getUrl(fileId2));
+    expect(url1).toBeNull();
+    expect(url2).toBeNull();
   });
 });
 

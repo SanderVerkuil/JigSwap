@@ -419,6 +419,28 @@ export default defineSchema({
     .index("by_aggregate_id", ["aggregateId"])
     .index("by_user_completed", ["userId", "isCompleted"]),
 
+  // Moderation sidecars for completion photos (completions.photos storage ids). One row per photo;
+  // absent moderationStatus = legacy approved. The moderation pipeline may SWAP fileId (re-encode)
+  // — it patches this row and the completions.photos entry together.
+  completionImages: defineTable({
+    completionId: v.string(), // Solving CompletionId aggregateId
+    uploaderId: v.id("users"),
+    fileId: v.id("_storage"),
+    moderationStatus: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("approved"),
+        v.literal("rejected"),
+      ),
+    ),
+    moderationScore: v.optional(v.number()),
+    moderationLabel: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_completion", ["completionId"])
+    .index("by_moderation_status", ["moderationStatus"]),
+
   // User-defined categories for organizing collections
   categories: defineTable({
     // Library PersonalCategoryId. Optional so legacy rows still validate; the domain-driven

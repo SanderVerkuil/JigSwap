@@ -3,7 +3,6 @@ import {
   makeStartCompletion,
   type MemberId,
   toCopyId,
-  toFileId,
   toPuzzleDefinitionId,
 } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
@@ -30,7 +29,6 @@ export const recordCompletion = mutation({
     endDate: v.optional(v.number()),
     completionTimeMinutes: v.optional(v.number()),
     notes: v.optional(v.string()),
-    photos: v.optional(v.array(v.string())),
     allPiecesPresent: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
@@ -56,7 +54,6 @@ export const recordCompletion = mutation({
       ? toPuzzleDefinitionId(args.puzzleDefinitionId)
       : undefined;
     const copyId = args.copyId ? toCopyId(args.copyId) : undefined;
-    const photoFileIds = args.photos?.map((id) => toFileId(id));
 
     let completionId: string;
     if (args.endDate === undefined) {
@@ -75,7 +72,6 @@ export const recordCompletion = mutation({
         copyId,
         startDate: new Date(args.startDate),
         notes: args.notes,
-        photoFileIds,
         allPiecesPresent: args.allPiecesPresent,
       });
       if (result.isErr) throw toConvexError(result.error);
@@ -95,7 +91,6 @@ export const recordCompletion = mutation({
         endDate: new Date(args.endDate),
         completionTimeMinutes: args.completionTimeMinutes,
         notes: args.notes,
-        photoFileIds,
         allPiecesPresent: args.allPiecesPresent,
       });
       if (result.isErr) throw toConvexError(result.error);

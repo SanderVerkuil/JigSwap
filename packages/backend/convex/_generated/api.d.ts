@@ -327,6 +327,7 @@ import type * as solving_adapters_idGenerators from "../solving/adapters/idGener
 import type * as solving_adapters_inProcessEventPublisher from "../solving/adapters/inProcessEventPublisher.js";
 import type * as solving_adapters_solvingSettingsProvider from "../solving/adapters/solvingSettingsProvider.js";
 import type * as solving_adapters_systemClock from "../solving/adapters/systemClock.js";
+import type * as solving_attachCompletionPhotos from "../solving/attachCompletionPhotos.js";
 import type * as solving_backfill from "../solving/backfill.js";
 import type * as solving_backfillCompletionPuzzleId from "../solving/backfillCompletionPuzzleId.js";
 import type * as solving_copySnapshot from "../solving/copySnapshot.js";
@@ -339,6 +340,7 @@ import type * as solving_getCompletionHistory from "../solving/getCompletionHist
 import type * as solving_listMyCompletions from "../solving/listMyCompletions.js";
 import type * as solving_listMyGoals from "../solving/listMyGoals.js";
 import type * as solving_listMyInProgress from "../solving/listMyInProgress.js";
+import type * as solving_moderateCompletionPhoto from "../solving/moderateCompletionPhoto.js";
 import type * as solving_recordCompletion from "../solving/recordCompletion.js";
 import type * as solving_reviewPuzzle from "../solving/reviewPuzzle.js";
 import type * as solving_setShareInProgress from "../solving/setShareInProgress.js";
@@ -672,6 +674,7 @@ declare const fullApi: ApiFromModules<{
   "solving/adapters/inProcessEventPublisher": typeof solving_adapters_inProcessEventPublisher;
   "solving/adapters/solvingSettingsProvider": typeof solving_adapters_solvingSettingsProvider;
   "solving/adapters/systemClock": typeof solving_adapters_systemClock;
+  "solving/attachCompletionPhotos": typeof solving_attachCompletionPhotos;
   "solving/backfill": typeof solving_backfill;
   "solving/backfillCompletionPuzzleId": typeof solving_backfillCompletionPuzzleId;
   "solving/copySnapshot": typeof solving_copySnapshot;
@@ -684,6 +687,7 @@ declare const fullApi: ApiFromModules<{
   "solving/listMyCompletions": typeof solving_listMyCompletions;
   "solving/listMyGoals": typeof solving_listMyGoals;
   "solving/listMyInProgress": typeof solving_listMyInProgress;
+  "solving/moderateCompletionPhoto": typeof solving_moderateCompletionPhoto;
   "solving/recordCompletion": typeof solving_recordCompletion;
   "solving/reviewPuzzle": typeof solving_reviewPuzzle;
   "solving/setShareInProgress": typeof solving_setShareInProgress;
