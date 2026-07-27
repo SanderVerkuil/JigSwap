@@ -13,6 +13,9 @@ export const solvingSettingsSection: MemberSettingsSection = {
       clock: systemClock,
     });
     const prefs = await get({ memberId });
-    return { trackCompletionDuration: prefs.trackCompletionDuration };
+    return {
+      trackCompletionDuration: prefs.trackCompletionDuration,
+      shareInProgress: prefs.shareInProgress,
+    };
   },
 };

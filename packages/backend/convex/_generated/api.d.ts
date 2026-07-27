@@ -339,6 +339,7 @@ import type * as solving_listMyCompletions from "../solving/listMyCompletions.js
 import type * as solving_listMyGoals from "../solving/listMyGoals.js";
 import type * as solving_recordCompletion from "../solving/recordCompletion.js";
 import type * as solving_reviewPuzzle from "../solving/reviewPuzzle.js";
+import type * as solving_setShareInProgress from "../solving/setShareInProgress.js";
 import type * as solving_setTrackCompletionDuration from "../solving/setTrackCompletionDuration.js";
 import type * as users from "../users.js";
 
@@ -680,6 +681,7 @@ declare const fullApi: ApiFromModules<{
   "solving/listMyGoals": typeof solving_listMyGoals;
   "solving/recordCompletion": typeof solving_recordCompletion;
   "solving/reviewPuzzle": typeof solving_reviewPuzzle;
+  "solving/setShareInProgress": typeof solving_setShareInProgress;
   "solving/setTrackCompletionDuration": typeof solving_setTrackCompletionDuration;
   users: typeof users;
 }>;

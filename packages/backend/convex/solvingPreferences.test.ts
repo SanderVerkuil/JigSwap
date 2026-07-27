@@ -71,3 +71,37 @@ describe("solving.setTrackCompletionDuration", () => {
     expect(rows).toHaveLength(1);
   });
 });
+
+describe("solving.setShareInProgress", () => {
+  test("persists the choice and surfaces it via the federated settings read", async () => {
+    const t = convexTest(schema, modules);
+    await seedUser(t); // the file's existing helper is named seedUser (NOT seed)
+
+    // Absent row → settings read reports undefined (never chosen).
+    const before = await asAlice(t).query(
+      api.settings.getMyUserSettings.getMyUserSettings,
+      {},
+    );
+    expect(before.solving.shareInProgress).toBeUndefined();
+
+    await asAlice(t).mutation(
+      api.solving.setShareInProgress.setShareInProgress,
+      { enabled: true },
+    );
+    const after = await asAlice(t).query(
+      api.settings.getMyUserSettings.getMyUserSettings,
+      {},
+    );
+    expect(after.solving.shareInProgress).toBe(true);
+
+    await asAlice(t).mutation(
+      api.solving.setShareInProgress.setShareInProgress,
+      { enabled: false },
+    );
+    const off = await asAlice(t).query(
+      api.settings.getMyUserSettings.getMyUserSettings,
+      {},
+    );
+    expect(off.solving.shareInProgress).toBe(false);
+  });
+});

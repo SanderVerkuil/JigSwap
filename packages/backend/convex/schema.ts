@@ -416,7 +416,8 @@ export default defineSchema({
     .index("by_user_owned_puzzle", ["userId", "ownedPuzzleId"])
     .index("by_completion_date", ["endDate"])
     .index("by_rating", ["rating"])
-    .index("by_aggregate_id", ["aggregateId"]),
+    .index("by_aggregate_id", ["aggregateId"])
+    .index("by_user_completed", ["userId", "isCompleted"]),
 
   // User-defined categories for organizing collections
   categories: defineTable({
@@ -772,6 +773,8 @@ export default defineSchema({
   solvingPreferences: defineTable({
     memberId: v.id("users"),
     trackCompletionDuration: v.optional(v.boolean()),
+    // Friend-facing in-progress sharing. undefined = never chosen; every gate tests `=== true`.
+    shareInProgress: v.optional(v.boolean()),
     updatedAt: v.number(),
   }).index("by_member", ["memberId"]),
 
