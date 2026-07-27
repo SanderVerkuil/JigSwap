@@ -172,6 +172,21 @@ export interface PublicProfileRecords {
 }
 
 /**
+ * One in-progress solve on the profile's "Currently solving" section. STRICTER gate than
+ * `unlocked`: only self, or a mutual follower of a member whose `shareInProgress` preference is
+ * explicitly true, ever receives this (anonymous viewers never do — getPublicProfile is
+ * unauthenticated and profiles default public). Deliberately excludes notes, photos, and
+ * copy/completion ids; `thumbnailUrl` is catalog box art, never a completion photo.
+ */
+export interface CurrentlySolvingItemView {
+  title?: string;
+  pieceCount?: number;
+  /** The solve's startDate, epoch ms. Future-dated starts are excluded server-side. */
+  startDate: number;
+  thumbnailUrl?: string;
+}
+
+/**
  * The visibility-gated read behind the redesigned public member profile page. A discriminated
  * union on `locked`: UNLOCKED (visibility public, viewer is the owner, or viewer is a mutual
  * follower) carries the full `story`/`stats`/`records`; LOCKED (private + non-mutual viewer,
@@ -188,5 +203,7 @@ export type PublicProfileView =
       story?: string;
       stats: PublicProfileStats;
       records: PublicProfileRecords;
+      /** See CurrentlySolvingItemView — friends-only + opt-in; absent when the gate fails. */
+      currentlySolving?: CurrentlySolvingItemView[];
     }
   | { locked: true; hero: PublicProfileHero };

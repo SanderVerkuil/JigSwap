@@ -1,4 +1,7 @@
-import type { PublicProfileView } from "@jigswap/contracts";
+import type {
+  CurrentlySolvingItemView,
+  PublicProfileView,
+} from "@jigswap/contracts";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { computeMemberStats } from "../identity/getUserStats";
@@ -135,6 +138,49 @@ export const getPublicProfile = query({
       }
     }
 
+    // "Currently solving" — deliberately NARROWER than `unlocked`: this read is unauthenticated
+    // and profiles default to public, so riding `unlocked` would expose real-time solving to
+    // anonymous visitors. Gate: self always; otherwise mutual follower AND the member's explicit
+    // opt-in (`shareInProgress === true`; tri-state, absent = off). Small indexed read (not the
+    // .take(2000) scan above, which takes the OLDEST rows and could miss new starts).
+    let currentlySolving: CurrentlySolvingItemView[] | undefined;
+    if (isSelf || isMutual) {
+      const prefs = await ctx.db
+        .query("solvingPreferences")
+        .withIndex("by_member", (q) => q.eq("memberId", memberId))
+        .unique();
+      if (isSelf || prefs?.shareInProgress === true) {
+        const now = Date.now();
+        const inProgress = await ctx.db
+          .query("completions")
+          .withIndex("by_user_completed", (q) =>
+            q.eq("userId", memberId).eq("isCompleted", false),
+          )
+          .collect();
+        const shown = inProgress
+          .filter((c) => c.startDate <= now)
+          .sort((a, b) => b.startDate - a.startDate)
+          .slice(0, 10);
+        currentlySolving = await Promise.all(
+          shown.map(async (c) => {
+            let title = c.copySnapshot?.title;
+            let pieceCount = c.copySnapshot?.pieceCount;
+            let thumbnailUrl: string | undefined;
+            const puzzle = c.puzzleId ? await ctx.db.get(c.puzzleId) : null;
+            if (puzzle) {
+              title ??= puzzle.title;
+              pieceCount ??= puzzle.pieceCount;
+              if (puzzle.image) {
+                thumbnailUrl =
+                  (await ctx.storage.getUrl(puzzle.image)) ?? undefined;
+              }
+            }
+            return { title, pieceCount, startDate: c.startDate, thumbnailUrl };
+          }),
+        );
+      }
+    }
+
     return {
       locked: false,
       hero,
@@ -146,6 +192,7 @@ export const getPublicProfile = query({
         swaps: tradesCompleted,
       },
       records: { fastest, hardest },
+      currentlySolving,
     };
   },
 });

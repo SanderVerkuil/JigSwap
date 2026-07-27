@@ -128,11 +128,13 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
       createdAt: now,
       updatedAt: now,
     });
+    const copyAggregateId = crypto.randomUUID();
     const aliceCopy = await ctx.db.insert("ownedPuzzles", {
       puzzleId: alicePuzzle,
       ownerId: alice,
       condition: "good",
       availability: NO_AVAILABILITY,
+      aggregateId: copyAggregateId,
       createdAt: now,
       updatedAt: now,
     });
@@ -277,7 +279,7 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
       updatedAt: now,
     });
 
-    return { alice, bob, frank, carol, dave, eve };
+    return { alice, bob, frank, carol, dave, eve, copyAggregateId };
   });
 
 describe("getPublicProfile", () => {
@@ -499,5 +501,207 @@ describe("getPublicProfile", () => {
       title: "Mega Vista",
       pieceCount: 1200,
     });
+  });
+});
+
+const HOUR = 60 * 60 * 1000;
+const asAlice = (t: ReturnType<typeof convexTest>) =>
+  t.withIdentity({ subject: "clerk_alice" });
+const asBob = (t: ReturnType<typeof convexTest>) =>
+  t.withIdentity({ subject: "clerk_bob" });
+const asEve = (t: ReturnType<typeof convexTest>) =>
+  t.withIdentity({ subject: "clerk_eve" });
+
+const clearSeededInProgress = (t: ReturnType<typeof convexTest>) =>
+  t.run(async (ctx) => {
+    const rows = await ctx.db.query("completions").collect();
+    for (const row of rows) {
+      if (!row.isCompleted) await ctx.db.delete(row._id);
+    }
+  });
+
+describe("getPublicProfile — currentlySolving gating", () => {
+  test("anonymous viewer on a public profile never sees currentlySolving even when sharing is on", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    await clearSeededInProgress(t);
+    await asAlice(t).mutation(
+      api.solving.setShareInProgress.setShareInProgress,
+      { enabled: true },
+    );
+    await asAlice(t).mutation(api.solving.startCompletion.startCompletion, {
+      copyId: copyAggregateId,
+      startDate: Date.now() - HOUR,
+    });
+
+    const view = await t.query(api.social.getPublicProfile.getPublicProfile, {
+      handle: "alice",
+    });
+    expect(view?.locked).toBe(false); // public profile unlocks
+    expect(
+      view && "currentlySolving" in view ? view.currentlySolving : undefined,
+    ).toBeUndefined();
+  });
+
+  test("mutual follower sees currentlySolving when sharing is on", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t); // alice↔bob are mutual in the seed already
+    await clearSeededInProgress(t);
+    await asAlice(t).mutation(
+      api.solving.setShareInProgress.setShareInProgress,
+      { enabled: true },
+    );
+    await asAlice(t).mutation(api.solving.startCompletion.startCompletion, {
+      copyId: copyAggregateId,
+      startDate: Date.now() - HOUR,
+    });
+
+    const view = await asBob(t).query(
+      api.social.getPublicProfile.getPublicProfile,
+      { handle: "alice" },
+    );
+    expect(view?.locked).toBe(false);
+    const solving =
+      view && "currentlySolving" in view ? view.currentlySolving : undefined;
+    expect(solving).toHaveLength(1);
+    expect(solving?.[0].title).toBe("Mountain Vista");
+    // Field exclusion (review blocker F5): no notes/photos/ids ever leave the server. (Assert via
+    // `in`, not a full key list — Convex strips undefined-valued fields like thumbnailUrl.)
+    expect("notes" in solving![0]).toBe(false);
+    expect("photos" in solving![0]).toBe(false);
+    expect("copyId" in solving![0]).toBe(false);
+    expect("completionId" in solving![0]).toBe(false);
+  });
+
+  test("authenticated non-follower (eve) does not see currentlySolving on a public profile", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    await clearSeededInProgress(t);
+    await asAlice(t).mutation(
+      api.solving.setShareInProgress.setShareInProgress,
+      { enabled: true },
+    );
+    await asAlice(t).mutation(api.solving.startCompletion.startCompletion, {
+      copyId: copyAggregateId,
+      startDate: Date.now() - HOUR,
+    });
+
+    const view = await asEve(t).query(
+      api.social.getPublicProfile.getPublicProfile,
+      { handle: "alice" },
+    );
+    expect(view?.locked).toBe(false); // public profile unlocks
+    expect(
+      view && "currentlySolving" in view ? view.currentlySolving : undefined,
+    ).toBeUndefined();
+  });
+
+  test("mutual follower does not see currentlySolving when sharing is off, nor when the preference row is absent", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    await clearSeededInProgress(t);
+    await asAlice(t).mutation(api.solving.startCompletion.startCompletion, {
+      copyId: copyAggregateId,
+      startDate: Date.now() - HOUR,
+    });
+
+    // Variant 1: preference row absent entirely (member never chose).
+    const absentView = await asBob(t).query(
+      api.social.getPublicProfile.getPublicProfile,
+      { handle: "alice" },
+    );
+    expect(absentView?.locked).toBe(false);
+    expect(
+      absentView && "currentlySolving" in absentView
+        ? absentView.currentlySolving
+        : undefined,
+    ).toBeUndefined();
+
+    // Variant 2: preference row present but explicitly false.
+    await asAlice(t).mutation(
+      api.solving.setShareInProgress.setShareInProgress,
+      { enabled: false },
+    );
+    const offView = await asBob(t).query(
+      api.social.getPublicProfile.getPublicProfile,
+      { handle: "alice" },
+    );
+    expect(offView?.locked).toBe(false);
+    expect(
+      offView && "currentlySolving" in offView
+        ? offView.currentlySolving
+        : undefined,
+    ).toBeUndefined();
+  });
+
+  test("self always sees own currentlySolving, even without ever choosing to share", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    await clearSeededInProgress(t);
+    await asAlice(t).mutation(api.solving.startCompletion.startCompletion, {
+      copyId: copyAggregateId,
+      startDate: Date.now() - HOUR,
+    });
+
+    const view = await asAlice(t).query(
+      api.social.getPublicProfile.getPublicProfile,
+      { handle: "alice" },
+    );
+    expect(view?.locked).toBe(false);
+    const solving =
+      view && "currentlySolving" in view ? view.currentlySolving : undefined;
+    expect(solving).toHaveLength(1);
+    expect(solving?.[0].title).toBe("Mountain Vista");
+  });
+
+  test("mutual follower sees an empty currentlySolving list when only a future-dated start exists", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    await clearSeededInProgress(t);
+    await asAlice(t).mutation(
+      api.solving.setShareInProgress.setShareInProgress,
+      { enabled: true },
+    );
+    await asAlice(t).mutation(api.solving.startCompletion.startCompletion, {
+      copyId: copyAggregateId,
+      startDate: Date.now() + HOUR,
+    });
+
+    const view = await asBob(t).query(
+      api.social.getPublicProfile.getPublicProfile,
+      { handle: "alice" },
+    );
+    expect(view?.locked).toBe(false);
+    const solving =
+      view && "currentlySolving" in view ? view.currentlySolving : undefined;
+    expect(solving).toEqual([]);
+  });
+
+  test("non-follower (eve) sees no currentlySolving key at all when alice's profile is private (locked)", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, copyAggregateId } = await seed(t);
+    await clearSeededInProgress(t);
+    await t.run(async (ctx) => {
+      const row = await ctx.db
+        .query("profiles")
+        .withIndex("by_member", (q) => q.eq("memberId", alice))
+        .unique();
+      if (row) await ctx.db.patch(row._id, { visibility: "private" });
+    });
+    await asAlice(t).mutation(
+      api.solving.setShareInProgress.setShareInProgress,
+      { enabled: true },
+    );
+    await asAlice(t).mutation(api.solving.startCompletion.startCompletion, {
+      copyId: copyAggregateId,
+      startDate: Date.now() - HOUR,
+    });
+
+    const view = await asEve(t).query(
+      api.social.getPublicProfile.getPublicProfile,
+      { handle: "alice" },
+    );
+    expect(view?.locked).toBe(true);
+    expect(view).not.toHaveProperty("currentlySolving");
   });
 });
