@@ -198,15 +198,11 @@ function CompletionsPage() {
     .sort((a, b) => b.startDate - a.startDate);
   const history = sorted.filter((c) => c.isCompleted);
 
-  function CompletionRow({
-    completion,
-    index,
-    isLast,
-  }: {
-    completion: (typeof sorted)[number];
-    index: number;
-    isLast: boolean;
-  }) {
+  const renderCompletionRow = (
+    completion: (typeof sorted)[number],
+    index: number,
+    isLast: boolean,
+  ) => {
     const info =
       (completion.ownedPuzzleId &&
         infoByCopyId.get(completion.ownedPuzzleId)) ||
@@ -242,6 +238,7 @@ function CompletionsPage() {
 
     return (
       <div
+        key={completion._id}
         className={cn(
           "flex flex-wrap items-center gap-3.5 py-3.5",
           !isLast && "border-b",
@@ -381,7 +378,7 @@ function CompletionsPage() {
         </div>
       </div>
     );
-  }
+  };
 
   return (
     <div className="flex flex-col gap-[26px]">
@@ -407,14 +404,13 @@ function CompletionsPage() {
                   {t("inProgressSection")}
                 </h2>
                 <div className="mb-6 flex flex-col">
-                  {inProgress.map((completion, index) => (
-                    <CompletionRow
-                      key={completion._id}
-                      completion={completion}
-                      index={index}
-                      isLast={index === inProgress.length - 1}
-                    />
-                  ))}
+                  {inProgress.map((completion, index) =>
+                    renderCompletionRow(
+                      completion,
+                      index,
+                      index === inProgress.length - 1,
+                    ),
+                  )}
                 </div>
               </>
             )}
@@ -426,14 +422,13 @@ function CompletionsPage() {
                   </h2>
                 )}
                 <div className="flex flex-col">
-                  {history.map((completion, index) => (
-                    <CompletionRow
-                      key={completion._id}
-                      completion={completion}
-                      index={index}
-                      isLast={index === history.length - 1}
-                    />
-                  ))}
+                  {history.map((completion, index) =>
+                    renderCompletionRow(
+                      completion,
+                      index,
+                      index === history.length - 1,
+                    ),
+                  )}
                 </div>
               </>
             )}
