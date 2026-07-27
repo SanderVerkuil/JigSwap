@@ -56,6 +56,8 @@ export const listMyCompletions = query({
 
     // Reachability per distinct copy. The circle-shared context is built lazily: only when some
     // copy is foreign and not currently held (the common all-own case never pays for it).
+    // Sequential on purpose: the lazy ??= init and the ownerVisibility memo aren't safe to
+    // parallelize — a Promise.all would race N context builds.
     let context: CopyViewContext | null = null;
     const reachable = new Map<string, boolean>();
     for (const [id, copy] of copies) {

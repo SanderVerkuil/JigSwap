@@ -867,6 +867,27 @@ describe("solving.listMyCompletions — row enrichment", () => {
     expect(rows[0].thumbnailUrl).toBe(url);
   });
 
+  test("two completions sharing one copy get the same link/thumbnailUrl (pins the distinct-map fan-out)", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, copyAggregateId, ownedPuzzleId } = await seed(t);
+    await recordForAlice(t, copyAggregateId);
+    await recordForAlice(t, copyAggregateId);
+    const { photoId, url } = await addCoverPhoto(t, ownedPuzzleId, alice);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(ownedPuzzleId, { coverImageId: photoId });
+    });
+
+    const rows = await asAlice(t).query(
+      api.solving.listMyCompletions.listMyCompletions,
+      {},
+    );
+    expect(rows).toHaveLength(2);
+    for (const row of rows) {
+      expect(row.link).toEqual({ kind: "myCopy", id: ownedPuzzleId as string });
+      expect(row.thumbnailUrl).toBe(url);
+    }
+  });
+
   test("pending/rejected cover is never used; falls back to box art", async () => {
     const t = convexTest(schema, modules);
     const { alice, copyAggregateId, ownedPuzzleId, puzzleId } = await seed(t);
