@@ -722,20 +722,58 @@ describe("solving.listMyInProgress", () => {
     expect(bobs).toEqual([]);
   });
 
-  test("survives copy deletion via the snapshot/puzzle fallback chain", async () => {
+  test("falls back to the catalog puzzle when the snapshot lacks display data", async () => {
     const t = convexTest(schema, modules);
     const { copyAggregateId, ownedPuzzleId } = await seed(t);
-    await asAlice(t).mutation(api.solving.startCompletion.startCompletion, {
-      copyId: copyAggregateId,
-      startDate: Date.now(),
-    });
+    const completionId = (await asAlice(t).mutation(
+      api.solving.startCompletion.startCompletion,
+      { copyId: copyAggregateId, startDate: Date.now() },
+    )) as string;
     await t.run(async (ctx) => ctx.db.delete(ownedPuzzleId));
+
+    // Strip the snapshot's display fields so "Mountain Vista" / 1000 can only come from the
+    // puzzles row via row.puzzleId, not from copySnapshot.
+    await t.run(async (ctx) => {
+      const row = await ctx.db
+        .query("completions")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", completionId))
+        .unique();
+      const {
+        title: _title,
+        pieceCount: _pieceCount,
+        ...rest
+      } = row!.copySnapshot!;
+      await ctx.db.patch(row!._id, { copySnapshot: rest });
+    });
 
     const mine = await asAlice(t).query(
       api.solving.listMyInProgress.listMyInProgress,
       {},
     );
     expect(mine).toHaveLength(1);
-    expect(mine[0].title).toBe("Mountain Vista"); // from copySnapshot / puzzles fallback
+    expect(mine[0].title).toBe("Mountain Vista"); // from the puzzles row fallback
+    expect(mine[0].pieceCount).toBe(1000);
+  });
+
+  test("drops legacy in-progress rows that have no aggregateId", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("completions", {
+        userId: alice,
+        startDate: now,
+        photos: [],
+        isCompleted: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const mine = await asAlice(t).query(
+      api.solving.listMyInProgress.listMyInProgress,
+      {},
+    );
+    expect(mine).toEqual([]);
   });
 });
