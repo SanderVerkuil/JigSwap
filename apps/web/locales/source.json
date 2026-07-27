@@ -780,6 +780,11 @@
       },
       "arrangeShelf": "Arrange shelf"
     },
+    "currentlySolving": {
+      "title": "{name} is currently solving",
+      "untitled": "A puzzle",
+      "pieces": "{count, plural, one {# piece} other {# pieces}}"
+    },
     "trustLevels": {
       "beginner": "Beginner",
       "intermediate": "Intermediate",

@@ -780,6 +780,11 @@
       },
       "arrangeShelf": "Plank indelen"
     },
+    "currentlySolving": {
+      "title": "{name} is nu bezig met",
+      "untitled": "Een puzzel",
+      "pieces": "{count, plural, one {# stukje} other {# stukjes}}"
+    },
     "trustLevels": {
       "beginner": "Beginner",
       "intermediate": "Gevorderd",
