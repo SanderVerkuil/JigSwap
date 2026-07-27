@@ -358,7 +358,9 @@ function LatestColumn({
   me: Member;
 }) {
   const t = useTranslations("dashboard.pulse.latest");
-  const shown = entries.slice(0, 4);
+  const shown = entries
+    .filter((entry) => isKnownActivityKind(entry.kind))
+    .slice(0, 4);
 
   return (
     <section className="min-w-0">
@@ -367,16 +369,14 @@ function LatestColumn({
         <p className="text-muted-foreground text-sm">{t("empty")}</p>
       ) : (
         <div className="flex flex-col">
-          {shown
-            .filter((entry) => isKnownActivityKind(entry.kind))
-            .map((entry, i, visible) => (
-              <ActivityRow
-                key={`${entry.kind}-${entry.ref}-${entry.occurredAt}`}
-                entry={entry}
-                me={me}
-                isLast={i === visible.length - 1}
-              />
-            ))}
+          {shown.map((entry, i) => (
+            <ActivityRow
+              key={`${entry.kind}-${entry.ref}-${entry.occurredAt}`}
+              entry={entry}
+              me={me}
+              isLast={i === shown.length - 1}
+            />
+          ))}
         </div>
       )}
     </section>
