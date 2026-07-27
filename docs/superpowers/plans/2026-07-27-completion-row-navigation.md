@@ -23,14 +23,15 @@
 
 Read `libraryReads.test.ts` first; reuse its seed and `withIdentity` helpers (names differ from the solving test files). Add a describe with these cases (write real code adapted to the file's helpers — the behaviors are fixed):
 
-1. "the current holder can view a private, closed copy": seed a copy owned by A with `visibility: "private"`, no availability flags, and a PRIVATE profile row for A (absent profile defaults to public — the test must insert `profiles` row with `visibility: "private"` or the open+public branch can't be isolated); patch `heldBy` to B via `t.run`; assert `getCopyInstanceView` as B returns a non-null view (this pins the gate through its heaviest consumer).
-2. "an ex-holder falls through to the old rules": continue the scenario — patch `heldBy` back to A (simulating return; if the file has a real returnLoan flow test, prefer driving `api.library.returnLoan` and ALSO assert the ROW's `heldBy` equals the owner id afterwards — the persistence-level check the review asked for); assert `getCopyInstanceView` as B now returns null (or its not-found shape — read how existing denial tests assert it).
+1. "the current holder can view a private, closed copy": seed a copy owned by A with `visibility: "private"`, no availability flags, and a PRIVATE profile row for A (absent profile defaults to public — the insert MUST include the schema-required `memberId`, `displayName`, `updatedAt` alongside `visibility: "private"`; precedent at `libraryReads.test.ts:224-229`); patch `heldBy` to B via `t.run`; assert `getCopyInstanceView` as B returns a non-null view (denied viewers get `null` — verified). This pins the gate through its heaviest consumer.
+2. "an ex-holder falls through to the old rules": continue the scenario — patch `heldBy` back to A via `t.run` (simulating return; do NOT try to drive `api.library.returnLoan` here — this file's seed has no loan rows, and the persistence-level "row heldBy equals owner after returnLoan/recallLoan" assert ALREADY EXISTS at `loanFlow.test.ts:119` and `:207` — verify both lines are present, do not duplicate them); assert `getCopyInstanceView` as B now returns `null`.
 3. "owner and public+open behavior unchanged": one assertion each that the owner still sees their copy and a public-profile+open copy is still visible to a stranger (guards the refactor).
+4. "context form honors the holder clause directly" (the enrichment and the wrapper both short-circuit before it — this is the only test that exercises the clause INSIDE `canViewCopyWithContext`): inside `t.run`, `const context = await buildCopyViewContext(ctx, B); expect(await canViewCopyWithContext(ctx, B, copyRow, context)).toBe(true);` for the private closed copy with `heldBy: B` (import the two new exports into the test file).
 
 - [ ] **Step 2: Run to verify failure**
 
 Run: `cd packages/backend && npx vitest run convex/libraryReads.test.ts`
-Expected: case 1 FAILS (holder denied today); cases 2-3 pass (they pin current behavior — that is fine, they are refactor guards).
+Expected: cases 1 and 4 FAIL (holder denied today; new exports missing → case 4 errors on import, the right reason); cases 2-3 pass (they pin current behavior — that is fine, they are refactor guards).
 
 - [ ] **Step 3: Implement**
 
@@ -105,19 +106,19 @@ export const canViewCopy = async (
 };
 ```
 
-Keep the existing file-header comment, extending its rule list with the holder clause. Preserve the existing imports (`profileVisibilityOf`, `collectCircleSharedCopies`); `Id` is already imported via the type import.
+Note: "replace the body below `isOpen`" INCLUDES the current rule-list comment (canViewCopy.ts:13-19, which sits below `isOpen`) — the snippet's own 4-rule comment IS the extended rule list the spec mandates; don't keep both. Preserve the existing imports (`profileVisibilityOf`, `collectCircleSharedCopies`); `Doc`/`Id`/`QueryCtx` are already imported.
 
 - [ ] **Step 4: Run to verify pass**
 
-Run: `cd packages/backend && npx vitest run convex/libraryReads.test.ts convex/photoComments.test.ts`
-Expected: all pass (photoComments consumes the gate — its existing tests must survive; the holder can now ALSO comment, which is the spec's accepted consequence — if a photoComments test asserts a holder is denied, that assertion must be updated to expect success and note the spec decision).
+Run: `cd packages/backend && npx vitest run convex/libraryReads.test.ts convex/photoComments.test.ts convex/getCopyInstanceView.test.ts convex/setCopyCover.test.ts convex/loanFlow.test.ts`
+Expected: all pass (verified: no existing test asserts a holder is DENIED, so nothing should need updating; if one fails, read it — a holder-denial assertion would be updated to expect success per the spec decision, anything else is a real regression).
 
 - [ ] **Step 5: Commit**
 
 ```bash
 pnpm prettier --write packages/backend/convex/library/canViewCopy.ts packages/backend/convex/libraryReads.test.ts
 git add packages/backend
-git commit -m "feat(library): current holder may view the copy they hold; context form of canViewCopy"
+git commit -m "feat(library): current holder may view the copy they hold; context form of canViewCopy" -m "Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ```
 
 ---
@@ -131,7 +132,9 @@ git commit -m "feat(library): current holder may view the copy they hold; contex
 
 - [ ] **Step 1: Write the failing test**
 
-In the same test file, add: seed a copy with a cover photo whose `ownedPuzzleImages` row has `moderationStatus: "rejected"` and set `ownedPuzzles.coverImageId` to it; assert `getCopyInstanceView` (as the owner) returns `coverImage` equal to the catalog box-art URL (or undefined when the puzzle has no image — match the seed) and `coverImageId: null`. Mirror how existing tests in the file insert `ownedPuzzleImages` rows (check the schema fields: `ownedPuzzleId`, `fileId`, `moderationStatus`, plus whatever is required — read `schema.ts` ~279-330).
+Preferred location: `packages/backend/convex/getCopyInstanceView.test.ts`, colocated next to its existing gallery-moderation test (~line 765) — that file is where this read's coverage actually lives (libraryReads.test.ts is acceptable if its seed is more convenient; pick one).
+
+Add: seed a copy with a cover photo whose `ownedPuzzleImages` row has `moderationStatus: "rejected"` and set `ownedPuzzles.coverImageId` to it; assert `getCopyInstanceView` (as the owner) returns **`view.snapshot.image` undefined** (the seed puzzles have no catalog `image`, so the box-art fallback is undefined) and **`view.snapshot.coverImageId` null** — these are the DTO paths (`coverImage`/`coverImageId` are internal locals only); assertion precedent at `setCopyCover.test.ts:131,159`. The `ownedPuzzleImages` insert requires `ownedPuzzleId`, `uploaderId`, `fileId` (a REAL storage id — `await ctx.storage.store(new Blob([...]))` inside `t.run`, precedent `setCopyCover.test.ts:86-92`), `createdAt`, `updatedAt`, plus `moderationStatus: "rejected"`. TRAP: `libraryReads.test.ts`'s seed has a local named `fileId` that is actually an image ROW id — don't copy it blindly.
 
 - [ ] **Step 2: Run to verify failure**
 
@@ -155,13 +158,13 @@ In `getCopyInstanceView.ts`, extend the cover condition:
 
 - [ ] **Step 4: Run + commit**
 
-Run: `cd packages/backend && npx vitest run convex/libraryReads.test.ts`
-Expected: PASS.
+Run: `cd packages/backend && npx vitest run convex/getCopyInstanceView.test.ts convex/setCopyCover.test.ts convex/libraryReads.test.ts`
+Expected: PASS (setCopyCover's photos carry no moderationStatus = legacy-approved, so its `snapshot.coverImageId` assertions survive the new condition — verified).
 
 ```bash
-pnpm prettier --write packages/backend/convex/library/getCopyInstanceView.ts packages/backend/convex/libraryReads.test.ts
+pnpm prettier --write packages/backend/convex
 git add packages/backend
-git commit -m "fix(library): copy-page cover respects photo moderation status"
+git commit -m "fix(library): copy-page cover respects photo moderation status" -m "Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ```
 
 ---
@@ -178,8 +181,8 @@ git commit -m "fix(library): copy-page cover respects photo moderation status"
 New describe `"solving.listMyCompletions — row enrichment"`. Behaviors to pin (write full tests; drive writes through real mutations where possible — `recordForAlice`, `startCompletion` — and shape the world via `t.run` patches):
 
 1. **Own copy → myCopy link + cover preference**: alice records a completion on her copy; insert an `ownedPuzzleImages` row (approved) for her copy and set `coverImageId`; assert the returned row has `link = { kind: "myCopy", id: <ownedPuzzles _id> }` and `thumbnailUrl` equal to the cover photo's URL (in convex-test, `storage.getUrl` of a stored id — store a blob via `t.run(ctx => ctx.storage.store(...))` if needed; if storing blobs is awkward, assert `thumbnailUrl` is a non-null string distinct from the box-art case by giving the puzzle no `image` so ONLY the cover can produce a URL).
-2. **Pending/rejected cover NOT used**: same but `moderationStatus: "rejected"` → `thumbnailUrl` falls back to box art (give `puzzles.image` a stored id) or undefined when no box art; never the cover URL.
-3. **Borrowed now → copy link**: bob-owned copy (insert via `t.run`: private profile row for bob, `visibility: "private"`, no availability flags), `heldBy: alice`; alice records a completion against it (use `recordCompletion` with that copy's aggregateId — holder is authorized); assert `link.kind === "copy"` with the bob-copy `_id` (pins the heldBy clause through the enrichment).
+2. **Pending/rejected cover NOT used**: same but with `moderationStatus: "rejected"` — and a second sub-assertion (or sibling test) for `"pending"` → in both cases `thumbnailUrl` falls back to box art (give `puzzles.image` a stored id so the assertion is directed, not vacuous); never the cover URL.
+3. **Borrowed now → copy link**: bob-owned copy inserted via `t.run` — the `ownedPuzzles` insert requires `puzzleId`, `puzzleDefinitionId`, `ownerId: bob`, `condition`, `availability` (all flags false), `visibility: "private"`, `createdAt`, `updatedAt`, PLUS `aggregateId` (schema-optional but `recordCompletion` resolves via `by_aggregate_id` — without it the mutation throws "Copy not found") and `heldBy: alice`; bob's `profiles` insert requires `memberId`, `displayName`, `updatedAt` alongside `visibility: "private"`. Alice records a completion against the copy's aggregateId (holder is authorized — precedent `solvingMutations.test.ts:133-149`); assert `link.kind === "copy"` with the bob-copy `_id` (pins the heldBy clause through the enrichment).
 4. **Returned + viewable → copy link**: same copy, `heldBy` patched back to bob, bob's profile row set `visibility: "public"` and copy `availability.forLend: true` → `link.kind === "copy"`.
 5. **Returned + unviewable → definition link + box art**: bob's profile `visibility: "private"`, all availability flags false → `link = { kind: "definition", id: <puzzles _id> }`, and `thumbnailUrl` is the box art (or undefined without one), never bob's cover photo even if he has an approved one (add one to make the assertion bite).
 6. **Copy deleted → definition link; puzzle also deleted → no link**: delete the bob copy row → `definition`; then also delete the puzzles row → `link` undefined (and `thumbnailUrl` undefined).
@@ -188,7 +191,7 @@ New describe `"solving.listMyCompletions — row enrichment"`. Behaviors to pin 
 - [ ] **Step 2: Run to verify failure**
 
 Run: `cd packages/backend && npx vitest run convex/solvingMutations.test.ts`
-Expected: new describe fails (`link`/`thumbnailUrl` absent); all pre-existing tests pass.
+Expected: cases 1-5 and 6's first half genuinely FAIL (fields absent). Case 6's second half ("puzzle also deleted → link undefined") and case 7 PASS vacuously pre-implementation — they are regression pins, expected green in both states; don't "fix" them. All pre-existing tests pass.
 
 - [ ] **Step 3: Implement**
 
@@ -196,7 +199,7 @@ Rewrite `listMyCompletions.ts`'s handler (keep `resolvePhotoUrls` as is):
 
 ```ts
 import type { Doc, Id } from "../_generated/dataModel";
-import { query, type QueryCtx } from "../_generated/server";
+import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import {
   buildCopyViewContext,
@@ -332,14 +335,14 @@ Note the doc comment on the file: extend the existing header to describe the enr
 - [ ] **Step 4: Run to verify pass**
 
 Run: `cd packages/backend && npx vitest run convex/solvingMutations.test.ts convex/libraryReads.test.ts`
-Expected: all pass. Also `npx nx run backend:type-check --skip-nx-cache` (name per nx.json) — clean.
+Expected: all pass. Also `npx nx run @jigswap/backend:type-check --skip-nx-cache` (exact project name — verified) from repo root — clean.
 
 - [ ] **Step 5: Commit**
 
 ```bash
 pnpm prettier --write packages/backend/convex
 git add packages/backend
-git commit -m "feat(solving): enrich listMyCompletions with navigation link + thumbnail"
+git commit -m "feat(solving): enrich listMyCompletions with navigation link + thumbnail" -m "Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ```
 
 ---
@@ -355,78 +358,69 @@ git commit -m "feat(solving): enrich listMyCompletions with navigation link + th
 
 In `renderCompletionRow` (~line 201):
 
+NOTE ON SNIPPETS: the blocks below are JSX expressions to splice INTO the existing JSX — do not wrap them in extra `{ }` braces or add trailing semicolons inside expression containers (`{expr;}` is a JSX syntax error).
+
 1. Row root div: add `relative` to its `cn(...)` classes.
-2. Replace the `CoverChip` block (~lines 247-250) with:
+2. Replace the `CoverChip` element (~lines 247-251) with this ternary in its place:
 
 ```tsx
-{
-  completion.thumbnailUrl ? (
-    <Image
-      src={completion.thumbnailUrl}
-      alt=""
-      width={44}
-      height={44}
-      className="h-11 w-11 shrink-0 rounded-lg object-cover"
-    />
-  ) : (
-    <CoverChip
-      color={chipColor(index)}
-      icon={done ? CircleCheck : Clock}
-      size={44}
-    />
-  );
-}
+completion.thumbnailUrl ? (
+  <Image
+    src={completion.thumbnailUrl}
+    alt=""
+    width={44}
+    height={44}
+    className="h-11 w-11 shrink-0 rounded-lg object-cover"
+  />
+) : (
+  <CoverChip
+    color={chipColor(index)}
+    icon={done ? CircleCheck : Clock}
+    size={44}
+  />
+);
 ```
 
-with `import { Image } from "@/compat/image";` added.
+with `import { Image } from "@/compat/image";` added. `CircleCheck`/`Clock` stay imported (the fallback and the Finish button still use them).
 
-3. Title (~line 253 `<span className="text-sm font-semibold">{title}</span>`): when `completion.link` is present, wrap in the stretched link (house pattern from `puzzle-card-shell.tsx`):
+3. Title (~line 254 `<span className="text-sm font-semibold">{title}</span>`): when `completion.link` is present, render the stretched link instead (house pattern from `apps/web/src/components/puzzles/puzzle-card-shell.tsx` ~138-146):
 
 ```tsx
-{
-  completion.link ? (
-    <Link
-      href={hrefForLink(completion.link)}
-      className="text-sm font-semibold after:absolute after:inset-0 after:z-[1] after:content-[''] hover:underline focus-visible:underline focus-visible:outline-none"
-    >
-      {title}
-    </Link>
-  ) : (
-    <span className="text-sm font-semibold">{title}</span>
-  );
-}
+completion.link ? (
+  <Link
+    href={hrefForLink(completion.link)}
+    className="text-sm font-semibold after:absolute after:inset-0 after:z-[1] after:content-[''] hover:underline focus-visible:underline focus-visible:outline-none"
+  >
+    {title}
+  </Link>
+) : (
+  <span className="text-sm font-semibold">{title}</span>
+);
 ```
 
-with a module-level helper (place near `todayInputValue`-style helpers if any, else above the component):
+with a module-level helper (above the component, near the other helpers):
 
 ```tsx
 // Route target for a completion's server-resolved navigation link (ids are doc _ids).
-function hrefForLink(link: { kind: string; id: string }): string {
+function hrefForLink(link: {
+  kind: "myCopy" | "copy" | "definition";
+  id: string;
+}): string {
   if (link.kind === "myCopy") return `/my-puzzles/${link.id}`;
   if (link.kind === "copy") return `/copies/${link.id}`;
   return `/puzzles/${link.id}`;
 }
 ```
 
-4. The action-button cluster (the `div.flex.items-center.gap-1` holding Finish/review/edit/delete) gets `relative z-10` added to its className, so the buttons sit above the overlay.
-5. Status line (~line 276): change
+4. The action-button cluster (the `div.flex.items-center.gap-1` holding Finish/review/edit/delete, ~line 296) gets `relative z-10` added to its className, so the buttons sit above the overlay.
+5. Status line: the ternary at ~lines 274-276 sits INSIDE a larger `<p>` that also appends the pieces-missing suffix — edit ONLY the ternary itself, leaving the surrounding element intact:
+
+change `completion.copySnapshot.wasBorrowed ? t("solvedBorrowedCopy") : t("solvedOwnCopy")` to
 
 ```tsx
-{
-  completion.copySnapshot.wasBorrowed
-    ? t("solvedBorrowedCopy")
-    : t("solvedOwnCopy");
-}
-```
-
-to
-
-```tsx
-{
-  completion.copySnapshot.wasBorrowed
-    ? t(done ? "solvedBorrowedCopy" : "solvingBorrowedCopy")
-    : t(done ? "solvedOwnCopy" : "solvingOwnCopy");
-}
+completion.copySnapshot.wasBorrowed
+  ? t(done ? "solvedBorrowedCopy" : "solvingBorrowedCopy")
+  : t(done ? "solvedOwnCopy" : "solvingOwnCopy");
 ```
 
 (`done` is already in scope in the row).
@@ -440,14 +434,14 @@ to
 
 - [ ] **Step 3: Verify**
 
-Run: `cd apps/web && npx tsc --noEmit` (clean); `python3 -c "import json; [json.load(open(f'apps/web/locales/{l}.json')) for l in ('en','nl','source')]"` from repo root (valid); `npx vitest run src/components/social/activity-feed-meta.test.ts` (3 green); `npx nx run web:lint --skip-nx-cache` (no NEW errors).
+Run: `cd apps/web && npx tsc --noEmit` (no NEW errors — routeTree.gen noise is a known pre-existing possibility; the branch has been clean lately); `python3 -c "import json; [json.load(open(f'apps/web/locales/{l}.json')) for l in ('en','nl','source')]"` from repo root (valid); `cd apps/web && npx vitest run src/components/social/activity-feed-meta.test.ts` (3 green); `npx nx run @jigswap/web:lint --skip-nx-cache` (exact project name — verified) from repo root (no NEW errors).
 
 - [ ] **Step 4: Commit**
 
 ```bash
 pnpm prettier --write apps/web/src/routes/_dashboard/completions/index.tsx apps/web/locales
 git add apps/web
-git commit -m "feat(web): completion rows link to copy/definition with cover thumbnails"
+git commit -m "feat(web): completion rows link to copy/definition with cover thumbnails" -m "Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ```
 
 ---

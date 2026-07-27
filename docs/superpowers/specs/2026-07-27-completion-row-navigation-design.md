@@ -93,9 +93,9 @@ NOT consume this gate and is unaffected):
 - `getOwnedPuzzlesByOwner`, `featuredShelf`, `getCollectionById` — the
   borrowed copy becomes visible to the holder inside the owner's
   library/shelf/collection listings.
-- `listPuzzleComments`, `listPhotoComments`, and the **mutation**
-  `postPhotoComment` — the holder can read and write photo comments on the
-  copy.
+- `listPuzzleComments`, `listPuzzleReviews`, `listPhotoComments`, and the
+  **mutation** `postPhotoComment` — the holder can read comments/reviews and
+  write photo comments on the copy.
 
 **Accepted disclosure:** the holder of a private copy sees its social
 history (other borrowers, prior owners, other members' reviews) — the same
