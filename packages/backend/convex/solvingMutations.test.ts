@@ -495,6 +495,15 @@ describe("solving.attachCompletionPhotos", () => {
     expect(row?.photos).toEqual([fileId1, fileId2]);
     const images = await completionImagesFor(t, completionId);
     expect(images).toHaveLength(2);
+
+    // Deduped ids must not schedule extra moderation jobs: exactly 2 across BOTH calls
+    // (fileId1 from the first, fileId2 from the second).
+    const scheduled = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect(),
+    );
+    expect(
+      scheduled.filter((s) => s.name.includes("moderateCompletionPhoto")),
+    ).toHaveLength(2);
   });
 
   test("existing 4 plus 2 new exceeds the cap => TooManyPhotos", async () => {

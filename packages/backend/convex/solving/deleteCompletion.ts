@@ -48,15 +48,20 @@ export const deleteCompletion = mutation({
           q.eq("completionId", args.completionId),
         )
         .collect();
+      // Blob sources: the UNION of the row's photos and the sidecars' fileIds. After the
+      // moderation re-encode swap they briefly reference different blobs, and a rejected photo's
+      // sidecar keeps a fileId that already left `photos` — the union covers every blob either
+      // side still references. Tolerate already-deleted blobs (a rejected photo's blob is gone);
+      // don't fail the whole delete over a missing file.
+      const fileIds = new Set([...row.photos, ...images.map((i) => i.fileId)]);
       for (const image of images) {
         await ctx.db.delete(image._id);
       }
-      // Best-effort: drop the stored blobs so they don't orphan. The rows are already gone either way.
-      for (const fileId of row.photos) {
+      for (const fileId of fileIds) {
         try {
           await ctx.storage.delete(fileId);
         } catch {
-          // A lingering blob is harmless; nothing references it.
+          // Already gone; nothing references it.
         }
       }
     }

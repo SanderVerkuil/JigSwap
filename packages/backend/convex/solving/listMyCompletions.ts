@@ -1,5 +1,5 @@
 import type { Doc, Id } from "../_generated/dataModel";
-import { query } from "../_generated/server";
+import { query, type QueryCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import {
   buildCopyViewContext,
@@ -122,7 +122,10 @@ export const listMyCompletions = query({
 
         return {
           ...row,
-          photoUrls: await resolvePhotoUrls(ctx, row.photos),
+          photoUrls: await resolvePhotoUrls(
+            ctx,
+            await excludeRejectedPhotos(ctx, row),
+          ),
           thumbnailUrl,
           link,
         };
@@ -130,6 +133,28 @@ export const listMyCompletions = query({
     );
   },
 });
+
+// Drop photos whose moderation sidecar says "rejected" — and ONLY those. Pending stays visible
+// (these reads are self-facing: the viewer is the uploader, matching the copy-gallery precedent)
+// and an ABSENT sidecar is a legacy photo, treated as approved. Only domain rows (aggregateId
+// present) can have sidecars, so legacy rows skip the join. Shared with getCompletionHistory.
+export const excludeRejectedPhotos = async (
+  ctx: QueryCtx,
+  row: Pick<Doc<"completions">, "aggregateId" | "photos">,
+): Promise<Id<"_storage">[]> => {
+  const completionId = row.aggregateId;
+  if (!completionId || row.photos.length === 0) return [...row.photos];
+  const sidecars = await ctx.db
+    .query("completionImages")
+    .withIndex("by_completion", (q) => q.eq("completionId", completionId))
+    .collect();
+  const statusByFile = new Map(
+    sidecars.map((s) => [s.fileId as string, s.moderationStatus]),
+  );
+  return row.photos.filter(
+    (fileId) => statusByFile.get(fileId as string) !== "rejected",
+  );
+};
 
 // Resolve each stored `_storage` id to a served URL (null entries are dropped by the UI).
 const resolvePhotoUrls = (

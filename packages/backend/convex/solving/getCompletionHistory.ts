@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { excludeRejectedPhotos } from "./listMyCompletions";
 
 // Read side for a puzzle's/copy's solve history: the acting member's completions of a given
 // puzzle definition OR a given owned copy, newest first. The arg is a domain aggregateId
@@ -44,12 +45,16 @@ export const getCompletionHistory = query({
     }
 
     return Promise.all(
-      rows.map(async (row) => ({
-        ...row,
-        photoUrls: await Promise.all(
-          row.photos.map((fileId) => ctx.storage.getUrl(fileId)),
-        ),
-      })),
+      rows.map(async (row) => {
+        // Rejected photos are filtered out; pending + legacy (no sidecar) stay visible.
+        const visible = await excludeRejectedPhotos(ctx, row);
+        return {
+          ...row,
+          photoUrls: await Promise.all(
+            visible.map((fileId) => ctx.storage.getUrl(fileId)),
+          ),
+        };
+      }),
     );
   },
 });

@@ -330,6 +330,7 @@ import type * as solving_adapters_systemClock from "../solving/adapters/systemCl
 import type * as solving_attachCompletionPhotos from "../solving/attachCompletionPhotos.js";
 import type * as solving_backfill from "../solving/backfill.js";
 import type * as solving_backfillCompletionPuzzleId from "../solving/backfillCompletionPuzzleId.js";
+import type * as solving_completionModerationStore from "../solving/completionModerationStore.js";
 import type * as solving_copySnapshot from "../solving/copySnapshot.js";
 import type * as solving_createGoal from "../solving/createGoal.js";
 import type * as solving_deleteCompletion from "../solving/deleteCompletion.js";
@@ -677,6 +678,7 @@ declare const fullApi: ApiFromModules<{
   "solving/attachCompletionPhotos": typeof solving_attachCompletionPhotos;
   "solving/backfill": typeof solving_backfill;
   "solving/backfillCompletionPuzzleId": typeof solving_backfillCompletionPuzzleId;
+  "solving/completionModerationStore": typeof solving_completionModerationStore;
   "solving/copySnapshot": typeof solving_copySnapshot;
   "solving/createGoal": typeof solving_createGoal;
   "solving/deleteCompletion": typeof solving_deleteCompletion;

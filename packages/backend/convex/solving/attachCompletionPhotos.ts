@@ -25,7 +25,10 @@ export const attachCompletionPhotos = mutation({
   handler: async (ctx, args) => {
     const memberId = await requireMember(ctx);
 
-    // Dedupe within the call and against already-attached photos.
+    // Dedupe within the call and against already-attached photos. This checks `row.photos` only,
+    // so a previously REJECTED fileId (removed from photos by moderation) could be re-attached,
+    // creating a fresh sidecar — acceptable: it re-enters moderation as pending and is
+    // re-screened.
     const row = await ctx.db
       .query("completions")
       .withIndex("by_aggregate_id", (q) =>
