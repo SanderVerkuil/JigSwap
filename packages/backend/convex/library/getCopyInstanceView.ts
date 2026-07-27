@@ -311,9 +311,11 @@ export const getCopyInstanceView = query({
 
     // --- Cover resolution. --------------------------------------------------------------------
     // The copy may pin one of its own photos as the cover; resolve it to a URL. Falls back to the
-    // puzzle's global catalogue image when no cover is chosen, the image row vanished, or its
-    // stored file no longer resolves. `coverImageId` is null unless a cover both exists AND resolves
-    // so the picker only reports an active, usable selection.
+    // puzzle's global catalogue image when no cover is chosen, the image row vanished, its stored
+    // file no longer resolves, or the cover isn't approved (mirrors resolveCoverUrl.ts's
+    // approved-only rule — a rejected/pending cover must not render on the copy page). `coverImageId`
+    // is null unless a cover both exists AND resolves so the picker only reports an active, usable
+    // selection.
     // NOTE: the catalogue image is a _storage id, so it MUST be resolved via getUrl — emitting the
     // raw id renders a broken <img src>. (snapshot.thumbnail caches the same storage id.)
     const globalImage = puzzle?.image
@@ -323,7 +325,11 @@ export const getCopyInstanceView = query({
     let coverImageId: string | null = null;
     if (copy.coverImageId) {
       const coverRow = await ctx.db.get(copy.coverImageId);
-      if (coverRow && coverRow.ownedPuzzleId === args.copyId) {
+      if (
+        coverRow &&
+        coverRow.ownedPuzzleId === args.copyId &&
+        (coverRow.moderationStatus ?? "approved") === "approved"
+      ) {
         const coverUrl = await ctx.storage.getUrl(coverRow.fileId);
         if (coverUrl) {
           coverImage = coverUrl;

@@ -836,6 +836,36 @@ describe("getCopyInstanceView rich detail", () => {
     expect(strangerIds).not.toContain(ids.otherPending as string);
   });
 
+  test("copy-page cover respects photo moderation status: a rejected cover falls back to box art", async () => {
+    const t = convexTest(schema, modules);
+    const { viewer, copy } = await seedCopy(t);
+
+    await t.run(async (ctx) => {
+      const fileId = await ctx.storage.store(
+        new Blob(["rejected-cover"], { type: "image/png" }),
+      );
+      const now = Date.now();
+      const imageId = await ctx.db.insert("ownedPuzzleImages", {
+        ownedPuzzleId: copy,
+        uploaderId: viewer,
+        fileId,
+        moderationStatus: "rejected",
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.patch(copy, { coverImageId: imageId });
+    });
+
+    const view = await asViewer(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    // The seed puzzle carries no catalogue image, so once the rejected cover is excluded, the
+    // box-art fallback is undefined (never the rejected cover's URL).
+    expect(view?.snapshot.image).toBeUndefined();
+    expect(view?.snapshot.coverImageId).toBeNull();
+  });
+
   test("grouped completion entries carry rating, note and isYou", async () => {
     const t = convexTest(schema, modules);
     const { now, viewer, solver, copy } = await seedCopy(t);
