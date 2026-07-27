@@ -12,9 +12,14 @@ export function useUserSettings() {
   const { mutateAsync: setTrackDuration } = useMutation({
     mutationFn: useConvexMutation(gateway.solving.setTrackCompletionDuration),
   });
+  const { mutateAsync: setShare } = useMutation({
+    mutationFn: useConvexMutation(gateway.solving.setShareInProgress),
+  });
   return {
     isLoading: isPending || settings === undefined,
     trackCompletionDuration: settings?.solving.trackCompletionDuration,
+    shareInProgress: settings?.solving.shareInProgress,
     setTrackDuration: (enabled: boolean) => setTrackDuration({ enabled }),
+    setShareInProgress: (enabled: boolean) => setShare({ enabled }),
   };
 }

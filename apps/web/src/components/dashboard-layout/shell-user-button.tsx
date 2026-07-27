@@ -94,7 +94,12 @@ export function ShellUserButton({
 // the shell.user.* and solving.settings.* translations.
 function PreferencesPage() {
   const { fullWidth, hideEmail, setPreference } = useShellPreferences();
-  const { trackCompletionDuration, setTrackDuration } = useUserSettings();
+  const {
+    trackCompletionDuration,
+    setTrackDuration,
+    shareInProgress,
+    setShareInProgress,
+  } = useUserSettings();
   const t = useTranslations("shell.user");
   const ts = useTranslations("solving.settings");
 
@@ -152,6 +157,19 @@ function PreferencesPage() {
         </div>
         <p className="text-muted-foreground text-xs">
           {ts("trackDurationHint")}
+        </p>
+        <div className="flex items-center justify-between gap-4">
+          <label htmlFor="share-in-progress" className="text-sm">
+            {ts("shareInProgressLabel")}
+          </label>
+          <Switch
+            id="share-in-progress"
+            checked={shareInProgress === true}
+            onCheckedChange={(checked) => void setShareInProgress(checked)}
+          />
+        </div>
+        <p className="text-muted-foreground text-xs">
+          {ts("shareInProgressHint")}
         </p>
       </section>
     </div>

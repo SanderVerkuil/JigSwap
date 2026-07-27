@@ -1866,7 +1866,9 @@
     "settings": {
       "sectionTitle": "Puzzelen",
       "trackDurationLabel": "Voltooiingstijd bijhouden",
-      "trackDurationHint": "Indien aan vragen de dialoogvensters hoelang een puzzel duurde."
+      "trackDurationHint": "Indien aan vragen de dialoogvensters hoelang een puzzel duurde.",
+      "shareInProgressLabel": "Deel puzzels waar je mee bezig bent met vrienden",
+      "shareInProgressHint": "Vrienden (mensen die je volgt en die jou terugvolgen) zien aan welke puzzels je werkt — ook puzzels waar je al aan begonnen bent."
     },
     "review": {
       "title": "Beoordeel deze puzzel",

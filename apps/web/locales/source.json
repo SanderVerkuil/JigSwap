@@ -1862,7 +1862,9 @@
     "settings": {
       "sectionTitle": "Solving",
       "trackDurationLabel": "Track completion duration",
-      "trackDurationHint": "When on, the solve dialogs ask how long a puzzle took."
+      "trackDurationHint": "When on, the solve dialogs ask how long a puzzle took.",
+      "shareInProgressLabel": "Share in-progress puzzles with friends",
+      "shareInProgressHint": "Friends (people you follow who follow you back) can see which puzzles you're working on — including ones you've already started."
     },
     "review": {
       "title": "Review this puzzle",
