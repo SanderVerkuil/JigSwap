@@ -41,7 +41,7 @@ export interface FollowEdgeView {
  */
 export interface ActivityEntryView {
   memberId: string;
-  kind: "completion" | "acquisition" | "exchange";
+  kind: "completion" | "acquisition" | "exchange" | "started";
   occurredAt: number;
   ref: string;
   actorName: string;

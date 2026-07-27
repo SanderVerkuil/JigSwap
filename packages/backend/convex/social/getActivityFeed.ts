@@ -10,6 +10,7 @@ import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { areMutualFollowers } from "./privacy";
 
 // The activity-feed read: the acting member's own activity plus the activity of everyone they
 // follow, newest-first. It reads the DURABLE `domainEvents` log and maps FOREIGN events into
@@ -19,10 +20,13 @@ import { requireMember } from "../identity/requireMember";
 //
 // Foreign events mapped (verified against the emitting domains):
 //   CompletionRecorded (Solving)  -> "completion",  member = payload.userId,  ref = completionId
+//   CompletionStarted  (Solving)  -> "started",     member = payload.userId,  ref = completionId
+//                                    (opt-in + mutual-followers-only, filtered below)
 //   CopyAcquired       (Library)  -> "acquisition", member = payload.ownerId, ref = copyId
 //   ExchangeCompleted  (Exchange) -> "exchange",    members = both parties (row),  ref = exchangeId
 const FEED_EVENT_NAMES = [
   "CompletionRecorded",
+  "CompletionStarted",
   "CopyAcquired",
   "ExchangeCompleted",
 ] as const;
@@ -94,7 +98,42 @@ export const getActivityFeed = query({
       ...new Map(entries.map((e) => [`${e.kind}:${e.ref}`, e])).values(),
     ];
 
-    const feed = buildActivityFeed(deduped, {
+    // "started" is OPT-IN and FRIENDS-ONLY (spec §4): the actor must have shareInProgress === true
+    // (tri-state; absent = off) AND be a mutual follower of the viewer. The viewer's own starts are
+    // exempt. Checked once per distinct actor — bounded by the audience-filtered entries, not the
+    // raw event batch — and BEFORE buildActivityFeed's limit slice so pages are never short.
+    const startedActorIds = [
+      ...new Set(
+        deduped
+          .filter(
+            (e) =>
+              e.kind === "started" &&
+              (e.memberId as string) !== (meId as string),
+          )
+          .map((e) => e.memberId as string),
+      ),
+    ];
+    const startedActorAllowed = new Map(
+      await Promise.all(
+        startedActorIds.map(async (id) => {
+          const actorId = id as unknown as Id<"users">;
+          const prefs = await ctx.db
+            .query("solvingPreferences")
+            .withIndex("by_member", (q) => q.eq("memberId", actorId))
+            .unique();
+          if (prefs?.shareInProgress !== true) return [id, false] as const;
+          return [id, await areMutualFollowers(ctx, meId, actorId)] as const;
+        }),
+      ),
+    );
+    const visible = deduped.filter(
+      (e) =>
+        e.kind !== "started" ||
+        (e.memberId as string) === (meId as string) ||
+        startedActorAllowed.get(e.memberId as string) === true,
+    );
+
+    const feed = buildActivityFeed(visible, {
       limit: args.limit ?? DEFAULT_LIMIT,
     });
 
@@ -158,6 +197,12 @@ const toActivityEntries = async (
   switch (event.name) {
     case "CompletionRecorded":
       return make(p.userId as string, "completion", p.completionId as string);
+    case "CompletionStarted": {
+      // A future-dated start hasn't begun; don't announce it (spec §2).
+      const startDate = p.startDate as number | undefined;
+      if (startDate !== undefined && startDate > Date.now()) return [];
+      return make(p.userId as string, "started", p.completionId as string);
+    }
     case "CopyAcquired":
       return make(p.ownerId as string, "acquisition", p.copyId as string);
     case "ExchangeCompleted": {
