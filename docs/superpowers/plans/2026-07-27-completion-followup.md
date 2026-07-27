@@ -40,9 +40,9 @@
       return err(SolvingError.tooManyPhotos(MAX_PHOTOS));
     }
     this.state = { ...this.state, photos: combined, updatedAt: now };
-    // Reuse CompletionEdited (verified consumer-safe: no feed/notification/goal reactions).
-    // Record it exactly the way edit() records its event.
-    ...
+    // Reuse CompletionEdited (verified consumer-safe: no feed/notification/goal reactions);
+    // recorded exactly the way edit() records it (completion.ts:316).
+    this.record(new CompletionEdited(this.state.id, now));
     return ok(undefined);
   }
 ```
@@ -58,11 +58,15 @@ export interface AttachCompletionPhotosCommand {
 export interface AttachCompletionPhotos {
   (
     cmd: AttachCompletionPhotosCommand,
-  ): Promise<Result<void /* same union as EditCompletion */>>;
+  ): Promise<Result<void, SolvingError | SolvingApplicationError>>;
 }
 ```
 
-Use case: verbatim shape of `makeEditCompletion` (load → `completion.attachPhotos(cmd.actingMemberId, cmd.photoFileIds.map(Photo.of), clock.now())` → save → publish). Barrel exports in `ports/in/index.ts` + `use-cases/index.ts`.
+(imports exactly as `edit-completion.port.ts:1-3`: `Result` from `../../../../shared-kernel`; `CompletionId, FileId, MemberId, SolvingError` from `../../../domain`; `SolvingApplicationError` from `../../errors` — `Result` has NO default error param, both type args are required.)
+
+Use case: **exported as `makeAttachCompletionPhotos`** — verbatim shape of `makeEditCompletion` (load → `completion.attachPhotos(cmd.actingMemberId, cmd.photoFileIds.map(Photo.of), clock.now())` → save → publish). Barrel exports in `ports/in/index.ts` + `use-cases/index.ts`.
+
+Red-state note: adding the `makeAttachCompletionPhotos` import to `completion-use-cases.spec.ts` before implementing fails the WHOLE file at load (module missing) — expected file-poisoning red, don't "fix" by skipping.
 
 - [ ] **Step 4: Run** both spec files + full domain suite — green. `pnpm arch:check` clean.
 - [ ] **Step 5: Commit** `feat(domain): window-free attachPhotos on Completion`.
@@ -75,9 +79,12 @@ Use case: verbatim shape of `makeEditCompletion` (load → `completion.attachPho
 
 - Modify: `packages/backend/convex/schema.ts`
 - Create: `packages/backend/convex/solving/attachCompletionPhotos.ts`
+- **Create: `packages/backend/convex/solving/moderateCompletionPhoto.ts` (STUB — Task 3 fills it)**
 - Modify: `packages/backend/convex/solving/editCompletion.ts`, `packages/backend/convex/solving/recordCompletion.ts` (strip `photos` args), `packages/backend/convex/solving/deleteCompletion.ts` (cascade)
-- Modify: `packages/backend/convex/_generated/api.d.ts`, `packages/gateway/src/operations.ts`
-- Test: `packages/backend/convex/solvingMutations.test.ts` (extend; adjust any tests using the stripped args)
+- Modify: `packages/backend/convex/_generated/api.d.ts`, `packages/gateway/src/operations.ts` (the `solving:` block)
+- Test: `packages/backend/convex/solvingMutations.test.ts` (extend)
+
+VERIFIED FACT for step (g): NO existing test (backend or web) passes `photos` as a mutation arg — stripping the args is a pure deletion in the two mutation files. The `photos: []` fields in the test file's raw `ctx.db.insert("completions", ...)` seeds are the required TABLE column and MUST STAY.
 
 - [ ] **Step 1: Failing tests.** New describe: (a) author attaches 2 photos (real stored blobs via `ctx.storage.store(new Blob([...]))` — precedent `setCopyCover.test.ts:86-92`) → `completions.photos` grows, one `completionImages` row per photo with `moderationStatus: "pending"`, one scheduled `moderateCompletionPhoto` job per photo (assert via `_scheduled_functions`, precedent `addCopyPhoto.test.ts:113-121`); (b) non-author rejected; (c) duplicate storageIds in one call + re-attach of an already-attached id → deduped (no extra rows/photos); (d) existing 4 + 2 new → `TooManyPhotos` ConvexError code; (e) **backdated completion (endDate 10 days ago) attach succeeds**; (f) `deleteCompletion` removes sidecar rows and (assert via `t.run` storage lookup if feasible, else assert sidecars gone) blobs; (g) `editCompletion`/`recordCompletion` no longer accept `photos` (TypeScript-level — just remove usages; adjust the existing tests that passed `photos` if any — grep first).
 - [ ] **Step 2: Run** — new describe fails (module missing).
@@ -181,7 +188,22 @@ export const attachCompletionPhotos = mutation({
 });
 ```
 
-(The `internal.solving.moderateCompletionPhoto` reference lands in Task 3 — for THIS task's tests to run, create the Task 3 files as minimal stubs OR order the scheduling line into Task 3. DECISION: create `solving/moderateCompletionPhoto.ts` in THIS task as a stub internal action that does nothing yet, registered in api.d.ts, so scheduling asserts work; Task 3 fills it in.)
+**Stub step (required in THIS task):** create `solving/moderateCompletionPhoto.ts` as a minimal internal action (no `"use node"` needed for the stub — only Task 3's jimp fill-in needs it):
+
+```ts
+import { v } from "convex/values";
+import { internalAction } from "../_generated/server";
+
+// Stub — filled in by the moderation task. Scheduling asserts in tests never drain this.
+export const moderateCompletionPhoto = internalAction({
+  args: { imageId: v.id("completionImages") },
+  handler: async () => {},
+});
+```
+
+registered in api.d.ts so `internal.solving.moderateCompletionPhoto.moderateCompletionPhoto` resolves; Task 3 replaces the body.
+
+Mild existence-oracle note (accepted parity): the mutation throws "Completion not found" before ownership is checked — same shape as `addCopyPhoto`'s copy-not-found; no change required.
 
 `editCompletion.ts` / `recordCompletion.ts`: delete the `photos` arg + its `photoFileIds` mapping (pass `undefined`/omit to the domain commands — they're optional). `deleteCompletion.ts`: load the row via `by_aggregate_id` BEFORE the use case (capture `photos`); after success, delete sidecars via `by_completion` and best-effort `ctx.storage.delete` every captured photo id (try/catch per blob; comment mirrors `removeCopyPhoto`).
 
@@ -206,9 +228,9 @@ Gateway: `attachCompletionPhotos` line. api.d.ts: both new modules.
 - [ ] **Step 2: Failing tests** (per the ESTABLISHED pattern — never drain the node action; env-less drains fail open):
   - Verdict mutations called directly: approve-with-swap patches the sidecar's `fileId` to the new blob AND swaps old→new inside `completions.photos` (insert a completion + sidecar first via attach); reject removes the id from `completions.photos`, deletes the blob (assert sidecar keeps `rejected` + the `moderationActions` stamp row exists with kind `photo_auto_rejected`).
   - Photo read filter: seed sidecars in each status — `listMyCompletions`'s `photoUrls` excludes REJECTED only; pending and absent (legacy) included. Same for `getCompletionHistory`.
-- [ ] **Step 3: Implement.** `completionModerationStore.ts`: internal mutations mirroring `moderationStore.ts`'s responsibilities but typed to `completionImages` — `loadForModeration(imageId)`, `setVerdict/approve(imageId, {score,label})`, `setModerationFile(imageId, newFileId)` — with the two OBLIGATIONS the spec mandates:
-  1. **approve/setModerationFile**: in ONE mutation, patch the sidecar `fileId` AND load the completion row (`by_aggregate_id` on the sidecar's `completionId`) and `db.patch` its `photos` array replacing old id with new (direct system write, comment: deliberately outside the domain path). Delete the old blob after (as the library flow does).
-  2. **reject**: patch sidecar `rejected` (+score/label), load the completion row and `db.patch` `photos` without the id (frees a cap slot), `ctx.storage.delete` the blob, and stamp `photo_auto_rejected` via the existing `stampModerationAction` helper with `targetId = completionId` aggregate string and `targetLabel` from `copySnapshot?.title ?? "Completion photo"`.
+- [ ] **Step 3: Implement.** `completionModerationStore.ts`: internal mutations mirroring `moderationStore.ts`'s REAL export split, typed to `completionImages` — **use the same names**: `getImageForModeration(imageId)`, `setModerationFile(imageId, newFileId)`, `setModerationVerdict(imageId, verdict, score?, label?)`. Every sidecar patch bumps `updatedAt`. The spec's two OBLIGATIONS map onto that split as follows:
+  1. **The completions.photos old→new swap lives in `setModerationFile`** (the ONLY mutation that changes fileId — mirroring the library split): patch the sidecar's `fileId` AND, in the same mutation, load the completion row (`by_aggregate_id` on the sidecar's `completionId`) and `db.patch` its `photos` array replacing old id with new (direct system write; comment: deliberately outside the domain path). The old-blob delete stays where the library action does it. **Approvals after a decode failure never call `setModerationFile`** (the action classifies the original; verdict-only) — do not fold the swap into the verdict mutation.
+  2. **`setModerationVerdict` with "rejected"**: patch sidecar `rejected` (+score/label), load the completion row and `db.patch` `photos` without the id (frees a cap slot), `ctx.storage.delete` the blob, and stamp `photo_auto_rejected` via the existing `stampModerationAction` helper with `targetId = completionId` aggregate string and `targetLabel` from `copySnapshot?.title ?? "Completion photo"`. NOTE this deliberately does MORE than the library reject (which only stamps + patches the sidecar — library photos live solely in their own table); do not "correct" it back to parity.
 
   `moderateCompletionPhoto.ts`: internal action cloned from `library/moderatePhoto.ts` — same re-encode (EXIF strip) + classify + fails-open semantics, calling the solving store's mutations. Keep the same env/provider handling.
   Read filter: in both reads, per completion row load `completionImages` via `by_completion` (only when `row.aggregateId` present), build `fileId → status`, and filter `row.photos` to entries whose status is not `"rejected"` before URL resolution.
@@ -220,14 +242,15 @@ Gateway: `attachCompletionPhotos` line. api.d.ts: both new modules.
 
 ### Task 4: Web — providers, follow-up dialog, trigger wiring
 
+Executed as THREE sub-tasks (4a/4b/4c), each with its own verify + commit — dispatch each to a fresh subagent.
+
 **Files:**
 
-- Modify: `apps/web/src/components/solving/duration-prompt-provider.tsx`
-- Create: `apps/web/src/components/solving/completion-follow-up-provider.tsx`
-- Modify: `apps/web/src/routes/_dashboard/route.tsx` (mount), `apps/web/src/components/solving/log-solve-dialog.tsx`, `apps/web/src/components/solving/finish-solve-dialog.tsx`
-- Modify: locale ×3 (`solving.followUp` namespace)
+- 4a Modify: `apps/web/src/components/solving/duration-prompt-provider.tsx`
+- 4b Create: `apps/web/src/components/solving/completion-follow-up-provider.tsx`; Modify: `apps/web/src/routes/_dashboard/route.tsx` (mount), locale ×3 (`solving.followUp` namespace)
+- 4c Modify: `apps/web/src/components/solving/log-solve-dialog.tsx`, `apps/web/src/components/solving/finish-solve-dialog.tsx`
 
-- [ ] **Step 1: `requestPrompt(onDone?)`.** Rewrite the provider's core (file is 75 lines — current code in repo):
+- [ ] **Task 4a / Step 1: `requestPrompt(onDone?)`.** Rewrite the provider's core (file is 75 lines — current code in repo):
 
 ```tsx
 const onDoneRef = useRef<(() => void) | null>(null);
@@ -256,14 +279,17 @@ const choose = async (enabled: boolean) => {
 // Dialog onOpenChange: (o) => { setOpen(o); if (!o) finish(); }
 ```
 
-No-provider stub: `{ requestPrompt: (onDone) => onDone?.() }`. Update the `DurationPromptApi` type.
+No-provider stub: `{ requestPrompt: (onDone) => onDone?.() }`. Update the `DurationPromptApi` type. (Sole existing caller is log-solve-dialog — the optional arg is backward-compatible.) Verify tsc + lint; commit `feat(web): duration prompt onDone chaining`.
 
-- [ ] **Step 2: `CompletionFollowUpProvider`.** New file, mirroring the provider idiom: context `{ requestFollowUp(completionId: string): void }`, first-wins (`if (completionId already set) return`), no-provider stub no-ops. The dialog content:
+- [ ] **Task 4b / Step 2: `CompletionFollowUpProvider`.** New file, mirroring the provider idiom: context `{ requestFollowUp(completionId: string): void }`, **first-wins per open** (`if (completionId already set) return`), no-provider stub no-ops. **On dialog close (save, skip, or dismiss) clear the stored completionId and ALL photo/upload state — revoking object URLs — so the next `requestFollowUp` works** (without this, first-wins degrades to once-per-session). Mount in `route.tsx`: nest `CompletionFollowUpProvider` directly inside `DurationPromptProvider` (~line 44; nesting order is a convention choice — the dialogs' closures sit inside BOTH providers either way). The dialog content:
   - Star rating (`StarRating` interactive — check `review-puzzle-dialog.tsx` for the exact usage) + review `Textarea`.
-  - Photo section: hidden `<input type="file" accept="image/*" multiple>` behind an add-tile (pattern: `copies/$id.tsx` PhotoStrip label ~857-961); compress each picked file with compressorjs using `forms/file-upload/index.tsx`'s settings (quality/max dims — read it; use the library directly, NOT the FileUpload component); cap picks at 5 (and show the domain TooManyPhotos error friendly on attach failure); local previews via `URL.createObjectURL` (revoke on cleanup); remove-before-save supported.
+  - Photo section: hidden `<input type="file" accept="image/*" multiple>` behind an add-tile (pattern: `copies/$id.tsx` PhotoStrip label ~857-961); compress each picked file with compressorjs using `forms/file-upload/index.tsx`'s settings (`new Compressor(file, { quality: 0.6, maxWidth: 1024, maxHeight: 1024, ... })` — read it; use the library directly, NOT the FileUpload component — compressorjs is a direct apps/web dep); cap picks at a flat 5 (deliberate simplification of the spec's `min(5, 5 − existing)`: the completion is freshly created in this flow so existing is always 0; the server-side cap is the real guard) and show the domain TooManyPhotos error friendly on attach failure; local previews via `URL.createObjectURL` (revoke on cleanup); remove-before-save supported.
   - Save: `Promise.allSettled` over per-file (generateUploadUrl → POST → storageId); failures keep the dialog open with failed items marked and a Retry that re-runs failures only; then if rating ≥ 1 `reviewPuzzle({completionId, rating, text})`; then if storageIds `attachCompletionPhotos({completionId, storageIds})` (retry attach-only on failure). Dismissal disabled while saving (`onOpenChange` guarded on pending). Skip closes immediately (orphaned uploaded blobs accepted per spec).
   - Toasts: saved / saveError. All strings from `solving.followUp` (title, description, ratingLabel, textLabel/placeholder — reuse `solving.review` keys where they fit, photosLabel, photosHint, addPhotos, retry, save, skip, saved, saveError, tooManyPhotos) ×3 locales.
-- [ ] **Step 3: Mount + wire triggers.** `route.tsx`: wrap next to `DurationPromptProvider` (follow-up INSIDE so it can be requested from the duration chain). `log-solve-dialog.tsx`: capture `const completionId = await recordCompletion.mutateAsync(...) as string;` and build the chain — replace the current post-save block with:
+
+  Verify tsc/lint/JSON + meta test; commit `feat(web): completion follow-up provider + dialog`.
+
+- [ ] **Task 4c / Step 3: Wire triggers.** `log-solve-dialog.tsx`: capture `const completionId = await recordCompletion.mutateAsync(...) as string;` and build the chain — REWRITE (not splice) the current post-save block (lines ~113-121) to:
 
 ```ts
 const completed = end !== undefined;
@@ -286,10 +312,27 @@ if (wasFirstChoice) requestPrompt(offerOrFollowUp);
 else offerOrFollowUp();
 ```
 
-with `followUpAfterUpdateCopyRef` invoked (once-guarded, same ref-null pattern) from BOTH `confirmUpdateCopy`'s finally and the offer dialog's `onOpenChange(false)`. `finish-solve-dialog.tsx`: add `onSuccess?: () => void`; in the success path order `requestFollowUp(completionId)` → `onSuccess?.()` → `onOpenChange(false)`.
+with `followUpAfterUpdateCopyRef` (a `useRef`, created in this task) invoked (once-guarded, same ref-null pattern as the provider) from BOTH `confirmUpdateCopy`'s finally and the offer dialog's `onOpenChange(false)`.
 
-- [ ] **Step 4: Verify** tsc (no new errors), lint (no new), meta test 3 green, locale JSON valid.
-- [ ] **Step 5: Commit** `feat(web): combined review+photos follow-up after completed solves`.
+**BLOCKER FIX (verified — do not skip): the unmount safety valve.** On `/completions/new`, `onOpenChange(false)` unmounts `LogSolveDialog` synchronously (`setSolveTarget(null)`), so `setOfferUpdateCopy(true)` after it is a dead no-op and the follow-up hung on that dialog would be silently lost on the completed+pieces-missing path. Add a `useEffect` unmount cleanup in `LogSolveDialog` that fires the once-guarded ref:
+
+```ts
+useEffect(
+  () => () => {
+    const cb = followUpAfterUpdateCopyRef.current;
+    followUpAfterUpdateCopyRef.current = null;
+    cb?.();
+  },
+  [],
+);
+```
+
+(`requestFollowUp` is provider-owned, so firing it during unmount is safe — same guarantee the existing `requestPrompt` call relies on.)
+
+`finish-solve-dialog.tsx`: add `onSuccess?: () => void`; in the success path order `requestFollowUp(completionId)` → `onSuccess?.()` → `onOpenChange(false)`.
+
+- [ ] **Task 4c / Step 4: Verify** tsc (no new errors), lint (no new), meta test 3 green.
+- [ ] **Task 4c / Step 5: Commit** `feat(web): trigger completion follow-up from solve dialogs`.
 
 ---
 
