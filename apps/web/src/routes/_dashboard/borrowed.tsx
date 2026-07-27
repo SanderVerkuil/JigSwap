@@ -2,7 +2,9 @@ import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
+import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
+import { StartSolveDialog } from "@/components/solving/start-solve-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,7 +15,7 @@ import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { HandHelping, Package, User } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/borrowed")({
@@ -33,6 +35,7 @@ function BorrowedPage() {
   const t = useTranslations("lending");
   const tCommon = useTranslations("common");
   const tSolve = useTranslations("solving.logSolve");
+  const tStart = useTranslations("solving.startSolve");
   const dateLocale = useDateFnsLocale();
 
   // Source of truth for "copies I'm holding on loan"; open loans where the caller is the borrower.
@@ -43,6 +46,32 @@ function BorrowedPage() {
     mutationFn: useConvexMutation(gateway.lending.returnLoan),
   });
 
+  // The caller's own solve log, powering the Start puzzle ↔ Finish solve swap per loan row.
+  const { data: completions } = useQuery(
+    convexQuery(gateway.solving.myCompletions, {}),
+  );
+  // Caller's newest in-progress solve per copy _id; borrowed loans expose the copy as
+  // loan.copyDocId ("" when the copy row is gone — skip those).
+  const inProgressByCopyDocId = useMemo(() => {
+    const map = new Map<string, { completionId: string; startDate: number }>();
+    for (const completion of completions ?? []) {
+      if (
+        completion.isCompleted ||
+        !completion.ownedPuzzleId ||
+        !completion.aggregateId
+      )
+        continue;
+      const existing = map.get(completion.ownedPuzzleId);
+      if (!existing || completion.startDate > existing.startDate) {
+        map.set(completion.ownedPuzzleId, {
+          completionId: completion.aggregateId,
+          startDate: completion.startDate,
+        });
+      }
+    }
+    return map;
+  }, [completions]);
+
   // The loan currently being returned, so we can disable just its button while the mutation runs.
   const returningId = returnLoan.isPending
     ? (returnLoan.variables?.loanId ?? null)
@@ -51,6 +80,16 @@ function BorrowedPage() {
   const [solveFor, setSolveFor] = useState<{
     copyId: string;
     title: string;
+  } | null>(null);
+  // The loan for which we are starting a solve (null = dialog closed).
+  const [startFor, setStartFor] = useState<{
+    copyId: string;
+    title: string;
+  } | null>(null);
+  // The in-progress completion being finished (null = dialog closed).
+  const [finishTarget, setFinishTarget] = useState<{
+    completionId: string;
+    startDate: number;
   } | null>(null);
 
   const handleReturn = async (loanId: string) => {
@@ -135,6 +174,33 @@ function BorrowedPage() {
                 </div>
 
                 <div className="mt-auto flex items-center justify-end gap-2 border-t pt-4">
+                  {loan.copyDocId !== "" &&
+                  inProgressByCopyDocId.has(loan.copyDocId) ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        setFinishTarget(
+                          inProgressByCopyDocId.get(loan.copyDocId)!,
+                        )
+                      }
+                    >
+                      {tStart("finishTrigger")}
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        setStartFor({
+                          copyId: loan.copyId,
+                          title: loan.puzzleTitle,
+                        })
+                      }
+                    >
+                      {tStart("trigger")}
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="outline"
@@ -170,6 +236,24 @@ function BorrowedPage() {
           copyId={solveFor.copyId}
           puzzleTitle={solveFor.title}
           viewerIsOwner={false}
+        />
+      )}
+
+      {startFor && (
+        <StartSolveDialog
+          open
+          onOpenChange={(o) => !o && setStartFor(null)}
+          copyId={startFor.copyId}
+          puzzleTitle={startFor.title}
+        />
+      )}
+
+      {finishTarget && (
+        <FinishSolveDialog
+          open
+          onOpenChange={(o) => !o && setFinishTarget(null)}
+          completionId={finishTarget.completionId}
+          minEndDate={finishTarget.startDate}
         />
       )}
     </div>

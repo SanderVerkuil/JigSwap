@@ -14,7 +14,9 @@ import {
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { ImageEditorDialog } from "@/components/image-editor/image-editor-dialog";
 import { EmptyState } from "@/components/library/empty-state";
+import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
+import { StartSolveDialog } from "@/components/solving/start-solve-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -197,6 +199,7 @@ function CopyInstanceDetail({
   const t = useTranslations("copyInstance");
   const tShell = useTranslations("shell");
   const tPuzzles = useTranslations("puzzles");
+  const tStart = useTranslations("solving.startSolve");
   const tDifficulty = useTranslations("puzzles.puzzles.difficulty");
   const format = useFormatter();
   // A stable "now" captured once per mount, so duration/relative-time renders are
@@ -212,6 +215,27 @@ function CopyInstanceDetail({
   // copy editor (also reachable from the page-head Edit button registered below).
   const [logOpen, setLogOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  // Start/Finish solve swap: `startOpen` drives the start dialog; `finishTarget` holds the
+  // in-progress completion being finished (null = finish dialog closed).
+  const [startOpen, setStartOpen] = useState(false);
+  const [finishTarget, setFinishTarget] = useState<{
+    completionId: string;
+    startDate: number;
+  } | null>(null);
+
+  // The caller's solve history on this copy (caller-scoped server-side), powering the
+  // Start puzzle ↔ Finish solve swap below.
+  const { data: myHistory } = useQuery(
+    convexQuery(
+      gateway.solving.completionHistory,
+      copy.aggregateId ? { copyId: copy.aggregateId } : "skip",
+    ),
+  );
+  // The CALLER's most recent in-progress solve on this copy (caller-scoped server-side).
+  const myInProgress = (myHistory ?? [])
+    .filter((c) => !c.isCompleted && c.aggregateId)
+    .sort((a, b) => b.startDate - a.startDate)[0];
+
   const updateSharing = useMutation({
     mutationFn: useConvexMutation(gateway.library.updateSharing),
   });
@@ -493,6 +517,28 @@ function CopyInstanceDetail({
                   <CircleCheck className="h-4 w-4" />
                   {t("actions.logCompletion")}
                 </Button>
+                {myInProgress ? (
+                  <Button
+                    variant="outline"
+                    disabled={copy.aggregateId == null}
+                    onClick={() =>
+                      setFinishTarget({
+                        completionId: myInProgress.aggregateId!,
+                        startDate: myInProgress.startDate,
+                      })
+                    }
+                  >
+                    {tStart("finishTrigger")}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    disabled={copy.aggregateId == null}
+                    onClick={() => setStartOpen(true)}
+                  >
+                    {tStart("trigger")}
+                  </Button>
+                )}
               </>
             ) : (
               <>
@@ -695,6 +741,20 @@ function CopyInstanceDetail({
             puzzleTitle={snapshot.title}
             viewerIsOwner={copy.viewerIsOwner}
           />
+          <StartSolveDialog
+            open={startOpen}
+            onOpenChange={setStartOpen}
+            copyId={copy.aggregateId ?? ""}
+            puzzleTitle={snapshot.title}
+          />
+          {finishTarget && (
+            <FinishSolveDialog
+              open
+              onOpenChange={(open) => !open && setFinishTarget(null)}
+              completionId={finishTarget.completionId}
+              minEndDate={finishTarget.startDate}
+            />
+          )}
           <EditCopyDialog
             open={editOpen}
             onOpenChange={setEditOpen}
