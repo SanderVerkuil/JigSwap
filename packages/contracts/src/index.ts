@@ -10,3 +10,4 @@ export * from "./search";
 export * from "./shared";
 export * from "./sharing";
 export * from "./social";
+export * from "./solving";

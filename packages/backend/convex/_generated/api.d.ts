@@ -338,6 +338,7 @@ import type * as solving_finishCompletion from "../solving/finishCompletion.js";
 import type * as solving_getCompletionHistory from "../solving/getCompletionHistory.js";
 import type * as solving_listMyCompletions from "../solving/listMyCompletions.js";
 import type * as solving_listMyGoals from "../solving/listMyGoals.js";
+import type * as solving_listMyInProgress from "../solving/listMyInProgress.js";
 import type * as solving_recordCompletion from "../solving/recordCompletion.js";
 import type * as solving_reviewPuzzle from "../solving/reviewPuzzle.js";
 import type * as solving_setShareInProgress from "../solving/setShareInProgress.js";
@@ -682,6 +683,7 @@ declare const fullApi: ApiFromModules<{
   "solving/getCompletionHistory": typeof solving_getCompletionHistory;
   "solving/listMyCompletions": typeof solving_listMyCompletions;
   "solving/listMyGoals": typeof solving_listMyGoals;
+  "solving/listMyInProgress": typeof solving_listMyInProgress;
   "solving/recordCompletion": typeof solving_recordCompletion;
   "solving/reviewPuzzle": typeof solving_reviewPuzzle;
   "solving/setShareInProgress": typeof solving_setShareInProgress;

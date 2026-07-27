@@ -211,6 +211,7 @@ export const gateway = {
     myCompletions: api.solving.listMyCompletions.listMyCompletions,
     completionHistory: api.solving.getCompletionHistory.getCompletionHistory,
     myGoals: api.solving.listMyGoals.listMyGoals,
+    myInProgress: api.solving.listMyInProgress.listMyInProgress,
     setShareInProgress: api.solving.setShareInProgress.setShareInProgress,
     setTrackCompletionDuration:
       api.solving.setTrackCompletionDuration.setTrackCompletionDuration,

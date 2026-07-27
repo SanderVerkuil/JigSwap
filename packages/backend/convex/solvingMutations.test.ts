@@ -684,3 +684,58 @@ describe("solving.startCompletion — first-class start", () => {
     expect(row?.isCompleted).toBe(true);
   });
 });
+
+describe("solving.listMyInProgress", () => {
+  test("returns only the caller's in-progress solves as DTOs, newest-started first", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+
+    // One finished, two in-progress (started at different times).
+    await recordForAlice(t, copyAggregateId);
+    const older = (await asAlice(t).mutation(
+      api.solving.startCompletion.startCompletion,
+      { copyId: copyAggregateId, startDate: Date.now() - 48 * HOUR },
+    )) as string;
+    const newer = (await asAlice(t).mutation(
+      api.solving.startCompletion.startCompletion,
+      { copyId: copyAggregateId, startDate: Date.now() - HOUR },
+    )) as string;
+
+    const mine = await asAlice(t).query(
+      api.solving.listMyInProgress.listMyInProgress,
+      {},
+    );
+    expect(mine.map((s) => s.completionId)).toEqual([newer, older]);
+    expect(mine[0].title).toBe("Mountain Vista");
+    expect(mine[0].pieceCount).toBe(1000);
+    // The DTO never carries notes/photos/raw rows. (Don't assert the full key list — Convex
+    // strips undefined-valued fields like thumbnailUrl in serialization.)
+    expect("notes" in mine[0]).toBe(false);
+    expect("photos" in mine[0]).toBe(false);
+    expect("_id" in mine[0]).toBe(false);
+
+    // Bob sees nothing.
+    const bobs = await asBob(t).query(
+      api.solving.listMyInProgress.listMyInProgress,
+      {},
+    );
+    expect(bobs).toEqual([]);
+  });
+
+  test("survives copy deletion via the snapshot/puzzle fallback chain", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId, ownedPuzzleId } = await seed(t);
+    await asAlice(t).mutation(api.solving.startCompletion.startCompletion, {
+      copyId: copyAggregateId,
+      startDate: Date.now(),
+    });
+    await t.run(async (ctx) => ctx.db.delete(ownedPuzzleId));
+
+    const mine = await asAlice(t).query(
+      api.solving.listMyInProgress.listMyInProgress,
+      {},
+    );
+    expect(mine).toHaveLength(1);
+    expect(mine[0].title).toBe("Mountain Vista"); // from copySnapshot / puzzles fallback
+  });
+});
