@@ -1801,6 +1801,8 @@
       "piecesFinished": "{pieces, number} stukjes · voltooid in {days, plural, one {# dag} other {# dagen}}",
       "solvedOwnCopy": "Eigen exemplaar opgelost",
       "solvedBorrowedCopy": "Geleend exemplaar opgelost",
+      "solvingOwnCopy": "Bezig met eigen exemplaar",
+      "solvingBorrowedCopy": "Bezig met geleend exemplaar",
       "piecesComplete": "was compleet",
       "piecesMissing": "miste stukjes",
       "new": {

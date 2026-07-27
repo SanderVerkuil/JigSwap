@@ -1801,6 +1801,8 @@
       "piecesFinished": "{pieces, number} pieces · finished in {days, plural, one {# day} other {# days}}",
       "solvedOwnCopy": "Solved your copy",
       "solvedBorrowedCopy": "Solved a borrowed copy",
+      "solvingOwnCopy": "Solving your copy",
+      "solvingBorrowedCopy": "Solving a borrowed copy",
       "piecesComplete": "was complete",
       "piecesMissing": "had missing pieces",
       "new": {

@@ -2,6 +2,7 @@ import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useUser } from "@/compat/clerk";
+import { Image } from "@/compat/image";
 import { Link } from "@/compat/link";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { CoverChip } from "@/components/library/cover-chip";
@@ -50,6 +51,16 @@ type DialogState =
     }
   | { kind: "delete"; completionId: string }
   | null;
+
+// Route target for a completion's server-resolved navigation link (ids are doc _ids).
+function hrefForLink(link: {
+  kind: "myCopy" | "copy" | "definition";
+  id: string;
+}): string {
+  if (link.kind === "myCopy") return `/my-puzzles/${link.id}`;
+  if (link.kind === "copy") return `/copies/${link.id}`;
+  return `/puzzles/${link.id}`;
+}
 
 export const Route = createFileRoute("/_dashboard/completions/")({
   head: ({ match }) => ({
@@ -240,18 +251,37 @@ function CompletionsPage() {
       <div
         key={completion._id}
         className={cn(
-          "flex flex-wrap items-center gap-3.5 py-3.5",
+          "relative flex flex-wrap items-center gap-3.5 py-3.5",
           !isLast && "border-b",
         )}
       >
-        <CoverChip
-          color={chipColor(index)}
-          icon={done ? CircleCheck : Clock}
-          size={44}
-        />
+        {completion.thumbnailUrl ? (
+          <Image
+            src={completion.thumbnailUrl}
+            alt=""
+            width={44}
+            height={44}
+            className="h-11 w-11 shrink-0 rounded-lg object-cover"
+          />
+        ) : (
+          <CoverChip
+            color={chipColor(index)}
+            icon={done ? CircleCheck : Clock}
+            size={44}
+          />
+        )}
         <div className="min-w-0 flex-1 basis-52">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-semibold">{title}</span>
+            {completion.link ? (
+              <Link
+                href={hrefForLink(completion.link)}
+                className="text-sm font-semibold after:absolute after:inset-0 after:z-[1] after:content-[''] hover:underline focus-visible:underline focus-visible:outline-none"
+              >
+                {title}
+              </Link>
+            ) : (
+              <span className="text-sm font-semibold">{title}</span>
+            )}
             {!done && (
               <Badge variant="secondary" className="text-xs">
                 {t("inProgress")}
@@ -272,8 +302,8 @@ function CompletionsPage() {
           {"copySnapshot" in completion && completion.copySnapshot != null && (
             <p className="text-muted-foreground mt-0.5 text-xs">
               {completion.copySnapshot.wasBorrowed
-                ? t("solvedBorrowedCopy")
-                : t("solvedOwnCopy")}
+                ? t(done ? "solvedBorrowedCopy" : "solvingBorrowedCopy")
+                : t(done ? "solvedOwnCopy" : "solvingOwnCopy")}
               {"allPiecesPresent" in completion &&
               completion.allPiecesPresent === false
                 ? ` — ${t("piecesMissing")}`
@@ -293,7 +323,7 @@ function CompletionsPage() {
           {formatDate(completion.endDate ?? completion.startDate)}
         </span>
 
-        <div className="flex items-center gap-1">
+        <div className="relative z-10 flex items-center gap-1">
           {!done && completion.aggregateId && (
             <Button
               variant="outline"
