@@ -863,10 +863,10 @@
       "empty": "Nothing on the table right now.",
       "emptyCta": "Start one from your puzzles",
       "untitled": "A puzzle",
-      "pieces": "{count} pieces",
+      "pieces": "{count, plural, one {# piece} other {# pieces}}",
       "startedToday": "Started today",
-      "startedDaysAgo": "Started {days} days ago",
-      "startsInDays": "Starts in {days} days",
+      "startedDaysAgo": "{days, plural, one {Started # day ago} other {Started # days ago}}",
+      "startsInDays": "{days, plural, one {Starts in # day} other {Starts in # days}}",
       "finish": "Finish"
     },
     "pulse": {

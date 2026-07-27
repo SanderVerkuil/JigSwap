@@ -863,10 +863,10 @@
       "empty": "Er ligt nu niets op tafel.",
       "emptyCta": "Start er een vanuit je puzzels",
       "untitled": "Een puzzel",
-      "pieces": "{count} stukjes",
+      "pieces": "{count, plural, one {# stukje} other {# stukjes}}",
       "startedToday": "Vandaag gestart",
-      "startedDaysAgo": "{days} dagen geleden gestart",
-      "startsInDays": "Start over {days} dagen",
+      "startedDaysAgo": "{days, plural, one {# dag geleden gestart} other {# dagen geleden gestart}}",
+      "startsInDays": "{days, plural, one {Start over # dag} other {Start over # dagen}}",
       "finish": "Afronden"
     },
     "pulse": {

@@ -6,6 +6,7 @@ import { SectionHead } from "@/components/dashboard-home/section-head";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
@@ -17,7 +18,7 @@ import { useTranslations } from "use-intl";
 // The dashboard's in-progress rail: what the member is solving right now, with a one-click finish.
 export function SolvingNowSection() {
   const t = useTranslations("dashboard.solvingNow");
-  const { member } = useCurrentMember();
+  const { member, isMemberLoading } = useCurrentMember();
   const { data: solves } = useQuery(
     convexQuery(gateway.solving.myInProgress, member?._id ? {} : "skip"),
   );
@@ -28,6 +29,20 @@ export function SolvingNowSection() {
   // Calling Date.now() during render is an impure-render violation; capture it once at mount
   // (matches the codebase's existing `useState(() => Date.now())` idiom).
   const [now] = useState(() => Date.now());
+
+  const loading = isMemberLoading || (member != null && solves === undefined);
+
+  if (loading) {
+    return (
+      <section>
+        <SectionHead title={t("title")} icon={Puzzle} />
+        <div className="flex flex-col gap-3 py-3">
+          <Skeleton className="h-11 w-full" />
+          <Skeleton className="h-11 w-full" />
+        </div>
+      </section>
+    );
+  }
 
   if (!member || solves === undefined) return null;
 
