@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">68.42% </span>
+                <span class="strong">71.42% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>13/19</span>
+                <span class='fraction'>15/21</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">81.25% </span>
+                <span class="strong">82.35% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>13/16</span>
+                <span class='fraction'>14/17</span>
             </div>
         
             
@@ -142,7 +142,9 @@
 <a name='L77'></a><a href='#L77'>77</a>
 <a name='L78'></a><a href='#L78'>78</a>
 <a name='L79'></a><a href='#L79'>79</a>
-<a name='L80'></a><a href='#L80'>80</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -181,6 +183,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -195,20 +199,20 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
@@ -259,7 +263,9 @@ export const setModerationFile = internalMutation({
   },
 });
 &nbsp;
-// Record the classifier verdict. Only patches a row that still exists.
+// Record the classifier verdict. Only patches a row that still exists AND is still pending —
+// FIRST VERDICT WINS. A re-run (retried or concurrently drained action) on a decided row is a
+// full no-op; in particular a late fail-open approve can never overwrite a rejection.
 export const setModerationVerdict = internalMutation({
   args: {
     imageId: v.id("ownedPuzzleImages"),
@@ -274,6 +280,8 @@ export const setModerationVerdict = internalMutation({
   handler: async (ctx, args) =&gt; {
     const row = await ctx.db.get(args.imageId);
     <span class="missing-if-branch" title="if path not taken" >I</span>if (!row) <span class="cstat-no" title="statement not covered" >return;</span>
+    // First verdict wins: an absent status is legacy-approved, anything else is already decided.
+    if (row.moderationStatus !== "pending") return;
     await ctx.db.patch(args.imageId, {
       moderationStatus: args.moderationStatus,
       moderationScore: args.moderationScore,
@@ -281,13 +289,11 @@ export const setModerationVerdict = internalMutation({
       updatedAt: Date.now(),
     });
     // Audit trail: this is the single place the pipeline writes "rejected", so the automated
-    // decision is stamped here (no actorId = system). Only on the transition INTO rejected, so a
-    // re-run cannot double-stamp. The label is the puzzle title via the copy's cached snapshot
-    // (falling back to the puzzle row, then the image id).
-    if (
-      args.moderationStatus === "rejected" &amp;&amp;
-      row.moderationStatus !== "rejected"
-    ) {
+    // decision is stamped here (no actorId = system). The row was pending, so this is always the
+    // transition INTO rejected — the guard above already makes double-stamping impossible. The
+    // label is the puzzle title via the copy's cached snapshot (falling back to the puzzle row,
+    // then the image id).
+    if (args.moderationStatus === "rejected") {
       const copy = await ctx.db.get(row.ownedPuzzleId);
       const title =
         copy?.snapshot?.title ??
@@ -307,7 +313,7 @@ export const setModerationVerdict = internalMutation({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-07-27T20:08:45.998Z
+                at 2026-07-27T22:45:47.199Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
