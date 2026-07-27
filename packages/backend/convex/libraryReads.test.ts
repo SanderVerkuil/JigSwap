@@ -767,17 +767,7 @@ describe("canViewCopy — holder clause", () => {
         updatedAt: now,
       });
     });
-    const bob = await t.run(async (ctx) =>
-      ctx.db
-        .query("users")
-        .withIndex("by_clerk_id", (q) => q.eq("clerkId", "clerk_bob"))
-        .unique(),
-    );
-    // Bob holds the copy...
-    await t.run(async (ctx) => {
-      await ctx.db.patch(unavailable, { heldBy: bob?._id });
-    });
-    // ...then it is returned to Alice (the owner).
+    // The copy has been returned to Alice (the owner) — Bob no longer holds it.
     await t.run(async (ctx) => {
       await ctx.db.patch(unavailable, { heldBy: alice });
     });
@@ -860,9 +850,75 @@ describe("canViewCopy — holder clause", () => {
       const copyRow = await ctx.db.get(unavailable);
       if (!copyRow) throw new Error("copy not seeded");
       const context = await buildCopyViewContext(ctx, bobId);
-      expect(await canViewCopyWithContext(ctx, bobId, copyRow, context)).toBe(
-        true,
-      );
+      expect(await canViewCopyWithContext(ctx, copyRow, context)).toBe(true);
+    });
+  });
+
+  test("context form: circle-shared open copy of a private-profile owner is reachable", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, available } = await seed(t);
+
+    const bob = await t.run(async (ctx) => {
+      await ctx.db.patch(available, {
+        availability: { forTrade: true, forSale: false, forLend: false },
+      });
+      await ctx.db.insert("profiles", {
+        memberId: alice,
+        displayName: "Alice",
+        visibility: "private",
+        updatedAt: Date.now(),
+      });
+      const now = Date.now();
+      const bobId = await ctx.db.insert("users", {
+        clerkId: "clerk_bob",
+        email: "bob@example.com",
+        name: "Bob",
+        username: "bob",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      // Circle wiring, per browseOwnedPuzzles.test.ts's precedent: Alice and Bob share a circle,
+      // and Alice's OPEN copy is shared into it (keyed by the copy's aggregateId).
+      const circleAggregateId = "circle-1";
+      await ctx.db.insert("circles", {
+        aggregateId: circleAggregateId,
+        ownerId: alice,
+        name: "Saturday Puzzlers",
+        memberships: [
+          {
+            id: "m-alice",
+            memberId: alice,
+            permission: "Admin",
+            joinedAt: now,
+          },
+          {
+            id: "m-bob",
+            memberId: bobId,
+            permission: "ViewOnly",
+            joinedAt: now,
+          },
+        ],
+        createdAt: now,
+      });
+      for (const memberId of [alice, bobId]) {
+        await ctx.db.insert("circleMembers", { circleAggregateId, memberId });
+      }
+      await ctx.db.insert("circleCopyShares", {
+        circleId: circleAggregateId,
+        copyId: "copy-a",
+        sharedAt: now,
+      });
+
+      return bobId;
+    });
+
+    await t.run(async (ctx) => {
+      const copyRow = await ctx.db.get(available);
+      if (!copyRow) throw new Error("copy not seeded");
+      const context = await buildCopyViewContext(ctx, bob);
+      expect(await canViewCopyWithContext(ctx, copyRow, context)).toBe(true);
     });
   });
 });
