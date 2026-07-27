@@ -734,6 +734,37 @@ describe("solving.deleteCompletion", () => {
     expect(url1).toBeNull();
     expect(url2).toBeNull();
   });
+
+  test("delete cascades the UNION of photos and sidecar fileIds when they diverge", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    const completionId = await recordForAlice(t, copyAggregateId);
+    const photoFileId = (await storeBlob(t)) as Id<"_storage">;
+    await asAlice(t).mutation(
+      api.solving.attachCompletionPhotos.attachCompletionPhotos,
+      { completionId, storageIds: [photoFileId] },
+    );
+
+    // Simulate a mid-swap divergence: the sidecar points at a different blob than the
+    // completions.photos entry. Distinct bytes on purpose — convex-test URLs are
+    // content-derived, so identical contents would make the two blobs indistinguishable.
+    const swappedFileId = (await t.run((ctx) =>
+      ctx.storage.store(new Blob(["img-swapped"], { type: "image/png" })),
+    )) as Id<"_storage">;
+    const [image] = await completionImagesFor(t, completionId);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(image._id, { fileId: swappedFileId });
+    });
+
+    await asAlice(t).mutation(api.solving.deleteCompletion.deleteCompletion, {
+      completionId,
+    });
+
+    expect(await completionImagesFor(t, completionId)).toHaveLength(0);
+    // BOTH sides of the divergence are deleted.
+    expect(await t.run((ctx) => ctx.storage.getUrl(photoFileId))).toBeNull();
+    expect(await t.run((ctx) => ctx.storage.getUrl(swappedFileId))).toBeNull();
+  });
 });
 
 describe("solving read queries", () => {

@@ -7,9 +7,13 @@ import schema from "./schema";
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
-// Verdict-store tests for the completion-photo moderation pipeline. Per the established
-// moderation-test pattern the Node action is NEVER drained (env-less drains fail open and can
-// never produce "rejected") — the store mutations are called DIRECTLY via `internal.*`.
+// Verdict-store tests for the completion-photo moderation pipeline. The store mutations are
+// called DIRECTLY via `internal.*` — but note convex-test DOES drain runAfter(0) jobs in the
+// background (real setTimeout), so the scheduled action runs during these tests and fails open
+// (env-less + non-image bytes: verdict-only approve, never "rejected", no file swap). The tests
+// stay deterministic by settling all scheduled jobs to a terminal state and resetting the
+// sidecar to "pending" before each direct verdict call, combined with setModerationVerdict's
+// first-wins-on-pending guard (a late re-run can never overwrite a decided verdict).
 
 // Seed a member + a catalog puzzle + an owned copy (with a snapshot title, which the rejection
 // stamp uses as targetLabel via the completion's copySnapshot).
@@ -97,7 +101,32 @@ const completionImagesFor = (
 const moderationActions = (t: ReturnType<typeof convexTest>) =>
   t.run((ctx) => ctx.db.query("moderationActions").collect());
 
-// Attach one photo and return its sidecar row (attach inserts it as "pending").
+// Wait until every scheduled job reaches a terminal state. convex-test starts runAfter(0) jobs
+// via real setTimeout; finishInProgressScheduledFunctions only awaits jobs whose timer already
+// fired, so yield through the macrotask queue between rounds to let pending timers fire too.
+const settleScheduledJobs = async (t: ReturnType<typeof convexTest>) => {
+  for (let i = 0; i < 100; i++) {
+    await t.finishInProgressScheduledFunctions();
+    const jobs = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect(),
+    );
+    if (
+      jobs.every(
+        (job) =>
+          job.state.kind !== "pending" && job.state.kind !== "inProgress",
+      )
+    ) {
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  throw new Error("scheduled functions did not settle");
+};
+
+// Attach one photo and return its sidecar row, reset to "pending": the background-drained
+// action fail-open-approves it (verdict-only — decode fails on non-image bytes, so no file
+// swap), so settle that job first, then re-open the sidecar so each test exercises the FIRST
+// verdict deterministically.
 const attachOne = async (
   t: ReturnType<typeof convexTest>,
   completionId: string,
@@ -107,9 +136,13 @@ const attachOne = async (
     api.solving.attachCompletionPhotos.attachCompletionPhotos,
     { completionId, storageIds: [fileId] },
   );
+  await settleScheduledJobs(t);
   const images = await completionImagesFor(t, completionId);
   const sidecar = images.find((img) => img.fileId === fileId);
   if (!sidecar) throw new Error("sidecar not inserted by attach");
+  await t.run((ctx) =>
+    ctx.db.patch(sidecar._id, { moderationStatus: "pending" }),
+  );
   return { fileId, sidecar };
 };
 
@@ -277,6 +310,9 @@ describe("rejected-photo read filtering", () => {
       api.solving.attachCompletionPhotos.attachCompletionPhotos,
       { completionId, storageIds: [approved, rejected, pending] },
     );
+    // Let the background drain finish (it fail-open-approves all three) before pinning the
+    // exact statuses, so none can be overwritten afterwards.
+    await settleScheduledJobs(t);
     const images = await completionImagesFor(t, completionId);
     const byFile = new Map(images.map((img) => [img.fileId, img._id]));
     const legacy = (await storeBlob(t)) as Id<"_storage">;
@@ -288,7 +324,10 @@ describe("rejected-photo read filtering", () => {
       await ctx.db.patch(byFile.get(rejected)!, {
         moderationStatus: "rejected",
       });
-      // `pending` stays pending; `legacy` gets NO sidecar at all.
+      await ctx.db.patch(byFile.get(pending)!, {
+        moderationStatus: "pending",
+      });
+      // `legacy` gets NO sidecar at all.
       await ctx.db.patch(row!._id, {
         photos: [approved, rejected, pending, legacy],
       });

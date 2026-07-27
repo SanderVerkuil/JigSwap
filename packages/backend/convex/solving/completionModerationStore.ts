@@ -57,11 +57,13 @@ export const setModerationFile = internalMutation({
   },
 });
 
-// Record the classifier verdict. Only patches a row that still exists. On the transition INTO
-// "rejected" this deliberately does MORE than the library's verdict mutation (library photos live
-// solely in their own table): it also drops the id from the completions row's `photos` array
-// (freeing a cap slot), deletes the blob, and stamps the audit row — the sidecar itself survives
-// as the audit record.
+// Record the classifier verdict. Only patches a row that still exists AND is still pending —
+// FIRST VERDICT WINS. A re-run (retried or concurrently drained action) on a decided row is a
+// full no-op; in particular a late fail-open approve can never overwrite a rejection. On the
+// pending→rejected transition this deliberately does MORE than the library's verdict mutation
+// (library photos live solely in their own table): it also drops the id from the completions
+// row's `photos` array (freeing a cap slot), deletes the blob, and stamps the audit row — the
+// sidecar itself survives as the audit record.
 export const setModerationVerdict = internalMutation({
   args: {
     imageId: v.id("completionImages"),
@@ -76,19 +78,17 @@ export const setModerationVerdict = internalMutation({
   handler: async (ctx, args) => {
     const row = await ctx.db.get(args.imageId);
     if (!row) return;
+    // First verdict wins: an absent status is legacy-approved, anything else is already decided.
+    if (row.moderationStatus !== "pending") return;
     await ctx.db.patch(args.imageId, {
       moderationStatus: args.moderationStatus,
       moderationScore: args.moderationScore,
       moderationLabel: args.moderationLabel,
       updatedAt: Date.now(),
     });
-    // Only on the transition INTO rejected, so a re-run cannot double-stamp or double-delete.
-    if (
-      args.moderationStatus !== "rejected" ||
-      row.moderationStatus === "rejected"
-    ) {
-      return;
-    }
+    // The row was pending, so this is always the transition INTO rejected — the guard above
+    // already makes double-stamping/double-deleting impossible.
+    if (args.moderationStatus !== "rejected") return;
 
     const completion = await ctx.db
       .query("completions")
