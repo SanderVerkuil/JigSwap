@@ -200,6 +200,7 @@ function CopyInstanceDetail({
   const tShell = useTranslations("shell");
   const tPuzzles = useTranslations("puzzles");
   const tStart = useTranslations("solving.startSolve");
+  const tCompletions = useTranslations("solving.completions");
   const tDifficulty = useTranslations("puzzles.puzzles.difficulty");
   const format = useFormatter();
   // A stable "now" captured once per mount, so duration/relative-time renders are
@@ -441,6 +442,12 @@ function CopyInstanceDetail({
             {availability.forSale && (
               <Badge variant="secondary" className="rounded-full text-xs">
                 {t("forSale")}
+              </Badge>
+            )}
+            {myInProgress && (
+              <Badge variant="secondary" className="rounded-full text-xs">
+                <Clock className="mr-1 h-3 w-3" />
+                {tCompletions("inProgress")}
               </Badge>
             )}
           </div>

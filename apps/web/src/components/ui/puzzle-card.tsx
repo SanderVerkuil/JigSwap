@@ -355,13 +355,6 @@ export function PuzzleCard({
           </span>
         </div>
       )}
-
-      {solveInProgress && (
-        <Badge variant="secondary" className="text-xs">
-          <Clock className="mr-1 h-3 w-3" />
-          {tCompletions("inProgress")}
-        </Badge>
-      )}
     </>
   );
 
