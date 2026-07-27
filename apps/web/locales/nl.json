@@ -1854,7 +1854,7 @@
       "submit": "Starten",
       "started": "Puzzel gestart",
       "finishTrigger": "Puzzel afronden",
-      "saveError": "Opslaan mislukt — probeer het opnieuw."
+      "saveError": "Kon de sessie niet opslaan. Probeer het opnieuw."
     },
     "durationPrompt": {
       "title": "Bijhouden hoelang puzzels duren?",

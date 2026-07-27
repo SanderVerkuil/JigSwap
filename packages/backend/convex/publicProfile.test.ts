@@ -545,13 +545,29 @@ describe("getPublicProfile — currentlySolving gating", () => {
 
   test("mutual follower sees currentlySolving when sharing is on", async () => {
     const t = convexTest(schema, modules);
-    const { copyAggregateId } = await seed(t); // alice↔bob are mutual in the seed already
+    const { bob, copyAggregateId } = await seed(t); // alice↔bob are mutual in the seed already
     await clearSeededInProgress(t);
     await asAlice(t).mutation(
       api.solving.setShareInProgress.setShareInProgress,
       { enabled: true },
     );
     await asAlice(t).mutation(api.solving.startCompletion.startCompletion, {
+      copyId: copyAggregateId,
+      startDate: Date.now() - HOUR,
+    });
+
+    // Decoy: bob (as current holder) starts his own in-progress solve on the same copy. Alice's
+    // view must still contain exactly her one solve — pins the userId scoping of the index read.
+    await t.run(async (ctx) => {
+      const copy = await ctx.db
+        .query("ownedPuzzles")
+        .withIndex("by_aggregate_id", (q) =>
+          q.eq("aggregateId", copyAggregateId),
+        )
+        .unique();
+      await ctx.db.patch(copy!._id, { heldBy: bob });
+    });
+    await asBob(t).mutation(api.solving.startCompletion.startCompletion, {
       copyId: copyAggregateId,
       startDate: Date.now() - HOUR,
     });

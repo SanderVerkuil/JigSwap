@@ -1850,7 +1850,7 @@
       "submit": "Start",
       "started": "Puzzle started",
       "finishTrigger": "Finish solve",
-      "saveError": "Could not save — please try again."
+      "saveError": "Could not save the solve. Please try again."
     },
     "durationPrompt": {
       "title": "Track how long puzzles take you?",

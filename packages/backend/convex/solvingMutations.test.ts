@@ -653,7 +653,18 @@ describe("solving.startCompletion — first-class start", () => {
         copyId: copyAggregateId,
         startDate: Date.now(),
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow("Only the owner or current holder");
+  });
+
+  test("rejects an unknown copyId", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await expect(
+      asAlice(t).mutation(api.solving.startCompletion.startCompletion, {
+        copyId: crypto.randomUUID(),
+        startDate: Date.now(),
+      }),
+    ).rejects.toThrow("Copy not found");
   });
 
   test("allows the borrower (current holder) and marks the snapshot borrowed", async () => {

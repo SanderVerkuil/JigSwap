@@ -199,6 +199,8 @@ const toActivityEntries = async (
       return make(p.userId as string, "completion", p.completionId as string);
     case "CompletionStarted": {
       // A future-dated start hasn't begun; don't announce it (spec §2).
+      // Payload is frozen at emission; a later startDate edit does not move this gate (accepted,
+      // like the deletion residual).
       const startDate = p.startDate as number | undefined;
       if (startDate !== undefined && startDate > Date.now()) return [];
       return make(p.userId as string, "started", p.completionId as string);

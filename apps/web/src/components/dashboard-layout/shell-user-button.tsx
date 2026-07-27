@@ -90,8 +90,8 @@ export function ShellUserButton({
 
 // Content of the Clerk custom profile page: the content-width choice and the
 // hide-email toggle (useShellPreferences, Clerk metadata) plus the solve-duration
-// tracking toggle (useUserSettings, the Solving-context Convex preference). Uses
-// the shell.user.* and solving.settings.* translations.
+// tracking and share-in-progress toggles (useUserSettings, the Solving-context
+// Convex preferences). Uses the shell.user.* and solving.settings.* translations.
 function PreferencesPage() {
   const { fullWidth, hideEmail, setPreference } = useShellPreferences();
   const {
@@ -159,7 +159,10 @@ function PreferencesPage() {
           {ts("trackDurationHint")}
         </p>
         <div className="flex items-center justify-between gap-4">
-          <label htmlFor="share-in-progress" className="text-sm">
+          <label
+            htmlFor="share-in-progress"
+            className="text-muted-foreground text-sm"
+          >
             {ts("shareInProgressLabel")}
           </label>
           <Switch

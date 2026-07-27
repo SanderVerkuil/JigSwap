@@ -161,7 +161,11 @@ describe("social.getActivityFeed — started entries", () => {
       api.social.getActivityFeed.getActivityFeed,
       {},
     );
-    expect(feed.filter((e) => e.ref === completionId)).toHaveLength(2);
+    const entries = feed.filter((e) => e.ref === completionId);
+    expect(entries).toHaveLength(2);
+    expect(new Set(entries.map((e) => e.kind))).toEqual(
+      new Set(["started", "completion"]),
+    );
   });
 
   test("pages stay full-length when non-opted-in actors' starts are dropped (filter before slice)", async () => {

@@ -75,7 +75,7 @@ describe("solving.setTrackCompletionDuration", () => {
 describe("solving.setShareInProgress", () => {
   test("persists the choice and surfaces it via the federated settings read", async () => {
     const t = convexTest(schema, modules);
-    await seedUser(t); // the file's existing helper is named seedUser (NOT seed)
+    await seedUser(t);
 
     // Absent row → settings read reports undefined (never chosen).
     const before = await asAlice(t).query(
@@ -103,5 +103,11 @@ describe("solving.setShareInProgress", () => {
       {},
     );
     expect(off.solving.shareInProgress).toBe(false);
+
+    // Two writes upserted into a single preferences row, not one row per write.
+    const rows = await t.run(async (ctx) =>
+      ctx.db.query("solvingPreferences").collect(),
+    );
+    expect(rows).toHaveLength(1);
   });
 });

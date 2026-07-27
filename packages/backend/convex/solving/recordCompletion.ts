@@ -60,6 +60,9 @@ export const recordCompletion = mutation({
 
     let completionId: string;
     if (args.endDate === undefined) {
+      // Event-payload asymmetry: this path passes puzzleDefinitionId as given (undefined when only
+      // a copy is supplied), while startCompletion derives it from the copy. Rows converge via the
+      // snapshot denormalization below; only the CompletionStarted event payload differs.
       const start = makeStartCompletion({
         completions: convexCompletionRepository(ctx),
         ids: completionIdGenerator,
