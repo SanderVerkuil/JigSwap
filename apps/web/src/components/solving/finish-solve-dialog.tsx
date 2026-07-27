@@ -1,5 +1,6 @@
 "use client";
 
+import { useCompletionFollowUp } from "@/components/solving/completion-follow-up-provider";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -32,6 +33,9 @@ interface FinishSolveDialogProps {
   /** The solve's startDate (epoch ms); floors the end-date input so a future-dated start can't
    * produce an opaque domain rejection. Optional — call sites without the row omit it. */
   minEndDate?: number;
+  // Called after a successful finish (before the dialog closes, after the follow-up is
+  // requested). Useful for post-save navigation.
+  onSuccess?: () => void;
 }
 
 // Marks an in-progress completion finished: captures an end date and an optional time, then
@@ -41,12 +45,14 @@ export function FinishSolveDialog({
   onOpenChange,
   completionId,
   minEndDate,
+  onSuccess,
 }: FinishSolveDialogProps) {
   const t = useTranslations("solving.logSolve");
   const finishCompletion = useMutation({
     mutationFn: useConvexMutation(gateway.solving.finishCompletion),
   });
   const { trackCompletionDuration } = useUserSettings();
+  const { requestFollowUp } = useCompletionFollowUp();
 
   const [endDate, setEndDate] = useState(todayInputValue);
   const [hours, setHours] = useState("");
@@ -70,6 +76,8 @@ export function FinishSolveDialog({
         allPiecesPresent,
       });
       toast.success(t("finished"));
+      requestFollowUp(completionId);
+      onSuccess?.();
       onOpenChange(false);
     } catch (error) {
       console.error("Failed to finish solve:", error);

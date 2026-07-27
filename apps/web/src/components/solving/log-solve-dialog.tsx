@@ -1,5 +1,6 @@
 "use client";
 
+import { useCompletionFollowUp } from "@/components/solving/completion-follow-up-provider";
 import { useDurationPrompt } from "@/components/solving/duration-prompt-provider";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -18,7 +19,7 @@ import { gateway } from "@/gateway";
 import { useUserSettings } from "@/hooks/use-user-settings";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
@@ -66,6 +67,7 @@ export function LogSolveDialog({
   });
   const { trackCompletionDuration } = useUserSettings();
   const { requestPrompt } = useDurationPrompt();
+  const { requestFollowUp } = useCompletionFollowUp();
 
   const [startDate, setStartDate] = useState(todayInputValue);
   const [endDate, setEndDate] = useState(todayInputValue);
@@ -74,9 +76,26 @@ export function LogSolveDialog({
   const [notes, setNotes] = useState("");
   const [allPiecesPresent, setAllPiecesPresent] = useState(true);
   const [offerUpdateCopy, setOfferUpdateCopy] = useState(false);
+  // Set while the update-copy-pieces offer dialog is open; holds the deferred follow-up call so it
+  // fires exactly once when that dialog resolves (confirm or dismiss) — OR, if this whole component
+  // unmounts first (e.g. navigation on /completions/new), from the unmount cleanup below.
+  const followUpAfterUpdateCopyRef = useRef<(() => void) | null>(null);
 
   const showDuration = trackCompletionDuration === true;
   const isFinished = endDate !== "";
+
+  // Unmount safety valve: onOpenChange(false) can synchronously unmount this component (e.g.
+  // /completions/new's setSolveTarget(null)), which would leave a pending follow-up dangling on
+  // the (now-unmountable) update-copy-pieces dialog forever. requestFollowUp is provider-owned,
+  // so firing it during unmount is safe.
+  useEffect(
+    () => () => {
+      const cb = followUpAfterUpdateCopyRef.current;
+      followUpAfterUpdateCopyRef.current = null;
+      cb?.();
+    },
+    [],
+  );
 
   const reset = () => {
     setStartDate(todayInputValue());
@@ -99,7 +118,7 @@ export function LogSolveDialog({
     const wasFirstChoice = trackCompletionDuration === undefined;
 
     try {
-      await recordCompletion.mutateAsync({
+      const completionId = await recordCompletion.mutateAsync({
         copyId,
         startDate: start,
         endDate: end,
@@ -110,19 +129,45 @@ export function LogSolveDialog({
       });
       toast.success(end === undefined ? t("savedInProgress") : t("saved"));
 
-      const piecesMissing = end !== undefined && !allPiecesPresent;
+      const completed = end !== undefined;
+      const piecesMissing = completed && !allPiecesPresent;
       reset();
       onSuccess?.();
       onOpenChange(false);
 
-      // After the log dialog closes: ask the first-time duration question (secondary modal), and/or
-      // offer to sync the owned copy's missing-pieces count.
-      if (wasFirstChoice) requestPrompt();
-      if (piecesMissing && viewerIsOwner) setOfferUpdateCopy(true);
+      // Follow-up (rating/review/photos) only ever applies to a completed solve — never to an
+      // in-progress save.
+      const followUp = () => {
+        if (completed) requestFollowUp(completionId);
+      };
+      // Sequencing: if we're about to offer the update-copy-pieces dialog, defer the follow-up
+      // until THAT dialog resolves (confirm or dismiss) so the two never stack; otherwise fire it
+      // right away.
+      const offerOrFollowUp = () => {
+        if (piecesMissing && viewerIsOwner) {
+          followUpAfterUpdateCopyRef.current = followUp; // fire when that dialog closes
+          setOfferUpdateCopy(true);
+        } else {
+          followUp();
+        }
+      };
+      // First-time duration question (secondary modal) still comes first when applicable; its
+      // onDone chains into the offer-or-follow-up step either way.
+      if (wasFirstChoice) requestPrompt(offerOrFollowUp);
+      else offerOrFollowUp();
     } catch (error) {
       console.error("Failed to log solve:", error);
       toast.error(t("saveError"));
     }
+  };
+
+  // Once-guarded: nulls the ref before invoking, same pattern as the unmount cleanup above, so a
+  // deferred follow-up fires exactly once regardless of which path (confirm, dismiss, or unmount)
+  // resolves the offer dialog first.
+  const fireFollowUpAfterUpdateCopy = () => {
+    const cb = followUpAfterUpdateCopyRef.current;
+    followUpAfterUpdateCopyRef.current = null;
+    cb?.();
   };
 
   const confirmUpdateCopy = async () => {
@@ -133,7 +178,13 @@ export function LogSolveDialog({
       toast.error(t("saveError"));
     } finally {
       setOfferUpdateCopy(false);
+      fireFollowUpAfterUpdateCopy();
     }
+  };
+
+  const closeOfferUpdateCopy = (o: boolean) => {
+    setOfferUpdateCopy(o);
+    if (!o) fireFollowUpAfterUpdateCopy();
   };
 
   return (
@@ -239,14 +290,17 @@ export function LogSolveDialog({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={offerUpdateCopy} onOpenChange={setOfferUpdateCopy}>
+      <Dialog open={offerUpdateCopy} onOpenChange={closeOfferUpdateCopy}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("updateCopyPiecesTitle")}</DialogTitle>
             <DialogDescription>{t("updateCopyPiecesBody")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOfferUpdateCopy(false)}>
+            <Button
+              variant="outline"
+              onClick={() => closeOfferUpdateCopy(false)}
+            >
               {t("updateCopyPiecesDismiss")}
             </Button>
             <Button onClick={() => void confirmUpdateCopy()}>
