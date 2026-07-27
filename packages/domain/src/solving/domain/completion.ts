@@ -317,6 +317,28 @@ export class Completion {
     return ok(undefined);
   }
 
+  // Append photos. Additive (never removes), owner-only, capped at MAX_PHOTOS. Deliberately NOT
+  // window-gated: attaching photos is not a revision of the solve's facts, and a backdated
+  // completion's endDate-anchored window is already closed at creation.
+  attachPhotos(
+    actingMemberId: MemberId,
+    photos: readonly Photo[],
+    now: Date,
+  ): Result<void, SolvingError> {
+    if (actingMemberId !== this.state.userId) {
+      return err(SolvingError.notCompletionOwner());
+    }
+    const combined = [...this.state.photos, ...photos];
+    if (combined.length > MAX_PHOTOS) {
+      return err(SolvingError.tooManyPhotos(MAX_PHOTOS));
+    }
+    this.state = { ...this.state, photos: combined, updatedAt: now };
+    // Reuse CompletionEdited (verified consumer-safe: no feed/notification/goal reactions);
+    // recorded exactly the way edit() records it (completion.ts:316).
+    this.record(new CompletionEdited(this.state.id, now));
+    return ok(undefined);
+  }
+
   // Attach a PuzzleReview (opinion of the puzzle). Records PuzzleReviewed. Re-reviewing replaces
   // the prior opinion and records the event again (a member can change their mind).
   review(

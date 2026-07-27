@@ -8,6 +8,7 @@ import {
   RecordingEventPublisher,
   SequentialCompletionIdGenerator,
 } from "../testing";
+import { makeAttachCompletionPhotos } from "./attach-completion-photos";
 import { makeDeleteCompletion } from "./delete-completion";
 import { makeEditCompletion } from "./edit-completion";
 import { makeFinishCompletion } from "./finish-completion";
@@ -272,6 +273,48 @@ describe("Completion use cases", () => {
       });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("NotCompletionOwner");
+    });
+  });
+
+  describe("attachCompletionPhotos", () => {
+    const seedRecorded = async () => {
+      const record = makeRecordCompletion({ completions, ids, events, clock });
+      const recorded = await record({
+        userId: ALICE,
+        startDate: START,
+        endDate: END,
+      });
+      if (!recorded.isOk) throw new Error("setup failed");
+      events.published.length = 0;
+      return recorded.value;
+    };
+
+    it("attaches photos to the member's completion and publishes CompletionEdited", async () => {
+      const id = await seedRecorded();
+      const attach = makeAttachCompletionPhotos({ completions, events, clock });
+      const result = await attach({
+        actingMemberId: ALICE,
+        completionId: id,
+        photoFileIds: [toFileId("p-1"), toFileId("p-2")],
+      });
+      expect(result.isOk).toBe(true);
+      expect(events.names()).toEqual(["CompletionEdited"]);
+      const stored = await completions.findById(id);
+      expect(stored?.photos.map((p) => p.fileId)).toEqual([
+        toFileId("p-1"),
+        toFileId("p-2"),
+      ]);
+    });
+
+    it("returns CompletionNotFound for an unknown id", async () => {
+      const attach = makeAttachCompletionPhotos({ completions, events, clock });
+      const result = await attach({
+        actingMemberId: ALICE,
+        completionId: toCompletionId("nope"),
+        photoFileIds: [toFileId("p-1")],
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("CompletionNotFound");
     });
   });
 

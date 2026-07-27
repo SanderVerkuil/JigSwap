@@ -476,6 +476,49 @@ describe("Completion.edit", () => {
   });
 });
 
+describe("Completion.attachPhotos", () => {
+  it("appends photos to the existing set and bumps updatedAt", () => {
+    const recorded = recordValid({ photos: photos(1) });
+    if (!recorded.isOk) throw new Error("setup failed");
+    recorded.value.pullEvents();
+    const later = new Date(END.getTime() + 1000);
+    const outcome = recorded.value.attachPhotos(ALICE, photos(2), later);
+    expect(outcome.isOk).toBe(true);
+    expect(recorded.value.photos).toHaveLength(3);
+    expect(recorded.value.toState().updatedAt).toEqual(later);
+    expect(names(recorded.value)).toEqual(["CompletionEdited"]);
+  });
+
+  it("rejects a non-owner with NotCompletionOwner", () => {
+    const recorded = recordValid();
+    if (!recorded.isOk) throw new Error("setup failed");
+    const outcome = recorded.value.attachPhotos(BOB, photos(1), END);
+    expect(outcome.isErr).toBe(true);
+    if (outcome.isErr) expect(outcome.error.code).toBe("NotCompletionOwner");
+  });
+
+  it("rejects when existing plus new photos exceed five with TooManyPhotos", () => {
+    const recorded = recordValid({ photos: photos(4) });
+    if (!recorded.isOk) throw new Error("setup failed");
+    const outcome = recorded.value.attachPhotos(ALICE, photos(2), END);
+    expect(outcome.isErr).toBe(true);
+    if (outcome.isErr) expect(outcome.error.code).toBe("TooManyPhotos");
+  });
+
+  it("attaches to a backdated completion outside the 24h edit window (window-free)", () => {
+    const tenDaysAgo = new Date(NOW.getTime() - 10 * 24 * 60 * 60 * 1000);
+    const recorded = recordValid({
+      startDate: tenDaysAgo,
+      endDate: tenDaysAgo,
+      now: tenDaysAgo,
+    });
+    if (!recorded.isOk) throw new Error("setup failed");
+    const outcome = recorded.value.attachPhotos(ALICE, photos(1), NOW);
+    expect(outcome.isOk).toBe(true);
+    expect(recorded.value.photos).toHaveLength(1);
+  });
+});
+
 describe("Completion.allPiecesPresent", () => {
   it("defaults to undefined when not provided", () => {
     const result = recordValid();

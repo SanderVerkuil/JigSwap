@@ -1,3 +1,4 @@
+export * from "./attach-completion-photos.port";
 export * from "./create-goal.port";
 export * from "./delete-completion.port";
 export * from "./edit-completion.port";
