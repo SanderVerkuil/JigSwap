@@ -1822,6 +1822,18 @@
       "updateCopyPiecesConfirm": "Update copy",
       "updateCopyPiecesDismiss": "Not now"
     },
+    "startSolve": {
+      "trigger": "Start puzzle",
+      "title": "Start puzzle",
+      "description": "Mark {puzzle} as in progress. You can adjust the date if you started earlier.",
+      "startDate": "Start date",
+      "notes": "Notes",
+      "notesPlaceholder": "Anything to remember about this solve?",
+      "submit": "Start",
+      "started": "Puzzle started",
+      "finishTrigger": "Finish solve",
+      "saveError": "Could not save — please try again."
+    },
     "durationPrompt": {
       "title": "Track how long puzzles take you?",
       "body": "Some solvers like recording solve times; others prefer to keep it simple. You can change this anytime in Settings.",

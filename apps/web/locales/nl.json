@@ -1822,6 +1822,18 @@
       "updateCopyPiecesConfirm": "Exemplaar bijwerken",
       "updateCopyPiecesDismiss": "Niet nu"
     },
+    "startSolve": {
+      "trigger": "Puzzel starten",
+      "title": "Puzzel starten",
+      "description": "Markeer {puzzle} als bezig. Je kunt de datum aanpassen als je eerder bent begonnen.",
+      "startDate": "Startdatum",
+      "notes": "Notities",
+      "notesPlaceholder": "Iets om te onthouden over deze sessie?",
+      "submit": "Starten",
+      "started": "Puzzel gestart",
+      "finishTrigger": "Puzzel afronden",
+      "saveError": "Opslaan mislukt — probeer het opnieuw."
+    },
     "durationPrompt": {
       "title": "Bijhouden hoelang puzzels duren?",
       "body": "Sommige puzzelaars houden hun tijd graag bij, anderen houden het liever simpel. Je kunt dit altijd wijzigen in Instellingen.",
