@@ -34,6 +34,7 @@ import type { FunctionReturnType } from "convex/server";
 import {
   Check,
   CircleCheck,
+  Clock,
   Edit,
   FolderOpen,
   Heart,
@@ -286,6 +287,7 @@ export function PuzzleCard({
   className = "",
 }: PuzzleCardProps) {
   const t = useTranslations("puzzles");
+  const tCompletions = useTranslations("solving.completions");
 
   // Early return if no puzzle data
   if (!puzzle.puzzle) {
@@ -353,6 +355,13 @@ export function PuzzleCard({
           </span>
         </div>
       )}
+
+      {solveInProgress && (
+        <Badge variant="secondary" className="text-xs">
+          <Clock className="mr-1 h-3 w-3" />
+          {tCompletions("inProgress")}
+        </Badge>
+      )}
     </>
   );
 
@@ -374,6 +383,17 @@ export function PuzzleCard({
   // check, and the selection-variant checkbox.
   const overlay = (
     <>
+      {solveInProgress && (
+        <div className="absolute top-2 left-2 z-10">
+          <Badge
+            variant="secondary"
+            className="bg-background/70 backdrop-blur-md border border-border/50 shadow-sm text-xs"
+          >
+            <Clock className="mr-1 h-3 w-3" />
+            {tCompletions("inProgress")}
+          </Badge>
+        </div>
+      )}
       {showOverflowMenu && (
         <PuzzleOverflowMenu
           ownedId={ownedId}
