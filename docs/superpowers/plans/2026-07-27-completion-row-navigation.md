@@ -268,7 +268,8 @@ export const listMyCompletions = query({
         continue;
       }
       context ??= await buildCopyViewContext(ctx, me);
-      reachable.set(id, await canViewCopyWithContext(ctx, me, copy, context));
+      // NOTE: post-review API — the context carries viewerId; no separate viewer param.
+      reachable.set(id, await canViewCopyWithContext(ctx, copy, context));
     }
 
     // Thumbnails per distinct copy (cover — approved only — then box art) and per distinct
