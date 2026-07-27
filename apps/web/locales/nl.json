@@ -1756,7 +1756,13 @@
       "title": "Voltooiingen",
       "subtitle": "Je oplosgeschiedenis van al je puzzels.",
       "empty": "Nog geen voltooiingen",
+<<<<<<< HEAD
       "emptyHint": "Leg een voltooiing vast vanuit een van je puzzels om je geschiedenis bij te houden.",
+=======
+      "emptyHint": "Leg een oplossing vast vanuit een van je puzzels om je geschiedenis bij te houden.",
+      "inProgressSection": "Bezig",
+      "historySection": "Geschiedenis",
+>>>>>>> 028e3808a (feat(web): split completions page into in-progress and history sections)
       "inProgress": "Bezig",
       "completed": "Voltooid",
       "started": "Gestart {date}",

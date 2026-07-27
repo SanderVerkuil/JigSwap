@@ -191,6 +191,198 @@ function CompletionsPage() {
     (a, b) => (b.endDate ?? b.startDate) - (a.endDate ?? a.startDate),
   );
 
+  // In-progress on top (newest-started first), finished history below. isCompleted is authoritative
+  // (edit() can attach an endDate to a still-in-progress row) — never key on endDate presence.
+  const inProgress = sorted
+    .filter((c) => !c.isCompleted)
+    .sort((a, b) => b.startDate - a.startDate);
+  const history = sorted.filter((c) => c.isCompleted);
+
+  function CompletionRow({
+    completion,
+    index,
+    isLast,
+  }: {
+    completion: (typeof sorted)[number];
+    index: number;
+    isLast: boolean;
+  }) {
+    const info =
+      (completion.ownedPuzzleId &&
+        infoByCopyId.get(completion.ownedPuzzleId)) ||
+      undefined;
+    // Borrowed copies aren't in the viewer's library, so fall back to the durable
+    // copySnapshot for the title and piece count.
+    const snapshot =
+      "copySnapshot" in completion ? completion.copySnapshot : undefined;
+    const title = info?.title ?? snapshot?.title ?? t("title");
+    const pieceCount = info?.pieceCount ?? snapshot?.pieceCount;
+    const done = completion.isCompleted;
+    // Whole days between start and finish, floored at one — "finished
+    // in 3 days" reads better than raw milliseconds.
+    const days =
+      done && completion.endDate !== undefined
+        ? Math.max(
+            1,
+            Math.round((completion.endDate - completion.startDate) / 86400000),
+          )
+        : undefined;
+    const metaLine =
+      done && pieceCount && days !== undefined
+        ? t("piecesFinished", { pieces: pieceCount, days })
+        : done && completion.endDate !== undefined
+          ? completion.completionTimeMinutes !== undefined
+            ? `${t("finished", { date: formatDate(completion.endDate) })} · ${formatTime(completion.completionTimeMinutes)}`
+            : t("finished", { date: formatDate(completion.endDate) })
+          : completion.completionTimeMinutes !== undefined
+            ? `${t("started", { date: formatDate(completion.startDate) })} · ${formatTime(completion.completionTimeMinutes)}`
+            : t("started", {
+                date: formatDate(completion.startDate),
+              });
+
+    return (
+      <div
+        className={cn(
+          "flex flex-wrap items-center gap-3.5 py-3.5",
+          !isLast && "border-b",
+        )}
+      >
+        <CoverChip
+          color={chipColor(index)}
+          icon={done ? CircleCheck : Clock}
+          size={44}
+        />
+        <div className="min-w-0 flex-1 basis-52">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-semibold">{title}</span>
+            {!done && (
+              <Badge variant="secondary" className="text-xs">
+                {t("inProgress")}
+              </Badge>
+            )}
+          </div>
+          <div className="text-muted-foreground mt-0.5 text-xs">{metaLine}</div>
+          {completion.notes && (
+            <p className="text-muted-foreground mt-1 line-clamp-1 text-xs">
+              {completion.notes}
+            </p>
+          )}
+          {completion.review && (
+            <p className="text-muted-foreground mt-1 line-clamp-1 text-xs italic">
+              {completion.review}
+            </p>
+          )}
+          {"copySnapshot" in completion && completion.copySnapshot != null && (
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              {completion.copySnapshot.wasBorrowed
+                ? t("solvedBorrowedCopy")
+                : t("solvedOwnCopy")}
+              {"allPiecesPresent" in completion &&
+              completion.allPiecesPresent === false
+                ? ` — ${t("piecesMissing")}`
+                : "allPiecesPresent" in completion &&
+                    completion.allPiecesPresent === true
+                  ? ` — ${t("piecesComplete")}`
+                  : ""}
+            </p>
+          )}
+        </div>
+
+        {completion.rating !== undefined && (
+          <StarRating value={completion.rating} size="sm" />
+        )}
+
+        <span className="text-muted-foreground w-[78px] text-right text-xs whitespace-nowrap">
+          {formatDate(completion.endDate ?? completion.startDate)}
+        </span>
+
+        <div className="flex items-center gap-1">
+          {!done && completion.aggregateId && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setDialog({
+                  kind: "finish",
+                  completionId: completion.aggregateId!,
+                  startDate: completion.startDate,
+                })
+              }
+            >
+              <CircleCheck className="h-4 w-4" />
+              {t("finish")}
+            </Button>
+          )}
+          {completion.aggregateId && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              title={
+                completion.rating !== undefined
+                  ? t("editReview")
+                  : t("addReview")
+              }
+              aria-label={
+                completion.rating !== undefined
+                  ? t("editReview")
+                  : t("addReview")
+              }
+              onClick={() =>
+                setDialog({
+                  kind: "review",
+                  completionId: completion.aggregateId!,
+                  rating: completion.rating,
+                  text: completion.review,
+                })
+              }
+            >
+              <Star className="h-4 w-4" />
+            </Button>
+          )}
+          {completion.aggregateId && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              title={t("edit")}
+              aria-label={t("edit")}
+              onClick={() =>
+                setDialog({
+                  kind: "edit",
+                  completionId: completion.aggregateId!,
+                  startDate: completion.startDate,
+                  endDate: completion.endDate,
+                  timeMinutes: completion.completionTimeMinutes,
+                  notes: completion.notes,
+                })
+              }
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+          {completion.aggregateId && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8 text-destructive hover:text-destructive"
+              title={t("delete")}
+              aria-label={t("delete")}
+              onClick={() =>
+                setDialog({
+                  kind: "delete",
+                  completionId: completion.aggregateId!,
+                })
+              }
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-[26px]">
       {/* Divided stat row — open, no boxes */}
@@ -208,192 +400,44 @@ function CompletionsPage() {
         {sorted.length === 0 ? (
           <EmptyState title={t("empty")} sub={t("emptyHint")} />
         ) : (
-          <div className="flex flex-col">
-            {sorted.map((completion, index) => {
-              const info =
-                (completion.ownedPuzzleId &&
-                  infoByCopyId.get(completion.ownedPuzzleId)) ||
-                undefined;
-              // Borrowed copies aren't in the viewer's library, so fall back to the durable
-              // copySnapshot for the title and piece count.
-              const snapshot =
-                "copySnapshot" in completion
-                  ? completion.copySnapshot
-                  : undefined;
-              const title = info?.title ?? snapshot?.title ?? t("title");
-              const pieceCount = info?.pieceCount ?? snapshot?.pieceCount;
-              const done = completion.isCompleted;
-              // Whole days between start and finish, floored at one — "finished
-              // in 3 days" reads better than raw milliseconds.
-              const days =
-                done && completion.endDate !== undefined
-                  ? Math.max(
-                      1,
-                      Math.round(
-                        (completion.endDate - completion.startDate) / 86400000,
-                      ),
-                    )
-                  : undefined;
-              const metaLine =
-                done && pieceCount && days !== undefined
-                  ? t("piecesFinished", { pieces: pieceCount, days })
-                  : done && completion.endDate !== undefined
-                    ? completion.completionTimeMinutes !== undefined
-                      ? `${t("finished", { date: formatDate(completion.endDate) })} · ${formatTime(completion.completionTimeMinutes)}`
-                      : t("finished", { date: formatDate(completion.endDate) })
-                    : completion.completionTimeMinutes !== undefined
-                      ? `${t("started", { date: formatDate(completion.startDate) })} · ${formatTime(completion.completionTimeMinutes)}`
-                      : t("started", {
-                          date: formatDate(completion.startDate),
-                        });
-
-              return (
-                <div
-                  key={completion._id}
-                  className={cn(
-                    "flex flex-wrap items-center gap-3.5 py-3.5",
-                    index < sorted.length - 1 && "border-b",
-                  )}
-                >
-                  <CoverChip
-                    color={chipColor(index)}
-                    icon={done ? CircleCheck : Clock}
-                    size={44}
-                  />
-                  <div className="min-w-0 flex-1 basis-52">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-semibold">{title}</span>
-                      {!done && (
-                        <Badge variant="secondary" className="text-xs">
-                          {t("inProgress")}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="text-muted-foreground mt-0.5 text-xs">
-                      {metaLine}
-                    </div>
-                    {completion.notes && (
-                      <p className="text-muted-foreground mt-1 line-clamp-1 text-xs">
-                        {completion.notes}
-                      </p>
-                    )}
-                    {completion.review && (
-                      <p className="text-muted-foreground mt-1 line-clamp-1 text-xs italic">
-                        {completion.review}
-                      </p>
-                    )}
-                    {"copySnapshot" in completion &&
-                      completion.copySnapshot != null && (
-                        <p className="text-muted-foreground mt-0.5 text-xs">
-                          {completion.copySnapshot.wasBorrowed
-                            ? t("solvedBorrowedCopy")
-                            : t("solvedOwnCopy")}
-                          {"allPiecesPresent" in completion &&
-                          completion.allPiecesPresent === false
-                            ? ` — ${t("piecesMissing")}`
-                            : "allPiecesPresent" in completion &&
-                                completion.allPiecesPresent === true
-                              ? ` — ${t("piecesComplete")}`
-                              : ""}
-                        </p>
-                      )}
-                  </div>
-
-                  {completion.rating !== undefined && (
-                    <StarRating value={completion.rating} size="sm" />
-                  )}
-
-                  <span className="text-muted-foreground w-[78px] text-right text-xs whitespace-nowrap">
-                    {formatDate(completion.endDate ?? completion.startDate)}
-                  </span>
-
-                  <div className="flex items-center gap-1">
-                    {!done && completion.aggregateId && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          setDialog({
-                            kind: "finish",
-                            completionId: completion.aggregateId!,
-                            startDate: completion.startDate,
-                          })
-                        }
-                      >
-                        <CircleCheck className="h-4 w-4" />
-                        {t("finish")}
-                      </Button>
-                    )}
-                    {completion.aggregateId && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8"
-                        title={
-                          completion.rating !== undefined
-                            ? t("editReview")
-                            : t("addReview")
-                        }
-                        aria-label={
-                          completion.rating !== undefined
-                            ? t("editReview")
-                            : t("addReview")
-                        }
-                        onClick={() =>
-                          setDialog({
-                            kind: "review",
-                            completionId: completion.aggregateId!,
-                            rating: completion.rating,
-                            text: completion.review,
-                          })
-                        }
-                      >
-                        <Star className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {completion.aggregateId && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8"
-                        title={t("edit")}
-                        aria-label={t("edit")}
-                        onClick={() =>
-                          setDialog({
-                            kind: "edit",
-                            completionId: completion.aggregateId!,
-                            startDate: completion.startDate,
-                            endDate: completion.endDate,
-                            timeMinutes: completion.completionTimeMinutes,
-                            notes: completion.notes,
-                          })
-                        }
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {completion.aggregateId && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 text-destructive hover:text-destructive"
-                        title={t("delete")}
-                        aria-label={t("delete")}
-                        onClick={() =>
-                          setDialog({
-                            kind: "delete",
-                            completionId: completion.aggregateId!,
-                          })
-                        }
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
+          <>
+            {inProgress.length > 0 && (
+              <>
+                <h2 className="text-muted-foreground mb-2 text-sm font-medium">
+                  {t("inProgressSection")}
+                </h2>
+                <div className="mb-6 flex flex-col">
+                  {inProgress.map((completion, index) => (
+                    <CompletionRow
+                      key={completion._id}
+                      completion={completion}
+                      index={index}
+                      isLast={index === inProgress.length - 1}
+                    />
+                  ))}
                 </div>
-              );
-            })}
-          </div>
+              </>
+            )}
+            {history.length > 0 && (
+              <>
+                {inProgress.length > 0 && (
+                  <h2 className="text-muted-foreground mb-2 text-sm font-medium">
+                    {t("historySection")}
+                  </h2>
+                )}
+                <div className="flex flex-col">
+                  {history.map((completion, index) => (
+                    <CompletionRow
+                      key={completion._id}
+                      completion={completion}
+                      index={index}
+                      isLast={index === history.length - 1}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </>
         )}
       </section>
 

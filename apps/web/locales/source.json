@@ -1757,6 +1757,8 @@
       "subtitle": "Your solve history across every puzzle.",
       "empty": "No completions yet",
       "emptyHint": "Log a solve from one of your puzzles to start tracking your history.",
+      "inProgressSection": "In progress",
+      "historySection": "History",
       "inProgress": "In progress",
       "completed": "Completed",
       "started": "Started {date}",
