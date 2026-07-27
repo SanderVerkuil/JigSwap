@@ -519,14 +519,16 @@ function CopyInstanceDetail({
                     ? t("offeredForLend")
                     : t("offerForLend")}
                 </Button>
-                <Button
-                  variant="outline"
-                  disabled={copy.aggregateId == null}
-                  onClick={() => setLogOpen(true)}
-                >
-                  <CircleCheck className="h-4 w-4" />
-                  {t("actions.logCompletion")}
-                </Button>
+                {!myInProgress && (
+                  <Button
+                    variant="outline"
+                    disabled={copy.aggregateId == null}
+                    onClick={() => setLogOpen(true)}
+                  >
+                    <CircleCheck className="h-4 w-4" />
+                    {t("actions.logCompletion")}
+                  </Button>
+                )}
                 {myInProgress ? (
                   <Button
                     variant="outline"

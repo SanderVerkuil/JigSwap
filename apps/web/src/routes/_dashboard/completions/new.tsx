@@ -4,6 +4,7 @@ import { useUser } from "@/compat/clerk";
 import { useRouter } from "@/compat/navigation";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
+import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,7 @@ import { pageTitle } from "@/lib/page-title";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/completions/new")({
@@ -35,6 +36,11 @@ function NewCompletionPage() {
     copyId: string;
     title: string;
   } | null>(null);
+  // The in-progress completion being finished; null when the dialog is closed.
+  const [finishTarget, setFinishTarget] = useState<{
+    completionId: string;
+    startDate: number;
+  } | null>(null);
 
   const { data: convexUser, isPending: convexUserPending } = useQuery(
     convexQuery(
@@ -51,6 +57,45 @@ function NewCompletionPage() {
         : "skip",
     ),
   );
+
+  // The member's solve log powers the finish-instead branch: registering a completion for a
+  // copy already in progress finishes that solve instead of logging a new one.
+  const { data: completions } = useQuery(
+    convexQuery(gateway.solving.myCompletions, convexUser?._id ? {} : "skip"),
+  );
+  const solveStateByCopyId = useMemo(() => {
+    const map = new Map<
+      string,
+      {
+        inProgress: boolean;
+        completed: boolean;
+        inProgressCompletionId?: string;
+        inProgressStartDate?: number;
+      }
+    >();
+    for (const completion of completions ?? []) {
+      if (!completion.ownedPuzzleId) continue;
+      const state = map.get(completion.ownedPuzzleId) ?? {
+        inProgress: false,
+        completed: false,
+      };
+      if (completion.isCompleted) state.completed = true;
+      else {
+        state.inProgress = true;
+        // Retain the newest in-progress completion so the card's Finish action targets it.
+        if (
+          completion.aggregateId &&
+          (state.inProgressStartDate === undefined ||
+            completion.startDate > state.inProgressStartDate)
+        ) {
+          state.inProgressCompletionId = completion.aggregateId;
+          state.inProgressStartDate = completion.startDate;
+        }
+      }
+      map.set(completion.ownedPuzzleId, state);
+    }
+    return map;
+  }, [completions]);
 
   usePageHeader(
     () => ({
@@ -96,6 +141,19 @@ function NewCompletionPage() {
     const copy = ownedPuzzles.find((p) => p._id === ownedPuzzleId);
     if (!copy?.aggregateId) {
       console.error("Cannot log a solve: copy is missing its aggregateId.");
+      return;
+    }
+    // With an in-progress solve on the copy, registering a completion finishes that solve
+    // instead of logging a separate one.
+    const state = solveStateByCopyId.get(ownedPuzzleId);
+    if (
+      state?.inProgressCompletionId &&
+      state.inProgressStartDate !== undefined
+    ) {
+      setFinishTarget({
+        completionId: state.inProgressCompletionId,
+        startDate: state.inProgressStartDate,
+      });
       return;
     }
     setSolveTarget({
@@ -146,6 +204,16 @@ function NewCompletionPage() {
           copyId={solveTarget.copyId}
           puzzleTitle={solveTarget.title}
           viewerIsOwner={true}
+          onSuccess={() => router.push("/completions")}
+        />
+      )}
+
+      {finishTarget && (
+        <FinishSolveDialog
+          open
+          onOpenChange={(open) => !open && setFinishTarget(null)}
+          completionId={finishTarget.completionId}
+          minEndDate={finishTarget.startDate}
           onSuccess={() => router.push("/completions")}
         />
       )}

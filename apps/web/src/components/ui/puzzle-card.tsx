@@ -159,7 +159,7 @@ function PuzzleOverflowMenu({
         {/* Portal ensures the menu content is portaled out of the card's
             stacking context so clicks can't fall through to the stretched link. */}
         <DropdownMenuContent align="end" className="min-w-[160px]">
-          {onLogSolve && (
+          {onLogSolve && !solveInProgress && (
             <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation();

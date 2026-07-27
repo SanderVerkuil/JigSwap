@@ -201,18 +201,20 @@ function BorrowedPage() {
                       {tStart("trigger")}
                     </Button>
                   )}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      setSolveFor({
-                        copyId: loan.copyId,
-                        title: loan.puzzleTitle,
-                      })
-                    }
-                  >
-                    {tSolve("trigger")}
-                  </Button>
+                  {!inProgressByCopyDocId.has(loan.copyDocId) && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        setSolveFor({
+                          copyId: loan.copyId,
+                          title: loan.puzzleTitle,
+                        })
+                      }
+                    >
+                      {tSolve("trigger")}
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     disabled={returningId === loan.loanId}
