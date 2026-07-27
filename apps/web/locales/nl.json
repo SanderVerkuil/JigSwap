@@ -1879,6 +1879,21 @@
       "saveError": "Kon de review niet opslaan. Probeer het opnieuw.",
       "ratingRequired": "Kies eerst een beoordeling."
     },
+    "followUp": {
+      "title": "Puzzel voltooid!",
+      "description": "Beoordeel de puzzel en voeg foto's van je voltooiing toe — beide zijn optioneel.",
+      "photosLabel": "Foto's",
+      "photosHint": "Maximaal 5 foto's van je gelegde puzzel.",
+      "addPhotos": "Foto's toevoegen",
+      "removePhoto": "Foto verwijderen",
+      "uploadFailed": "Uploaden mislukt",
+      "retry": "Opnieuw proberen",
+      "save": "Opslaan",
+      "skip": "Overslaan",
+      "saved": "Bedankt! Alles is opgeslagen.",
+      "saveError": "Kon niet alles opslaan. Probeer het opnieuw.",
+      "tooManyPhotos": "Een voltooiing kan maximaal 5 foto's hebben."
+    },
     "goals": {
       "title": "Doelen",
       "subtitle": "Stel voltooiingsdoelen in en volg je voortgang.",

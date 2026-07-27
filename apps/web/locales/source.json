@@ -1879,6 +1879,21 @@
       "saveError": "Could not save the review. Please try again.",
       "ratingRequired": "Please pick a rating first."
     },
+    "followUp": {
+      "title": "Puzzle solved!",
+      "description": "Rate the puzzle and add photos of your solve — both optional.",
+      "photosLabel": "Photos",
+      "photosHint": "Up to 5 photos of your finished puzzle.",
+      "addPhotos": "Add photos",
+      "removePhoto": "Remove photo",
+      "uploadFailed": "Upload failed",
+      "retry": "Retry",
+      "save": "Save",
+      "skip": "Skip",
+      "saved": "Thanks! Follow-up saved.",
+      "saveError": "Could not save everything. Please try again.",
+      "tooManyPhotos": "A completion can have at most 5 photos."
+    },
     "goals": {
       "title": "Goals",
       "subtitle": "Set completion targets and track your progress.",

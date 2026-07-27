@@ -3,6 +3,7 @@ import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 import { AppNotFound } from "@/components/NotFound";
 import { DashboardShell } from "@/components/dashboard-layout/shell";
 import { InviteRedeemer } from "@/components/social/invite-redeemer";
+import { CompletionFollowUpProvider } from "@/components/solving/completion-follow-up-provider";
 import { DurationPromptProvider } from "@/components/solving/duration-prompt-provider";
 import { PageLoading } from "@/components/ui/loading";
 import { requireAuth } from "@/lib/require-auth";
@@ -42,8 +43,10 @@ function DashboardLayout() {
   return (
     <DashboardShell>
       <DurationPromptProvider>
-        <InviteRedeemer />
-        <Outlet />
+        <CompletionFollowUpProvider>
+          <InviteRedeemer />
+          <Outlet />
+        </CompletionFollowUpProvider>
       </DurationPromptProvider>
     </DashboardShell>
   );
