@@ -95,8 +95,12 @@ export function CompletionFollowUpProvider({
   // Every close path (save, skip, dismiss) funnels here: clear the completionId and ALL
   // photo/upload state — revoking object URLs — so the next requestFollowUp works.
   const closeAndReset = () => {
-    for (const p of photos) URL.revokeObjectURL(p.previewUrl);
-    setPhotos([]);
+    // Revoke-then-clear inside the functional update so it always sees the CURRENT list,
+    // never a stale closure. Double-revoke under StrictMode is a harmless no-op.
+    setPhotos((prev) => {
+      prev.forEach((p) => URL.revokeObjectURL(p.previewUrl));
+      return [];
+    });
     setRating(0);
     setText("");
     setSaving(false);
@@ -123,17 +127,23 @@ export function CompletionFollowUpProvider({
           const compressed = new File([result], file.name, {
             type: file.type,
           });
-          setPhotos((prev) => [
-            ...prev,
-            {
-              id: `photo-${nextPhotoId++}`,
-              file: compressed,
-              previewUrl: URL.createObjectURL(compressed),
-            },
-          ]);
+          const previewUrl = URL.createObjectURL(compressed);
+          // Re-check the cap against the CURRENT list (concurrent picks can race past the
+          // pre-slice); in the reject branch revoke immediately — double-revoke is a no-op.
+          setPhotos((prev) => {
+            if (prev.length >= MAX_PHOTOS) {
+              URL.revokeObjectURL(previewUrl);
+              return prev;
+            }
+            return [
+              ...prev,
+              { id: `photo-${nextPhotoId++}`, file: compressed, previewUrl },
+            ];
+          });
         },
         error: (error) => {
           console.error("Failed to compress photo:", error);
+          toast.error(t("uploadFailed"));
         },
       });
     }
@@ -168,17 +178,23 @@ export function CompletionFollowUpProvider({
       const pending = current.filter((p) => !p.storageId);
       const settled = await Promise.allSettled(pending.map(uploadOne));
       const uploaded = new Map<string, string>();
+      const failedIds = new Set<string>();
       pending.forEach((p, i) => {
         const result = settled[i];
         if (result.status === "fulfilled") uploaded.set(p.id, result.value);
+        else failedIds.add(p.id);
       });
-      const next = current.map((p) => {
-        const storageId = uploaded.get(p.id);
-        if (storageId) return { ...p, storageId, failed: false };
-        return p.storageId ? p : { ...p, failed: true };
-      });
-      setPhotos(next);
-      if (next.some((p) => !p.storageId)) {
+      // Apply results by photo id via a functional update: photos unknown to this save pass
+      // (none today — picking is disabled while saving — but by construction) stay untouched
+      // and their object URLs are never clobbered.
+      setPhotos((prev) =>
+        prev.map((p) => {
+          const storageId = uploaded.get(p.id);
+          if (storageId) return { ...p, storageId, failed: false };
+          return failedIds.has(p.id) ? { ...p, failed: true } : p;
+        }),
+      );
+      if (failedIds.size > 0) {
         // Partial failure: keep the dialog open with failed items marked; Save becomes Retry.
         toast.error(t("saveError"));
         return;
@@ -195,10 +211,12 @@ export function CompletionFollowUpProvider({
       }
 
       // 3. One attach call for all storageIds; on failure the retry is attach-only
-      //    (uploads are done, review is once-guarded above).
-      const storageIds = next.flatMap((p) =>
-        p.storageId ? [p.storageId as Id<"_storage">] : [],
-      );
+      //    (uploads are done, review is once-guarded above). Prior successes come off the
+      //    snapshot, fresh ones off this pass's upload results.
+      const storageIds = current.flatMap((p) => {
+        const storageId = p.storageId ?? uploaded.get(p.id);
+        return storageId ? [storageId as Id<"_storage">] : [];
+      });
       if (storageIds.length > 0) {
         await attachCompletionPhotos({ completionId, storageIds });
       }
