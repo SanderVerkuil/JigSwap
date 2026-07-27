@@ -40,3 +40,17 @@ this environment).
 ## Out of scope
 
 Completed-state indicators; badges on browse/other card consumers.
+
+## Revision (same day, user decision)
+
+1. **Card placement narrowed to overlay-only**: the context-row badge added in
+   `1c57536f0` is REMOVED — the cover-overlay chip alone carries the state
+   ("a bit double; just in the image is good enough").
+2. **Copy detail page** (`CopyInstanceScreen`, serving `/my-puzzles/<id>` and
+   `/copies/<id>`): when the caller has an in-progress solve on the copy
+   (the existing owner-gated `myInProgress` selector), the hero's badge row
+   (~line 412, rounded-full secondary badges) gains an "In progress" badge —
+   `Clock` icon + the same `solving.completions.inProgress` key, matching
+   sibling badge styling. Owner-scoped (the underlying query is gated to
+   `viewerIsOwner` by an earlier review fix); borrower-facing state on
+   `/copies/<id>` stays out of scope.
