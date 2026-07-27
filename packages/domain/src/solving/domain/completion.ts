@@ -87,7 +87,8 @@ export interface CompletionChanges {
 // aggregates. It can be in-progress (no end, isCompleted=false) or done (end + duration).
 //
 // Invariants: endDate ≥ startDate; the duration is consistent with the recorded end; at most
-// five photos; edits only within 24h of completion.
+// five photos; edits only within 24h of completion (photo attachment is exempt — see
+// attachPhotos).
 export class Completion {
   private events: DomainEvent[] = [];
 
@@ -334,7 +335,7 @@ export class Completion {
     }
     this.state = { ...this.state, photos: combined, updatedAt: now };
     // Reuse CompletionEdited (verified consumer-safe: no feed/notification/goal reactions);
-    // recorded exactly the way edit() records it (completion.ts:316).
+    // recorded exactly the way edit() records it (see edit()).
     this.record(new CompletionEdited(this.state.id, now));
     return ok(undefined);
   }
