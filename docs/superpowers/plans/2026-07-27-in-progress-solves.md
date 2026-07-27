@@ -12,7 +12,7 @@
 
 - Run backend tests: `cd packages/backend && npx vitest run <file>` (or `pnpm nx run backend:coverage` for all). Domain: `cd packages/domain && npx vitest run <file>`.
 - Before every commit: `pnpm prettier --write <changed files>` (CI runs `format:check` first).
-- New Convex function files MUST be registered in `packages/backend/convex/_generated/api.d.ts` by hand (codegen needs a running deployment; hand-edit mirrors existing entries — see Task 3 Step 5 for the exact pattern).
+- New Convex function files MUST be registered in `packages/backend/convex/_generated/api.d.ts` by hand (codegen needs a running deployment; hand-edit mirrors existing entries — see Task 3 Step 3 for the exact pattern).
 - Locale keys land in ALL THREE files: `apps/web/locales/en.json`, `apps/web/locales/nl.json`, `apps/web/locales/source.json` (source = English source of truth; keep it identical to en for new keys).
 - Never name a backend local `use[A-Z]…` (trips react-hooks lint); use `<verb>UseCase`.
 - `pnpm arch:check` enforces: domain imports no convex/react/contracts; web imports gateway only.
@@ -840,12 +840,12 @@ git commit -m "feat: contracts/solving DTOs + listMyInProgress read"
 - Its `seed(t)` returns `{ alice, bob, frank, carol, dave, eve }` — **no copy aggregate id**. Alice's `ownedPuzzles` row (~lines 131-138) has **no `aggregateId` and no `puzzleDefinitionId`**, so `startCompletion` against it is impossible until the seed is extended.
 - The seed already inserts an **in-progress completion for alice** (`copySnapshot.title: "Unfinished"`, `startDate: now`, `isCompleted: false`, ~lines 226-241). Left alone it pollutes every positive assertion (an extra, newest item).
 - **alice↔bob are already mutual followers** in the seed (~lines 100-130). Do NOT use bob for the "authenticated non-follower" row — use **eve** (or frank).
-- `aliceHandle` is the literal username string `"alice"` (existing tests pass it at lines 287-341; resolution is id → slug → username).
+- The profile handle for alice is the literal username string `"alice"` (existing tests pass it at lines 287-341; resolution is id → slug → username) — the snippets below use it directly.
 - The file has NO `asAlice`/`asBob`/`HOUR` helpers — existing tests inline `t.withIdentity({ subject: "clerk_…" })`. Add small local helpers (match the seed's actual clerkIds — read them) or inline the same way.
 
 **Required prep (part of this step):**
 
-1. Extend the seed's alice `ownedPuzzles` insert with `aggregateId: aliceCopyAggregateId` (a `crypto.randomUUID()`) — and `puzzleDefinitionId` if the alice puzzle row has an aggregateId to point at — and add the id to the seed's return object. Re-run the file's pre-existing tests to confirm the seed change is inert.
+1. Extend the seed's alice `ownedPuzzles` insert with an `aggregateId` (a `crypto.randomUUID()`) — and `puzzleDefinitionId` if the alice puzzle row has an aggregateId to point at — and return it from the seed **under the exact key `copyAggregateId`** (every snippet below destructures `const { copyAggregateId } = await seed(t)`). Re-run the file's pre-existing tests to confirm the seed change is inert.
 2. Add a helper that removes the seeded "Unfinished" in-progress row so the new tests start clean:
 
 ```ts
@@ -1231,7 +1231,17 @@ describe("social.getActivityFeed — started entries", () => {
       { enabled: true },
     );
 
-    // Carol starts twice on a copy she holds (lend alice's copy to carol so authz passes).
+    // ORDER MATTERS: the feed sorts by event PUBLISH time (occurredAt), not startDate. Alice's
+    // visible starts must be published FIRST so carol's later (newer) dropped entries occupy the
+    // top slice slots — that's what makes a drop-AFTER-slice bug return a short page here.
+    for (const offset of [3, 2, 1]) {
+      await asUser(t, "alice").mutation(
+        api.solving.startCompletion.startCompletion,
+        { copyId: copyAggregateId, startDate: Date.now() - offset * HOUR },
+      );
+    }
+    // Then carol starts twice on the copy (lend it to her so the holder authz passes). Her two
+    // CompletionStarted events are now the NEWEST in bob's raw window.
     await t.run(async (ctx) => {
       const copy = await ctx.db
         .query("ownedPuzzles")
@@ -1247,25 +1257,9 @@ describe("social.getActivityFeed — started entries", () => {
         { copyId: copyAggregateId, startDate: Date.now() - offset * HOUR },
       );
     }
-    // Alice produces 3 visible entries (return the copy to her first).
-    await t.run(async (ctx) => {
-      const copy = await ctx.db
-        .query("ownedPuzzles")
-        .withIndex("by_aggregate_id", (q) =>
-          q.eq("aggregateId", copyAggregateId),
-        )
-        .unique();
-      await ctx.db.patch(copy!._id, { heldBy: undefined });
-    });
-    for (const offset of [3, 2, 1]) {
-      await asUser(t, "alice").mutation(
-        api.solving.startCompletion.startCompletion,
-        { copyId: copyAggregateId, startDate: Date.now() - offset * HOUR },
-      );
-    }
 
-    // limit 3 < visible pool (alice's 3): a drop-after-slice bug would return < 3 because carol's
-    // dropped entries consumed slots. Filter-before-slice returns a full page, all alice's.
+    // limit 3 < raw pool (5): drop-after-slice would slice [carol, carol, alice] then drop carol's
+    // two → a 1-entry page. Filter-before-slice returns a full 3-entry page, all alice's.
     const feed = await asUser(t, "bob").query(
       api.social.getActivityFeed.getActivityFeed,
       { limit: 3 },
@@ -1374,7 +1368,7 @@ const feed = buildActivityFeed(visible, {
 - [ ] **Step 4: Run to verify pass**
 
 Run: `cd packages/backend && npx vitest run convex/activityFeed.test.ts`
-Expected: PASS (4 tests). Also run `npx vitest run convex/publicProfile.test.ts convex/solvingMutations.test.ts` — still green.
+Expected: PASS (5 tests). Also run `npx vitest run convex/publicProfile.test.ts convex/solvingMutations.test.ts` — still green.
 
 - [ ] **Step 5: Commit**
 
