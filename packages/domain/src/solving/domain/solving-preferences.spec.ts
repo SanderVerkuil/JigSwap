@@ -28,6 +28,21 @@ describe("SolvingPreferences", () => {
     expect(prefs.toState().updatedAt).toEqual(firstUpdate);
   });
 
+  it("setShareInProgress sets the value and bumps updatedAt", () => {
+    const prefs = SolvingPreferences.createDefault(ALICE, NOW);
+    prefs.setShareInProgress(true, LATER);
+    expect(prefs.shareInProgress).toBe(true);
+    expect(prefs.toState().updatedAt).toEqual(LATER);
+  });
+
+  it("setting the same shareInProgress value is a no-op (updatedAt unchanged)", () => {
+    const prefs = SolvingPreferences.createDefault(ALICE, NOW);
+    prefs.setShareInProgress(false, LATER);
+    const firstUpdate = prefs.toState().updatedAt;
+    prefs.setShareInProgress(false, new Date("2026-06-03T10:00:00Z"));
+    expect(prefs.toState().updatedAt).toEqual(firstUpdate);
+  });
+
   it("rehydrate round-trips state", () => {
     const state = {
       memberId: ALICE,
