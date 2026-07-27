@@ -858,6 +858,17 @@
         "activeSub": "Op dit moment in beweging"
       }
     },
+    "solvingNow": {
+      "title": "Nu aan het puzzelen",
+      "empty": "Er ligt nu niets op tafel.",
+      "emptyCta": "Start er een vanuit je puzzels",
+      "untitled": "Een puzzel",
+      "pieces": "{count} stukjes",
+      "startedToday": "Vandaag gestart",
+      "startedDaysAgo": "{days} dagen geleden gestart",
+      "startsInDays": "Start over {days} dagen",
+      "finish": "Afronden"
+    },
     "pulse": {
       "inMotion": {
         "title": "In Beweging",

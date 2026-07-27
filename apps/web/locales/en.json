@@ -858,6 +858,17 @@
         "activeSub": "In motion right now"
       }
     },
+    "solvingNow": {
+      "title": "Solving now",
+      "empty": "Nothing on the table right now.",
+      "emptyCta": "Start one from your puzzles",
+      "untitled": "A puzzle",
+      "pieces": "{count} pieces",
+      "startedToday": "Started today",
+      "startedDaysAgo": "Started {days} days ago",
+      "startsInDays": "Starts in {days} days",
+      "finish": "Finish"
+    },
     "pulse": {
       "inMotion": {
         "title": "In Motion",
