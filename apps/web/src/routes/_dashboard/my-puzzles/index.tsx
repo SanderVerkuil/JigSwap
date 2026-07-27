@@ -422,8 +422,12 @@ function PuzzlesPage() {
                 onDelete={handleDeletePuzzle}
                 onLogSolve={handleLogSolve}
                 onStartSolve={handleStartSolve}
+                // Matches handleStartSolve's finish predicate (not `inProgress`): a legacy
+                // in-progress row without an aggregateId can't be finished, so its card must
+                // keep showing "Start puzzle" rather than a Finish label that opens Start.
                 solveInProgress={
-                  solveStateByCopyId.get(puzzle._id)?.inProgress ?? false
+                  solveStateByCopyId.get(puzzle._id)?.inProgressCompletionId !=
+                  null
                 }
                 loanBadge={
                   loan && (

@@ -224,11 +224,14 @@ function CopyInstanceDetail({
   } | null>(null);
 
   // The caller's solve history on this copy (caller-scoped server-side), powering the
-  // Start puzzle ↔ Finish solve swap below.
+  // Start puzzle ↔ Finish solve swap below. Owner-only: the swap button renders only in the
+  // viewerIsOwner branch, so non-owner viewers skip the query entirely.
   const { data: myHistory } = useQuery(
     convexQuery(
       gateway.solving.completionHistory,
-      copy.aggregateId ? { copyId: copy.aggregateId } : "skip",
+      copy.viewerIsOwner && copy.aggregateId
+        ? { copyId: copy.aggregateId }
+        : "skip",
     ),
   );
   // The CALLER's most recent in-progress solve on this copy (caller-scoped server-side).
