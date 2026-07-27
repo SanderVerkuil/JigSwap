@@ -38,7 +38,9 @@ Create `packages/domain/src/solving/application/use-cases/solving-preferences-us
 
 ```ts
 import { describe, expect, test } from "vitest";
-import { toMemberId } from "../../domain";
+// toMemberId lives in shared-kernel (branded-ids.ts) — solving/domain/ids.ts exports only the
+// TYPES, not the constructors. Same import path completion-use-cases.spec.ts uses.
+import { toMemberId } from "../../../shared-kernel";
 import { FixedClock } from "../testing/fixed-clock";
 import { InMemorySolvingPreferencesRepository } from "../testing/in-memory-solving-preferences.repository";
 import { makeSetShareInProgress } from "./set-share-in-progress";
@@ -80,7 +82,7 @@ describe("setShareInProgress", () => {
 });
 ```
 
-Note: check `packages/domain/src/solving/application/testing/fixed-clock.ts` for whether `FixedClock` is a class or factory (`fixedClock(date)`) and match its real API in the spec.
+(`FixedClock` is a class taking a `Date` — verified; `new FixedClock(date)` is correct as written.)
 
 - [ ] **Step 2: Run the spec to verify it fails**
 
@@ -222,7 +224,7 @@ Open `packages/backend/convex/solvingPreferences.test.ts`, mirror its existing s
 describe("solving.setShareInProgress", () => {
   test("persists the choice and surfaces it via the federated settings read", async () => {
     const t = convexTest(schema, modules);
-    await seed(t); // reuse the file's existing seed helper (adjust name if it differs)
+    await seedUser(t); // the file's existing helper is named seedUser (NOT seed)
 
     // Absent row → settings read reports undefined (never chosen).
     const before = await asAlice(t).query(
@@ -512,7 +514,7 @@ if (copy) {
 
 and add the import: `import { denormalizeCopyOntoCompletion } from "./copySnapshot";`.
 
-**Snapshot-title caveat:** the existing block reads `copy.snapshot?.title` etc. If the seeded test copy has no `snapshot` field, the denormalized `title` is undefined and the first test's `copySnapshot.title` assertion fails. Check what the existing "borrower can log a solve" test asserts about `copySnapshot`; if `ownedPuzzles.snapshot` is not seeded, extend the `seed` helper to insert `snapshot: { title: "Mountain Vista", brand: "Ravensburger", pieceCount: 1000 }` on the ownedPuzzles row (matching the schema's snapshot shape) rather than weakening the assertion.
+**Seed extension (REQUIRED, verified):** the file's `seed` does NOT insert `snapshot` on the ownedPuzzles row, so the denormalized `copySnapshot.title` would be undefined and the first test fails. Extend the `seed` helper's ownedPuzzles insert with `snapshot: { title: "Mountain Vista", brand: "Ravensburger", pieceCount: 1000 }`. This is safe: no existing test in the file asserts `copySnapshot.title` (only `wasBorrowed`/`condition`/`copyId`), and the schema's snapshot shape requires `title: v.string()`/`pieceCount: v.number()` — matched. Re-run the file's pre-existing tests after the seed change to confirm.
 
 `packages/backend/convex/solving/startCompletion.ts`:
 
@@ -790,7 +792,7 @@ export const listMyInProgress = query({
 });
 ```
 
-(Check the `puzzles` schema for the box-art field name — the plan assumes `image: v.optional(v.id("_storage"))`; if it differs, e.g. `imageId`, use the real name.)
+(Verified: the box-art field is `puzzles.image: v.optional(v.id("_storage"))` at `schema.ts:139`. Two deliberate spec deviations, both recorded: the display fallback chain skips the "live copy" step — `copySnapshot` is copied from `copy.snapshot` at start time, so the live read adds nothing; and the gateway key is `myInProgress` (house style, matching `myCompletions`) rather than the spec's literal `listMyInProgress`.)
 
 `_generated/api.d.ts`:
 
@@ -833,24 +835,53 @@ git commit -m "feat: contracts/solving DTOs + listMyInProgress read"
 
 - [ ] **Step 1: Write the failing tests**
 
-Open `packages/backend/convex/publicProfile.test.ts` and mirror its existing seed/follow helpers (it already tests locked/unlocked and mutual-follow cases — reuse those helpers verbatim; the snippets below name them generically). Append a describe implementing this exact gating matrix (one test per row):
+**Verified facts about `packages/backend/convex/publicProfile.test.ts` (read it first, but these are checked):**
+
+- Its `seed(t)` returns `{ alice, bob, frank, carol, dave, eve }` — **no copy aggregate id**. Alice's `ownedPuzzles` row (~lines 131-138) has **no `aggregateId` and no `puzzleDefinitionId`**, so `startCompletion` against it is impossible until the seed is extended.
+- The seed already inserts an **in-progress completion for alice** (`copySnapshot.title: "Unfinished"`, `startDate: now`, `isCompleted: false`, ~lines 226-241). Left alone it pollutes every positive assertion (an extra, newest item).
+- **alice↔bob are already mutual followers** in the seed (~lines 100-130). Do NOT use bob for the "authenticated non-follower" row — use **eve** (or frank).
+- `aliceHandle` is the literal username string `"alice"` (existing tests pass it at lines 287-341; resolution is id → slug → username).
+- The file has NO `asAlice`/`asBob`/`HOUR` helpers — existing tests inline `t.withIdentity({ subject: "clerk_…" })`. Add small local helpers (match the seed's actual clerkIds — read them) or inline the same way.
+
+**Required prep (part of this step):**
+
+1. Extend the seed's alice `ownedPuzzles` insert with `aggregateId: aliceCopyAggregateId` (a `crypto.randomUUID()`) — and `puzzleDefinitionId` if the alice puzzle row has an aggregateId to point at — and add the id to the seed's return object. Re-run the file's pre-existing tests to confirm the seed change is inert.
+2. Add a helper that removes the seeded "Unfinished" in-progress row so the new tests start clean:
+
+```ts
+const clearSeededInProgress = (t: ReturnType<typeof convexTest>) =>
+  t.run(async (ctx) => {
+    const rows = await ctx.db.query("completions").collect();
+    for (const row of rows) {
+      if (!row.isCompleted) await ctx.db.delete(row._id);
+    }
+  });
+```
+
+Call it at the top of every new test, right after `seed(t)`.
+
+Append a describe implementing this exact gating matrix (one test per row):
 
 | viewer                                   | target profile | shareInProgress       | expected `currentlySolving`                          |
 | ---------------------------------------- | -------------- | --------------------- | ---------------------------------------------------- |
 | anonymous (no identity)                  | public         | true                  | **absent/undefined**                                 |
-| authenticated non-follower               | public         | true                  | absent                                               |
-| mutual follower                          | public/private | true                  | **present** with items                               |
-| mutual follower                          | public         | false or absent row   | absent                                               |
+| authenticated non-follower (**eve**)     | public         | true                  | absent                                               |
+| mutual follower (bob, seeded mutual)     | public         | true                  | **present** with items                               |
+| mutual follower (bob)                    | public         | false, and absent row | absent (assert BOTH variants)                        |
 | self                                     | any            | absent (never chosen) | **present** (self always sees)                       |
-| mutual follower, future-dated start only | public         | true                  | present but **empty array** (future starts excluded) |
+| mutual follower (bob), future-dated only | public         | true                  | present but **empty array** (future starts excluded) |
+| non-follower (eve), **private** profile  | private        | true                  | `locked: true`, no `currentlySolving` key at all     |
 
-Test skeleton (adapt helper names to the file's own):
+For the locked-profile row, flip alice's profile row to `visibility: "private"` inside `t.run` (the seed creates her profile — find and patch it), then view as eve.
+
+Test skeleton — two representative tests in full; write the remaining rows in the same shape:
 
 ```ts
 describe("getPublicProfile — currentlySolving gating", () => {
   test("anonymous viewer on a public profile never sees currentlySolving even when sharing is on", async () => {
     const t = convexTest(schema, modules);
     const { copyAggregateId } = await seed(t);
+    await clearSeededInProgress(t);
     await asAlice(t).mutation(
       api.solving.setShareInProgress.setShareInProgress,
       { enabled: true },
@@ -861,7 +892,7 @@ describe("getPublicProfile — currentlySolving gating", () => {
     });
 
     const view = await t.query(api.social.getPublicProfile.getPublicProfile, {
-      handle: aliceHandle, // resolve the same way the file's existing tests do
+      handle: "alice",
     });
     expect(view?.locked).toBe(false); // public profile unlocks
     expect(
@@ -871,8 +902,8 @@ describe("getPublicProfile — currentlySolving gating", () => {
 
   test("mutual follower sees currentlySolving when sharing is on", async () => {
     const t = convexTest(schema, modules);
-    const { alice, bob, copyAggregateId } = await seed(t);
-    await makeMutualFollowers(t, alice, bob); // reuse/create via direct db inserts into `follows`
+    const { copyAggregateId } = await seed(t); // alice↔bob are mutual in the seed already
+    await clearSeededInProgress(t);
     await asAlice(t).mutation(
       api.solving.setShareInProgress.setShareInProgress,
       { enabled: true },
@@ -884,9 +915,7 @@ describe("getPublicProfile — currentlySolving gating", () => {
 
     const view = await asBob(t).query(
       api.social.getPublicProfile.getPublicProfile,
-      {
-        handle: aliceHandle,
-      },
+      { handle: "alice" },
     );
     expect(view?.locked).toBe(false);
     const solving =
@@ -902,42 +931,18 @@ describe("getPublicProfile — currentlySolving gating", () => {
   });
 
   // ...remaining matrix rows follow the same pattern:
-  // - mutual follower + sharing off/absent -> undefined
+  // - mutual follower (bob) + sharing off AND absent row -> undefined (two assertions)
   // - self + sharing absent -> present
-  // - mutual follower + only a future-dated start -> present, []
-  // - authenticated non-follower on public profile + sharing on -> undefined
+  // - mutual follower (bob) + only a future-dated start -> present, []
+  // - authenticated non-follower (EVE, not bob) on public profile + sharing on -> undefined
+  // - eve viewing alice's profile flipped to private + sharing on -> locked: true, no key
 });
 ```
 
-If `makeMutualFollowers` does not already exist in the file, add it:
-
-```ts
-const makeMutualFollowers = (
-  t: ReturnType<typeof convexTest>,
-  a: Id<"users">,
-  b: Id<"users">,
-) =>
-  t.run(async (ctx) => {
-    const now = Date.now();
-    await ctx.db.insert("follows", {
-      followerId: a,
-      followeeId: b,
-      createdAt: now,
-    });
-    await ctx.db.insert("follows", {
-      followerId: b,
-      followeeId: a,
-      createdAt: now,
-    });
-  });
-```
-
-(check the `follows` table's exact required fields in `schema.ts:891` and match them).
-
-- [ ] **Step 2: Run to verify failure**
+- [ ] **Step 2: Run — note the split red state**
 
 Run: `cd packages/backend && npx vitest run convex/publicProfile.test.ts`
-Expected: new tests FAIL (`currentlySolving` never present).
+Expected: the POSITIVE rows (mutual-present, self-present, future-dated-empty) FAIL — that is the genuine red. The pure-absence rows (anonymous, eve, sharing-off, locked) will PASS vacuously pre-implementation — that is EXPECTED and correct for gate tests; do not "fix" them. If instead every test errors with an arg-validation/"Copy not found" failure, the seed extension from Step 1 prep was not applied.
 
 - [ ] **Step 3: Implement**
 
@@ -954,8 +959,8 @@ Expected: new tests FAIL (`currentlySolving` never present).
 export interface CurrentlySolvingItemView {
   title?: string;
   pieceCount?: number;
-  /** startDate, epoch ms. Future-dated starts are excluded server-side. */
-  startedAt: number;
+  /** The solve's startDate, epoch ms. Future-dated starts are excluded server-side. */
+  startDate: number;
   thumbnailUrl?: string;
 }
 ```
@@ -1009,7 +1014,7 @@ if (isSelf || isMutual) {
               (await ctx.storage.getUrl(puzzle.image)) ?? undefined;
           }
         }
-        return { title, pieceCount, startedAt: c.startDate, thumbnailUrl };
+        return { title, pieceCount, startDate: c.startDate, thumbnailUrl };
       }),
     );
   }
@@ -1169,7 +1174,7 @@ describe("social.getActivityFeed — started entries", () => {
     expect(feed.filter((e) => e.kind === "started")).toHaveLength(1);
   });
 
-  test("future-dated starts are excluded from the feed", async () => {
+  test("future-dated starts are excluded from the feed (past-dated ones appear)", async () => {
     const t = convexTest(schema, modules);
     const { copyAggregateId } = await seed(t);
     await asUser(t, "alice").mutation(
@@ -1180,11 +1185,19 @@ describe("social.getActivityFeed — started entries", () => {
       api.solving.startCompletion.startCompletion,
       { copyId: copyAggregateId, startDate: Date.now() + 24 * HOUR },
     );
+    const pastId = (await asUser(t, "alice").mutation(
+      api.solving.startCompletion.startCompletion,
+      { copyId: copyAggregateId, startDate: Date.now() - HOUR },
+    )) as string;
     const feed = await asUser(t, "alice").query(
       api.social.getActivityFeed.getActivityFeed,
       {},
     );
-    expect(feed.filter((e) => e.kind === "started")).toHaveLength(0);
+    // Positive control makes this test genuinely red pre-implementation: exactly the past-dated
+    // start shows, the future-dated one does not.
+    const started = feed.filter((e) => e.kind === "started");
+    expect(started).toHaveLength(1);
+    expect(started[0].ref).toBe(pastId);
   });
 
   test("finishing a started solve yields both a started and a completion entry (distinct kinds, same ref)", async () => {
@@ -1204,15 +1217,71 @@ describe("social.getActivityFeed — started entries", () => {
     );
     expect(feed.filter((e) => e.ref === completionId)).toHaveLength(2);
   });
+
+  test("pages stay full-length when non-opted-in actors' starts are dropped (filter before slice)", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, carol, copyAggregateId } = await seed(t);
+    // bob follows carol one-way; carol never opts in — her starts must be dropped.
+    await follow(t, bob, carol);
+    // bob↔alice mutual; alice opts in — her activity is visible.
+    await follow(t, bob, alice);
+    await follow(t, alice, bob);
+    await asUser(t, "alice").mutation(
+      api.solving.setShareInProgress.setShareInProgress,
+      { enabled: true },
+    );
+
+    // Carol starts twice on a copy she holds (lend alice's copy to carol so authz passes).
+    await t.run(async (ctx) => {
+      const copy = await ctx.db
+        .query("ownedPuzzles")
+        .withIndex("by_aggregate_id", (q) =>
+          q.eq("aggregateId", copyAggregateId),
+        )
+        .unique();
+      await ctx.db.patch(copy!._id, { heldBy: carol });
+    });
+    for (const offset of [5, 4]) {
+      await asUser(t, "carol").mutation(
+        api.solving.startCompletion.startCompletion,
+        { copyId: copyAggregateId, startDate: Date.now() - offset * HOUR },
+      );
+    }
+    // Alice produces 3 visible entries (return the copy to her first).
+    await t.run(async (ctx) => {
+      const copy = await ctx.db
+        .query("ownedPuzzles")
+        .withIndex("by_aggregate_id", (q) =>
+          q.eq("aggregateId", copyAggregateId),
+        )
+        .unique();
+      await ctx.db.patch(copy!._id, { heldBy: undefined });
+    });
+    for (const offset of [3, 2, 1]) {
+      await asUser(t, "alice").mutation(
+        api.solving.startCompletion.startCompletion,
+        { copyId: copyAggregateId, startDate: Date.now() - offset * HOUR },
+      );
+    }
+
+    // limit 3 < visible pool (alice's 3): a drop-after-slice bug would return < 3 because carol's
+    // dropped entries consumed slots. Filter-before-slice returns a full page, all alice's.
+    const feed = await asUser(t, "bob").query(
+      api.social.getActivityFeed.getActivityFeed,
+      { limit: 3 },
+    );
+    expect(feed).toHaveLength(3);
+    expect(feed.every((e) => e.memberId === alice)).toBe(true);
+  });
 });
 ```
 
-(Check the `follows` table's exact required fields in `schema.ts:891` before running; adjust the `follow` helper if it needs more than `followerId`/`followeeId`/`createdAt`.)
+(`follows` requires only `followerId`/`followeeId`/`createdAt` — verified against `schema.ts:891`. If this file's inline seed ever conflicts with the real schema, the schema wins.)
 
 - [ ] **Step 2: Run to verify failure**
 
 Run: `cd packages/backend && npx vitest run convex/activityFeed.test.ts`
-Expected: FAIL — no `"started"` kind exists.
+Expected: FAIL — tests 1 (final phase), 2, 3, 4, and 5 are genuinely red (they assert positive `started` counts and no `"started"` kind exists yet). The intermediate zero-assertions inside test 1 pass trivially until then — that's fine.
 
 - [ ] **Step 3: Implement**
 
@@ -1336,7 +1405,11 @@ import { describe, expect, it } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import source from "../../../locales/source.json";
-import { ACTIVITY_KINDS, ACTIVITY_META } from "./activity-feed-meta";
+import {
+  ACTIVITY_KINDS,
+  ACTIVITY_META,
+  isKnownActivityKind,
+} from "./activity-feed-meta";
 
 type LocaleShape = {
   activity: Record<string, unknown>;
@@ -1369,6 +1442,11 @@ describe("ACTIVITY_META", () => {
       }
     }
   });
+
+  it("guards unknown kinds (deploy-order safety: renderers skip, never crash)", () => {
+    expect(isKnownActivityKind("started")).toBe(true);
+    expect(isKnownActivityKind("some-future-kind")).toBe(false);
+  });
 });
 ```
 
@@ -1382,12 +1460,20 @@ Expected: FAIL — `activity-feed-meta.ts` does not exist.
 `apps/web/src/components/social/activity-feed-meta.ts`:
 
 ```ts
-import type { ActivityEntryView } from "@jigswap/contracts";
+// IMPORTANT: apps/web does NOT depend on @jigswap/contracts — the repo convention is "the web
+// tier derives Convex view types from the gateway" (see profile-body.tsx:48). Deriving via
+// FunctionReturnType keeps that rule AND keeps the bidirectional exhaustiveness check.
+import type { gateway } from "@/gateway";
+import type { FunctionReturnType } from "convex/server";
 import type { LucideIcon } from "lucide-react";
 import { ArrowRightLeft, CircleCheck, Package, Puzzle } from "lucide-react";
 
+type FeedEntryKind = FunctionReturnType<
+  typeof gateway.social.activityFeed
+>[number]["kind"];
+
 // Every activity kind the web app knows how to render. The type-level assertions below force this
-// list to stay in sync with the contracts union in BOTH directions — adding a kind to the contract
+// list to stay in sync with the server union in BOTH directions — adding a kind server-side
 // without touching this file is a compile error, and vice versa.
 export const ACTIVITY_KINDS = [
   "completion",
@@ -1398,13 +1484,9 @@ export const ACTIVITY_KINDS = [
 
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number];
 
-// Bidirectional exhaustiveness check against the contract.
-type _ContractCoversLocal = ActivityEntryView["kind"] extends ActivityKind
-  ? true
-  : never;
-type _LocalCoversContract = ActivityKind extends ActivityEntryView["kind"]
-  ? true
-  : never;
+// Bidirectional exhaustiveness check against the gateway-derived union.
+type _ContractCoversLocal = FeedEntryKind extends ActivityKind ? true : never;
+type _LocalCoversContract = ActivityKind extends FeedEntryKind ? true : never;
 const _exhaustive: [_ContractCoversLocal, _LocalCoversContract] = [true, true];
 void _exhaustive;
 
@@ -1442,13 +1524,7 @@ and change the row rendering (line 48-50) to skip unknown kinds:
 
 (Note: with skipped entries the `index < feed.length - 1` border check can double-draw a border on the last visible row — acceptable cosmetic edge; do not restructure for it.)
 
-`pulse-section.tsx` — in `ActivityRow` (the component starting ~line 300), add the same guard as the FIRST statement of the component body:
-
-```ts
-if (!isKnownActivityKind(entry.kind)) return null;
-```
-
-Wait — hooks must not be conditional. `ActivityRow` calls hooks (`useTranslations`, `useQuery`). Place the guard in `LatestColumn` instead, where entries are mapped (~line 369):
+`pulse-section.tsx` — do NOT put a guard inside `ActivityRow` (it calls hooks — an early return before them is a conditional-hooks bug). Place the guard in `LatestColumn`, where entries are mapped (~line 369):
 
 ```tsx
           {shown.map((entry, i) => (
@@ -1506,16 +1582,15 @@ git commit -m "feat(web): 'started' activity kind with deploy-safe unknown-kind 
 
 ### Task 8: `StartSolveDialog` + Start/Finish buttons on copy detail, my-puzzles, borrowed
 
+This task is executed as THREE sub-tasks (8a, 8b, 8c), each with its own verification and commit — dispatch each to a fresh subagent.
+
 **Files:**
 
-- Create: `apps/web/src/components/solving/start-solve-dialog.tsx`
-- Modify: `apps/web/src/components/solving/finish-solve-dialog.tsx`
-- Modify: `apps/web/src/routes/_dashboard/copies/$id.tsx` (~lines 469-490 actions, ~688-695 dialogs)
-- Modify: `apps/web/src/routes/_dashboard/my-puzzles/index.tsx` (~lines 122, 168-181, 224-236, 397-405)
-- Modify: `apps/web/src/routes/_dashboard/borrowed.tsx`
-- Modify: locale files ×3 (`solving.startSolve` namespace + `solving.logSolve.endBeforeStartError`)
+- 8a Modify: `apps/web/src/components/solving/finish-solve-dialog.tsx`, `apps/web/src/routes/_dashboard/completions/index.tsx` (DialogState), locale ×3 (`solving.logSolve.endBeforeStartError`)
+- 8b Create: `apps/web/src/components/solving/start-solve-dialog.tsx`, locale ×3 (`solving.startSolve`)
+- 8c Modify: `apps/web/src/routes/_dashboard/copies/$id.tsx` (~lines 469-490 actions, ~688-695 dialogs), `apps/web/src/routes/_dashboard/my-puzzles/index.tsx` (~lines 122, 168-181, 224-236, 397-405), the shared `PuzzleCard` component it renders (follow the `onLogSolve` prop at index.tsx:366 to its file), `apps/web/src/routes/_dashboard/borrowed.tsx`
 
-- [ ] **Step 0: FinishSolveDialog — start-date floor + specific error (spec §2)**
+- [ ] **Task 8a / Step 0: FinishSolveDialog — start-date floor + specific error (spec §2)**
 
 `finish-solve-dialog.tsx`: add an optional `minEndDate?: number` prop (epoch ms of the solve's startDate). Wire it:
 
@@ -1544,33 +1619,36 @@ interface FinishSolveDialogProps {
 />
 ```
 
-In the catch block, map the end-before-start domain error to a specific message. First check `packages/backend/convex/solving/errors.ts` + the domain's solving error codes for the exact code the `finish()` end<start rejection produces (search `packages/domain/src/solving` for the error construction in `completion.ts:218`), then:
+In the catch block, map the end-before-start domain error to a specific message. **Verified facts:** the domain code is `"InvalidTimeRange"` (`packages/domain/src/solving/domain/errors.ts:27`), `toConvexError` preserves it as `ConvexError({ code, message })` (data is an object in the browser — the JSON-string form is a convex-test-only artifact), and the web app already has the extraction helper: `solvingErrorCode(error)` in `apps/web/src/components/solving/solving-error.ts`. Use it:
 
 ```tsx
     } catch (error) {
       console.error("Failed to finish solve:", error);
-      const code =
-        error instanceof ConvexError
-          ? (typeof error.data === "string"
-              ? (JSON.parse(error.data) as { code?: string })
-              : (error.data as { code?: string })
-            )?.code
-          : undefined;
       toast.error(
-        code === "END_BEFORE_START" // replace with the REAL code found above
+        solvingErrorCode(error) === "InvalidTimeRange"
           ? t("endBeforeStartError")
           : t("saveError"),
       );
     }
 ```
 
-(import `ConvexError` from `convex/values`; if the error shape differs at the browser boundary, match how other web catch blocks inspect ConvexError data — search `apps/web/src` for `ConvexError` and mirror; if no precedent exists, a plain `minEndDate` floor without code-sniffing is acceptable — note it in the PR.)
+with `import { solvingErrorCode } from "./solving-error";` (open that file first to confirm the exported name/signature and mirror how other components call it).
 
-Existing call sites (`completions/index.tsx`) pass `minEndDate={completion.startDate}` where the row is in hand — update the finish-dialog mount in the completions page dialog wiring (`dialog.kind === "finish"` needs `startDate` added to its DialogState variant and the `setDialog` call at the Finish button). Task 10's dashboard section passes `minEndDate={solve.startDate}` (add `startDate` to its `finishTarget` state: `{ completionId: string; startDate: number } | null`). Task 8's page wirings below pass it wherever the in-progress row's `startDate` is already tracked (my-puzzles `inProgressStartDate`, borrowed map's `startDate`, copies `myInProgress.startDate`).
+**Wire the completions page in this same sub-task** (`completions/index.tsx`): the `DialogState` finish variant (line 35-36) becomes `{ kind: "finish"; completionId: string; startDate: number }`; the Finish button's `setDialog` call (~line 309) adds `startDate: completion.startDate` (in scope); the `FinishSolveDialog` mount (~line 392) adds `minEndDate={dialog.startDate}`. (Task 9 later refactors this same file — it must preserve this wiring.) The other `minEndDate` call sites are wired in Task 8c and Task 10, whose snippets already include them.
 
-Locale (`solving.logSolve.endBeforeStartError`): en/source "The finish date can't be before the start date ({date}).", nl "De einddatum kan niet vóór de startdatum ({date}) liggen." — pass `date: new Date(minEndDate).toLocaleDateString()` when available, else use a `{date}`-free variant key. If threading the date param is awkward, use the simpler copy "The finish date can't be before the start date." / "De einddatum kan niet vóór de startdatum liggen." without a param.
+Locale (`solving.logSolve.endBeforeStartError`): en/source "The finish date can't be before the start date.", nl "De einddatum kan niet vóór de startdatum liggen." (no param — keep it simple; the date is visible in the floored input).
 
-- [ ] **Step 1: Create the dialog**
+Verify + commit 8a:
+
+Run: `cd apps/web && npx tsc --noEmit` — no new errors.
+
+```bash
+pnpm prettier --write apps/web/src apps/web/locales
+git add apps/web
+git commit -m "feat(web): FinishSolveDialog start-date floor + InvalidTimeRange message"
+```
+
+- [ ] **Task 8b / Step 1: Create the dialog**
 
 `apps/web/src/components/solving/start-solve-dialog.tsx`:
 
@@ -1716,17 +1794,39 @@ Locale (`solving.startSolve`, en + source; nl in parentheses):
 
 nl: trigger "Puzzel starten", title "Puzzel starten", description "Markeer {puzzle} als bezig. Je kunt de datum aanpassen als je eerder bent begonnen.", startDate "Startdatum", notes "Notities", notesPlaceholder "Iets om te onthouden over deze sessie?", submit "Starten", started "Puzzel gestart", finishTrigger "Puzzel afronden", saveError "Opslaan mislukt — probeer het opnieuw."
 
-- [ ] **Step 2: Wire the copy detail page** (`copies/$id.tsx`)
+Verify + commit 8b:
 
-The page already loads the caller's per-copy history via `gateway.solving.completionHistory` (~line 567) and mounts `LogSolveDialog` (~line 691). Locate the button that opens the log dialog (~lines 469-490, guarded by `copy.aggregateId == null`). Add, next to it, state + a swap button:
+Run: `cd apps/web && npx tsc --noEmit` — no new errors.
+
+```bash
+pnpm prettier --write apps/web/src apps/web/locales
+git add apps/web
+git commit -m "feat(web): StartSolveDialog component"
+```
+
+- [ ] **Task 8c / Step 2: Wire the copy detail page** (`copies/$id.tsx`)
+
+**Verified fact:** the page does NOT currently load `gateway.solving.completionHistory` — the "completionHistory" at line 567 is a translation key, and the rendered `copy.completions` list is a server projection of FINISHED completions without `isCompleted`/`aggregateId`/`startDate`. You must ADD the query. `getCompletionHistory` is caller-scoped server-side (`requireMember` + `by_user_owned_puzzle` on the caller's own userId) and spreads full rows — so a borrower's in-progress solve can never flip the owner's button; no client-side filtering needed. Check its args validator for the exact parameter name before wiring (expected: the copy aggregateId):
+
+```tsx
+const { data: myHistory } = useQuery(
+  convexQuery(
+    gateway.solving.completionHistory,
+    copy?.aggregateId ? { copyId: copy.aggregateId } : "skip",
+  ),
+);
+```
+
+Then add state + the swap selector next to the existing dialog state (~lines 469-490 hold the log button, ~688-695 the dialogs):
 
 ```tsx
 const [startOpen, setStartOpen] = useState(false);
-const [finishTarget, setFinishTarget] = useState<string | null>(null);
-// The CALLER's most recent in-progress solve on this copy (completionHistory is caller-scoped).
-// The caller-not-the-owner case matters: a borrower's in-progress solve must not flip the owner's
-// button — verify completionHistory only returns the caller's rows; if it returns others', filter.
-const myInProgress = (completionHistory ?? [])
+const [finishTarget, setFinishTarget] = useState<{
+  completionId: string;
+  startDate: number;
+} | null>(null);
+// The CALLER's most recent in-progress solve on this copy (caller-scoped server-side).
+const myInProgress = (myHistory ?? [])
   .filter((c) => !c.isCompleted && c.aggregateId)
   .sort((a, b) => b.startDate - a.startDate)[0];
 ```
@@ -1739,7 +1839,12 @@ Button (same placement/disabled pattern as the existing log button):
     <Button
       variant="outline"
       disabled={copy.aggregateId == null}
-      onClick={() => setFinishTarget(myInProgress.aggregateId!)}
+      onClick={() =>
+        setFinishTarget({
+          completionId: myInProgress.aggregateId!,
+          startDate: myInProgress.startDate,
+        })
+      }
     >
       {tStart("finishTrigger")}
     </Button>
@@ -1769,15 +1874,16 @@ with `const tStart = useTranslations("solving.startSolve");`, and mount next to 
     <FinishSolveDialog
       open
       onOpenChange={(open) => !open && setFinishTarget(null)}
-      completionId={finishTarget}
+      completionId={finishTarget.completionId}
+      minEndDate={finishTarget.startDate}
     />
   );
 }
 ```
 
-Read the surrounding code first and match its exact variable names (title prop, owner guards). The **behavioural requirements** are fixed: swap on caller-only in-progress state; disable when `aggregateId == null`.
+Read the surrounding code first and match its exact variable names (title prop, owner guards). The **behavioural requirements** are fixed: swap on caller-only in-progress state; disable when `aggregateId == null`; `minEndDate` always passed alongside the completion id.
 
-- [ ] **Step 3: Wire my-puzzles** (`my-puzzles/index.tsx`)
+- [ ] **Task 8c / Step 3: Wire my-puzzles** (`my-puzzles/index.tsx` + the shared `PuzzleCard`)
 
 Extend `solveStateByCopyId` (~line 168) to retain the newest in-progress aggregateId:
 
@@ -1823,7 +1929,10 @@ const [startTarget, setStartTarget] = useState<{
   copyId: string;
   title: string;
 } | null>(null);
-const [finishTarget, setFinishTarget] = useState<string | null>(null);
+const [finishTarget, setFinishTarget] = useState<{
+  completionId: string;
+  startDate: number;
+} | null>(null);
 
 const handleStartSolve = (ownedPuzzleId: Id<"ownedPuzzles">) => {
   const copy = userownedPuzzles?.find((p) => p._id === ownedPuzzleId);
@@ -1831,9 +1940,12 @@ const handleStartSolve = (ownedPuzzleId: Id<"ownedPuzzles">) => {
     console.error("Cannot start a solve: copy is missing its aggregateId.");
     return;
   }
-  const inProgressId =
-    solveStateByCopyId.get(ownedPuzzleId)?.inProgressCompletionId;
-  if (inProgressId) setFinishTarget(inProgressId);
+  const state = solveStateByCopyId.get(ownedPuzzleId);
+  if (state?.inProgressCompletionId && state.inProgressStartDate !== undefined)
+    setFinishTarget({
+      completionId: state.inProgressCompletionId,
+      startDate: state.inProgressStartDate,
+    });
   else
     setStartTarget({
       copyId: copy.aggregateId,
@@ -1842,7 +1954,7 @@ const handleStartSolve = (ownedPuzzleId: Id<"ownedPuzzles">) => {
 };
 ```
 
-Wire a Start/Finish action onto the card next to wherever `handleLogSolve` is already wired (search the JSX below line 280 for the existing log-solve action and mirror it, labelled with `tStart("trigger")` / `tStart("finishTrigger")` based on `solveStateByCopyId.get(puzzle._id)?.inProgress`). Mount next to the existing `LogSolveDialog` (~line 397):
+**Card wiring goes through the shared `PuzzleCard` component** (the page passes `onLogSolve={handleLogSolve}` at ~index.tsx:366 — actions are props, not inline JSX). Follow that prop into the `PuzzleCard` file, add an `onStartSolve?: (id: Id<"ownedPuzzles">) => void` prop plus an optional `solveInProgress?: boolean` display flag, and render a Start/Finish button next to the existing log-solve action — mirroring the log action's markup exactly, labelled `tStart("trigger")` / `tStart("finishTrigger")` based on `solveInProgress`. Back on the page, pass `onStartSolve={handleStartSolve}` and `solveInProgress={solveStateByCopyId.get(puzzle._id)?.inProgress ?? false}`. Mount the dialogs next to the existing `LogSolveDialog` (~line 397):
 
 ```tsx
 {
@@ -1860,13 +1972,14 @@ Wire a Start/Finish action onto the card next to wherever `handleLogSolve` is al
     <FinishSolveDialog
       open
       onOpenChange={(open) => !open && setFinishTarget(null)}
-      completionId={finishTarget}
+      completionId={finishTarget.completionId}
+      minEndDate={finishTarget.startDate}
     />
   );
 }
 ```
 
-- [ ] **Step 4: Wire the borrowed page** (`borrowed.tsx`)
+- [ ] **Task 8c / Step 4: Wire the borrowed page** (`borrowed.tsx`)
 
 The page loads no completion data today. Add:
 
@@ -1899,6 +2012,8 @@ const inProgressByCopyDocId = useMemo(() => {
 
 Per loan row, next to the existing "Log solve" button (search for where `setSolveFor` is called), add the swap:
 
+**Verified field names** (`LoanView`, `packages/contracts/src/lending/views.ts:14-21`): `loanId`, `copyId` (aggregate), `copyDocId` (doc id, `""` when the copy row is gone), **`puzzleTitle`** (there is no `title` field). The existing `setSolveFor` call at borrowed.tsx:142-144 already uses `{ copyId: loan.copyId, title: loan.puzzleTitle }` — mirror it:
+
 ```tsx
 {
   loan.copyDocId !== "" && inProgressByCopyDocId.has(loan.copyDocId) ? (
@@ -1906,7 +2021,7 @@ Per loan row, next to the existing "Log solve" button (search for where `setSolv
       variant="outline"
       size="sm"
       onClick={() =>
-        setFinishTarget(inProgressByCopyDocId.get(loan.copyDocId)!.completionId)
+        setFinishTarget(inProgressByCopyDocId.get(loan.copyDocId)!)
       }
     >
       {tStart("finishTrigger")}
@@ -1915,7 +2030,9 @@ Per loan row, next to the existing "Log solve" button (search for where `setSolv
     <Button
       variant="outline"
       size="sm"
-      onClick={() => setStartFor({ copyId: loan.copyId, title: loan.title })}
+      onClick={() =>
+        setStartFor({ copyId: loan.copyId, title: loan.puzzleTitle })
+      }
     >
       {tStart("trigger")}
     </Button>
@@ -1923,9 +2040,9 @@ Per loan row, next to the existing "Log solve" button (search for where `setSolv
 }
 ```
 
-Read the loan view's actual field names first (`loan.copyId` aggregate vs `copyDocId` doc id vs the title field — check `packages/contracts/src/lending` or the existing `setSolveFor` call, which already extracts exactly the right `{copyId, title}` pair — mirror that call). Add `startFor`/`finishTarget` state + dialog mounts exactly as on my-puzzles. Add `useMemo` to the imports.
+Add `startFor: { copyId: string; title: string } | null` and `finishTarget: { completionId: string; startDate: number } | null` state + dialog mounts exactly as on my-puzzles (the `FinishSolveDialog` mount passes `completionId={finishTarget.completionId}` and `minEndDate={finishTarget.startDate}` — the map's values already carry both). Add `useMemo` to the imports.
 
-- [ ] **Step 5: Verify + commit**
+- [ ] **Task 8c / Step 5: Verify + commit**
 
 Run: `cd apps/web && npx tsc --noEmit` (only new errors matter — `routeTree.gen` noise is pre-existing).
 Manual check: `pnpm dev` runs on :3001 if a visual sanity check is wanted (browser automation is unavailable in this environment).
@@ -1933,7 +2050,7 @@ Manual check: `pnpm dev` runs on :3001 if a visual sanity check is wanted (brows
 ```bash
 pnpm prettier --write apps/web/src apps/web/locales
 git add apps/web
-git commit -m "feat(web): StartSolveDialog + start/finish swap on copy, my-puzzles, borrowed"
+git commit -m "feat(web): start/finish swap on copy detail, my-puzzles, borrowed"
 ```
 
 ---
@@ -1958,7 +2075,7 @@ const inProgress = sorted
 const history = sorted.filter((c) => c.isCompleted);
 ```
 
-Extract the row JSX (the whole `sorted.map` callback body, lines 205-386) into a local component `CompletionRow({ completion, index, isLast })` inside the same file, preserving every prop/handler it closes over (pass `infoByCopyId`, `formatDate`, `formatTime`, `t`, `setDialog` as props or keep it as an inner closure — an inner function component defined inside `CompletionsPage` keeps the closures and is the smallest change). Then render:
+Extract the row JSX (the whole `sorted.map` callback body — originally lines 205-386, but Task 8a has already edited this file, so locate it by structure, not line number) into a local component `CompletionRow({ completion, index, isLast })` inside the same file, preserving every prop/handler it closes over (an inner function component defined inside `CompletionsPage` keeps the closures and is the smallest change). **The finish `DialogState` variant now carries `startDate` (added in Task 8a) — preserve that wiring (`setDialog({ kind: "finish", completionId, startDate: completion.startDate })` and the `minEndDate={dialog.startDate}` mount) through the extraction.** Then render:
 
 ```tsx
 <section>
@@ -2058,7 +2175,10 @@ export function SolvingNowSection() {
   const { data: solves } = useQuery(
     convexQuery(gateway.solving.myInProgress, member?._id ? {} : "skip"),
   );
-  const [finishTarget, setFinishTarget] = useState<string | null>(null);
+  const [finishTarget, setFinishTarget] = useState<{
+    completionId: string;
+    startDate: number;
+  } | null>(null);
 
   if (!member || solves === undefined) return null;
 
@@ -2114,7 +2234,12 @@ export function SolvingNowSection() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setFinishTarget(solve.completionId)}
+                onClick={() =>
+                  setFinishTarget({
+                    completionId: solve.completionId,
+                    startDate: solve.startDate,
+                  })
+                }
               >
                 <CircleCheck className="h-4 w-4" />
                 {t("finish")}
@@ -2128,7 +2253,8 @@ export function SolvingNowSection() {
         <FinishSolveDialog
           open
           onOpenChange={(open) => !open && setFinishTarget(null)}
-          completionId={finishTarget}
+          completionId={finishTarget.completionId}
+          minEndDate={finishTarget.startDate}
         />
       )}
     </section>
@@ -2211,7 +2337,7 @@ function CurrentlySolvingSection({
       <div className="flex flex-col">
         {items.map((item, index) => (
           <div
-            key={`${item.startedAt}-${index}`}
+            key={`${item.startDate}-${index}`}
             className={cn(
               "flex items-center gap-3.5 py-3",
               index < items.length - 1 && "border-b",
@@ -2235,7 +2361,7 @@ function CurrentlySolvingSection({
               <p className="text-muted-foreground text-xs">
                 {item.pieceCount !== undefined &&
                   `${t("pieces", { count: item.pieceCount })} · `}
-                {format.relativeTime(new Date(item.startedAt))}
+                {format.relativeTime(new Date(item.startDate))}
               </p>
             </div>
           </div>
