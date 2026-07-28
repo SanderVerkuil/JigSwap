@@ -1878,7 +1878,10 @@
       "submit": "Review opslaan",
       "saved": "Review opgeslagen",
       "saveError": "Kon de review niet opslaan. Probeer het opnieuw.",
-      "ratingRequired": "Kies eerst een beoordeling."
+      "ratingRequired": "Kies eerst een beoordeling.",
+      "puzzleQuestion": "Wat vond je van deze puzzel?",
+      "copyQuestion": "Wat vond je van dit exemplaar?",
+      "updatesExisting": "Opslaan werkt je bestaande beoordeling bij."
     },
     "followUp": {
       "title": "Puzzel voltooid!",

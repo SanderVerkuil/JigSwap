@@ -1878,7 +1878,10 @@
       "submit": "Save review",
       "saved": "Review saved",
       "saveError": "Could not save the review. Please try again.",
-      "ratingRequired": "Please pick a rating first."
+      "ratingRequired": "Please pick a rating first.",
+      "puzzleQuestion": "What did you think of this puzzle?",
+      "copyQuestion": "What did you think of this copy?",
+      "updatesExisting": "Saving updates your existing review."
     },
     "followUp": {
       "title": "Puzzle solved!",
