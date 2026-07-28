@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>14/14</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>6/6</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>12/12</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
@@ -103,15 +103,7 @@
 <a name='L38'></a><a href='#L38'>38</a>
 <a name='L39'></a><a href='#L39'>39</a>
 <a name='L40'></a><a href='#L40'>40</a>
-<a name='L41'></a><a href='#L41'>41</a>
-<a name='L42'></a><a href='#L42'>42</a>
-<a name='L43'></a><a href='#L43'>43</a>
-<a name='L44'></a><a href='#L44'>44</a>
-<a name='L45'></a><a href='#L45'>45</a>
-<a name='L46'></a><a href='#L46'>46</a>
-<a name='L47'></a><a href='#L47'>47</a>
-<a name='L48'></a><a href='#L48'>48</a>
-<a name='L49'></a><a href='#L49'>49</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L41'></a><a href='#L41'>41</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -131,15 +123,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">23x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">23x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -152,15 +137,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">18x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">23x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">21x</span>
-<span class="cline-any cline-yes">21x</span>
-<span class="cline-any cline-yes">21x</span>
+<span class="cline-any cline-yes">17x</span>
+<span class="cline-any cline-yes">17x</span>
+<span class="cline-any cline-yes">17x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Clock, DomainEventPublisher, err, ok } from "../../../shared-kernel";
-import { Completion, Photo, PuzzleReview, StarRating } from "../../domain";
+import { Completion, Photo } from "../../domain";
 import {
   RecordCompletion,
   RecordCompletionCommand,
@@ -175,18 +159,11 @@ export interface RecordCompletionDeps {
   readonly clock: Clock;
 }
 &nbsp;
-// Transaction script: build an already-finished Completion (optionally with a PuzzleReview),
-// persist, publish. Goal progress is recomputed separately in reaction to CompletionRecorded.
+// Transaction script: build an already-finished Completion, persist, publish. Goal progress is
+// recomputed separately in reaction to CompletionRecorded.
 export const makeRecordCompletion =
   (deps: RecordCompletionDeps): RecordCompletion =&gt;
   async (cmd: RecordCompletionCommand) =&gt; {
-    let review: PuzzleReview | undefined;
-    if (cmd.rating !== undefined) {
-      const rating = StarRating.create(cmd.rating);
-      if (rating.isErr) return err(rating.error);
-      review = PuzzleReview.create(rating.value, cmd.reviewText);
-    }
-&nbsp;
     const completion = Completion.record({
       id: deps.ids.next(),
       userId: cmd.userId,
@@ -197,7 +174,6 @@ export const makeRecordCompletion =
       completionTimeMinutes: cmd.completionTimeMinutes,
       notes: cmd.notes,
       photos: cmd.photoFileIds?.map((id) =&gt; Photo.of(id)),
-      review,
       allPiecesPresent: cmd.allPiecesPresent,
       now: deps.clock.now(),
     });
@@ -214,7 +190,7 @@ export const makeRecordCompletion =
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-07-28T06:47:04.694Z
+                at 2026-07-28T11:09:54.711Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

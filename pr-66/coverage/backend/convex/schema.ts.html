@@ -1126,13 +1126,67 @@
 <a name='L1061'></a><a href='#L1061'>1061</a>
 <a name='L1062'></a><a href='#L1062'>1062</a>
 <a name='L1063'></a><a href='#L1063'>1063</a>
-<a name='L1064'></a><a href='#L1064'>1064</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1064'></a><a href='#L1064'>1064</a>
+<a name='L1065'></a><a href='#L1065'>1065</a>
+<a name='L1066'></a><a href='#L1066'>1066</a>
+<a name='L1067'></a><a href='#L1067'>1067</a>
+<a name='L1068'></a><a href='#L1068'>1068</a>
+<a name='L1069'></a><a href='#L1069'>1069</a>
+<a name='L1070'></a><a href='#L1070'>1070</a>
+<a name='L1071'></a><a href='#L1071'>1071</a>
+<a name='L1072'></a><a href='#L1072'>1072</a>
+<a name='L1073'></a><a href='#L1073'>1073</a>
+<a name='L1074'></a><a href='#L1074'>1074</a>
+<a name='L1075'></a><a href='#L1075'>1075</a>
+<a name='L1076'></a><a href='#L1076'>1076</a>
+<a name='L1077'></a><a href='#L1077'>1077</a>
+<a name='L1078'></a><a href='#L1078'>1078</a>
+<a name='L1079'></a><a href='#L1079'>1079</a>
+<a name='L1080'></a><a href='#L1080'>1080</a>
+<a name='L1081'></a><a href='#L1081'>1081</a>
+<a name='L1082'></a><a href='#L1082'>1082</a>
+<a name='L1083'></a><a href='#L1083'>1083</a>
+<a name='L1084'></a><a href='#L1084'>1084</a>
+<a name='L1085'></a><a href='#L1085'>1085</a>
+<a name='L1086'></a><a href='#L1086'>1086</a>
+<a name='L1087'></a><a href='#L1087'>1087</a>
+<a name='L1088'></a><a href='#L1088'>1088</a>
+<a name='L1089'></a><a href='#L1089'>1089</a>
+<a name='L1090'></a><a href='#L1090'>1090</a>
+<a name='L1091'></a><a href='#L1091'>1091</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">79x</span>
+<span class="cline-any cline-yes">81x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2632,6 +2686,33 @@ export default defineSchema({
     .index("by_completion", ["completionId"])
     .index("by_moderation_status", ["moderationStatus"]),
 &nbsp;
+  // One review per (member, puzzle definition). `rating` is optional ONLY to
+  // hold migrated text-only legacy reviews (the old catalog form required text,
+  // stars optional); every new write supplies a rating. At least one of
+  // rating/text is always present.
+  puzzleReviews: defineTable({
+    userId: v.id("users"),
+    puzzleId: v.id("puzzles"),
+    rating: v.optional(v.number()),
+    text: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_puzzle", ["puzzleId"])
+    .index("by_user_puzzle", ["userId", "puzzleId"]),
+&nbsp;
+  // One star-only review per (member, physical copy). Write-gated to the
+  // copy's owner or a member with a completion on the copy.
+  copyReviews: defineTable({
+    userId: v.id("users"),
+    copyId: v.id("ownedPuzzles"),
+    rating: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_copy", ["copyId"])
+    .index("by_user_copy", ["userId", "copyId"]),
+&nbsp;
   // User-defined categories for organizing collections
   categories: defineTable({
     // Library PersonalCategoryId. Optional so legacy rows still validate; the domain-driven
@@ -3259,7 +3340,7 @@ export default defineSchema({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-07-28T06:47:36.888Z
+                at 2026-07-28T11:10:34.836Z
             </div>
         <script src="../prettify.js"></script>
         <script>

@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>25/25</span>
+                <span class='fraction'>22/22</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>6/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>15/15</span>
+                <span class='fraction'>13/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>21/21</span>
+                <span class='fraction'>18/18</span>
             </div>
         
             
@@ -172,7 +172,10 @@
 <a name='L107'></a><a href='#L107'>107</a>
 <a name='L108'></a><a href='#L108'>108</a>
 <a name='L109'></a><a href='#L109'>109</a>
-<a name='L110'></a><a href='#L110'>110</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -236,7 +239,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-yes">17x</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -250,13 +253,9 @@
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -272,6 +271,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
@@ -285,11 +287,9 @@
 // DTOs (no Convex imports). The Convex adapter fetches rows, maps them to these inputs, and applies
 // the function. Keeping the maths here makes it deterministic and unit-testable in isolation.
 &nbsp;
-// One completed solve, reduced to what the stats need. `ratingGiven` is the PuzzleReview rating the
-// member left (1-5) when present.
+// One completed solve, reduced to what the stats need.
 export interface CompletionStatInput {
   readonly completionTimeMinutes?: number;
-  readonly ratingGiven?: number;
   readonly isCompleted: boolean;
 }
 &nbsp;
@@ -324,6 +324,9 @@ export interface PersonalStatsInput {
   readonly copies: readonly CopyStatInput[];
   readonly collectionsCount: number;
   readonly exchanges: readonly ExchangeStatInput[];
+  // The 1-5 ratings from the member's puzzle reviews (the two-level review model's
+  // `puzzleReviews` rows), no longer attached to completions.
+  readonly puzzleReviewRatings: readonly number[];
   readonly reviewsReceived: readonly ReceivedReviewStatInput[];
   readonly goals: readonly GoalStatInput[];
 }
@@ -336,7 +339,8 @@ export interface PersonalStats {
   readonly distinctDefinitions: number;
   readonly collectionsCount: number;
   readonly exchangesCompleted: number;
-  readonly averageRatingGiven: number;
+  // null when the member has no puzzle reviews (distinguishes "no reviews" from a 0 average).
+  readonly averageRatingGiven: number | null;
   readonly averageRatingReceived: number;
   readonly goalsActive: number;
   readonly goalsAchieved: number;
@@ -363,10 +367,6 @@ export const computePersonalStats = (
     .filter((m): m is number =&gt; typeof m === "number");
   const totalSolveMinutes = solveMinutes.reduce((acc, m) =&gt; acc + m, 0);
 &nbsp;
-  const ratingsGiven = completed
-    .map((c) =&gt; c.ratingGiven)
-    .filter((r): r is number =&gt; typeof r === "number");
-&nbsp;
   const distinctDefinitions = new Set(
     input.copies
       .map((c) =&gt; c.puzzleDefinitionKey)
@@ -382,7 +382,10 @@ export const computePersonalStats = (
     collectionsCount: input.collectionsCount,
     exchangesCompleted: input.exchanges.filter((e) =&gt; e.status === "completed")
       .length,
-    averageRatingGiven: mean(ratingsGiven),
+    averageRatingGiven:
+      input.puzzleReviewRatings.length === 0
+        ? null
+        : mean(input.puzzleReviewRatings),
     averageRatingReceived: mean(input.reviewsReceived.map((r) =&gt; r.rating)),
     goalsActive: input.goals.filter((g) =&gt; g.isActive).length,
     goalsAchieved: input.goals.filter(
@@ -397,7 +400,7 @@ export const computePersonalStats = (
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-07-28T06:47:04.694Z
+                at 2026-07-28T11:09:54.711Z
             </div>
         <script src="../prettify.js"></script>
         <script>

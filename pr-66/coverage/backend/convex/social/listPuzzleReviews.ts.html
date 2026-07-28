@@ -30,9 +30,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">66.66% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>4/6</span>
+                <span class='fraction'>6/6</span>
             </div>
         
             
@@ -133,23 +133,23 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -169,54 +169,54 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type { PuzzleCommentView } from "@jigswap/contracts";
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type { PuzzleReviewView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { toMemberView } from "../identity/toMemberView";
 &nbsp;
-// Read side: the community reviews on a catalog puzzle DEFINITION, keyed by puzzleId directly (the
-// catalog detail page has no copyId). Newest first. Each review joins its REAL author (reviews are
-// voluntary public posts — never anonymised); the author join falls back to a synthetic "Member"
-// view if the user row vanished, so an orphaned review never breaks the list. Mirrors
-// listPuzzleComments, which keys by copyId.
+// Read side: the community reviews on a catalog puzzle DEFINITION — the `puzzleReviews` table, one
+// row per (member, puzzle), keyed by puzzleId directly (the catalog detail page has no copyId).
+// Most-recently-updated first: the `by_puzzle` index orders by _creationTime, so rows are sorted by
+// `updatedAt` in JS after collect. Each review joins its REAL author (reviews are voluntary public
+// posts — never anonymised); the author join falls back to a synthetic "Member" view if the user
+// row vanished, so an orphaned review never breaks the list.
 //
 // SECURITY: auth-gated. Each review is projected through `toMemberView`, which exposes member
 // identity (name/username/bio/location) intended only for OTHER AUTHENTICATED MEMBERS — so the
-// handler requires a signed-in member before returning any author view. There is no copy here (these
-// are catalog-definition reviews with copyId == null), so the `canViewCopy` reachability gate that
+// handler requires a signed-in member before returning any author view. There is no copy here
+// (these are catalog-definition reviews), so the `canViewCopy` reachability gate that
 // listPuzzleComments uses does NOT apply; auth is the correct gate for definition-level reviews.
 export const listPuzzleReviews = query({
   args: { puzzleId: v.id("puzzles") },
-  handler: async (ctx, args): Promise&lt;PuzzleCommentView[]&gt; =&gt; {
+  handler: async (ctx, args): Promise&lt;PuzzleReviewView[]&gt; =&gt; {
     await requireMember(ctx);
 &nbsp;
     const rows = (
       await ctx.db
-        .query("puzzleComments")
+        .query("puzzleReviews")
         .withIndex("by_puzzle", (q) =&gt; q.eq("puzzleId", args.puzzleId))
-        .order("desc")
         .collect()
-    ).filter((row) =&gt; row.copyId == null); // community reviews only; exclude copy-scoped comments
+    ).sort((a, b) =&gt; b.updatedAt - a.updatedAt);
 &nbsp;
     return Promise.all(
-      rows.map(async (row): Promise&lt;PuzzleCommentView&gt; =&gt; {
-        const author = await ctx.db.get(row.authorId);
+      rows.map(async (row): Promise&lt;PuzzleReviewView&gt; =&gt; {
+        const author = await ctx.db.get(row.userId);
         return {
-          id: row.aggregateId ?? <span class="branch-1 cbranch-no" title="branch not covered" >row._id,</span>
+          id: row._id,
           author: author
             ? toMemberView(author)
-            : <span class="branch-1 cbranch-no" title="branch not covered" >{</span>
-                _id: row.authorId,
+            : {
+                _id: row.userId,
                 _creationTime: 0,
                 name: "Member",
                 isActive: false,
                 createdAt: 0,
                 updatedAt: 0,
               },
-          text: row.text,
           rating: row.rating ?? null,
-          createdAt: row.createdAt,
+          text: row.text ?? null,
+          updatedAt: row.updatedAt,
         };
       }),
     );
@@ -229,7 +229,7 @@ export const listPuzzleReviews = query({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-07-28T06:47:36.888Z
+                at 2026-07-28T11:10:34.836Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

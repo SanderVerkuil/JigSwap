@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">75% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>3/4</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
@@ -142,10 +142,7 @@
 <a name='L77'></a><a href='#L77'>77</a>
 <a name='L78'></a><a href='#L78'>78</a>
 <a name='L79'></a><a href='#L79'>79</a>
-<a name='L80'></a><a href='#L80'>80</a>
-<a name='L81'></a><a href='#L81'>81</a>
-<a name='L82'></a><a href='#L82'>82</a>
-<a name='L83'></a><a href='#L83'>83</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L80'></a><a href='#L80'>80</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -173,17 +170,18 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">31x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">31x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">29x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -200,18 +198,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">31x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">29x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">94x</span>
-<span class="cline-any cline-yes">94x</span>
-<span class="cline-any cline-yes">94x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">91x</span>
+<span class="cline-any cline-yes">91x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -233,7 +227,6 @@
   type CopyId,
   Photo,
   type PuzzleDefinitionId,
-  PuzzleReview,
   toCompletionId,
   toFileId,
   toMemberId,
@@ -246,10 +239,17 @@ import type { Doc, Id } from "../../_generated/dataModel";
 // The insert/patch payload for the completion row (minus Convex-managed `_id`/`_creationTime`).
 // The FK columns `puzzleId`/`ownedPuzzleId` are excluded here because the mapper is pure and
 // cannot resolve the real `puzzles._id`/`ownedPuzzles._id` from the aggregateIds — the
-// repository resolves and supplies them.
+// repository resolves and supplies them. The legacy `rating`/`review` columns are excluded too:
+// reviews live in the `puzzleReviews`/`copyReviews` tables now, never on the completion row.
 export type CompletionRow = Omit&lt;
   Doc&lt;"completions"&gt;,
-  "_id" | "_creationTime" | "puzzleId" | "ownedPuzzleId" | "copySnapshot"
+  | "_id"
+  | "_creationTime"
+  | "puzzleId"
+  | "ownedPuzzleId"
+  | "copySnapshot"
+  | "rating"
+  | "review"
 &gt;;
 &nbsp;
 // Row -&gt; aggregate. The row MUST carry an aggregateId (only domain-written rows do); callers
@@ -260,11 +260,6 @@ export const toDomain = (
   puzzleDefinitionId: PuzzleDefinitionId | undefined,
   copyId: CopyId | undefined,
 ): Completion =&gt; {
-  const review =
-    row.rating === undefined
-      ? undefined
-      : <span class="branch-1 cbranch-no" title="branch not covered" >PuzzleReview.fromState({ rating: row.rating, text: row.review });</span>
-&nbsp;
   const state: CompletionState = {
     id: toCompletionId(row.aggregateId as string),
     userId: toMemberId(row.userId as unknown as string),
@@ -277,7 +272,6 @@ export const toDomain = (
     photos: row.photos.map((fileId) =&gt;
       Photo.of(toFileId(fileId as unknown as string)),
     ),
-    review,
     allPiecesPresent: row.allPiecesPresent,
     isCompleted: row.isCompleted,
     createdAt: new Date(row.createdAt),
@@ -287,18 +281,15 @@ export const toDomain = (
 };
 &nbsp;
 // Aggregate -&gt; completion row payload (without the FK columns, which the repository fills with
-// the resolved real document ids). The PuzzleReview maps to the `rating`/`review` columns.
+// the resolved real document ids).
 export const toRow = (completion: Completion): CompletionRow =&gt; {
   const state: CompletionState = completion.toState();
-  const reviewState = state.review?.toState();
   return {
     aggregateId: state.id as string,
     userId: state.userId as unknown as Id&lt;"users"&gt;,
     startDate: state.startDate.getTime(),
     endDate: state.endDate?.getTime(),
     completionTimeMinutes: state.completionTimeMinutes,
-    rating: reviewState?.rating,
-    review: reviewState?.text,
     notes: state.notes,
     photos: state.photos.map(
       (photo) =&gt; photo.fileId as unknown as Id&lt;"_storage"&gt;,
@@ -316,7 +307,7 @@ export const toRow = (completion: Completion): CompletionRow =&gt; {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-07-28T06:47:36.888Z
+                at 2026-07-28T11:10:34.836Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
