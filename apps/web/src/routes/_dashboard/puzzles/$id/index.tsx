@@ -34,7 +34,7 @@ import {
   Plus,
   Star,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
 
@@ -489,17 +489,18 @@ function ReviewsSection({
   const [rating, setRating] = useState(0);
   const [now] = useState(() => Date.now());
 
-  // Seed the composer once from the existing review; later reactive updates
-  // must not clobber what the member is typing.
+  // Seed the composer once from the existing review, during render (the sanctioned "adjust
+  // state when a value changes" pattern — an effect + setState would trip the
+  // react-hooks/set-state-in-effect rule); later reactive updates must not clobber what the
+  // member is typing.
   const [seeded, setSeeded] = useState(false);
-  useEffect(() => {
-    if (seeded || myReviews === undefined) return;
+  if (!seeded && myReviews !== undefined) {
     if (myReviews.puzzle) {
       setRating(myReviews.puzzle.rating ?? 0);
       setText(myReviews.puzzle.text ?? "");
     }
     setSeeded(true);
-  }, [seeded, myReviews]);
+  }
 
   const hasExistingReview = myReviews?.puzzle != null;
 
@@ -510,7 +511,8 @@ function ReviewsSection({
     format.relativeTime(new Date(timestamp), now);
 
   const submit = async () => {
-    if (rating < 1) return;
+    // isPending guard: the Enter-key path bypasses the disabled button and could double-fire.
+    if (postReview.isPending || rating < 1) return;
     const trimmed = text.trim();
     try {
       await postReview.mutateAsync({

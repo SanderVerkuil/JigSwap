@@ -40,7 +40,7 @@ export function ReviewPuzzleDialog({
 
   // Fetch the caller's existing reviews while the dialog is open; the form only mounts once
   // this resolves, so its seed-once useState is safe.
-  const { data } = useQuery(
+  const { data, isError } = useQuery(
     convexQuery(
       gateway.solving.getMyReviews,
       open
@@ -60,13 +60,16 @@ export function ReviewPuzzleDialog({
           <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
-        {data === undefined ? (
+        {isError ? (
+          <p className="text-destructive text-sm">{t("saveError")}</p>
+        ) : data === undefined ? (
           <div className="space-y-4">
             <Skeleton className="h-8 w-40" />
             <Skeleton className="h-20 w-full" />
           </div>
         ) : (
           <ReviewForm
+            key={`${puzzleId}:${copyId ?? ""}`}
             data={data}
             puzzleId={puzzleId}
             copyId={copyId}

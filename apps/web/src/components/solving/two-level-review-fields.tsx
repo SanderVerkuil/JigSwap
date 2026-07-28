@@ -39,7 +39,7 @@ export function TwoLevelReviewFields({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label>{t("puzzleQuestion")}</Label>
+        <Label htmlFor={puzzleTextId}>{t("puzzleQuestion")}</Label>
         <StarRating
           value={puzzleRating}
           onChange={onPuzzleRatingChange}

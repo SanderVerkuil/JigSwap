@@ -111,7 +111,7 @@ export function CompletionFollowUpProvider({
 
   // The caller's existing reviews, fetched while the dialog is open. puzzleId == null is the
   // legacy edge (pre-backfill completion rows): no review section at all, photos still work.
-  const { data: reviewsData } = useQuery(
+  const { data: reviewsData, isError: reviewsError } = useQuery(
     convexQuery(
       gateway.solving.getMyReviews,
       target !== null && target.puzzleId !== null
@@ -340,9 +340,15 @@ export function CompletionFollowUpProvider({
 
           <div className="space-y-4">
             {/* Legacy edge: puzzleId == null (pre-backfill rows) → no review section, photos
-                still work. Otherwise skeleton until the reviews query seeds the form. */}
+                still work. A failed reviews query shows an error line instead of an eternal
+                skeleton (photos stay fully usable); otherwise skeleton until the query seeds
+                the form. */}
             {target?.puzzleId != null &&
-              (seed === null ? (
+              (reviewsError && seed === null ? (
+                <p className="text-destructive text-sm">
+                  {tReview("saveError")}
+                </p>
+              ) : seed === null ? (
                 <div className="space-y-4">
                   <Skeleton className="h-8 w-40" />
                   <Skeleton className="h-20 w-full" />
