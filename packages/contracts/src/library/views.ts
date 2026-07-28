@@ -276,7 +276,7 @@ export type CopyInstanceTimelineEntry =
 
 // --- Type-grouped history (richer detail page) -------------------------------------------------
 // The same three history sources as the merged timeline, but grouped by type and carrying the extra
-// per-record facts the detail page renders (rating/note/finish duration). Every member is still
+// per-record facts the detail page renders (finish duration). Every member is still
 // privacy-projected (salt = copyId). Each list is descending by `occurredAt` (newest first).
 
 /** A finished completion of this copy, for the grouped completions list. */
@@ -292,10 +292,16 @@ export interface CopyCompletionEntry {
    * `completionTimeMinutes`, else null. Raw minutes so the UI can humanize (hours/days/weeks).
    */
   finishMinutes: number | null;
-  /** The 1-5 star rating, or null when unrated. */
-  rating: number | null;
-  /** The free-text review, or null when absent. */
-  note: string | null;
+}
+
+/** One star-only review of this physical copy, for the copy page's reviews list. */
+export interface CopyReviewEntry {
+  /** The reviewing member (projected; salt = copyId, like every member on this page). */
+  author: ProjectedMember;
+  /** The 1-5 star rating. */
+  rating: number;
+  /** Epoch millis the review was last updated (the list's descending sort key). */
+  updatedAt: number;
 }
 
 /** A loan of this copy, for the grouped loans list. */
@@ -331,21 +337,23 @@ export interface CopyInstanceStats {
   fastestFinishMinutes: number | null;
   /** Number of loans recorded for this copy. */
   timesLentOut: number;
-  /**
-   * The VIEWER's own average rating (1 decimal) across their rated completions of this copy, or
-   * null when they have none rated.
-   */
-  yourAvgRating: number | null;
+  /** The VIEWER's own `copyReviews` star rating for this copy, or null when they left none. */
+  yourCopyRating: number | null;
 }
 
-/** Community-wide rating aggregate over ALL rated completions of the copy's puzzle DEFINITION. */
+/**
+ * Community rating distribution over the copy's puzzle DEFINITION — the definition's rated
+ * `puzzleReviews` rows (one per member), same numbers as the catalog detail page.
+ */
 export interface CopyInstanceCommunity {
-  /** Average rating to 1 decimal across rated completions (0 when none). */
+  /** Average rating to 1 decimal across rated reviews (0 when none). */
   rating: number;
-  /** Number of rated completions. */
+  /** Number of rated reviews. */
   count: number;
   /** Counts per star bucket, ordered [5★, 4★, 3★, 2★, 1★]. */
   breakdown: [number, number, number, number, number];
+  /** Each bucket as a percentage of `count`, rounded (all 0 when `count` is 0), same order. */
+  percentages: [number, number, number, number, number];
 }
 
 /** A resolved gallery photo for this copy, with the metadata a lightbox needs. */
@@ -382,6 +390,8 @@ export interface CopyPhoto {
 export interface CopyInstanceView {
   /** The copy's `ownedPuzzles` _id. */
   copyId: DocId;
+  /** The copy's puzzle DEFINITION `puzzles` _id (the copy-page -> puzzle-page nav link). */
+  puzzleId: DocId;
   /**
    * The domain CopyId (aggregateId). The copy-edit mutations (changeCondition, updateSharing,
    * updateDetails) and recordCompletion key on this, not the `_id`. Null for legacy rows.
@@ -431,6 +441,8 @@ export interface CopyInstanceView {
   loans: CopyLoanEntry[];
   /** Every ownership transfer of this copy, newest first. Members privacy-projected. */
   transfers: CopyTransferEntry[];
+  /** Star-only reviews of THIS copy, newest-updated first. Authors privacy-projected. */
+  copyReviews: CopyReviewEntry[];
   /** Per-copy aggregate stats. */
   stats: CopyInstanceStats;
   /** Community-wide rating aggregate over the copy's puzzle definition (no identities). */
@@ -486,7 +498,7 @@ export interface PuzzleDefinitionDetailView {
     tags: string[];
     description?: string;
   };
-  /** Community rating distribution over this definition's rated reviews (`puzzleComments` with a rating). */
+  /** Community rating distribution over this definition's rated reviews (`puzzleReviews` with a rating). */
   rating: {
     /** Average rating to 1 decimal across rated reviews (0 when none). */
     rating: number;

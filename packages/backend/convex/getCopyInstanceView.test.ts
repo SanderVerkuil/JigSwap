@@ -458,13 +458,13 @@ describe("getCopyInstanceView rich detail", () => {
     expect(view?.snapshot.difficulty).toBeUndefined();
   });
 
-  test("stats: timesCompleted, fastestFinishMinutes, timesLentOut, yourAvgRating", async () => {
+  test("stats: timesCompleted, fastestFinishMinutes, timesLentOut, yourCopyRating", async () => {
     const t = convexTest(schema, modules);
     const { now, viewer, solver, copy } = await seedCopy(t);
     await setVisibility(t, solver, "public");
 
     await t.run(async (ctx) => {
-      // Viewer completion #1: 5-day solve, rating 4.
+      // Viewer completion #1: 5-day solve. A legacy per-solve rating must NOT feed any stat.
       await ctx.db.insert("completions", {
         userId: viewer,
         ownedPuzzleId: copy,
@@ -476,7 +476,7 @@ describe("getCopyInstanceView rich detail", () => {
         createdAt: now,
         updatedAt: now,
       });
-      // Viewer completion #2: 2-day solve (fastest), rating 5.
+      // Viewer completion #2: 2-day solve (fastest).
       await ctx.db.insert("completions", {
         userId: viewer,
         ownedPuzzleId: copy,
@@ -537,8 +537,40 @@ describe("getCopyInstanceView rich detail", () => {
     // 2-day fastest solve, now reported in raw minutes (2 * 24 * 60).
     expect(view?.stats.fastestFinishMinutes).toBe(2 * 24 * 60);
     expect(view?.stats.timesLentOut).toBe(2);
-    // Viewer's own ratings: 4 and 5 -> avg 4.5.
-    expect(view?.stats.yourAvgRating).toBe(4.5);
+    // No copyReviews row for the viewer -> null, even though legacy per-solve ratings exist.
+    expect(view?.stats.yourCopyRating).toBeNull();
+    // The old per-copy completions average is gone entirely.
+    expect(view?.stats).not.toHaveProperty("yourAvgRating");
+  });
+
+  test("stats.yourCopyRating comes from the viewer's own copyReviews row", async () => {
+    const t = convexTest(schema, modules);
+    const { now, viewer, solver, copy } = await seedCopy(t);
+    await setVisibility(t, solver, "public");
+
+    await t.run(async (ctx) => {
+      // The viewer's own copy review + another member's — only the viewer's feeds the stat.
+      await ctx.db.insert("copyReviews", {
+        userId: viewer,
+        copyId: copy,
+        rating: 4,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("copyReviews", {
+        userId: solver,
+        copyId: copy,
+        rating: 1,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const view = await asViewer(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    expect(view?.stats.yourCopyRating).toBe(4);
   });
 
   test("stored completionTimeMinutes wins over date-diff: same-day row with stored 1440 -> fastest = 1440", async () => {
@@ -634,12 +666,12 @@ describe("getCopyInstanceView rich detail", () => {
     expect(view?.stats.timesCompleted).toBe(0);
     expect(view?.stats.fastestFinishMinutes).toBeNull();
     expect(view?.stats.timesLentOut).toBe(0);
-    expect(view?.stats.yourAvgRating).toBeNull();
+    expect(view?.stats.yourCopyRating).toBeNull();
   });
 
-  test("community aggregation over the puzzle definition: count, avg, breakdown buckets", async () => {
+  test("community equals the definition-level puzzleReviews breakdown; copy completions do NOT move it", async () => {
     const t = convexTest(schema, modules);
-    const { now, viewer, solver, copy } = await seedCopy(t);
+    const { now, viewer, prevOwner, solver, copy } = await seedCopy(t);
     const puzzleId = await t.run(async (ctx) => {
       const c = await ctx.db.get(copy);
       return c!.puzzleId;
@@ -650,32 +682,39 @@ describe("getCopyInstanceView rich detail", () => {
     );
 
     await t.run(async (ctx) => {
-      // Rated completions across users of the PUZZLE DEFINITION (keyed by puzzleId):
+      // puzzleReviews across MEMBERS of the PUZZLE DEFINITION (one per member):
       // ratings 5, 5, 3, 1 -> count 4, sum 14, avg 3.5; breakdown [5★,4★,3★,2★,1★] = [2,0,1,0,1].
       for (const [user, rating] of [
         [viewer, 5],
         [solver, 5],
         [otherUser, 3],
-        [viewer, 1],
+        [prevOwner, 1],
       ] as const) {
-        await ctx.db.insert("completions", {
+        await ctx.db.insert("puzzleReviews", {
           userId: user,
           puzzleId,
-          startDate: now,
-          endDate: now + DAY,
           rating,
-          photos: [],
-          isCompleted: true,
           createdAt: now,
           updatedAt: now,
         });
       }
-      // An unrated puzzle-def completion must be excluded from count/avg/breakdown.
-      await ctx.db.insert("completions", {
-        userId: otherUser,
+      // A text-only (migrated) review with no rating never aggregates.
+      const textOnly = await mkUser(ctx, "clerk_textonly", "Text Only", now);
+      await ctx.db.insert("puzzleReviews", {
+        userId: textOnly,
         puzzleId,
+        text: "unrated migrated review",
+        createdAt: now,
+        updatedAt: now,
+      });
+      // A RATED completion on the copy must NOT move the community aggregate — the breakdown is
+      // sourced from puzzleReviews only.
+      await ctx.db.insert("completions", {
+        userId: viewer,
+        ownedPuzzleId: copy,
         startDate: now,
         endDate: now + DAY,
+        rating: 2,
         photos: [],
         isCompleted: true,
         createdAt: now,
@@ -690,9 +729,10 @@ describe("getCopyInstanceView rich detail", () => {
     expect(view?.community.count).toBe(4);
     expect(view?.community.rating).toBe(3.5);
     expect(view?.community.breakdown).toEqual([2, 0, 1, 0, 1]);
+    expect(view?.community.percentages).toEqual([50, 0, 25, 0, 25]);
   });
 
-  test("community is 0/empty when the puzzle has no rated completions", async () => {
+  test("community is 0/empty when the puzzle has no rated reviews", async () => {
     const t = convexTest(schema, modules);
     const { copy } = await seedCopy(t);
     const view = await asViewer(t).query(
@@ -702,6 +742,7 @@ describe("getCopyInstanceView rich detail", () => {
     expect(view?.community.count).toBe(0);
     expect(view?.community.rating).toBe(0);
     expect(view?.community.breakdown).toEqual([0, 0, 0, 0, 0]);
+    expect(view?.community.percentages).toEqual([0, 0, 0, 0, 0]);
   });
 
   test("gallery resolves seeded ownedPuzzleImages to per-photo metadata", async () => {
@@ -866,12 +907,13 @@ describe("getCopyInstanceView rich detail", () => {
     expect(view?.snapshot.coverImageId).toBeNull();
   });
 
-  test("grouped completion entries carry rating, note and isYou", async () => {
+  test("grouped completion entries carry isYou/finishMinutes and expose NO rating/note keys", async () => {
     const t = convexTest(schema, modules);
     const { now, viewer, solver, copy } = await seedCopy(t);
     await setVisibility(t, solver, "public");
 
     await t.run(async (ctx) => {
+      // A legacy per-solve rating/review on the row must NOT surface — per-solve reviews are gone.
       await ctx.db.insert("completions", {
         userId: viewer,
         ownedPuzzleId: copy,
@@ -916,12 +958,153 @@ describe("getCopyInstanceView rich detail", () => {
     const viewerEntry = view?.completions[1];
     expect(solverEntry?.isYou).toBe(false);
     expect(solverEntry?.finishMinutes).toBe(7 * 24 * 60);
-    expect(solverEntry?.rating).toBeNull();
-    expect(solverEntry?.note).toBeNull();
 
     expect(viewerEntry?.isYou).toBe(true);
     expect(viewerEntry?.finishMinutes).toBe(3 * 24 * 60);
-    expect(viewerEntry?.rating).toBe(5);
-    expect(viewerEntry?.note).toBe("Loved it");
+
+    // Per-solve reviews are gone: the entries carry no rating/note keys at all.
+    for (const entry of view?.completions ?? []) {
+      expect(entry).not.toHaveProperty("rating");
+      expect(entry).not.toHaveProperty("note");
+    }
+    // "Loved it" never leaves the server anywhere in the payload.
+    expect(JSON.stringify(view)).not.toContain("Loved it");
+  });
+
+  test("view exposes the copy's puzzleId for the puzzle-page nav link", async () => {
+    const t = convexTest(schema, modules);
+    const { copy } = await seedCopy(t);
+    const puzzleId = await t.run(async (ctx) => {
+      const c = await ctx.db.get(copy);
+      return c!.puzzleId;
+    });
+
+    const view = await asViewer(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    expect(view?.puzzleId).toBe(puzzleId);
+  });
+});
+
+describe("getCopyInstanceView copyReviews", () => {
+  test("rows come back {author, rating, updatedAt} sorted desc by updatedAt", async () => {
+    const t = convexTest(schema, modules);
+    const { now, viewer, solver, copy } = await seedCopy(t);
+    await setVisibility(t, solver, "public");
+
+    await t.run(async (ctx) => {
+      // Owner's review is OLDER (created first, updated earlier) than the solver's; creation-time
+      // index order (viewer first) differs from the required updatedAt order (solver first).
+      await ctx.db.insert("copyReviews", {
+        userId: viewer,
+        copyId: copy,
+        rating: 5,
+        createdAt: now,
+        updatedAt: now + 10,
+      });
+      await ctx.db.insert("copyReviews", {
+        userId: solver,
+        copyId: copy,
+        rating: 3,
+        createdAt: now + 1,
+        updatedAt: now + 30,
+      });
+    });
+
+    const view = await asViewer(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    expect(view?.copyReviews).toHaveLength(2);
+    expect(view?.copyReviews[0]).toEqual({
+      author: {
+        anonymous: false,
+        member: expect.objectContaining({ name: "Solver" }),
+      },
+      rating: 3,
+      updatedAt: now + 30,
+    });
+    expect(view?.copyReviews[1]).toEqual({
+      author: {
+        anonymous: false,
+        member: expect.objectContaining({ _id: viewer, name: "Viewer" }),
+      },
+      rating: 5,
+      updatedAt: now + 10,
+    });
+  });
+
+  test("a HIDDEN author is anonymised exactly like the timeline (same memoised anonRef)", async () => {
+    const t = convexTest(schema, modules);
+    const { now, prevOwner, copy } = await seedCopy(t);
+    await setVisibility(t, prevOwner, "private");
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("copyReviews", {
+        userId: prevOwner,
+        copyId: copy,
+        rating: 2,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const view = await asViewer(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    const review = view?.copyReviews[0] as unknown as {
+      author: { anonymous: boolean; anonRef?: string };
+      rating: number;
+    };
+    expect(review.author.anonymous).toBe(true);
+    expect(review.author.anonRef).toEqual(expect.any(String));
+    // The projected object has exactly the two anon keys, nothing else.
+    expect(Object.keys(review.author).sort()).toEqual(["anonRef", "anonymous"]);
+    // Same memo + same salt as the timeline: prevOwner also appears in the custody transfer, and
+    // both anonymous projections must carry the IDENTICAL anonRef.
+    const transfer = findTransfer(view as View) as {
+      from: { anonymous: boolean; anonRef?: string };
+    };
+    expect(transfer.from.anonymous).toBe(true);
+    expect(review.author.anonRef).toBe(transfer.from.anonRef);
+
+    // Adversarial: the hidden author's identity never leaks anywhere in the payload.
+    const serialized = JSON.stringify(view);
+    expect(serialized).not.toContain(prevOwner as string);
+    expect(serialized).not.toContain("Prev Owner");
+    expect(serialized).not.toContain("clerk_prev");
+  });
+
+  test("a VANISHED author (deleted users row) gets the anonymous fallback; the list still returns", async () => {
+    const t = convexTest(schema, modules);
+    const { now, solver, copy } = await seedCopy(t);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("copyReviews", {
+        userId: solver,
+        copyId: copy,
+        rating: 4,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.delete(solver);
+    });
+
+    const view = await asViewer(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    expect(view?.copyReviews).toHaveLength(1);
+    const review = view?.copyReviews[0] as unknown as {
+      author: { anonymous: boolean; anonRef?: string };
+      rating: number;
+      updatedAt: number;
+    };
+    expect(review.author.anonymous).toBe(true);
+    expect(review.author.anonRef).toEqual(expect.any(String));
+    expect(review.rating).toBe(4);
+    expect(review.updatedAt).toBe(now);
   });
 });
