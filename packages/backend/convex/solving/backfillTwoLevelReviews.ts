@@ -11,6 +11,14 @@ import { internalMutation } from "../_generated/server";
 
 type Candidate = { ts: number; rating?: number; text?: string };
 
+// Match the domain's text normalisation (upsert-puzzle-review.ts): trim, and treat empty/
+// whitespace-only text as absent — untrimmed migrated text would defeat the dialogs' dirty
+// tracking, which compares trimmed form input against the stored value.
+const normalizeText = (text?: string): string | undefined => {
+  const trimmed = text?.trim();
+  return trimmed && trimmed.length > 0 ? trimmed : undefined;
+};
+
 // Group `candidate` under `key`, tracking the pair's identifying ids alongside.
 function addCandidate<K>(
   map: Map<string, { ids: K; candidates: Candidate[] }>,
@@ -46,16 +54,24 @@ export const backfillTwoLevelReviews = internalMutation({
         puzzlePairs,
         `${row.userId}|${row.puzzleId}`,
         { userId: row.userId, puzzleId: row.puzzleId },
-        { ts: row.updatedAt, rating: row.rating, text: row.review },
+        {
+          ts: row.updatedAt,
+          rating: row.rating,
+          text: normalizeText(row.review),
+        },
       );
     }
     for (const row of comments) {
       if (row.copyId !== undefined) continue; // definition-scoped only
+      const text = normalizeText(row.text);
+      // A comment with neither a rating nor (normalised) text carries nothing — no candidate,
+      // so a pair with only such comments gets no review row. (Cleanup still deletes it below.)
+      if (row.rating == null && text === undefined) continue;
       addCandidate(
         puzzlePairs,
         `${row.authorId}|${row.puzzleId}`,
         { userId: row.authorId, puzzleId: row.puzzleId },
-        { ts: row._creationTime, rating: row.rating, text: row.text },
+        { ts: row._creationTime, rating: row.rating, text },
       );
     }
 

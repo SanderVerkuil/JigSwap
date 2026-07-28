@@ -140,6 +140,26 @@ describe("solving.submitReviews — puzzle level", () => {
     expect(rows[0].updatedAt).toBeGreaterThan(past); // bumped
   });
 
+  test("cross-mutation cardinality: postPuzzleReview then submitReviews keeps ONE row with the later values", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, puzzleId } = await seed(t);
+
+    await asAlice(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
+      puzzleId,
+      rating: 5,
+      text: "From the catalog form",
+    });
+    await asAlice(t).mutation(api.solving.submitReviews.submitReviews, {
+      puzzleId,
+      puzzle: { rating: 2, text: "From the review dialog" },
+    });
+
+    const rows = await puzzleReviewsFor(t, alice, puzzleId);
+    expect(rows).toHaveLength(1); // both mutations upsert the same (member, puzzle) row
+    expect(rows[0].rating).toBe(2);
+    expect(rows[0].text).toBe("From the review dialog");
+  });
+
   test("neither puzzle nor copy payload => ConvexError", async () => {
     const t = convexTest(schema, modules);
     const { puzzleId } = await seed(t);
@@ -198,6 +218,25 @@ describe("solving.submitReviews — copy level", () => {
         copy: { rating: 4 },
       }),
     ).rejects.toBeInstanceOf(ConvexError);
+    expect(await copyReviewsFor(t, bob, ownedPuzzleId)).toHaveLength(0);
+  });
+
+  test("rollback atomicity: a rejected copy level rolls back the puzzle level in the same call", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, puzzleId, ownedPuzzleId } = await seed(t);
+
+    // Bob is neither the owner nor a completion-holder: the copy level fails permission AFTER
+    // the puzzle level was written — the whole mutation (one Convex transaction) must roll back.
+    await expect(
+      asBob(t).mutation(api.solving.submitReviews.submitReviews, {
+        puzzleId,
+        copyId: ownedPuzzleId,
+        puzzle: { rating: 5, text: "Should not survive" },
+        copy: { rating: 4 },
+      }),
+    ).rejects.toBeInstanceOf(ConvexError);
+
+    expect(await puzzleReviewsFor(t, bob, puzzleId)).toHaveLength(0);
     expect(await copyReviewsFor(t, bob, ownedPuzzleId)).toHaveLength(0);
   });
 

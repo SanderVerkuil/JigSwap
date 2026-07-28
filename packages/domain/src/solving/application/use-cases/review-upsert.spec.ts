@@ -53,13 +53,13 @@ describe("Review upsert use cases", () => {
       puzzleReviews = new RecordingPuzzleReviewRepository();
     });
 
-    it("upserts a review and publishes PuzzleReviewUpserted", async () => {
+    it("upserts a review (text trimmed before store) and publishes PuzzleReviewUpserted", async () => {
       const upsert = makeUpsertPuzzleReview({ puzzleReviews, events, clock });
       const result = await upsert({
         actingMemberId: ALICE,
         puzzleId: PUZZLE,
         rating: 4,
-        text: "Great fit",
+        text: "  Great fit  ",
       });
       expect(result.isOk).toBe(true);
       expect(puzzleReviews.upserts).toEqual([

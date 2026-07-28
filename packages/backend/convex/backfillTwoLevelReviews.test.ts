@@ -295,6 +295,42 @@ describe("solving/backfillTwoLevelReviews — puzzle level", () => {
     expect(rows[0].text).toBe("Just words");
   });
 
+  test("(l) legacy comment text is trimmed before store (matches the domain's normalizeText)", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, puzzleId } = await seed(t);
+    await insertComment(t, {
+      puzzleId,
+      authorId: alice,
+      text: "  loved it  ",
+      rating: 4,
+    });
+
+    const summary = await run(t);
+    expect(summary.puzzleReviewsCreated).toBe(1);
+
+    const rows = await puzzleReviewsFor(t, alice, puzzleId);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].rating).toBe(4);
+    expect(rows[0].text).toBe("loved it");
+  });
+
+  test("(m) a whitespace-only-text comment alone carries nothing => NO row created", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, puzzleId } = await seed(t);
+    await insertComment(t, {
+      puzzleId,
+      authorId: alice,
+      text: "   ",
+      // no rating — whitespace-only text normalises to "no text", so nothing to migrate
+    });
+
+    const summary = await run(t);
+    expect(summary.puzzleReviewsCreated).toBe(0);
+    expect(summary.definitionCommentsDeleted).toBe(1); // cleanup still removes it
+
+    expect(await puzzleReviewsFor(t, alice, puzzleId)).toHaveLength(0);
+  });
+
   test("(h) completion without puzzleId is skipped at puzzle level but counted at copy level", async () => {
     const t = convexTest(schema, modules);
     const { alice, puzzleId, copyId } = await seed(t);
@@ -546,6 +582,37 @@ describe("solving/backfillTwoLevelReviews — cleanup & idempotency", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].rating).toBe(1);
     expect(rows[0].text).toBe("Written by the live app");
+    expect(rows[0].createdAt).toBe(appTs);
+    expect(rows[0].updatedAt).toBe(appTs);
+  });
+
+  test("(j) a pre-existing copyReviews row is NOT overwritten (live-app upserts win)", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, copyId } = await seed(t);
+    const appTs = Date.now() - 1_000;
+    await t.run(async (ctx) => {
+      await ctx.db.insert("copyReviews", {
+        userId: alice,
+        copyId,
+        rating: 1,
+        createdAt: appTs,
+        updatedAt: appTs,
+      });
+    });
+    await insertCompletion(t, {
+      userId: alice,
+      ownedPuzzleId: copyId,
+      rating: 5,
+      updatedAt: Date.now(),
+    });
+
+    const summary = await run(t);
+    expect(summary.copyReviewsCreated).toBe(0);
+    expect(summary.completionsCleaned).toBe(1); // legacy columns still cleaned
+
+    const rows = await copyReviewsFor(t, alice, copyId);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].rating).toBe(1);
     expect(rows[0].createdAt).toBe(appTs);
     expect(rows[0].updatedAt).toBe(appTs);
   });
