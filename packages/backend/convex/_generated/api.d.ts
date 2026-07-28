@@ -338,6 +338,7 @@ import type * as solving_editCompletion from "../solving/editCompletion.js";
 import type * as solving_errors from "../solving/errors.js";
 import type * as solving_finishCompletion from "../solving/finishCompletion.js";
 import type * as solving_getCompletionHistory from "../solving/getCompletionHistory.js";
+import type * as solving_getMyReviews from "../solving/getMyReviews.js";
 import type * as solving_listMyCompletions from "../solving/listMyCompletions.js";
 import type * as solving_listMyGoals from "../solving/listMyGoals.js";
 import type * as solving_listMyInProgress from "../solving/listMyInProgress.js";
@@ -346,6 +347,7 @@ import type * as solving_recordCompletion from "../solving/recordCompletion.js";
 import type * as solving_setShareInProgress from "../solving/setShareInProgress.js";
 import type * as solving_setTrackCompletionDuration from "../solving/setTrackCompletionDuration.js";
 import type * as solving_startCompletion from "../solving/startCompletion.js";
+import type * as solving_submitReviews from "../solving/submitReviews.js";
 import type * as users from "../users.js";
 
 import type {
@@ -685,6 +687,7 @@ declare const fullApi: ApiFromModules<{
   "solving/errors": typeof solving_errors;
   "solving/finishCompletion": typeof solving_finishCompletion;
   "solving/getCompletionHistory": typeof solving_getCompletionHistory;
+  "solving/getMyReviews": typeof solving_getMyReviews;
   "solving/listMyCompletions": typeof solving_listMyCompletions;
   "solving/listMyGoals": typeof solving_listMyGoals;
   "solving/listMyInProgress": typeof solving_listMyInProgress;
@@ -693,6 +696,7 @@ declare const fullApi: ApiFromModules<{
   "solving/setShareInProgress": typeof solving_setShareInProgress;
   "solving/setTrackCompletionDuration": typeof solving_setTrackCompletionDuration;
   "solving/startCompletion": typeof solving_startCompletion;
+  "solving/submitReviews": typeof solving_submitReviews;
   users: typeof users;
 }>;
 

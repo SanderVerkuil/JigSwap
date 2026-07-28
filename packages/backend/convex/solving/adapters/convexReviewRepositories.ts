@@ -1,7 +1,5 @@
 import type {
-  CopyId,
   CopyReviewRepository,
-  PuzzleDefinitionId,
   PuzzleReviewRepository,
 } from "@jigswap/domain";
 import type { Id } from "../../_generated/dataModel";
@@ -9,47 +7,18 @@ import type { MutationCtx } from "../../_generated/server";
 
 // Driven adapters for the two-level review model over `ctx.db`. Upsert-by-unique-key: the
 // one-row-per-(member, target) cardinality the domain ports promise lives HERE, via the
-// `by_user_puzzle`/`by_user_copy` indexes. The domain hands branded aggregateId strings; the
-// FK columns are `v.id(...)`, so the adapters resolve real document ids at the boundary
-// (mirroring convexCompletionRepository; legacy rows fall back to treating the value as a
-// raw `_id`).
-
-// Resolve the real `puzzles._id` for a Catalog PuzzleDefinitionId aggregateId.
-const resolvePuzzleId = async (
-  ctx: MutationCtx,
-  puzzleDefinitionId: PuzzleDefinitionId,
-): Promise<Id<"puzzles">> => {
-  const byAggregateId = await ctx.db
-    .query("puzzles")
-    .withIndex("by_aggregate_id", (q) =>
-      q.eq("aggregateId", puzzleDefinitionId as string),
-    )
-    .unique();
-  return byAggregateId
-    ? byAggregateId._id
-    : (puzzleDefinitionId as unknown as Id<"puzzles">);
-};
-
-// Resolve the real `ownedPuzzles._id` for a Library CopyId aggregateId.
-const resolveCopyId = async (
-  ctx: MutationCtx,
-  copyId: CopyId,
-): Promise<Id<"ownedPuzzles">> => {
-  const byAggregateId = await ctx.db
-    .query("ownedPuzzles")
-    .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", copyId as string))
-    .unique();
-  return byAggregateId
-    ? byAggregateId._id
-    : (copyId as unknown as Id<"ownedPuzzles">);
-};
+// `by_user_puzzle`/`by_user_copy` indexes. The branded `PuzzleDefinitionId`/`CopyId` at this
+// port CARRY Convex doc `_id`s: composition roots brand `v.id(...)` args / row FK values via
+// `toPuzzleDefinitionId`/`toCopyId` (the postPuzzleReview.ts idiom), so the adapters just cast
+// back — no resolution. This mirrors the social-context branding, NOT
+// convexCompletionRepository (which resolves aggregateIds).
 
 export const convexPuzzleReviewRepository = (
   ctx: MutationCtx,
 ): PuzzleReviewRepository => ({
   async upsert(review): Promise<void> {
     const userId = review.userId as unknown as Id<"users">;
-    const puzzleId = await resolvePuzzleId(ctx, review.puzzleId);
+    const puzzleId = review.puzzleId as unknown as Id<"puzzles">;
     const now = review.now.getTime();
     const existing = await ctx.db
       .query("puzzleReviews")
@@ -81,7 +50,7 @@ export const convexCopyReviewRepository = (
 ): CopyReviewRepository => ({
   async upsert(review): Promise<void> {
     const userId = review.userId as unknown as Id<"users">;
-    const copyId = await resolveCopyId(ctx, review.copyId);
+    const copyId = review.copyId as unknown as Id<"ownedPuzzles">;
     const now = review.now.getTime();
     const existing = await ctx.db
       .query("copyReviews")

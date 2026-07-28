@@ -216,6 +216,9 @@ export const gateway = {
     setShareInProgress: api.solving.setShareInProgress.setShareInProgress,
     setTrackCompletionDuration:
       api.solving.setTrackCompletionDuration.setTrackCompletionDuration,
+    // Two-level review form: upsert puzzle and/or copy review in one call; read own rows back.
+    submitReviews: api.solving.submitReviews.submitReviews,
+    getMyReviews: api.solving.getMyReviews.getMyReviews,
   },
 
   // Federated user settings: a read-composition over each context's settings section. Writes are
