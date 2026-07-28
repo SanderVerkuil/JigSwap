@@ -18,7 +18,8 @@ type CompletionLink = {
 };
 
 // Read side for the solving history view: the acting member's own completions, newest first.
-// Auth-gated; photo storage ids are resolved to URLs like the other queries that surface images.
+// Auth-gated; photo storage ids are resolved to display items (url + pending flag) via
+// resolvePhotoItems.
 // Each row is also enriched with a navigation `link` and a `thumbnailUrl`, resolved once per
 // DISTINCT copy/puzzle (many completions share one) since this is a self-facing read only.
 export const listMyCompletions = query({
@@ -122,10 +123,7 @@ export const listMyCompletions = query({
 
         return {
           ...row,
-          photoUrls: await resolvePhotoUrls(
-            ctx,
-            await excludeRejectedPhotos(ctx, row),
-          ),
+          photoItems: await resolvePhotoItems(ctx, row),
           thumbnailUrl,
           link,
         };
@@ -134,31 +132,39 @@ export const listMyCompletions = query({
   },
 });
 
-// Drop photos whose moderation sidecar says "rejected" — and ONLY those. Pending stays visible
-// (these reads are self-facing: the viewer is the uploader, matching the copy-gallery precedent)
-// and an ABSENT sidecar is a legacy photo, treated as approved. Only domain rows (aggregateId
-// present) can have sidecars, so legacy rows skip the join. Shared with getCompletionHistory.
-export const excludeRejectedPhotos = async (
+// A completion photo ready for display: the served URL plus whether moderation is still pending.
+export type PhotoItem = { url: string; pending: boolean };
+
+// Resolve a completion's photos to displayable items. Photos whose moderation sidecar says
+// "rejected" are dropped — and ONLY those. Pending stays visible but flagged `pending: true`
+// (these reads are self-facing: the viewer is the uploader, matching the copy-gallery precedent);
+// an ABSENT sidecar is a legacy photo, treated as approved (`pending: false`). Only domain rows
+// (aggregateId present) can have sidecars, so legacy rows skip the join. Storage ids that no
+// longer resolve to a URL are dropped. Shared with getCompletionHistory.
+export const resolvePhotoItems = async (
   ctx: QueryCtx,
   row: Pick<Doc<"completions">, "aggregateId" | "photos">,
-): Promise<Id<"_storage">[]> => {
+): Promise<PhotoItem[]> => {
+  if (row.photos.length === 0) return [];
   const completionId = row.aggregateId;
-  if (!completionId || row.photos.length === 0) return [...row.photos];
-  const sidecars = await ctx.db
-    .query("completionImages")
-    .withIndex("by_completion", (q) => q.eq("completionId", completionId))
-    .collect();
-  const statusByFile = new Map(
-    sidecars.map((s) => [s.fileId as string, s.moderationStatus]),
+  const statusByFile = new Map<string, string | undefined>();
+  if (completionId) {
+    const sidecars = await ctx.db
+      .query("completionImages")
+      .withIndex("by_completion", (q) => q.eq("completionId", completionId))
+      .collect();
+    for (const s of sidecars) {
+      statusByFile.set(s.fileId as string, s.moderationStatus);
+    }
+  }
+  const items = await Promise.all(
+    row.photos.map(async (fileId): Promise<PhotoItem | null> => {
+      const status = statusByFile.get(fileId as string);
+      if (status === "rejected") return null;
+      const url = await ctx.storage.getUrl(fileId);
+      if (!url) return null;
+      return { url, pending: status === "pending" };
+    }),
   );
-  return row.photos.filter(
-    (fileId) => statusByFile.get(fileId as string) !== "rejected",
-  );
+  return items.filter((item): item is PhotoItem => item !== null);
 };
-
-// Resolve each stored `_storage` id to a served URL (null entries are dropped by the UI).
-const resolvePhotoUrls = (
-  ctx: { storage: { getUrl(id: Id<"_storage">): Promise<string | null> } },
-  photos: readonly Id<"_storage">[],
-): Promise<(string | null)[]> =>
-  Promise.all(photos.map((fileId) => ctx.storage.getUrl(fileId)));

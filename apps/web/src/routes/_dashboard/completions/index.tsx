@@ -346,6 +346,58 @@ function CompletionsPage() {
                   : ""}
             </p>
           )}
+          {completion.photoItems && completion.photoItems.length > 0 && (
+            <TooltipProvider delayDuration={200}>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {completion.photoItems.map((photo, photoIndex) => (
+                  <Tooltip key={`${photo.url}-${photoIndex}`}>
+                    <TooltipTrigger asChild>
+                      {/* Not a link (no nav target) — a focusable no-op button so keyboard
+                          users can surface the tooltip; z-10 lifts it above the stretched
+                          row link. */}
+                      <button
+                        type="button"
+                        aria-label={
+                          photo.pending
+                            ? `${title} — ${t("pendingReview")}`
+                            : title
+                        }
+                        className="relative z-10 shrink-0 rounded-md"
+                      >
+                        <Image
+                          src={photo.url}
+                          alt=""
+                          width={44}
+                          height={44}
+                          className="h-11 w-11 rounded-md border bg-muted object-contain"
+                        />
+                        {photo.pending && (
+                          <Badge
+                            variant="secondary"
+                            className="pointer-events-none absolute inset-x-0 bottom-0 justify-center rounded-none rounded-b-md px-0.5 py-0 text-[10px]"
+                          >
+                            {t("pendingReview")}
+                          </Badge>
+                        )}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="p-1.5">
+                      <img
+                        src={photo.url}
+                        alt=""
+                        className="max-h-[280px] max-w-[260px] rounded-md object-contain"
+                      />
+                      {photo.pending && (
+                        <p className="mt-1 text-center text-xs">
+                          {t("pendingReview")}
+                        </p>
+                      )}
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+              </div>
+            </TooltipProvider>
+          )}
         </div>
 
         {completion.rating !== undefined && (

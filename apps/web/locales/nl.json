@@ -1803,6 +1803,7 @@
       "solvedBorrowedCopy": "Geleend exemplaar opgelost",
       "solvingOwnCopy": "Bezig met eigen exemplaar",
       "solvingBorrowedCopy": "Bezig met geleend exemplaar",
+      "pendingReview": "Wacht op controle",
       "piecesComplete": "was compleet",
       "piecesMissing": "miste stukjes",
       "new": {

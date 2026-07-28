@@ -337,36 +337,36 @@ describe("rejected-photo read filtering", () => {
     return {
       copyAggregateId,
       completionId,
-      expectedUrls: [
-        await urlOf(approved),
-        await urlOf(pending),
-        await urlOf(legacy),
+      expectedItems: [
+        { url: await urlOf(approved), pending: false },
+        { url: await urlOf(pending), pending: true },
+        { url: await urlOf(legacy), pending: false },
       ],
     };
   };
 
-  test("listMyCompletions excludes rejected only — pending and legacy-absent included", async () => {
+  test("listMyCompletions excludes rejected only — pending flagged, legacy-absent included", async () => {
     const t = convexTest(schema, modules);
-    const { expectedUrls } = await seedStatuses(t);
+    const { expectedItems } = await seedStatuses(t);
 
     const mine = await asAlice(t).query(
       api.solving.listMyCompletions.listMyCompletions,
       {},
     );
     expect(mine).toHaveLength(1);
-    expect(mine[0].photoUrls).toEqual(expectedUrls);
+    expect(mine[0].photoItems).toEqual(expectedItems);
   });
 
-  test("getCompletionHistory excludes rejected only — pending and legacy-absent included", async () => {
+  test("getCompletionHistory excludes rejected only — pending flagged, legacy-absent included", async () => {
     const t = convexTest(schema, modules);
-    const { copyAggregateId, expectedUrls } = await seedStatuses(t);
+    const { copyAggregateId, expectedItems } = await seedStatuses(t);
 
     const history = await asAlice(t).query(
       api.solving.getCompletionHistory.getCompletionHistory,
       { copyId: copyAggregateId },
     );
     expect(history).toHaveLength(1);
-    expect(history[0].photoUrls).toEqual(expectedUrls);
+    expect(history[0].photoItems).toEqual(expectedItems);
   });
 
   test("a legacy completion without aggregateId keeps all photos", async () => {
@@ -391,7 +391,8 @@ describe("rejected-photo read filtering", () => {
       {},
     );
     expect(mine).toHaveLength(1);
-    expect(mine[0].photoUrls).toHaveLength(1);
-    expect(mine[0].photoUrls[0]).not.toBeNull();
+    expect(mine[0].photoItems).toHaveLength(1);
+    expect(mine[0].photoItems[0].url).toBeTruthy();
+    expect(mine[0].photoItems[0].pending).toBe(false);
   });
 });

@@ -1803,6 +1803,7 @@
       "solvedBorrowedCopy": "Solved a borrowed copy",
       "solvingOwnCopy": "Solving your copy",
       "solvingBorrowedCopy": "Solving a borrowed copy",
+      "pendingReview": "Pending review",
       "piecesComplete": "was complete",
       "piecesMissing": "had missing pieces",
       "new": {
