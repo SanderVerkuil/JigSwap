@@ -77,7 +77,6 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
       startDate: now - 2 * HOUR,
       endDate: now - HOUR,
       completionTimeMinutes: 60,
-      rating: 4,
       photos: [],
       isCompleted: true,
       createdAt: now,
@@ -89,9 +88,23 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
       startDate: now - 3 * HOUR,
       endDate: now - HOUR,
       completionTimeMinutes: 120,
-      rating: 2,
       photos: [],
       isCompleted: true,
+      createdAt: now,
+      updatedAt: now,
+    });
+    // Two-level review model: averageRatingGiven comes from puzzleReviews rows, not completions.
+    await ctx.db.insert("puzzleReviews", {
+      userId: alice,
+      puzzleId: puzzleA,
+      rating: 4,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await ctx.db.insert("puzzleReviews", {
+      userId: alice,
+      puzzleId: puzzleB,
+      rating: 2,
       createdAt: now,
       updatedAt: now,
     });

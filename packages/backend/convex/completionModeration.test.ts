@@ -66,11 +66,13 @@ const recordForAlice = async (
   t: ReturnType<typeof convexTest>,
   copyAggregateId: string,
 ) =>
-  (await asAlice(t).mutation(api.solving.recordCompletion.recordCompletion, {
-    copyId: copyAggregateId,
-    startDate: Date.now() - 2 * HOUR,
-    endDate: Date.now() - HOUR,
-  })) as string;
+  (
+    await asAlice(t).mutation(api.solving.recordCompletion.recordCompletion, {
+      copyId: copyAggregateId,
+      startDate: Date.now() - 2 * HOUR,
+      endDate: Date.now() - HOUR,
+    })
+  ).completionId;
 
 // Unique content per blob — convex-test content-addresses storage, so identical bytes would
 // yield identical URLs and blunt the "which photo survived" assertions below.

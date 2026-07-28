@@ -107,6 +107,17 @@ export const recordCompletion = mutation({
       );
     }
 
-    return completionId;
+    // `completionId` stays the domain AGGREGATE id (photo attach and downstream flows key on it
+    // via by_aggregate_id); `puzzleId`/`copyId` are the resolved Convex doc `_id`s from the
+    // persisted row, for callers that need the review targets.
+    const row = await ctx.db
+      .query("completions")
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", completionId))
+      .unique();
+    return {
+      completionId,
+      puzzleId: row?.puzzleId ?? null,
+      copyId: row?.ownedPuzzleId ?? null,
+    };
   },
 });

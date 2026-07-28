@@ -208,7 +208,6 @@ export const gateway = {
     attachCompletionPhotos:
       api.solving.attachCompletionPhotos.attachCompletionPhotos,
     deleteCompletion: api.solving.deleteCompletion.deleteCompletion,
-    reviewPuzzle: api.solving.reviewPuzzle.reviewPuzzle,
     createGoal: api.solving.createGoal.createGoal,
     myCompletions: api.solving.listMyCompletions.listMyCompletions,
     completionHistory: api.solving.getCompletionHistory.getCompletionHistory,

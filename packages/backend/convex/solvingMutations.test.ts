@@ -137,26 +137,28 @@ const recordForAlice = async (
   copyAggregateId: string,
   overrides: Record<string, unknown> = {},
 ) =>
-  (await asAlice(t).mutation(api.solving.recordCompletion.recordCompletion, {
-    copyId: copyAggregateId,
-    startDate: Date.now() - 2 * HOUR,
-    endDate: Date.now() - HOUR,
-    ...overrides,
-  })) as string;
+  (
+    await asAlice(t).mutation(api.solving.recordCompletion.recordCompletion, {
+      copyId: copyAggregateId,
+      startDate: Date.now() - 2 * HOUR,
+      endDate: Date.now() - HOUR,
+      ...overrides,
+    })
+  ).completionId;
 
 describe("solving.recordCompletion — borrowing, snapshot, pieces", () => {
   test("the current holder (borrower) can log a solve on a copy they do not own", async () => {
     const t = convexTest(schema, modules);
     const { bob, copyAggregateId, ownedPuzzleId } = await seed(t);
     await lendToBob(t, ownedPuzzleId, bob);
-    const completionId = (await asBob(t).mutation(
+    const { completionId } = await asBob(t).mutation(
       api.solving.recordCompletion.recordCompletion,
       {
         copyId: copyAggregateId,
         startDate: Date.now() - 2 * HOUR,
         endDate: Date.now() - HOUR,
       },
-    )) as string;
+    );
     const row = await completionRow(t, completionId);
     expect(row?.userId).toBe(bob);
     expect(row?.ownedPuzzleId).toBe(ownedPuzzleId);
@@ -214,10 +216,10 @@ describe("solving.recordCompletion — borrowing, snapshot, pieces", () => {
     const t = convexTest(schema, modules);
     const { copyAggregateId, puzzleId } = await seed(t);
     // Start (no endDate, no puzzleDefinitionId): the composition root denormalizes puzzleId + snapshot.
-    const completionId = (await asAlice(t).mutation(
+    const { completionId } = await asAlice(t).mutation(
       api.solving.recordCompletion.recordCompletion,
       { copyId: copyAggregateId, startDate: Date.now() - HOUR },
-    )) as string;
+    );
     expect((await completionRow(t, completionId))?.puzzleId).toBe(puzzleId);
 
     // Finishing goes through the repository save() again — the anchor + snapshot must survive.
@@ -245,11 +247,22 @@ describe("solving.recordCompletion", () => {
     ).rejects.toThrow("Unauthenticated");
   });
 
-  test("records a finished completion: owner from auth, FK resolved, returns aggregateId", async () => {
+  test("records a finished completion: owner from auth, FK resolved, returns aggregateId + doc ids", async () => {
     const t = convexTest(schema, modules);
-    const { alice, copyAggregateId, ownedPuzzleId } = await seed(t);
-    const completionId = await recordForAlice(t, copyAggregateId);
-    expect(typeof completionId).toBe("string");
+    const { alice, copyAggregateId, puzzleId, ownedPuzzleId } = await seed(t);
+    const result = await asAlice(t).mutation(
+      api.solving.recordCompletion.recordCompletion,
+      {
+        copyId: copyAggregateId,
+        startDate: Date.now() - 2 * HOUR,
+        endDate: Date.now() - HOUR,
+      },
+    );
+    // completionId stays the domain AGGREGATE id; puzzleId/copyId are the resolved doc `_id`s.
+    expect(typeof result.completionId).toBe("string");
+    expect(result.puzzleId).toBe(puzzleId);
+    expect(result.copyId).toBe(ownedPuzzleId);
+    const completionId = result.completionId;
 
     const row = await completionRow(t, completionId);
     expect(row?.userId).toBe(alice); // from auth, not args
@@ -313,15 +326,18 @@ describe("solving.recordCompletion", () => {
   test("records against a puzzle definition, resolving the puzzles._id FK", async () => {
     const t = convexTest(schema, modules);
     const { puzzleAggregateId, puzzleId } = await seed(t);
-    const completionId = (await asAlice(t).mutation(
+    const result = await asAlice(t).mutation(
       api.solving.recordCompletion.recordCompletion,
       {
         puzzleDefinitionId: puzzleAggregateId,
         startDate: Date.now() - 2 * HOUR,
         endDate: Date.now() - HOUR,
       },
-    )) as string;
-    const row = await completionRow(t, completionId);
+    );
+    // Definition-only record: puzzleId doc id is returned, copyId is null.
+    expect(result.puzzleId).toBe(puzzleId);
+    expect(result.copyId).toBeNull();
+    const row = await completionRow(t, result.completionId);
     expect(row?.puzzleId).toBe(puzzleId);
   });
 
@@ -341,10 +357,10 @@ describe("solving.recordCompletion", () => {
   test("starting (no endDate) leaves the completion in progress", async () => {
     const t = convexTest(schema, modules);
     const { copyAggregateId } = await seed(t);
-    const completionId = (await asAlice(t).mutation(
+    const { completionId } = await asAlice(t).mutation(
       api.solving.recordCompletion.recordCompletion,
       { copyId: copyAggregateId, startDate: Date.now() },
-    )) as string;
+    );
     const row = await completionRow(t, completionId);
     expect(row?.isCompleted).toBe(false);
     expect(row?.endDate).toBeUndefined();
@@ -354,10 +370,10 @@ describe("solving.recordCompletion", () => {
     const t = convexTest(schema, modules);
     const { copyAggregateId } = await seed(t);
     const today = Date.now();
-    const completionId = (await asAlice(t).mutation(
+    const { completionId } = await asAlice(t).mutation(
       api.solving.recordCompletion.recordCompletion,
       { copyId: copyAggregateId, startDate: today, endDate: today },
-    )) as string;
+    );
     const row = await completionRow(t, completionId);
     expect(row?.isCompleted).toBe(true);
     expect(row?.completionTimeMinutes).toBe(1440);
@@ -365,16 +381,21 @@ describe("solving.recordCompletion", () => {
 });
 
 describe("solving.finishCompletion", () => {
-  test("finishes an in-progress completion", async () => {
+  test("finishes an in-progress completion and returns the same id shape as record", async () => {
     const t = convexTest(schema, modules);
-    const { copyAggregateId } = await seed(t);
-    const completionId = (await asAlice(t).mutation(
+    const { copyAggregateId, puzzleId, ownedPuzzleId } = await seed(t);
+    const { completionId } = await asAlice(t).mutation(
       api.solving.recordCompletion.recordCompletion,
       { copyId: copyAggregateId, startDate: Date.now() - HOUR },
-    )) as string;
-    await asAlice(t).mutation(api.solving.finishCompletion.finishCompletion, {
+    );
+    const result = await asAlice(t).mutation(
+      api.solving.finishCompletion.finishCompletion,
+      { completionId, endDate: Date.now() },
+    );
+    expect(result).toEqual({
       completionId,
-      endDate: Date.now(),
+      puzzleId,
+      copyId: ownedPuzzleId,
     });
     const row = await completionRow(t, completionId);
     expect(row?.isCompleted).toBe(true);
@@ -549,35 +570,6 @@ describe("solving.attachCompletionPhotos", () => {
 
     const row = await completionRow(t, completionId);
     expect(row?.photos).toEqual([fileId]);
-  });
-});
-
-describe("solving.reviewPuzzle", () => {
-  test("attaches a rating and text to the completion", async () => {
-    const t = convexTest(schema, modules);
-    const { copyAggregateId } = await seed(t);
-    const completionId = await recordForAlice(t, copyAggregateId);
-    await asAlice(t).mutation(api.solving.reviewPuzzle.reviewPuzzle, {
-      completionId,
-      rating: 4,
-      text: "Lovely artwork",
-    });
-    const row = await completionRow(t, completionId);
-    expect(row?.rating).toBe(4);
-    expect(row?.review).toBe("Lovely artwork");
-  });
-
-  test("a rating outside 1–5 => InvalidRating", async () => {
-    const t = convexTest(schema, modules);
-    const { copyAggregateId } = await seed(t);
-    const completionId = await recordForAlice(t, copyAggregateId);
-    await expectConvexCode(
-      asAlice(t).mutation(api.solving.reviewPuzzle.reviewPuzzle, {
-        completionId,
-        rating: 9,
-      }),
-      "InvalidRating",
-    );
   });
 });
 
