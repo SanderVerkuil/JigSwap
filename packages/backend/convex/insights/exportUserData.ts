@@ -23,6 +23,8 @@ export const exportUserData = query({
       collections,
       goals,
       reviewsGiven,
+      puzzleReviews,
+      copyReviews,
       exchangesA,
       exchangesB,
     ] = await Promise.all([
@@ -46,6 +48,15 @@ export const exportUserData = query({
       ctx.db
         .query("reviews")
         .withIndex("by_reviewer", (q) => q.eq("reviewerId", userId))
+        .take(EXPORT_LIMIT),
+      // Two-level review model: the member's catalog-puzzle reviews and physical-copy reviews.
+      ctx.db
+        .query("puzzleReviews")
+        .withIndex("by_user_puzzle", (q) => q.eq("userId", userId))
+        .take(EXPORT_LIMIT),
+      ctx.db
+        .query("copyReviews")
+        .withIndex("by_user_copy", (q) => q.eq("userId", userId))
         .take(EXPORT_LIMIT),
       ctx.db
         .query("exchanges")
@@ -97,6 +108,8 @@ export const exportUserData = query({
       collections,
       goals,
       reviewsGiven,
+      puzzleReviews,
+      copyReviews,
       exchanges: [...exchangesA, ...exchangesB],
     };
   },

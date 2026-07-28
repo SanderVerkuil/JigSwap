@@ -776,6 +776,37 @@ describe("solving read queries", () => {
     expect(bobs).toHaveLength(0);
   });
 
+  test("listMyCompletions rows never carry legacy rating/review columns", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, puzzleId, ownedPuzzleId } = await seed(t);
+    // A legacy row inserted with the schema-optional per-completion rating/review columns —
+    // superseded by puzzleReviews/copyReviews, so the read must strip them.
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("completions", {
+        userId: alice,
+        puzzleId,
+        ownedPuzzleId,
+        startDate: now - 2 * HOUR,
+        endDate: now - HOUR,
+        rating: 4,
+        review: "legacy per-completion words",
+        photos: [],
+        isCompleted: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const rows = await asAlice(t).query(
+      api.solving.listMyCompletions.listMyCompletions,
+      {},
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).not.toHaveProperty("rating");
+    expect(rows[0]).not.toHaveProperty("review");
+  });
+
   test("getCompletionHistory filters by copy", async () => {
     const t = convexTest(schema, modules);
     const { copyAggregateId } = await seed(t);

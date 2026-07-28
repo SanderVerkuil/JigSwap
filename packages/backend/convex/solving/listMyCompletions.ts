@@ -121,8 +121,11 @@ export const listMyCompletions = query({
           (puzzleKey ? puzzleThumbs.get(puzzleKey) : null) ??
           undefined;
 
+        // Legacy per-completion rating/review columns are superseded by the puzzleReviews/
+        // copyReviews tables; never surface them on completion rows.
+        const { rating: _rating, review: _review, ...rest } = row;
         return {
-          ...row,
+          ...rest,
           photoItems: await resolvePhotoItems(ctx, row),
           thumbnailUrl,
           link,

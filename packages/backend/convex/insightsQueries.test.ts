@@ -161,11 +161,13 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
       createdAt: now,
     });
 
-    return { alice, bob };
+    return { alice, bob, puzzleA, copyA };
   });
 
 const asAlice = (t: ReturnType<typeof convexTest>) =>
   t.withIdentity({ subject: "clerk_alice" });
+const asBob = (t: ReturnType<typeof convexTest>) =>
+  t.withIdentity({ subject: "clerk_bob" });
 
 describe("insights.getPersonalStats", () => {
   test("requires authentication", async () => {
@@ -194,6 +196,49 @@ describe("insights.getPersonalStats", () => {
     expect(stats.averageRatingReceived).toBe(5);
     expect(stats.goalsActive).toBe(1);
     expect(stats.goalsAchieved).toBe(0);
+  });
+
+  test("a catalog-only reviewer (zero completions) still gets an average", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, puzzleA } = await seed(t);
+    // Bob reviewed a catalog puzzle but never logged a completion.
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("puzzleReviews", {
+        userId: bob,
+        puzzleId: puzzleA,
+        rating: 5,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+    const stats = await asBob(t).query(
+      api.insights.getPersonalStats.getPersonalStats,
+      {},
+    );
+    expect(stats.completionsCount).toBe(0);
+    expect(stats.averageRatingGiven).toBe(5);
+  });
+
+  test("averageRatingGiven is null without rated reviews (text-only rows skipped)", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, puzzleA } = await seed(t);
+    // A migrated text-only legacy review: no rating — must not count as 0.
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("puzzleReviews", {
+        userId: bob,
+        puzzleId: puzzleA,
+        text: "lovely gradient, soft cut",
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+    const stats = await asBob(t).query(
+      api.insights.getPersonalStats.getPersonalStats,
+      {},
+    );
+    expect(stats.averageRatingGiven).toBeNull();
   });
 });
 
@@ -270,5 +315,47 @@ describe("insights.exportUserData", () => {
       "Mountain Vista",
       "Ocean Calm",
     ]);
+  });
+
+  test("includes the member's puzzle and copy reviews; other members' rows absent", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, puzzleA, copyA } = await seed(t);
+    // Alice: one copy review on her own copy. Bob: one puzzle review + one copy review — neither
+    // may leak into Alice's export.
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("copyReviews", {
+        userId: alice,
+        copyId: copyA,
+        rating: 4,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("puzzleReviews", {
+        userId: bob,
+        puzzleId: puzzleA,
+        rating: 1,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("copyReviews", {
+        userId: bob,
+        copyId: copyA,
+        rating: 2,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const data = await asAlice(t).query(
+      api.insights.exportUserData.exportUserData,
+      {},
+    );
+    // The seed gives Alice two puzzleReviews (ratings 4 and 2).
+    expect(data.puzzleReviews).toHaveLength(2);
+    expect(data.puzzleReviews.every((r) => r.userId === alice)).toBe(true);
+    expect(data.copyReviews).toHaveLength(1);
+    expect(data.copyReviews[0].userId).toBe(alice);
+    expect(data.copyReviews[0].rating).toBe(4);
   });
 });
