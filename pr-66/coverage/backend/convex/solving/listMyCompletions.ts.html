@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">98.57% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>63/63</span>
+                <span class='fraction'>69/70</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">95.74% </span>
+                <span class="strong">94.11% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>45/47</span>
+                <span class='fraction'>48/51</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>15/15</span>
+                <span class='fraction'>13/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>61/61</span>
+                <span class='fraction'>66/66</span>
             </div>
         
             
@@ -227,7 +227,14 @@
 <a name='L162'></a><a href='#L162'>162</a>
 <a name='L163'></a><a href='#L163'>163</a>
 <a name='L164'></a><a href='#L164'>164</a>
-<a name='L165'></a><a href='#L165'>165</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L165'></a><a href='#L165'>165</a>
+<a name='L166'></a><a href='#L166'>166</a>
+<a name='L167'></a><a href='#L167'>167</a>
+<a name='L168'></a><a href='#L168'>168</a>
+<a name='L169'></a><a href='#L169'>169</a>
+<a name='L170'></a><a href='#L170'>170</a>
+<a name='L171'></a><a href='#L171'>171</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -367,12 +374,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">16x</span>
-<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
@@ -380,17 +391,18 @@
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">14x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
@@ -411,7 +423,8 @@ type CompletionLink = {
 };
 &nbsp;
 // Read side for the solving history view: the acting member's own completions, newest first.
-// Auth-gated; photo storage ids are resolved to URLs like the other queries that surface images.
+// Auth-gated; photo storage ids are resolved to display items (url + pending flag) via
+// resolvePhotoItems.
 // Each row is also enriched with a navigation `link` and a `thumbnailUrl`, resolved once per
 // DISTINCT copy/puzzle (many completions share one) since this is a self-facing read only.
 export const listMyCompletions = query({
@@ -515,10 +528,7 @@ export const listMyCompletions = query({
 &nbsp;
         return {
           ...row,
-          photoUrls: await resolvePhotoUrls(
-            ctx,
-            await excludeRejectedPhotos(ctx, row),
-          ),
+          photoItems: await resolvePhotoItems(ctx, row),
           thumbnailUrl,
           link,
         };
@@ -527,34 +537,42 @@ export const listMyCompletions = query({
   },
 });
 &nbsp;
-// Drop photos whose moderation sidecar says "rejected" — and ONLY those. Pending stays visible
-// (these reads are self-facing: the viewer is the uploader, matching the copy-gallery precedent)
-// and an ABSENT sidecar is a legacy photo, treated as approved. Only domain rows (aggregateId
-// present) can have sidecars, so legacy rows skip the join. Shared with getCompletionHistory.
-export const excludeRejectedPhotos = async (
+// A completion photo ready for display: the served URL plus whether moderation is still pending.
+export type PhotoItem = { url: string; pending: boolean };
+&nbsp;
+// Resolve a completion's photos to displayable items. Photos whose moderation sidecar says
+// "rejected" are dropped — and ONLY those. Pending stays visible but flagged `pending: true`
+// (these reads are self-facing: the viewer is the uploader, matching the copy-gallery precedent);
+// an ABSENT sidecar is a legacy photo, treated as approved (`pending: false`). Only domain rows
+// (aggregateId present) can have sidecars, so legacy rows skip the join. Storage ids that no
+// longer resolve to a URL are dropped. Shared with getCompletionHistory.
+export const resolvePhotoItems = async (
   ctx: QueryCtx,
   row: Pick&lt;Doc&lt;"completions"&gt;, "aggregateId" | "photos"&gt;,
-): Promise&lt;Id&lt;"_storage"&gt;[]&gt; =&gt; {
+): Promise&lt;PhotoItem[]&gt; =&gt; {
+  if (row.photos.length === 0) return [];
   const completionId = row.aggregateId;
-  if (!completionId || row.photos.length === 0) return [...row.photos];
-  const sidecars = await ctx.db
-    .query("completionImages")
-    .withIndex("by_completion", (q) =&gt; q.eq("completionId", completionId))
-    .collect();
-  const statusByFile = new Map(
-    sidecars.map((s) =&gt; [s.fileId as string, s.moderationStatus]),
+  const statusByFile = new Map&lt;string, string | undefined&gt;();
+  if (completionId) {
+    const sidecars = await ctx.db
+      .query("completionImages")
+      .withIndex("by_completion", (q) =&gt; q.eq("completionId", completionId))
+      .collect();
+    for (const s of sidecars) {
+      statusByFile.set(s.fileId as string, s.moderationStatus);
+    }
+  }
+  const items = await Promise.all(
+    row.photos.map(async (fileId): Promise&lt;PhotoItem | null&gt; =&gt; {
+      const status = statusByFile.get(fileId as string);
+      if (status === "rejected") return null;
+      const url = await ctx.storage.getUrl(fileId);
+      <span class="missing-if-branch" title="if path not taken" >I</span>if (!url) <span class="cstat-no" title="statement not covered" >return null;</span>
+      return { url, pending: status === "pending" };
+    }),
   );
-  return row.photos.filter(
-    (fileId) =&gt; statusByFile.get(fileId as string) !== "rejected",
-  );
+  return items.filter((item): item is PhotoItem =&gt; item !== null);
 };
-&nbsp;
-// Resolve each stored `_storage` id to a served URL (null entries are dropped by the UI).
-const resolvePhotoUrls = (
-  ctx: { storage: { getUrl(id: Id&lt;"_storage"&gt;): Promise&lt;string | null&gt; } },
-  photos: readonly Id&lt;"_storage"&gt;[],
-): Promise&lt;(string | null)[]&gt; =&gt;
-  Promise.all(photos.map((fileId) =&gt; ctx.storage.getUrl(fileId)));
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -562,7 +580,7 @@ const resolvePhotoUrls = (
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-07-27T22:45:47.199Z
+                at 2026-07-28T06:47:36.888Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
