@@ -10,3 +10,5 @@ export * from "./review-puzzle.port";
 export * from "./set-share-in-progress.port";
 export * from "./set-track-completion-duration.port";
 export * from "./start-completion.port";
+export * from "./upsert-copy-review.port";
+export * from "./upsert-puzzle-review.port";

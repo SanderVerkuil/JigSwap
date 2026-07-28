@@ -10,3 +10,5 @@ export * from "./review-puzzle";
 export * from "./set-share-in-progress";
 export * from "./set-track-completion-duration";
 export * from "./start-completion";
+export * from "./upsert-copy-review";
+export * from "./upsert-puzzle-review";

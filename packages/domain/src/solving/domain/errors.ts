@@ -11,7 +11,8 @@ export type SolvingErrorCode =
   | "NotCompletionOwner"
   | "InvalidGoalTarget"
   | "InvalidRating"
-  | "InvalidDuration";
+  | "InvalidDuration"
+  | "NotAllowedToReviewCopy";
 
 export class SolvingError extends DomainError {
   override readonly name = "SolvingError";
@@ -76,6 +77,14 @@ export class SolvingError extends DomainError {
     return new SolvingError(
       "InvalidDuration",
       "A solve duration must be a positive number of minutes",
+    );
+  }
+
+  // Only the copy's owner or a member with a completion on the copy may review it.
+  static notAllowedToReviewCopy(): SolvingError {
+    return new SolvingError(
+      "NotAllowedToReviewCopy",
+      "Only the copy's owner or a member who completed it may review this copy",
     );
   }
 }

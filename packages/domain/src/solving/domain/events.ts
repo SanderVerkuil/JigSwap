@@ -73,6 +73,28 @@ export class PuzzleReviewed implements DomainEvent {
   ) {}
 }
 
+// A member's single review OF THE PUZZLE (one per member+puzzle) was created or replaced.
+export class PuzzleReviewUpserted implements DomainEvent {
+  readonly name = "PuzzleReviewUpserted";
+  constructor(
+    readonly userId: MemberId,
+    readonly puzzleDefinitionId: PuzzleDefinitionId,
+    readonly rating: number,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+// A member's single star-only review OF A COPY (one per member+copy) was created or replaced.
+export class CopyReviewUpserted implements DomainEvent {
+  readonly name = "CopyReviewUpserted";
+  constructor(
+    readonly userId: MemberId,
+    readonly copyId: CopyId,
+    readonly rating: number,
+    readonly occurredAt: Date,
+  ) {}
+}
+
 export class GoalCreated implements DomainEvent {
   readonly name = "GoalCreated";
   constructor(
@@ -113,6 +135,8 @@ export type SolvingDomainEvent =
   | CompletionEdited
   | CompletionDeleted
   | PuzzleReviewed
+  | PuzzleReviewUpserted
+  | CopyReviewUpserted
   | GoalCreated
   | GoalProgressed
   | GoalAchieved;
