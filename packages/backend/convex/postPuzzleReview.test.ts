@@ -2,14 +2,15 @@ import { convexTest } from "convex-test";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
-// Seed one member + ONE approved catalog puzzle. Reviews key by the puzzle DEFINITION id directly
-// (the catalog detail page has no copy id), and share the `puzzleComments` table with the copy-keyed
-// comment functions.
+// Seed one member + ONE approved catalog puzzle. The catalog review FORM upserts the member's
+// single `puzzleReviews` row keyed by the puzzle DEFINITION id directly (the catalog detail page
+// has no copy id).
 const seed = async (t: ReturnType<typeof convexTest>) =>
   t.run(async (ctx) => {
     const now = Date.now();
@@ -36,25 +37,145 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
 const asAlice = (t: ReturnType<typeof convexTest>) =>
   t.withIdentity({ subject: "clerk_alice" });
 
-describe("postPuzzleReview / listPuzzleReviews", () => {
-  test("posts a review by puzzleId; list returns it with the real author", async () => {
+// Seed a community review ROW directly into `puzzleComments`. The list side still reads
+// `puzzleComments` until it is repointed at `puzzleReviews` in a later task, while the FORM
+// already writes `puzzleReviews` — so list coverage pins current behavior by inserting rows
+// itself instead of going through the mutation.
+const seedComment = (
+  t: ReturnType<typeof convexTest>,
+  args: {
+    puzzleId: Id<"puzzles">;
+    authorId: Id<"users">;
+    text: string;
+    rating?: number;
+  },
+) =>
+  t.run(async (ctx) => {
+    await ctx.db.insert("puzzleComments", {
+      aggregateId: crypto.randomUUID(),
+      puzzleId: args.puzzleId,
+      authorId: args.authorId,
+      text: args.text,
+      rating: args.rating,
+      createdAt: Date.now(),
+    });
+  });
+
+describe("postPuzzleReview — upserts the member's puzzleReviews row", () => {
+  test("posting with a rating and no text stores one puzzleReviews row, zero puzzleComments", async () => {
     const t = convexTest(schema, modules);
     const { alice, puzzleId } = await seed(t);
 
     await asAlice(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
       puzzleId,
+      rating: 4,
+    });
+
+    const reviews = await t.run((ctx) =>
+      ctx.db.query("puzzleReviews").collect(),
+    );
+    expect(reviews).toHaveLength(1);
+    expect(reviews[0].userId).toBe(alice);
+    expect(reviews[0].puzzleId).toBe(puzzleId);
+    expect(reviews[0].rating).toBe(4);
+    expect(reviews[0].text).toBeUndefined();
+
+    // The form no longer writes rated comments.
+    const comments = await t.run((ctx) =>
+      ctx.db.query("puzzleComments").collect(),
+    );
+    expect(comments).toHaveLength(0);
+  });
+
+  test("posting twice keeps ONE row: values updated, createdAt stable, updatedAt bumped", async () => {
+    const t = convexTest(schema, modules);
+    const { puzzleId } = await seed(t);
+
+    await asAlice(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
+      puzzleId,
+      rating: 5,
+      text: "Stunning artwork",
+    });
+    let rows = await t.run((ctx) => ctx.db.query("puzzleReviews").collect());
+    expect(rows).toHaveLength(1);
+
+    // Backdate the row so the second post's timestamps are distinguishable.
+    const past = Date.now() - 60_000;
+    await t.run(async (ctx) => {
+      await ctx.db.patch(rows[0]._id, { createdAt: past, updatedAt: past });
+    });
+
+    await asAlice(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
+      puzzleId,
+      rating: 2,
+      text: "Faded on second solve",
+    });
+    rows = await t.run((ctx) => ctx.db.query("puzzleReviews").collect());
+    expect(rows).toHaveLength(1); // still ONE row — upsert, not insert
+    expect(rows[0].rating).toBe(2);
+    expect(rows[0].text).toBe("Faded on second solve");
+    expect(rows[0].createdAt).toBe(past); // stable
+    expect(rows[0].updatedAt).toBeGreaterThan(past); // bumped
+  });
+
+  test("whitespace-only text is normalised to undefined", async () => {
+    const t = convexTest(schema, modules);
+    const { puzzleId } = await seed(t);
+
+    await asAlice(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
+      puzzleId,
+      rating: 3,
+      text: "   ",
+    });
+
+    const rows = await t.run((ctx) => ctx.db.query("puzzleReviews").collect());
+    expect(rows).toHaveLength(1);
+    expect(rows[0].rating).toBe(3);
+    expect(rows[0].text).toBeUndefined();
+  });
+
+  test("a rating out of range is rejected; nothing stored", async () => {
+    const t = convexTest(schema, modules);
+    const { puzzleId } = await seed(t);
+
+    await expect(
+      asAlice(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
+        puzzleId,
+        rating: 6,
+        text: "ok",
+      }),
+    ).rejects.toThrow(ConvexError);
+
+    const rows = await t.run((ctx) => ctx.db.query("puzzleReviews").collect());
+    expect(rows).toHaveLength(0);
+  });
+
+  test("auth is required to post a review", async () => {
+    const t = convexTest(schema, modules);
+    const { puzzleId } = await seed(t);
+
+    await expect(
+      t.mutation(api.social.postPuzzleReview.postPuzzleReview, {
+        puzzleId,
+        rating: 4,
+      }),
+    ).rejects.toThrow(ConvexError);
+  });
+});
+
+// The list still reads `puzzleComments` until a later task repoints it at `puzzleReviews`;
+// rows are seeded directly (the form no longer writes comments) to pin current behavior.
+describe("listPuzzleReviews — still comment-sourced (interim)", () => {
+  test("returns a seeded comment with the real author", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, puzzleId } = await seed(t);
+
+    await seedComment(t, {
+      puzzleId,
+      authorId: alice,
       text: "Stunning artwork",
       rating: 5,
     });
-
-    // Persisted under the catalog puzzleId.
-    const stored = await t.run((ctx) =>
-      ctx.db.query("puzzleComments").collect(),
-    );
-    expect(stored).toHaveLength(1);
-    expect(stored[0].puzzleId).toBe(puzzleId);
-    expect(stored[0].rating).toBe(5);
-    expect(stored[0].aggregateId).toBeDefined();
 
     const list = await asAlice(t).query(
       api.social.listPuzzleReviews.listPuzzleReviews,
@@ -68,12 +189,13 @@ describe("postPuzzleReview / listPuzzleReviews", () => {
     expect(list[0].author.name).toBe("Alice");
   });
 
-  test("posts a review without a rating; list surfaces rating null", async () => {
+  test("a comment without a rating surfaces rating null", async () => {
     const t = convexTest(schema, modules);
-    const { puzzleId } = await seed(t);
+    const { alice, puzzleId } = await seed(t);
 
-    await asAlice(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
+    await seedComment(t, {
       puzzleId,
+      authorId: alice,
       text: "No stars from me",
     });
 
@@ -87,16 +209,10 @@ describe("postPuzzleReview / listPuzzleReviews", () => {
 
   test("reviews are returned newest-first", async () => {
     const t = convexTest(schema, modules);
-    const { puzzleId } = await seed(t);
+    const { alice, puzzleId } = await seed(t);
 
-    await asAlice(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
-      puzzleId,
-      text: "first",
-    });
-    await asAlice(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
-      puzzleId,
-      text: "second",
-    });
+    await seedComment(t, { puzzleId, authorId: alice, text: "first" });
+    await seedComment(t, { puzzleId, authorId: alice, text: "second" });
 
     const list = await asAlice(t).query(
       api.social.listPuzzleReviews.listPuzzleReviews,
@@ -105,57 +221,16 @@ describe("postPuzzleReview / listPuzzleReviews", () => {
     expect(list.map((c) => c.text)).toEqual(["second", "first"]);
   });
 
-  test("empty / whitespace-only text is rejected", async () => {
-    const t = convexTest(schema, modules);
-    const { puzzleId } = await seed(t);
-
-    await expect(
-      asAlice(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
-        puzzleId,
-        text: "   ",
-      }),
-    ).rejects.toThrow(ConvexError);
-
-    const stored = await t.run((ctx) =>
-      ctx.db.query("puzzleComments").collect(),
-    );
-    expect(stored).toHaveLength(0);
-  });
-
-  test("a rating out of range is rejected", async () => {
-    const t = convexTest(schema, modules);
-    const { puzzleId } = await seed(t);
-
-    await expect(
-      asAlice(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
-        puzzleId,
-        text: "ok",
-        rating: 6,
-      }),
-    ).rejects.toThrow(ConvexError);
-  });
-
-  test("auth is required to post a review", async () => {
-    const t = convexTest(schema, modules);
-    const { puzzleId } = await seed(t);
-
-    await expect(
-      t.mutation(api.social.postPuzzleReview.postPuzzleReview, {
-        puzzleId,
-        text: "anon",
-      }),
-    ).rejects.toThrow(ConvexError);
-  });
-
   // SECURITY: listPuzzleReviews projects each author through `toMemberView`, exposing member
   // identity (name/username/bio/location) meant only for OTHER AUTHENTICATED MEMBERS. An
   // unauthenticated caller must be rejected so that PII never leaks to anonymous clients.
   test("auth is required to list reviews (no anonymous PII exposure)", async () => {
     const t = convexTest(schema, modules);
-    const { puzzleId } = await seed(t);
+    const { alice, puzzleId } = await seed(t);
 
-    await asAlice(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
+    await seedComment(t, {
       puzzleId,
+      authorId: alice,
       text: "Stunning artwork",
       rating: 5,
     });

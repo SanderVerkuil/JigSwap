@@ -1,49 +1,37 @@
-import {
-  makePostComment,
-  type MemberId,
-  type PuzzleDefinitionId,
-  toMemberId,
-  toPuzzleDefinitionId,
-} from "@jigswap/domain";
+import { makeUpsertPuzzleReview, toPuzzleDefinitionId } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { convexCommentRepository } from "./adapters/convexCommentRepository";
-import { commentIdGenerator } from "./adapters/idGenerators";
-import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
-import { systemClock } from "./adapters/systemClock";
-import { toConvexError } from "./errors";
+import { convexPuzzleReviewRepository } from "../solving/adapters/convexReviewRepositories";
+import { inProcessEventPublisher } from "../solving/adapters/inProcessEventPublisher";
+import { systemClock } from "../solving/adapters/systemClock";
+import { toConvexError } from "../solving/errors";
 
-// Composition root for posting a community review on the catalog puzzle DEFINITION. Identical to
-// postPuzzleComment but keyed by puzzleId directly: the catalog detail page has no copyId to resolve
-// through. Reuses the SAME post-comment domain use case + `puzzleComments` table + repository; the
-// non-empty-text / rating-1-5 validation stays in the Comment aggregate. The author is derived from
-// auth, never the client.
+// Composition root for the catalog "write a review" form: upsert the caller's SINGLE
+// `puzzleReviews` row for the puzzle definition (one review per member per puzzle), replacing the
+// old append-only rated `puzzleComments` write. Same wiring as solving/submitReviews: the branded
+// PuzzleDefinitionId CARRIES the Convex doc `_id` (the adapter casts back, no resolution). Rating
+// is required; text optional — the 1–5 validation and whitespace normalisation live in the domain
+// use case. The author is derived from auth, never the client.
 export const postPuzzleReview = mutation({
   args: {
     puzzleId: v.id("puzzles"),
-    text: v.string(),
-    rating: v.optional(v.number()),
+    rating: v.number(),
+    text: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const authorId = (await requireMember(ctx)) as unknown as MemberId;
+    const memberId = await requireMember(ctx);
 
-    const post = makePostComment({
-      comments: convexCommentRepository(ctx),
-      commentIds: commentIdGenerator,
+    const upsertPuzzleReviewUseCase = makeUpsertPuzzleReview({
+      puzzleReviews: convexPuzzleReviewRepository(ctx),
       events: inProcessEventPublisher(ctx),
       clock: systemClock,
     });
-
-    const result = await post({
-      authorId: toMemberId(authorId as unknown as string),
-      // Carry the catalog puzzle's Convex id as the PuzzleDefinitionId (the mapper re-brands it to
-      // the `puzzles` FK column on save).
-      puzzleId: toPuzzleDefinitionId(
-        args.puzzleId as unknown as string,
-      ) as PuzzleDefinitionId,
-      text: args.text,
+    const result = await upsertPuzzleReviewUseCase({
+      actingMemberId: memberId,
+      puzzleId: toPuzzleDefinitionId(args.puzzleId as unknown as string),
       rating: args.rating,
+      text: args.text,
     });
     if (result.isErr) throw toConvexError(result.error);
   },

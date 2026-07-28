@@ -135,7 +135,7 @@ describe("postPuzzleComment / listPuzzleComments", () => {
 
   test("copy-scoped comments do NOT appear in the puzzle's community reviews", async () => {
     const t = convexTest(schema, modules);
-    const { puzzleId, aliceCopy } = await seed(t);
+    const { bob, puzzleId, aliceCopy } = await seed(t);
 
     // A copy-scoped comment with a rating.
     await asAlice(t).mutation(api.social.postPuzzleComment.postPuzzleComment, {
@@ -143,11 +143,18 @@ describe("postPuzzleComment / listPuzzleComments", () => {
       text: "my copy is mint",
       rating: 5,
     });
-    // A genuine community review on the same puzzle definition.
-    await asBob(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
-      puzzleId,
-      text: "great design",
-      rating: 3,
+    // A genuine community review row on the same puzzle definition. Seeded directly: the review
+    // FORM now upserts `puzzleReviews`, but the list still reads `puzzleComments` until it is
+    // repointed in a later task.
+    await t.run(async (ctx) => {
+      await ctx.db.insert("puzzleComments", {
+        aggregateId: crypto.randomUUID(),
+        puzzleId,
+        authorId: bob,
+        text: "great design",
+        rating: 3,
+        createdAt: Date.now(),
+      });
     });
 
     // The catalog reviews list shows ONLY the community review, not the copy comment.
