@@ -23,7 +23,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StarRating } from "@/components/ui/star-rating";
 import {
   Tooltip,
   TooltipContent,
@@ -51,9 +50,8 @@ type DialogState =
     }
   | {
       kind: "review";
-      completionId: string;
-      rating?: number;
-      text?: string;
+      puzzleId: string;
+      copyId?: string;
     }
   | { kind: "delete"; completionId: string }
   | null;
@@ -327,11 +325,6 @@ function CompletionsPage() {
               {completion.notes}
             </p>
           )}
-          {completion.review && (
-            <p className="text-muted-foreground mt-1 line-clamp-1 text-xs italic">
-              {completion.review}
-            </p>
-          )}
           {"copySnapshot" in completion && completion.copySnapshot != null && (
             <p className="text-muted-foreground mt-0.5 text-xs">
               {completion.copySnapshot.wasBorrowed
@@ -400,10 +393,6 @@ function CompletionsPage() {
           )}
         </div>
 
-        {completion.rating !== undefined && (
-          <StarRating value={completion.rating} size="sm" />
-        )}
-
         <span className="text-muted-foreground w-[78px] text-right text-xs whitespace-nowrap">
           {formatDate(completion.endDate ?? completion.startDate)}
         </span>
@@ -425,27 +414,18 @@ function CompletionsPage() {
               {t("finish")}
             </Button>
           )}
-          {completion.aggregateId && (
+          {completion.puzzleId != null && (
             <Button
               variant="ghost"
               size="icon"
               className="size-8"
-              title={
-                completion.rating !== undefined
-                  ? t("editReview")
-                  : t("addReview")
-              }
-              aria-label={
-                completion.rating !== undefined
-                  ? t("editReview")
-                  : t("addReview")
-              }
+              title={t("review")}
+              aria-label={t("review")}
               onClick={() =>
                 setDialog({
                   kind: "review",
-                  completionId: completion.aggregateId!,
-                  rating: completion.rating,
-                  text: completion.review,
+                  puzzleId: completion.puzzleId!,
+                  copyId: completion.ownedPuzzleId ?? undefined,
                 })
               }
             >
@@ -563,9 +543,8 @@ function CompletionsPage() {
         <ReviewPuzzleDialog
           open
           onOpenChange={(open) => !open && setDialog(null)}
-          completionId={dialog.completionId}
-          initialRating={dialog.rating}
-          initialText={dialog.text}
+          puzzleId={dialog.puzzleId}
+          copyId={dialog.copyId}
         />
       )}
       {dialog?.kind === "edit" && (

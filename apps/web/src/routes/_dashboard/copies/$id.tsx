@@ -2,6 +2,7 @@ import { durationParts } from "@/lib/humanize-duration";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
+import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
 import { availabilityToSharing } from "@/components/add-puzzle";
 import { ImageZoom } from "@/components/common/image-zoom";
@@ -408,6 +409,13 @@ function CopyInstanceDetail({
               {snapshot.pieceCount.toLocaleString()}
             </span>{" "}
             {tPuzzles("pieces")}
+            {" · "}
+            <Link
+              href={`/puzzles/${copy.puzzleId}`}
+              className="text-jigsaw-primary font-semibold hover:underline"
+            >
+              {t("viewPuzzlePage")}
+            </Link>
           </p>
 
           {/* Badges */}
@@ -591,12 +599,8 @@ function CopyInstanceDetail({
           divided
         />
         <Stat
-          value={
-            copy.viewerIsOwner && stats.yourAvgRating != null
-              ? stats.yourAvgRating
-              : "—"
-          }
-          label={t("statYourAvgRating")}
+          value={stats.yourCopyRating != null ? stats.yourCopyRating : "—"}
+          label={t("statYourCopyRating")}
           divided
         />
       </div>
@@ -656,18 +660,7 @@ function CopyInstanceDetail({
                     ? `${formatDay(c.occurredAt)} · ${t("finishedIn", { duration: formatDuration(c.finishMinutes) })}`
                     : formatDay(c.occurredAt)
                 }
-                right={
-                  c.rating != null ? (
-                    <StarRating value={c.rating} size="sm" />
-                  ) : undefined
-                }
-              >
-                {c.note && (
-                  <p className="text-foreground/90 mt-1.5 text-sm italic">
-                    “{c.note}”
-                  </p>
-                )}
-              </TimelineRow>
+              />
             ))}
           </HistoryGroup>
 
@@ -736,9 +729,10 @@ function CopyInstanceDetail({
           </HistoryGroup>
         </div>
 
-        {/* Right: community + comments */}
+        {/* Right: community + copy reviews + comments */}
         <div className="space-y-9">
           <CommunityRating community={community} />
+          <CopyReviewsSection reviews={copy.copyReviews} />
           <CommentsSection copyId={copyId} />
         </div>
       </div>
@@ -1088,7 +1082,6 @@ function CommunityRating({
   community: CopyInstanceView["community"];
 }) {
   const t = useTranslations("copyInstance");
-  const total = community.breakdown.reduce((a, b) => a + b, 0) || 1;
   return (
     <section>
       <SectionHead icon={<StarGlyph />} title={t("communityRating")} />
@@ -1114,7 +1107,7 @@ function CommunityRating({
               <span className="bg-muted h-1.5 flex-1 overflow-hidden rounded-full">
                 <span
                   className="block h-full rounded-full bg-yellow-400"
-                  style={{ width: `${(n / total) * 100}%` }}
+                  style={{ width: `${community.percentages[i]}%` }}
                 />
               </span>
               <span className="text-muted-foreground w-6 text-right font-mono text-xs">
@@ -1124,6 +1117,85 @@ function CommunityRating({
           );
         })}
       </div>
+    </section>
+  );
+}
+
+// Star-only reviews of THIS physical copy (distinct from the definition-wide community rating
+// above). Authors are ProjectedMembers — privacy-projected server-side like every member on this
+// page, so an anonymised author renders the "Anonymous user" label and never a real name/avatar.
+function CopyReviewsSection({
+  reviews,
+}: {
+  reviews: CopyInstanceView["copyReviews"];
+}) {
+  const t = useTranslations("copyInstance");
+  const format = useFormatter();
+  const formatDay = (timestamp: number) =>
+    format.dateTime(new Date(timestamp), {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  const average =
+    reviews.length > 0
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+      : null;
+  return (
+    <section>
+      <SectionHead
+        icon={<StarGlyph />}
+        title={t("copyReviews")}
+        meta={String(reviews.length)}
+      />
+      {average == null ? (
+        <p className="text-muted-foreground text-sm">{t("noCopyReviews")}</p>
+      ) : (
+        <>
+          <div className="mb-1.5 flex items-end gap-2.5">
+            <div className="font-heading text-foreground text-2xl font-bold leading-none">
+              {average.toFixed(1)}
+            </div>
+            <div className="pb-0.5">
+              <StarRating value={Math.round(average)} size="sm" />
+            </div>
+          </div>
+          <div className="flex flex-col">
+            {reviews.map((review, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "flex items-center gap-3 py-3.5",
+                  i !== reviews.length - 1 && "border-border border-b",
+                )}
+              >
+                <Avatar className="h-8 w-8">
+                  {!review.author.anonymous && review.author.member.avatar && (
+                    <AvatarImage
+                      src={review.author.member.avatar}
+                      alt={review.author.member.name}
+                    />
+                  )}
+                  <AvatarFallback className="text-xs font-medium">
+                    {(review.author.anonymous ? "?" : review.author.member.name)
+                      .slice(0, 1)
+                      .toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm">
+                    <ProjectedName member={review.author} />
+                  </div>
+                  <div className="text-muted-foreground mt-0.5 text-xs">
+                    {formatDay(review.updatedAt)}
+                  </div>
+                </div>
+                <StarRating value={review.rating} size="sm" />
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </section>
   );
 }
@@ -1160,7 +1232,6 @@ function CommentsSection({ copyId }: { copyId: string }) {
   });
 
   const [text, setText] = useState("");
-  const [rating, setRating] = useState(0);
   const posting = postComment.isPending;
   const [now] = useState(() => Date.now());
 
@@ -1176,10 +1247,8 @@ function CommentsSection({ copyId }: { copyId: string }) {
       await postComment.mutateAsync({
         copyId: copyId as Id<"ownedPuzzles">,
         text: trimmed,
-        ...(rating > 0 ? { rating } : {}),
       });
       setText("");
-      setRating(0);
     } catch {
       toast.error(t("commentFailed"));
     }
@@ -1201,34 +1270,26 @@ function CommentsSection({ copyId }: { copyId: string }) {
             {(me?.name ?? "?").slice(0, 1).toUpperCase()}
           </AvatarFallback>
         </Avatar>
-        <div className="flex flex-1 flex-col gap-2">
-          <div className="flex gap-2">
-            <Input
-              placeholder={t("addComment")}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  void submit();
-                }
-              }}
-              className="flex-1"
-            />
-            <Button
-              variant="brand"
-              onClick={() => void submit()}
-              disabled={posting || text.trim().length === 0}
-            >
-              {t("post")}
-            </Button>
-          </div>
-          <StarRating
-            value={rating}
-            onChange={setRating}
-            size="sm"
-            label={t("rateOptional")}
+        <div className="flex flex-1 gap-2">
+          <Input
+            placeholder={t("addComment")}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                void submit();
+              }
+            }}
+            className="flex-1"
           />
+          <Button
+            variant="brand"
+            onClick={() => void submit()}
+            disabled={posting || text.trim().length === 0}
+          >
+            {t("post")}
+          </Button>
         </div>
       </div>
 
@@ -1273,9 +1334,6 @@ function CommentRow({
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-foreground text-sm font-semibold">{name}</span>
-          {comment.rating != null && (
-            <StarRating value={comment.rating} size="sm" />
-          )}
           <span className="text-muted-foreground text-xs">
             {relative(comment.createdAt)}
           </span>
