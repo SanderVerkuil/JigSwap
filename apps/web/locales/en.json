@@ -1787,7 +1787,6 @@
       "finish": "Finish solve",
       "edit": "Edit",
       "editWindowClosed": "This completion can no longer be edited (the 24-hour window has closed).",
-      "yourReview": "Your review",
       "review": "Review",
       "stats": {
         "completed": "Puzzles completed",
@@ -1870,9 +1869,8 @@
     },
     "review": {
       "title": "Review this puzzle",
-      "description": "Rate the puzzle itself, 1 to 5 stars.",
+      "description": "Rate the puzzle itself — and, if it applies, the copy you solved.",
       "rating": "Rating",
-      "text": "Review",
       "textPlaceholder": "What did you think of this puzzle?",
       "submit": "Save review",
       "saved": "Review saved",
@@ -1884,7 +1882,7 @@
     },
     "followUp": {
       "title": "Puzzle solved!",
-      "description": "Rate the puzzle and add photos of your solve — both optional.",
+      "description": "Review the puzzle and add photos of your solve — everything is optional.",
       "photosLabel": "Photos",
       "photosHint": "Up to 5 photos of your finished puzzle.",
       "addPhotos": "Add photos",
@@ -2876,7 +2874,6 @@
     "noCopyReviews": "No reviews of this copy yet.",
     "comments": "Comments",
     "addComment": "Add a comment…",
-    "rateOptional": "Rate this puzzle (optional)",
     "post": "Post",
     "noComments": "No comments yet. Be the first.",
     "commentFailed": "Couldn't post comment",

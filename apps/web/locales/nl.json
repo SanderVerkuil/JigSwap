@@ -1787,7 +1787,6 @@
       "finish": "Voltooiing afronden",
       "edit": "Bewerken",
       "editWindowClosed": "Deze voltooiing kan niet meer worden bewerkt (het venster van 24 uur is gesloten).",
-      "yourReview": "Jouw review",
       "review": "Beoordelen",
       "stats": {
         "completed": "Puzzels voltooid",
@@ -1870,9 +1869,8 @@
     },
     "review": {
       "title": "Beoordeel deze puzzel",
-      "description": "Beoordeel de puzzel zelf, 1 tot 5 sterren.",
+      "description": "Beoordeel de puzzel zelf — en, indien van toepassing, het exemplaar dat je hebt gelegd.",
       "rating": "Beoordeling",
-      "text": "Review",
       "textPlaceholder": "Wat vond je van deze puzzel?",
       "submit": "Review opslaan",
       "saved": "Review opgeslagen",
@@ -1884,7 +1882,7 @@
     },
     "followUp": {
       "title": "Puzzel voltooid!",
-      "description": "Beoordeel de puzzel en voeg foto's van je voltooiing toe — beide zijn optioneel.",
+      "description": "Beoordeel de puzzel en voeg foto's van je voltooiing toe — alles is optioneel.",
       "photosLabel": "Foto's",
       "photosHint": "Maximaal 5 foto's van je gelegde puzzel.",
       "addPhotos": "Foto's toevoegen",
@@ -2876,7 +2874,6 @@
     "noCopyReviews": "Nog geen beoordelingen van dit exemplaar.",
     "comments": "Reacties",
     "addComment": "Voeg een reactie toe…",
-    "rateOptional": "Beoordeel deze puzzel (optioneel)",
     "post": "Plaatsen",
     "noComments": "Nog geen reacties. Wees de eerste.",
     "commentFailed": "Kon reactie niet plaatsen",
