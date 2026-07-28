@@ -6,7 +6,7 @@ import { requireMember } from "../identity/requireMember";
 import { toMemberView } from "../identity/toMemberView";
 import { canViewCopy } from "../library/canViewCopy";
 
-// Read side: the COPY-scoped comments on the given owned copy (the owner's own notes/rating),
+// Read side: the COPY-scoped comments on the given owned copy (the owner's own plain-text notes),
 // newest first — NOT the shared community reviews (those live on the catalog page via
 // listPuzzleReviews). Each comment joins its REAL author (comments are voluntary public posts —
 // never anonymised). A missing copy returns []. The author join falls back to a synthetic "Member"
@@ -14,7 +14,7 @@ import { canViewCopy } from "../library/canViewCopy";
 //
 // SECURITY: auth-gated, and the copy is run through the SAME reachability gate as getCopyInstanceView
 // (canViewCopy) before any comment is returned — a private/unreachable copy of another member yields
-// [], so the owner's per-copy notes/ratings never leak to a viewer who cannot see the copy.
+// [], so the owner's per-copy notes never leak to a viewer who cannot see the copy.
 export const listPuzzleComments = query({
   args: { copyId: v.id("ownedPuzzles") },
   handler: async (ctx, args): Promise<PuzzleCommentView[]> => {
@@ -46,7 +46,6 @@ export const listPuzzleComments = query({
                 updatedAt: 0,
               },
           text: row.text,
-          rating: row.rating ?? null,
           createdAt: row.createdAt,
         };
       }),

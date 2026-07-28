@@ -10,6 +10,9 @@ import { projectPublicAuthor } from "./privacy";
 //
 // Leak gates: reviews of a non-approved definition return [] (mirrors every public catalog read),
 // and copy-scoped comments (copyId set) are excluded — community reviews only. Newest first.
+//
+// INTERIM: still sourced from `puzzleComments` (rows shaped into PublicPuzzleReviewView) until the
+// read is re-pointed at the `puzzleReviews` table.
 export const listPublicPuzzleReviews = query({
   args: { puzzleId: v.id("puzzles") },
   handler: async (ctx, args): Promise<PublicPuzzleReviewView[]> => {
@@ -28,9 +31,9 @@ export const listPublicPuzzleReviews = query({
       rows.map(async (row): Promise<PublicPuzzleReviewView> => ({
         id: row.aggregateId ?? row._id,
         author: await projectPublicAuthor(ctx, row.authorId),
-        text: row.text,
         rating: row.rating ?? null,
-        createdAt: row.createdAt,
+        text: row.text ?? null,
+        updatedAt: row._creationTime,
       })),
     );
   },

@@ -1,4 +1,4 @@
-import type { PuzzleCommentView } from "@jigswap/contracts";
+import type { PuzzleReviewView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
@@ -17,7 +17,9 @@ import { toMemberView } from "../identity/toMemberView";
 // listPuzzleComments uses does NOT apply; auth is the correct gate for definition-level reviews.
 export const listPuzzleReviews = query({
   args: { puzzleId: v.id("puzzles") },
-  handler: async (ctx, args): Promise<PuzzleCommentView[]> => {
+  // INTERIM: still sourced from `puzzleComments` (rows shaped into PuzzleReviewView) until the
+  // read is re-pointed at the `puzzleReviews` table.
+  handler: async (ctx, args): Promise<PuzzleReviewView[]> => {
     await requireMember(ctx);
 
     const rows = (
@@ -29,7 +31,7 @@ export const listPuzzleReviews = query({
     ).filter((row) => row.copyId == null); // community reviews only; exclude copy-scoped comments
 
     return Promise.all(
-      rows.map(async (row): Promise<PuzzleCommentView> => {
+      rows.map(async (row): Promise<PuzzleReviewView> => {
         const author = await ctx.db.get(row.authorId);
         return {
           id: row.aggregateId ?? row._id,
@@ -43,9 +45,9 @@ export const listPuzzleReviews = query({
                 createdAt: 0,
                 updatedAt: 0,
               },
-          text: row.text,
           rating: row.rating ?? null,
-          createdAt: row.createdAt,
+          text: row.text ?? null,
+          updatedAt: row._creationTime,
         };
       }),
     );
