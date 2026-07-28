@@ -68,19 +68,17 @@ export interface RatingBreakdown {
   percentages: [number, number, number, number, number];
 }
 
-/** Community rating distribution over DEFINITION-level reviews (puzzleComments with a rating and
- * copyId == null). breakdown index 0..4 == [5★..1★]. */
+/** Community rating distribution over the definition's `puzzleReviews` rows (one per member).
+ * Migrated text-only rows (rating undefined) never aggregate. breakdown index 0..4 == [5★..1★]. */
 export const ratingBreakdownOf = async (
   ctx: QueryCtx,
   puzzleId: Id<"puzzles">,
 ): Promise<RatingBreakdown> => {
-  const comments = await ctx.db
-    .query("puzzleComments")
+  const reviews = await ctx.db
+    .query("puzzleReviews")
     .withIndex("by_puzzle", (q) => q.eq("puzzleId", puzzleId))
     .collect();
-  const ratedReviews = comments.filter(
-    (c) => c.rating != null && c.copyId == null,
-  );
+  const ratedReviews = reviews.filter((c) => c.rating != null);
   const breakdown: [number, number, number, number, number] = [0, 0, 0, 0, 0];
   let ratingSum = 0;
   for (const c of ratedReviews) {

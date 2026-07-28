@@ -125,17 +125,17 @@ describe("postPuzzleComment / listPuzzleComments", () => {
       copyId: aliceCopy,
       text: "my copy is mint",
     });
-    // A genuine community review row on the same puzzle definition. Seeded directly: the review
-    // FORM now upserts `puzzleReviews`, but the list still reads `puzzleComments` until it is
-    // repointed in a later task.
+    // A genuine community review row on the same puzzle definition, in `puzzleReviews` — the
+    // table the reviews list reads.
     await t.run(async (ctx) => {
-      await ctx.db.insert("puzzleComments", {
-        aggregateId: crypto.randomUUID(),
+      const now = Date.now();
+      await ctx.db.insert("puzzleReviews", {
         puzzleId,
-        authorId: bob,
+        userId: bob,
         text: "great design",
         rating: 3,
-        createdAt: Date.now(),
+        createdAt: now,
+        updatedAt: now,
       });
     });
 

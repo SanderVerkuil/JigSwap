@@ -37,27 +37,46 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
 const asAlice = (t: ReturnType<typeof convexTest>) =>
   t.withIdentity({ subject: "clerk_alice" });
 
-// Seed a community review ROW directly into `puzzleComments`. The list side still reads
-// `puzzleComments` until it is repointed at `puzzleReviews` in a later task, while the FORM
-// already writes `puzzleReviews` — so list coverage pins current behavior by inserting rows
-// itself instead of going through the mutation.
-const seedComment = (
+// Seed a review ROW directly into `puzzleReviews` (bypassing the mutation) so list coverage can
+// pin rows the form can't produce today: migrated text-only rows (rating undefined), backdated
+// updatedAt values, other members' rows.
+const seedReview = (
   t: ReturnType<typeof convexTest>,
   args: {
     puzzleId: Id<"puzzles">;
-    authorId: Id<"users">;
-    text: string;
+    userId: Id<"users">;
+    text?: string;
     rating?: number;
+    updatedAt?: number;
   },
 ) =>
   t.run(async (ctx) => {
-    await ctx.db.insert("puzzleComments", {
-      aggregateId: crypto.randomUUID(),
+    const at = args.updatedAt ?? Date.now();
+    await ctx.db.insert("puzzleReviews", {
       puzzleId: args.puzzleId,
-      authorId: args.authorId,
+      userId: args.userId,
       text: args.text,
       rating: args.rating,
-      createdAt: Date.now(),
+      createdAt: at,
+      updatedAt: at,
+    });
+  });
+
+// One review per (member, puzzle) — multi-review scenarios need extra members.
+const mkMember = (
+  t: ReturnType<typeof convexTest>,
+  clerkId: string,
+  name: string,
+) =>
+  t.run(async (ctx) => {
+    const now = Date.now();
+    return ctx.db.insert("users", {
+      clerkId,
+      email: `${clerkId}@example.com`,
+      name,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
     });
   });
 
@@ -163,16 +182,16 @@ describe("postPuzzleReview — upserts the member's puzzleReviews row", () => {
   });
 });
 
-// The list still reads `puzzleComments` until a later task repoints it at `puzzleReviews`;
-// rows are seeded directly (the form no longer writes comments) to pin current behavior.
-describe("listPuzzleReviews — still comment-sourced (interim)", () => {
-  test("returns a seeded comment with the real author", async () => {
+// The list reads the member's `puzzleReviews` rows; extra rows are seeded directly so migrated
+// text-only shapes and backdated updatedAt values can be pinned.
+describe("listPuzzleReviews — sourced from puzzleReviews", () => {
+  test("returns a seeded review with the real author", async () => {
     const t = convexTest(schema, modules);
     const { alice, puzzleId } = await seed(t);
 
-    await seedComment(t, {
+    await seedReview(t, {
       puzzleId,
-      authorId: alice,
+      userId: alice,
       text: "Stunning artwork",
       rating: 5,
     });
@@ -189,13 +208,13 @@ describe("listPuzzleReviews — still comment-sourced (interim)", () => {
     expect(list[0].author.name).toBe("Alice");
   });
 
-  test("a comment without a rating surfaces rating null", async () => {
+  test("a migrated text-only row serializes rating null", async () => {
     const t = convexTest(schema, modules);
     const { alice, puzzleId } = await seed(t);
 
-    await seedComment(t, {
+    await seedReview(t, {
       puzzleId,
-      authorId: alice,
+      userId: alice,
       text: "No stars from me",
     });
 
@@ -205,20 +224,105 @@ describe("listPuzzleReviews — still comment-sourced (interim)", () => {
     );
     expect(list).toHaveLength(1);
     expect(list[0].rating).toBeNull();
+    expect(list[0].text).toBe("No stars from me");
   });
 
-  test("reviews are returned newest-first", async () => {
+  test("a rating-only row serializes text null", async () => {
     const t = convexTest(schema, modules);
     const { alice, puzzleId } = await seed(t);
 
-    await seedComment(t, { puzzleId, authorId: alice, text: "first" });
-    await seedComment(t, { puzzleId, authorId: alice, text: "second" });
+    await seedReview(t, { puzzleId, userId: alice, rating: 4 });
 
     const list = await asAlice(t).query(
       api.social.listPuzzleReviews.listPuzzleReviews,
       { puzzleId },
     );
-    expect(list.map((c) => c.text)).toEqual(["second", "first"]);
+    expect(list).toHaveLength(1);
+    expect(list[0].rating).toBe(4);
+    expect(list[0].text).toBeNull();
+  });
+
+  test("reviews order desc by updatedAt, not by insertion order", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, puzzleId } = await seed(t);
+    const bob = await mkMember(t, "clerk_bob", "Bob");
+    const cara = await mkMember(t, "clerk_cara", "Cara");
+    const base = Date.now();
+
+    // Insertion order alice, bob, cara — updatedAt says cara, alice, bob. The by_puzzle index
+    // orders by _creationTime, so a creation-time read would return the wrong order.
+    await seedReview(t, {
+      puzzleId,
+      userId: alice,
+      text: "middle",
+      updatedAt: base + 2_000,
+    });
+    await seedReview(t, {
+      puzzleId,
+      userId: bob,
+      text: "oldest",
+      updatedAt: base + 1_000,
+    });
+    await seedReview(t, {
+      puzzleId,
+      userId: cara,
+      text: "newest",
+      updatedAt: base + 3_000,
+    });
+
+    const list = await asAlice(t).query(
+      api.social.listPuzzleReviews.listPuzzleReviews,
+      { puzzleId },
+    );
+    expect(list.map((c) => c.text)).toEqual(["newest", "middle", "oldest"]);
+    // updatedAt is surfaced as-is.
+    expect(list.map((c) => c.updatedAt)).toEqual([
+      base + 3_000,
+      base + 2_000,
+      base + 1_000,
+    ]);
+  });
+
+  test("a vanished author falls back to a synthetic 'Member' view", async () => {
+    const t = convexTest(schema, modules);
+    const { puzzleId } = await seed(t);
+    const bob = await mkMember(t, "clerk_bob", "Bob");
+
+    await seedReview(t, { puzzleId, userId: bob, text: "Orphaned", rating: 3 });
+    await t.run(async (ctx) => {
+      await ctx.db.delete(bob);
+    });
+
+    const list = await asAlice(t).query(
+      api.social.listPuzzleReviews.listPuzzleReviews,
+      { puzzleId },
+    );
+    expect(list).toHaveLength(1);
+    expect(list[0].text).toBe("Orphaned");
+    expect(list[0].author._id).toBe(bob as string);
+    expect(list[0].author.name).toBe("Member");
+    expect(list[0].author.isActive).toBe(false);
+  });
+
+  test("end-to-end: postPuzzleReview then listPuzzleReviews shows the review", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, puzzleId } = await seed(t);
+
+    await asAlice(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
+      puzzleId,
+      rating: 5,
+      text: "Stunning artwork",
+    });
+
+    const list = await asAlice(t).query(
+      api.social.listPuzzleReviews.listPuzzleReviews,
+      { puzzleId },
+    );
+    expect(list).toHaveLength(1);
+    expect(list[0].rating).toBe(5);
+    expect(list[0].text).toBe("Stunning artwork");
+    expect(list[0].author._id).toBe(alice as string);
+    expect(list[0].author.name).toBe("Alice");
   });
 
   // SECURITY: listPuzzleReviews projects each author through `toMemberView`, exposing member
@@ -228,9 +332,9 @@ describe("listPuzzleReviews — still comment-sourced (interim)", () => {
     const t = convexTest(schema, modules);
     const { alice, puzzleId } = await seed(t);
 
-    await seedComment(t, {
+    await seedReview(t, {
       puzzleId,
-      authorId: alice,
+      userId: alice,
       text: "Stunning artwork",
       rating: 5,
     });
