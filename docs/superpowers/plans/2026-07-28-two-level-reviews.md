@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-07-28-two-level-reviews-design.md` — read it first; it records 9 user decisions this plan implements exactly.
 
-**Landing plan (two PRs — mandatory):** every task below lands on `feat/in-progress-solves` (PR #66) against the still-loose schema. Schema tightening (dropping `completions.rating/review`, `completions.by_rating`, `puzzleComments.rating`) is PR B, a follow-up executed ONLY after the migration has run on dev+prod. PR B is NOT part of this plan's tasks; Task 21 records the runbook.
+**Landing plan (two PRs — mandatory):** every task below lands on `feat/in-progress-solves` (PR #66) against the still-loose schema. Schema tightening (dropping `completions.rating/review`, `completions.by_rating`, `puzzleComments.rating`) is PR B, a follow-up executed ONLY after the migration has run on dev+prod. PR B is NOT part of this plan's tasks; Task 17 records the runbook.
 
 **Conventions (apply to every task):**
 
@@ -80,13 +80,15 @@ git commit -m "feat(backend): puzzleReviews + copyReviews tables"
 
 **Files:**
 
-- Create: `packages/domain/src/solving/domain/puzzle-review-entry.ts` (entity + events)
-- Create: `packages/domain/src/solving/application/ports/out/review-repositories.port.ts`
+- Create: `packages/domain/src/solving/domain/puzzle-review-entry.ts` (entity ONLY — events do NOT live here)
+- Create: `packages/domain/src/solving/application/ports/out/review.repositories.ts` (out-ports are `*.repository/ies.ts` in this repo, never `*.port.ts`)
 - Create: `packages/domain/src/solving/application/ports/in/upsert-puzzle-review.port.ts`
 - Create: `packages/domain/src/solving/application/ports/in/upsert-copy-review.port.ts`
 - Create: `packages/domain/src/solving/application/use-cases/upsert-puzzle-review.ts`
 - Create: `packages/domain/src/solving/application/use-cases/upsert-copy-review.ts`
-- Create: `packages/domain/src/solving/review-upsert.spec.ts` (co-locate with existing domain .spec.ts convention)
+- Create: `packages/domain/src/solving/application/use-cases/review-upsert.spec.ts` (co-located next to the use cases, like `completion-use-cases.spec.ts` — specs never sit at a context root)
+- Modify: `packages/domain/src/solving/domain/events.ts` — add `PuzzleReviewUpserted` + `CopyReviewUpserted` classes AND add them to the `SolvingDomainEvent` union (~line 110–118; the publisher is typed against it)
+- Modify: `packages/domain/src/solving/domain/errors.ts` — add `notAllowedToReviewCopy` static (existing variants at ~27–75; backend `toConvexError` is a generic code/message passthrough, no backend error-mapping change needed)
 - Modify: `packages/domain/src/solving/domain/index.ts`, `packages/domain/src/solving/application/ports/in/index.ts` (exports)
 
 Follow the EXACT structural idiom of the existing `review-puzzle` use case (`packages/domain/src/solving/application/use-cases/review-puzzle.ts`) and its ports before deleting them in Task 3 — same Result type, error channel (`notCompletionOwner`-style discriminated errors), `StarRating.create` reuse, clock port.
@@ -99,14 +101,14 @@ Follow the EXACT structural idiom of the existing `review-puzzle` use case (`pac
   - `upsertCopyReview` requires permission: the in-port command carries `{ actingMemberId, copyOwnerId, hasCompletionOnCopy: boolean, copyId, rating }`; owner passes, completion-holder passes, neither → `notAllowedToReviewCopy` error. (The composition root supplies `copyOwnerId`/`hasCompletionOnCopy` — the domain stays pure; no repository lookups for permission.)
   - `CopyReviewUpserted` event recorded on success.
 
-Run: `cd packages/domain && npx vitest run src/solving/review-upsert.spec.ts`
+Run: `cd packages/domain && npx vitest run src/solving/application/use-cases/review-upsert.spec.ts`
 Expected: FAIL (modules don't exist).
 
-- [ ] **Step 2: Implement** the entity/events, ports, and the two use cases (minimal code to satisfy the specs; events follow the existing event-class pattern in `packages/domain/src/solving/domain/events.ts` — add `PuzzleReviewUpserted` and `CopyReviewUpserted` classes there alongside the others).
+- [ ] **Step 2: Implement** the entity, events (in `events.ts` + union, per the Files list), error static, ports, and the two use cases — minimal code to satisfy the specs, following the existing event-class pattern.
 
 - [ ] **Step 3: Run specs + arch check**
 
-Run: `cd packages/domain && npx vitest run src/solving/review-upsert.spec.ts && pnpm nx run @jigswap/domain:arch:check --skip-nx-cache`
+Run: `cd packages/domain && npx vitest run src/solving/application/use-cases/review-upsert.spec.ts && pnpm nx run @jigswap/domain:arch-check --skip-nx-cache`
 Expected: PASS / no violations.
 
 - [ ] **Step 4: Commit** — `feat(domain): puzzle/copy review upsert commands`
@@ -118,8 +120,8 @@ Expected: PASS / no violations.
 **Files:**
 
 - Modify: `packages/domain/src/solving/domain/completion.ts` (delete `review()` ~line 345–362; delete the creation-time review recording at ~199–207; drop `rating`/`review` from state)
-- Delete: `packages/domain/src/solving/domain/puzzle-review.ts`, `packages/domain/src/solving/puzzle-review.spec.ts`
-- Modify: `packages/domain/src/solving/domain/events.ts` (delete `PuzzleReviewed`, ~line 65–74)
+- Delete: `packages/domain/src/solving/domain/puzzle-review.ts`, `packages/domain/src/solving/domain/puzzle-review.spec.ts` (spec is co-located in `domain/`)
+- Modify: `packages/domain/src/solving/domain/events.ts` (delete `PuzzleReviewed`, ~line 65–74, AND remove it from the `SolvingDomainEvent` union ~110–118)
 - Modify: `packages/domain/src/solving/domain/ids.ts` (delete `PuzzleReviewId`, line ~6)
 - Modify: `packages/domain/src/solving/domain/index.ts` (drop the `puzzle-review` export, line ~7)
 - Delete: `packages/domain/src/solving/application/use-cases/review-puzzle.ts`, `.../ports/in/review-puzzle.port.ts`
@@ -129,11 +131,11 @@ Expected: PASS / no violations.
 - Modify: `packages/domain/src/insights/personal-stats.ts` — input shape: remove per-completion `ratingGiven` (~line 5–9), add `puzzleReviewRatings: number[]`; `averageRatingGiven` (~line 83–102) averages that array (null when empty). Update its spec.
 
 - [ ] **Step 1:** Make all removals; fix compile errors ONLY by deletion/adjustment of the listed touchpoints (if tsc reveals another consumer, remove its review usage too and note it in the commit body).
-- [ ] **Step 2:** Run: `cd packages/domain && npx vitest run && npx tsc --noEmit && pnpm nx run @jigswap/domain:arch:check --skip-nx-cache`
+- [ ] **Step 2:** Run: `cd packages/domain && npx vitest run && npx tsc --noEmit && pnpm nx run @jigswap/domain:arch-check --skip-nx-cache`
       Expected: full domain suite PASS (specs updated), clean compile.
 - [ ] **Step 3: Commit** — `refactor(domain)!: remove per-solve review path`
 
-Note: `packages/backend` will NOT compile between Tasks 3 and 5 (mapper/use-case references). That is expected mid-stack; Tasks 4–5 restore it. Do not run backend verification until Task 5.
+Note: `packages/backend` will NOT compile between Tasks 3 and 4 (mapper + `reviewPuzzle.ts` references). That is expected mid-stack; Task 4 restores it. `apps/web` goes red at Task 4 (return-shape change) and stays red until Tasks 12–15 progressively fix it. Do not run backend verification until Task 4 completes, nor web verification until its per-task expectations below.
 
 ---
 
@@ -143,8 +145,11 @@ Note: `packages/backend` will NOT compile between Tasks 3 and 5 (mapper/use-case
 
 - Create: `packages/backend/convex/solving/adapters/convexReviewRepositories.ts`
 - Modify: `packages/backend/convex/solving/adapters/completionMapper.ts` (drop rating/review round-trip, ~lines 34–37, 61–72)
-- Modify: `packages/backend/convex/solving/recordCompletion.ts`, `finishCompletion.ts` — return `{ completionId, puzzleId, copyId }` (doc ids; nullable). `recordCompletion` currently returns the aggregate id (line ~110); `finishCompletion` returns void (~24–40). Resolve `puzzleId`/`copyId` from the completions row (`row.puzzleId ?? null`, `row.ownedPuzzleId ?? null`) after the use case succeeds.
-- Modify: `packages/contracts` solving DTOs + `packages/gateway/src/operations.ts` for the new return shapes.
+- Modify: `packages/backend/convex/solving/recordCompletion.ts`, `finishCompletion.ts` — return `{ completionId, puzzleId, copyId }`. **`completionId` stays the domain AGGREGATE id exactly as today (unchanged semantics — photo attach and all downstream flows key on it); ONLY `puzzleId`/`copyId` are doc `_id`s, both nullable.** `recordCompletion` currently returns the aggregate id (line ~110); `finishCompletion` returns void (~24–40). Resolve `puzzleId`/`copyId` from the completions row (`row.puzzleId ?? null`, `row.ownedPuzzleId ?? null`) after the use case succeeds.
+- Delete: `packages/backend/convex/solving/reviewPuzzle.ts` (it imports the now-deleted `makeReviewPuzzle` — must go in THIS task or backend stays red)
+- Modify: `packages/backend/convex/_generated/api.d.ts` (drop the `solving/reviewPuzzle` registration)
+- Modify: `packages/gateway/src/operations.ts` (remove the `reviewPuzzle` line ~211; new operations arrive in Task 5)
+- Modify: `packages/contracts` solving DTOs for the new return shapes.
 - Modify: `packages/backend/convex/solvingMutations.test.ts` — return-shape assertions; remove any rating/review seeding.
 
 - [ ] **Step 1 (test-first):** In `solvingMutations.test.ts`, assert `recordCompletion` returns `{ completionId: string, puzzleId: <puzzles doc id>, copyId: <ownedPuzzles doc id> }` for a copy-linked record, and `finishCompletion` returns the same shape; a definition-only record returns `copyId: null`.
@@ -155,14 +160,15 @@ Expected: FAIL (shape mismatch).
 - [ ] **Step 2:** Implement the repository adapter:
 
 ```ts
+import type { Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
 
 // Upsert-by-unique-key adapters for the two review tables. Cardinality
 // (one row per member+target) lives HERE via the by_user_* indexes.
 export const convexPuzzleReviewRepository = (ctx: MutationCtx) => ({
   upsert: async (input: {
-    userId: string;
-    puzzleId: string;
+    userId: Id<"users">;
+    puzzleId: Id<"puzzles">;
     rating: number;
     text: string | undefined;
     now: number;
@@ -170,9 +176,7 @@ export const convexPuzzleReviewRepository = (ctx: MutationCtx) => ({
     const existing = await ctx.db
       .query("puzzleReviews")
       .withIndex("by_user_puzzle", (q) =>
-        q
-          .eq("userId", input.userId as never)
-          .eq("puzzleId", input.puzzleId as never),
+        q.eq("userId", input.userId).eq("puzzleId", input.puzzleId),
       )
       .unique();
     if (existing) {
@@ -184,8 +188,8 @@ export const convexPuzzleReviewRepository = (ctx: MutationCtx) => ({
       return;
     }
     await ctx.db.insert("puzzleReviews", {
-      userId: input.userId as never,
-      puzzleId: input.puzzleId as never,
+      userId: input.userId,
+      puzzleId: input.puzzleId,
       rating: input.rating,
       text: input.text,
       createdAt: input.now,
@@ -196,10 +200,10 @@ export const convexPuzzleReviewRepository = (ctx: MutationCtx) => ({
 // convexCopyReviewRepository: same shape against copyReviews/by_user_copy (no text).
 ```
 
-Adapt casts/typing to the codebase's existing adapter idiom (see `convexCompletionRepository.ts`) — do not invent a new style. Then implement the mutation return changes and mapper cleanup.
+The composition root holds real doc ids, so the port is typed with `Id<...>` directly; where the domain hands over branded strings, convert with the repo's `as unknown as Id<"users">` idiom (see `convexCompletionRepository.ts:25,41`) — never `as never`. Then implement the mutation return changes, mapper cleanup, and the reviewPuzzle deletions.
 
 - [ ] **Step 3:** Run: `cd packages/backend && npx vitest run convex/solvingMutations.test.ts && npx tsc --noEmit`
-      Expected: PASS, clean compile (backend compiles again from here).
+      Expected: PASS, clean compile (backend compiles again from here; `apps/web` is now red — expected until Tasks 12–15).
 - [ ] **Step 4: Commit** — `feat(backend): review repositories; record/finish return doc ids`
 
 ---
@@ -210,9 +214,8 @@ Adapt casts/typing to the codebase's existing adapter idiom (see `convexCompleti
 
 - Create: `packages/backend/convex/solving/submitReviews.ts`
 - Create: `packages/backend/convex/solving/getMyReviews.ts`
-- Delete: `packages/backend/convex/solving/reviewPuzzle.ts`
-- Modify: `packages/backend/convex/_generated/api.d.ts` (register submitReviews + getMyReviews; drop reviewPuzzle)
-- Modify: `packages/gateway/src/operations.ts` (replace the `reviewPuzzle` line ~211 with the two new operations)
+- Modify: `packages/backend/convex/_generated/api.d.ts` (register submitReviews + getMyReviews; reviewPuzzle was dropped in Task 4)
+- Modify: `packages/gateway/src/operations.ts` (add `solving.submitReviews` + `solving.getMyReviews`)
 - Create: `packages/backend/convex/reviewMutations.test.ts`
 
 - [ ] **Step 1 (failing tests):** `reviewMutations.test.ts` with convex-test:
@@ -221,6 +224,7 @@ Adapt casts/typing to the codebase's existing adapter idiom (see `convexCompleti
   - borrower (non-owner) WITH a completion on the copy → copy review allowed; member with neither → ConvexError.
   - `copyId` whose `puzzleId` ≠ `args.puzzleId` → ConvexError (cross-puzzle guard).
   - missing copy doc → ConvexError.
+  - `copy` payload supplied WITHOUT `copyId` → ConvexError.
   - neither `puzzle` nor `copy` provided → ConvexError.
   - `getMyReviews`: returns own rows only; `copyReviewAllowed:false` for absent copyId, deleted copy, and unpermitted member; `true` for owner and for completion-holder.
 
@@ -229,8 +233,8 @@ Run: `cd packages/backend && npx vitest run convex/reviewMutations.test.ts` — 
 - [ ] **Step 2:** Implement `submitReviews` as a composition root: `requireMember` → validate arg combination → when `copy` present: load copy (`ctx.db.get`), check existence + `copy.puzzleId === args.puzzleId`, compute `hasCompletionOnCopy` via `completions.by_user_owned_puzzle` (`.first() != null`) → call the two domain use cases (`upsertPuzzleReviewUseCase`, `upsertCopyReviewUseCase`) with the repository adapters, `inProcessEventPublisher`, `systemClock`; `toConvexError` on domain errors. Implement `getMyReviews` as a plain query (viewer-own lookups + the same permission computation; NO copy-content leakage — it returns only booleans/own rows).
 
 - [ ] **Step 3:** Run the new test file + `npx tsc --noEmit` — PASS.
-- [ ] **Step 4:** Register both modules in `api.d.ts`, wire the gateway ops (`solving.submitReviews`, `solving.getMyReviews`), remove `reviewPuzzle` everywhere backend/gateway-side (the WEB binding is Task 12 — expect `apps/web` tsc to be red until then, do not run web checks yet).
-- [ ] **Step 5: Commit** — `feat(backend): submitReviews + getMyReviews; drop reviewPuzzle`
+- [ ] **Step 4:** Register both modules in `api.d.ts`, wire the gateway ops (`solving.submitReviews`, `solving.getMyReviews`). (Web stays red — its fixes are Tasks 12–15; do not run web checks.)
+- [ ] **Step 5: Commit** — `feat(backend): submitReviews + getMyReviews`
 
 ---
 
@@ -241,7 +245,7 @@ Run: `cd packages/backend && npx vitest run convex/reviewMutations.test.ts` — 
 - Modify: `packages/backend/convex/social/postPuzzleReview.ts` (args at ~23–26; currently delegates to `makePostComment`)
 - Modify: `packages/backend/convex/postPuzzleReview.test.ts`
 
-- [ ] **Step 1 (failing tests):** rewrite tests: rating REQUIRED (`rating: v.number()`), text optional; posting twice by one member on one puzzle → ONE `puzzleReviews` row (upserted), ZERO new `puzzleComments` rows; whitespace-only text → undefined.
+- [ ] **Step 1 (failing tests):** rewrite tests: rating REQUIRED (`rating: v.number()`), text optional; posting twice by one member on one puzzle → ONE `puzzleReviews` row (upserted), ZERO new `puzzleComments` rows; whitespace-only text → undefined. NOTE: `postPuzzleReview.test.ts` also hosts `listPuzzleReviews` coverage — the lists still read `puzzleComments` until Task 8, so any list assertions that relied on the form writing comments must (interim) seed `puzzleComments` directly; they get their final puzzleReviews-sourced form in Task 8.
 - [ ] **Step 2:** Rewrite the mutation to call the SAME `upsertPuzzleReviewUseCase` + repository used by `submitReviews` (no duplicate logic — extract a small shared helper in `solving/` if needed). Keep the module path/name (public API surface for the catalog form stays put).
 - [ ] **Step 3:** Run: `npx vitest run convex/postPuzzleReview.test.ts` — PASS.
 - [ ] **Step 4: Commit** — `feat(backend): catalog review form upserts puzzleReviews`
@@ -254,11 +258,12 @@ Run: `cd packages/backend && npx vitest run convex/reviewMutations.test.ts` — 
 
 - Modify: `packages/backend/convex/social/postPuzzleComment.ts` (drop `rating` arg, line ~28 writes it)
 - Modify: `packages/backend/convex/social/listPuzzleComments.ts` (projection line ~49)
-- Modify: `packages/contracts/src/social/social.ts` — `PuzzleCommentView` (~57–63): remove `rating`; flip `text` handling ONLY if shared with reviews (see Task 8 — if `PuzzleCommentView` is review-shared, SPLIT the DTO: `PuzzleCommentView` (text required, no rating) and a new `PuzzleReviewView` for Task 8)
+- Modify: `packages/contracts/src/social/social.ts` — `PuzzleCommentView` (~57–63) IS review-shared (`listPuzzleReviews.ts:20` returns it), so SPLIT the DTO here: `PuzzleCommentView` (text required, NO rating) and a new `PuzzleReviewView` `{ id, author, rating: number | null, text: string | null, updatedAt: number }`
+- Modify: `packages/backend/convex/social/listPuzzleReviews.ts` + `listPublicPuzzleReviews.ts` — INTERIM retype to `PuzzleReviewView` (still sourced from `puzzleComments` until Task 8; map `rating: row.rating ?? null`, `text: row.text`, `updatedAt: row._creationTime` for now) so backend tsc stays green
 - Modify: `packages/backend/convex/postPuzzleComment.test.ts`
 
 - [ ] **Step 1:** Failing tests: `postPuzzleComment` rejects/ignores rating (arg removed → TS-level), `listPuzzleComments` rows carry no `rating` key.
-- [ ] **Step 2:** Implement; split the contract DTO as described.
+- [ ] **Step 2:** Implement; split the contract DTO and retype the review lists as described.
 - [ ] **Step 3:** `npx vitest run convex/postPuzzleComment.test.ts` + backend tsc — PASS (web red is expected until Tasks 12–15).
 - [ ] **Step 4: Commit** — `refactor(backend)!: comments are plain text; rating removed`
 
@@ -275,7 +280,7 @@ Run: `cd packages/backend && npx vitest run convex/reviewMutations.test.ts` — 
 
 - [ ] **Step 1 (failing tests):**
   - Breakdown: seed 3 rated `puzzleReviews` rows (one per member) + 1 text-only row → `count: 3`, text-only excluded; a member CANNOT have two rows (guaranteed by Task 5, no test here).
-  - Dedupe proof: one member's single row counts once even after multiple `submitReviews` calls.
+  - Dedupe proof (the original bug, regression-pinned): seed THREE completions by one member on the puzzle PLUS that member's single review → breakdown `count: 1` (completions no longer feed the breakdown); also one member's row counts once after multiple `submitReviews` calls.
   - Lists: ordered desc by `updatedAt`; text-only and rating-only rows both serialize (`text: null` / `rating: null`); vanished-author synthetic "Member" fallback preserved; public list empty for non-approved puzzles.
 - [ ] **Step 2:** Implement: `ratingBreakdownOf` queries `puzzleReviews.by_puzzle`, filters `rating != null`, keeps its `{rating, count, breakdown, percentages}` return shape. Lists mirror today's author-join/gating structure (`listPuzzleReviews.ts` requireMember + `toMemberView`; public twin `projectPublicAuthor` + approved gate).
 - [ ] **Step 3:** Run the three test files — PASS. All three breakdown callers (`getPuzzleDefinitionView`, `browsePublicCatalog`, `catalog/getPublicDefinitionView`) compile untouched.
@@ -324,7 +329,7 @@ Run: `cd packages/backend && npx vitest run convex/reviewMutations.test.ts` — 
 
 **Files:**
 
-- Create: `packages/backend/convex/migrations/backfillTwoLevelReviews.ts` (internal mutation, batched — mirror `solving/backfillCompletionPuzzleId.ts`'s pagination/batching idiom)
+- Create: `packages/backend/convex/solving/backfillTwoLevelReviews.ts` (backfills live in their context dir — there is NO `migrations/` dir). NOTE: `backfillCompletionPuzzleId.ts` is a single-pass `.collect()` loop with NO pagination — that simple full-scan idiom is ACCEPTABLE here (small pre-release data); if you prefer cursor batching, the repo's idiom is `conversation/backfill.ts:66–73` (`paginate({ cursor, numItems })`).
 - Create: `packages/backend/convex/backfillTwoLevelReviews.test.ts`
 
 Rules (from spec — implement EXACTLY):
@@ -359,7 +364,7 @@ Behavior (spec-exact):
 - Delete nothing: clearing text and saving sends `text: undefined` (upsert-overwrite; allowed).
 
 - [ ] **Step 1:** Implement. Keep the conditional-mount-per-target pattern at call sites.
-- [ ] **Step 2:** Verify: `cd apps/web && npx tsc --noEmit` (routeTree.gen noise is known — judge real errors only) — the `reviewPuzzle` binding removal (follow-up provider) is Task 13; this file must no longer reference `completionId`.
+- [ ] **Step 2:** Verify: `cd apps/web && npx tsc --noEmit` (routeTree.gen noise is known — judge real errors only). Expected: THIS FILE contributes zero errors and no longer references `completionId`; residual errors are EXPECTED and confined to files owned by later tasks — `completion-follow-up-provider.tsx`, `finish-solve-dialog.tsx`, `log-solve-dialog.tsx` (Task 13), `completions/index.tsx`, `copies/$id.tsx`, `stat-cards.tsx` (Task 14), `puzzles/$id/index.tsx`, `catalog/$id.tsx` (Task 15). Do NOT fix those here.
 - [ ] **Step 3: Commit** — `feat(web): two-level review dialog with prefill + dirty tracking`
 
 ---
@@ -370,7 +375,7 @@ Behavior (spec-exact):
 
 - Modify: `apps/web/src/components/solving/completion-follow-up-provider.tsx` (`requestFollowUp` ~33–35/86–91; review save step ~204–211; `gateway.solving.reviewPuzzle` binding line ~70)
 - Modify: `apps/web/src/components/solving/finish-solve-dialog.tsx`, `log-solve-dialog.tsx` (success paths — thread the NEW `{ completionId, puzzleId, copyId }` mutation returns into `requestFollowUp`)
-- Modify: the no-provider stub + any `requestFollowUp` call sites (`/completions/new` route)
+- Modify: the no-provider stub. (`requestFollowUp` is called ONLY from `finish-solve-dialog.tsx`, `log-solve-dialog.tsx`, and the provider itself; `/completions/new` merely renders `LogSolveDialog` — just verify it still compiles.)
 
 Behavior:
 
@@ -380,7 +385,7 @@ Behavior:
 - Nothing-changed + no photos → Save/Skip closes with no mutation.
 
 - [ ] **Step 1:** Implement provider + threading (finish/log dialogs consume the new return values from Task 4).
-- [ ] **Step 2:** `cd apps/web && npx tsc --noEmit` — zero real errors; `npx vitest run` for the web meta tests.
+- [ ] **Step 2:** `cd apps/web && npx tsc --noEmit`. Expected: the Task-13 files contribute zero errors; residual errors confined to Task 14's files (`completions/index.tsx`, `copies/$id.tsx`, `stat-cards.tsx`) and Task 15's catalog files. Do NOT fix those here.
 - [ ] **Step 3: Commit** — `feat(web): follow-up dialog reviews puzzle + copy`
 
 ---
@@ -391,9 +396,10 @@ Behavior:
 
 - Modify: `apps/web/src/routes/_dashboard/completions/index.tsx` — remove read-only stars (~403–405) and review text (~330–333); Review button (~427–452): single label (one locale key, no add/edit ternary — delete the `completion.rating !== undefined` gate), pass `{ puzzleId: completion.puzzleId, copyId: completion.ownedPuzzleId }` doc ids from the row, HIDE when `completion.puzzleId == null`; dialog union member carries the ids (~53–56, render ~562–569)
 - Modify: `apps/web/src/routes/_dashboard/copies/$id.tsx` — comment form star input removed (~1163–1230) and comment list stars removed (~1276–1278); `CommunityRating` unchanged visually (data now includes `percentages` — reconcile its props, ~1085–1128); NEW copy-reviews block (avg from view.community? NO — copy-level avg computed inline from `view.copyReviews` + per-member rows with author/stars/date) placed beside/below the comments section following the page's `SectionHead` idiom; `stats` grid swaps "your avg rating" for the new `yourCopyRating` (~224-derived stat + `MetaItem`/stat renderer); hero subtitle (~405–411) gains the "View puzzle page" link to `/puzzles/${view.puzzleId}` (import `Link` from `@/compat/link` — not currently imported)
+- Modify: `apps/web/src/components/insights/stat-cards.tsx` — its OWN prop interface declares `averageRatingGiven: number` (line ~14, formatted ~88); the domain change (Task 3) makes it `number | null` — update the prop type and render a placeholder (em dash) when null
 
-- [ ] **Step 1:** Implement both routes. Keep the stretched-link/z-index conventions on the completions rows (action cluster stays `relative z-10`).
-- [ ] **Step 2:** `cd apps/web && npx tsc --noEmit` + web vitest — clean.
+- [ ] **Step 1:** Implement both routes + the stat card. Keep the stretched-link/z-index conventions on the completions rows (action cluster stays `relative z-10`).
+- [ ] **Step 2:** `cd apps/web && npx tsc --noEmit` + web vitest. Expected: residual errors confined to Task 15's two catalog files. Do NOT fix those here.
 - [ ] **Step 3: Commit** — `feat(web): rows + copy page on two-level reviews; puzzle-page link`
 
 ---
@@ -406,7 +412,7 @@ Behavior:
 - Modify: `apps/web/src/routes/_public/catalog/$id.tsx` (~422–426): same nullable-text/rating rendering + `updatedAt`
 
 - [ ] **Step 1:** Implement.
-- [ ] **Step 2:** `cd apps/web && npx tsc --noEmit` + vitest — clean.
+- [ ] **Step 2:** `cd apps/web && npx tsc --noEmit` + vitest — FULLY CLEAN (this is the first task where zero real web errors is claimable; if anything else is still red, a previous task under-delivered — fix it there conceptually, i.e. flag it, don't silently absorb it).
 - [ ] **Step 3: Commit** — `feat(web): catalog review form + lists on puzzleReviews`
 
 ---
@@ -431,13 +437,15 @@ Behavior:
 - [ ] **Step 2: Full battery** (from repo root):
 
 ```bash
-pnpm nx run @jigswap/domain:arch:check --skip-nx-cache
-pnpm nx run-many -t type-check --skip-nx-cache
+pnpm nx run @jigswap/domain:arch-check --skip-nx-cache
+pnpm nx run-many -t lint type-check build --skip-nx-cache
 pnpm nx run @jigswap/domain:test --skip-nx-cache
 pnpm nx run @jigswap/backend:coverage --skip-nx-cache
 pnpm nx run @jigswap/web:test --skip-nx-cache
 npx prettier --check .
 ```
+
+(This mirrors CI's `lint type-check test build arch-check` matrix — lint and build included deliberately.)
 
 Expected: all green.
 
@@ -448,7 +456,7 @@ Expected: all green.
 ### Task 17 (documentation only — no code): PR B + runbook note
 
 - [ ] **Step 1:** Append to `docs/deployment` runbook notes (or the PR #66 description): after merge + auto-deploy, IMMEDIATELY run `backfillTwoLevelReviews` on dev, verify, then prod (between deploy and migration, community ratings read empty — accepted). PR B afterwards: drop `completions.rating`, `completions.review`, `completions.by_rating`, `puzzleComments.rating` from `schema.ts` and remove/adjust the migration tests that seed legacy fields.
-- [ ] **Step 2:** Update the PR #66 body to cover this slice.
+- [ ] **Step 2:** Update the PR #66 body to cover this slice, including a PR-preview verification checklist: unchanged-prefill Save is a no-op (no `updatedAt` bump / list re-sort), nothing-rated Save closes without a mutation, two-level dialog flows (row Review button, follow-up after finish, catalog form update path), copy-page puzzle link.
 
 ---
 
@@ -456,4 +464,4 @@ Expected: all green.
 
 - Spec coverage: decisions 1–9 → Tasks 1–16 (verified: text-only rows T1/T8/T11; visibility upgrade is migration behavior T11; two-PR landing T17).
 - No placeholders; type names consistent (`PuzzleReviewView`, `getMyReviews` shape, `{ completionId, puzzleId, copyId }` return) across tasks.
-- Mid-stack red windows are EXPLICIT (after T3 backend red until T4/T5; web red from T5 until T12–15) — implementers must not "fix" them ahead of order.
+- Mid-stack red windows are EXPLICIT (backend red between T3 and T4; web red from T4 until T15, with per-task residual-error expectations in T12–14) — implementers must not "fix" them ahead of order.
