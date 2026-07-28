@@ -57,7 +57,7 @@ describe("Review upsert use cases", () => {
       const upsert = makeUpsertPuzzleReview({ puzzleReviews, events, clock });
       const result = await upsert({
         actingMemberId: ALICE,
-        puzzleDefinitionId: PUZZLE,
+        puzzleId: PUZZLE,
         rating: 4,
         text: "Great fit",
       });
@@ -65,7 +65,7 @@ describe("Review upsert use cases", () => {
       expect(puzzleReviews.upserts).toEqual([
         {
           userId: ALICE,
-          puzzleDefinitionId: PUZZLE,
+          puzzleId: PUZZLE,
           rating: 4,
           text: "Great fit",
           now: NOW,
@@ -75,7 +75,7 @@ describe("Review upsert use cases", () => {
         expect.objectContaining({
           name: "PuzzleReviewUpserted",
           userId: ALICE,
-          puzzleDefinitionId: PUZZLE,
+          puzzleId: PUZZLE,
           rating: 4,
           occurredAt: NOW,
         }),
@@ -86,12 +86,12 @@ describe("Review upsert use cases", () => {
       const upsert = makeUpsertPuzzleReview({ puzzleReviews, events, clock });
       const first = await upsert({
         actingMemberId: ALICE,
-        puzzleDefinitionId: PUZZLE,
+        puzzleId: PUZZLE,
         rating: 4,
       });
       const second = await upsert({
         actingMemberId: ALICE,
-        puzzleDefinitionId: PUZZLE,
+        puzzleId: PUZZLE,
         rating: 2,
       });
       expect(first.isOk).toBe(true);
@@ -105,7 +105,7 @@ describe("Review upsert use cases", () => {
       const upsert = makeUpsertPuzzleReview({ puzzleReviews, events, clock });
       const result = await upsert({
         actingMemberId: ALICE,
-        puzzleDefinitionId: PUZZLE,
+        puzzleId: PUZZLE,
         rating,
       });
       expect(result.isErr).toBe(true);
@@ -118,7 +118,7 @@ describe("Review upsert use cases", () => {
       const upsert = makeUpsertPuzzleReview({ puzzleReviews, events, clock });
       const result = await upsert({
         actingMemberId: ALICE,
-        puzzleDefinitionId: PUZZLE,
+        puzzleId: PUZZLE,
         rating: 3,
         text: "   ",
       });
@@ -189,14 +189,14 @@ describe("Review upsert use cases", () => {
       expect(events.published).toHaveLength(0);
     });
 
-    it("rejects an invalid rating with InvalidRating", async () => {
+    it.each([0, 6])("rejects rating %i with InvalidRating", async (rating) => {
       const upsert = makeUpsertCopyReview({ copyReviews, events, clock });
       const result = await upsert({
         actingMemberId: ALICE,
         copyId: COPY,
         copyOwnerId: ALICE,
         hasCompletionOnCopy: false,
-        rating: 0,
+        rating,
       });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("InvalidRating");

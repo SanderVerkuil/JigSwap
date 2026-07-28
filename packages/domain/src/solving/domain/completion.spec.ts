@@ -3,8 +3,6 @@ import { toCompletionId, toFileId, toMemberId } from "../../shared-kernel";
 import { Completion, EDIT_WINDOW_MS } from "./completion";
 
 import { Photo } from "./photo";
-import { PuzzleReview } from "./puzzle-review";
-import { StarRating } from "./star-rating";
 
 const ID = toCompletionId("completion-1");
 const ALICE = toMemberId("alice");
@@ -141,18 +139,6 @@ describe("Completion.record", () => {
     });
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("InvalidDuration");
-  });
-
-  it("records PuzzleReviewed when a review is supplied", () => {
-    const result = recordValid({
-      review: PuzzleReview.create(StarRating.fromState(5), "great"),
-    });
-    expect(result.isOk).toBe(true);
-    if (result.isOk)
-      expect(names(result.value)).toEqual([
-        "CompletionRecorded",
-        "PuzzleReviewed",
-      ]);
   });
 });
 
@@ -560,23 +546,6 @@ describe("Completion.allPiecesPresent", () => {
     const outcome = c.finish(END, NOW, undefined, true);
     expect(outcome.isOk).toBe(true);
     expect(c.toState().allPiecesPresent).toBe(true);
-  });
-});
-
-describe("Completion.review", () => {
-  it("attaches a PuzzleReview with rating and text and records PuzzleReviewed", () => {
-    const recorded = recordValid();
-    if (!recorded.isOk) throw new Error("setup failed");
-    recorded.value.pullEvents();
-    const outcome = recorded.value.review(
-      StarRating.fromState(4),
-      END,
-      "solid",
-    );
-    expect(outcome.isOk).toBe(true);
-    expect(recorded.value.puzzleReview?.rating.value).toBe(4);
-    expect(recorded.value.puzzleReview?.text).toBe("solid");
-    expect(names(recorded.value)).toEqual(["PuzzleReviewed"]);
   });
 });
 

@@ -6,7 +6,6 @@ export * from "./finish-completion";
 export * from "./get-solving-preferences";
 export * from "./recompute-goal-progress";
 export * from "./record-completion";
-export * from "./review-puzzle";
 export * from "./set-share-in-progress";
 export * from "./set-track-completion-duration";
 export * from "./start-completion";

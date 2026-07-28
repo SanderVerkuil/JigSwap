@@ -9,6 +9,7 @@ const empty: PersonalStatsInput = {
   copies: [],
   collectionsCount: 0,
   exchanges: [],
+  puzzleReviewRatings: [],
   reviewsReceived: [],
   goals: [],
 };
@@ -24,14 +25,14 @@ describe("computePersonalStats", () => {
       distinctDefinitions: 0,
       collectionsCount: 0,
       exchangesCompleted: 0,
-      averageRatingGiven: 0,
+      // No puzzle reviews: null, not 0 (distinguishes "no reviews" from a 0 average).
+      averageRatingGiven: null,
       averageRatingReceived: 0,
       goalsActive: 0,
       goalsAchieved: 0,
     });
     // Explicitly guard against NaN leaking through any average.
     expect(Number.isNaN(stats.averageSolveMinutes)).toBe(false);
-    expect(Number.isNaN(stats.averageRatingGiven)).toBe(false);
     expect(Number.isNaN(stats.averageRatingReceived)).toBe(false);
   });
 
@@ -98,11 +99,7 @@ describe("computePersonalStats", () => {
   it("averages ratings given and received independently", () => {
     const stats = computePersonalStats({
       ...empty,
-      completions: [
-        { isCompleted: true, ratingGiven: 4 },
-        { isCompleted: true, ratingGiven: 2 },
-        { isCompleted: true }, // no rating -> excluded
-      ],
+      puzzleReviewRatings: [4, 2],
       reviewsReceived: [{ rating: 5 }, { rating: 3 }, { rating: 1 }],
     });
     expect(stats.averageRatingGiven).toBe(3); // (4+2)/2

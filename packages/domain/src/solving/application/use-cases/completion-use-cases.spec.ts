@@ -13,7 +13,6 @@ import { makeDeleteCompletion } from "./delete-completion";
 import { makeEditCompletion } from "./edit-completion";
 import { makeFinishCompletion } from "./finish-completion";
 import { makeRecordCompletion } from "./record-completion";
-import { makeReviewPuzzle } from "./review-puzzle";
 import { makeStartCompletion } from "./start-completion";
 
 const ALICE = toMemberId("alice");
@@ -83,31 +82,6 @@ describe("Completion use cases", () => {
       });
       expect(result.isOk).toBe(true);
       expect(events.names()).toEqual(["CompletionRecorded"]);
-    });
-
-    it("attaches a review and publishes PuzzleReviewed when a rating is supplied", async () => {
-      const record = makeRecordCompletion({ completions, ids, events, clock });
-      const result = await record({
-        userId: ALICE,
-        startDate: START,
-        endDate: END,
-        rating: 5,
-        reviewText: "great",
-      });
-      expect(result.isOk).toBe(true);
-      expect(events.names()).toEqual(["CompletionRecorded", "PuzzleReviewed"]);
-    });
-
-    it("rejects an invalid rating with InvalidRating", async () => {
-      const record = makeRecordCompletion({ completions, ids, events, clock });
-      const result = await record({
-        userId: ALICE,
-        startDate: START,
-        endDate: END,
-        rating: 9,
-      });
-      expect(result.isErr).toBe(true);
-      if (result.isErr) expect(result.error.code).toBe("InvalidRating");
     });
 
     it("rejects an end before start with InvalidTimeRange", async () => {
@@ -358,82 +332,6 @@ describe("Completion use cases", () => {
       });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("CompletionNotFound");
-    });
-  });
-
-  describe("reviewPuzzle", () => {
-    it("attaches a review to the member's completion", async () => {
-      const record = makeRecordCompletion({ completions, ids, events, clock });
-      const recorded = await record({
-        userId: ALICE,
-        startDate: START,
-        endDate: END,
-      });
-      if (!recorded.isOk) throw new Error("setup failed");
-      events.published.length = 0;
-
-      const review = makeReviewPuzzle({ completions, events, clock });
-      const result = await review({
-        actingMemberId: ALICE,
-        completionId: recorded.value,
-        rating: 4,
-        text: "nice",
-      });
-      expect(result.isOk).toBe(true);
-      expect(events.names()).toEqual(["PuzzleReviewed"]);
-
-      const stored = await completions.findById(recorded.value);
-      expect(stored?.puzzleReview?.rating.value).toBe(4);
-      expect(stored?.puzzleReview?.text).toBe("nice");
-    });
-
-    it("rejects an invalid rating with InvalidRating", async () => {
-      const record = makeRecordCompletion({ completions, ids, events, clock });
-      const recorded = await record({
-        userId: ALICE,
-        startDate: START,
-        endDate: END,
-      });
-      if (!recorded.isOk) throw new Error("setup failed");
-
-      const review = makeReviewPuzzle({ completions, events, clock });
-      const result = await review({
-        actingMemberId: ALICE,
-        completionId: recorded.value,
-        rating: 0,
-      });
-      expect(result.isErr).toBe(true);
-      if (result.isErr) expect(result.error.code).toBe("InvalidRating");
-    });
-
-    it("returns CompletionNotFound for an unknown id", async () => {
-      const review = makeReviewPuzzle({ completions, events, clock });
-      const result = await review({
-        actingMemberId: ALICE,
-        completionId: toCompletionId("nope"),
-        rating: 4,
-      });
-      expect(result.isErr).toBe(true);
-      if (result.isErr) expect(result.error.code).toBe("CompletionNotFound");
-    });
-
-    it("rejects a non-owner with NotCompletionOwner", async () => {
-      const record = makeRecordCompletion({ completions, ids, events, clock });
-      const recorded = await record({
-        userId: ALICE,
-        startDate: START,
-        endDate: END,
-      });
-      if (!recorded.isOk) throw new Error("setup failed");
-
-      const review = makeReviewPuzzle({ completions, events, clock });
-      const result = await review({
-        actingMemberId: BOB,
-        completionId: recorded.value,
-        rating: 4,
-      });
-      expect(result.isErr).toBe(true);
-      if (result.isErr) expect(result.error.code).toBe("NotCompletionOwner");
     });
   });
 });

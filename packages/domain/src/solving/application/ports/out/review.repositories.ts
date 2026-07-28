@@ -8,7 +8,7 @@ import { CopyId, MemberId, PuzzleDefinitionId } from "../../../domain";
 // The already-normalised values a puzzle-review upsert persists.
 export interface PuzzleReviewUpsert {
   readonly userId: MemberId;
-  readonly puzzleDefinitionId: PuzzleDefinitionId;
+  readonly puzzleId: PuzzleDefinitionId;
   readonly rating: number;
   readonly text?: string;
   readonly now: Date;
