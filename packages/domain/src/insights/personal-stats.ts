@@ -2,11 +2,9 @@
 // DTOs (no Convex imports). The Convex adapter fetches rows, maps them to these inputs, and applies
 // the function. Keeping the maths here makes it deterministic and unit-testable in isolation.
 
-// One completed solve, reduced to what the stats need. `ratingGiven` is the PuzzleReview rating the
-// member left (1-5) when present.
+// One completed solve, reduced to what the stats need.
 export interface CompletionStatInput {
   readonly completionTimeMinutes?: number;
-  readonly ratingGiven?: number;
   readonly isCompleted: boolean;
 }
 
@@ -41,6 +39,9 @@ export interface PersonalStatsInput {
   readonly copies: readonly CopyStatInput[];
   readonly collectionsCount: number;
   readonly exchanges: readonly ExchangeStatInput[];
+  // The 1-5 ratings from the member's puzzle reviews (the two-level review model's
+  // `puzzleReviews` rows), no longer attached to completions.
+  readonly puzzleReviewRatings: readonly number[];
   readonly reviewsReceived: readonly ReceivedReviewStatInput[];
   readonly goals: readonly GoalStatInput[];
 }
@@ -53,7 +54,8 @@ export interface PersonalStats {
   readonly distinctDefinitions: number;
   readonly collectionsCount: number;
   readonly exchangesCompleted: number;
-  readonly averageRatingGiven: number;
+  // null when the member has no puzzle reviews (distinguishes "no reviews" from a 0 average).
+  readonly averageRatingGiven: number | null;
   readonly averageRatingReceived: number;
   readonly goalsActive: number;
   readonly goalsAchieved: number;
@@ -80,10 +82,6 @@ export const computePersonalStats = (
     .filter((m): m is number => typeof m === "number");
   const totalSolveMinutes = solveMinutes.reduce((acc, m) => acc + m, 0);
 
-  const ratingsGiven = completed
-    .map((c) => c.ratingGiven)
-    .filter((r): r is number => typeof r === "number");
-
   const distinctDefinitions = new Set(
     input.copies
       .map((c) => c.puzzleDefinitionKey)
@@ -99,7 +97,10 @@ export const computePersonalStats = (
     collectionsCount: input.collectionsCount,
     exchangesCompleted: input.exchanges.filter((e) => e.status === "completed")
       .length,
-    averageRatingGiven: mean(ratingsGiven),
+    averageRatingGiven:
+      input.puzzleReviewRatings.length === 0
+        ? null
+        : mean(input.puzzleReviewRatings),
     averageRatingReceived: mean(input.reviewsReceived.map((r) => r.rating)),
     goalsActive: input.goals.filter((g) => g.isActive).length,
     goalsAchieved: input.goals.filter(

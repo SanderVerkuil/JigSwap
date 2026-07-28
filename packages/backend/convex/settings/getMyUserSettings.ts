@@ -18,7 +18,7 @@ export const getMyUserSettings = query({
       ]),
     );
     return Object.fromEntries(sections) as {
-      solving: { trackCompletionDuration?: boolean };
+      solving: { trackCompletionDuration?: boolean; shareInProgress?: boolean };
     };
   },
 });

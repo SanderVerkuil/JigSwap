@@ -4,7 +4,6 @@ import {
   type CopyId,
   Photo,
   type PuzzleDefinitionId,
-  PuzzleReview,
   toCompletionId,
   toFileId,
   toMemberId,
@@ -17,10 +16,17 @@ import type { Doc, Id } from "../../_generated/dataModel";
 // The insert/patch payload for the completion row (minus Convex-managed `_id`/`_creationTime`).
 // The FK columns `puzzleId`/`ownedPuzzleId` are excluded here because the mapper is pure and
 // cannot resolve the real `puzzles._id`/`ownedPuzzles._id` from the aggregateIds — the
-// repository resolves and supplies them.
+// repository resolves and supplies them. The legacy `rating`/`review` columns are excluded too:
+// reviews live in the `puzzleReviews`/`copyReviews` tables now, never on the completion row.
 export type CompletionRow = Omit<
   Doc<"completions">,
-  "_id" | "_creationTime" | "puzzleId" | "ownedPuzzleId" | "copySnapshot"
+  | "_id"
+  | "_creationTime"
+  | "puzzleId"
+  | "ownedPuzzleId"
+  | "copySnapshot"
+  | "rating"
+  | "review"
 >;
 
 // Row -> aggregate. The row MUST carry an aggregateId (only domain-written rows do); callers
@@ -31,11 +37,6 @@ export const toDomain = (
   puzzleDefinitionId: PuzzleDefinitionId | undefined,
   copyId: CopyId | undefined,
 ): Completion => {
-  const review =
-    row.rating === undefined
-      ? undefined
-      : PuzzleReview.fromState({ rating: row.rating, text: row.review });
-
   const state: CompletionState = {
     id: toCompletionId(row.aggregateId as string),
     userId: toMemberId(row.userId as unknown as string),
@@ -48,7 +49,6 @@ export const toDomain = (
     photos: row.photos.map((fileId) =>
       Photo.of(toFileId(fileId as unknown as string)),
     ),
-    review,
     allPiecesPresent: row.allPiecesPresent,
     isCompleted: row.isCompleted,
     createdAt: new Date(row.createdAt),
@@ -58,18 +58,15 @@ export const toDomain = (
 };
 
 // Aggregate -> completion row payload (without the FK columns, which the repository fills with
-// the resolved real document ids). The PuzzleReview maps to the `rating`/`review` columns.
+// the resolved real document ids).
 export const toRow = (completion: Completion): CompletionRow => {
   const state: CompletionState = completion.toState();
-  const reviewState = state.review?.toState();
   return {
     aggregateId: state.id as string,
     userId: state.userId as unknown as Id<"users">,
     startDate: state.startDate.getTime(),
     endDate: state.endDate?.getTime(),
     completionTimeMinutes: state.completionTimeMinutes,
-    rating: reviewState?.rating,
-    review: reviewState?.text,
     notes: state.notes,
     photos: state.photos.map(
       (photo) => photo.fileId as unknown as Id<"_storage">,

@@ -7,6 +7,7 @@
 // story + stats + records + shelf) or locked (hero + private card + follow
 // action). All tokens resolve in both the marketing and dashboard shells.
 
+import { Image } from "@/compat/image";
 import { PuzzlePlank3D } from "@/components/common/puzzle-plank-3d";
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import { toPlankBox, type ShelfCopy } from "@/components/profile/to-plank-box";
@@ -36,6 +37,7 @@ import {
   Lock,
   MapPin,
   Mountain,
+  Puzzle,
   Sparkles,
   Star,
   Users,
@@ -43,7 +45,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 
 // The web tier derives Convex view types from the gateway (not @jigswap/contracts directly).
 export type PublicProfileView = NonNullable<
@@ -103,6 +105,10 @@ export function ProfileBody({
           )}
           <StatStrip stats={profile.stats} />
           <RecordsRow records={profile.records} />
+          <CurrentlySolvingSection
+            firstName={firstName}
+            items={profile.currentlySolving ?? []}
+          />
           <ShelfSection firstName={firstName} shelf={shelf} />
         </>
       )}
@@ -490,6 +496,59 @@ function RecordCard({
         <div className="text-muted-foreground text-sm">{sub}</div>
       </div>
     </div>
+  );
+}
+
+// ── Currently solving ────────────────────────────────────────────────────────
+function CurrentlySolvingSection({
+  firstName,
+  items,
+}: {
+  firstName: string;
+  items: NonNullable<UnlockedProfile["currentlySolving"]>;
+}) {
+  const t = useTranslations("profile.currentlySolving");
+  const format = useFormatter();
+  if (items.length === 0) return null;
+  return (
+    <section>
+      <SectionHead title={t("title", { name: firstName })} icon={Puzzle} />
+      <div className="flex flex-col">
+        {items.map((item, index) => (
+          <div
+            key={`${item.startDate}-${index}`}
+            className={cn(
+              "flex items-center gap-3.5 py-3",
+              index < items.length - 1 && "border-b",
+            )}
+          >
+            {item.thumbnailUrl ? (
+              <Image
+                src={item.thumbnailUrl}
+                alt=""
+                width={44}
+                height={44}
+                className="h-11 w-11 shrink-0 rounded-md border bg-muted object-contain"
+              />
+            ) : (
+              <span className="bg-muted flex h-11 w-11 shrink-0 items-center justify-center rounded-md">
+                <Puzzle className="text-muted-foreground h-5 w-5" />
+              </span>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold">
+                {item.title ?? t("untitled")}
+              </p>
+              <p className="text-muted-foreground text-xs">
+                {item.pieceCount !== undefined &&
+                  `${t("pieces", { count: item.pieceCount })} · `}
+                {format.relativeTime(new Date(item.startDate))}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

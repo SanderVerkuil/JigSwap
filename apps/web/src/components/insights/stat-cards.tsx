@@ -11,7 +11,7 @@ export interface PersonalStats {
   distinctDefinitions: number;
   collectionsCount: number;
   exchangesCompleted: number;
-  averageRatingGiven: number;
+  averageRatingGiven: number | null;
   averageRatingReceived: number;
   goalsActive: number;
   goalsAchieved: number;
@@ -37,10 +37,10 @@ export function StatCards({ stats }: { stats: PersonalStats }) {
       : t("timeMinutes", { minutes: m });
   };
 
-  // A 0 rating means "no ratings yet" in the read model (mean of empty set), so show a dash
-  // rather than a misleading 0.0.
-  const formatRating = (rating: number): string =>
-    rating > 0 ? rating.toFixed(1) : t("ratingNone");
+  // Null means "no ratings yet"; a 0 rating means the same in the legacy read model (mean of an
+  // empty set), so both show the placeholder rather than a misleading 0.0.
+  const formatRating = (rating: number | null): string =>
+    rating != null && rating > 0 ? rating.toFixed(1) : t("ratingNone");
 
   return (
     <div className="flex flex-col gap-8">

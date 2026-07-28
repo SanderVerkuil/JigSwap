@@ -4,6 +4,7 @@ import type {
   CopyInstanceView,
   CopyLoanEntry,
   CopyPhoto,
+  CopyReviewEntry,
   CopyTransferEntry,
   ProjectedMember,
 } from "@jigswap/contracts";
@@ -14,6 +15,7 @@ import { requireMember } from "../identity/requireMember";
 import { toMemberView } from "../identity/toMemberView";
 import { projectMemberIdentity } from "../social/privacy";
 import { canViewCopy } from "./canViewCopy";
+import { ratingBreakdownOf } from "./definitionAggregates";
 
 // Solve duration in whole MINUTES: the stored, explicit `completionTimeMinutes` ALWAYS wins (it's
 // the domain's resolved duration — mirrors `Completion.resolveDuration`, which already picked
@@ -36,9 +38,6 @@ const finishMinutesOf = (c: {
   }
   return null;
 };
-
-// Round to 1 decimal place.
-const round1 = (n: number): number => Math.round(n * 10) / 10;
 
 // Privacy-gated detail read for a single owned COPY (instance). Auth-gated; the acting member is the
 // viewer. Assembles the copy's catalog/condition snapshot, its (projected) current owner, and one
@@ -184,8 +183,6 @@ export const getCopyInstanceView = query({
           isYou: c.userId === viewerId,
           occurredAt: c.endDate ?? c.startDate,
           finishMinutes: finishMinutesOf(c),
-          rating: c.rating ?? null,
-          note: c.review ?? null,
         })),
     );
 
@@ -221,48 +218,43 @@ export const getCopyInstanceView = query({
     const fastestFinishMinutes =
       finishMinutesList.length > 0 ? Math.min(...finishMinutesList) : null;
 
-    const viewerRatings = completions
-      .filter((c) => c.userId === viewerId && c.rating != null)
-      .map((c) => c.rating as number);
-    const yourAvgRating =
-      viewerRatings.length > 0
-        ? round1(
-            viewerRatings.reduce((s, r) => s + r, 0) / viewerRatings.length,
-          )
-        : null;
+    // The viewer's own star-only review of THIS copy (one per member+copy), or null.
+    const viewerCopyReview = await ctx.db
+      .query("copyReviews")
+      .withIndex("by_user_copy", (q) =>
+        q.eq("userId", viewerId).eq("copyId", args.copyId),
+      )
+      .unique();
 
     const stats = {
       timesCompleted: completedCompletions.length,
       fastestFinishMinutes,
       timesLentOut: loans.length,
-      yourAvgRating,
+      yourCopyRating: viewerCopyReview?.rating ?? null,
     };
 
-    // --- Community rating aggregate over ALL rated completions of the PUZZLE DEFINITION. -------
-    const puzzleCompletions = await ctx.db
-      .query("completions")
-      .withIndex("by_puzzle", (q) => q.eq("puzzleId", copy.puzzleId))
+    // --- Copy reviews: star-only reviews of THIS copy, newest-updated first. -------------------
+    // Authors go through the same projection memo (salt = copyId) as every other member on this
+    // page, so a hidden reviewer stays anonymised and a vanished author gets the anon fallback.
+    const copyReviewRows = await ctx.db
+      .query("copyReviews")
+      .withIndex("by_copy", (q) => q.eq("copyId", args.copyId))
       .collect();
-    const ratedPuzzleCompletions = puzzleCompletions.filter(
-      (c) => c.rating != null,
+    const copyReviews: CopyReviewEntry[] = await Promise.all(
+      copyReviewRows
+        // The index orders by _creationTime; the list contract is descending by updatedAt.
+        .slice()
+        .sort((a, b) => b.updatedAt - a.updatedAt)
+        .map(async (r) => ({
+          author: await project(r.userId),
+          rating: r.rating,
+          updatedAt: r.updatedAt,
+        })),
     );
-    // breakdown index 0..4 == [5★,4★,3★,2★,1★].
-    const breakdown: [number, number, number, number, number] = [0, 0, 0, 0, 0];
-    let ratingSum = 0;
-    for (const c of ratedPuzzleCompletions) {
-      const r = c.rating as number;
-      ratingSum += r;
-      const bucket = 5 - r; // r=5 -> 0, r=1 -> 4
-      if (bucket >= 0 && bucket <= 4) breakdown[bucket] += 1;
-    }
-    const community = {
-      count: ratedPuzzleCompletions.length,
-      rating:
-        ratedPuzzleCompletions.length > 0
-          ? round1(ratingSum / ratedPuzzleCompletions.length)
-          : 0,
-      breakdown,
-    };
+
+    // --- Community rating: the DEFINITION-level puzzleReviews breakdown (shared helper — same
+    // numbers as the catalog detail page). ------------------------------------------------------
+    const community = await ratingBreakdownOf(ctx, copy.puzzleId);
 
     // --- Gallery: per-copy uploaded images, resolved to URLs, newest first. --------------------
     const imageRows = await ctx.db
@@ -311,9 +303,11 @@ export const getCopyInstanceView = query({
 
     // --- Cover resolution. --------------------------------------------------------------------
     // The copy may pin one of its own photos as the cover; resolve it to a URL. Falls back to the
-    // puzzle's global catalogue image when no cover is chosen, the image row vanished, or its
-    // stored file no longer resolves. `coverImageId` is null unless a cover both exists AND resolves
-    // so the picker only reports an active, usable selection.
+    // puzzle's global catalogue image when no cover is chosen, the image row vanished, its stored
+    // file no longer resolves, or the cover isn't approved (mirrors resolveCoverUrl.ts's
+    // approved-only rule — a rejected/pending cover must not render on the copy page). `coverImageId`
+    // is null unless a cover both exists AND resolves so the picker only reports an active, usable
+    // selection.
     // NOTE: the catalogue image is a _storage id, so it MUST be resolved via getUrl — emitting the
     // raw id renders a broken <img src>. (snapshot.thumbnail caches the same storage id.)
     const globalImage = puzzle?.image
@@ -323,7 +317,11 @@ export const getCopyInstanceView = query({
     let coverImageId: string | null = null;
     if (copy.coverImageId) {
       const coverRow = await ctx.db.get(copy.coverImageId);
-      if (coverRow && coverRow.ownedPuzzleId === args.copyId) {
+      if (
+        coverRow &&
+        coverRow.ownedPuzzleId === args.copyId &&
+        (coverRow.moderationStatus ?? "approved") === "approved"
+      ) {
         const coverUrl = await ctx.storage.getUrl(coverRow.fileId);
         if (coverUrl) {
           coverImage = coverUrl;
@@ -334,6 +332,7 @@ export const getCopyInstanceView = query({
 
     return {
       copyId: copy._id,
+      puzzleId: copy.puzzleId,
       // The domain CopyId — the copy-edit mutations (condition/sharing/details, recordCompletion)
       // key on this aggregateId, not the _id. Null for rows that predate the backfill.
       aggregateId: copy.aggregateId ?? null,
@@ -361,6 +360,7 @@ export const getCopyInstanceView = query({
       completions: completionsGrouped,
       loans: loansGrouped,
       transfers: transfersGrouped,
+      copyReviews,
       stats,
       community,
       gallery,

@@ -41,25 +41,38 @@ export interface FollowEdgeView {
  */
 export interface ActivityEntryView {
   memberId: string;
-  kind: "completion" | "acquisition" | "exchange";
+  kind: "completion" | "acquisition" | "exchange" | "started";
   occurredAt: number;
   ref: string;
   actorName: string;
 }
 
 /**
- * One community comment on a puzzle, as surfaced on the catalog/copy view. A comment is posted
- * against the puzzle DEFINITION, so every owned copy of that puzzle shows the same list. The
- * `author` is the real member identity (comments are voluntary public posts — never anonymised);
- * `rating` is the author's optional 1–5 star opinion, or null when they left only text. `id` is the
- * CommentId aggregateId. Newest comments are returned first.
+ * One PLAIN-TEXT comment on an owned copy, as surfaced on the copy view. Comments carry no rating —
+ * copy-level star opinions live in `copyReviews`, and definition-level opinions are
+ * PuzzleReviewView. The `author` is the real member identity (comments are voluntary public posts —
+ * never anonymised); `id` is the CommentId aggregateId. Newest comments are returned first.
  */
 export interface PuzzleCommentView {
   id: string;
   author: MemberView;
   text: string;
-  rating: number | null;
   createdAt: number;
+}
+
+/**
+ * One community review of a puzzle DEFINITION, as surfaced on the catalog detail page. A review is
+ * the author's single upserted opinion: `rating` is their 1–5 star score (null when they left only
+ * text) and `text` their optional write-up (null when they left only stars). The `author` is the
+ * real member identity (reviews are voluntary public posts — never anonymised); `updatedAt` is when
+ * the review was last written. Newest reviews are returned first.
+ */
+export interface PuzzleReviewView {
+  id: string;
+  author: MemberView;
+  rating: number | null;
+  text: string | null;
+  updatedAt: number;
 }
 
 /**
@@ -172,6 +185,21 @@ export interface PublicProfileRecords {
 }
 
 /**
+ * One in-progress solve on the profile's "Currently solving" section. STRICTER gate than
+ * `unlocked`: only self, or a mutual follower of a member whose `shareInProgress` preference is
+ * explicitly true, ever receives this (anonymous viewers never do — getPublicProfile is
+ * unauthenticated and profiles default public). Deliberately excludes notes, photos, and
+ * copy/completion ids; `thumbnailUrl` is catalog box art, never a completion photo.
+ */
+export interface CurrentlySolvingItemView {
+  title?: string;
+  pieceCount?: number;
+  /** The solve's startDate, epoch ms. Future-dated starts are excluded server-side. */
+  startDate: number;
+  thumbnailUrl?: string;
+}
+
+/**
  * The visibility-gated read behind the redesigned public member profile page. A discriminated
  * union on `locked`: UNLOCKED (visibility public, viewer is the owner, or viewer is a mutual
  * follower) carries the full `story`/`stats`/`records`; LOCKED (private + non-mutual viewer,
@@ -188,5 +216,7 @@ export type PublicProfileView =
       story?: string;
       stats: PublicProfileStats;
       records: PublicProfileRecords;
+      /** See CurrentlySolvingItemView — friends-only + opt-in; absent when the gate fails. */
+      currentlySolving?: CurrentlySolvingItemView[];
     }
   | { locked: true; hero: PublicProfileHero };

@@ -6,22 +6,12 @@ import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import type { LucideIcon } from "lucide-react";
-import { ArrowRightLeft, CircleCheck, Package } from "lucide-react";
 import { useFormatter, useTranslations } from "use-intl";
+import { ACTIVITY_META, isKnownActivityKind } from "./activity-feed-meta";
 
 // The acting member's activity feed: their own activity plus everyone they follow, newest-first.
 // Scoping + the foreign-event mapping happen server-side; here we only render the ActivityEntryView
 // as open, thin-divider rows on the ground (no boxed card).
-type ActivityKind = "completion" | "acquisition" | "exchange";
-
-// Icon + accent per kind; the human-readable label is translated at render time
-// (key `activity.<kind>`), and the timestamp uses the locale-aware formatter.
-const META: Record<ActivityKind, { icon: LucideIcon; accent: string }> = {
-  completion: { icon: CircleCheck, accent: "text-green-500" },
-  acquisition: { icon: Package, accent: "text-blue-500" },
-  exchange: { icon: ArrowRightLeft, accent: "text-amber-500" },
-};
 
 export function ActivityFeed() {
   const t = useTranslations("activity");
@@ -46,7 +36,8 @@ export function ActivityFeed() {
   return (
     <div className="flex flex-col">
       {feed.map((entry, index) => {
-        const meta = META[entry.kind as ActivityKind];
+        if (!isKnownActivityKind(entry.kind)) return null;
+        const meta = ACTIVITY_META[entry.kind];
         const Icon = meta.icon;
         const isYou = me != null && entry.memberId === me._id;
         return (

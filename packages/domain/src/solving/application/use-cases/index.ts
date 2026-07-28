@@ -1,3 +1,4 @@
+export * from "./attach-completion-photos";
 export * from "./create-goal";
 export * from "./delete-completion";
 export * from "./edit-completion";
@@ -5,6 +6,8 @@ export * from "./finish-completion";
 export * from "./get-solving-preferences";
 export * from "./recompute-goal-progress";
 export * from "./record-completion";
-export * from "./review-puzzle";
+export * from "./set-share-in-progress";
 export * from "./set-track-completion-duration";
 export * from "./start-completion";
+export * from "./upsert-copy-review";
+export * from "./upsert-puzzle-review";

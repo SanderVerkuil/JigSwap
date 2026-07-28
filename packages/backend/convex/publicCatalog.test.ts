@@ -123,31 +123,31 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
       forLend: false,
     });
 
-    // Definition-level reviews (copyId == null): one by a public profile, one by a private one.
-    await ctx.db.insert("puzzleComments", {
-      aggregateId: "rev-pia",
+    // Definition-level reviews (puzzleReviews): one by a public profile, one by a private one.
+    await ctx.db.insert("puzzleReviews", {
       puzzleId: approved,
-      authorId: pia,
+      userId: pia,
       text: "Lovely gradient sky.",
       rating: 5,
       createdAt: NOW + 1,
+      updatedAt: NOW + 1,
     });
-    await ctx.db.insert("puzzleComments", {
-      aggregateId: "rev-priya",
+    await ctx.db.insert("puzzleReviews", {
       puzzleId: approved,
-      authorId: priya,
+      userId: priya,
       text: "Tough edges!",
       rating: 3,
       createdAt: NOW + 2,
+      updatedAt: NOW + 2,
     });
     // A review on the PENDING puzzle must never surface publicly.
-    await ctx.db.insert("puzzleComments", {
-      aggregateId: "rev-pending",
+    await ctx.db.insert("puzzleReviews", {
       puzzleId: pending,
-      authorId: pia,
+      userId: pia,
       text: "Should not leak.",
       rating: 4,
       createdAt: NOW + 3,
+      updatedAt: NOW + 3,
     });
 
     return { pia, paul, priya, approved, pending };
@@ -258,13 +258,13 @@ describe("listPublicPuzzleReviews", () => {
     const t = convexTest(schema, modules);
     const { approved, paul } = await seed(t);
     await t.run(async (ctx) => {
-      await ctx.db.insert("puzzleComments", {
-        aggregateId: "rev-paul",
+      await ctx.db.insert("puzzleReviews", {
         puzzleId: approved,
-        authorId: paul,
+        userId: paul,
         text: "Great fit.",
         rating: 4,
         createdAt: NOW + 10,
+        updatedAt: NOW + 10,
       });
     });
 
@@ -284,13 +284,13 @@ describe("listPublicPuzzleReviews", () => {
     // default them to "public", but the indexable public surface must fail closed and anonymize them.
     await t.run(async (ctx) => {
       const norow = await mkUser(ctx, "clerk_norow", "Nora NoRow");
-      await ctx.db.insert("puzzleComments", {
-        aggregateId: "rev-norow",
+      await ctx.db.insert("puzzleReviews", {
         puzzleId: approved,
-        authorId: norow,
+        userId: norow,
         text: "No profile row here.",
         rating: 2,
         createdAt: NOW + 20,
+        updatedAt: NOW + 20,
       });
     });
 
@@ -305,6 +305,33 @@ describe("listPublicPuzzleReviews", () => {
     expect(piaReview?.author?.name).toBe("Pia Public");
     // Nora's real name never leaves the server on this indexable surface.
     expect(JSON.stringify(reviews)).not.toContain("Nora NoRow");
+  });
+
+  test("reviews order desc by updatedAt, not by insertion order", async () => {
+    const t = convexTest(schema, modules);
+    const { approved, paul } = await seed(t);
+    // Inserted LAST but with the OLDEST updatedAt — creation-time ordering would surface it
+    // first; updatedAt ordering must put it last.
+    await t.run(async (ctx) => {
+      await ctx.db.insert("puzzleReviews", {
+        puzzleId: approved,
+        userId: paul,
+        text: "Old but gold.",
+        rating: 4,
+        createdAt: NOW,
+        updatedAt: NOW,
+      });
+    });
+
+    const reviews = await t.query(
+      api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
+      { puzzleId: approved },
+    );
+    expect(reviews.map((r) => r.text)).toEqual([
+      "Tough edges!", // NOW + 2
+      "Lovely gradient sky.", // NOW + 1
+      "Old but gold.", // NOW
+    ]);
   });
 
   test("returns [] for a non-approved definition (reviews must not leak)", async () => {
@@ -331,7 +358,7 @@ describe("listPublicPuzzleReviews", () => {
     );
     expect(raw).not.toContain("clerk_"); // usernames equal clerk ids in the seed
     expect(raw).not.toContain("Utrecht");
-    expect(raw).not.toContain("authorId");
+    expect(raw).not.toContain("userId");
     expect(raw).not.toContain("email");
   });
 });

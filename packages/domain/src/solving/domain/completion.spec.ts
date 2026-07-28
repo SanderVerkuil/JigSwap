@@ -3,8 +3,6 @@ import { toCompletionId, toFileId, toMemberId } from "../../shared-kernel";
 import { Completion, EDIT_WINDOW_MS } from "./completion";
 
 import { Photo } from "./photo";
-import { PuzzleReview } from "./puzzle-review";
-import { StarRating } from "./star-rating";
 
 const ID = toCompletionId("completion-1");
 const ALICE = toMemberId("alice");
@@ -141,18 +139,6 @@ describe("Completion.record", () => {
     });
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("InvalidDuration");
-  });
-
-  it("records PuzzleReviewed when a review is supplied", () => {
-    const result = recordValid({
-      review: PuzzleReview.create(StarRating.fromState(5), "great"),
-    });
-    expect(result.isOk).toBe(true);
-    if (result.isOk)
-      expect(names(result.value)).toEqual([
-        "CompletionRecorded",
-        "PuzzleReviewed",
-      ]);
   });
 });
 
@@ -476,6 +462,49 @@ describe("Completion.edit", () => {
   });
 });
 
+describe("Completion.attachPhotos", () => {
+  it("appends photos to the existing set and bumps updatedAt", () => {
+    const recorded = recordValid({ photos: photos(1) });
+    if (!recorded.isOk) throw new Error("setup failed");
+    recorded.value.pullEvents();
+    const later = new Date(END.getTime() + 1000);
+    const outcome = recorded.value.attachPhotos(ALICE, photos(2), later);
+    expect(outcome.isOk).toBe(true);
+    expect(recorded.value.photos).toHaveLength(3);
+    expect(recorded.value.toState().updatedAt).toEqual(later);
+    expect(names(recorded.value)).toEqual(["CompletionEdited"]);
+  });
+
+  it("rejects a non-owner with NotCompletionOwner", () => {
+    const recorded = recordValid();
+    if (!recorded.isOk) throw new Error("setup failed");
+    const outcome = recorded.value.attachPhotos(BOB, photos(1), END);
+    expect(outcome.isErr).toBe(true);
+    if (outcome.isErr) expect(outcome.error.code).toBe("NotCompletionOwner");
+  });
+
+  it("rejects when existing plus new photos exceed five with TooManyPhotos", () => {
+    const recorded = recordValid({ photos: photos(4) });
+    if (!recorded.isOk) throw new Error("setup failed");
+    const outcome = recorded.value.attachPhotos(ALICE, photos(2), END);
+    expect(outcome.isErr).toBe(true);
+    if (outcome.isErr) expect(outcome.error.code).toBe("TooManyPhotos");
+  });
+
+  it("attaches to a backdated completion outside the 24h edit window (window-free)", () => {
+    const tenDaysAgo = new Date(NOW.getTime() - 10 * 24 * 60 * 60 * 1000);
+    const recorded = recordValid({
+      startDate: tenDaysAgo,
+      endDate: tenDaysAgo,
+      now: tenDaysAgo,
+    });
+    if (!recorded.isOk) throw new Error("setup failed");
+    const outcome = recorded.value.attachPhotos(ALICE, photos(1), NOW);
+    expect(outcome.isOk).toBe(true);
+    expect(recorded.value.photos).toHaveLength(1);
+  });
+});
+
 describe("Completion.allPiecesPresent", () => {
   it("defaults to undefined when not provided", () => {
     const result = recordValid();
@@ -517,23 +546,6 @@ describe("Completion.allPiecesPresent", () => {
     const outcome = c.finish(END, NOW, undefined, true);
     expect(outcome.isOk).toBe(true);
     expect(c.toState().allPiecesPresent).toBe(true);
-  });
-});
-
-describe("Completion.review", () => {
-  it("attaches a PuzzleReview with rating and text and records PuzzleReviewed", () => {
-    const recorded = recordValid();
-    if (!recorded.isOk) throw new Error("setup failed");
-    recorded.value.pullEvents();
-    const outcome = recorded.value.review(
-      StarRating.fromState(4),
-      END,
-      "solid",
-    );
-    expect(outcome.isOk).toBe(true);
-    expect(recorded.value.puzzleReview?.rating.value).toBe(4);
-    expect(recorded.value.puzzleReview?.text).toBe("solid");
-    expect(names(recorded.value)).toEqual(["PuzzleReviewed"]);
   });
 });
 

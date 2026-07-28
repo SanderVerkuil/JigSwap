@@ -2,6 +2,7 @@ import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useUser } from "@/compat/clerk";
+import { Image } from "@/compat/image";
 import { Link } from "@/compat/link";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { CoverChip } from "@/components/library/cover-chip";
@@ -22,7 +23,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StarRating } from "@/components/ui/star-rating";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { gateway, Id } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -33,7 +39,7 @@ import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 type DialogState =
-  | { kind: "finish"; completionId: string }
+  | { kind: "finish"; completionId: string; startDate: number }
   | {
       kind: "edit";
       completionId: string;
@@ -44,12 +50,21 @@ type DialogState =
     }
   | {
       kind: "review";
-      completionId: string;
-      rating?: number;
-      text?: string;
+      puzzleId: string;
+      copyId?: string;
     }
   | { kind: "delete"; completionId: string }
   | null;
+
+// Route target for a completion's server-resolved navigation link (ids are doc _ids).
+function hrefForLink(link: {
+  kind: "myCopy" | "copy" | "definition";
+  id: string;
+}): string {
+  if (link.kind === "myCopy") return `/my-puzzles/${link.id}`;
+  if (link.kind === "copy") return `/copies/${link.id}`;
+  return `/puzzles/${link.id}`;
+}
 
 export const Route = createFileRoute("/_dashboard/completions/")({
   head: ({ match }) => ({
@@ -191,6 +206,275 @@ function CompletionsPage() {
     (a, b) => (b.endDate ?? b.startDate) - (a.endDate ?? a.startDate),
   );
 
+  // In-progress on top (newest-started first), finished history below. isCompleted is authoritative
+  // (edit() can attach an endDate to a still-in-progress row) — never key on endDate presence.
+  const inProgress = sorted
+    .filter((c) => !c.isCompleted)
+    .sort((a, b) => b.startDate - a.startDate);
+  const history = sorted.filter((c) => c.isCompleted);
+
+  const renderCompletionRow = (
+    completion: (typeof sorted)[number],
+    index: number,
+    isLast: boolean,
+  ) => {
+    const info =
+      (completion.ownedPuzzleId &&
+        infoByCopyId.get(completion.ownedPuzzleId)) ||
+      undefined;
+    // Borrowed copies aren't in the viewer's library, so fall back to the durable
+    // copySnapshot for the title and piece count.
+    const snapshot =
+      "copySnapshot" in completion ? completion.copySnapshot : undefined;
+    const title = info?.title ?? snapshot?.title ?? t("title");
+    const pieceCount = info?.pieceCount ?? snapshot?.pieceCount;
+    const done = completion.isCompleted;
+    // Whole days between start and finish, floored at one — "finished
+    // in 3 days" reads better than raw milliseconds.
+    const days =
+      done && completion.endDate !== undefined
+        ? Math.max(
+            1,
+            Math.round((completion.endDate - completion.startDate) / 86400000),
+          )
+        : undefined;
+    const metaLine =
+      done && pieceCount && days !== undefined
+        ? t("piecesFinished", { pieces: pieceCount, days })
+        : done && completion.endDate !== undefined
+          ? completion.completionTimeMinutes !== undefined
+            ? `${t("finished", { date: formatDate(completion.endDate) })} · ${formatTime(completion.completionTimeMinutes)}`
+            : t("finished", { date: formatDate(completion.endDate) })
+          : completion.completionTimeMinutes !== undefined
+            ? `${t("started", { date: formatDate(completion.startDate) })} · ${formatTime(completion.completionTimeMinutes)}`
+            : t("started", {
+                date: formatDate(completion.startDate),
+              });
+
+    return (
+      <div
+        key={completion._id}
+        className={cn(
+          "relative flex flex-wrap items-center gap-3.5 py-3.5",
+          !isLast && "border-b",
+        )}
+      >
+        {completion.thumbnailUrl && completion.link ? (
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href={hrefForLink(completion.link)}
+                  aria-label={title}
+                  className="relative z-10 shrink-0"
+                >
+                  <Image
+                    src={completion.thumbnailUrl}
+                    alt=""
+                    width={44}
+                    height={44}
+                    className="h-11 w-11 shrink-0 rounded-lg border bg-muted object-contain"
+                  />
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="p-1.5">
+                <img
+                  src={completion.thumbnailUrl}
+                  alt=""
+                  className="max-h-[280px] max-w-[260px] rounded-md object-contain"
+                />
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ) : completion.thumbnailUrl ? (
+          <Image
+            src={completion.thumbnailUrl}
+            alt=""
+            width={44}
+            height={44}
+            className="h-11 w-11 shrink-0 rounded-lg border bg-muted object-contain"
+          />
+        ) : (
+          <CoverChip
+            color={chipColor(index)}
+            icon={done ? CircleCheck : Clock}
+            size={44}
+          />
+        )}
+        <div className="min-w-0 flex-1 basis-52">
+          <div className="flex flex-wrap items-center gap-2">
+            {completion.link ? (
+              <Link
+                href={hrefForLink(completion.link)}
+                className="text-sm font-semibold after:absolute after:inset-0 after:z-[1] after:content-[''] hover:underline focus-visible:underline focus-visible:outline-none"
+              >
+                {title}
+              </Link>
+            ) : (
+              <span className="text-sm font-semibold">{title}</span>
+            )}
+            {!done && (
+              <Badge variant="secondary" className="text-xs">
+                {t("inProgress")}
+              </Badge>
+            )}
+          </div>
+          <div className="text-muted-foreground mt-0.5 text-xs">{metaLine}</div>
+          {completion.notes && (
+            <p className="text-muted-foreground mt-1 line-clamp-1 text-xs">
+              {completion.notes}
+            </p>
+          )}
+          {"copySnapshot" in completion && completion.copySnapshot != null && (
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              {completion.copySnapshot.wasBorrowed
+                ? t(done ? "solvedBorrowedCopy" : "solvingBorrowedCopy")
+                : t(done ? "solvedOwnCopy" : "solvingOwnCopy")}
+              {"allPiecesPresent" in completion &&
+              completion.allPiecesPresent === false
+                ? ` — ${t("piecesMissing")}`
+                : "allPiecesPresent" in completion &&
+                    completion.allPiecesPresent === true
+                  ? ` — ${t("piecesComplete")}`
+                  : ""}
+            </p>
+          )}
+          {completion.photoItems && completion.photoItems.length > 0 && (
+            <TooltipProvider delayDuration={200}>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {completion.photoItems.map((photo, photoIndex) => (
+                  <Tooltip key={`${photo.url}-${photoIndex}`}>
+                    <TooltipTrigger asChild>
+                      {/* Not a link (no nav target) — a focusable no-op button so keyboard
+                          users can surface the tooltip; z-10 lifts it above the stretched
+                          row link. */}
+                      <button
+                        type="button"
+                        aria-label={
+                          photo.pending
+                            ? `${title} — ${t("pendingReview")}`
+                            : title
+                        }
+                        className="relative z-10 shrink-0 rounded-md"
+                      >
+                        <Image
+                          src={photo.url}
+                          alt=""
+                          width={44}
+                          height={44}
+                          className="h-11 w-11 rounded-md border bg-muted object-contain"
+                        />
+                        {photo.pending && (
+                          <Badge
+                            variant="secondary"
+                            className="pointer-events-none absolute inset-x-0 bottom-0 justify-center rounded-none rounded-b-md px-0.5 py-0 text-[10px]"
+                          >
+                            {t("pendingReview")}
+                          </Badge>
+                        )}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="p-1.5">
+                      <img
+                        src={photo.url}
+                        alt=""
+                        className="max-h-[280px] max-w-[260px] rounded-md object-contain"
+                      />
+                      {photo.pending && (
+                        <p className="mt-1 text-center text-xs">
+                          {t("pendingReview")}
+                        </p>
+                      )}
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+              </div>
+            </TooltipProvider>
+          )}
+        </div>
+
+        <span className="text-muted-foreground w-[78px] text-right text-xs whitespace-nowrap">
+          {formatDate(completion.endDate ?? completion.startDate)}
+        </span>
+
+        <div className="relative z-10 flex items-center gap-1">
+          {!done && completion.aggregateId && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setDialog({
+                  kind: "finish",
+                  completionId: completion.aggregateId!,
+                  startDate: completion.startDate,
+                })
+              }
+            >
+              <CircleCheck className="h-4 w-4" />
+              {t("finish")}
+            </Button>
+          )}
+          {completion.puzzleId != null && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              title={t("review")}
+              aria-label={t("review")}
+              onClick={() =>
+                setDialog({
+                  kind: "review",
+                  puzzleId: completion.puzzleId!,
+                  copyId: completion.ownedPuzzleId ?? undefined,
+                })
+              }
+            >
+              <Star className="h-4 w-4" />
+            </Button>
+          )}
+          {completion.aggregateId && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              title={t("edit")}
+              aria-label={t("edit")}
+              onClick={() =>
+                setDialog({
+                  kind: "edit",
+                  completionId: completion.aggregateId!,
+                  startDate: completion.startDate,
+                  endDate: completion.endDate,
+                  timeMinutes: completion.completionTimeMinutes,
+                  notes: completion.notes,
+                })
+              }
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+          {completion.aggregateId && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8 text-destructive hover:text-destructive"
+              title={t("delete")}
+              aria-label={t("delete")}
+              onClick={() =>
+                setDialog({
+                  kind: "delete",
+                  completionId: completion.aggregateId!,
+                })
+              }
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col gap-[26px]">
       {/* Divided stat row — open, no boxes */}
@@ -208,191 +492,42 @@ function CompletionsPage() {
         {sorted.length === 0 ? (
           <EmptyState title={t("empty")} sub={t("emptyHint")} />
         ) : (
-          <div className="flex flex-col">
-            {sorted.map((completion, index) => {
-              const info =
-                (completion.ownedPuzzleId &&
-                  infoByCopyId.get(completion.ownedPuzzleId)) ||
-                undefined;
-              // Borrowed copies aren't in the viewer's library, so fall back to the durable
-              // copySnapshot for the title and piece count.
-              const snapshot =
-                "copySnapshot" in completion
-                  ? completion.copySnapshot
-                  : undefined;
-              const title = info?.title ?? snapshot?.title ?? t("title");
-              const pieceCount = info?.pieceCount ?? snapshot?.pieceCount;
-              const done = completion.isCompleted;
-              // Whole days between start and finish, floored at one — "finished
-              // in 3 days" reads better than raw milliseconds.
-              const days =
-                done && completion.endDate !== undefined
-                  ? Math.max(
-                      1,
-                      Math.round(
-                        (completion.endDate - completion.startDate) / 86400000,
-                      ),
-                    )
-                  : undefined;
-              const metaLine =
-                done && pieceCount && days !== undefined
-                  ? t("piecesFinished", { pieces: pieceCount, days })
-                  : done && completion.endDate !== undefined
-                    ? completion.completionTimeMinutes !== undefined
-                      ? `${t("finished", { date: formatDate(completion.endDate) })} · ${formatTime(completion.completionTimeMinutes)}`
-                      : t("finished", { date: formatDate(completion.endDate) })
-                    : completion.completionTimeMinutes !== undefined
-                      ? `${t("started", { date: formatDate(completion.startDate) })} · ${formatTime(completion.completionTimeMinutes)}`
-                      : t("started", {
-                          date: formatDate(completion.startDate),
-                        });
-
-              return (
-                <div
-                  key={completion._id}
-                  className={cn(
-                    "flex flex-wrap items-center gap-3.5 py-3.5",
-                    index < sorted.length - 1 && "border-b",
+          <>
+            {inProgress.length > 0 && (
+              <>
+                <h2 className="text-muted-foreground mb-2 text-sm font-medium">
+                  {t("inProgressSection")}
+                </h2>
+                <div className="mb-6 flex flex-col">
+                  {inProgress.map((completion, index) =>
+                    renderCompletionRow(
+                      completion,
+                      index,
+                      index === inProgress.length - 1,
+                    ),
                   )}
-                >
-                  <CoverChip
-                    color={chipColor(index)}
-                    icon={done ? CircleCheck : Clock}
-                    size={44}
-                  />
-                  <div className="min-w-0 flex-1 basis-52">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-semibold">{title}</span>
-                      {!done && (
-                        <Badge variant="secondary" className="text-xs">
-                          {t("inProgress")}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="text-muted-foreground mt-0.5 text-xs">
-                      {metaLine}
-                    </div>
-                    {completion.notes && (
-                      <p className="text-muted-foreground mt-1 line-clamp-1 text-xs">
-                        {completion.notes}
-                      </p>
-                    )}
-                    {completion.review && (
-                      <p className="text-muted-foreground mt-1 line-clamp-1 text-xs italic">
-                        {completion.review}
-                      </p>
-                    )}
-                    {"copySnapshot" in completion &&
-                      completion.copySnapshot != null && (
-                        <p className="text-muted-foreground mt-0.5 text-xs">
-                          {completion.copySnapshot.wasBorrowed
-                            ? t("solvedBorrowedCopy")
-                            : t("solvedOwnCopy")}
-                          {"allPiecesPresent" in completion &&
-                          completion.allPiecesPresent === false
-                            ? ` — ${t("piecesMissing")}`
-                            : "allPiecesPresent" in completion &&
-                                completion.allPiecesPresent === true
-                              ? ` — ${t("piecesComplete")}`
-                              : ""}
-                        </p>
-                      )}
-                  </div>
-
-                  {completion.rating !== undefined && (
-                    <StarRating value={completion.rating} size="sm" />
-                  )}
-
-                  <span className="text-muted-foreground w-[78px] text-right text-xs whitespace-nowrap">
-                    {formatDate(completion.endDate ?? completion.startDate)}
-                  </span>
-
-                  <div className="flex items-center gap-1">
-                    {!done && completion.aggregateId && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          setDialog({
-                            kind: "finish",
-                            completionId: completion.aggregateId!,
-                          })
-                        }
-                      >
-                        <CircleCheck className="h-4 w-4" />
-                        {t("finish")}
-                      </Button>
-                    )}
-                    {completion.aggregateId && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8"
-                        title={
-                          completion.rating !== undefined
-                            ? t("editReview")
-                            : t("addReview")
-                        }
-                        aria-label={
-                          completion.rating !== undefined
-                            ? t("editReview")
-                            : t("addReview")
-                        }
-                        onClick={() =>
-                          setDialog({
-                            kind: "review",
-                            completionId: completion.aggregateId!,
-                            rating: completion.rating,
-                            text: completion.review,
-                          })
-                        }
-                      >
-                        <Star className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {completion.aggregateId && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8"
-                        title={t("edit")}
-                        aria-label={t("edit")}
-                        onClick={() =>
-                          setDialog({
-                            kind: "edit",
-                            completionId: completion.aggregateId!,
-                            startDate: completion.startDate,
-                            endDate: completion.endDate,
-                            timeMinutes: completion.completionTimeMinutes,
-                            notes: completion.notes,
-                          })
-                        }
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {completion.aggregateId && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 text-destructive hover:text-destructive"
-                        title={t("delete")}
-                        aria-label={t("delete")}
-                        onClick={() =>
-                          setDialog({
-                            kind: "delete",
-                            completionId: completion.aggregateId!,
-                          })
-                        }
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
                 </div>
-              );
-            })}
-          </div>
+              </>
+            )}
+            {history.length > 0 && (
+              <>
+                {inProgress.length > 0 && (
+                  <h2 className="text-muted-foreground mb-2 text-sm font-medium">
+                    {t("historySection")}
+                  </h2>
+                )}
+                <div className="flex flex-col">
+                  {history.map((completion, index) =>
+                    renderCompletionRow(
+                      completion,
+                      index,
+                      index === history.length - 1,
+                    ),
+                  )}
+                </div>
+              </>
+            )}
+          </>
         )}
       </section>
 
@@ -401,15 +536,15 @@ function CompletionsPage() {
           open
           onOpenChange={(open) => !open && setDialog(null)}
           completionId={dialog.completionId}
+          minEndDate={dialog.startDate}
         />
       )}
       {dialog?.kind === "review" && (
         <ReviewPuzzleDialog
           open
           onOpenChange={(open) => !open && setDialog(null)}
-          completionId={dialog.completionId}
-          initialRating={dialog.rating}
-          initialText={dialog.text}
+          puzzleId={dialog.puzzleId}
+          copyId={dialog.copyId}
         />
       )}
       {dialog?.kind === "edit" && (

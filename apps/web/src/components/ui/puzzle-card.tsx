@@ -34,6 +34,7 @@ import type { FunctionReturnType } from "convex/server";
 import {
   Check,
   CircleCheck,
+  Clock,
   Edit,
   FolderOpen,
   Heart,
@@ -77,6 +78,10 @@ interface PuzzleCardProps {
   onMessage?: (puzzleId: Id<"ownedPuzzles">) => void;
   onFavorite?: (puzzleId: Id<"ownedPuzzles">) => void;
   onLogSolve?: (puzzleId: Id<"ownedPuzzles">) => void;
+  // Start/Finish solve swap: the page resolves whether the caller has an in-progress solve on
+  // this copy (`solveInProgress`) and handles the action (start vs finish) itself.
+  onStartSolve?: (puzzleId: Id<"ownedPuzzles">) => void;
+  solveInProgress?: boolean;
   isSelected?: boolean;
   showOwner?: boolean;
   showActions?: boolean;
@@ -108,6 +113,8 @@ const CORNER_CHIP_CLASS = [
 interface PuzzleOverflowMenuProps {
   ownedId: Id<"ownedPuzzles">;
   onLogSolve?: (id: Id<"ownedPuzzles">) => void;
+  onStartSolve?: (id: Id<"ownedPuzzles">) => void;
+  solveInProgress?: boolean;
   onEdit?: (id: Id<"ownedPuzzles">) => void;
   onDelete?: (id: Id<"ownedPuzzles">) => void;
   // When set, the menu includes an "add to collection" submenu (the Copy aggregateId the add needs).
@@ -118,6 +125,8 @@ interface PuzzleOverflowMenuProps {
 function PuzzleOverflowMenu({
   ownedId,
   onLogSolve,
+  onStartSolve,
+  solveInProgress = false,
   onEdit,
   onDelete,
   showCollection = false,
@@ -125,9 +134,11 @@ function PuzzleOverflowMenu({
 }: PuzzleOverflowMenuProps) {
   const t = useTranslations("puzzles");
   const tSolving = useTranslations("solving.logSolve");
+  const tStart = useTranslations("solving.startSolve");
 
   // Don't mount the chip at all when nothing is wired.
-  if (!onLogSolve && !onEdit && !onDelete && !showCollection) return null;
+  if (!onLogSolve && !onStartSolve && !onEdit && !onDelete && !showCollection)
+    return null;
 
   return (
     // `relative z-10` wrapper sits above the stretched-link overlay (z-[1]).
@@ -148,7 +159,7 @@ function PuzzleOverflowMenu({
         {/* Portal ensures the menu content is portaled out of the card's
             stacking context so clicks can't fall through to the stretched link. */}
         <DropdownMenuContent align="end" className="min-w-[160px]">
-          {onLogSolve && (
+          {onLogSolve && !solveInProgress && (
             <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation();
@@ -157,6 +168,17 @@ function PuzzleOverflowMenu({
             >
               <CircleCheck className="h-4 w-4 mr-2 shrink-0" />
               {tSolving("trigger")}
+            </DropdownMenuItem>
+          )}
+          {onStartSolve && (
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onStartSolve(ownedId);
+              }}
+            >
+              <CircleCheck className="h-4 w-4 mr-2 shrink-0" />
+              {solveInProgress ? tStart("finishTrigger") : tStart("trigger")}
             </DropdownMenuItem>
           )}
           {onEdit && (
@@ -254,6 +276,8 @@ export function PuzzleCard({
   onMessage,
   onFavorite,
   onLogSolve,
+  onStartSolve,
+  solveInProgress = false,
   isSelected = false,
   showOwner = false,
   showActions = true,
@@ -263,6 +287,7 @@ export function PuzzleCard({
   className = "",
 }: PuzzleCardProps) {
   const t = useTranslations("puzzles");
+  const tCompletions = useTranslations("solving.completions");
 
   // Early return if no puzzle data
   if (!puzzle.puzzle) {
@@ -339,16 +364,35 @@ export function PuzzleCard({
     showActions &&
     variant !== "selection" &&
     variant !== "pick" &&
-    !!(onLogSolve || onEdit || onDelete || showCollectionDropdown);
+    !!(
+      onLogSolve ||
+      onStartSolve ||
+      onEdit ||
+      onDelete ||
+      showCollectionDropdown
+    );
 
   // Image overlays: the ⋯ overflow chip (top-right), the selection ring's
   // check, and the selection-variant checkbox.
   const overlay = (
     <>
+      {solveInProgress && (
+        <div className="absolute top-2 left-2 z-10">
+          <Badge
+            variant="secondary"
+            className="bg-background/70 backdrop-blur-md border border-border/50 shadow-sm text-xs"
+          >
+            <Clock className="mr-1 h-3 w-3" />
+            {tCompletions("inProgress")}
+          </Badge>
+        </div>
+      )}
       {showOverflowMenu && (
         <PuzzleOverflowMenu
           ownedId={ownedId}
           onLogSolve={onLogSolve}
+          onStartSolve={onStartSolve}
+          solveInProgress={solveInProgress}
           onEdit={onEdit}
           onDelete={onDelete}
           showCollection={showCollectionDropdown}

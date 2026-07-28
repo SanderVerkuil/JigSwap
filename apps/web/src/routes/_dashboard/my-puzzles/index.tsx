@@ -7,7 +7,9 @@ import { useRouter } from "@/compat/navigation";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
 import { FilterBar, FilterOption } from "@/components/library/filter-bar";
+import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
+import { StartSolveDialog } from "@/components/solving/start-solve-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -123,6 +125,16 @@ function PuzzlesPage() {
     copyId: string;
     title: string;
   } | null>(null);
+  // The copy a solve is being started on; null when the dialog is closed.
+  const [startTarget, setStartTarget] = useState<{
+    copyId: string;
+    title: string;
+  } | null>(null);
+  // The in-progress completion being finished; null when the dialog is closed.
+  const [finishTarget, setFinishTarget] = useState<{
+    completionId: string;
+    startDate: number;
+  } | null>(null);
   // The copy awaiting the destructive delete confirm; null when the dialog is closed.
   const [deleteTarget, setDeleteTarget] = useState<{
     copyId: string;
@@ -166,7 +178,15 @@ function PuzzlesPage() {
     convexQuery(gateway.solving.myCompletions, convexUser?._id ? {} : "skip"),
   );
   const solveStateByCopyId = useMemo(() => {
-    const map = new Map<string, { inProgress: boolean; completed: boolean }>();
+    const map = new Map<
+      string,
+      {
+        inProgress: boolean;
+        completed: boolean;
+        inProgressCompletionId?: string;
+        inProgressStartDate?: number;
+      }
+    >();
     for (const completion of completions ?? []) {
       if (!completion.ownedPuzzleId) continue;
       const state = map.get(completion.ownedPuzzleId) ?? {
@@ -174,7 +194,18 @@ function PuzzlesPage() {
         completed: false,
       };
       if (completion.isCompleted) state.completed = true;
-      else state.inProgress = true;
+      else {
+        state.inProgress = true;
+        // Retain the newest in-progress completion so the card's Finish action targets it.
+        if (
+          completion.aggregateId &&
+          (state.inProgressStartDate === undefined ||
+            completion.startDate > state.inProgressStartDate)
+        ) {
+          state.inProgressCompletionId = completion.aggregateId;
+          state.inProgressStartDate = completion.startDate;
+        }
+      }
       map.set(completion.ownedPuzzleId, state);
     }
     return map;
@@ -233,6 +264,32 @@ function PuzzlesPage() {
       copyId: copy.aggregateId,
       title: copy.puzzle?.title ?? "",
     });
+  };
+
+  const handleStartSolve = (ownedPuzzleId: Id<"ownedPuzzles">) => {
+    // Starting a solve takes the Copy aggregateId; guard rows predating the backfill rather
+    // than open a dialog that can't persist.
+    const copy = userownedPuzzles?.find((p) => p._id === ownedPuzzleId);
+    if (!copy?.aggregateId) {
+      console.error("Cannot start a solve: copy is missing its aggregateId.");
+      return;
+    }
+    // With an in-progress solve on the copy, the action flips to finishing that solve.
+    const state = solveStateByCopyId.get(ownedPuzzleId);
+    if (
+      state?.inProgressCompletionId &&
+      state.inProgressStartDate !== undefined
+    ) {
+      setFinishTarget({
+        completionId: state.inProgressCompletionId,
+        startDate: state.inProgressStartDate,
+      });
+    } else {
+      setStartTarget({
+        copyId: copy.aggregateId,
+        title: copy.puzzle?.title ?? "",
+      });
+    }
   };
 
   const filterOptions: FilterOption<StatusFilter>[] = [
@@ -364,6 +421,14 @@ function PuzzlesPage() {
                 onEdit={handleEditPuzzle}
                 onDelete={handleDeletePuzzle}
                 onLogSolve={handleLogSolve}
+                onStartSolve={handleStartSolve}
+                // Matches handleStartSolve's finish predicate (not `inProgress`): a legacy
+                // in-progress row without an aggregateId can't be finished, so its card must
+                // keep showing "Start puzzle" rather than a Finish label that opens Start.
+                solveInProgress={
+                  solveStateByCopyId.get(puzzle._id)?.inProgressCompletionId !=
+                  null
+                }
                 loanBadge={
                   loan && (
                     <div className="flex items-center gap-2">
@@ -403,6 +468,24 @@ function PuzzlesPage() {
           copyId={solveTarget.copyId}
           puzzleTitle={solveTarget.title}
           viewerIsOwner={true}
+        />
+      )}
+
+      {startTarget && (
+        <StartSolveDialog
+          open
+          onOpenChange={(open) => !open && setStartTarget(null)}
+          copyId={startTarget.copyId}
+          puzzleTitle={startTarget.title}
+        />
+      )}
+
+      {finishTarget && (
+        <FinishSolveDialog
+          open
+          onOpenChange={(open) => !open && setFinishTarget(null)}
+          completionId={finishTarget.completionId}
+          minEndDate={finishTarget.startDate}
         />
       )}
 

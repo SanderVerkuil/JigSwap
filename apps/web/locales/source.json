@@ -293,6 +293,10 @@
       "you": "You completed a swap",
       "other": "<strong>{name}</strong> completed a swap"
     },
+    "started": {
+      "you": "You started a puzzle",
+      "other": "<strong>{name}</strong> started a puzzle"
+    },
     "empty": "No recent activity yet",
     "emptyHint": "Follow other members to see what they are up to."
   },
@@ -776,6 +780,11 @@
       },
       "arrangeShelf": "Arrange shelf"
     },
+    "currentlySolving": {
+      "title": "{name} is currently solving",
+      "untitled": "A puzzle",
+      "pieces": "{count, plural, one {# piece} other {# pieces}}"
+    },
     "trustLevels": {
       "beginner": "Beginner",
       "intermediate": "Intermediate",
@@ -854,6 +863,17 @@
         "activeSub": "In motion right now"
       }
     },
+    "solvingNow": {
+      "title": "Solving now",
+      "empty": "Nothing on the table right now.",
+      "emptyCta": "Start one from your puzzles",
+      "untitled": "A puzzle",
+      "pieces": "{count, plural, one {# piece} other {# pieces}}",
+      "startedToday": "Started today",
+      "startedDaysAgo": "{days, plural, one {Started # day ago} other {Started # days ago}}",
+      "startsInDays": "{days, plural, one {Starts in # day} other {Starts in # days}}",
+      "finish": "Finish"
+    },
     "pulse": {
       "inMotion": {
         "title": "In Motion",
@@ -890,6 +910,7 @@
         "completion": "<strong>{name}</strong> finished a puzzle",
         "acquisition": "<strong>{name}</strong> added a puzzle to their shelf",
         "exchange": "<strong>{name}</strong> completed a swap",
+        "started": "<strong>{name}</strong> started a puzzle",
         "empty": "All quiet for now — follow fellow puzzlers and their latest moves will show up here. 🧩"
       }
     },
@@ -1752,6 +1773,8 @@
       "subtitle": "Your solve history across every puzzle.",
       "empty": "No completions yet",
       "emptyHint": "Log a solve from one of your puzzles to start tracking your history.",
+      "inProgressSection": "In progress",
+      "historySection": "History",
       "inProgress": "In progress",
       "completed": "Completed",
       "started": "Started {date}",
@@ -1764,9 +1787,7 @@
       "finish": "Finish solve",
       "edit": "Edit",
       "editWindowClosed": "This completion can no longer be edited (the 24-hour window has closed).",
-      "yourReview": "Your review",
-      "addReview": "Add a review",
-      "editReview": "Edit review",
+      "review": "Review",
       "stats": {
         "completed": "Puzzles completed",
         "pieces": "Pieces placed",
@@ -1778,6 +1799,9 @@
       "piecesFinished": "{pieces, number} pieces · finished in {days, plural, one {# day} other {# days}}",
       "solvedOwnCopy": "Solved your copy",
       "solvedBorrowedCopy": "Solved a borrowed copy",
+      "solvingOwnCopy": "Solving your copy",
+      "solvingBorrowedCopy": "Solving a borrowed copy",
+      "pendingReview": "Pending review",
       "piecesComplete": "was complete",
       "piecesMissing": "had missing pieces",
       "new": {
@@ -1810,11 +1834,24 @@
       "savedInProgress": "Solve started",
       "finished": "Solve finished",
       "saveError": "Could not save the solve. Please try again.",
+      "endBeforeStartError": "The finish date can't be before the start date.",
       "allPiecesPresent": "All pieces were present",
       "updateCopyPiecesTitle": "Update this copy?",
       "updateCopyPiecesBody": "You marked pieces missing. Update this copy's missing-pieces count too?",
       "updateCopyPiecesConfirm": "Update copy",
       "updateCopyPiecesDismiss": "Not now"
+    },
+    "startSolve": {
+      "trigger": "Start puzzle",
+      "title": "Start puzzle",
+      "description": "Mark {puzzle} as in progress. You can adjust the date if you started earlier.",
+      "startDate": "Start date",
+      "notes": "Notes",
+      "notesPlaceholder": "Anything to remember about this solve?",
+      "submit": "Start",
+      "started": "Puzzle started",
+      "finishTrigger": "Finish solve",
+      "saveError": "Could not save the solve. Please try again."
     },
     "durationPrompt": {
       "title": "Track how long puzzles take you?",
@@ -1826,18 +1863,37 @@
     "settings": {
       "sectionTitle": "Solving",
       "trackDurationLabel": "Track completion duration",
-      "trackDurationHint": "When on, the solve dialogs ask how long a puzzle took."
+      "trackDurationHint": "When on, the solve dialogs ask how long a puzzle took.",
+      "shareInProgressLabel": "Share in-progress puzzles with friends",
+      "shareInProgressHint": "Friends (people you follow who follow you back) can see which puzzles you're working on — including ones you've already started."
     },
     "review": {
       "title": "Review this puzzle",
-      "description": "Rate the puzzle itself, 1 to 5 stars.",
+      "description": "Rate the puzzle itself — and, if it applies, the copy you solved.",
       "rating": "Rating",
-      "text": "Review",
       "textPlaceholder": "What did you think of this puzzle?",
       "submit": "Save review",
       "saved": "Review saved",
       "saveError": "Could not save the review. Please try again.",
-      "ratingRequired": "Please pick a rating first."
+      "ratingRequired": "Please pick a rating first.",
+      "puzzleQuestion": "What did you think of this puzzle?",
+      "copyQuestion": "What did you think of this copy?",
+      "updatesExisting": "Saving updates your existing review."
+    },
+    "followUp": {
+      "title": "Puzzle solved!",
+      "description": "Review the puzzle and add photos of your solve — everything is optional.",
+      "photosLabel": "Photos",
+      "photosHint": "Up to 5 photos of your finished puzzle.",
+      "addPhotos": "Add photos",
+      "removePhoto": "Remove photo",
+      "uploadFailed": "Upload failed",
+      "retry": "Retry",
+      "save": "Save",
+      "skip": "Skip",
+      "saved": "Thanks! Follow-up saved.",
+      "saveError": "Could not save everything. Please try again.",
+      "tooManyPhotos": "A completion can have at most 5 photos."
     },
     "goals": {
       "title": "Goals",
@@ -2791,8 +2847,9 @@
     "statTimesCompleted": "times completed",
     "statFastestFinish": "fastest finish",
     "statTimesLentOut": "times lent out",
-    "statYourAvgRating": "your avg. rating",
+    "statYourCopyRating": "your rating of this copy",
     "statDaysValue": "{days}d",
+    "viewPuzzlePage": "View puzzle page",
     "photos": "Photos",
     "photosCount": "{count} photos",
     "addPhoto": "Add photo",
@@ -2813,9 +2870,10 @@
     "finishedIn": "finished in {duration}",
     "communityRating": "Community Rating",
     "communityRatings": "{count} community ratings",
+    "copyReviews": "Copy Reviews",
+    "noCopyReviews": "No reviews of this copy yet.",
     "comments": "Comments",
     "addComment": "Add a comment…",
-    "rateOptional": "Rate this puzzle (optional)",
     "post": "Post",
     "noComments": "No comments yet. Be the first.",
     "commentFailed": "Couldn't post comment",
@@ -2884,10 +2942,11 @@
     "seeAllCopies": "See all {count} available copies →",
     "noCopies": "No copies are available to swap yet.",
     "reviews": "Reviews",
-    "reviewPlaceholder": "Review {title}…",
-    "rateOptional": "Rate this puzzle (optional)",
+    "reviewPlaceholder": "Review {title} (optional)…",
+    "rateRequired": "Rate this puzzle",
     "reviewPublicNote": "Reviews also appear on the public puzzle catalogue.",
     "post": "Post",
+    "updateReview": "Update review",
     "reviewFailed": "Couldn't post review",
     "noReviews": "No reviews yet. Be the first.",
     "swapType": {

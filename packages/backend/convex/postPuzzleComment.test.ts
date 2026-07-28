@@ -56,24 +56,24 @@ const asBob = (t: ReturnType<typeof convexTest>) =>
   t.withIdentity({ subject: "clerk_bob" });
 
 describe("postPuzzleComment / listPuzzleComments", () => {
-  test("posts a comment with a rating; list returns it with the real author", async () => {
+  test("posts a plain-text comment; list returns it with the real author and NO rating", async () => {
     const t = convexTest(schema, modules);
     const { alice, puzzleId, aliceCopy } = await seed(t);
 
     await asAlice(t).mutation(api.social.postPuzzleComment.postPuzzleComment, {
       copyId: aliceCopy,
       text: "Beautiful cut",
-      rating: 5,
     });
 
-    // Persisted with the catalog puzzleId (for context) AND scoped to the owned copy.
+    // Persisted with the catalog puzzleId (for context) AND scoped to the owned copy. Comments are
+    // plain text now — no rating is ever written (copy-level opinions live in copyReviews).
     const stored = await t.run((ctx) =>
       ctx.db.query("puzzleComments").collect(),
     );
     expect(stored).toHaveLength(1);
     expect(stored[0].puzzleId).toBe(puzzleId);
     expect(stored[0].copyId).toBe(aliceCopy);
-    expect(stored[0].rating).toBe(5);
+    expect(stored[0].rating).toBeUndefined();
     expect(stored[0].aggregateId).toBeDefined();
 
     const list = await asAlice(t).query(
@@ -82,27 +82,11 @@ describe("postPuzzleComment / listPuzzleComments", () => {
     );
     expect(list).toHaveLength(1);
     expect(list[0].text).toBe("Beautiful cut");
-    expect(list[0].rating).toBe(5);
+    // The projection carries no rating key at all — the DTO is plain text.
+    expect(list[0]).not.toHaveProperty("rating");
     // Real author identity — never anonymised.
     expect(list[0].author._id).toBe(alice as string);
     expect(list[0].author.name).toBe("Alice");
-  });
-
-  test("posts a comment without a rating; list surfaces rating null", async () => {
-    const t = convexTest(schema, modules);
-    const { aliceCopy } = await seed(t);
-
-    await asAlice(t).mutation(api.social.postPuzzleComment.postPuzzleComment, {
-      copyId: aliceCopy,
-      text: "No stars from me",
-    });
-
-    const list = await asAlice(t).query(
-      api.social.listPuzzleComments.listPuzzleComments,
-      { copyId: aliceCopy },
-    );
-    expect(list).toHaveLength(1);
-    expect(list[0].rating).toBeNull();
   });
 
   test("comments are scoped to each copy (two copies of the same puzzle do NOT share)", async () => {
@@ -113,7 +97,6 @@ describe("postPuzzleComment / listPuzzleComments", () => {
     await asAlice(t).mutation(api.social.postPuzzleComment.postPuzzleComment, {
       copyId: aliceCopy,
       text: "from alice",
-      rating: 4,
     });
     await asBob(t).mutation(api.social.postPuzzleComment.postPuzzleComment, {
       copyId: bobCopy,
@@ -135,19 +118,25 @@ describe("postPuzzleComment / listPuzzleComments", () => {
 
   test("copy-scoped comments do NOT appear in the puzzle's community reviews", async () => {
     const t = convexTest(schema, modules);
-    const { puzzleId, aliceCopy } = await seed(t);
+    const { bob, puzzleId, aliceCopy } = await seed(t);
 
-    // A copy-scoped comment with a rating.
+    // A copy-scoped comment.
     await asAlice(t).mutation(api.social.postPuzzleComment.postPuzzleComment, {
       copyId: aliceCopy,
       text: "my copy is mint",
-      rating: 5,
     });
-    // A genuine community review on the same puzzle definition.
-    await asBob(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
-      puzzleId,
-      text: "great design",
-      rating: 3,
+    // A genuine community review row on the same puzzle definition, in `puzzleReviews` — the
+    // table the reviews list reads.
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("puzzleReviews", {
+        puzzleId,
+        userId: bob,
+        text: "great design",
+        rating: 3,
+        createdAt: now,
+        updatedAt: now,
+      });
     });
 
     // The catalog reviews list shows ONLY the community review, not the copy comment.
@@ -195,19 +184,6 @@ describe("postPuzzleComment / listPuzzleComments", () => {
     expect(stored).toHaveLength(0);
   });
 
-  test("a rating out of range is rejected", async () => {
-    const t = convexTest(schema, modules);
-    const { aliceCopy } = await seed(t);
-
-    await expect(
-      asAlice(t).mutation(api.social.postPuzzleComment.postPuzzleComment, {
-        copyId: aliceCopy,
-        text: "ok",
-        rating: 6,
-      }),
-    ).rejects.toThrow(ConvexError);
-  });
-
   test("a non-owner posting on someone else's copy is rejected", async () => {
     const t = convexTest(schema, modules);
     const { aliceCopy } = await seed(t);
@@ -217,7 +193,6 @@ describe("postPuzzleComment / listPuzzleComments", () => {
       asBob(t).mutation(api.social.postPuzzleComment.postPuzzleComment, {
         copyId: aliceCopy,
         text: "not my copy",
-        rating: 5,
       }),
     ).rejects.toThrow(ConvexError);
 
@@ -255,11 +230,10 @@ describe("postPuzzleComment / listPuzzleComments", () => {
     const { aliceCopy } = await seed(t);
 
     // Alice's copy is CLOSED (not open) and her profile defaults to public — so it is unreachable
-    // for Bob, who would otherwise see her private per-copy notes/rating.
+    // for Bob, who would otherwise see her private per-copy notes.
     await asAlice(t).mutation(api.social.postPuzzleComment.postPuzzleComment, {
       copyId: aliceCopy,
       text: "my private take",
-      rating: 5,
     });
 
     const seenByBob = await asBob(t).query(
@@ -289,7 +263,6 @@ describe("postPuzzleComment / listPuzzleComments", () => {
     await asAlice(t).mutation(api.social.postPuzzleComment.postPuzzleComment, {
       copyId: aliceCopy,
       text: "publicly reachable",
-      rating: 4,
     });
 
     const seenByBob = await asBob(t).query(

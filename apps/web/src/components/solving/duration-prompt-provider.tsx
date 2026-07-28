@@ -10,12 +10,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useUserSettings } from "@/hooks/use-user-settings";
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useTranslations } from "use-intl";
 
 interface DurationPromptApi {
   // Open the first-time prompt (no-op if the member already chose). Call after a solve is logged.
-  requestPrompt: () => void;
+  // onDone fires once the prompt is resolved (choice made, dismissed, or self-suppressed).
+  requestPrompt: (onDone?: () => void) => void;
 }
 
 const DurationPromptContext = createContext<DurationPromptApi | null>(null);
@@ -27,20 +34,39 @@ export function DurationPromptProvider({ children }: { children: ReactNode }) {
   const t = useTranslations("solving.durationPrompt");
   const { trackCompletionDuration, setTrackDuration } = useUserSettings();
   const [open, setOpen] = useState(false);
+  const onDoneRef = useRef<(() => void) | null>(null);
 
-  const requestPrompt = () => {
-    if (trackCompletionDuration === undefined) setOpen(true);
+  const finish = () => {
+    const cb = onDoneRef.current;
+    onDoneRef.current = null; // once-guard
+    cb?.();
+  };
+
+  const requestPrompt = (onDone?: () => void) => {
+    if (trackCompletionDuration === undefined) {
+      onDoneRef.current = onDone ?? null;
+      setOpen(true);
+    } else {
+      onDone?.(); // self-suppressed: chain continues synchronously
+    }
   };
 
   const choose = async (enabled: boolean) => {
     await setTrackDuration(enabled);
     setOpen(false);
+    finish();
   };
 
   return (
     <DurationPromptContext.Provider value={{ requestPrompt }}>
       {children}
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog
+        open={open}
+        onOpenChange={(o) => {
+          setOpen(o);
+          if (!o) finish();
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("title")}</DialogTitle>
@@ -70,5 +96,9 @@ export function DurationPromptProvider({ children }: { children: ReactNode }) {
 
 // Solve dialogs call requestPrompt() after a first-time save. Safe no-op outside the provider.
 export function useDurationPrompt(): DurationPromptApi {
-  return useContext(DurationPromptContext) ?? { requestPrompt: () => {} };
+  return (
+    useContext(DurationPromptContext) ?? {
+      requestPrompt: (onDone) => onDone?.(),
+    }
+  );
 }

@@ -416,7 +416,57 @@ export default defineSchema({
     .index("by_user_owned_puzzle", ["userId", "ownedPuzzleId"])
     .index("by_completion_date", ["endDate"])
     .index("by_rating", ["rating"])
-    .index("by_aggregate_id", ["aggregateId"]),
+    .index("by_aggregate_id", ["aggregateId"])
+    .index("by_user_completed", ["userId", "isCompleted"]),
+
+  // Moderation sidecars for completion photos (completions.photos storage ids). One row per photo;
+  // absent moderationStatus = legacy approved. The moderation pipeline may SWAP fileId (re-encode)
+  // — it patches this row and the completions.photos entry together.
+  completionImages: defineTable({
+    completionId: v.string(), // Solving CompletionId aggregateId
+    uploaderId: v.id("users"),
+    fileId: v.id("_storage"),
+    moderationStatus: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("approved"),
+        v.literal("rejected"),
+      ),
+    ),
+    moderationScore: v.optional(v.number()),
+    moderationLabel: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_completion", ["completionId"])
+    .index("by_moderation_status", ["moderationStatus"]),
+
+  // One review per (member, puzzle definition). `rating` is optional ONLY to
+  // hold migrated text-only legacy reviews (the old catalog form required text,
+  // stars optional); every new write supplies a rating. At least one of
+  // rating/text is always present.
+  puzzleReviews: defineTable({
+    userId: v.id("users"),
+    puzzleId: v.id("puzzles"),
+    rating: v.optional(v.number()),
+    text: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_puzzle", ["puzzleId"])
+    .index("by_user_puzzle", ["userId", "puzzleId"]),
+
+  // One star-only review per (member, physical copy). Write-gated to the
+  // copy's owner or a member with a completion on the copy.
+  copyReviews: defineTable({
+    userId: v.id("users"),
+    copyId: v.id("ownedPuzzles"),
+    rating: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_copy", ["copyId"])
+    .index("by_user_copy", ["userId", "copyId"]),
 
   // User-defined categories for organizing collections
   categories: defineTable({
@@ -772,6 +822,8 @@ export default defineSchema({
   solvingPreferences: defineTable({
     memberId: v.id("users"),
     trackCompletionDuration: v.optional(v.boolean()),
+    // Friend-facing in-progress sharing. undefined = never chosen; every gate tests `=== true`.
+    shareInProgress: v.optional(v.boolean()),
     updatedAt: v.number(),
   }).index("by_member", ["memberId"]),
 
