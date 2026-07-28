@@ -2945,10 +2945,11 @@
     "seeAllCopies": "Bekijk alle {count} beschikbare exemplaren →",
     "noCopies": "Er zijn nog geen exemplaren beschikbaar om te ruilen.",
     "reviews": "Reviews",
-    "reviewPlaceholder": "Beoordeel {title}…",
-    "rateOptional": "Beoordeel deze puzzel (optioneel)",
+    "reviewPlaceholder": "Beoordeel {title} (optioneel)…",
+    "rateRequired": "Beoordeel deze puzzel",
     "reviewPublicNote": "Reviews verschijnen ook in de openbare puzzelcatalogus.",
     "post": "Plaatsen",
+    "updateReview": "Beoordeling bijwerken",
     "reviewFailed": "Kon review niet plaatsen",
     "noReviews": "Nog geen reviews. Wees de eerste.",
     "swapType": {

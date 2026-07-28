@@ -423,12 +423,14 @@ function PublicReviewRow({
             <StarRating value={review.rating} size="sm" />
           )}
           <span className="text-muted-foreground text-xs">
-            {relative(review.createdAt)}
+            {relative(review.updatedAt)}
           </span>
         </div>
-        <p className="text-foreground/90 mt-1 text-sm leading-relaxed">
-          {review.text}
-        </p>
+        {review.text != null && (
+          <p className="text-foreground/90 mt-1 text-sm leading-relaxed">
+            {review.text}
+          </p>
+        )}
       </div>
     </div>
   );

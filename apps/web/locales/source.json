@@ -2945,10 +2945,11 @@
     "seeAllCopies": "See all {count} available copies →",
     "noCopies": "No copies are available to swap yet.",
     "reviews": "Reviews",
-    "reviewPlaceholder": "Review {title}…",
-    "rateOptional": "Rate this puzzle (optional)",
+    "reviewPlaceholder": "Review {title} (optional)…",
+    "rateRequired": "Rate this puzzle",
     "reviewPublicNote": "Reviews also appear on the public puzzle catalogue.",
     "post": "Post",
+    "updateReview": "Update review",
     "reviewFailed": "Couldn't post review",
     "noReviews": "No reviews yet. Be the first.",
     "swapType": {

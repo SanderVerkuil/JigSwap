@@ -34,7 +34,7 @@ import {
   Plus,
   Star,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
 
@@ -474,6 +474,13 @@ function ReviewsSection({
       puzzleId: puzzleId as Id<"puzzles">,
     }),
   );
+  // The caller's own puzzle review (if any) drives the update-mode affordance:
+  // prefill the composer and relabel the submit button.
+  const { data: myReviews } = useQuery(
+    convexQuery(gateway.solving.getMyReviews, {
+      puzzleId: puzzleId as Id<"puzzles">,
+    }),
+  );
   const postReview = useMutation({
     mutationFn: useConvexMutation(gateway.social.postPuzzleReview),
   });
@@ -482,6 +489,20 @@ function ReviewsSection({
   const [rating, setRating] = useState(0);
   const [now] = useState(() => Date.now());
 
+  // Seed the composer once from the existing review; later reactive updates
+  // must not clobber what the member is typing.
+  const [seeded, setSeeded] = useState(false);
+  useEffect(() => {
+    if (seeded || myReviews === undefined) return;
+    if (myReviews.puzzle) {
+      setRating(myReviews.puzzle.rating ?? 0);
+      setText(myReviews.puzzle.text ?? "");
+    }
+    setSeeded(true);
+  }, [seeded, myReviews]);
+
+  const hasExistingReview = myReviews?.puzzle != null;
+
   const list = reviews ?? [];
   const title = view?.definition.title ?? "";
 
@@ -489,16 +510,14 @@ function ReviewsSection({
     format.relativeTime(new Date(timestamp), now);
 
   const submit = async () => {
+    if (rating < 1) return;
     const trimmed = text.trim();
-    if (!trimmed) return;
     try {
       await postReview.mutateAsync({
         puzzleId: puzzleId as Id<"puzzles">,
-        text: trimmed,
-        ...(rating > 0 ? { rating } : {}),
+        rating,
+        ...(trimmed ? { text: trimmed } : {}),
       });
-      setText("");
-      setRating(0);
     } catch {
       toast.error(t("reviewFailed"));
     }
@@ -533,16 +552,16 @@ function ReviewsSection({
             <Button
               variant="brand"
               onClick={() => void submit()}
-              disabled={postReview.isPending || text.trim().length === 0}
+              disabled={postReview.isPending || rating < 1}
             >
-              {t("post")}
+              {hasExistingReview ? t("updateReview") : t("post")}
             </Button>
           </div>
           <StarRating
             value={rating}
             onChange={setRating}
             size="sm"
-            label={t("rateOptional")}
+            label={t("rateRequired")}
           />
           <p className="text-muted-foreground text-xs">
             {t("reviewPublicNote")}
@@ -588,12 +607,14 @@ function ReviewRow({
             <StarRating value={review.rating} size="sm" />
           )}
           <span className="text-muted-foreground text-xs">
-            {relative(review.createdAt)}
+            {relative(review.updatedAt)}
           </span>
         </div>
-        <p className="text-foreground/90 mt-1 text-sm leading-relaxed">
-          {review.text}
-        </p>
+        {review.text != null && (
+          <p className="text-foreground/90 mt-1 text-sm leading-relaxed">
+            {review.text}
+          </p>
+        )}
       </div>
     </div>
   );
