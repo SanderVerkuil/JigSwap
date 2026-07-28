@@ -69,14 +69,14 @@ export function FinishSolveDialog({
       (Number(hours) || 0) * 60 + (Number(minutes) || 0) || undefined;
 
     try {
-      await finishCompletion.mutateAsync({
+      const result = await finishCompletion.mutateAsync({
         completionId,
         endDate: end,
         completionTimeMinutes: showDuration ? totalMinutes : undefined,
         allPiecesPresent,
       });
       toast.success(t("finished"));
-      requestFollowUp(completionId);
+      requestFollowUp(result);
       onSuccess?.();
       onOpenChange(false);
     } catch (error) {

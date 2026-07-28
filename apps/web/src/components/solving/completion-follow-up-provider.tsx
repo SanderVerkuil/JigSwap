@@ -10,16 +10,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { StarRating } from "@/components/ui/star-rating";
-import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, type Id } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { useConvexMutation } from "@convex-dev/react-query";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import Compressor from "compressorjs";
 import { AlertTriangle, ImagePlus, X } from "lucide-react";
 import {
   createContext,
   useContext,
+  useEffect,
   useRef,
   useState,
   type ReactNode,
@@ -27,12 +28,21 @@ import {
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { solvingErrorCode } from "./solving-error";
+import { TwoLevelReviewFields } from "./two-level-review-fields";
+
+// What a solve dialog hands over after a completed save: the domain aggregate id (photo attach
+// keys on it) plus the resolved review targets (Convex doc ids, null on legacy rows).
+interface FollowUpTarget {
+  completionId: string;
+  puzzleId: string | null;
+  copyId: string | null;
+}
 
 interface CompletionFollowUpApi {
-  // Open the post-solve follow-up (rating + review + photos) for a completion. First-wins:
+  // Open the post-solve follow-up (two-level review + photos) for a completion. First-wins:
   // calls while a follow-up is already open are ignored (the completions-row Review button
   // is the fallback). Safe no-op outside the provider.
-  requestFollowUp: (completionId: string) => void;
+  requestFollowUp: (target: FollowUpTarget) => void;
 }
 
 const CompletionFollowUpContext = createContext<CompletionFollowUpApi | null>(
@@ -54,8 +64,8 @@ interface PendingPhoto {
 let nextPhotoId = 0;
 
 // Mounted once in the dashboard shell (inside DurationPromptProvider) so the dialog survives
-// any solve dialog unmounting/navigating. Solve dialogs call requestFollowUp(completionId)
-// after a completed save; the provider owns the single dialog instance.
+// any solve dialog unmounting/navigating. Solve dialogs call requestFollowUp(target) after a
+// completed save; the provider owns the single dialog instance.
 export function CompletionFollowUpProvider({
   children,
 }: {
@@ -67,32 +77,79 @@ export function CompletionFollowUpProvider({
   const generateUploadUrl = useConvexMutation(
     gateway.library.generateUploadUrl,
   );
-  const reviewPuzzle = useConvexMutation(gateway.solving.reviewPuzzle);
+  const submitReviews = useConvexMutation(gateway.solving.submitReviews);
   const attachCompletionPhotos = useConvexMutation(
     gateway.solving.attachCompletionPhotos,
   );
 
-  const [completionId, setCompletionId] = useState<string | null>(null);
-  const [rating, setRating] = useState(0);
-  const [text, setText] = useState("");
+  const [target, setTarget] = useState<FollowUpTarget | null>(null);
+  const [puzzleRating, setPuzzleRating] = useState(0);
+  const [puzzleText, setPuzzleText] = useState("");
+  const [copyRating, setCopyRating] = useState(0);
+  // Snapshot of the caller's existing reviews, taken ONCE per follow-up when the query first
+  // resolves (the review dialog's seed-once semantics; here the form state lives in the
+  // provider, so a one-shot effect seeds it). Dirty tracking compares against this — null
+  // means "not seeded yet" (skeleton; nothing can be dirty).
+  const [seed, setSeed] = useState<{
+    puzzleRating: number;
+    puzzleText: string;
+    copyRating: number;
+    copyReviewAllowed: boolean;
+    hasExisting: boolean;
+  } | null>(null);
   const [photos, setPhotos] = useState<PendingPhoto[]>([]);
   const [saving, setSaving] = useState(false);
   // First-wins guard (ref, not state: immune to same-tick double calls).
   const activeRef = useRef(false);
   // Review submitted on a previous Save attempt → retry is attach-only (never re-review).
   const reviewDoneRef = useRef(false);
-  // Mirrors `completionId` for async callbacks (compression finishing after a close must not
+  // Mirrors the completionId for async callbacks (compression finishing after a close must not
   // leak a photo — or an unrevoked object URL — into a later session).
   const completionIdRef = useRef<string | null>(null);
 
-  const requestFollowUp = (id: string) => {
+  const completionId = target?.completionId ?? null;
+
+  // The caller's existing reviews, fetched while the dialog is open. puzzleId == null is the
+  // legacy edge (pre-backfill completion rows): no review section at all, photos still work.
+  const { data: reviewsData } = useQuery(
+    convexQuery(
+      gateway.solving.getMyReviews,
+      target !== null && target.puzzleId !== null
+        ? {
+            puzzleId: target.puzzleId as Id<"puzzles">,
+            copyId: (target.copyId ?? undefined) as
+              Id<"ownedPuzzles"> | undefined,
+          }
+        : "skip",
+    ),
+  );
+
+  // Seed once per follow-up session, on first resolve; closeAndReset clears the seed so the
+  // next session re-seeds from its own query.
+  useEffect(() => {
+    if (target === null || target.puzzleId === null) return;
+    if (seed !== null || reviewsData === undefined) return;
+    const next = {
+      puzzleRating: reviewsData.puzzle?.rating ?? 0,
+      puzzleText: reviewsData.puzzle?.text ?? "",
+      copyRating: reviewsData.copy?.rating ?? 0,
+      copyReviewAllowed: reviewsData.copyReviewAllowed,
+      hasExisting: reviewsData.puzzle !== null || reviewsData.copy !== null,
+    };
+    setSeed(next);
+    setPuzzleRating(next.puzzleRating);
+    setPuzzleText(next.puzzleText);
+    setCopyRating(next.copyRating);
+  }, [target, seed, reviewsData]);
+
+  const requestFollowUp = (next: FollowUpTarget) => {
     if (activeRef.current) return; // first-wins per open
     activeRef.current = true;
-    completionIdRef.current = id;
-    setCompletionId(id);
+    completionIdRef.current = next.completionId;
+    setTarget(next);
   };
 
-  // Every close path (save, skip, dismiss) funnels here: clear the completionId and ALL
+  // Every close path (save, skip, dismiss) funnels here: clear the target and ALL review/
   // photo/upload state — revoking object URLs — so the next requestFollowUp works.
   const closeAndReset = () => {
     // Revoke-then-clear inside the functional update so it always sees the CURRENT list,
@@ -101,13 +158,15 @@ export function CompletionFollowUpProvider({
       prev.forEach((p) => URL.revokeObjectURL(p.previewUrl));
       return [];
     });
-    setRating(0);
-    setText("");
+    setPuzzleRating(0);
+    setPuzzleText("");
+    setCopyRating(0);
+    setSeed(null);
     setSaving(false);
     reviewDoneRef.current = false;
     activeRef.current = false;
     completionIdRef.current = null;
-    setCompletionId(null);
+    setTarget(null);
   };
 
   const pickFiles = (list: FileList | null) => {
@@ -168,8 +227,24 @@ export function CompletionFollowUpProvider({
     return storageId;
   };
 
+  // Dirty per level, against the seed snapshot (null seed → nothing dirty, mutation skipped).
+  const showCopySection =
+    target?.copyId != null && seed?.copyReviewAllowed === true;
+  const puzzleDirty =
+    seed !== null &&
+    (puzzleRating !== seed.puzzleRating ||
+      puzzleText.trim() !== seed.puzzleText);
+  const copyDirty =
+    seed !== null && showCopySection && copyRating !== seed.copyRating;
+
   const handleSave = async () => {
-    if (!completionId || saving) return;
+    if (!target || !completionId || saving) return;
+    // The domain validates 1–5; block the call early (mirrors the review dialog) so the user
+    // gets an inline hint. A dirty copy level always has rating ≥ 1 (stars only go 1–5).
+    if (!reviewDoneRef.current && puzzleDirty && puzzleRating < 1) {
+      toast.error(tReview("ratingRequired"));
+      return;
+    }
     setSaving(true);
     try {
       // 1. Upload in parallel — only photos without a storageId (Retry re-runs failures
@@ -200,12 +275,22 @@ export function CompletionFollowUpProvider({
         return;
       }
 
-      // 2. Review (independent of photos; rating 0 means "skipped the rating").
-      if (rating >= 1 && !reviewDoneRef.current) {
-        await reviewPuzzle({
-          completionId,
-          rating,
-          text: text.trim() || undefined,
+      // 2. Review (independent of photos): ONE submitReviews call with only the dirty levels,
+      //    once per follow-up — reviewDoneRef makes photo-retry loops attach-only, never
+      //    re-submitting the review. Nothing dirty → no mutation at all.
+      if (
+        target.puzzleId !== null &&
+        !reviewDoneRef.current &&
+        (puzzleDirty || copyDirty)
+      ) {
+        await submitReviews({
+          puzzleId: target.puzzleId as Id<"puzzles">,
+          copyId: (target.copyId ?? undefined) as
+            Id<"ownedPuzzles"> | undefined,
+          puzzle: puzzleDirty
+            ? { rating: puzzleRating, text: puzzleText.trim() || undefined }
+            : undefined,
+          copy: copyDirty ? { rating: copyRating } : undefined,
         });
         reviewDoneRef.current = true;
       }
@@ -241,7 +326,7 @@ export function CompletionFollowUpProvider({
     <CompletionFollowUpContext.Provider value={{ requestFollowUp }}>
       {children}
       <Dialog
-        open={completionId !== null}
+        open={target !== null}
         onOpenChange={(o) => {
           // Dismissal is disabled while saving: ignore the close request entirely.
           if (!o && !saving) closeAndReset();
@@ -254,24 +339,27 @@ export function CompletionFollowUpProvider({
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>{tReview("rating")}</Label>
-              <StarRating
-                value={rating}
-                onChange={setRating}
-                size="lg"
-                label={tReview("rating")}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="follow-up-text">{tReview("text")}</Label>
-              <Textarea
-                id="follow-up-text"
-                placeholder={tReview("textPlaceholder")}
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-              />
-            </div>
+            {/* Legacy edge: puzzleId == null (pre-backfill rows) → no review section, photos
+                still work. Otherwise skeleton until the reviews query seeds the form. */}
+            {target?.puzzleId != null &&
+              (seed === null ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-8 w-40" />
+                  <Skeleton className="h-20 w-full" />
+                </div>
+              ) : (
+                <TwoLevelReviewFields
+                  puzzleRating={puzzleRating}
+                  onPuzzleRatingChange={setPuzzleRating}
+                  puzzleText={puzzleText}
+                  onPuzzleTextChange={setPuzzleText}
+                  copyRating={copyRating}
+                  onCopyRatingChange={setCopyRating}
+                  showCopySection={showCopySection}
+                  showUpdatesExisting={seed.hasExisting}
+                  puzzleTextId="follow-up-review-text"
+                />
+              ))}
             <div className="space-y-2">
               <Label>{t("photosLabel")}</Label>
               <div className="grid grid-cols-4 gap-2">
@@ -351,8 +439,8 @@ export function CompletionFollowUpProvider({
   );
 }
 
-// Solve dialogs call requestFollowUp(completionId) after a completed save. Safe no-op outside
-// the provider.
+// Solve dialogs call requestFollowUp(target) after a completed save. Safe no-op outside the
+// provider.
 export function useCompletionFollowUp(): CompletionFollowUpApi {
   return (
     useContext(CompletionFollowUpContext) ?? {

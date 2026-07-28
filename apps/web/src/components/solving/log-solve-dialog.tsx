@@ -118,7 +118,8 @@ export function LogSolveDialog({
     const wasFirstChoice = trackCompletionDuration === undefined;
 
     try {
-      const completionId = await recordCompletion.mutateAsync({
+      // { completionId (aggregate id), puzzleId, copyId } — the review targets for the follow-up.
+      const result = await recordCompletion.mutateAsync({
         copyId,
         startDate: start,
         endDate: end,
@@ -138,7 +139,7 @@ export function LogSolveDialog({
       // Follow-up (rating/review/photos) only ever applies to a completed solve — never to an
       // in-progress save.
       const followUp = () => {
-        if (completed) requestFollowUp(completionId);
+        if (completed) requestFollowUp(result);
       };
       // Sequencing: if we're about to offer the update-copy-pieces dialog, defer the follow-up
       // until THAT dialog resolves (confirm or dismiss) so the two never stack; otherwise fire it

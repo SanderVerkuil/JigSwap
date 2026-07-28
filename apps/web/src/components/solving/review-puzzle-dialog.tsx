@@ -1,5 +1,6 @@
 "use client";
 
+import { TwoLevelReviewFields } from "@/components/solving/two-level-review-fields";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,10 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StarRating } from "@/components/ui/star-rating";
-import { Textarea } from "@/components/ui/textarea";
 import type { Id } from "@/gateway";
 import { gateway } from "@/gateway";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -144,39 +142,16 @@ function ReviewForm({
 
   return (
     <>
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label>{t("puzzleQuestion")}</Label>
-          <StarRating
-            value={puzzleRating}
-            onChange={setPuzzleRating}
-            size="lg"
-            label={t("rating")}
-          />
-          <Textarea
-            id="review-text"
-            placeholder={t("textPlaceholder")}
-            value={puzzleText}
-            onChange={(e) => setPuzzleText(e.target.value)}
-          />
-        </div>
-        {showCopySection && (
-          <div className="space-y-2">
-            <Label>{t("copyQuestion")}</Label>
-            <StarRating
-              value={copyRating}
-              onChange={setCopyRating}
-              size="lg"
-              label={t("copyQuestion")}
-            />
-          </div>
-        )}
-        {hasExisting && (
-          <p className="text-sm text-muted-foreground">
-            {t("updatesExisting")}
-          </p>
-        )}
-      </div>
+      <TwoLevelReviewFields
+        puzzleRating={puzzleRating}
+        onPuzzleRatingChange={setPuzzleRating}
+        puzzleText={puzzleText}
+        onPuzzleTextChange={setPuzzleText}
+        copyRating={copyRating}
+        onCopyRatingChange={setCopyRating}
+        showCopySection={showCopySection}
+        showUpdatesExisting={hasExisting}
+      />
 
       <DialogFooter>
         <Button onClick={handleSubmit} disabled={submitReviews.isPending}>
