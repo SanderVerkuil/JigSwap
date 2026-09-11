@@ -24,7 +24,7 @@
     "@edge-runtime/vm": "^5.0.0",
     "@types/web-push": "^3.6.4",
     "convex-test": "^0.0.54",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   },
   "scripts": {
     "convex:dev": "convex dev",
