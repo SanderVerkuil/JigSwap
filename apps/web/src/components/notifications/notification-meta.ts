@@ -279,12 +279,12 @@ export function notificationAccent(type: string): string {
       return "text-blue-500";
     case "admin_proposal_filed":
     case "admin_definition_submitted":
-      return "text-primary";
+      return "text-primary-text";
     // Brand violet, matching the What's new feature chip.
     case "whats_new":
       return "text-jigsaw-primary";
     default:
-      return "text-primary";
+      return "text-primary-text";
   }
 }
 

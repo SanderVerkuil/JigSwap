@@ -120,7 +120,7 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
               </p>
               <a
                 href={learnMoreHref}
-                className="text-xs text-primary underline underline-offset-4 hover:no-underline"
+                className="text-xs text-primary-text underline underline-offset-4 hover:no-underline"
               >
                 {t("learnMoreText")}
               </a>

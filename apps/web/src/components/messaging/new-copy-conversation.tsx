@@ -102,7 +102,7 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
         {view?.status === "self" && (
           <Link
             href={`/copies/${copyId}`}
-            className="text-primary text-sm underline-offset-4 hover:underline"
+            className="text-primary-text text-sm underline-offset-4 hover:underline"
           >
             {t("backToPuzzle")}
           </Link>

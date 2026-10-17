@@ -79,7 +79,7 @@ export function KpiRow() {
         value={stats && String(stats.flagsCleared)}
         label={t("flagsCleared")}
         suffix={thisWeek}
-        chipClass="bg-primary/15 text-primary"
+        chipClass="bg-primary/15 text-primary-text"
       />
       <KpiTile
         icon={Clock}
