@@ -859,6 +859,7 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_read", ["userId", "isRead"])
+    .index("by_user_group", ["userId", "groupKey", "isRead"])
     .index("by_type", ["type"])
     .index("by_read_status", ["isRead"])
     .index("by_created_at", ["createdAt"])

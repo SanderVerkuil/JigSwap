@@ -332,6 +332,50 @@ describe("new_follower / follow_request_approved live state", () => {
     expect(view.createdAt).toBe(now + 10_000);
   });
 
+  test("marking a grouped row read keeps all of its actors", async () => {
+    const s = await setup();
+    const rowId = await s.t.run((ctx) =>
+      notify(ctx, s.viewer, {
+        type: "new_follower",
+        actorIds: [s.mara, s.priv],
+        actorCount: 5,
+        groupKey: "new_follower",
+        updatedAt: now + 10_000,
+      }),
+    );
+    const view = await onlyView(s);
+    await s.t
+      .withIdentity({ subject: "viewer" })
+      .mutation(api.notifications.markNotificationRead.markNotificationRead, {
+        notificationId: view.id,
+      });
+    const row = await s.t.run((ctx) => ctx.db.get(rowId));
+    expect(row).toMatchObject({
+      isRead: true,
+      actorIds: [s.mara, s.priv],
+      actorCount: 5,
+      groupKey: "new_follower",
+      updatedAt: now + 10_000,
+    });
+  });
+
+  test("a grouped row stays informational when its newest follower is gone", async () => {
+    const s = await setup();
+    await s.t.run(async (ctx) => {
+      await follow(ctx, s.mara, s.viewer);
+      await notify(ctx, s.viewer, {
+        type: "new_follower",
+        actorIds: [s.other, s.mara],
+        actorCount: 2,
+      });
+      await ctx.db.delete(s.other);
+    });
+    const view = await onlyView(s);
+    expect(view.actors[0]).toEqual({ anonymous: true });
+    expect(view.state).toBe("informational");
+    expect(view.href).toBe("/people");
+  });
+
   test("follow_request_approved: resolved following, follow back after the viewer unfollowed", async () => {
     const s = await setup();
     const edge = await s.t.run(async (ctx) => {

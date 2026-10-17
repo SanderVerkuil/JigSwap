@@ -484,6 +484,10 @@ export const resolveNotificationView = async (
   let decision: ViewDecision = INFORMATIONAL;
   if (subjectFacts && !subjectFacts.available) {
     decision = UNAVAILABLE;
+  } else if (type === "new_follower" && actorCount > 1) {
+    // A grouped row is informational: no follow back, and one gone follower does not make the
+    // whole group unavailable.
+    decision = INFORMATIONAL;
   } else if (isActorSubjectType(type)) {
     // Follow types: the actor is the subject. A gone (or legacy, ref-less) actor has nothing left
     // to act on.
