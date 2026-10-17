@@ -962,6 +962,11 @@
     "gridView": "Rasterweergave",
     "listView": "Lijstweergave"
   },
+  "browsePuzzleFilter": {
+    "label": "Puzzel",
+    "unknownPuzzle": "Onbekende puzzel",
+    "remove": "Puzzelfilter verwijderen: {title}"
+  },
   "footer": {
     "tagline": "Legpuzzelruil toegankelijk en duurzaam maken voor iedereen.",
     "about": "Over",

@@ -962,6 +962,11 @@
     "gridView": "Grid View",
     "listView": "List View"
   },
+  "browsePuzzleFilter": {
+    "label": "Puzzle",
+    "unknownPuzzle": "Unknown puzzle",
+    "remove": "Remove puzzle filter: {title}"
+  },
   "footer": {
     "tagline": "Making jigsaw puzzle trading accessible and sustainable for everyone.",
     "about": "About",

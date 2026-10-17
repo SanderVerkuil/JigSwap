@@ -1,7 +1,11 @@
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link as RouterLink,
+  useNavigate,
+} from "@tanstack/react-router";
 
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
@@ -111,6 +115,7 @@ function PuzzleDefinitionDetail({
   puzzleId: string;
 }) {
   const router = useRouter();
+  const navigate = useNavigate();
   const t = useTranslations("puzzleDefinition");
   const tPuzzles = useTranslations("puzzles");
   const tCatalog = useTranslations("puzzles.puzzles");
@@ -262,7 +267,12 @@ function PuzzleDefinitionDetail({
               <Plus className="h-4 w-4" />
               {tPuzzles("addToLibrary")}
             </Button>
-            <Button variant="outline" onClick={() => router.push("/browse")}>
+            <Button
+              variant="outline"
+              onClick={() =>
+                navigate({ to: "/browse", search: { puzzle: puzzleId } })
+              }
+            >
               <ArrowLeftRight className="h-4 w-4" />
               {t("findCopyToSwap")}
             </Button>
@@ -324,6 +334,7 @@ function PuzzleDefinitionDetail({
           <AvailableToSwap
             copies={availableCopies}
             totalAvailable={totalAvailable}
+            puzzleId={puzzleId}
           />
         </div>
 
@@ -391,9 +402,11 @@ function swapTypeClasses(swapType: AvailableCopy["swapType"]) {
 function AvailableToSwap({
   copies,
   totalAvailable,
+  puzzleId,
 }: {
   copies: AvailableCopy[];
   totalAvailable: number;
+  puzzleId: string;
 }) {
   const t = useTranslations("puzzleDefinition");
   const displayName = useMemberDisplayName();
@@ -445,12 +458,13 @@ function AvailableToSwap({
         </div>
       )}
       {totalAvailable > 0 && (
-        <Link
-          href="/browse"
+        <RouterLink
+          to="/browse"
+          search={{ puzzle: puzzleId }}
           className="text-jigsaw-primary mt-3 inline-block text-sm font-semibold hover:underline"
         >
           {t("seeAllCopies", { count: totalAvailable })}
-        </Link>
+        </RouterLink>
       )}
     </section>
   );

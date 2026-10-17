@@ -42,6 +42,10 @@ export const browseOwnedPuzzles = query({
       ),
     ),
     searchTerm: v.optional(v.string()),
+    // Narrow to copies of ONE catalogue definition (the puzzle's Convex _id). Typed as a string,
+    // not v.id, because it arrives from a URL search param: a malformed value normalises to null
+    // and yields an empty page instead of failing the whole query.
+    puzzleId: v.optional(v.string()),
     includeOwnPuzzles: v.optional(v.boolean()),
     limit: v.optional(v.number()),
     offset: v.optional(v.number()),
@@ -54,15 +58,29 @@ export const browseOwnedPuzzles = query({
     // user's Convex _id.
     const memberId = (await requireMember(ctx)) as unknown as Id<"users">;
 
+    const puzzleId =
+      args.puzzleId === undefined
+        ? undefined
+        : ctx.db.normalizeId("puzzles", args.puzzleId);
+    if (puzzleId === null) {
+      return { ownedPuzzles: [], total: 0, hasMore: false };
+    }
+
     // Availability-sourced candidate set: every OPEN copy (rule 1). Convex can't `neq` on an
     // index, so we collect the availability-filtered set and exclude the viewer's own copies in
     // memory (unless includeOwnPuzzles). Browse shows OTHER members' available copies.
     // Perf: bound the worst-case scan with `.take(500)` instead of an unbounded `.collect()`.
     // CAVEAT: this is a read-cap, not a true index — at large catalogue scale this set should be
     // sourced from a dedicated availability index + cursor paging rather than an in-memory filter.
+    // With a definition filter, source candidates from the `by_puzzle` index instead, so copies of
+    // that puzzle are never lost behind the global 500-row cap.
+    const candidates = puzzleId
+      ? ctx.db
+          .query("ownedPuzzles")
+          .withIndex("by_puzzle", (q) => q.eq("puzzleId", puzzleId))
+      : ctx.db.query("ownedPuzzles");
     const availableNotOwn = (
-      await ctx.db
-        .query("ownedPuzzles")
+      await candidates
         .filter((f) =>
           f.or(
             f.eq(f.field("availability.forTrade"), true),
@@ -80,7 +98,7 @@ export const browseOwnedPuzzles = query({
     // but a fellow member's open circle copy that wasn't in the prefilter is added here).
     const circleShared = (
       await collectCircleSharedCopies(ctx, memberId)
-    ).filter(isOpen);
+    ).filter((c) => isOpen(c) && (!puzzleId || c.puzzleId === puzzleId));
     const circleSharedIds = new Set(
       circleShared.map((c) => c._id as unknown as string),
     );
