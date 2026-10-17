@@ -721,7 +721,6 @@
   },
   "copyConversation": {
     "title": "Message {name}",
-    "aboutPuzzle": "About this puzzle",
     "pieces": "{count} pieces",
     "placeholder": "Write a message about this puzzle…",
     "firstMessageHint": "Your conversation starts when you send the first message.",

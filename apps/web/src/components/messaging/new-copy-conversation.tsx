@@ -18,8 +18,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
-import { MessageCopyCard } from "./copy-card";
 import { conversationErrorCode, threadSubjectTitle } from "./format";
+import { StagedCopyChip } from "./staged-copy-chip";
 import { ThreadSubjectAvatar } from "./thread-list";
 import { BackToInboxLink } from "./thread-view";
 
@@ -161,10 +161,9 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
       </div>
 
       <div className="bg-card shrink-0 border-t px-3 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] md:px-4 md:pb-3">
-        <p className="text-muted-foreground mb-1.5 text-xs font-medium">
-          {t("aboutPuzzle")}
-        </p>
-        <MessageCopyCard copy={view.copy} className="mb-2 w-72 max-w-full" />
+        {/* The puzzle this conversation is about, pre-staged and fixed —
+            the same chip model as an attachment in a thread. */}
+        <StagedCopyChip copy={view.copy} />
         {view.canMessage ? (
           <div className="flex items-end gap-2">
             <Textarea

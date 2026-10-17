@@ -721,7 +721,6 @@
   },
   "copyConversation": {
     "title": "Bericht aan {name}",
-    "aboutPuzzle": "Over deze puzzel",
     "pieces": "{count} stukjes",
     "placeholder": "Schrijf een bericht over deze puzzel…",
     "firstMessageHint": "Je gesprek begint zodra je het eerste bericht verstuurt.",
