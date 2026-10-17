@@ -706,6 +706,10 @@ export default defineSchema({
     kind: v.union(v.literal("text"), v.literal("image"), v.literal("system")),
     body: v.string(),
     sentAt: v.number(),
+    // The copy this message is about, when sent from a copy's "Message" action. Lives on the
+    // message (not the thread) because a DM is one long-lived thread per pair, spanning many
+    // puzzles; absent on plain/system messages and every pre-existing row.
+    copyId: v.optional(v.id("ownedPuzzles")),
   })
     .index("by_thread_sent", ["threadAggregateId", "sentAt"])
     .index("by_message_id", ["messageId"]),

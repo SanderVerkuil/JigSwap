@@ -14,7 +14,42 @@ export interface ThreadMessageView {
   readonly body: string;
   /** Epoch millis the message was sent. */
   readonly sentAt: number;
+  /**
+   * The copy the message is about (sent from a copy's "Message" action). Resolved by
+   * getThreadMessages only, and only while the reader may still view the copy; absent otherwise
+   * (including inbox previews).
+   */
+  readonly copy?: MessageCopyView;
 }
+
+/** A compact card for the copy a conversation is about. */
+export interface MessageCopyView {
+  /** The copy's ownedPuzzles `_id`. */
+  readonly copyId: string;
+  readonly title: string;
+  readonly brand: string | null;
+  readonly pieceCount: number | null;
+  /** The copy's approved cover photo or the puzzle's box art; null when neither exists. */
+  readonly coverUrl: string | null;
+}
+
+/**
+ * Where a copy's "Message" action lands (getCopyConversation). `unavailable`: the copy does not
+ * exist or the viewer may not view it. `self`: the viewer owns it. `existing`: a DM with the
+ * owner already exists — open it. `new`: no DM yet — show a composer addressed to the owner
+ * (privacy-projected; their raw id never crosses the wire); `canMessage` mirrors the
+ * ConnectionPolicy that startCopyConversation enforces.
+ */
+export type CopyConversationView =
+  | { readonly status: "unavailable" }
+  | { readonly status: "self" }
+  | { readonly status: "existing"; readonly threadId: string }
+  | {
+      readonly status: "new";
+      readonly copy: MessageCopyView;
+      readonly owner: ProjectedMember;
+      readonly canMessage: boolean;
+    };
 
 /**
  * What an inbox thread is ABOUT. Exchange threads carry the exchange's identity and a cached
