@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
@@ -7,20 +7,20 @@ import schema from "./schema";
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
-const asOwner = (t: ReturnType<typeof convexTest>) =>
+const asOwner = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_owner" });
-const asBorrower = (t: ReturnType<typeof convexTest>) =>
+const asBorrower = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
 
 // Drain the async dispatch chain (settle -> PossessionTransferred -> openLoan -> LoanOpened ...).
-const flush = async (t: ReturnType<typeof convexTest>) => {
+const flush = async (t: TestConvex<typeof schema>) => {
   for (let i = 0; i < 12; i++) {
     await new Promise((resolve) => setTimeout(resolve, 0));
     await t.finishInProgressScheduledFunctions();
   }
 };
 
-const seed = (t: ReturnType<typeof convexTest>) =>
+const seed = (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string) =>
@@ -56,7 +56,7 @@ const seed = (t: ReturnType<typeof convexTest>) =>
 
 // Alice borrows `copy` from the owner via a settled lend.
 const settleLend = async (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   copy: Id<"ownedPuzzles">,
   owner: Id<"users">,
 ) => {

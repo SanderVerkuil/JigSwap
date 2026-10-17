@@ -1,5 +1,5 @@
 import { COOLDOWN_MS } from "@jigswap/domain";
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -7,7 +7,7 @@ import schema from "./schema";
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
-const seedUsers = (t: ReturnType<typeof convexTest>) =>
+const seedUsers = (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const alice = await ctx.db.insert("users", {
@@ -29,13 +29,13 @@ const seedUsers = (t: ReturnType<typeof convexTest>) =>
     return { alice, newbie };
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asNewbie = (t: ReturnType<typeof convexTest>) =>
+const asNewbie = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_newbie" });
 
 const mutualEdges = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   a: Id<"users">,
   b: Id<"users">,
 ) =>
@@ -55,7 +55,7 @@ const mutualEdges = (
     return { ab: ab !== null, ba: ba !== null };
   });
 
-const linkFor = (t: ReturnType<typeof convexTest>, token: string) =>
+const linkFor = (t: TestConvex<typeof schema>, token: string) =>
   t.run((ctx) =>
     ctx.db
       .query("inviteLinks")

@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
@@ -11,7 +11,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 // Seed one member + ONE approved catalog puzzle. The catalog review FORM upserts the member's
 // single `puzzleReviews` row keyed by the puzzle DEFINITION id directly (the catalog detail page
 // has no copy id).
-const seed = async (t: ReturnType<typeof convexTest>) =>
+const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const alice = await ctx.db.insert("users", {
@@ -34,14 +34,14 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
     return { alice, puzzleId };
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
 
 // Seed a review ROW directly into `puzzleReviews` (bypassing the mutation) so list coverage can
 // pin rows the form can't produce today: migrated text-only rows (rating undefined), backdated
 // updatedAt values, other members' rows.
 const seedReview = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   args: {
     puzzleId: Id<"puzzles">;
     userId: Id<"users">;
@@ -64,7 +64,7 @@ const seedReview = (
 
 // One review per (member, puzzle) — multi-review scenarios need extra members.
 const mkMember = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   clerkId: string,
   name: string,
 ) =>

@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -12,7 +12,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 // (+ follow_request_approved to the requester, and NO new_follower to the approver — the
 // approval suppression); decline is silent end-to-end.
 
-const seedMembers = async (t: ReturnType<typeof convexTest>) =>
+const seedMembers = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string, name: string) =>
@@ -38,24 +38,21 @@ const seedMembers = async (t: ReturnType<typeof convexTest>) =>
     return { alice, bob, carol };
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asBob = (t: ReturnType<typeof convexTest>) =>
+const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
-const asCarol = (t: ReturnType<typeof convexTest>) =>
+const asCarol = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_carol" });
 
-const flushScheduled = async (t: ReturnType<typeof convexTest>) => {
+const flushScheduled = async (t: TestConvex<typeof schema>) => {
   for (let i = 0; i < 10; i++) {
     await new Promise((resolve) => setTimeout(resolve, 0));
     await t.finishInProgressScheduledFunctions();
   }
 };
 
-const notificationsFor = (
-  t: ReturnType<typeof convexTest>,
-  userId: Id<"users">,
-) =>
+const notificationsFor = (t: TestConvex<typeof schema>, userId: Id<"users">) =>
   t.run((ctx) =>
     ctx.db
       .query("notifications")
@@ -63,7 +60,7 @@ const notificationsFor = (
       .collect(),
   );
 
-const followEdges = (t: ReturnType<typeof convexTest>) =>
+const followEdges = (t: TestConvex<typeof schema>) =>
   t.run((ctx) => ctx.db.query("follows").collect());
 
 describe("follow notifications", () => {
@@ -365,7 +362,7 @@ describe("follow request lifecycle", () => {
 describe("silent-decline cooldown cannot be bypassed by cancel + re-request", () => {
   const EIGHT_DAYS = 8 * 24 * 60 * 60 * 1000;
 
-  const followRequestRows = (t: ReturnType<typeof convexTest>) =>
+  const followRequestRows = (t: TestConvex<typeof schema>) =>
     t.run((ctx) => ctx.db.query("followRequests").collect());
 
   test("cancel then re-request within the cooldown: mask resumes, one row, no new notification", async () => {

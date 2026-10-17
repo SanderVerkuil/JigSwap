@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
@@ -10,7 +10,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 // Seed two members, a catalog puzzle, and an owned copy of it (Alice's) so reviews can target
 // the puzzle level, the copy level, or both.
-const seed = async (t: ReturnType<typeof convexTest>) =>
+const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const alice = await ctx.db.insert("users", {
@@ -53,13 +53,13 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
     return { alice, bob, puzzleId, ownedPuzzleId };
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asBob = (t: ReturnType<typeof convexTest>) =>
+const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
 
 const puzzleReviewsFor = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   userId: Id<"users">,
   puzzleId: Id<"puzzles">,
 ) =>
@@ -73,7 +73,7 @@ const puzzleReviewsFor = (
   );
 
 const copyReviewsFor = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   userId: Id<"users">,
   copyId: Id<"ownedPuzzles">,
 ) =>
@@ -89,7 +89,7 @@ const copyReviewsFor = (
 // Insert a finished completion row for the member on the copy — the fact the copy-review
 // permission check reads via `by_user_owned_puzzle`.
 const insertCompletion = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   userId: Id<"users">,
   ownedPuzzleId: Id<"ownedPuzzles">,
 ) =>

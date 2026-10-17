@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -14,7 +14,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 // Seed the uploader, a DISTINCT admin user, an approved puzzle, and a copy carrying a snapshot
 // title. The two users keep the "stamp actor is the admin, notification goes to the uploader"
 // assertions load-bearing. The Clerk subject maps to the user via by_clerk_id.
-const seedWorld = (t: ReturnType<typeof convexTest>) =>
+const seedWorld = (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const userId = await ctx.db.insert("users", {
@@ -55,7 +55,7 @@ const seedWorld = (t: ReturnType<typeof convexTest>) =>
 
 // Seed one photo row with a REAL stored blob so ctx.storage.getUrl/delete operate on it.
 const seedPhoto = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   copyId: Id<"ownedPuzzles">,
   userId: Id<"users">,
   moderationStatus: "pending" | "approved" | "rejected",
@@ -76,12 +76,12 @@ const seedPhoto = (
     return { imageId, fileId };
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asAdmin = (t: ReturnType<typeof convexTest>) =>
+const asAdmin = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_ada", metadata: { role: "admin" } });
 
-const allActions = (t: ReturnType<typeof convexTest>) =>
+const allActions = (t: TestConvex<typeof schema>) =>
   t.run((ctx) => ctx.db.query("moderationActions").collect());
 
 describe("listRejectedPhotos", () => {

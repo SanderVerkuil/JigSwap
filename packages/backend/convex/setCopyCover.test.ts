@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
@@ -10,7 +10,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 // Seed two members + a catalog puzzle (with aggregateId) the snapshot provider can resolve. The
 // puzzle carries a global thumbnail so the fall-back path is observable.
-const seed = async (t: ReturnType<typeof convexTest>) =>
+const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string, email: string) =>
@@ -44,9 +44,9 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
     return { alice, bob, puzzleAggregateId, globalImageId };
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asBob = (t: ReturnType<typeof convexTest>) =>
+const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
 
 // convex-test serializes ConvexError.data to a JSON string at the function boundary; normalise.
@@ -59,7 +59,7 @@ const dataOf = (e: unknown): { code?: string } => {
 
 // Alice acquires a copy of the seeded puzzle; resolve the copy's Convex _id (cover/gallery key).
 const acquireCopy = async (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   puzzleAggregateId: string,
 ): Promise<Id<"ownedPuzzles">> => {
   const aggregateId = (await asAlice(t).mutation(
@@ -78,7 +78,7 @@ const acquireCopy = async (
 
 // Insert an ownedPuzzleImages row (with a real stored blob) for the given copy, returning its id.
 const addPhoto = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   copyId: Id<"ownedPuzzles">,
   uploader: Id<"users">,
 ): Promise<Id<"ownedPuzzleImages">> =>
@@ -96,7 +96,7 @@ const addPhoto = (
     });
   });
 
-const view = (t: ReturnType<typeof convexTest>, copyId: Id<"ownedPuzzles">) =>
+const view = (t: TestConvex<typeof schema>, copyId: Id<"ownedPuzzles">) =>
   asAlice(t).query(api.library.getCopyInstanceView.getCopyInstanceView, {
     copyId,
   });

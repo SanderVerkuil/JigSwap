@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -12,14 +12,14 @@ const ALL_FALSE: Avail = { forTrade: false, forSale: false, forLend: false };
 
 // Drain the async event dispatcher: yield a macrotask so the pending runAfter(0) job fires, then
 // await any in-progress jobs — looped a few times to settle the chain.
-const flushScheduled = async (t: ReturnType<typeof convexTest>) => {
+const flushScheduled = async (t: TestConvex<typeof schema>) => {
   for (let i = 0; i < 10; i++) {
     await new Promise((resolve) => setTimeout(resolve, 0));
     await t.finishInProgressScheduledFunctions();
   }
 };
 
-const seed = (t: ReturnType<typeof convexTest>) =>
+const seed = (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string, email: string) =>
@@ -45,7 +45,7 @@ const seed = (t: ReturnType<typeof convexTest>) =>
   });
 
 const addCopy = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   puzzleId: Id<"puzzles">,
   ownerId: Id<"users">,
   availability: Avail,
@@ -61,10 +61,7 @@ const addCopy = (
     }),
   );
 
-const notificationsFor = (
-  t: ReturnType<typeof convexTest>,
-  userId: Id<"users">,
-) =>
+const notificationsFor = (t: TestConvex<typeof schema>, userId: Id<"users">) =>
   t.run(async (ctx) =>
     ctx.db
       .query("notifications")
@@ -72,14 +69,14 @@ const notificationsFor = (
       .collect(),
   );
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asBob = (t: ReturnType<typeof convexTest>) =>
+const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
 
 // Seed a mutual follow between the pair so the DM ConnectionPolicy's first clause passes.
 const followMutually = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   a: Id<"users">,
   b: Id<"users">,
 ) =>
@@ -97,7 +94,7 @@ const followMutually = (
   });
 
 // Alice proposes a sale to Bob; returns the exchange aggregateId + the seeded ids.
-const proposeSale = async (t: ReturnType<typeof convexTest>) => {
+const proposeSale = async (t: TestConvex<typeof schema>) => {
   const { alice, bob, puzzleId } = await seed(t);
   const copy = await addCopy(t, puzzleId, bob, { ...ALL_FALSE, forSale: true });
   const id = await asAlice(t).mutation(api.exchange.propose.propose, {
@@ -166,7 +163,7 @@ describe("end-to-end async dispatch", () => {
 
 describe("message_received notifications", () => {
   const messageNotesFor = async (
-    t: ReturnType<typeof convexTest>,
+    t: TestConvex<typeof schema>,
     userId: Id<"users">,
   ) =>
     (await notificationsFor(t, userId)).filter(

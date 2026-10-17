@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { internal } from "./_generated/api";
 import schema from "./schema";
@@ -24,7 +24,7 @@ const clerkUser = (
   public_metadata: {},
 });
 
-const findRow = (t: ReturnType<typeof convexTest>) =>
+const findRow = (t: TestConvex<typeof schema>) =>
   t.run((ctx) =>
     ctx.db
       .query("users")

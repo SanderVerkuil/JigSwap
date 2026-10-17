@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, it } from "vitest";
 import { internal } from "./_generated/api";
 import schema from "./schema";
@@ -11,7 +11,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 // edit/deactivate actions enable.
 describe("catalog/backfillCategories", () => {
   const seed = async (
-    t: ReturnType<typeof convexTest>,
+    t: TestConvex<typeof schema>,
     opts: { name: string; aggregateId?: string },
   ) =>
     t.run(async (ctx) =>

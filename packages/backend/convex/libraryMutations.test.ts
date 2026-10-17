@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
@@ -9,7 +9,7 @@ import schema from "./schema";
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 // Seed two members + a catalog puzzle (with aggregateId) the snapshot provider can resolve.
-const seed = async (t: ReturnType<typeof convexTest>) =>
+const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string, email: string) =>
@@ -70,12 +70,12 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
     };
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asBob = (t: ReturnType<typeof convexTest>) =>
+const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
 
-const copyRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
+const copyRow = (t: TestConvex<typeof schema>, aggregateId: string) =>
   t.run(async (ctx) =>
     ctx.db
       .query("ownedPuzzles")
@@ -83,7 +83,7 @@ const copyRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
       .unique(),
   );
 
-const collectionRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
+const collectionRow = (t: TestConvex<typeof schema>, aggregateId: string) =>
   t.run(async (ctx) =>
     ctx.db
       .query("collections")
@@ -91,7 +91,7 @@ const collectionRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
       .unique(),
   );
 
-const categoryRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
+const categoryRow = (t: TestConvex<typeof schema>, aggregateId: string) =>
   t.run(async (ctx) =>
     ctx.db
       .query("categories")
@@ -116,7 +116,7 @@ const expectConvexCode = async (p: Promise<unknown>, code: string) => {
 
 // Helper: Alice acquires a copy of the seeded puzzle, returning the new CopyId (aggregateId).
 const acquireForAlice = async (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   puzzleAggregateId: string,
 ) =>
   (await asAlice(t).mutation(api.library.acquireCopy.acquireCopy, {
@@ -347,7 +347,7 @@ describe("library.createCollection", () => {
 });
 
 describe("library.addCopyToCollection / removeCopyFromCollection", () => {
-  const setup = async (t: ReturnType<typeof convexTest>) => {
+  const setup = async (t: TestConvex<typeof schema>) => {
     const { alice, bob, puzzleAggregateId } = await seed(t);
     const copyId = await acquireForAlice(t, puzzleAggregateId);
     const collectionId = (await asAlice(t).mutation(

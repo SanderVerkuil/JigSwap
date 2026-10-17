@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -8,7 +8,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 const HOUR = 60 * 60 * 1000;
 
 // Seed: alice owns a copy; bob and carol exist. Follow edges are inserted per-test.
-const seed = async (t: ReturnType<typeof convexTest>) =>
+const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (name: string) =>
@@ -50,11 +50,11 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
     return { alice, bob, carol, copyAggregateId };
   });
 
-const asUser = (t: ReturnType<typeof convexTest>, name: string) =>
+const asUser = (t: TestConvex<typeof schema>, name: string) =>
   t.withIdentity({ subject: `clerk_${name}` });
 
 const follow = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   follower: Id<"users">,
   followee: Id<"users">,
 ) =>

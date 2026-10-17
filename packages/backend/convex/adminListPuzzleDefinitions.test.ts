@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -10,7 +10,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 // Admin read model over ALL definitions regardless of status (the public lists filter to
 // approved), newest first, paginated, with submitter name and distinct-owner count joined in.
 
-const seedMember = async (t: ReturnType<typeof convexTest>) =>
+const seedMember = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     return ctx.db.insert("users", {
@@ -23,13 +23,13 @@ const seedMember = async (t: ReturnType<typeof convexTest>) =>
     });
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asAdmin = (t: ReturnType<typeof convexTest>) =>
+const asAdmin = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice", metadata: { role: "admin" } });
 
 // One puzzle per status, inserted oldest→newest so order("desc") returns the reverse.
-const seedPuzzles = (t: ReturnType<typeof convexTest>, alice: Id<"users">) =>
+const seedPuzzles = (t: TestConvex<typeof schema>, alice: Id<"users">) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const statuses = ["approved", "pending", "rejected", "disabled"] as const;
@@ -51,7 +51,7 @@ const seedPuzzles = (t: ReturnType<typeof convexTest>, alice: Id<"users">) =>
   });
 
 const listPage = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   paginationOpts: { numItems: number; cursor: string | null },
 ) =>
   asAdmin(t).query(api.admin.listPuzzleDefinitions.listPuzzleDefinitions, {

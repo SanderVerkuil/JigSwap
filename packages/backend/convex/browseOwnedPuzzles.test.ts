@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -10,7 +10,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 const OPEN = { forTrade: true, forSale: false, forLend: false };
 const CLOSED = { forTrade: false, forSale: false, forLend: false };
 
-const asViewer = (t: ReturnType<typeof convexTest>) =>
+const asViewer = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_viewer" });
 
 // Seed the viewer plus three other members (public / private / private-in-circle), a shared puzzle
@@ -18,7 +18,7 @@ const asViewer = (t: ReturnType<typeof convexTest>) =>
 // exactly as `collectCircleSharedCopies` reads them: `circleMembers.by_member` for the viewer's
 // circles, `circleCopyShares.by_circle` keyed on the circle aggregateId, and copy resolution via
 // `ownedPuzzles.by_aggregate_id`.
-const seed = async (t: ReturnType<typeof convexTest>) =>
+const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string, name: string) =>
@@ -125,7 +125,7 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
   });
 
 const browse = async (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   args: Record<string, unknown> = {},
 ) => asViewer(t).query(api.library.browseOwnedPuzzles.browseOwnedPuzzles, args);
 

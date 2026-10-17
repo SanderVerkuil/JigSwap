@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -17,7 +17,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 // Seed a member + a catalog puzzle + an owned copy (with a snapshot title, which the rejection
 // stamp uses as targetLabel via the completion's copySnapshot).
-const seed = async (t: ReturnType<typeof convexTest>) =>
+const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const alice = await ctx.db.insert("users", {
@@ -57,13 +57,13 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
     return { alice, copyAggregateId };
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
 
 const HOUR = 60 * 60 * 1000;
 
 const recordForAlice = async (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   copyAggregateId: string,
 ) =>
   (
@@ -76,12 +76,12 @@ const recordForAlice = async (
 
 // Unique content per blob — convex-test content-addresses storage, so identical bytes would
 // yield identical URLs and blunt the "which photo survived" assertions below.
-const storeBlob = (t: ReturnType<typeof convexTest>) =>
+const storeBlob = (t: TestConvex<typeof schema>) =>
   t.run((ctx) =>
     ctx.storage.store(new Blob([crypto.randomUUID()], { type: "image/png" })),
   );
 
-const completionRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
+const completionRow = (t: TestConvex<typeof schema>, aggregateId: string) =>
   t.run(async (ctx) =>
     ctx.db
       .query("completions")
@@ -90,7 +90,7 @@ const completionRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
   );
 
 const completionImagesFor = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   completionId: string,
 ) =>
   t.run(async (ctx) =>
@@ -100,13 +100,13 @@ const completionImagesFor = (
       .collect(),
   );
 
-const moderationActions = (t: ReturnType<typeof convexTest>) =>
+const moderationActions = (t: TestConvex<typeof schema>) =>
   t.run((ctx) => ctx.db.query("moderationActions").collect());
 
 // Wait until every scheduled job reaches a terminal state. convex-test starts runAfter(0) jobs
 // via real setTimeout; finishInProgressScheduledFunctions only awaits jobs whose timer already
 // fired, so yield through the macrotask queue between rounds to let pending timers fire too.
-const settleScheduledJobs = async (t: ReturnType<typeof convexTest>) => {
+const settleScheduledJobs = async (t: TestConvex<typeof schema>) => {
   for (let i = 0; i < 100; i++) {
     await t.finishInProgressScheduledFunctions();
     const jobs = await t.run((ctx) =>
@@ -130,7 +130,7 @@ const settleScheduledJobs = async (t: ReturnType<typeof convexTest>) => {
 // swap), so settle that job first, then re-open the sidecar so each test exercises the FIRST
 // verdict deterministically.
 const attachOne = async (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   completionId: string,
 ) => {
   const fileId = (await storeBlob(t)) as Id<"_storage">;
@@ -302,7 +302,7 @@ describe("rejected-photo read filtering", () => {
   // Seed a completion with 4 photos: approved, rejected, pending, and one WITHOUT a sidecar
   // (legacy). Statuses are patched directly so the filter itself is pinned — not the reject
   // cascade (which also removes the photo from the row).
-  const seedStatuses = async (t: ReturnType<typeof convexTest>) => {
+  const seedStatuses = async (t: TestConvex<typeof schema>) => {
     const { copyAggregateId } = await seed(t);
     const completionId = await recordForAlice(t, copyAggregateId);
     const approved = (await storeBlob(t)) as Id<"_storage">;

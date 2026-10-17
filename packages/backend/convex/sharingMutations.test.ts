@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
@@ -8,7 +8,7 @@ import schema from "./schema";
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 // Seed three members + a catalog puzzle (with aggregateId) the snapshot provider can resolve.
-const seed = async (t: ReturnType<typeof convexTest>) =>
+const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string, email: string) =>
@@ -38,11 +38,11 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
     return { alice, bob, carol, puzzleAggregateId };
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asBob = (t: ReturnType<typeof convexTest>) =>
+const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
-const asCarol = (t: ReturnType<typeof convexTest>) =>
+const asCarol = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_carol" });
 
 // convex-test serializes ConvexError.data to a JSON string at the function boundary; normalise.
@@ -61,12 +61,12 @@ const expectConvexCode = async (p: Promise<unknown>, code: string) => {
 };
 
 // Alice creates a circle, returning its CircleId (aggregateId).
-const createCircleForAlice = async (t: ReturnType<typeof convexTest>) =>
+const createCircleForAlice = async (t: TestConvex<typeof schema>) =>
   (await asAlice(t).mutation(api.sharing.createCircle.createCircle, {
     name: "Saturday Puzzlers",
   })) as string;
 
-const circleRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
+const circleRow = (t: TestConvex<typeof schema>, aggregateId: string) =>
   t.run(async (ctx) =>
     ctx.db
       .query("circles")
@@ -275,7 +275,7 @@ describe("sharing.getCircle visibility", () => {
 // open even when reached through a circle, so the row is marked forLend; rule 2 (owner public OR
 // circle-shared) is exercised by Alice's private profile — the public path is closed.
 const acquirePrivateForAlice = async (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   puzzleAggregateId: string,
 ) => {
   const copyId = (await asAlice(t).mutation(

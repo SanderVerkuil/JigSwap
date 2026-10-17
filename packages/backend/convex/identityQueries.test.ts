@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
@@ -8,7 +8,7 @@ import schema from "./schema";
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
-const seed = async (t: ReturnType<typeof convexTest>) =>
+const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
 
@@ -80,10 +80,10 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
     return { alice, bob };
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
 
-const asBob = (t: ReturnType<typeof convexTest>) =>
+const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
 
 describe("identity.getCurrentUser", () => {
@@ -344,7 +344,7 @@ describe("identity.searchUsers profile-visibility gating", () => {
   // Mirrors search.global people gating: a private member is never surfaced by
   // name/username/avatar to a searcher who is neither them nor a mutual follower.
   const insertUser = (
-    t: ReturnType<typeof convexTest>,
+    t: TestConvex<typeof schema>,
     clerkId: string,
     name: string,
     username: string,
@@ -364,7 +364,7 @@ describe("identity.searchUsers profile-visibility gating", () => {
     });
 
   const setVisibility = (
-    t: ReturnType<typeof convexTest>,
+    t: TestConvex<typeof schema>,
     memberId: Id<"users">,
     visibility: "public" | "private",
   ) =>
@@ -378,7 +378,7 @@ describe("identity.searchUsers profile-visibility gating", () => {
     });
 
   const follow = (
-    t: ReturnType<typeof convexTest>,
+    t: TestConvex<typeof schema>,
     followerId: Id<"users">,
     followeeId: Id<"users">,
   ) =>
@@ -386,7 +386,7 @@ describe("identity.searchUsers profile-visibility gating", () => {
       await ctx.db.insert("follows", { followerId, followeeId, createdAt: 1 });
     });
 
-  const asSearcher = (t: ReturnType<typeof convexTest>) =>
+  const asSearcher = (t: TestConvex<typeof schema>) =>
     t.withIdentity({ subject: "clerk_searcher" });
 
   test("surfaces a public-profile member to any searcher", async () => {
@@ -456,7 +456,7 @@ describe("identity.searchUsers profile-visibility gating", () => {
 // known-follower count only breaks ties WITHIN a bucket. See identity/searchUsers.ts.
 describe("identity.searchUsers ranking", () => {
   const insertUser = (
-    t: ReturnType<typeof convexTest>,
+    t: TestConvex<typeof schema>,
     clerkId: string,
     name: string,
     username: string,
@@ -476,7 +476,7 @@ describe("identity.searchUsers ranking", () => {
     });
 
   const follow = (
-    t: ReturnType<typeof convexTest>,
+    t: TestConvex<typeof schema>,
     followerId: Id<"users">,
     followeeId: Id<"users">,
   ) =>
@@ -484,7 +484,7 @@ describe("identity.searchUsers ranking", () => {
       await ctx.db.insert("follows", { followerId, followeeId, createdAt: 1 });
     });
 
-  const asClerk = (t: ReturnType<typeof convexTest>, clerkId: string) =>
+  const asClerk = (t: TestConvex<typeof schema>, clerkId: string) =>
     t.withIdentity({ subject: clerkId });
 
   test("within the same match bucket, more known-followers ranks first", async () => {
