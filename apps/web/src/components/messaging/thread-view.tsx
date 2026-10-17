@@ -18,7 +18,12 @@ import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
-import { ChevronLeft, Info, MessageSquare } from "lucide-react";
+import {
+  ChevronLeft,
+  Info,
+  MessageSquare,
+  Puzzle as PuzzleIcon,
+} from "lucide-react";
 import { Fragment, useEffect, useRef } from "react";
 import { useLocale, useNow, useTranslations } from "use-intl";
 import { MessageCopyCard } from "./copy-card";
@@ -31,6 +36,7 @@ import {
 } from "./format";
 import { MessageComposer } from "./message-composer";
 import { ThreadSubjectAvatar } from "./thread-list";
+import { ThreadQuickLinks } from "./thread-quick-links";
 
 type ThreadMessage = FunctionReturnType<
   typeof gateway.conversation.getThreadMessages
@@ -219,6 +225,7 @@ export function ThreadView({
                 >
                   {title ?? t("threadFallbackTitle")}
                 </Heading>
+                {thread && <ThreadQuickLinks thread={thread} />}
               </>
             )}
           </div>
@@ -346,6 +353,9 @@ function ThreadItemView({
                 className={cn("w-72 max-w-full", pending && "opacity-70")}
               />
             )}
+            {message.copyUnavailable && (
+              <CopyUnavailableCard className={cn(pending && "opacity-70")} />
+            )}
             <div
               title={formatFullDateTime(message.sentAt, locale)}
               className={cn(
@@ -371,6 +381,25 @@ function ThreadItemView({
         </time>
       )}
     </li>
+  );
+}
+
+// Placeholder in the copy card's slot when the referenced copy is gone or no
+// longer visible to the reader: same geometry, not a link.
+function CopyUnavailableCard({ className }: { className?: string }) {
+  const t = useTranslations("messages");
+  return (
+    <div
+      className={cn(
+        "text-muted-foreground flex w-72 max-w-full items-center gap-3 rounded-lg border border-dashed p-2",
+        className,
+      )}
+    >
+      <span className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-md">
+        <PuzzleIcon className="size-5" aria-hidden />
+      </span>
+      <span className="text-sm">{t("copyUnavailable")}</span>
+    </div>
   );
 }
 
