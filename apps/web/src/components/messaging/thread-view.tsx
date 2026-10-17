@@ -12,6 +12,7 @@ import { Link } from "@/compat/link";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -72,6 +73,11 @@ export function ThreadView({
   const title = thread
     ? threadSubjectTitle(thread.subject, t, displayName)
     : undefined;
+  // Who wrote the other side's messages, for screen readers: the DM partner's
+  // name (or the anonymous label); exchange titles name the puzzle, not a
+  // person, so those use a generic label.
+  const otherAuthor =
+    thread?.subject.kind === "dm" && title ? title : t("otherMember");
 
   // mutateAsync is referentially stable, so the effect deps below behave as before.
   const { mutateAsync: markThreadRead } = useMutation({
@@ -133,6 +139,9 @@ export function ThreadView({
   // Thread switch: move focus to the header title so keyboard and screen-reader
   // users land in the new conversation (once per thread, after it renders).
   const headingRef = useRef<HTMLHeadingElement>(null);
+  // Phones hide the shell top bar (and its h1) on thread pages, so the thread
+  // title is the page's h1 there; desktop keeps the shell's page h1.
+  const Heading = useIsMobile() ? "h1" : "h2";
   const focusedThreadRef = useRef<string | null>(null);
   const headerReady = inbox !== undefined;
   useEffect(() => {
@@ -159,14 +168,22 @@ export function ThreadView({
     if (!newest || newest.id === previous.id) return;
     if (newest.authorId === null || newest.authorId === me) return;
     const text = newest.body.replace(/\s+/g, " ").trim();
-    if (!liveRegionRef.current) return;
-    liveRegionRef.current.textContent = t("newMessageAnnouncement", {
+    const region = liveRegionRef.current;
+    if (!region) return;
+    const announcement = t("newMessageAnnouncement", {
       name: title ?? t("threadFallbackTitle"),
       body:
         text.length > ANNOUNCE_MAX
           ? `${text.slice(0, ANNOUNCE_MAX - 1)}…`
           : text,
     });
+    // Clear first and set on the next frame, so a message identical to the
+    // previous announcement is still read out.
+    region.textContent = "";
+    const frame = requestAnimationFrame(() => {
+      region.textContent = announcement;
+    });
+    return () => cancelAnimationFrame(frame);
   }, [messages, newest, threadId, me, title, t]);
 
   const items =
@@ -195,13 +212,13 @@ export function ThreadView({
                 )}
                 {/* Inbox loaded but this thread isn't in it (e.g. a subject that
                     no longer resolves) — a generic title beats an eternal skeleton. */}
-                <h2
+                <Heading
                   ref={headingRef}
                   tabIndex={-1}
-                  className="font-heading min-w-0 flex-1 truncate text-base font-bold outline-none"
+                  className="font-heading focus-visible:ring-ring/40 min-w-0 flex-1 truncate rounded-sm text-base font-bold outline-none focus-visible:ring-2"
                 >
                   {title ?? t("threadFallbackTitle")}
-                </h2>
+                </Heading>
               </>
             )}
           </div>
@@ -234,11 +251,18 @@ export function ThreadView({
       ) : (
         <ol
           ref={scrollerRef}
+          // Keyboard users can scroll the history without a mouse.
+          tabIndex={0}
           aria-label={title ?? t("threadFallbackTitle")}
-          className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 py-4 md:px-6"
+          className="focus-visible:ring-ring flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 py-4 outline-none focus-visible:ring-2 focus-visible:ring-inset md:px-6"
         >
           {items.map((item) => (
-            <ThreadItemView key={item.key} item={item} locale={locale} />
+            <ThreadItemView
+              key={item.key}
+              item={item}
+              locale={locale}
+              otherAuthor={otherAuthor}
+            />
           ))}
         </ol>
       )}
@@ -276,10 +300,13 @@ export function BackToInboxLink() {
 function ThreadItemView({
   item,
   locale,
+  otherAuthor,
 }: {
   item: ThreadItem<ThreadMessage>;
   locale: string;
+  otherAuthor: string;
 }) {
+  const t = useTranslations("messages");
   if (item.type === "day") {
     return (
       <li className="flex items-center gap-3 py-1">
@@ -307,6 +334,8 @@ function ThreadItemView({
     <li
       className={cn("flex flex-col gap-0.5", own ? "items-end" : "items-start")}
     >
+      {/* Bubble side and colour carry authorship visually; say it too. */}
+      <span className="sr-only">{own ? t("you") : otherAuthor}:</span>
       {messages.map((message, index) => {
         const pending = message.id.startsWith("pending-");
         return (

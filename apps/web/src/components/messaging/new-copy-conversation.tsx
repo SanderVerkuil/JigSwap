@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, type Id } from "@/gateway";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -30,6 +31,8 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
   const tMessages = useTranslations("messages");
   const displayName = useMemberDisplayName();
   const navigate = useNavigate();
+  // The shell top bar (and its h1) is hidden here on phones.
+  const Heading = useIsMobile() ? "h1" : "h2";
   const { member } = useCurrentMember();
   const me = member?._id;
 
@@ -141,9 +144,9 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
         <div className="flex h-14 items-center gap-3 px-2 md:px-4">
           {backLink}
           <ThreadSubjectAvatar subject={subject} className="size-9" />
-          <h2 className="font-heading min-w-0 flex-1 truncate text-base font-bold">
+          <Heading className="font-heading min-w-0 flex-1 truncate text-base font-bold">
             {t("title", { name: ownerName })}
-          </h2>
+          </Heading>
         </div>
       </div>
 

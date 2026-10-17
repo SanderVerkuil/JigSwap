@@ -752,6 +752,7 @@
     "noThreadYet": "Nog geen gesprek voor deze uitwisseling.",
     "notConnected": "Je kunt alleen berichten sturen naar leden met wie je verbonden bent",
     "openError": "Het gesprek kon niet worden geopend. Probeer het opnieuw.",
+    "otherMember": "Ander lid",
     "retry": "Opnieuw proberen",
     "selectConversation": "Selecteer een gesprek",
     "selectConversationHint": "Kies een gesprek uit de lijst om te beginnen met chatten",
@@ -767,6 +768,7 @@
     "typeMessage": "Type je bericht...",
     "unreadCount": "{count, plural, one {# ongelezen bericht} other {# ongelezen berichten}}",
     "untitledPuzzle": "Naamloze puzzel",
+    "you": "Jij",
     "youPrefix": "Jij: {body}"
   },
   "profile": {
