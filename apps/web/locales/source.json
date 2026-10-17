@@ -1412,6 +1412,28 @@
     "startJourney": "Start Your Puzzle Journey",
     "goToDashboard": "Go to Dashboard"
   },
+  "cataloguePicker": {
+    "openPicker": "Add several",
+    "searchLabel": "Search the catalogue",
+    "searchPlaceholder": "Search brand or title…",
+    "searchHint": "Search for the puzzles on your shelf, then pick as many as you like.",
+    "add": "Add {title}",
+    "remove": "Remove {title}",
+    "picked": "{count} picked",
+    "pickedHeading": "Picked ({count})",
+    "onShelf": "On your shelf",
+    "noResults": "No puzzles match \"{query}\".",
+    "notListed": "Can't find it?",
+    "register": "Register \"{query}\"",
+    "registerNew": "Register a new puzzle",
+    "forTrade": "Available to swap",
+    "forTradeLabel": "{title} available to swap",
+    "availabilityNote": "Added puzzles are not offered for swap or loan unless you switch on swapping below. You can change that per puzzle later.",
+    "limitReached": "You can add up to {max} puzzles at once.",
+    "submit": "{count, plural, one {Add # puzzle} other {Add # puzzles}}",
+    "added": "{count, plural, one {# puzzle added to your shelf} other {# puzzles added to your shelf}}",
+    "addFailed": "Couldn't add these puzzles, so nothing was added. Please try again."
+  },
   "collections": {
     "myCollections": "My Collections",
     "organizePuzzles": "Organize your puzzles into collections",
@@ -2705,6 +2727,7 @@
     "myPuzzles": "My puzzles — JigSwap",
     "addPuzzle": "Add puzzle — JigSwap",
     "createPuzzle": "Create puzzle — JigSwap",
+    "quickAddPuzzles": "Add several puzzles — JigSwap",
     "puzzles": "Puzzles — JigSwap",
     "puzzle": "Puzzle details — JigSwap",
     "collections": "Collections — JigSwap",
@@ -2865,6 +2888,10 @@
       "createPuzzle": {
         "title": "Create a Puzzle",
         "subtitle": "Add a brand-new puzzle to the catalogue and your shelf."
+      },
+      "quickAddPuzzles": {
+        "title": "Add several puzzles",
+        "subtitle": "Pick the puzzles on your shelf and add them in one go."
       },
       "contributePuzzle": {
         "title": "Contribute a Puzzle",

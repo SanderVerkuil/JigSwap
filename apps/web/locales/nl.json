@@ -1412,6 +1412,28 @@
     "startJourney": "Start Je Puzzelreis",
     "goToDashboard": "Ga naar Dashboard"
   },
+  "cataloguePicker": {
+    "openPicker": "Meerdere toevoegen",
+    "searchLabel": "Zoek in de catalogus",
+    "searchPlaceholder": "Zoek op merk of titel…",
+    "searchHint": "Zoek de puzzels die op je plank staan en kies er zoveel als je wilt.",
+    "add": "{title} toevoegen",
+    "remove": "{title} verwijderen",
+    "picked": "{count} gekozen",
+    "pickedHeading": "Gekozen ({count})",
+    "onShelf": "Op je plank",
+    "noResults": "Geen puzzels gevonden voor \"{query}\".",
+    "notListed": "Niet gevonden?",
+    "register": "\"{query}\" registreren",
+    "registerNew": "Een nieuwe puzzel registreren",
+    "forTrade": "Beschikbaar om te ruilen",
+    "forTradeLabel": "{title} beschikbaar om te ruilen",
+    "availabilityNote": "Toegevoegde puzzels worden niet aangeboden om te ruilen of uit te lenen, tenzij je hieronder ruilen aanzet. Dat kun je later per puzzel aanpassen.",
+    "limitReached": "Je kunt maximaal {max} puzzels tegelijk toevoegen.",
+    "submit": "{count, plural, one {# puzzel toevoegen} other {# puzzels toevoegen}}",
+    "added": "{count, plural, one {# puzzel aan je plank toegevoegd} other {# puzzels aan je plank toegevoegd}}",
+    "addFailed": "Deze puzzels konden niet worden toegevoegd, dus er is niets toegevoegd. Probeer het opnieuw."
+  },
   "collections": {
     "myCollections": "Mijn Collecties",
     "organizePuzzles": "Organiseer je puzzels in collecties",
@@ -2705,6 +2727,7 @@
     "myPuzzles": "Mijn puzzels — JigSwap",
     "addPuzzle": "Puzzel toevoegen — JigSwap",
     "createPuzzle": "Puzzel aanmaken — JigSwap",
+    "quickAddPuzzles": "Meerdere puzzels toevoegen — JigSwap",
     "puzzles": "Puzzels — JigSwap",
     "puzzle": "Puzzeldetails — JigSwap",
     "collections": "Collecties — JigSwap",
@@ -2865,6 +2888,10 @@
       "createPuzzle": {
         "title": "Een puzzel aanmaken",
         "subtitle": "Voeg een gloednieuwe puzzel toe aan de catalogus en je plank."
+      },
+      "quickAddPuzzles": {
+        "title": "Meerdere puzzels toevoegen",
+        "subtitle": "Kies de puzzels op je plank en voeg ze in één keer toe."
       },
       "contributePuzzle": {
         "title": "Een puzzel bijdragen",

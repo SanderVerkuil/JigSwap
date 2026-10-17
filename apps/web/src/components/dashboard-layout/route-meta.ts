@@ -143,6 +143,7 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   "/my-puzzles": { pageKey: "myPuzzles", group: "library" },
   "/my-puzzles/add": { pageKey: "addPuzzle", group: "library" },
   "/my-puzzles/add/new": { pageKey: "createPuzzle", group: "library" },
+  "/my-puzzles/add/quick": { pageKey: "quickAddPuzzles", group: "library" },
   // Owner's own copy detail (gated): nav-highlights My Puzzles; the page publishes
   // its own "My Library › My Puzzles › <name>" crumbs + title at runtime.
   "/my-puzzles/$id": { pageKey: "myPuzzles", group: "library" },
