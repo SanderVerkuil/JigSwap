@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 
 // Card-free section heading: an icon + Title Case h2 over a thin rule, with
 // optional right-aligned meta text and an action slot. This is the open layout
@@ -12,12 +12,15 @@ export function SectionHead({
   meta,
   action,
   className,
+  headingProps,
 }: {
   title: string;
   icon?: LucideIcon;
   meta?: ReactNode;
   action?: ReactNode;
   className?: string;
+  // Passed to the h2, e.g. an id and tabIndex={-1} so focus can be moved to the heading.
+  headingProps?: ComponentProps<"h2">;
 }) {
   return (
     <div
@@ -26,7 +29,13 @@ export function SectionHead({
         className,
       )}
     >
-      <h2 className="font-heading flex items-center gap-2 text-xl font-semibold whitespace-nowrap">
+      <h2
+        {...headingProps}
+        className={cn(
+          "font-heading flex items-center gap-2 text-xl font-semibold whitespace-nowrap",
+          headingProps?.className,
+        )}
+      >
         {Icon && <Icon className="text-jigsaw-primary size-[18px]" />}
         {title}
       </h2>
