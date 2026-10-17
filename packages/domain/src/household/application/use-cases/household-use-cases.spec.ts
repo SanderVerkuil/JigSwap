@@ -8,7 +8,12 @@ import {
   makeRemoveHouseholdMember,
 } from ".";
 import { toMemberId } from "../../../shared-kernel";
-import { HouseholdId, HouseholdInviteId } from "../../domain";
+import {
+  Household,
+  HouseholdId,
+  HouseholdInviteId,
+  MemberId,
+} from "../../domain";
 import {
   FixedClock,
   InMemoryHouseholdInviteRepository,
@@ -137,6 +142,31 @@ describe("inviteToHousehold", () => {
     });
     // You are already in (your own) household, which is checked first.
     expect(result.isErr && result.error.code).toBe("InviteeAlreadyInHousehold");
+  });
+
+  it("relays the domain's self-invite rejection when the invitee lookup misses", async () => {
+    // Only the actor lookup finds the household, so the self-invite reaches HouseholdInvite.send.
+    class ActorLookupOnly extends InMemoryHouseholdRepository {
+      private lookups = 0;
+      override async findByMember(memberId: MemberId) {
+        this.lookups += 1;
+        return this.lookups === 1 ? super.findByMember(memberId) : null;
+      }
+    }
+    deps.households = households = new ActorLookupOnly();
+    await households.save(
+      Household.found({
+        id: "h" as HouseholdId,
+        founderId: ann,
+        now: clock.now(),
+      }),
+    );
+    const result = await makeInviteToHousehold(deps)({
+      actorId: ann,
+      inviteeId: ann,
+    });
+    expect(result.isErr && result.error.code).toBe("SelfInvite");
+    expect(events.published).toEqual([]);
   });
 });
 
