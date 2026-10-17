@@ -1,10 +1,11 @@
 import { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { isNetworkLink } from "./inviteLinkRules";
 
 // Returns the member's ACTIVE invite token, creating one on first use. A mutation (not a query)
 // because the first call writes. The token is opaque (uuid hex) — never derived from the member id,
-// so resetting it actually severs old links.
+// so resetting it actually severs old links. Household links (context set) are never "the" link.
 export const getMyInviteLink = mutation({
   args: {},
   handler: async (ctx, _args) => {
@@ -14,7 +15,9 @@ export const getMyInviteLink = mutation({
       .query("inviteLinks")
       .withIndex("by_owner", (q) => q.eq("ownerId", memberId))
       .collect();
-    const active = rows.find((r) => r.revokedAt === undefined);
+    const active = rows.find(
+      (r) => isNetworkLink(r) && r.revokedAt === undefined,
+    );
     if (active) return { token: active.token };
 
     const token = crypto.randomUUID().replaceAll("-", "");

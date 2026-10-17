@@ -316,6 +316,7 @@ import type * as social_adapters_systemClock from "../social/adapters/systemCloc
 import type * as social_approveFollowRequest from "../social/approveFollowRequest.js";
 import type * as social_arrangeShelf from "../social/arrangeShelf.js";
 import type * as social_cancelFollowRequest from "../social/cancelFollowRequest.js";
+import type * as social_createHouseholdInviteLink from "../social/createHouseholdInviteLink.js";
 import type * as social_declineFollowRequest from "../social/declineFollowRequest.js";
 import type * as social_editProfile from "../social/editProfile.js";
 import type * as social_errors from "../social/errors.js";
@@ -330,6 +331,7 @@ import type * as social_getMyInviteLink from "../social/getMyInviteLink.js";
 import type * as social_getProfile from "../social/getProfile.js";
 import type * as social_getPublicMemberTeaser from "../social/getPublicMemberTeaser.js";
 import type * as social_getPublicProfile from "../social/getPublicProfile.js";
+import type * as social_inviteLinkRules from "../social/inviteLinkRules.js";
 import type * as social_isFollowing from "../social/isFollowing.js";
 import type * as social_knownFollowers from "../social/knownFollowers.js";
 import type * as social_listFollowees from "../social/listFollowees.js";
@@ -347,6 +349,7 @@ import type * as social_readViews from "../social/readViews.js";
 import type * as social_recordInviteLanding from "../social/recordInviteLanding.js";
 import type * as social_redeemInvite from "../social/redeemInvite.js";
 import type * as social_resetInviteLink from "../social/resetInviteLink.js";
+import type * as social_revokeHouseholdInviteLinks from "../social/revokeHouseholdInviteLinks.js";
 import type * as social_setProfileVisibility from "../social/setProfileVisibility.js";
 import type * as social_unfollowMember from "../social/unfollowMember.js";
 import type * as solving_adapters_completionMapper from "../solving/adapters/completionMapper.js";
@@ -706,6 +709,7 @@ declare const fullApi: ApiFromModules<{
   "social/approveFollowRequest": typeof social_approveFollowRequest;
   "social/arrangeShelf": typeof social_arrangeShelf;
   "social/cancelFollowRequest": typeof social_cancelFollowRequest;
+  "social/createHouseholdInviteLink": typeof social_createHouseholdInviteLink;
   "social/declineFollowRequest": typeof social_declineFollowRequest;
   "social/editProfile": typeof social_editProfile;
   "social/errors": typeof social_errors;
@@ -720,6 +724,7 @@ declare const fullApi: ApiFromModules<{
   "social/getProfile": typeof social_getProfile;
   "social/getPublicMemberTeaser": typeof social_getPublicMemberTeaser;
   "social/getPublicProfile": typeof social_getPublicProfile;
+  "social/inviteLinkRules": typeof social_inviteLinkRules;
   "social/isFollowing": typeof social_isFollowing;
   "social/knownFollowers": typeof social_knownFollowers;
   "social/listFollowees": typeof social_listFollowees;
@@ -737,6 +742,7 @@ declare const fullApi: ApiFromModules<{
   "social/recordInviteLanding": typeof social_recordInviteLanding;
   "social/redeemInvite": typeof social_redeemInvite;
   "social/resetInviteLink": typeof social_resetInviteLink;
+  "social/revokeHouseholdInviteLinks": typeof social_revokeHouseholdInviteLinks;
   "social/setProfileVisibility": typeof social_setProfileVisibility;
   "social/unfollowMember": typeof social_unfollowMember;
   "solving/adapters/completionMapper": typeof solving_adapters_completionMapper;

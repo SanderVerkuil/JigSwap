@@ -345,6 +345,12 @@ export const gateway = {
     recordInviteLanding: api.social.recordInviteLanding.recordInviteLanding,
     redeemInvite: api.social.redeemInvite.redeemInvite,
     acceptQrFollow: api.social.acceptQrFollow.acceptQrFollow,
+    // Household-context invite links (admin-only, single-use, 14-day expiry, rate-limited). A new
+    // member redeeming one gets a PENDING household invite; revoke withdraws the actor's open ones.
+    createHouseholdInviteLink:
+      api.social.createHouseholdInviteLink.createHouseholdInviteLink,
+    revokeHouseholdInviteLinks:
+      api.social.revokeHouseholdInviteLinks.revokeHouseholdInviteLinks,
     profile: api.social.getProfile.getProfile,
     publicMemberTeaser: api.social.getPublicMemberTeaser.getPublicMemberTeaser,
     // The visibility-gated read behind the redesigned public member profile page. Unauthenticated-

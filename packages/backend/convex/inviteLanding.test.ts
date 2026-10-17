@@ -45,7 +45,7 @@ describe("getInviteContext", () => {
         token,
         memberId: alice,
       }),
-    ).toEqual({ valid: true });
+    ).toEqual({ valid: true, kind: "network" });
 
     // Token pinned to a different member's profile -> invalid
     expect(
@@ -53,7 +53,7 @@ describe("getInviteContext", () => {
         token,
         memberId: bob,
       }),
-    ).toEqual({ valid: false });
+    ).toEqual({ valid: false, kind: "network" });
 
     // Unknown token -> invalid
     expect(
@@ -61,7 +61,7 @@ describe("getInviteContext", () => {
         token: "nope",
         memberId: alice,
       }),
-    ).toEqual({ valid: false });
+    ).toEqual({ valid: false, kind: "network" });
 
     // Revoked token -> invalid
     await asAlice(t).mutation(api.social.resetInviteLink.resetInviteLink, {});
@@ -70,7 +70,7 @@ describe("getInviteContext", () => {
         token,
         memberId: alice,
       }),
-    ).toEqual({ valid: false });
+    ).toEqual({ valid: false, kind: "network" });
   });
 });
 

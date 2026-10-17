@@ -989,6 +989,14 @@ export default defineSchema({
     landingViews: v.number(),
     signupsAttributed: v.number(),
     followsEstablished: v.number(),
+    // Absent = the member's network link (the one ACTIVE row above). Present = a household
+    // invite link: minted by the household admin, single-use, expiring. Never stores a recipient.
+    context: v.optional(
+      v.object({ kind: v.literal("household"), householdId: v.string() }),
+    ),
+    expiresAt: v.optional(v.number()), // household links only: createdAt + 14 d
+    consumedAt: v.optional(v.number()), // household links are single-use
+    consumedBy: v.optional(v.id("users")),
   })
     .index("by_owner", ["ownerId"])
     .index("by_token", ["token"]),
