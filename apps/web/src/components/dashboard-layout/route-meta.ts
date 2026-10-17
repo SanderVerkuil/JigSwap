@@ -137,6 +137,8 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   // Top-level like /profile (no crumb row); reached from the sidebar footer, the user menu and the
   // mobile quick sheet rather than a nav group.
   "/whats-new": { pageKey: "whatsNew" },
+  // The quick start flow: top-level, no crumb row (opened from the dashboard and the user menu).
+  "/welcome": { pageKey: "quickSetup" },
 
   // My Library
   "/library": { pageKey: "library", variant: "landing" },

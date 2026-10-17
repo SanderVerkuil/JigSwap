@@ -2796,7 +2796,8 @@
     "people": "People — JigSwap",
     "members": "Members — JigSwap",
     "copyInstance": "Owned copy — JigSwap",
-    "whatsNew": "What's new — JigSwap"
+    "whatsNew": "What's new — JigSwap",
+    "quickSetup": "Quick setup — JigSwap"
   },
   "shell": {
     "search": {
@@ -2994,6 +2995,10 @@
         "title": "What's new",
         "subtitle": "Fresh features, improvements and fixes.",
         "description": "Everything that changed in JigSwap, newest first."
+      },
+      "quickSetup": {
+        "title": "Quick setup",
+        "subtitle": "Set up your shelf in a few steps. You can stop at any time."
       }
     },
     "user": {
@@ -3769,6 +3774,92 @@
       "submit": "{count, plural, one {Log # puzzle} other {Log # puzzles}}",
       "saved": "{count, plural, one {# puzzle logged} other {# puzzles logged}}",
       "saveError": "Couldn't log these puzzles. Nothing was saved, so you can try again."
+    },
+    "welcome": {
+      "title": "Welcome to JigSwap!",
+      "body": "Shall we set up your shelf? Add the puzzles you own, the ones you've finished, and the people you puzzle with.",
+      "stepPuzzles": "Add the puzzles on your shelf",
+      "stepSolves": "Mark the ones you've finished",
+      "stepPeople": "Find the people you puzzle with",
+      "time": "Takes about 3 minutes. You can stop at any time.",
+      "start": "Start quick setup",
+      "explore": "Explore on my own"
+    },
+    "card": {
+      "title": "Quick setup",
+      "progress": "{done} of {total}",
+      "progressLabel": "{done} of {total} steps done",
+      "hide": "Hide quick setup",
+      "hiddenToast": "Quick setup is hidden. You can reopen it from your account menu.",
+      "optional": "Optional",
+      "skipped": "Skipped",
+      "doItNow": "Do it now",
+      "continue": "Continue · {progress}",
+      "state": {
+        "todo": "to do",
+        "inProgress": "in progress",
+        "done": "done",
+        "skipped": "skipped"
+      },
+      "allDone": "Your shelf is set up",
+      "hideDone": "Hide"
+    },
+    "menu": {
+      "quickSetup": "Quick setup"
+    },
+    "steps": {
+      "puzzles": {
+        "title": "Add your puzzles",
+        "count": "{count} added",
+        "partial": "{count} of 3"
+      },
+      "solves": {
+        "title": "Log puzzles you finished",
+        "count": "{count} logged"
+      },
+      "people": {
+        "title": "Find your people",
+        "count": "Following {count}"
+      },
+      "household": {
+        "title": "Household",
+        "done": "You're in a household",
+        "pending": "Invitation waiting"
+      },
+      "profile": {
+        "title": "Make it yours",
+        "done": "Profile set"
+      }
+    },
+    "flow": {
+      "title": "Quick setup",
+      "stepOf": "Step {step} of {total}",
+      "optionalStep": "Optional step",
+      "skip": "Skip",
+      "continue": "Continue",
+      "finishLater": "Finish later"
+    },
+    "people": {
+      "suggested": "People you may know",
+      "inviteTitle": "Invite someone who isn't on JigSwap yet",
+      "inviteBody": "Share your invite link. When they sign up, you'll follow each other."
+    },
+    "household": {
+      "lead": "Live with someone who puzzles? Share one shelf.",
+      "create": "Create a household",
+      "alone": "I puzzle alone",
+      "inviteMember": "Invite a member",
+      "pendingTitle": "{name} invited you to their household"
+    },
+    "push": {
+      "title": "Want a notification when someone follows you back?",
+      "enable": "Turn on notifications",
+      "notNow": "Not now"
+    },
+    "done": {
+      "title": "Your shelf is ready",
+      "summary": "{copies, plural, one {# puzzle} other {# puzzles}} · {solves} finished · {following} following",
+      "goToShelf": "Go to my shelf"
     }
   }
 }

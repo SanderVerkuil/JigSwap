@@ -2796,7 +2796,8 @@
     "people": "Mensen — JigSwap",
     "members": "Leden — JigSwap",
     "copyInstance": "Exemplaar in bezit — JigSwap",
-    "whatsNew": "Wat is er nieuw — JigSwap"
+    "whatsNew": "Wat is er nieuw — JigSwap",
+    "quickSetup": "Snel instellen — JigSwap"
   },
   "shell": {
     "search": {
@@ -2994,6 +2995,10 @@
         "title": "Wat is er nieuw",
         "subtitle": "Nieuwe functies, verbeteringen en oplossingen.",
         "description": "Alles wat er in JigSwap is veranderd, nieuwste eerst."
+      },
+      "quickSetup": {
+        "title": "Snel instellen",
+        "subtitle": "Richt je plank in met een paar stappen. Je kunt altijd stoppen."
       }
     },
     "user": {
@@ -3769,6 +3774,92 @@
       "submit": "{count, plural, one {# puzzel vastleggen} other {# puzzels vastleggen}}",
       "saved": "{count, plural, one {# puzzel vastgelegd} other {# puzzels vastgelegd}}",
       "saveError": "Deze puzzels konden niet worden vastgelegd. Er is niets opgeslagen, dus je kunt het opnieuw proberen."
+    },
+    "welcome": {
+      "title": "Welkom bij JigSwap!",
+      "body": "Zullen we je plank inrichten? Voeg je puzzels toe, welke je al hebt afgemaakt en met wie je puzzelt.",
+      "stepPuzzles": "Voeg de puzzels op je plank toe",
+      "stepSolves": "Vink aan welke je al hebt afgemaakt",
+      "stepPeople": "Vind de mensen met wie je puzzelt",
+      "time": "Duurt ongeveer 3 minuten. Je kunt altijd stoppen.",
+      "start": "Snel instellen",
+      "explore": "Zelf rondkijken"
+    },
+    "card": {
+      "title": "Snel instellen",
+      "progress": "{done} van {total}",
+      "progressLabel": "{done} van {total} stappen klaar",
+      "hide": "Snel instellen verbergen",
+      "hiddenToast": "Snel instellen is verborgen. Je kunt het weer openen via je accountmenu.",
+      "optional": "Optioneel",
+      "skipped": "Overgeslagen",
+      "doItNow": "Nu doen",
+      "continue": "Verder · {progress}",
+      "state": {
+        "todo": "nog te doen",
+        "inProgress": "bezig",
+        "done": "klaar",
+        "skipped": "overgeslagen"
+      },
+      "allDone": "Je plank is ingericht",
+      "hideDone": "Verbergen"
+    },
+    "menu": {
+      "quickSetup": "Snel instellen"
+    },
+    "steps": {
+      "puzzles": {
+        "title": "Voeg je puzzels toe",
+        "count": "{count} toegevoegd",
+        "partial": "{count} van 3"
+      },
+      "solves": {
+        "title": "Leg vast wat je al hebt afgemaakt",
+        "count": "{count} vastgelegd"
+      },
+      "people": {
+        "title": "Vind je puzzelmaatjes",
+        "count": "{count} gevolgd"
+      },
+      "household": {
+        "title": "Huishouden",
+        "done": "Je zit in een huishouden",
+        "pending": "Uitnodiging wacht op je"
+      },
+      "profile": {
+        "title": "Maak het persoonlijk",
+        "done": "Profiel ingesteld"
+      }
+    },
+    "flow": {
+      "title": "Snel instellen",
+      "stepOf": "Stap {step} van {total}",
+      "optionalStep": "Optionele stap",
+      "skip": "Overslaan",
+      "continue": "Doorgaan",
+      "finishLater": "Later afmaken"
+    },
+    "people": {
+      "suggested": "Mensen die je misschien kent",
+      "inviteTitle": "Nodig iemand uit die nog niet op JigSwap zit",
+      "inviteBody": "Deel je uitnodigingslink. Als ze zich aanmelden, volgen jullie elkaar."
+    },
+    "household": {
+      "lead": "Woon je samen met iemand die puzzelt? Deel één plank.",
+      "create": "Een huishouden aanmaken",
+      "alone": "Ik puzzel alleen",
+      "inviteMember": "Een lid uitnodigen",
+      "pendingTitle": "{name} heeft je uitgenodigd voor hun huishouden"
+    },
+    "push": {
+      "title": "Wil je een melding als iemand je terugvolgt?",
+      "enable": "Meldingen aanzetten",
+      "notNow": "Niet nu"
+    },
+    "done": {
+      "title": "Je plank staat klaar",
+      "summary": "{copies, plural, one {# puzzel} other {# puzzels}} · {solves} afgemaakt · {following} gevolgd",
+      "goToShelf": "Naar mijn plank"
     }
   }
 }

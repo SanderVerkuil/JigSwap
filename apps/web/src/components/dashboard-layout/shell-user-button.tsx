@@ -13,9 +13,17 @@ import { useWhatsNewUnreadCount } from "@/components/whats-new/use-whats-new-sta
 import { gateway } from "@/gateway";
 import { useUserSettings } from "@/hooks/use-user-settings";
 import { cn } from "@/lib/utils";
-import { convexQuery } from "@convex-dev/react-query";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, Shield, SlidersHorizontal, Sparkles, User } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import {
+  Bell,
+  ListChecks,
+  Shield,
+  SlidersHorizontal,
+  Sparkles,
+  User,
+} from "lucide-react";
 import { useTranslations } from "use-intl";
 import { useShellPreferences } from "./preferences";
 
@@ -29,6 +37,11 @@ export function ShellUserButton({
 }) {
   const t = useTranslations("shell");
   const tWhatsNew = useTranslations("whatsNew");
+  const tQuickStart = useTranslations("quickStart.menu");
+  const navigate = useNavigate();
+  const recordQuickStart = useConvexMutation(
+    gateway.onboarding.recordQuickStart,
+  );
   const { user } = useUser();
   const whatsNewCount = useWhatsNewUnreadCount();
 
@@ -79,6 +92,18 @@ export function ShellUserButton({
             </span>
           }
           href="/whats-new"
+        />
+        {/* Always here (spec §2.3): reopens the quick start and brings back a hidden card.
+            restoreCard is a no-op when the card was never hidden. */}
+        <UserButton.Action
+          label={tQuickStart("quickSetup")}
+          labelIcon={<ListChecks className="size-4" />}
+          onClick={() => {
+            recordQuickStart({ kind: "restoreCard" }).catch((error: unknown) =>
+              console.error("Failed to restore quick setup:", error),
+            );
+            void navigate({ to: "/welcome" });
+          }}
         />
         {isAdmin && (
           <UserButton.Link
