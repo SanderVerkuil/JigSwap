@@ -89,6 +89,22 @@ describe("Profile.edit", () => {
     expect(updated.displayName).toBe("Alice B.");
   });
 
+  it("keeps the current display name when an edit omits it (bio-only save)", () => {
+    const profile = open();
+    const edited = profile.edit({ bio: "Only the story", now: NOW });
+    expect(edited.isOk).toBe(true);
+    expect(profile.displayName?.value).toBe("Alice");
+    expect(profile.bio).toBe("Only the story");
+  });
+
+  it("allows a bio-only save on a profile that has no display name", () => {
+    const created = Profile.create(profileId, member, { now: NOW });
+    if (!created.isOk) throw new Error("setup");
+    const edited = created.value.edit({ bio: "Hi", now: NOW });
+    expect(edited.isOk).toBe(true);
+    expect(created.value.displayName).toBeUndefined();
+  });
+
   it("clears the bio when edited with no bio", () => {
     const profile = open();
     const edited = profile.edit({ displayName: "Alice", now: NOW });

@@ -237,6 +237,29 @@ describe("editProfile", () => {
     expect(profile?.aggregateId).toBe(firstAggregateId);
   });
 
+  test("a bio-only save keeps the display name (and works before one is chosen)", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+
+    await asAlice(t).mutation(api.social.editProfile.editProfile, {
+      bio: "Story first",
+    });
+    let profile = await asAlice(t).query(api.social.getProfile.getProfile, {});
+    expect(profile?.displayName).toBeUndefined();
+    expect(profile?.bio).toBe("Story first");
+
+    await asAlice(t).mutation(api.social.editProfile.editProfile, {
+      displayName: "Alice A.",
+      bio: "Story first",
+    });
+    await asAlice(t).mutation(api.social.editProfile.editProfile, {
+      bio: "Story second",
+    });
+    profile = await asAlice(t).query(api.social.getProfile.getProfile, {});
+    expect(profile?.displayName).toBe("Alice A.");
+    expect(profile?.bio).toBe("Story second");
+  });
+
   test("an empty display name is rejected (InvalidDisplayName)", async () => {
     const t = convexTest(schema, modules);
     await seed(t);

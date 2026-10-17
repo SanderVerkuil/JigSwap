@@ -13,7 +13,11 @@ import { toConvexError } from "./errors";
 // existing profile (ProfileNotFound otherwise); first-time editors get a profile minted via
 // Profile.create here, keeping creation a deliberate, separate flow from the editing invariant.
 export const editProfile = mutation({
-  args: { displayName: v.string(), bio: v.optional(v.string()) },
+  // displayName omitted = keep the current one (a bio-only save from the profile editor).
+  args: {
+    displayName: v.optional(v.string()),
+    bio: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     const memberId = await requireMember(ctx);
     const profiles = convexProfileRepository(ctx);

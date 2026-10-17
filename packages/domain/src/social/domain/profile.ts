@@ -16,20 +16,16 @@ export const MAX_FEATURED = 6;
 // whether to surface the member or treat them as anonymous.
 export type ProfileVisibility = "public" | "private";
 
-// Input to edit(): the still-unvalidated display name plus an optional bio. The bio is free
-// text (or cleared by passing undefined); the display name is validated by the DisplayName VO.
+// Input to create()/edit(): the still-unvalidated display name plus an optional bio. The bio is
+// free text (or cleared by passing undefined); a supplied display name is validated by the
+// DisplayName VO. The display name is OPTIONAL: a profile can be opened lazily (visibility toggle,
+// shelf curation) for a member who never chose one, and an edit that omits it keeps the current
+// one (bio-only save). Readers fall back to the account name via resolveMemberDisplayName.
 export interface EditProps {
-  readonly displayName: string;
+  readonly displayName?: string;
   readonly bio?: string;
   readonly now: Date;
 }
-
-// Input to create(): like EditProps, but the display name is OPTIONAL — a profile can be opened
-// lazily (visibility toggle, shelf curation) for a member who never chose a name. Absent means
-// "not chosen"; readers fall back to the account name via resolveMemberDisplayName.
-export type CreateProps = Omit<EditProps, "displayName"> & {
-  readonly displayName?: string;
-};
 
 // The persistable shape of a member's public profile, kept deliberately close to a `profiles`
 // table so the 1b mapper is a trivial field-for-field translation (DisplayName <-> string).
@@ -83,7 +79,7 @@ export class Profile {
   static create(
     id: ProfileId,
     memberId: MemberId,
-    props: CreateProps,
+    props: EditProps,
   ): Result<Profile, SocialError> {
     let displayName: DisplayName | undefined;
     if (props.displayName !== undefined) {
@@ -108,14 +104,19 @@ export class Profile {
   }
 
   // Apply an edit to the editable fields. Decides only from its own data: rejects an invalid
-  // display name. Emits ProfileUpdated carrying the new display name for subscribers.
+  // display name; an omitted one keeps the current. Emits ProfileUpdated carrying the resulting
+  // display name for subscribers.
   edit(props: EditProps): Result<void, SocialError> {
-    const displayName = DisplayName.create(props.displayName);
-    if (displayName.isErr) return err(displayName.error);
+    let displayName = this.state.displayName;
+    if (props.displayName !== undefined) {
+      const created = DisplayName.create(props.displayName);
+      if (created.isErr) return err(created.error);
+      displayName = created.value;
+    }
 
     this.state = {
       ...this.state,
-      displayName: displayName.value,
+      displayName,
       bio: props.bio,
       updatedAt: props.now,
     };
@@ -124,7 +125,7 @@ export class Profile {
       new ProfileUpdated(
         this.state.id,
         this.state.memberId,
-        displayName.value.value,
+        displayName?.value,
         props.now,
       ),
     );
