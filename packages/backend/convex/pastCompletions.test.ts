@@ -402,6 +402,32 @@ describe("the activity feed", () => {
   });
 });
 
+describe("the activity feed and past-solves batches", () => {
+  // Unlike a batch of copy adds (one grouped "added N puzzles" entry), a past-solves batch is
+  // hidden entirely: every solve in it is a backfill, even the ones with a picked day.
+  test("a batch of dated past solves is hidden, never grouped, for followers and the member", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, a1, a2, a3 } = await seed(t);
+    await follow(t, bob, alice);
+    const { completionIds } = await recordPast(t, "alice", [
+      { copyId: a1.copyAggregateId, datePrecision: "day", date: Date.now() },
+      { copyId: a2.copyAggregateId, datePrecision: "day", date: Date.now() },
+      { copyId: a3.copyAggregateId, datePrecision: "day", date: Date.now() },
+    ]);
+    expect(completionIds).toHaveLength(3);
+
+    for (const viewer of ["bob", "alice"]) {
+      const feed = await as(t, viewer).query(
+        api.social.getActivityFeed.getActivityFeed,
+        {},
+      );
+      expect(feed.filter((e) => e.kind === "completion")).toEqual([]);
+      expect(feed.filter((e) => e.batch !== undefined)).toEqual([]);
+      expect(feed.some((e) => completionIds.includes(e.ref))).toBe(false);
+    }
+  });
+});
+
 describe("goals", () => {
   test("count dated and year-only solves, never undated ones", async () => {
     const t = convexTest(schema, modules);

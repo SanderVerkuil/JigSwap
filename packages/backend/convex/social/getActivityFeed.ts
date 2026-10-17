@@ -307,7 +307,9 @@ const toActivityEntries = async (
     case "CompletionRecorded":
       // A year-only or undated solve is a backfill, and so is anything logged in a batch: none of
       // them is recent activity, so they never reach followers (spec 2026-10-17 §3.2, D4). Older
-      // payloads carry neither field and read as dated, single solves.
+      // payloads carry neither field and read as dated, single solves. A past-solves batch is
+      // HIDDEN, not grouped like a batch of copy adds: every solve in it is a backfill, even one
+      // with a picked day, so there is no "logged N solves" entry.
       if ((p.datePrecision ?? "day") !== "day" || p.bulk === true) return [];
       return make(p.userId as string, "completion", p.completionId as string);
     case "CompletionStarted": {
