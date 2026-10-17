@@ -127,4 +127,257 @@ describe("renderEmail", () => {
     expect(email.html).toMatchSnapshot();
     expect(email.text).toMatchSnapshot();
   });
+
+  it("pins the rendered HTML layout with a detail paragraph", async () => {
+    const email = await renderEmail({
+      type: "message_received",
+      params: {
+        actorName: "Anna",
+        messagePreview: "Still have the Ravensburger?",
+      },
+      locale: "en",
+      baseUrl: BASE,
+      href: "/messages/thread-1",
+    });
+    expect(email.html).toMatchSnapshot();
+    expect(email.text).toMatchSnapshot();
+  });
+});
+
+describe("renderEmail with resolved delivery content", () => {
+  it.each([
+    ["en", "Anna wants to trade for “Starry Night”.", "View trade request"],
+    ["nl", "Anna wil ruilen voor “Starry Night”.", "Bekijk ruilverzoek"],
+  ] as const)(
+    "%s: uses the rich body with the puzzle title and deep-links the exchange",
+    async (locale, body, cta) => {
+      const email = await renderEmail({
+        type: "trade_request",
+        params: { actorName: "Anna", puzzleTitle: "Starry Night" },
+        locale,
+        baseUrl: BASE,
+        href: "/trades?exchange=ex-1",
+      });
+      expect(email.text).toContain(body);
+      expect(email.text).toContain(cta);
+      expect(email.html).toContain(`${BASE}/trades?exchange=ex-1`);
+    },
+  );
+
+  it("keeps the generic body when the context token is missing (actorName alone is not enough)", async () => {
+    const email = await renderEmail({
+      type: "trade_accepted",
+      params: { actorName: "Anna" },
+      locale: "en",
+      baseUrl: BASE,
+      href: "/trades?exchange=ex-1",
+    });
+    expect(email.text).toContain(
+      "Good news — your trade request has been accepted!",
+    );
+    expect(email.text).not.toContain("Anna");
+  });
+
+  it("uses the rich body with only context tokens present, falling back for the actor", async () => {
+    const email = await renderEmail({
+      type: "trade_cancelled",
+      params: { puzzleTitle: "Sky" },
+      locale: "nl",
+      baseUrl: BASE,
+    });
+    expect(email.text).toContain(
+      "Iemand heeft het ruilverzoek voor “Sky” geannuleerd.",
+    );
+  });
+
+  it.each([
+    [
+      "trade_accepted",
+      "en",
+      "Good news — Bo accepted your trade request for “Sky”! Time to arrange the exchange.",
+      "View trade",
+    ],
+    [
+      "trade_accepted",
+      "nl",
+      "Goed nieuws — Bo heeft je ruilverzoek voor “Sky” geaccepteerd! Tijd om de ruil te regelen.",
+      "Bekijk ruil",
+    ],
+    [
+      "trade_declined",
+      "en",
+      "Unfortunately Bo declined your trade request for “Sky”.",
+      "View trade",
+    ],
+    [
+      "trade_declined",
+      "nl",
+      "Helaas heeft Bo je ruilverzoek voor “Sky” afgewezen.",
+      "Bekijk ruil",
+    ],
+    [
+      "trade_completed",
+      "en",
+      "Your exchange of “Sky” with Bo has been marked as completed. Enjoy the puzzle!",
+      "View trade",
+    ],
+    [
+      "trade_completed",
+      "nl",
+      "Je ruil van “Sky” met Bo is gemarkeerd als afgerond. Veel puzzelplezier!",
+      "Bekijk ruil",
+    ],
+    [
+      "trade_cancelled",
+      "en",
+      "Bo cancelled the trade request for “Sky”.",
+      "View trade",
+    ],
+  ] as const)(
+    "%s/%s names the actor and the puzzle",
+    async (type, locale, body, cta) => {
+      const email = await renderEmail({
+        type,
+        params: { actorName: "Bo", puzzleTitle: "Sky" },
+        locale,
+        baseUrl: BASE,
+        href: "/trades?exchange=ex-9",
+      });
+      expect(email.text).toContain(body);
+      expect(email.text).toContain(cta);
+    },
+  );
+
+  it("labels a deleted or deactivated actor as a former member, with the brand-only from name", async () => {
+    const en = await renderEmail({
+      type: "new_follower",
+      params: { actorName: "Old Name" },
+      locale: "en",
+      baseUrl: BASE,
+      actorAnonymous: true,
+    });
+    expect(en.subject).toBe("Former member started following you on JigSwap");
+    expect(en.html).not.toContain("Old Name");
+    expect(en.fromName).toBe("JigSwap");
+    const nl = await renderEmail({
+      type: "message_received",
+      params: {},
+      locale: "nl",
+      baseUrl: BASE,
+      actorAnonymous: true,
+    });
+    expect(nl.subject).toBe("Nieuw bericht van Voormalig lid op JigSwap");
+  });
+
+  it.each([
+    ["en", "“See you Saturday”"],
+    ["nl", "“See you Saturday”"],
+  ] as const)(
+    "%s: renders the message preview as a detail paragraph",
+    async (locale, detail) => {
+      const email = await renderEmail({
+        type: "message_received",
+        params: { actorName: "Anna", messagePreview: "See you Saturday" },
+        locale,
+        baseUrl: BASE,
+        href: "/messages/thread-1",
+      });
+      expect(email.text).toContain(detail);
+      expect(email.html).toContain(`${BASE}/messages/thread-1`);
+    },
+  );
+
+  it("omits the detail paragraph when its token has no value", async () => {
+    const email = await renderEmail({
+      type: "message_received",
+      params: { actorName: "Anna", messagePreview: "" },
+      locale: "en",
+      baseUrl: BASE,
+    });
+    expect(email.text).not.toContain("“");
+  });
+
+  it.each([
+    ["en", "Mara left you a review after your trade.", "Rating: 4 out of 5"],
+    [
+      "nl",
+      "Mara heeft een beoordeling voor je achtergelaten na jullie ruil.",
+      "Waardering: 4 van 5",
+    ],
+  ] as const)(
+    "%s: a review names the reviewer and the rating",
+    async (locale, body, detail) => {
+      const email = await renderEmail({
+        type: "review_received",
+        params: { actorName: "Mara", rating: "4" },
+        locale,
+        baseUrl: BASE,
+      });
+      expect(email.text).toContain(body);
+      expect(email.text).toContain(detail);
+    },
+  );
+
+  it("a nameless reviewer falls back to the generic actor label and no rating line", async () => {
+    const email = await renderEmail({
+      type: "review_received",
+      params: {},
+      locale: "en",
+      baseUrl: BASE,
+    });
+    expect(email.text).toContain("Someone left you a review after your trade.");
+    expect(email.text).not.toContain("Rating:");
+  });
+
+  it.each([
+    ["new_follower", "en", "View profile"],
+    ["new_follower", "nl", "Bekijk profiel"],
+    ["follow_request_approved", "en", "View profile"],
+    ["follow_request_approved", "nl", "Bekijk profiel"],
+    ["follow_request_received", "en", "Review request"],
+  ] as const)(
+    "%s/%s deep-links the member profile",
+    async (type, locale, cta) => {
+      const email = await renderEmail({
+        type,
+        params: { actorName: "Mara" },
+        locale,
+        baseUrl: BASE,
+        href: "/members/mara",
+      });
+      expect(email.html).toContain(`${BASE}/members/mara`);
+      expect(email.text).toContain(cta);
+    },
+  );
+
+  it("keeps the list CTA label when the resolved href equals the legacy path", async () => {
+    const email = await renderEmail({
+      type: "new_follower",
+      params: {},
+      locale: "en",
+      baseUrl: BASE,
+      href: "/people",
+    });
+    expect(email.text).toContain("View people");
+  });
+
+  it.each([
+    null,
+    undefined,
+    "https://evil.example/x",
+    "//evil.example/x",
+    "members/x",
+    "",
+  ])("falls back to the legacy CTA path for href %s", async (href) => {
+    const email = await renderEmail({
+      type: "new_follower",
+      params: {},
+      locale: "en",
+      baseUrl: BASE,
+      href,
+    });
+    expect(email.html).toContain(`href="${BASE}/people"`);
+    expect(email.html).not.toContain("evil.example");
+    expect(email.text).toContain("View people");
+  });
 });
