@@ -1,6 +1,7 @@
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { onboardingRowOf } from "../onboarding/memberOnboarding";
 
 // Per-context cap on rows pulled into a single export. Convex queries have a read budget; a member
 // with a very large history is capped so the export stays a single, bounded query return. The UI
@@ -27,6 +28,7 @@ export const exportUserData = query({
       copyReviews,
       exchangesA,
       exchangesB,
+      quickStart,
     ] = await Promise.all([
       ctx.db
         .query("completions")
@@ -66,6 +68,7 @@ export const exportUserData = query({
         .query("exchanges")
         .withIndex("by_recipient", (q) => q.eq("recipientId", userId))
         .take(EXPORT_LIMIT),
+      onboardingRowOf(ctx, userId),
     ]);
 
     // Resolve puzzle titles for the completions and copies (de-duplicated) so the export reads
@@ -111,6 +114,8 @@ export const exportUserData = query({
       puzzleReviews,
       copyReviews,
       exchanges: [...exchangesA, ...exchangesB],
+      // Quick start choices (skipped steps, dismissals), or null when never set.
+      quickStart,
     };
   },
 });

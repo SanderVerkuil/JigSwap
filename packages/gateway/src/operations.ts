@@ -305,6 +305,14 @@ export const gateway = {
       api.notifications.pushSubscriptions.unregisterPushSubscription,
   },
 
+  // Onboarding (quick start): the member's own checklist state. Step "done" is derived from real
+  // data; recordQuickStart stores only skipped steps and the welcome/card dismissals, in the
+  // caller's own row (`step` only with skipStep/unskipStep, else `invalid_change`). Idempotent.
+  onboarding: {
+    quickStart: api.onboarding.getQuickStart.getQuickStart,
+    recordQuickStart: api.onboarding.recordQuickStart.recordQuickStart,
+  },
+
   // What's new: the member's own unread entry ids (newest first; entries published before the
   // account existed are never unread) and tour progress, plus marking entries seen. Unknown ids
   // are ignored server-side (web/Convex deploy skew); at most 50 ids per markSeen call. Tour

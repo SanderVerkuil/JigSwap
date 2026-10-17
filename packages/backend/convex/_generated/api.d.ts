@@ -270,6 +270,9 @@ import type * as notifications_setNotificationPreferences from "../notifications
 import type * as notifications_subscriber from "../notifications/subscriber.js";
 import type * as notifications_unreadCount from "../notifications/unreadCount.js";
 import type * as notifications_updateNotificationPreference from "../notifications/updateNotificationPreference.js";
+import type * as onboarding_getQuickStart from "../onboarding/getQuickStart.js";
+import type * as onboarding_memberOnboarding from "../onboarding/memberOnboarding.js";
+import type * as onboarding_recordQuickStart from "../onboarding/recordQuickStart.js";
 import type * as presence from "../presence.js";
 import type * as puzzles from "../puzzles.js";
 import type * as reputation_adapters_convexExchangeCompletionPort from "../reputation/adapters/convexExchangeCompletionPort.js";
@@ -667,6 +670,9 @@ declare const fullApi: ApiFromModules<{
   "notifications/subscriber": typeof notifications_subscriber;
   "notifications/unreadCount": typeof notifications_unreadCount;
   "notifications/updateNotificationPreference": typeof notifications_updateNotificationPreference;
+  "onboarding/getQuickStart": typeof onboarding_getQuickStart;
+  "onboarding/memberOnboarding": typeof onboarding_memberOnboarding;
+  "onboarding/recordQuickStart": typeof onboarding_recordQuickStart;
   presence: typeof presence;
   puzzles: typeof puzzles;
   "reputation/adapters/convexExchangeCompletionPort": typeof reputation_adapters_convexExchangeCompletionPort;

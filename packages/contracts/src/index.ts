@@ -7,6 +7,7 @@ export * from "./identity";
 export * from "./insights";
 export * from "./lending";
 export * from "./library";
+export * from "./onboarding";
 export * from "./search";
 export * from "./shared";
 export * from "./sharing";
