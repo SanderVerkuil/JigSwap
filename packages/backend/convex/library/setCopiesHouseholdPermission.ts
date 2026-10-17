@@ -2,6 +2,7 @@ import {
   dedupeHouseholdPermissionBatch,
   HouseholdApplicationError,
   planHouseholdPermissionBatch,
+  storedHouseholdPermission,
   toMemberId,
 } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
@@ -14,11 +15,16 @@ import { requireMember } from "../identity/requireMember";
 // Bulk form of setCopyHouseholdPermission, from the household page. The caller must be in a
 // household and OWN every copy in the batch; one foreign or missing copy rejects the whole batch
 // before anything is written (one mutation = one transaction, so it is all-or-nothing). Ids are
-// deduped and capped; copies already at the target (absent = "manage") are not rewritten.
+// deduped and capped; copies whose stored value already matches the choice are not rewritten.
 export const setCopiesHouseholdPermission = mutation({
   args: {
     copyIds: v.array(v.id("ownedPuzzles")),
-    permission: v.union(v.literal("manage"), v.literal("view")),
+    // "default" clears the explicit value so the copy follows the household default.
+    permission: v.union(
+      v.literal("manage"),
+      v.literal("view"),
+      v.literal("default"),
+    ),
   },
   handler: async (
     ctx,
@@ -54,7 +60,7 @@ export const setCopiesHouseholdPermission = mutation({
     const now = Date.now();
     for (const copy of plan.value.toChange) {
       await ctx.db.patch(copy._id, {
-        householdPermission: args.permission,
+        householdPermission: storedHouseholdPermission(args.permission),
         updatedAt: now,
       });
     }

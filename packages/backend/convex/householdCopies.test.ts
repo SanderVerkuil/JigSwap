@@ -207,6 +207,8 @@ describe("visibility", () => {
       permission: "manage",
       viewerAccess: "manage",
       owner: { memberId: w.ann, name: "Ann" },
+      inheritsDefault: true,
+      householdDefault: "manage",
     });
     const view = await as(t, "bob").query(
       api.library.getCopyInstanceView.getCopyInstanceView,
@@ -223,6 +225,8 @@ describe("visibility", () => {
       permission: "view",
       viewerAccess: "owner",
       owner: { memberId: w.ann, name: "Ann" },
+      inheritsDefault: false,
+      householdDefault: "manage",
     });
   });
 });
@@ -540,5 +544,220 @@ describe("completions stay personal", () => {
       {},
     );
     expect(anns).toEqual([]);
+  });
+});
+
+describe("household default copy permission", () => {
+  const setDefault =
+    api.household.setDefaultCopyPermission.setDefaultCopyPermission;
+  const setOne =
+    api.library.setCopyHouseholdPermission.setCopyHouseholdPermission;
+  const bobAccessTo = async (copyId: Id<"ownedPuzzles">) =>
+    (
+      await as(t, "bob").query(
+        api.library.getCopyInstanceView.getCopyInstanceView,
+        { copyId },
+      )
+    )?.household?.viewerAccess;
+
+  test("a 'view' default governs copies without an explicit value; an explicit 'manage' overrides it", async () => {
+    expect(
+      await as(t, "ann").mutation(setDefault, { permission: "view" }),
+    ).toEqual({ changed: true });
+
+    expect(await bobAccessTo(w.manageCopy)).toBe("view");
+    const listed = await as(t, "bob").query(
+      api.household.listHouseholdCopies.listHouseholdCopies,
+      {},
+    );
+    expect(
+      listed.find((c) => c._id === w.manageCopy)?.household.viewerAccess,
+    ).toBe("view");
+    const bob = as(t, "bob");
+    await expectConvexCode(
+      bob.mutation(api.library.updateCopyDetails.updateCopyDetails, {
+        copyId: "copy-manage",
+        notes: "edit",
+      }),
+      "NotOwner",
+    );
+    await expectConvexCode(
+      bob.mutation(api.library.updateCopySharing.updateCopySharing, {
+        copyId: "copy-manage",
+        visibility: "visible",
+        forLend: true,
+      }),
+      "NotOwner",
+    );
+    await expectConvexCode(
+      bob.mutation(api.exchange.propose.propose, {
+        recipientId: w.cat,
+        type: "trade",
+        requestedPuzzleId: w.catCopy,
+        offeredPuzzleId: w.manageCopy,
+      }),
+      "OfferedCopyNotOwned",
+    );
+
+    await as(t, "ann").mutation(setOne, {
+      copyId: w.manageCopy,
+      permission: "manage",
+    });
+    expect(await bobAccessTo(w.manageCopy)).toBe("manage");
+    await bob.mutation(api.library.updateCopyDetails.updateCopyDetails, {
+      copyId: "copy-manage",
+      notes: "edit",
+    });
+    expect((await copyRow(t, w.manageCopy))?.notes).toBe("edit");
+    expect(
+      typeof (await bob.mutation(api.exchange.propose.propose, {
+        recipientId: w.cat,
+        type: "trade",
+        requestedPuzzleId: w.catCopy,
+        offeredPuzzleId: w.manageCopy,
+      })),
+    ).toBe("string");
+  });
+
+  test("only the household admin may change the default", async () => {
+    await expectConvexCode(
+      as(t, "bob").mutation(setDefault, { permission: "view" }),
+      "NotHouseholdAdmin",
+    );
+    await expectConvexCode(
+      as(t, "cat").mutation(setDefault, { permission: "view" }),
+      "NotInHousehold",
+    );
+    await expect(
+      t.mutation(setDefault, { permission: "view" }),
+    ).rejects.toThrow(/Unauthenticated/);
+    const mine = await as(t, "bob").query(
+      api.household.getMyHousehold.getMyHousehold,
+      {},
+    );
+    expect(mine?.defaultCopyPermission).toBe("manage");
+  });
+
+  test("the household reports its default and how many copies follow it", async () => {
+    // Ann's manageCopy and Bob's bobCopy have no explicit value; Ann's viewCopy does; Cat is out.
+    const before = await as(t, "bob").query(
+      api.household.getMyHousehold.getMyHousehold,
+      {},
+    );
+    expect(before?.defaultCopyPermission).toBe("manage");
+    expect(before?.copiesUsingDefault).toBe(2);
+    await as(t, "ann").mutation(setDefault, { permission: "view" });
+    const after = await as(t, "ann").query(
+      api.household.getMyHousehold.getMyHousehold,
+      {},
+    );
+    expect(after?.defaultCopyPermission).toBe("view");
+    expect(after?.copiesUsingDefault).toBe(2);
+    expect(
+      await as(t, "ann").mutation(setDefault, { permission: "view" }),
+    ).toEqual({ changed: false });
+  });
+
+  test("clearing an explicit value falls back to the household default", async () => {
+    await as(t, "ann").mutation(setDefault, { permission: "view" });
+    await as(t, "ann").mutation(setOne, {
+      copyId: w.manageCopy,
+      permission: "manage",
+    });
+    expect(await bobAccessTo(w.manageCopy)).toBe("manage");
+
+    await as(t, "ann").mutation(setOne, {
+      copyId: w.manageCopy,
+      permission: "default",
+    });
+    expect(
+      (await copyRow(t, w.manageCopy))?.householdPermission,
+    ).toBeUndefined();
+    expect(await bobAccessTo(w.manageCopy)).toBe("view");
+    const ownerView = await as(t, "ann").query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: w.manageCopy },
+    );
+    expect(ownerView?.household).toEqual({
+      permission: "view",
+      viewerAccess: "owner",
+      inheritsDefault: true,
+      householdDefault: "view",
+      owner: { memberId: w.ann, name: "Ann" },
+    });
+  });
+
+  test("the bulk 'default' choice clears explicit values", async () => {
+    await as(t, "ann").mutation(setDefault, { permission: "view" });
+    expect(
+      await as(t, "ann").mutation(
+        api.library.setCopiesHouseholdPermission.setCopiesHouseholdPermission,
+        { copyIds: [w.manageCopy, w.viewCopy], permission: "default" },
+      ),
+    ).toEqual({ changed: 1, unchanged: 1 });
+    expect((await copyRow(t, w.viewCopy))?.householdPermission).toBeUndefined();
+
+    const mine = await as(t, "ann").query(
+      api.household.listMyHouseholdCopyPermissions
+        .listMyHouseholdCopyPermissions,
+      {},
+    );
+    expect(
+      mine
+        .map((c) => [c._id, c.householdPermission, c.permissionSource])
+        .sort(),
+    ).toEqual(
+      [
+        [w.manageCopy, "view", "default"],
+        [w.viewCopy, "view", "default"],
+      ].sort(),
+    );
+  });
+
+  test("a leaving owner's copies are no longer governed by the old household default", async () => {
+    await as(t, "ann").mutation(setDefault, { permission: "view" });
+    await as(t, "ann").mutation(
+      api.household.leaveHousehold.leaveHousehold,
+      {},
+    );
+    // Ann left; Bob (promoted admin) keeps the household and its "view" default.
+    expect(
+      (
+        await as(t, "bob").query(
+          api.household.getMyHousehold.getMyHousehold,
+          {},
+        )
+      )?.defaultCopyPermission,
+    ).toBe("view");
+
+    // Ann starts a new household and invites Cat: Ann's inheriting copy now follows the NEW
+    // household (manage), not the one she left.
+    await as(t, "ann").mutation(
+      api.household.createHousehold.createHousehold,
+      {},
+    );
+    const inviteId = await as(t, "ann").mutation(
+      api.household.inviteToHousehold.inviteToHousehold,
+      { inviteeId: w.cat },
+    );
+    await as(t, "cat").mutation(
+      api.household.acceptHouseholdInvite.acceptHouseholdInvite,
+      { inviteId },
+    );
+    const catSees = await as(t, "cat").query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: w.manageCopy },
+    );
+    expect(catSees?.household?.viewerAccess).toBe("manage");
+    const annMine = await as(t, "ann").query(
+      api.household.listMyHouseholdCopyPermissions
+        .listMyHouseholdCopyPermissions,
+      {},
+    );
+    expect(
+      annMine.find((c) => c._id === w.manageCopy)?.householdPermission,
+    ).toBe("manage");
+    // Bob no longer reaches Ann's copies at all.
+    expect(await bobAccessTo(w.manageCopy)).toBeUndefined();
   });
 });

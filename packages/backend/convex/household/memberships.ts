@@ -22,6 +22,19 @@ export const membersOfHousehold = (
     .withIndex("by_household", (q) => q.eq("householdId", householdId))
     .collect();
 
+// The household-wide default copy permission of a household (undefined when unset). Feed it to the
+// domain's resolveHouseholdCopyPermission; never fall back here.
+export const householdDefaultOf = async (
+  ctx: QueryCtx,
+  householdId: string,
+): Promise<Doc<"households">["defaultCopyPermission"]> => {
+  const row = await ctx.db
+    .query("households")
+    .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", householdId))
+    .unique();
+  return row?.defaultCopyPermission;
+};
+
 // The OTHER members of the member's household (empty when they are in none).
 export const householdMateIds = async (
   ctx: QueryCtx,
