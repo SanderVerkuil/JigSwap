@@ -45,6 +45,13 @@ This project is a pnpm workspace monorepo (tasks run via Turborepo). Install all
 pnpm install
 ```
 
+**Editor setup.** The repo uses TypeScript 7 (the native compiler) and nothing else. TS 7
+doesn't ship the `tsserver.js` that VS Code's built-in TypeScript support runs, so install
+the [TypeScript 7 extension](https://marketplace.visualstudio.com/items?itemName=TypeScriptTeam.native-preview)
+(`TypeScriptTeam.native-preview`). Once installed it becomes the default language server;
+the command palette has **Enable/Disable TypeScript 7 Language Server** to switch. Other
+editors can use TS 7's LSP server.
+
 ### 3. Set Up Environment Variables
 
 You'll need to set up accounts with Convex and Clerk to get the necessary API keys.
