@@ -12,6 +12,8 @@ type InviteShareProps = {
   url: string | null;
   // Which message to prefill: the network link ("follow each other") or a household link.
   kind: "network" | "household";
+  // Called on any share, copy, Email or WhatsApp action (the quick start's push-prompt trigger).
+  onShared?: () => void;
 };
 
 const noopSubscribe = () => () => {};
@@ -34,6 +36,7 @@ export function InviteShareButtons({
   url,
   kind,
   canShare,
+  onShared,
 }: InviteShareProps & { canShare: boolean }) {
   const t = useTranslations("inviteShare");
   const tInvite = useTranslations("invite");
@@ -48,13 +51,16 @@ export function InviteShareButtons({
     if (!url) return;
     void navigator.clipboard.writeText(url);
     setCopied(true);
+    onShared?.();
     setTimeout(() => setCopied(false), 2000);
   };
 
   const share = () => {
     // The URL is part of the message text, so it is not passed again as `url` (most share
     // targets would append it a second time). A dismissed share sheet rejects; that is fine.
-    if (url) navigator.share({ title: subject, text: message }).catch(() => {});
+    if (!url) return;
+    navigator.share({ title: subject, text: message }).catch(() => {});
+    onShared?.();
   };
 
   const fallback = "pointer-coarse:min-h-11";
@@ -84,7 +90,10 @@ export function InviteShareButtons({
         {url ? (
           <>
             <Button asChild variant="outline" className={fallback}>
-              <a href={mailtoUrl({ subject, body: message })}>
+              <a
+                href={mailtoUrl({ subject, body: message })}
+                onClick={onShared}
+              >
                 <Mail className="size-4" />
                 {t("email")}
               </a>
@@ -94,6 +103,7 @@ export function InviteShareButtons({
                 href={whatsAppUrl(message)}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={onShared}
               >
                 <MessageCircle className="size-4" />
                 {t("whatsapp")}

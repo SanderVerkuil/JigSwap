@@ -15,7 +15,14 @@ import { useTranslations } from "use-intl";
 // "Invite with a link" for the household admin: mints a single-use, 14-day household link
 // (social.createHouseholdInviteLink) and hands it to the share sheet. Whoever signs up through
 // it gets a pending household invite to accept; nobody is added automatically.
-export function HouseholdInviteLink({ memberId }: { memberId: string }) {
+export function HouseholdInviteLink({
+  memberId,
+  onShared,
+}: {
+  memberId: string;
+  // Called on any share action (the quick start's push-prompt trigger).
+  onShared?: () => void;
+}) {
   const t = useTranslations("inviteShare");
 
   const create = useMutation({
@@ -44,7 +51,7 @@ export function HouseholdInviteLink({ memberId }: { memberId: string }) {
     <div className="space-y-3">
       <h3 className="text-sm font-medium">{t("inviteLink")}</h3>
       {url ? (
-        <InviteShareActions url={url} kind="household" />
+        <InviteShareActions url={url} kind="household" onShared={onShared} />
       ) : (
         <Button
           variant="outline"
