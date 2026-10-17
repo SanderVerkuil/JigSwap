@@ -21,12 +21,18 @@ import { useTranslations } from "use-intl";
 // unconnected members get a disabled button with an explanatory tooltip.
 // Clicking opens (or lands on) the pair's DM thread and navigates into it.
 // `size` mirrors FollowButton so compact contexts render the small variant.
+// `iconOnly` (opt-in, for compact cards) renders a square icon button with a tooltip;
+// `memberName` qualifies its aria-label ("Message Mara"). Without it nothing changes.
 export function MessageButton({
   memberId,
   size = "default",
+  iconOnly = false,
+  memberName,
 }: {
   memberId: Id<"users">;
   size?: "default" | "sm";
+  iconOnly?: boolean;
+  memberName?: string;
 }) {
   const t = useTranslations("messages");
   const navigate = useNavigate();
@@ -56,17 +62,33 @@ export function MessageButton({
     }
   };
 
-  const button = (enabled: boolean) => (
-    <Button
-      variant="outline"
-      size={size}
-      disabled={!enabled || pending}
-      onClick={enabled ? handleClick : undefined}
-    >
-      <MessageCircle className="mr-2 h-4 w-4" />
-      {t("messageButton")}
-    </Button>
-  );
+  const button = (enabled: boolean) =>
+    iconOnly ? (
+      <Button
+        variant="outline"
+        size="icon"
+        className="pointer-coarse:size-11"
+        disabled={!enabled || pending}
+        onClick={enabled ? handleClick : undefined}
+        aria-label={
+          memberName
+            ? t("messageName", { name: memberName })
+            : t("messageButton")
+        }
+      >
+        <MessageCircle aria-hidden="true" />
+      </Button>
+    ) : (
+      <Button
+        variant="outline"
+        size={size}
+        disabled={!enabled || pending}
+        onClick={enabled ? handleClick : undefined}
+      >
+        <MessageCircle className="mr-2 h-4 w-4" />
+        {t("messageButton")}
+      </Button>
+    );
 
   // canMessage undefined = still loading; render the button disabled without
   // the "not connected" explanation until the gate has actually answered.
@@ -83,6 +105,15 @@ export function MessageButton({
           <span tabIndex={0}>{button(false)}</span>
         </TooltipTrigger>
         <TooltipContent>{t("notConnected")}</TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  if (iconOnly) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{button(true)}</TooltipTrigger>
+        <TooltipContent>{t("messageButton")}</TooltipContent>
       </Tooltip>
     );
   }
