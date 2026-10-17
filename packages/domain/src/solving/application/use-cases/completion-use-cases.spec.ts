@@ -107,6 +107,45 @@ describe("Completion use cases", () => {
       const stored = await completions.findById(result.value);
       expect(stored?.photos.map((p) => p.fileId)).toEqual([toFileId("p-1")]);
     });
+
+    it("defaults to day precision when none is given", async () => {
+      const record = makeRecordCompletion({ completions, ids, events, clock });
+      const result = await record({
+        userId: ALICE,
+        startDate: START,
+        endDate: END,
+      });
+      if (!result.isOk) throw new Error("record failed");
+      const stored = await completions.findById(result.value);
+      expect(stored?.toState().datePrecision).toBe("day");
+    });
+
+    it("passes the precision, year and bulk flag through to the aggregate", async () => {
+      const record = makeRecordCompletion({ completions, ids, events, clock });
+      const result = await record({
+        userId: ALICE,
+        datePrecision: "year",
+        year: 2023,
+        bulk: true,
+      });
+      if (!result.isOk) throw new Error("record failed");
+      const stored = await completions.findById(result.value);
+      expect(stored?.toState().datePrecision).toBe("year");
+      expect(stored?.toState().endDate?.getUTCFullYear()).toBe(2023);
+      const [event] = events.published;
+      expect(event).toMatchObject({ datePrecision: "year", bulk: true });
+    });
+
+    it("rejects a duration on an undated solve", async () => {
+      const record = makeRecordCompletion({ completions, ids, events, clock });
+      const result = await record({
+        userId: ALICE,
+        datePrecision: "unknown",
+        completionTimeMinutes: 10,
+      });
+      expect(result.isErr && result.error.code).toBe("DurationNotAllowed");
+      expect(completions.size()).toBe(0);
+    });
   });
 
   describe("finishCompletion", () => {

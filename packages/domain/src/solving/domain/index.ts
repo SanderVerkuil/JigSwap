@@ -1,4 +1,5 @@
 export * from "./completion";
+export * from "./date-precision";
 export * from "./errors";
 export * from "./events";
 export * from "./goal";

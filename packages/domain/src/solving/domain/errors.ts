@@ -12,7 +12,10 @@ export type SolvingErrorCode =
   | "InvalidGoalTarget"
   | "InvalidRating"
   | "InvalidDuration"
-  | "NotAllowedToReviewCopy";
+  | "NotAllowedToReviewCopy"
+  | "InvalidDatePrecision"
+  | "InvalidYear"
+  | "DurationNotAllowed";
 
 export class SolvingError extends DomainError {
   override readonly name = "SolvingError";
@@ -85,6 +88,31 @@ export class SolvingError extends DomainError {
     return new SolvingError(
       "NotAllowedToReviewCopy",
       "Only the copy's owner or a member who completed it may review this copy",
+    );
+  }
+
+  // The supplied date fields don't match the precision: "day" needs a start and an end, "year"
+  // needs a year and no dates, "unknown" takes neither.
+  static invalidDatePrecision(): SolvingError {
+    return new SolvingError(
+      "InvalidDatePrecision",
+      "A completion's dates do not match its date precision",
+    );
+  }
+
+  // A year-only solve must name a whole year from 1900 to the current year.
+  static invalidYear(year: number): SolvingError {
+    return new SolvingError(
+      "InvalidYear",
+      `A solve year must be a whole year from 1900 to this year (got ${year})`,
+    );
+  }
+
+  // A year-only or undated solve has no real span, so it cannot carry a solve time.
+  static durationNotAllowed(): SolvingError {
+    return new SolvingError(
+      "DurationNotAllowed",
+      "A solve without a full date cannot have a solve time",
     );
   }
 }

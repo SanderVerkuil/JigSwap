@@ -19,6 +19,7 @@ const recordValid = (
   Completion.record({
     id: ID,
     userId: ALICE,
+    datePrecision: "day",
     startDate: START,
     endDate: END,
     now: NOW,
