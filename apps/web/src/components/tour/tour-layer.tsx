@@ -59,6 +59,7 @@ export function TourCardBody({
   title,
   body,
   pendingLabel,
+  actionHint,
   index,
   total,
   nextLabel,
@@ -68,13 +69,15 @@ export function TourCardBody({
   onNext,
   onClose,
 }: {
-  ids: { eyebrow: string; title: string; body: string };
+  ids: { eyebrow: string; title: string; body: string; hint?: string };
   titleRef?: RefObject<HTMLHeadingElement | null>;
   stepLabel: string;
   title: string;
   body: string;
   /** Set while the step's page or anchor is loading: replaces the body with a spinner line. */
   pendingLabel?: string;
+  /** Set on an action step: the member presses the target to continue, so there is no Next. */
+  actionHint?: string;
   index: number;
   total: number;
   nextLabel: string;
@@ -126,6 +129,14 @@ export function TourCardBody({
           body
         )}
       </p>
+      {actionHint && (
+        <p
+          id={ids.hint}
+          className="text-foreground px-4 pt-2 text-sm font-medium"
+        >
+          {actionHint}
+        </p>
+      )}
       <div aria-hidden className="flex items-center gap-1.5 px-4 pt-3 pb-4">
         {Array.from({ length: total }, (_, i) => (
           <span
@@ -155,17 +166,19 @@ export function TourCardBody({
         ) : (
           <span />
         )}
-        <Button
-          size={touch ? "default" : "sm"}
-          className={cn(
-            "bg-jigsaw-primary hover:bg-jigsaw-primary/90 text-white",
-            touch && "min-h-11",
-          )}
-          onClick={onNext}
-        >
-          {nextLabel}
-          {isLast ? <Check aria-hidden /> : <ChevronRight aria-hidden />}
-        </Button>
+        {!actionHint && (
+          <Button
+            size={touch ? "default" : "sm"}
+            className={cn(
+              "bg-jigsaw-primary hover:bg-jigsaw-primary/90 text-white",
+              touch && "min-h-11",
+            )}
+            onClick={onNext}
+          >
+            {nextLabel}
+            {isLast ? <Check aria-hidden /> : <ChevronRight aria-hidden />}
+          </Button>
+        )}
       </div>
     </>
   );
@@ -229,11 +242,22 @@ function useBelowMd(): boolean {
 
 const SPOTLIGHT_PAD = 6;
 
-/** Click shield + dim (spotlight cut-out when a target is lit), spec Part B §5.2. */
-function TourBackdrop({ rect }: { rect: DOMRect | null }) {
+/** Click shield + dim (spotlight cut-out when a target is lit), spec Part B §5.2. On an action step
+ * the shield leaves a hole over the lit target so the member can press it. */
+function TourBackdrop({
+  rect,
+  action,
+}: {
+  rect: DOMRect | null;
+  action: boolean;
+}) {
   return createPortal(
     <div aria-hidden data-tour-overlay="">
-      <div className="pointer-events-auto fixed inset-0 z-50" />
+      {rect && action ? (
+        <ShieldAround rect={rect} />
+      ) : (
+        <div className="pointer-events-auto fixed inset-0 z-50" />
+      )}
       {rect ? (
         <div
           className="ring-primary ring-offset-background pointer-events-none fixed z-50 rounded-lg shadow-[0_0_0_9999px_rgb(0_0_0/0.5)] ring-2 ring-offset-2 transition-[top,left,width,height] duration-300 ease-out forced-colors:shadow-none forced-colors:outline-2 forced-colors:outline-[Highlight] motion-reduce:transition-none"
@@ -249,6 +273,35 @@ function TourBackdrop({ rect }: { rect: DOMRect | null }) {
       )}
     </div>,
     document.body,
+  );
+}
+
+/** Four click-shield panels around the padded `rect`, leaving it open to the pointer. */
+function ShieldAround({ rect }: { rect: DOMRect }) {
+  const top = rect.top - SPOTLIGHT_PAD;
+  const left = rect.left - SPOTLIGHT_PAD;
+  const bottom = rect.bottom + SPOTLIGHT_PAD;
+  const right = rect.right + SPOTLIGHT_PAD;
+  const panel = "pointer-events-auto fixed z-50";
+  return (
+    <>
+      <div
+        className={cn(panel, "inset-x-0 top-0")}
+        style={{ height: Math.max(0, top) }}
+      />
+      <div
+        className={cn(panel, "inset-x-0 bottom-0")}
+        style={{ top: bottom }}
+      />
+      <div
+        className={cn(panel, "left-0")}
+        style={{ top, height: bottom - top, width: Math.max(0, left) }}
+      />
+      <div
+        className={cn(panel, "right-0")}
+        style={{ top, height: bottom - top, left: right }}
+      />
+    </>
   );
 }
 
@@ -269,9 +322,12 @@ export function TourLayer({
     eyebrow: `${uid}-eyebrow`,
     title: `${uid}-title`,
     body: `${uid}-body`,
+    hint: `${uid}-hint`,
   };
 
   const { tourId, index, total, step, phase, target } = snapshot;
+  // Only while lit: the target must be on screen to be pressed.
+  const action = phase === "shown" && snapshot.action;
   const rect = useTargetRect(phase === "shown" ? target : null);
   const anchorRef = useMemo(() => ({ current: target }), [target]);
 
@@ -297,6 +353,7 @@ export function TourLayer({
           ? t("tour.opening", { page: pageTitle(step.route) })
           : undefined
       }
+      actionHint={action ? t("tour.actionHint") : undefined}
       index={index}
       total={total}
       nextLabel={
@@ -314,10 +371,11 @@ export function TourLayer({
     />
   );
 
+  // An action step leaves the page interactive (non-modal), so the target can be pressed.
   const a11y = {
-    "aria-modal": true,
+    "aria-modal": !action,
     "aria-labelledby": `${ids.eyebrow} ${ids.title}`,
-    "aria-describedby": ids.body,
+    "aria-describedby": action ? `${ids.body} ${ids.hint}` : ids.body,
     "aria-roledescription": t("tour.roleDescription"),
   } as const;
   const handlers = {
@@ -333,8 +391,20 @@ export function TourLayer({
     },
     // The shield owns outside clicks: they must not end the tour.
     onInteractOutside: (event: Event) => event.preventDefault(),
-    onKeyDown: (event: KeyboardEvent) => {
+    onKeyDown: (event: KeyboardEvent<HTMLElement>) => {
       if (event.key === "Escape") return; // handled by onEscapeKeyDown
+      // The card is portalled to the end of the page, so Tab past its last control would leave the
+      // page; on an action step it goes to the target instead.
+      if (action && target && event.key === "Tab" && !event.shiftKey) {
+        const tabbable = event.currentTarget.querySelectorAll<HTMLElement>(
+          "button:not([disabled]), [href], [tabindex]:not([tabindex='-1'])",
+        );
+        if (document.activeElement === tabbable[tabbable.length - 1]) {
+          event.preventDefault();
+          target.focus();
+        }
+        return;
+      }
       if (actions.onKey(event.key)) event.preventDefault();
     },
   };
@@ -342,7 +412,7 @@ export function TourLayer({
   let card: ReactNode;
   if (phase === "shown" && target && !mobile) {
     card = (
-      <Popover open modal>
+      <Popover open modal={!action}>
         <PopoverAnchor virtualRef={anchorRef} />
         <PopoverContent
           side={step.side ?? "bottom"}
@@ -367,7 +437,7 @@ export function TourLayer({
           : "bottom"
         : undefined;
     card = (
-      <DialogPrimitive.Root open modal>
+      <DialogPrimitive.Root open modal={!action}>
         <DialogPrimitive.Portal>
           <DialogPrimitive.Content
             className={cn(
@@ -393,7 +463,7 @@ export function TourLayer({
 
   return (
     <>
-      <TourBackdrop rect={phase === "shown" ? rect : null} />
+      <TourBackdrop rect={phase === "shown" ? rect : null} action={action} />
       {card}
     </>
   );

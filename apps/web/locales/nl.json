@@ -3710,6 +3710,7 @@
     "done": "Klaar",
     "end": "Rondleiding stoppen",
     "opening": "{page} openen…",
+    "actionHint": "Druk op de gemarkeerde knop om verder te gaan.",
     "paused": "Rondleiding gepauzeerd. Je kunt verder gaan via Wat is er nieuw.",
     "pausedStandalone": "Rondleiding gepauzeerd. Je kunt verder gaan via Snel instellen.",
     "resumeAction": "Hervatten",

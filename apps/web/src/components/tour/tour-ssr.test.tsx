@@ -169,6 +169,29 @@ describe("TourCardBody", () => {
     ]);
   });
 
+  it("drops Next and shows the hint on an action step", () => {
+    const hint = en.tour.actionHint;
+    const els = elements(
+      render(
+        card({
+          index: 1,
+          ids: { eyebrow: "e", title: "t", body: "b", hint: "h" },
+          actionHint: hint,
+        }),
+      ),
+    );
+    const buttons = els
+      .filter((el) => el.tagName === "button")
+      .map((el) => text(el).trim() || attr(el, "aria-label"));
+    expect(buttons).toEqual(["End tour", "Back"]);
+    expect(text(els.find((el) => attr(el, "id") === "h")!)).toBe(
+      "Press the highlighted button to continue.",
+    );
+    expect(nl.tour.actionHint).toBe(
+      "Druk op de gemarkeerde knop om verder te gaan.",
+    );
+  });
+
   it("marks the current progress segment and hides the dots from assistive tech", () => {
     const els = elements(render(card({ index: 1 })));
     const progress = els.find(
