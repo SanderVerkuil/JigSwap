@@ -34,13 +34,12 @@ export function ThreadSubjectAvatar({
   subject: InboxThread["subject"];
   className?: string;
 }) {
-  const displayName = useMemberDisplayName();
   if (subject.kind === "dm" && !subject.otherMember.anonymous) {
-    const name = displayName(subject.otherMember.member);
     return (
-      <Avatar className={cn("shrink-0", className)}>
+      // Decorative: the name always sits right next to it.
+      <Avatar aria-hidden className={cn("shrink-0", className)}>
         {subject.otherMember.member.avatar && (
-          <AvatarImage src={subject.otherMember.member.avatar} alt={name} />
+          <AvatarImage src={subject.otherMember.member.avatar} alt="" />
         )}
         <AvatarFallback>
           <MemberInitial source={subject.otherMember.member} />
@@ -51,6 +50,7 @@ export function ThreadSubjectAvatar({
   const Icon = subject.kind === "exchange" ? ArrowLeftRight : User;
   return (
     <span
+      aria-hidden
       className={cn(
         "bg-muted text-muted-foreground flex shrink-0 items-center justify-center rounded-full",
         className,
@@ -189,6 +189,8 @@ function ThreadRow({
         ? t("youPrefix", { body })
         : body;
   const fullTime = formatFullDateTime(thread.updatedAt, locale);
+  // muted-foreground on the selected tint is < 4.5:1; darken it there.
+  const mutedText = selected ? "text-foreground/75" : "text-muted-foreground";
 
   return (
     <Link
@@ -224,9 +226,7 @@ function ThreadRow({
             aria-hidden
             className={cn(
               "shrink-0 text-xs leading-5 tabular-nums",
-              unread
-                ? "text-primary-text font-semibold"
-                : "text-muted-foreground",
+              unread ? "text-primary-text font-semibold" : mutedText,
             )}
           >
             {formatCompactTime(thread.updatedAt, now, locale, t)}
@@ -237,9 +237,7 @@ function ThreadRow({
             className={cn(
               "min-w-0 flex-1 truncate",
               isSystem && "italic",
-              unread && !isSystem
-                ? "text-foreground font-medium"
-                : "text-muted-foreground",
+              unread && !isSystem ? "text-foreground font-medium" : mutedText,
             )}
           >
             {snippet}

@@ -117,7 +117,8 @@ export function MessageComposer({
           }
           maxLength={MAX_MESSAGE_LENGTH}
           rows={1}
-          className="max-h-40 min-h-11 flex-1 resize-none rounded-[20px] px-4 py-2.5 md:min-h-10"
+          // muted-foreground lifts the outline to ≥3:1 (--input is ~1.3:1).
+          className="border-muted-foreground/80 dark:border-muted-foreground/60 max-h-40 min-h-11 flex-1 resize-none rounded-[20px] px-4 py-2.5 md:min-h-10"
         />
         <Button
           onClick={() => void send()}
