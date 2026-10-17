@@ -1,23 +1,24 @@
 "use client";
 
-// Inbox pane of /messages: the reactive getMyInbox subscription rendered as
-// open divided rows (the previous mock's ConversationRow styling, now on real
-// data). PROVISIONAL layout per the design doc — all data access lives in the
-// messaging components so a designer pass can restyle presentation only.
+// Inbox pane of /messages: the reactive getMyInbox subscription rendered as a
+// list of fixed-height conversation rows (message-center redesign spec §3–§4).
+// All data access lives in the messaging components; routes stay thin.
 import { Link } from "@/compat/link";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
-import { useDateFnsLocale } from "@/lib/date-locale";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { formatDistanceToNow } from "date-fns";
 import { ArrowLeftRight, MessageSquare, User } from "lucide-react";
-import { useTranslations } from "use-intl";
+import { useLocale, useNow, useTranslations } from "use-intl";
 import {
+  formatCompactTime,
+  formatFullDateTime,
   formatUnreadCount,
   threadSubjectTitle,
   type InboxThread,
@@ -28,14 +29,16 @@ import {
 // exchange icon chip for exchange threads.
 export function ThreadSubjectAvatar({
   subject,
+  className = "size-10",
 }: {
   subject: InboxThread["subject"];
+  className?: string;
 }) {
   const displayName = useMemberDisplayName();
   if (subject.kind === "dm" && !subject.otherMember.anonymous) {
     const name = displayName(subject.otherMember.member);
     return (
-      <Avatar className="size-10 shrink-0">
+      <Avatar className={cn("shrink-0", className)}>
         {subject.otherMember.member.avatar && (
           <AvatarImage src={subject.otherMember.member.avatar} alt={name} />
         )}
@@ -47,28 +50,78 @@ export function ThreadSubjectAvatar({
   }
   const Icon = subject.kind === "exchange" ? ArrowLeftRight : User;
   return (
-    <span className="bg-muted text-muted-foreground flex size-10 shrink-0 items-center justify-center rounded-full">
+    <span
+      className={cn(
+        "bg-muted text-muted-foreground flex shrink-0 items-center justify-center rounded-full",
+        className,
+      )}
+    >
       <Icon className="size-[18px]" />
     </span>
   );
 }
 
+// The list pane: a md+ header ("Conversations", aligned with the thread
+// header's rule), then loading / error / empty / rows. Mobile shows just the
+// rows — the shell top bar already titles the page.
 export function ThreadList({ activeThreadId }: { activeThreadId?: string }) {
   const t = useTranslations("messages");
-  const { member } = useCurrentMember();
-  const { data: inbox } = useQuery(
-    convexQuery(gateway.conversation.getMyInbox, member?._id ? {} : "skip"),
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="hidden h-14 shrink-0 items-center border-b px-4 md:flex">
+        <h2 className="font-heading text-base font-bold">
+          {t("conversationsLabel")}
+        </h2>
+      </div>
+      {/* Desktop scrolls inside the frame; mobile scrolls the document. */}
+      <div className="md:min-h-0 md:flex-1 md:overflow-y-auto">
+        <ThreadListBody activeThreadId={activeThreadId} />
+      </div>
+    </div>
   );
+}
+
+function ThreadListBody({ activeThreadId }: { activeThreadId?: string }) {
+  const t = useTranslations("messages");
+  const locale = useLocale();
+  // One clock for every row, ticking each minute so "now"/"5m" stay fresh.
+  const now = useNow({ updateInterval: 60_000 }).getTime();
+  const { member } = useCurrentMember();
+  const me = member?._id;
+  const {
+    data: inbox,
+    isError,
+    refetch,
+  } = useQuery(convexQuery(gateway.conversation.getMyInbox, me ? {} : "skip"));
+
+  if (isError) {
+    return (
+      <div className="p-6 text-center text-sm">
+        <p>{t("inboxError")}</p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-3"
+          onClick={() => void refetch()}
+        >
+          {t("retry")}
+        </Button>
+      </div>
+    );
+  }
 
   if (inbox === undefined) {
     return (
-      <div className="space-y-3 py-2" aria-hidden>
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="flex gap-3 px-2">
-            <div className="bg-muted size-10 shrink-0 animate-pulse rounded-full" />
-            <div className="flex-1 space-y-2 py-1">
-              <div className="bg-muted h-3 w-3/4 animate-pulse rounded" />
-              <div className="bg-muted h-3 w-1/2 animate-pulse rounded" />
+      <div className="flex flex-col gap-0.5 p-2 max-md:-mx-2" aria-hidden>
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="flex h-[68px] items-center gap-3 px-3">
+            <Skeleton className="size-10 shrink-0 rounded-full" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <div className="flex items-center">
+                <Skeleton className="h-3.5 w-32" />
+                <Skeleton className="ml-auto h-3 w-8" />
+              </div>
+              <Skeleton className="h-3 w-48 max-w-full" />
             </div>
           </div>
         ))}
@@ -78,7 +131,7 @@ export function ThreadList({ activeThreadId }: { activeThreadId?: string }) {
 
   if (inbox.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
+      <div className="flex flex-col items-center gap-2 px-4 py-16 text-center">
         <div className="bg-muted flex size-12 items-center justify-center rounded-full">
           <MessageSquare className="text-muted-foreground size-6" />
         </div>
@@ -89,91 +142,125 @@ export function ThreadList({ activeThreadId }: { activeThreadId?: string }) {
   }
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto">
-      {inbox.map((thread, index) => (
-        <ThreadRow
-          key={thread.threadId}
-          thread={thread}
-          selected={thread.threadId === activeThreadId}
-          isLast={index === inbox.length - 1}
-        />
-      ))}
-    </div>
+    <nav aria-label={t("conversationsLabel")}>
+      <ul role="list" className="flex flex-col gap-0.5 p-2 max-md:-mx-2">
+        {inbox.map((thread) => (
+          <li key={thread.threadId}>
+            <ThreadRow
+              thread={thread}
+              selected={thread.threadId === activeThreadId}
+              me={me}
+              now={now}
+              locale={locale}
+            />
+          </li>
+        ))}
+      </ul>
+    </nav>
   );
 }
 
-// One conversation as an open divided row: subject avatar, the title bolder
-// when unread, the last-message preview (system messages stay muted), and a
-// right column with the muted relative time over the unread-count pill.
+// One conversation: avatar, then two baseline-aligned lines — name + compact
+// time, snippet + unread badge. Fixed 68px so rows (and skeletons) line up.
 function ThreadRow({
   thread,
   selected,
-  isLast,
+  me,
+  now,
+  locale,
 }: {
   thread: InboxThread;
   selected: boolean;
-  isLast: boolean;
+  me: string | undefined;
+  now: number;
+  locale: string;
 }) {
   const t = useTranslations("messages");
   const displayName = useMemberDisplayName();
-  const dateLocale = useDateFnsLocale();
 
   const unread = thread.unreadCount > 0;
-  // System messages render their body as-is, always muted.
-  const isSystem = thread.lastMessage?.kind === "system";
-  const preview = thread.lastMessage?.body ?? t("noMessages");
+  const last = thread.lastMessage;
+  const isSystem = last?.kind === "system";
+  const body = last?.body.replace(/\s+/g, " ").trim();
+  const snippet =
+    body === undefined
+      ? t("noMessages")
+      : last?.authorId != null && last.authorId === me
+        ? t("youPrefix", { body })
+        : body;
+  const fullTime = formatFullDateTime(thread.updatedAt, locale);
 
   return (
     <Link
       href={`/messages/${thread.threadId}`}
       aria-current={selected ? "page" : undefined}
       className={cn(
-        "flex w-full items-center gap-3 px-2 py-3 text-left transition-colors",
-        !isLast && "border-b",
-        selected ? "bg-muted/60" : "hover:bg-muted/40",
+        "group focus-visible:ring-ring relative flex h-[68px] items-center gap-3 rounded-lg px-3 outline-none transition-colors focus-visible:ring-2",
+        selected
+          ? "bg-jigsaw-primary-tint hover:bg-jigsaw-primary-tint"
+          : "hover:bg-muted/60",
       )}
     >
+      {selected && (
+        <span
+          aria-hidden
+          className="bg-primary absolute inset-y-3 left-0 w-[3px] rounded-full"
+        />
+      )}
       <ThreadSubjectAvatar subject={thread.subject} />
       <div className="min-w-0 flex-1">
-        <p
-          className={cn(
-            "truncate text-sm",
-            unread ? "font-bold" : "font-semibold",
-          )}
-        >
-          {threadSubjectTitle(thread.subject, t, displayName)}
-        </p>
-        <p
-          className={cn(
-            "truncate text-sm",
-            unread && !isSystem ? "text-foreground" : "text-muted-foreground",
-          )}
-        >
-          {preview}
-        </p>
-      </div>
-      <div className="flex shrink-0 flex-col items-end gap-1.5 self-start pt-0.5">
-        <span className="text-muted-foreground text-xs whitespace-nowrap">
-          {formatDistanceToNow(new Date(thread.updatedAt), {
-            addSuffix: true,
-            locale: dateLocale,
-          })}
-        </span>
-        {unread && (
-          <>
+        <div className="flex items-baseline gap-2">
+          <span
+            className={cn(
+              "text-foreground min-w-0 flex-1 truncate text-sm leading-5",
+              unread ? "font-bold" : "font-medium",
+            )}
+          >
+            {threadSubjectTitle(thread.subject, t, displayName)}
+          </span>
+          <time
+            dateTime={new Date(thread.updatedAt).toISOString()}
+            title={fullTime}
+            aria-hidden
+            className={cn(
+              "shrink-0 text-xs leading-5 tabular-nums",
+              unread
+                ? "text-primary-text font-semibold"
+                : "text-muted-foreground",
+            )}
+          >
+            {formatCompactTime(thread.updatedAt, now, locale, t)}
+          </time>
+        </div>
+        <div className="mt-0.5 flex items-center gap-2 text-[13px] leading-5">
+          <span
+            className={cn(
+              "min-w-0 flex-1 truncate",
+              isSystem && "italic",
+              unread && !isSystem
+                ? "text-foreground font-medium"
+                : "text-muted-foreground",
+            )}
+          >
+            {snippet}
+          </span>
+          {unread && (
             <span
               aria-hidden
-              className="bg-primary text-primary-foreground inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[11px] font-bold"
+              className="bg-primary text-primary-foreground inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1.5 text-[11px] font-bold"
             >
               {formatUnreadCount(thread.unreadCount)}
             </span>
-            {/* Announced as part of the link text, so the visual pill stays aria-hidden. */}
-            <span className="sr-only">
-              {t("unreadCount", { count: thread.unreadCount })}
-            </span>
-          </>
-        )}
+          )}
+        </div>
       </div>
+      {/* The visual time and pill are aria-hidden; announce the full forms instead. */}
+      {unread && (
+        <span className="sr-only">
+          {t("unreadCount", { count: thread.unreadCount })}
+        </span>
+      )}
+      <span className="sr-only">{fullTime}</span>
     </Link>
   );
 }
