@@ -12,6 +12,7 @@ import { useMemberDisplayName } from "@/lib/member-display-name";
 import { Image } from "@/compat/image";
 import { PuzzlePlank3D } from "@/components/common/puzzle-plank-3d";
 import { SectionHead } from "@/components/dashboard-home/section-head";
+import { contentWidthClass } from "@/components/dashboard-layout/content-width";
 import {
   ProfileCompletionsSection,
   ProfilePuzzlesSection,
@@ -89,7 +90,15 @@ export function ProfileBody({
   const firstName = firstNameOf(displayName({ name: hero.displayName }));
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-4 py-10">
+    // Inside the dashboard shell the content area already applies the user's
+    // width preference; the logged-out page has no preferences, so it uses the
+    // regular (non-full-width) column.
+    <div
+      className={cn(
+        "flex w-full flex-col gap-10 px-4 py-10",
+        viewer === "public" && contentWidthClass(false),
+      )}
+    >
       {invitedName && <InvitedBanner name={invitedName} />}
       <HeroSection
         hero={hero}
@@ -411,7 +420,7 @@ function StorySection({
         >
           &ldquo;
         </span>
-        <p className="text-foreground/90 relative pl-4 text-lg leading-relaxed whitespace-pre-wrap">
+        <p className="text-foreground/90 relative max-w-3xl pl-4 text-lg leading-relaxed whitespace-pre-wrap">
           {story}
         </p>
       </div>

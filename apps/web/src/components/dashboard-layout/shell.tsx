@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { AppSidebar } from "./app-sidebar";
 import { CommandPalette } from "./command-palette";
+import { contentWidthClass } from "./content-width";
 import { MobileTabBar } from "./mobile-tab-bar";
 import { MobileTopBar } from "./mobile-top-bar";
 import { PageHead } from "./page-head";
@@ -93,7 +94,7 @@ function ContentArea({ children }: { children: React.ReactNode }) {
         // need a little bottom breathing room so the last item clears the raised
         // center button's overhang.
         "w-full px-4 pt-[18px] pb-6 md:p-6",
-        !fullWidth && "mx-auto max-w-[1180px]",
+        contentWidthClass(fullWidth),
       )}
     >
       <MobilePageActions />
