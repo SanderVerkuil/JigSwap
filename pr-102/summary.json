@@ -1,0 +1,11 @@
+{
+  "pr": "102",
+  "headSha": "4f77589de351ad63ca0f378b278916ca3e7d6af5",
+  "runUrl": "https://github.com/SanderVerkuil/JigSwap/actions/runs/39047063761",
+  "generatedAt": "2026-10-17T15:56:03.989Z",
+  "coverage": {
+    "domain": 98.82,
+    "backend": 93.29
+  },
+  "bundleGzipBytes": 2034016
+}
