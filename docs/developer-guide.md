@@ -376,6 +376,11 @@ Run with `pnpm test` (all) or `pnpm turbo run test --filter=<package>` (e.g. `--
 (`pnpm format` or `pnpm lint:fix`). oxlint config lives in `.oxlintrc.json`; Prettier uses
 `prettier-plugin-organize-imports`.
 
+Lint runs `oxlint --type-aware` (types come from `oxlint-tsgolint`, which runs on
+typescript-go). Floating promises are errors: `await` them, `.catch` them, or mark a
+deliberate fire-and-forget with `void` and a comment explaining why. Async JSX handlers
+(`onClick={async () => …}`) are allowed.
+
 ### 4.4 Commit & PR style
 
 [Conventional Commits](https://www.conventionalcommits.org/): `<type>(<scope>): <subject>` —
