@@ -6,6 +6,7 @@ import { InviteRedeemer } from "@/components/social/invite-redeemer";
 import { CompletionFollowUpProvider } from "@/components/solving/completion-follow-up-provider";
 import { DurationPromptProvider } from "@/components/solving/duration-prompt-provider";
 import { PageLoading } from "@/components/ui/loading";
+import { WhatsNewHighlight } from "@/components/whats-new/highlight-dialog";
 import { requireAuth } from "@/lib/require-auth";
 
 // Pathless layout for the logged-in app. Auth: requireAuth reads the Clerk
@@ -45,6 +46,8 @@ function DashboardLayout() {
       <DurationPromptProvider>
         <CompletionFollowUpProvider>
           <InviteRedeemer />
+          {/* Inside both prompt providers: it yields to their prompts (surface-busy signal). */}
+          <WhatsNewHighlight />
           <Outlet />
         </CompletionFollowUpProvider>
       </DurationPromptProvider>

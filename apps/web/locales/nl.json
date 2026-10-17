@@ -2721,7 +2721,8 @@
     "library": "Mijn Bibliotheek — JigSwap",
     "people": "Mensen — JigSwap",
     "members": "Leden — JigSwap",
-    "copyInstance": "Exemplaar in bezit — JigSwap"
+    "copyInstance": "Exemplaar in bezit — JigSwap",
+    "whatsNew": "Wat is er nieuw — JigSwap"
   },
   "shell": {
     "search": {
@@ -2910,6 +2911,11 @@
         "title": "Feedback",
         "subtitle": "“Was deze pagina nuttig?”-stemmen uit de documentatie, nieuwste eerst.",
         "description": "Bekijk stemmen over de documentatie"
+      },
+      "whatsNew": {
+        "title": "Wat is er nieuw",
+        "subtitle": "Nieuwe functies, verbeteringen en oplossingen.",
+        "description": "Alles wat er in JigSwap is veranderd, nieuwste eerst."
       }
     },
     "user": {
@@ -2949,8 +2955,10 @@
         "logCompletionSub": "Eentje af? Leg het vast",
         "proposeSwap": "Een Ruil Voorstellen",
         "proposeSwapSub": "Ruil met een mede-puzzelaar",
-        "browseCommunitySub": "Ontdek puzzels bij jou in de buurt"
-      }
+        "browseCommunitySub": "Ontdek puzzels bij jou in de buurt",
+        "whatsNewSub": "De nieuwste functies en oplossingen"
+      },
+      "openQuickActionsUnread": "{count, plural, one {Snelle acties, # update} other {Snelle acties, # updates}}"
     },
     "breadcrumbLabel": "Broodkruimel",
     "crumbs": {
@@ -3580,5 +3588,31 @@
     "logInToReview": "Log in om een review te schrijven",
     "notFound": "Puzzel niet gevonden",
     "notFoundSub": "Deze puzzel is mogelijk uit de catalogus verwijderd."
+  },
+  "whatsNew": {
+    "menuLabel": "Wat is er nieuw",
+    "menuLabelUnread": "Wat is er nieuw ({count})",
+    "unreadCount": "{count, plural, =0 {Geen nieuwe updates} one {# nieuwe update} other {# nieuwe updates}}",
+    "announce": "{count, plural, one {# nieuwe update in Wat is er nieuw} other {# nieuwe updates in Wat is er nieuw}}",
+    "new": "Nieuw",
+    "newPrefix": "Nieuw:",
+    "category": {
+      "feature": "Functie",
+      "improvement": "Verbetering",
+      "fix": "Oplossing"
+    },
+    "empty": {
+      "title": "Nog geen updates",
+      "body": "Nieuwe functies en oplossingen verschijnen hier."
+    },
+    "readMore": "Lees meer",
+    "seeAll": "Alle updates bekijken",
+    "modal": {
+      "eyebrow": "Nieuw in JigSwap",
+      "later": "Misschien later"
+    },
+    "tour": {
+      "take": "Doe de rondleiding"
+    }
   }
 }

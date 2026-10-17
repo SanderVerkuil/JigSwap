@@ -134,6 +134,9 @@ export type ShellRouteMeta = {
 export const ROUTE_META: Record<string, ShellRouteMeta> = {
   "/dashboard": { pageKey: "dashboard", variant: "dashboard" },
   "/profile": { pageKey: "profile" },
+  // Top-level like /profile (no crumb row); reached from the sidebar footer, the user menu and the
+  // mobile quick sheet rather than a nav group.
+  "/whats-new": { pageKey: "whatsNew" },
 
   // My Library
   "/library": { pageKey: "library", variant: "landing" },

@@ -295,6 +295,14 @@ export const gateway = {
       api.notifications.pushSubscriptions.unregisterPushSubscription,
   },
 
+  // What's new: the member's own unread entry ids (newest first; entries published before the
+  // account existed are never unread) and tour progress, plus marking entries seen. Unknown ids
+  // are ignored server-side (web/Convex deploy skew); at most 50 ids per markSeen call.
+  whatsNew: {
+    state: api.whatsNew.getWhatsNewState.getWhatsNewState,
+    markSeen: api.whatsNew.markWhatsNewSeen.markWhatsNewSeen,
+  },
+
   // Presence (messages page): heartbeat/list/disconnect consumed by @convex-dev/presence's
   // usePresence hook; used to suppress message notifications for members already viewing.
   presence: {
