@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   buildPickerRows,
   PICK_LIMIT,
+  pickerSearchQuery,
+  pickerSearchResults,
   registerSearch,
   removeLastPick,
   removePick,
@@ -141,6 +143,8 @@ describe("registerSearch", () => {
   it("prefills the trimmed query and carries returnTo", () => {
     expect(registerSearch(" Cats at night ", "/welcome?step=puzzles")).toEqual({
       title: "Cats at night",
+      ean: undefined,
+      upc: undefined,
       returnTo: "/welcome?step=puzzles",
     });
   });
@@ -148,7 +152,89 @@ describe("registerSearch", () => {
   it("leaves out an empty query and a missing returnTo", () => {
     expect(registerSearch("  ", undefined)).toEqual({
       title: undefined,
+      ean: undefined,
+      upc: undefined,
       returnTo: undefined,
     });
+  });
+
+  it("prefills an unknown barcode as the EAN or UPC instead of the title", () => {
+    expect(registerSearch("4 005556 123456", "/q")).toEqual({
+      title: undefined,
+      ean: "4005556123456",
+      upc: undefined,
+      returnTo: "/q",
+    });
+    expect(registerSearch("012345678905", undefined)).toEqual({
+      title: undefined,
+      ean: undefined,
+      upc: "012345678905",
+      returnTo: undefined,
+    });
+  });
+});
+
+describe("pickerSearchQuery", () => {
+  it("runs nothing for a blank term", () => {
+    expect(pickerSearchQuery("   ")).toEqual({
+      searchTerm: null,
+      barcode: null,
+    });
+  });
+
+  it("sends the normalised term to the text search", () => {
+    expect(pickerSearchQuery("  Cats   AT Night ")).toEqual({
+      searchTerm: "cats at night",
+      barcode: null,
+    });
+  });
+
+  it("runs the barcode lookup instead for a 12/13-digit code", () => {
+    expect(pickerSearchQuery("4 005556 123456")).toEqual({
+      searchTerm: null,
+      barcode: "4005556123456",
+    });
+    expect(pickerSearchQuery("012345678905")).toEqual({
+      searchTerm: null,
+      barcode: "012345678905",
+    });
+  });
+
+  it("text-searches an 8-digit code (no EAN-8 in the catalogue)", () => {
+    expect(pickerSearchQuery("12345670")).toEqual({
+      searchTerm: "12345670",
+      barcode: null,
+    });
+  });
+});
+
+describe("pickerSearchResults", () => {
+  const row = (id: string) => ({ aggregateId: id, title: id });
+
+  it("uses the text-search page when no barcode is looked up", () => {
+    expect(
+      pickerSearchResults({
+        barcode: null,
+        barcodeMatch: undefined,
+        page: [row("a"), row("b")],
+      }),
+    ).toEqual([row("a"), row("b")]);
+  });
+
+  it("shows only the barcode match, or nothing when the code is unknown", () => {
+    expect(
+      pickerSearchResults({
+        barcode: "4005556123456",
+        barcodeMatch: row("m"),
+        page: [row("a")],
+      }),
+    ).toEqual([row("m")]);
+    expect(
+      pickerSearchResults({
+        barcode: "4005556123456",
+        barcodeMatch: null,
+        page: [row("a")],
+      }),
+    ).toEqual([]);
   });
 });

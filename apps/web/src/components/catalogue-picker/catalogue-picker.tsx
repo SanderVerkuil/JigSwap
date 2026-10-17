@@ -2,12 +2,16 @@ import { useCurrentMember } from "@/components/dashboard-home/use-current-member
 import { gateway, type Id } from "@/gateway";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+// sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
+import { usePaginatedQuery } from "convex/react";
 import { useDeferredValue, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { CataloguePickerView } from "./catalogue-picker-view";
 import {
   buildPickerRows,
+  pickerSearchQuery,
+  pickerSearchResults,
   removeLastPick,
   removePick,
   setPickForTrade,
@@ -16,21 +20,30 @@ import {
   type Pick,
 } from "./selection";
 
-// How many search results the picker asks for per query.
+// How many search results the picker loads (the first page of the paginated search).
 const SEARCH_LIMIT = 20;
 
-// The catalogue search seam. Today it is the approved-only search-index read
-// (`catalog.puzzleSuggestions`); once the member-gated paginated `catalog/searchCatalog` and the
-// barcode lookup from PR #101 are on main, they replace this one hook and nothing else changes.
+// The catalogue search: the member-gated paginated `catalog.search` for text, or the barcode
+// lookup for a 12/13-digit code, as in the add flow. The picker shows the first page only.
 function useCatalogueSearch(term: string) {
-  const searchTerm = term.trim();
-  const { data, isFetching } = useQuery(
+  const { searchTerm, barcode } = pickerSearchQuery(term);
+  const { results: page, status } = usePaginatedQuery(
+    gateway.catalog.search,
+    searchTerm ? { searchTerm } : "skip",
+    { initialNumItems: SEARCH_LIMIT },
+  );
+  const { data: barcodeMatch, isFetching: barcodeFetching } = useQuery(
     convexQuery(
-      gateway.catalog.puzzleSuggestions,
-      searchTerm ? { searchTerm, limit: SEARCH_LIMIT } : "skip",
+      gateway.catalog.lookupBarcode,
+      barcode ? { code: barcode } : "skip",
     ),
   );
-  return { results: data ?? [], isSearching: !!searchTerm && isFetching };
+  return {
+    results: pickerSearchResults({ barcode, barcodeMatch, page }),
+    isSearching: barcode
+      ? barcodeFetching
+      : !!searchTerm && status === "LoadingFirstPage",
+  };
 }
 
 // The multi-select catalogue picker: search, pick many, optionally offer each for swap, and add

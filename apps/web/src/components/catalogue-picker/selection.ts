@@ -1,6 +1,8 @@
 // Pure selection and row logic for the multi-select CataloguePicker. Kept free of React and
 // Convex so the rules (limit, order, dedupe, owned/pending marks) are unit-tested on their own.
 
+import { catalogueSearchKey, detectBarcode } from "@/lib/catalogue-search";
+
 // Mirrors the backend's MAX_ACQUIRE_BATCH: one `library.acquireCopies` call takes at most 25.
 export const PICK_LIMIT = 25;
 
@@ -117,12 +119,41 @@ export const buildPickerRows = ({
   return [...own, ...found];
 };
 
+// Which catalogue read a term runs, using the add flow's rules: a 12/13-digit code runs the barcode
+// lookup (`catalog.lookupBarcode`) instead of the text search (`catalog.search`), which gets the
+// normalised term; a blank term runs neither.
+export const pickerSearchQuery = (
+  term: string,
+): { searchTerm: string | null; barcode: string | null } => {
+  const key = catalogueSearchKey(term);
+  const barcode = detectBarcode(key);
+  return { searchTerm: key && !barcode ? key : null, barcode };
+};
+
+// The search results the rows are built from: the barcode match alone (none when the code is
+// unknown) while a barcode is looked up, otherwise the text search's loaded page.
+export const pickerSearchResults = <Row>({
+  barcode,
+  barcodeMatch,
+  page,
+}: {
+  barcode: string | null;
+  barcodeMatch: Row | null | undefined;
+  page: readonly Row[];
+}): readonly Row[] => {
+  if (!barcode) return page;
+  return barcodeMatch ? [barcodeMatch] : [];
+};
+
 // "Can't find it? Register it": the search params for the full add form (/my-puzzles/add/new),
-// with the query as the title and a way back to the picker.
-export const registerSearch = (
-  query: string,
-  returnTo: string | undefined,
-) => ({
-  title: query.trim() || undefined,
-  returnTo,
-});
+// with the query as the title (or, for an unknown barcode, as its EAN/UPC, like the add flow) and
+// a way back to the picker.
+export const registerSearch = (query: string, returnTo: string | undefined) => {
+  const { barcode } = pickerSearchQuery(query);
+  return {
+    title: barcode ? undefined : query.trim() || undefined,
+    ean: barcode && barcode.length === 13 ? barcode : undefined,
+    upc: barcode && barcode.length === 12 ? barcode : undefined,
+    returnTo,
+  };
+};
