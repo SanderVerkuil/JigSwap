@@ -79,11 +79,15 @@ export function ThreadView({
   const title = thread
     ? threadSubjectTitle(thread.subject, t, displayName)
     : undefined;
-  // Who wrote the other side's messages, for screen readers: the DM partner's
-  // name (or the anonymous label); exchange titles name the puzzle, not a
-  // person, so those use a generic label.
-  const otherAuthor =
-    thread?.subject.kind === "dm" && title ? title : t("otherMember");
+  // Who wrote the other side's messages, for screen readers: the DM or trading
+  // partner's display name, the anonymous label when they're anonymised, and a
+  // generic label until the inbox row has loaded.
+  const otherMember = thread?.subject.otherMember;
+  const otherAuthor = !otherMember
+    ? t("otherMember")
+    : otherMember.anonymous
+      ? t("anonymous")
+      : displayName(otherMember.member);
 
   // mutateAsync is referentially stable, so the effect deps below behave as before.
   const { mutateAsync: markThreadRead } = useMutation({
