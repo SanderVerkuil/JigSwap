@@ -29,6 +29,6 @@
   "scripts": {
     "convex:dev": "convex dev",
     "convex:deploy": "convex deploy",
-    "type-check": "tsc --noEmit"
+    "type-check": "node ../../node_modules/typescript7/bin/tsc --noEmit"
   }
 }
