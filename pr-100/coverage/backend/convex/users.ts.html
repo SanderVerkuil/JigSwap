@@ -357,7 +357,31 @@
 <a name='L292'></a><a href='#L292'>292</a>
 <a name='L293'></a><a href='#L293'>293</a>
 <a name='L294'></a><a href='#L294'>294</a>
-<a name='L295'></a><a href='#L295'>295</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L295'></a><a href='#L295'>295</a>
+<a name='L296'></a><a href='#L296'>296</a>
+<a name='L297'></a><a href='#L297'>297</a>
+<a name='L298'></a><a href='#L298'>298</a>
+<a name='L299'></a><a href='#L299'>299</a>
+<a name='L300'></a><a href='#L300'>300</a>
+<a name='L301'></a><a href='#L301'>301</a>
+<a name='L302'></a><a href='#L302'>302</a>
+<a name='L303'></a><a href='#L303'>303</a>
+<a name='L304'></a><a href='#L304'>304</a>
+<a name='L305'></a><a href='#L305'>305</a>
+<a name='L306'></a><a href='#L306'>306</a>
+<a name='L307'></a><a href='#L307'>307</a>
+<a name='L308'></a><a href='#L308'>308</a>
+<a name='L309'></a><a href='#L309'>309</a>
+<a name='L310'></a><a href='#L310'>310</a>
+<a name='L311'></a><a href='#L311'>311</a>
+<a name='L312'></a><a href='#L312'>312</a>
+<a name='L313'></a><a href='#L313'>313</a>
+<a name='L314'></a><a href='#L314'>314</a>
+<a name='L315'></a><a href='#L315'>315</a>
+<a name='L316'></a><a href='#L316'>316</a>
+<a name='L317'></a><a href='#L317'>317</a>
+<a name='L318'></a><a href='#L318'>318</a>
+<a name='L319'></a><a href='#L319'>319</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -377,6 +401,28 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">22x</span>
@@ -471,6 +517,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">22x</span>
 <span class="cline-any cline-yes">22x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -651,7 +699,7 @@
 <span class="cline-any cline-yes">25x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { UserJSON } from "@clerk/backend";
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type { EmailAddressJSON, UserJSON } from "@clerk/backend";
 import { normalizeMemberName } from "@jigswap/contracts";
 import { v } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
@@ -668,10 +716,32 @@ import { requireMember } from "./identity/requireMember";
 const toSearchableName = (name?: string, username?: string): string =&gt;
   [name, username].filter(Boolean).join(" ").toLowerCase();
 &nbsp;
+// The UserJSON fields updateOrCreateUser reads. The Clerk webhook passes a full UserJSON; tests
+// pass just these, so the handler's contract is checked against what it actually uses.
+type ClerkUserSync = Pick&lt;
+  UserJSON,
+  | "id"
+  | "first_name"
+  | "last_name"
+  | "username"
+  | "image_url"
+  | "created_at"
+  | "updated_at"
+  | "public_metadata"
+  | "primary_email_address_id"
+&gt; &amp; {
+  email_addresses: (Pick&lt;EmailAddressJSON, "id" | "email_address"&gt; &amp; {
+    verification: Pick&lt;
+      NonNullable&lt;EmailAddressJSON["verification"]&gt;,
+      "status"
+    &gt; | null;
+  })[];
+};
+&nbsp;
 // The Clerk publicMetadata.role, mirrored onto the users row for display (admin users page).
 // Display-only: authorization stays JWT-based (identity/isAdmin) and never reads this field.
 // UserPublicMetadata is an open record, so read the claim defensively.
-const roleOf = (clerkUser: UserJSON): string | undefined =&gt; {
+const roleOf = (clerkUser: ClerkUserSync): string | undefined =&gt; {
   const role = (
     clerkUser.public_metadata as Record&lt;string, unknown&gt; | null | undefined
   )?.role;
@@ -764,7 +834,9 @@ export const getUser = internalQuery({
 // The member's email as Clerk vouches for it: the PRIMARY address (by primary_email_address_id, not
 // array order), and only once Clerk has verified it. Anything else is undefined, so the caller keeps
 // whatever verified email it already stored rather than syncing an address the member may not own.
-const verifiedPrimaryEmailOf = (clerkUser: UserJSON): string | undefined =&gt; {
+const verifiedPrimaryEmailOf = (
+  clerkUser: ClerkUserSync,
+): string | undefined =&gt; {
   const primary = (clerkUser.email_addresses ?? <span class="branch-1 cbranch-no" title="branch not covered" >[])</span>.find(
     (address) =&gt; address.id === clerkUser.primary_email_address_id,
   );
@@ -776,7 +848,7 @@ const verifiedPrimaryEmailOf = (clerkUser: UserJSON): string | undefined =&gt; {
 /** Create a new Clerk user or update existing Clerk user data. */
 export const updateOrCreateUser = internalMutation({
   args: { clerkUser: v.any() }, // no runtime validation, trust Clerk
-  async handler(ctx, { clerkUser }: { clerkUser: UserJSON }) {
+  async handler(ctx, { clerkUser }: { clerkUser: ClerkUserSync }) {
     const userRecord = await userQuery(ctx, clerkUser.id);
 &nbsp;
     // Clerk sends `null` for a missing first/last name; interpolating them directly persisted the
@@ -952,7 +1024,7 @@ export async function userQuery(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-17T15:37:55.919Z
+                at 2026-10-17T16:16:08.806Z
             </div>
         <script src="../prettify.js"></script>
         <script>
