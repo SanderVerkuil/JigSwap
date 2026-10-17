@@ -388,6 +388,49 @@ Current evidence says this won't be needed. The CLI spawns
 and TS 7's `tsc` handles those flags (it listed 1719 files). Stage 5 confirms
 or refutes this. Stage 6 records the outcome.
 
+**Outcome (stage 6): not needed. There is no TS 6 anywhere.** `pnpm why typescript`
+finds one version, `typescript@7.0.2`. The Convex CLI looks for
+`node_modules/@typescript/native/bin/tsc`, then `node_modules/typescript/bin/tsc`, and
+only spawns it (`--version`, then `--project convex/ --listFiles`); it never imports
+`typescript`. A spawn log from `npx convex typecheck` shows it runs the backend's own
+`typescript@7.0.2`.
+
+### Outcome of stage 6 (TS 7 as the only TypeScript)
+
+`typescript` is `7.0.2` in the root, `apps/web` and `packages/backend`. The `typescript7`
+alias is gone, and every `type-check` script is plain `tsc --noEmit` again.
+
+TS-API consumers, re-checked on the stage-6 branch. Method: grep every installed package
+for `require`/`import` of `typescript`, plus anything that spawns `typescript/bin/tsc`.
+
+| Consumer                                                | Result under TS 7 only                                                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| prettier-plugin-organize-imports                        | **Replaced** by `@ianvs/prettier-plugin-sort-imports@4.7.1` (Babel parser, no TS dep). `importOrder: ["<BUILTIN_MODULES>", "^@/", "<THIRD_PARTY_MODULES>", "^[.]"]` mirrors organizeImports (non-relative first, `@/` before packages, relative last). One reformat commit (277 files)                                                           |
+| dependency-cruiser                                      | **`parser: "swc"`**, with `@swc/core` as a root devDependency. `tsPreCompilationDeps` and `tsConfig` are removed: both only work through the TS API, and the base tsconfig has no `paths`. Same graph as under TS 6 (2033 module pairs). An injected value import, `import type` and `export type` from forbidden packages all fail `arch:check` |
+| Stryker `ts-config-preprocessor`                        | **`inPlace: true`** in both stryker configs, which skips the preprocessor. `turbo run mutation --filter=@jigswap/domain`: 97.71% (break threshold 95)                                                                                                                                                                                            |
+| Convex CLI                                              | Works. `npx convex typecheck` runs TS 7 and fails on an injected type error                                                                                                                                                                                                                                                                      |
+| vite, TanStack plugins, vitest, convex-test, `@types/*` | No TS import. Gate and web build green                                                                                                                                                                                                                                                                                                           |
+| tsconfck (via vite-tsconfig-paths)                      | Imports `typescript` only in `parseNative`, which vite-tsconfig-paths calls only with `parseNative: true`. We don't set it. Its `typescript@^5` optional peer is unmet, as it was under TS 6                                                                                                                                                     |
+| convex-helpers, frimousse                               | Optional type-only peers. They resolve to 7.0.2                                                                                                                                                                                                                                                                                                  |
+| oxlint-tsgolint                                         | Ships its own typescript-go binary and has no `typescript` dependency. Type-aware rules still fire (an injected floating promise errors)                                                                                                                                                                                                         |
+| Editors                                                 | VS Code needs the TS 7 extension (`TypeScriptTeam.native-preview`). README and CONTRIBUTING say so                                                                                                                                                                                                                                               |
+
+Differences from organizeImports that we accept: inline `type` specifiers sort after value
+specifiers, blank-line-separated import groups merge into one sorted block, and the blank
+line between a file-header comment and the first import goes away. Unused imports are no
+longer removed on format; oxlint's `no-unused-vars` reports them.
+
+`turbo run type-check --force --concurrency=4` after `rm -rf .turbo`, 3 runs each (ms):
+
+| Run                                       | Base (#94)         | Stage 6            |
+| ----------------------------------------- | ------------------ | ------------------ |
+| type-check gate                           | 2172 / 966 / 950   | 965 / 977 / 953    |
+| `npx convex typecheck` (packages/backend) | 4936 / 4886 / 4905 | 1979 / 1958 / 1982 |
+
+The gate already ran TS 7 through the alias, so its time doesn't change (median 966 vs
+965 ms; the base's first run includes a cold route-tree generation). The Convex deploy
+typecheck was still on TS 6 and gets about 2.5x faster (median 4905 → 1979 ms).
+
 ## Why the dual-TS prototype commit stays on this branch
 
 `chore(tooling): type-check with TypeScript 7 alongside TypeScript 6` stays.
@@ -408,8 +451,8 @@ Measured on the earlier base (`b9fd1550f`), medians of 3:
 | `packages/backend/convex/tsconfig.json`                              | 3693          | 660           |
 | `nx run-many -t type-check --parallel=4 --skip-nx-cache`, end to end | 8642          | 1915          |
 
-Stage 4 collapses this back to a single `typescript@7` and removes the alias
-and the explicit paths.
+Stage 6 collapsed this back to a single `typescript@7` and removed the alias
+and the explicit paths (see "Outcome of stage 6").
 
 ## Not determined
 
