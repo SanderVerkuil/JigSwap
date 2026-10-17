@@ -3315,7 +3315,11 @@
       "photoRemoved": "Foto verwijderd",
       "removeFailed": "Kon de foto niet verwijderen",
       "cancel": "Annuleren",
-      "unsetCover": "Omslag verwijderen"
+      "unsetCover": "Omslag verwijderen",
+      "zoomIn": "Inzoomen",
+      "zoomOut": "Uitzoomen",
+      "resetZoom": "Zoom herstellen",
+      "zoomLevel": "Zoom {percent}%"
     },
     "offerForSwap": "Aanbieden voor ruil",
     "offeredForSwap": "Aangeboden voor ruil",
