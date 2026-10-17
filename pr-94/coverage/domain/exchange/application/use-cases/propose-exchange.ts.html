@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">97.36% </span>
+                <span class="strong">97.43% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>37/38</span>
+                <span class='fraction'>38/39</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">93.54% </span>
+                <span class="strong">93.33% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>29/31</span>
+                <span class='fraction'>28/30</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>5/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>34/34</span>
+                <span class='fraction'>35/35</span>
             </div>
         
             
@@ -178,7 +178,16 @@
 <a name='L113'></a><a href='#L113'>113</a>
 <a name='L114'></a><a href='#L114'>114</a>
 <a name='L115'></a><a href='#L115'>115</a>
-<a name='L116'></a><a href='#L116'>116</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a>
+<a name='L118'></a><a href='#L118'>118</a>
+<a name='L119'></a><a href='#L119'>119</a>
+<a name='L120'></a><a href='#L120'>120</a>
+<a name='L121'></a><a href='#L121'>121</a>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -272,6 +281,18 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -283,12 +304,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
@@ -306,6 +322,7 @@ import {
   ExchangeError,
   ExchangeId,
   ExchangeKind,
+  MemberId,
 } from "../../domain";
 import { ApplicationError } from "../errors";
 import {
@@ -385,6 +402,18 @@ export const makeProposeExchange =
     return ok(exchange.value.id);
   };
 &nbsp;
+// The swap offer rule, shared with the read side that lists a requester's offerable copies: the
+// initiator may offer a copy they own or co-manage through their household — but never the
+// recipient's own copy (a co-manager "swapping" the owner's copy with the owner).
+export const mayOfferCopy = (
+  offered: CopyView,
+  initiatorId: MemberId,
+  recipientId: MemberId,
+): boolean =&gt;
+  (offered.ownerId === initiatorId ||
+    (offered.coManagerIds ?? []).includes(initiatorId)) &amp;&amp;
+  offered.ownerId !== recipientId;
+&nbsp;
 // For a swap the offered copy must exist and be owned (or household-co-managed) by the initiator
 // (the offered copy id lives in the kind-tagged terms).
 const loadOfferedCopy = async (
@@ -398,12 +427,7 @@ const loadOfferedCopy = async (
 &nbsp;
   const offered = await copies.getCopy(offeredCopyId);
   if (!offered) return err(ApplicationError.copyNotFound(offeredCopyId));
-  // The initiator may offer a copy they own or co-manage through their household — but never the
-  // recipient's own copy (a co-manager "swapping" the owner's copy with the owner).
-  const mayOffer =
-    offered.ownerId === cmd.initiatorId ||
-    (offered.coManagerIds ?? []).includes(cmd.initiatorId);
-  if (!mayOffer || offered.ownerId === cmd.recipientId) {
+  if (!mayOfferCopy(offered, cmd.initiatorId, cmd.recipientId)) {
     return err(ApplicationError.offeredCopyNotOwned(offeredCopyId));
   }
   return ok(undefined);
@@ -415,7 +439,7 @@ const loadOfferedCopy = async (
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-17T13:47:58.063Z
+                at 2026-10-17T15:55:45.968Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
