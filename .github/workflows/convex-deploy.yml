@@ -61,11 +61,32 @@ jobs:
       # Start the whats_new notification fan-out for notify:true What's new entries this deploy
       # shipped. Idempotent (one whatsNewPublications row per entry), so it is safe on every
       # deploy and a no-op when nothing is pending. The deploy key selects the same deployment.
+      # Retried (4 attempts, 15s/30s/60s backoff) so one failed call doesn't fail an otherwise
+      # successful deploy; the deploy step itself is never retried. Each attempt's output stays
+      # in the log, and if every attempt fails the job fails with a warning annotation.
       - name: Publish pending What's new notifications
         working-directory: packages/backend
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_DEV }}
-        run: pnpm exec convex run whatsNew/publishPending:publishPending
+        run: |
+          set -o pipefail
+          delays=(15 30 60)
+          for attempt in 1 2 3 4; do
+            echo "--- publishPending attempt ${attempt}/4"
+            status=0
+            pnpm exec convex run whatsNew/publishPending:publishPending || status=$?
+            if [ "$status" -eq 0 ]; then
+              exit 0
+            fi
+            echo "publishPending attempt ${attempt}/4 failed (exit ${status})"
+            if [ "$attempt" -lt 4 ]; then
+              delay=${delays[attempt - 1]}
+              echo "Retrying in ${delay}s"
+              sleep "$delay"
+            fi
+          done
+          echo "::warning title=publishPending failed::The Convex deploy succeeded, but whatsNew/publishPending failed after 4 attempts. publishPending is idempotent, so re-running this job is safe."
+          exit 1
 
   production:
     name: Deploy production deployment
@@ -105,8 +126,29 @@ jobs:
       # Start the whats_new notification fan-out for notify:true What's new entries this deploy
       # shipped. Idempotent (one whatsNewPublications row per entry), so it is safe on every
       # deploy and a no-op when nothing is pending. The deploy key selects the same deployment.
+      # Retried (4 attempts, 15s/30s/60s backoff) so one failed call doesn't fail an otherwise
+      # successful deploy; the deploy step itself is never retried. Each attempt's output stays
+      # in the log, and if every attempt fails the job fails with a warning annotation.
       - name: Publish pending What's new notifications
         working-directory: packages/backend
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_PROD }}
-        run: pnpm exec convex run whatsNew/publishPending:publishPending
+        run: |
+          set -o pipefail
+          delays=(15 30 60)
+          for attempt in 1 2 3 4; do
+            echo "--- publishPending attempt ${attempt}/4"
+            status=0
+            pnpm exec convex run whatsNew/publishPending:publishPending || status=$?
+            if [ "$status" -eq 0 ]; then
+              exit 0
+            fi
+            echo "publishPending attempt ${attempt}/4 failed (exit ${status})"
+            if [ "$attempt" -lt 4 ]; then
+              delay=${delays[attempt - 1]}
+              echo "Retrying in ${delay}s"
+              sleep "$delay"
+            fi
+          done
+          echo "::warning title=publishPending failed::The Convex deploy succeeded, but whatsNew/publishPending failed after 4 attempts. publishPending is idempotent, so re-running this job is safe."
+          exit 1
