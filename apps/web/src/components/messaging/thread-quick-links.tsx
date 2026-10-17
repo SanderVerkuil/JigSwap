@@ -70,7 +70,8 @@ export function ThreadQuickLinks({ thread }: { thread: InboxThread }) {
             {links.map(({ kind, href }) => {
               const { icon: Icon, label } = LINK_META[kind];
               return (
-                <DropdownMenuItem key={kind} asChild>
+                // The menu only exists below md: keep each item a 44px target.
+                <DropdownMenuItem key={kind} asChild className="min-h-11">
                   <Link href={href}>
                     <Icon aria-hidden />
                     {t(label)}
