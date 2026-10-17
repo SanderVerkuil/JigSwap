@@ -26,7 +26,7 @@ import {
 import { useState } from "react";
 import { useTranslations } from "use-intl";
 import { MobileQuickSheet } from "./mobile-quick-sheet";
-import { getRouteMeta } from "./route-meta";
+import { getRouteMeta, isImmersiveMobileRoute } from "./route-meta";
 
 type TabKey = "home" | "library" | "swaps" | "community";
 
@@ -71,6 +71,9 @@ export function MobileTabBar() {
     (exchange) =>
       exchange.userRole === "owner" && exchange.status === "proposed",
   ).length;
+
+  // The open thread / new-conversation pane owns the phone screen (composer above the keyboard).
+  if (isImmersiveMobileRoute(pathname)) return null;
 
   return (
     <>
