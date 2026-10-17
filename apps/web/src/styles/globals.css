@@ -70,7 +70,9 @@
   --card-foreground: oklch(0.965 0.01 286);
   --popover: oklch(0.285 0.05 285);
   --popover-foreground: oklch(0.965 0.01 286);
-  --primary: oklch(0.62 0.21 282);
+  /* L 0.57 (was 0.62): primary-foreground on primary reaches 4.68:1 (was 3.80:1). The ring keeps
+     the lighter 0.62, so focus rings stay 4.24:1 on the background. */
+  --primary: oklch(0.57 0.21 282);
   --primary-foreground: oklch(0.99 0.005 286);
   --secondary: oklch(0.33 0.05 285);
   --secondary-foreground: oklch(0.965 0.01 286);
@@ -85,7 +87,9 @@
   --ring: oklch(0.62 0.21 282);
 
   /* JigSwap custom colors for dark mode */
-  --jigsaw-primary: #7560f0;
+  /* oklch L 0.57 (was #7560f0, L 0.588), same hue and chroma: white text on it reaches 4.84:1
+     (was 4.48:1). */
+  --jigsaw-primary: #705aea;
   --jigsaw-primary-accent: #ec4899;
   --jigsaw-secondary: #19c316;
   --jigsaw-success: #34d399;

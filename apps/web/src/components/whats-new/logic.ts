@@ -66,7 +66,7 @@ export function pickHighlightEntry<
 /**
  * The highlight modal's priority rule (spec §A6, D9): it is the lowest-priority surface, so it
  * opens only when nothing else is on screen or pending, at most once per session, and never on
- * /whats-new itself.
+ * /whats-new itself or the quick start flow (/welcome).
  */
 export function canOpenHighlight(state: {
   pathname: string;
@@ -77,11 +77,13 @@ export function canOpenHighlight(state: {
   /** Any Radix dialog or sheet is open. */
   dialogOpen: boolean;
 }): boolean {
-  const onWhatsNew = state.pathname.replace(/\/+$/, "") === "/whats-new";
+  const path = state.pathname.replace(/\/+$/, "");
+  // Never on the changelog itself, nor over the quick start flow (even between its steps).
+  const excluded = path === "/whats-new" || path === "/welcome";
   return (
     state.hasCandidate &&
     !state.shownThisSession &&
-    !onWhatsNew &&
+    !excluded &&
     !state.surfaceBusy &&
     !state.dialogOpen
   );

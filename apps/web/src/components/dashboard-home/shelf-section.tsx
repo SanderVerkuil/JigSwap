@@ -16,6 +16,14 @@ import { useTranslations } from "use-intl";
 import { SectionHead } from "./section-head";
 import { useCurrentMember } from "./use-current-member";
 
+// The Shelf heading takes focus when the quick setup card above it is hidden (spec §5.7).
+export const SHELF_HEADING_ID = "dashboard-shelf-heading";
+const SHELF_HEADING_PROPS = {
+  id: SHELF_HEADING_ID,
+  tabIndex: -1,
+  className: "focus-visible:outline-none",
+};
+
 type OwnedCopy = FunctionReturnType<
   typeof gateway.library.ownedByOwner
 >[number];
@@ -132,7 +140,11 @@ export function ShelfSection() {
   if (loading) {
     return (
       <section>
-        <SectionHead title={t("title")} icon={BookOpen} />
+        <SectionHead
+          title={t("title")}
+          icon={BookOpen}
+          headingProps={SHELF_HEADING_PROPS}
+        />
         <div className="grid items-center gap-10 lg:grid-cols-[1fr_252px]">
           <Skeleton className="h-44 w-full" />
           <div className="space-y-3">
@@ -186,6 +198,7 @@ export function ShelfSection() {
       <SectionHead
         title={t("title")}
         icon={BookOpen}
+        headingProps={SHELF_HEADING_PROPS}
         meta={
           owned.length > 0
             ? t("meta", { owned: owned.length, forTrade })

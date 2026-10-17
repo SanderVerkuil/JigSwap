@@ -104,6 +104,11 @@ describe("canOpenHighlight (priority rule)", () => {
     expect(canOpenHighlight({ ...idle, pathname: "/whats-new/" })).toBe(false);
   });
 
+  it("never opens over the quick start flow at /welcome", () => {
+    expect(canOpenHighlight({ ...idle, pathname: "/welcome" })).toBe(false);
+    expect(canOpenHighlight({ ...idle, pathname: "/welcome/" })).toBe(false);
+  });
+
   it("defers to a task-flow prompt or a running tour", () => {
     expect(canOpenHighlight({ ...idle, surfaceBusy: true })).toBe(false);
   });
