@@ -1766,7 +1766,6 @@
     "seeAll": "See all notifications",
     "empty": "No notifications yet",
     "emptyHint": "Trade activity, reviews, and goal milestones will show up here.",
-    "unread": "Unread",
     "unreadStat": "Unread",
     "filterAll": "All",
     "unreadOnly": "Unread only",
@@ -1981,7 +1980,148 @@
       "household_invite_accepted": "When someone accepts your household invite.",
       "whats_new": "When a new feature or change to JigSwap is announced."
     },
-    "pushServiceUnreachable": "Your browser couldn't reach its push service. Some privacy browsers block or remove it — Brave disables it by default (enable 'Use Google services for push messaging' in Settings), and de-Googled Chromium builds like Helium strip it out. Firefox, Chrome, or Edge will work."
+    "pushServiceUnreachable": "Your browser couldn't reach its push service. Some privacy browsers block or remove it — Brave disables it by default (enable 'Use Google services for push messaging' in Settings), and de-Googled Chromium builds like Helium strip it out. Firefox, Chrome, or Edge will work.",
+    "rich": {
+      "formerMember": "Former member",
+      "unread": "Unread, ",
+      "unavailable": "No longer available",
+      "loadMore": "Load more",
+      "moreActions": "More actions for {actor}",
+      "undo": "Undo",
+      "followedToast": "You now follow {actor}.",
+      "requestedToast": "Follow request sent to {actor}.",
+      "undoError": "Couldn't undo. Try again.",
+      "context": {
+        "reason": "Reason: {reason}",
+        "rating": "{rating} out of 5 stars",
+        "messagePreview": "“{preview}”"
+      },
+      "requester": {
+        "viewProfile": "View profile",
+        "viewProfileAria": "View {actor}'s profile summary",
+        "memberSince": "Member since {date}",
+        "public": "Public profile",
+        "private": "Private profile",
+        "openProfile": "Open profile"
+      },
+      "trade_request": {
+        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> wants to trade for <b>{puzzle}</b>.} other {<b>{actor}</b> wants to trade for one of your puzzles.}}"
+      },
+      "trade_accepted": {
+        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> accepted your trade for <b>{puzzle}</b>.} other {<b>{actor}</b> accepted your trade request.}}"
+      },
+      "trade_declined": {
+        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> declined your trade for <b>{puzzle}</b>.} other {<b>{actor}</b> declined your trade request.}}"
+      },
+      "trade_cancelled": {
+        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> cancelled the trade for <b>{puzzle}</b>.} other {<b>{actor}</b> cancelled the trade.}}"
+      },
+      "trade_completed": {
+        "sentence": "Your trade with <b>{actor}</b> is complete."
+      },
+      "exchange_disputed": {
+        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> flagged an issue with your trade for <b>{puzzle}</b>.} other {<b>{actor}</b> flagged an issue with your trade.}}"
+      },
+      "message_received": {
+        "sentence": "<b>{actor}</b> sent you a message.",
+        "actions": {
+          "reply": "Reply",
+          "replyAria": "Reply to {actor}"
+        }
+      },
+      "review_received": {
+        "sentence": "<b>{actor}</b> reviewed your trade."
+      },
+      "goal_achieved": {
+        "sentence": "{hasGoal, select, yes {You reached <b>{goal}</b>!} other {You reached one of your goals!}}"
+      },
+      "puzzle_approved": {
+        "sentence": "{hasPuzzle, select, yes {Your puzzle <b>{puzzle}</b> was approved.} other {Your puzzle submission was approved.}}"
+      },
+      "puzzle_rejected": {
+        "sentence": "{hasPuzzle, select, yes {Your puzzle <b>{puzzle}</b> was rejected.} other {Your puzzle submission was rejected.}}"
+      },
+      "proposal_approved": {
+        "sentence": "{hasPuzzle, select, yes {Your suggested edit to <b>{puzzle}</b> is now live.} other {Your suggested edit is now live.}}"
+      },
+      "proposal_rejected": {
+        "sentence": "{hasPuzzle, select, yes {Your suggested edit to <b>{puzzle}</b> was declined.} other {Your suggested edit was declined.}}"
+      },
+      "photo_removed": {
+        "sentence": "{hasPuzzle, select, yes {A moderator removed a photo from <b>{puzzle}</b>.} other {A moderator removed one of your puzzle photos.}}"
+      },
+      "admin_proposal_filed": {
+        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> suggested an edit to <b>{puzzle}</b>.} other {<b>{actor}</b> suggested an edit to a catalogue puzzle.}}"
+      },
+      "admin_definition_submitted": {
+        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> submitted <b>{puzzle}</b> for moderation.} other {<b>{actor}</b> submitted a new puzzle for moderation.}}"
+      },
+      "new_follower": {
+        "sentence": "<b>{actor}</b> started following you.",
+        "sentenceGrouped": "{others, plural, =0 {<b>{actor}</b> and <b>{actor2}</b> followed you.} one {<b>{actor}</b>, <b>{actor2}</b> and # other followed you.} other {<b>{actor}</b>, <b>{actor2}</b> and # others followed you.}}",
+        "actions": {
+          "followBack": "Follow back",
+          "followBackAria": "Follow back {actor}",
+          "followBackError": "Couldn't follow {actor}. Try again."
+        },
+        "resolved": {
+          "following_each_other": "You follow each other",
+          "following": "Following",
+          "requested": "Requested"
+        }
+      },
+      "follow_request_received": {
+        "sentence": "<b>{actor}</b> asked to follow you.",
+        "actions": {
+          "approve": "Approve",
+          "approveAria": "Approve {actor}'s follow request",
+          "approveError": "Couldn't approve {actor}'s request. Try again.",
+          "approveAndFollowBack": "Approve & follow back",
+          "approveAndFollowBackAria": "Approve {actor}'s follow request and follow back",
+          "approveAndFollowBackError": "Couldn't approve {actor}'s request. Try again.",
+          "decline": "Decline",
+          "declineAria": "Decline {actor}'s follow request",
+          "declineError": "Couldn't decline {actor}'s request. Try again."
+        },
+        "resolved": {
+          "approved": "Approved",
+          "declined": "Declined",
+          "expired": "Request withdrawn"
+        }
+      },
+      "follow_request_approved": {
+        "sentence": "<b>{actor}</b> approved your follow request.",
+        "actions": {
+          "followBack": "Follow back",
+          "followBackAria": "Follow back {actor}",
+          "followBackError": "Couldn't follow {actor}. Try again."
+        },
+        "resolved": {
+          "following_each_other": "You follow each other",
+          "following": "Following",
+          "requested": "Requested"
+        }
+      },
+      "household_invite_received": {
+        "sentence": "<b>{actor}</b> invited you to their household.",
+        "actions": {
+          "accept": "Accept",
+          "acceptAria": "Accept {actor}'s household invite",
+          "acceptError": "Couldn't accept {actor}'s invite. Try again.",
+          "decline": "Decline",
+          "declineAria": "Decline {actor}'s household invite",
+          "declineError": "Couldn't decline {actor}'s invite. Try again."
+        },
+        "resolved": {
+          "joined": "Joined",
+          "declined": "Declined",
+          "expired": "Invite expired or withdrawn"
+        }
+      },
+      "household_invite_accepted": {
+        "sentence": "<b>{actor}</b> joined your household."
+      }
+    }
   },
   "solving": {
     "title": "Solving",
