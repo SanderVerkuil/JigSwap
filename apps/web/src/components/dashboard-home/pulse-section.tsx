@@ -9,13 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useRelativeTime } from "@/hooks/use-relative-time";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import { ArrowLeftRight, Bell, Package, Target } from "lucide-react";
-import { useFormatter, useTranslations } from "use-intl";
+import { useTranslations } from "use-intl";
 import { SectionHead } from "./section-head";
 import { useCurrentMember } from "./use-current-member";
 
@@ -311,7 +312,7 @@ function ActivityRow({
   isLast: boolean;
 }) {
   const t = useTranslations("dashboard.pulse.latest");
-  const format = useFormatter();
+  const relativeTime = useRelativeTime();
   const displayName = useMemberDisplayName();
 
   const isMe = entry.memberId === me._id;
@@ -361,7 +362,7 @@ function ActivityRow({
           />
         )}
         <span className="mt-0.5 block text-xs">
-          {format.relativeTime(entry.occurredAt)}
+          {relativeTime(entry.occurredAt)}
         </span>
       </div>
     </div>

@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
+import { useRelativeTime } from "@/hooks/use-relative-time";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
@@ -13,7 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import { CircleCheck, Plus, Search } from "lucide-react";
 import type { ReactNode } from "react";
-import { useFormatter, useTranslations } from "use-intl";
+import { useTranslations } from "use-intl";
 import { useCurrentMember } from "./use-current-member";
 
 type ExchangeRow = FunctionReturnType<typeof gateway.exchange.forUser>[number];
@@ -104,7 +105,7 @@ function Headline({
 // The first pending incoming request, surfaced as an actionable banner row.
 function PendingRequestBanner({ exchange }: { exchange: ExchangeRow }) {
   const t = useTranslations("dashboard.pendingBanner");
-  const format = useFormatter();
+  const relativeTime = useRelativeTime();
   const displayName = useMemberDisplayName();
 
   const requester = exchange.requester;
@@ -154,7 +155,7 @@ function PendingRequestBanner({ exchange }: { exchange: ExchangeRow }) {
       </Avatar>
       <div className="text-muted-foreground min-w-0 flex-1 text-sm">
         {message}
-        <span> · {format.relativeTime(exchange.createdAt)}</span>
+        <span> · {relativeTime(exchange.createdAt)}</span>
       </div>
       <div className="flex items-center gap-2">
         <Button size="sm" asChild>

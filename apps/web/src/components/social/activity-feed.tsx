@@ -3,11 +3,12 @@
 import { EmptyState } from "@/components/community/primitives";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
+import { useRelativeTime } from "@/hooks/use-relative-time";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { useFormatter, useTranslations } from "use-intl";
+import { useTranslations } from "use-intl";
 import { ActivityBatchCovers } from "./activity-batch-covers";
 import { ACTIVITY_META, isKnownActivityKind } from "./activity-feed-meta";
 
@@ -18,7 +19,7 @@ import { ACTIVITY_META, isKnownActivityKind } from "./activity-feed-meta";
 export function ActivityFeed() {
   const t = useTranslations("activity");
   const displayName = useMemberDisplayName();
-  const format = useFormatter();
+  const relativeTime = useRelativeTime();
   const { data: feed } = useQuery(convexQuery(gateway.social.activityFeed, {}));
   const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
 
@@ -73,7 +74,7 @@ export function ActivityFeed() {
                 />
               )}
               <p className="text-muted-foreground text-xs">
-                {format.relativeTime(new Date(entry.occurredAt))}
+                {relativeTime(new Date(entry.occurredAt))}
               </p>
             </div>
           </div>

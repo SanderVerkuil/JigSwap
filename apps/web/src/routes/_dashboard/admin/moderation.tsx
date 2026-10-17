@@ -26,6 +26,7 @@ import {
   UNDERLINE_TABS_LIST_CLASS,
 } from "@/components/ui/underline-tabs";
 import { gateway } from "@/gateway";
+import { useRelativeTime } from "@/hooks/use-relative-time";
 import { pageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -34,7 +35,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Flag, History, Inbox } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useFormatter, useTranslations } from "use-intl";
+import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/admin/moderation")({
   head: ({ match }) => ({
@@ -50,7 +51,7 @@ export const Route = createFileRoute("/_dashboard/admin/moderation")({
 function ModerationPage() {
   const t = useTranslations("admin.moderation");
   const tAdmin = useTranslations("admin");
-  const format = useFormatter();
+  const relativeTime = useRelativeTime();
 
   const { data: pending } = useQuery(convexQuery(gateway.catalog.pending, {}));
   // One subscription serves both the tab's count pill and the tab body.
@@ -234,7 +235,7 @@ function ModerationPage() {
                     </span>
                   </span>
                   <span className="shrink-0 text-xs text-muted-foreground">
-                    {format.relativeTime(submission.createdAt)}
+                    {relativeTime(submission.createdAt)}
                   </span>
                 </>
               )}
@@ -288,7 +289,7 @@ function ModerationPage() {
                     </span>
                   </span>
                   <span className="shrink-0 text-xs text-muted-foreground">
-                    {format.relativeTime(photo.uploadedAt)}
+                    {relativeTime(photo.uploadedAt)}
                   </span>
                 </>
               )}

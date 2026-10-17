@@ -25,6 +25,7 @@ import {
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { gateway, Id } from "@/gateway";
+import { useRelativeTime } from "@/hooks/use-relative-time";
 import { pageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -42,7 +43,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useFormatter, useTranslations } from "use-intl";
+import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/collections/$id/")({
   head: ({ match }) => ({
@@ -59,7 +60,7 @@ function CollectionPending() {
 
 function CollectionDetailPage() {
   const { id } = Route.useParams();
-  const format = useFormatter();
+  const relativeTime = useRelativeTime();
   const t = useTranslations("collections");
   const tCommon = useTranslations("common");
   const tPuzzles = useTranslations("puzzles");
@@ -313,7 +314,7 @@ function CollectionDetailPage() {
         </div>
         <p className="text-muted-foreground shrink-0 text-xs">
           {t("updatedAgo", {
-            time: format.relativeTime(new Date(collection.updatedAt)),
+            time: relativeTime(new Date(collection.updatedAt)),
           })}
         </p>
       </div>

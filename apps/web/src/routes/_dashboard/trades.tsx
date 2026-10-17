@@ -11,6 +11,7 @@ import { ReputationBadge } from "@/components/reputation/reputation-badge";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
+import { useRelativeTime } from "@/hooks/use-relative-time";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { validateTradesSearch } from "@/lib/trades-search";
@@ -29,7 +30,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useFormatter, useTranslations } from "use-intl";
+import { useTranslations } from "use-intl";
 
 type ExchangeStatus =
   "proposed" | "accepted" | "rejected" | "completed" | "cancelled" | "disputed";
@@ -255,7 +256,7 @@ function ExchangeListRow({
   const t = useTranslations("trades");
   const displayName = useMemberDisplayName();
   const tCommon = useTranslations("common");
-  const format = useFormatter();
+  const relativeTime = useRelativeTime();
   const [open, setOpen] = useState(focused);
   const rowRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -305,7 +306,7 @@ function ExchangeListRow({
             {t("rowMeta", {
               direction: t(`direction.${direction}`),
               who,
-              when: format.relativeTime(exchange.createdAt),
+              when: relativeTime(exchange.createdAt),
             })}
           </div>
         </div>
@@ -551,7 +552,7 @@ function PuzzleSummary({
 function BorrowedList({ borrowed }: { borrowed: BorrowedLoan[] | undefined }) {
   const t = useTranslations("lending");
   const displayName = useMemberDisplayName();
-  const format = useFormatter();
+  const relativeTime = useRelativeTime();
   const returnLoan = useMutation({
     mutationFn: useConvexMutation(gateway.lending.returnLoan),
   });
@@ -606,7 +607,7 @@ function BorrowedList({ borrowed }: { borrowed: BorrowedLoan[] | undefined }) {
               })}{" "}
               ·{" "}
               {t("openedRelative", {
-                when: format.relativeTime(loan.openedAt),
+                when: relativeTime(loan.openedAt),
               })}
             </div>
           </div>
