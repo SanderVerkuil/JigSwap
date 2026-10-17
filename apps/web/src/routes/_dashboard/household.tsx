@@ -124,6 +124,7 @@ function HouseholdPage() {
             <Button
               variant="brand"
               data-tour="household-main"
+              data-tour-action=""
               disabled={create.isPending}
               onClick={() => create.mutate({})}
             >
