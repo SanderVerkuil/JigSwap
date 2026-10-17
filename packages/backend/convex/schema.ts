@@ -377,8 +377,6 @@ export default defineSchema({
     // finished completion always carries both. Existing rows already hold values.
     endDate: v.optional(v.number()),
     completionTimeMinutes: v.optional(v.number()),
-    rating: v.optional(v.number()), // 1-5 stars
-    review: v.optional(v.string()),
     notes: v.optional(v.string()),
     photos: v.array(v.id("_storage")), // Array of photo URLs (max 5)
     // Per-solve record: were all pieces present this time? Optional so legacy rows and
@@ -415,7 +413,6 @@ export default defineSchema({
     .index("by_user_puzzle", ["userId", "puzzleId"])
     .index("by_user_owned_puzzle", ["userId", "ownedPuzzleId"])
     .index("by_completion_date", ["endDate"])
-    .index("by_rating", ["rating"])
     .index("by_aggregate_id", ["aggregateId"])
     .index("by_user_completed", ["userId", "isCompleted"]),
 
@@ -910,18 +907,17 @@ export default defineSchema({
     .index("by_aggregate_id", ["aggregateId"]),
 
   // Social: a community comment on a PUZZLE DEFINITION (shared across every owned copy of that
-  // puzzle). A lightweight, append-only post: trimmed text + optional 1–5 rating + author + when.
+  // puzzle). A lightweight, append-only post: trimmed text + author + when.
   // aggregateId is the CommentId; `by_puzzle` backs the newest-first read keyed on puzzleId.
   puzzleComments: defineTable({
     aggregateId: v.optional(v.string()),
     puzzleId: v.id("puzzles"),
-    // Set only for COPY-scoped comments (the owner's notes/rating on one owned copy). Absent rows
+    // Set only for COPY-scoped comments (the owner's notes on one owned copy). Absent rows
     // are community reviews of the shared puzzle definition. Copy-scoped rows are listed by_copy and
-    // excluded from the definition's community reviews/rating.
+    // excluded from the definition's community reviews.
     copyId: v.optional(v.id("ownedPuzzles")),
     authorId: v.id("users"),
     text: v.string(),
-    rating: v.optional(v.number()),
     createdAt: v.number(),
   })
     .index("by_puzzle", ["puzzleId"])

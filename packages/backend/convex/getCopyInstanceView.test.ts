@@ -464,13 +464,12 @@ describe("getCopyInstanceView rich detail", () => {
     await setVisibility(t, solver, "public");
 
     await t.run(async (ctx) => {
-      // Viewer completion #1: 5-day solve. A legacy per-solve rating must NOT feed any stat.
+      // Viewer completion #1: 5-day solve.
       await ctx.db.insert("completions", {
         userId: viewer,
         ownedPuzzleId: copy,
         startDate: now,
         endDate: now + 5 * DAY,
-        rating: 4,
         photos: [],
         isCompleted: true,
         createdAt: now,
@@ -482,13 +481,12 @@ describe("getCopyInstanceView rich detail", () => {
         ownedPuzzleId: copy,
         startDate: now,
         endDate: now + 2 * DAY,
-        rating: 5,
         photos: [],
         isCompleted: true,
         createdAt: now,
         updatedAt: now,
       });
-      // Another solver's completion: 10-day solve, unrated (no rating).
+      // Another solver's completion: 10-day solve.
       await ctx.db.insert("completions", {
         userId: solver,
         ownedPuzzleId: copy,
@@ -707,14 +705,13 @@ describe("getCopyInstanceView rich detail", () => {
         createdAt: now,
         updatedAt: now,
       });
-      // A RATED completion on the copy must NOT move the community aggregate — the breakdown is
+      // A completion on the copy must NOT move the community aggregate — the breakdown is
       // sourced from puzzleReviews only.
       await ctx.db.insert("completions", {
         userId: viewer,
         ownedPuzzleId: copy,
         startDate: now,
         endDate: now + DAY,
-        rating: 2,
         photos: [],
         isCompleted: true,
         createdAt: now,
@@ -913,14 +910,11 @@ describe("getCopyInstanceView rich detail", () => {
     await setVisibility(t, solver, "public");
 
     await t.run(async (ctx) => {
-      // A legacy per-solve rating/review on the row must NOT surface — per-solve reviews are gone.
       await ctx.db.insert("completions", {
         userId: viewer,
         ownedPuzzleId: copy,
         startDate: now,
         endDate: now + 3 * DAY,
-        rating: 5,
-        review: "Loved it",
         photos: [],
         isCompleted: true,
         createdAt: now,
@@ -967,8 +961,6 @@ describe("getCopyInstanceView rich detail", () => {
       expect(entry).not.toHaveProperty("rating");
       expect(entry).not.toHaveProperty("note");
     }
-    // "Loved it" never leaves the server anywhere in the payload.
-    expect(JSON.stringify(view)).not.toContain("Loved it");
   });
 
   test("view exposes the copy's puzzleId for the puzzle-page nav link", async () => {

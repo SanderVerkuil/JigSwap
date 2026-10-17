@@ -134,7 +134,7 @@ export const followRequestToRow = (
 
 // Comment aggregate -> row payload. Domain CommentId becomes `aggregateId`; the PuzzleDefinitionId
 // it carries is the catalog puzzle's Convex `_id` (resolved from the owned copy in the mutation),
-// re-branded to the `puzzles` FK column. A cleared rating is stored as undefined (column absent).
+// re-branded to the `puzzles` FK column.
 export const commentToRow = (comment: Comment): CommentRow => {
   const state = comment.toState();
   return {
@@ -144,7 +144,6 @@ export const commentToRow = (comment: Comment): CommentRow => {
     copyId: state.copyId as unknown as Id<"ownedPuzzles"> | undefined,
     authorId: state.authorId as unknown as Id<"users">,
     text: state.text.value,
-    rating: state.rating?.value,
     createdAt: state.createdAt.getTime(),
   };
 };

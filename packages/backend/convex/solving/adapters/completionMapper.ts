@@ -16,17 +16,10 @@ import type { Doc, Id } from "../../_generated/dataModel";
 // The insert/patch payload for the completion row (minus Convex-managed `_id`/`_creationTime`).
 // The FK columns `puzzleId`/`ownedPuzzleId` are excluded here because the mapper is pure and
 // cannot resolve the real `puzzles._id`/`ownedPuzzles._id` from the aggregateIds — the
-// repository resolves and supplies them. The legacy `rating`/`review` columns are excluded too:
-// reviews live in the `puzzleReviews`/`copyReviews` tables now, never on the completion row.
+// repository resolves and supplies them.
 export type CompletionRow = Omit<
   Doc<"completions">,
-  | "_id"
-  | "_creationTime"
-  | "puzzleId"
-  | "ownedPuzzleId"
-  | "copySnapshot"
-  | "rating"
-  | "review"
+  "_id" | "_creationTime" | "puzzleId" | "ownedPuzzleId" | "copySnapshot"
 >;
 
 // Row -> aggregate. The row MUST carry an aggregateId (only domain-written rows do); callers

@@ -28,7 +28,7 @@ User-puzzle relationships with visibility settings and ownership status.
 
 #### `completions`
 
-Detailed completion records with timing, rating, notes, and photos.
+Detailed completion records with timing, notes, and photos.
 
 ```typescript
 {
@@ -37,8 +37,6 @@ Detailed completion records with timing, rating, notes, and photos.
   startDate: number,
   endDate: number,
   completionTimeMinutes: number,
-  rating?: number, // 1-5 stars
-  review?: string,
   notes?: string,
   photos: string[], // Array of photo URLs (max 5)
   isCompleted: boolean, // true = completed, false = in progress
@@ -572,7 +570,6 @@ The following indexes are available for efficient querying:
 - `completions.by_puzzle` - Get all completions for a puzzle
 - `completions.by_user_puzzle` - Get specific user-puzzle completions
 - `completions.by_completion_date` - Sort by completion date
-- `completions.by_rating` - Filter by rating
 - `categories.by_user` - Get all categories for a user
 - `categories.by_user_name` - Get specific category by name
 - `goals.by_user` - Get all goals for a user
