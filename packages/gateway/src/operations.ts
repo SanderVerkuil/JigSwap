@@ -297,6 +297,9 @@ export const gateway = {
     unreadCount: api.notifications.unreadCount.unreadCount,
     markRead: api.notifications.markNotificationRead.markNotificationRead,
     markAllRead: api.notifications.markAllRead.markAllRead,
+    // One inline action on a view ({ notificationId, action }); targets come from the stored row,
+    // stale actions throw NOTIFICATION_ACTION_STALE with the current resolvedAs.
+    act: api.notifications.act.act,
     preferences: api.notifications.getMyPreferences.getMyPreferences,
     updatePreference:
       api.notifications.updateNotificationPreference

@@ -242,6 +242,7 @@ import type * as library_transferOnSettlement from "../library/transferOnSettlem
 import type * as library_updateCollection from "../library/updateCollection.js";
 import type * as library_updateCopyDetails from "../library/updateCopyDetails.js";
 import type * as library_updateCopySharing from "../library/updateCopySharing.js";
+import type * as notifications_act from "../notifications/act.js";
 import type * as notifications_adapters_ahasendEmailSender from "../notifications/adapters/ahasendEmailSender.js";
 import type * as notifications_adapters_channels_emailChannel from "../notifications/adapters/channels/emailChannel.js";
 import type * as notifications_adapters_channels_inAppChannel from "../notifications/adapters/channels/inAppChannel.js";
@@ -649,6 +650,7 @@ declare const fullApi: ApiFromModules<{
   "library/updateCollection": typeof library_updateCollection;
   "library/updateCopyDetails": typeof library_updateCopyDetails;
   "library/updateCopySharing": typeof library_updateCopySharing;
+  "notifications/act": typeof notifications_act;
   "notifications/adapters/ahasendEmailSender": typeof notifications_adapters_ahasendEmailSender;
   "notifications/adapters/channels/emailChannel": typeof notifications_adapters_channels_emailChannel;
   "notifications/adapters/channels/inAppChannel": typeof notifications_adapters_channels_inAppChannel;
