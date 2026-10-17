@@ -6,6 +6,9 @@ import { CopyId, MemberId } from "../../../domain";
 export interface CopyView {
   readonly id: CopyId;
   readonly ownerId: MemberId;
+  // Members other than the owner who may act as if they owned this copy (household members the
+  // owner left at `manage`). Absent ⇒ nobody but the owner.
+  readonly coManagerIds?: readonly MemberId[];
   readonly availability: {
     readonly forTrade: boolean;
     readonly forSale: boolean;

@@ -268,6 +268,14 @@ export default defineSchema({
       }),
     ),
 
+    // --- Household ---
+    // What the owner lets their household do with this copy: "manage" (act as co-owner) or "view".
+    // ABSENT means the default ("manage") — existing copies need no backfill. Cleared when ownership
+    // moves (the permission was the previous owner's choice). See households design spec.
+    householdPermission: v.optional(
+      v.union(v.literal("manage"), v.literal("view")),
+    ),
+
     // --- Timestamps ---
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -787,6 +795,8 @@ export default defineSchema({
       v.literal("new_follower"),
       v.literal("follow_request_received"),
       v.literal("follow_request_approved"),
+      v.literal("household_invite_received"),
+      v.literal("household_invite_accepted"),
     ),
     // Legacy pre-rendered English copy. Optional since notifications went structured: new rows
     // store `params` and the edges render copy (web via i18n keys, email via @jigswap/email).
@@ -1006,6 +1016,40 @@ export default defineSchema({
     .index("by_target_status", ["targetId", "status"])
     .index("by_requester_target", ["requesterId", "targetId"])
     .index("by_aggregate_id", ["aggregateId"]),
+
+  // Household context: members who pool their libraries (copies stay owned by whoever added them;
+  // household visibility/management is derived from membership at read time). A member belongs to
+  // at most one household — enforced by the use cases via `householdMembers.by_member`.
+  households: defineTable({
+    aggregateId: v.string(), // HouseholdId
+    createdAt: v.number(),
+  }).index("by_aggregate_id", ["aggregateId"]),
+
+  householdMembers: defineTable({
+    householdId: v.string(), // HouseholdId (households.aggregateId)
+    memberId: v.id("users"),
+    role: v.union(v.literal("admin"), v.literal("member")),
+    joinedAt: v.number(),
+  })
+    .index("by_member", ["memberId"])
+    .index("by_household", ["householdId"]),
+
+  householdInvites: defineTable({
+    aggregateId: v.string(), // HouseholdInviteId
+    householdId: v.string(), // HouseholdId
+    inviterId: v.id("users"),
+    inviteeId: v.id("users"),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("accepted"),
+      v.literal("declined"),
+    ),
+    createdAt: v.number(),
+    respondedAt: v.optional(v.number()),
+  })
+    .index("by_aggregate_id", ["aggregateId"])
+    .index("by_invitee_status", ["inviteeId", "status"])
+    .index("by_household", ["householdId"]),
 
   // The durable domain-event log: every context's events are appended here, then an async
   // dispatcher (scheduled per insert) routes each to its subscribers and stamps processedAt.

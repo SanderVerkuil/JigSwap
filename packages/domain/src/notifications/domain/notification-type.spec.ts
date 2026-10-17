@@ -25,6 +25,8 @@ describe("NOTIFICATION_TYPES", () => {
       "new_follower",
       "follow_request_received",
       "follow_request_approved",
+      "household_invite_received",
+      "household_invite_accepted",
     ]);
   });
 });

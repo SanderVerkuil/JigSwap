@@ -5,6 +5,10 @@ import {
   UpdateCopySharing,
   UpdateCopySharingCommand,
 } from "../ports/in/update-copy-sharing.port";
+import {
+  CopyManagerPolicy,
+  mayManageCopy,
+} from "../ports/out/copy-manager.policy";
 import { CopyReservationPort } from "../ports/out/copy-reservation.port";
 import { CopyRepository } from "../ports/out/copy.repository";
 
@@ -14,6 +18,8 @@ export interface UpdateCopySharingDeps {
   readonly reservations: CopyReservationPort;
   readonly events: DomainEventPublisher;
   readonly clock: Clock;
+  // Household co-management (optional): absent ⇒ owner-only.
+  readonly managers?: CopyManagerPolicy;
 }
 
 // Transaction script: load (→ CopyNotFound), check ownership, and — only when the new setting
@@ -25,7 +31,7 @@ export const makeUpdateCopySharing =
   async (cmd: UpdateCopySharingCommand) => {
     const copy = await deps.copies.findById(cmd.copyId);
     if (!copy) return err(LibraryApplicationError.copyNotFound(cmd.copyId));
-    if (copy.ownerId !== cmd.actingMemberId) {
+    if (!(await mayManageCopy(copy, cmd.actingMemberId, deps.managers))) {
       return err(LibraryError.notOwner("update this copy's sharing"));
     }
 

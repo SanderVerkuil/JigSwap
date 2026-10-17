@@ -11,6 +11,8 @@ import type {
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { copyAccessOf } from "../household/copyAccess";
+import { membershipOf } from "../household/memberships";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 import { projectMemberIdentity } from "../social/privacy";
@@ -63,6 +65,19 @@ export const getCopyInstanceView = query({
     if (!(await canViewCopy(ctx, viewerId, copy))) return null;
 
     const viewerIsOwner = copy.ownerId === viewerId;
+    // Household access: a member the owner left at "manage" acts as co-owner (edit controls +
+    // owner-only fields); "view" only sees the copy. Since/before tenure stays owner-only.
+    const access = await copyAccessOf(ctx, viewerId, copy);
+    const viewerCanManage = access === "owner" || access === "manage";
+    const household =
+      access === "manage" ||
+      access === "view" ||
+      (access === "owner" && (await membershipOf(ctx, viewerId)) !== null)
+        ? {
+            permission: copy.householdPermission ?? ("manage" as const),
+            viewerAccess: access,
+          }
+        : null;
 
     const puzzle = await ctx.db.get(copy.puzzleId);
     const salt = args.copyId as string;
@@ -337,6 +352,8 @@ export const getCopyInstanceView = query({
       // key on this aggregateId, not the _id. Null for rows that predate the backfill.
       aggregateId: copy.aggregateId ?? null,
       viewerIsOwner,
+      viewerCanManage,
+      household,
       owner,
       snapshot: {
         title: copy.snapshot?.title ?? puzzle?.title ?? "Unknown Puzzle",
@@ -345,12 +362,13 @@ export const getCopyInstanceView = query({
         image: coverImage,
         coverImageId,
         condition: copy.condition,
-        // Owner-only personal fields (notes / acquisition provenance) are omitted for non-owners,
+        // Owner-only personal fields (notes / acquisition provenance) are omitted for anyone who
+        // can't manage the copy (a household "manage" member is a co-owner and may edit notes),
         // alongside the sale/acquisition price the DTO already never carries for them.
-        notes: viewerIsOwner ? copy.notes : undefined,
+        notes: viewerCanManage ? copy.notes : undefined,
         availability: copy.availability,
-        acquisitionDate: viewerIsOwner ? copy.acquisitionDate : undefined,
-        acquisitionSource: viewerIsOwner ? copy.acquisitionSource : undefined,
+        acquisitionDate: viewerCanManage ? copy.acquisitionDate : undefined,
+        acquisitionSource: viewerCanManage ? copy.acquisitionSource : undefined,
         difficulty: puzzle?.difficulty,
         tags: puzzle?.tags ?? [],
       },

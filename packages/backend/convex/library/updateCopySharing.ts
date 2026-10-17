@@ -7,6 +7,7 @@ import {
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
+import { convexCopyManagerPolicy } from "../household/copyAccess";
 import { requireMember } from "../identity/requireMember";
 import { convexCopyRepository } from "./adapters/convexCopyRepository";
 import { convexCopyReservationPort } from "./adapters/convexCopyReservationPort";
@@ -46,6 +47,8 @@ export const updateCopySharing = mutation({
       reservations: convexCopyReservationPort(ctx),
       events: libraryEventPublisher(ctx),
       clock: systemClock,
+      // Household members with manage permission act as co-owner.
+      managers: convexCopyManagerPolicy(ctx),
     });
 
     const result = await update({

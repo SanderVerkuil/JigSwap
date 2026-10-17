@@ -6,8 +6,9 @@ import {
   toPuzzleDefinitionId,
 } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
-import type { Doc } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
+import { copyAccessOf } from "../household/copyAccess";
 import { requireMember } from "../identity/requireMember";
 import { convexCompletionRepository } from "./adapters/convexCompletionRepository";
 import { completionIdGenerator } from "./adapters/idGenerators";
@@ -43,9 +44,15 @@ export const recordCompletion = mutation({
         .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", args.copyId))
         .unique();
       if (!copy) throw new ConvexError("Copy not found");
-      if (copy.ownerId !== me && copy.heldBy !== me) {
+      // Owner, current holder, or any household member (view or manage): the solve is the
+      // logger's own — completions are personal and never shared with the household.
+      if (
+        copy.ownerId !== me &&
+        copy.heldBy !== me &&
+        (await copyAccessOf(ctx, me as Id<"users">, copy)) === "none"
+      ) {
         throw new ConvexError(
-          "Only the owner or current holder can log a solve for this copy",
+          "Only the owner, current holder or a household member can log a solve for this copy",
         );
       }
     }

@@ -483,6 +483,8 @@
     "resultCount": "{count} of {total} puzzles",
     "searchHint": "Press ⌘K to search puzzles, people and more",
     "countMeta": "{count, plural, one {# puzzle} other {# puzzles}}",
+    "householdBadge": "Household · {name}",
+    "householdBadgeView": "Household · {name} · view only",
     "gridView": "Grid view",
     "listView": "List view",
     "deleteConfirmTitle": "Delete \"{title}\"?",
@@ -1427,6 +1429,64 @@
     "updatedAgo": "Updated {time}",
     "added": "Added"
   },
+  "household": {
+    "loading": "Loading your household...",
+    "joined": "You joined the household",
+    "explainer": "Everyone in your household sees each other's puzzles in My puzzles. Puzzles stay owned by whoever added them; owners choose per puzzle whether the household can manage it (edit, lend, swap) or only view it. Solves stay personal.",
+    "empty": {
+      "title": "You're not in a household yet",
+      "sub": "Create a household to share your puzzle library with the people you live with, then invite them.",
+      "create": "Create household"
+    },
+    "invites": {
+      "title": "Household invites",
+      "from": "invited you",
+      "accept": "Accept",
+      "decline": "Decline"
+    },
+    "members": {
+      "title": "Members",
+      "you": "(you)",
+      "admin": "Admin",
+      "remove": "Remove",
+      "removeTitle": "Remove {name} from the household?",
+      "removeBody": "Their puzzles leave the household with them, and they will no longer see yours."
+    },
+    "invite": {
+      "title": "Invite someone",
+      "searchPlaceholder": "Search members by name",
+      "action": "Invite",
+      "sent": "Invite sent",
+      "pending": "Waiting for a response",
+      "pendingBadge": "Invited"
+    },
+    "leave": {
+      "action": "Leave household",
+      "title": "Leave the household?",
+      "body": "Your puzzles leave the household with you, and you will no longer see the others' puzzles.",
+      "bodyLast": "You are the last member, so the household will be dissolved and any pending invites cancelled."
+    },
+    "copyAccess": {
+      "label": "Household access",
+      "manage": "Can manage",
+      "view": "View only",
+      "memberManage": "Household copy — you can manage it",
+      "memberView": "Household copy — view only",
+      "saveFailed": "Couldn't update household access"
+    },
+    "errors": {
+      "generic": "Something went wrong. Please try again.",
+      "AlreadyInHousehold": "You are already in a household.",
+      "NotInHousehold": "You are not in a household.",
+      "InviteeAlreadyInHousehold": "This member is already in a household.",
+      "DuplicateInvite": "This member already has a pending invite.",
+      "InviteNotFound": "This invite no longer exists.",
+      "HouseholdNotFound": "This household no longer exists.",
+      "NotHouseholdAdmin": "Only the household admin can do this.",
+      "InviteNotPending": "This invite has already been answered.",
+      "MemberNotFound": "This member could not be found."
+    }
+  },
   "circles": {
     "yourCircles": "Your Circles",
     "meta": "Private groups to swap within",
@@ -1635,7 +1695,9 @@
       "goal_achieved": "Goal achieved",
       "new_follower": "New followers",
       "follow_request_received": "Follow requests",
-      "follow_request_approved": "Follow request approved"
+      "follow_request_approved": "Follow request approved",
+      "household_invite_received": "Household invites",
+      "household_invite_accepted": "Household invite accepted"
     },
     "categories": {
       "trades": {
@@ -1743,6 +1805,14 @@
       "follow_request_approved": {
         "title": "Request approved",
         "message": "Your follow request was approved."
+      },
+      "household_invite_received": {
+        "title": "Household invite",
+        "message": "Someone invited you to their household."
+      },
+      "household_invite_accepted": {
+        "title": "Invite accepted",
+        "message": "Someone joined your household."
       }
     },
     "pushDeviceTitle": "Push on this device",
@@ -1779,7 +1849,9 @@
       "goal_achieved": "When you reach a solving goal.",
       "new_follower": "When someone starts following you.",
       "follow_request_received": "When someone asks to follow you.",
-      "follow_request_approved": "When a follow request you sent is approved."
+      "follow_request_approved": "When a follow request you sent is approved.",
+      "household_invite_received": "When someone invites you to their household.",
+      "household_invite_accepted": "When someone accepts your household invite."
     },
     "pushServiceUnreachable": "Your browser couldn't reach its push service. Some privacy browsers block or remove it — Brave disables it by default (enable 'Use Google services for push messaging' in Settings), and de-Googled Chromium builds like Helium strip it out. Firefox, Chrome, or Edge will work."
   },
@@ -2536,6 +2608,7 @@
     "puzzles": "Puzzles — JigSwap",
     "puzzle": "Puzzle details — JigSwap",
     "collections": "Collections — JigSwap",
+    "household": "Household — JigSwap",
     "collection": "Collection — JigSwap",
     "collectionAddPuzzles": "Add puzzles to collection — JigSwap",
     "trades": "Trades — JigSwap",
@@ -2625,6 +2698,11 @@
         "title": "Collections",
         "subtitle": "Curated shelves of your favourites.",
         "description": "Curated sets and shelves"
+      },
+      "household": {
+        "title": "Household",
+        "subtitle": "Share your library with the people you live with.",
+        "description": "Share puzzles with your household"
       },
       "completions": {
         "title": "Completions",

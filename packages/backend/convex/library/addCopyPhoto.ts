@@ -2,13 +2,14 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
+import { canManageCopy } from "../household/copyAccess";
 import { requireMember } from "../identity/requireMember";
 
 // Composition root for attaching an uploaded photo to an owned copy, keyed by the copy's Convex id.
 // Pairs with `generateUploadUrl`: the client uploads the blob, then calls this with the returned
 // storageId. A plain Convex mutation that writes the `ownedPuzzleImages` read-model directly (the
-// gallery in getCopyInstanceView reads the same table). Owner-only: only the copy's owner may add a
-// photo to it.
+// gallery in getCopyInstanceView reads the same table). Only the copy's owner (or a household member
+// with manage permission) may add a photo to it.
 export const addCopyPhoto = mutation({
   args: {
     copyId: v.id("ownedPuzzles"),
@@ -29,7 +30,8 @@ export const addCopyPhoto = mutation({
 
     const copy = await ctx.db.get(args.copyId);
     if (!copy) throw new ConvexError("Copy not found");
-    if (copy.ownerId !== memberId) {
+    // Owner, or a household member the owner left at "manage" (co-owner).
+    if (!(await canManageCopy(ctx, memberId, copy))) {
       throw new ConvexError("Only the owner can add a photo to this copy");
     }
 

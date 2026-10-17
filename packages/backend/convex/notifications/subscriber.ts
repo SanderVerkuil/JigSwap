@@ -325,6 +325,29 @@ const translate = async (
     }
     // FollowRequestDeclined: DELIBERATELY unmapped — decline is silent (spec).
 
+    // --- Household ---
+    case "HouseholdInviteSent": {
+      return [
+        cmd(
+          p.inviteeId as string,
+          "household_invite_received",
+          p.inviteId as string,
+          await memberName(ctx, p.inviterId as string),
+        ),
+      ];
+    }
+    case "HouseholdInviteAccepted": {
+      return [
+        cmd(
+          p.inviterId as string,
+          "household_invite_accepted",
+          p.householdId as string,
+          await memberName(ctx, p.inviteeId as string),
+        ),
+      ];
+    }
+    // HouseholdInviteDeclined: DELIBERATELY unmapped — decline is silent (spec).
+
     default:
       return [];
   }

@@ -1,6 +1,7 @@
 import { makeRecallLoan, type OwnerId, toLoanId } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
+import { convexCopyManagerPolicy } from "../household/copyAccess";
 import { requireMember } from "../identity/requireMember";
 import { convexCopyRepository } from "./adapters/convexCopyRepository";
 import { convexLoanRepository } from "./adapters/convexLoanRepository";
@@ -19,6 +20,8 @@ export const recallLoan = mutation({
       copies: convexCopyRepository(ctx),
       events: libraryEventPublisher(ctx),
       clock: systemClock,
+      // Household members with manage permission act as co-owner.
+      managers: convexCopyManagerPolicy(ctx),
     })({
       loanId: toLoanId(args.loanId),
       actingMemberId,

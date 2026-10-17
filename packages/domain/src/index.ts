@@ -16,6 +16,7 @@ export type { StarRating } from "./solving";
 export * from "./catalog";
 export * from "./conversation";
 export * from "./exchange";
+export * from "./household";
 export * from "./identity";
 export * from "./insights";
 export * from "./library";

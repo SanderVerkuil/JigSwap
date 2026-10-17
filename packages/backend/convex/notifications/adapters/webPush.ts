@@ -120,6 +120,10 @@ export const notificationUrl = (type: string, relatedId?: string): string => {
     case "follow_request_received":
     case "follow_request_approved":
       return "/people";
+    // Household invites resolve on the Household page (accept/decline lives there).
+    case "household_invite_received":
+    case "household_invite_accepted":
+      return "/household";
     default:
       return "/notifications";
   }

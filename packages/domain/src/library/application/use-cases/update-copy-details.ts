@@ -5,12 +5,18 @@ import {
   UpdateCopyDetails,
   UpdateCopyDetailsCommand,
 } from "../ports/in/update-copy-details.port";
+import {
+  CopyManagerPolicy,
+  mayManageCopy,
+} from "../ports/out/copy-manager.policy";
 import { CopyRepository } from "../ports/out/copy.repository";
 
 export interface UpdateCopyDetailsDeps {
   readonly copies: CopyRepository;
   readonly events: DomainEventPublisher;
   readonly clock: Clock;
+  // Household co-management (optional): absent ⇒ owner-only.
+  readonly managers?: CopyManagerPolicy;
 }
 
 // Transaction script: load (→ CopyNotFound), check ownership, delegate the descriptive-field
@@ -20,7 +26,7 @@ export const makeUpdateCopyDetails =
   async (cmd: UpdateCopyDetailsCommand) => {
     const copy = await deps.copies.findById(cmd.copyId);
     if (!copy) return err(LibraryApplicationError.copyNotFound(cmd.copyId));
-    if (copy.ownerId !== cmd.actingMemberId) {
+    if (!(await mayManageCopy(copy, cmd.actingMemberId, deps.managers))) {
       return err(LibraryError.notOwner("update this copy's details"));
     }
 

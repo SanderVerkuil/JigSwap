@@ -5,12 +5,18 @@ import {
   AddCopyImage,
   AddCopyImageCommand,
 } from "../ports/in/add-copy-image.port";
+import {
+  CopyManagerPolicy,
+  mayManageCopy,
+} from "../ports/out/copy-manager.policy";
 import { CopyRepository } from "../ports/out/copy.repository";
 
 export interface AddCopyImageDeps {
   readonly copies: CopyRepository;
   readonly events: DomainEventPublisher;
   readonly clock: Clock;
+  // Household co-management (optional): absent ⇒ owner-only.
+  readonly managers?: CopyManagerPolicy;
 }
 
 // Transaction script: load (→ CopyNotFound), check ownership, attach the image VO, persist, publish.
@@ -19,7 +25,7 @@ export const makeAddCopyImage =
   async (cmd: AddCopyImageCommand) => {
     const copy = await deps.copies.findById(cmd.copyId);
     if (!copy) return err(LibraryApplicationError.copyNotFound(cmd.copyId));
-    if (copy.ownerId !== cmd.actingMemberId) {
+    if (!(await mayManageCopy(copy, cmd.actingMemberId, deps.managers))) {
       return err(LibraryError.notOwner("add an image to this copy"));
     }
 

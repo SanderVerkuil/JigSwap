@@ -2,6 +2,10 @@ import { makeSetCopyCover, type OwnerId, toCopyId } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
+import {
+  canManageCopy,
+  convexCopyManagerPolicy,
+} from "../household/copyAccess";
 import { requireMember } from "../identity/requireMember";
 import { convexCopyRepository } from "./adapters/convexCopyRepository";
 import { libraryEventPublisher } from "./adapters/eventPublisher";
@@ -9,8 +13,8 @@ import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
 
 // Composition root for choosing a copy's cover picture. Keyed by the copy's Convex id so it pairs
-// with the gallery (also keyed by `ownedPuzzles._id`). OWNER-ONLY: only the copy's owner may pick
-// its cover. When a `coverImageId` is supplied it must be one of THIS copy's own photos — an image
+// with the gallery (also keyed by `ownedPuzzles._id`). Only the copy's owner (or a household member
+// with manage permission) may pick its cover. When a `coverImageId` is supplied it must be one of THIS copy's own photos — an image
 // row whose `ownedPuzzleId` is this copy — else the request is rejected. Passing `coverImageId`
 // undefined clears the selection (fall back to the puzzle's global catalogue image).
 export const setCopyCover = mutation({
@@ -23,7 +27,7 @@ export const setCopyCover = mutation({
 
     const copy = await ctx.db.get(args.copyId);
     if (!copy) throw new ConvexError("Copy not found");
-    if (copy.ownerId !== memberId) {
+    if (!(await canManageCopy(ctx, memberId, copy))) {
       throw new ConvexError("Only the owner can change this copy's cover");
     }
     if (!copy.aggregateId) {
@@ -42,6 +46,8 @@ export const setCopyCover = mutation({
       copies: convexCopyRepository(ctx),
       events: libraryEventPublisher(ctx),
       clock: systemClock,
+      // Household members with manage permission act as co-owner.
+      managers: convexCopyManagerPolicy(ctx),
     });
 
     const result = await setCover({

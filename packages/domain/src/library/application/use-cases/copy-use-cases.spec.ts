@@ -8,6 +8,7 @@ import {
 import { CatalogSnapshot, Copy, CopyId } from "../../domain";
 import {
   FakeCatalogSnapshotProvider,
+  FakeCopyManagerPolicy,
   FakeCopyReservationPort,
   FixedClock,
   InMemoryCopyRepository,
@@ -535,5 +536,126 @@ describe("copy mutation use cases", () => {
       if (result.isErr) expect(result.error.code).toBe("CopyNotFound");
       expect(events.published).toHaveLength(0);
     });
+  });
+});
+
+// Household co-management: a member the CopyManagerPolicy vouches for may act as if they owned the
+// copy; anyone else (and everyone, when no policy is wired) is still rejected as a non-owner.
+describe("copy mutation use cases with a CopyManagerPolicy", () => {
+  let copies: InMemoryCopyRepository;
+  let reservations: FakeCopyReservationPort;
+  let events: RecordingEventPublisher;
+  let managers: FakeCopyManagerPolicy;
+  let copyId: CopyId;
+  const carol = toOwnerId("carol");
+  const clock = new FixedClock(NOW);
+
+  beforeEach(async () => {
+    copies = new InMemoryCopyRepository();
+    reservations = new FakeCopyReservationPort();
+    events = new RecordingEventPublisher();
+    managers = new FakeCopyManagerPolicy();
+    const acquired = Copy.acquire({
+      id: toCopyId("copy-seed"),
+      ownerId: alice,
+      snapshot: snapshot(),
+      condition: "good",
+      now: NOW,
+    });
+    if (!acquired.isOk) throw new Error("setup");
+    copyId = acquired.value.id;
+    await copies.save(acquired.value);
+    managers.allow(copyId, bob);
+  });
+
+  const cases: Array<
+    [
+      string,
+      (
+        actor: typeof alice,
+      ) => Promise<{ isOk: boolean; isErr: boolean; error?: { code: string } }>,
+    ]
+  > = [
+    [
+      "changeCopyCondition",
+      (actor) =>
+        makeChangeCopyCondition({ copies, events, clock, managers })({
+          actingMemberId: actor,
+          copyId,
+          condition: "fair",
+        }),
+    ],
+    [
+      "updateCopySharing",
+      (actor) =>
+        makeUpdateCopySharing({
+          copies,
+          reservations,
+          events,
+          clock,
+          managers,
+        })({
+          actingMemberId: actor,
+          copyId,
+          visibility: "visible",
+          forTrade: false,
+          forSale: false,
+          forLend: true,
+        }),
+    ],
+    [
+      "addCopyImage",
+      (actor) =>
+        makeAddCopyImage({ copies, events, clock, managers })({
+          actingMemberId: actor,
+          copyId,
+          fileId: toFileId("file1"),
+        }),
+    ],
+    [
+      "setCopyCover",
+      (actor) =>
+        makeSetCopyCover({ copies, events, clock, managers })({
+          actingMemberId: actor,
+          copyId,
+          coverImageId: "img-1",
+        }),
+    ],
+    [
+      "updateCopyDetails",
+      (actor) =>
+        makeUpdateCopyDetails({ copies, events, clock, managers })({
+          actingMemberId: actor,
+          copyId,
+          notes: "shared shelf",
+        }),
+    ],
+  ];
+
+  for (const [name, run] of cases) {
+    it(`${name}: a policy-approved manager may act`, async () => {
+      const result = await run(bob);
+      expect(result.isOk).toBe(true);
+      expect((await copies.findById(copyId))?.ownerId).toBe(alice);
+    });
+
+    it(`${name}: a member the policy rejects is still NotOwner`, async () => {
+      const result = await run(carol);
+      expect(result.isErr).toBe(true);
+      expect(result.error?.code).toBe("NotOwner");
+    });
+  }
+
+  it("deleteCopy stays owner-only even for a policy-approved manager", async () => {
+    const result = await makeDeleteCopy({
+      copies,
+      reservations,
+      events,
+      clock,
+    })({
+      actingMemberId: bob,
+      copyId,
+    });
+    expect(result.isErr && result.error.code).toBe("NotOwner");
   });
 });

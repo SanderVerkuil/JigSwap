@@ -483,6 +483,8 @@
     "resultCount": "{count} van {total} puzzels",
     "searchHint": "Druk op ⌘K om puzzels, mensen en meer te zoeken",
     "countMeta": "{count, plural, one {# puzzel} other {# puzzels}}",
+    "householdBadge": "Huishouden · {name}",
+    "householdBadgeView": "Huishouden · {name} · alleen bekijken",
     "gridView": "Rasterweergave",
     "listView": "Lijstweergave",
     "deleteConfirmTitle": "\"{title}\" verwijderen?",
@@ -1427,6 +1429,64 @@
     "updatedAgo": "Bijgewerkt {time}",
     "added": "Toegevoegd"
   },
+  "household": {
+    "loading": "Je huishouden laden...",
+    "joined": "Je bent lid geworden van het huishouden",
+    "explainer": "Iedereen in je huishouden ziet elkaars puzzels in Mijn puzzels. Puzzels blijven van wie ze heeft toegevoegd; eigenaren kiezen per puzzel of het huishouden hem mag beheren (bewerken, uitlenen, ruilen) of alleen mag bekijken. Oplossingen blijven persoonlijk.",
+    "empty": {
+      "title": "Je zit nog niet in een huishouden",
+      "sub": "Maak een huishouden aan om je puzzelbibliotheek te delen met de mensen met wie je samenwoont, en nodig ze daarna uit.",
+      "create": "Huishouden aanmaken"
+    },
+    "invites": {
+      "title": "Uitnodigingen voor een huishouden",
+      "from": "heeft je uitgenodigd",
+      "accept": "Accepteren",
+      "decline": "Weigeren"
+    },
+    "members": {
+      "title": "Leden",
+      "you": "(jij)",
+      "admin": "Beheerder",
+      "remove": "Verwijderen",
+      "removeTitle": "{name} uit het huishouden verwijderen?",
+      "removeBody": "Hun puzzels verlaten het huishouden met hen mee, en ze zien die van jou niet meer."
+    },
+    "invite": {
+      "title": "Iemand uitnodigen",
+      "searchPlaceholder": "Zoek leden op naam",
+      "action": "Uitnodigen",
+      "sent": "Uitnodiging verstuurd",
+      "pending": "Wacht op antwoord",
+      "pendingBadge": "Uitgenodigd"
+    },
+    "leave": {
+      "action": "Huishouden verlaten",
+      "title": "Het huishouden verlaten?",
+      "body": "Je puzzels verlaten het huishouden met je mee, en je ziet de puzzels van de anderen niet meer.",
+      "bodyLast": "Je bent het laatste lid, dus het huishouden wordt opgeheven en openstaande uitnodigingen vervallen."
+    },
+    "copyAccess": {
+      "label": "Toegang huishouden",
+      "manage": "Mag beheren",
+      "view": "Alleen bekijken",
+      "memberManage": "Puzzel van je huishouden — jij mag hem beheren",
+      "memberView": "Puzzel van je huishouden — alleen bekijken",
+      "saveFailed": "Toegang voor het huishouden kon niet worden bijgewerkt"
+    },
+    "errors": {
+      "generic": "Er ging iets mis. Probeer het opnieuw.",
+      "AlreadyInHousehold": "Je zit al in een huishouden.",
+      "NotInHousehold": "Je zit niet in een huishouden.",
+      "InviteeAlreadyInHousehold": "Dit lid zit al in een huishouden.",
+      "DuplicateInvite": "Dit lid heeft al een openstaande uitnodiging.",
+      "InviteNotFound": "Deze uitnodiging bestaat niet meer.",
+      "HouseholdNotFound": "Dit huishouden bestaat niet meer.",
+      "NotHouseholdAdmin": "Alleen de beheerder van het huishouden kan dit doen.",
+      "InviteNotPending": "Deze uitnodiging is al beantwoord.",
+      "MemberNotFound": "Dit lid kon niet worden gevonden."
+    }
+  },
   "circles": {
     "yourCircles": "Jouw Kringen",
     "meta": "Besloten groepen om binnen te ruilen",
@@ -1635,7 +1695,9 @@
       "goal_achieved": "Doel behaald",
       "new_follower": "Nieuwe volgers",
       "follow_request_received": "Volgverzoeken",
-      "follow_request_approved": "Volgverzoek goedgekeurd"
+      "follow_request_approved": "Volgverzoek goedgekeurd",
+      "household_invite_received": "Uitnodigingen voor een huishouden",
+      "household_invite_accepted": "Uitnodiging voor huishouden geaccepteerd"
     },
     "categories": {
       "trades": {
@@ -1743,6 +1805,14 @@
       "follow_request_approved": {
         "title": "Verzoek goedgekeurd",
         "message": "Je volgverzoek is goedgekeurd."
+      },
+      "household_invite_received": {
+        "title": "Uitnodiging voor huishouden",
+        "message": "Iemand heeft je uitgenodigd voor hun huishouden."
+      },
+      "household_invite_accepted": {
+        "title": "Uitnodiging geaccepteerd",
+        "message": "Iemand is lid geworden van je huishouden."
       }
     },
     "pushDeviceTitle": "Push op dit apparaat",
@@ -1779,7 +1849,9 @@
       "goal_achieved": "Wanneer je een puzzeldoel behaalt.",
       "new_follower": "Wanneer iemand je begint te volgen.",
       "follow_request_received": "Wanneer iemand vraagt om je te volgen.",
-      "follow_request_approved": "Wanneer een volgverzoek dat je stuurde wordt goedgekeurd."
+      "follow_request_approved": "Wanneer een volgverzoek dat je stuurde wordt goedgekeurd.",
+      "household_invite_received": "Wanneer iemand je uitnodigt voor hun huishouden.",
+      "household_invite_accepted": "Wanneer iemand je uitnodiging voor het huishouden accepteert."
     },
     "pushServiceUnreachable": "Je browser kon zijn pushdienst niet bereiken. Sommige privacybrowsers blokkeren of verwijderen die — Brave schakelt het standaard uit (zet 'Google-services voor pushberichten gebruiken' aan in Instellingen), en de-Googled Chromium-browsers zoals Helium verwijderen het. Firefox, Chrome of Edge werkt wel."
   },
@@ -2536,6 +2608,7 @@
     "puzzles": "Puzzels — JigSwap",
     "puzzle": "Puzzeldetails — JigSwap",
     "collections": "Collecties — JigSwap",
+    "household": "Huishouden — JigSwap",
     "collection": "Collectie — JigSwap",
     "collectionAddPuzzles": "Puzzels toevoegen aan collectie — JigSwap",
     "trades": "Uitwisselingen — JigSwap",
@@ -2625,6 +2698,11 @@
         "title": "Collecties",
         "subtitle": "Samengestelde planken met je favorieten.",
         "description": "Samengestelde sets en planken"
+      },
+      "household": {
+        "title": "Huishouden",
+        "subtitle": "Deel je bibliotheek met de mensen met wie je samenwoont.",
+        "description": "Deel puzzels met je huishouden"
       },
       "completions": {
         "title": "Voltooiingen",

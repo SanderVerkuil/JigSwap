@@ -214,6 +214,71 @@ describe("makeProposeExchange", () => {
     if (result.isErr) expect(result.error.code).toBe("OfferedCopyNotOwned");
   });
 
+  it("accepts a swap offering a household copy the initiator co-manages", async () => {
+    const carol = toMemberId("carol"); // alice's household mate, owner of the offered copy
+    copies
+      .seed(
+        copy({
+          id: requestedId,
+          ownerId: bob,
+          availability: { forTrade: true, forSale: false, forLend: false },
+        }),
+      )
+      .seed(copy({ id: offeredId, ownerId: carol, coManagerIds: [alice] }));
+
+    const result = await propose({
+      initiatorId: alice,
+      recipientId: bob,
+      kind: "swap",
+      requestedCopyId: requestedId,
+      terms: swapTerms,
+    });
+    expect(result.isOk).toBe(true);
+  });
+
+  it("rejects a swap offering a copy the initiator neither owns nor co-manages", async () => {
+    const carol = toMemberId("carol");
+    copies
+      .seed(
+        copy({
+          id: requestedId,
+          ownerId: bob,
+          availability: { forTrade: true, forSale: false, forLend: false },
+        }),
+      )
+      .seed(copy({ id: offeredId, ownerId: carol, coManagerIds: [] }));
+
+    const result = await propose({
+      initiatorId: alice,
+      recipientId: bob,
+      kind: "swap",
+      requestedCopyId: requestedId,
+      terms: swapTerms,
+    });
+    expect(result.isErr && result.error.code).toBe("OfferedCopyNotOwned");
+  });
+
+  it("rejects a swap offering the recipient's own copy back, even when co-managed", async () => {
+    copies
+      .seed(
+        copy({
+          id: requestedId,
+          ownerId: bob,
+          availability: { forTrade: true, forSale: false, forLend: false },
+        }),
+      )
+      .seed(copy({ id: offeredId, ownerId: bob, coManagerIds: [alice] }));
+
+    const result = await propose({
+      initiatorId: alice,
+      recipientId: bob,
+      kind: "swap",
+      requestedCopyId: requestedId,
+      terms: swapTerms,
+    });
+    expect(result.isErr && result.error.code).toBe("OfferedCopyNotOwned");
+  });
+
   it("rejects a swap whose offered copy does not exist", async () => {
     copies.seed(
       copy({

@@ -398,6 +398,19 @@ export interface CopyInstanceView {
   aggregateId: string | null;
   /** Whether the acting viewer currently owns this copy. */
   viewerIsOwner: boolean;
+  /**
+   * Whether the viewer may manage the copy as if they owned it: the owner, or a household member
+   * the owner left at "manage". Gates the edit controls; delete/household permission stay owner-only.
+   */
+  viewerCanManage: boolean;
+  /**
+   * Household facts, present when the viewer is the owner AND in a household, or a member of the
+   * owner's household; null otherwise. `permission` is the owner's per-copy choice (absent = manage).
+   */
+  household: {
+    permission: "manage" | "view";
+    viewerAccess: "owner" | "manage" | "view";
+  } | null;
   /** The (projected) current owner. */
   owner: ProjectedMember;
   /** Catalog/condition snapshot of the copy. */

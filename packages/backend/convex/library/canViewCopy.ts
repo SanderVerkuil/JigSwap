@@ -1,5 +1,6 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { householdMateIds } from "../household/memberships";
 import { profileVisibilityOf } from "../social/privacy";
 import { collectCircleSharedCopies } from "./circleSharedCopies";
 
@@ -17,6 +18,9 @@ const isOpen = (copy: Doc<"ownedPuzzles">): boolean =>
 export interface CopyViewContext {
   readonly viewerId: Id<"users">;
   readonly circleSharedOpenIds: ReadonlySet<Id<"ownedPuzzles">>;
+  // The other members of the viewer's household (empty when none): their copies are in the
+  // viewer's library regardless of availability or profile visibility.
+  readonly householdMateIds: ReadonlySet<Id<"users">>;
   readonly ownerVisibility: Map<Id<"users">, "public" | "private">;
 }
 
@@ -30,6 +34,7 @@ export const buildCopyViewContext = async (
   return {
     viewerId,
     circleSharedOpenIds: new Set(circleShared.map((c) => c._id)),
+    householdMateIds: await householdMateIds(ctx, viewerId),
     ownerVisibility: new Map(),
   };
 };
@@ -39,7 +44,8 @@ export const buildCopyViewContext = async (
 //   2. the viewer currently HOLDS it (heldBy) — the member physically holding a copy may view its
 //      page; they can already log solves against it from the Borrowed page; OR
 //   3. the owner's profile is PUBLIC and the copy is OPEN (at least one availability flag); OR
-//   4. the copy is shared into a circle the viewer belongs to.
+//   4. the copy is shared into a circle the viewer belongs to; OR
+//   5. the owner is in the viewer's household (any household permission — "view" still views).
 export const canViewCopyWithContext = async (
   ctx: QueryCtx,
   copy: Doc<"ownedPuzzles">,
@@ -48,6 +54,7 @@ export const canViewCopyWithContext = async (
   const viewerId = context.viewerId;
   if (copy.ownerId === viewerId) return true;
   if (copy.heldBy === viewerId) return true;
+  if (context.householdMateIds.has(copy.ownerId)) return true;
 
   if (isOpen(copy)) {
     let visibility = context.ownerVisibility.get(copy.ownerId);

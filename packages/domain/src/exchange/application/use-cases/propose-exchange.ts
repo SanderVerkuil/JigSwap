@@ -90,8 +90,8 @@ export const makeProposeExchange =
     return ok(exchange.value.id);
   };
 
-// For a swap the offered copy must exist and be owned by the initiator (the offered copy id
-// lives in the kind-tagged terms).
+// For a swap the offered copy must exist and be owned (or household-co-managed) by the initiator
+// (the offered copy id lives in the kind-tagged terms).
 const loadOfferedCopy = async (
   copies: CopyPort,
   cmd: ProposeExchangeCommand,
@@ -103,7 +103,12 @@ const loadOfferedCopy = async (
 
   const offered = await copies.getCopy(offeredCopyId);
   if (!offered) return err(ApplicationError.copyNotFound(offeredCopyId));
-  if (offered.ownerId !== cmd.initiatorId) {
+  // The initiator may offer a copy they own or co-manage through their household — but never the
+  // recipient's own copy (a co-manager "swapping" the owner's copy with the owner).
+  const mayOffer =
+    offered.ownerId === cmd.initiatorId ||
+    (offered.coManagerIds ?? []).includes(cmd.initiatorId);
+  if (!mayOffer || offered.ownerId === cmd.recipientId) {
     return err(ApplicationError.offeredCopyNotOwned(offeredCopyId));
   }
   return ok(undefined);
