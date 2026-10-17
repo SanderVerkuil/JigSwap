@@ -127,7 +127,7 @@ describe("MemberTile", () => {
     expect(link).toContain('title="Hans-Peter van den Berg"');
     expect(link).toContain("after:inset-0");
     expect(link).not.toMatch(/<button|<a\b[\s\S]*<a\b/);
-    expect(link.replace(/<[^>]+>/g, "")).toBe("Hans-Peter van den Berg");
+    expect(link).toMatch(/^<a\b[^>]*>Hans-Peter van den Berg<\/a>$/);
   });
 
   it("does not nest the action buttons inside the link", () => {
