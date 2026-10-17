@@ -7,11 +7,22 @@
 // closes. Lists only what listAttachableCopies allows, i.e. copies both
 // participants may view.
 import { Image } from "@/compat/image";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   TAB_TRIGGER_CLASS,
   UNDERLINE_TABS_LIST_CLASS,
@@ -21,7 +32,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { Puzzle, Search } from "lucide-react";
+import { Puzzle, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 import type { MessageCopy } from "./copy-card";
@@ -36,6 +47,7 @@ export function AttachPicker({
   threadId,
   theirsLabel,
   onSelect,
+  onCloseAutoFocus,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -43,8 +55,12 @@ export function AttachPicker({
   // The other member's tab label; null hides that tab.
   theirsLabel: string | null;
   onSelect: (copy: MessageCopy) => void;
+  // Where focus lands on close (the composer decides: textarea after a pick,
+  // else the attach button) — without it Radix drops focus on <body>.
+  onCloseAutoFocus: (event: Event) => void;
 }) {
   const t = useTranslations("messages");
+  const tCommon = useTranslations("common");
   const isMobile = useIsMobile();
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -59,6 +75,18 @@ export function AttachPicker({
       }}
     />
   );
+  // Our own 44px close button, first in the tab order (before the tabs), in
+  // place of the primitives' 16px corner X.
+  const closeButton = (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="size-11 shrink-0"
+      aria-label={tCommon("close")}
+    >
+      <X className="size-5" />
+    </Button>
+  );
 
   if (isMobile) {
     return (
@@ -72,11 +100,17 @@ export function AttachPicker({
             event.preventDefault();
             (event.currentTarget as HTMLElement | null)?.focus();
           }}
-          className="bg-card h-[85dvh] gap-0 rounded-t-[20px] border-t-0 p-0"
+          onCloseAutoFocus={onCloseAutoFocus}
+          // [&>button]:hidden drops the primitive's own close (display:none,
+          // so it's out of the tab order too) — ours sits in the title row.
+          className="bg-card h-[85dvh] gap-0 rounded-t-[20px] border-t-0 p-0 motion-reduce:animate-none [&>button]:hidden"
         >
-          <SheetTitle className="font-heading px-4 pt-4 pb-2 text-lg font-bold">
-            {t("attachTitle")}
-          </SheetTitle>
+          <div className="flex items-center gap-2 py-1.5 pr-1.5 pl-4">
+            <SheetTitle className="font-heading min-w-0 flex-1 text-lg font-bold">
+              {t("attachTitle")}
+            </SheetTitle>
+            <SheetClose asChild>{closeButton}</SheetClose>
+          </div>
           {body}
         </SheetContent>
       </Sheet>
@@ -87,15 +121,20 @@ export function AttachPicker({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         aria-describedby={undefined}
+        showCloseButton={false}
         onOpenAutoFocus={(event) => {
           event.preventDefault();
           searchRef.current?.focus();
         }}
-        className="flex h-[min(36rem,85vh)] max-w-md flex-col gap-0 p-0"
+        onCloseAutoFocus={onCloseAutoFocus}
+        className="flex h-[min(36rem,85vh)] max-w-md flex-col gap-0 p-0 motion-reduce:animate-none"
       >
-        <DialogTitle className="font-heading px-5 pt-5 pb-2 text-lg font-bold">
-          {t("attachTitle")}
-        </DialogTitle>
+        <div className="flex items-center gap-2 py-2 pr-2 pl-5">
+          <DialogTitle className="font-heading min-w-0 flex-1 text-lg font-bold">
+            {t("attachTitle")}
+          </DialogTitle>
+          <DialogClose asChild>{closeButton}</DialogClose>
+        </div>
         {body}
       </DialogContent>
     </Dialog>
@@ -115,6 +154,7 @@ function PickerBody({
 }) {
   const t = useTranslations("messages");
   const [side, setSide] = useState<Side>("mine");
+  // One search box value shared by both tabs.
   const [query, setQuery] = useState("");
   const [search, setSearch] = useState("");
   useEffect(() => {
@@ -122,6 +162,70 @@ function PickerBody({
     return () => clearTimeout(timer);
   }, [query]);
 
+  const tabTrigger = cn(TAB_TRIGGER_CLASS, "min-h-11 md:min-h-0");
+  const panel = (
+    <PickerPanel
+      threadId={threadId}
+      side={side}
+      query={query}
+      search={search}
+      onQueryChange={setQuery}
+      searchRef={searchRef}
+      onSelect={onSelect}
+    />
+  );
+
+  return (
+    <Tabs
+      value={side}
+      onValueChange={(value) => setSide(value as Side)}
+      className="min-h-0 flex-1 gap-0"
+    >
+      <TabsList className={cn(UNDERLINE_TABS_LIST_CLASS, "px-2")}>
+        <TabsTrigger value="mine" className={tabTrigger}>
+          {t("tabMine")}
+        </TabsTrigger>
+        {theirsLabel !== null && (
+          <TabsTrigger
+            value="theirs"
+            // A long member name truncates instead of widening the sheet.
+            className={cn(tabTrigger, "min-w-0 shrink")}
+          >
+            <span className="truncate">{theirsLabel}</span>
+          </TabsTrigger>
+        )}
+      </TabsList>
+      {/* Real tabpanels, so each trigger's aria-controls resolves. */}
+      <TabsContent value="mine" className="flex min-h-0 flex-col">
+        {side === "mine" && panel}
+      </TabsContent>
+      {theirsLabel !== null && (
+        <TabsContent value="theirs" className="flex min-h-0 flex-col">
+          {side === "theirs" && panel}
+        </TabsContent>
+      )}
+    </Tabs>
+  );
+}
+
+function PickerPanel({
+  threadId,
+  side,
+  query,
+  search,
+  onQueryChange,
+  searchRef,
+  onSelect,
+}: {
+  threadId: string;
+  side: Side;
+  query: string;
+  search: string;
+  onQueryChange: (query: string) => void;
+  searchRef: React.RefObject<HTMLInputElement | null>;
+  onSelect: (copy: MessageCopy) => void;
+}) {
+  const t = useTranslations("messages");
   const { data: copies } = useQuery({
     ...convexQuery(gateway.conversation.listAttachableCopies, {
       threadId,
@@ -133,27 +237,7 @@ function PickerBody({
   });
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <Tabs
-        value={side}
-        onValueChange={(value) => setSide(value as Side)}
-        className="gap-0 px-2"
-      >
-        <TabsList className={UNDERLINE_TABS_LIST_CLASS}>
-          <TabsTrigger value="mine" className={TAB_TRIGGER_CLASS}>
-            {t("tabMine")}
-          </TabsTrigger>
-          {theirsLabel !== null && (
-            <TabsTrigger
-              value="theirs"
-              // A long member name truncates instead of widening the sheet.
-              className={cn(TAB_TRIGGER_CLASS, "min-w-0 shrink")}
-            >
-              <span className="truncate">{theirsLabel}</span>
-            </TabsTrigger>
-          )}
-        </TabsList>
-      </Tabs>
+    <>
       <div className="px-4 pt-3 pb-2">
         <div className="relative">
           <Search
@@ -164,13 +248,19 @@ function PickerBody({
             ref={searchRef}
             type="search"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => onQueryChange(event.target.value)}
             placeholder={t("searchPuzzles")}
             aria-label={t("searchPuzzles")}
             className="h-11 pl-9 md:h-10"
           />
         </div>
       </div>
+      {/* Result count for screen readers, updated as the search settles. */}
+      <p role="status" className="sr-only">
+        {copies && copies.length > 0
+          ? t("puzzleCount", { count: copies.length })
+          : ""}
+      </p>
       <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
         {copies === undefined ? (
           <div className="flex flex-col gap-1 px-1" aria-hidden>
@@ -185,7 +275,10 @@ function PickerBody({
             ))}
           </div>
         ) : copies.length === 0 ? (
-          <p className="text-muted-foreground px-4 py-10 text-center text-sm">
+          <p
+            role="status"
+            className="text-muted-foreground px-4 py-10 text-center text-sm"
+          >
             {search ? t("noPuzzleResults", { query: search }) : t("noPuzzles")}
           </p>
         ) : (
@@ -198,7 +291,7 @@ function PickerBody({
           </ul>
         )}
       </div>
-    </div>
+    </>
   );
 }
 

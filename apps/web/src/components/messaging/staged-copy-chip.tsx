@@ -11,8 +11,12 @@ import type { MessageCopy } from "./copy-card";
 export function StagedCopyChip({
   copy,
   onRemove,
+  descriptionId,
 }: {
   copy: MessageCopy;
+  // id of the sr-only "Attached: <title>" text, for the textarea's
+  // aria-describedby.
+  descriptionId?: string;
   // Omitted when the copy can't be removed (a new conversation about it).
   onRemove?: () => void;
 }) {
@@ -27,11 +31,16 @@ export function StagedCopyChip({
         )}
       </span>
       <span className="min-w-0 truncate text-sm font-medium">{copy.title}</span>
+      {descriptionId && (
+        <span id={descriptionId} className="sr-only">
+          {t("attached", { title: copy.title })}
+        </span>
+      )}
       {onRemove ? (
         <Button
           variant="ghost"
           size="icon"
-          className="size-8 shrink-0"
+          className="size-11 shrink-0 md:size-8"
           onClick={onRemove}
           aria-label={t("removeAttachment", { title: copy.title })}
         >

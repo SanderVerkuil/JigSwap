@@ -11,12 +11,13 @@ import { conversationErrorCode } from "@/components/messaging/format";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, type Id } from "@/gateway";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import type { OptimisticUpdate } from "convex/browser";
 import type { FunctionArgs } from "convex/server";
 import { Puzzle, Send } from "lucide-react";
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { AttachPicker } from "./attach-picker";
@@ -81,6 +82,16 @@ export function MessageComposer({
   const [staged, setStaged] = useState<MessageCopy | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const attachButtonRef = useRef<HTMLButtonElement>(null);
+  // Set by a pick so the picker's close hands focus to the input, not back to
+  // the attach button.
+  const pickedRef = useRef(false);
+  const stagedDescriptionId = useId();
+  const isMobile = useIsMobile();
+  // After picking or removing an attachment: the textarea on desktop; on
+  // phones the attach button, so the keyboard doesn't pop up unasked.
+  const focusAfterAttachChange = () =>
+    (isMobile ? attachButtonRef : textareaRef).current?.focus();
 
   const postMessage = useMutation({
     mutationFn: useConvexMutation(
@@ -131,14 +142,16 @@ export function MessageComposer({
       {staged && (
         <StagedCopyChip
           copy={staged}
+          descriptionId={stagedDescriptionId}
           onRemove={() => {
             setStaged(null);
-            textareaRef.current?.focus();
+            focusAfterAttachChange();
           }}
         />
       )}
       <div className="flex items-end gap-2">
         <Button
+          ref={attachButtonRef}
           variant="ghost"
           size="icon"
           className="text-muted-foreground size-11 rounded-full md:size-10"
@@ -161,6 +174,8 @@ export function MessageComposer({
               ? t("messageName", { name: recipientName })
               : t("typeMessage")
           }
+          // Announces the staged attachment ("Attached: <title>").
+          aria-describedby={staged ? stagedDescriptionId : undefined}
           maxLength={MAX_MESSAGE_LENGTH}
           rows={1}
           // muted-foreground lifts the outline to ≥3:1 (--input is ~1.3:1).
@@ -188,8 +203,16 @@ export function MessageComposer({
         theirsLabel={theirsLabel}
         onSelect={(copy) => {
           setStaged(copy);
-          // After the picker's close animation returns focus to the trigger.
-          setTimeout(() => textareaRef.current?.focus(), 0);
+          pickedRef.current = true;
+        }}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          if (pickedRef.current) {
+            pickedRef.current = false;
+            focusAfterAttachChange();
+          } else {
+            attachButtonRef.current?.focus();
+          }
         }}
       />
     </div>
