@@ -8,6 +8,8 @@
   "scripts": {
     "type-check": "node ../../node_modules/typescript7/bin/tsc --noEmit",
     "test": "vitest run",
-    "mutation": "stryker run"
+    "mutation": "stryker run",
+    "lint": "eslint .",
+    "coverage": "vitest run --coverage"
   }
 }
