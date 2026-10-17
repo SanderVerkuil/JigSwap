@@ -15,15 +15,18 @@ import {
   unreadCountOf,
 } from "./readModelHelpers";
 
-// Context-copy bounds. Per thread: at most CONTEXT_COPY_CAP distinct viewable copies, found by
-// scanning at most the newest CONTEXT_SCAN_PER_THREAD messages, stopping early once the cap is
-// reached. Per inbox read: at most CONTEXT_SCAN_BUDGET messages in total, spent on threads in
-// newest-activity order — so a member with many long, copy-less threads cannot push the query
-// past Convex's read limits; once spent, the remaining (least recent) threads read only their
-// newest message (for lastMessage) and list just their exchange copies.
+// Context-copy bounds. Message references are read through by_thread_copy_sent, so plain messages
+// are never scanned for them. That index groups rows per copy (copyId, then sentAt), so each
+// distinct copy costs one skip-scan probe: two single-row index reads (the next copyId, then that
+// copy's newest reference). Per thread at most CONTEXT_COPY_PROBES distinct copies are probed;
+// per inbox read at most CONTEXT_PROBE_BUDGET in total, spent on threads in newest-activity order.
+// At most CONTEXT_COPY_CAP viewable copies are returned per thread.
 const CONTEXT_COPY_CAP = 10;
-const CONTEXT_SCAN_PER_THREAD = 500;
-const CONTEXT_SCAN_BUDGET = 3000;
+const CONTEXT_COPY_PROBES = 50;
+const CONTEXT_PROBE_BUDGET = 1000;
+
+// Below every Id string, above `undefined`: `gt` on it skips rows without a copyId.
+const LOWEST_COPY_ID = "" as Id<"ownedPuzzles">;
 
 type ContextCopyResolver = ReturnType<typeof viewableContextCopies>;
 
@@ -93,61 +96,84 @@ const profileHandleOf = async (
   return user.slug ?? user.username ?? (user._id as string);
 };
 
-// Mutable per-inbox-read count of messages the context scans may still read.
-interface ScanBudget {
+// Mutable per-inbox-read count of distinct-copy probes still allowed.
+interface ProbeBudget {
   remaining: number;
 }
 
-// One pass over the thread's newest messages yielding the newest message (lastMessage) and the
-// distinct viewable context copies: an exchange's requested then offered copy first, then
-// message references newest first. Stops at CONTEXT_COPY_CAP copies or the scan bound.
-const scanThread = async (
+// The thread's distinct referenced copies with their newest reference instant, by skip-scanning
+// by_thread_copy_sent: jump to the next copyId, read that copy's newest row, repeat. Reads two
+// rows per distinct copy, never the messages in between.
+const referencedCopiesOf = async (
+  ctx: QueryCtx,
+  threadAggregateId: string,
+  budget: ProbeBudget,
+): Promise<{ copyId: Id<"ownedPuzzles">; sentAt: number }[]> => {
+  const found: { copyId: Id<"ownedPuzzles">; sentAt: number }[] = [];
+  let after = LOWEST_COPY_ID;
+  while (found.length < CONTEXT_COPY_PROBES && budget.remaining > 0) {
+    const next = await ctx.db
+      .query("threadMessages")
+      .withIndex("by_thread_copy_sent", (q) =>
+        q.eq("threadAggregateId", threadAggregateId).gt("copyId", after),
+      )
+      .first();
+    if (!next?.copyId) break;
+    const copyId = next.copyId;
+    const newest = await ctx.db
+      .query("threadMessages")
+      .withIndex("by_thread_copy_sent", (q) =>
+        q.eq("threadAggregateId", threadAggregateId).eq("copyId", copyId),
+      )
+      .order("desc")
+      .first();
+    budget.remaining -= 1;
+    found.push({ copyId, sentAt: newest?.sentAt ?? next.sentAt });
+    after = copyId;
+  }
+  return found.sort((a, b) => b.sentAt - a.sentAt);
+};
+
+// The distinct viewable context copies, labelled by owner: an exchange's requested then offered
+// copy first, then message references newest first. A copy owned by neither participant (legacy
+// data) is left out — there is no safe owner label for a third party.
+const contextCopiesOf = async (
   ctx: QueryCtx,
   thread: Doc<"threads">,
+  me: Id<"users">,
   resolveCopy: ContextCopyResolver,
-  budget: ScanBudget,
-): Promise<{
-  last: Doc<"threadMessages"> | null;
-  contextCopies: InboxThreadContextCopy[];
-}> => {
-  const contextCopies: InboxThreadContextCopy[] = [];
-  const seen = new Set<Id<"ownedPuzzles">>();
-  const consider = async (copyId: Id<"ownedPuzzles">) => {
-    if (seen.has(copyId) || contextCopies.length >= CONTEXT_COPY_CAP) return;
-    seen.add(copyId);
-    const copy = await resolveCopy(copyId);
-    if (copy) contextCopies.push(copy);
-  };
-
+  budget: ProbeBudget,
+): Promise<InboxThreadContextCopy[]> => {
+  const candidates: Id<"ownedPuzzles">[] = [];
   if (thread.subjectKind === "exchange" && thread.exchangeId) {
     const exchange = await ctx.db.get(thread.exchangeId);
     if (exchange) {
-      await consider(exchange.requestedPuzzleId);
-      if (exchange.offeredPuzzleId) await consider(exchange.offeredPuzzleId);
+      candidates.push(exchange.requestedPuzzleId);
+      if (exchange.offeredPuzzleId) candidates.push(exchange.offeredPuzzleId);
     }
   }
-
-  // Always read at least one message so lastMessage survives an exhausted budget.
-  const limit = Math.max(
-    1,
-    Math.min(CONTEXT_SCAN_PER_THREAD, budget.remaining),
-  );
-  let last: Doc<"threadMessages"> | null = null;
-  let scanned = 0;
-  const newestFirst = ctx.db
-    .query("threadMessages")
-    .withIndex("by_thread_sent", (q) =>
-      q.eq("threadAggregateId", thread.aggregateId),
-    )
-    .order("desc");
-  for await (const message of newestFirst) {
-    scanned += 1;
-    last ??= message;
-    if (message.copyId) await consider(message.copyId);
-    if (contextCopies.length >= CONTEXT_COPY_CAP || scanned >= limit) break;
+  for (const { copyId } of await referencedCopiesOf(
+    ctx,
+    thread.aggregateId,
+    budget,
+  )) {
+    candidates.push(copyId);
   }
-  budget.remaining = Math.max(0, budget.remaining - scanned);
-  return { last, contextCopies };
+
+  const contextCopies: InboxThreadContextCopy[] = [];
+  const seen = new Set<Id<"ownedPuzzles">>();
+  for (const copyId of candidates) {
+    if (contextCopies.length >= CONTEXT_COPY_CAP) break;
+    if (seen.has(copyId)) continue;
+    seen.add(copyId);
+    const resolved = await resolveCopy(copyId);
+    if (!resolved || !thread.participants.includes(resolved.ownerId)) continue;
+    contextCopies.push({
+      ...resolved.card,
+      owner: resolved.ownerId === me ? "viewer" : "other",
+    });
+  }
+  return contextCopies;
 };
 
 const toInboxThreadView = async (
@@ -155,13 +181,21 @@ const toInboxThreadView = async (
   thread: Doc<"threads">,
   me: Id<"users">,
   resolveCopy: ContextCopyResolver,
-  budget: ScanBudget,
+  budget: ProbeBudget,
 ): Promise<InboxThreadView | null> => {
   const subject = await subjectOf(ctx, thread, me);
   if (!subject) return null;
-  const { last, contextCopies } = await scanThread(
+  const last = await ctx.db
+    .query("threadMessages")
+    .withIndex("by_thread_sent", (q) =>
+      q.eq("threadAggregateId", thread.aggregateId),
+    )
+    .order("desc")
+    .first();
+  const contextCopies = await contextCopiesOf(
     ctx,
     thread,
+    me,
     resolveCopy,
     budget,
   );
@@ -197,14 +231,14 @@ export const getMyInbox = query({
       );
       if (thread) threads.push(thread);
     }
-    // Newest activity first, so the context-scan budget is spent on the top of the inbox.
+    // Newest activity first, so the context-copy probe budget is spent on the top of the inbox.
     const activityOf = (thread: Doc<"threads">) =>
       thread.lastMessageAt ?? thread.createdAt;
     threads.sort((a, b) => activityOf(b) - activityOf(a));
 
     const views: InboxThreadView[] = [];
     const resolveCopy = viewableContextCopies(ctx, me);
-    const budget: ScanBudget = { remaining: CONTEXT_SCAN_BUDGET };
+    const budget: ProbeBudget = { remaining: CONTEXT_PROBE_BUDGET };
     for (const thread of threads) {
       const view = await toInboxThreadView(
         ctx,

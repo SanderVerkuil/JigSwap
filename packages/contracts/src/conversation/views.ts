@@ -87,10 +87,14 @@ export type InboxThreadSubjectView =
     };
 
 /**
- * A puzzle copy an inbox thread is about (header puzzle menu, inbox cover stack). The same compact
- * card as a message's copy: id, title, brand, piece count and cover.
+ * A puzzle copy an inbox thread is about (header puzzle menu, inbox cover stack): the same compact
+ * card as a message's copy, plus whose copy it is. Only copies owned by one of the thread's two
+ * participants are listed, so `owner` is always one of them: `"viewer"` ("Your copy") or
+ * `"other"` (name them via the subject's privacy-projected `otherMember`).
  */
-export type InboxThreadContextCopy = MessageCopyView;
+export interface InboxThreadContextCopy extends MessageCopyView {
+  readonly owner: "viewer" | "other";
+}
 
 /** One row of a member's inbox: the thread, its subject, and the caller's unread state. */
 export interface InboxThreadView {
@@ -107,7 +111,8 @@ export interface InboxThreadView {
   /**
    * The DISTINCT copies the thread is about that the viewer may view right now, at most 10.
    * Exchange threads list the requested then the offered copy first; then copies referenced by
-   * messages, newest reference first (scanning at most the newest 500 messages). Empty when none.
+   * messages, newest reference first. Copies owned by neither participant (legacy rows) are left
+   * out. Empty when none.
    */
   readonly contextCopies: readonly InboxThreadContextCopy[];
   /** Inbox ordering instant: the newest message's sentAt, or the thread's creation. */

@@ -723,6 +723,9 @@ export default defineSchema({
     copyId: v.optional(v.id("ownedPuzzles")),
   })
     .index("by_thread_sent", ["threadAggregateId", "sentAt"])
+    // Copy-referencing messages of a thread, grouped per copy (rows without a copyId sort first
+    // as undefined and are excluded by a range on copyId). Backs the inbox's context copies.
+    .index("by_thread_copy_sent", ["threadAggregateId", "copyId", "sentAt"])
     .index("by_message_id", ["messageId"]),
 
   // Member-lookup projection of threads.participants, kept in sync by the repository on every

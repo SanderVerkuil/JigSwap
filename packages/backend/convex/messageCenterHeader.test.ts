@@ -1,5 +1,5 @@
 import { convexTest, type TestConvex } from "convex-test";
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
@@ -74,15 +74,23 @@ const followMutually = (
     });
   });
 
-// Keep message sentAt instants strictly increasing.
-const tick = () => new Promise((resolve) => setTimeout(resolve, 3));
+// Fake timers throughout: posting schedules async jobs (event dispatch, notification delivery),
+// and on real timers those could fire after a test ends and leak into later tests. Jobs only run
+// where a test drains them (flushScheduled); useRealTimers drops the rest.
+beforeEach(() => {
+  vi.useFakeTimers();
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
-const flushScheduled = async (t: TestConvex<typeof schema>) => {
-  for (let i = 0; i < 10; i++) {
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    await t.finishInProgressScheduledFunctions();
-  }
+// Keep message sentAt instants strictly increasing — moves the faked clock without firing timers.
+const tick = async () => {
+  vi.setSystemTime(Date.now() + 5);
 };
+
+const flushScheduled = (t: TestConvex<typeof schema>) =>
+  t.finishAllScheduledFunctions(vi.runAllTimers);
 
 const closeCopy = (t: TestConvex<typeof schema>, copy: Id<"ownedPuzzles">) =>
   t.run((ctx) => ctx.db.patch(copy, { availability: CLOSED }));
@@ -187,6 +195,17 @@ const appendMessages = (
 const contextIdsOf = async (viewer: ReturnType<typeof asAlice>) =>
   (await inboxOf(viewer))[0].contextCopies.map((c) => c.copyId);
 
+const openAliceBobDm = async (
+  t: TestConvex<typeof schema>,
+  alice: Id<"users">,
+  bob: Id<"users">,
+) => {
+  await followMutually(t, alice, bob);
+  return asAlice(t).mutation(api.conversation.openDmThread.openDmThread, {
+    recipientId: bob,
+  });
+};
+
 describe("getMyInbox contextCopies", () => {
   test("a DM without copy references has no context copies", async () => {
     const t = convexTest(schema, modules);
@@ -234,37 +253,60 @@ describe("getMyInbox contextCopies", () => {
     expect(await contextIdsOf(asBob(t))).toEqual([second]);
   });
 
+  test("newest reference first across interleaved references, not index (copyId) order", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+    const threadId = await openAliceBobDm(t, alice, bob);
+    const [c0, c1, c2, c3] = await mkOpenCopies(t, bob, [
+      "C0",
+      "C1",
+      "C2",
+      "C3",
+    ]);
+    await appendMessages(t, threadId, alice, [
+      c0,
+      null,
+      c1,
+      c2,
+      null,
+      c0,
+      c3,
+      null,
+      c1,
+      null,
+    ]);
+    expect(await contextIdsOf(asAlice(t))).toEqual([c1, c3, c0, c2]);
+  });
+
   test("capped at the 10 most recently referenced distinct copies", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob } = await seed(t);
-    await followMutually(t, alice, bob);
-    const threadId = await asAlice(t).mutation(
-      api.conversation.openDmThread.openDmThread,
-      { recipientId: bob },
-    );
+    const threadId = await openAliceBobDm(t, alice, bob);
     const copies = await mkOpenCopies(
       t,
       bob,
       Array.from({ length: 12 }, (_, i) => `Copy ${i}`),
     );
+    // Referenced in both id orders so neither the newest nor the oldest ids alone pass.
     await appendMessages(t, threadId, alice, copies);
-
     expect(await contextIdsOf(asAlice(t))).toEqual(copies.slice(2).reverse());
+    await appendMessages(t, threadId, alice, [...copies].reverse());
+    expect(await contextIdsOf(asAlice(t))).toEqual(copies.slice(0, 10));
   });
 
-  test("a reference older than 50 messages is still found", async () => {
+  test("plain messages neither hide nor bound references: one far back in a long thread is found", async () => {
     const t = convexTest(schema, modules);
-    const { alice, bob, first } = await seed(t);
-    await followMutually(t, alice, bob);
-    const threadId = await asAlice(t).mutation(
-      api.conversation.openDmThread.openDmThread,
-      { recipientId: bob },
-    );
+    const { alice, bob, first, second } = await seed(t);
+    const threadId = await openAliceBobDm(t, alice, bob);
     await appendMessages(t, threadId, alice, [
       first,
-      ...Array.from({ length: 120 }, () => null),
+      ...Array.from({ length: 1000 }, () => null),
+      second,
+      ...Array.from({ length: 600 }, () => null),
     ]);
-    expect(await contextIdsOf(asAlice(t))).toEqual([first]);
+    expect(await contextIdsOf(asAlice(t))).toEqual([second, first]);
+    // lastMessage still reads the newest message, copy or not.
+    expect((await inboxOf(asAlice(t)))[0].lastMessage?.body).toBe("chatter");
   });
 
   test("exchange: requested then offered copy first, deduped against message references", async () => {
@@ -296,6 +338,70 @@ describe("getMyInbox contextCopies", () => {
     await makePrivate(t, bob);
     expect(await contextIdsOf(asAlice(t))).toEqual([aliceCopy]);
     expect(await contextIdsOf(asBob(t))).toEqual([first, aliceCopy, second]);
+  });
+});
+
+describe("getMyInbox contextCopies owner", () => {
+  test("DM: `viewer` for the caller's own copy, `other` for the partner's — from both sides", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, first } = await seed(t);
+    const threadId = await openAliceBobDm(t, alice, bob);
+    const [aliceCopy] = await mkOpenCopies(t, alice, ["Alice's Copy"]);
+    await appendMessages(t, threadId, alice, [first, aliceCopy]);
+
+    const ownersFor = async (viewer: ReturnType<typeof asAlice>) =>
+      (await inboxOf(viewer))[0].contextCopies.map((c) => [c.copyId, c.owner]);
+    expect(await ownersFor(asAlice(t))).toEqual([
+      [aliceCopy, "viewer"],
+      [first, "other"],
+    ]);
+    expect(await ownersFor(asBob(t))).toEqual([
+      [aliceCopy, "other"],
+      [first, "viewer"],
+    ]);
+  });
+
+  test("exchange: the offered and requested copies are labelled per viewer", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, first } = await seed(t);
+    const [aliceCopy] = await mkOpenCopies(t, alice, ["Alice's Offer"]);
+    await t.run((ctx) =>
+      ctx.db.patch(first, {
+        availability: { forTrade: true, forSale: false, forLend: false },
+      }),
+    );
+    await asAlice(t).mutation(api.exchange.propose.propose, {
+      recipientId: bob,
+      type: "trade",
+      requestedPuzzleId: first,
+      offeredPuzzleId: aliceCopy,
+    });
+    await flushScheduled(t);
+
+    const forAlice = (await inboxOf(asAlice(t)))[0].contextCopies;
+    expect(forAlice.map((c) => c.owner)).toEqual(["other", "viewer"]);
+    const forBob = (await inboxOf(asBob(t)))[0].contextCopies;
+    expect(forBob.map((c) => c.owner)).toEqual(["viewer", "other"]);
+  });
+
+  test("a legacy reference to a third party's copy is left out, even when viewable", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, first } = await seed(t);
+    const threadId = await openAliceBobDm(t, alice, bob);
+    const carol = await t.run((ctx) =>
+      ctx.db.insert("users", {
+        clerkId: "clerk_carol",
+        email: "carol@example.com",
+        name: "clerk_carol",
+        isActive: true,
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    const [carolCopy] = await mkOpenCopies(t, carol, ["Carol's Copy"]);
+    await appendMessages(t, threadId, alice, [first, carolCopy]);
+    expect(await contextIdsOf(asAlice(t))).toEqual([first]);
+    expect(await contextIdsOf(asBob(t))).toEqual([first]);
   });
 });
 

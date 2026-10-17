@@ -1,7 +1,4 @@
-import type {
-  InboxThreadContextCopy,
-  MessageCopyView,
-} from "@jigswap/contracts";
+import type { MessageCopyView } from "@jigswap/contracts";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import {
@@ -51,6 +48,13 @@ export const viewableCopyCards = (ctx: QueryCtx, viewerId: Id<"users">) => {
   };
 };
 
+// A viewable context copy before it is labelled for a thread: the card plus its owner, which the
+// caller maps to "viewer" / "other" against the thread's participants.
+export interface ViewableContextCopy {
+  readonly card: MessageCopyView;
+  readonly ownerId: Id<"users">;
+}
+
 // Per-request resolver for an inbox thread's context copies: the card only while `viewerId` may
 // view the copy, null otherwise (including a deleted copy). Memoised per copy (gate AND cover
 // URL), and the viewer's copy-view context (circle shares, household) is built lazily at most
@@ -59,11 +63,9 @@ export const viewableContextCopies = (ctx: QueryCtx, viewerId: Id<"users">) => {
   let context: Promise<CopyViewContext> | undefined;
   const memo = new Map<
     Id<"ownedPuzzles">,
-    Promise<InboxThreadContextCopy | null>
+    Promise<ViewableContextCopy | null>
   >();
-  return (
-    copyId: Id<"ownedPuzzles">,
-  ): Promise<InboxThreadContextCopy | null> => {
+  return (copyId: Id<"ownedPuzzles">): Promise<ViewableContextCopy | null> => {
     let resolved = memo.get(copyId);
     if (!resolved) {
       resolved = (async () => {
@@ -72,7 +74,10 @@ export const viewableContextCopies = (ctx: QueryCtx, viewerId: Id<"users">) => {
         context ??= buildCopyViewContext(ctx, viewerId);
         if (!(await canViewCopyWithContext(ctx, copy, await context)))
           return null;
-        return messageCopyViewOf(ctx, copy);
+        return {
+          card: await messageCopyViewOf(ctx, copy),
+          ownerId: copy.ownerId,
+        };
       })();
       memo.set(copyId, resolved);
     }
