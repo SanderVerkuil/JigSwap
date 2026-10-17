@@ -10,7 +10,9 @@ export type HouseholdErrorCode =
   | "CannotRemoveSelf"
   | "SelfInvite"
   | "NotInvitee"
-  | "InviteNotPending";
+  | "InviteNotPending"
+  | "NotCopyOwner"
+  | "PermissionBatchTooLarge";
 
 export class HouseholdError extends DomainError {
   override readonly name = "HouseholdError";
@@ -65,6 +67,20 @@ export class HouseholdError extends DomainError {
     return new HouseholdError(
       "InviteNotPending",
       "This household invite has already been answered",
+    );
+  }
+
+  static notCopyOwner(): HouseholdError {
+    return new HouseholdError(
+      "NotCopyOwner",
+      "Only the owner can change this copy's household access",
+    );
+  }
+
+  static permissionBatchTooLarge(max: number): HouseholdError {
+    return new HouseholdError(
+      "PermissionBatchTooLarge",
+      `At most ${max} copies can be changed at once`,
     );
   }
 }
