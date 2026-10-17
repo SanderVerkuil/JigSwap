@@ -1141,4 +1141,28 @@ export default defineSchema({
     userId: v.optional(v.id("users")),
     createdAt: v.number(),
   }).index("by_slug", ["slug", "createdAt"]),
+
+  // What's new read state: one row per member that has marked an entry seen. `seenEntryIds` holds
+  // manifest ids only (@jigswap/contracts WHATS_NEW_MANIFEST) and is pruned of ids that left the
+  // manifest on every write. Entries published before the account existed are read by definition
+  // and never stored. The highlight modal derives from this set (no separate "modal shown" state).
+  whatsNewReadStates: defineTable({
+    memberId: v.id("users"),
+    seenEntryIds: v.array(v.string()),
+    updatedAt: v.number(),
+  }).index("by_member", ["memberId"]),
+
+  // One row per (member, tour) the member has started from a What's new entry. `step` is the
+  // 0-based step to resume from (in_progress) or the last step reached.
+  whatsNewTourProgress: defineTable({
+    memberId: v.id("users"),
+    tourId: v.string(),
+    status: v.union(
+      v.literal("in_progress"),
+      v.literal("completed"),
+      v.literal("dismissed"),
+    ),
+    step: v.optional(v.number()),
+    updatedAt: v.number(),
+  }).index("by_member_tour", ["memberId", "tourId"]),
 });

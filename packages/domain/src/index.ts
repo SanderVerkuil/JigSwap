@@ -26,3 +26,4 @@ export * from "./shared-kernel";
 export * from "./sharing";
 export * from "./social";
 export * from "./solving";
+export * from "./whats-new";

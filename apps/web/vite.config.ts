@@ -6,6 +6,7 @@ import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig } from "vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 import { docsPlugin } from "./vite-plugin-docs";
+import { whatsNewPlugin } from "./vite-plugin-whats-new";
 
 // root pinned to this dir so Vite resolves config/paths from the app, not the
 // monorepo root, when Nx invokes the build from a different cwd.
@@ -16,6 +17,7 @@ export default defineConfig({
     tsConfigPaths({ projects: ["./tsconfig.json"] }),
     tailwindcss(),
     docsPlugin(),
+    whatsNewPlugin(),
     // Statically prerender the public docs to HTML at build time. We seed the
     // crawler at /docs and let it follow the sidebar/TOC links; the filter keeps
     // prerendering scoped to /docs/* so the authenticated app is never rendered
