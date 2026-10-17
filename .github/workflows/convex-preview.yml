@@ -95,7 +95,9 @@ jobs:
           # A preview deploy key (project-scoped) makes `convex deploy` target a preview
           # deployment; `--preview-name` creates it if needed and reuses it otherwise.
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_PREVIEW }}
-        run: pnpm exec convex deploy --typecheck enable --preview-name "$BRANCH_NAME"
+        # The Vercel build pushes to this same preview at the same time; the wrapper
+        # retries only when this push lost that race (OCC 503 / RaceDetected 409).
+        run: bash ../../scripts/convex-deploy-retry.sh pnpm exec convex deploy --typecheck enable --preview-name "$BRANCH_NAME"
 
       - name: Check whether the preview database is empty
         id: db-state
