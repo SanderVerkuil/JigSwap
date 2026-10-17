@@ -74,6 +74,11 @@ See [`stryker.config.json`](./stryker.config.json). Key choices:
   [#6214](https://github.com/stryker-mutator/stryker-js/pull/6214). Drop the patch once a
   runner release includes the fix; pnpm refuses to install when a patch matches no
   installed version, so a runner bump forces that decision.
+- **`inPlace: true`** — Stryker mutates the files in `packages/domain` itself and restores
+  them afterwards, instead of copying the package to a `.stryker-tmp` sandbox. The sandbox
+  path rewrites `tsconfig.json` with the TypeScript compiler API, which TS 7 doesn't ship.
+  Don't edit files in the package while a run is in progress, and if a run is killed, check
+  `git status` for leftover mutants.
 - **`mutate`** excludes specs, `testing/` fakes, and barrel `index.ts` files so the score
   reflects real production logic only.
 
