@@ -61,3 +61,7 @@ export const toMessageId = (value: string): Id<"MessageId"> =>
   toId<"MessageId">(value);
 export const toChangeProposalId = (value: string): Id<"ChangeProposalId"> =>
   toId<"ChangeProposalId">(value);
+export const toHouseholdId = (value: string): Id<"HouseholdId"> =>
+  toId<"HouseholdId">(value);
+export const toHouseholdInviteId = (value: string): Id<"HouseholdInviteId"> =>
+  toId<"HouseholdInviteId">(value);
