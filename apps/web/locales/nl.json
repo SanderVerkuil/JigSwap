@@ -666,6 +666,11 @@
     "priceLabel": "Jouw bod (EUR)",
     "pricePlaceholder": "bijv. 15,00",
     "priceInvalid": "Vul een bedrag boven nul in, zoals 15 of 15,50.",
+    "ownerSeesSender": "De eigenaar ziet wie deze aanvraag heeft gestuurd.",
+    "revealNotice": {
+      "title": "Je naam en profiel worden zichtbaar voor de eigenaar van deze puzzel.",
+      "body": "Je profiel is privé, maar de eigenaar moet weten met wie die ruilt."
+    },
     "cancel": "Annuleren",
     "submit": "Aanvraag versturen",
     "submitting": "Versturen...",

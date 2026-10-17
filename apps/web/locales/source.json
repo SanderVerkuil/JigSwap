@@ -666,6 +666,11 @@
     "priceLabel": "Your offer (EUR)",
     "pricePlaceholder": "e.g. 15.00",
     "priceInvalid": "Enter an amount above zero, like 15 or 15.50.",
+    "ownerSeesSender": "The owner will see who sent this request.",
+    "revealNotice": {
+      "title": "Your name and profile will be visible to the owner of this puzzle.",
+      "body": "Your profile is private, but the owner needs to know who they're trading with."
+    },
     "cancel": "Cancel",
     "submit": "Send request",
     "submitting": "Sending...",

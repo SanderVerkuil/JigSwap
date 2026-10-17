@@ -26,6 +26,7 @@ import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import type { MemberNameSource } from "@jigswap/contracts";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
+import { Eye } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
@@ -103,6 +104,16 @@ function RequestTradeForm({
     ),
   );
 
+  // Whether sending reveals the viewer's identity to the owner (undefined = still loading). Submit
+  // waits for it so a private member always sees the notice before their request goes out.
+  const { data: disclosure } = useQuery(
+    convexQuery(gateway.exchange.requestDisclosure, {
+      requestedPuzzleId: copy.copyId as Id<"ownedPuzzles">,
+    }),
+  );
+  const disclosureLoaded = disclosure !== undefined;
+  const revealsRequester = disclosure?.revealsRequester === true;
+
   const ownerName = displayName(copy.owner);
   const priceCents = parsePriceCents(price);
   const ready =
@@ -111,7 +122,7 @@ function RequestTradeForm({
     type === "loan";
 
   const handleSubmit = async () => {
-    if (!type || !ready) return;
+    if (!type || !ready || !disclosureLoaded) return;
     try {
       await propose.mutateAsync({
         recipientId: copy.ownerId as Id<"users">,
@@ -168,6 +179,11 @@ function RequestTradeForm({
                 {t("ownedBy", { name: ownerName })}
               </span>
             </div>
+            {disclosureLoaded && !revealsRequester && (
+              <p className="text-muted-foreground mt-1 text-xs">
+                {t("ownerSeesSender")}
+              </p>
+            )}
           </div>
         </div>
 
@@ -237,13 +253,29 @@ function RequestTradeForm({
             )}
           </div>
         )}
+
+        {revealsRequester && (
+          <div
+            role="note"
+            className="border-primary/25 bg-jigsaw-primary-tint flex gap-3 rounded-lg border p-3 text-sm"
+          >
+            <Eye className="text-primary mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            <div className="space-y-1">
+              <p className="font-medium">{t("revealNotice.title")}</p>
+              <p className="text-muted-foreground">{t("revealNotice.body")}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <DialogFooter>
         <Button variant="ghost" onClick={onDone} disabled={propose.isPending}>
           {t("cancel")}
         </Button>
-        <Button onClick={handleSubmit} disabled={!ready || propose.isPending}>
+        <Button
+          onClick={handleSubmit}
+          disabled={!ready || !disclosureLoaded || propose.isPending}
+        >
           {propose.isPending ? t("submitting") : t("submit")}
         </Button>
       </DialogFooter>
