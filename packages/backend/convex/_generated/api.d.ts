@@ -131,6 +131,7 @@ import type * as exchange_getExchangeStats from "../exchange/getExchangeStats.js
 import type * as exchange_getExchangesByOwner from "../exchange/getExchangesByOwner.js";
 import type * as exchange_getExchangesByRequester from "../exchange/getExchangesByRequester.js";
 import type * as exchange_getOfferableCopies from "../exchange/getOfferableCopies.js";
+import type * as exchange_getRequestDisclosure from "../exchange/getRequestDisclosure.js";
 import type * as exchange_getUserExchanges from "../exchange/getUserExchanges.js";
 import type * as exchange_propose from "../exchange/propose.js";
 import type * as exchange_raiseDispute from "../exchange/raiseDispute.js";
@@ -348,6 +349,8 @@ import type * as social_getProfile from "../social/getProfile.js";
 import type * as social_getPublicMemberTeaser from "../social/getPublicMemberTeaser.js";
 import type * as social_getPublicProfile from "../social/getPublicProfile.js";
 import type * as social_householdLinkInvite from "../social/householdLinkInvite.js";
+import type * as social_identityRevealSubscriber from "../social/identityRevealSubscriber.js";
+import type * as social_identityReveals from "../social/identityReveals.js";
 import type * as social_inviteLinkRules from "../social/inviteLinkRules.js";
 import type * as social_isFollowing from "../social/isFollowing.js";
 import type * as social_knownFollowers from "../social/knownFollowers.js";
@@ -541,6 +544,7 @@ declare const fullApi: ApiFromModules<{
   "exchange/getExchangesByOwner": typeof exchange_getExchangesByOwner;
   "exchange/getExchangesByRequester": typeof exchange_getExchangesByRequester;
   "exchange/getOfferableCopies": typeof exchange_getOfferableCopies;
+  "exchange/getRequestDisclosure": typeof exchange_getRequestDisclosure;
   "exchange/getUserExchanges": typeof exchange_getUserExchanges;
   "exchange/propose": typeof exchange_propose;
   "exchange/raiseDispute": typeof exchange_raiseDispute;
@@ -758,6 +762,8 @@ declare const fullApi: ApiFromModules<{
   "social/getPublicMemberTeaser": typeof social_getPublicMemberTeaser;
   "social/getPublicProfile": typeof social_getPublicProfile;
   "social/householdLinkInvite": typeof social_householdLinkInvite;
+  "social/identityRevealSubscriber": typeof social_identityRevealSubscriber;
+  "social/identityReveals": typeof social_identityReveals;
   "social/inviteLinkRules": typeof social_inviteLinkRules;
   "social/isFollowing": typeof social_isFollowing;
   "social/knownFollowers": typeof social_knownFollowers;

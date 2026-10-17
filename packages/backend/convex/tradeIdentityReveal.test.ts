@@ -103,10 +103,10 @@ const propose = async (
   t: T,
   who: string,
   requestedPuzzleId: Id<"ownedPuzzles">,
-  recipientId: Id<"users">,
+  recipientId?: Id<"users">,
 ): Promise<string> => {
   const id = await as(t, who).mutation(api.exchange.propose.propose, {
-    recipientId,
+    ...(recipientId ? { recipientId } : {}),
     // A sale needs no offered copy, keeping the fixtures small; the reveal is kind-agnostic.
     type: "sale",
     salePrice: 10,
@@ -533,5 +533,113 @@ describe("trade identity reveal: notifications", () => {
       anonymous: false,
       memberId: w.owner,
     });
+  });
+});
+
+describe("proposing to an anonymous owner", () => {
+  test("propose without a recipientId derives the copy's owner", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    const ex = await propose(t, "requester", w.copy);
+
+    const docId = await docIdOf(t, ex);
+    const row = await t.run(async (ctx) => ctx.db.get(docId));
+    expect(row?.recipientId).toBe(w.owner);
+    expect(row?.initiatorId).toBe(w.requester);
+    expect(await sees(t, w.owner, w.requester)).toBe(true);
+    expect(await sees(t, w.requester, w.owner)).toBe(false);
+  });
+
+  test("a wrong explicit recipientId is still rejected", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    await expect(
+      as(t, "requester").mutation(api.exchange.propose.propose, {
+        recipientId: w.third,
+        type: "sale",
+        salePrice: 10,
+        requestedPuzzleId: w.copy,
+      }),
+    ).rejects.toThrow(/RecipientNotOwner/);
+  });
+});
+
+describe("getRequestDisclosure", () => {
+  const disclosure = (
+    t: T,
+    who: string,
+    requestedPuzzleId: Id<"ownedPuzzles">,
+  ) =>
+    as(t, who).query(api.exchange.getRequestDisclosure.getRequestDisclosure, {
+      requestedPuzzleId,
+    });
+
+  test("true for a private requester the owner can't see yet", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    expect(await disclosure(t, "requester", w.copy)).toEqual({
+      revealsRequester: true,
+    });
+  });
+
+  test("false for a public requester", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    await setVisibility(t, w.requester, "public");
+    expect(await disclosure(t, "requester", w.copy)).toEqual({
+      revealsRequester: false,
+    });
+  });
+
+  test("false for mutual followers", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    await t.run(async (ctx) => {
+      await ctx.db.insert("follows", {
+        followerId: w.requester,
+        followeeId: w.owner,
+        createdAt: 1,
+      });
+      await ctx.db.insert("follows", {
+        followerId: w.owner,
+        followeeId: w.requester,
+        createdAt: 1,
+      });
+    });
+    expect(await disclosure(t, "requester", w.copy)).toEqual({
+      revealsRequester: false,
+    });
+  });
+
+  test("false once already granted to an owner the requester can identify", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    const ex = await propose(t, "requester", w.copy);
+    await act(t, "owner", "accept", ex);
+    expect(await disclosure(t, "requester", w.copy)).toEqual({
+      revealsRequester: false,
+    });
+  });
+
+  test("a grant toward a still-anonymous owner does not link their other copies", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    await propose(t, "requester", w.copy); // owner sees requester; owner stays anonymous
+    expect(await disclosure(t, "requester", w.copy)).toEqual({
+      revealsRequester: true,
+    });
+  });
+
+  test("null for the owner's own copy, a missing copy, or a signed-out caller", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    expect(await disclosure(t, "owner", w.copy)).toBeNull();
+    expect(
+      await t.query(api.exchange.getRequestDisclosure.getRequestDisclosure, {
+        requestedPuzzleId: w.copy,
+      }),
+    ).toBeNull();
+    await t.run((ctx) => ctx.db.delete(w.thirdCopy));
+    expect(await disclosure(t, "requester", w.thirdCopy)).toBeNull();
   });
 });

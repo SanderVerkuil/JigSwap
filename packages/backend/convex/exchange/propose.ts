@@ -21,9 +21,13 @@ const DEFAULT_CURRENCY = "EUR";
 
 // Composition root for proposing an exchange: authenticate -> wire adapters -> call the use
 // case -> map result. All behaviour lives in the (Convex-free) domain/application layers.
+//
+// `recipientId` is OPTIONAL: a requester may not know an anonymous owner's id (exchange views and
+// the copy page omit it), so when absent the recipient is derived server-side from the requested
+// copy's owner. When present, the domain's RecipientNotOwner check still applies unchanged.
 export const propose = mutation({
   args: {
-    recipientId: v.id("users"),
+    recipientId: v.optional(v.id("users")),
     type: v.union(v.literal("trade"), v.literal("sale"), v.literal("loan")),
     offeredPuzzleId: v.optional(v.id("ownedPuzzles")),
     requestedPuzzleId: v.id("ownedPuzzles"),
@@ -32,6 +36,15 @@ export const propose = mutation({
   },
   handler: async (ctx, args) => {
     const initiatorId = await requireMember(ctx); // initiator derived from auth, never the client
+
+    const recipientId =
+      args.recipientId ?? (await ctx.db.get(args.requestedPuzzleId))?.ownerId;
+    if (recipientId === undefined) {
+      throw new ConvexError({
+        code: "CopyNotFound",
+        message: `Copy ${args.requestedPuzzleId} could not be found`,
+      });
+    }
 
     const kind: ExchangeKind = TYPE_TO_KIND[args.type];
     const terms = buildTerms(kind, args);
@@ -47,7 +60,7 @@ export const propose = mutation({
 
     const result = await proposeExchange({
       initiatorId,
-      recipientId: toMemberId(args.recipientId),
+      recipientId: toMemberId(recipientId),
       kind,
       requestedCopyId: toCopyId(args.requestedPuzzleId),
       terms,

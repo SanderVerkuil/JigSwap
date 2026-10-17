@@ -194,6 +194,8 @@ export const gateway = {
     stats: api.exchange.getExchangeStats.getExchangeStats,
     // The viewer's copies they may offer in a swap for a requested copy (propose's offer rule).
     offerableCopies: api.exchange.getOfferableCopies.getOfferableCopies,
+    // Whether proposing for a copy would reveal the (currently anonymous) requester to its owner.
+    requestDisclosure: api.exchange.getRequestDisclosure.getRequestDisclosure,
   },
 
   // Conversation: threads, DMs, exchange chat, inbox.
