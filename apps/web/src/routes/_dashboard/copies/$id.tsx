@@ -8,6 +8,7 @@ import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
 import { availabilityToSharing } from "@/components/add-puzzle";
 import { ImageZoom } from "@/components/common/image-zoom";
+import { CopyOwner } from "@/components/copies/copy-owner";
 import { EditCopyDialog } from "@/components/copies/edit-copy-dialog";
 import { PhotoLightbox } from "@/components/copies/photo-lightbox";
 import {
@@ -45,6 +46,7 @@ import {
   Puzzle,
   Star,
   Tag,
+  UserRound,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -207,6 +209,7 @@ function CopyInstanceDetail({
   const router = useRouter();
   const t = useTranslations("copyInstance");
   const tShell = useTranslations("shell");
+  const tOwner = useTranslations("copyOwner");
   const tPuzzles = useTranslations("puzzles");
   const tStart = useTranslations("solving.startSolve");
   const tCompletions = useTranslations("solving.completions");
@@ -480,6 +483,17 @@ function CopyInstanceDetail({
 
           {/* Meta row */}
           <div className="mt-4 flex flex-wrap gap-x-8 gap-y-4">
+            <MetaItem
+              icon={<UserRound className="h-3.5 w-3.5" />}
+              label={tOwner("label")}
+              value={
+                <CopyOwner
+                  owner={copy.owner}
+                  householdOwner={copy.household?.owner}
+                  viewerIsOwner={copy.viewerIsOwner}
+                />
+              }
+            />
             <MetaItem
               icon={<Calendar className="h-3.5 w-3.5" />}
               label={t("acquired")}

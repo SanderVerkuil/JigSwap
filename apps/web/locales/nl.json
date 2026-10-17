@@ -3015,6 +3015,11 @@
     "photoCover": "Omslag",
     "photoPending": "Wordt beoordeeld"
   },
+  "copyOwner": {
+    "label": "Eigenaar",
+    "you": "jij",
+    "anonymous": "Anonieme gebruiker"
+  },
   "puzzleDefinition": {
     "notFound": "Puzzel niet gevonden",
     "notFoundSub": "Deze puzzel is mogelijk uit de catalogus verwijderd, of de link klopt niet.",
