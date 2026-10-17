@@ -109,7 +109,11 @@ describe("profile page width", () => {
       )[0],
     );
     const html = withIntl(
-      <ProfilePuzzlesSection memberId={"member1" as never} firstName="Hans" />,
+      <ProfilePuzzlesSection
+        memberId={"member1" as never}
+        firstName="Hans"
+        scope="available"
+      />,
     );
     const grids = elementsOf(html).filter((el) =>
       el.childNodes.some((c) => isElement(c) && c.tagName === "article"),

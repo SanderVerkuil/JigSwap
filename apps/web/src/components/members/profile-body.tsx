@@ -144,6 +144,7 @@ export function ProfileBody({
             <ProfilePuzzlesSection
               memberId={hero.memberId as Id<"users">}
               firstName={firstName}
+              scope={profile.libraryScope}
             />
           )}
         </>

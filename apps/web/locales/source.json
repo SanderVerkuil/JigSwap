@@ -841,6 +841,11 @@
     },
     "puzzles": {
       "title": "{name}'s puzzles",
+      "filterLabel": "Which of {name}'s puzzles to show",
+      "filterAll": "All puzzles",
+      "filterAvailable": "Available",
+      "availableNote": "Puzzles {name} offers to swap, lend or sell.",
+      "emptyAvailable": "{name} has no puzzles available to swap, lend or sell right now.",
       "showMore": "Show more"
     },
     "completions": {
