@@ -2,6 +2,7 @@ import { gateway, type Id } from "@/gateway";
 import { ConvexQueryClient, convexQuery } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConvexProviderWithAuth, ConvexReactClient } from "convex/react";
+import { parseFragment, type DefaultTreeAdapterMap } from "parse5";
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { IntlProvider } from "use-intl";
@@ -112,45 +113,94 @@ const rated = {
   totalReviews: 12,
 };
 
-const parse = (html: string) => {
-  const anchors = html.match(/<a\b[^>]*>[\s\S]*?<\/a>/g) ?? [];
-  return { anchors };
+// Assert on a real HTML tree (parse5), never on regex-extracted markup.
+type Node = DefaultTreeAdapterMap["childNode"];
+type Element = DefaultTreeAdapterMap["element"];
+
+const isElement = (node: Node): node is Element => "tagName" in node;
+
+const elementsOf = (html: string): Element[] => {
+  const out: Element[] = [];
+  const walk = (nodes: Node[]) => {
+    for (const node of nodes) {
+      if (!isElement(node)) continue;
+      out.push(node);
+      walk(node.childNodes);
+    }
+  };
+  walk(parseFragment(html).childNodes);
+  return out;
 };
+
+const attr = (el: Element, name: string) =>
+  el.attrs.find((a) => a.name === name)?.value;
+
+const classes = (el: Element) => (attr(el, "class") ?? "").split(/\s+/);
+
+const textOf = (el: Element): string =>
+  el.childNodes
+    .map((child) =>
+      isElement(child) ? textOf(child) : "value" in child ? child.value : "",
+    )
+    .join("");
+
+const hasAncestor = (el: Element, tagName: string) => {
+  for (let p = el.parentNode; p && "tagName" in p; p = p.parentNode) {
+    if (p.tagName === tagName) return true;
+  }
+  return false;
+};
+
+const byLabel = (els: Element[], label: string) =>
+  els.find((el) => attr(el, "aria-label") === label);
 
 describe("MemberTile", () => {
   it("has exactly one link — the name — stretched over the card, with only text inside", () => {
     const html = render({ stats: rated });
-    const { anchors } = parse(html);
+    const anchors = elementsOf(html).filter((el) => el.tagName === "a");
     expect(anchors).toHaveLength(1);
-    const link = anchors[0] ?? "";
-    expect(link).toContain('href="/members/hans"');
-    expect(link).toContain('title="Hans-Peter van den Berg"');
-    expect(link).toContain("after:inset-0");
-    expect(link).not.toMatch(/<button|<a\b[\s\S]*<a\b/);
-    expect(link).toMatch(/^<a\b[^>]*>Hans-Peter van den Berg<\/a>$/);
+    const link = anchors[0]!;
+    expect(attr(link, "href")).toBe("/members/hans");
+    expect(attr(link, "title")).toBe("Hans-Peter van den Berg");
+    expect(classes(link)).toContain("after:inset-0");
+    // Only text inside the link: no nested elements (buttons, links, ...).
+    expect(link.childNodes.every((child) => !isElement(child))).toBe(true);
+    expect(textOf(link)).toBe("Hans-Peter van den Berg");
   });
 
   it("does not nest the action buttons inside the link", () => {
     const html = render({ stats: rated });
-    const linkEnd = html.indexOf("</a>");
-    const firstButton = html.indexOf("<button");
-    expect(firstButton).toBeGreaterThan(linkEnd);
+    const buttons = elementsOf(html).filter((el) => el.tagName === "button");
+    expect(buttons.length).toBeGreaterThan(0);
+    for (const button of buttons) {
+      expect(hasAncestor(button, "a")).toBe(false);
+    }
     // Actions sit above the stretched-link overlay.
-    expect(html).toMatch(/class="[^"]*relative z-10[^"]*"[^>]*><button/);
+    const wrapper = buttons[0]!.parentNode as Element;
+    expect(classes(wrapper)).toEqual(
+      expect.arrayContaining(["relative", "z-10"]),
+    );
   });
 
   it("labels the icon actions with the member's name", () => {
     const html = render({ stats: rated });
-    expect(html).toContain('aria-label="Unfollow Hans-Peter van den Berg"');
-    expect(html).toContain('aria-label="Message Hans-Peter van den Berg"');
+    const els = elementsOf(html);
+    expect(byLabel(els, "Unfollow Hans-Peter van den Berg")?.tagName).toBe(
+      "button",
+    );
+    expect(byLabel(els, "Message Hans-Peter van den Berg")?.tagName).toBe(
+      "button",
+    );
   });
 
   it("describes the link with the meta line and the stats", () => {
     const html = render({ stats: rated }, { followsYou: true });
-    const describedBy = html.match(/aria-describedby="([^"]+)"/)?.[1];
-    expect(describedBy?.split(" ")).toHaveLength(2);
-    for (const id of describedBy!.split(" ")) {
-      expect(html).toContain(`id="${id}"`);
+    const els = elementsOf(html);
+    const link = els.find((el) => el.tagName === "a")!;
+    const ids = (attr(link, "aria-describedby") ?? "").split(" ");
+    expect(ids).toHaveLength(2);
+    for (const id of ids) {
+      expect(els.some((el) => attr(el, "id") === id)).toBe(true);
     }
     expect(html).toContain("Follows you");
     expect(html).toContain("Utrecht");
@@ -175,9 +225,8 @@ describe("MemberTile", () => {
   it("omits the location on discovery surfaces and the meta line when empty", () => {
     const html = render({ stats: rated }, { hideLocation: true });
     expect(html).not.toContain("Utrecht");
-    expect(
-      html.match(/aria-describedby="([^"]+)"/)?.[1].split(" "),
-    ).toHaveLength(1);
+    const link = elementsOf(html).find((el) => el.tagName === "a")!;
+    expect(attr(link, "aria-describedby")?.split(" ")).toHaveLength(1);
   });
 
   it("uses the filled Follow CTA when not following, and drops empty descriptions", () => {
@@ -193,12 +242,14 @@ describe("MemberTile", () => {
       },
       { hideLocation: true },
     );
-    const follow = html.match(
-      /<button[^>]*aria-label="Follow Hans-Peter van den Berg"[^>]*>/,
-    )?.[0];
-    expect(follow).toContain("bg-primary");
+    const els = elementsOf(html);
+    const follow = byLabel(els, "Follow Hans-Peter van den Berg");
+    expect(follow?.tagName).toBe("button");
+    expect(classes(follow!)).toContain("bg-primary");
     // Private stats and no meta line: nothing to describe the link with.
-    expect(html).not.toContain("aria-describedby");
+    expect(els.some((el) => attr(el, "aria-describedby") !== undefined)).toBe(
+      false,
+    );
   });
 
   it("keeps the Requested state a dropdown trigger with a qualified label", () => {
@@ -211,10 +262,12 @@ describe("MemberTile", () => {
         pendingRequest: { requestId: "r1", requestedAt: Date.now() },
       },
     });
-    const trigger = html.match(
-      /<button[^>]*aria-label="Follow request to Hans-Peter van den Berg pending"[^>]*>/,
-    )?.[0];
-    expect(trigger).toContain('aria-haspopup="menu"');
+    const trigger = byLabel(
+      elementsOf(html),
+      "Follow request to Hans-Peter van den Berg pending",
+    );
+    expect(trigger?.tagName).toBe("button");
+    expect(attr(trigger!, "aria-haspopup")).toBe("menu");
     expect(html).toContain("lucide-clock");
   });
 
@@ -228,8 +281,9 @@ describe("MemberTile", () => {
         avatar: "https://example.com/a.png",
       },
     });
-    expect(html).toMatch(
-      /data-slot="avatar"[^>]*aria-hidden="true"|aria-hidden="true"[^>]*data-slot="avatar"/,
+    const avatar = elementsOf(html).find(
+      (el) => attr(el, "data-slot") === "avatar",
     );
+    expect(avatar && attr(avatar, "aria-hidden")).toBe("true");
   });
 });
