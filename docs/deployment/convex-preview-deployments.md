@@ -173,6 +173,16 @@ workflow before its key is configured.
   `--replace` because the deploy step already pushed the branch's schema: a table the
   branch newly adds exists empty on the preview but is absent from the dev snapshot,
   and `--replace` aborts on the resulting table-ID conflict.
+  `--replace-all` alone is not enough either: for such a table the backend creates an
+  empty replacement and picks its table number mid-import (lowest free number), which can
+  collide with a number the snapshot assigns to a table created later (PR #109:
+  `conflict between memberOnboarding and whatsNewReadStates with table number 10051`).
+  A retry can pass by luck, because the aborted import's hidden tables then occupy that number. So before
+  importing, CI lists the preview's tables (`convex data --preview-name <branch>`) and
+  `scripts/pin-snapshot-table-numbers.py` adds a `_tables` entry for every one the
+  snapshot lacks, numbered above all of the snapshot's numbers. The snapshot's documents,
+  IDs and table numbers are imported unchanged. A table the branch _removes_ is still
+  imported from the snapshot (Convex accepts tables outside the schema).
   A preview that already has data is left untouched, so data created on the preview
   survives pushes — and a preview first created empty by the Vercel build, or recreated
   empty after expiry, gets seeded by the next run automatically.

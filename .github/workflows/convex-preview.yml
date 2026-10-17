@@ -141,6 +141,16 @@ jobs:
         # IDs that conflict with existing table Y"). Deleting all tables first is safe in
         # both reachable paths: the if-empty path only runs when the sentinel check found
         # no data, and the force path is documented as replacing the preview's data.
-        run: >-
-          pnpm exec convex import --preview-name "$BRANCH_NAME"
-          --replace-all -y "$RUNNER_TEMP/dev-snapshot.zip"
+        # `--replace-all` alone still fails when the branch adds a table: the backend gives
+        # that table an empty replacement whose number it picks mid-import, which can
+        # collide with a number the snapshot assigns to a table created later ("conflict
+        # between `memberOnboarding` and `whatsNewReadStates` with table number 10051").
+        # So first pin a number, above all of the snapshot's, for every preview table the
+        # snapshot lacks (scripts/pin-snapshot-table-numbers.py). The snapshot's own
+        # documents, IDs and table numbers are imported unchanged.
+        run: |
+          pnpm exec convex data --preview-name "$BRANCH_NAME" > "$RUNNER_TEMP/preview-tables.txt"
+          python3 ../../scripts/pin-snapshot-table-numbers.py "$RUNNER_TEMP/dev-snapshot.zip" \
+            "$RUNNER_TEMP/preview-tables.txt" "$RUNNER_TEMP/seed-snapshot.zip"
+          pnpm exec convex import --preview-name "$BRANCH_NAME" \
+            --replace-all -y "$RUNNER_TEMP/seed-snapshot.zip"
