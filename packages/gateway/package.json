@@ -7,7 +7,7 @@
   "types": "./src/index.ts",
   "scripts": {
     "type-check": "node ../../node_modules/typescript7/bin/tsc --noEmit",
-    "lint": "oxlint ."
+    "lint": "oxlint --type-aware ."
   },
   "dependencies": {
     "@jigswap/backend": "workspace:^"

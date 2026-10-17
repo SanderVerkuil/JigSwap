@@ -10,7 +10,7 @@
     "type-check": "node generate-route-tree.mjs && node ../../node_modules/typescript7/bin/tsc --noEmit",
     "test": "vitest run",
     "whats-new:manifest": "vitest run src/whats-new/manifest.spec.ts -u",
-    "lint": "oxlint src"
+    "lint": "oxlint --type-aware src"
   },
   "dependencies": {
     "@clerk/localizations": "^4.23.0",

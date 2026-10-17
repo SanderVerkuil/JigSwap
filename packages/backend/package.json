@@ -32,7 +32,7 @@
     "convex:deploy": "convex deploy",
     "type-check": "node ../../node_modules/typescript7/bin/tsc --noEmit",
     "dev": "convex dev",
-    "lint": "oxlint .",
+    "lint": "oxlint --type-aware .",
     "test": "vitest run",
     "coverage": "vitest run --coverage"
   }
