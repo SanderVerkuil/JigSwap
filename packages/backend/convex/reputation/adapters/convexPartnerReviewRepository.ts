@@ -1,9 +1,9 @@
 import {
+  toExchangeId,
   type ExchangeId,
   type MemberId,
   type PartnerReview,
   type PartnerReviewRepository,
-  toExchangeId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";

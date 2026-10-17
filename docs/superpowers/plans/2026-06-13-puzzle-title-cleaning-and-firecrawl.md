@@ -339,12 +339,12 @@ The full updated file (add the import at top, update the function body):
 
 ```typescript
 // packages/domain/src/catalog/domain/extract-puzzle-draft.ts
+import { cleanPuzzleTitle } from "./clean-puzzle-title";
 import type {
   JsonLdProduct,
   PuzzleImportDraft,
   RawProductPage,
 } from "./puzzle-import-draft";
-import { cleanPuzzleTitle } from "./clean-puzzle-title";
 
 // Multilingual piece-count: EN pieces/pcs, NL stukjes, DE Teile, ES piezas, FR pieces. Captures
 // an integer that may carry `.`/`,`/space thousands separators (e.g. "1.000", "1,500").

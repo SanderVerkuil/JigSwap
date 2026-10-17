@@ -1,9 +1,8 @@
-import { Outlet, createFileRoute } from "@tanstack/react-router";
-
-import { NotFoundContent } from "@/components/NotFound";
 import { MarketingFooter } from "@/components/marketing/footer";
 import { MarketingHeader } from "@/components/marketing/header";
+import { NotFoundContent } from "@/components/NotFound";
 import { PageLoading } from "@/components/ui/loading";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 
 // Pathless layout for the (public) marketing pages (about/contact/privacy/terms/
 // how-it-works/features). Marketing chrome (sticky header + footer) on the

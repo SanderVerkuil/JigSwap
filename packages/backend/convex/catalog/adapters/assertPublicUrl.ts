@@ -1,6 +1,7 @@
 "use node";
-import { isPrivateIp } from "@jigswap/domain";
+
 import { lookup as dnsLookup } from "node:dns/promises";
+import { isPrivateIp } from "@jigswap/domain";
 
 // Centralised SSRF pre-flight for the import pipeline's INITIAL url. Enforces an http(s) scheme and
 // a DNS-resolved public host ONCE, so every fetcher tier only ever sees a pre-validated public host.

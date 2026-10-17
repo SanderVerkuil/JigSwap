@@ -11,7 +11,6 @@
 // control carries its own remove (×) button; "Clear All" resets everything and a
 // muted live result count sits on the right. Active accents use the brand violet
 // (bg-jigsaw-primary), never the near-black --primary, per the design language.
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

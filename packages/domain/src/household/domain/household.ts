@@ -1,7 +1,7 @@
 import { DomainEvent, err, ok, Result } from "../../shared-kernel";
 import {
-  type HouseholdCopyPermission,
   resolveHouseholdCopyPermission,
+  type HouseholdCopyPermission,
 } from "./copy-access";
 import { HouseholdError } from "./errors";
 import {

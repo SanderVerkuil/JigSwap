@@ -1,4 +1,5 @@
 "use node";
+
 import { AxiomWithoutBatching } from "@axiomhq/js";
 
 // Forwards wide events to Axiom (https://axiom.co) from Node actions, since this project is not on

@@ -5,7 +5,6 @@
 // buttons next to a detail pane on lg+, stacked list-above-detail below.
 // The rows' content is entirely the caller's (renderRow); this component
 // owns only selection state presentation and the responsive split.
-
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 

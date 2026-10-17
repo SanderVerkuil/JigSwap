@@ -6,7 +6,6 @@
 // library pages light Library, community pages light Community — except
 // /trades, which lights its dedicated Swaps tab. Safe-area padded for
 // home-indicator phones.
-
 import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
@@ -20,9 +19,9 @@ import {
   ArrowLeftRight,
   BookOpen,
   LayoutDashboard,
-  type LucideIcon,
   Plus,
   Users,
+  type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";

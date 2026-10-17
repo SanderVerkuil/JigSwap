@@ -4,7 +4,6 @@
 // the counterpart from the copy (getCopyConversation): an existing DM with the owner is opened
 // directly; otherwise this shows a composer pre-addressed to the owner with the puzzle attached,
 // and the DM is created only when the first message is sent (startCopyConversation).
-
 import { Link } from "@/compat/link";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { Button } from "@/components/ui/button";

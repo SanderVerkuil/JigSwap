@@ -179,9 +179,9 @@ Expected: FAIL — `api.social.getMyInviteLink` is undefined
 - [ ] **Step 3: Implement `getMyInviteLink.ts`**
 
 ```ts
+import { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { Id } from "../_generated/dataModel";
 
 // Returns the member's ACTIVE invite token, creating one on first use. A mutation (not a query)
 // because the first call writes. The token is opaque (uuid hex) — never derived from the member id,
@@ -215,9 +215,9 @@ export const getMyInviteLink = mutation({
 - [ ] **Step 4: Implement `resetInviteLink.ts`**
 
 ```ts
+import { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { Id } from "../_generated/dataModel";
 
 // Revoke the active invite token and issue a fresh one. Old rows are kept (revokedAt stamped) so
 // historical counters survive; landings on the old token silently degrade to the plain teaser.
@@ -469,8 +469,8 @@ git commit -m "feat(social): public invite-context query + landing counter"
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
-import schema from "./schema";
 import { Id } from "./_generated/dataModel";
+import schema from "./schema";
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
@@ -1279,6 +1279,7 @@ In `people.tsx`, the page already publishes header actions via `usePageHeaderAct
 
 ```tsx
 import { QrDialog } from "@/components/social/qr-dialog";
+
 // ... inside PeoplePage():
 const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
 
@@ -1320,6 +1321,7 @@ import { gateway } from "@/gateway";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+
 // ... inside the dialog component:
 const t = useTranslations("invite");
 const { mutate: resetLink } = useMutation({
@@ -1616,6 +1618,7 @@ In `apps/web/src/routes/_dashboard/route.tsx`, render `<InviteRedeemer />` once 
 
 ```tsx
 import { InviteRedeemer } from "@/components/social/invite-redeemer";
+
 // ... in the layout JSX:
 <InviteRedeemer />;
 ```

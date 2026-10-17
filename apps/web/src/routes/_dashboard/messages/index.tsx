@@ -1,7 +1,6 @@
+import { ThreadList } from "@/components/messaging/thread-list";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
-
-import { ThreadList } from "@/components/messaging/thread-list";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/messages/")({

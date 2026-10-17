@@ -4,7 +4,6 @@
 // four most-used actions as 56px rows — violet round icon chip, title with a
 // one-line sub, chevron — sliding up over the dimmed backdrop, with a drag
 // handle and safe-area bottom padding.
-
 import { useRouter } from "@/compat/navigation";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { WhatsNewCountPill } from "@/components/whats-new/badges";
@@ -12,11 +11,11 @@ import {
   ArrowLeftRight,
   ChevronRight,
   CircleCheck,
-  type LucideIcon,
   Plus,
   Search,
   Sparkles,
   UserRound,
+  type LucideIcon,
 } from "lucide-react";
 import { useTranslations } from "use-intl";
 

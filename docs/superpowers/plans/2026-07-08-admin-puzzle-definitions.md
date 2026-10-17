@@ -522,10 +522,10 @@ import {
   Eye,
   EyeOff,
   Flag,
-  type LucideIcon,
   Trash2,
   Undo2,
   XCircle,
+  type LucideIcon,
 } from "lucide-react";
 ```
 
@@ -1039,8 +1039,8 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ```ts
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
-import type { Id } from "./_generated/dataModel";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -1221,7 +1221,7 @@ export interface AdminPuzzleDefinitionRowView {
 
 ```ts
 import type { AdminPuzzleDefinitionRowView } from "@jigswap/contracts";
-import { type PaginationResult, paginationOptsValidator } from "convex/server";
+import { paginationOptsValidator, type PaginationResult } from "convex/server";
 import { ConvexError } from "convex/values";
 import { query } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
@@ -1697,9 +1697,6 @@ In `apps/web/locales/nl.json`, same position:
 - [ ] Create the route `apps/web/src/routes/_dashboard/admin/puzzles.tsx`:
 
 ```tsx
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -1714,9 +1711,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
+import { pageTitle } from "@/lib/page-title";
 import { useConvexMutation } from "@convex-dev/react-query";
 import type { AdminPuzzleDefinitionRowView } from "@jigswap/contracts";
 import { useMutation } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
 import { Puzzle as PuzzleIcon } from "lucide-react";

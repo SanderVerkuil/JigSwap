@@ -1,8 +1,8 @@
 import {
   makeRemoveMember,
-  type MemberId,
   toCircleId,
   toMemberId,
+  type MemberId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";

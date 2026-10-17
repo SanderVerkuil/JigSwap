@@ -502,9 +502,13 @@ Create `apps/web/src/components/social/find-people.tsx`:
 // public profiles. Both empty states route to the QR fallback — the answer to
 // "can't find them" is always "ask for their link or QR". Discovery tiles hide
 // location (stats build trust with strangers; street-level context doesn't).
-
 import { EmptyState } from "@/components/community/primitives";
 import { SectionHead } from "@/components/dashboard-home/section-head";
+import {
+  MemberTile,
+  MemberTileSkeleton,
+} from "@/components/social/member-tile";
+import { QrDialog } from "@/components/social/qr-dialog";
 import { Input } from "@/components/ui/input";
 import { gateway, Id } from "@/gateway";
 import { convexQuery } from "@convex-dev/react-query";
@@ -512,11 +516,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Search, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslations } from "use-intl";
-import {
-  MemberTile,
-  MemberTileSkeleton,
-} from "@/components/social/member-tile";
-import { QrDialog } from "@/components/social/qr-dialog";
 
 const MIN_QUERY_LENGTH = 2;
 const DEBOUNCE_MS = 300;
@@ -670,9 +669,6 @@ git commit -m "feat(web): Find people tab content — gated search + recently jo
 Replace the contents of `apps/web/src/routes/_dashboard/people.tsx` with:
 
 ```tsx
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-
 import { EmptyState } from "@/components/community/primitives";
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
@@ -687,8 +683,10 @@ import { ProfileEditDialog } from "@/components/social/profile-edit-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { gateway, Id } from "@/gateway";
+import { pageTitle } from "@/lib/page-title";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Bell, X } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";

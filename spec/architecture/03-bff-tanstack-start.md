@@ -35,9 +35,9 @@ Proposed: the UI and BFF depend on an **`ApplicationGateway` port**; a Convex ad
 ```ts
 // apps/web/src/gateway/application-gateway.ts  (a PORT — an interface)
 import type {
-  ProposeExchangeInput,
-  ExchangeSummaryDTO,
   CopyDetailDTO,
+  ExchangeSummaryDTO,
+  ProposeExchangeInput,
 } from "@jigswap/contracts";
 
 export interface ApplicationGateway {
@@ -52,8 +52,8 @@ export interface ApplicationGateway {
 
 ```ts
 // apps/web/src/gateway/convex-application-gateway.ts  (the ADAPTER)
-import { ConvexHttpClient } from "convex/browser";
 import { api } from "@jigswap/backend/convex/_generated/api"; // ← the ONLY place this import is allowed
+import { ConvexHttpClient } from "convex/browser";
 import type { ApplicationGateway } from "./application-gateway";
 
 export const convexApplicationGateway = (
@@ -73,10 +73,10 @@ contexts across deployments) is a one-file change. The UI imports `ApplicationGa
 
 ```ts
 // apps/web/src/server/exchange.server.ts
-import { createServerFn } from "@tanstack/react-start";
 import { proposeExchangeInput } from "@jigswap/contracts"; // zod schema (SHAPE validation only)
-import { getGateway } from "./gateway-context"; // builds Convex gateway w/ session token
+import { createServerFn } from "@tanstack/react-start";
 import { requireSession } from "./auth"; // Clerk
+import { getGateway } from "./gateway-context"; // builds Convex gateway w/ session token
 
 export const proposeExchange = createServerFn({ method: "POST" })
   .validator(proposeExchangeInput) // shape validation

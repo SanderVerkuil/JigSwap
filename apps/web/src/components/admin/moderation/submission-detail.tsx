@@ -5,7 +5,6 @@
 // suggestions search index, run for the selected item only), and the three
 // moderation actions. Mutations live in the route; this pane only renders
 // and calls back.
-
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";

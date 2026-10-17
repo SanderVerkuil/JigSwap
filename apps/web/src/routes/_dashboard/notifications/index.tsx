@@ -1,6 +1,3 @@
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
-
 import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
@@ -26,10 +23,12 @@ import { PageLoading } from "@/components/ui/loading";
 import { Switch } from "@/components/ui/switch";
 import { gateway } from "@/gateway";
 import { useDateFnsLocale } from "@/lib/date-locale";
+import { pageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
 import { currentSubscriptionEndpoint, pushSupported } from "@/lib/web-push";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import {
   formatDistanceToNow,
   isToday,

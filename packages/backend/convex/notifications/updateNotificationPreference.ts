@@ -1,6 +1,6 @@
 import {
-  type Channel,
   makeUpdateNotificationPreference,
+  type Channel,
   type NotificationType,
 } from "@jigswap/domain";
 import { v } from "convex/values";

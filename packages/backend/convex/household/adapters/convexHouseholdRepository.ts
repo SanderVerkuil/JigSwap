@@ -1,10 +1,10 @@
 import {
   Household,
+  toHouseholdId,
+  toMemberId,
   type HouseholdId,
   type HouseholdRepository,
   type MemberId,
-  toHouseholdId,
-  toMemberId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";

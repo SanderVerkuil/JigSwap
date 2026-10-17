@@ -5,7 +5,6 @@
 // "Preferences" page (content width, hide email, solve-duration tracking) mounted
 // inside Clerk's profile modal. Shared by the desktop sidebar footer and the mobile
 // top bar so both open the same menu instead of hard-navigating to /profile.
-
 import { UserButton, useUser } from "@/compat/clerk";
 import { NotificationPreferencesPanel } from "@/components/notifications/notification-preferences-panel";
 import { Switch } from "@/components/ui/switch";

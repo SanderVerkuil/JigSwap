@@ -12,7 +12,6 @@
 // sheet; the content sits on the plain background with no inset card or page
 // head. The shadcn sidebar's mobile offcanvas becomes unreachable by design —
 // its trigger lives in the (hidden) desktop top bar.
-
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { WhatsNewAnnouncer } from "@/components/whats-new/announcer";
 import { cn } from "@/lib/utils";

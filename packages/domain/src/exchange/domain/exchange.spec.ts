@@ -12,7 +12,6 @@ import {
   PossessionTransferred,
 } from "./events";
 import { Exchange, ProposeProps } from "./exchange";
-
 import { ExchangeTermsInput, Money } from "./terms";
 
 const exchangeId = toExchangeId("ex1");

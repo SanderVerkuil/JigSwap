@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DomainEvent, toMemberId, toNotificationId } from "../../shared-kernel";
 import { NotificationCreated, NotificationRead } from "./events";
-
 import { Notification } from "./notification";
 
 const id = toNotificationId("ntf1");

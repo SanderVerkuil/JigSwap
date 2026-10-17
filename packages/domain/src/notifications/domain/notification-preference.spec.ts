@@ -5,7 +5,6 @@ import {
   toNotificationPreferenceId,
 } from "../../shared-kernel";
 import { PreferenceChanged } from "./events";
-
 import { NotificationPreference } from "./notification-preference";
 import { NOTIFICATION_TYPES } from "./notification-type";
 

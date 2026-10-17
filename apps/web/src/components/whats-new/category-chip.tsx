@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { WhatsNewCategory } from "@jigswap/contracts";
-import { type LucideIcon, Rocket, TrendingUp, Wrench } from "lucide-react";
+import { Rocket, TrendingUp, Wrench, type LucideIcon } from "lucide-react";
 import { useTranslations } from "use-intl";
 
 // One record for the category look (spec Part B §1.4; contrast measured against --card in both

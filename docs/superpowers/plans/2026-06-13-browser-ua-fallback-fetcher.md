@@ -48,9 +48,9 @@ Create the file at `packages/backend/convex/catalog/adapters/ogieRawProductPage.
 
 ```ts
 import {
+  StorePageFetchError,
   type JsonLdProduct,
   type RawProductPage,
-  StorePageFetchError,
 } from "@jigswap/domain";
 
 export const asArray = (value: unknown): unknown[] =>
@@ -268,8 +268,8 @@ Create `packages/domain/src/catalog/application/make-fallback-store-page-fetcher
 import { describe, expect, it } from "vitest";
 import { isErr, isOk } from "../../shared-kernel";
 import { StorePageFetchError } from "../domain";
-import { FakeStorePageFetcher } from "./testing";
 import { makeFallbackStorePageFetcher } from "./make-fallback-store-page-fetcher";
+import { FakeStorePageFetcher } from "./testing";
 
 const URL = "https://example.com/puzzle";
 const PAGE = { ogImages: [], jsonLdProducts: [] };
@@ -517,6 +517,7 @@ git commit -m "feat(domain): makeFallbackStorePageFetcher — pure composite wit
 Create `packages/backend/convex/catalog/adapters/browserStorePageFetcher.ts`:
 
 ```ts
+import { lookup as dnsLookup } from "node:dns/promises";
 import {
   err,
   isPrivateIp,
@@ -525,7 +526,6 @@ import {
   type StorePageFetcher,
 } from "@jigswap/domain";
 import { extractFromHtml } from "ogie";
-import { lookup as dnsLookup } from "node:dns/promises";
 import { mapOgieError, toRawProductPage } from "./ogieRawProductPage";
 
 const MAX_BODY_BYTES = 5 * 1024 * 1024; // 5 MB cap to avoid reading huge pages
@@ -757,11 +757,12 @@ Edit `packages/backend/convex/catalog/extractFromUrl.ts` — add imports and cha
 
 ```ts
 "use node";
+
 import {
+  makeFallbackStorePageFetcher,
+  makeImportPuzzleFromUrl,
   type CachedImportDraft,
   type ImportDraftCache,
-  makeImportPuzzleFromUrl,
-  makeFallbackStorePageFetcher,
   type PuzzleMatchLookup,
 } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";

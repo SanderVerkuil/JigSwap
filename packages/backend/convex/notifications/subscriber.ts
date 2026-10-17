@@ -1,7 +1,7 @@
 import {
+  toMemberId,
   type MemberId,
   type NotifyMemberCommand,
-  toMemberId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";

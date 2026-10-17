@@ -5,7 +5,6 @@
 // (the established withOptimisticUpdate pattern — see use-favorites); Convex
 // replaces the local patch when the server result streams back, so pending
 // messages clear themselves. PROVISIONAL layout per the design doc.
-
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { conversationErrorCode } from "@/components/messaging/format";
 import { Button } from "@/components/ui/button";
