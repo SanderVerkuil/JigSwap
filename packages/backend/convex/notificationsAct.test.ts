@@ -361,6 +361,38 @@ describe("notifications.act: follow requests", () => {
     await flushScheduled(t);
   });
 
+  test("an old declined request plus a newer pending one for the pair: the view offers approve and act approves the pending one", async () => {
+    const { t, viewer, mara } = await setup();
+    const id = await t.run(async (ctx) => {
+      // The old declined row is inserted first, so a plain index .first() would return it.
+      await ctx.db.insert("followRequests", {
+        aggregateId: "req-old",
+        requesterId: mara,
+        targetId: viewer,
+        status: "declined",
+        createdAt: now - 10_000,
+        respondedAt: now - 9_000,
+      });
+      await request(ctx, "req-new", mara, viewer);
+      return followRequestRow(ctx, viewer, mara, "req-gone");
+    });
+
+    const page = await as(t, "viewer").query(
+      api.notifications.listMyNotificationViews.listMyNotificationViews,
+      { paginationOpts: { numItems: 10, cursor: null } },
+    );
+    const view = page.page.find((v) => v.id === id);
+    expect(view?.state).toBe("actionable");
+    expect(view?.availableActions).toContain("approve_follow_request");
+
+    expect(await act(t, id, "approve_follow_request")).toEqual({
+      resolvedAs: "approved",
+    });
+    expect((await requestOf(t, "req-new"))?.status).toBe("approved");
+    expect((await requestOf(t, "req-old"))?.status).toBe("declined");
+    await flushScheduled(t);
+  });
+
   test("a stored request id pointing at someone else's request is ignored for the actor -> viewer pair", async () => {
     const { t, viewer, mara, other } = await setup();
     const id = await t.run(async (ctx) => {

@@ -23,6 +23,7 @@ import { toConvexError } from "./errors";
 import { markNotificationReadUseCase } from "./markNotificationRead";
 import {
   createNotificationViewCache,
+  currentFollowRequest,
   resolveNotificationView,
 } from "./resolveNotificationView";
 
@@ -72,12 +73,7 @@ const followRequestIdOf = async (
       return stored.aggregateId;
     }
   }
-  const current = await ctx.db
-    .query("followRequests")
-    .withIndex("by_requester_target", (q) =>
-      q.eq("requesterId", actorId).eq("targetId", viewerId),
-    )
-    .first();
+  const current = await currentFollowRequest(ctx, actorId, viewerId);
   return current?.aggregateId ?? null;
 };
 
