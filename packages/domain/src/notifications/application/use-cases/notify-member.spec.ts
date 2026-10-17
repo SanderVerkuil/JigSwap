@@ -14,6 +14,7 @@ import {
 import { makeNotifyMember, NotifyMemberDeps } from "./notify-member";
 
 const alice = toMemberId("alice");
+const bob = toMemberId("bob");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 let notifications: InMemoryNotificationRepository;
@@ -153,6 +154,46 @@ describe("makeNotifyMember", () => {
     await notifyMember(cmd({ relatedId: "exchange-42" }));
     const [stored] = await notifications.listByUser(alice);
     expect(stored.toState().relatedId).toBe("exchange-42");
+  });
+
+  it("copies actorId and subject onto the notification for every channel", async () => {
+    const pref = NotificationPreference.createDefault(prefId(), alice, NOW);
+    pref.enable("trade_request", "email", NOW);
+    pref.enable("trade_request", "push", NOW);
+    pref.pullEvents();
+    await preferences.save(pref);
+
+    const notifyMember = makeNotifyMember(deps);
+    await notifyMember(
+      cmd({
+        actorId: bob,
+        subject: { kind: "exchange", exchangeId: "exchange-42" },
+      }),
+    );
+
+    expect(delivery.channels().sort()).toEqual(["email", "inApp", "push"]);
+    for (const { notification } of delivery.delivered) {
+      const state = notification.toState();
+      expect(state.actorId).toBe(bob);
+      expect(state.subject).toEqual({
+        kind: "exchange",
+        exchangeId: "exchange-42",
+      });
+    }
+    const [stored] = await notifications.listByUser(alice);
+    expect(stored.toState().actorId).toBe(bob);
+    expect(stored.toState().subject).toEqual({
+      kind: "exchange",
+      exchangeId: "exchange-42",
+    });
+  });
+
+  it("leaves actorId and subject absent when the command omits them", async () => {
+    const notifyMember = makeNotifyMember(deps);
+    await notifyMember(cmd());
+    const [{ notification }] = delivery.delivered;
+    expect(notification.toState().actorId).toBeUndefined();
+    expect(notification.toState().subject).toBeUndefined();
   });
 
   it("never delivers email for a type outside EMAIL_ELIGIBLE_TYPES, even when opted in", async () => {

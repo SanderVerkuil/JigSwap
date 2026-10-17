@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DomainEvent, toMemberId, toNotificationId } from "../../shared-kernel";
 import { NotificationCreated, NotificationRead } from "./events";
 import { Notification } from "./notification";
+import { NotificationSubject } from "./notification-subject";
 
 const id = toNotificationId("ntf1");
 const alice = toMemberId("alice");
@@ -92,6 +93,67 @@ describe("Notification.create", () => {
     expect(notification.toState().params).toEqual({ actorName: "Bob" });
     const rehydrated = Notification.rehydrate(notification.toState());
     expect(rehydrated.toState().params).toEqual({ actorName: "Bob" });
+  });
+});
+
+describe("Notification actor and subject refs", () => {
+  const subject: NotificationSubject = {
+    kind: "exchange",
+    exchangeId: "exchange-7",
+  };
+
+  it("carries actorId and subject through create/toState/rehydrate", () => {
+    const n = Notification.create({
+      id,
+      userId: alice,
+      type: "trade_request",
+      actorId: bob,
+      subject,
+      channel: "inApp",
+      now: NOW,
+    });
+    const state = n.toState();
+    expect(state.actorId).toBe(bob);
+    expect(state.subject).toEqual({
+      kind: "exchange",
+      exchangeId: "exchange-7",
+    });
+    const back = Notification.rehydrate(state);
+    expect(back.toState()).toEqual(state);
+    expect(back.pullEvents()).toEqual([]);
+  });
+
+  it("leaves actorId and subject absent when not given", () => {
+    const state = create().toState();
+    expect(state.actorId).toBeUndefined();
+    expect(state.subject).toBeUndefined();
+  });
+
+  it("accepts every subject kind as an opaque reference", () => {
+    const subjects: NotificationSubject[] = [
+      { kind: "exchange", exchangeId: "e1" },
+      { kind: "thread", threadId: "t1" },
+      { kind: "followRequest", requestId: "fr1" },
+      { kind: "householdInvite", inviteId: "hi1" },
+      { kind: "household", householdId: "h1" },
+      { kind: "puzzle", puzzleId: "p1" },
+      { kind: "copy", copyId: "c1" },
+      { kind: "goal", goalId: "g1" },
+      { kind: "review", reviewId: "r1" },
+      { kind: "changeProposal", proposalId: "cp1" },
+      { kind: "whatsNew", entryId: "w1" },
+    ];
+    for (const s of subjects) {
+      const n = Notification.create({
+        id,
+        userId: alice,
+        type: "trade_request",
+        subject: s,
+        channel: "inApp",
+        now: NOW,
+      });
+      expect(n.toState().subject).toEqual(s);
+    }
   });
 });
 
