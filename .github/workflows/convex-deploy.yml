@@ -18,6 +18,13 @@ name: Convex Deploy
 # Both pushes pass `--typecheck enable`: a type error in packages/backend/convex (tests
 # included, per convex/tsconfig.json) fails the deploy. The CLI default `try` silently
 # skips the check when packages/backend has no local `typescript`.
+#
+# Stale-commit guard: each job first checks that the commit it is about to deploy is still the
+# tip of main, and skips every later step (with a notice; the job still succeeds) if not. CI runs
+# for consecutive main commits can finish out of order, and the prod concurrency group queues
+# runs without ordering them by commit, so an older commit's run could otherwise deploy over a
+# newer one. The newer commit's own run deploys it. A re-run of an old run skips the same way.
+# If the tip of main can't be read, the job fails without deploying (visible, safe to re-run).
 on:
   push:
     branches: [main]
@@ -41,17 +48,39 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Skip if no longer the tip of main
+        id: guard
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
+        run: |
+          tip_line=$(git ls-remote --exit-code origin refs/heads/main) || {
+            echo "::error title=Stale-commit guard::Could not read the tip of main (git ls-remote failed), so ${DEPLOY_SHA} was not deployed. Re-run this job."
+            exit 1
+          }
+          tip=${tip_line%%[[:space:]]*}
+          if [ "$tip" = "$DEPLOY_SHA" ]; then
+            echo "${DEPLOY_SHA} is the tip of main; deploying."
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice title=Stale deploy skipped::Skipping deploy: ${DEPLOY_SHA} is no longer the tip of main (${tip}); a newer commit's deploy will run."
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: pnpm/action-setup@v4
+        if: steps.guard.outputs.deploy == 'true'
 
       - uses: actions/setup-node@v4
+        if: steps.guard.outputs.deploy == 'true'
         with:
           node-version: 22
           cache: pnpm
 
       - name: Install dependencies
+        if: steps.guard.outputs.deploy == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Deploy to dev
+        if: steps.guard.outputs.deploy == 'true'
         working-directory: packages/backend
         env:
           # A dev deploy key (format "dev:<name>|...") selects the development deployment.
@@ -65,6 +94,7 @@ jobs:
       # successful deploy; the deploy step itself is never retried. Each attempt's output stays
       # in the log, and if every attempt fails the job fails with a warning annotation.
       - name: Publish pending What's new notifications
+        if: steps.guard.outputs.deploy == 'true'
         working-directory: packages/backend
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_DEV }}
@@ -106,17 +136,39 @@ jobs:
           # workflow_run runs detached from the triggering commit; check out the exact SHA CI passed on.
           ref: ${{ github.event.workflow_run.head_sha }}
 
+      - name: Skip if no longer the tip of main
+        id: guard
+        env:
+          DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          tip_line=$(git ls-remote --exit-code origin refs/heads/main) || {
+            echo "::error title=Stale-commit guard::Could not read the tip of main (git ls-remote failed), so ${DEPLOY_SHA} was not deployed. Re-run this job."
+            exit 1
+          }
+          tip=${tip_line%%[[:space:]]*}
+          if [ "$tip" = "$DEPLOY_SHA" ]; then
+            echo "${DEPLOY_SHA} is the tip of main; deploying."
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice title=Stale deploy skipped::Skipping deploy: ${DEPLOY_SHA} is no longer the tip of main (${tip}); a newer commit's deploy will run."
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: pnpm/action-setup@v4
+        if: steps.guard.outputs.deploy == 'true'
 
       - uses: actions/setup-node@v4
+        if: steps.guard.outputs.deploy == 'true'
         with:
           node-version: 22
           cache: pnpm
 
       - name: Install dependencies
+        if: steps.guard.outputs.deploy == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Deploy production
+        if: steps.guard.outputs.deploy == 'true'
         working-directory: packages/backend
         env:
           # A production deploy key targets prod non-interactively (no confirmation prompt).
@@ -130,6 +182,7 @@ jobs:
       # successful deploy; the deploy step itself is never retried. Each attempt's output stays
       # in the log, and if every attempt fails the job fails with a warning annotation.
       - name: Publish pending What's new notifications
+        if: steps.guard.outputs.deploy == 'true'
         working-directory: packages/backend
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_PROD }}
