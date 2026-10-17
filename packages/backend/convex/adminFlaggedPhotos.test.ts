@@ -193,7 +193,11 @@ describe("confirmPhotoRemoval", () => {
       type: "photo_removed",
       relatedId: copyId,
       isRead: false,
+      subject: { kind: "copy", copyId },
     });
+    // Moderator-driven: the acting admin is never exposed as the actor.
+    expect(removed[0]?.actorIds).toBeUndefined();
+    expect(removed[0]?.actorCount).toBeUndefined();
     // No pre-rendered copy on the create path — renderers use type + params (photo_removed takes none).
     expect(removed[0]?.title).toBeUndefined();
     expect(removed[0]?.message).toBeUndefined();

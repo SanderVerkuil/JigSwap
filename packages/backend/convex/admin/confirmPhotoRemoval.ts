@@ -42,12 +42,14 @@ export const confirmPhotoRemoval = mutation({
       targetId: imageId,
     });
 
-    // Tell the uploader; relatedId points at the copy the photo belonged to.
+    // Tell the uploader; relatedId and subject point at the copy the photo belonged to. No actor:
+    // the moderator is never exposed.
     const notify = makeNotify(ctx);
     await notify({
       memberId: toMemberId(row.uploaderId),
       type: "photo_removed",
       relatedId: row.ownedPuzzleId,
+      subject: { kind: "copy", copyId: row.ownedPuzzleId },
     });
   },
 });
