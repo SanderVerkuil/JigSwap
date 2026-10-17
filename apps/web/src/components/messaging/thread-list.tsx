@@ -15,9 +15,11 @@ import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftRight, MessageSquare, User } from "lucide-react";
+import { useState } from "react";
 import { useLocale, useNow, useTranslations } from "use-intl";
-import { CoverStack } from "./cover-stack";
+import { CoverStack, CoverStackTooltipProvider } from "./cover-stack";
 import {
+  copyOwnerHint,
   coverStackSummary,
   formatCompactTime,
   formatFullDateTime,
@@ -144,21 +146,23 @@ function ThreadListBody({ activeThreadId }: { activeThreadId?: string }) {
   }
 
   return (
-    <nav aria-label={t("conversationsLabel")}>
-      <ul role="list" className="flex flex-col gap-0.5 p-2 max-md:-mx-2">
-        {inbox.map((thread) => (
-          <li key={thread.threadId}>
-            <ThreadRow
-              thread={thread}
-              selected={thread.threadId === activeThreadId}
-              me={me}
-              now={now}
-              locale={locale}
-            />
-          </li>
-        ))}
-      </ul>
-    </nav>
+    <CoverStackTooltipProvider>
+      <nav aria-label={t("conversationsLabel")}>
+        <ul role="list" className="flex flex-col gap-0.5 p-2 max-md:-mx-2">
+          {inbox.map((thread) => (
+            <li key={thread.threadId}>
+              <ThreadRow
+                thread={thread}
+                selected={thread.threadId === activeThreadId}
+                me={me}
+                now={now}
+                locale={locale}
+              />
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </CoverStackTooltipProvider>
   );
 }
 
@@ -179,6 +183,9 @@ function ThreadRow({
 }) {
   const t = useTranslations("messages");
   const displayName = useMemberDisplayName();
+  // Keyboard (focus-visible) focus on the row: the cover stack names its
+  // front cover, as hovering does for the cover under the pointer.
+  const [keyboardFocused, setKeyboardFocused] = useState(false);
 
   const unread = thread.unreadCount > 0;
   const { contextCopies } = thread;
@@ -199,6 +206,10 @@ function ThreadRow({
     <Link
       href={`/messages/${thread.threadId}`}
       aria-current={selected ? "page" : undefined}
+      onFocus={(event) =>
+        setKeyboardFocused(event.currentTarget.matches(":focus-visible"))
+      }
+      onBlur={() => setKeyboardFocused(false)}
       className={cn(
         "group focus-visible:ring-ring relative flex h-[68px] items-center gap-3 rounded-lg px-3 outline-none transition-colors focus-visible:ring-2",
         selected
@@ -244,6 +255,15 @@ function ThreadRow({
                 locale,
                 t,
               )}
+              keyboardFocused={keyboardFocused}
+              describe={(copy) =>
+                `${copy.title} · ${copyOwnerHint(
+                  copy.owner,
+                  thread.subject.otherMember,
+                  t,
+                  displayName,
+                )}`
+              }
               ringClass={
                 selected
                   ? "ring-jigsaw-primary-tint"
