@@ -483,6 +483,8 @@
     "resultCount": "{count} of {total} puzzles",
     "searchHint": "Press ⌘K to search puzzles, people and more",
     "countMeta": "{count, plural, one {# puzzle} other {# puzzles}}",
+    "householdBadge": "Household · {name}",
+    "householdBadgeView": "Household · {name} · view only",
     "gridView": "Grid view",
     "listView": "List view",
     "deleteConfirmTitle": "Delete \"{title}\"?",

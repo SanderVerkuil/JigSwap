@@ -29,7 +29,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Grid, Lightbulb, List, Plus, Undo2, X } from "lucide-react";
+import { Grid, House, Lightbulb, List, Plus, Undo2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslations } from "use-intl";
 
@@ -126,6 +126,7 @@ function PuzzlesPage() {
   const [solveTarget, setSolveTarget] = useState<{
     copyId: string;
     title: string;
+    canManage: boolean;
   } | null>(null);
   // The copy a solve is being started on; null when the dialog is closed.
   const [startTarget, setStartTarget] = useState<{
@@ -159,6 +160,23 @@ function PuzzlesPage() {
           : "skip",
       ),
     );
+
+  // Household copies: the other members' copies, shown after the member's own (copies stay owned by
+  // whoever added them; `household.viewerAccess` says whether the viewer may manage or only view).
+  const { data: householdCopies } = useQuery(
+    convexQuery(gateway.household.copies, convexUser?._id ? {} : "skip"),
+  );
+  const allCopies = useMemo(
+    () => [...(userownedPuzzles ?? []), ...(householdCopies ?? [])],
+    [userownedPuzzles, householdCopies],
+  );
+  const householdAccessById = useMemo(
+    () =>
+      new Map(
+        (householdCopies ?? []).map((copy) => [copy._id, copy.household]),
+      ),
+    [householdCopies],
+  );
 
   const deletePuzzle = useMutation({
     mutationFn: useConvexMutation(gateway.library.deleteOwned),
@@ -231,7 +249,7 @@ function PuzzlesPage() {
   const handleDeletePuzzle = (ownedPuzzleId: Id<"ownedPuzzles">) => {
     // The domain delete takes the Copy aggregateId; resolve it from the loaded row. Guard rows
     // that predate the backfill (no aggregateId) rather than send an unresolvable id.
-    const copy = userownedPuzzles?.find((p) => p._id === ownedPuzzleId);
+    const copy = allCopies.find((p) => p._id === ownedPuzzleId);
     if (!copy?.aggregateId) {
       console.error("Cannot delete: copy is missing its aggregateId.");
       return;
@@ -257,7 +275,7 @@ function PuzzlesPage() {
   const handleLogSolve = (ownedPuzzleId: Id<"ownedPuzzles">) => {
     // Solves are logged against the Copy aggregateId; guard rows predating the backfill rather
     // than open a dialog that can't persist.
-    const copy = userownedPuzzles?.find((p) => p._id === ownedPuzzleId);
+    const copy = allCopies.find((p) => p._id === ownedPuzzleId);
     if (!copy?.aggregateId) {
       console.error("Cannot log a solve: copy is missing its aggregateId.");
       return;
@@ -265,13 +283,15 @@ function PuzzlesPage() {
     setSolveTarget({
       copyId: copy.aggregateId,
       title: copy.puzzle?.title ?? "",
+      // Only someone who may manage the copy is offered to update its missing-pieces count.
+      canManage: householdAccessById.get(copy._id)?.viewerAccess !== "view",
     });
   };
 
   const handleStartSolve = (ownedPuzzleId: Id<"ownedPuzzles">) => {
     // Starting a solve takes the Copy aggregateId; guard rows predating the backfill rather
     // than open a dialog that can't persist.
-    const copy = userownedPuzzles?.find((p) => p._id === ownedPuzzleId);
+    const copy = allCopies.find((p) => p._id === ownedPuzzleId);
     if (!copy?.aggregateId) {
       console.error("Cannot start a solve: copy is missing its aggregateId.");
       return;
@@ -305,7 +325,7 @@ function PuzzlesPage() {
 
   // Free-text search now lives in the global ⌘K palette; this page narrows only by status. The
   // status pill maps onto the copy's availability flags or its solve state.
-  const filteredownedPuzzles = (userownedPuzzles ?? []).filter((puzzle) => {
+  const filteredownedPuzzles = allCopies.filter((puzzle) => {
     if (statusFilter === "all") return true;
     const { forTrade, forLend, forSale } = puzzle.availability;
     if (statusFilter === "available") return forTrade || forLend || forSale;
@@ -318,7 +338,7 @@ function PuzzlesPage() {
 
   // The page title lives in the shell page head; publish the owned count + the
   // Add Puzzle action there so the page body carries no duplicate header.
-  const ownedCount = (userownedPuzzles ?? []).length;
+  const ownedCount = allCopies.length;
   const headerMeta = t("countMeta", { count: ownedCount });
   usePageHeaderActions(
     () => (
@@ -390,7 +410,7 @@ function PuzzlesPage() {
         onChange={setStatusFilter}
         count={t("resultCount", {
           count: filteredownedPuzzles.length,
-          total: userownedPuzzles.length,
+          total: allCopies.length,
         })}
       />
 
@@ -412,16 +432,20 @@ function PuzzlesPage() {
         <PuzzleViewProvider viewMode={viewMode}>
           {filteredownedPuzzles.map((puzzle) => {
             const loan = loanByCopyDocId.get(puzzle._id);
+            // A household copy: owner-only actions (delete, personal collections) are hidden, and
+            // edit is offered only when the owner left it at "manage".
+            const household = householdAccessById.get(puzzle._id);
+            const canManage = household?.viewerAccess !== "view";
             return (
               <PuzzleCard
                 key={puzzle._id}
                 puzzle={puzzle}
                 variant="default"
-                showCollectionDropdown={true}
+                showCollectionDropdown={!household}
                 viewBasePath="/my-puzzles"
                 imageFit="contain"
-                onEdit={handleEditPuzzle}
-                onDelete={handleDeletePuzzle}
+                onEdit={canManage ? handleEditPuzzle : undefined}
+                onDelete={household ? undefined : handleDeletePuzzle}
                 onLogSolve={handleLogSolve}
                 onStartSolve={handleStartSolve}
                 // Matches handleStartSolve's finish predicate (not `inProgress`): a legacy
@@ -432,27 +456,42 @@ function PuzzlesPage() {
                   null
                 }
                 loanBadge={
-                  loan && (
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="text-xs">
-                        {tLending("onLoanTo", {
-                          name: loan.borrower
-                            ? displayName(loan.borrower)
-                            : tLending("unknownMember"),
-                        })}
-                      </Badge>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2"
-                        disabled={recallingId === loan.loanId}
-                        onClick={() => handleRecallLoan(loan.loanId)}
-                      >
-                        <Undo2 className="h-3 w-3 mr-1" />
-                        {recallingId === loan.loanId
-                          ? tLending("recalling")
-                          : tLending("recallAction")}
-                      </Button>
+                  (household || loan) && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {household && (
+                        <Badge variant="outline" className="text-xs">
+                          <House className="h-3 w-3 mr-1" />
+                          {t(
+                            household.viewerAccess === "view"
+                              ? "householdBadgeView"
+                              : "householdBadge",
+                            { name: household.owner.name },
+                          )}
+                        </Badge>
+                      )}
+                      {loan && (
+                        <>
+                          <Badge variant="secondary" className="text-xs">
+                            {tLending("onLoanTo", {
+                              name: loan.borrower
+                                ? displayName(loan.borrower)
+                                : tLending("unknownMember"),
+                            })}
+                          </Badge>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2"
+                            disabled={recallingId === loan.loanId}
+                            onClick={() => handleRecallLoan(loan.loanId)}
+                          >
+                            <Undo2 className="h-3 w-3 mr-1" />
+                            {recallingId === loan.loanId
+                              ? tLending("recalling")
+                              : tLending("recallAction")}
+                          </Button>
+                        </>
+                      )}
                     </div>
                   )
                 }
@@ -470,7 +509,7 @@ function PuzzlesPage() {
           }}
           copyId={solveTarget.copyId}
           puzzleTitle={solveTarget.title}
-          viewerIsOwner={true}
+          viewerIsOwner={solveTarget.canManage}
         />
       )}
 

@@ -483,6 +483,8 @@
     "resultCount": "{count} van {total} puzzels",
     "searchHint": "Druk op ⌘K om puzzels, mensen en meer te zoeken",
     "countMeta": "{count, plural, one {# puzzel} other {# puzzels}}",
+    "householdBadge": "Huishouden · {name}",
+    "householdBadgeView": "Huishouden · {name} · alleen bekijken",
     "gridView": "Rasterweergave",
     "listView": "Lijstweergave",
     "deleteConfirmTitle": "\"{title}\" verwijderen?",
