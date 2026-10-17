@@ -569,7 +569,7 @@
     "advancedDetails": "Meer details (optioneel)",
     "cancel": "Annuleren",
     "chooser": {
-      "searchPlaceholder": "Zoek puzzels op titel of merk…",
+      "searchPlaceholder": "Zoek op titel, merk of barcode…",
       "yourSubmissions": "Jouw inzendingen",
       "yourSubmissionsHint": "Puzzels die je aan de catalogus hebt toegevoegd en nog niet zijn goedgekeurd.",
       "allPuzzles": "Alle puzzels",
@@ -578,6 +578,10 @@
       "createNew": "Nieuwe aanmaken",
       "noResults": "Geen puzzels gevonden",
       "noCatalogueResults": "Geen catalogus-puzzels komen overeen met je zoekopdracht.",
+      "barcodeResult": "Barcode {code}",
+      "barcodeNotFound": "Nog geen puzzel met barcode {code}",
+      "barcodeNotFoundHint": "Registreer hem, zodat jij en iedereen hem kunnen toevoegen.",
+      "registerIt": "Registreer hem",
       "chosenPuzzle": "Een exemplaar toevoegen van",
       "copyDetails": "Jouw exemplaar"
     },

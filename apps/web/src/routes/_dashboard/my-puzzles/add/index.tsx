@@ -10,13 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
+import { catalogueSearchKey, detectBarcode } from "@/lib/catalogue-search";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { Plus, Search } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Plus, ScanBarcode, Search } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/my-puzzles/add/")({
@@ -26,12 +27,23 @@ export const Route = createFileRoute("/_dashboard/my-puzzles/add/")({
   component: AddPuzzleChooserPage,
 });
 
-// The card renders the catalog summary shape (the same `catalog.listAll`
+// The card renders the catalog summary shape (the same `catalog.search`
 // paginates); the contributed list returns raw puzzle rows that carry the same
 // display fields, so we narrow them to the card's prop type at the call site.
 type CardPuzzle = FunctionReturnType<
   typeof gateway.catalog.recentPuzzles
 >[number];
+
+const SEARCH_DEBOUNCE_MS = 300;
+
+function useDebouncedValue(value: string, delayMs: number): string {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const handle = setTimeout(() => setDebounced(value), delayMs);
+    return () => clearTimeout(handle);
+  }, [value, delayMs]);
+  return debounced;
+}
 
 function matchesSearch(
   puzzle: { title: string; brand?: string | null },
@@ -47,8 +59,17 @@ function matchesSearch(
 
 function AddPuzzleChooserPage() {
   const t = useTranslations("puzzles");
-  const [searchTerm, setSearchTerm] = useState("");
-  const observerRef = useRef<HTMLDivElement>(null);
+  const [searchInput, setSearchInput] = useState("");
+  // The server search runs on the debounced, normalised key; a barcode-shaped
+  // key runs the EAN/UPC lookup instead of the text search.
+  const searchKey = useDebouncedValue(
+    catalogueSearchKey(searchInput),
+    SEARCH_DEBOUNCE_MS,
+  );
+  const barcode = detectBarcode(searchKey);
+  // A callback ref (state) so the observer re-attaches whenever the sentinel
+  // remounts, e.g. when leaving the barcode view.
+  const [sentinel, setSentinel] = useState<HTMLDivElement | null>(null);
 
   // The member's own not-yet-approved submissions — offered first so they can
   // acquire a copy of a puzzle they contributed before it is approved.
@@ -56,13 +77,24 @@ function AddPuzzleChooserPage() {
     convexQuery(gateway.catalog.myContributedPuzzles, {}),
   );
 
-  // The full, paginated, approved catalogue with infinite scroll (mirrors
-  // puzzle-client.tsx).
+  // The approved catalogue, searched server-side and paginated with infinite
+  // scroll, so matches beyond the loaded page are still found.
   const {
     results: catalogue,
     status,
     loadMore,
-  } = usePaginatedQuery(gateway.catalog.listAll, {}, { initialNumItems: 20 });
+  } = usePaginatedQuery(
+    gateway.catalog.search,
+    barcode ? "skip" : { searchTerm: searchKey || undefined },
+    { initialNumItems: 20 },
+  );
+
+  const { data: barcodeMatch, isPending: barcodePending } = useQuery(
+    convexQuery(
+      gateway.catalog.lookupBarcode,
+      barcode ? { code: barcode } : "skip",
+    ),
+  );
 
   const handleObserver = useCallback(
     (entries: IntersectionObserverEntry[]) => {
@@ -75,7 +107,7 @@ function AddPuzzleChooserPage() {
   );
 
   useEffect(() => {
-    const element = observerRef.current;
+    const element = sentinel;
     if (!element) return;
     const observer = new IntersectionObserver(handleObserver, {
       root: null,
@@ -84,7 +116,7 @@ function AddPuzzleChooserPage() {
     });
     observer.observe(element);
     return () => observer.unobserve(element);
-  }, [handleObserver]);
+  }, [handleObserver, sentinel]);
 
   // Publish the primary "Create new" action into the shared shell page head;
   // the title/subtitle come from route-meta (shell.pages.addPuzzle).
@@ -100,12 +132,9 @@ function AddPuzzleChooserPage() {
     [],
   );
 
-  const filteredSubmissions = (mySubmissions ?? []).filter((p) =>
-    matchesSearch(p, searchTerm),
-  );
-  const filteredCatalogue = catalogue.filter((p) =>
-    matchesSearch(p, searchTerm),
-  );
+  const filteredSubmissions = barcode
+    ? []
+    : (mySubmissions ?? []).filter((p) => matchesSearch(p, searchKey));
 
   const createNewCta = (
     <Button variant="outline" asChild>
@@ -117,12 +146,24 @@ function AddPuzzleChooserPage() {
   );
 
   // First paint: both reads still loading and nothing to show yet.
-  if (mySubmissions === undefined && catalogue.length === 0) {
+  if (
+    mySubmissions === undefined &&
+    !searchKey &&
+    status === "LoadingFirstPage"
+  ) {
     return <PageLoading message={t("loadingPuzzles")} />;
   }
 
+  const spinner = (
+    <div className="flex justify-center py-4">
+      <div className="border-primary h-6 w-6 animate-spin rounded-full border-b-2" />
+    </div>
+  );
+
   const nothingToShow =
-    filteredSubmissions.length === 0 && filteredCatalogue.length === 0;
+    status !== "LoadingFirstPage" &&
+    filteredSubmissions.length === 0 &&
+    catalogue.length === 0;
 
   return (
     <div className="flex flex-col gap-8">
@@ -132,8 +173,8 @@ function AddPuzzleChooserPage() {
         <Input
           type="text"
           placeholder={t("chooser.searchPlaceholder")}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
           className="pl-9"
         />
       </div>
@@ -157,47 +198,79 @@ function AddPuzzleChooserPage() {
         </section>
       )}
 
-      {/* All puzzles */}
-      <section className="flex flex-col gap-4">
-        <div>
-          <h2 className="font-heading text-lg font-bold">
-            {t("chooser.allPuzzles")}
+      {/* Barcode lookup: replaces the text search for an EAN/UPC-shaped input. */}
+      {barcode && (
+        <section className="flex flex-col gap-4">
+          <h2 className="font-heading flex items-center gap-2 text-lg font-bold">
+            <ScanBarcode className="h-5 w-5" />
+            {t("chooser.barcodeResult", { code: barcode })}
           </h2>
-          <p className="text-muted-foreground text-sm">
-            {t("chooser.allPuzzlesHint")}
-          </p>
-        </div>
+          {barcodePending ? (
+            spinner
+          ) : barcodeMatch ? (
+            <PuzzleViewProvider viewMode="grid">
+              <PuzzleCard puzzle={barcodeMatch} />
+            </PuzzleViewProvider>
+          ) : (
+            <EmptyState
+              title={t("chooser.barcodeNotFound", { code: barcode })}
+              sub={t("chooser.barcodeNotFoundHint")}
+              action={
+                <Button variant="outline" asChild>
+                  <Link
+                    href={`/my-puzzles/add/new?${barcode.length === 12 ? "upc" : "ean"}=${barcode}`}
+                  >
+                    <Plus className="h-4 w-4" />
+                    {t("chooser.registerIt")}
+                  </Link>
+                </Button>
+              }
+            />
+          )}
+        </section>
+      )}
 
-        {nothingToShow ? (
-          <EmptyState
-            title={t("chooser.noResults")}
-            sub={t("chooser.cantFind")}
-            action={createNewCta}
-          />
-        ) : (
-          <>
-            {filteredCatalogue.length > 0 ? (
-              <PuzzleViewProvider viewMode="grid">
-                {filteredCatalogue.map((puzzle) => (
-                  <PuzzleCard key={puzzle._id} puzzle={puzzle} />
-                ))}
-              </PuzzleViewProvider>
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                {t("chooser.noCatalogueResults")}
-              </p>
-            )}
+      {/* All puzzles */}
+      {!barcode && (
+        <section className="flex flex-col gap-4">
+          <div>
+            <h2 className="font-heading text-lg font-bold">
+              {t("chooser.allPuzzles")}
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              {t("chooser.allPuzzlesHint")}
+            </p>
+          </div>
 
-            {/* Infinite scroll sentinel */}
-            <div ref={observerRef} className="h-4" />
-            {status === "LoadingMore" && (
-              <div className="flex justify-center py-4">
-                <div className="border-primary h-6 w-6 animate-spin rounded-full border-b-2" />
-              </div>
-            )}
-          </>
-        )}
-      </section>
+          {nothingToShow ? (
+            <EmptyState
+              title={t("chooser.noResults")}
+              sub={t("chooser.cantFind")}
+              action={createNewCta}
+            />
+          ) : (
+            <>
+              {status === "LoadingFirstPage" ? (
+                spinner
+              ) : catalogue.length > 0 ? (
+                <PuzzleViewProvider viewMode="grid">
+                  {catalogue.map((puzzle) => (
+                    <PuzzleCard key={puzzle._id} puzzle={puzzle} />
+                  ))}
+                </PuzzleViewProvider>
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  {t("chooser.noCatalogueResults")}
+                </p>
+              )}
+
+              {/* Infinite scroll sentinel */}
+              <div ref={setSentinel} className="h-4" />
+              {status === "LoadingMore" && spinner}
+            </>
+          )}
+        </section>
+      )}
 
       {/* Persistent "can't find it?" CTA below the grid. */}
       <div className="flex flex-col items-center gap-2 border-t border-border pt-6 text-center">

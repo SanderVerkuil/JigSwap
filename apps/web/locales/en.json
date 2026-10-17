@@ -569,7 +569,7 @@
     "advancedDetails": "More details (optional)",
     "cancel": "Cancel",
     "chooser": {
-      "searchPlaceholder": "Search puzzles by title or brand…",
+      "searchPlaceholder": "Search by title, brand or barcode…",
       "yourSubmissions": "Your submissions",
       "yourSubmissionsHint": "Puzzles you've added to the catalogue that aren't approved yet.",
       "allPuzzles": "All puzzles",
@@ -578,6 +578,10 @@
       "createNew": "Create new",
       "noResults": "No puzzles found",
       "noCatalogueResults": "No catalogue puzzles match your search.",
+      "barcodeResult": "Barcode {code}",
+      "barcodeNotFound": "No puzzle with barcode {code} yet",
+      "barcodeNotFoundHint": "Register it so you, and everyone else, can add it.",
+      "registerIt": "Register it",
       "chosenPuzzle": "Adding a copy of",
       "copyDetails": "Your copy"
     },
