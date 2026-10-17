@@ -350,7 +350,7 @@ These are guardrails, not suggestions — add them in Phase 0:
   never `_generated`).
 - **`dependency-cruiser`** rule: forbid any import of `convex`, `convex/values`, `@clerk/*`, `react`
   from `packages/domain/**`.
-- **ESLint `no-restricted-imports`** in `apps/web/**`: ban `@jigswap/backend/convex/_generated/api`
+- **Lint `no-restricted-imports`** (oxlint) in `apps/web/**`: ban `@jigswap/backend/convex/_generated/api`
   (the UI must use the gateway).
 - **Domain unit tests** run with **no Convex** (Vitest, already in the stack) — fast, the regression net
   that makes the refactor safe.

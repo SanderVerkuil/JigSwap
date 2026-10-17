@@ -71,7 +71,7 @@ Our mission is to make puzzle sharing sustainable, accessible, and enjoyable for
 
 - **Turborepo** - Monorepo task runner and cache
 - **pnpm** - Fast, disk space efficient package manager (v10.13.1)
-- **ESLint** - Code linting
+- **oxlint** - Code linting
 - **TypeScript** - Static type checking
 - **Turbopack** - Fast development builds
 - **Prettier** - Code formatting
@@ -228,8 +228,8 @@ jigswap/
 - `pnpm build:web` - Build web app for production
 - `pnpm start` - Start production server for web app
 - `pnpm start:web` - Start web app production server
-- `pnpm lint` - Run ESLint on all projects
-- `pnpm lint:fix` - Fix ESLint errors on all projects
+- `pnpm lint` - Run oxlint on all projects
+- `pnpm lint:fix` - Fix oxlint errors on all projects
 - `pnpm type-check` - Run TypeScript type checking on all projects
 - `pnpm test` - Run tests on all projects
 - `pnpm clean` - Clean build artifacts and the Turborepo cache
@@ -241,8 +241,8 @@ jigswap/
 - `pnpm dev` - Start Next.js development server with Turbopack
 - `pnpm build` - Build for production
 - `pnpm start` - Start production server
-- `pnpm lint` - Run ESLint
-- `pnpm lint:fix` - Fix ESLint errors
+- `pnpm lint` - Run oxlint
+- `pnpm lint:fix` - Fix oxlint errors
 - `pnpm type-check` - Run TypeScript type checking
 - `pnpm build:analyze` - Build with bundle analyzer
 - `pnpm build:production` - Build with production environment

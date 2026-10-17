@@ -254,7 +254,7 @@ Root (`package.json`), all via Turborepo:
 | ----------------------------------- | -------------------------------------------------------------------------------------- |
 | `pnpm dev`                          | `turbo run dev --filter=@jigswap/web` — start the web app                              |
 | `pnpm build`                        | build all projects                                                                     |
-| `pnpm lint` / `pnpm lint:fix`       | ESLint across all projects                                                             |
+| `pnpm lint` / `pnpm lint:fix`       | oxlint across all projects                                                             |
 | `pnpm type-check`                   | `tsc --noEmit` across all projects                                                     |
 | `pnpm test`                         | run all project tests (Vitest)                                                         |
 | `pnpm format` / `pnpm format:check` | Prettier write / check (CI runs `format:check`)                                        |
@@ -373,7 +373,7 @@ Run with `pnpm test` (all) or `pnpm turbo run test --filter=<package>` (e.g. `--
 ### 4.3 Prettier & lint
 
 **CI runs `format:check` first.** Always format changed files before committing
-(`pnpm format` or `pnpm lint:fix`). ESLint config lives in the repo; Prettier uses
+(`pnpm format` or `pnpm lint:fix`). oxlint config lives in `.oxlintrc.json`; Prettier uses
 `prettier-plugin-organize-imports`.
 
 ### 4.4 Commit & PR style
