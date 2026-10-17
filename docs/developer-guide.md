@@ -20,7 +20,7 @@ extension tasks.
 
 ## 1. Architecture overview
 
-JigSwap is a **pnpm + Nx monorepo** organized around a strict **hexagonal (ports-and-adapters),
+JigSwap is a **pnpm + Turborepo monorepo** organized around a strict **hexagonal (ports-and-adapters),
 Domain-Driven Design** core. The architecture is the product of a deliberate refactor away from
 an entity-driven, Convex-coupled shape; see
 [`spec/architecture/01-bounded-contexts.md`](../spec/architecture/01-bounded-contexts.md) and
@@ -39,14 +39,15 @@ jigswap/
 │   └── backend/
 │       └── convex/             # @jigswap/backend — Convex functions, grouped by context
 ├── spec/                       # Architecture + feature specifications
-├── nx.json                     # Nx workspace config
+├── turbo.json                  # Turborepo task pipeline
 ├── pnpm-workspace.yaml         # pnpm workspace (apps/*, packages/*)
 └── package.json                # Root scripts
 ```
 
-**Nx** orchestrates per-project targets (`dev`, `build`, `lint`, `type-check`, `test`) and
-caches results. **pnpm** is the package manager (workspace protocol `workspace:^` links the
-internal packages). Run `pnpm graph` to view the dependency graph.
+**Turborepo** runs each package's `package.json` scripts (`dev`, `build`, `lint`, `type-check`,
+`test`, `coverage`, `mutation`) as tasks and caches results (`turbo.json`); the scripts are the
+source of truth. **pnpm** is the package manager (workspace protocol `workspace:^` links the
+internal packages). Run `pnpm graph` to write the task graph to `graph.html`.
 
 ### 1.2 The four tiers and the dependency rule
 
@@ -238,7 +239,7 @@ Two processes, two terminals:
 cd packages/backend && pnpm convex:dev
 
 # Terminal 2 — web app (Vite dev server)
-pnpm dev          # = nx dev web  (runs `vite dev` for apps/web)
+pnpm dev          # = turbo run dev --filter=@jigswap/web  (runs `vite dev` for apps/web)
 ```
 
 > The dev server runs on **`http://localhost:3001`** in this environment (not 3000 as the README
@@ -247,22 +248,22 @@ pnpm dev          # = nx dev web  (runs `vite dev` for apps/web)
 
 ### 2.4 Key scripts
 
-Root (`package.json`), all via Nx:
+Root (`package.json`), all via Turborepo:
 
 | Script                              | Purpose                                                                                |
 | ----------------------------------- | -------------------------------------------------------------------------------------- |
-| `pnpm dev`                          | `nx dev web` — start the web app                                                       |
+| `pnpm dev`                          | `turbo run dev --filter=@jigswap/web` — start the web app                              |
 | `pnpm build`                        | build all projects                                                                     |
-| `pnpm lint` / `pnpm lint:fix`       | ESLint across all projects                                                             |
+| `pnpm lint` / `pnpm lint:fix`       | oxlint across all projects                                                             |
 | `pnpm type-check`                   | `tsc --noEmit` across all projects                                                     |
 | `pnpm test`                         | run all project tests (Vitest)                                                         |
 | `pnpm format` / `pnpm format:check` | Prettier write / check (CI runs `format:check`)                                        |
-| `pnpm graph`                        | open the Nx dependency graph                                                           |
-| `pnpm affected`                     | run targets only on affected projects                                                  |
+| `pnpm graph`                        | write the task graph to `graph.html`                                                   |
+| `pnpm affected`                     | run tasks only on packages changed versus `main`                                       |
 | `pnpm arch:check`                   | dependency-cruiser — enforces the hexagonal dependency rule over `packages/domain/src` |
 | `pnpm mutation:domain`              | Stryker mutation testing for the domain package                                        |
 
-Backend (`packages/backend`): `pnpm convex:dev`, `pnpm convex:deploy`, `pnpm type-check`.
+Backend (`packages/backend`): `pnpm convex:dev`, `pnpm convex:deploy`, `pnpm type-check`, `pnpm test`.
 
 Web (`apps/web`): `pnpm dev` (`vite dev`), `pnpm build`, `pnpm start`, `pnpm type-check`,
 `pnpm test`.
@@ -367,13 +368,20 @@ Per the project's conventions (and team memory):
 - Mutation testing for the domain: `pnpm mutation:domain` (Stryker).
 - `routeTree.gen.ts` produces `tsc` noise; this is a known issue and can be ignored.
 
-Run with `pnpm test` (all) or `nx test <project>` / `nx test web` for one.
+Run with `pnpm test` (all) or `pnpm turbo run test --filter=<package>` (e.g. `--filter=@jigswap/web`) for one.
 
 ### 4.3 Prettier & lint
 
 **CI runs `format:check` first.** Always format changed files before committing
-(`pnpm format` or `pnpm lint:fix`). ESLint config lives in the repo; Prettier uses
-`prettier-plugin-organize-imports`.
+(`pnpm format` or `pnpm lint:fix`). oxlint config lives in `.oxlintrc.json`. Prettier sorts
+imports with `@ianvs/prettier-plugin-sort-imports` (Babel-based, so it doesn't need the
+TypeScript compiler API): built-ins, then `@/` aliases, then packages, then relative imports.
+It doesn't remove unused imports; oxlint's `no-unused-vars` flags those.
+
+Lint runs `oxlint --type-aware` (types come from `oxlint-tsgolint`, which runs on
+typescript-go). Floating promises are errors: `await` them, `.catch` them, or mark a
+deliberate fire-and-forget with `void` and a comment explaining why. Async JSX handlers
+(`onClick={async () => …}`) are allowed.
 
 ### 4.4 Commit & PR style
 

@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api, internal } from "./_generated/api";
 import schema from "./schema";
@@ -11,7 +11,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 // auto-rejections (no actorId = system).
 
 // Seed a single member; the Clerk subject maps to the user via by_clerk_id.
-const seedMember = async (t: ReturnType<typeof convexTest>) =>
+const seedMember = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     return ctx.db.insert("users", {
@@ -24,13 +24,13 @@ const seedMember = async (t: ReturnType<typeof convexTest>) =>
     });
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asAdmin = (t: ReturnType<typeof convexTest>) =>
+const asAdmin = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice", metadata: { role: "admin" } });
 
 // Alice submits a pending definition, returning the aggregateId.
-const submitPending = async (t: ReturnType<typeof convexTest>) => {
+const submitPending = async (t: TestConvex<typeof schema>) => {
   const id = await asAlice(t).mutation(
     api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
     { title: "Mountain Vista", pieceCount: 1000 },
@@ -38,7 +38,7 @@ const submitPending = async (t: ReturnType<typeof convexTest>) => {
   return id as string;
 };
 
-const allActions = (t: ReturnType<typeof convexTest>) =>
+const allActions = (t: TestConvex<typeof schema>) =>
   t.run((ctx) => ctx.db.query("moderationActions").collect());
 
 describe("catalog moderation stamps", () => {
@@ -120,7 +120,7 @@ describe("catalog moderation stamps", () => {
 describe("photo pipeline stamps", () => {
   // Seed a member + puzzle + copy (with a snapshot title) + a pending photo row, the state the
   // moderatePhoto pipeline operates on before it records a verdict via setModerationVerdict.
-  const seedPendingPhoto = async (t: ReturnType<typeof convexTest>) =>
+  const seedPendingPhoto = async (t: TestConvex<typeof schema>) =>
     t.run(async (ctx) => {
       const now = Date.now();
       const userId = await ctx.db.insert("users", {
@@ -219,7 +219,7 @@ describe("photo pipeline stamps", () => {
 
 // Seed one moderationActions row directly with a controlled timestamp.
 const seedAction = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   action: {
     kind:
       | "definition_approved"

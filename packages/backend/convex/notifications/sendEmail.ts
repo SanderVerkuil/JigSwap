@@ -1,5 +1,6 @@
 "use node";
-import { type EmailLocale, isEmailType, renderEmail } from "@jigswap/email";
+
+import { isEmailType, renderEmail, type EmailLocale } from "@jigswap/email";
 import { v } from "convex/values";
 import { internalAction } from "../_generated/server";
 import { ingestToAxiom } from "../lib/axiom";

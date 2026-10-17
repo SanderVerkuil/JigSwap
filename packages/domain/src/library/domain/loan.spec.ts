@@ -5,7 +5,6 @@ import {
   toLoanId,
   toOwnerId,
 } from "../../shared-kernel";
-
 import { Loan } from "./loan";
 
 const loanId = toLoanId("loan1");

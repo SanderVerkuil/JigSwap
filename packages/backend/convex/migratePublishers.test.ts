@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { internal } from "./_generated/api";
 import schema from "./schema";
@@ -8,7 +8,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 // Seed a bare puzzles row (legacy-style write, no aggregate) with the given brand/publisher.
 const seedPuzzle = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   fields: { title: string; brand?: string; publisher?: string },
 ) =>
   t.run(async (ctx) => {

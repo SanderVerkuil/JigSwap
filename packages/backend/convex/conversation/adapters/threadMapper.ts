@@ -1,5 +1,6 @@
 import {
   Thread,
+  toCopyId,
   toMemberId,
   toMessageId,
   toThreadId,
@@ -68,6 +69,10 @@ export const toMessageRow = (
   kind: message.kind,
   body: message.body,
   sentAt: message.sentAt.getTime(),
+  // The domain carries the copy's ownedPuzzles `_id` as an opaque CopyId; absent stays absent.
+  ...(message.copyId !== undefined && {
+    copyId: message.copyId as unknown as Id<"ownedPuzzles">,
+  }),
 });
 
 // Rows -> aggregate state. `exchangeId` is the OUTBOUND aggregateId, supplied by the repository
@@ -109,4 +114,5 @@ const toMessageState = (row: Doc<"threadMessages">): MessageState => ({
   kind: row.kind,
   body: row.body,
   sentAt: new Date(row.sentAt),
+  ...(row.copyId !== undefined && { copyId: toCopyId(row.copyId as string) }),
 });

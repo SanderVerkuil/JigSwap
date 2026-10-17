@@ -1,9 +1,9 @@
 import {
   makeRecordCompletion,
   makeStartCompletion,
-  type MemberId,
   toCopyId,
   toPuzzleDefinitionId,
+  type MemberId,
 } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";

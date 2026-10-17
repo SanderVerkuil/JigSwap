@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
@@ -7,7 +7,7 @@ import schema from "./schema";
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
-const seedUsers = (t: ReturnType<typeof convexTest>) =>
+const seedUsers = (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const alice = await ctx.db.insert("users", {
@@ -29,10 +29,10 @@ const seedUsers = (t: ReturnType<typeof convexTest>) =>
     return { alice, bob };
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
 
-const asBob = (t: ReturnType<typeof convexTest>) =>
+const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
 
 describe("arrangeShelf", () => {

@@ -10,9 +10,14 @@ export type HouseholdCopyPermission = "manage" | "view";
 export const DEFAULT_HOUSEHOLD_COPY_PERMISSION: HouseholdCopyPermission =
   "manage";
 
+// THE resolution order for a copy's household permission, applied at read time: the copy's
+// explicit value, else its household's default, else DEFAULT_HOUSEHOLD_COPY_PERMISSION. Every
+// reader goes through here; none keeps its own fallback.
 export const resolveHouseholdCopyPermission = (
   stored: HouseholdCopyPermission | undefined,
-): HouseholdCopyPermission => stored ?? DEFAULT_HOUSEHOLD_COPY_PERMISSION;
+  householdDefault?: HouseholdCopyPermission,
+): HouseholdCopyPermission =>
+  stored ?? householdDefault ?? DEFAULT_HOUSEHOLD_COPY_PERMISSION;
 
 // The acting member's access to a copy through ownership or the household.
 export type HouseholdCopyAccess = "owner" | "manage" | "view" | "none";
@@ -22,16 +27,24 @@ export interface HouseholdCopyFacts {
   readonly householdPermission?: HouseholdCopyPermission;
 }
 
-// THE household access rule. `sharesHousehold` is whether the actor and the copy's owner are
-// members of the same household (resolved by the caller from persistence).
+// The household the actor shares with the copy's owner, as far as copy access needs it.
+export interface SharedHouseholdFacts {
+  readonly defaultCopyPermission?: HouseholdCopyPermission;
+}
+
+// THE household access rule. `sharedHousehold` is the household the actor and the copy's owner
+// both belong to, or null when they share none (resolved by the caller from persistence).
 export const householdCopyAccess = (
   copy: HouseholdCopyFacts,
   actorId: MemberId,
-  sharesHousehold: boolean,
+  sharedHousehold: SharedHouseholdFacts | null,
 ): HouseholdCopyAccess => {
   if (copy.ownerId === actorId) return "owner";
-  if (!sharesHousehold) return "none";
-  return resolveHouseholdCopyPermission(copy.householdPermission);
+  if (!sharedHousehold) return "none";
+  return resolveHouseholdCopyPermission(
+    copy.householdPermission,
+    sharedHousehold.defaultCopyPermission,
+  );
 };
 
 // May the actor act on the copy as if they owned it?

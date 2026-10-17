@@ -1,11 +1,11 @@
 import {
+  toCatalogCategoryId,
+  toChangeProposalId,
+  toPuzzleDefinitionId,
   type CatalogCategoryId,
   type CatalogIdGenerator,
   type ChangeProposalId,
   type PuzzleDefinitionId,
-  toCatalogCategoryId,
-  toChangeProposalId,
-  toPuzzleDefinitionId,
 } from "@jigswap/domain";
 
 // Driven adapter for the CatalogIdGenerator port. crypto.randomUUID is available in the Convex

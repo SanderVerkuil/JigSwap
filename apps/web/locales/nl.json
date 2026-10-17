@@ -639,6 +639,38 @@
       "disputed": "In geschil"
     }
   },
+  "tradeRequest": {
+    "title": "Deze puzzel aanvragen",
+    "description": "Stuur {name} een aanvraag voor dit exemplaar.",
+    "ownedBy": "Van {name}",
+    "pieces": "{count} stukjes",
+    "typeLabel": "Soort uitwisseling",
+    "types": {
+      "trade": "Ruilen",
+      "sale": "Kopen",
+      "loan": "Lenen"
+    },
+    "offerLabel": "Puzzel die je aanbiedt",
+    "offerPlaceholder": "Kies een van je puzzels",
+    "offerHousehold": "{title} ({name}, huishouden)",
+    "noOfferable": "Je hebt geen puzzels die je kunt aanbieden om te ruilen.",
+    "priceLabel": "Jouw bod (EUR)",
+    "pricePlaceholder": "bijv. 15,00",
+    "priceInvalid": "Vul een bedrag boven nul in, zoals 15 of 15,50.",
+    "cancel": "Annuleren",
+    "submit": "Aanvraag versturen",
+    "submitting": "Versturen...",
+    "success": "Ruilaanvraag verstuurd",
+    "errors": {
+      "notAvailable": "Deze puzzel is niet meer beschikbaar voor die uitwisseling.",
+      "notFound": "Deze puzzel is niet meer beschikbaar.",
+      "offeredNotOwned": "Je kunt die puzzel niet aanbieden in deze ruil.",
+      "duplicate": "Je hebt al een openstaande aanvraag voor deze puzzel.",
+      "ownCopy": "Je kunt je eigen puzzel niet aanvragen.",
+      "missingTerms": "Er ontbreken gegevens. Controleer het formulier en probeer het opnieuw.",
+      "generic": "De aanvraag kon niet worden verstuurd. Probeer het opnieuw."
+    }
+  },
   "reputation": {
     "title": "Reputatie",
     "subtitle": "Vertrouwenssignalen uit voltooide uitwisselingen.",
@@ -677,6 +709,16 @@
       "invalidRating": "Geef een beoordeling tussen 1 en 5 sterren.",
       "generic": "Je review kon niet worden verstuurd. Probeer het opnieuw."
     }
+  },
+  "copyConversation": {
+    "title": "Bericht aan {name}",
+    "aboutPuzzle": "Over deze puzzel",
+    "pieces": "{count} stukjes",
+    "placeholder": "Schrijf een bericht over deze puzzel…",
+    "firstMessageHint": "Je gesprek begint zodra je het eerste bericht verstuurt.",
+    "self": "Dit is je eigen puzzel.",
+    "unavailable": "Over deze puzzel kun je geen bericht sturen.",
+    "backToPuzzle": "Terug naar de puzzel"
   },
   "messages": {
     "anonymous": "Anonieme gebruiker",
@@ -965,6 +1007,11 @@
     "textPlaceholder": "Titel, merk of thema…",
     "gridView": "Rasterweergave",
     "listView": "Lijstweergave"
+  },
+  "browsePuzzleFilter": {
+    "label": "Puzzel",
+    "unknownPuzzle": "Onbekende puzzel",
+    "remove": "Puzzelfilter verwijderen: {title}"
   },
   "footer": {
     "tagline": "Legpuzzelruil toegankelijk en duurzaam maken voor iedereen.",
@@ -1476,7 +1523,8 @@
       "view": "Alleen bekijken",
       "memberManage": "Puzzel van je huishouden — jij mag hem beheren",
       "memberView": "Puzzel van je huishouden — alleen bekijken",
-      "saveFailed": "Toegang voor het huishouden kon niet worden bijgewerkt"
+      "saveFailed": "Toegang voor het huishouden kon niet worden bijgewerkt",
+      "useDefault": "Standaard van het huishouden gebruiken (nu: {permission, select, view {Alleen bekijken} other {Mag beheren}})"
     },
     "errors": {
       "generic": "Er ging iets mis. Probeer het opnieuw.",
@@ -1488,7 +1536,45 @@
       "HouseholdNotFound": "Dit huishouden bestaat niet meer.",
       "NotHouseholdAdmin": "Alleen de beheerder van het huishouden kan dit doen.",
       "InviteNotPending": "Deze uitnodiging is al beantwoord.",
-      "MemberNotFound": "Dit lid kon niet worden gevonden."
+      "MemberNotFound": "Dit lid kon niet worden gevonden.",
+      "NotCopyOwner": "Alleen de eigenaar kan de toegang voor het huishouden van een puzzel wijzigen.",
+      "PermissionBatchTooLarge": "Je kunt maximaal 200 puzzels tegelijk wijzigen.",
+      "CopyNotFound": "Een van deze puzzels bestaat niet meer."
+    },
+    "bulkPermission": {
+      "title": "Mijn puzzels in dit huishouden",
+      "sub": "Kies wat je huishouden met elk van je puzzels mag doen. Alleen jij kunt dit voor je eigen puzzels wijzigen.",
+      "empty": "Je hebt nog geen puzzels toegevoegd.",
+      "filterLabel": "Filteren op toegang voor het huishouden",
+      "filterAll": "Alle puzzels",
+      "selectAll": "Alles selecteren",
+      "selectNone": "Niets selecteren",
+      "selectedCount": "{count, plural, one {# geselecteerd} other {# geselecteerd}}",
+      "setManage": "Instellen op Mag beheren",
+      "setView": "Instellen op Alleen bekijken",
+      "selectLabel": "{title} selecteren",
+      "noMatches": "Geen van je puzzels past bij dit filter.",
+      "untitled": "Puzzel zonder titel",
+      "confirmTitle": "{count, plural, one {# puzzel wijzigen?} other {# puzzels wijzigen?}}",
+      "confirmManage": "Je huishouden kan {count, plural, one {deze puzzel} other {deze puzzels}} dan beheren: bewerken, uitlenen en ruilen.",
+      "confirmView": "Je huishouden kan {count, plural, one {deze puzzel} other {deze puzzels}} dan alleen bekijken.",
+      "confirm": "Toegang wijzigen",
+      "changed": "{count, plural, =0 {Er hoefde niets te veranderen} one {# puzzel bijgewerkt} other {# puzzels bijgewerkt}}",
+      "setDefault": "Standaard van het huishouden gebruiken (nu: {permission, select, view {Alleen bekijken} other {Mag beheren}})",
+      "confirmDefault": "{count, plural, one {Deze puzzel volgt} other {Deze puzzels volgen}} dan de standaard van het huishouden (nu: {permission, select, view {Alleen bekijken} other {Mag beheren}}) en veranderen mee.",
+      "sourceDefault": "Standaard van het huishouden",
+      "sourceExplicit": "Ingesteld voor deze puzzel"
+    },
+    "settings": {
+      "title": "Instellingen huishouden",
+      "defaultLabel": "Standaardtoegang voor puzzels",
+      "defaultHelp": "Geldt voor de puzzels van alle leden die geen eigen toegangsinstelling hebben. Een instelling voor een specifieke puzzel gaat altijd voor.",
+      "affected": "{count, plural, =0 {Er volgen nu geen exemplaren de standaard van het huishouden} one {Geldt voor # exemplaar dat de standaard van het huishouden volgt} other {Geldt voor # exemplaren die de standaard van het huishouden volgen}}",
+      "adminOnly": "Alleen de beheerder van het huishouden kan dit wijzigen.",
+      "confirmTitle": "Standaard van het huishouden wijzigen naar {permission, select, view {Alleen bekijken} other {Mag beheren}}?",
+      "confirmBody": "{count, plural, =0 {Er volgen nu geen exemplaren de standaard, dus er verandert nog niets.} one {Dit geldt meteen voor # exemplaar dat de standaard van het huishouden volgt.} other {Dit geldt meteen voor # exemplaren die de standaard van het huishouden volgen.}} Puzzels met een eigen toegangsinstelling houden die.",
+      "confirm": "Standaard wijzigen",
+      "saved": "Standaard van het huishouden bijgewerkt"
     }
   },
   "circles": {
@@ -1701,7 +1787,8 @@
       "follow_request_received": "Volgverzoeken",
       "follow_request_approved": "Volgverzoek goedgekeurd",
       "household_invite_received": "Uitnodigingen voor een huishouden",
-      "household_invite_accepted": "Uitnodiging voor huishouden geaccepteerd"
+      "household_invite_accepted": "Uitnodiging voor huishouden geaccepteerd",
+      "whats_new": "Wat is er nieuw"
     },
     "categories": {
       "trades": {
@@ -1719,6 +1806,10 @@
       "submissions": {
         "title": "Mijn inzendingen",
         "description": "Uitkomsten van je puzzelinzendingen en voorgestelde wijzigingen"
+      },
+      "product": {
+        "title": "Productupdates",
+        "description": "Nieuwe functies en wijzigingen in JigSwap"
       },
       "admin": {
         "title": "Beheer",
@@ -1817,6 +1908,10 @@
       "household_invite_accepted": {
         "title": "Uitnodiging geaccepteerd",
         "message": "Iemand is lid geworden van je huishouden."
+      },
+      "whats_new": {
+        "title": "Nieuw in JigSwap",
+        "message": "Bekijk wat er nieuw is in JigSwap."
       }
     },
     "pushDeviceTitle": "Push op dit apparaat",
@@ -1855,7 +1950,8 @@
       "follow_request_received": "Wanneer iemand vraagt om je te volgen.",
       "follow_request_approved": "Wanneer een volgverzoek dat je stuurde wordt goedgekeurd.",
       "household_invite_received": "Wanneer iemand je uitnodigt voor hun huishouden.",
-      "household_invite_accepted": "Wanneer iemand je uitnodiging voor het huishouden accepteert."
+      "household_invite_accepted": "Wanneer iemand je uitnodiging voor het huishouden accepteert.",
+      "whats_new": "Wanneer een nieuwe functie of wijziging in JigSwap wordt aangekondigd."
     },
     "pushServiceUnreachable": "Je browser kon zijn pushdienst niet bereiken. Sommige privacybrowsers blokkeren of verwijderen die — Brave schakelt het standaard uit (zet 'Google-services voor pushberichten gebruiken' aan in Instellingen), en de-Googled Chromium-browsers zoals Helium verwijderen het. Firefox, Chrome of Edge werkt wel."
   },
@@ -2639,7 +2735,8 @@
     "library": "Mijn Bibliotheek — JigSwap",
     "people": "Mensen — JigSwap",
     "members": "Leden — JigSwap",
-    "copyInstance": "Exemplaar in bezit — JigSwap"
+    "copyInstance": "Exemplaar in bezit — JigSwap",
+    "whatsNew": "Wat is er nieuw — JigSwap"
   },
   "shell": {
     "search": {
@@ -2828,6 +2925,11 @@
         "title": "Feedback",
         "subtitle": "“Was deze pagina nuttig?”-stemmen uit de documentatie, nieuwste eerst.",
         "description": "Bekijk stemmen over de documentatie"
+      },
+      "whatsNew": {
+        "title": "Wat is er nieuw",
+        "subtitle": "Nieuwe functies, verbeteringen en oplossingen.",
+        "description": "Alles wat er in JigSwap is veranderd, nieuwste eerst."
       }
     },
     "user": {
@@ -2867,8 +2969,10 @@
         "logCompletionSub": "Eentje af? Leg het vast",
         "proposeSwap": "Een Ruil Voorstellen",
         "proposeSwapSub": "Ruil met een mede-puzzelaar",
-        "browseCommunitySub": "Ontdek puzzels bij jou in de buurt"
-      }
+        "browseCommunitySub": "Ontdek puzzels bij jou in de buurt",
+        "whatsNewSub": "De nieuwste functies en oplossingen"
+      },
+      "openQuickActionsUnread": "{count, plural, one {Snelle acties, # update} other {Snelle acties, # updates}}"
     },
     "breadcrumbLabel": "Broodkruimel",
     "crumbs": {
@@ -3018,6 +3122,11 @@
     },
     "photoCover": "Omslag",
     "photoPending": "Wordt beoordeeld"
+  },
+  "copyOwner": {
+    "label": "Eigenaar",
+    "you": "jij",
+    "anonymous": "Anonieme gebruiker"
   },
   "puzzleDefinition": {
     "notFound": "Puzzel niet gevonden",
@@ -3493,5 +3602,94 @@
     "logInToReview": "Log in om een review te schrijven",
     "notFound": "Puzzel niet gevonden",
     "notFoundSub": "Deze puzzel is mogelijk uit de catalogus verwijderd."
+  },
+  "whatsNew": {
+    "menuLabel": "Wat is er nieuw",
+    "menuLabelUnread": "Wat is er nieuw ({count})",
+    "unreadCount": "{count, plural, =0 {Geen nieuwe updates} one {# nieuwe update} other {# nieuwe updates}}",
+    "announce": "{count, plural, one {# nieuwe update in Wat is er nieuw} other {# nieuwe updates in Wat is er nieuw}}",
+    "new": "Nieuw",
+    "newPrefix": "Nieuw:",
+    "category": {
+      "feature": "Functie",
+      "improvement": "Verbetering",
+      "fix": "Oplossing"
+    },
+    "empty": {
+      "title": "Nog geen updates",
+      "body": "Nieuwe functies en oplossingen verschijnen hier."
+    },
+    "readMore": "Lees meer",
+    "seeAll": "Alle updates bekijken",
+    "modal": {
+      "eyebrow": "Nieuw in JigSwap",
+      "later": "Misschien later"
+    },
+    "tour": {
+      "take": "Doe de rondleiding",
+      "replay": "Rondleiding opnieuw bekijken",
+      "resume": "Rondleiding hervatten (stap {step} van {total})",
+      "restart": "Opnieuw beginnen"
+    }
+  },
+  "tour": {
+    "stepOf": "Stap {step} van {total}",
+    "roleDescription": "rondleidingsstap",
+    "back": "Terug",
+    "next": "Volgende",
+    "nextOnPage": "Volgende: {page}",
+    "done": "Klaar",
+    "end": "Rondleiding stoppen",
+    "opening": "{page} openen…",
+    "paused": "Rondleiding gepauzeerd. Je kunt verder gaan via Wat is er nieuw.",
+    "resumeAction": "Hervatten",
+    "completedTitle": "Je bent er klaar voor",
+    "completed": "Rondleiding afgerond. Veel plezier met de nieuwe functie!"
+  },
+  "tours": {
+    "households": {
+      "steps": {
+        "start": {
+          "title": "Je huishouden",
+          "body": "Maak een huishouden aan voor de mensen met wie je samenwoont, of bekijk wie er in het jouwe zit. Iedereen erin ziet elkaars puzzels in Mijn Puzzels."
+        },
+        "invite": {
+          "title": "Nodig je huisgenoten uit",
+          "body": "Zoek een lid en stuur een uitnodiging; ze doen mee zodra ze accepteren. Beheerders van het huishouden versturen de uitnodigingen."
+        },
+        "copy-access": {
+          "title": "Jij kiest per puzzel",
+          "body": "Je puzzels blijven van jou. Open er een en kies bij Toegang huishouden: met Mag beheren kunnen huisgenoten hem bewerken, uitlenen en ruilen; met Alleen bekijken zien ze hem alleen."
+        }
+      }
+    },
+    "member-profiles": {
+      "steps": {
+        "network": {
+          "title": "Bekijk een lid",
+          "body": "Open iemand uit je netwerk en zie welke puzzels die heeft en welke die heeft afgemaakt, met datum, tijd en foto's."
+        },
+        "your-profile": {
+          "title": "Wie het jouwe ziet",
+          "body": "Je puzzels en afgemaakte puzzels staan op je profiel voor ingelogde leden die het mogen zien: iedereen als het openbaar is, wederzijdse volgers als het privé is. Je wijzigt dit via Profiel Bewerken."
+        }
+      }
+    },
+    "in-progress-solves": {
+      "steps": {
+        "solving-now": {
+          "title": "Nu aan het puzzelen",
+          "body": "Puzzels waar je aan begonnen bent staan op je dashboard, met één klik op Afronden als je klaar bent."
+        },
+        "in-progress": {
+          "title": "Eerst bezig, dan geschiedenis",
+          "body": "Voltooiingen toont bovenaan de puzzels waar je mee bezig bent en daaronder de afgeronde. Begin aan een puzzel vanuit je eigen puzzels, met een startdatum in het verleden of de toekomst."
+        },
+        "sharing": {
+          "title": "Deel het met vrienden, als je wilt",
+          "body": "Delen staat standaard uit. Open je accountmenu, kies Account beheren en dan Voorkeuren, en zet Deel puzzels waar je mee bezig bent met vrienden aan."
+        }
+      }
+    }
   }
 }

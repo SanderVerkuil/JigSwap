@@ -6,7 +6,6 @@
 // then search (command palette), notifications and the profile avatar on the
 // right. Every control is a 44px touch target and the bar is safe-area padded
 // for notched phones.
-
 import { useUser } from "@/compat/clerk";
 import { Image } from "@/compat/image";
 import { Link } from "@/compat/link";
@@ -114,7 +113,9 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
             <span className="bg-jigsaw-primary-accent ring-card absolute top-2.5 right-2.5 size-2 rounded-full ring-2" />
           )}
         </Link>
-        <ShellUserButton tapTarget />
+        <span data-tour="account-menu" className="flex">
+          <ShellUserButton tapTarget />
+        </span>
       </div>
     </header>
   );

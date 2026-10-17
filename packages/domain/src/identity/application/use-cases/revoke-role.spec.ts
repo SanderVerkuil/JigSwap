@@ -12,7 +12,9 @@ import { makeRevokeRole } from "./revoke-role";
 const NOW = new Date("2026-06-08T10:00:00Z");
 const unknownId = toMemberId("ghost");
 
-const seedMember = (members: InMemoryMemberRepository): MemberId => {
+const seedMember = async (
+  members: InMemoryMemberRepository,
+): Promise<MemberId> => {
   const result = Member.register({
     id: toMemberId("member-1"),
     clerkId: "clerk_abc",
@@ -22,7 +24,7 @@ const seedMember = (members: InMemoryMemberRepository): MemberId => {
   });
   if (!result.isOk) throw new Error("setup");
   result.value.pullEvents();
-  members.save(result.value);
+  await members.save(result.value);
   return result.value.id;
 };
 
@@ -40,7 +42,7 @@ describe("makeRevokeRole", () => {
   });
 
   it("withdraws a held role and publishes RoleRevoked", async () => {
-    const id = seedMember(members);
+    const id = await seedMember(members);
     await assign({ memberId: id, role: "moderator" });
     events.published.length = 0;
 
@@ -51,7 +53,7 @@ describe("makeRevokeRole", () => {
   });
 
   it("is idempotent: revoking an unheld role publishes nothing", async () => {
-    const id = seedMember(members);
+    const id = await seedMember(members);
 
     const result = await revoke({ memberId: id, role: "admin" });
     expect(result.isOk).toBe(true);
@@ -59,7 +61,7 @@ describe("makeRevokeRole", () => {
   });
 
   it("fails with InvalidRole for an unknown role", async () => {
-    const id = seedMember(members);
+    const id = await seedMember(members);
     const result = await revoke({ memberId: id, role: "superuser" });
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("InvalidRole");

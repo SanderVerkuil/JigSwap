@@ -5,7 +5,6 @@
 // from the puzzle form schema) that saves the update mutation and then
 // approves with `edited: true` so the audit stamp records
 // definition_edited_approved.
-
 import { SuggestInput } from "@/components/add-puzzle";
 import { puzzleFormSchema } from "@/components/forms/puzzle-form/puzzle-form-schema";
 import { Button } from "@/components/ui/button";

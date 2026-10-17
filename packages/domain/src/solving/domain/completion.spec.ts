@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { toCompletionId, toFileId, toMemberId } from "../../shared-kernel";
 import { Completion, EDIT_WINDOW_MS } from "./completion";
-
 import { Photo } from "./photo";
 
 const ID = toCompletionId("completion-1");

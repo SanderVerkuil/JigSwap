@@ -9,7 +9,7 @@ import {
   RecordingEventPublisher,
   SequentialIdGenerator,
 } from "../testing";
-import { makeProposeExchange } from "./propose-exchange";
+import { makeProposeExchange, mayOfferCopy } from "./propose-exchange";
 
 const alice = toMemberId("alice"); // initiator
 const bob = toMemberId("bob"); // recipient
@@ -343,5 +343,31 @@ describe("makeProposeExchange", () => {
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("SelfExchange");
     expect(events.published).toHaveLength(0);
+  });
+});
+
+describe("mayOfferCopy", () => {
+  const carol = toMemberId("carol"); // a third member
+
+  it("allows a copy the initiator owns", () => {
+    expect(
+      mayOfferCopy(copy({ id: offeredId, ownerId: alice }), alice, bob),
+    ).toBe(true);
+  });
+
+  it("allows a household copy the initiator co-manages", () => {
+    const c = copy({ id: offeredId, ownerId: carol, coManagerIds: [alice] });
+    expect(mayOfferCopy(c, alice, bob)).toBe(true);
+  });
+
+  it("rejects a copy the initiator neither owns nor co-manages", () => {
+    expect(
+      mayOfferCopy(copy({ id: offeredId, ownerId: carol }), alice, bob),
+    ).toBe(false);
+  });
+
+  it("rejects the recipient's own copy, even when co-managed", () => {
+    const c = copy({ id: offeredId, ownerId: bob, coManagerIds: [alice] });
+    expect(mayOfferCopy(c, alice, bob)).toBe(false);
   });
 });

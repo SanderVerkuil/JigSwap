@@ -974,7 +974,7 @@ Expected: the 4 new tests FAIL (module not found); previous 8 still PASS.
 ```ts
 // packages/backend/convex/catalog/browsePublicCatalog.ts
 import type { PublicCatalogCardView } from "@jigswap/contracts";
-import { type PaginationResult, paginationOptsValidator } from "convex/server";
+import { paginationOptsValidator, type PaginationResult } from "convex/server";
 import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
@@ -1712,12 +1712,12 @@ import { Image } from "@/compat/image";
 import { Link } from "@/compat/link";
 import { EmptyState } from "@/components/library/empty-state";
 import {
+  difficultyClasses,
   MemberAvatar,
   PuzzleCoverFallback,
   SectionHead,
   StarGlyph,
   Stat,
-  difficultyClasses,
 } from "@/components/puzzles/catalog-detail-parts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

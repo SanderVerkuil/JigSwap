@@ -34,7 +34,7 @@ export function SolvingNowSection() {
 
   if (loading) {
     return (
-      <section>
+      <section data-tour="solving-now">
         <SectionHead title={t("title")} icon={Puzzle} />
         <div className="flex flex-col gap-3 py-3">
           <Skeleton className="h-11 w-full" />
@@ -55,7 +55,7 @@ export function SolvingNowSection() {
   };
 
   return (
-    <section>
+    <section data-tour="solving-now">
       <SectionHead title={t("title")} icon={Puzzle} />
       {solves.length === 0 ? (
         <p className="text-muted-foreground text-sm">

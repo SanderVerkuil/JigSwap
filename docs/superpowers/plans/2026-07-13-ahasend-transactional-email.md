@@ -1210,9 +1210,9 @@ import {
   DEFAULT_PARAMS,
   EMAIL_COPY,
   EMAIL_TYPES,
+  FOOTER,
   type EmailLocale,
   type EmailType,
-  FOOTER,
 } from "./copy";
 import { NotificationEmail } from "./notification-email";
 import { ctaPath } from "./urls";
@@ -1573,7 +1573,8 @@ Replace `packages/backend/convex/notifications/sendEmail.ts`. It becomes `"use n
 
 ```ts
 "use node";
-import { type EmailLocale, isEmailType, renderEmail } from "@jigswap/email";
+
+import { isEmailType, renderEmail, type EmailLocale } from "@jigswap/email";
 import { v } from "convex/values";
 import { internalAction } from "../_generated/server";
 import { ingestToAxiom } from "../lib/axiom";

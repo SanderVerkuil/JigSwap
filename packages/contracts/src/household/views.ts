@@ -34,6 +34,10 @@ export interface HouseholdView {
   viewerRole: HouseholdRole;
   members: HouseholdMemberView[];
   pendingInvites: HouseholdSentInviteView[];
+  /** Household-wide permission for member copies without an explicit value (unset = "manage"). */
+  defaultCopyPermission: HouseholdCopyPermission;
+  /** How many copies, across all members, have no explicit value and so follow the default. */
+  copiesUsingDefault: number;
 }
 
 /** `household.myInvites`: a pending invite the viewer received. */
@@ -45,12 +49,22 @@ export interface HouseholdIncomingInviteView {
 
 /**
  * `household.copies`: another member's copy as it appears in the viewer's library. `viewerAccess`
- * is the owner's per-copy permission for the household (absent on the row = "manage"). Owner-only
- * fields (notes, acquisition) are included only for "manage" (co-owner) access.
+ * is the copy's effective permission for the household (explicit, else household default, else
+ * "manage"). Owner-only fields (notes, acquisition) are included only for "manage" access.
  */
 export interface HouseholdCopyView extends OwnedCopyView {
   household: {
     owner: HouseholdPersonView;
     viewerAccess: HouseholdCopyPermission;
   };
+}
+
+/**
+ * `household.myCopyPermissions`: one of the viewer's OWN copies with the household permission it
+ * currently grants (explicit value, else the household default, else "manage"), and whether that
+ * is the copy's own explicit value or inherited from the household default.
+ */
+export interface HouseholdOwnCopyView extends OwnedCopyView {
+  householdPermission: HouseholdCopyPermission;
+  permissionSource: "explicit" | "default";
 }

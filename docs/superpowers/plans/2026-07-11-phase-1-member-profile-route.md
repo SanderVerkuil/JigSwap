@@ -501,7 +501,6 @@ Create `apps/web/src/components/members/member-identity-header.tsx`:
 // Shared identity block for every /members/$handle tier: avatar, display name,
 // @username (muted mono), member-since — with an optional right-aligned action
 // slot (Follow/Message on the full profile; nothing on the teaser).
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useFormatter, useTranslations } from "use-intl";
 
@@ -565,7 +564,6 @@ Create `apps/web/src/components/members/logged-out-teaser.tsx`:
 // consent-gated server-side), a coarse collection line for public profiles, the
 // private-profile card for private ones, and join/log-in CTAs that round-trip
 // through Clerk back to this page (redirect_url).
-
 import { MemberIdentityHeader } from "@/components/members/member-identity-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -655,9 +653,8 @@ Create `apps/web/src/components/members/private-interstitial.tsx`:
 // action. Phase 1 keeps today's instant follow; the request-to-follow flow
 // replaces this button in Phase 2. No Message button — messaging is
 // connection-gated anyway.
-
-import { MemberIdentityHeader } from "@/components/members/member-identity-header";
 import { PrivateProfileCard } from "@/components/members/logged-out-teaser";
+import { MemberIdentityHeader } from "@/components/members/member-identity-header";
 import { FollowButton } from "@/components/social/follow-button";
 import { Id } from "@/gateway";
 import type { PublicMemberTeaserView } from "@jigswap/contracts";
@@ -695,15 +692,14 @@ Create `apps/web/src/components/members/member-profile-view.tsx`:
 // mutual follower): identity header with Follow/Message, the people-hub stat
 // row, the curated featured shelf (hidden when uncurated), and the bio.
 // All reads are the existing privacy-gated identity/social queries.
-
 import { MemberIdentityHeader } from "@/components/members/member-identity-header";
 import { FollowButton } from "@/components/social/follow-button";
 import { MessageButton } from "@/components/social/message-button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
-import type { MemberView } from "@jigswap/contracts";
 import { convexQuery } from "@convex-dev/react-query";
+import type { MemberView } from "@jigswap/contracts";
 import { useQuery } from "@tanstack/react-query";
 import { Star } from "lucide-react";
 import { useTranslations } from "use-intl";
@@ -845,12 +841,12 @@ In `apps/web/src/components/dashboard-layout/route-meta.ts`, in the Community se
 Create `apps/web/src/routes/members.$handle.tsx`:
 
 ```tsx
-import { LoggedOutTeaser } from "@/components/members/logged-out-teaser";
-import { PrivateInterstitial } from "@/components/members/private-interstitial";
-import { MemberProfileView } from "@/components/members/member-profile-view";
 import { DashboardShell } from "@/components/dashboard-layout/shell";
 import { MarketingFooter } from "@/components/marketing/footer";
 import { MarketingHeader } from "@/components/marketing/header";
+import { LoggedOutTeaser } from "@/components/members/logged-out-teaser";
+import { MemberProfileView } from "@/components/members/member-profile-view";
+import { PrivateInterstitial } from "@/components/members/private-interstitial";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";

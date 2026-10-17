@@ -1,6 +1,3 @@
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
-
 import { Link } from "@/compat/link";
 import {
   computeCollectionStats,
@@ -28,9 +25,11 @@ import {
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { gateway, Id } from "@/gateway";
+import { pageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import {
   ChevronRight,
   Edit,

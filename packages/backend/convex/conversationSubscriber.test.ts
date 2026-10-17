@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { internal } from "./_generated/api";
 import schema from "./schema";
@@ -9,7 +9,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 // Drain the async event dispatcher: yield a macrotask so the pending runAfter(0) job fires, then
 // await any in-progress jobs — looped a few times to settle the chain (posting a system message
 // records MessagePosted, which schedules its own dispatch).
-const flushScheduled = async (t: ReturnType<typeof convexTest>) => {
+const flushScheduled = async (t: TestConvex<typeof schema>) => {
   for (let i = 0; i < 10; i++) {
     await new Promise((resolve) => setTimeout(resolve, 0));
     await t.finishInProgressScheduledFunctions();
@@ -19,7 +19,7 @@ const flushScheduled = async (t: ReturnType<typeof convexTest>) => {
 // Seed the two parties plus a persisted exchange row between them (the subscriber resolves the
 // exchange by its aggregateId to address the real parties). Fabricated directly — the subscriber
 // reacts to recorded domainEvents rows, not to the proposing mutation.
-const seed = (t: ReturnType<typeof convexTest>) =>
+const seed = (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string) =>
@@ -67,7 +67,7 @@ const seed = (t: ReturnType<typeof convexTest>) =>
 // Fabricate a recorded domainEvents row and dispatch it directly (the production path is the
 // same internalMutation, scheduled by recordAndSchedule).
 const dispatchEvent = async (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   name: string,
   payload: Record<string, unknown>,
   context = "exchange",
@@ -84,13 +84,10 @@ const dispatchEvent = async (
   await flushScheduled(t);
 };
 
-const threadsOf = (t: ReturnType<typeof convexTest>) =>
+const threadsOf = (t: TestConvex<typeof schema>) =>
   t.run((ctx) => ctx.db.query("threads").collect());
 
-const messagesOf = (
-  t: ReturnType<typeof convexTest>,
-  threadAggregateId: string,
-) =>
+const messagesOf = (t: TestConvex<typeof schema>, threadAggregateId: string) =>
   t.run((ctx) =>
     ctx.db
       .query("threadMessages")

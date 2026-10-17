@@ -1,16 +1,15 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import {
+  EmojiPicker as EmojiPickerPrimitive,
   type EmojiPickerListCategoryHeaderProps,
   type EmojiPickerListEmojiProps,
   type EmojiPickerListRowProps,
-  EmojiPicker as EmojiPickerPrimitive,
 } from "frimousse";
 import { LoaderIcon, SearchIcon } from "lucide-react";
 import type * as React from "react";
 import { useTranslations } from "use-intl";
-
-import { cn } from "@/lib/utils";
 
 function EmojiPicker({
   className,

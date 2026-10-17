@@ -1,7 +1,7 @@
 import {
   makeFinishCompletion,
-  type MemberId,
   toCompletionId,
+  type MemberId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";

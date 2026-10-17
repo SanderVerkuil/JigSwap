@@ -1,4 +1,4 @@
-import { MemberId, MessageId } from "./ids";
+import { CopyId, MemberId, MessageId } from "./ids";
 
 // The kinds of message a thread carries. `text` and `image` are member-authored; `system` is
 // service-authored (no member author). For an `image` message the body is a storage reference
@@ -15,6 +15,9 @@ export interface MessageState {
   readonly kind: MessageKind;
   readonly body: string;
   readonly sentAt: Date;
+  // The copy this message is about, when posted from a copy's "Message" action. Optional:
+  // absent for plain messages, system messages, and every pre-existing message.
+  readonly copyId?: CopyId;
 }
 
 export class Message {
@@ -38,6 +41,10 @@ export class Message {
 
   get sentAt(): Date {
     return this.state.sentAt;
+  }
+
+  get copyId(): CopyId | undefined {
+    return this.state.copyId;
   }
 
   // Construct from already-validated state. Crossing into a Message never re-checks invariants;

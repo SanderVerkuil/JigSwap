@@ -45,7 +45,7 @@ export function DocsSearch({
   const go = (slug: string) => {
     onOpenChange(false);
     setQuery("");
-    navigate({ to: "/docs/$", params: { _splat: slug } });
+    void navigate({ to: "/docs/$", params: { _splat: slug } });
   };
 
   return (

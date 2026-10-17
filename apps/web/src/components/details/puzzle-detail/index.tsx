@@ -2,13 +2,12 @@
 
 import { Image } from "@/compat/image";
 import { Card, CardContent } from "@/components/ui/card";
+import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { Grid } from "lucide-react";
 import { useTranslations } from "use-intl";
-
-import { PageLoading } from "@/components/ui/loading";
 import { CustodyTimeline } from "./custody-timeline";
 import { LoanHistory } from "./loan-history";
 import { PuzzleDetailActions } from "./puzzle-detail-actions";

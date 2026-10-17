@@ -1,0 +1,58 @@
+{
+  "$schema": "./node_modules/turbo/schema.json",
+  "cacheDir": ".turbo/cache",
+  "agentGuidance": false,
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".output/**", "dist/**"],
+      "env": ["VITE_*"]
+    },
+    "@jigswap/web#build": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/docs/user/**",
+        "$TURBO_ROOT$/docs/whats-new/**",
+        "$TURBO_ROOT$/packages/contracts/src/whats-new/manifest.generated.ts"
+      ],
+      "outputs": [".output/**", "dist/**"],
+      "env": ["VITE_*"]
+    },
+    "@jigswap/web#test": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/docs/whats-new/**",
+        "$TURBO_ROOT$/packages/contracts/src/whats-new/manifest.generated.ts"
+      ]
+    },
+    "lint": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/.oxlintrc.json",
+        "$TURBO_ROOT$/tsconfig.base.json"
+      ]
+    },
+    "type-check": {
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/tsconfig.base.json"]
+    },
+    "test": {},
+    "coverage": {
+      "cache": false
+    },
+    "//#arch:check": {
+      "inputs": [".dependency-cruiser.cjs", "packages/domain/src/**"]
+    },
+    "mutation": {
+      "cache": false
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "start": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

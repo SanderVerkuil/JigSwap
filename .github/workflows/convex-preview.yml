@@ -95,7 +95,7 @@ jobs:
           # A preview deploy key (project-scoped) makes `convex deploy` target a preview
           # deployment; `--preview-name` creates it if needed and reuses it otherwise.
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_PREVIEW }}
-        run: pnpm exec convex deploy --preview-name "$BRANCH_NAME"
+        run: pnpm exec convex deploy --typecheck enable --preview-name "$BRANCH_NAME"
 
       - name: Check whether the preview database is empty
         id: db-state

@@ -1,12 +1,12 @@
 import {
+  toHouseholdId,
+  toHouseholdInviteId,
   type Clock,
   type DomainEventPublisher,
   type HouseholdId,
   type HouseholdIdGenerator,
   type HouseholdInviteId,
   type HouseholdInviteIdGenerator,
-  toHouseholdId,
-  toHouseholdInviteId,
 } from "@jigswap/domain";
 import type { MutationCtx } from "../../_generated/server";
 import { makeEventPublisher } from "../../events/makeEventPublisher";

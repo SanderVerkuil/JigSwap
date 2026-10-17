@@ -1,26 +1,39 @@
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { toast } from "sonner";
-
 import { useUser } from "@/compat/clerk";
+import { PuzzleFilterChip } from "@/components/browse/puzzle-filter-chip";
 import {
-  type CategoryOption,
   EMPTY_QUERY,
   QueryBuilder,
+  type CategoryOption,
   type QueryBuilderState,
 } from "@/components/browse/query-builder";
 import { EmptyState } from "@/components/community/primitives";
+import { canRequestTrade } from "@/components/exchange/request-trade";
+import {
+  RequestTradeDialog,
+  type RequestableCopy,
+} from "@/components/exchange/request-trade-dialog";
+import {
+  copyMessageRoute,
+  isOwnCopy,
+} from "@/components/messaging/copy-conversation";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { gateway, Id } from "@/gateway";
+import { validateBrowseSearch } from "@/lib/browse-search";
+import { pageTitle } from "@/lib/page-title";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Grid, List } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/browse")({
+  // `?puzzle=<definitionId>` narrows Browse to copies of one catalogue puzzle (the catalogue's
+  // "Find a copy to swap" CTA). Kept in the URL so back/forward and shared links keep the filter.
+  validateSearch: validateBrowseSearch,
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "browse") }],
   }),
@@ -35,6 +48,7 @@ function BrowsePending() {
 
 function BrowsePage() {
   const navigate = useNavigate();
+  const { puzzle: puzzleFilter } = Route.useSearch();
   const { user } = useUser();
   const t = useTranslations("puzzles");
   const tCommon = useTranslations("common");
@@ -42,6 +56,7 @@ function BrowsePage() {
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [query, setQuery] = useState<QueryBuilderState>(EMPTY_QUERY);
+  const [requestCopy, setRequestCopy] = useState<RequestableCopy | null>(null);
 
   // Debounce the free-text condition (~200ms) so typing narrows results without
   // refetching the browse query on every keystroke. Every other condition is
@@ -72,6 +87,7 @@ function BrowsePage() {
       minPieceCount: query.minPieces ? parseInt(query.minPieces) : undefined,
       maxPieceCount: query.maxPieces ? parseInt(query.maxPieces) : undefined,
       searchTerm: debouncedText || undefined,
+      puzzleId: puzzleFilter,
       includeOwnPuzzles: false,
       limit: 50,
     }),
@@ -113,6 +129,12 @@ function BrowsePage() {
 
   return (
     <div className="flex flex-col gap-[18px]">
+      {puzzleFilter && (
+        <PuzzleFilterChip
+          puzzleId={puzzleFilter}
+          onRemove={() => navigate({ to: "/browse", search: {} })}
+        />
+      )}
       {/* Query builder + result count + view toggle. Members compose multiple
           AND-combined conditions (one of them the free-text filter); the global
           ⌘K palette stays the quick known-item lookup. The shell owns the page
@@ -177,13 +199,37 @@ function BrowsePage() {
                   params: { id: ownedPuzzleId },
                 })
               }
-              onRequestExchange={() => navigate({ to: "/trades" })}
-              onMessage={() => navigate({ to: "/messages" })}
+              onRequestExchange={
+                canRequestTrade(puzzle, convexUser?._id)
+                  ? () =>
+                      setRequestCopy({
+                        copyId: puzzle._id,
+                        ownerId: puzzle.ownerId,
+                        owner: puzzle.owner,
+                        title: puzzle.puzzle?.title ?? "",
+                        pieceCount: puzzle.puzzle?.pieceCount,
+                        coverUrl: puzzle.coverUrl,
+                        availability: puzzle.availability,
+                      })
+                  : undefined
+              }
+              onMessage={
+                isOwnCopy(puzzle.ownerId, convexUser?._id)
+                  ? undefined
+                  : (ownedPuzzleId) => navigate(copyMessageRoute(ownedPuzzleId))
+              }
               onFavorite={() => toast(tBrowse("favoritesComingSoon"))}
             />
           ))}
         </PuzzleViewProvider>
       )}
+
+      <RequestTradeDialog
+        copy={requestCopy}
+        onOpenChange={(open) => {
+          if (!open) setRequestCopy(null);
+        }}
+      />
     </div>
   );
 }

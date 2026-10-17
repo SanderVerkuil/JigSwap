@@ -1,7 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
-
-import { pageTitle } from "@/lib/page-title";
-
 import { Container } from "@/components/marketing/container";
 import { PageHero } from "@/components/marketing/page-hero";
 import { Reveal } from "@/components/marketing/reveal";
@@ -9,9 +5,11 @@ import { Section } from "@/components/marketing/section";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { gateway } from "@/gateway";
+import { pageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { LifeBuoy, Mail, MapPin, Shield } from "lucide-react";
 import * as React from "react";
 import { useLocale, useTranslations } from "use-intl";

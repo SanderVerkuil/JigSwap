@@ -1,10 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-
-import { pageTitle } from "@/lib/page-title";
-
 import { Link } from "@/compat/link";
 import { LegalDoc, type LegalSection } from "@/components/marketing/legal-doc";
 import { PageHero } from "@/components/marketing/page-hero";
+import { pageTitle } from "@/lib/page-title";
+import { createFileRoute } from "@tanstack/react-router";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_public/privacy")({

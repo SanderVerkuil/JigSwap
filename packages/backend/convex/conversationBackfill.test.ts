@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -14,7 +14,7 @@ const BASE = 1_700_000_000_000;
 // seeded OUT of createdAt order (newest first) including a system row; exchange 2 (carol <-> bob)
 // carries one. Plus two message_received notifications: one legacy row whose relatedId is the
 // exchange _id (must be remapped) and one already carrying a thread aggregateId (must be kept).
-const seed = (t: ReturnType<typeof convexTest>) =>
+const seed = (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string) =>
@@ -142,11 +142,11 @@ const seed = (t: ReturnType<typeof convexTest>) =>
     };
   });
 
-const runBackfill = (t: ReturnType<typeof convexTest>) =>
+const runBackfill = (t: TestConvex<typeof schema>) =>
   t.mutation(internal.conversation.backfill.run, {});
 
 const threadForExchange = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   exchangeId: Id<"exchanges">,
 ) =>
   t.run(async (ctx) => {
@@ -158,7 +158,7 @@ const threadForExchange = (
     return thread;
   });
 
-const messagesOf = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
+const messagesOf = (t: TestConvex<typeof schema>, aggregateId: string) =>
   t.run((ctx) =>
     ctx.db
       .query("threadMessages")

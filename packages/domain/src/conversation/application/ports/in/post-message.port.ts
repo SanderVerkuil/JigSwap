@@ -1,6 +1,7 @@
 import { Result } from "../../../../shared-kernel";
 import {
   ConversationError,
+  CopyId,
   MemberId,
   MessageId,
   ThreadId,
@@ -15,6 +16,9 @@ export interface PostMessageCommand {
   readonly authorId: MemberId;
   readonly kind: "text" | "image";
   readonly body: string;
+  // Optional: the copy the message is about. The transport adapter must establish that the
+  // author may reference it (the use case only carries it onto the message).
+  readonly copyId?: CopyId;
 }
 
 // Inbound port: the post-message use case. Yields the new message's id on success.

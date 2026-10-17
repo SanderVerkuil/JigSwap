@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import {
-  DEFAULT_NSFW_THRESHOLD,
   decideFromScores,
+  DEFAULT_NSFW_THRESHOLD,
   makeHuggingFaceModerationPort,
   makeModerationPortFromEnv,
   makeNoopModerationPort,

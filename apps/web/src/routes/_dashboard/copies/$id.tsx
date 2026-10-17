@@ -1,13 +1,8 @@
-import { MemberInitial } from "@/components/members/member-initial";
-import { durationParts } from "@/lib/humanize-duration";
-import { useMemberDisplayName } from "@/lib/member-display-name";
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
-
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
 import { availabilityToSharing } from "@/components/add-puzzle";
 import { ImageZoom } from "@/components/common/image-zoom";
+import { CopyOwner } from "@/components/copies/copy-owner";
 import { EditCopyDialog } from "@/components/copies/edit-copy-dialog";
 import { PhotoLightbox } from "@/components/copies/photo-lightbox";
 import {
@@ -15,9 +10,15 @@ import {
   type NavContext,
 } from "@/components/dashboard-layout/nav-context";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import {
+  RequestTradeDialog,
+  type RequestableCopy,
+} from "@/components/exchange/request-trade-dialog";
 import { HouseholdAccess } from "@/components/household/household-access";
 import { ImageEditorDialog } from "@/components/image-editor/image-editor-dialog";
 import { EmptyState } from "@/components/library/empty-state";
+import { MemberInitial } from "@/components/members/member-initial";
+import { copyMessageRoute } from "@/components/messaging/copy-conversation";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
 import { StartSolveDialog } from "@/components/solving/start-solve-dialog";
@@ -28,9 +29,13 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
+import { durationParts } from "@/lib/humanize-duration";
+import { useMemberDisplayName } from "@/lib/member-display-name";
+import { pageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import {
   ArrowLeftRight,
@@ -45,6 +50,7 @@ import {
   Puzzle,
   Star,
   Tag,
+  UserRound,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -205,8 +211,10 @@ function CopyInstanceDetail({
   navContext: NavContext | null;
 }) {
   const router = useRouter();
+  const navigate = useNavigate();
   const t = useTranslations("copyInstance");
   const tShell = useTranslations("shell");
+  const tOwner = useTranslations("copyOwner");
   const tPuzzles = useTranslations("puzzles");
   const tStart = useTranslations("solving.startSolve");
   const tCompletions = useTranslations("solving.completions");
@@ -225,6 +233,8 @@ function CopyInstanceDetail({
   // copy editor (also reachable from the page-head Edit button registered below).
   const [logOpen, setLogOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  // The trade-request dialog's target (null = closed); set from the non-owner Request action.
+  const [requestCopy, setRequestCopy] = useState<RequestableCopy | null>(null);
   // Start/Finish solve swap: `startOpen` drives the start dialog; `finishTarget` holds the
   // in-progress completion being finished (null = finish dialog closed).
   const [startOpen, setStartOpen] = useState(false);
@@ -481,6 +491,17 @@ function CopyInstanceDetail({
           {/* Meta row */}
           <div className="mt-4 flex flex-wrap gap-x-8 gap-y-4">
             <MetaItem
+              icon={<UserRound className="h-3.5 w-3.5" />}
+              label={tOwner("label")}
+              value={
+                <CopyOwner
+                  owner={copy.owner}
+                  householdOwner={copy.household?.owner}
+                  viewerIsOwner={copy.viewerIsOwner}
+                />
+              }
+            />
+            <MetaItem
               icon={<Calendar className="h-3.5 w-3.5" />}
               label={t("acquired")}
               value={
@@ -577,14 +598,31 @@ function CopyInstanceDetail({
               </>
             ) : (
               <>
-                <Button variant="brand" onClick={() => router.push("/trades")}>
-                  <ArrowLeftRight className="h-4 w-4" />
-                  {t("actions.requestSwap")}
-                </Button>
+                {/* An anonymous (privacy-projected) owner can't be named as the recipient. */}
+                {isAvailable && !copy.owner.anonymous && (
+                  <Button
+                    variant="brand"
+                    onClick={() => {
+                      if (copy.owner.anonymous) return;
+                      setRequestCopy({
+                        copyId: copy.copyId,
+                        ownerId: copy.owner.member._id,
+                        owner: copy.owner.member,
+                        title: snapshot.title,
+                        pieceCount: snapshot.pieceCount,
+                        coverUrl: snapshot.image,
+                        availability,
+                      });
+                    }}
+                  >
+                    <ArrowLeftRight className="h-4 w-4" />
+                    {t("actions.requestSwap")}
+                  </Button>
+                )}
                 {!copy.owner.anonymous && (
                   <Button
                     variant="outline"
-                    onClick={() => router.push("/messages")}
+                    onClick={() => navigate(copyMessageRoute(copyId))}
                   >
                     <MessageCircle className="h-4 w-4" />
                     {t("actions.message")}
@@ -596,6 +634,12 @@ function CopyInstanceDetail({
           {copy.household && (
             <HouseholdAccess copyId={copyId} household={copy.household} />
           )}
+          <RequestTradeDialog
+            copy={requestCopy}
+            onOpenChange={(open) => {
+              if (!open) setRequestCopy(null);
+            }}
+          />
         </div>
       </section>
 

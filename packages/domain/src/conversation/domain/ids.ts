@@ -11,3 +11,6 @@ export type MessageId = Id<"MessageId">;
 // is handled at integration.)
 export type ExchangeId = Id<"ExchangeId">;
 export type MemberId = Id<"MemberId">;
+// CopyId is owned by Library: a member-authored message may reference the copy it is about
+// (e.g. "Message the owner" from a copy page). Conversation only carries the opaque id.
+export type CopyId = Id<"CopyId">;

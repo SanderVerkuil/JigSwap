@@ -1,5 +1,5 @@
-import { convexTest } from "convex-test";
-import { ConvexError } from "convex/values";
+import { convexTest, type TestConvex } from "convex-test";
+import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -8,13 +8,13 @@ import schema from "./schema";
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
-const asUser = (t: ReturnType<typeof convexTest>, subject: string) =>
+const asUser = (t: TestConvex<typeof schema>, subject: string) =>
   t.withIdentity({ subject });
 
 // Seed three members, an owned copy (for the exchanges' required FK), and a COMPLETED exchange
 // between alice (initiator) and bob (recipient) carrying an aggregateId. Returns the ids plus the
 // exchange's aggregateId, which the submit mutation takes as its `exchangeId` arg.
-const seed = async (t: ReturnType<typeof convexTest>) =>
+const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string, name: string) =>
@@ -81,7 +81,7 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
 
 // convex-test serializes ConvexError.data to a JSON string at the function boundary; normalise.
 const dataOf = (e: unknown): { code?: string } => {
-  const data = (e as ConvexError<unknown>).data;
+  const data = (e as ConvexError<Value>).data;
   return typeof data === "string"
     ? JSON.parse(data)
     : (data as { code?: string });
@@ -94,7 +94,7 @@ const expectConvexCode = async (p: Promise<unknown>, code: string) => {
   });
 };
 
-const reviewRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
+const reviewRow = (t: TestConvex<typeof schema>, aggregateId: string) =>
   t.run(async (ctx) =>
     ctx.db
       .query("reviews")
@@ -102,7 +102,7 @@ const reviewRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
       .unique(),
   );
 
-const profileRow = (t: ReturnType<typeof convexTest>, memberId: Id<"users">) =>
+const profileRow = (t: TestConvex<typeof schema>, memberId: Id<"users">) =>
   t.run(async (ctx) =>
     ctx.db
       .query("reputationProfiles")

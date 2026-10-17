@@ -9,7 +9,6 @@
 //
 // TODO: only the newest page (50 messages) renders — the getThreadMessages
 // `before` cursor exists but a "load older messages" affordance is unbuilt.
-
 import { Link } from "@/compat/link";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { gateway } from "@/gateway";
@@ -20,6 +19,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronLeft, MessageSquare } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useFormatter, useTranslations } from "use-intl";
+import { MessageCopyCard } from "./copy-card";
 import { threadSubjectTitle } from "./format";
 import { MessageComposer } from "./message-composer";
 import { ThreadSubjectAvatar } from "./thread-list";
@@ -180,6 +180,9 @@ export function ThreadView({
                     own ? "bg-primary text-primary-foreground" : "bg-muted",
                   )}
                 >
+                  {message.copy && (
+                    <MessageCopyCard copy={message.copy} className="mb-2" />
+                  )}
                   <p className="text-sm break-words whitespace-pre-wrap">
                     {message.body}
                   </p>

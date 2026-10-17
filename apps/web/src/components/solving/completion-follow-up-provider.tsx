@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useReportSurfaceBusy } from "@/components/whats-new/surface-busy";
 import { gateway, type Id } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -107,6 +108,8 @@ export function CompletionFollowUpProvider({
   const completionIdRef = useRef<string | null>(null);
 
   const completionId = target?.completionId ?? null;
+  // Busy from request to reset (open, saving or retrying); the What's new highlight modal yields.
+  useReportSurfaceBusy("completionFollowUp", target !== null);
 
   // The caller's existing reviews, fetched while the dialog is open. puzzleId == null is the
   // legacy edge (pre-backfill completion rows): no review section at all, photos still work.

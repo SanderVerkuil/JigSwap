@@ -1,4 +1,4 @@
-import { type MemberId, toMemberId } from "@jigswap/domain";
+import { toMemberId, type MemberId } from "@jigswap/domain";
 import { ConvexError } from "convex/values";
 import type { QueryCtx } from "../_generated/server";
 

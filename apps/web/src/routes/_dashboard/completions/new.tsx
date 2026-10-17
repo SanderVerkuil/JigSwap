@@ -1,5 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
-
 import { useUser } from "@/compat/clerk";
 import { useRouter } from "@/compat/navigation";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
@@ -14,6 +12,7 @@ import { gateway, Id } from "@/gateway";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslations } from "use-intl";

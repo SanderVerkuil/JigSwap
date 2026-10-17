@@ -28,10 +28,10 @@ cd packages/domain
 pnpm run mutation
 ```
 
-Via Nx (from the repo root):
+Via Turborepo (from the repo root):
 
 ```bash
-nx run @jigswap/domain:mutation
+pnpm exec turbo run mutation --filter=@jigswap/domain
 # or the convenience alias:
 pnpm run mutation:domain
 ```
@@ -64,6 +64,21 @@ See [`stryker.config.json`](./stryker.config.json). Key choices:
   package cwd. The explicit entry makes loading deterministic.
 - **`coverageAnalysis: "perTest"`** — supported by the vitest runner; only re-runs the
   tests that actually cover each mutant.
+- **Vitest 5 runner patch:** `@stryker-mutator/vitest-runner` 10.0.0 builds its per-mutant
+  `testNamePattern` by joining the suite chain with a space, but Vitest 5 matches the
+  chain joined with `' > '`. Unpatched, no test runs against any mutant and every mutant
+  survives (score ~0%). `patches/@stryker-mutator__vitest-runner@10.0.0.patch`
+  (registered under `patchedDependencies` in `pnpm-workspace.yaml`) switches both
+  `collectTestName` copies to `' > '`. Upstream:
+  [stryker-js#6210](https://github.com/stryker-mutator/stryker-js/issues/6210), fix PR
+  [#6214](https://github.com/stryker-mutator/stryker-js/pull/6214). Drop the patch once a
+  runner release includes the fix; pnpm refuses to install when a patch matches no
+  installed version, so a runner bump forces that decision.
+- **`inPlace: true`** — Stryker mutates the files in `packages/domain` itself and restores
+  them afterwards, instead of copying the package to a `.stryker-tmp` sandbox. The sandbox
+  path rewrites `tsconfig.json` with the TypeScript compiler API, which TS 7 doesn't ship.
+  Don't edit files in the package while a run is in progress, and if a run is killed, check
+  `git status` for leftover mutants.
 - **`mutate`** excludes specs, `testing/` fakes, and barrel `index.ts` files so the score
   reflects real production logic only.
 

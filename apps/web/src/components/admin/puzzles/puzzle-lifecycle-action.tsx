@@ -6,7 +6,6 @@
 // plus its controlled AlertDialog confirm and calls the catalog disable/reenable
 // mutations. Legacy definitions without an aggregateId still render the button
 // but keep it disabled — the mutations key on the Catalog aggregate.
-
 import {
   AlertDialog,
   AlertDialogAction,

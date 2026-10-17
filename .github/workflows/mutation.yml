@@ -39,10 +39,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Nx caching is intentionally skipped: the mutation target is uncacheable
-      # (project.json sets cache: false) and nothing else runs here.
+      # No task cache to restore: the mutation task is uncacheable
+      # (turbo.json sets cache: false) and nothing else runs here.
       - name: Run mutation tests
-        run: pnpm exec nx run @jigswap/domain:mutation
+        run: pnpm exec turbo run mutation --filter=@jigswap/domain
 
       # Uploaded even on threshold failure so the publish job can still report.
       - name: Upload mutation report (HTML + JSON)

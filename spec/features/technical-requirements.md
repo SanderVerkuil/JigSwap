@@ -75,7 +75,7 @@
 - **Package Manager**: pnpm for fast, efficient dependency management
 - **Monorepo**: Nx workspace for scalable development
 - **Testing**: Vitest for unit testing
-- **Linting**: ESLint for code quality
+- **Linting**: oxlint for code quality
 - **Formatting**: Prettier for consistent code style
 - **Build**: Turbopack for fast development builds
 

@@ -1,14 +1,14 @@
 import {
   Collection,
+  toCollectionId,
+  toCopyId,
+  toOwnerId,
+  toPuzzleDefinitionId,
   type CollectionId,
   type CollectionRepository,
   type CollectionState,
   type CopyId,
   type OwnerId,
-  toCollectionId,
-  toCopyId,
-  toOwnerId,
-  toPuzzleDefinitionId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";

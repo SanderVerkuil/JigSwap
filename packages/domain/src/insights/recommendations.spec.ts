@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  recommendPuzzles,
   type CandidatePuzzle,
   type MemberSignals,
-  recommendPuzzles,
 } from "./recommendations";
 
 const signals = (facets: MemberSignals["facets"]): MemberSignals => ({

@@ -1,10 +1,10 @@
 import {
+  toCircleId,
+  toMembershipId,
   type CircleId,
   type CircleIdGenerator,
   type MembershipId,
   type MembershipIdGenerator,
-  toCircleId,
-  toMembershipId,
 } from "@jigswap/domain";
 
 // Driven adapters for the Sharing id-generator ports. crypto.randomUUID is available in the Convex

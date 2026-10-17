@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { toCompletionId, toFileId, toMemberId } from "../../../shared-kernel";
-
 import { EDIT_WINDOW_MS } from "../../domain/completion";
 import {
   FixedClock,

@@ -1,11 +1,11 @@
 import {
   Goal,
+  toGoalId,
+  toMemberId,
   type GoalId,
   type GoalRepository,
   type GoalState,
   type MemberId,
-  toGoalId,
-  toMemberId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";

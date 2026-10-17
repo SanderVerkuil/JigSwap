@@ -1,6 +1,4 @@
 "use client";
-import { MemberInitial } from "@/components/members/member-initial";
-import { useMemberDisplayName } from "@/lib/member-display-name";
 
 // The single shared body for the redesigned public member profile
 // (/members/$handle), rendered for every viewer tier: logged-out ("public"),
@@ -8,10 +6,11 @@ import { useMemberDisplayName } from "@/lib/member-display-name";
 // the discriminated `gateway.social.publicProfile` payload — unlocked (hero +
 // story + stats + records + shelf) or locked (hero + private card + follow
 // action). All tokens resolve in both the marketing and dashboard shells.
-
 import { Image } from "@/compat/image";
 import { PuzzlePlank3D } from "@/components/common/puzzle-plank-3d";
 import { SectionHead } from "@/components/dashboard-home/section-head";
+import { contentWidthClass } from "@/components/dashboard-layout/content-width";
+import { MemberInitial } from "@/components/members/member-initial";
 import {
   ProfileCompletionsSection,
   ProfilePuzzlesSection,
@@ -30,6 +29,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { gateway, Id } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
@@ -89,7 +89,15 @@ export function ProfileBody({
   const firstName = firstNameOf(displayName({ name: hero.displayName }));
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-4 py-10">
+    // Inside the dashboard shell the content area already applies the user's
+    // width preference; the logged-out page has no preferences, so it uses the
+    // regular (non-full-width) column.
+    <div
+      className={cn(
+        "flex w-full flex-col gap-10 px-4 py-10",
+        viewer === "public" && contentWidthClass(false),
+      )}
+    >
       {invitedName && <InvitedBanner name={invitedName} />}
       <HeroSection
         hero={hero}
@@ -411,7 +419,7 @@ function StorySection({
         >
           &ldquo;
         </span>
-        <p className="text-foreground/90 relative pl-4 text-lg leading-relaxed whitespace-pre-wrap">
+        <p className="text-foreground/90 relative max-w-3xl pl-4 text-lg leading-relaxed whitespace-pre-wrap">
           {story}
         </p>
       </div>

@@ -1,6 +1,3 @@
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
-
 import { useUser } from "@/compat/clerk";
 import { Image } from "@/compat/image";
 import { Link } from "@/compat/link";
@@ -31,9 +28,11 @@ import {
 } from "@/components/ui/tooltip";
 import { gateway, Id } from "@/gateway";
 import { formatSolveTime, hrefForLink } from "@/lib/completion-format";
+import { pageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { CircleCheck, Clock, Pencil, Plus, Star, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -472,7 +471,10 @@ function CompletionsPage() {
           <>
             {inProgress.length > 0 && (
               <>
-                <h2 className="text-muted-foreground mb-2 text-sm font-medium">
+                <h2
+                  className="text-muted-foreground mb-2 text-sm font-medium"
+                  data-tour="completions-in-progress"
+                >
                   {t("inProgressSection")}
                 </h2>
                 <div className="mb-6 flex flex-col">

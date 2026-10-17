@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
@@ -8,7 +8,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 // Nine members inserted oldest-first (insert order fixes _creationTime order).
 // alice = the viewer; carol is private; dave is inactive; everyone else public.
-const seed = async (t: ReturnType<typeof convexTest>) =>
+const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (
@@ -51,7 +51,7 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
     await mkUser("clerk_ivy", "Ivy");
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
 
 describe("listRecentPublicMembers", () => {

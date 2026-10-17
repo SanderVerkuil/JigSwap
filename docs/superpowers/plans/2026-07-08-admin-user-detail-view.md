@@ -404,7 +404,7 @@ export interface AdminUserDetailView {
 import type { AdminUserDetailView } from "@jigswap/contracts";
 import { ConvexError, v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
-import { type QueryCtx, query } from "../_generated/server";
+import { query, type QueryCtx } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
 
@@ -601,7 +601,6 @@ The role-management plan wired grant/revoke inline in `users.tsx` (confirm state
 // stamp) via useConvexAction, and renders NOTHING for the caller's own row/page
 // — the server's CannotChangeOwnRole gate is the real enforcement; the UI just
 // doesn't offer the foot-gun.
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -718,9 +717,6 @@ export function UserRoleAction({
 - [ ] **Step 3.2:** Move the table page: `git mv apps/web/src/routes/_dashboard/admin/users.tsx apps/web/src/routes/_dashboard/admin/users/index.tsx`, then replace its contents with (the role-action wiring replaced by the shared component; the member cell now a `Link`; route path string updated to the directory-index form — the `messages/index.tsx` convention):
 
 ```tsx
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute, Link } from "@tanstack/react-router";
-
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { UserRoleAction } from "@/components/admin/users/user-role-action";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -729,6 +725,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
+import { pageTitle } from "@/lib/page-title";
+import { createFileRoute, Link } from "@tanstack/react-router";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
 import { Search, UserX } from "lucide-react";
@@ -939,7 +937,6 @@ The detail page: one `convexQuery` for the whole read model; profile header card
 // includes the role_granted/role_revoked labels). Kinds arrive typed as plain
 // strings via the contracts DTO, so an unknown future kind falls back to a raw
 // "kind — target" line instead of crashing on a missing message.
-
 import { gateway } from "@/gateway";
 import type { FunctionReturnType } from "convex/server";
 import { useFormatter, useTranslations } from "use-intl";
@@ -1009,9 +1006,6 @@ export function AuditList({
 - [ ] **Step 4.2:** Create `apps/web/src/routes/_dashboard/admin/users/$userId.tsx`:
 
 ```tsx
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
-
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { AuditList } from "@/components/admin/users/audit-list";
 import { UserRoleAction } from "@/components/admin/users/user-role-action";
@@ -1020,8 +1014,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, type Id } from "@/gateway";
+import { pageTitle } from "@/lib/page-title";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { UserX } from "lucide-react";
 import { useFormatter, useTranslations } from "use-intl";
 

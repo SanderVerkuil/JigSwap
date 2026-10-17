@@ -1,21 +1,20 @@
 "use client";
 
+import { useEmojiLabel } from "@/lib/emoji-label";
+import { cn } from "@/lib/utils";
 import * as Popover from "@radix-ui/react-popover";
 import type { Locale } from "frimousse";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useLocale, useTranslations } from "use-intl";
+import { Button } from "./button";
+import { Card, CardContent } from "./card";
 import {
   EmojiPicker,
   EmojiPickerContent,
   EmojiPickerFooter,
   EmojiPickerSearch,
 } from "./emoji-picker";
-
-import { useEmojiLabel } from "@/lib/emoji-label";
-import { cn } from "@/lib/utils";
-import { Button } from "./button";
-import { Card, CardContent } from "./card";
 
 export function EmojiPickerInput({
   id,

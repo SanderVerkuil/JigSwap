@@ -1,11 +1,11 @@
 import {
-  type OwnerId,
   PersonalCategory,
+  toOwnerId,
+  toPersonalCategoryId,
+  type OwnerId,
   type PersonalCategoryId,
   type PersonalCategoryRepository,
   type PersonalCategoryState,
-  toOwnerId,
-  toPersonalCategoryId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";

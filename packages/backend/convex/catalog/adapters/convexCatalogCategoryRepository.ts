@@ -1,9 +1,9 @@
 import {
   CatalogCategory,
+  toCatalogCategoryId,
   type CatalogCategoryId,
   type CatalogCategoryRepository,
   type CatalogCategoryState,
-  toCatalogCategoryId,
 } from "@jigswap/domain";
 import type { Doc } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";

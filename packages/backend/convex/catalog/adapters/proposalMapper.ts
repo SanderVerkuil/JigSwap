@@ -1,11 +1,11 @@
 import {
-  type PuzzleChangeProposalState,
-  type PuzzleDefinitionChanges,
   PuzzleChangeProposal,
   toCatalogCategoryId,
   toChangeProposalId,
   toPuzzleDefinitionId,
   toSubmitterId,
+  type PuzzleChangeProposalState,
+  type PuzzleDefinitionChanges,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 

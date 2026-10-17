@@ -706,6 +706,10 @@ export default defineSchema({
     kind: v.union(v.literal("text"), v.literal("image"), v.literal("system")),
     body: v.string(),
     sentAt: v.number(),
+    // The copy this message is about, when sent from a copy's "Message" action. Lives on the
+    // message (not the thread) because a DM is one long-lived thread per pair, spanning many
+    // puzzles; absent on plain/system messages and every pre-existing row.
+    copyId: v.optional(v.id("ownedPuzzles")),
   })
     .index("by_thread_sent", ["threadAggregateId", "sentAt"])
     .index("by_message_id", ["messageId"]),
@@ -797,6 +801,7 @@ export default defineSchema({
       v.literal("follow_request_approved"),
       v.literal("household_invite_received"),
       v.literal("household_invite_accepted"),
+      v.literal("whats_new"),
     ),
     // Legacy pre-rendered English copy. Optional since notifications went structured: new rows
     // store `params` and the edges render copy (web via i18n keys, email via @jigswap/email).
@@ -1023,6 +1028,11 @@ export default defineSchema({
   households: defineTable({
     aggregateId: v.string(), // HouseholdId
     createdAt: v.number(),
+    // Household-wide permission for member copies without an explicit householdPermission.
+    // Absent = "manage" (no backfill). Resolved at read time by the domain helper.
+    defaultCopyPermission: v.optional(
+      v.union(v.literal("manage"), v.literal("view")),
+    ),
   }).index("by_aggregate_id", ["aggregateId"]),
 
   householdMembers: defineTable({
@@ -1132,4 +1142,37 @@ export default defineSchema({
     userId: v.optional(v.id("users")),
     createdAt: v.number(),
   }).index("by_slug", ["slug", "createdAt"]),
+
+  // What's new read state: one row per member that has marked an entry seen. `seenEntryIds` holds
+  // manifest ids only (@jigswap/contracts WHATS_NEW_MANIFEST) and is pruned of ids that left the
+  // manifest on every write. Entries published before the account existed are read by definition
+  // and never stored. The highlight modal derives from this set (no separate "modal shown" state).
+  whatsNewReadStates: defineTable({
+    memberId: v.id("users"),
+    seenEntryIds: v.array(v.string()),
+    updatedAt: v.number(),
+  }).index("by_member", ["memberId"]),
+
+  // One row per (member, tour) the member has started from a What's new entry. `step` is the
+  // 0-based step to resume from (in_progress) or the last step reached.
+  whatsNewTourProgress: defineTable({
+    memberId: v.id("users"),
+    tourId: v.string(),
+    status: v.union(
+      v.literal("in_progress"),
+      v.literal("completed"),
+      v.literal("dismissed"),
+    ),
+    step: v.optional(v.number()),
+    updatedAt: v.number(),
+  }).index("by_member_tour", ["memberId", "tourId"]),
+
+  // One row per notify:true What's new entry whose whats_new notification fan-out has started
+  // (whatsNew/publishPending). The row is the idempotency key: an entry with a row is never fanned
+  // out again. `completedAt` is set when the last member batch has run.
+  whatsNewPublications: defineTable({
+    entryId: v.string(),
+    startedAt: v.number(),
+    completedAt: v.optional(v.number()),
+  }).index("by_entry", ["entryId"]),
 });

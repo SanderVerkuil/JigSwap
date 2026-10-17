@@ -1,5 +1,5 @@
-import { convexTest } from "convex-test";
-import { ConvexError } from "convex/values";
+import { convexTest, type TestConvex } from "convex-test";
+import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -8,7 +8,7 @@ import schema from "./schema";
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
-const seed = (t: ReturnType<typeof convexTest>) =>
+const seed = (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string) =>
@@ -26,16 +26,16 @@ const seed = (t: ReturnType<typeof convexTest>) =>
     return { alice, bob, carol };
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asBob = (t: ReturnType<typeof convexTest>) =>
+const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
-const asCarol = (t: ReturnType<typeof convexTest>) =>
+const asCarol = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_carol" });
 
 // Seed a mutual follow between the pair so the ConnectionPolicy's first clause passes.
 const followMutually = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   a: Id<"users">,
   b: Id<"users">,
 ) =>
@@ -55,7 +55,7 @@ const followMutually = (
 // Seed shared circle membership between the pair (the circle row itself is irrelevant to the
 // policy, which only consults the circleMembers projection).
 const shareCircle = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   a: Id<"users">,
   b: Id<"users">,
 ) =>
@@ -67,7 +67,7 @@ const shareCircle = (
 
 // convex-test serializes ConvexError.data to a JSON string at the function boundary; normalise.
 const dataOf = (e: unknown): { code?: string } => {
-  const data = (e as ConvexError<unknown>).data;
+  const data = (e as ConvexError<Value>).data;
   return typeof data === "string"
     ? JSON.parse(data)
     : (data as { code?: string });
@@ -176,7 +176,7 @@ describe("openDmThread", () => {
 });
 
 describe("postMessage", () => {
-  const openThread = async (t: ReturnType<typeof convexTest>) => {
+  const openThread = async (t: TestConvex<typeof schema>) => {
     const { alice, bob, carol } = await seed(t);
     await followMutually(t, alice, bob);
     const threadId = await asAlice(t).mutation(

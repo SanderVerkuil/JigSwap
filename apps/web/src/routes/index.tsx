@@ -1,8 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
-
-import { globalStatsQuery } from "@/lib/marketing-queries";
-import { pageTitle } from "@/lib/page-title";
-
 import { MarketingFooter } from "@/components/marketing/footer";
 import { MarketingHeader } from "@/components/marketing/header";
 import { FeatureRows } from "@/components/marketing/home/feature-rows";
@@ -12,6 +7,9 @@ import { HowPreview } from "@/components/marketing/home/how-preview";
 import { Stats } from "@/components/marketing/home/stats";
 import { Sustain } from "@/components/marketing/home/sustain";
 import { Testimonial } from "@/components/marketing/home/testimonial";
+import { globalStatsQuery } from "@/lib/marketing-queries";
+import { pageTitle } from "@/lib/page-title";
+import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
   head: ({ match }) => ({

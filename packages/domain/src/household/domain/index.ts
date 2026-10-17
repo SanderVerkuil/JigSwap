@@ -1,4 +1,5 @@
 export * from "./copy-access";
+export * from "./copy-permission-change";
 export * from "./errors";
 export * from "./events";
 export * from "./household";

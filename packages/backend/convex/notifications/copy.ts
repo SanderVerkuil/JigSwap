@@ -15,6 +15,8 @@ import type { NotificationType } from "@jigswap/domain";
 //                 admin_definition_submitted
 //   goalTitle   — goal_achieved
 //   reason      — proposal_rejected (moderator-entered, may be absent)
+// whats_new carries no params: relatedId is the entry id, and the entry title is per-locale content
+// the backend manifest doesn't hold, so push uses a static line.
 
 export interface NotificationText {
   readonly title: string;
@@ -142,6 +144,10 @@ const COPY: Record<NotificationType, (p: Params) => NotificationText> = {
     message: p["actorName"]
       ? `${p["actorName"]} joined your household`
       : "Someone joined your household",
+  }),
+  whats_new: () => ({
+    title: "New in JigSwap",
+    message: "See what's new in JigSwap",
   }),
 };
 

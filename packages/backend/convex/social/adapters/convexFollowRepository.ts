@@ -1,8 +1,8 @@
 import {
+  toMemberId,
   type Follow,
   type FollowRepository,
   type MemberId,
-  toMemberId,
 } from "@jigswap/domain";
 import type { Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";

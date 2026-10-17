@@ -1,15 +1,8 @@
-import { nxCopyAssetsPlugin } from "@nx/vite/plugins/nx-copy-assets.plugin";
-import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 import { defineConfig } from "vite";
 
 export default defineConfig(() => ({
   root: __dirname,
   cacheDir: "../../node_modules/.vite/packages/backend",
-  plugins: [nxViteTsPaths(), nxCopyAssetsPlugin(["*.md"])],
-  // Uncomment this if you are using workers.
-  // worker: {
-  //  plugins: [ nxViteTsPaths() ],
-  // },
   test: {
     watch: false,
     globals: true,
@@ -23,7 +16,7 @@ export default defineConfig(() => ({
     // _scheduled_functions status write. That rejection is unhandled (the job is never awaited), so
     // vitest would fail an otherwise all-green run. Assertions are what matter here; ignore it.
     dangerouslyIgnoreUnhandledErrors: true,
-    // CI runs `nx run-many --parallel=4`, so vitest shares the runner with other projects'
+    // CI runs `turbo run ... --concurrency=4`, so vitest shares the runner with other projects'
     // lint/build; convex-test's per-test module bundling then pushes tests that take ~500ms
     // locally past the 5s default timeout.
     testTimeout: 20_000,

@@ -41,8 +41,11 @@ module.exports = {
   ],
   options: {
     doNotFollow: { path: "node_modules" },
-    tsPreCompilationDeps: true,
-    tsConfig: { fileName: "tsconfig.base.json" },
+    // Parse with swc, not the TypeScript compiler API: TS 7 has no JS API. swc parses the
+    // TypeScript source itself, so `import type` / `export type` still count as dependencies.
+    // tsPreCompilationDeps and tsConfig are left out on purpose: both only work through the
+    // TS API (with TS 7 they'd silently do nothing and print a missing-transpiler warning).
+    parser: "swc",
     enhancedResolveOptions: {
       exportsFields: ["exports"],
       conditionNames: ["import", "require", "node", "default", "types"],

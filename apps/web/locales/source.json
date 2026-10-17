@@ -639,6 +639,38 @@
       "disputed": "Disputed"
     }
   },
+  "tradeRequest": {
+    "title": "Request this puzzle",
+    "description": "Send {name} a request for this copy.",
+    "ownedBy": "Owned by {name}",
+    "pieces": "{count} pieces",
+    "typeLabel": "Exchange type",
+    "types": {
+      "trade": "Swap",
+      "sale": "Buy",
+      "loan": "Borrow"
+    },
+    "offerLabel": "Puzzle you offer",
+    "offerPlaceholder": "Choose one of your puzzles",
+    "offerHousehold": "{title} ({name}, household)",
+    "noOfferable": "You have no puzzles you can offer in a swap.",
+    "priceLabel": "Your offer (EUR)",
+    "pricePlaceholder": "e.g. 15.00",
+    "priceInvalid": "Enter an amount above zero, like 15 or 15.50.",
+    "cancel": "Cancel",
+    "submit": "Send request",
+    "submitting": "Sending...",
+    "success": "Trade request sent",
+    "errors": {
+      "notAvailable": "This puzzle is no longer available for that exchange.",
+      "notFound": "This puzzle is no longer available.",
+      "offeredNotOwned": "You can't offer that puzzle in this swap.",
+      "duplicate": "You already have an open request for this puzzle.",
+      "ownCopy": "You can't request your own puzzle.",
+      "missingTerms": "Some details are missing. Check the form and try again.",
+      "generic": "Couldn't send the request. Please try again."
+    }
+  },
   "reputation": {
     "title": "Reputation",
     "subtitle": "Trust signals from completed exchanges.",
@@ -677,6 +709,16 @@
       "invalidRating": "Please give a rating between 1 and 5 stars.",
       "generic": "Couldn't submit your review. Please try again."
     }
+  },
+  "copyConversation": {
+    "title": "Message {name}",
+    "aboutPuzzle": "About this puzzle",
+    "pieces": "{count} pieces",
+    "placeholder": "Write a message about this puzzle…",
+    "firstMessageHint": "Your conversation starts when you send the first message.",
+    "self": "This is your own puzzle.",
+    "unavailable": "This puzzle isn't available to message about.",
+    "backToPuzzle": "Back to the puzzle"
   },
   "messages": {
     "anonymous": "Anonymous user",
@@ -965,6 +1007,11 @@
     "textPlaceholder": "Title, brand or theme…",
     "gridView": "Grid View",
     "listView": "List View"
+  },
+  "browsePuzzleFilter": {
+    "label": "Puzzle",
+    "unknownPuzzle": "Unknown puzzle",
+    "remove": "Remove puzzle filter: {title}"
   },
   "footer": {
     "tagline": "Making jigsaw puzzle trading accessible and sustainable for everyone.",
@@ -1476,7 +1523,8 @@
       "view": "View only",
       "memberManage": "Household copy — you can manage it",
       "memberView": "Household copy — view only",
-      "saveFailed": "Couldn't update household access"
+      "saveFailed": "Couldn't update household access",
+      "useDefault": "Use household default (currently: {permission, select, view {View only} other {Can manage}})"
     },
     "errors": {
       "generic": "Something went wrong. Please try again.",
@@ -1488,7 +1536,45 @@
       "HouseholdNotFound": "This household no longer exists.",
       "NotHouseholdAdmin": "Only the household admin can do this.",
       "InviteNotPending": "This invite has already been answered.",
-      "MemberNotFound": "This member could not be found."
+      "MemberNotFound": "This member could not be found.",
+      "NotCopyOwner": "Only the owner can change a puzzle's household access.",
+      "PermissionBatchTooLarge": "You can change at most 200 puzzles at once.",
+      "CopyNotFound": "One of these puzzles no longer exists."
+    },
+    "bulkPermission": {
+      "title": "My puzzles in this household",
+      "sub": "Choose what your household may do with each of your puzzles. Only you can change this for your own puzzles.",
+      "empty": "You haven't added any puzzles yet.",
+      "filterLabel": "Filter by household access",
+      "filterAll": "All puzzles",
+      "selectAll": "Select all",
+      "selectNone": "Select none",
+      "selectedCount": "{count, plural, one {# selected} other {# selected}}",
+      "setManage": "Set to Can manage",
+      "setView": "Set to View only",
+      "selectLabel": "Select {title}",
+      "noMatches": "None of your puzzles match this filter.",
+      "untitled": "Untitled puzzle",
+      "confirmTitle": "{count, plural, one {Change # puzzle?} other {Change # puzzles?}}",
+      "confirmManage": "Your household will be able to manage {count, plural, one {this puzzle} other {these puzzles}}: edit, lend and swap {count, plural, one {it} other {them}}.",
+      "confirmView": "Your household will only be able to view {count, plural, one {this puzzle} other {these puzzles}}.",
+      "confirm": "Change access",
+      "changed": "{count, plural, =0 {No puzzles needed changing} one {# puzzle updated} other {# puzzles updated}}",
+      "setDefault": "Use household default (currently: {permission, select, view {View only} other {Can manage}})",
+      "confirmDefault": "{count, plural, one {This puzzle} other {These puzzles}} will follow the household default (currently: {permission, select, view {View only} other {Can manage}}), and change with it.",
+      "sourceDefault": "Household default",
+      "sourceExplicit": "Set for this puzzle"
+    },
+    "settings": {
+      "title": "Household settings",
+      "defaultLabel": "Default access for puzzles",
+      "defaultHelp": "Applies to every member's puzzles that have no access setting of their own. A setting made for a specific puzzle always wins.",
+      "affected": "{count, plural, =0 {No copies use the household default right now} one {Applies to # copy that uses the household default} other {Applies to # copies that use the household default}}",
+      "adminOnly": "Only the household admin can change this.",
+      "confirmTitle": "Change the household default to {permission, select, view {View only} other {Can manage}}?",
+      "confirmBody": "{count, plural, =0 {No copies use the household default right now, so nothing changes yet.} one {This applies right away to # copy that uses the household default.} other {This applies right away to # copies that use the household default.}} Puzzles with their own access setting keep it.",
+      "confirm": "Change default",
+      "saved": "Household default updated"
     }
   },
   "circles": {
@@ -1701,7 +1787,8 @@
       "follow_request_received": "Follow requests",
       "follow_request_approved": "Follow request approved",
       "household_invite_received": "Household invites",
-      "household_invite_accepted": "Household invite accepted"
+      "household_invite_accepted": "Household invite accepted",
+      "whats_new": "What's new"
     },
     "categories": {
       "trades": {
@@ -1719,6 +1806,10 @@
       "submissions": {
         "title": "My submissions",
         "description": "Outcomes of your puzzle submissions and suggested edits"
+      },
+      "product": {
+        "title": "Product updates",
+        "description": "New features and changes to JigSwap"
       },
       "admin": {
         "title": "Admin",
@@ -1817,6 +1908,10 @@
       "household_invite_accepted": {
         "title": "Invite accepted",
         "message": "Someone joined your household."
+      },
+      "whats_new": {
+        "title": "New in JigSwap",
+        "message": "See what's new in JigSwap."
       }
     },
     "pushDeviceTitle": "Push on this device",
@@ -1855,7 +1950,8 @@
       "follow_request_received": "When someone asks to follow you.",
       "follow_request_approved": "When a follow request you sent is approved.",
       "household_invite_received": "When someone invites you to their household.",
-      "household_invite_accepted": "When someone accepts your household invite."
+      "household_invite_accepted": "When someone accepts your household invite.",
+      "whats_new": "When a new feature or change to JigSwap is announced."
     },
     "pushServiceUnreachable": "Your browser couldn't reach its push service. Some privacy browsers block or remove it — Brave disables it by default (enable 'Use Google services for push messaging' in Settings), and de-Googled Chromium builds like Helium strip it out. Firefox, Chrome, or Edge will work."
   },
@@ -2639,7 +2735,8 @@
     "library": "My Library — JigSwap",
     "people": "People — JigSwap",
     "members": "Members — JigSwap",
-    "copyInstance": "Owned copy — JigSwap"
+    "copyInstance": "Owned copy — JigSwap",
+    "whatsNew": "What's new — JigSwap"
   },
   "shell": {
     "search": {
@@ -2828,6 +2925,11 @@
         "title": "Feedback",
         "subtitle": "“Was this page helpful?” votes from the documentation, newest first.",
         "description": "Review docs helpfulness votes"
+      },
+      "whatsNew": {
+        "title": "What's new",
+        "subtitle": "Fresh features, improvements and fixes.",
+        "description": "Everything that changed in JigSwap, newest first."
       }
     },
     "user": {
@@ -2867,8 +2969,10 @@
         "logCompletionSub": "Finished one? Record it",
         "proposeSwap": "Propose a Swap",
         "proposeSwapSub": "Trade with a fellow puzzler",
-        "browseCommunitySub": "Discover puzzles near you"
-      }
+        "browseCommunitySub": "Discover puzzles near you",
+        "whatsNewSub": "Latest features and fixes"
+      },
+      "openQuickActionsUnread": "{count, plural, one {Quick actions, # update} other {Quick actions, # updates}}"
     },
     "breadcrumbLabel": "Breadcrumb",
     "crumbs": {
@@ -3018,6 +3122,11 @@
     },
     "photoCover": "Cover",
     "photoPending": "Pending review"
+  },
+  "copyOwner": {
+    "label": "Owner",
+    "you": "you",
+    "anonymous": "Anonymous user"
   },
   "puzzleDefinition": {
     "notFound": "Puzzle not found",
@@ -3493,5 +3602,94 @@
     "logInToReview": "Log in to write a review",
     "notFound": "Puzzle not found",
     "notFoundSub": "This puzzle may have been removed from the catalogue."
+  },
+  "whatsNew": {
+    "menuLabel": "What's new",
+    "menuLabelUnread": "What's new ({count})",
+    "unreadCount": "{count, plural, =0 {No new updates} one {# new update} other {# new updates}}",
+    "announce": "{count, plural, one {# new update in What's new} other {# new updates in What's new}}",
+    "new": "New",
+    "newPrefix": "New:",
+    "category": {
+      "feature": "Feature",
+      "improvement": "Improvement",
+      "fix": "Fix"
+    },
+    "empty": {
+      "title": "No updates yet",
+      "body": "New features and fixes will show up here."
+    },
+    "readMore": "Read more",
+    "seeAll": "See all updates",
+    "modal": {
+      "eyebrow": "New in JigSwap",
+      "later": "Maybe later"
+    },
+    "tour": {
+      "take": "Take the tour",
+      "replay": "Replay the tour",
+      "resume": "Resume tour (step {step} of {total})",
+      "restart": "Start over"
+    }
+  },
+  "tour": {
+    "stepOf": "Step {step} of {total}",
+    "roleDescription": "tour step",
+    "back": "Back",
+    "next": "Next",
+    "nextOnPage": "Next: {page}",
+    "done": "Done",
+    "end": "End tour",
+    "opening": "Opening {page}…",
+    "paused": "Tour paused. You can pick it up again from What's new.",
+    "resumeAction": "Resume",
+    "completedTitle": "You're all set",
+    "completed": "Tour finished. Enjoy the new feature!"
+  },
+  "tours": {
+    "households": {
+      "steps": {
+        "start": {
+          "title": "Your household",
+          "body": "Create a household for the people you live with, or see who is in yours. Everyone in it sees each other's puzzles in My Puzzles."
+        },
+        "invite": {
+          "title": "Invite your housemates",
+          "body": "Search for a member and send an invite; they join once they accept. Household admins send the invites."
+        },
+        "copy-access": {
+          "title": "You decide per puzzle",
+          "body": "Your puzzles stay yours. Open one and set Household access: Can manage lets housemates edit, lend and swap it; View only lets them see it."
+        }
+      }
+    },
+    "member-profiles": {
+      "steps": {
+        "network": {
+          "title": "Visit a member",
+          "body": "Open anyone in your network to see the puzzles they own and the ones they've finished, with dates, times and photos."
+        },
+        "your-profile": {
+          "title": "Who sees yours",
+          "body": "Your puzzles and finished solves show on your profile to signed-in members who can see it: anyone when it's public, mutual followers when it's private. Change it under Edit Profile."
+        }
+      }
+    },
+    "in-progress-solves": {
+      "steps": {
+        "solving-now": {
+          "title": "Solving now",
+          "body": "Puzzles you've started show up on your dashboard, with a one-click Finish when you're done."
+        },
+        "in-progress": {
+          "title": "In progress, then history",
+          "body": "Completions lists your open solves on top and finished ones below. Start a solve from any of your puzzles, with a start date in the past or the future."
+        },
+        "sharing": {
+          "title": "Share with friends, if you like",
+          "body": "Sharing is off by default. Open your account menu, choose Manage account, then Preferences, and turn on Share in-progress puzzles with friends."
+        }
+      }
+    }
   }
 }

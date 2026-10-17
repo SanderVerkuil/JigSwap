@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { toCatalogCategoryId, toPuzzleDefinitionId } from "../../shared-kernel";
-
 import { CatalogApplicationError } from "./errors";
 
 describe("CatalogApplicationError factories", () => {

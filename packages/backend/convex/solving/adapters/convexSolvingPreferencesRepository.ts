@@ -1,9 +1,9 @@
 import {
-  type MemberId,
   SolvingPreferences,
+  toMemberId,
+  type MemberId,
   type SolvingPreferencesRepository,
   type SolvingPreferencesState,
-  toMemberId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../../_generated/server";

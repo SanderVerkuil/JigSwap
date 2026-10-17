@@ -17,7 +17,6 @@ import {
   CopyMadeAvailable,
   CopyMadeUnavailable,
 } from "./events";
-
 import { Price } from "./price";
 import { SharingSetting } from "./sharing-setting";
 

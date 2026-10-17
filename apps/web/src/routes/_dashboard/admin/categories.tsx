@@ -1,14 +1,13 @@
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
-
 import { CategoryDialog } from "@/components/admin/category-dialog";
 import { CategoryList, type Category } from "@/components/admin/category-list";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
+import { pageTitle } from "@/lib/page-title";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { Plus, Shapes } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslations } from "use-intl";

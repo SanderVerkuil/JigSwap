@@ -1,6 +1,3 @@
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
-
 import { Link } from "@/compat/link";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
@@ -11,8 +8,10 @@ import { Input } from "@/components/ui/input";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
 import { catalogueSearchKey, detectBarcode } from "@/lib/catalogue-search";
+import { pageTitle } from "@/lib/page-title";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";

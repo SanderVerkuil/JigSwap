@@ -241,7 +241,7 @@ function QrFollowPrompt({ token, name }: { token: string; name: string }) {
     },
   });
   return (
-    <div className="border-jigsaw-primary/20 bg-jigsaw-primary/5 mx-auto mb-6 flex w-full max-w-3xl flex-col gap-3 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="border-jigsaw-primary/20 bg-jigsaw-primary/5 mb-6 flex w-full flex-col gap-3 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-muted-foreground text-sm">
         {t("followEachOther", { name })}
       </p>
@@ -264,7 +264,7 @@ function QrFollowPrompt({ token, name }: { token: string; name: string }) {
 function OwnerPreviewBanner({ locked }: { locked: boolean }) {
   const t = useTranslations("members.profile");
   return (
-    <div className="border-jigsaw-primary/20 bg-jigsaw-primary/5 mx-auto mb-6 flex w-full max-w-3xl flex-col gap-3 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="border-jigsaw-primary/20 bg-jigsaw-primary/5 mb-6 flex w-full flex-col gap-3 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-start gap-2.5">
         <Eye className="text-jigsaw-primary mt-0.5 size-4 shrink-0" />
         <p className="text-muted-foreground text-sm">

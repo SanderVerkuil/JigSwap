@@ -8,11 +8,13 @@ import type {
   CopyTransferEntry,
   ProjectedMember,
 } from "@jigswap/contracts";
+import { resolveHouseholdCopyPermission } from "@jigswap/domain";
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { copyAccessOf } from "../household/copyAccess";
-import { membershipOf } from "../household/memberships";
+import { personView } from "../household/getMyHousehold";
+import { householdDefaultOf, membershipOf } from "../household/memberships";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 import { projectMemberIdentity } from "../social/privacy";
@@ -67,17 +69,33 @@ export const getCopyInstanceView = query({
     const viewerIsOwner = copy.ownerId === viewerId;
     // Household access: a member the owner left at "manage" acts as co-owner (edit controls +
     // owner-only fields); "view" only sees the copy. Since/before tenure stays owner-only.
+    // `owner` is the household person view (name/avatar, never email), the same one behind the
+    // library's "Household · {owner}" badge, so the copy page names a housemate's copy's owner even
+    // when the profile projection anonymises them.
     const access = await copyAccessOf(ctx, viewerId, copy);
     const viewerCanManage = access === "owner" || access === "manage";
-    const household =
-      access === "manage" ||
-      access === "view" ||
-      (access === "owner" && (await membershipOf(ctx, viewerId)) !== null)
-        ? {
-            permission: copy.householdPermission ?? ("manage" as const),
-            viewerAccess: access,
-          }
-        : null;
+    // The owner's household (the viewer's own when they are the owner) carries the default an
+    // inheriting copy follows; the effective permission comes from the domain resolution helper.
+    const ownerMembership =
+      access === "none" ? null : await membershipOf(ctx, copy.ownerId);
+    const householdDefault = ownerMembership
+      ? await householdDefaultOf(ctx, ownerMembership.householdId)
+      : undefined;
+    const household = ownerMembership
+      ? {
+          permission: resolveHouseholdCopyPermission(
+            copy.householdPermission,
+            householdDefault,
+          ),
+          viewerAccess: access as "owner" | "manage" | "view",
+          inheritsDefault: copy.householdPermission === undefined,
+          householdDefault: resolveHouseholdCopyPermission(
+            undefined,
+            householdDefault,
+          ),
+          owner: await personView(ctx, copy.ownerId),
+        }
+      : null;
 
     const puzzle = await ctx.db.get(copy.puzzleId);
     const salt = args.copyId as string;

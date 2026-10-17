@@ -1,4 +1,9 @@
 import {
+  toCommentId,
+  toFollowId,
+  toFollowRequestId,
+  toPhotoCommentId,
+  toProfileId,
   type CommentId,
   type CommentIdGenerator,
   type FollowId,
@@ -9,11 +14,6 @@ import {
   type PhotoCommentIdGenerator,
   type ProfileId,
   type ProfileIdGenerator,
-  toCommentId,
-  toFollowId,
-  toFollowRequestId,
-  toPhotoCommentId,
-  toProfileId,
 } from "@jigswap/domain";
 
 // Driven adapters for the Social id-generator ports. crypto.randomUUID is available in the Convex

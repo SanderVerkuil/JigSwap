@@ -1,5 +1,5 @@
-import { convexTest } from "convex-test";
-import { ConvexError } from "convex/values";
+import { convexTest, type TestConvex } from "convex-test";
+import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
@@ -11,7 +11,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 const VALID_EAN = "4006381333931";
 
 // Seed a single member; the Clerk subject maps to the user via by_clerk_id.
-const seedMember = async (t: ReturnType<typeof convexTest>) =>
+const seedMember = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     return ctx.db.insert("users", {
@@ -24,18 +24,18 @@ const seedMember = async (t: ReturnType<typeof convexTest>) =>
     });
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
 
 // Alice acting as an admin: the moderation + taxonomy mutations now assert isAdmin server-side
 // (the role lives in the Clerk JWT's metadata.role claim). Keep the same Clerk subject so the
 // resolved member is still the seeded `clerk_alice`.
-const asAdmin = (t: ReturnType<typeof convexTest>) =>
+const asAdmin = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice", metadata: { role: "admin" } });
 
 // Seed two members (alice + bob); mirrors changeProposalDecisions.test.ts's helper, needed for
 // tests where the acting admin must be a DIFFERENT member than the submitter.
-const seedMembers = async (t: ReturnType<typeof convexTest>) =>
+const seedMembers = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string, name: string) =>
@@ -53,10 +53,10 @@ const seedMembers = async (t: ReturnType<typeof convexTest>) =>
     };
   });
 
-const asBob = (t: ReturnType<typeof convexTest>) =>
+const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
 
-const puzzleRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
+const puzzleRow = (t: TestConvex<typeof schema>, aggregateId: string) =>
   t.run(async (ctx) =>
     ctx.db
       .query("puzzles")
@@ -64,7 +64,7 @@ const puzzleRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
       .unique(),
   );
 
-const categoryRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
+const categoryRow = (t: TestConvex<typeof schema>, aggregateId: string) =>
   t.run(async (ctx) =>
     ctx.db
       .query("adminCategories")
@@ -74,7 +74,7 @@ const categoryRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
 
 // convex-test serializes ConvexError.data to a JSON string at the function boundary; normalise.
 const dataOf = (e: unknown): { code?: string } => {
-  const data = (e as ConvexError<unknown>).data;
+  const data = (e as ConvexError<Value>).data;
   return typeof data === "string"
     ? JSON.parse(data)
     : (data as { code?: string });
@@ -215,7 +215,7 @@ describe("catalog.submitPuzzleDefinition", () => {
 });
 
 // Helper: Alice submits a pending definition, returning the aggregateId.
-const submitPending = async (t: ReturnType<typeof convexTest>) => {
+const submitPending = async (t: TestConvex<typeof schema>) => {
   await seedMember(t);
   const id = await asAlice(t).mutation(
     api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
@@ -409,7 +409,7 @@ describe("catalog category management", () => {
   const NAME = { en: "Animals", nl: "Dieren" };
 
   const createCategory = async (
-    t: ReturnType<typeof convexTest>,
+    t: TestConvex<typeof schema>,
     sortOrder: number,
     name = NAME,
   ) =>
