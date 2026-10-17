@@ -2247,7 +2247,8 @@
     "revokeLinks": "Open links intrekken",
     "revoked": "{count, plural, =0 {Geen open links om in te trekken} one {# link ingetrokken} other {# links ingetrokken}}",
     "rateLimited": "Je hebt vandaag veel uitnodigingslinks gemaakt. Probeer het morgen opnieuw.",
-    "createFailed": "Kon geen uitnodigingslink maken. Probeer het opnieuw."
+    "createFailed": "Kon geen uitnodigingslink maken. Probeer het opnieuw.",
+    "revokeFailed": "Kon de links niet intrekken. Probeer het opnieuw."
   },
   "forms": {
     "owned-puzzle-form": {

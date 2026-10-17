@@ -1,4 +1,5 @@
 import { householdErrorKey } from "@/components/household/household-error";
+import { HouseholdInviteLink } from "@/components/household/household-invite-link";
 import { HouseholdSettings } from "@/components/household/household-settings";
 import { MyHouseholdCopies } from "@/components/household/my-household-copies";
 import { EmptyState } from "@/components/library/empty-state";
@@ -188,6 +189,8 @@ function HouseholdDetails({
   const tCommon = useTranslations("common");
   const displayName = useMemberDisplayName();
   const isAdmin = household.viewerRole === "admin";
+  const viewerId =
+    household.members.find((member) => member.isYou)?.memberId ?? "";
   const [search, setSearch] = useState("");
   const [removeTarget, setRemoveTarget] = useState<Person | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
@@ -308,6 +311,8 @@ function HouseholdDetails({
               ))}
             </div>
           )}
+
+          <HouseholdInviteLink memberId={viewerId} />
 
           {household.pendingInvites.length > 0 && (
             <div className="space-y-2">

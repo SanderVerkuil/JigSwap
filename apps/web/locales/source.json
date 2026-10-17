@@ -2247,7 +2247,8 @@
     "revokeLinks": "Revoke open links",
     "revoked": "{count, plural, =0 {No open links to revoke} one {# link revoked} other {# links revoked}}",
     "rateLimited": "You've created a lot of invite links today. Try again tomorrow.",
-    "createFailed": "Couldn't create an invite link. Try again."
+    "createFailed": "Couldn't create an invite link. Try again.",
+    "revokeFailed": "Couldn't revoke the links. Try again."
   },
   "forms": {
     "owned-puzzle-form": {
