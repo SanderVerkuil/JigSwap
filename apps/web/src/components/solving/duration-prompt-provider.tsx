@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useReportSurfaceBusy } from "@/components/whats-new/surface-busy";
 import { useUserSettings } from "@/hooks/use-user-settings";
 import {
   createContext,
@@ -35,6 +36,9 @@ export function DurationPromptProvider({ children }: { children: ReactNode }) {
   const { trackCompletionDuration, setTrackDuration } = useUserSettings();
   const [open, setOpen] = useState(false);
   const onDoneRef = useRef<(() => void) | null>(null);
+  // Open covers the in-flight save too (`choose` closes only after it resolves). The What's new
+  // highlight modal yields to this prompt.
+  useReportSurfaceBusy("durationPrompt", open);
 
   const finish = () => {
     const cb = onDoneRef.current;
