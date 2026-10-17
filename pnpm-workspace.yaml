@@ -16,7 +16,7 @@ linkWorkspacePackages: true
 # Pin zod: keep the whole workspace on one zod version that @hookform/resolvers and the
 # zodResolver-based forms type-check against. Raised to 4.6.7 alongside resolvers 5.9.1.
 # Pin less: it's an optional CSS-preprocessor peer of vite (unused here); 4.5.1 added a
-# postinstall script that makes `pnpm install` exit non-zero, breaking Nx's pre-install.
+# postinstall script that makes `pnpm install` exit non-zero.
 # Pin eslint-plugin-react-hooks (oxlint runs it as a jsPlugin): keep the whole workspace
 # on one version, so lint results don't depend on which copy resolves.
 # 7.1.1's `set-state-in-effect`/`refs` findings are fixed.

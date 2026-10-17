@@ -1,8 +1,5 @@
 {
   "mcpServers": {
-    "nx-mcp": {
-      "url": "http://localhost:9664/sse"
-    },
     "convex": {
       "command": "npx",
       "args": ["-y", "convex@latest", "mcp", "start"]
