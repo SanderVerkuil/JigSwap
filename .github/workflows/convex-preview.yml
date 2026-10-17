@@ -5,7 +5,10 @@ permissions:
 
 # Per-PR Convex preview deployments (docs/deployment/convex-preview-deployments.md).
 #
-#   - Every PR push deploys the branch's code to a preview deployment named after the
+#   - Gated like vercel-preview.yml: only a non-draft PR with the `preview` label gets a
+#     preview (adding the label, pushing while it is on, or marking the PR ready), so no
+#     Convex preview is created without a web preview next to it.
+#   - Each such run deploys the branch's code to a preview deployment named after the
 #     branch. `--preview-name` REUSES an existing preview (and its data) across pushes,
 #     so data created on the preview survives `synchronize` events.
 #   - Seeding is STATE-based, not event-based: every run checks whether the preview's
@@ -23,12 +26,12 @@ permissions:
 # (`preview:team:project|…`) the CLI honors `--preview-name` and can ONLY target preview
 # deployments; with a deployment-scoped key (dev:/prod:) the CLI IGNORES `--preview-name`
 # and targets the key's deployment — so the dev key must never reach the import step.
-# No base-branch filter: stacked PRs (base = another feature branch) get a Vercel web
-# preview like any other PR — and the Vercel build creates the branch's Convex preview —
-# so they need the same deploy + seed or their preview backend stays empty.
+# No base-branch filter: a labeled stacked PR (base = another feature branch) gets a
+# Vercel web preview like any other PR — and the Vercel build creates the branch's Convex
+# preview — so it needs the same deploy + seed or its preview backend stays empty.
 on:
   pull_request:
-    types: [opened, reopened, synchronize]
+    types: [opened, reopened, synchronize, labeled, ready_for_review]
   workflow_dispatch:
     inputs:
       branch:
@@ -44,6 +47,13 @@ on:
 jobs:
   preview:
     name: Deploy + seed preview deployment
+    # Same gate as vercel-preview.yml; `labeled` fires for every label, so react only to
+    # `preview`. Manual runs skip the gate.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.draft == false &&
+      contains(github.event.pull_request.labels.*.name, 'preview') &&
+      (github.event.action != 'labeled' || github.event.label.name == 'preview'))
     runs-on: ubuntu-latest
     timeout-minutes: 15
     # Per-branch queue: a newer push to the same branch supersedes an in-flight run;

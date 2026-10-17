@@ -5,7 +5,8 @@ permissions:
   # The sweep job derives its keep-set from the repo's open PRs.
   pull-requests: read
 
-# Deletes a PR's Convex preview deployment when the PR is merged or closed, and
+# Deletes a PR's Convex preview deployment when the PR is merged or closed, or when its
+# `preview` label is removed (previews are label-gated, see convex-preview.yml), and
 # offers a manually dispatched SWEEP that reaps every preview whose branch has no
 # open PR (docs/deployment/convex-preview-deployments.md → "Teardown on PR close").
 # The sweep exists because auto-expiry proved unreliable in practice: the first
@@ -24,7 +25,7 @@ permissions:
 # preview this job misses (e.g. a re-created one after a stray late synchronize run).
 on:
   pull_request:
-    types: [closed]
+    types: [closed, unlabeled]
   workflow_dispatch:
     inputs:
       dryRun:
@@ -36,7 +37,10 @@ on:
 jobs:
   teardown:
     name: Delete preview deployment
-    if: github.event_name == 'pull_request'
+    # `unlabeled` fires for every label; only removing `preview` tears down.
+    if: >-
+      github.event_name == 'pull_request' &&
+      (github.event.action == 'closed' || github.event.label.name == 'preview')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
