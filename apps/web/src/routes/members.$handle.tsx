@@ -7,6 +7,11 @@ import {
   ProfileCtaBand,
   type PublicProfileView,
 } from "@/components/members/profile-body";
+import { HouseholdLinkInvite } from "@/components/social/household-link-invite";
+import {
+  INVITE_KEY,
+  shouldHandOffInvite,
+} from "@/components/social/invite-landing";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
@@ -20,11 +25,12 @@ import {
   Link,
   notFound,
   redirect,
+  useNavigate,
   useRouteContext,
 } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { Eye } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
@@ -101,8 +107,9 @@ function MemberPage() {
     convexQuery(gateway.social.publicProfile, { handle }),
   );
 
-  // Does `?invite=<token>` point at a live invite for THIS profile? The query
-  // returns only a validity boolean (no owner data). Phase 3 growth loop.
+  // Does `?invite=<token>` point at a live invite for THIS profile, and is it
+  // the member's network link or a household link? No owner data. Phase 3
+  // growth loop; household links per the quick-start spec §3.4.
   const { data: inviteContext } = useQuery({
     ...convexQuery(gateway.social.inviteContext, {
       token: invite ?? "",
@@ -111,6 +118,10 @@ function MemberPage() {
     enabled: invite !== undefined && profile !== undefined,
   });
   const inviteValid = inviteContext?.valid === true;
+  const inviteKind = inviteContext?.kind ?? "network";
+  // Expired or used household links say so; a dead network link stays silent.
+  const inviteExpired =
+    inviteContext !== undefined && !inviteValid && inviteKind === "household";
 
   const { mutate: recordLanding } = useMutation({
     mutationFn: useConvexMutation(gateway.social.recordInviteLanding),
@@ -122,7 +133,7 @@ function MemberPage() {
   // invite. safeStorage degrades gracefully when storage is blocked.
   useEffect(() => {
     if (!invite || !inviteValid || userId) return;
-    safeStorage.setItem("local", "jigswap.invite", invite);
+    safeStorage.setItem("local", INVITE_KEY, invite);
     const sessionKey = `jigswap.inviteLanded.${invite}`;
     if (safeStorage.getItem("session", sessionKey)) return;
     safeStorage.setItem("session", sessionKey, "1");
@@ -149,6 +160,8 @@ function MemberPage() {
                 ? displayName({ name: profile.hero.displayName })
                 : undefined
             }
+            invitedKind={inviteKind}
+            inviteExpired={inviteExpired}
           />
           {!profile.locked && <ProfileCtaBand returnToHref={returnToHref} />}
         </main>
@@ -163,6 +176,7 @@ function MemberPage() {
         profile={profile}
         invite={invite}
         inviteValid={inviteValid}
+        inviteKind={inviteKind}
       />
     </DashboardShell>
   );
@@ -172,10 +186,12 @@ function AuthedMemberPage({
   profile,
   invite,
   inviteValid,
+  inviteKind,
 }: {
   profile: PublicProfileView;
   invite: string | undefined;
   inviteValid: boolean;
+  inviteKind: "network" | "household";
 }) {
   const tShell = useTranslations("shell");
   const displayName = useMemberDisplayName();
@@ -184,6 +200,32 @@ function AuthedMemberPage({
 
   const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
   const isSelf = me?._id === memberId;
+  const navigate = useNavigate();
+
+  // Clerk's sign-up returns here (redirect_url), but this page renders outside
+  // the _dashboard layout, so InviteRedeemer never runs on it. A brand-new
+  // member on a live invite: (re)store the token — the ?invite on the URL
+  // re-seeds it even if storage was lost across the redirect — and go to the
+  // dashboard, where InviteRedeemer redeems it. Existing members stay here.
+  // The page's first-render time: Date.now() can't run during render, and a stale "now" only
+  // matters at the 15-minute boundary, which the server enforces anyway.
+  const [now] = useState(() => Date.now());
+  const handingOff =
+    me !== null &&
+    me !== undefined &&
+    invite !== undefined &&
+    shouldHandOffInvite({
+      memberCreatedAt: me.createdAt,
+      isSelf,
+      invite,
+      inviteValid,
+      now,
+    });
+  useEffect(() => {
+    if (!handingOff || !invite) return;
+    safeStorage.setItem("local", INVITE_KEY, invite);
+    void navigate({ to: "/dashboard", replace: true });
+  }, [handingOff, invite, navigate]);
 
   // The featured shelf is auth-gated (requireMember) and only exists on an
   // unlocked profile; skip it while `me` is unresolved and for locked profiles.
@@ -215,8 +257,11 @@ function AuthedMemberPage({
   return (
     <>
       {isSelf && <OwnerPreviewBanner locked={profile.locked} />}
-      {!isSelf && invite && inviteValid && (
+      {!isSelf && invite && inviteValid && inviteKind === "network" && (
         <QrFollowPrompt token={invite} name={name} />
+      )}
+      {!isSelf && !handingOff && invite && inviteKind === "household" && (
+        <HouseholdLinkInvite token={invite} fallbackName={name} />
       )}
       <ProfileBody
         profile={profile}

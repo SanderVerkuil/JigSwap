@@ -2227,7 +2227,36 @@
     "findThem": "Find them",
     "loopTitle": "Anyone else here?",
     "loopBody": "Show them this code so they can follow you too.",
-    "loopSkip": "Not now"
+    "loopSkip": "Not now",
+    "householdInvitedYou": "{name} invited you to join their household on JigSwap",
+    "householdExplainer": "Sign up first. You'll then choose whether to join; nothing is shared until you accept.",
+    "linkExpired": "This invite link has expired or was already used.",
+    "householdLinkTitle": "{name} invited you to their household",
+    "householdLinkBody": "Joining shares your puzzle library with the household, and you'll see theirs. Your puzzles stay yours, and you can leave at any time.",
+    "householdLinkAlreadyInHousehold": "You're already in a household. You can only be in one at a time, so you can't join this one.",
+    "householdLinkExpired": "This invite link has expired. Ask {name} for a new one.",
+    "householdLinkUsed": "This invite link was already used. Ask {name} for a new one.",
+    "householdLinkInvalid": "This invite link is no longer valid.",
+    "householdLinkJoined": "You joined {name}'s household",
+    "householdLinkDeclined": "Invite declined",
+    "householdLinkFailed": "Couldn't respond to the invite. Please try again."
+  },
+  "inviteShare": {
+    "share": "Share invite link",
+    "email": "Email",
+    "whatsapp": "WhatsApp",
+    "subject": "Join me on JigSwap",
+    "message": "Join me on JigSwap, where I keep track of my puzzles: {url}",
+    "householdMessage": "Join our household on JigSwap so we can share one puzzle shelf: {url}",
+    "privacy": "JigSwap doesn't see or store who you send this to.",
+    "inviteLink": "Invite with a link",
+    "createLink": "Create invite link",
+    "linkNote": "The link works once and expires in 14 days.",
+    "revokeLinks": "Revoke open links",
+    "revoked": "{count, plural, =0 {No open links to revoke} one {# link revoked} other {# links revoked}}",
+    "rateLimited": "You've created a lot of invite links today. Try again tomorrow.",
+    "createFailed": "Couldn't create an invite link. Try again.",
+    "revokeFailed": "Couldn't revoke the links. Try again."
   },
   "forms": {
     "owned-puzzle-form": {

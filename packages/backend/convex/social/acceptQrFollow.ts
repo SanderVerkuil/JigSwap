@@ -3,10 +3,11 @@ import { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { establishMutualFollow } from "./establishMutualFollow";
+import { isNetworkLink } from "./inviteLinkRules";
 
 // A logged-in member scanned someone's QR (or opened their invite link): one tap establishes the
 // mutual follow. Own/invalid/revoked tokens are silently ignored — never an error, the landing
-// page just shows nothing special.
+// page just shows nothing special. Household links are ignored: their only effect is redeemInvite.
 export const acceptQrFollow = mutation({
   args: { token: v.string() },
   handler: async (ctx, { token }) => {
@@ -19,6 +20,7 @@ export const acceptQrFollow = mutation({
     if (
       link === null ||
       link.revokedAt !== undefined ||
+      !isNetworkLink(link) ||
       link.ownerId === memberId
     ) {
       return { established: false };

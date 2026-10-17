@@ -1,22 +1,25 @@
+import {
+  INVITE_KEY,
+  NEW_MEMBER_WINDOW_MS,
+} from "@/components/social/invite-landing";
 import { QrDialogAutoOpen } from "@/components/social/qr-dialog";
 import { gateway } from "@/gateway";
 import { safeStorage } from "@/lib/safe-storage";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
-const INVITE_KEY = "jigswap.invite";
 const LOOP_SHOWN_KEY = "jigswap.inviteLoopShown";
 const FALLBACK_SHOWN_KEY = "jigswap.inviteFallbackShown";
-const NEW_MEMBER_WINDOW_MS = 15 * 60 * 1000;
 
 // Mounted once in the authed dashboard layout. Three jobs, all one-shot:
 // 1. Redeem a localStorage invite token that survived the Clerk redirect (attribution).
 // 2. Loop closure: after a successful redemption, offer the new member their OWN QR (skippable).
+//    A household link instead leaves a pending household invite: go to /household to accept it.
 // 3. Fallback: brand-new member with NO token (cross-device scan, private mode) gets a one-time
 //    "did someone invite you?" nudge toward people search.
 export function InviteRedeemer() {
@@ -24,6 +27,7 @@ export function InviteRedeemer() {
   const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
   const [showLoopQr, setShowLoopQr] = useState(false);
   const ran = useRef(false);
+  const navigate = useNavigate();
 
   const { mutate: redeem } = useMutation({
     mutationFn: useConvexMutation(gateway.social.redeemInvite),
@@ -35,6 +39,11 @@ export function InviteRedeemer() {
     onSuccess: (
       result: FunctionReturnType<typeof gateway.social.redeemInvite>,
     ) => {
+      // The pending invite waits on the household page; the invitee decides there.
+      if (result.householdInvite === "pending") {
+        void navigate({ to: "/household" });
+        return;
+      }
       if (
         result.redeemed &&
         safeStorage.getItem("local", LOOP_SHOWN_KEY) === null

@@ -3,6 +3,7 @@ export * from "./create-household";
 export * from "./decline-household-invite";
 export * from "./deps";
 export * from "./invite-to-household";
+export * from "./join-household-by-link";
 export * from "./leave-household";
 export * from "./remove-household-member";
 export * from "./set-household-default-copy-permission";
