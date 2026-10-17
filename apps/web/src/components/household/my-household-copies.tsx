@@ -80,7 +80,7 @@ export function MyHouseholdCopies({
   const targetIds = selectedVisibleIds(selected, visible);
 
   return (
-    <section className="space-y-3">
+    <section className="space-y-3" data-tour="household-my-copies">
       <div>
         <h2 className="font-heading text-lg font-bold">{t("title")}</h2>
         <p className="text-muted-foreground text-sm">{t("sub")}</p>

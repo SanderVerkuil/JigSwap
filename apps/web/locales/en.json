@@ -3730,7 +3730,7 @@
         },
         "copy-access": {
           "title": "You decide per puzzle",
-          "body": "Your puzzles stay yours. Open one and set Household access: Can manage lets housemates edit, lend and swap it; View only lets them see it."
+          "body": "Your puzzles stay yours. Here you choose what the household may do with each one: Can manage lets housemates edit, lend and swap it; View only lets them see it. Select several to change them at once."
         }
       }
     },
