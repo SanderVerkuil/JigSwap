@@ -674,6 +674,16 @@
       "generic": "Couldn't submit your review. Please try again."
     }
   },
+  "copyConversation": {
+    "title": "Message {name}",
+    "aboutPuzzle": "About this puzzle",
+    "pieces": "{count} pieces",
+    "placeholder": "Write a message about this puzzle…",
+    "firstMessageHint": "Your conversation starts when you send the first message.",
+    "self": "This is your own puzzle.",
+    "unavailable": "This puzzle isn't available to message about.",
+    "backToPuzzle": "Back to the puzzle"
+  },
   "messages": {
     "anonymous": "Anonymous user",
     "backToInbox": "Back to messages",

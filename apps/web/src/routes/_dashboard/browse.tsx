@@ -11,6 +11,10 @@ import {
   type QueryBuilderState,
 } from "@/components/browse/query-builder";
 import { EmptyState } from "@/components/community/primitives";
+import {
+  copyMessageRoute,
+  isOwnCopy,
+} from "@/components/messaging/copy-conversation";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
@@ -191,7 +195,11 @@ function BrowsePage() {
                 })
               }
               onRequestExchange={() => navigate({ to: "/trades" })}
-              onMessage={() => navigate({ to: "/messages" })}
+              onMessage={
+                isOwnCopy(puzzle.ownerId, convexUser?._id)
+                  ? undefined
+                  : (ownedPuzzleId) => navigate(copyMessageRoute(ownedPuzzleId))
+              }
               onFavorite={() => toast(tBrowse("favoritesComingSoon"))}
             />
           ))}
