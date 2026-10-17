@@ -70,6 +70,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
           void navigate({ to: route });
         },
         findTarget: findVisibleAnchor,
+        isActionTarget: (el) => el.hasAttribute("data-tour-action"),
       }),
   );
 

@@ -3850,6 +3850,7 @@
     "done": "Done",
     "end": "End tour",
     "opening": "Opening {page}…",
+    "actionHint": "Press the highlighted button to continue.",
     "paused": "Tour paused. You can pick it up again from What's new.",
     "pausedStandalone": "Tour paused. You can resume it from Quick setup.",
     "resumeAction": "Resume",
@@ -3869,7 +3870,7 @@
         },
         "copy-access": {
           "title": "You decide per puzzle",
-          "body": "Your puzzles stay yours. Open one and set Household access: Can manage lets housemates edit, lend and swap it; View only lets them see it."
+          "body": "Your puzzles stay yours. Here you choose what the household may do with each one: Can manage lets housemates edit, lend and swap it; View only lets them see it. Select several to change them at once."
         }
       }
     },

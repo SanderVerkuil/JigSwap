@@ -51,9 +51,8 @@ const tours: readonly TourDefinition[] = [
     steps: [
       { id: "start", route: "/household", target: "household-main" },
       { id: "invite", route: "/household", target: "household-invite" },
-      // Per-copy access is set on a copy page, which needs a concrete copy; this step explains it
-      // from the library instead of guessing one of the member's copies.
-      { id: "copy-access", route: "/my-puzzles" },
+      // Per-copy access, set in bulk from the household page's own "My puzzles" section.
+      { id: "copy-access", route: "/household", target: "household-my-copies" },
     ],
   },
   {
