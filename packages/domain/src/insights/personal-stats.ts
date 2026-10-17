@@ -6,6 +6,9 @@
 export interface CompletionStatInput {
   readonly completionTimeMinutes?: number;
   readonly isCompleted: boolean;
+  // Absent = "day". Every precision counts in the lifetime total; only dated solves feed the
+  // time averages.
+  readonly datePrecision?: "day" | "year" | "unknown";
 }
 
 // One owned copy, reduced to its catalog snapshot facets used for counting/distribution.
@@ -78,6 +81,7 @@ export const computePersonalStats = (
   const completed = input.completions.filter((c) => c.isCompleted);
 
   const solveMinutes = completed
+    .filter((c) => (c.datePrecision ?? "day") === "day")
     .map((c) => c.completionTimeMinutes)
     .filter((m): m is number => typeof m === "number");
   const totalSolveMinutes = solveMinutes.reduce((acc, m) => acc + m, 0);

@@ -245,6 +245,10 @@ export const gateway = {
   solving: {
     startCompletion: api.solving.startCompletion.startCompletion,
     recordCompletion: api.solving.recordCompletion.recordCompletion,
+    // Bulk "I've solved these" (quick start step 2): finished solves of copies, each dated to a
+    // day, a year or not at all; all or nothing, capped, and never announced in the feed.
+    recordPastCompletions:
+      api.solving.recordPastCompletions.recordPastCompletions,
     finishCompletion: api.solving.finishCompletion.finishCompletion,
     editCompletion: api.solving.editCompletion.editCompletion,
     attachCompletionPhotos:

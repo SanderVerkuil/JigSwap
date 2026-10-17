@@ -24,12 +24,15 @@ export const makeRecordCompletion =
       userId: cmd.userId,
       puzzleDefinitionId: cmd.puzzleDefinitionId,
       copyId: cmd.copyId,
+      datePrecision: cmd.datePrecision ?? "day",
       startDate: cmd.startDate,
       endDate: cmd.endDate,
+      year: cmd.year,
       completionTimeMinutes: cmd.completionTimeMinutes,
       notes: cmd.notes,
       photos: cmd.photoFileIds?.map((id) => Photo.of(id)),
       allPiecesPresent: cmd.allPiecesPresent,
+      bulk: cmd.bulk,
       now: deps.clock.now(),
     });
     if (completion.isErr) return err(completion.error);

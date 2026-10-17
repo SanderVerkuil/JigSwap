@@ -86,4 +86,22 @@ describe("computeCompletionTrends", () => {
       "2026-06",
     ]);
   });
+
+  it("counts only day-precision solves (absent = day); year and unknown can't be placed in a month", () => {
+    const points = computeCompletionTrends(
+      [
+        { completedAt: at(2026, 5, 1), completionTimeMinutes: 60 },
+        {
+          completedAt: at(2026, 5, 2),
+          completionTimeMinutes: 30,
+          datePrecision: "day",
+        },
+        { completedAt: at(2026, 5, 3), datePrecision: "year" },
+        { completedAt: at(2026, 5, 4), datePrecision: "unknown" },
+      ],
+      NOW,
+    );
+    const june = points.find((p) => p.month === "2026-06");
+    expect(june).toEqual({ month: "2026-06", count: 2, totalMinutes: 90 });
+  });
 });

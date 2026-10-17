@@ -2032,7 +2032,9 @@
       "deleteConfirmBody": "Dit verwijdert de voltooiing definitief uit je geschiedenis. Dit kan niet ongedaan worden gemaakt.",
       "deleteConfirm": "Verwijderen",
       "deleteSuccess": "Voltooiing verwijderd",
-      "deleteError": "Voltooiing kon niet worden verwijderd"
+      "deleteError": "Voltooiing kon niet worden verwijderd",
+      "dateUnknown": "Datum onbekend",
+      "inYear": "In {year}"
     },
     "logSolve": {
       "trigger": "Voltooiing vastleggen",
@@ -3723,6 +3725,21 @@
           "body": "Delen staat standaard uit. Open je accountmenu, kies Account beheren en dan Voorkeuren, en zet Deel puzzels waar je mee bezig bent met vrienden aan."
         }
       }
+    }
+  },
+  "quickStart": {
+    "solves": {
+      "lead": "Heb je een van deze al afgemaakt?",
+      "finished": "Ik heb {title} afgemaakt",
+      "when": "Wanneer?",
+      "dontRemember": "Weet ik niet meer",
+      "whichYear": "Welk jaar",
+      "pickDate": "Kies een datum",
+      "showMore": "Meer tonen",
+      "empty": "Voeg eerst een puzzel toe en kom dan terug om hem vast te leggen.",
+      "submit": "{count, plural, one {# puzzel vastleggen} other {# puzzels vastleggen}}",
+      "saved": "{count, plural, one {# puzzel vastgelegd} other {# puzzels vastgelegd}}",
+      "saveError": "Deze puzzels konden niet worden vastgelegd. Er is niets opgeslagen, dus je kunt het opnieuw proberen."
     }
   }
 }

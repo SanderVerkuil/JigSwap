@@ -6,8 +6,9 @@ export interface CompletionRepository {
   findById(id: CompletionId): Promise<Completion | null>;
   save(completion: Completion): Promise<void>;
   listByUser(userId: MemberId): Promise<readonly Completion[]>;
-  // The authoritative count of a member's recorded (finished) completions. Drives the DERIVED
-  // goal progress so the count is never hand-set on a Goal.
+  // The authoritative count of a member's recorded (finished) completions that count toward goals
+  // (countsTowardGoals: undated solves don't). Drives the DERIVED goal progress so the count is
+  // never hand-set on a Goal.
   countCompletedByUser(userId: MemberId): Promise<number>;
   // Hard-delete a completion by its domain id. No-op if the completion is already gone.
   delete(id: CompletionId): Promise<void>;

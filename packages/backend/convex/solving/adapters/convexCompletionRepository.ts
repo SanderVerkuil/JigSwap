@@ -1,4 +1,5 @@
 import {
+  countsTowardGoals,
   toCopyId,
   toPuzzleDefinitionId,
   type Completion,
@@ -126,8 +127,12 @@ export const convexCompletionRepository = (
           q.eq("userId", userId as unknown as Id<"users">),
         )
         .collect();
-      // The authoritative count of FINISHED completions; drives the derived goal progress.
-      return rows.filter((row) => row.isCompleted).length;
+      // The authoritative count of FINISHED completions that count toward goals (undated ones
+      // don't, decision 4); drives the derived goal progress.
+      return rows.filter(
+        (row) =>
+          row.isCompleted && countsTowardGoals(row.datePrecision ?? "day"),
+      ).length;
     },
 
     async delete(id: CompletionId): Promise<void> {

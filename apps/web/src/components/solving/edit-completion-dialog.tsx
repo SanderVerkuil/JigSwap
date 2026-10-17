@@ -40,6 +40,9 @@ interface EditCompletionDialogProps {
   initialEndDate?: number;
   initialTimeMinutes?: number;
   initialNotes?: string;
+  // Absent = "day". A year-only or undated solve's dates are sentinels, so the date inputs start
+  // empty; entering a date upgrades the solve to "day" server-side.
+  datePrecision?: "day" | "year" | "unknown";
 }
 
 // Edits a completion's mutable fields. The 24h window is enforced server-side; a closed window
@@ -52,15 +55,21 @@ export function EditCompletionDialog({
   initialEndDate,
   initialTimeMinutes,
   initialNotes,
+  datePrecision,
 }: EditCompletionDialogProps) {
+  const dated = (datePrecision ?? "day") === "day";
   const t = useTranslations("solving.logSolve");
   const tCompletions = useTranslations("solving.completions");
   const editCompletion = useMutation({
     mutationFn: useConvexMutation(gateway.solving.editCompletion),
   });
 
-  const [startDate, setStartDate] = useState(msToDateInput(initialStartDate));
-  const [endDate, setEndDate] = useState(msToDateInput(initialEndDate));
+  const [startDate, setStartDate] = useState(
+    dated ? msToDateInput(initialStartDate) : "",
+  );
+  const [endDate, setEndDate] = useState(
+    dated ? msToDateInput(initialEndDate) : "",
+  );
   const [hours, setHours] = useState(
     initialTimeMinutes ? String(Math.floor(initialTimeMinutes / 60)) : "",
   );

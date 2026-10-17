@@ -1,4 +1,5 @@
 import { DomainEvent } from "../../shared-kernel";
+import { DatePrecision } from "./date-precision";
 import {
   CompletionId,
   CopyId,
@@ -27,8 +28,14 @@ export class CompletionStarted implements DomainEvent {
 
 // A solve was finished (or recorded already-finished). This is the event that drives goal
 // progress and feeds activity feeds — the marketing "completed a puzzle" moment.
+//
+// `datePrecision` is carried only when it isn't "day", so every older payload reads as "day".
+// `bulk` is carried only for solves logged in a batch (the past-solves backfill); the feed skips
+// those so a backfill never floods followers.
 export class CompletionRecorded implements DomainEvent {
   readonly name = "CompletionRecorded";
+  readonly datePrecision: Exclude<DatePrecision, "day"> | undefined;
+  readonly bulk: true | undefined;
   constructor(
     readonly completionId: CompletionId,
     readonly userId: MemberId,
@@ -38,7 +45,12 @@ export class CompletionRecorded implements DomainEvent {
     readonly endDate: Date,
     readonly completionTimeMinutes: number | undefined,
     readonly occurredAt: Date,
-  ) {}
+    datePrecision: DatePrecision = "day",
+    bulk = false,
+  ) {
+    this.datePrecision = datePrecision === "day" ? undefined : datePrecision;
+    this.bulk = bulk ? true : undefined;
+  }
 }
 
 // Mutable fields (notes/photos/duration/dates) of a completion were edited within the 24h window.

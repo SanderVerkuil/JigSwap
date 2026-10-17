@@ -6,7 +6,11 @@ import { SectionHead } from "@/components/dashboard-home/section-head";
 import { Button } from "@/components/ui/button";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { gateway, Id } from "@/gateway";
-import { formatSolveTime, hrefForLink } from "@/lib/completion-format";
+import {
+  formatCompletionDate,
+  formatSolveTime,
+  hrefForLink,
+} from "@/lib/completion-format";
 import { cn } from "@/lib/utils";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
@@ -108,9 +112,11 @@ export function ProfileCompletionsSection({
           const meta = [
             completion.pieceCount !== undefined &&
               t("pieces", { count: completion.pieceCount }),
-            tLog("finished", {
-              date: new Date(completion.endDate).toLocaleDateString(),
-            }),
+            completion.datePrecision === "day"
+              ? tLog("finished", {
+                  date: new Date(completion.endDate).toLocaleDateString(),
+                })
+              : formatCompletionDate(tLog, completion),
             completion.completionTimeMinutes !== undefined &&
               formatSolveTime(tLog, completion.completionTimeMinutes),
           ]

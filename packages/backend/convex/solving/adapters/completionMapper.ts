@@ -44,6 +44,7 @@ export const toDomain = (
     ),
     allPiecesPresent: row.allPiecesPresent,
     isCompleted: row.isCompleted,
+    datePrecision: row.datePrecision ?? "day",
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
   };
@@ -66,6 +67,9 @@ export const toRow = (completion: Completion): CompletionRow => {
     ),
     allPiecesPresent: state.allPiecesPresent,
     isCompleted: state.isCompleted,
+    // Stored only when it isn't "day" (absent = "day"); an upgrade to "day" clears it on patch.
+    datePrecision:
+      state.datePrecision === "day" ? undefined : state.datePrecision,
     createdAt: state.createdAt.getTime(),
     updatedAt: state.updatedAt.getTime(),
   };

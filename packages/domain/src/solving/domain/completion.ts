@@ -1,4 +1,5 @@
 import { DomainEvent, err, ok, Result } from "../../shared-kernel";
+import { DatePrecision, MIN_SOLVE_YEAR, yearSentinel } from "./date-precision";
 import { SolvingError } from "./errors";
 import {
   CompletionEdited,
@@ -31,19 +32,25 @@ export interface StartCompletionProps {
   readonly now: Date;
 }
 
-// Input to record(): an already-finished solve logged after the fact.
+// Input to record(): an already-finished solve logged after the fact. The date fields depend on
+// the precision: "day" needs startDate + endDate, "year" needs year, "unknown" takes neither (the
+// sentinel dates are computed here, never supplied).
 export interface RecordCompletionProps {
   readonly id: CompletionId;
   readonly userId: MemberId;
   readonly puzzleDefinitionId?: PuzzleDefinitionId;
   readonly copyId?: CopyId;
-  readonly startDate: Date;
-  readonly endDate: Date;
-  // If omitted, the duration is derived from start/end.
+  readonly datePrecision: DatePrecision;
+  readonly startDate?: Date;
+  readonly endDate?: Date;
+  readonly year?: number;
+  // If omitted, the duration is derived from start/end. Refused for "year" and "unknown".
   readonly completionTimeMinutes?: number;
   readonly notes?: string;
   readonly photos?: readonly Photo[];
   readonly allPiecesPresent?: boolean;
+  // Logged as part of a batch backfill; carried on CompletionRecorded so the feed can skip it.
+  readonly bulk?: boolean;
   readonly now: Date;
 }
 
@@ -63,6 +70,8 @@ export interface CompletionState {
   readonly photos: readonly Photo[];
   readonly allPiecesPresent?: boolean;
   readonly isCompleted: boolean;
+  // "year"/"unknown" rows hold sentinel dates and no duration (see record()).
+  readonly datePrecision: DatePrecision;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }
@@ -121,6 +130,7 @@ export class Completion {
       photos,
       allPiecesPresent: props.allPiecesPresent,
       isCompleted: false,
+      datePrecision: "day",
       createdAt: props.now,
       updatedAt: props.now,
     });
@@ -137,38 +147,48 @@ export class Completion {
     return ok(completion);
   }
 
-  // Log an already-finished solve. Enforces endDate ≥ startDate, the photo cap, and a duration
-  // consistent with start/end; records CompletionRecorded.
+  // Log an already-finished solve. Enforces dates that match the precision, endDate ≥ startDate,
+  // the photo cap, and a duration consistent with start/end; records CompletionRecorded. A
+  // "year"/"unknown" solve gets sentinel dates (start = end) and no duration: the same-day
+  // one-day derivation would invent a solve time.
   static record(
     props: RecordCompletionProps,
   ): Result<Completion, SolvingError> {
-    if (props.endDate.getTime() < props.startDate.getTime()) {
-      return err(SolvingError.invalidTimeRange());
-    }
+    const dates = Completion.resolveRecordDates(props);
+    if (dates.isErr) return err(dates.error);
+    const { startDate, endDate } = dates.value;
+
     const photos = props.photos ?? [];
     if (photos.length > MAX_PHOTOS) {
       return err(SolvingError.tooManyPhotos(MAX_PHOTOS));
     }
 
-    const duration = Completion.resolveDuration(
-      props.startDate,
-      props.endDate,
-      props.completionTimeMinutes,
-    );
-    if (duration.isErr) return err(duration.error);
+    let minutes: number | undefined;
+    if (props.datePrecision === "day") {
+      const duration = Completion.resolveDuration(
+        startDate,
+        endDate,
+        props.completionTimeMinutes,
+      );
+      if (duration.isErr) return err(duration.error);
+      minutes = duration.value;
+    } else if (props.completionTimeMinutes !== undefined) {
+      return err(SolvingError.durationNotAllowed());
+    }
 
     const completion = new Completion({
       id: props.id,
       userId: props.userId,
       puzzleDefinitionId: props.puzzleDefinitionId,
       copyId: props.copyId,
-      startDate: props.startDate,
-      endDate: props.endDate,
-      completionTimeMinutes: duration.value,
+      startDate,
+      endDate,
+      completionTimeMinutes: minutes,
       notes: props.notes,
       photos,
       allPiecesPresent: props.allPiecesPresent,
       isCompleted: true,
+      datePrecision: props.datePrecision,
       createdAt: props.now,
       updatedAt: props.now,
     });
@@ -178,10 +198,12 @@ export class Completion {
         props.userId,
         props.puzzleDefinitionId,
         props.copyId,
-        props.startDate,
-        props.endDate,
-        duration.value,
+        startDate,
+        endDate,
+        minutes,
         props.now,
+        props.datePrecision,
+        props.bulk,
       ),
     );
     return ok(completion);
@@ -249,9 +271,27 @@ export class Completion {
       }
     }
 
-    const nextStart = changes.startDate ?? this.state.startDate;
+    // A "year"/"unknown" row's dates are sentinels, not facts. Setting a real date upgrades it to
+    // "day", and a single supplied date stands in for the missing one. Without a date, it still
+    // cannot take a solve time.
+    const datesChanged =
+      changes.startDate !== undefined || changes.endDate !== undefined;
+    const undated = this.state.datePrecision !== "day";
+    if (
+      undated &&
+      !datesChanged &&
+      changes.completionTimeMinutes !== undefined
+    ) {
+      return err(SolvingError.durationNotAllowed());
+    }
+    const nextStart =
+      changes.startDate ??
+      (undated ? changes.endDate : undefined) ??
+      this.state.startDate;
     const nextEnd =
-      changes.endDate !== undefined ? changes.endDate : this.state.endDate;
+      changes.endDate ??
+      (undated ? changes.startDate : undefined) ??
+      this.state.endDate;
     if (nextEnd && nextEnd.getTime() < nextStart.getTime()) {
       return err(SolvingError.invalidTimeRange());
     }
@@ -289,6 +329,7 @@ export class Completion {
       startDate: nextStart,
       endDate: nextEnd,
       completionTimeMinutes: nextDuration,
+      datePrecision: datesChanged ? "day" : this.state.datePrecision,
       updatedAt: now,
     };
     this.record(new CompletionEdited(this.state.id, now));
@@ -334,6 +375,37 @@ export class Completion {
   }
 
   // --- internals ---
+
+  // The start/end a recorded solve is stored with, per its precision (see RecordCompletionProps).
+  private static resolveRecordDates(
+    props: RecordCompletionProps,
+  ): Result<{ startDate: Date; endDate: Date }, SolvingError> {
+    const { startDate, endDate, year, now } = props;
+    if (props.datePrecision === "day") {
+      if (!startDate || !endDate || year !== undefined) {
+        return err(SolvingError.invalidDatePrecision());
+      }
+      if (endDate.getTime() < startDate.getTime()) {
+        return err(SolvingError.invalidTimeRange());
+      }
+      return ok({ startDate, endDate });
+    }
+    if (startDate || endDate) return err(SolvingError.invalidDatePrecision());
+    if (props.datePrecision === "unknown") {
+      if (year !== undefined) return err(SolvingError.invalidDatePrecision());
+      return ok({ startDate: now, endDate: now });
+    }
+    if (year === undefined) return err(SolvingError.invalidDatePrecision());
+    if (
+      !Number.isInteger(year) ||
+      year < MIN_SOLVE_YEAR ||
+      year > now.getUTCFullYear()
+    ) {
+      return err(SolvingError.invalidYear(year));
+    }
+    const at = yearSentinel(year, now);
+    return ok({ startDate: at, endDate: at });
+  }
 
   // Reconcile a supplied duration with the start/end span. Returns the resolved minutes. An
   // explicit minutes value must be a positive number. An explicit end-before-start is rejected

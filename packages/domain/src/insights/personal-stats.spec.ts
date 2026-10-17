@@ -127,4 +127,24 @@ describe("computePersonalStats", () => {
       computePersonalStats({ ...empty, collectionsCount: 7 }).collectionsCount,
     ).toBe(7);
   });
+
+  it("counts every precision in the lifetime total but only dated solves in the time averages", () => {
+    const stats = computePersonalStats({
+      ...empty,
+      completions: [
+        { isCompleted: true, completionTimeMinutes: 60 },
+        { isCompleted: true, completionTimeMinutes: 120, datePrecision: "day" },
+        // Defensive: a year/unknown row never carries minutes, but if one did it must not count.
+        {
+          isCompleted: true,
+          completionTimeMinutes: 999,
+          datePrecision: "year",
+        },
+        { isCompleted: true, datePrecision: "unknown" },
+      ],
+    });
+    expect(stats.completionsCount).toBe(4);
+    expect(stats.totalSolveMinutes).toBe(180);
+    expect(stats.averageSolveMinutes).toBe(90);
+  });
 });

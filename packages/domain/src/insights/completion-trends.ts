@@ -6,6 +6,8 @@ export interface CompletionTrendInput {
   // Epoch milliseconds the solve finished. Only finished solves should be passed in.
   readonly completedAt: number;
   readonly completionTimeMinutes?: number;
+  // Absent = "day". Year-only and undated solves have no month, so they are skipped (spec D4).
+  readonly datePrecision?: "day" | "year" | "unknown";
 }
 
 export interface CompletionTrendPoint {
@@ -58,6 +60,7 @@ export const computeCompletionTrends = (
   }
 
   for (const c of completions) {
+    if ((c.datePrecision ?? "day") !== "day") continue;
     const key = monthKey(c.completedAt);
     const bucket = buckets.get(key);
     if (!bucket) continue; // outside the window

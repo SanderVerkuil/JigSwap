@@ -216,5 +216,27 @@ describe("Goal use cases", () => {
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("InvalidGoalTarget");
     });
+
+    it("ignores undated solves but counts year-only ones (decision 4)", async () => {
+      const goalId = await seedGoal(5);
+      const record = makeRecordCompletion({
+        completions,
+        ids: completionIds,
+        events,
+        clock,
+      });
+      await recordCompletion();
+      await record({ userId: ALICE, datePrecision: "year", year: 2023 });
+      await record({ userId: ALICE, datePrecision: "unknown" });
+
+      const recompute = makeRecomputeGoalProgress({
+        goals,
+        completions,
+        events,
+        clock,
+      });
+      await recompute({ userId: ALICE });
+      expect((await goals.findById(goalId))?.currentCompletions).toBe(2);
+    });
   });
 });
