@@ -117,7 +117,13 @@
 <a name='L52'></a><a href='#L52'>52</a>
 <a name='L53'></a><a href='#L53'>53</a>
 <a name='L54'></a><a href='#L54'>54</a>
-<a name='L55'></a><a href='#L55'>55</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -132,49 +138,59 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { makeSetCopyCover, type OwnerId, toCopyId } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
+import {
+  canManageCopy,
+  convexCopyManagerPolicy,
+} from "../household/copyAccess";
 import { requireMember } from "../identity/requireMember";
 import { convexCopyRepository } from "./adapters/convexCopyRepository";
 import { libraryEventPublisher } from "./adapters/eventPublisher";
@@ -182,8 +198,8 @@ import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
 &nbsp;
 // Composition root for choosing a copy's cover picture. Keyed by the copy's Convex id so it pairs
-// with the gallery (also keyed by `ownedPuzzles._id`). OWNER-ONLY: only the copy's owner may pick
-// its cover. When a `coverImageId` is supplied it must be one of THIS copy's own photos — an image
+// with the gallery (also keyed by `ownedPuzzles._id`). Only the copy's owner (or a household member
+// with manage permission) may pick its cover. When a `coverImageId` is supplied it must be one of THIS copy's own photos — an image
 // row whose `ownedPuzzleId` is this copy — else the request is rejected. Passing `coverImageId`
 // undefined clears the selection (fall back to the puzzle's global catalogue image).
 export const setCopyCover = mutation({
@@ -196,7 +212,7 @@ export const setCopyCover = mutation({
 &nbsp;
     const copy = await ctx.db.get(args.copyId);
     if (!copy) throw new ConvexError("Copy not found");
-    if (copy.ownerId !== memberId) {
+    if (!(await canManageCopy(ctx, memberId, copy))) {
       throw new ConvexError("Only the owner can change this copy's cover");
     }
     <span class="missing-if-branch" title="if path not taken" >I</span>if (!copy.aggregateId) {
@@ -215,6 +231,8 @@ export const setCopyCover = mutation({
       copies: convexCopyRepository(ctx),
       events: libraryEventPublisher(ctx),
       clock: systemClock,
+      // Household members with manage permission act as co-owner.
+      managers: convexCopyManagerPolicy(ctx),
     });
 &nbsp;
     const result = await setCover({
@@ -232,7 +250,7 @@ export const setCopyCover = mutation({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-17T08:28:08.872Z
+                at 2026-10-17T12:23:47.625Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
