@@ -8,6 +8,7 @@ import { computeMemberStats } from "../identity/getUserStats";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { optionalActingMember } from "../identity/optionalActingMember";
 import { resolveMemberByHandle } from "../identity/resolveMemberByHandle";
+import { hasIdentityReveal } from "./identityReveals";
 import { areMutualFollowers, profileVisibilityOf } from "./privacy";
 
 // The UNAUTHENTICATED read behind the redesigned public member profile. Handle resolution
@@ -15,9 +16,11 @@ import { areMutualFollowers, profileVisibilityOf } from "./privacy";
 // identity/resolveMemberByHandle — the SECURITY-critical precedence lives there, once.
 //
 // Unlocking rule: the deeper story/stats/records are shown when the profile is public, the viewer
-// IS the member (isSelf), or the viewer and member are mutual followers. Otherwise the payload is
-// LOCKED and carries only `hero` — an Instagram-style private-account header (name, avatar, follow
-// counts, rating) that is disclosed regardless of lock state. `location` is the one strict
+// IS the member (isSelf), the viewer and member are mutual followers, or the viewer holds a trade
+// identity reveal toward the member (social/identityReveals — e.g. the owner of a requested copy
+// viewing the requester). Otherwise the payload is LOCKED and carries only `hero` — an
+// Instagram-style private-account header (name, avatar, follow counts, rating) that is disclosed
+// regardless of lock state. `location` is the one strict
 // exception inside `hero`: it is included ONLY when visibility === "public", in BOTH locked and
 // unlocked payloads, with no self/mutual carve-out — see PublicProfileHero's doc.
 export const getPublicProfile = query({
@@ -41,7 +44,14 @@ export const getPublicProfile = query({
       !isSelf &&
       viewerId !== null &&
       (await areMutualFollowers(ctx, viewerId, memberId));
-    const unlocked = visibility === "public" || isSelf || isMutual;
+    const isRevealed =
+      !isSelf &&
+      !isMutual &&
+      viewerId !== null &&
+      visibility !== "public" &&
+      (await hasIdentityReveal(ctx, viewerId, memberId));
+    const unlocked =
+      visibility === "public" || isSelf || isMutual || isRevealed;
 
     // Avatar: any signed-in member may see it; anonymous callers only with explicit public-surface
     // consent. Same rule as getPublicMemberTeaser.

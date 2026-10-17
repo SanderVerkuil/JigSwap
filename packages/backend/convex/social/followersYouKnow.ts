@@ -4,6 +4,7 @@ import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
+import { hasIdentityReveal } from "./identityReveals";
 import { knownFollowerIds } from "./knownFollowers";
 import { areMutualFollowers, profileVisibilityOf } from "./privacy";
 
@@ -34,7 +35,8 @@ export const followersYouKnow = query({
 
     if (
       (await profileVisibilityOf(ctx, args.memberId)) === "private" &&
-      !(await areMutualFollowers(ctx, viewer, args.memberId))
+      !(await areMutualFollowers(ctx, viewer, args.memberId)) &&
+      !(await hasIdentityReveal(ctx, viewer, args.memberId))
     ) {
       return { total: 0, members: [] };
     }

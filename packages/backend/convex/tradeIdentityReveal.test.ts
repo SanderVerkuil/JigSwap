@@ -1,0 +1,378 @@
+import { convexTest, type TestConvex } from "convex-test";
+import { describe, expect, test } from "vitest";
+import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
+import schema from "./schema";
+import { projectMemberIdentity } from "./social/privacy";
+
+// Trade identity reveal (staged): proposing reveals the REQUESTER to the OWNER at once; the OWNER
+// is revealed to the requester only by the owner's own action (accept, or a member-authored
+// message in the exchange thread). Reveals are append-only grants (identityReveals) read by the
+// privacy chokepoint. Both parties have PRIVATE profiles unless a test says otherwise.
+
+type T = TestConvex<typeof schema>;
+const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
+
+const as = (t: T, who: string) => t.withIdentity({ subject: `clerk_${who}` });
+
+// The dispatcher runs via runAfter(0); yield a macrotask then drain, a few times to settle chains.
+const flush = async (t: T) => {
+  for (let i = 0; i < 10; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await t.finishInProgressScheduledFunctions();
+  }
+};
+
+type World = {
+  requester: Id<"users">;
+  owner: Id<"users">;
+  third: Id<"users">;
+  copy: Id<"ownedPuzzles">;
+  thirdCopy: Id<"ownedPuzzles">;
+};
+
+const setVisibility = (
+  t: T,
+  memberId: Id<"users">,
+  visibility: "public" | "private",
+) =>
+  t.run(async (ctx) => {
+    const row = await ctx.db
+      .query("profiles")
+      .withIndex("by_member", (q) => q.eq("memberId", memberId))
+      .unique();
+    if (row) await ctx.db.patch(row._id, { visibility });
+    else
+      await ctx.db.insert("profiles", {
+        aggregateId: `prof-${memberId}`,
+        memberId,
+        displayName: "X",
+        visibility,
+        updatedAt: 1,
+      });
+  });
+
+const seed = async (t: T): Promise<World> => {
+  const world = await t.run(async (ctx) => {
+    const now = 1_000_000;
+    const mkUser = (who: string, name: string) =>
+      ctx.db.insert("users", {
+        clerkId: `clerk_${who}`,
+        email: `${who}@example.com`,
+        name,
+        username: who,
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    const requester = await mkUser("requester", "Rita Requester");
+    const owner = await mkUser("owner", "Olivia Owner");
+    const third = await mkUser("third", "Theo Third");
+    const puzzleId = await ctx.db.insert("puzzles", {
+      title: "Harbour Lights",
+      pieceCount: 1000,
+      status: "approved",
+      submittedBy: owner,
+      createdAt: now,
+      updatedAt: now,
+    });
+    const mkCopy = (ownerId: Id<"users">) =>
+      ctx.db.insert("ownedPuzzles", {
+        puzzleId,
+        ownerId,
+        condition: "good",
+        availability: { forTrade: false, forSale: true, forLend: false },
+        createdAt: now,
+        updatedAt: now,
+      });
+    return {
+      requester,
+      owner,
+      third,
+      copy: await mkCopy(owner),
+      thirdCopy: await mkCopy(third),
+    };
+  });
+  for (const id of [world.requester, world.owner, world.third]) {
+    await setVisibility(t, id, "private");
+  }
+  return world;
+};
+
+const propose = async (
+  t: T,
+  who: string,
+  requestedPuzzleId: Id<"ownedPuzzles">,
+  recipientId: Id<"users">,
+): Promise<string> => {
+  const id = await as(t, who).mutation(api.exchange.propose.propose, {
+    recipientId,
+    // A sale needs no offered copy, keeping the fixtures small; the reveal is kind-agnostic.
+    type: "sale",
+    salePrice: 10,
+    requestedPuzzleId,
+  });
+  await flush(t);
+  return id;
+};
+
+const act = async (
+  t: T,
+  who: string,
+  action: "accept" | "decline" | "cancel" | "confirmCompletion",
+  exchangeId: string,
+) => {
+  const fn = {
+    accept: api.exchange.accept.accept,
+    decline: api.exchange.decline.decline,
+    cancel: api.exchange.cancel.cancel,
+    confirmCompletion: api.exchange.confirmCompletion.confirmCompletion,
+  }[action];
+  await as(t, who).mutation(fn, { exchangeId });
+  await flush(t);
+};
+
+const postInThread = async (
+  t: T,
+  who: string,
+  exchangeId: string,
+  body = "hello",
+) => {
+  const threadId = await as(t, who).query(
+    api.conversation.getThreadByExchange.getThreadByExchange,
+    { exchangeId },
+  );
+  expect(threadId).not.toBeNull();
+  await as(t, who).mutation(api.conversation.postMessage.postMessage, {
+    threadId: threadId!,
+    kind: "text",
+    body,
+  });
+  await flush(t);
+};
+
+/** Does `viewer` see `target`'s real identity through the privacy chokepoint? */
+const sees = (t: T, viewer: Id<"users">, target: Id<"users">) =>
+  t.run(
+    async (ctx) =>
+      !(await projectMemberIdentity(ctx, viewer, target, "salt")).anonymous,
+  );
+
+const grants = (t: T) =>
+  t.run(async (ctx) => ctx.db.query("identityReveals").collect());
+
+describe("trade identity reveal: grants", () => {
+  test("proposing reveals the requester to the owner, not the owner to the requester", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    expect(await sees(t, w.owner, w.requester)).toBe(false);
+
+    await propose(t, "requester", w.copy, w.owner);
+
+    expect(await sees(t, w.owner, w.requester)).toBe(true);
+    expect(await sees(t, w.requester, w.owner)).toBe(false);
+    const rows = await grants(t);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      viewerId: w.owner,
+      targetId: w.requester,
+      reason: "exchange_requested",
+    });
+  });
+
+  test("accepting reveals the owner to the requester", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    const ex = await propose(t, "requester", w.copy, w.owner);
+
+    await act(t, "owner", "accept", ex);
+
+    expect(await sees(t, w.requester, w.owner)).toBe(true);
+    const ownerGrant = (await grants(t)).find((g) => g.targetId === w.owner);
+    expect(ownerGrant).toMatchObject({
+      viewerId: w.requester,
+      reason: "exchange_owner_acted",
+    });
+  });
+
+  test("an owner-authored thread message reveals the owner without accepting", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    const ex = await propose(t, "requester", w.copy, w.owner);
+
+    await postInThread(t, "owner", ex, "Which edition is yours?");
+
+    expect(await sees(t, w.requester, w.owner)).toBe(true);
+  });
+
+  test("the requester's own messages and the lifecycle system messages never reveal the owner", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    const ex = await propose(t, "requester", w.copy, w.owner);
+
+    // The thread already carries the "Exchange proposed" system message (null author).
+    await postInThread(t, "requester", ex, "Still interested?");
+
+    expect(await sees(t, w.requester, w.owner)).toBe(false);
+    expect(await grants(t)).toHaveLength(1);
+  });
+
+  test("declining before any reply keeps the owner anonymous", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    const ex = await propose(t, "requester", w.copy, w.owner);
+
+    await act(t, "owner", "decline", ex);
+
+    expect(await sees(t, w.requester, w.owner)).toBe(false);
+    expect(await sees(t, w.owner, w.requester)).toBe(true);
+  });
+
+  test("reveals persist after completion", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    const ex = await propose(t, "requester", w.copy, w.owner);
+    await act(t, "owner", "accept", ex);
+    await act(t, "owner", "confirmCompletion", ex);
+    await act(t, "requester", "confirmCompletion", ex);
+
+    expect(await sees(t, w.requester, w.owner)).toBe(true);
+    expect(await sees(t, w.owner, w.requester)).toBe(true);
+  });
+
+  test("reveals persist after cancelling an accepted exchange", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    const ex = await propose(t, "requester", w.copy, w.owner);
+    await act(t, "owner", "accept", ex);
+    await act(t, "requester", "cancel", ex);
+
+    expect(await sees(t, w.requester, w.owner)).toBe(true);
+    expect(await sees(t, w.owner, w.requester)).toBe(true);
+  });
+
+  test("reveals persist after cancelling a proposal the owner replied to", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    const ex = await propose(t, "requester", w.copy, w.owner);
+    await postInThread(t, "owner", ex);
+    await act(t, "requester", "cancel", ex);
+
+    expect(await sees(t, w.requester, w.owner)).toBe(true);
+    expect(await sees(t, w.owner, w.requester)).toBe(true);
+  });
+
+  test("a third party is unaffected by other members' grants", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    const ex = await propose(t, "requester", w.copy, w.owner);
+    await act(t, "owner", "accept", ex);
+
+    for (const [a, b] of [
+      [w.third, w.owner],
+      [w.third, w.requester],
+      [w.owner, w.third],
+      [w.requester, w.third],
+    ] as const) {
+      expect(await sees(t, a, b)).toBe(false);
+    }
+  });
+
+  test("a grant is idempotent per pair across several exchanges", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    const ex = await propose(t, "requester", w.copy, w.owner);
+    await act(t, "owner", "decline", ex);
+    await propose(t, "requester", w.copy, w.owner);
+
+    expect(await grants(t)).toHaveLength(1);
+  });
+
+  test("public and mutual-follower rules are unchanged without any grant", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    expect(await sees(t, w.requester, w.owner)).toBe(false);
+    await setVisibility(t, w.owner, "public");
+    expect(await sees(t, w.requester, w.owner)).toBe(true);
+    await setVisibility(t, w.owner, "private");
+    await t.run(async (ctx) => {
+      for (const [a, b] of [
+        [w.requester, w.owner],
+        [w.owner, w.requester],
+      ] as const) {
+        await ctx.db.insert("follows", {
+          followerId: a,
+          followeeId: b,
+          createdAt: 1,
+        });
+      }
+    });
+    expect(await sees(t, w.requester, w.owner)).toBe(true);
+    expect(await grants(t)).toHaveLength(0);
+  });
+});
+
+describe("trade identity reveal: the profile page", () => {
+  test("the owner gets the requester's unlocked profile right after the proposal", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    await t.run(async (ctx) => {
+      const puzzleId = (await ctx.db.get(w.copy))!.puzzleId;
+      await ctx.db.insert("completions", {
+        userId: w.requester,
+        puzzleId,
+        startDate: 1,
+        isCompleted: true,
+        completionTimeMinutes: 90,
+        photos: [],
+        createdAt: 1,
+        updatedAt: 1,
+      });
+    });
+    const profile = (who: string, handle: string) =>
+      as(t, who).query(api.social.getPublicProfile.getPublicProfile, {
+        handle,
+      });
+    const completions = (who: string, memberId: Id<"users">) =>
+      as(t, who).query(
+        api.social.listProfileCompletions.listProfileCompletions,
+        { memberId, paginationOpts: { numItems: 10, cursor: null } } as never,
+      );
+
+    expect((await profile("owner", "requester"))?.locked).toBe(true);
+    expect((await completions("owner", w.requester)).page).toHaveLength(0);
+    await propose(t, "requester", w.copy, w.owner);
+
+    expect((await profile("owner", "requester"))?.locked).toBe(false);
+    expect(
+      (await completions("owner", w.requester)).page.length,
+    ).toBeGreaterThan(0);
+    // The requester still finds the owner's profile LOCKED.
+    expect((await profile("requester", "owner"))?.locked).toBe(true);
+    // A third party gains nothing.
+    expect((await profile("third", "requester"))?.locked).toBe(true);
+  });
+
+  test("the follow-graph and identity gates honour the grant", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    await propose(t, "requester", w.copy, w.owner);
+
+    const asOwner = as(t, "owner");
+    expect(
+      await asOwner.query(api.identity.getUserById.getUserById, {
+        userId: w.requester,
+      }),
+    ).not.toBeNull();
+    expect(
+      await as(t, "requester").query(api.identity.getUserById.getUserById, {
+        userId: w.owner,
+      }),
+    ).toBeNull();
+    expect(
+      await asOwner.query(api.social.getProfile.getProfile, {
+        memberId: w.requester,
+      }),
+    ).not.toBeNull();
+  });
+});

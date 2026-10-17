@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { query } from "../_generated/server";
+import { hasIdentityReveal } from "../social/identityReveals";
 import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
 import { requireMember } from "./requireMember";
 
@@ -76,7 +77,8 @@ export const getUserStats = query({
     if (
       target !== viewer &&
       (await profileVisibilityOf(ctx, target)) === "private" &&
-      !(await areMutualFollowers(ctx, viewer, target))
+      !(await areMutualFollowers(ctx, viewer, target)) &&
+      !(await hasIdentityReveal(ctx, viewer, target))
     ) {
       return null;
     }

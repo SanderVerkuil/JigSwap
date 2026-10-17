@@ -1010,6 +1010,22 @@ export default defineSchema({
     .index("by_follower_followee", ["followerId", "followeeId"])
     .index("by_aggregate_id", ["aggregateId"]),
 
+  // Social: trade identity reveals. One APPEND-ONLY grant per directed (viewer, target) pair: the
+  // viewer may see the target's real identity and full profile, like a mutual follower. Written by
+  // social/identityRevealSubscriber (the owner sees the requester on propose; the requester sees
+  // the owner once the owner accepts or replies). Never deleted — a reveal persists forever.
+  // GLOBAL per pair, not per trade: `exchangeId` / `reason` record only the FIRST grant's origin.
+  identityReveals: defineTable({
+    viewerId: v.id("users"),
+    targetId: v.id("users"),
+    exchangeId: v.id("exchanges"),
+    reason: v.union(
+      v.literal("exchange_requested"),
+      v.literal("exchange_owner_acted"),
+    ),
+    createdAt: v.number(),
+  }).index("by_viewer_target", ["viewerId", "targetId"]),
+
   // Social: a member's shareable invite link. One ACTIVE row per member (revokedAt undefined);
   // resets revoke the old row and insert a new one so historical counters survive. The token rides
   // on the profile URL as ?invite=<token> (QR + share). Counters are the growth-loop metrics.
