@@ -6,6 +6,7 @@ import nlMessages from "../../../locales/nl.json";
 import type { InboxThread, Translator } from "./format";
 import {
   conversationErrorCode,
+  copyOwnerHint,
   coverStackSummary,
   formatCompactTime,
   formatDayLabel,
@@ -382,5 +383,49 @@ describe("coverStackSummary", () => {
     expect(coverStackSummary(["A", "B", "C", "D", "E"], "nl", nl)).toBe(
       "Over 5 puzzels: A, B, C en nog 2",
     );
+  });
+});
+
+describe("copyOwnerHint", () => {
+  const translators = {
+    en: createTranslator({
+      locale: "en",
+      messages: enMessages,
+      namespace: "messages",
+    }) as unknown as Translator,
+    nl: createTranslator({
+      locale: "nl",
+      messages: nlMessages,
+      namespace: "messages",
+    }) as unknown as Translator,
+  };
+  const named = {
+    anonymous: false,
+    member: { name: "Esther" },
+  } as InboxThread["subject"]["otherMember"];
+  const anonymised = {
+    anonymous: true,
+    anonRef: "anon-1",
+  } as InboxThread["subject"]["otherMember"];
+  const displayName = (source: { name?: string | null }) =>
+    source.name ?? "generic";
+
+  it.each([
+    ["en", "viewer", named, "Your copy"],
+    ["nl", "viewer", named, "Jouw exemplaar"],
+    ["en", "other", named, "Esther's copy"],
+    ["nl", "other", named, "Exemplaar van Esther"],
+    ["en", "other", anonymised, "The other member's copy"],
+    ["nl", "other", anonymised, "Exemplaar van de ander"],
+  ] as const)("%s: %s copy → %s", (locale, owner, member, expected) => {
+    expect(copyOwnerHint(owner, member, translators[locale], displayName)).toBe(
+      expected,
+    );
+  });
+
+  it("never names an anonymised owner", () => {
+    expect(
+      copyOwnerHint("other", anonymised, translators.en, () => "Leaked Name"),
+    ).not.toContain("Leaked");
   });
 });

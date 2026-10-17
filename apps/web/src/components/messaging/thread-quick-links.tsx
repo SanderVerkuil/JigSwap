@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import {
   ArrowLeftRight,
   ChevronDown,
@@ -26,6 +27,7 @@ import {
 import { useTranslations } from "use-intl";
 import {
   contextCopyHref,
+  copyOwnerHint,
   threadQuickLinks,
   type InboxContextCopy,
   type InboxThread,
@@ -45,7 +47,11 @@ const LINK_META: Record<
 
 export function ThreadQuickLinks({ thread }: { thread: InboxThread }) {
   const t = useTranslations("messages");
+  const displayName = useMemberDisplayName();
   const links = threadQuickLinks(thread);
+  // Second line per puzzle: whose copy it is (several can share a title).
+  const ownerHint = (copy: InboxContextCopy) =>
+    copyOwnerHint(copy.owner, thread.subject.otherMember, t, displayName);
   if (links.length === 0) return null;
   const single = links.filter((link): link is SingleLink => "href" in link);
   const puzzles = links.find((link) => link.kind === "puzzles")?.copies;
@@ -104,7 +110,11 @@ export function ThreadQuickLinks({ thread }: { thread: InboxThread }) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72">
               {puzzles.map((copy) => (
-                <PuzzleMenuItem key={copy.copyId} copy={copy} />
+                <PuzzleMenuItem
+                  key={copy.copyId}
+                  copy={copy}
+                  hint={ownerHint(copy)}
+                />
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -150,6 +160,7 @@ export function ThreadQuickLinks({ thread }: { thread: InboxThread }) {
                   <PuzzleMenuItem
                     key={copy.copyId}
                     copy={copy}
+                    hint={ownerHint(copy)}
                     className="min-h-11"
                   />
                 ))}
@@ -165,9 +176,11 @@ export function ThreadQuickLinks({ thread }: { thread: InboxThread }) {
 // One puzzle in a menu: small cover (or the puzzle glyph) and its title.
 function PuzzleMenuItem({
   copy,
+  hint,
   className,
 }: {
   copy: InboxContextCopy;
+  hint: string;
   className?: string;
 }) {
   return (
@@ -180,7 +193,12 @@ function PuzzleMenuItem({
             <Puzzle className="text-muted-foreground size-4" aria-hidden />
           )}
         </span>
-        <span className="min-w-0 truncate">{copy.title}</span>
+        <span className="min-w-0">
+          <span className="block truncate">{copy.title}</span>
+          <span className="text-muted-foreground block truncate text-xs">
+            {hint}
+          </span>
+        </span>
       </Link>
     </DropdownMenuItem>
   );

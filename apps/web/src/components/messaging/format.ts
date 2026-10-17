@@ -259,3 +259,17 @@ export function coverStackSummary(
   }).format(items);
   return t("coverStackSummary", { count: titles.length, list });
 }
+
+// Whose copy a context copy is, for the header puzzle menu and the cover
+// tooltips: "Your copy", "<Name>'s copy", or a generic label when the other
+// member is anonymised (never a real identity).
+export function copyOwnerHint(
+  owner: InboxContextCopy["owner"],
+  otherMember: InboxThread["subject"]["otherMember"],
+  t: Translator,
+  displayName: (source: MemberNameSource) => string,
+): string {
+  if (owner === "viewer") return t("copyOwnerYou");
+  if (otherMember.anonymous) return t("copyOwnerOther");
+  return t("copyOwnerNamed", { name: displayName(otherMember.member) });
+}
