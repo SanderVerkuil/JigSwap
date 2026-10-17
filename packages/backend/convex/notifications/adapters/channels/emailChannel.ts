@@ -14,7 +14,8 @@ export const emailChannel =
   async (notification: Notification): Promise<void> => {
     const state = notification.toState();
     const user = await ctx.db.get(state.userId as unknown as Id<"users">);
-    if (!user) return;
+    // No verified email on file (see users.updateOrCreateUser): nothing to send to.
+    if (!user?.email) return;
     await ctx.scheduler.runAfter(0, internal.notifications.sendEmail.send, {
       to: user.email,
       // The recipient's OWN label, so their email is a fine fallback.
