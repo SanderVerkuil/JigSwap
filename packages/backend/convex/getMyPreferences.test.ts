@@ -42,7 +42,7 @@ describe("getMyPreferences", () => {
       {},
     );
 
-    expect(Object.keys(prefs)).toHaveLength(23);
+    expect(Object.keys(prefs)).toHaveLength(24);
     // The stored email wins; the absent inApp key falls back to its default (true).
     expect(prefs.trade_request).toEqual({
       inApp: true,
@@ -51,6 +51,12 @@ describe("getMyPreferences", () => {
     });
     // A type never in the stored row resolves to the plain default triple.
     expect(prefs.goal_achieved).toEqual({
+      inApp: true,
+      email: false,
+      push: false,
+    });
+    // Product news defaults to in-app only, like every type.
+    expect(prefs.whats_new).toEqual({
       inApp: true,
       email: false,
       push: false,

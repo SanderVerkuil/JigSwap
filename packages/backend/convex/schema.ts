@@ -797,6 +797,7 @@ export default defineSchema({
       v.literal("follow_request_approved"),
       v.literal("household_invite_received"),
       v.literal("household_invite_accepted"),
+      v.literal("whats_new"),
     ),
     // Legacy pre-rendered English copy. Optional since notifications went structured: new rows
     // store `params` and the edges render copy (web via i18n keys, email via @jigswap/email).
