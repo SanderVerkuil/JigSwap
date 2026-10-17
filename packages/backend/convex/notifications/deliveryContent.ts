@@ -3,6 +3,10 @@ import type { NotificationState } from "@jigswap/domain";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import schema from "../schema";
+import {
+  ADMIN_NOTIFICATION_TYPES,
+  INITIATOR_NOTIFICATION_TYPES,
+} from "./viewRules";
 
 // What the out-of-band channels (email, push) render for ONE notification: the same resolution the
 // in-app read model does (resolveNotificationView), flattened into render params + a deep link.
@@ -49,8 +53,10 @@ export interface DeliveryContent {
    */
   readonly params: Record<string, string>;
   /**
-   * The actor resolved anonymous (deleted or deactivated; every actor-bearing delivered type is
-   * otherwise revealed to its recipient): render the "Former member" label, never a name.
+   * The actor resolved anonymous on an initiator or admin type (whose actor is otherwise always
+   * revealed to its recipient), where that can only mean deleted or deactivated: render the "Former member" label, never a name. A
+   * privacy-anonymous actor (e.g. a private owner declining a trade before ever replying) is NOT
+   * flagged: it simply carries no actorName, so the renderer uses its generic, nameless copy.
    */
   readonly actorAnonymous: boolean;
   /** The in-app deep link (root-relative); null when the read model has none (use the fallback). */
@@ -82,7 +88,11 @@ export const deliveryContentOf = (
 
   return {
     params,
-    actorAnonymous: hasActorRef && actor?.anonymous === true,
+    actorAnonymous:
+      hasActorRef &&
+      actor?.anonymous === true &&
+      (INITIATOR_NOTIFICATION_TYPES.has(view.type) ||
+        ADMIN_NOTIFICATION_TYPES.has(view.type)),
     href: view.href,
   };
 };

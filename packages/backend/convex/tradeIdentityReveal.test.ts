@@ -376,3 +376,162 @@ describe("trade identity reveal: the profile page", () => {
     ).not.toBeNull();
   });
 });
+
+const docIdOf = (t: T, aggregateId: string) =>
+  t.run(async (ctx) => {
+    const row = await ctx.db
+      .query("exchanges")
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", aggregateId))
+      .unique();
+    return row!._id;
+  });
+
+const exchangeViews = async (t: T, who: string, exchangeId: string) => {
+  const docId = await docIdOf(t, exchangeId);
+  const reader = as(t, who);
+  return {
+    detail: await reader.query(api.exchange.getExchangeById.getExchangeById, {
+      exchangeId: docId,
+    }),
+    list: await reader.query(
+      api.exchange.getUserExchanges.getUserExchanges,
+      {},
+    ),
+    asRequester: await reader.query(
+      api.exchange.getExchangesByRequester.getExchangesByRequester,
+      {},
+    ),
+    asOwner: await reader.query(
+      api.exchange.getExchangesByOwner.getExchangesByOwner,
+      {},
+    ),
+  };
+};
+
+const notificationViews = async (t: T, who: string) =>
+  (
+    await as(t, who).query(
+      api.notifications.listMyNotificationViews.listMyNotificationViews,
+      { paginationOpts: { numItems: 50, cursor: null } },
+    )
+  ).page;
+
+describe("trade identity reveal: exchange views", () => {
+  test("the requester sees an anonymous owner with no raw owner id anywhere", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    const ex = await propose(t, "requester", w.copy, w.owner);
+
+    const views = await exchangeViews(t, "requester", ex);
+
+    expect(views.detail?.owner).toBeNull();
+    expect(views.detail?.requester?._id).toBe(w.requester);
+    expect(views.detail?.initiatorId).toBe(w.requester);
+    expect(views.detail).not.toHaveProperty("recipientId");
+    expect(views.detail?.ownerPuzzle).not.toHaveProperty("ownerId");
+    expect(views.list).toHaveLength(1);
+    expect(views.list[0]!.owner).toBeNull();
+    expect(views.asRequester).toHaveLength(1);
+    const json = JSON.stringify(views);
+    expect(json).not.toContain(w.owner);
+    expect(json).not.toContain("Olivia");
+  });
+
+  test("the owner sees the requester in every exchange view", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    const ex = await propose(t, "requester", w.copy, w.owner);
+
+    const views = await exchangeViews(t, "owner", ex);
+
+    expect(views.detail?.requester?.name).toBe("Rita Requester");
+    expect(views.detail?.initiatorId).toBe(w.requester);
+    expect(views.detail?.recipientId).toBe(w.owner);
+    expect(views.detail?.ownerPuzzle?.ownerId).toBe(w.owner);
+    expect(views.asOwner[0]!.requester?._id).toBe(w.requester);
+    expect(views.list[0]!.requester?._id).toBe(w.requester);
+  });
+
+  test("after the owner accepts, the requester's views carry the owner", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    const ex = await propose(t, "requester", w.copy, w.owner);
+    await act(t, "owner", "accept", ex);
+
+    const views = await exchangeViews(t, "requester", ex);
+
+    expect(views.detail?.owner?.name).toBe("Olivia Owner");
+    expect(views.detail?.recipientId).toBe(w.owner);
+    expect(views.detail?.ownerPuzzle?.ownerId).toBe(w.owner);
+    expect(views.list[0]!.owner?._id).toBe(w.owner);
+  });
+
+  test("a public owner stays visible to the requester as before", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    await setVisibility(t, w.owner, "public");
+    const ex = await propose(t, "requester", w.copy, w.owner);
+
+    const views = await exchangeViews(t, "requester", ex);
+
+    expect(views.detail?.owner?._id).toBe(w.owner);
+    expect(views.detail?.recipientId).toBe(w.owner);
+  });
+});
+
+describe("trade identity reveal: notifications", () => {
+  test("the trade request names the requester to the owner", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    await propose(t, "requester", w.copy, w.owner);
+
+    const request = (await notificationViews(t, "owner")).find(
+      (n) => n.type === "trade_request",
+    );
+    expect(request?.actors[0]).toMatchObject({
+      anonymous: false,
+      memberId: w.requester,
+    });
+  });
+
+  test("a decline before any reply keeps the owner anonymous; an accept names them", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    const declined = await propose(t, "requester", w.copy, w.owner);
+    await act(t, "owner", "decline", declined);
+
+    const decline = (await notificationViews(t, "requester")).find(
+      (n) => n.type === "trade_declined",
+    );
+    expect(decline?.actors).toEqual([{ anonymous: true }]);
+    expect(
+      JSON.stringify(await notificationViews(t, "requester")),
+    ).not.toContain(w.owner);
+
+    const accepted = await propose(t, "requester", w.copy, w.owner);
+    await act(t, "owner", "accept", accepted);
+    const accept = (await notificationViews(t, "requester")).find(
+      (n) => n.type === "trade_accepted",
+    );
+    expect(accept?.actors[0]).toMatchObject({
+      anonymous: false,
+      memberId: w.owner,
+    });
+  });
+
+  test("a decline after the owner replied names the owner", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    const ex = await propose(t, "requester", w.copy, w.owner);
+    await postInThread(t, "owner", ex, "Sorry, it's promised to a friend");
+    await act(t, "owner", "decline", ex);
+
+    const decline = (await notificationViews(t, "requester")).find(
+      (n) => n.type === "trade_declined",
+    );
+    expect(decline?.actors[0]).toMatchObject({
+      anonymous: false,
+      memberId: w.owner,
+    });
+  });
+});

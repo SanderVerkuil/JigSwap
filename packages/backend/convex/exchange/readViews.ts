@@ -3,20 +3,60 @@ import type {
   ExchangeOwnedPuzzleView,
   ExchangePuzzleView,
   ExchangeSummaryView,
+  MemberView,
 } from "@jigswap/contracts";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
-import { toMemberView } from "../identity/toMemberView";
+import { projectMemberIdentity } from "../social/privacy";
 
 // Shared row->DTO mapping for the exchange reads, so every exchange adapter emits typed view DTOs
 // (faithful supersets of the joined rows) rather than leaking raw documents.
 
-export const toExchangeFields = (e: Doc<"exchanges">): ExchangeFields => ({
+/**
+ * Both parties as the viewer may see them. Each party goes through the privacy chokepoint
+ * (projectMemberIdentity, salt = the exchange `_id`): a party anonymous to the viewer becomes
+ * `null` and is flagged hidden, so every view also OMITS their raw id (a raw user id is itself a
+ * leak — e.g. a locked profile hero discloses name/avatar to anyone holding it). The owner is
+ * revealed to the requester only once the owner acted (social/identityRevealSubscriber).
+ */
+export type ExchangeParties = {
+  readonly requester: MemberView | null;
+  readonly owner: MemberView | null;
+  /** Party ids the viewer may NOT see (never contains the viewer). */
+  readonly hidden: ReadonlySet<Id<"users">>;
+};
+
+export const projectExchangeParties = async (
+  ctx: QueryCtx,
+  e: Doc<"exchanges">,
+  viewerId: Id<"users">,
+): Promise<ExchangeParties> => {
+  const salt = e._id as string;
+  const [requester, owner] = await Promise.all([
+    projectMemberIdentity(ctx, viewerId, e.initiatorId, salt),
+    projectMemberIdentity(ctx, viewerId, e.recipientId, salt),
+  ]);
+  const hidden = new Set<Id<"users">>();
+  if (requester.anonymous && e.initiatorId !== viewerId) {
+    hidden.add(e.initiatorId);
+  }
+  if (owner.anonymous && e.recipientId !== viewerId) hidden.add(e.recipientId);
+  return {
+    requester: requester.anonymous ? null : requester.member,
+    owner: owner.anonymous ? null : owner.member,
+    hidden,
+  };
+};
+
+export const toExchangeFields = (
+  e: Doc<"exchanges">,
+  hidden: ReadonlySet<Id<"users">>,
+): ExchangeFields => ({
   _id: e._id,
   _creationTime: e._creationTime,
   aggregateId: e.aggregateId,
-  initiatorId: e.initiatorId,
-  recipientId: e.recipientId,
+  ...(hidden.has(e.initiatorId) ? {} : { initiatorId: e.initiatorId }),
+  ...(hidden.has(e.recipientId) ? {} : { recipientId: e.recipientId }),
   type: e.type,
   offeredPuzzleId: e.offeredPuzzleId,
   requestedPuzzleId: e.requestedPuzzleId,
@@ -38,10 +78,12 @@ export const toExchangeFields = (e: Doc<"exchanges">): ExchangeFields => ({
  * `library/mappers.ts` `toOwnedCopyView` and `getCopyInstanceView`. `salePrice` is NOT owner-only:
  * it is the public asking price for a copy listed for sale (and intrinsic to the exchange), so it is
  * always carried. Each copy is gated independently — pass the acting member as `viewerId`.
+ * `ownerId` is OMITTED when the copy's owner is in `hidden` (a party anonymous to the viewer).
  */
 export const toOwnedPuzzleView = (
   c: Doc<"ownedPuzzles"> | null,
   viewerId: Id<"users">,
+  hidden: ReadonlySet<Id<"users">>,
 ): ExchangeOwnedPuzzleView | null => {
   if (!c) return null;
   const viewerIsOwner = c.ownerId === viewerId;
@@ -52,7 +94,7 @@ export const toOwnedPuzzleView = (
     puzzleId: c.puzzleId,
     puzzleDefinitionId: c.puzzleDefinitionId,
     snapshot: c.snapshot,
-    ownerId: c.ownerId,
+    ...(hidden.has(c.ownerId) ? {} : { ownerId: c.ownerId }),
     condition: c.condition,
     missingPiecesCount: c.missingPiecesCount,
     // Owner-only personal fields: only surfaced when the viewer owns this copy.
@@ -69,8 +111,11 @@ export const toOwnedPuzzleView = (
   };
 };
 
+// `submittedBy` is OMITTED when the catalog submitter is a party anonymous to the viewer (the owner
+// often submitted the definition of the copy they own).
 export const toPuzzleView = (
   p: Doc<"puzzles"> | null,
+  hidden: ReadonlySet<Id<"users">>,
 ): ExchangePuzzleView | null =>
   p
     ? {
@@ -94,28 +139,29 @@ export const toPuzzleView = (
         image: p.image,
         searchableText: p.searchableText,
         status: p.status,
-        submittedBy: p.submittedBy,
+        ...(hidden.has(p.submittedBy) ? {} : { submittedBy: p.submittedBy }),
         createdAt: p.createdAt,
         updatedAt: p.updatedAt,
       }
     : null;
 
-// Enrich one exchange row into a list-item view: resolve both parties, the requested/offered owned
-// copies and their catalog definitions (copy.puzzleId -> puzzles). Mirrors the legacy two-step join
-// in getUserExchanges/getExchangesByOwner/getExchangesByRequester. `userRole` is set by the caller.
+// Enrich one exchange row into a list-item view: project both parties (projectExchangeParties), the
+// requested/offered owned copies and their catalog definitions (copy.puzzleId -> puzzles). Mirrors
+// the legacy two-step join in getUserExchanges/getExchangesByOwner/getExchangesByRequester.
+// `userRole` is set by the caller.
 export const enrichExchangeSummary = async (
   ctx: QueryCtx,
   e: Doc<"exchanges">,
   viewerId: Id<"users">,
   userRole?: "requester" | "owner",
 ): Promise<ExchangeSummaryView> => {
-  const [requester, owner, requestedOwnedPuzzle, offeredOwnedPuzzle] =
-    await Promise.all([
-      ctx.db.get(e.initiatorId),
-      ctx.db.get(e.recipientId),
+  const [parties, requestedOwnedPuzzle, offeredOwnedPuzzle] = await Promise.all(
+    [
+      projectExchangeParties(ctx, e, viewerId),
       ctx.db.get(e.requestedPuzzleId),
       e.offeredPuzzleId ? ctx.db.get(e.offeredPuzzleId) : null,
-    ]);
+    ],
+  );
 
   const [requestedPuzzle, offeredPuzzle] = await Promise.all([
     requestedOwnedPuzzle ? ctx.db.get(requestedOwnedPuzzle.puzzleId) : null,
@@ -123,14 +169,22 @@ export const enrichExchangeSummary = async (
   ]);
 
   return {
-    ...toExchangeFields(e),
+    ...toExchangeFields(e, parties.hidden),
     ...(userRole ? { userRole } : {}),
-    requester: requester ? toMemberView(requester) : null,
-    owner: owner ? toMemberView(owner) : null,
+    requester: parties.requester,
+    owner: parties.owner,
     // Gate each copy independently: the viewer sees owner-only fields only on the copy they own.
-    requestedOwnedPuzzle: toOwnedPuzzleView(requestedOwnedPuzzle, viewerId),
-    requestedPuzzle: toPuzzleView(requestedPuzzle),
-    offeredOwnedPuzzle: toOwnedPuzzleView(offeredOwnedPuzzle, viewerId),
-    offeredPuzzle: toPuzzleView(offeredPuzzle),
+    requestedOwnedPuzzle: toOwnedPuzzleView(
+      requestedOwnedPuzzle,
+      viewerId,
+      parties.hidden,
+    ),
+    requestedPuzzle: toPuzzleView(requestedPuzzle, parties.hidden),
+    offeredOwnedPuzzle: toOwnedPuzzleView(
+      offeredOwnedPuzzle,
+      viewerId,
+      parties.hidden,
+    ),
+    offeredPuzzle: toPuzzleView(offeredPuzzle, parties.hidden),
   };
 };

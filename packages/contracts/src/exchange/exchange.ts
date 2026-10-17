@@ -13,11 +13,17 @@ export type ExchangeStatus =
  * The raw exchange document fields (the `exchanges` table). Every exchange view spreads these, so
  * the legacy `...exchange` spread is preserved verbatim (UI reads `_id`, `aggregateId`, `status`,
  * `createdAt`, etc.).
+ *
+ * PRIVACY: `initiatorId` / `recipientId` are present only for a party the viewer may identify
+ * (projectMemberIdentity: self, public profile, mutual follower, or a trade identity reveal). A
+ * party who is anonymous to the viewer has their raw id OMITTED (a raw id is itself a leak), and the
+ * matching `requester` / `owner` is null. The viewer's own id is always present. In practice only
+ * the owner (recipient) can be hidden, from the requester, until the owner accepts or replies.
  */
 export interface ExchangeFields extends ConvexSystemFields {
   aggregateId?: string;
-  initiatorId: string;
-  recipientId: string;
+  initiatorId?: string;
+  recipientId?: string;
   type: "trade" | "sale" | "loan";
   offeredPuzzleId?: string;
   requestedPuzzleId: string;
@@ -36,7 +42,9 @@ export interface ExchangeFields extends ConvexSystemFields {
  * the catalog definition); preserved verbatim.
  */
 export interface ExchangeView extends ExchangeFields {
+  /** null when the requester is anonymous to the viewer (or their account is gone). */
   requester: MemberView | null;
+  /** null when the owner is anonymous to the viewer (or their account is gone). */
   owner: MemberView | null;
   ownerPuzzle: ExchangeOwnedPuzzleView | null;
   requesterPuzzle: ExchangeOwnedPuzzleView | null;
@@ -49,7 +57,9 @@ export interface ExchangeView extends ExchangeFields {
  */
 export interface ExchangeSummaryView extends ExchangeFields {
   userRole?: "requester" | "owner";
+  /** null when the requester is anonymous to the viewer (or their account is gone). */
   requester: MemberView | null;
+  /** null when the owner is anonymous to the viewer (or their account is gone). */
   owner: MemberView | null;
   requestedOwnedPuzzle: ExchangeOwnedPuzzleView | null;
   requestedPuzzle: ExchangePuzzleView | null;

@@ -47,7 +47,6 @@ describe("isActorRevealed", () => {
     "household_invite_accepted",
     "trade_request",
     "trade_accepted",
-    "trade_declined",
     "trade_completed",
     "trade_cancelled",
     "exchange_disputed",
@@ -55,6 +54,17 @@ describe("isActorRevealed", () => {
     "review_received",
   ] as const)("%s: a private, non-mutual initiator is revealed", (type) => {
     expect(isActorRevealed(type, hidden, false)).toBe(true);
+  });
+
+  test("trade_declined: a private, non-mutual owner stays hidden unless revealed by a trade grant", () => {
+    expect(isActorRevealed("trade_declined", hidden, false)).toBe(false);
+    expect(
+      isActorRevealed(
+        "trade_declined",
+        { ...hidden, identityRevealed: true },
+        false,
+      ),
+    ).toBe(true);
   });
 
   test("a private, non-mutual actor on a non-initiator type is hidden", () => {

@@ -9,6 +9,7 @@ import type { QueryCtx } from "../_generated/server";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { canViewCopy } from "../library/canViewCopy";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
+import { hasIdentityReveal } from "../social/identityReveals";
 import {
   ADMIN_NOTIFICATION_TYPES,
   decideFollowBack,
@@ -243,10 +244,16 @@ const resolveActor = async (
       ? (await follows(ctx, cache, viewerId, actorId)) &&
         (await follows(ctx, cache, actorId, viewerId))
       : false;
+  const identityRevealed =
+    !preRevealed && !isPublic && !isViewer && !mutualFollowers
+      ? await memoized(cache, `reveal:${viewerId}>${actorId}`, () =>
+          hasIdentityReveal(ctx, viewerId, actorId),
+        )
+      : false;
   if (
     !isActorRevealed(
       type,
-      { active: true, isViewer, isPublic, mutualFollowers },
+      { active: true, isViewer, isPublic, mutualFollowers, identityRevealed },
       cache.viewerIsAdmin,
     )
   ) {

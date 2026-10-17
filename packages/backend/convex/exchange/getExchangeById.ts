@@ -3,12 +3,17 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { toMemberView } from "../identity/toMemberView";
-import { toExchangeFields, toOwnedPuzzleView } from "./readViews";
+import {
+  projectExchangeParties,
+  toExchangeFields,
+  toOwnedPuzzleView,
+} from "./readViews";
 
 // Exchange read (thin adapter): a single exchange with its parties and the requested/offered owned
 // copies. Join targets and the legacy ownerPuzzle/requesterPuzzle naming are preserved verbatim
-// (these are the requested/offered OWNED copies, not the catalog definitions).
+// (these are the requested/offered OWNED copies, not the catalog definitions). Parties are
+// projected through the privacy chokepoint (projectExchangeParties): an anonymous counterparty is
+// null and their raw id is omitted everywhere in the view.
 export const getExchangeById = query({
   args: { exchangeId: v.id("exchanges") },
   handler: async (ctx, args): Promise<ExchangeView | null> => {
@@ -22,21 +27,24 @@ export const getExchangeById = query({
       return null;
     }
 
-    const [requester, owner, ownerPuzzle, requesterPuzzle] = await Promise.all([
-      ctx.db.get(exchange.initiatorId),
-      ctx.db.get(exchange.recipientId),
+    const [parties, ownerPuzzle, requesterPuzzle] = await Promise.all([
+      projectExchangeParties(ctx, exchange, member),
       ctx.db.get(exchange.requestedPuzzleId),
       exchange.offeredPuzzleId ? ctx.db.get(exchange.offeredPuzzleId) : null,
     ]);
 
     return {
-      ...toExchangeFields(exchange),
-      requester: requester ? toMemberView(requester) : null,
-      owner: owner ? toMemberView(owner) : null,
+      ...toExchangeFields(exchange, parties.hidden),
+      requester: parties.requester,
+      owner: parties.owner,
       // Gate each copy independently on the acting member: a party never sees the counterparty's
       // owner-only fields (notes / acquisition provenance), only those on the copy they own.
-      ownerPuzzle: toOwnedPuzzleView(ownerPuzzle, member),
-      requesterPuzzle: toOwnedPuzzleView(requesterPuzzle, member),
+      ownerPuzzle: toOwnedPuzzleView(ownerPuzzle, member, parties.hidden),
+      requesterPuzzle: toOwnedPuzzleView(
+        requesterPuzzle,
+        member,
+        parties.hidden,
+      ),
     };
   },
 });
