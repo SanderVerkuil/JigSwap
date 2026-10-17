@@ -268,6 +268,18 @@ describe("applyQuickStartChange", () => {
     ).toBeNull();
   });
 
+  it("records the first start of the flow once, keeping the first timestamp", () => {
+    const once = applyQuickStartChange(
+      { skippedSteps: ["solves"] },
+      { kind: "startQuickStart" },
+      NOW,
+    );
+    expect(once).toEqual({ skippedSteps: ["solves"], startedAt: NOW });
+    expect(
+      applyQuickStartChange(once!, { kind: "startQuickStart" }, NOW + 5),
+    ).toBeNull();
+  });
+
   it("dismisses the card once and restores it", () => {
     const dismissed = applyQuickStartChange(
       { skippedSteps: ["solves"], welcomeDismissedAt: 1 },

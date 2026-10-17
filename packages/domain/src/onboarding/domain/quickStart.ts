@@ -1,6 +1,7 @@
 // Quick start: a first-sign-in checklist. Each step's "done" is derived from the member's real data
-// (facts gathered by the backend); only the member's choices are stored: skipped steps and when the
-// welcome dialog / dashboard card were dismissed. Done wins over skipped. Timestamps are epoch ms.
+// (facts gathered by the backend); only the member's choices are stored: skipped steps, when the
+// welcome dialog / dashboard card were dismissed, and when the member first opened the flow (a
+// funnel fact for the activation report). Done wins over skipped. Timestamps are epoch ms.
 
 export const QUICK_START_STEP_IDS = [
   "puzzles",
@@ -36,6 +37,8 @@ export interface QuickStartState {
   skippedSteps: QuickStartStepId[];
   welcomeDismissedAt?: number;
   cardDismissedAt?: number;
+  /** When the member first opened the /welcome flow. */
+  startedAt?: number;
 }
 
 export interface QuickStartInput {
@@ -119,7 +122,10 @@ export const deriveQuickStart = (input: QuickStartInput): QuickStart => {
 
 export type QuickStartChange =
   | { kind: "skipStep" | "unskipStep"; step: QuickStartStepId }
-  | { kind: "dismissWelcome" | "dismissCard" | "restoreCard" };
+  | {
+      kind:
+        "dismissWelcome" | "dismissCard" | "restoreCard" | "startQuickStart";
+    };
 
 // The member's stored state after `change`, or null when it changes nothing (so writes are
 // idempotent). Skipped steps stay in step order; a repeated dismiss keeps the first timestamp.
@@ -145,6 +151,10 @@ export const applyQuickStartChange = (
     case "dismissCard":
       return state.cardDismissedAt === undefined
         ? { ...state, cardDismissedAt: now }
+        : null;
+    case "startQuickStart":
+      return state.startedAt === undefined
+        ? { ...state, startedAt: now }
         : null;
     case "restoreCard": {
       if (state.cardDismissedAt === undefined) return null;
