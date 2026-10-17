@@ -31,13 +31,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Persist Nx's computation cache between runs so unchanged projects are replayed.
-      - name: Restore Nx cache
+      # Persist Turborepo's local task cache between runs so unchanged packages are replayed.
+      - name: Restore Turborepo cache
         uses: actions/cache@v4
         with:
-          path: .nx/cache
-          key: nx-${{ runner.os }}-${{ github.sha }}
-          restore-keys: nx-${{ runner.os }}-
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: turbo-${{ runner.os }}-
 
       - name: Check formatting
         run: pnpm run format:check
@@ -45,4 +45,4 @@ jobs:
       # Convex _generated/* is committed, so no deployment or secrets are needed here.
       # arch-check enforces the DDD/hexagonal boundaries via dependency-cruiser.
       - name: Verify (lint, type-check, test, build, arch-check)
-        run: pnpm exec nx run-many -t lint type-check test build arch-check --parallel=4
+        run: pnpm exec turbo run lint type-check test build arch:check --concurrency=4
