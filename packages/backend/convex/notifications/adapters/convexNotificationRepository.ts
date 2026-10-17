@@ -31,8 +31,14 @@ export const convexNotificationRepository = (
     async save(notification: Notification): Promise<void> {
       const row = toRow(notification);
       const existing = await rowByAggregateId(notification.id);
-      if (existing) await ctx.db.patch(existing._id, row);
-      else await ctx.db.insert("notifications", row);
+      if (existing) {
+        // The aggregate holds only the newest actor, so its actor refs would collapse a grouped
+        // row to one actor. Actor refs are write-once here (set on insert; grouping and the
+        // backfill patch them directly), so a re-save keeps the stored ones. The grouping fields
+        // (groupKey/updatedAt) are not in the row payload and survive the patch as well.
+        const { actorIds: _actorIds, actorCount: _actorCount, ...rest } = row;
+        await ctx.db.patch(existing._id, rest);
+      } else await ctx.db.insert("notifications", row);
     },
 
     async listByUser(userId: MemberId): Promise<Notification[]> {
