@@ -243,6 +243,23 @@ describe("leaveHousehold", () => {
     const result = await makeLeaveHousehold(deps)({ actorId: ann });
     expect(result.isErr && result.error.code).toBe("NotInHousehold");
   });
+
+  it("relays the domain's rejection when the found household does not list the actor", async () => {
+    // A stale membership lookup returns a household the actor is no longer in.
+    class StaleMembershipLookup extends InMemoryHouseholdRepository {
+      override async findByMember() {
+        return this.findById("household-1" as HouseholdId);
+      }
+    }
+    deps.households = households = new StaleMembershipLookup();
+    const householdId = await create();
+    events.published.length = 0;
+
+    const result = await makeLeaveHousehold(deps)({ actorId: cat });
+    expect(result.isErr && result.error.code).toBe("NotAMember");
+    expect((await households.findById(householdId))?.isMember(ann)).toBe(true);
+    expect(events.published).toEqual([]);
+  });
 });
 
 describe("removeHouseholdMember", () => {
