@@ -12,6 +12,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { copyAccessOf } from "../household/copyAccess";
+import { personView } from "../household/getMyHousehold";
 import { membershipOf } from "../household/memberships";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
@@ -67,6 +68,9 @@ export const getCopyInstanceView = query({
     const viewerIsOwner = copy.ownerId === viewerId;
     // Household access: a member the owner left at "manage" acts as co-owner (edit controls +
     // owner-only fields); "view" only sees the copy. Since/before tenure stays owner-only.
+    // `owner` is the household person view (name/avatar, never email), the same one behind the
+    // library's "Household · {owner}" badge, so the copy page names a housemate's copy's owner even
+    // when the profile projection anonymises them.
     const access = await copyAccessOf(ctx, viewerId, copy);
     const viewerCanManage = access === "owner" || access === "manage";
     const household =
@@ -76,6 +80,7 @@ export const getCopyInstanceView = query({
         ? {
             permission: copy.householdPermission ?? ("manage" as const),
             viewerAccess: access,
+            owner: await personView(ctx, copy.ownerId),
           }
         : null;
 

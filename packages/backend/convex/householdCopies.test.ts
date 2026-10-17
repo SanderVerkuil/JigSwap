@@ -206,6 +206,7 @@ describe("visibility", () => {
     expect(manage?.household).toEqual({
       permission: "manage",
       viewerAccess: "manage",
+      owner: { memberId: w.ann, name: "Ann" },
     });
     const view = await as(t, "bob").query(
       api.library.getCopyInstanceView.getCopyInstanceView,
@@ -221,6 +222,7 @@ describe("visibility", () => {
     expect(owner?.household).toEqual({
       permission: "view",
       viewerAccess: "owner",
+      owner: { memberId: w.ann, name: "Ann" },
     });
   });
 });
