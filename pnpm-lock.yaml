@@ -198,6 +198,9 @@ importers:
       '@stryker-mutator/vitest-runner':
         specifier: 10.0.0
         version: 10.0.0(patch_hash=3c9b97ef92da646892a3d93af005902a1efde39e8d986092a97357837856cad6)(@stryker-mutator/core@10.0.0(@types/node@26.6.5))(vitest@5.0.5)
+      '@swc/core':
+        specifier: 1.16.18
+        version: 1.16.18(@swc/helpers@0.5.23)
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
@@ -9638,10 +9641,8 @@ snapshots:
       '@swc/core-win32-ia32-msvc': 1.16.18
       '@swc/core-win32-x64-msvc': 1.16.18
       '@swc/helpers': 0.5.23
-    optional: true
 
-  '@swc/counter@0.1.3':
-    optional: true
+  '@swc/counter@0.1.3': {}
 
   '@swc/helpers@0.5.23':
     dependencies:
@@ -9651,7 +9652,6 @@ snapshots:
   '@swc/types@0.1.28':
     dependencies:
       '@swc/counter': 0.1.3
-    optional: true
 
   '@tailwindcss/node@4.3.3':
     dependencies:
