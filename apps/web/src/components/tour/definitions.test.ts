@@ -1,12 +1,12 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { getRouteMeta } from "@/components/dashboard-layout/route-meta";
-import { WHATS_NEW_MANIFEST } from "@jigswap/contracts";
+import { STANDALONE_TOUR_IDS, WHATS_NEW_MANIFEST } from "@jigswap/contracts";
 import { describe, expect, it } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import source from "../../../locales/source.json";
-import { stepMessageKeys, TOURS } from "./definitions";
+import { isStandaloneTour, stepMessageKeys, TOURS } from "./definitions";
 
 // Static checks that keep tours, the What's new manifest, the locale files and the data-tour
 // anchors in agreement: each of these fails silently at runtime (unknown_tour, a raw key on the
@@ -41,11 +41,46 @@ async function sourceFiles(dir: string): Promise<string[]> {
 }
 
 describe("tour definitions", () => {
-  it("are exactly the tours the What's new manifest references", () => {
-    const referenced = new Set(
-      WHATS_NEW_MANIFEST.flatMap((entry) => (entry.tour ? [entry.tour] : [])),
-    );
-    expect([...TOURS.keys()].sort()).toEqual([...referenced].sort());
+  // recordTourProgress accepts a tour id only when a manifest entry references it or it is in
+  // STANDALONE_TOUR_IDS; anything else is rejected as unknown_tour at runtime.
+  const referenced = new Set(
+    WHATS_NEW_MANIFEST.flatMap((entry) => (entry.tour ? [entry.tour] : [])),
+  );
+  const standalone = new Set<string>(STANDALONE_TOUR_IDS);
+
+  it("are each referenced by a What's new entry or registered as standalone", () => {
+    for (const id of TOURS.keys()) {
+      expect(referenced.has(id) || standalone.has(id), id).toBe(true);
+    }
+  });
+
+  it("define every tour the manifest references and every standalone tour", () => {
+    for (const id of [...referenced, ...standalone]) {
+      expect(TOURS.has(id), id).toBe(true);
+    }
+  });
+
+  it("keep standalone tours out of the manifest", () => {
+    for (const id of standalone) {
+      expect(referenced.has(id), id).toBe(false);
+      expect(isStandaloneTour(id)).toBe(true);
+    }
+    for (const id of referenced) expect(isStandaloneTour(id)).toBe(false);
+  });
+
+  it("include the quick start's getting-started tour on existing anchors", () => {
+    expect(TOURS.get("getting-started")?.steps).toEqual([
+      { id: "shelf", route: "/dashboard", target: "dashboard-shelf" },
+      { id: "solving-now", route: "/dashboard", target: "solving-now" },
+      { id: "people", route: "/people", target: "people-network" },
+      {
+        id: "account-menu",
+        route: "/dashboard",
+        target: "account-menu",
+        side: "right",
+        align: "end",
+      },
+    ]);
   });
 
   it("have unique step ids, a page title per route, and fit the backend's step limit", () => {

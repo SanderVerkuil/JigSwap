@@ -139,7 +139,7 @@ export function ShelfSection() {
 
   if (loading) {
     return (
-      <section>
+      <section data-tour="dashboard-shelf">
         <SectionHead
           title={t("title")}
           icon={BookOpen}
@@ -194,7 +194,7 @@ export function ShelfSection() {
   ];
 
   return (
-    <section>
+    <section data-tour="dashboard-shelf">
       <SectionHead
         title={t("title")}
         icon={BookOpen}

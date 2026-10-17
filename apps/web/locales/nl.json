@@ -3711,6 +3711,7 @@
     "end": "Rondleiding stoppen",
     "opening": "{page} openen…",
     "paused": "Rondleiding gepauzeerd. Je kunt verder gaan via Wat is er nieuw.",
+    "pausedStandalone": "Rondleiding gepauzeerd. Je kunt verder gaan via Snel instellen.",
     "resumeAction": "Hervatten",
     "completedTitle": "Je bent er klaar voor",
     "completed": "Rondleiding afgerond. Veel plezier met de nieuwe functie!"
@@ -3757,6 +3758,26 @@
         "sharing": {
           "title": "Deel het met vrienden, als je wilt",
           "body": "Delen staat standaard uit. Open je accountmenu, kies Account beheren en dan Voorkeuren, en zet Deel puzzels waar je mee bezig bent met vrienden aan."
+        }
+      }
+    },
+    "getting-started": {
+      "steps": {
+        "shelf": {
+          "title": "Je plank",
+          "body": "Elke puzzel die je toevoegt komt hier. Open er een om een oplossing vast te leggen of hem te ruilen."
+        },
+        "solving-now": {
+          "title": "Nu aan het puzzelen",
+          "body": "Start een puzzel om bij te houden hoe lang je erover doet. Hij staat hier tot je klaar bent."
+        },
+        "people": {
+          "title": "Je netwerk",
+          "body": "Mensen met wie je elkaar volgt. Hun planken en oplossingen zie je hier."
+        },
+        "account-menu": {
+          "title": "Instellingen en snel instellen",
+          "body": "Je profiel, meldingen en Snel instellen vind je hier."
         }
       }
     }
@@ -3851,6 +3872,14 @@
       "inviteMember": "Een lid uitnodigen",
       "pendingTitle": "{name} heeft je uitgenodigd voor hun huishouden"
     },
+    "profile": {
+      "lead": "Help anderen je te herkennen.",
+      "changePhoto": "Foto wijzigen",
+      "locationHint": "Optioneel. Zichtbaar op je profiel.",
+      "visibility": "Wie kan je profiel zien?",
+      "public": "Iedereen",
+      "private": "Alleen mensen die je toelaat"
+    },
     "push": {
       "title": "Wil je een melding als iemand je terugvolgt?",
       "enable": "Meldingen aanzetten",
@@ -3859,7 +3888,8 @@
     "done": {
       "title": "Je plank staat klaar",
       "summary": "{copies, plural, one {# puzzel} other {# puzzels}} · {solves} afgemaakt · {following} gevolgd",
-      "goToShelf": "Naar mijn plank"
+      "goToShelf": "Naar mijn plank",
+      "tour": "Geef me een rondleiding"
     }
   }
 }

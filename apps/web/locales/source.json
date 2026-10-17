@@ -3711,6 +3711,7 @@
     "end": "End tour",
     "opening": "Opening {page}…",
     "paused": "Tour paused. You can pick it up again from What's new.",
+    "pausedStandalone": "Tour paused. You can resume it from Quick setup.",
     "resumeAction": "Resume",
     "completedTitle": "You're all set",
     "completed": "Tour finished. Enjoy the new feature!"
@@ -3757,6 +3758,26 @@
         "sharing": {
           "title": "Share with friends, if you like",
           "body": "Sharing is off by default. Open your account menu, choose Manage account, then Preferences, and turn on Share in-progress puzzles with friends."
+        }
+      }
+    },
+    "getting-started": {
+      "steps": {
+        "shelf": {
+          "title": "Your shelf",
+          "body": "Every puzzle you add lands here. Open one to log a solve or offer it for a swap."
+        },
+        "solving-now": {
+          "title": "Solving now",
+          "body": "Start a puzzle to keep track of how long it takes. It shows up here until you finish."
+        },
+        "people": {
+          "title": "Your network",
+          "body": "People you follow each other with. Their shelves and solves show up for you."
+        },
+        "account-menu": {
+          "title": "Settings and quick setup",
+          "body": "Your profile, notifications and Quick setup live here."
         }
       }
     }
@@ -3851,6 +3872,14 @@
       "inviteMember": "Invite a member",
       "pendingTitle": "{name} invited you to their household"
     },
+    "profile": {
+      "lead": "Help people recognise you.",
+      "changePhoto": "Change photo",
+      "locationHint": "Optional. Shown on your profile.",
+      "visibility": "Who can see your profile?",
+      "public": "Everyone",
+      "private": "Only people you approve"
+    },
     "push": {
       "title": "Want a notification when someone follows you back?",
       "enable": "Turn on notifications",
@@ -3859,7 +3888,8 @@
     "done": {
       "title": "Your shelf is ready",
       "summary": "{copies, plural, one {# puzzle} other {# puzzles}} · {solves} finished · {following} following",
-      "goToShelf": "Go to my shelf"
+      "goToShelf": "Go to my shelf",
+      "tour": "Show me around"
     }
   }
 }

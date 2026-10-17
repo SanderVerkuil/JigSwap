@@ -238,6 +238,8 @@ export const gateway = {
     isAdmin: api.identity.isCurrentUserAdmin.isCurrentUserAdmin,
     // Set (or clear, via null) the caller's Convex-owned profile handle.
     setSlug: api.identity.setSlug.setSlug,
+    // Set (or clear, with "") the caller's own location: trimmed, at most 80 characters.
+    setLocation: api.identity.setLocation.setLocation,
   },
 
   // Solving: solve tracking, puzzle reviews, goals. Ownership / 24h edit window / rating are
@@ -308,6 +310,8 @@ export const gateway = {
   // Onboarding (quick start): the member's own checklist state. Step "done" is derived from real
   // data; recordQuickStart stores only skipped steps and the welcome/card dismissals, in the
   // caller's own row (`step` only with skipStep/unskipStep, else `invalid_change`). Idempotent.
+  // The activation report (onboarding/activationReport) is an internalQuery and deliberately not
+  // listed here: it is run by an operator, never by a client.
   onboarding: {
     quickStart: api.onboarding.getQuickStart.getQuickStart,
     recordQuickStart: api.onboarding.recordQuickStart.recordQuickStart,

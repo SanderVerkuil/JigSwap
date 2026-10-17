@@ -124,13 +124,16 @@ the end.
    - **≥ 1 mutual connection**: some `X` where both `follows(member → X)` and
      `follows(X → member)` exist with `createdAt` inside the window. The
      connection counts from the later of the two rows.
-   - **≥ 1 household link**: the member's `householdMembers` row has `joinedAt`
-     inside the window **and** the household has at least one other member who
-     joined inside the window too. A household of one is not a connection.
+   - **≥ 1 household link** (decision 10, §9): the member's `householdMembers`
+     row has `joinedAt` inside the window (they created or joined it then)
+     **and** the household has at least one other member, **whenever** that
+     member joined. A household of one is not a connection. Because the other
+     member may join later, activation can flip to true after day 7, so
+     re-running the report for a closed cohort can raise its count.
 
 **Computation.** `onboarding/activationReport.ts` exports
 `activationReport`, an `internalQuery`. It is not exposed through the gateway
-and is run by an operator (`npx convex run onboarding/activationReport:activationReport '{"from":…,"to":…}'`).
+and is run by an operator (`npx convex run --prod onboarding/activationReport:activationReport '{"from":…,"to":…}'`).
 
 - Args: `{ from: number, to: number }`. These are cohort bounds on sign-up
   time, at most 31 days apart.
@@ -139,13 +142,20 @@ and is run by an operator (`npx convex run onboarding/activationReport:activatio
   `completions.by_user_completed`, `follows.by_follower` plus
   `follows.by_follower_followee` for the reverse edge, and
   `householdMembers.by_member` / `by_household`.
-- Returns **aggregates only**, never member ids:
-  `{ cohortSize, activated, rate, windowClosed, breakdown: { copies3, completion, mutual, household } }`.
+- Returns **aggregates only**, never member ids (as built in Q8):
+  `{ from, to, generatedAt, cohorts: Cohort[], total: Cohort }`, where
+  `cohorts` are weekly sign-up buckets starting at `from` (the last ends at
+  `to`) and each `Cohort` is
+  `{ from, to, windowClosed, signedUp, activated, rate, breakdown: { copies3, completion, mutual, household, connection, completion14d }, funnel: { signedUp, welcomeAnswered, startedQuickStart, copies3, activated, quickStartCompleted, householdLinkCreated }, steps: { <stepId>: { done, skipped } } }`.
   `windowClosed` is `to + 7 d <= now`. An open cohort is reported but marked
-  as such.
+  as such. The funnel's quick start fields are the member's current state.
+  `startedQuickStart` comes from `memberOnboarding.startedAt`, written once by
+  `recordQuickStart({ kind: "startQuickStart" })` on the first `/welcome`
+  visit.
 - The predicate is a pure function, `isActivated(facts, signupAt)` in the
-  domain, so the thresholds are unit-tested and the Convex query only gathers
-  facts.
+  domain (with `evaluateActivation` per criterion and `summarizeActivation`
+  for the cohorts), so the thresholds are unit-tested and the Convex query
+  only gathers facts.
 - If a cohort ever exceeds a single query's read budget, wrap it in an
   `internalAction` that pages the cohort through the same query. This is not
   needed at today's volume.
@@ -1270,11 +1280,15 @@ rebased onto `main` when that merges.
 - **The tour hand-off goes in Q8**, with "Make it yours", because both touch the
   end of the flow and the tour change is small. Until Q8 lands, the done panel
   shows only "Go to my shelf".
-- **Funnel events (Q8)** are a handful of PostHog `capture` calls behind the
-  existing analytics consent (`lib/analytics-consent.ts`): `qs_welcome_shown`,
-  `qs_started`, `qs_step_skipped{step}`, `qs_completed`, `invite_shared{channel,context}`,
-  `household_link_created`. They undercount by design; the activation report is
-  the source of truth.
+- **Funnel events (Q8)** are derived from Convex data in the activation report
+  instead of PostHog `capture` calls (PostHog only has consent-gated
+  pageviews): `qs_welcome_shown`/answered → `funnel.welcomeAnswered`,
+  `qs_started` → `funnel.startedQuickStart` (the one stored fact,
+  `memberOnboarding.startedAt`), `qs_step_skipped{step}` → `steps.<id>.skipped`,
+  `qs_completed` → `funnel.quickStartCompleted`, `household_link_created` →
+  `funnel.householdLinkCreated`. `invite_shared{channel,context}` is not
+  recorded: sharing happens on the device and JigSwap deliberately does not
+  see it (decision 2).
 - **Q2 is a soft dependency of Q4,** not a hard one. Q4 can merge before Q2;
   the picker then switches to the server search when the stack is rebased on a
   `main` that has Q2.

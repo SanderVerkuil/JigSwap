@@ -32,4 +32,11 @@ export interface QuickStartView {
 
 export type QuickStartCommand =
   | { kind: "skipStep" | "unskipStep"; step: QuickStartStepId }
-  | { kind: "dismissWelcome" | "dismissCard" | "restoreCard" };
+  | {
+      kind:
+        | "dismissWelcome"
+        | "dismissCard"
+        | "restoreCard"
+        // The first /welcome visit; recorded once, for the activation report's funnel.
+        | "startQuickStart";
+    };

@@ -167,6 +167,7 @@ import type * as identity_optionalActingMember from "../identity/optionalActingM
 import type * as identity_requireMember from "../identity/requireMember.js";
 import type * as identity_resolveMemberByHandle from "../identity/resolveMemberByHandle.js";
 import type * as identity_searchUsers from "../identity/searchUsers.js";
+import type * as identity_setLocation from "../identity/setLocation.js";
 import type * as identity_setSlug from "../identity/setSlug.js";
 import type * as identity_toMemberView from "../identity/toMemberView.js";
 import type * as insights_exportUserData from "../insights/exportUserData.js";
@@ -270,8 +271,10 @@ import type * as notifications_setNotificationPreferences from "../notifications
 import type * as notifications_subscriber from "../notifications/subscriber.js";
 import type * as notifications_unreadCount from "../notifications/unreadCount.js";
 import type * as notifications_updateNotificationPreference from "../notifications/updateNotificationPreference.js";
+import type * as onboarding_activationReport from "../onboarding/activationReport.js";
 import type * as onboarding_getQuickStart from "../onboarding/getQuickStart.js";
 import type * as onboarding_memberOnboarding from "../onboarding/memberOnboarding.js";
+import type * as onboarding_quickStartFacts from "../onboarding/quickStartFacts.js";
 import type * as onboarding_recordQuickStart from "../onboarding/recordQuickStart.js";
 import type * as presence from "../presence.js";
 import type * as puzzles from "../puzzles.js";
@@ -567,6 +570,7 @@ declare const fullApi: ApiFromModules<{
   "identity/requireMember": typeof identity_requireMember;
   "identity/resolveMemberByHandle": typeof identity_resolveMemberByHandle;
   "identity/searchUsers": typeof identity_searchUsers;
+  "identity/setLocation": typeof identity_setLocation;
   "identity/setSlug": typeof identity_setSlug;
   "identity/toMemberView": typeof identity_toMemberView;
   "insights/exportUserData": typeof insights_exportUserData;
@@ -670,8 +674,10 @@ declare const fullApi: ApiFromModules<{
   "notifications/subscriber": typeof notifications_subscriber;
   "notifications/unreadCount": typeof notifications_unreadCount;
   "notifications/updateNotificationPreference": typeof notifications_updateNotificationPreference;
+  "onboarding/activationReport": typeof onboarding_activationReport;
   "onboarding/getQuickStart": typeof onboarding_getQuickStart;
   "onboarding/memberOnboarding": typeof onboarding_memberOnboarding;
+  "onboarding/quickStartFacts": typeof onboarding_quickStartFacts;
   "onboarding/recordQuickStart": typeof onboarding_recordQuickStart;
   presence: typeof presence;
   puzzles: typeof puzzles;
