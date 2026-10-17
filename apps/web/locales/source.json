@@ -732,6 +732,9 @@
   "messages": {
     "anonymous": "Anonymous user",
     "backToInbox": "Back to messages",
+    "conversationsLabel": "Conversations",
+    "dayToday": "Today",
+    "dayYesterday": "Yesterday",
     "empty": "No conversations yet",
     "emptyHint": "Message a member from their profile or start one from an exchange.",
     "exchangeThread": "{type}: {title}",
@@ -740,22 +743,31 @@
       "sale": "Sale",
       "loan": "Loan"
     },
+    "inboxError": "Couldn't load your conversations.",
     "messageButton": "Message",
     "messageName": "Message {name}",
+    "newMessageAnnouncement": "New message from {name}: {body}",
     "noMessages": "No messages yet",
     "noMessagesHint": "Say hello to get the conversation going.",
     "noThreadYet": "No conversation for this exchange yet.",
     "notConnected": "You can only message members you're connected with",
     "openError": "Couldn't open the conversation. Please try again.",
+    "retry": "Try again",
     "selectConversation": "Select a conversation",
     "selectConversationHint": "Choose a conversation from the list to start messaging",
     "sendError": "Your message couldn't be sent. Please try again.",
-    "sendMessage": "Send Message",
+    "sendMessage": "Send message",
     "threadFallbackTitle": "Conversation",
+    "time": {
+      "now": "now",
+      "minutes": "{count}m",
+      "hours": "{count}h"
+    },
     "tooLong": "That message is too long (4,000 characters max).",
     "typeMessage": "Type your message...",
     "unreadCount": "{count, plural, one {# unread message} other {# unread messages}}",
-    "untitledPuzzle": "Untitled puzzle"
+    "untitledPuzzle": "Untitled puzzle",
+    "youPrefix": "You: {body}"
   },
   "profile": {
     "title": "Profile",
