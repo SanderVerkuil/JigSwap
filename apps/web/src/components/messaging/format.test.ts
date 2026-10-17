@@ -1,8 +1,12 @@
 import { ConvexError } from "convex/values";
+import { createTranslator } from "use-intl";
 import { describe, expect, it } from "vitest";
-import type { InboxThread } from "./format";
+import enMessages from "../../../locales/en.json";
+import nlMessages from "../../../locales/nl.json";
+import type { InboxThread, Translator } from "./format";
 import {
   conversationErrorCode,
+  coverStackSummary,
   formatCompactTime,
   formatDayLabel,
   formatFullDateTime,
@@ -280,48 +284,103 @@ describe("groupThreadMessages", () => {
 });
 
 describe("threadQuickLinks", () => {
+  const member = { anonymous: false, member: { name: "Joost" } };
   const dm = (profileHandle: string | null) =>
     ({
       kind: "dm",
-      otherMember: { anonymous: false, member: { name: "Joost" } },
+      otherMember: member,
       profileHandle,
     }) as InboxThread["subject"];
+  const exchange = (profileHandle: string | null) =>
+    ({
+      kind: "exchange",
+      exchangeId: "ex 1",
+      exchangeType: "trade",
+      puzzleTitle: "Canals",
+      otherMember: member,
+      profileHandle,
+    }) as InboxThread["subject"];
+  const copy = (copyId: string) => ({
+    copyId,
+    title: copyId,
+    brand: null,
+    pieceCount: null,
+    coverUrl: null,
+  });
   const thread = (
     subject: InboxThread["subject"],
-    contextCopy: { copyId: string; title: string } | null,
-  ) =>
-    ({
-      subject,
-      contextCopies: contextCopy ? [contextCopy] : [],
-    }) as unknown as InboxThread;
+    contextCopies: ReturnType<typeof copy>[],
+  ) => ({ subject, contextCopies }) as unknown as InboxThread;
 
-  it("links a DM to the member profile and the puzzle it is about", () => {
-    expect(
-      threadQuickLinks(
-        thread(dm("joost"), { copyId: "copy1", title: "Canals" }),
-      ),
-    ).toEqual([
+  it("links a DM to the member profile and the one puzzle it is about", () => {
+    expect(threadQuickLinks(thread(dm("joost"), [copy("copy1")]))).toEqual([
       { kind: "profile", href: "/members/joost" },
       { kind: "puzzle", href: "/copies/copy1" },
     ]);
   });
 
   it("omits the profile link when the server withholds the handle", () => {
-    expect(threadQuickLinks(thread(dm(null), null))).toEqual([]);
+    expect(threadQuickLinks(thread(dm(null), []))).toEqual([]);
   });
 
-  it("links an exchange thread to /trades?exchange=<id> and its puzzle", () => {
-    const subject = {
-      kind: "exchange",
-      exchangeId: "ex 1",
-      exchangeType: "trade",
-      puzzleTitle: "Canals",
-    } as InboxThread["subject"];
+  it("groups two or more puzzles into one menu, keeping the server's order", () => {
+    const copies = [copy("newest"), copy("older"), copy("oldest")];
+    expect(threadQuickLinks(thread(dm("joost"), copies))).toEqual([
+      { kind: "profile", href: "/members/joost" },
+      { kind: "puzzles", copies },
+    ]);
+  });
+
+  it("links an exchange thread to the partner, /trades?exchange=<id> and its puzzles", () => {
+    const copies = [copy("requested"), copy("offered")];
+    expect(threadQuickLinks(thread(exchange("joost"), copies))).toEqual([
+      { kind: "profile", href: "/members/joost" },
+      { kind: "exchange", href: "/trades?exchange=ex%201" },
+      { kind: "puzzles", copies },
+    ]);
+  });
+
+  it("drops the exchange partner's profile when anonymised or inactive", () => {
     expect(
-      threadQuickLinks(thread(subject, { copyId: "copy2", title: "Canals" })),
+      threadQuickLinks(thread(exchange(null), [copy("requested")])),
     ).toEqual([
       { kind: "exchange", href: "/trades?exchange=ex%201" },
-      { kind: "puzzle", href: "/copies/copy2" },
+      { kind: "puzzle", href: "/copies/requested" },
     ]);
+  });
+});
+
+describe("coverStackSummary", () => {
+  // The real catalogues through use-intl's ICU formatter.
+  const en = createTranslator({
+    locale: "en",
+    messages: enMessages,
+    namespace: "messages",
+  }) as unknown as Translator;
+  const nl = createTranslator({
+    locale: "nl",
+    messages: nlMessages,
+    namespace: "messages",
+  }) as unknown as Translator;
+
+  it("names a single puzzle", () => {
+    expect(coverStackSummary(["Canals"], "en", en)).toBe(
+      "About 1 puzzle: Canals",
+    );
+  });
+
+  it("lists up to three titles", () => {
+    expect(coverStackSummary(["A", "B", "C"], "en", en)).toBe(
+      "About 3 puzzles: A, B, and C",
+    );
+  });
+
+  it("counts the titles beyond the visible three", () => {
+    expect(coverStackSummary(["A", "B", "C", "D", "E"], "en", en)).toBe(
+      "About 5 puzzles: A, B, C, and 2 more",
+    );
+    expect(coverStackSummary(["A", "B", "C", "D", "E"], "nl", nl)).toBe(
+      "Over 5 puzzels: A, B, C en nog 2",
+    );
   });
 });

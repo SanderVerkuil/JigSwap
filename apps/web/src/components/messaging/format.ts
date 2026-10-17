@@ -199,20 +199,24 @@ export function groupThreadMessages<M extends GroupableMessage>(
   return items;
 }
 
-export type ThreadQuickLink = {
-  kind: "profile" | "puzzle" | "exchange";
-  href: string;
-};
+export type InboxContextCopy = InboxThread["contextCopies"][number];
+
+export type ThreadQuickLink =
+  | { kind: "profile" | "exchange" | "puzzle"; href: string }
+  // Two or more puzzles: one menu listing them all, newest reference first.
+  | { kind: "puzzles"; copies: readonly InboxContextCopy[] };
+
+const copyHref = (copyId: string) => `/copies/${encodeURIComponent(copyId)}`;
 
 // Header quick links for a thread, in display order; each appears only when the
-// server says the target is reachable (profileHandle non-null / contextCopies non-empty).
-// DM: profile + puzzle. Exchange: the exchange on /trades (+ its puzzle).
+// server says the target is reachable (profileHandle non-null / contextCopies
+// non-empty). Profile (DM partner or trading partner, unless anonymised or
+// inactive), then the exchange on /trades, then the puzzle — or a puzzle menu
+// when the conversation is about several.
 export function threadQuickLinks(thread: InboxThread): ThreadQuickLink[] {
   const links: ThreadQuickLink[] = [];
-  const { subject } = thread;
-  // Stub: first context copy only, until the header puzzle menu lands.
-  const contextCopy = thread.contextCopies[0] ?? null;
-  if (subject.kind === "dm" && subject.profileHandle !== null) {
+  const { subject, contextCopies } = thread;
+  if (subject.profileHandle !== null) {
     links.push({
       kind: "profile",
       href: `/members/${encodeURIComponent(subject.profileHandle)}`,
@@ -224,11 +228,34 @@ export function threadQuickLinks(thread: InboxThread): ThreadQuickLink[] {
       href: `/trades?exchange=${encodeURIComponent(subject.exchangeId)}`,
     });
   }
-  if (contextCopy !== null) {
-    links.push({
-      kind: "puzzle",
-      href: `/copies/${encodeURIComponent(contextCopy.copyId)}`,
-    });
+  if (contextCopies.length === 1) {
+    links.push({ kind: "puzzle", href: copyHref(contextCopies[0].copyId) });
+  } else if (contextCopies.length > 1) {
+    links.push({ kind: "puzzles", copies: contextCopies });
   }
   return links;
+}
+
+export function contextCopyHref(copy: InboxContextCopy): string {
+  return copyHref(copy.copyId);
+}
+
+// Covers shown in an inbox row's stack before the "+N" counter.
+export const COVER_STACK_VISIBLE = 3;
+
+// Screen-reader summary of a row's puzzle stack: "About 5 puzzles: A, B, C and
+// 2 more" — the first COVER_STACK_VISIBLE titles, the rest counted.
+export function coverStackSummary(
+  titles: readonly string[],
+  locale: string,
+  t: Translator,
+): string {
+  const shown = titles.slice(0, COVER_STACK_VISIBLE);
+  const rest = titles.length - shown.length;
+  const items = rest > 0 ? [...shown, t("moreCount", { count: rest })] : shown;
+  const list = new Intl.ListFormat(locale, {
+    style: "long",
+    type: "conjunction",
+  }).format(items);
+  return t("coverStackSummary", { count: titles.length, list });
 }
