@@ -28,10 +28,10 @@ cd packages/domain
 pnpm run mutation
 ```
 
-Via Nx (from the repo root):
+Via Turborepo (from the repo root):
 
 ```bash
-nx run @jigswap/domain:mutation
+pnpm exec turbo run mutation --filter=@jigswap/domain
 # or the convenience alias:
 pnpm run mutation:domain
 ```
