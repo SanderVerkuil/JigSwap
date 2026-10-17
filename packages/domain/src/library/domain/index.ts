@@ -1,3 +1,4 @@
+export * from "./acquire-batch";
 export * from "./acquisition";
 export * from "./catalog-snapshot";
 export * from "./collection";

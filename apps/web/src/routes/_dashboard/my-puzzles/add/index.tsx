@@ -15,7 +15,7 @@ import { createFileRoute } from "@tanstack/react-router";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { Plus, ScanBarcode, Search } from "lucide-react";
+import { ListPlus, Plus, ScanBarcode, Search } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "use-intl";
 
@@ -58,6 +58,7 @@ function matchesSearch(
 
 function AddPuzzleChooserPage() {
   const t = useTranslations("puzzles");
+  const tPicker = useTranslations("cataloguePicker");
   const [searchInput, setSearchInput] = useState("");
   // The server search runs on the debounced, normalised key; a barcode-shaped
   // key runs the EAN/UPC lookup instead of the text search.
@@ -121,12 +122,20 @@ function AddPuzzleChooserPage() {
   // the title/subtitle come from route-meta (shell.pages.addPuzzle).
   usePageHeaderActions(
     () => (
-      <Button variant="brand" size="sm" asChild>
-        <Link href="/my-puzzles/add/new">
-          <Plus className="h-4 w-4" />
-          {t("chooser.createNew")}
-        </Link>
-      </Button>
+      <>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/my-puzzles/add/quick">
+            <ListPlus className="h-4 w-4" />
+            {tPicker("openPicker")}
+          </Link>
+        </Button>
+        <Button variant="brand" size="sm" asChild>
+          <Link href="/my-puzzles/add/new">
+            <Plus className="h-4 w-4" />
+            {t("chooser.createNew")}
+          </Link>
+        </Button>
+      </>
     ),
     [],
   );

@@ -72,6 +72,8 @@ export const gateway = {
   // approved Catalog definition and re-graded/re-shared/re-detailed via granular mutations.
   library: {
     createOwned: api.library.acquireCopy.acquireCopy,
+    // Quick-start batch add: one copy per picked definition, all or nothing (cap 25).
+    acquireCopies: api.library.acquireCopies.acquireCopies,
     // The legacy single updateOwned is split into granular Copy mutations; callers invoke only
     // those whose fields changed.
     changeCondition: api.library.changeCopyCondition.changeCopyCondition,

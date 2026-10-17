@@ -1,4 +1,7 @@
-import type { ActivityEntryView } from "@jigswap/contracts";
+import type {
+  ActivityBatchCoverView,
+  ActivityEntryView,
+} from "@jigswap/contracts";
 import {
   buildActivityFeed,
   toMemberId,
@@ -11,7 +14,13 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
-import { areMutualFollowers } from "./privacy";
+import {
+  buildCopyViewContext,
+  canViewCopyWithContext,
+  type CopyViewContext,
+} from "../library/canViewCopy";
+import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
+import { areMutualFollowers, canSeeProfileContent } from "./privacy";
 
 // The activity-feed read: the acting member's own activity plus the activity of everyone they
 // follow, newest-first. It reads the DURABLE `domainEvents` log and maps FOREIGN events into
@@ -24,6 +33,8 @@ import { areMutualFollowers } from "./privacy";
 //   CompletionStarted  (Solving)  -> "started",     member = payload.userId,  ref = completionId
 //                                    (opt-in + mutual-followers-only, filtered below)
 //   CopyAcquired       (Library)  -> "acquisition", member = payload.ownerId, ref = copyId
+//                                    or, with payload.batchId (one acquireCopies call), ONE
+//                                    "acquisitionBatch" per batch, ref = batchId (grouped below)
 //   ExchangeCompleted  (Exchange) -> "exchange",    members = both parties (row),  ref = exchangeId
 const FEED_EVENT_NAMES = [
   "CompletionRecorded",
@@ -33,6 +44,9 @@ const FEED_EVENT_NAMES = [
 ] as const;
 
 const DEFAULT_LIMIT = 50;
+
+// How many covers a grouped batch entry shows.
+const BATCH_COVER_COUNT = 4;
 
 // Time window + per-name cap so the feed reads a bounded slice of `domainEvents` (via the
 // `by_name` index) instead of scanning the whole log. 90 days comfortably covers a feed page.
@@ -84,17 +98,26 @@ export const getActivityFeed = query({
       ),
     );
 
+    // batchId -> the copy ids its CopyAcquired events name, collected while mapping.
+    const batchCopyIds = new Map<string, string[]>();
     const entries: ActivityEntry[] = [];
     for (const batch of eventBatches) {
       for (const event of batch) {
-        const mapped = await toActivityEntries(ctx, event, audience);
+        const mapped = await toActivityEntries(
+          ctx,
+          event,
+          audience,
+          batchCopyIds,
+        );
         entries.push(...mapped);
       }
     }
 
     // One activity per (kind, ref): an ExchangeCompleted is attributed to BOTH parties, so a viewer
-    // who is a party AND follows the counterparty would otherwise see the same exchange twice.
-    // buildActivityFeed only sorts/slices, so dedupe here, keeping the first occurrence.
+    // who is a party AND follows the counterparty would otherwise see the same exchange twice, and
+    // a batch add maps one entry per CopyAcquired event. buildActivityFeed only sorts/slices, so
+    // dedupe here, keeping the first occurrence: events are read newest-first, so a grouped batch
+    // keeps its newest event's time (the batch time).
     const deduped = [
       ...new Map(entries.map((e) => [`${e.kind}:${e.ref}`, e])).values(),
     ];
@@ -134,7 +157,21 @@ export const getActivityFeed = query({
         startedActorAllowed.get(e.memberId as string) === true,
     );
 
-    const feed = buildActivityFeed(visible, {
+    // A grouped batch shows only the copies THIS viewer may see; one with none is dropped. Resolved
+    // BEFORE the limit slice (like "started") so pages are never short.
+    const batchCopies = await visibleBatchCopies(
+      ctx,
+      meId,
+      visible.filter((e) => e.kind === "acquisitionBatch"),
+      batchCopyIds,
+    );
+    const shown = visible.filter(
+      (e) =>
+        e.kind !== "acquisitionBatch" ||
+        (batchCopies.get(e.ref)?.length ?? 0) > 0,
+    );
+
+    const feed = buildActivityFeed(shown, {
       limit: args.limit ?? DEFAULT_LIMIT,
     });
 
@@ -151,10 +188,79 @@ export const getActivityFeed = query({
       ),
     );
 
-    return feed.map((entry) =>
-      toActivityEntryView(entry, actorNames.get(entry.memberId as string)),
+    return Promise.all(
+      feed.map(async (entry) =>
+        toActivityEntryView(
+          entry,
+          actorNames.get(entry.memberId as string),
+          entry.kind === "acquisitionBatch"
+            ? await toBatchView(ctx, batchCopies.get(entry.ref) ?? [])
+            : undefined,
+        ),
+      ),
     );
   },
+});
+
+// The copies of each grouped batch that `viewerId` may see, in pick order. Same two gates as the
+// member's profile puzzles (listProfileCopies), which the entry links to: the profile unlock rule
+// (self, public profile, or mutual follower), then the per-copy canViewCopy gate. A copy that was
+// deleted or has since changed hands no longer counts toward the actor's batch.
+const visibleBatchCopies = async (
+  ctx: QueryCtx,
+  viewerId: Id<"users">,
+  batchEntries: ActivityEntry[],
+  batchCopyIds: Map<string, string[]>,
+): Promise<Map<string, Doc<"ownedPuzzles">[]>> => {
+  const result = new Map<string, Doc<"ownedPuzzles">[]>();
+  // Sequential: the context's ownerVisibility memo isn't safe to share across a Promise.all.
+  let context: CopyViewContext | null = null;
+  for (const entry of batchEntries) {
+    const actorId = entry.memberId as unknown as Id<"users">;
+    const isSelf = actorId === viewerId;
+    if (!isSelf && !(await canSeeProfileContent(ctx, viewerId, actorId))) {
+      result.set(entry.ref, []);
+      continue;
+    }
+    // Collected newest-first from the event read; reverse for the order they were picked in.
+    const copyIds = [...(batchCopyIds.get(entry.ref) ?? [])].reverse();
+    const copies: Doc<"ownedPuzzles">[] = [];
+    for (const copyId of copyIds) {
+      const copy = await ctx.db
+        .query("ownedPuzzles")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", copyId))
+        .unique();
+      if (!copy || copy.ownerId !== actorId) continue;
+      if (!isSelf) {
+        context ??= await buildCopyViewContext(ctx, viewerId);
+        if (!(await canViewCopyWithContext(ctx, copy, context))) continue;
+      }
+      copies.push(copy);
+    }
+    result.set(entry.ref, copies);
+  }
+  return result;
+};
+
+// The grouped entry's payload: the visible count and the first few covers. Covers are resolved
+// only for the entries that made the page.
+const toBatchView = async (
+  ctx: QueryCtx,
+  copies: Doc<"ownedPuzzles">[],
+): Promise<ActivityEntryView["batch"]> => ({
+  count: copies.length,
+  covers: await Promise.all(
+    copies
+      .slice(0, BATCH_COVER_COUNT)
+      .map(async (copy): Promise<ActivityBatchCoverView> => {
+        const puzzle = await ctx.db.get(copy.puzzleId);
+        return {
+          copyId: copy.aggregateId as string,
+          title: puzzle?.title ?? copy.snapshot?.title ?? "",
+          coverUrl: await resolveCopyCoverUrl(ctx, copy, puzzle),
+        };
+      }),
+  ),
 });
 
 // Prefer the actor's Social profile display name, falling back to their account name (mirrors
@@ -182,6 +288,7 @@ const toActivityEntries = async (
   ctx: QueryCtx,
   event: Doc<"domainEvents">,
   audience: Set<string>,
+  batchCopyIds: Map<string, string[]>,
 ): Promise<ActivityEntry[]> => {
   const p = event.payload as Record<string, unknown>;
   const occurredAt = new Date(event.occurredAt);
@@ -206,8 +313,22 @@ const toActivityEntries = async (
       if (startDate !== undefined && startDate > Date.now()) return [];
       return make(p.userId as string, "started", p.completionId as string);
     }
-    case "CopyAcquired":
-      return make(p.ownerId as string, "acquisition", p.copyId as string);
+    case "CopyAcquired": {
+      // A batch add (acquireCopies) tags every event with one batch id; they fold into a single
+      // "acquisitionBatch" entry (deduped by ref = batchId) instead of one entry per box.
+      const batchId = p.batchId;
+      if (typeof batchId !== "string") {
+        return make(p.ownerId as string, "acquisition", p.copyId as string);
+      }
+      const grouped = make(p.ownerId as string, "acquisitionBatch", batchId);
+      if (grouped.length > 0) {
+        batchCopyIds.set(batchId, [
+          ...(batchCopyIds.get(batchId) ?? []),
+          p.copyId as string,
+        ]);
+      }
+      return grouped;
+    }
     case "ExchangeCompleted": {
       // ExchangeCompleted carries no member; resolve both parties from the persisted exchange row
       // (mirrors Notifications' both-party treatment) and attribute the settlement to each.
@@ -237,10 +358,12 @@ const loadExchange = (
 const toActivityEntryView = (
   entry: ActivityEntry,
   actorName: string | undefined,
+  batch: ActivityEntryView["batch"],
 ): ActivityEntryView => ({
   memberId: entry.memberId as string,
   kind: entry.kind,
   occurredAt: entry.occurredAt.getTime(),
   ref: entry.ref,
   actorName,
+  ...(batch ? { batch } : {}),
 });

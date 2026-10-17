@@ -62,6 +62,27 @@ describe("buildActivityFeed", () => {
     ]);
   });
 
+  it("sorts a grouped batch entry at its batch time among single entries", () => {
+    const feed = buildActivityFeed([
+      entry({
+        kind: "acquisition",
+        ref: "single",
+        occurredAt: new Date("2026-02-01T00:00:00Z"),
+      }),
+      entry({
+        kind: "acquisitionBatch",
+        ref: "batch-1",
+        occurredAt: new Date("2026-03-01T00:00:00Z"),
+      }),
+      entry({
+        kind: "completion",
+        ref: "c",
+        occurredAt: new Date("2026-04-01T00:00:00Z"),
+      }),
+    ]);
+    expect(feed.map((e) => e.ref)).toEqual(["c", "batch-1", "single"]);
+  });
+
   it("caps the feed to the limit, keeping the newest entries", () => {
     const feed = buildActivityFeed(
       [

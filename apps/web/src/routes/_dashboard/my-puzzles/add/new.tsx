@@ -38,13 +38,14 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, Id } from "@/gateway";
 import { pageTitle } from "@/lib/page-title";
+import { safeReturnTo } from "@/lib/return-to";
 import {
   convexQuery,
   useConvexAction,
   useConvexMutation,
 } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -61,10 +62,14 @@ export const Route = createFileRoute("/_dashboard/my-puzzles/add/new")({
   // ?ean / ?upc prefill the barcode when registering a code the add-copy
   // picker's barcode lookup did not find (the router JSON-parses search
   // values, so a code without a leading zero arrives as a number).
+  // ?title prefills the title and ?returnTo (a same-app path) is where to go after adding: the
+  // catalogue picker's "Register it" link sets both.
   validateSearch: (search: Record<string, unknown>) => ({
     puzzleId: typeof search.puzzleId === "string" ? search.puzzleId : undefined,
     ean: barcodeParam(search.ean),
     upc: barcodeParam(search.upc),
+    title: typeof search.title === "string" ? search.title : undefined,
+    returnTo: safeReturnTo(search.returnTo),
   }),
   component: AddPuzzlePage,
 });
@@ -126,14 +131,25 @@ const DEFAULT_FORM: FormState = {
   dimensions: { width: "", height: "", unit: "cm" },
 };
 
+// Reached from the catalogue picker (returnTo set): availability starts all off, like the picker
+// and the domain default, instead of pre-ticking swap.
+const QUICK_FLOW_FORM: FormState = {
+  ...DEFAULT_FORM,
+  availability: { forTrade: false, forLend: false, forSale: false },
+};
+
 function AddPuzzlePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useTranslations("puzzles");
   const tf = useTranslations("forms.puzzle-form");
 
+  const navigate = useNavigate();
+  const returnTo = searchParams.get("returnTo") ?? undefined;
+  const formDefaults = returnTo ? QUICK_FLOW_FORM : DEFAULT_FORM;
   const [form, setForm] = useState<FormState>(() => ({
-    ...DEFAULT_FORM,
+    ...formDefaults,
+    title: searchParams.get("title") ?? "",
     ean: searchParams.get("ean") ?? "",
     upc: searchParams.get("upc") ?? "",
   }));
@@ -254,7 +270,7 @@ function AddPuzzlePage() {
   };
 
   const resetForm = () => {
-    setForm(DEFAULT_FORM);
+    setForm(formDefaults);
     setSelectedDefinitionId(null);
     setPendingMatch(null);
   };
@@ -338,7 +354,8 @@ function AddPuzzlePage() {
       if (andAnother) {
         resetForm();
       } else {
-        router.push("/puzzles");
+        if (returnTo) void navigate({ href: returnTo });
+        else router.push("/puzzles");
       }
     },
     onError: (error) => {
@@ -533,7 +550,11 @@ function AddPuzzlePage() {
       <Button
         type="button"
         variant="ghost"
-        onClick={() => router.push(isCopyMode ? "/my-puzzles/add" : "/puzzles")}
+        onClick={() =>
+          returnTo
+            ? void navigate({ href: returnTo })
+            : router.push(isCopyMode ? "/my-puzzles/add" : "/puzzles")
+        }
       >
         {t("cancel")}
       </Button>

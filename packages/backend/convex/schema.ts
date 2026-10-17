@@ -270,6 +270,10 @@ export default defineSchema({
         currency: v.string(),
       }),
     ),
+    // The quick-start batch (one library.acquireCopies call) that added this copy; the same id is
+    // on its CopyAcquired event. Absent for a single add and for every legacy row. Provenance only:
+    // written once by acquireCopies, not part of the Library domain model or any copy view.
+    acquisitionBatchId: v.optional(v.string()),
 
     // --- Household ---
     // What the owner lets their household do with this copy: "manage" (act as co-owner) or "view".
