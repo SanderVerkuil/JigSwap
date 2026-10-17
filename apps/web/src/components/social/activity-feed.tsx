@@ -10,10 +10,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useFormatter, useTranslations } from "use-intl";
 import { ActivityBatchCovers } from "./activity-batch-covers";
 import { ACTIVITY_META, isKnownActivityKind } from "./activity-feed-meta";
+import { ActivityTargetLink, ActorLink } from "./activity-links";
 
 // The acting member's activity feed: their own activity plus everyone they follow, newest-first.
 // Scoping + the foreign-event mapping happen server-side; here we only render the ActivityEntryView
-// as open, thin-divider rows on the ground (no boxed card).
+// as open, thin-divider rows on the ground (no boxed card). A row with a server-decided target is one
+// stretched link to it; the actor's name is a separate sibling link to their profile.
 
 export function ActivityFeed() {
   const t = useTranslations("activity");
@@ -45,11 +47,13 @@ export function ActivityFeed() {
         const isYou = me != null && entry.memberId === me._id;
         // A grouped batch add reads "added N puzzles"; the other kinds ignore the count.
         const count = entry.batch?.count ?? 1;
+        const name = displayName({ name: entry.actorName });
         return (
           <div
             key={`${entry.ref}-${entry.memberId}-${entry.occurredAt}`}
             className={cn(
-              "flex items-start gap-3 py-3.5",
+              "relative flex items-start gap-3 py-3.5",
+              entry.target && "hover:bg-muted/40 transition-colors",
               index < feed.length - 1 && "border-b",
             )}
           >
@@ -61,21 +65,26 @@ export function ActivityFeed() {
                 {isYou
                   ? t(`${entry.kind}.you`, { count })
                   : t.rich(`${entry.kind}.other`, {
-                      name: displayName({ name: entry.actorName }),
+                      name,
                       count,
-                      strong: (chunks) => <strong>{chunks}</strong>,
+                      strong: (chunks) =>
+                        entry.actor ? (
+                          <ActorLink actor={entry.actor} className="py-3">
+                            <strong>{chunks}</strong>
+                          </ActorLink>
+                        ) : (
+                          <strong>{chunks}</strong>
+                        ),
                     })}
               </p>
-              {entry.batch && (
-                <ActivityBatchCovers
-                  memberId={entry.memberId}
-                  batch={entry.batch}
-                />
-              )}
+              {entry.batch && <ActivityBatchCovers batch={entry.batch} />}
               <p className="text-muted-foreground text-xs">
                 {format.relativeTime(new Date(entry.occurredAt))}
               </p>
             </div>
+            {entry.target && (
+              <ActivityTargetLink target={entry.target} count={count} />
+            )}
           </div>
         );
       })}

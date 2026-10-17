@@ -303,6 +303,10 @@
       "you": "Je bent aan een puzzel begonnen",
       "other": "<strong>{name}</strong> is aan een puzzel begonnen"
     },
+    "open": {
+      "puzzle": "Bekijk de puzzel",
+      "trades": "Bekijk je uitwisselingen"
+    },
     "empty": "Nog geen recente activiteit",
     "emptyHint": "Volg andere leden om te zien wat zij doen."
   },
