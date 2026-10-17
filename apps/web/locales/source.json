@@ -2635,7 +2635,8 @@
     "library": "My Library — JigSwap",
     "people": "People — JigSwap",
     "members": "Members — JigSwap",
-    "copyInstance": "Owned copy — JigSwap"
+    "copyInstance": "Owned copy — JigSwap",
+    "whatsNew": "What's new — JigSwap"
   },
   "shell": {
     "search": {
@@ -2824,6 +2825,11 @@
         "title": "Feedback",
         "subtitle": "“Was this page helpful?” votes from the documentation, newest first.",
         "description": "Review docs helpfulness votes"
+      },
+      "whatsNew": {
+        "title": "What's new",
+        "subtitle": "Fresh features, improvements and fixes.",
+        "description": "Everything that changed in JigSwap, newest first."
       }
     },
     "user": {
@@ -2863,8 +2869,10 @@
         "logCompletionSub": "Finished one? Record it",
         "proposeSwap": "Propose a Swap",
         "proposeSwapSub": "Trade with a fellow puzzler",
-        "browseCommunitySub": "Discover puzzles near you"
-      }
+        "browseCommunitySub": "Discover puzzles near you",
+        "whatsNewSub": "Latest features and fixes"
+      },
+      "openQuickActionsUnread": "{count, plural, one {Quick actions, # update} other {Quick actions, # updates}}"
     },
     "breadcrumbLabel": "Breadcrumb",
     "crumbs": {
@@ -3489,5 +3497,31 @@
     "logInToReview": "Log in to write a review",
     "notFound": "Puzzle not found",
     "notFoundSub": "This puzzle may have been removed from the catalogue."
+  },
+  "whatsNew": {
+    "menuLabel": "What's new",
+    "menuLabelUnread": "What's new ({count})",
+    "unreadCount": "{count, plural, =0 {No new updates} one {# new update} other {# new updates}}",
+    "announce": "{count, plural, one {# new update in What's new} other {# new updates in What's new}}",
+    "new": "New",
+    "newPrefix": "New:",
+    "category": {
+      "feature": "Feature",
+      "improvement": "Improvement",
+      "fix": "Fix"
+    },
+    "empty": {
+      "title": "No updates yet",
+      "body": "New features and fixes will show up here."
+    },
+    "readMore": "Read more",
+    "seeAll": "See all updates",
+    "modal": {
+      "eyebrow": "New in JigSwap",
+      "later": "Maybe later"
+    },
+    "tour": {
+      "take": "Take the tour"
+    }
   }
 }
