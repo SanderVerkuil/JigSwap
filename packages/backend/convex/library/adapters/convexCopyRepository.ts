@@ -101,6 +101,13 @@ export const convexCopyRepository = (ctx: MutationCtx): CopyRepository => {
         .collect();
       for (const membership of memberships) await ctx.db.delete(membership._id);
 
+      // Copy reviews are scoped to the physical copy; they don't outlive it.
+      const reviews = await ctx.db
+        .query("copyReviews")
+        .withIndex("by_copy", (q) => q.eq("copyId", row._id))
+        .collect();
+      for (const review of reviews) await ctx.db.delete(review._id);
+
       const images = await loadImages(row._id);
       for (const image of images) await ctx.db.delete(image._id);
 

@@ -3,7 +3,6 @@ import {
   makeStartCompletion,
   type MemberId,
   toCopyId,
-  toFileId,
   toPuzzleDefinitionId,
 } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
@@ -14,6 +13,7 @@ import { convexCompletionRepository } from "./adapters/convexCompletionRepositor
 import { completionIdGenerator } from "./adapters/idGenerators";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
+import { denormalizeCopyOntoCompletion } from "./copySnapshot";
 import { toConvexError } from "./errors";
 
 // Composition root for logging a solve. Either a copy or a puzzle definition (or both) may be
@@ -29,7 +29,6 @@ export const recordCompletion = mutation({
     endDate: v.optional(v.number()),
     completionTimeMinutes: v.optional(v.number()),
     notes: v.optional(v.string()),
-    photos: v.optional(v.array(v.string())),
     allPiecesPresent: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
@@ -55,10 +54,12 @@ export const recordCompletion = mutation({
       ? toPuzzleDefinitionId(args.puzzleDefinitionId)
       : undefined;
     const copyId = args.copyId ? toCopyId(args.copyId) : undefined;
-    const photoFileIds = args.photos?.map((id) => toFileId(id));
 
     let completionId: string;
     if (args.endDate === undefined) {
+      // Event-payload asymmetry: this path passes puzzleDefinitionId as given (undefined when only
+      // a copy is supplied), while startCompletion derives it from the copy. Rows converge via the
+      // snapshot denormalization below; only the CompletionStarted event payload differs.
       const start = makeStartCompletion({
         completions: convexCompletionRepository(ctx),
         ids: completionIdGenerator,
@@ -71,7 +72,6 @@ export const recordCompletion = mutation({
         copyId,
         startDate: new Date(args.startDate),
         notes: args.notes,
-        photoFileIds,
         allPiecesPresent: args.allPiecesPresent,
       });
       if (result.isErr) throw toConvexError(result.error);
@@ -91,36 +91,33 @@ export const recordCompletion = mutation({
         endDate: new Date(args.endDate),
         completionTimeMinutes: args.completionTimeMinutes,
         notes: args.notes,
-        photoFileIds,
         allPiecesPresent: args.allPiecesPresent,
       });
       if (result.isErr) throw toConvexError(result.error);
       completionId = result.value as string;
     }
 
-    // Denormalize the durable puzzleId anchor + copy snapshot onto the just-written row.
     if (copy) {
-      const row = await ctx.db
-        .query("completions")
-        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", completionId))
-        .unique();
-      if (row) {
-        await ctx.db.patch(row._id, {
-          puzzleId: row.puzzleId ?? copy.puzzleId,
-          copySnapshot: {
-            copyId: args.copyId as string,
-            ownerId: copy.ownerId,
-            wasBorrowed: copy.ownerId !== me,
-            condition: copy.condition,
-            missingPiecesCount: copy.missingPiecesCount,
-            title: copy.snapshot?.title,
-            brand: copy.snapshot?.brand,
-            pieceCount: copy.snapshot?.pieceCount,
-          },
-        });
-      }
+      await denormalizeCopyOntoCompletion(
+        ctx,
+        completionId,
+        copy,
+        args.copyId as string,
+        me,
+      );
     }
 
-    return completionId;
+    // `completionId` stays the domain AGGREGATE id (photo attach and downstream flows key on it
+    // via by_aggregate_id); `puzzleId`/`copyId` are the resolved Convex doc `_id`s from the
+    // persisted row, for callers that need the review targets.
+    const row = await ctx.db
+      .query("completions")
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", completionId))
+      .unique();
+    return {
+      completionId,
+      puzzleId: row?.puzzleId ?? null,
+      copyId: row?.ownedPuzzleId ?? null,
+    };
   },
 });

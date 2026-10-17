@@ -37,5 +37,19 @@ export const finishCompletion = mutation({
       allPiecesPresent: args.allPiecesPresent,
     });
     if (result.isErr) throw toConvexError(result.error);
+
+    // Same return shape as recordCompletion: `completionId` stays the domain AGGREGATE id;
+    // `puzzleId`/`copyId` are the resolved Convex doc `_id`s from the persisted row.
+    const row = await ctx.db
+      .query("completions")
+      .withIndex("by_aggregate_id", (q) =>
+        q.eq("aggregateId", args.completionId),
+      )
+      .unique();
+    return {
+      completionId: args.completionId,
+      puzzleId: row?.puzzleId ?? null,
+      copyId: row?.ownedPuzzleId ?? null,
+    };
   },
 });

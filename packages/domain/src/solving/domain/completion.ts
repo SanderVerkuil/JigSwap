@@ -4,13 +4,10 @@ import {
   CompletionEdited,
   CompletionRecorded,
   CompletionStarted,
-  PuzzleReviewed,
 } from "./events";
 import { CompletionId, CopyId, MemberId, PuzzleDefinitionId } from "./ids";
 import { Photo } from "./photo";
-import { PuzzleReview } from "./puzzle-review";
 import { SolveDuration } from "./solve-duration";
-import { StarRating } from "./star-rating";
 
 // A completion may hold at most five photos (§1.4).
 export const MAX_PHOTOS = 5;
@@ -46,7 +43,6 @@ export interface RecordCompletionProps {
   readonly completionTimeMinutes?: number;
   readonly notes?: string;
   readonly photos?: readonly Photo[];
-  readonly review?: PuzzleReview;
   readonly allPiecesPresent?: boolean;
   readonly now: Date;
 }
@@ -54,8 +50,7 @@ export interface RecordCompletionProps {
 // The persistable shape, kept close to the `completions` columns so the 2c mapper is a
 // near field-for-field translation:
 //   userId, puzzleId→puzzleDefinitionId, ownedPuzzleId→copyId, startDate, endDate,
-//   completionTimeMinutes, rating→review.rating, review(text)→review.text, notes, photos[],
-//   isCompleted, createdAt, updatedAt.
+//   completionTimeMinutes, notes, photos[], isCompleted, createdAt, updatedAt.
 export interface CompletionState {
   readonly id: CompletionId;
   readonly userId: MemberId;
@@ -66,7 +61,6 @@ export interface CompletionState {
   readonly completionTimeMinutes?: number;
   readonly notes?: string;
   readonly photos: readonly Photo[];
-  readonly review?: PuzzleReview;
   readonly allPiecesPresent?: boolean;
   readonly isCompleted: boolean;
   readonly createdAt: Date;
@@ -87,7 +81,8 @@ export interface CompletionChanges {
 // aggregates. It can be in-progress (no end, isCompleted=false) or done (end + duration).
 //
 // Invariants: endDate ≥ startDate; the duration is consistent with the recorded end; at most
-// five photos; edits only within 24h of completion.
+// five photos; edits only within 24h of completion (photo attachment is exempt — see
+// attachPhotos).
 export class Completion {
   private events: DomainEvent[] = [];
 
@@ -103,10 +98,6 @@ export class Completion {
 
   get isCompleted(): boolean {
     return this.state.isCompleted;
-  }
-
-  get puzzleReview(): PuzzleReview | undefined {
-    return this.state.review;
   }
 
   get photos(): readonly Photo[] {
@@ -147,8 +138,7 @@ export class Completion {
   }
 
   // Log an already-finished solve. Enforces endDate ≥ startDate, the photo cap, and a duration
-  // consistent with start/end; records CompletionRecorded (and PuzzleReviewed if a review came
-  // along).
+  // consistent with start/end; records CompletionRecorded.
   static record(
     props: RecordCompletionProps,
   ): Result<Completion, SolvingError> {
@@ -177,7 +167,6 @@ export class Completion {
       completionTimeMinutes: duration.value,
       notes: props.notes,
       photos,
-      review: props.review,
       allPiecesPresent: props.allPiecesPresent,
       isCompleted: true,
       createdAt: props.now,
@@ -195,17 +184,6 @@ export class Completion {
         props.now,
       ),
     );
-    if (props.review) {
-      completion.record(
-        new PuzzleReviewed(
-          props.id,
-          props.userId,
-          props.puzzleDefinitionId,
-          props.review.rating.value,
-          props.now,
-        ),
-      );
-    }
     return ok(completion);
   }
 
@@ -317,24 +295,25 @@ export class Completion {
     return ok(undefined);
   }
 
-  // Attach a PuzzleReview (opinion of the puzzle). Records PuzzleReviewed. Re-reviewing replaces
-  // the prior opinion and records the event again (a member can change their mind).
-  review(
-    rating: StarRating,
+  // Append photos. Additive (never removes), owner-only, capped at MAX_PHOTOS. Deliberately NOT
+  // window-gated: attaching photos is not a revision of the solve's facts, and a backdated
+  // completion's endDate-anchored window is already closed at creation.
+  attachPhotos(
+    actingMemberId: MemberId,
+    photos: readonly Photo[],
     now: Date,
-    text?: string,
   ): Result<void, SolvingError> {
-    const puzzleReview = PuzzleReview.create(rating, text);
-    this.state = { ...this.state, review: puzzleReview, updatedAt: now };
-    this.record(
-      new PuzzleReviewed(
-        this.state.id,
-        this.state.userId,
-        this.state.puzzleDefinitionId,
-        rating.value,
-        now,
-      ),
-    );
+    if (actingMemberId !== this.state.userId) {
+      return err(SolvingError.notCompletionOwner());
+    }
+    const combined = [...this.state.photos, ...photos];
+    if (combined.length > MAX_PHOTOS) {
+      return err(SolvingError.tooManyPhotos(MAX_PHOTOS));
+    }
+    this.state = { ...this.state, photos: combined, updatedAt: now };
+    // Reuse CompletionEdited (verified consumer-safe: no feed/notification/goal reactions);
+    // recorded exactly the way edit() records it (see edit()).
+    this.record(new CompletionEdited(this.state.id, now));
     return ok(undefined);
   }
 

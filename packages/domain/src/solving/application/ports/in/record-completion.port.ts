@@ -8,8 +8,7 @@ import {
   SolvingError,
 } from "../../../domain";
 
-// Log an already-finished solve. The duration is derived from start/end when omitted. An
-// optional 1–5 rating (+ text) attaches a PuzzleReview in the same transaction.
+// Log an already-finished solve. The duration is derived from start/end when omitted.
 export interface RecordCompletionCommand {
   readonly userId: MemberId;
   readonly puzzleDefinitionId?: PuzzleDefinitionId;
@@ -19,8 +18,6 @@ export interface RecordCompletionCommand {
   readonly completionTimeMinutes?: number;
   readonly notes?: string;
   readonly photoFileIds?: readonly FileId[];
-  readonly rating?: number;
-  readonly reviewText?: string;
   readonly allPiecesPresent?: boolean;
 }
 

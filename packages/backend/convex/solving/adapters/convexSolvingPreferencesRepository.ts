@@ -12,6 +12,7 @@ const toDomain = (row: Doc<"solvingPreferences">): SolvingPreferences => {
   const state: SolvingPreferencesState = {
     memberId: toMemberId(row.memberId as unknown as string),
     trackCompletionDuration: row.trackCompletionDuration,
+    shareInProgress: row.shareInProgress,
     updatedAt: new Date(row.updatedAt),
   };
   return SolvingPreferences.rehydrate(state);
@@ -47,6 +48,7 @@ export const convexSolvingPreferencesRepository = (
     const row = {
       memberId: state.memberId as unknown as Id<"users">,
       trackCompletionDuration: state.trackCompletionDuration,
+      shareInProgress: state.shareInProgress,
       updatedAt: state.updatedAt.getTime(),
     };
     const existing = await findRow(ctx, state.memberId);

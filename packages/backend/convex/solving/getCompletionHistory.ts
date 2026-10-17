@@ -2,11 +2,12 @@ import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { resolvePhotoItems } from "./listMyCompletions";
 
 // Read side for a puzzle's/copy's solve history: the acting member's completions of a given
 // puzzle definition OR a given owned copy, newest first. The arg is a domain aggregateId
 // (string); resolve it to the stored FK `_id` (legacy `_id` fallback) before querying. Auth-gated;
-// photo storage ids are resolved to URLs.
+// photo storage ids are resolved to display items (url + pending flag).
 export const getCompletionHistory = query({
   args: {
     puzzleDefinitionId: v.optional(v.string()),
@@ -46,9 +47,8 @@ export const getCompletionHistory = query({
     return Promise.all(
       rows.map(async (row) => ({
         ...row,
-        photoUrls: await Promise.all(
-          row.photos.map((fileId) => ctx.storage.getUrl(fileId)),
-        ),
+        // Rejected photos are filtered out; pending + legacy (no sidecar) stay visible.
+        photoItems: await resolvePhotoItems(ctx, row),
       })),
     );
   },

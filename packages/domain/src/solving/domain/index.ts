@@ -4,7 +4,6 @@ export * from "./events";
 export * from "./goal";
 export * from "./ids";
 export * from "./photo";
-export * from "./puzzle-review";
 export * from "./solve-duration";
 export * from "./solving-preferences";
 export * from "./star-rating";

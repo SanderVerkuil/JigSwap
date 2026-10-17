@@ -46,6 +46,12 @@ export const getPersonalStats = query({
       .withIndex("by_reviewee", (q) => q.eq("revieweeId", userId))
       .collect();
 
+    // The member's puzzle reviews (two-level review model): source of averageRatingGiven.
+    const puzzleReviews = await ctx.db
+      .query("puzzleReviews")
+      .withIndex("by_user_puzzle", (q) => q.eq("userId", userId))
+      .collect();
+
     const goals = await ctx.db
       .query("goals")
       .withIndex("by_user", (q) => q.eq("userId", userId))
@@ -54,7 +60,6 @@ export const getPersonalStats = query({
     return computePersonalStats({
       completions: completions.map((c) => ({
         completionTimeMinutes: c.completionTimeMinutes,
-        ratingGiven: c.rating,
         isCompleted: c.isCompleted,
       })),
       // A copy's catalog definition: prefer the snapshot-backed PuzzleDefinitionId, fall back to the
@@ -66,6 +71,10 @@ export const getPersonalStats = query({
       exchanges: exchanges.map((e) => ({
         status: e.status as ExchangeStatStatus,
       })),
+      // `rating` is schema-optional only for migrated text-only legacy reviews; skip those.
+      puzzleReviewRatings: puzzleReviews
+        .map((r) => r.rating)
+        .filter((r): r is number => typeof r === "number"),
       reviewsReceived: reviewsReceived.map((r) => ({ rating: r.rating })),
       goals: goals.map((g) => ({
         isActive: g.isActive,

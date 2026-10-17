@@ -61,13 +61,24 @@ export class CompletionDeleted implements DomainEvent {
   ) {}
 }
 
-// A PuzzleReview (opinion of the puzzle) was attached to a completion.
-export class PuzzleReviewed implements DomainEvent {
-  readonly name = "PuzzleReviewed";
+// A member's single review OF THE PUZZLE (one per member+puzzle) was created or replaced.
+// `puzzleId` holds a Convex `puzzles` doc id under the PuzzleDefinitionId brand.
+export class PuzzleReviewUpserted implements DomainEvent {
+  readonly name = "PuzzleReviewUpserted";
   constructor(
-    readonly completionId: CompletionId,
     readonly userId: MemberId,
-    readonly puzzleDefinitionId: PuzzleDefinitionId | undefined,
+    readonly puzzleId: PuzzleDefinitionId,
+    readonly rating: number,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+// A member's single star-only review OF A COPY (one per member+copy) was created or replaced.
+export class CopyReviewUpserted implements DomainEvent {
+  readonly name = "CopyReviewUpserted";
+  constructor(
+    readonly userId: MemberId,
+    readonly copyId: CopyId,
     readonly rating: number,
     readonly occurredAt: Date,
   ) {}
@@ -112,7 +123,8 @@ export type SolvingDomainEvent =
   | CompletionRecorded
   | CompletionEdited
   | CompletionDeleted
-  | PuzzleReviewed
+  | PuzzleReviewUpserted
+  | CopyReviewUpserted
   | GoalCreated
   | GoalProgressed
   | GoalAchieved;

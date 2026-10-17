@@ -293,6 +293,10 @@
       "you": "Je hebt een ruil afgerond",
       "other": "<strong>{name}</strong> heeft een ruil afgerond"
     },
+    "started": {
+      "you": "Je bent aan een puzzel begonnen",
+      "other": "<strong>{name}</strong> is aan een puzzel begonnen"
+    },
     "empty": "Nog geen recente activiteit",
     "emptyHint": "Volg andere leden om te zien wat zij doen."
   },
@@ -776,6 +780,11 @@
       },
       "arrangeShelf": "Plank indelen"
     },
+    "currentlySolving": {
+      "title": "{name} is nu bezig met",
+      "untitled": "Een puzzel",
+      "pieces": "{count, plural, one {# stukje} other {# stukjes}}"
+    },
     "trustLevels": {
       "beginner": "Beginner",
       "intermediate": "Gevorderd",
@@ -854,6 +863,17 @@
         "activeSub": "Op dit moment in beweging"
       }
     },
+    "solvingNow": {
+      "title": "Nu aan het puzzelen",
+      "empty": "Er ligt nu niets op tafel.",
+      "emptyCta": "Start er een vanuit je puzzels",
+      "untitled": "Een puzzel",
+      "pieces": "{count, plural, one {# stukje} other {# stukjes}}",
+      "startedToday": "Vandaag gestart",
+      "startedDaysAgo": "{days, plural, one {# dag geleden gestart} other {# dagen geleden gestart}}",
+      "startsInDays": "{days, plural, one {Start over # dag} other {Start over # dagen}}",
+      "finish": "Afronden"
+    },
     "pulse": {
       "inMotion": {
         "title": "In Beweging",
@@ -890,6 +910,7 @@
         "completion": "<strong>{name}</strong> heeft een puzzel afgemaakt",
         "acquisition": "<strong>{name}</strong> heeft een puzzel op de plank gezet",
         "exchange": "<strong>{name}</strong> heeft een ruil afgerond",
+        "started": "<strong>{name}</strong> is aan een puzzel begonnen",
         "empty": "Voorlopig alles rustig — volg medepuzzelaars en hun nieuwste stappen verschijnen hier. 🧩"
       }
     },
@@ -1752,6 +1773,8 @@
       "subtitle": "Je oplosgeschiedenis van al je puzzels.",
       "empty": "Nog geen voltooiingen",
       "emptyHint": "Leg een voltooiing vast vanuit een van je puzzels om je geschiedenis bij te houden.",
+      "inProgressSection": "Bezig",
+      "historySection": "Geschiedenis",
       "inProgress": "Bezig",
       "completed": "Voltooid",
       "started": "Gestart {date}",
@@ -1764,9 +1787,7 @@
       "finish": "Voltooiing afronden",
       "edit": "Bewerken",
       "editWindowClosed": "Deze voltooiing kan niet meer worden bewerkt (het venster van 24 uur is gesloten).",
-      "yourReview": "Jouw review",
-      "addReview": "Review toevoegen",
-      "editReview": "Review bewerken",
+      "review": "Beoordelen",
       "stats": {
         "completed": "Puzzels voltooid",
         "pieces": "Stukjes gelegd",
@@ -1778,6 +1799,9 @@
       "piecesFinished": "{pieces, number} stukjes · voltooid in {days, plural, one {# dag} other {# dagen}}",
       "solvedOwnCopy": "Eigen exemplaar opgelost",
       "solvedBorrowedCopy": "Geleend exemplaar opgelost",
+      "solvingOwnCopy": "Bezig met eigen exemplaar",
+      "solvingBorrowedCopy": "Bezig met geleend exemplaar",
+      "pendingReview": "Wacht op controle",
       "piecesComplete": "was compleet",
       "piecesMissing": "miste stukjes",
       "new": {
@@ -1810,11 +1834,24 @@
       "savedInProgress": "Voltooiing gestart",
       "finished": "Voltooiing afgerond",
       "saveError": "Kon de voltooiing niet opslaan. Probeer het opnieuw.",
+      "endBeforeStartError": "De einddatum kan niet vóór de startdatum liggen.",
       "allPiecesPresent": "Alle stukjes waren aanwezig",
       "updateCopyPiecesTitle": "Dit exemplaar bijwerken?",
       "updateCopyPiecesBody": "Je gaf aan dat er stukjes ontbreken. Wil je het aantal ontbrekende stukjes van dit exemplaar ook bijwerken?",
       "updateCopyPiecesConfirm": "Exemplaar bijwerken",
       "updateCopyPiecesDismiss": "Niet nu"
+    },
+    "startSolve": {
+      "trigger": "Puzzel starten",
+      "title": "Puzzel starten",
+      "description": "Markeer {puzzle} als bezig. Je kunt de datum aanpassen als je eerder bent begonnen.",
+      "startDate": "Startdatum",
+      "notes": "Notities",
+      "notesPlaceholder": "Iets om te onthouden over deze sessie?",
+      "submit": "Starten",
+      "started": "Puzzel gestart",
+      "finishTrigger": "Puzzel afronden",
+      "saveError": "Kon de sessie niet opslaan. Probeer het opnieuw."
     },
     "durationPrompt": {
       "title": "Bijhouden hoelang puzzels duren?",
@@ -1826,18 +1863,37 @@
     "settings": {
       "sectionTitle": "Puzzelen",
       "trackDurationLabel": "Voltooiingstijd bijhouden",
-      "trackDurationHint": "Indien aan vragen de dialoogvensters hoelang een puzzel duurde."
+      "trackDurationHint": "Indien aan vragen de dialoogvensters hoelang een puzzel duurde.",
+      "shareInProgressLabel": "Deel puzzels waar je mee bezig bent met vrienden",
+      "shareInProgressHint": "Vrienden (mensen die je volgt en die jou terugvolgen) zien aan welke puzzels je werkt — ook puzzels waar je al aan begonnen bent."
     },
     "review": {
       "title": "Beoordeel deze puzzel",
-      "description": "Beoordeel de puzzel zelf, 1 tot 5 sterren.",
+      "description": "Beoordeel de puzzel zelf — en, indien van toepassing, het exemplaar dat je hebt gelegd.",
       "rating": "Beoordeling",
-      "text": "Review",
       "textPlaceholder": "Wat vond je van deze puzzel?",
       "submit": "Review opslaan",
       "saved": "Review opgeslagen",
       "saveError": "Kon de review niet opslaan. Probeer het opnieuw.",
-      "ratingRequired": "Kies eerst een beoordeling."
+      "ratingRequired": "Kies eerst een beoordeling.",
+      "puzzleQuestion": "Wat vond je van deze puzzel?",
+      "copyQuestion": "Wat vond je van dit exemplaar?",
+      "updatesExisting": "Opslaan werkt je bestaande beoordeling bij."
+    },
+    "followUp": {
+      "title": "Puzzel voltooid!",
+      "description": "Beoordeel de puzzel en voeg foto's van je voltooiing toe — alles is optioneel.",
+      "photosLabel": "Foto's",
+      "photosHint": "Maximaal 5 foto's van je gelegde puzzel.",
+      "addPhotos": "Foto's toevoegen",
+      "removePhoto": "Foto verwijderen",
+      "uploadFailed": "Uploaden mislukt",
+      "retry": "Opnieuw proberen",
+      "save": "Opslaan",
+      "skip": "Overslaan",
+      "saved": "Bedankt! Alles is opgeslagen.",
+      "saveError": "Kon niet alles opslaan. Probeer het opnieuw.",
+      "tooManyPhotos": "Een voltooiing kan maximaal 5 foto's hebben."
     },
     "goals": {
       "title": "Doelen",
@@ -2791,8 +2847,9 @@
     "statTimesCompleted": "keer voltooid",
     "statFastestFinish": "snelste tijd",
     "statTimesLentOut": "keer uitgeleend",
-    "statYourAvgRating": "jouw gem. beoordeling",
+    "statYourCopyRating": "jouw beoordeling van dit exemplaar",
     "statDaysValue": "{days}d",
+    "viewPuzzlePage": "Bekijk puzzelpagina",
     "photos": "Foto's",
     "photosCount": "{count} foto's",
     "addPhoto": "Foto toevoegen",
@@ -2813,9 +2870,10 @@
     "finishedIn": "voltooid in {duration}",
     "communityRating": "Communitybeoordeling",
     "communityRatings": "{count} communitybeoordelingen",
+    "copyReviews": "Beoordelingen van dit exemplaar",
+    "noCopyReviews": "Nog geen beoordelingen van dit exemplaar.",
     "comments": "Reacties",
     "addComment": "Voeg een reactie toe…",
-    "rateOptional": "Beoordeel deze puzzel (optioneel)",
     "post": "Plaatsen",
     "noComments": "Nog geen reacties. Wees de eerste.",
     "commentFailed": "Kon reactie niet plaatsen",
@@ -2884,10 +2942,11 @@
     "seeAllCopies": "Bekijk alle {count} beschikbare exemplaren →",
     "noCopies": "Er zijn nog geen exemplaren beschikbaar om te ruilen.",
     "reviews": "Reviews",
-    "reviewPlaceholder": "Beoordeel {title}…",
-    "rateOptional": "Beoordeel deze puzzel (optioneel)",
+    "reviewPlaceholder": "Beoordeel {title} (optioneel)…",
+    "rateRequired": "Beoordeel deze puzzel",
     "reviewPublicNote": "Reviews verschijnen ook in de openbare puzzelcatalogus.",
     "post": "Plaatsen",
+    "updateReview": "Beoordeling bijwerken",
     "reviewFailed": "Kon review niet plaatsen",
     "noReviews": "Nog geen reviews. Wees de eerste.",
     "swapType": {

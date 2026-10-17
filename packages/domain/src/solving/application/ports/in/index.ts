@@ -1,3 +1,4 @@
+export * from "./attach-completion-photos.port";
 export * from "./create-goal.port";
 export * from "./delete-completion.port";
 export * from "./edit-completion.port";
@@ -5,6 +6,8 @@ export * from "./finish-completion.port";
 export * from "./get-solving-preferences.port";
 export * from "./recompute-goal-progress.port";
 export * from "./record-completion.port";
-export * from "./review-puzzle.port";
+export * from "./set-share-in-progress.port";
 export * from "./set-track-completion-duration.port";
 export * from "./start-completion.port";
+export * from "./upsert-copy-review.port";
+export * from "./upsert-puzzle-review.port";

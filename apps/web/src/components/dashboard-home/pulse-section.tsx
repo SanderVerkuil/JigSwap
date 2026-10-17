@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@/compat/link";
+import { isKnownActivityKind } from "@/components/social/activity-feed-meta";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -357,7 +358,9 @@ function LatestColumn({
   me: Member;
 }) {
   const t = useTranslations("dashboard.pulse.latest");
-  const shown = entries.slice(0, 4);
+  const shown = entries
+    .filter((entry) => isKnownActivityKind(entry.kind))
+    .slice(0, 4);
 
   return (
     <section className="min-w-0">

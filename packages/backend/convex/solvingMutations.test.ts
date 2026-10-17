@@ -50,6 +50,11 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
       condition: "good",
       availability: { forTrade: false, forSale: false, forLend: false },
       visibility: "private",
+      snapshot: {
+        title: "Mountain Vista",
+        brand: "Ravensburger",
+        pieceCount: 1000,
+      },
       createdAt: now,
       updatedAt: now,
     });
@@ -82,6 +87,21 @@ const goalRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
       .query("goals")
       .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", aggregateId))
       .unique(),
+  );
+
+// A real stored blob so fileId is a valid `_storage` id.
+const storeBlob = (t: ReturnType<typeof convexTest>) =>
+  t.run((ctx) => ctx.storage.store(new Blob(["img"], { type: "image/png" })));
+
+const completionImagesFor = (
+  t: ReturnType<typeof convexTest>,
+  completionId: string,
+) =>
+  t.run(async (ctx) =>
+    ctx.db
+      .query("completionImages")
+      .withIndex("by_completion", (q) => q.eq("completionId", completionId))
+      .collect(),
   );
 
 // Lend the seeded copy to Bob: ownership stays with Alice, possession (heldBy) moves to Bob.
@@ -117,26 +137,28 @@ const recordForAlice = async (
   copyAggregateId: string,
   overrides: Record<string, unknown> = {},
 ) =>
-  (await asAlice(t).mutation(api.solving.recordCompletion.recordCompletion, {
-    copyId: copyAggregateId,
-    startDate: Date.now() - 2 * HOUR,
-    endDate: Date.now() - HOUR,
-    ...overrides,
-  })) as string;
+  (
+    await asAlice(t).mutation(api.solving.recordCompletion.recordCompletion, {
+      copyId: copyAggregateId,
+      startDate: Date.now() - 2 * HOUR,
+      endDate: Date.now() - HOUR,
+      ...overrides,
+    })
+  ).completionId;
 
 describe("solving.recordCompletion — borrowing, snapshot, pieces", () => {
   test("the current holder (borrower) can log a solve on a copy they do not own", async () => {
     const t = convexTest(schema, modules);
     const { bob, copyAggregateId, ownedPuzzleId } = await seed(t);
     await lendToBob(t, ownedPuzzleId, bob);
-    const completionId = (await asBob(t).mutation(
+    const { completionId } = await asBob(t).mutation(
       api.solving.recordCompletion.recordCompletion,
       {
         copyId: copyAggregateId,
         startDate: Date.now() - 2 * HOUR,
         endDate: Date.now() - HOUR,
       },
-    )) as string;
+    );
     const row = await completionRow(t, completionId);
     expect(row?.userId).toBe(bob);
     expect(row?.ownedPuzzleId).toBe(ownedPuzzleId);
@@ -194,10 +216,10 @@ describe("solving.recordCompletion — borrowing, snapshot, pieces", () => {
     const t = convexTest(schema, modules);
     const { copyAggregateId, puzzleId } = await seed(t);
     // Start (no endDate, no puzzleDefinitionId): the composition root denormalizes puzzleId + snapshot.
-    const completionId = (await asAlice(t).mutation(
+    const { completionId } = await asAlice(t).mutation(
       api.solving.recordCompletion.recordCompletion,
       { copyId: copyAggregateId, startDate: Date.now() - HOUR },
-    )) as string;
+    );
     expect((await completionRow(t, completionId))?.puzzleId).toBe(puzzleId);
 
     // Finishing goes through the repository save() again — the anchor + snapshot must survive.
@@ -225,11 +247,22 @@ describe("solving.recordCompletion", () => {
     ).rejects.toThrow("Unauthenticated");
   });
 
-  test("records a finished completion: owner from auth, FK resolved, returns aggregateId", async () => {
+  test("records a finished completion: owner from auth, FK resolved, returns aggregateId + doc ids", async () => {
     const t = convexTest(schema, modules);
-    const { alice, copyAggregateId, ownedPuzzleId } = await seed(t);
-    const completionId = await recordForAlice(t, copyAggregateId);
-    expect(typeof completionId).toBe("string");
+    const { alice, copyAggregateId, puzzleId, ownedPuzzleId } = await seed(t);
+    const result = await asAlice(t).mutation(
+      api.solving.recordCompletion.recordCompletion,
+      {
+        copyId: copyAggregateId,
+        startDate: Date.now() - 2 * HOUR,
+        endDate: Date.now() - HOUR,
+      },
+    );
+    // completionId stays the domain AGGREGATE id; puzzleId/copyId are the resolved doc `_id`s.
+    expect(typeof result.completionId).toBe("string");
+    expect(result.puzzleId).toBe(puzzleId);
+    expect(result.copyId).toBe(ownedPuzzleId);
+    const completionId = result.completionId;
 
     const row = await completionRow(t, completionId);
     expect(row?.userId).toBe(alice); // from auth, not args
@@ -293,15 +326,18 @@ describe("solving.recordCompletion", () => {
   test("records against a puzzle definition, resolving the puzzles._id FK", async () => {
     const t = convexTest(schema, modules);
     const { puzzleAggregateId, puzzleId } = await seed(t);
-    const completionId = (await asAlice(t).mutation(
+    const result = await asAlice(t).mutation(
       api.solving.recordCompletion.recordCompletion,
       {
         puzzleDefinitionId: puzzleAggregateId,
         startDate: Date.now() - 2 * HOUR,
         endDate: Date.now() - HOUR,
       },
-    )) as string;
-    const row = await completionRow(t, completionId);
+    );
+    // Definition-only record: puzzleId doc id is returned, copyId is null.
+    expect(result.puzzleId).toBe(puzzleId);
+    expect(result.copyId).toBeNull();
+    const row = await completionRow(t, result.completionId);
     expect(row?.puzzleId).toBe(puzzleId);
   });
 
@@ -321,10 +357,10 @@ describe("solving.recordCompletion", () => {
   test("starting (no endDate) leaves the completion in progress", async () => {
     const t = convexTest(schema, modules);
     const { copyAggregateId } = await seed(t);
-    const completionId = (await asAlice(t).mutation(
+    const { completionId } = await asAlice(t).mutation(
       api.solving.recordCompletion.recordCompletion,
       { copyId: copyAggregateId, startDate: Date.now() },
-    )) as string;
+    );
     const row = await completionRow(t, completionId);
     expect(row?.isCompleted).toBe(false);
     expect(row?.endDate).toBeUndefined();
@@ -334,10 +370,10 @@ describe("solving.recordCompletion", () => {
     const t = convexTest(schema, modules);
     const { copyAggregateId } = await seed(t);
     const today = Date.now();
-    const completionId = (await asAlice(t).mutation(
+    const { completionId } = await asAlice(t).mutation(
       api.solving.recordCompletion.recordCompletion,
       { copyId: copyAggregateId, startDate: today, endDate: today },
-    )) as string;
+    );
     const row = await completionRow(t, completionId);
     expect(row?.isCompleted).toBe(true);
     expect(row?.completionTimeMinutes).toBe(1440);
@@ -345,16 +381,21 @@ describe("solving.recordCompletion", () => {
 });
 
 describe("solving.finishCompletion", () => {
-  test("finishes an in-progress completion", async () => {
+  test("finishes an in-progress completion and returns the same id shape as record", async () => {
     const t = convexTest(schema, modules);
-    const { copyAggregateId } = await seed(t);
-    const completionId = (await asAlice(t).mutation(
+    const { copyAggregateId, puzzleId, ownedPuzzleId } = await seed(t);
+    const { completionId } = await asAlice(t).mutation(
       api.solving.recordCompletion.recordCompletion,
       { copyId: copyAggregateId, startDate: Date.now() - HOUR },
-    )) as string;
-    await asAlice(t).mutation(api.solving.finishCompletion.finishCompletion, {
+    );
+    const result = await asAlice(t).mutation(
+      api.solving.finishCompletion.finishCompletion,
+      { completionId, endDate: Date.now() },
+    );
+    expect(result).toEqual({
       completionId,
-      endDate: Date.now(),
+      puzzleId,
+      copyId: ownedPuzzleId,
     });
     const row = await completionRow(t, completionId);
     expect(row?.isCompleted).toBe(true);
@@ -408,32 +449,127 @@ describe("solving.editCompletion", () => {
   });
 });
 
-describe("solving.reviewPuzzle", () => {
-  test("attaches a rating and text to the completion", async () => {
+describe("solving.attachCompletionPhotos", () => {
+  test("the author attaches 2 photos: photos grows, sidecars pending, jobs scheduled", async () => {
     const t = convexTest(schema, modules);
     const { copyAggregateId } = await seed(t);
     const completionId = await recordForAlice(t, copyAggregateId);
-    await asAlice(t).mutation(api.solving.reviewPuzzle.reviewPuzzle, {
-      completionId,
-      rating: 4,
-      text: "Lovely artwork",
-    });
+    const fileId1 = (await storeBlob(t)) as Id<"_storage">;
+    const fileId2 = (await storeBlob(t)) as Id<"_storage">;
+
+    await asAlice(t).mutation(
+      api.solving.attachCompletionPhotos.attachCompletionPhotos,
+      { completionId, storageIds: [fileId1, fileId2] },
+    );
+
     const row = await completionRow(t, completionId);
-    expect(row?.rating).toBe(4);
-    expect(row?.review).toBe("Lovely artwork");
+    expect(row?.photos).toEqual([fileId1, fileId2]);
+
+    const images = await completionImagesFor(t, completionId);
+    expect(images).toHaveLength(2);
+    for (const img of images) {
+      expect(img.moderationStatus).toBe("pending");
+    }
+
+    const scheduled = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect(),
+    );
+    const jobs = scheduled.filter((s) =>
+      s.name.includes("moderateCompletionPhoto"),
+    );
+    expect(jobs).toHaveLength(2);
   });
 
-  test("a rating outside 1–5 => InvalidRating", async () => {
+  test("a non-author is rejected", async () => {
     const t = convexTest(schema, modules);
     const { copyAggregateId } = await seed(t);
     const completionId = await recordForAlice(t, copyAggregateId);
+    const fileId = (await storeBlob(t)) as Id<"_storage">;
+
     await expectConvexCode(
-      asAlice(t).mutation(api.solving.reviewPuzzle.reviewPuzzle, {
-        completionId,
-        rating: 9,
-      }),
-      "InvalidRating",
+      asBob(t).mutation(
+        api.solving.attachCompletionPhotos.attachCompletionPhotos,
+        { completionId, storageIds: [fileId] },
+      ),
+      "NotCompletionOwner",
     );
+  });
+
+  test("duplicate ids within a call and an already-attached id are deduped", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    const completionId = await recordForAlice(t, copyAggregateId);
+    const fileId1 = (await storeBlob(t)) as Id<"_storage">;
+    const fileId2 = (await storeBlob(t)) as Id<"_storage">;
+
+    await asAlice(t).mutation(
+      api.solving.attachCompletionPhotos.attachCompletionPhotos,
+      { completionId, storageIds: [fileId1] },
+    );
+    // Re-attach fileId1 (already attached) alongside a within-call duplicate of fileId2.
+    await asAlice(t).mutation(
+      api.solving.attachCompletionPhotos.attachCompletionPhotos,
+      { completionId, storageIds: [fileId1, fileId2, fileId2] },
+    );
+
+    const row = await completionRow(t, completionId);
+    expect(row?.photos).toEqual([fileId1, fileId2]);
+    const images = await completionImagesFor(t, completionId);
+    expect(images).toHaveLength(2);
+
+    // Deduped ids must not schedule extra moderation jobs: exactly 2 across BOTH calls
+    // (fileId1 from the first, fileId2 from the second).
+    const scheduled = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect(),
+    );
+    expect(
+      scheduled.filter((s) => s.name.includes("moderateCompletionPhoto")),
+    ).toHaveLength(2);
+  });
+
+  test("existing 4 plus 2 new exceeds the cap => TooManyPhotos", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    const completionId = await recordForAlice(t, copyAggregateId);
+    const existing: Id<"_storage">[] = [];
+    for (let i = 0; i < 4; i++) {
+      existing.push((await storeBlob(t)) as Id<"_storage">);
+    }
+    const seededRow = await completionRow(t, completionId);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(seededRow!._id, { photos: existing });
+    });
+    const newFileId1 = (await storeBlob(t)) as Id<"_storage">;
+    const newFileId2 = (await storeBlob(t)) as Id<"_storage">;
+
+    await expectConvexCode(
+      asAlice(t).mutation(
+        api.solving.attachCompletionPhotos.attachCompletionPhotos,
+        { completionId, storageIds: [newFileId1, newFileId2] },
+      ),
+      "TooManyPhotos",
+    );
+    const row = await completionRow(t, completionId);
+    expect(row?.photos).toHaveLength(4);
+  });
+
+  test("a backdated completion (endDate 10 days ago) can still attach photos", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    const tenDays = 10 * 24 * HOUR;
+    const completionId = await recordForAlice(t, copyAggregateId, {
+      startDate: Date.now() - tenDays - HOUR,
+      endDate: Date.now() - tenDays,
+    });
+    const fileId = (await storeBlob(t)) as Id<"_storage">;
+
+    await asAlice(t).mutation(
+      api.solving.attachCompletionPhotos.attachCompletionPhotos,
+      { completionId, storageIds: [fileId] },
+    );
+
+    const row = await completionRow(t, completionId);
+    expect(row?.photos).toEqual([fileId]);
   });
 });
 
@@ -566,6 +702,61 @@ describe("solving.deleteCompletion", () => {
     row = await goalRow(t, goalId);
     expect(row?.currentCompletions).toBe(0);
   });
+
+  test("deleting a completion removes photo sidecars and best-effort deletes their blobs", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    const completionId = await recordForAlice(t, copyAggregateId);
+    const fileId1 = (await storeBlob(t)) as Id<"_storage">;
+    const fileId2 = (await storeBlob(t)) as Id<"_storage">;
+    await asAlice(t).mutation(
+      api.solving.attachCompletionPhotos.attachCompletionPhotos,
+      { completionId, storageIds: [fileId1, fileId2] },
+    );
+
+    await asAlice(t).mutation(api.solving.deleteCompletion.deleteCompletion, {
+      completionId,
+    });
+
+    const images = await completionImagesFor(t, completionId);
+    expect(images).toHaveLength(0);
+
+    const url1 = await t.run((ctx) => ctx.storage.getUrl(fileId1));
+    const url2 = await t.run((ctx) => ctx.storage.getUrl(fileId2));
+    expect(url1).toBeNull();
+    expect(url2).toBeNull();
+  });
+
+  test("delete cascades the UNION of photos and sidecar fileIds when they diverge", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    const completionId = await recordForAlice(t, copyAggregateId);
+    const photoFileId = (await storeBlob(t)) as Id<"_storage">;
+    await asAlice(t).mutation(
+      api.solving.attachCompletionPhotos.attachCompletionPhotos,
+      { completionId, storageIds: [photoFileId] },
+    );
+
+    // Simulate a mid-swap divergence: the sidecar points at a different blob than the
+    // completions.photos entry. Distinct bytes on purpose — convex-test URLs are
+    // content-derived, so identical contents would make the two blobs indistinguishable.
+    const swappedFileId = (await t.run((ctx) =>
+      ctx.storage.store(new Blob(["img-swapped"], { type: "image/png" })),
+    )) as Id<"_storage">;
+    const [image] = await completionImagesFor(t, completionId);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(image._id, { fileId: swappedFileId });
+    });
+
+    await asAlice(t).mutation(api.solving.deleteCompletion.deleteCompletion, {
+      completionId,
+    });
+
+    expect(await completionImagesFor(t, completionId)).toHaveLength(0);
+    // BOTH sides of the divergence are deleted.
+    expect(await t.run((ctx) => ctx.storage.getUrl(photoFileId))).toBeNull();
+    expect(await t.run((ctx) => ctx.storage.getUrl(swappedFileId))).toBeNull();
+  });
 });
 
 describe("solving read queries", () => {
@@ -585,6 +776,37 @@ describe("solving read queries", () => {
     expect(bobs).toHaveLength(0);
   });
 
+  test("listMyCompletions rows never carry legacy rating/review columns", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, puzzleId, ownedPuzzleId } = await seed(t);
+    // A legacy row inserted with the schema-optional per-completion rating/review columns —
+    // superseded by puzzleReviews/copyReviews, so the read must strip them.
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("completions", {
+        userId: alice,
+        puzzleId,
+        ownedPuzzleId,
+        startDate: now - 2 * HOUR,
+        endDate: now - HOUR,
+        rating: 4,
+        review: "legacy per-completion words",
+        photos: [],
+        isCompleted: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const rows = await asAlice(t).query(
+      api.solving.listMyCompletions.listMyCompletions,
+      {},
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).not.toHaveProperty("rating");
+    expect(rows[0]).not.toHaveProperty("review");
+  });
+
   test("getCompletionHistory filters by copy", async () => {
     const t = convexTest(schema, modules);
     const { copyAggregateId } = await seed(t);
@@ -597,5 +819,484 @@ describe("solving read queries", () => {
     expect(
       (history[0] as { ownedPuzzleId?: Id<"ownedPuzzles"> }).ownedPuzzleId,
     ).toBeDefined();
+  });
+});
+
+describe("solving.startCompletion — first-class start", () => {
+  test("creates an in-progress row with the copy snapshot and puzzleId denormalized", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId, puzzleId } = await seed(t);
+
+    const completionId = (await asAlice(t).mutation(
+      api.solving.startCompletion.startCompletion,
+      {
+        copyId: copyAggregateId,
+        startDate: Date.now() - HOUR,
+        notes: "corner pieces first",
+      },
+    )) as string;
+
+    const row = await completionRow(t, completionId);
+    expect(row?.isCompleted).toBe(false);
+    expect(row?.endDate).toBeUndefined();
+    expect(row?.notes).toBe("corner pieces first");
+    // Review blocker: without this denormalization every downstream view is title-less.
+    expect(row?.puzzleId).toBe(puzzleId);
+    expect(row?.copySnapshot?.title).toBe("Mountain Vista");
+    expect(row?.copySnapshot?.wasBorrowed).toBe(false);
+  });
+
+  test("accepts backdated and future start dates", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+
+    const past = (await asAlice(t).mutation(
+      api.solving.startCompletion.startCompletion,
+      { copyId: copyAggregateId, startDate: Date.now() - 30 * 24 * HOUR },
+    )) as string;
+    const future = (await asAlice(t).mutation(
+      api.solving.startCompletion.startCompletion,
+      { copyId: copyAggregateId, startDate: Date.now() + 3 * 24 * HOUR },
+    )) as string;
+    expect(await completionRow(t, past)).not.toBeNull();
+    expect(await completionRow(t, future)).not.toBeNull();
+  });
+
+  test("rejects a member who neither owns nor holds the copy", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    await expect(
+      asBob(t).mutation(api.solving.startCompletion.startCompletion, {
+        copyId: copyAggregateId,
+        startDate: Date.now(),
+      }),
+    ).rejects.toThrow("Only the owner or current holder");
+  });
+
+  test("rejects an unknown copyId", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await expect(
+      asAlice(t).mutation(api.solving.startCompletion.startCompletion, {
+        copyId: crypto.randomUUID(),
+        startDate: Date.now(),
+      }),
+    ).rejects.toThrow("Copy not found");
+  });
+
+  test("allows the borrower (current holder) and marks the snapshot borrowed", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, copyAggregateId, ownedPuzzleId } = await seed(t);
+    await lendToBob(t, ownedPuzzleId, bob);
+
+    const completionId = (await asBob(t).mutation(
+      api.solving.startCompletion.startCompletion,
+      { copyId: copyAggregateId, startDate: Date.now() },
+    )) as string;
+    const row = await completionRow(t, completionId);
+    expect(row?.copySnapshot?.wasBorrowed).toBe(true);
+  });
+
+  test("the started solve can be finished via the existing finish flow", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+    const completionId = (await asAlice(t).mutation(
+      api.solving.startCompletion.startCompletion,
+      { copyId: copyAggregateId, startDate: Date.now() - 2 * HOUR },
+    )) as string;
+    await asAlice(t).mutation(api.solving.finishCompletion.finishCompletion, {
+      completionId,
+      endDate: Date.now(),
+    });
+    const row = await completionRow(t, completionId);
+    expect(row?.isCompleted).toBe(true);
+  });
+});
+
+describe("solving.listMyInProgress", () => {
+  test("returns only the caller's in-progress solves as DTOs, newest-started first", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId } = await seed(t);
+
+    // One finished, two in-progress (started at different times).
+    await recordForAlice(t, copyAggregateId);
+    const older = (await asAlice(t).mutation(
+      api.solving.startCompletion.startCompletion,
+      { copyId: copyAggregateId, startDate: Date.now() - 48 * HOUR },
+    )) as string;
+    const newer = (await asAlice(t).mutation(
+      api.solving.startCompletion.startCompletion,
+      { copyId: copyAggregateId, startDate: Date.now() - HOUR },
+    )) as string;
+
+    const mine = await asAlice(t).query(
+      api.solving.listMyInProgress.listMyInProgress,
+      {},
+    );
+    expect(mine.map((s) => s.completionId)).toEqual([newer, older]);
+    expect(mine[0].title).toBe("Mountain Vista");
+    expect(mine[0].pieceCount).toBe(1000);
+    // The DTO never carries notes/photos/raw rows. (Don't assert the full key list — Convex
+    // strips undefined-valued fields like thumbnailUrl in serialization.)
+    expect("notes" in mine[0]).toBe(false);
+    expect("photos" in mine[0]).toBe(false);
+    expect("_id" in mine[0]).toBe(false);
+
+    // Bob sees nothing.
+    const bobs = await asBob(t).query(
+      api.solving.listMyInProgress.listMyInProgress,
+      {},
+    );
+    expect(bobs).toEqual([]);
+  });
+
+  test("falls back to the catalog puzzle when the snapshot lacks display data", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId, ownedPuzzleId } = await seed(t);
+    const completionId = (await asAlice(t).mutation(
+      api.solving.startCompletion.startCompletion,
+      { copyId: copyAggregateId, startDate: Date.now() },
+    )) as string;
+    await t.run(async (ctx) => ctx.db.delete(ownedPuzzleId));
+
+    // Strip the snapshot's display fields so "Mountain Vista" / 1000 can only come from the
+    // puzzles row via row.puzzleId, not from copySnapshot.
+    await t.run(async (ctx) => {
+      const row = await ctx.db
+        .query("completions")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", completionId))
+        .unique();
+      const {
+        title: _title,
+        pieceCount: _pieceCount,
+        ...rest
+      } = row!.copySnapshot!;
+      await ctx.db.patch(row!._id, { copySnapshot: rest });
+    });
+
+    const mine = await asAlice(t).query(
+      api.solving.listMyInProgress.listMyInProgress,
+      {},
+    );
+    expect(mine).toHaveLength(1);
+    expect(mine[0].title).toBe("Mountain Vista"); // from the puzzles row fallback
+    expect(mine[0].pieceCount).toBe(1000);
+  });
+
+  test("drops legacy in-progress rows that have no aggregateId", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("completions", {
+        userId: alice,
+        startDate: now,
+        photos: [],
+        isCompleted: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const mine = await asAlice(t).query(
+      api.solving.listMyInProgress.listMyInProgress,
+      {},
+    );
+    expect(mine).toEqual([]);
+  });
+});
+
+describe("solving.listMyCompletions — row enrichment", () => {
+  // Insert a real-stored ownedPuzzleImages row for a copy and return its id + resolved URL.
+  const addCoverPhoto = (
+    t: ReturnType<typeof convexTest>,
+    copyId: Id<"ownedPuzzles">,
+    uploaderId: Id<"users">,
+    moderationStatus?: "pending" | "approved" | "rejected",
+  ) =>
+    t.run(async (ctx) => {
+      const fileId = await ctx.storage.store(
+        new Blob(["cover-bytes"], { type: "image/png" }),
+      );
+      const now = Date.now();
+      const photoId = await ctx.db.insert("ownedPuzzleImages", {
+        ownedPuzzleId: copyId,
+        uploaderId,
+        fileId,
+        createdAt: now,
+        updatedAt: now,
+        ...(moderationStatus ? { moderationStatus } : {}),
+      });
+      const url = await ctx.storage.getUrl(fileId);
+      return { photoId, url };
+    });
+
+  // Insert a bob-owned copy of the seeded puzzle, held by alice (simulating an active loan).
+  // `aggregateId` is required even though schema-optional: recordCompletion resolves the copy via
+  // `by_aggregate_id`, and throws "Copy not found" without it.
+  const insertBobCopyHeldByAlice = (
+    t: ReturnType<typeof convexTest>,
+    puzzleAggregateId: string,
+    puzzleId: Id<"puzzles">,
+    bob: Id<"users">,
+    alice: Id<"users">,
+    availability: { forTrade: boolean; forSale: boolean; forLend: boolean },
+  ) => {
+    const aggregateId = crypto.randomUUID();
+    return t
+      .run(async (ctx) => {
+        const now = Date.now();
+        const id = await ctx.db.insert("ownedPuzzles", {
+          aggregateId,
+          puzzleDefinitionId: puzzleAggregateId,
+          puzzleId,
+          ownerId: bob,
+          condition: "good",
+          availability,
+          visibility: "private",
+          heldBy: alice,
+          createdAt: now,
+          updatedAt: now,
+        });
+        return id;
+      })
+      .then((id) => ({ aggregateId, id }));
+  };
+
+  test("own copy: myCopy link + cover photo preferred over box art", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, copyAggregateId, ownedPuzzleId } = await seed(t);
+    await recordForAlice(t, copyAggregateId);
+    const { photoId, url } = await addCoverPhoto(t, ownedPuzzleId, alice);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(ownedPuzzleId, { coverImageId: photoId });
+    });
+
+    const rows = await asAlice(t).query(
+      api.solving.listMyCompletions.listMyCompletions,
+      {},
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].link).toEqual({
+      kind: "myCopy",
+      id: ownedPuzzleId as string,
+    });
+    expect(rows[0].thumbnailUrl).toBe(url);
+  });
+
+  test("two completions sharing one copy get the same link/thumbnailUrl (pins the distinct-map fan-out)", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, copyAggregateId, ownedPuzzleId } = await seed(t);
+    await recordForAlice(t, copyAggregateId);
+    await recordForAlice(t, copyAggregateId);
+    const { photoId, url } = await addCoverPhoto(t, ownedPuzzleId, alice);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(ownedPuzzleId, { coverImageId: photoId });
+    });
+
+    const rows = await asAlice(t).query(
+      api.solving.listMyCompletions.listMyCompletions,
+      {},
+    );
+    expect(rows).toHaveLength(2);
+    for (const row of rows) {
+      expect(row.link).toEqual({ kind: "myCopy", id: ownedPuzzleId as string });
+      expect(row.thumbnailUrl).toBe(url);
+    }
+  });
+
+  test("pending/rejected cover is never used; falls back to box art", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, copyAggregateId, ownedPuzzleId, puzzleId } = await seed(t);
+    await recordForAlice(t, copyAggregateId);
+
+    const boxArtUrl = await t.run(async (ctx) => {
+      const fileId = await ctx.storage.store(
+        new Blob(["box-art"], { type: "image/png" }),
+      );
+      await ctx.db.patch(puzzleId, { image: fileId });
+      return ctx.storage.getUrl(fileId);
+    });
+
+    for (const moderationStatus of ["pending", "rejected"] as const) {
+      const { photoId } = await addCoverPhoto(
+        t,
+        ownedPuzzleId,
+        alice,
+        moderationStatus,
+      );
+      await t.run(async (ctx) => {
+        await ctx.db.patch(ownedPuzzleId, { coverImageId: photoId });
+      });
+      const rows = await asAlice(t).query(
+        api.solving.listMyCompletions.listMyCompletions,
+        {},
+      );
+      expect(rows[0].thumbnailUrl).toBe(boxArtUrl);
+    }
+  });
+
+  test("borrowed now (current holder): copy link, pins the heldBy clause through the enrichment", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, puzzleAggregateId, puzzleId } = await seed(t);
+    const { aggregateId, id: bobCopyId } = await insertBobCopyHeldByAlice(
+      t,
+      puzzleAggregateId,
+      puzzleId,
+      bob,
+      alice,
+      { forTrade: false, forSale: false, forLend: false },
+    );
+    await t.run(async (ctx) => {
+      await ctx.db.insert("profiles", {
+        memberId: bob,
+        displayName: "Bob",
+        visibility: "private",
+        updatedAt: Date.now(),
+      });
+    });
+
+    await recordForAlice(t, aggregateId);
+
+    const rows = await asAlice(t).query(
+      api.solving.listMyCompletions.listMyCompletions,
+      {},
+    );
+    expect(rows[0].link).toEqual({ kind: "copy", id: bobCopyId as string });
+  });
+
+  test("returned + viewable (public profile + open): copy link", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, puzzleAggregateId, puzzleId } = await seed(t);
+    const { aggregateId, id: bobCopyId } = await insertBobCopyHeldByAlice(
+      t,
+      puzzleAggregateId,
+      puzzleId,
+      bob,
+      alice,
+      { forTrade: false, forSale: false, forLend: true },
+    );
+    await recordForAlice(t, aggregateId);
+
+    await t.run(async (ctx) => {
+      await ctx.db.patch(bobCopyId, { heldBy: bob });
+      await ctx.db.insert("profiles", {
+        memberId: bob,
+        displayName: "Bob",
+        visibility: "public",
+        updatedAt: Date.now(),
+      });
+    });
+
+    const rows = await asAlice(t).query(
+      api.solving.listMyCompletions.listMyCompletions,
+      {},
+    );
+    expect(rows[0].link).toEqual({ kind: "copy", id: bobCopyId as string });
+  });
+
+  test("returned + unviewable (private profile, fully closed): definition link + box art, never bob's cover", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, puzzleAggregateId, puzzleId } = await seed(t);
+    const { aggregateId, id: bobCopyId } = await insertBobCopyHeldByAlice(
+      t,
+      puzzleAggregateId,
+      puzzleId,
+      bob,
+      alice,
+      { forTrade: false, forSale: false, forLend: false },
+    );
+    await recordForAlice(t, aggregateId);
+
+    const boxArtUrl = await t.run(async (ctx) => {
+      const fileId = await ctx.storage.store(
+        new Blob(["box-art"], { type: "image/png" }),
+      );
+      await ctx.db.patch(puzzleId, { image: fileId });
+      return ctx.storage.getUrl(fileId);
+    });
+
+    await t.run(async (ctx) => {
+      await ctx.db.patch(bobCopyId, { heldBy: bob });
+      await ctx.db.insert("profiles", {
+        memberId: bob,
+        displayName: "Bob",
+        visibility: "private",
+        updatedAt: Date.now(),
+      });
+      // Bob has an approved cover, but it must never surface once the copy is unreachable.
+      const now = Date.now();
+      const fileId = await ctx.storage.store(
+        new Blob(["bob-cover"], { type: "image/png" }),
+      );
+      const photoId = await ctx.db.insert("ownedPuzzleImages", {
+        ownedPuzzleId: bobCopyId,
+        uploaderId: bob,
+        fileId,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.patch(bobCopyId, { coverImageId: photoId });
+    });
+
+    const rows = await asAlice(t).query(
+      api.solving.listMyCompletions.listMyCompletions,
+      {},
+    );
+    expect(rows[0].link).toEqual({
+      kind: "definition",
+      id: puzzleId as string,
+    });
+    expect(rows[0].thumbnailUrl).toBe(boxArtUrl);
+  });
+
+  test("copy deleted: definition link; puzzle also deleted: no link, no thumbnail (regression pins)", async () => {
+    const t = convexTest(schema, modules);
+    const { copyAggregateId, ownedPuzzleId, puzzleId } = await seed(t);
+    await recordForAlice(t, copyAggregateId);
+
+    await t.run(async (ctx) => ctx.db.delete(ownedPuzzleId));
+    let rows = await asAlice(t).query(
+      api.solving.listMyCompletions.listMyCompletions,
+      {},
+    );
+    expect(rows[0].link).toEqual({
+      kind: "definition",
+      id: puzzleId as string,
+    });
+
+    // Regression pin: this half is expected green in both the pre- and post-implementation state.
+    await t.run(async (ctx) => ctx.db.delete(puzzleId));
+    rows = await asAlice(t).query(
+      api.solving.listMyCompletions.listMyCompletions,
+      {},
+    );
+    expect(rows[0].link).toBeUndefined();
+    expect(rows[0].thumbnailUrl).toBeUndefined();
+  });
+
+  test("orphaned row (no copy, no puzzle anchor): no link, no thumbnail, row still returned (regression pin)", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("completions", {
+        userId: alice,
+        startDate: now,
+        endDate: now,
+        isCompleted: true,
+        photos: [],
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const rows = await asAlice(t).query(
+      api.solving.listMyCompletions.listMyCompletions,
+      {},
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].link).toBeUndefined();
+    expect(rows[0].thumbnailUrl).toBeUndefined();
   });
 });

@@ -201,17 +201,24 @@ export const gateway = {
   // Solving: solve tracking, puzzle reviews, goals. Ownership / 24h edit window / rating are
   // enforced in the domain; reads surface server-derived state (photo URLs, goal isAchieved).
   solving: {
+    startCompletion: api.solving.startCompletion.startCompletion,
     recordCompletion: api.solving.recordCompletion.recordCompletion,
     finishCompletion: api.solving.finishCompletion.finishCompletion,
     editCompletion: api.solving.editCompletion.editCompletion,
+    attachCompletionPhotos:
+      api.solving.attachCompletionPhotos.attachCompletionPhotos,
     deleteCompletion: api.solving.deleteCompletion.deleteCompletion,
-    reviewPuzzle: api.solving.reviewPuzzle.reviewPuzzle,
     createGoal: api.solving.createGoal.createGoal,
     myCompletions: api.solving.listMyCompletions.listMyCompletions,
     completionHistory: api.solving.getCompletionHistory.getCompletionHistory,
     myGoals: api.solving.listMyGoals.listMyGoals,
+    myInProgress: api.solving.listMyInProgress.listMyInProgress,
+    setShareInProgress: api.solving.setShareInProgress.setShareInProgress,
     setTrackCompletionDuration:
       api.solving.setTrackCompletionDuration.setTrackCompletionDuration,
+    // Two-level review form: upsert puzzle and/or copy review in one call; read own rows back.
+    submitReviews: api.solving.submitReviews.submitReviews,
+    getMyReviews: api.solving.getMyReviews.getMyReviews,
   },
 
   // Federated user settings: a read-composition over each context's settings section. Writes are

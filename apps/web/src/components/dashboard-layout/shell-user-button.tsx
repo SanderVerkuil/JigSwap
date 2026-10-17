@@ -90,11 +90,16 @@ export function ShellUserButton({
 
 // Content of the Clerk custom profile page: the content-width choice and the
 // hide-email toggle (useShellPreferences, Clerk metadata) plus the solve-duration
-// tracking toggle (useUserSettings, the Solving-context Convex preference). Uses
-// the shell.user.* and solving.settings.* translations.
+// tracking and share-in-progress toggles (useUserSettings, the Solving-context
+// Convex preferences). Uses the shell.user.* and solving.settings.* translations.
 function PreferencesPage() {
   const { fullWidth, hideEmail, setPreference } = useShellPreferences();
-  const { trackCompletionDuration, setTrackDuration } = useUserSettings();
+  const {
+    trackCompletionDuration,
+    setTrackDuration,
+    shareInProgress,
+    setShareInProgress,
+  } = useUserSettings();
   const t = useTranslations("shell.user");
   const ts = useTranslations("solving.settings");
 
@@ -152,6 +157,22 @@ function PreferencesPage() {
         </div>
         <p className="text-muted-foreground text-xs">
           {ts("trackDurationHint")}
+        </p>
+        <div className="flex items-center justify-between gap-4">
+          <label
+            htmlFor="share-in-progress"
+            className="text-muted-foreground text-sm"
+          >
+            {ts("shareInProgressLabel")}
+          </label>
+          <Switch
+            id="share-in-progress"
+            checked={shareInProgress === true}
+            onCheckedChange={(checked) => void setShareInProgress(checked)}
+          />
+        </div>
+        <p className="text-muted-foreground text-xs">
+          {ts("shareInProgressHint")}
         </p>
       </section>
     </div>

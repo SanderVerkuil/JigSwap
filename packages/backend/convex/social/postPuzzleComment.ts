@@ -17,22 +17,22 @@ import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
 
 // Composition root for posting a COPY-scoped comment. Keyed by copy id: the comment is scoped to
-// that single owned copy (the owner's notes/rating), so we carry the copyId through AND resolve
+// that single owned copy (the owner's notes), so we carry the copyId through AND resolve
 // copy -> copy.puzzleId for context. Copy-scoped comments are listed only on that copy and are
 // excluded from the puzzle definition's community reviews/rating. The author is derived from auth;
-// the aggregate validates the text/rating.
+// the aggregate validates the text. Comments are PLAIN TEXT — copy-level star opinions live in
+// `copyReviews`, so no rating is accepted or written here.
 export const postPuzzleComment = mutation({
   args: {
     copyId: v.id("ownedPuzzles"),
     text: v.string(),
-    rating: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const authorId = (await requireMember(ctx)) as unknown as MemberId;
 
     const copy = await ctx.db.get(args.copyId);
     if (!copy) throw new ConvexError("Copy not found");
-    // Copy-scoped comments ARE the owner's own notes/rating on their copy, so only the owner may
+    // Copy-scoped comments ARE the owner's own notes on their copy, so only the owner may
     // post one — mirroring the addCopyPhoto ownership guard.
     if (copy.ownerId !== (authorId as unknown as string)) {
       throw new ConvexError("Only the owner can comment on this copy");
@@ -56,7 +56,6 @@ export const postPuzzleComment = mutation({
       // review of the shared definition.
       copyId: toCopyId(args.copyId as unknown as string) as CopyId,
       text: args.text,
-      rating: args.rating,
     });
     if (result.isErr) throw toConvexError(result.error);
   },

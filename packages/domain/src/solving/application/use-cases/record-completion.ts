@@ -1,5 +1,5 @@
 import { Clock, DomainEventPublisher, err, ok } from "../../../shared-kernel";
-import { Completion, Photo, PuzzleReview, StarRating } from "../../domain";
+import { Completion, Photo } from "../../domain";
 import {
   RecordCompletion,
   RecordCompletionCommand,
@@ -14,18 +14,11 @@ export interface RecordCompletionDeps {
   readonly clock: Clock;
 }
 
-// Transaction script: build an already-finished Completion (optionally with a PuzzleReview),
-// persist, publish. Goal progress is recomputed separately in reaction to CompletionRecorded.
+// Transaction script: build an already-finished Completion, persist, publish. Goal progress is
+// recomputed separately in reaction to CompletionRecorded.
 export const makeRecordCompletion =
   (deps: RecordCompletionDeps): RecordCompletion =>
   async (cmd: RecordCompletionCommand) => {
-    let review: PuzzleReview | undefined;
-    if (cmd.rating !== undefined) {
-      const rating = StarRating.create(cmd.rating);
-      if (rating.isErr) return err(rating.error);
-      review = PuzzleReview.create(rating.value, cmd.reviewText);
-    }
-
     const completion = Completion.record({
       id: deps.ids.next(),
       userId: cmd.userId,
@@ -36,7 +29,6 @@ export const makeRecordCompletion =
       completionTimeMinutes: cmd.completionTimeMinutes,
       notes: cmd.notes,
       photos: cmd.photoFileIds?.map((id) => Photo.of(id)),
-      review,
       allPiecesPresent: cmd.allPiecesPresent,
       now: deps.clock.now(),
     });

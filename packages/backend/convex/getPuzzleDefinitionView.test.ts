@@ -161,38 +161,79 @@ describe("getPuzzleDefinitionView", () => {
     expect(view?.definition.categoryName).toBe("Landscapes");
   });
 
-  test("rating aggregate + percentages over rated puzzleComments (reviews)", async () => {
+  test("rating aggregate + percentages over rated puzzleReviews rows", async () => {
     const t = convexTest(schema, modules);
     const { now, viewer, puzzleId } = await seed(t);
 
     await t.run(async (ctx) => {
-      // ratings 5,5,3,1 -> count 4, sum 14, avg 3.5; breakdown [2,0,1,0,1];
-      // percentages [50,0,25,0,25].
-      for (const rating of [5, 5, 3, 1]) {
-        await ctx.db.insert("puzzleComments", {
-          aggregateId: crypto.randomUUID(),
+      // One review per (member, puzzle): three members rate 5,4,3 -> count 3, sum 12, avg 4;
+      // breakdown [1,1,1,0,0]; percentages [33,33,33,0,0].
+      const raters = [
+        { userId: viewer, rating: 5 },
+        { userId: await mkUser(ctx, "clerk_r4", "RaterFour", now), rating: 4 },
+        { userId: await mkUser(ctx, "clerk_r3", "RaterThree", now), rating: 3 },
+      ];
+      for (const { userId, rating } of raters) {
+        await ctx.db.insert("puzzleReviews", {
+          userId,
           puzzleId,
-          authorId: viewer,
-          text: "review",
           rating,
+          text: "review",
           createdAt: now,
+          updatedAt: now,
         });
       }
-      // A text-only review (no rating) is excluded from count/avg/breakdown/percentages.
-      await ctx.db.insert("puzzleComments", {
-        aggregateId: crypto.randomUUID(),
+      // A migrated text-only review (rating undefined) is excluded from
+      // count/avg/breakdown/percentages.
+      await ctx.db.insert("puzzleReviews", {
+        userId: await mkUser(ctx, "clerk_textonly", "TextOnly", now),
         puzzleId,
-        authorId: viewer,
         text: "no stars",
         createdAt: now,
+        updatedAt: now,
       });
     });
 
     const view = await get(t, puzzleId);
-    expect(view?.rating.count).toBe(4);
-    expect(view?.rating.rating).toBe(3.5);
-    expect(view?.rating.breakdown).toEqual([2, 0, 1, 0, 1]);
-    expect(view?.rating.percentages).toEqual([50, 0, 25, 0, 25]);
+    expect(view?.rating.count).toBe(3);
+    expect(view?.rating.rating).toBe(4);
+    expect(view?.rating.breakdown).toEqual([1, 1, 1, 0, 0]);
+    expect(view?.rating.percentages).toEqual([33, 33, 33, 0, 0]);
+  });
+
+  // Regression pin for the ORIGINAL dedupe bug: a member who solved the puzzle several times must
+  // count ONCE in the rating breakdown. Completions no longer feed the breakdown at all — only the
+  // member's single puzzleReviews row does.
+  test("three completions by one member + their single review -> breakdown count 1", async () => {
+    const t = convexTest(schema, modules);
+    const { now, viewer, puzzleId } = await seed(t);
+
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 3; i++) {
+        await ctx.db.insert("completions", {
+          userId: viewer,
+          puzzleId,
+          startDate: now,
+          endDate: now + (i + 1) * DAY,
+          photos: [],
+          isCompleted: true,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+      await ctx.db.insert("puzzleReviews", {
+        userId: viewer,
+        puzzleId,
+        rating: 4,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const view = await get(t, puzzleId);
+    expect(view?.rating.count).toBe(1);
+    expect(view?.rating.rating).toBe(4);
+    expect(view?.rating.breakdown).toEqual([0, 1, 0, 0, 0]);
   });
 
   test("rating is 0/empty when there are no rated reviews", async () => {

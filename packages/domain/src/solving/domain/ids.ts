@@ -3,7 +3,6 @@ import { Id } from "../../shared-kernel";
 // The Solving aggregates' own identities.
 export type CompletionId = Id<"CompletionId">;
 export type GoalId = Id<"GoalId">;
-export type PuzzleReviewId = Id<"PuzzleReviewId">;
 
 // Foreign-aggregate references held as branded strings. The Solving context never loads these
 // aggregates; it only carries their ids. MemberId is the solving member (owned by Identity &

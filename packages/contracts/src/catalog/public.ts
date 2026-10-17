@@ -56,12 +56,15 @@ export interface PublicDefinitionDetailView {
   availability: PublicAvailabilityView;
 }
 
-/** A community review as shown on the public catalog page. `author` is null when the author's
- * profile is private — the UI renders a generic "A JigSwap member". */
+/** A community review as shown on the public catalog page — the public twin of PuzzleReviewView.
+ * `rating` is the author's 1–5 star score (null when they left only text) and `text` their optional
+ * write-up (null when they left only stars); `updatedAt` is when the review was last written.
+ * `author` is null when the author's profile is private — the UI renders a generic
+ * "A JigSwap member". */
 export interface PublicPuzzleReviewView {
   id: string;
   author: { name: string; avatar: string | null } | null;
-  text: string;
   rating: number | null;
-  createdAt: number;
+  text: string | null;
+  updatedAt: number;
 }

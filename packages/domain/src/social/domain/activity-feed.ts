@@ -6,7 +6,10 @@
 import { MemberId } from "./ids";
 
 // The kinds of activity Social surfaces in a feed, translated from foreign events at the seam.
-export type ActivityKind = "completion" | "acquisition" | "exchange";
+// "started" (CompletionStarted) is opt-in + friends-only — that policy lives at the read seam
+// (getActivityFeed), not here; the projection stays pure.
+export type ActivityKind =
+  "completion" | "acquisition" | "exchange" | "started";
 
 // Social's local, anti-corruption view of one piece of activity. `ref` is an opaque pointer back
 // to the originating record (e.g. a completion or exchange id) for the UI to deep-link; Social

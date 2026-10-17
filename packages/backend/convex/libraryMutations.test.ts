@@ -462,6 +462,49 @@ describe("library.deleteCopy", () => {
     expect(members).toHaveLength(0);
   });
 
+  test("deleting a copy cascades its copyReviews; other copies' reviews survive", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, puzzleAggregateId } = await seed(t);
+    const copyId = await acquireForAlice(t, puzzleAggregateId);
+    const otherCopyId = await acquireForAlice(t, puzzleAggregateId);
+    const row = await copyRow(t, copyId);
+    const otherRow = await copyRow(t, otherCopyId);
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      // Reviews on the doomed copy from BOTH the owner and another member, plus one review on a
+      // different copy that must survive the cascade.
+      await ctx.db.insert("copyReviews", {
+        userId: alice,
+        copyId: row!._id,
+        rating: 4,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("copyReviews", {
+        userId: bob,
+        copyId: row!._id,
+        rating: 2,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("copyReviews", {
+        userId: alice,
+        copyId: otherRow!._id,
+        rating: 5,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    await asAlice(t).mutation(api.library.deleteCopy.deleteCopy, { copyId });
+
+    const remaining = await t.run(async (ctx) =>
+      ctx.db.query("copyReviews").collect(),
+    );
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0].copyId).toBe(otherRow!._id);
+  });
+
   test("a non-owner cannot delete the copy => NotOwner", async () => {
     const t = convexTest(schema, modules);
     const { puzzleAggregateId } = await seed(t);

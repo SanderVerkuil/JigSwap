@@ -6,6 +6,9 @@ import { MemberId } from "./ids";
 export interface SolvingPreferencesState {
   readonly memberId: MemberId;
   readonly trackCompletionDuration?: boolean;
+  // undefined = never chosen. Gates the friend-facing in-progress surfaces; every consumer must
+  // test `=== true` (absent behaves as off).
+  readonly shareInProgress?: boolean;
   readonly updatedAt: Date;
 }
 
@@ -20,10 +23,15 @@ export class SolvingPreferences {
     return this.state.trackCompletionDuration;
   }
 
+  get shareInProgress(): boolean | undefined {
+    return this.state.shareInProgress;
+  }
+
   static createDefault(memberId: MemberId, now: Date): SolvingPreferences {
     return new SolvingPreferences({
       memberId,
       trackCompletionDuration: undefined,
+      shareInProgress: undefined,
       updatedAt: now,
     });
   }
@@ -35,6 +43,11 @@ export class SolvingPreferences {
       trackCompletionDuration: enabled,
       updatedAt: now,
     };
+  }
+
+  setShareInProgress(enabled: boolean, now: Date): void {
+    if (this.state.shareInProgress === enabled) return;
+    this.state = { ...this.state, shareInProgress: enabled, updatedAt: now };
   }
 
   static rehydrate(state: SolvingPreferencesState): SolvingPreferences {
