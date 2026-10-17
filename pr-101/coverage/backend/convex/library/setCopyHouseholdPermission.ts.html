@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">87.5% </span>
+                <span class="strong">88.88% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>7/8</span>
+                <span class='fraction'>8/9</span>
             </div>
         
             
@@ -91,7 +91,25 @@
 <a name='L26'></a><a href='#L26'>26</a>
 <a name='L27'></a><a href='#L27'>27</a>
 <a name='L28'></a><a href='#L28'>28</a>
-<a name='L29'></a><a href='#L29'>29</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -105,44 +123,62 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { ConvexError, v } from "convex/values";
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import {
+  householdPermissionChange,
+  storedHouseholdPermission,
+  toMemberId,
+} from "@jigswap/domain";
+import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
+import { toConvexError } from "../household/errors";
 import { requireMember } from "../identity/requireMember";
 &nbsp;
 // The copy's OWNER chooses what their household may do with it: "manage" (act as co-owner) or
-// "view" (see it only). Owner-only — a household manager may NOT change it (that would let them
-// escalate or lock out the owner's choice). Stored on the row; absent means "manage".
+// "view" (see it only). Owner-only (the domain's householdPermissionChange rule, shared with the
+// bulk setCopiesHouseholdPermission). Stored on the row; absent means the copy follows the household default.
 export const setCopyHouseholdPermission = mutation({
   args: {
     copyId: v.id("ownedPuzzles"),
-    permission: v.union(v.literal("manage"), v.literal("view")),
+    // "default" clears the explicit value so the copy follows the household default.
+    permission: v.union(
+      v.literal("manage"),
+      v.literal("view"),
+      v.literal("default"),
+    ),
   },
   handler: async (ctx, args): Promise&lt;void&gt; =&gt; {
     const memberId = (await requireMember(ctx)) as unknown as Id&lt;"users"&gt;;
     const copy = await ctx.db.get(args.copyId);
     <span class="missing-if-branch" title="if path not taken" >I</span>if (!copy) <span class="cstat-no" title="statement not covered" >throw new ConvexError("Copy not found");</span>
-    if (copy.ownerId !== memberId) {
-      throw new ConvexError(
-        "Only the owner can change this copy's household access",
-      );
-    }
+    const change = householdPermissionChange(
+      { ...copy, ownerId: toMemberId(copy.ownerId) },
+      toMemberId(memberId),
+      args.permission,
+    );
+    if (change.isErr) throw toConvexError(change.error);
     await ctx.db.patch(copy._id, {
-      householdPermission: args.permission,
+      householdPermission: storedHouseholdPermission(args.permission),
       updatedAt: Date.now(),
     });
   },
@@ -154,7 +190,7 @@ export const setCopyHouseholdPermission = mutation({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-17T15:41:17.557Z
+                at 2026-10-17T15:47:50.782Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
