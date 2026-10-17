@@ -25,13 +25,13 @@
     "@edge-runtime/vm": "^5.0.0",
     "@types/web-push": "^3.6.4",
     "convex-test": "^0.0.62",
-    "typescript": "6.0.3",
+    "typescript": "7.0.2",
     "vitest": "^5.0.5"
   },
   "scripts": {
     "convex:dev": "convex dev",
     "convex:deploy": "convex deploy",
-    "type-check": "node ../../node_modules/typescript7/bin/tsc --noEmit",
+    "type-check": "tsc --noEmit",
     "dev": "convex dev",
     "lint": "oxlint --type-aware .",
     "test": "vitest run",

@@ -241,11 +241,8 @@ importers:
         specifier: 2.11.7
         version: 2.11.7
       typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-      typescript7:
-        specifier: npm:typescript@7.0.2
-        version: typescript@7.0.2
+        specifier: 7.0.2
+        version: 7.0.2
       vite:
         specifier: ^8.3.4
         version: 8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(less@4.4.0)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(yaml@2.9.0)
@@ -392,7 +389,7 @@ importers:
         version: 4.4.0
       frimousse:
         specifier: ^0.4.0
-        version: 0.4.0(react@19.3.1)(typescript@6.0.3)
+        version: 0.4.0(react@19.3.1)(typescript@7.0.2)
       gray-matter:
         specifier: ^4.0.3
         version: 4.0.3
@@ -515,8 +512,8 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0
       typescript:
-        specifier: ^6.0.3
-        version: 6.0.3
+        specifier: ^7.0.2
+        version: 7.0.2
       unist-util-visit:
         specifier: ^5.1.0
         version: 5.1.0
@@ -525,7 +522,7 @@ importers:
         version: 8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(less@4.4.0)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(yaml@2.9.0)
       vite-tsconfig-paths:
         specifier: ^6.1.1
-        version: 6.1.1(supports-color@8.1.1)(typescript@6.0.3)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(less@4.4.0)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(yaml@2.9.0))
+        version: 6.1.1(supports-color@8.1.1)(typescript@7.0.2)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(less@4.4.0)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(yaml@2.9.0))
       vitest:
         specifier: ^5.0.5
         version: 5.0.5(@edge-runtime/vm@5.0.0)(@types/node@26.6.5)(@vitest/coverage-v8@5.0.5)(@vitest/ui@5.0.5)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(less@4.4.0)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(yaml@2.9.0))
@@ -558,7 +555,7 @@ importers:
         version: 1.47.0(@clerk/clerk-react@5.61.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@clerk/react@6.17.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)
       convex-helpers:
         specifier: 0.1.128
-        version: 0.1.128(@standard-schema/spec@1.1.0)(convex@1.47.0(@clerk/clerk-react@5.61.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@clerk/react@6.17.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1))(react@19.3.1)(typescript@6.0.3)(zod@4.6.7)
+        version: 0.1.128(@standard-schema/spec@1.1.0)(convex@1.47.0(@clerk/clerk-react@5.61.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@clerk/react@6.17.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1))(react@19.3.1)(typescript@7.0.2)(zod@4.6.7)
       jimp:
         specifier: ^1.6.1
         version: 1.6.1(supports-color@8.1.1)
@@ -588,8 +585,8 @@ importers:
         specifier: ^0.0.62
         version: 0.0.62(convex@1.47.0(@clerk/clerk-react@5.61.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@clerk/react@6.17.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1))
       typescript:
-        specifier: 6.0.3
-        version: 6.0.3
+        specifier: 7.0.2
+        version: 7.0.2
       vitest:
         specifier: ^5.0.5
         version: 5.0.5(@edge-runtime/vm@5.0.0)(@types/node@26.6.5)(@vitest/coverage-v8@5.0.5)(@vitest/ui@5.0.5)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(less@4.4.0)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(yaml@2.9.0))
@@ -6841,11 +6838,6 @@ packages:
     resolution: {integrity: sha512-k4kX5Up6qA68D0Cby2AK+6+vM5k3qTxe+/3FqhnHRExjY5cfbOnzjQZbP/LXleF8hVoDvDqxlgk9KK83HoBZlQ==}
     engines: {node: '>= 16.0.0'}
 
-  typescript@6.0.3:
-    resolution: {integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==}
-    engines: {node: '>=14.17'}
-    hasBin: true
-
   typescript@7.0.2:
     resolution: {integrity: sha512-8FYau96o3NKOhbjKi/qNvG/W5jhzxkbdm5sj9AbZ/5T5sWqn3hJgLfGx27sRKZWTvyzCP8dLRBTf5tBTSRVUNA==}
     engines: {node: '>=16.20.0'}
@@ -10716,13 +10708,13 @@ snapshots:
 
   convert-source-map@2.0.0: {}
 
-  convex-helpers@0.1.128(@standard-schema/spec@1.1.0)(convex@1.47.0(@clerk/clerk-react@5.61.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@clerk/react@6.17.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1))(react@19.3.1)(typescript@6.0.3)(zod@4.6.7):
+  convex-helpers@0.1.128(@standard-schema/spec@1.1.0)(convex@1.47.0(@clerk/clerk-react@5.61.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@clerk/react@6.17.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1))(react@19.3.1)(typescript@7.0.2)(zod@4.6.7):
     dependencies:
       convex: 1.47.0(@clerk/clerk-react@5.61.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@clerk/react@6.17.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)
     optionalDependencies:
       '@standard-schema/spec': 1.1.0
       react: 19.3.1
-      typescript: 6.0.3
+      typescript: 7.0.2
       zod: 4.6.7
 
   convex-test@0.0.62(convex@1.47.0(@clerk/clerk-react@5.61.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@clerk/react@6.17.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)):
@@ -11346,11 +11338,11 @@ snapshots:
 
   flru@1.0.2: {}
 
-  frimousse@0.4.0(react@19.3.1)(typescript@6.0.3):
+  frimousse@0.4.0(react@19.3.1)(typescript@7.0.2):
     dependencies:
       react: 19.3.1
     optionalDependencies:
-      typescript: 6.0.3
+      typescript: 7.0.2
 
   fsevents@2.3.3:
     optional: true
@@ -13515,9 +13507,9 @@ snapshots:
 
   trough@2.2.0: {}
 
-  tsconfck@3.1.6(typescript@6.0.3):
+  tsconfck@3.1.6(typescript@7.0.2):
     optionalDependencies:
-      typescript: 6.0.3
+      typescript: 7.0.2
 
   tsconfig-paths-webpack-plugin@4.2.0:
     dependencies:
@@ -13568,8 +13560,6 @@ snapshots:
       qs: 6.15.2
       tunnel: 0.0.6
       underscore: 1.13.8
-
-  typescript@6.0.3: {}
 
   typescript@7.0.2:
     optionalDependencies:
@@ -13774,11 +13764,11 @@ snapshots:
       d3-time: 3.1.0
       d3-timer: 3.0.1
 
-  vite-tsconfig-paths@6.1.1(supports-color@8.1.1)(typescript@6.0.3)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(less@4.4.0)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(yaml@2.9.0)):
+  vite-tsconfig-paths@6.1.1(supports-color@8.1.1)(typescript@7.0.2)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(less@4.4.0)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(yaml@2.9.0)):
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
       globrex: 0.1.2
-      tsconfck: 3.1.6(typescript@6.0.3)
+      tsconfck: 3.1.6(typescript@7.0.2)
       vite: 8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(less@4.4.0)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(yaml@2.9.0)
     transitivePeerDependencies:
       - supports-color

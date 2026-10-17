@@ -6,7 +6,7 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
-    "type-check": "node ../../node_modules/typescript7/bin/tsc --noEmit",
+    "type-check": "tsc --noEmit",
     "test": "vitest run",
     "mutation": "stryker run",
     "lint": "oxlint --type-aware .",
