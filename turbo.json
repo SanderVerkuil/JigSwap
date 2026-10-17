@@ -10,9 +10,21 @@
     },
     "@jigswap/web#build": {
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/docs/user/**"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/docs/user/**",
+        "$TURBO_ROOT$/docs/whats-new/**",
+        "$TURBO_ROOT$/packages/contracts/src/whats-new/manifest.generated.ts"
+      ],
       "outputs": [".output/**", "dist/**"],
       "env": ["VITE_*"]
+    },
+    "@jigswap/web#test": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/docs/whats-new/**",
+        "$TURBO_ROOT$/packages/contracts/src/whats-new/manifest.generated.ts"
+      ]
     },
     "lint": {
       "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/eslint.config.mjs"]
