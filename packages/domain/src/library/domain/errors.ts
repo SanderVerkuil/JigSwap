@@ -15,7 +15,9 @@ export type LibraryErrorCode =
   | "CannotLendToSelf"
   | "LoanNotOpen"
   | "NotBorrower"
-  | "NotLender";
+  | "NotLender"
+  | "EmptyAcquireBatch"
+  | "AcquireBatchTooLarge";
 
 export class LibraryError extends DomainError {
   override readonly name = "LibraryError";
@@ -97,5 +99,21 @@ export class LibraryError extends DomainError {
   // Only the lender (owner) may recall a loan.
   static notLender(): LibraryError {
     return new LibraryError("NotLender", "Only the owner may recall this loan");
+  }
+
+  // A batch add with no puzzles in it.
+  static emptyAcquireBatch(): LibraryError {
+    return new LibraryError(
+      "EmptyAcquireBatch",
+      "Pick at least one puzzle to add",
+    );
+  }
+
+  // A batch add with more distinct puzzles than the cap.
+  static acquireBatchTooLarge(max: number): LibraryError {
+    return new LibraryError(
+      "AcquireBatchTooLarge",
+      `At most ${max} puzzles can be added at once`,
+    );
   }
 }
