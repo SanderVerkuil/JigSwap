@@ -351,6 +351,14 @@ export const gateway = {
       api.social.createHouseholdInviteLink.createHouseholdInviteLink,
     revokeHouseholdInviteLinks:
       api.social.revokeHouseholdInviteLinks.revokeHouseholdInviteLinks,
+    // An EXISTING member on a household link: the landing state, then Accept (joins through the
+    // domain's invite + accept rules, consumes the token) or Decline (consumes it, silently).
+    householdLinkInvite:
+      api.social.getHouseholdLinkInvite.getHouseholdLinkInvite,
+    acceptHouseholdLinkInvite:
+      api.social.acceptHouseholdLinkInvite.acceptHouseholdLinkInvite,
+    declineHouseholdLinkInvite:
+      api.social.declineHouseholdLinkInvite.declineHouseholdLinkInvite,
     profile: api.social.getProfile.getProfile,
     publicMemberTeaser: api.social.getPublicMemberTeaser.getPublicMemberTeaser,
     // The visibility-gated read behind the redesigned public member profile page. Unauthenticated-

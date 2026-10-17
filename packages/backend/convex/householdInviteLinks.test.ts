@@ -661,3 +661,261 @@ describe("other token readers", () => {
     });
   });
 });
+
+// An EXISTING member opening a household link (spec addendum to §3.4): the landing shows
+// "<inviter> invited you to their household" with Accept / Decline. Accept joins through the same
+// domain path as accepting a pending invite and consumes the token; Decline consumes it too.
+describe("existing member on a household link", () => {
+  const landing = (t: T, who: Who, token: string) =>
+    as(t, who).query(api.social.getHouseholdLinkInvite.getHouseholdLinkInvite, {
+      token,
+    });
+  const acceptLink = (t: T, who: Who, token: string) =>
+    as(t, who).mutation(
+      api.social.acceptHouseholdLinkInvite.acceptHouseholdLinkInvite,
+      { token },
+    );
+  const declineLink = (t: T, who: Who, token: string) =>
+    as(t, who).mutation(
+      api.social.declineHouseholdLinkInvite.declineHouseholdLinkInvite,
+      { token },
+    );
+  const notificationTypes = (t: T, user: Id<"users">) =>
+    t.run(async (ctx) =>
+      (
+        await ctx.db
+          .query("notifications")
+          .withIndex("by_user", (q) => q.eq("userId", user))
+          .collect()
+      ).map((n) => n.type),
+    );
+
+  test("the landing names the inviter and offers Accept", async () => {
+    const t = convexTest(schema, modules);
+    const { cat } = await seed(t);
+    await annCreatesHousehold(t);
+    const { token } = await mintAsAnn(t);
+    await makeOld(t, cat);
+
+    expect(await landing(t, "cat", token)).toEqual({
+      state: "can-accept",
+      inviterName: "Ann",
+    });
+  });
+
+  test("accepting joins the household, consumes the token, notifies the admin and follows nobody", async () => {
+    const t = convexTest(schema, modules);
+    const { ann, cat } = await seed(t);
+    const householdId = await annCreatesHousehold(t);
+    const { token } = await mintAsAnn(t);
+    await makeOld(t, cat);
+
+    expect(await acceptLink(t, "cat", token)).toBe(householdId);
+
+    const mine = await as(t, "cat").query(
+      api.household.getMyHousehold.getMyHousehold,
+      {},
+    );
+    expect(mine?.viewerRole).toBe("member");
+    expect(mine?.members.map((m) => m.name).sort()).toEqual(["Ann", "Cat"]);
+    expect(
+      (await householdInvitesFor(t, cat)).map((i) => [
+        i.householdId,
+        i.inviterId,
+        i.status,
+      ]),
+    ).toEqual([[householdId, ann, "accepted"]]);
+
+    const link = await linkFor(t, token);
+    expect(link?.consumedBy).toBe(cat);
+    expect(link?.consumedAt).toBeDefined();
+    expect(link?.signupsAttributed).toBe(0);
+
+    await flushScheduled(t);
+    expect(await notificationTypes(t, ann)).toContain(
+      "household_invite_accepted",
+    );
+    // The invitee answered at once: no stale "you were invited" notification.
+    expect(await notificationTypes(t, cat)).not.toContain(
+      "household_invite_received",
+    );
+    expect(await mutualEdges(t, ann, cat)).toEqual({ ab: false, ba: false });
+    expect(
+      await t.run((ctx) => ctx.db.query("inviteRedemptions").collect()),
+    ).toEqual([]);
+  });
+
+  test("accepting also answers an in-app invite already pending from that household", async () => {
+    const t = convexTest(schema, modules);
+    const { cat } = await seed(t);
+    const householdId = await annCreatesHousehold(t);
+    await as(t, "ann").mutation(
+      api.household.inviteToHousehold.inviteToHousehold,
+      { inviteeId: cat },
+    );
+    const { token } = await mintAsAnn(t);
+
+    expect(await acceptLink(t, "cat", token)).toBe(householdId);
+    expect((await householdInvitesFor(t, cat)).map((i) => i.status)).toEqual([
+      "accepted",
+    ]);
+  });
+
+  test("a member already in a household is told why and cannot accept or decline", async () => {
+    const t = convexTest(schema, modules);
+    const { cat } = await seed(t);
+    await annCreatesHousehold(t);
+    const { token } = await mintAsAnn(t);
+    await as(t, "cat").mutation(
+      api.household.createHousehold.createHousehold,
+      {},
+    );
+
+    expect(await landing(t, "cat", token)).toEqual({
+      state: "already-in-household",
+      inviterName: "Ann",
+    });
+    await expectConvexCode(acceptLink(t, "cat", token), "AlreadyInHousehold");
+    await expectConvexCode(declineLink(t, "cat", token), "AlreadyInHousehold");
+    expect((await linkFor(t, token))?.consumedAt).toBeUndefined();
+    expect(await householdInvitesFor(t, cat)).toEqual([]);
+  });
+
+  test("an expired link is reported and refused", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await annCreatesHousehold(t);
+    const { token } = await mintAsAnn(t);
+    await t.run(async (ctx) => {
+      const row = await ctx.db
+        .query("inviteLinks")
+        .withIndex("by_token", (q) => q.eq("token", token))
+        .unique();
+      if (row) await ctx.db.patch(row._id, { expiresAt: Date.now() - 1 });
+    });
+
+    expect(await landing(t, "cat", token)).toEqual({ state: "expired" });
+    await expectConvexCode(acceptLink(t, "cat", token), "InviteLinkExpired");
+    await expectConvexCode(declineLink(t, "cat", token), "InviteLinkExpired");
+  });
+
+  test("a used link is reported and refused", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+    await annCreatesHousehold(t);
+    const { token } = await mintAsAnn(t);
+    await acceptLink(t, "cat", token);
+
+    expect(await landing(t, "bob", token)).toEqual({ state: "used" });
+    await expectConvexCode(acceptLink(t, "bob", token), "InviteLinkUsed");
+    expect(await householdInvitesFor(t, bob)).toEqual([]);
+  });
+
+  test("unknown, revoked and dead-household tokens are invalid", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await annCreatesHousehold(t);
+    const { token: revoked } = await mintAsAnn(t);
+    await as(t, "ann").mutation(
+      api.social.revokeHouseholdInviteLinks.revokeHouseholdInviteLinks,
+      {},
+    );
+    const { token: stale } = await mintAsAnn(t);
+    // Ann leaves (the household dissolves) and founds a new one: the old link outlives neither.
+    await as(t, "ann").mutation(
+      api.household.leaveHousehold.leaveHousehold,
+      {},
+    );
+    await annCreatesHousehold(t);
+
+    for (const token of ["nope", revoked, stale]) {
+      expect(await landing(t, "cat", token)).toEqual({ state: "invalid" });
+      await expectConvexCode(acceptLink(t, "cat", token), "InviteLinkInvalid");
+      await expectConvexCode(declineLink(t, "cat", token), "InviteLinkInvalid");
+    }
+  });
+
+  test("the inviter cannot accept or decline their own link", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await annCreatesHousehold(t);
+    const { token } = await mintAsAnn(t);
+
+    expect(await landing(t, "ann", token)).toEqual({ state: "own-link" });
+    await expectConvexCode(acceptLink(t, "ann", token), "OwnInviteLink");
+    await expectConvexCode(declineLink(t, "ann", token), "OwnInviteLink");
+    expect((await linkFor(t, token))?.consumedAt).toBeUndefined();
+  });
+
+  test("declining consumes the link silently, so it cannot be accepted later", async () => {
+    const t = convexTest(schema, modules);
+    const { ann, cat } = await seed(t);
+    await annCreatesHousehold(t);
+    const { token } = await mintAsAnn(t);
+
+    expect(await declineLink(t, "cat", token)).toBeNull();
+    const link = await linkFor(t, token);
+    expect(link?.consumedBy).toBe(cat);
+    expect(link?.consumedAt).toBeDefined();
+    expect(
+      await as(t, "cat").query(api.household.getMyHousehold.getMyHousehold, {}),
+    ).toBeNull();
+    expect(await householdInvitesFor(t, cat)).toEqual([]);
+
+    await flushScheduled(t);
+    expect(await notificationTypes(t, ann)).toEqual([]);
+    expect(await landing(t, "cat", token)).toEqual({ state: "used" });
+    await expectConvexCode(acceptLink(t, "cat", token), "InviteLinkUsed");
+  });
+
+  test("a plain network link is unaffected", async () => {
+    const t = convexTest(schema, modules);
+    const { ann, cat } = await seed(t);
+    await annCreatesHousehold(t);
+    const { token } = await as(t, "ann").mutation(
+      api.social.getMyInviteLink.getMyInviteLink,
+      {},
+    );
+
+    expect(await landing(t, "cat", token)).toEqual({ state: "invalid" });
+    await expectConvexCode(acceptLink(t, "cat", token), "InviteLinkInvalid");
+    await expectConvexCode(declineLink(t, "cat", token), "InviteLinkInvalid");
+    const link = await linkFor(t, token);
+    expect(link?.consumedAt).toBeUndefined();
+    expect(link?.revokedAt).toBeUndefined();
+    expect(await householdInvitesFor(t, cat)).toEqual([]);
+    // The network link still does its own job.
+    expect(
+      await as(t, "cat").mutation(api.social.acceptQrFollow.acceptQrFollow, {
+        token,
+      }),
+    ).toEqual({ established: true });
+    expect(await mutualEdges(t, ann, cat)).toEqual({ ab: true, ba: true });
+  });
+
+  test("unauthenticated callers are rejected", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await annCreatesHousehold(t);
+    const { token } = await mintAsAnn(t);
+
+    await expect(
+      t.query(api.social.getHouseholdLinkInvite.getHouseholdLinkInvite, {
+        token,
+      }),
+    ).rejects.toThrow(/Unauthenticated/);
+    await expect(
+      t.mutation(
+        api.social.acceptHouseholdLinkInvite.acceptHouseholdLinkInvite,
+        { token },
+      ),
+    ).rejects.toThrow(/Unauthenticated/);
+    await expect(
+      t.mutation(
+        api.social.declineHouseholdLinkInvite.declineHouseholdLinkInvite,
+        { token },
+      ),
+    ).rejects.toThrow(/Unauthenticated/);
+    expect((await linkFor(t, token))?.consumedAt).toBeUndefined();
+  });
+});
