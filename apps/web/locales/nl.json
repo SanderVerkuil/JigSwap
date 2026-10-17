@@ -765,7 +765,7 @@
       "hours": "{count} u"
     },
     "tooLong": "Dat bericht is te lang (maximaal 4.000 tekens).",
-    "typeMessage": "Type je bericht...",
+    "typeMessage": "Typ je bericht…",
     "unreadCount": "{count, plural, one {# ongelezen bericht} other {# ongelezen berichten}}",
     "untitledPuzzle": "Naamloze puzzel",
     "you": "Jij",
