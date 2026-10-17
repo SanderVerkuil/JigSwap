@@ -1,5 +1,5 @@
-import { convexTest } from "convex-test";
-import { ConvexError } from "convex/values";
+import { convexTest, type TestConvex } from "convex-test";
+import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -13,7 +13,7 @@ type Avail = { forTrade: boolean; forSale: boolean; forLend: boolean };
 const ALL_FALSE: Avail = { forTrade: false, forSale: false, forLend: false };
 
 // Seed two users and a shared puzzle; copies are added per test with explicit availability.
-const seed = async (t: ReturnType<typeof convexTest>) =>
+const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string, email: string) =>
@@ -39,7 +39,7 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
   });
 
 const addCopy = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   puzzleId: Id<"puzzles">,
   ownerId: Id<"users">,
   availability: Avail,
@@ -56,13 +56,10 @@ const addCopy = (
     });
   });
 
-const getCopy = (t: ReturnType<typeof convexTest>, id: Id<"ownedPuzzles">) =>
+const getCopy = (t: TestConvex<typeof schema>, id: Id<"ownedPuzzles">) =>
   t.run(async (ctx) => ctx.db.get(id));
 
-const notificationsFor = (
-  t: ReturnType<typeof convexTest>,
-  userId: Id<"users">,
-) =>
+const notificationsFor = (t: TestConvex<typeof schema>, userId: Id<"users">) =>
   t.run(async (ctx) =>
     ctx.db
       .query("notifications")
@@ -70,7 +67,7 @@ const notificationsFor = (
       .collect(),
   );
 
-const exchangeRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
+const exchangeRow = (t: TestConvex<typeof schema>, aggregateId: string) =>
   t.run(async (ctx) =>
     ctx.db
       .query("exchanges")
@@ -78,15 +75,15 @@ const exchangeRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
       .unique(),
   );
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asBob = (t: ReturnType<typeof convexTest>) =>
+const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
 
 // Notifications are produced asynchronously by the event dispatcher (scheduled via runAfter(0)).
 // finishInProgressScheduledFunctions only awaits jobs ALREADY in-progress, so we first yield a
 // macrotask to let the pending dispatch fire, then drain — looping a few times to settle the chain.
-const flushScheduled = async (t: ReturnType<typeof convexTest>) => {
+const flushScheduled = async (t: TestConvex<typeof schema>) => {
   for (let i = 0; i < 10; i++) {
     await new Promise((resolve) => setTimeout(resolve, 0));
     await t.finishInProgressScheduledFunctions();
@@ -96,7 +93,7 @@ const flushScheduled = async (t: ReturnType<typeof convexTest>) => {
 // convex-test serializes ConvexError.data to a JSON string when it crosses the function
 // boundary, so normalise before asserting on the stable `code`.
 const dataOf = (e: unknown): { code?: string } => {
-  const data = (e as ConvexError<unknown>).data;
+  const data = (e as ConvexError<Value>).data;
   return typeof data === "string"
     ? JSON.parse(data)
     : (data as { code?: string });
@@ -286,7 +283,7 @@ describe("exchange.propose", () => {
 });
 
 // Helper: Alice proposes a sale to Bob, returning the aggregateId.
-const proposeSale = async (t: ReturnType<typeof convexTest>) => {
+const proposeSale = async (t: TestConvex<typeof schema>) => {
   const { alice, bob, puzzleId } = await seed(t);
   const copy = await addCopy(t, puzzleId, bob, { ...ALL_FALSE, forSale: true });
   const id = await asAlice(t).mutation(api.exchange.propose.propose, {

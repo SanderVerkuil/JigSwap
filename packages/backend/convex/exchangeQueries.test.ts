@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
@@ -8,7 +8,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 // Alice (initiator) proposes a trade to Bob (recipient): she offers her copy of "Ocean Calm" for
 // his copy of "Mountain Vista". A second, newer exchange exercises ordering.
-const seed = async (t: ReturnType<typeof convexTest>) =>
+const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
 
@@ -99,9 +99,9 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
     return { alice, bob, older, newer };
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asBob = (t: ReturnType<typeof convexTest>) =>
+const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
 
 describe("exchange.getExchangeById", () => {

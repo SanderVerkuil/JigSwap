@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -9,7 +9,7 @@ import schema from "./schema";
 // anonymised otherwise, and never with an email. A household mate additionally gets the owner's
 // household person view (name/avatar, the same view behind the "Household · {owner}" badge).
 
-type T = ReturnType<typeof convexTest>;
+type T = TestConvex<typeof schema>;
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 const as = (t: T, who: string) => t.withIdentity({ subject: `clerk_${who}` });

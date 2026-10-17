@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
@@ -10,7 +10,7 @@ const NO_AVAILABILITY = { forTrade: false, forSale: false, forLend: false };
 
 // Four members: public-with-username (2 copies, consented avatar), public-without-username,
 // private-with-username (avatar NOT consented), and an inactive member.
-const seed = async (t: ReturnType<typeof convexTest>) =>
+const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (

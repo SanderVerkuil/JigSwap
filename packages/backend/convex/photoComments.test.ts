@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
@@ -10,7 +10,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 // Seed two members + a puzzle + a copy + ONE uploaded photo on that copy. Photo comments key to the
 // `ownedPuzzleImages` _id, so the photo id is what the API is called with.
-const seed = async (t: ReturnType<typeof convexTest>) =>
+const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string, email: string, name: string) =>
@@ -61,9 +61,9 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
     return { alice, bob, copy, photoId };
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asBob = (t: ReturnType<typeof convexTest>) =>
+const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
 
 describe("postPhotoComment / listPhotoComments", () => {
@@ -218,7 +218,7 @@ describe("postPhotoComment / listPhotoComments", () => {
 describe("photo comment reachability gating", () => {
   // Seed a CLOSED copy (no availability flags) on a PUBLIC owner: unreachable by a non-owner because
   // canViewCopy requires the copy to be open for a public-profile reveal.
-  const seedClosed = (t: ReturnType<typeof convexTest>) =>
+  const seedClosed = (t: TestConvex<typeof schema>) =>
     t.run(async (ctx) => {
       const now = Date.now();
       const mkUser = (clerkId: string, email: string, name: string) =>

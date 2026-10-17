@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
@@ -15,7 +15,7 @@ const NO_AVAILABILITY = { forTrade: false, forSale: false, forLend: false };
 // carol: private member (no avatar consent) with a distinctive completion (pieceCount 31415,
 // title "Should Not Leak") used to prove nothing besides `hero` crosses the wire when locked.
 // dave: mutual follower of carol. eve: signed-in but unrelated to carol (non-mutual).
-const seed = async (t: ReturnType<typeof convexTest>) =>
+const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
 
@@ -505,14 +505,14 @@ describe("getPublicProfile", () => {
 });
 
 const HOUR = 60 * 60 * 1000;
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asBob = (t: ReturnType<typeof convexTest>) =>
+const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
-const asEve = (t: ReturnType<typeof convexTest>) =>
+const asEve = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_eve" });
 
-const clearSeededInProgress = (t: ReturnType<typeof convexTest>) =>
+const clearSeededInProgress = (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const rows = await ctx.db.query("completions").collect();
     for (const row of rows) {

@@ -1,8 +1,8 @@
 {
-  // Type-checks the Convex functions with their own compiler settings (convex/tsconfig.json).
-  // Tests are excluded: convex-test files carry ~200 pre-existing type errors (import.meta.glob
-  // typing and loose Doc unions) and run under vitest, which strips types without checking.
+  // Type-checks the Convex functions and their convex-test suites with the Convex compiler
+  // settings (convex/tsconfig.json). Tests are included so a type error in a test fails the gate;
+  // vitest itself strips types without checking them.
   "extends": "./convex/tsconfig.json",
   "include": ["convex/**/*"],
-  "exclude": ["convex/_generated", "convex/**/*.test.ts"]
+  "exclude": ["convex/_generated"]
 }

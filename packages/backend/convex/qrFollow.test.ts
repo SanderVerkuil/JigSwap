@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
@@ -7,7 +7,7 @@ import { establishMutualFollow } from "./social/establishMutualFollow";
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
-const seedUsers = (t: ReturnType<typeof convexTest>) =>
+const seedUsers = (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const alice = await ctx.db.insert("users", {
@@ -29,13 +29,13 @@ const seedUsers = (t: ReturnType<typeof convexTest>) =>
     return { alice, bob };
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asBob = (t: ReturnType<typeof convexTest>) =>
+const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
 
 const followEdges = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   a: Id<"users">,
   b: Id<"users">,
 ) =>
@@ -57,17 +57,14 @@ const followEdges = (
 
 // Event dispatch (MemberFollowed -> Notifications subscriber) runs via scheduled functions;
 // yield + drain repeatedly so the notification rows land before we assert on them.
-const flushScheduled = async (t: ReturnType<typeof convexTest>) => {
+const flushScheduled = async (t: TestConvex<typeof schema>) => {
   for (let i = 0; i < 10; i++) {
     await new Promise((resolve) => setTimeout(resolve, 0));
     await t.finishInProgressScheduledFunctions();
   }
 };
 
-const notificationsFor = (
-  t: ReturnType<typeof convexTest>,
-  userId: Id<"users">,
-) =>
+const notificationsFor = (t: TestConvex<typeof schema>, userId: Id<"users">) =>
   t.run((ctx) =>
     ctx.db
       .query("notifications")

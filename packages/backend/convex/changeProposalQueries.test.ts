@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
@@ -9,7 +9,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 // Read models for the change-proposal review flow: the admin pending queue (with derived
 // conflict flags), the per-definition history, and the member's own submissions.
 
-const seedMembers = async (t: ReturnType<typeof convexTest>) =>
+const seedMembers = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string, name: string) =>
@@ -27,15 +27,15 @@ const seedMembers = async (t: ReturnType<typeof convexTest>) =>
     };
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asBob = (t: ReturnType<typeof convexTest>) =>
+const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
-const asAdmin = (t: ReturnType<typeof convexTest>) =>
+const asAdmin = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice", metadata: { role: "admin" } });
 
 // Submit + approve, returning an APPROVED definition's aggregateId.
-const submitApproved = async (t: ReturnType<typeof convexTest>) => {
+const submitApproved = async (t: TestConvex<typeof schema>) => {
   const id = await asAlice(t).mutation(
     api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
     { title: "Mountain Vista", pieceCount: 1000 },
@@ -47,7 +47,7 @@ const submitApproved = async (t: ReturnType<typeof convexTest>) => {
   return id as string;
 };
 
-const fileAsBob = async (t: ReturnType<typeof convexTest>) => {
+const fileAsBob = async (t: TestConvex<typeof schema>) => {
   const definitionId = await submitApproved(t);
   const proposalId = await asBob(t).mutation(
     api.catalog.proposeDefinitionChange.proposeDefinitionChange,

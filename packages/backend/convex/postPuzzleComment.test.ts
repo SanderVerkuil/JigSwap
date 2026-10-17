@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
@@ -11,7 +11,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 // Seed two members + ONE catalog puzzle + two owned copies of THAT SAME puzzle (one Alice's, one
 // Bob's). Comments are COPY-scoped, so each copy surfaces only its own list (and they never leak
 // into the shared puzzle's community reviews).
-const seed = async (t: ReturnType<typeof convexTest>) =>
+const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string, email: string, name: string) =>
@@ -50,9 +50,9 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
     return { alice, bob, puzzleId, aliceCopy, bobCopy };
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asBob = (t: ReturnType<typeof convexTest>) =>
+const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
 
 describe("postPuzzleComment / listPuzzleComments", () => {

@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -10,7 +10,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 // Community change-proposal outcomes (approve/reject) notify the proposer via the Notifications
 // subscriber. Filing/editing/withdrawing must NOT notify anyone.
 
-const seedMembers = async (t: ReturnType<typeof convexTest>) =>
+const seedMembers = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string, name: string) =>
@@ -28,15 +28,15 @@ const seedMembers = async (t: ReturnType<typeof convexTest>) =>
     };
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asBob = (t: ReturnType<typeof convexTest>) =>
+const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
-const asAdmin = (t: ReturnType<typeof convexTest>) =>
+const asAdmin = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice", metadata: { role: "admin" } });
 
 // Submit + approve, returning an APPROVED definition's aggregateId.
-const submitApproved = async (t: ReturnType<typeof convexTest>) => {
+const submitApproved = async (t: TestConvex<typeof schema>) => {
   const id = await asAlice(t).mutation(
     api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
     { title: "Mountain Vista", pieceCount: 1000 },
@@ -48,7 +48,7 @@ const submitApproved = async (t: ReturnType<typeof convexTest>) => {
   return id as string;
 };
 
-const fileAsBob = async (t: ReturnType<typeof convexTest>) => {
+const fileAsBob = async (t: TestConvex<typeof schema>) => {
   const definitionId = await submitApproved(t);
   const proposalId = await asBob(t).mutation(
     api.catalog.proposeDefinitionChange.proposeDefinitionChange,
@@ -63,17 +63,14 @@ const fileAsBob = async (t: ReturnType<typeof convexTest>) => {
 
 // Drain the async event dispatcher: yield a macrotask so the pending runAfter(0) job fires,
 // then await any in-progress jobs — looped a few times to settle the chain.
-const flushScheduled = async (t: ReturnType<typeof convexTest>) => {
+const flushScheduled = async (t: TestConvex<typeof schema>) => {
   for (let i = 0; i < 10; i++) {
     await new Promise((resolve) => setTimeout(resolve, 0));
     await t.finishInProgressScheduledFunctions();
   }
 };
 
-const notificationsFor = (
-  t: ReturnType<typeof convexTest>,
-  userId: Id<"users">,
-) =>
+const notificationsFor = (t: TestConvex<typeof schema>, userId: Id<"users">) =>
   t.run((ctx) =>
     ctx.db
       .query("notifications")
