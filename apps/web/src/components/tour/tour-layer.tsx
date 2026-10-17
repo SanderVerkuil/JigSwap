@@ -152,34 +152,37 @@ export function TourCardBody({
           />
         ))}
       </div>
-      <div className="flex items-center justify-between gap-2 border-t px-3 py-2.5">
-        {index > 0 ? (
-          <Button
-            variant="ghost"
-            size={touch ? "default" : "sm"}
-            className={cn(touch && "min-h-11")}
-            onClick={onBack}
-          >
-            <ChevronLeft aria-hidden />
-            {t("back")}
-          </Button>
-        ) : (
-          <span />
-        )}
-        {!actionHint && (
-          <Button
-            size={touch ? "default" : "sm"}
-            className={cn(
-              "bg-jigsaw-primary hover:bg-jigsaw-primary/90 text-white",
-              touch && "min-h-11",
-            )}
-            onClick={onNext}
-          >
-            {nextLabel}
-            {isLast ? <Check aria-hidden /> : <ChevronRight aria-hidden />}
-          </Button>
-        )}
-      </div>
+      {/* An action step on the first page has neither Back nor Next: no empty footer strip. */}
+      {(index > 0 || !actionHint) && (
+        <div className="flex items-center justify-between gap-2 border-t px-3 py-2.5">
+          {index > 0 ? (
+            <Button
+              variant="ghost"
+              size={touch ? "default" : "sm"}
+              className={cn(touch && "min-h-11")}
+              onClick={onBack}
+            >
+              <ChevronLeft aria-hidden />
+              {t("back")}
+            </Button>
+          ) : (
+            <span />
+          )}
+          {!actionHint && (
+            <Button
+              size={touch ? "default" : "sm"}
+              className={cn(
+                "bg-jigsaw-primary hover:bg-jigsaw-primary/90 text-white",
+                touch && "min-h-11",
+              )}
+              onClick={onNext}
+            >
+              {nextLabel}
+              {isLast ? <Check aria-hidden /> : <ChevronRight aria-hidden />}
+            </Button>
+          )}
+        </div>
+      )}
     </>
   );
 }
