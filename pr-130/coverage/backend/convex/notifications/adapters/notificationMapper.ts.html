@@ -30,9 +30,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>1/2</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
@@ -116,7 +116,28 @@
 <a name='L51'></a><a href='#L51'>51</a>
 <a name='L52'></a><a href='#L52'>52</a>
 <a name='L53'></a><a href='#L53'>53</a>
-<a name='L54'></a><a href='#L54'>54</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -137,8 +158,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">52x</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">57x</span>
+<span class="cline-any cline-yes">24x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -150,13 +176,29 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">52x</span>
-<span class="cline-any cline-yes">686x</span>
-<span class="cline-any cline-yes">686x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">57x</span>
+<span class="cline-any cline-yes">748x</span>
+<span class="cline-any cline-yes">748x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -175,6 +217,7 @@
   toNotificationId,
   type Channel,
   type NotificationState,
+  type NotificationSubject,
   type NotificationType,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
@@ -188,8 +231,12 @@ export type NotificationRow = Omit&lt;
   "_id" | "_creationTime"
 &gt;;
 &nbsp;
+// The persisted subject: the domain's opaque string ids, with puzzle/copy/goal typed as Convex ids.
+type SubjectRow = NonNullable&lt;Doc&lt;"notifications"&gt;["subject"]&gt;;
+&nbsp;
 // Row -&gt; aggregate. Only domain-written/backfilled rows (carrying an aggregateId) are mappable;
-// callers guard for it. `channel` defaults to inApp for legacy rows missing it.
+// callers guard for it. `channel` defaults to inApp for legacy rows missing it. The aggregate holds
+// one actor: the newest of `actorIds` (legacy rows carry none).
 export const toDomain = (row: Doc&lt;"notifications"&gt;): Notification =&gt; {
   const state: NotificationState = {
     id: toNotificationId(row.aggregateId as string),
@@ -199,7 +246,12 @@ export const toDomain = (row: Doc&lt;"notifications"&gt;): Notification =&gt; {
     message: row.message,
     params: row.params,
     relatedId: row.relatedId,
-    channel: (row.channel ?? <span class="branch-1 cbranch-no" title="branch not covered" >"inApp") as Channel,</span>
+    actorId:
+      row.actorIds?.[0] !== undefined
+        ? toMemberId(row.actorIds[0] as unknown as string)
+        : undefined,
+    subject: row.subject as NotificationSubject | undefined,
+    channel: (row.channel ?? "inApp") as Channel,
     isRead: row.isRead,
     createdAt: new Date(row.createdAt),
   };
@@ -207,6 +259,8 @@ export const toDomain = (row: Doc&lt;"notifications"&gt;): Notification =&gt; {
 };
 &nbsp;
 // Aggregate -&gt; row payload. `userId` is a user `_id`, carried directly by the domain as a MemberId.
+// The actor/subject keys are only written when present, so a re-save (markRead patch) of a row
+// without refs leaves it shaped exactly as before.
 export const toRow = (notification: Notification): NotificationRow =&gt; {
   const state: NotificationState = notification.toState();
   return {
@@ -217,6 +271,15 @@ export const toRow = (notification: Notification): NotificationRow =&gt; {
     message: state.message,
     params: state.params as Record&lt;string, string&gt; | undefined,
     relatedId: state.relatedId,
+    ...(state.actorId !== undefined
+      ? {
+          actorIds: [state.actorId as unknown as Id&lt;"users"&gt;],
+          actorCount: 1,
+        }
+      : {}),
+    ...(state.subject !== undefined
+      ? { subject: state.subject as SubjectRow }
+      : {}),
     channel: state.channel,
     isRead: state.isRead,
     createdAt: state.createdAt.getTime(),
@@ -229,7 +292,7 @@ export const toRow = (notification: Notification): NotificationRow =&gt; {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-17T21:46:47.797Z
+                at 2026-10-17T22:12:13.435Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

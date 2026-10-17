@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">40% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>2/5</span>
-            </div>
-        
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
-                <span class="quiet">Branches</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>5/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">50% </span>
-                <span class="quiet">Functions</span>
-                <span class='fraction'>1/2</span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>2/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">40% </span>
+                <span class="strong">100% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>2/2</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>2/5</span>
+                <span class='fraction'>5/5</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -90,7 +90,11 @@
 <a name='L25'></a><a href='#L25'>25</a>
 <a name='L26'></a><a href='#L26'>26</a>
 <a name='L27'></a><a href='#L27'>27</a>
-<a name='L28'></a><a href='#L28'>28</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -101,15 +105,19 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">51x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1285x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">55x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1338x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -122,26 +130,30 @@ import { internal } from "../../../_generated/api";
 import type { Id } from "../../../_generated/dataModel";
 import type { MutationCtx } from "../../../_generated/server";
 import { renderNotificationText } from "../../copy";
+import { deliveryRefsOf } from "../../deliveryContent";
 &nbsp;
 // Web Push channel: schedules the out-of-band send (notifications/sendWebPush) after commit, which
-// fans the notification out to every active push subscription of the recipient via VAPID. Copy is
-// rendered HERE from the structured type+params (English-only by design — push localization is out
-// of scope); the notification row itself carries no pre-rendered strings anymore. No-ops downstream
+// fans the notification out to every active push subscription of the recipient via VAPID. The
+// action re-renders the copy from the delivery resolved for the recipient (actor, live context,
+// deep link); the snapshot title/message rendered HERE from type+params stay as the args the action
+// has always taken. English-only by design (push localization is out of scope). No-ops downstream
 // when push is unconfigured or the member has no subscriptions.
 export const pushChannel =
   (ctx: MutationCtx) =&gt;
-<span class="fstat-no" title="function not covered" >  async (n</span>otification: Notification): Promise&lt;void&gt; =&gt; {
-    const state = <span class="cstat-no" title="statement not covered" >notification.toState();</span>
-    const { title, message } = <span class="cstat-no" title="statement not covered" >renderNotificationText(</span>
+  async (notification: Notification): Promise&lt;void&gt; =&gt; {
+    const state = notification.toState();
+    const { title, message } = renderNotificationText(
       state.type,
-      state.params ?? {},
+      state.params ?? <span class="branch-1 cbranch-no" title="branch not covered" >{},</span>
     );
-<span class="cstat-no" title="statement not covered" >    await ctx.scheduler.runAfter(0, internal.notifications.sendWebPush.send, {</span>
+    await ctx.scheduler.runAfter(0, internal.notifications.sendWebPush.send, {
       userId: state.userId as unknown as Id&lt;"users"&gt;,
       type: state.type as string,
       title,
       message,
       relatedId: state.relatedId,
+      params: (state.params ?? <span class="branch-1 cbranch-no" title="branch not covered" >{}) as Record&lt;string, string&gt;,</span>
+      ...deliveryRefsOf(state),
     });
   };
 &nbsp;</pre></td></tr></table></pre>
@@ -151,7 +163,7 @@ export const pushChannel =
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-17T21:46:47.797Z
+                at 2026-10-17T22:12:13.435Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>
