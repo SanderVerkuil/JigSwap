@@ -429,6 +429,26 @@ describe("TourController: action steps", () => {
     expect(running(controller).index).toBe(1);
   });
 
+  it("returns to the action step when a resumed step's anchor needs that action", async () => {
+    const { controller } = actionSetup();
+    // Resumed at step 2, but its anchor only appears after step 1's action.
+    controller.start("demo", 1);
+    await vi.advanceTimersByTimeAsync(SAME_PAGE_GRACE_MS + 100);
+    expect(running(controller)).toMatchObject({
+      index: 0,
+      phase: "shown",
+      action: true,
+    });
+  });
+
+  it("keeps a missing card when the previous step is not an action", async () => {
+    const { world, controller } = setup("/one");
+    world.anchors.add("one-a");
+    controller.start("demo", 1);
+    await vi.advanceTimersByTimeAsync(SAME_PAGE_GRACE_MS + 100);
+    expect(running(controller)).toMatchObject({ index: 1, phase: "missing" });
+  });
+
   it("leaves normal steps untouched", () => {
     const { world, controller } = setup("/one");
     world.anchors.add("one-a");

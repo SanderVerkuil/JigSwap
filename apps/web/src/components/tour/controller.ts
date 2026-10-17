@@ -266,6 +266,18 @@ export class TourController<T> {
       step.target !== undefined ? this.deps.findTarget(step.target) : null;
     const settle = () => {
       const found = onPage() ? target() : null;
+      // The anchor is missing because the previous step's action was never taken (a resumed tour,
+      // or one started elsewhere): go back to that step instead of explaining something not there.
+      const prev = tour.steps[index - 1];
+      if (!found && step.target !== undefined && prev?.target !== undefined) {
+        const prevTarget = samePath(this.deps.currentPath(), prev.route)
+          ? this.deps.findTarget(prev.target)
+          : null;
+        if (prevTarget !== null && this.deps.isActionTarget(prevTarget)) {
+          this.enter(tour, index - 1);
+          return;
+        }
+      }
       const action = found !== null && this.deps.isActionTarget(found);
       this.set({
         ...base,
