@@ -1,3 +1,4 @@
+import { inviteExtrasSuppressed } from "@/components/quick-start/logic";
 import {
   INVITE_KEY,
   NEW_MEMBER_WINDOW_MS,
@@ -19,14 +20,23 @@ const FALLBACK_SHOWN_KEY = "jigswap.inviteFallbackShown";
 // Mounted once in the authed dashboard layout. Three jobs, all one-shot:
 // 1. Redeem a localStorage invite token that survived the Clerk redirect (attribution).
 // 2. Loop closure: after a successful redemption, offer the new member their OWN QR (skippable).
-//    A household link instead leaves a pending household invite: go to /household to accept it.
+//    A household link instead leaves a pending household invite: open the quick start household
+//    step (/welcome?step=household) to accept it.
 // 3. Fallback: brand-new member with NO token (cross-device scan, private mode) gets a one-time
 //    "did someone invite you?" nudge toward people search.
+// While the member qualifies for the quick start (D7), it still redeems but skips the loop QR and
+// the nudge: the quick start's people step offers both, and two dialogs would compete.
 export function InviteRedeemer() {
   const t = useTranslations("invite");
   const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
+  const { data: quickStart } = useQuery(
+    convexQuery(gateway.onboarding.quickStart, me ? {} : "skip"),
+  );
+  const suppressed = inviteExtrasSuppressed(quickStart);
   const [showLoopQr, setShowLoopQr] = useState(false);
   const ran = useRef(false);
+  const hadToken = useRef(false);
+  const nudged = useRef(false);
   const navigate = useNavigate();
 
   const { mutate: redeem } = useMutation({
@@ -39,13 +49,15 @@ export function InviteRedeemer() {
     onSuccess: (
       result: FunctionReturnType<typeof gateway.social.redeemInvite>,
     ) => {
-      // The pending invite waits on the household page; the invitee decides there.
+      // The pending invite waits in the quick start's household step; the invitee decides there.
       if (result.householdInvite === "pending") {
-        void navigate({ to: "/household" });
+        void navigate({ to: "/welcome", search: { step: "household" } });
         return;
       }
       if (
         result.redeemed &&
+        // Only once the quick start state says it isn't covering this (unknown = skip).
+        suppressed === false &&
         safeStorage.getItem("local", LOOP_SHOWN_KEY) === null
       ) {
         safeStorage.setItem("local", LOOP_SHOWN_KEY, "1");
@@ -64,10 +76,19 @@ export function InviteRedeemer() {
 
     const token = safeStorage.getItem("local", INVITE_KEY);
     if (token !== null) {
+      hadToken.current = true;
       safeStorage.removeItem("local", INVITE_KEY);
       redeem({ token });
+    }
+  }, [me, redeem]);
+
+  useEffect(() => {
+    // The nudge waits for the quick start state (redemption above never does), once per mount.
+    if (!me || hadToken.current || nudged.current || suppressed === undefined) {
       return;
     }
+    nudged.current = true;
+    if (suppressed) return;
 
     // Fallback nudge: only for members created in the last 15 minutes, once ever.
     const isNew = Date.now() - me.createdAt < NEW_MEMBER_WINDOW_MS;
@@ -87,7 +108,7 @@ export function InviteRedeemer() {
         duration: 15000,
       });
     }
-  }, [me, redeem, t]);
+  }, [me, suppressed, t]);
 
   if (!me || !showLoopQr) return null;
 
