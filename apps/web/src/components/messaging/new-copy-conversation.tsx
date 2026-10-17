@@ -7,18 +7,20 @@
 import { Link } from "@/compat/link";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, type Id } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, Send } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Send } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 import { MessageCopyCard } from "./copy-card";
 import { conversationErrorCode, threadSubjectTitle } from "./format";
 import { ThreadSubjectAvatar } from "./thread-list";
+import { BackToInboxLink } from "./thread-view";
 
 // The Thread aggregate rejects longer bodies (ConvexError code MessageTooLong).
 const MAX_MESSAGE_LENGTH = 4000;
@@ -50,6 +52,16 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
       });
     }
   }, [existingThreadId, navigate]);
+
+  // Desktop lands the caret in the composer; phones wait for a tap so the
+  // keyboard doesn't cover the screen unasked.
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const composerReady = view?.status === "new" && view.canMessage;
+  useEffect(() => {
+    if (!composerReady) return;
+    if (!window.matchMedia("(min-width: 768px)").matches) return;
+    textareaRef.current?.focus();
+  }, [composerReady]);
 
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -83,30 +95,27 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
     }
   };
 
-  const backLink = (
-    <Link
-      href="/messages"
-      aria-label={tMessages("backToInbox")}
-      className="hover:bg-accent -ml-2 inline-flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors md:hidden"
-    >
-      <ChevronLeft className="size-5" />
-    </Link>
-  );
+  const backLink = <BackToInboxLink />;
 
   if (isError || view?.status === "unavailable" || view?.status === "self") {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-        <p className="text-sm font-medium">
-          {view?.status === "self" ? t("self") : t("unavailable")}
-        </p>
-        {view?.status === "self" && (
-          <Link
-            href={`/copies/${copyId}`}
-            className="text-primary-text text-sm underline-offset-4 hover:underline"
-          >
-            {t("backToPuzzle")}
-          </Link>
-        )}
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="flex h-14 shrink-0 items-center px-2 md:hidden">
+          {backLink}
+        </div>
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
+          <p className="text-sm font-medium">
+            {view?.status === "self" ? t("self") : t("unavailable")}
+          </p>
+          {view?.status === "self" && (
+            <Link
+              href={`/copies/${copyId}`}
+              className="text-primary-text text-sm underline-offset-4 hover:underline"
+            >
+              {t("backToPuzzle")}
+            </Link>
+          )}
+        </div>
       </div>
     );
   }
@@ -114,7 +123,11 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
   if (view === undefined || view.status === "existing") {
     return (
       <div className="flex min-h-0 flex-1 flex-col" aria-busy>
-        <div className="bg-muted h-10 w-44 animate-pulse rounded" />
+        <div className="flex h-14 shrink-0 items-center gap-3 border-b px-2 md:px-4">
+          {backLink}
+          <Skeleton className="size-9 shrink-0 rounded-full" />
+          <Skeleton className="h-4 w-36" />
+        </div>
       </div>
     );
   }
@@ -124,26 +137,31 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center gap-3 border-b pb-3">
-        {backLink}
-        <ThreadSubjectAvatar subject={subject} />
-        <p className="font-heading min-w-0 truncate text-base font-bold">
-          {t("title", { name: ownerName })}
+      <div className="bg-card shrink-0 border-b pt-[env(safe-area-inset-top)] md:pt-0">
+        <div className="flex h-14 items-center gap-3 px-2 md:px-4">
+          {backLink}
+          <ThreadSubjectAvatar subject={subject} className="size-9" />
+          <h2 className="font-heading min-w-0 flex-1 truncate text-base font-bold">
+            {t("title", { name: ownerName })}
+          </h2>
+        </div>
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col justify-end gap-2 px-3 py-4 md:px-6">
+        <p className="text-muted-foreground text-center text-xs">
+          {t("firstMessageHint")}
         </p>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col justify-end gap-2 py-4">
-        <p className="text-muted-foreground text-xs">{t("firstMessageHint")}</p>
-      </div>
-
-      <div className="border-t pt-3">
+      <div className="bg-card shrink-0 border-t px-3 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] md:px-4 md:pb-3">
         <p className="text-muted-foreground mb-1.5 text-xs font-medium">
           {t("aboutPuzzle")}
         </p>
-        <MessageCopyCard copy={view.copy} className="mb-2 max-w-sm" />
+        <MessageCopyCard copy={view.copy} className="mb-2 w-72 max-w-full" />
         {view.canMessage ? (
           <div className="flex items-end gap-2">
             <Textarea
+              ref={textareaRef}
               value={body}
               onChange={(event) => {
                 setBody(event.target.value);
@@ -157,15 +175,16 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
                 }
               }}
               placeholder={t("placeholder")}
-              aria-label={t("placeholder")}
+              aria-label={tMessages("messageName", { name: ownerName })}
               maxLength={MAX_MESSAGE_LENGTH}
-              rows={2}
-              className="max-h-40 min-h-9 flex-1 resize-none"
+              rows={1}
+              className="max-h-40 min-h-11 flex-1 resize-none rounded-[20px] px-4 py-2.5 md:min-h-10"
             />
             <Button
               onClick={() => void send()}
               disabled={!body.trim() || start.isPending}
-              size="sm"
+              size="icon"
+              className="size-11 rounded-full md:size-10"
               aria-label={tMessages("sendMessage")}
             >
               <Send className="size-4" />
