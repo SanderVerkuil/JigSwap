@@ -25,6 +25,7 @@
     "@edge-runtime/vm": "^5.0.0",
     "@types/web-push": "^3.6.4",
     "convex-test": "^0.0.62",
+    "typescript": "6.0.3",
     "vitest": "^5.0.5"
   },
   "scripts": {
