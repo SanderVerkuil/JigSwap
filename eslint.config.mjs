@@ -33,6 +33,9 @@ const eslintConfig = [
     files: ["**/*.{ts,tsx,js,jsx}"],
     plugins: { boundaries },
     settings: {
+      // Element patterns are repo-relative; the plugin resolves them against the CWD unless told
+      // otherwise, and every package's `lint` script runs from inside its own package.
+      "boundaries/root-path": import.meta.dirname,
       "import/resolver": {
         typescript: {
           project: ["apps/*/tsconfig.json", "packages/*/tsconfig.json"],
