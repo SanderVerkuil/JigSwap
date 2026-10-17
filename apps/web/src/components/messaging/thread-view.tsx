@@ -215,7 +215,7 @@ export function ThreadView({
                 <Heading
                   ref={headingRef}
                   tabIndex={-1}
-                  className="font-heading focus-visible:ring-ring/40 min-w-0 flex-1 truncate rounded-sm text-base font-bold outline-none focus-visible:ring-2"
+                  className="font-heading decoration-primary-text/60 min-w-0 flex-1 truncate text-base font-bold underline-offset-4 outline-none focus-visible:underline"
                 >
                   {title ?? t("threadFallbackTitle")}
                 </Heading>
