@@ -1,11 +1,16 @@
 import type { HouseholdCopyView } from "@jigswap/contracts";
+import { resolveHouseholdCopyPermission } from "@jigswap/domain";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { toOwnedCopyView } from "../library/mappers";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
 import { personView } from "./getMyHousehold";
-import { householdMateIds } from "./memberships";
+import {
+  householdDefaultOf,
+  householdMateIds,
+  membershipOf,
+} from "./memberships";
 
 // The OTHER household members' copies, for the viewer's "My puzzles". Every household copy is
 // listed regardless of availability (the household rule of canViewCopy), tagged with its owner and
@@ -16,6 +21,11 @@ export const listHouseholdCopies = query({
   handler: async (ctx): Promise<HouseholdCopyView[]> => {
     const viewerId = (await requireMember(ctx)) as unknown as Id<"users">;
     const mates = await householdMateIds(ctx, viewerId);
+    const membership = await membershipOf(ctx, viewerId);
+    // Every mate shares the viewer's household, so one default applies to all their copies.
+    const householdDefault = membership
+      ? await householdDefaultOf(ctx, membership.householdId)
+      : undefined;
 
     const views: HouseholdCopyView[] = [];
     for (const mateId of mates) {
@@ -25,7 +35,10 @@ export const listHouseholdCopies = query({
         .withIndex("by_owner", (q) => q.eq("ownerId", mateId))
         .collect();
       for (const copy of copies) {
-        const viewerAccess = copy.householdPermission ?? "manage";
+        const viewerAccess = resolveHouseholdCopyPermission(
+          copy.householdPermission,
+          householdDefault,
+        );
         const puzzle = await ctx.db.get(copy.puzzleId);
         views.push({
           ...toOwnedCopyView(copy, puzzle, {

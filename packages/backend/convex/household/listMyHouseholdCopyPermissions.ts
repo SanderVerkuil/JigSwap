@@ -5,17 +5,23 @@ import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { toOwnedCopyView } from "../library/mappers";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
-import { membershipOf } from "./memberships";
+import { householdDefaultOf, membershipOf } from "./memberships";
 
-// The viewer's OWN copies with the household permission each currently grants (absent on the row
-// = "manage"), for the household page's bulk editor. Empty when the viewer is in no household.
+// The viewer's OWN copies with the household permission each currently grants (explicit value,
+// else the household default, else "manage") and whether it is explicit or inherited, for the
+// household page's bulk editor. Empty when the viewer is in no household.
 // Not paginated, like the other owner-library reads (getOwnedPuzzlesByOwner, listHouseholdCopies).
 // Newest first.
 export const listMyHouseholdCopyPermissions = query({
   args: {},
   handler: async (ctx): Promise<HouseholdOwnCopyView[]> => {
     const viewerId = (await requireMember(ctx)) as unknown as Id<"users">;
-    if (!(await membershipOf(ctx, viewerId))) return [];
+    const membership = await membershipOf(ctx, viewerId);
+    if (!membership) return [];
+    const householdDefault = await householdDefaultOf(
+      ctx,
+      membership.householdId,
+    );
 
     const copies = await ctx.db
       .query("ownedPuzzles")
@@ -31,7 +37,12 @@ export const listMyHouseholdCopyPermissions = query({
           }),
           householdPermission: resolveHouseholdCopyPermission(
             copy.householdPermission,
+            householdDefault,
           ),
+          permissionSource:
+            copy.householdPermission === undefined
+              ? ("default" as const)
+              : ("explicit" as const),
         };
       }),
     );

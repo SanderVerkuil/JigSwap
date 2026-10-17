@@ -1519,7 +1519,8 @@
       "view": "View only",
       "memberManage": "Household copy — you can manage it",
       "memberView": "Household copy — view only",
-      "saveFailed": "Couldn't update household access"
+      "saveFailed": "Couldn't update household access",
+      "useDefault": "Use household default (currently: {permission, select, view {View only} other {Can manage}})"
     },
     "errors": {
       "generic": "Something went wrong. Please try again.",
@@ -1554,7 +1555,22 @@
       "confirmManage": "Your household will be able to manage {count, plural, one {this puzzle} other {these puzzles}}: edit, lend and swap {count, plural, one {it} other {them}}.",
       "confirmView": "Your household will only be able to view {count, plural, one {this puzzle} other {these puzzles}}.",
       "confirm": "Change access",
-      "changed": "{count, plural, =0 {No puzzles needed changing} one {# puzzle updated} other {# puzzles updated}}"
+      "changed": "{count, plural, =0 {No puzzles needed changing} one {# puzzle updated} other {# puzzles updated}}",
+      "setDefault": "Use household default (currently: {permission, select, view {View only} other {Can manage}})",
+      "confirmDefault": "{count, plural, one {This puzzle} other {These puzzles}} will follow the household default (currently: {permission, select, view {View only} other {Can manage}}), and change with it.",
+      "sourceDefault": "Household default",
+      "sourceExplicit": "Set for this puzzle"
+    },
+    "settings": {
+      "title": "Household settings",
+      "defaultLabel": "Default access for puzzles",
+      "defaultHelp": "Applies to every member's puzzles that have no access setting of their own. A setting made for a specific puzzle always wins.",
+      "affected": "{count, plural, =0 {No copies use the household default right now} one {Applies to # copy that uses the household default} other {Applies to # copies that use the household default}}",
+      "adminOnly": "Only the household admin can change this.",
+      "confirmTitle": "Change the household default to {permission, select, view {View only} other {Can manage}}?",
+      "confirmBody": "{count, plural, =0 {No copies use the household default right now, so nothing changes yet.} one {This applies right away to # copy that uses the household default.} other {This applies right away to # copies that use the household default.}} Puzzles with their own access setting keep it.",
+      "confirm": "Change default",
+      "saved": "Household default updated"
     }
   },
   "circles": {

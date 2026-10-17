@@ -1027,6 +1027,11 @@ export default defineSchema({
   households: defineTable({
     aggregateId: v.string(), // HouseholdId
     createdAt: v.number(),
+    // Household-wide permission for member copies without an explicit householdPermission.
+    // Absent = "manage" (no backfill). Resolved at read time by the domain helper.
+    defaultCopyPermission: v.optional(
+      v.union(v.literal("manage"), v.literal("view")),
+    ),
   }).index("by_aggregate_id", ["aggregateId"]),
 
   householdMembers: defineTable({

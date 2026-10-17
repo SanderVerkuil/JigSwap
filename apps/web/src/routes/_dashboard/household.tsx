@@ -2,6 +2,7 @@ import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { householdErrorKey } from "@/components/household/household-error";
+import { HouseholdSettings } from "@/components/household/household-settings";
 import { MyHouseholdCopies } from "@/components/household/my-household-copies";
 import { EmptyState } from "@/components/library/empty-state";
 import { MemberInitial } from "@/components/members/member-initial";
@@ -328,7 +329,17 @@ function HouseholdDetails({
         </section>
       )}
 
-      <MyHouseholdCopies onError={onError} />
+      <HouseholdSettings
+        isAdmin={isAdmin}
+        defaultCopyPermission={household.defaultCopyPermission}
+        copiesUsingDefault={household.copiesUsingDefault}
+        onError={onError}
+      />
+
+      <MyHouseholdCopies
+        householdDefault={household.defaultCopyPermission}
+        onError={onError}
+      />
 
       <section>
         <Button variant="outline" onClick={() => setConfirmLeave(true)}>

@@ -5,3 +5,4 @@ export * from "./deps";
 export * from "./invite-to-household";
 export * from "./leave-household";
 export * from "./remove-household-member";
+export * from "./set-household-default-copy-permission";

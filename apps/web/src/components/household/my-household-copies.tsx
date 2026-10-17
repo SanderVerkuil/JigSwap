@@ -29,6 +29,7 @@ import { useTranslations } from "use-intl";
 import {
   filterByPermission,
   type HouseholdPermission,
+  type HouseholdPermissionChoice,
   type PermissionFilter,
   selectAll,
   selectedVisibleIds,
@@ -44,8 +45,10 @@ type OwnCopy = FunctionReturnType<
 // copies are deliberately not listed here — only an owner can change a copy's permission, and
 // those copies already show in My puzzles with the viewer's access.
 export function MyHouseholdCopies({
+  householdDefault,
   onError,
 }: {
+  householdDefault: HouseholdPermission;
   onError: (error: unknown) => void;
 }) {
   const t = useTranslations("household.bulkPermission");
@@ -54,7 +57,7 @@ export function MyHouseholdCopies({
   const [filter, setFilter] = useState<PermissionFilter>("all");
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [confirmTarget, setConfirmTarget] =
-    useState<HouseholdPermission | null>(null);
+    useState<HouseholdPermissionChoice | null>(null);
 
   const { data: copies } = useQuery(
     convexQuery(gateway.household.myCopyPermissions, {}),
@@ -139,6 +142,14 @@ export function MyHouseholdCopies({
             >
               {t("setView")}
             </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={targetIds.length === 0 || setMany.isPending}
+              onClick={() => setConfirmTarget("default")}
+            >
+              {t("setDefault", { permission: householdDefault })}
+            </Button>
           </div>
 
           {visible.length === 0 ? (
@@ -154,6 +165,11 @@ export function MyHouseholdCopies({
                     setSelected((current) => toggleSelected(current, copy._id))
                   }
                   permissionLabel={tAccess(copy.householdPermission)}
+                  sourceLabel={
+                    copy.permissionSource === "default"
+                      ? t("sourceDefault")
+                      : t("sourceExplicit")
+                  }
                   untitled={t("untitled")}
                   selectLabel={(title) => t("selectLabel", { title })}
                 />
@@ -173,9 +189,14 @@ export function MyHouseholdCopies({
               {t("confirmTitle", { count: targetIds.length })}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmTarget === "view"
-                ? t("confirmView", { count: targetIds.length })
-                : t("confirmManage", { count: targetIds.length })}
+              {confirmTarget === "default"
+                ? t("confirmDefault", {
+                    count: targetIds.length,
+                    permission: householdDefault,
+                  })
+                : confirmTarget === "view"
+                  ? t("confirmView", { count: targetIds.length })
+                  : t("confirmManage", { count: targetIds.length })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -205,6 +226,7 @@ function CopyRow({
   checked,
   onToggle,
   permissionLabel,
+  sourceLabel,
   untitled,
   selectLabel,
 }: {
@@ -212,6 +234,7 @@ function CopyRow({
   checked: boolean;
   onToggle: () => void;
   permissionLabel: string;
+  sourceLabel: string;
   untitled: string;
   selectLabel: (title: string) => string;
 }) {
@@ -238,9 +261,10 @@ function CopyRow({
           <Puzzle className="text-muted-foreground h-4 w-4" />
         )}
       </div>
-      <span className="min-w-0 flex-1 truncate text-sm font-medium">
-        {title}
-      </span>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-sm font-medium">{title}</div>
+        <div className="text-muted-foreground text-xs">{sourceLabel}</div>
+      </div>
       <Badge
         variant={copy.householdPermission === "view" ? "outline" : "secondary"}
         className="shrink-0 text-xs"

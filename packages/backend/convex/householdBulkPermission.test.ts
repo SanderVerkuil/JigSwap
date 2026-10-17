@@ -195,15 +195,16 @@ describe("setCopiesHouseholdPermission", () => {
     });
   });
 
-  test("absent counts as manage, so setting manage on it is unchanged", async () => {
+  test("an explicit choice is written even when it equals the inherited value", async () => {
+    // Pinning "manage" on an inheriting copy protects it from a later change of the default.
     expect(
       await as(t, "ann").mutation(setMany, {
         copyIds: [w.annDefault],
         permission: "manage",
       }),
-    ).toEqual({ changed: 0, unchanged: 1 });
+    ).toEqual({ changed: 1, unchanged: 0 });
     const [d] = await rows(t, [w.annDefault]);
-    expect(d?.householdPermission).toBeUndefined();
+    expect(d?.householdPermission).toBe("manage");
   });
 
   test("duplicate ids are deduped", async () => {

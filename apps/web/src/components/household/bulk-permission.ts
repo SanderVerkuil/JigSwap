@@ -1,6 +1,8 @@
 // Pure selection/filter logic for the household page's bulk permission editor.
 
 export type HouseholdPermission = "manage" | "view";
+// What an owner can choose for a copy: an explicit permission, or follow the household default.
+export type HouseholdPermissionChoice = HouseholdPermission | "default";
 export type PermissionFilter = "all" | HouseholdPermission;
 
 interface PermissionRow {
@@ -37,3 +39,10 @@ export const selectedVisibleIds = (
   visible: readonly PermissionRow[],
 ): string[] =>
   visible.filter((copy) => selected.has(copy._id)).map((copy) => copy._id);
+
+// The owner's current choice for a copy: "default" while it inherits, else its explicit value.
+export const ownerChoiceOf = (household: {
+  permission: HouseholdPermission;
+  inheritsDefault: boolean;
+}): HouseholdPermissionChoice =>
+  household.inheritsDefault ? "default" : household.permission;

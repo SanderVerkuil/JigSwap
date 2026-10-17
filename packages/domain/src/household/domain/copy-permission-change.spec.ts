@@ -21,28 +21,26 @@ describe("householdPermissionChange", () => {
     }
   });
 
-  it("needs a write only when the effective permission differs", () => {
-    expect(
-      householdPermissionChange({ ownerId: owner }, owner, "view"),
-    ).toEqual({ isOk: true, isErr: false, value: true });
-    // Absent means manage, so setting manage on an absent value is a no-op.
-    expect(
-      householdPermissionChange({ ownerId: owner }, owner, "manage"),
-    ).toEqual({ isOk: true, isErr: false, value: false });
-    expect(
-      householdPermissionChange(
-        { ownerId: owner, householdPermission: "view" },
-        owner,
-        "view",
-      ),
-    ).toEqual({ isOk: true, isErr: false, value: false });
-    expect(
-      householdPermissionChange(
-        { ownerId: owner, householdPermission: "view" },
-        owner,
-        "manage",
-      ),
-    ).toEqual({ isOk: true, isErr: false, value: true });
+  it("needs a write only when the stored explicit value differs from the choice", () => {
+    const write =
+      (stored: "manage" | "view" | undefined) =>
+      (choice: "manage" | "view" | "default") =>
+        householdPermissionChange(
+          { ownerId: owner, householdPermission: stored },
+          owner,
+          choice,
+        );
+    const yes = { isOk: true, isErr: false, value: true };
+    const no = { isOk: true, isErr: false, value: false };
+    // An explicit choice pins the copy even when it equals what it inherits today.
+    expect(write(undefined)("manage")).toEqual(yes);
+    expect(write(undefined)("view")).toEqual(yes);
+    expect(write(undefined)("default")).toEqual(no);
+    expect(write("view")("view")).toEqual(no);
+    expect(write("view")("manage")).toEqual(yes);
+    expect(write("view")("default")).toEqual(yes);
+    expect(write("manage")("manage")).toEqual(no);
+    expect(write("manage")("default")).toEqual(yes);
   });
 });
 
@@ -84,6 +82,15 @@ describe("planHouseholdPermissionBatch", () => {
       isOk: true,
       isErr: false,
       value: { toChange: [a, c], unchanged: 1 },
+    });
+  });
+
+  it("clears explicit values for the default choice and leaves inheriting copies alone", () => {
+    const result = planHouseholdPermissionBatch([a, b, c], owner, "default");
+    expect(result).toEqual({
+      isOk: true,
+      isErr: false,
+      value: { toChange: [b, c], unchanged: 1 },
     });
   });
 

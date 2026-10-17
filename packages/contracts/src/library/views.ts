@@ -406,7 +406,9 @@ export interface CopyInstanceView {
   viewerCanManage: boolean;
   /**
    * Household facts, present when the viewer is the owner AND in a household, or a member of the
-   * owner's household; null otherwise. `permission` is the owner's per-copy choice (absent = manage).
+   * owner's household; null otherwise. `permission` is the effective permission (the copy's explicit
+   * value, else the household default, else manage); `inheritsDefault` is true when the copy has no
+   * explicit value; `householdDefault` is the owner's household default (resolved).
    * `owner` is the copy owner's household view (name/avatar, never email), present even when the
    * projected `owner` below is anonymous: household mates already see each other by name.
    */
@@ -414,6 +416,8 @@ export interface CopyInstanceView {
     permission: "manage" | "view";
     viewerAccess: "owner" | "manage" | "view";
     owner: HouseholdPersonView;
+    inheritsDefault: boolean;
+    householdDefault: "manage" | "view";
   } | null;
   /** The (projected) current owner. */
   owner: ProjectedMember;
