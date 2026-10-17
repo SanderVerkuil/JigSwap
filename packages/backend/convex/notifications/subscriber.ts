@@ -36,8 +36,13 @@ const memberName = async (
   id: string | Id<"users">,
 ): Promise<Record<string, string>> => {
   const user = await ctx.db.get(id as Id<"users">);
-  // Never the email: the recipient is another member.
-  const actorName = memberDisplayNameOf(user);
+  const profile = await ctx.db
+    .query("profiles")
+    .withIndex("by_member", (q) => q.eq("memberId", id as Id<"users">))
+    .unique();
+  // Profile display name first, then account name/username. Never the email: the recipient is
+  // another member.
+  const actorName = memberDisplayNameOf(user, profile);
   return actorName ? { actorName } : {};
 };
 
