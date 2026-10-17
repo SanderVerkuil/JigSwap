@@ -7,7 +7,11 @@
     "build": {
       "executor": "nx:run-commands",
       "outputs": ["{projectRoot}/.output", "{projectRoot}/dist"],
-      "inputs": ["default", "{workspaceRoot}/docs/user/**/*"],
+      "inputs": [
+        "default",
+        "{workspaceRoot}/docs/user/**/*",
+        "{workspaceRoot}/docs/whats-new/**/*"
+      ],
       "options": {
         "command": "vite build",
         "cwd": "apps/web"

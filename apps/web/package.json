@@ -8,7 +8,8 @@
     "build": "vite build",
     "start": "node .output/server/index.mjs",
     "type-check": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "whats-new:manifest": "vitest run src/whats-new/manifest.spec.ts -u"
   },
   "dependencies": {
     "@clerk/localizations": "^4.23.0",
