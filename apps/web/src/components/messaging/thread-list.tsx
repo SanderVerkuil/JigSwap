@@ -179,6 +179,8 @@ function ThreadRow({
   const displayName = useMemberDisplayName();
 
   const unread = thread.unreadCount > 0;
+  // Stub: first context copy only, until the cover stack lands.
+  const contextCopy = thread.contextCopies[0] ?? null;
   const last = thread.lastMessage;
   const isSystem = last?.kind === "system";
   const body = last?.body.replace(/\s+/g, " ").trim();
@@ -234,15 +236,15 @@ function ThreadRow({
         </div>
         <div className="mt-0.5 flex items-center gap-2 text-[13px] leading-5">
           {/* What the DM is about (exchange rows already name it in the title). */}
-          {thread.subject.kind === "dm" && thread.contextCopy && (
+          {thread.subject.kind === "dm" && contextCopy && (
             <>
               <span className="text-primary-text inline-flex max-w-[45%] shrink-0 items-center gap-1 font-medium">
                 <Puzzle className="size-3.5 shrink-0" aria-hidden />
                 <span className="truncate" aria-hidden>
-                  {thread.contextCopy.title}
+                  {contextCopy.title}
                 </span>
                 <span className="sr-only">
-                  {t("contextCopy", { title: thread.contextCopy.title })}
+                  {t("contextCopy", { title: contextCopy.title })}
                 </span>
               </span>
               <span aria-hidden className="text-muted-foreground -mx-1">

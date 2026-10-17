@@ -70,6 +70,10 @@ export type InboxThreadSubjectView =
       readonly exchangeType: "trade" | "sale" | "loan";
       /** The requested copy's puzzle title, if it resolves. */
       readonly puzzleTitle: string | null;
+      /** The trading partner (the exchange party other than the viewer), privacy-projected. */
+      readonly otherMember: ProjectedMember;
+      /** As on a DM subject: the partner's `/members/<handle>`, null when anonymised or inactive. */
+      readonly profileHandle: string | null;
     }
   | {
       readonly kind: "dm";
@@ -82,12 +86,11 @@ export type InboxThreadSubjectView =
       readonly profileHandle: string | null;
     };
 
-/** The puzzle copy an inbox thread is currently about, for the header's "Go to puzzle" link. */
-export interface InboxThreadContextCopy {
-  /** The copy's ownedPuzzles `_id`. */
-  readonly copyId: string;
-  readonly title: string;
-}
+/**
+ * A puzzle copy an inbox thread is about (header puzzle menu, inbox cover stack). The same compact
+ * card as a message's copy: id, title, brand, piece count and cover.
+ */
+export type InboxThreadContextCopy = MessageCopyView;
 
 /** One row of a member's inbox: the thread, its subject, and the caller's unread state. */
 export interface InboxThreadView {
@@ -102,11 +105,11 @@ export interface InboxThreadView {
    */
   readonly unreadCount: number;
   /**
-   * The copy the thread is about, only while the viewer may view it. DM: the most recent of the
-   * newest 50 messages that references a viewable copy. Exchange: the requested copy. Null
-   * otherwise.
+   * The DISTINCT copies the thread is about that the viewer may view right now, at most 10.
+   * Exchange threads list the requested then the offered copy first; then copies referenced by
+   * messages, newest reference first (scanning at most the newest 500 messages). Empty when none.
    */
-  readonly contextCopy: InboxThreadContextCopy | null;
+  readonly contextCopies: readonly InboxThreadContextCopy[];
   /** Inbox ordering instant: the newest message's sentAt, or the thread's creation. */
   readonly updatedAt: number;
 }

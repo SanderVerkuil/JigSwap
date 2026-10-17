@@ -205,11 +205,13 @@ export type ThreadQuickLink = {
 };
 
 // Header quick links for a thread, in display order; each appears only when the
-// server says the target is reachable (profileHandle / contextCopy non-null).
+// server says the target is reachable (profileHandle non-null / contextCopies non-empty).
 // DM: profile + puzzle. Exchange: the exchange on /trades (+ its puzzle).
 export function threadQuickLinks(thread: InboxThread): ThreadQuickLink[] {
   const links: ThreadQuickLink[] = [];
-  const { subject, contextCopy } = thread;
+  const { subject } = thread;
+  // Stub: first context copy only, until the header puzzle menu lands.
+  const contextCopy = thread.contextCopies[0] ?? null;
   if (subject.kind === "dm" && subject.profileHandle !== null) {
     links.push({
       kind: "profile",

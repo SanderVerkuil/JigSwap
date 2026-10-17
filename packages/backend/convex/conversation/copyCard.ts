@@ -51,10 +51,10 @@ export const viewableCopyCards = (ctx: QueryCtx, viewerId: Id<"users">) => {
   };
 };
 
-// Per-request resolver for the inbox header's context copy: `{ copyId, title }` only while
-// `viewerId` may view the copy, null otherwise (including a deleted copy). Memoised per copy, and
-// the viewer's copy-view context (circle shares, household) is built lazily at most once — the
-// inbox resolves many threads, so per-copy canViewCopy would rebuild it per thread.
+// Per-request resolver for an inbox thread's context copies: the card only while `viewerId` may
+// view the copy, null otherwise (including a deleted copy). Memoised per copy (gate AND cover
+// URL), and the viewer's copy-view context (circle shares, household) is built lazily at most
+// once — the inbox resolves many threads, so per-copy canViewCopy would rebuild it per thread.
 export const viewableContextCopies = (ctx: QueryCtx, viewerId: Id<"users">) => {
   let context: Promise<CopyViewContext> | undefined;
   const memo = new Map<
@@ -72,11 +72,7 @@ export const viewableContextCopies = (ctx: QueryCtx, viewerId: Id<"users">) => {
         context ??= buildCopyViewContext(ctx, viewerId);
         if (!(await canViewCopyWithContext(ctx, copy, await context)))
           return null;
-        const puzzle = await ctx.db.get(copy.puzzleId);
-        return {
-          copyId: copy._id,
-          title: copy.snapshot?.title ?? puzzle?.title ?? "",
-        };
+        return messageCopyViewOf(ctx, copy);
       })();
       memo.set(copyId, resolved);
     }

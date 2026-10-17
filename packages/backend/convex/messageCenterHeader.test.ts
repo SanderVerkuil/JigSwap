@@ -4,8 +4,8 @@ import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
-// Message-center header read model: the inbox's `contextCopy` ("Go to puzzle") and the DM
-// subject's `profileHandle` ("Go to profile"), plus getThreadMessages' `copyUnavailable` flag.
+// Message-center header read model: the inbox's `contextCopies` (puzzle menu / cover stack) and
+// the subjects' `otherMember` + `profileHandle` ("Go to profile"), plus getThreadMessages' `copyUnavailable` flag.
 // Every field is gated server-side for the VIEWER — a copy they may not view, or a member who is
 // anonymised to them, never surfaces.
 
@@ -123,82 +123,239 @@ const dmAboutBoth = async (
   return threadId;
 };
 
-describe("getMyInbox contextCopy", () => {
-  test("a DM without copy references has no context copy", async () => {
+// Extra open copies owned by `owner` (public profile -> viewable by anyone), oldest first.
+const mkOpenCopies = (
+  t: TestConvex<typeof schema>,
+  owner: Id<"users">,
+  titles: string[],
+) =>
+  t.run(async (ctx) => {
+    const now = Date.now();
+    const ids: Id<"ownedPuzzles">[] = [];
+    for (const title of titles) {
+      const puzzleId = await ctx.db.insert("puzzles", {
+        title,
+        pieceCount: 500,
+        status: "approved",
+        submittedBy: owner,
+        createdAt: now,
+        updatedAt: now,
+      });
+      ids.push(
+        await ctx.db.insert("ownedPuzzles", {
+          puzzleId,
+          ownerId: owner,
+          condition: "good",
+          availability: { forTrade: true, forSale: false, forLend: false },
+          createdAt: now,
+          updatedAt: now,
+        }),
+      );
+    }
+    return ids;
+  });
+
+// Append message rows straight into the read-model table (the projection getMyInbox reads), in
+// order, each strictly newer than everything already in the thread. `null` = a plain message.
+const appendMessages = (
+  t: TestConvex<typeof schema>,
+  threadId: string,
+  author: Id<"users">,
+  copyIds: (Id<"ownedPuzzles"> | null)[],
+) =>
+  t.run(async (ctx) => {
+    const newest = await ctx.db
+      .query("threadMessages")
+      .withIndex("by_thread_sent", (q) => q.eq("threadAggregateId", threadId))
+      .order("desc")
+      .first();
+    let sentAt = Math.max(newest?.sentAt ?? 0, Date.now());
+    for (const [i, copyId] of copyIds.entries()) {
+      sentAt += 1;
+      await ctx.db.insert("threadMessages", {
+        threadAggregateId: threadId,
+        messageId: `seeded-${sentAt}-${i}`,
+        authorId: author,
+        kind: "text",
+        body: copyId ? "about a puzzle" : "chatter",
+        sentAt,
+        ...(copyId ? { copyId } : {}),
+      });
+    }
+  });
+
+const contextIdsOf = async (viewer: ReturnType<typeof asAlice>) =>
+  (await inboxOf(viewer))[0].contextCopies.map((c) => c.copyId);
+
+describe("getMyInbox contextCopies", () => {
+  test("a DM without copy references has no context copies", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob } = await seed(t);
     await followMutually(t, alice, bob);
     await asAlice(t).mutation(api.conversation.openDmThread.openDmThread, {
       recipientId: bob,
     });
-    const [row] = await inboxOf(asAlice(t));
-    expect(row.contextCopy).toBeNull();
+    expect(await contextIdsOf(asAlice(t))).toEqual([]);
   });
 
-  test("picks the most recently referenced viewable copy, past plain messages", async () => {
+  test("distinct referenced copies, newest reference first, with the full card", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob, first, second } = await seed(t);
     await followMutually(t, alice, bob);
-    await dmAboutBoth(t, first, second);
+    const threadId = await dmAboutBoth(t, first, second);
+    // `first` referenced again most recently: it moves to the front, listed once.
+    await appendMessages(t, threadId, alice, [first, null]);
 
     for (const viewer of [asAlice(t), asBob(t)]) {
       const [row] = await inboxOf(viewer);
-      expect(row.contextCopy).toEqual({
-        copyId: second,
-        title: "Second Puzzle",
+      expect(row.contextCopies.map((c) => c.copyId)).toEqual([first, second]);
+      expect(row.contextCopies[0]).toMatchObject({
+        copyId: first,
+        title: "First Puzzle",
+        pieceCount: 1000,
+        coverUrl: null,
       });
     }
   });
 
-  test("skips a copy the viewer can no longer view; null when none is viewable", async () => {
+  test("skips copies the viewer can no longer view (per viewer) and deleted copies", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob, first, second } = await seed(t);
     await followMutually(t, alice, bob);
     await dmAboutBoth(t, first, second);
 
     await closeCopy(t, second);
-    expect((await inboxOf(asAlice(t)))[0].contextCopy).toEqual({
-      copyId: first,
-      title: "First Puzzle",
-    });
-    // Per viewer: the owner still sees their own closed copy.
-    expect((await inboxOf(asBob(t)))[0].contextCopy?.copyId).toBe(second);
+    expect(await contextIdsOf(asAlice(t))).toEqual([first]);
+    // The owner still sees their own closed copy.
+    expect(await contextIdsOf(asBob(t))).toEqual([second, first]);
 
-    await closeCopy(t, first);
-    expect((await inboxOf(asAlice(t)))[0].contextCopy).toBeNull();
+    await t.run((ctx) => ctx.db.delete(first));
+    expect(await contextIdsOf(asAlice(t))).toEqual([]);
+    expect(await contextIdsOf(asBob(t))).toEqual([second]);
   });
 
-  test("a deleted copy is skipped", async () => {
+  test("capped at the 10 most recently referenced distinct copies", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+    await followMutually(t, alice, bob);
+    const threadId = await asAlice(t).mutation(
+      api.conversation.openDmThread.openDmThread,
+      { recipientId: bob },
+    );
+    const copies = await mkOpenCopies(
+      t,
+      bob,
+      Array.from({ length: 12 }, (_, i) => `Copy ${i}`),
+    );
+    await appendMessages(t, threadId, alice, copies);
+
+    expect(await contextIdsOf(asAlice(t))).toEqual(copies.slice(2).reverse());
+  });
+
+  test("a reference older than 50 messages is still found", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, first } = await seed(t);
+    await followMutually(t, alice, bob);
+    const threadId = await asAlice(t).mutation(
+      api.conversation.openDmThread.openDmThread,
+      { recipientId: bob },
+    );
+    await appendMessages(t, threadId, alice, [
+      first,
+      ...Array.from({ length: 120 }, () => null),
+    ]);
+    expect(await contextIdsOf(asAlice(t))).toEqual([first]);
+  });
+
+  test("exchange: requested then offered copy first, deduped against message references", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob, first, second } = await seed(t);
-    await followMutually(t, alice, bob);
-    await dmAboutBoth(t, first, second);
-    await t.run((ctx) => ctx.db.delete(second));
-    expect((await inboxOf(asBob(t)))[0].contextCopy?.copyId).toBe(first);
-  });
+    const [aliceCopy] = await mkOpenCopies(t, alice, ["Alice's Offer"]);
+    await t.run((ctx) =>
+      ctx.db.patch(first, {
+        availability: { forTrade: true, forSale: false, forLend: false },
+      }),
+    );
+    await asAlice(t).mutation(api.exchange.propose.propose, {
+      recipientId: bob,
+      type: "trade",
+      requestedPuzzleId: first,
+      offeredPuzzleId: aliceCopy,
+    });
+    await flushScheduled(t);
+    const [row] = await inboxOf(asAlice(t));
+    expect(row.subject.kind).toBe("exchange");
+    // Messages referencing the requested copy again plus another one.
+    await appendMessages(t, row.threadId, alice, [second, first]);
 
-  test("an exchange thread's context copy is the requested copy, only while viewable", async () => {
-    const t = convexTest(schema, modules);
-    const { bob, first } = await seed(t);
+    for (const viewer of [asAlice(t), asBob(t)]) {
+      expect(await contextIdsOf(viewer)).toEqual([first, aliceCopy, second]);
+    }
+
+    // Bob goes private and Alice is no mutual follower: his copies drop out for her only.
+    await makePrivate(t, bob);
+    expect(await contextIdsOf(asAlice(t))).toEqual([aliceCopy]);
+    expect(await contextIdsOf(asBob(t))).toEqual([first, aliceCopy, second]);
+  });
+});
+
+describe("getMyInbox exchange counterparty", () => {
+  const exchangeSubjectOf = async (viewer: ReturnType<typeof asAlice>) => {
+    const [row] = await inboxOf(viewer);
+    if (row.subject.kind !== "exchange")
+      throw new Error("expected an exchange subject");
+    return row.subject;
+  };
+
+  const propose = async (
+    t: TestConvex<typeof schema>,
+    bob: Id<"users">,
+    copy: Id<"ownedPuzzles">,
+  ) => {
     await asAlice(t).mutation(api.exchange.propose.propose, {
       recipientId: bob,
       type: "sale",
-      requestedPuzzleId: first,
+      requestedPuzzleId: copy,
       salePrice: 1000,
     });
     await flushScheduled(t);
+  };
 
-    for (const viewer of [asAlice(t), asBob(t)]) {
-      expect((await inboxOf(viewer))[0].contextCopy).toEqual({
-        copyId: first,
-        title: "First Puzzle",
-      });
-    }
+  test("each side sees the other party, revealed with a profile handle", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, first } = await seed(t);
+    await propose(t, bob, first);
+    await t.run((ctx) => ctx.db.patch(bob, { username: "bobby" }));
 
-    // Bob goes private and Alice is no mutual follower: she may no longer view the copy.
+    const forAlice = await exchangeSubjectOf(asAlice(t));
+    expect(forAlice.otherMember.anonymous).toBe(false);
+    if (!forAlice.otherMember.anonymous)
+      expect(forAlice.otherMember.member._id).toBe(bob);
+    expect(forAlice.profileHandle).toBe("bobby");
+
+    const forBob = await exchangeSubjectOf(asBob(t));
+    if (forBob.otherMember.anonymous) throw new Error("expected revealed");
+    expect(forBob.otherMember.member._id).toBe(alice);
+    expect(forBob.profileHandle).toBe(alice);
+  });
+
+  test("an anonymised partner has no handle", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, first } = await seed(t);
+    await propose(t, bob, first);
     await makePrivate(t, bob);
-    expect((await inboxOf(asAlice(t)))[0].contextCopy).toBeNull();
-    expect((await inboxOf(asBob(t)))[0].contextCopy?.copyId).toBe(first);
+
+    const subject = await exchangeSubjectOf(asAlice(t));
+    expect(subject.otherMember.anonymous).toBe(true);
+    expect(subject.profileHandle).toBeNull();
+  });
+
+  test("an inactive partner has no handle", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, first } = await seed(t);
+    await propose(t, bob, first);
+    await t.run((ctx) => ctx.db.patch(alice, { isActive: false }));
+    expect((await exchangeSubjectOf(asBob(t))).profileHandle).toBeNull();
   });
 });
 

@@ -288,8 +288,12 @@ describe("threadQuickLinks", () => {
     }) as InboxThread["subject"];
   const thread = (
     subject: InboxThread["subject"],
-    contextCopy: InboxThread["contextCopy"],
-  ) => ({ subject, contextCopy }) as InboxThread;
+    contextCopy: { copyId: string; title: string } | null,
+  ) =>
+    ({
+      subject,
+      contextCopies: contextCopy ? [contextCopy] : [],
+    }) as unknown as InboxThread;
 
   it("links a DM to the member profile and the puzzle it is about", () => {
     expect(
