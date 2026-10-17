@@ -108,6 +108,18 @@ export const getUser = internalQuery({
   },
 });
 
+// The member's email as Clerk vouches for it: the PRIMARY address (by primary_email_address_id, not
+// array order), and only once Clerk has verified it. Anything else is undefined, so the caller keeps
+// whatever verified email it already stored rather than syncing an address the member may not own.
+const verifiedPrimaryEmailOf = (clerkUser: UserJSON): string | undefined => {
+  const primary = (clerkUser.email_addresses ?? []).find(
+    (address) => address.id === clerkUser.primary_email_address_id,
+  );
+  return primary?.verification?.status === "verified"
+    ? primary.email_address
+    : undefined;
+};
+
 /** Create a new Clerk user or update existing Clerk user data. */
 export const updateOrCreateUser = internalMutation({
   args: { clerkUser: v.any() }, // no runtime validation, trust Clerk
@@ -122,10 +134,11 @@ export const updateOrCreateUser = internalMutation({
         .filter(Boolean)
         .join(" ") || undefined;
     const username = clerkUser.username ?? undefined;
+    const email = verifiedPrimaryEmailOf(clerkUser);
     if (userRecord === null) {
       await ctx.db.insert("users", {
         clerkId: clerkUser.id,
-        email: clerkUser.email_addresses[0].email_address,
+        email,
         name,
         username,
         avatar: clerkUser.image_url,
@@ -139,7 +152,8 @@ export const updateOrCreateUser = internalMutation({
     } else {
       await ctx.db.patch(userRecord._id, {
         clerkId: clerkUser.id,
-        email: clerkUser.email_addresses[0].email_address,
+        // No verified primary: keep the stored email (patching undefined would clear it).
+        ...(email !== undefined && { email }),
         name,
         username,
         avatar: clerkUser.image_url,
