@@ -209,6 +209,14 @@ describe("declineHouseholdInvite", () => {
     });
     expect(result.isErr && result.error.code).toBe("NotInvitee");
   });
+
+  it("rejects an unknown invite", async () => {
+    const result = await makeDeclineHouseholdInvite(deps)({
+      actorId: bob,
+      inviteId: "nope" as HouseholdInviteId,
+    });
+    expect(result.isErr && result.error.code).toBe("InviteNotFound");
+  });
 });
 
 describe("leaveHousehold", () => {
