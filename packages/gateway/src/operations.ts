@@ -84,6 +84,10 @@ export const gateway = {
     // image. Keyed by the copy's Convex id (like addCopyPhoto / getCopyInstanceView).
     setCopyCover: api.library.setCopyCover.setCopyCover,
     deleteOwned: api.library.deleteCopy.deleteCopy,
+    // Owner-only: whether the owner's household may manage ("manage", the default) or only view
+    // ("view") this copy. Keyed by the copy's Convex id.
+    setHouseholdPermission:
+      api.library.setCopyHouseholdPermission.setCopyHouseholdPermission,
     // Reads go through the domain-driven library module (file.export namespacing); each is a thin
     // Convex query returning a typed @jigswap/contracts view DTO, not a raw row.
     ownedByOwner: api.library.getOwnedPuzzlesByOwner.getOwnedPuzzlesByOwner,
@@ -118,6 +122,21 @@ export const gateway = {
     borrowed: api.library.getBorrowedLoans.getBorrowedLoans,
     lentOut: api.library.getLentOutLoans.getLentOutLoans,
     copyHistory: api.library.getCopyLoanHistory.getCopyLoanHistory,
+  },
+
+  // Households: members who pool their libraries. Copies stay owned by whoever added them; every
+  // member sees the others' copies (`copies`) and may manage those the owner left at "manage".
+  // Invite-based (admin invites, invitee accepts/declines); a member is in at most one household.
+  household: {
+    mine: api.household.getMyHousehold.getMyHousehold,
+    myInvites: api.household.listMyHouseholdInvites.listMyHouseholdInvites,
+    copies: api.household.listHouseholdCopies.listHouseholdCopies,
+    create: api.household.createHousehold.createHousehold,
+    invite: api.household.inviteToHousehold.inviteToHousehold,
+    acceptInvite: api.household.acceptHouseholdInvite.acceptHouseholdInvite,
+    declineInvite: api.household.declineHouseholdInvite.declineHouseholdInvite,
+    leave: api.household.leaveHousehold.leaveHousehold,
+    removeMember: api.household.removeHouseholdMember.removeHouseholdMember,
   },
 
   // Personal Library: collections (a member's private organisation of copies). Writes go through

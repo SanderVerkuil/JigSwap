@@ -17,6 +17,7 @@ import {
   FolderOpen,
   Gavel,
   Globe,
+  House,
   LayoutDashboard,
   type LucideIcon,
   Mail,
@@ -65,6 +66,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     items: [
       { key: "myPuzzles", href: "/my-puzzles", icon: Puzzle },
       { key: "collections", href: "/collections", icon: FolderOpen },
+      { key: "household", href: "/household", icon: House },
       { key: "completions", href: "/completions", icon: CircleCheck },
       { key: "goals", href: "/goals", icon: Target },
       { key: "insights", href: "/insights", icon: BarChart3 },
@@ -142,6 +144,7 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   // its own "My Library › My Puzzles › <name>" crumbs + title at runtime.
   "/my-puzzles/$id": { pageKey: "myPuzzles", group: "library" },
   "/collections": { pageKey: "collections", group: "library" },
+  "/household": { pageKey: "household", group: "library" },
   "/completions": { pageKey: "completions", group: "library" },
   "/completions/new": { pageKey: "completionNew", group: "library" },
   "/goals": { pageKey: "goals", group: "library" },

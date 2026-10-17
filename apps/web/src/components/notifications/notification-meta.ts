@@ -3,6 +3,7 @@ import {
   Bell,
   CheckCircle2,
   Heart,
+  House,
   ImageOff,
   Inbox,
   Lightbulb,
@@ -39,7 +40,9 @@ export type NotificationType =
   | "admin_definition_submitted"
   | "new_follower"
   | "follow_request_received"
-  | "follow_request_approved";
+  | "follow_request_approved"
+  | "household_invite_received"
+  | "household_invite_accepted";
 
 export const NOTIFICATION_TYPES: NotificationType[] = [
   "trade_request",
@@ -63,6 +66,8 @@ export const NOTIFICATION_TYPES: NotificationType[] = [
   "new_follower",
   "follow_request_received",
   "follow_request_approved",
+  "household_invite_received",
+  "household_invite_accepted",
 ];
 
 // Types only admins ever receive; hidden from non-admin preference matrices.
@@ -102,6 +107,8 @@ export const NOTIFICATION_CATEGORIES: readonly NotificationCategory[] = [
       "new_follower",
       "follow_request_received",
       "follow_request_approved",
+      "household_invite_received",
+      "household_invite_accepted",
       "puzzle_favorited",
       "review_received",
       "goal_achieved",
@@ -226,6 +233,9 @@ export function notificationIcon(type: string): LucideIcon {
       return UserPlus;
     case "follow_request_approved":
       return UserCheck;
+    case "household_invite_received":
+    case "household_invite_accepted":
+      return House;
     default:
       return Bell;
   }
@@ -240,6 +250,7 @@ export function notificationAccent(type: string): string {
     case "puzzle_approved":
     case "proposal_approved":
     case "follow_request_approved":
+    case "household_invite_accepted":
       return "text-green-600";
     case "trade_declined":
     case "trade_cancelled":
@@ -257,6 +268,7 @@ export function notificationAccent(type: string): string {
       return "text-blue-500";
     case "new_follower":
     case "follow_request_received":
+    case "household_invite_received":
       return "text-blue-500";
     case "admin_proposal_filed":
     case "admin_definition_submitted":
@@ -311,6 +323,10 @@ export function notificationHref(row: NotificationRow): string | null {
     case "follow_request_received":
     case "follow_request_approved":
       return "/people";
+    // Household invites are answered (and the household managed) on the Household page.
+    case "household_invite_received":
+    case "household_invite_accepted":
+      return "/household";
     default:
       return null;
   }

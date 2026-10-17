@@ -1635,7 +1635,9 @@
       "goal_achieved": "Doel behaald",
       "new_follower": "Nieuwe volgers",
       "follow_request_received": "Volgverzoeken",
-      "follow_request_approved": "Volgverzoek goedgekeurd"
+      "follow_request_approved": "Volgverzoek goedgekeurd",
+      "household_invite_received": "Uitnodigingen voor een huishouden",
+      "household_invite_accepted": "Uitnodiging voor huishouden geaccepteerd"
     },
     "categories": {
       "trades": {
@@ -1743,6 +1745,14 @@
       "follow_request_approved": {
         "title": "Verzoek goedgekeurd",
         "message": "Je volgverzoek is goedgekeurd."
+      },
+      "household_invite_received": {
+        "title": "Uitnodiging voor huishouden",
+        "message": "Iemand heeft je uitgenodigd voor hun huishouden."
+      },
+      "household_invite_accepted": {
+        "title": "Uitnodiging geaccepteerd",
+        "message": "Iemand is lid geworden van je huishouden."
       }
     },
     "pushDeviceTitle": "Push op dit apparaat",
@@ -1779,7 +1789,9 @@
       "goal_achieved": "Wanneer je een puzzeldoel behaalt.",
       "new_follower": "Wanneer iemand je begint te volgen.",
       "follow_request_received": "Wanneer iemand vraagt om je te volgen.",
-      "follow_request_approved": "Wanneer een volgverzoek dat je stuurde wordt goedgekeurd."
+      "follow_request_approved": "Wanneer een volgverzoek dat je stuurde wordt goedgekeurd.",
+      "household_invite_received": "Wanneer iemand je uitnodigt voor hun huishouden.",
+      "household_invite_accepted": "Wanneer iemand je uitnodiging voor het huishouden accepteert."
     },
     "pushServiceUnreachable": "Je browser kon zijn pushdienst niet bereiken. Sommige privacybrowsers blokkeren of verwijderen die — Brave schakelt het standaard uit (zet 'Google-services voor pushberichten gebruiken' aan in Instellingen), en de-Googled Chromium-browsers zoals Helium verwijderen het. Firefox, Chrome of Edge werkt wel."
   },
@@ -2536,6 +2548,7 @@
     "puzzles": "Puzzels — JigSwap",
     "puzzle": "Puzzeldetails — JigSwap",
     "collections": "Collecties — JigSwap",
+    "household": "Huishouden — JigSwap",
     "collection": "Collectie — JigSwap",
     "collectionAddPuzzles": "Puzzels toevoegen aan collectie — JigSwap",
     "trades": "Uitwisselingen — JigSwap",
@@ -2625,6 +2638,11 @@
         "title": "Collecties",
         "subtitle": "Samengestelde planken met je favorieten.",
         "description": "Samengestelde sets en planken"
+      },
+      "household": {
+        "title": "Huishouden",
+        "subtitle": "Deel je bibliotheek met de mensen met wie je samenwoont.",
+        "description": "Deel puzzels met je huishouden"
       },
       "completions": {
         "title": "Voltooiingen",

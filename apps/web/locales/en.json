@@ -1635,7 +1635,9 @@
       "goal_achieved": "Goal achieved",
       "new_follower": "New followers",
       "follow_request_received": "Follow requests",
-      "follow_request_approved": "Follow request approved"
+      "follow_request_approved": "Follow request approved",
+      "household_invite_received": "Household invites",
+      "household_invite_accepted": "Household invite accepted"
     },
     "categories": {
       "trades": {
@@ -1743,6 +1745,14 @@
       "follow_request_approved": {
         "title": "Request approved",
         "message": "Your follow request was approved."
+      },
+      "household_invite_received": {
+        "title": "Household invite",
+        "message": "Someone invited you to their household."
+      },
+      "household_invite_accepted": {
+        "title": "Invite accepted",
+        "message": "Someone joined your household."
       }
     },
     "pushDeviceTitle": "Push on this device",
@@ -1779,7 +1789,9 @@
       "goal_achieved": "When you reach a solving goal.",
       "new_follower": "When someone starts following you.",
       "follow_request_received": "When someone asks to follow you.",
-      "follow_request_approved": "When a follow request you sent is approved."
+      "follow_request_approved": "When a follow request you sent is approved.",
+      "household_invite_received": "When someone invites you to their household.",
+      "household_invite_accepted": "When someone accepts your household invite."
     },
     "pushServiceUnreachable": "Your browser couldn't reach its push service. Some privacy browsers block or remove it — Brave disables it by default (enable 'Use Google services for push messaging' in Settings), and de-Googled Chromium builds like Helium strip it out. Firefox, Chrome, or Edge will work."
   },
@@ -2536,6 +2548,7 @@
     "puzzles": "Puzzles — JigSwap",
     "puzzle": "Puzzle details — JigSwap",
     "collections": "Collections — JigSwap",
+    "household": "Household — JigSwap",
     "collection": "Collection — JigSwap",
     "collectionAddPuzzles": "Add puzzles to collection — JigSwap",
     "trades": "Trades — JigSwap",
@@ -2625,6 +2638,11 @@
         "title": "Collections",
         "subtitle": "Curated shelves of your favourites.",
         "description": "Curated sets and shelves"
+      },
+      "household": {
+        "title": "Household",
+        "subtitle": "Share your library with the people you live with.",
+        "description": "Share puzzles with your household"
       },
       "completions": {
         "title": "Completions",
