@@ -22,12 +22,14 @@ const DEFAULT_CURRENCY = "EUR";
 // Composition root for proposing an exchange: authenticate -> wire adapters -> call the use
 // case -> map result. All behaviour lives in the (Convex-free) domain/application layers.
 //
-// `recipientId` is OPTIONAL: a requester may not know an anonymous owner's id (exchange views and
-// the copy page omit it), so when absent the recipient is derived server-side from the requested
-// copy's owner. When present, the domain's RecipientNotOwner check still applies unchanged.
+// The recipient is ALWAYS the requested copy's current owner, read server-side. `recipientId` is
+// DEPRECATED and IGNORED: it stays in the validator (optional) only because older clients still
+// send it and Convex rejects unknown args. It must never influence the outcome — honouring it
+// would make propose an ownership oracle (a wrong guess erroring differently from a right one
+// lets a requester confirm a hidden owner's id, then read their locked profile hero by id).
 export const propose = mutation({
   args: {
-    recipientId: v.optional(v.id("users")),
+    recipientId: v.optional(v.id("users")), // deprecated, ignored (see above)
     type: v.union(v.literal("trade"), v.literal("sale"), v.literal("loan")),
     offeredPuzzleId: v.optional(v.id("ownedPuzzles")),
     requestedPuzzleId: v.id("ownedPuzzles"),
@@ -37,8 +39,7 @@ export const propose = mutation({
   handler: async (ctx, args) => {
     const initiatorId = await requireMember(ctx); // initiator derived from auth, never the client
 
-    const recipientId =
-      args.recipientId ?? (await ctx.db.get(args.requestedPuzzleId))?.ownerId;
+    const recipientId = (await ctx.db.get(args.requestedPuzzleId))?.ownerId;
     if (recipientId === undefined) {
       throw new ConvexError({
         code: "CopyNotFound",

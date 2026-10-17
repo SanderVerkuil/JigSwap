@@ -550,17 +550,38 @@ describe("proposing to an anonymous owner", () => {
     expect(await sees(t, w.requester, w.owner)).toBe(false);
   });
 
-  test("a wrong explicit recipientId is still rejected", async () => {
-    const t = convexTest(schema, modules);
-    const w = await seed(t);
-    await expect(
-      as(t, "requester").mutation(api.exchange.propose.propose, {
-        recipientId: w.third,
-        type: "sale",
-        salePrice: 10,
-        requestedPuzzleId: w.copy,
-      }),
-    ).rejects.toThrow(/RecipientNotOwner/);
+  // propose must not be an ownership oracle: the supplied recipientId is ignored, so a wrong and a
+  // right guess are indistinguishable.
+  test("a wrong and a right recipientId both succeed with the copy owner as recipient", async () => {
+    for (const guess of ["owner", "third"] as const) {
+      const t = convexTest(schema, modules);
+      const w = await seed(t);
+      const ex = await propose(t, "requester", w.copy, w[guess]);
+      const docId = await docIdOf(t, ex);
+      const row = await t.run(async (ctx) => ctx.db.get(docId));
+      expect(row?.recipientId).toBe(w.owner);
+    }
+  });
+
+  test("a wrong and a right recipientId fail with the same error", async () => {
+    const codes: string[] = [];
+    for (const guess of ["owner", "third"] as const) {
+      const t = convexTest(schema, modules);
+      const w = await seed(t);
+      // A swap of a sale-only copy fails the same way whoever the caller names.
+      const error = await as(t, "requester")
+        .mutation(api.exchange.propose.propose, {
+          recipientId: w[guess],
+          type: "trade",
+          requestedPuzzleId: w.copy,
+        })
+        .catch((e: unknown) => e);
+      expect(error).toBeInstanceOf(Error);
+      const data = (error as { data?: unknown }).data;
+      codes.push(typeof data === "string" ? data : JSON.stringify(data));
+    }
+    expect(codes[0]).toContain("CopyNotAvailable");
+    expect(codes[1]).toBe(codes[0]);
   });
 });
 
