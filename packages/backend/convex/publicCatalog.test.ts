@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -61,7 +61,7 @@ const mkCopy = (
 
 // Seed: an approved + a pending definition, three owners (public/public/private profiles) with
 // open + closed copies, and reviews by a public- and a private-profile author.
-const seed = async (t: ReturnType<typeof convexTest>) =>
+const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const pia = await mkUser(ctx, "clerk_pia", "Pia Public", {
       shareAvatarPublicly: true,

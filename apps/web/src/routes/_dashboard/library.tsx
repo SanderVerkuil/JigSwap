@@ -1,7 +1,6 @@
+import { GroupLanding } from "@/components/dashboard-layout/group-landing";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
-
-import { GroupLanding } from "@/components/dashboard-layout/group-landing";
 
 export const Route = createFileRoute("/_dashboard/library")({
   head: ({ match }) => ({

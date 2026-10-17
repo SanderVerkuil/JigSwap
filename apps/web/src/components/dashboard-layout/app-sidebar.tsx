@@ -5,7 +5,6 @@
 // bar) and no border walls. Group labels are small uppercase mono labels
 // that link to their landing pages (/library, /community, /admin — the admin
 // group renders only for backend-confirmed admins).
-
 import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";
@@ -24,6 +23,8 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { WhatsNewNavItem } from "@/components/whats-new/badges";
+import { useWhatsNewUnreadCount } from "@/components/whats-new/use-whats-new-state";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
@@ -40,6 +41,8 @@ import { UserFooter } from "./user-footer";
 
 export function AppSidebar() {
   const { user } = useUser();
+  const pathname = usePathname();
+  const whatsNewCount = useWhatsNewUnreadCount();
 
   // Backend-confirmed admin role — the same source the /admin route guard uses,
   // so the nav and the routes can't diverge. Convex dedupes the subscription.
@@ -72,6 +75,12 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
+        <SidebarMenu>
+          <WhatsNewNavItem
+            count={whatsNewCount}
+            active={pathname === "/whats-new"}
+          />
+        </SidebarMenu>
         <UserFooter />
       </SidebarFooter>
     </Sidebar>

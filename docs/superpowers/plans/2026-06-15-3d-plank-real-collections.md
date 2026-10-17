@@ -37,9 +37,9 @@
 - [ ] **Step 1: Write the failing test** — `layout.test.ts`:
 
 ```ts
+import { BOX_SCALE, PX } from "@/components/marketing/plank-3d/box";
 import { describe, expect, it } from "vitest";
 import { GAP, layoutRow } from "./layout";
-import { BOX_SCALE, PX } from "@/components/marketing/plank-3d/box";
 
 const w = (px: number) => px * PX * BOX_SCALE;
 
@@ -80,8 +80,8 @@ describe("layoutRow", () => {
 - [ ] **Step 3: Implement `layout.ts`:**
 
 ```ts
-import { BOX_SCALE, PX } from "@/components/marketing/plank-3d/box";
 import type { PuzzlePlankBox } from "@/components/common/puzzle-plank";
+import { BOX_SCALE, PX } from "@/components/marketing/plank-3d/box";
 
 /** World-space gap between neighbouring boxes on the shelf row. */
 export const GAP = 0.12;

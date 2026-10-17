@@ -1,10 +1,10 @@
 import {
+  toPartnerReviewId,
+  toReputationProfileId,
   type PartnerReviewId,
   type PartnerReviewIdGenerator,
   type ReputationProfileId,
   type ReputationProfileIdGenerator,
-  toPartnerReviewId,
-  toReputationProfileId,
 } from "@jigswap/domain";
 
 // Driven adapters for the Reputation id-generator ports. crypto.randomUUID is available in the

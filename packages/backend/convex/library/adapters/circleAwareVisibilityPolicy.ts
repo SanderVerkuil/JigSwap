@@ -1,9 +1,9 @@
 import {
+  SharingVisibilityPolicy,
   type CircleId,
   type Copy,
   type MemberId,
   type OwnerId,
-  SharingVisibilityPolicy,
   type VisibilityPolicy,
   type VisibilityScope,
 } from "@jigswap/domain";

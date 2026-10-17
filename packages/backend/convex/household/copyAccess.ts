@@ -1,30 +1,44 @@
 import {
   canManageHouseholdCopy,
+  householdCopyAccess,
+  resolveHouseholdCopyPermission,
+  toMemberId,
   type CopyManagerPolicy,
   type HouseholdCopyAccess,
-  householdCopyAccess,
+  type HouseholdCopyPermission,
   type MemberId,
-  toMemberId,
+  type SharedHouseholdFacts,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
-import { householdMateIds, membershipOf } from "./memberships";
+import {
+  householdDefaultOf,
+  householdMateIds,
+  membershipOf,
+} from "./memberships";
 
 // Server-side household authorization over copies, built on the domain's single rule
 // (`householdCopyAccess`): owner → "owner"; a member of the owner's household → the copy's
-// permission (absent = "manage"); anyone else → "none".
+// effective permission (explicit value, else the household default, else "manage"); anyone else →
+// "none". Every effective-permission read goes through resolveHouseholdCopyPermission.
 
-const sharesHousehold = async (
+// The household the two members share (with its default), or null when they share none.
+const sharedHouseholdOf = async (
   ctx: QueryCtx,
   a: Id<"users">,
   b: Id<"users">,
-): Promise<boolean> => {
-  if (a === b) return false;
+): Promise<SharedHouseholdFacts | null> => {
+  if (a === b) return null;
   const [ma, mb] = await Promise.all([
     membershipOf(ctx, a),
     membershipOf(ctx, b),
   ]);
-  return ma !== null && mb !== null && ma.householdId === mb.householdId;
+  if (ma === null || mb === null || ma.householdId !== mb.householdId) {
+    return null;
+  }
+  return {
+    defaultCopyPermission: await householdDefaultOf(ctx, ma.householdId),
+  };
 };
 
 export const copyAccessOf = async (
@@ -38,8 +52,23 @@ export const copyAccessOf = async (
       householdPermission: copy.householdPermission,
     },
     toMemberId(actorId),
-    await sharesHousehold(ctx, actorId, copy.ownerId),
+    await sharedHouseholdOf(ctx, actorId, copy.ownerId),
   );
+
+// The permission the copy grants its owner's household right now (explicit value, else the
+// owner's household default, else "manage"). Meaningful only while the owner is in a household.
+export const effectiveCopyPermission = async (
+  ctx: QueryCtx,
+  copy: Doc<"ownedPuzzles">,
+): Promise<HouseholdCopyPermission> => {
+  const membership = await membershipOf(ctx, copy.ownerId);
+  return resolveHouseholdCopyPermission(
+    copy.householdPermission,
+    membership
+      ? await householdDefaultOf(ctx, membership.householdId)
+      : undefined,
+  );
+};
 
 // May the actor act on the copy as if they owned it (owner, or household member at "manage")?
 export const canManageCopy = async (
@@ -54,7 +83,7 @@ export const coManagerIdsOf = async (
   ctx: QueryCtx,
   copy: Doc<"ownedPuzzles">,
 ): Promise<MemberId[]> => {
-  if ((copy.householdPermission ?? "manage") !== "manage") return [];
+  if ((await effectiveCopyPermission(ctx, copy)) !== "manage") return [];
   return [...(await householdMateIds(ctx, copy.ownerId))].map((id) =>
     toMemberId(id),
   );

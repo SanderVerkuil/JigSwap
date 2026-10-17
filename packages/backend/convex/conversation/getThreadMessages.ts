@@ -3,6 +3,7 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { viewableCopyCards } from "./copyCard";
 import {
   threadRowByAggregateId,
   toThreadMessageView,
@@ -45,6 +46,14 @@ export const getThreadMessages = query({
       })
       .order("desc")
       .take(args.limit ?? DEFAULT_PAGE_SIZE);
-    return page.reverse().map(toThreadMessageView);
+    // A message's copy reference surfaces as a card only while the reader may view the copy.
+    const cardOf = viewableCopyCards(ctx, me);
+    return Promise.all(
+      page.reverse().map(async (row) => {
+        const view = toThreadMessageView(row);
+        const copy = row.copyId ? await cardOf(row.copyId) : undefined;
+        return copy ? { ...view, copy } : view;
+      }),
+    );
   },
 });

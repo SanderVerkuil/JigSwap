@@ -16,7 +16,7 @@ set -euo pipefail
 
 if [ "${VERCEL_ENV:-}" = "preview" ]; then
   cd ../../packages/backend
-  npx convex deploy --cmd-url-env-var-name VITE_CONVEX_URL --cmd 'pnpm --filter @jigswap/web build'
+  npx convex deploy --typecheck enable --cmd-url-env-var-name VITE_CONVEX_URL --cmd 'pnpm --filter @jigswap/web build'
   # Deliberately best-effort: a flag regression must not fail an otherwise-good preview build.
   npx convex env set --preview-name "$VERCEL_GIT_COMMIT_REF" EMAIL_BASE_URL "https://$VERCEL_BRANCH_URL" \
     || echo "warning: EMAIL_BASE_URL not set on the preview deployment (email links fall back to https://jigswap.site)"

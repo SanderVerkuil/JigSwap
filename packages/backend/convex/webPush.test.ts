@@ -86,6 +86,13 @@ describe("notificationUrl", () => {
     expect(notificationUrl("household_invite_accepted")).toBe("/household");
   });
 
+  test("deep-links a What's new notification to its entry anchor, else the page", () => {
+    expect(notificationUrl("whats_new", "households")).toBe(
+      "/whats-new#entry-households",
+    );
+    expect(notificationUrl("whats_new")).toBe("/whats-new");
+  });
+
   test("deep-links an admin proposal review by relatedId, else the proposals queue", () => {
     expect(notificationUrl("admin_proposal_filed", "cp-1")).toBe(
       "/admin/puzzles/proposals/cp-1",

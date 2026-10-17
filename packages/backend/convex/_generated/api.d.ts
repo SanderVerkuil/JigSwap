@@ -93,7 +93,9 @@ import type * as conversation_adapters_systemClock from "../conversation/adapter
 import type * as conversation_adapters_threadMapper from "../conversation/adapters/threadMapper.js";
 import type * as conversation_backfill from "../conversation/backfill.js";
 import type * as conversation_canMessage from "../conversation/canMessage.js";
+import type * as conversation_copyCard from "../conversation/copyCard.js";
 import type * as conversation_errors from "../conversation/errors.js";
+import type * as conversation_getCopyConversation from "../conversation/getCopyConversation.js";
 import type * as conversation_getMyInbox from "../conversation/getMyInbox.js";
 import type * as conversation_getThreadByExchange from "../conversation/getThreadByExchange.js";
 import type * as conversation_getThreadMessages from "../conversation/getThreadMessages.js";
@@ -102,6 +104,7 @@ import type * as conversation_markThreadRead from "../conversation/markThreadRea
 import type * as conversation_openDmThread from "../conversation/openDmThread.js";
 import type * as conversation_postMessage from "../conversation/postMessage.js";
 import type * as conversation_readModelHelpers from "../conversation/readModelHelpers.js";
+import type * as conversation_startCopyConversation from "../conversation/startCopyConversation.js";
 import type * as conversation_subscriber from "../conversation/subscriber.js";
 import type * as custody_getCopyCustodyTimeline from "../custody/getCopyCustodyTimeline.js";
 import type * as custody_subscriber from "../custody/subscriber.js";
@@ -126,6 +129,7 @@ import type * as exchange_getExchangeById from "../exchange/getExchangeById.js";
 import type * as exchange_getExchangeStats from "../exchange/getExchangeStats.js";
 import type * as exchange_getExchangesByOwner from "../exchange/getExchangesByOwner.js";
 import type * as exchange_getExchangesByRequester from "../exchange/getExchangesByRequester.js";
+import type * as exchange_getOfferableCopies from "../exchange/getOfferableCopies.js";
 import type * as exchange_getUserExchanges from "../exchange/getUserExchanges.js";
 import type * as exchange_propose from "../exchange/propose.js";
 import type * as exchange_raiseDispute from "../exchange/raiseDispute.js";
@@ -144,9 +148,11 @@ import type * as household_getMyHousehold from "../household/getMyHousehold.js";
 import type * as household_inviteToHousehold from "../household/inviteToHousehold.js";
 import type * as household_leaveHousehold from "../household/leaveHousehold.js";
 import type * as household_listHouseholdCopies from "../household/listHouseholdCopies.js";
+import type * as household_listMyHouseholdCopyPermissions from "../household/listMyHouseholdCopyPermissions.js";
 import type * as household_listMyHouseholdInvites from "../household/listMyHouseholdInvites.js";
 import type * as household_memberships from "../household/memberships.js";
 import type * as household_removeHouseholdMember from "../household/removeHouseholdMember.js";
+import type * as household_setDefaultCopyPermission from "../household/setDefaultCopyPermission.js";
 import type * as http from "../http.js";
 import type * as identity_getCurrentUser from "../identity/getCurrentUser.js";
 import type * as identity_getUserByClerkId from "../identity/getUserByClerkId.js";
@@ -225,6 +231,7 @@ import type * as library_removeCopyFromCollection from "../library/removeCopyFro
 import type * as library_removeCopyPhoto from "../library/removeCopyPhoto.js";
 import type * as library_resolveCoverUrl from "../library/resolveCoverUrl.js";
 import type * as library_returnLoan from "../library/returnLoan.js";
+import type * as library_setCopiesHouseholdPermission from "../library/setCopiesHouseholdPermission.js";
 import type * as library_setCopyCover from "../library/setCopyCover.js";
 import type * as library_setCopyHouseholdPermission from "../library/setCopyHouseholdPermission.js";
 import type * as library_transferOnSettlement from "../library/transferOnSettlement.js";
@@ -369,6 +376,15 @@ import type * as solving_setTrackCompletionDuration from "../solving/setTrackCom
 import type * as solving_startCompletion from "../solving/startCompletion.js";
 import type * as solving_submitReviews from "../solving/submitReviews.js";
 import type * as users from "../users.js";
+import type * as whatsNew_getWhatsNewState from "../whatsNew/getWhatsNewState.js";
+import type * as whatsNew_manifest from "../whatsNew/manifest.js";
+import type * as whatsNew_markAllSeen from "../whatsNew/markAllSeen.js";
+import type * as whatsNew_markWhatsNewSeen from "../whatsNew/markWhatsNewSeen.js";
+import type * as whatsNew_notifyBatch from "../whatsNew/notifyBatch.js";
+import type * as whatsNew_publications from "../whatsNew/publications.js";
+import type * as whatsNew_publishPending from "../whatsNew/publishPending.js";
+import type * as whatsNew_readState from "../whatsNew/readState.js";
+import type * as whatsNew_recordTourProgress from "../whatsNew/recordTourProgress.js";
 
 import type {
   ApiFromModules,
@@ -462,7 +478,9 @@ declare const fullApi: ApiFromModules<{
   "conversation/adapters/threadMapper": typeof conversation_adapters_threadMapper;
   "conversation/backfill": typeof conversation_backfill;
   "conversation/canMessage": typeof conversation_canMessage;
+  "conversation/copyCard": typeof conversation_copyCard;
   "conversation/errors": typeof conversation_errors;
+  "conversation/getCopyConversation": typeof conversation_getCopyConversation;
   "conversation/getMyInbox": typeof conversation_getMyInbox;
   "conversation/getThreadByExchange": typeof conversation_getThreadByExchange;
   "conversation/getThreadMessages": typeof conversation_getThreadMessages;
@@ -471,6 +489,7 @@ declare const fullApi: ApiFromModules<{
   "conversation/openDmThread": typeof conversation_openDmThread;
   "conversation/postMessage": typeof conversation_postMessage;
   "conversation/readModelHelpers": typeof conversation_readModelHelpers;
+  "conversation/startCopyConversation": typeof conversation_startCopyConversation;
   "conversation/subscriber": typeof conversation_subscriber;
   "custody/getCopyCustodyTimeline": typeof custody_getCopyCustodyTimeline;
   "custody/subscriber": typeof custody_subscriber;
@@ -495,6 +514,7 @@ declare const fullApi: ApiFromModules<{
   "exchange/getExchangeStats": typeof exchange_getExchangeStats;
   "exchange/getExchangesByOwner": typeof exchange_getExchangesByOwner;
   "exchange/getExchangesByRequester": typeof exchange_getExchangesByRequester;
+  "exchange/getOfferableCopies": typeof exchange_getOfferableCopies;
   "exchange/getUserExchanges": typeof exchange_getUserExchanges;
   "exchange/propose": typeof exchange_propose;
   "exchange/raiseDispute": typeof exchange_raiseDispute;
@@ -513,9 +533,11 @@ declare const fullApi: ApiFromModules<{
   "household/inviteToHousehold": typeof household_inviteToHousehold;
   "household/leaveHousehold": typeof household_leaveHousehold;
   "household/listHouseholdCopies": typeof household_listHouseholdCopies;
+  "household/listMyHouseholdCopyPermissions": typeof household_listMyHouseholdCopyPermissions;
   "household/listMyHouseholdInvites": typeof household_listMyHouseholdInvites;
   "household/memberships": typeof household_memberships;
   "household/removeHouseholdMember": typeof household_removeHouseholdMember;
+  "household/setDefaultCopyPermission": typeof household_setDefaultCopyPermission;
   http: typeof http;
   "identity/getCurrentUser": typeof identity_getCurrentUser;
   "identity/getUserByClerkId": typeof identity_getUserByClerkId;
@@ -594,6 +616,7 @@ declare const fullApi: ApiFromModules<{
   "library/removeCopyPhoto": typeof library_removeCopyPhoto;
   "library/resolveCoverUrl": typeof library_resolveCoverUrl;
   "library/returnLoan": typeof library_returnLoan;
+  "library/setCopiesHouseholdPermission": typeof library_setCopiesHouseholdPermission;
   "library/setCopyCover": typeof library_setCopyCover;
   "library/setCopyHouseholdPermission": typeof library_setCopyHouseholdPermission;
   "library/transferOnSettlement": typeof library_transferOnSettlement;
@@ -738,6 +761,15 @@ declare const fullApi: ApiFromModules<{
   "solving/startCompletion": typeof solving_startCompletion;
   "solving/submitReviews": typeof solving_submitReviews;
   users: typeof users;
+  "whatsNew/getWhatsNewState": typeof whatsNew_getWhatsNewState;
+  "whatsNew/manifest": typeof whatsNew_manifest;
+  "whatsNew/markAllSeen": typeof whatsNew_markAllSeen;
+  "whatsNew/markWhatsNewSeen": typeof whatsNew_markWhatsNewSeen;
+  "whatsNew/notifyBatch": typeof whatsNew_notifyBatch;
+  "whatsNew/publications": typeof whatsNew_publications;
+  "whatsNew/publishPending": typeof whatsNew_publishPending;
+  "whatsNew/readState": typeof whatsNew_readState;
+  "whatsNew/recordTourProgress": typeof whatsNew_recordTourProgress;
 }>;
 
 /**

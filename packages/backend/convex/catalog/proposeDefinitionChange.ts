@@ -1,9 +1,9 @@
 import {
   makeFileChangeProposal,
-  type PuzzleDefinitionChanges,
   toCatalogCategoryId,
   toPuzzleDefinitionId,
   toSubmitterId,
+  type PuzzleDefinitionChanges,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";

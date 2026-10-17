@@ -1,5 +1,5 @@
 import type { ProjectedMember } from "@jigswap/contracts";
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
@@ -17,16 +17,16 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 type Avail = { forTrade: boolean; forSale: boolean; forLend: boolean };
 const FOR_SALE: Avail = { forTrade: false, forSale: true, forLend: false };
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asBob = (t: ReturnType<typeof convexTest>) =>
+const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
-const asCarol = (t: ReturnType<typeof convexTest>) =>
+const asCarol = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_carol" });
 
 // The custody projection is folded by an async subscriber scheduled via runAfter(0); yield then
 // drain, looping to settle the chain (mirrors the exchange suite's flushScheduled).
-const flushScheduled = async (t: ReturnType<typeof convexTest>) => {
+const flushScheduled = async (t: TestConvex<typeof schema>) => {
   for (let i = 0; i < 10; i++) {
     await new Promise((resolve) => setTimeout(resolve, 0));
     await t.finishInProgressScheduledFunctions();
@@ -34,7 +34,7 @@ const flushScheduled = async (t: ReturnType<typeof convexTest>) => {
 };
 
 // Seed three members and a shared puzzle; return their ids.
-const seed = (t: ReturnType<typeof convexTest>) =>
+const seed = (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string) =>
@@ -75,13 +75,13 @@ const seed = (t: ReturnType<typeof convexTest>) =>
 // Re-open the copy for sale so a second exchange can be proposed against it (settlement flips it
 // all-false). A test-only fixup; the projection only cares that another transfer is recorded.
 const reopenForSale = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   copy: Id<"ownedPuzzles">,
 ) => t.run(async (ctx) => ctx.db.patch(copy, { availability: FOR_SALE }));
 
 // Drive a full sale of `copy` from `owner` to `buyerAuth`, settling it (both parties confirm).
 const settleSaleToAlice = async (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   copy: Id<"ownedPuzzles">,
   owner: Id<"users">,
 ) => {
@@ -107,7 +107,7 @@ const settleSaleToAlice = async (
 
 // Drive a full loan of `copy` from `owner` to Alice. The copy must be lendable for the proposal.
 const settleLoanToAlice = async (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   copy: Id<"ownedPuzzles">,
   owner: Id<"users">,
 ) => {
@@ -139,7 +139,7 @@ const settleLoanToAlice = async (
 // Bob buys the copy from its CURRENT owner (`seller`). After the first sale the copy belongs to
 // Alice, so the second sale must name Alice as the recipient/seller (she now owns the copy).
 const settleSaleToBob = async (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   copy: Id<"ownedPuzzles">,
   seller: Id<"users">,
   sellerAuth: string,

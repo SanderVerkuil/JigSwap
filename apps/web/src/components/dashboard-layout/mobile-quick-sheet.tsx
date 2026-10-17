@@ -4,17 +4,18 @@
 // four most-used actions as 56px rows — violet round icon chip, title with a
 // one-line sub, chevron — sliding up over the dimmed backdrop, with a drag
 // handle and safe-area bottom padding.
-
 import { useRouter } from "@/compat/navigation";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { WhatsNewCountPill } from "@/components/whats-new/badges";
 import {
   ArrowLeftRight,
   ChevronRight,
   CircleCheck,
-  type LucideIcon,
   Plus,
   Search,
+  Sparkles,
   UserRound,
+  type LucideIcon,
 } from "lucide-react";
 import { useTranslations } from "use-intl";
 
@@ -59,17 +60,29 @@ const ACTIONS: Array<{
     href: "/profile",
     icon: UserRound,
   },
+  // What's new has no tab of its own on mobile; this row carries its unread count.
+  {
+    titleKey: "pages.whatsNew.title",
+    subKey: "mobile.quick.whatsNewSub",
+    href: "/whats-new",
+    icon: Sparkles,
+  },
 ];
 
 export function MobileQuickSheet({
   open,
   onOpenChange,
+  whatsNewCount,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  whatsNewCount: number;
 }) {
   const t = useTranslations("shell");
+  const tWhatsNew = useTranslations("whatsNew");
   const router = useRouter();
+  const countFor = (href: string) =>
+    href === "/whats-new" ? whatsNewCount : 0;
 
   const go = (href: string) => {
     onOpenChange(false);
@@ -106,7 +119,15 @@ export function MobileQuickSheet({
                   <span className="text-muted-foreground block text-sm">
                     {t(action.subKey)}
                   </span>
+                  {countFor(action.href) > 0 && (
+                    <span className="sr-only">
+                      {tWhatsNew("unreadCount", {
+                        count: countFor(action.href),
+                      })}
+                    </span>
+                  )}
                 </span>
+                <WhatsNewCountPill count={countFor(action.href)} />
                 <ChevronRight className="text-muted-foreground size-4 shrink-0" />
               </button>
             ))}

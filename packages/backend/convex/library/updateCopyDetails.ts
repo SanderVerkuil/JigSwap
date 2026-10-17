@@ -1,4 +1,4 @@
-import { makeUpdateCopyDetails, type OwnerId, toCopyId } from "@jigswap/domain";
+import { makeUpdateCopyDetails, toCopyId, type OwnerId } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { convexCopyManagerPolicy } from "../household/copyAccess";

@@ -1,5 +1,6 @@
 import { Result } from "../../../../shared-kernel";
 import {
+  HouseholdCopyPermission,
   HouseholdError,
   HouseholdId,
   HouseholdInviteId,
@@ -53,3 +54,11 @@ export interface RemoveHouseholdMemberCommand {
 export type RemoveHouseholdMember = (
   cmd: RemoveHouseholdMemberCommand,
 ) => Outcome<void>;
+
+export interface SetHouseholdDefaultCopyPermissionCommand {
+  readonly actorId: MemberId;
+  readonly permission: HouseholdCopyPermission;
+}
+export type SetHouseholdDefaultCopyPermission = (
+  cmd: SetHouseholdDefaultCopyPermissionCommand,
+) => Outcome<{ readonly changed: boolean }>;

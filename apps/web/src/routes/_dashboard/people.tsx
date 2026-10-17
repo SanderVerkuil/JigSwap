@@ -1,7 +1,3 @@
-import { pageTitle } from "@/lib/page-title";
-import { safeStorage } from "@/lib/safe-storage";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-
 import { EmptyState } from "@/components/community/primitives";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { ActivityFeed } from "@/components/social/activity-feed";
@@ -19,8 +15,11 @@ import {
   UNDERLINE_TABS_LIST_CLASS,
 } from "@/components/ui/underline-tabs";
 import { gateway, Id } from "@/gateway";
+import { pageTitle } from "@/lib/page-title";
+import { safeStorage } from "@/lib/safe-storage";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Bell, Search, Users, X } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
 import { useTranslations } from "use-intl";
@@ -234,7 +233,11 @@ function PeoplePage() {
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className={UNDERLINE_TABS_LIST_CLASS}>
-          <TabsTrigger value="network" className={TAB_TRIGGER_CLASS}>
+          <TabsTrigger
+            value="network"
+            className={TAB_TRIGGER_CLASS}
+            data-tour="people-network"
+          >
             <Users aria-hidden />
             {t("tabs.network")}
             <TabCount count={pendingCount > 0 ? pendingCount : undefined} />

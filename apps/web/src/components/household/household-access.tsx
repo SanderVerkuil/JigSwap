@@ -11,11 +11,16 @@ import { useMutation } from "@tanstack/react-query";
 import { House } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
+import {
+  ownerChoiceOf,
+  type HouseholdPermissionChoice,
+} from "./bulk-permission";
 
 type Permission = "manage" | "view";
 
 // The copy page's household line. The OWNER (in a household) picks whether the household may
-// manage the copy or only view it; a household member sees which of the two applies to them.
+// manage the copy, only view it, or follow the household default (clearing the explicit value);
+// a household member sees which of the two applies to them.
 // Rendered only when the copy view carries household facts.
 export function HouseholdAccess({
   copyId,
@@ -25,6 +30,8 @@ export function HouseholdAccess({
   household: {
     permission: Permission;
     viewerAccess: "owner" | "manage" | "view";
+    inheritsDefault: boolean;
+    householdDefault: Permission;
   };
 }) {
   const t = useTranslations("household.copyAccess");
@@ -54,9 +61,9 @@ export function HouseholdAccess({
         {t("label")}
       </span>
       <Select
-        value={household.permission}
+        value={ownerChoiceOf(household)}
         disabled={setPermission.isPending}
-        onValueChange={(permission: Permission) =>
+        onValueChange={(permission: HouseholdPermissionChoice) =>
           setPermission.mutate({
             copyId: copyId as Id<"ownedPuzzles">,
             permission,
@@ -64,12 +71,15 @@ export function HouseholdAccess({
         }
       >
         <SelectTrigger
-          className="w-44"
+          className="w-auto min-w-44"
           aria-labelledby="household-access-label"
         >
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value="default">
+            {t("useDefault", { permission: household.householdDefault })}
+          </SelectItem>
           <SelectItem value="manage">{t("manage")}</SelectItem>
           <SelectItem value="view">{t("view")}</SelectItem>
         </SelectContent>

@@ -12,3 +12,4 @@ export * from "./shared";
 export * from "./sharing";
 export * from "./social";
 export * from "./solving";
+export * from "./whats-new";

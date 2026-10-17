@@ -3,12 +3,17 @@ import type {
   HouseholdSentInviteView,
   HouseholdView,
 } from "@jigswap/contracts";
+import { resolveHouseholdCopyPermission } from "@jigswap/domain";
 import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { query } from "../_generated/server";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
-import { membershipOf, membersOfHousehold } from "./memberships";
+import {
+  householdDefaultOf,
+  membershipOf,
+  membersOfHousehold,
+} from "./memberships";
 
 export const personView = async (
   ctx: QueryCtx,
@@ -26,7 +31,9 @@ export const personView = async (
 };
 
 // The acting member's household (members + roles), or null. Pending sent invites are returned to
-// the admin only — they are the one who chose those people.
+// the admin only — they are the one who chose those people. Also the household-wide default copy
+// permission (resolved) and how many copies, across ALL members, follow it (no explicit value) —
+// what a change of the default would affect.
 export const getMyHousehold = query({
   args: {},
   handler: async (ctx): Promise<HouseholdView | null> => {
@@ -66,11 +73,27 @@ export const getMyHousehold = query({
       );
     }
 
+    let copiesUsingDefault = 0;
+    for (const row of rows) {
+      const copies = await ctx.db
+        .query("ownedPuzzles")
+        .withIndex("by_owner", (q) => q.eq("ownerId", row.memberId))
+        .collect();
+      copiesUsingDefault += copies.filter(
+        (copy) => copy.householdPermission === undefined,
+      ).length;
+    }
+
     return {
       householdId: membership.householdId,
       viewerRole: membership.role,
       members,
       pendingInvites,
+      defaultCopyPermission: resolveHouseholdCopyPermission(
+        undefined,
+        await householdDefaultOf(ctx, membership.householdId),
+      ),
+      copiesUsingDefault,
     };
   },
 });

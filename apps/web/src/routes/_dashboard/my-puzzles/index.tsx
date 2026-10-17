@@ -1,7 +1,3 @@
-import { useMemberDisplayName } from "@/lib/member-display-name";
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
-
 import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
@@ -27,8 +23,11 @@ import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
+import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { Grid, House, Lightbulb, List, Plus, Undo2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslations } from "use-intl";

@@ -11,7 +11,6 @@
 // profile UI as a custom <UserButton.UserProfilePage> ("Preferences"), persisted
 // to the Clerk user (see preferences.tsx). Admins reach /admin via the gated
 // sidebar group and the user menu's Admin link (shell-user-button.tsx).
-
 import { useUser } from "@/compat/clerk";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
@@ -59,6 +58,7 @@ export function UserFooter() {
   return (
     <div
       ref={rootRef}
+      data-tour="account-menu"
       className="flex items-center gap-2 rounded-md p-1.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
     >
       <ShellUserButton />

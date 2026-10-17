@@ -1,10 +1,10 @@
 import {
+  toNotificationId,
+  toNotificationPreferenceId,
   type NotificationId,
   type NotificationIdGenerator,
   type NotificationPreferenceId,
   type NotificationPreferenceIdGenerator,
-  toNotificationId,
-  toNotificationPreferenceId,
 } from "@jigswap/domain";
 
 // Driven adapters for the Notifications id-generator ports. crypto.randomUUID is available in the

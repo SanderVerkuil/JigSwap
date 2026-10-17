@@ -88,6 +88,10 @@ export const gateway = {
     // ("view") this copy. Keyed by the copy's Convex id.
     setHouseholdPermission:
       api.library.setCopyHouseholdPermission.setCopyHouseholdPermission,
+    // Bulk form for the household page: the owner sets many of their copies at once. Every copy
+    // must be the caller's (else the whole batch is rejected); deduped, capped, returns counts.
+    setHouseholdPermissions:
+      api.library.setCopiesHouseholdPermission.setCopiesHouseholdPermission,
     // Reads go through the domain-driven library module (file.export namespacing); each is a thin
     // Convex query returning a typed @jigswap/contracts view DTO, not a raw row.
     ownedByOwner: api.library.getOwnedPuzzlesByOwner.getOwnedPuzzlesByOwner,
@@ -131,12 +135,19 @@ export const gateway = {
     mine: api.household.getMyHousehold.getMyHousehold,
     myInvites: api.household.listMyHouseholdInvites.listMyHouseholdInvites,
     copies: api.household.listHouseholdCopies.listHouseholdCopies,
+    // The viewer's own copies with the household permission each grants (absent = "manage").
+    myCopyPermissions:
+      api.household.listMyHouseholdCopyPermissions
+        .listMyHouseholdCopyPermissions,
     create: api.household.createHousehold.createHousehold,
     invite: api.household.inviteToHousehold.inviteToHousehold,
     acceptInvite: api.household.acceptHouseholdInvite.acceptHouseholdInvite,
     declineInvite: api.household.declineHouseholdInvite.declineHouseholdInvite,
     leave: api.household.leaveHousehold.leaveHousehold,
     removeMember: api.household.removeHouseholdMember.removeHouseholdMember,
+    // Admin-only: the household-wide permission for member copies without an explicit value.
+    setDefaultCopyPermission:
+      api.household.setDefaultCopyPermission.setDefaultCopyPermission,
   },
 
   // Personal Library: collections (a member's private organisation of copies). Writes go through
@@ -175,6 +186,8 @@ export const gateway = {
     cancel: api.exchange.cancel.cancel,
     dispute: api.exchange.raiseDispute.raiseDispute,
     stats: api.exchange.getExchangeStats.getExchangeStats,
+    // The viewer's copies they may offer in a swap for a requested copy (propose's offer rule).
+    offerableCopies: api.exchange.getOfferableCopies.getOfferableCopies,
   },
 
   // Conversation: threads, DMs, exchange chat, inbox.
@@ -188,6 +201,10 @@ export const gateway = {
       api.conversation.getThreadByExchange.getThreadByExchange,
     canMessage: api.conversation.canMessage.canMessage,
     getUnreadTotal: api.conversation.getUnreadTotal.getUnreadTotal,
+    getCopyConversation:
+      api.conversation.getCopyConversation.getCopyConversation,
+    startCopyConversation:
+      api.conversation.startCopyConversation.startCopyConversation,
   },
 
   // Chain-of-Custody: a Copy's provenance (original owner -> each settled transfer -> current
@@ -276,6 +293,16 @@ export const gateway = {
     registerPush: api.notifications.pushSubscriptions.registerPushSubscription,
     unregisterPush:
       api.notifications.pushSubscriptions.unregisterPushSubscription,
+  },
+
+  // What's new: the member's own unread entry ids (newest first; entries published before the
+  // account existed are never unread) and tour progress, plus marking entries seen. Unknown ids
+  // are ignored server-side (web/Convex deploy skew); at most 50 ids per markSeen call. Tour
+  // progress is rejected for a tour no manifest entry references (`unknown_tour`).
+  whatsNew: {
+    state: api.whatsNew.getWhatsNewState.getWhatsNewState,
+    markSeen: api.whatsNew.markWhatsNewSeen.markWhatsNewSeen,
+    recordTourProgress: api.whatsNew.recordTourProgress.recordTourProgress,
   },
 
   // Presence (messages page): heartbeat/list/disconnect consumed by @convex-dev/presence's

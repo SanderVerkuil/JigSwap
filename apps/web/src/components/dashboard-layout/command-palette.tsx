@@ -4,7 +4,6 @@
 // Collections (gateway.search.global) plus the static "Go To" nav destinations and quick actions.
 // While a term is typed, live result groups render above the nav fallback; with an empty input the
 // palette is a pure jump-to navigator. Opened from the top-bar search pill or Cmd/Ctrl+K.
-
 import { useUser } from "@/compat/clerk";
 import { useRouter } from "@/compat/navigation";
 import {
@@ -17,10 +16,10 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import { gateway } from "@/gateway";
-import { convexQuery } from "@convex-dev/react-query";
-import { useQuery } from "@tanstack/react-query";
 // sanctioned convex/react exception: useConvexAuth (see tanstack-query migration spec)
 import { useMemberDisplayName } from "@/lib/member-display-name";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useConvexAuth } from "convex/react";
 import {
   CircleCheck,

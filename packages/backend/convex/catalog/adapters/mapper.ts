@@ -1,9 +1,9 @@
 import {
-  type CatalogCategoryId,
   PuzzleDefinition,
-  type PuzzleDefinitionState,
   toPuzzleDefinitionId,
   toSubmitterId,
+  type CatalogCategoryId,
+  type PuzzleDefinitionState,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 

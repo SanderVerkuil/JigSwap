@@ -66,6 +66,10 @@ override the Vercel **build command** so preview builds run through `npx convex 
 which (with the Preview-scoped `CONVEX_DEPLOY_KEY` from step 1) targets the branch-named
 preview deployment and injects its URL into the build.
 
+The script passes `--typecheck enable`, so a type error in the Convex functions (or their
+`*.test.ts` suites, which `convex/tsconfig.json` includes) fails the preview build instead
+of being skipped. See `packages/backend/README.md`.
+
 The Vercel project's root directory is **`apps/web`** (build cwd = `apps/web`, plain
 `vite build`). Vercel has ONE build command for all environments, and the production
 Convex deploy is deliberately CI-gated (`convex-deploy.yml` deploys prod only after CI

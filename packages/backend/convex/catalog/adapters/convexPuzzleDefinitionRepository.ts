@@ -1,9 +1,9 @@
 import {
+  toCatalogCategoryId,
   type CatalogCategoryId,
   type PuzzleDefinition,
   type PuzzleDefinitionId,
   type PuzzleDefinitionRepository,
-  toCatalogCategoryId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";

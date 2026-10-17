@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
@@ -6,7 +6,7 @@ import schema from "./schema";
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
-const seed = (t: ReturnType<typeof convexTest>) =>
+const seed = (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string) =>
@@ -27,13 +27,13 @@ const seed = (t: ReturnType<typeof convexTest>) =>
     return { viewer, a, b, c, target, x };
   });
 
-const asClerk = (t: ReturnType<typeof convexTest>, subject: string) =>
+const asClerk = (t: TestConvex<typeof schema>, subject: string) =>
   t.withIdentity({ subject });
 
 // Wire up the base intersection: viewer follows A, B, C; target is followed by A, B.
 // So a viewer with full visibility of `target` sees exactly {A, B}.
 const wireIntersection = async (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   a: string,
   b: string,
   c: string,
@@ -54,7 +54,7 @@ const wireIntersection = async (
 
 // Directly stamp a private profile row for a member (bypasses the auth'd mutation so any
 // member can be made private from the seed, not just the acting identity).
-const makePrivate = (t: ReturnType<typeof convexTest>, memberId: string) =>
+const makePrivate = (t: TestConvex<typeof schema>, memberId: string) =>
   t.run(async (ctx) => {
     await ctx.db.insert("profiles", {
       memberId: memberId as never,

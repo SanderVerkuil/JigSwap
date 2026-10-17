@@ -1,7 +1,7 @@
 import {
+  recommendPuzzles,
   type CandidatePuzzle,
   type PuzzleFacets,
-  recommendPuzzles,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";

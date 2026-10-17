@@ -1,12 +1,12 @@
 import {
   Completion,
-  type CompletionState,
-  type CopyId,
   Photo,
-  type PuzzleDefinitionId,
   toCompletionId,
   toFileId,
   toMemberId,
+  type CompletionState,
+  type CopyId,
+  type PuzzleDefinitionId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 

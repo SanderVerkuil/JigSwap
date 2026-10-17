@@ -6,7 +6,6 @@
 // public profiles. Both empty states route to the QR fallback — the answer to
 // "can't find them" is always "ask for their link or QR". Discovery tiles hide
 // location (stats build trust with strangers; street-level context doesn't).
-
 import { EmptyState } from "@/components/community/primitives";
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import {

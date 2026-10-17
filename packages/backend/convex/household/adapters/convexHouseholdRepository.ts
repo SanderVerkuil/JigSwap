@@ -1,10 +1,10 @@
 import {
   Household,
+  toHouseholdId,
+  toMemberId,
   type HouseholdId,
   type HouseholdRepository,
   type MemberId,
-  toHouseholdId,
-  toMemberId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
@@ -34,6 +34,7 @@ export const convexHouseholdRepository = (
     return Household.rehydrate({
       id,
       createdAt: new Date(row.createdAt),
+      defaultCopyPermission: row.defaultCopyPermission,
       members: members.map((m) => ({
         memberId: toMemberId(m.memberId),
         role: m.role,
@@ -57,10 +58,16 @@ export const convexHouseholdRepository = (
 
     async save(household: Household): Promise<void> {
       const state = household.toState();
-      if (!(await householdRow(state.id))) {
+      const row = await householdRow(state.id);
+      if (!row) {
         await ctx.db.insert("households", {
           aggregateId: state.id as string,
           createdAt: state.createdAt.getTime(),
+          defaultCopyPermission: state.defaultCopyPermission,
+        });
+      } else if (row.defaultCopyPermission !== state.defaultCopyPermission) {
+        await ctx.db.patch(row._id, {
+          defaultCopyPermission: state.defaultCopyPermission,
         });
       }
       // Sync member rows to the aggregate: drop departed, update roles, add newcomers.

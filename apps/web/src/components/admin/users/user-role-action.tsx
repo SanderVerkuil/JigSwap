@@ -7,7 +7,6 @@
 // stamp) via useConvexAction, and renders NOTHING for the caller's own row/page
 // — the server's CannotChangeOwnRole gate is the real enforcement; the UI just
 // doesn't offer the foot-gun.
-
 import {
   AlertDialog,
   AlertDialogAction,

@@ -1,6 +1,6 @@
 import {
-  type MemberId,
   Notification,
+  type MemberId,
   type NotificationId,
   type NotificationRepository,
 } from "@jigswap/domain";

@@ -6,7 +6,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { clearIntlCache, type Locale, setLocale } from "@/lib/i18n";
+import { clearIntlCache, setLocale, type Locale } from "@/lib/i18n";
 import { useRouter } from "@tanstack/react-router";
 import { Globe } from "lucide-react";
 import { toast } from "sonner";

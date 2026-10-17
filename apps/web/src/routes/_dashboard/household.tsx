@@ -1,7 +1,6 @@
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
-
 import { householdErrorKey } from "@/components/household/household-error";
+import { HouseholdSettings } from "@/components/household/household-settings";
+import { MyHouseholdCopies } from "@/components/household/my-household-copies";
 import { EmptyState } from "@/components/library/empty-state";
 import { MemberInitial } from "@/components/members/member-initial";
 import {
@@ -21,11 +20,13 @@ import { Input } from "@/components/ui/input";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
+import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { Check, House, LogOut, UserPlus, X } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
@@ -160,6 +161,7 @@ function HouseholdPage() {
           action={
             <Button
               variant="brand"
+              data-tour="household-main"
               disabled={create.isPending}
               onClick={() => create.mutate({})}
             >
@@ -231,7 +233,7 @@ function HouseholdDetails({
         {t("explainer")}
       </p>
 
-      <section className="space-y-2">
+      <section className="space-y-2" data-tour="household-main">
         <h2 className="font-heading text-lg font-bold">{t("members.title")}</h2>
         <div className="divide-y rounded-lg border px-4">
           {household.members.map((member) => (
@@ -278,6 +280,7 @@ function HouseholdDetails({
             placeholder={t("invite.searchPlaceholder")}
             aria-label={t("invite.searchPlaceholder")}
             className="max-w-md"
+            data-tour="household-invite"
           />
           {candidates.length > 0 && (
             <div className="divide-y rounded-lg border px-4">
@@ -326,6 +329,18 @@ function HouseholdDetails({
           )}
         </section>
       )}
+
+      <HouseholdSettings
+        isAdmin={isAdmin}
+        defaultCopyPermission={household.defaultCopyPermission}
+        copiesUsingDefault={household.copiesUsingDefault}
+        onError={onError}
+      />
+
+      <MyHouseholdCopies
+        householdDefault={household.defaultCopyPermission}
+        onError={onError}
+      />
 
       <section>
         <Button variant="outline" onClick={() => setConfirmLeave(true)}>

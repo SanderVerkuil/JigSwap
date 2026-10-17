@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { toOwnerId } from "../../../shared-kernel";
-
 import {
   FixedClock,
   InMemoryPersonalCategoryRepository,

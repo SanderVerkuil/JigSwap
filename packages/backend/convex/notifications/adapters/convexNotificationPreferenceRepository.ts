@@ -1,10 +1,10 @@
 import {
-  type MemberId,
   NotificationPreference,
-  type NotificationPreferenceRepository,
-  type NotificationPreferenceState,
   toMemberId,
   toNotificationPreferenceId,
+  type MemberId,
+  type NotificationPreferenceRepository,
+  type NotificationPreferenceState,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";

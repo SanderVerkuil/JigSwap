@@ -91,7 +91,11 @@ export function IdentityHeader({
             {t("trustBadge", { rating: reputation.averageRating.toFixed(1) })}
           </Badge>
         )}
-        <Button variant="outline" onClick={onToggleEdit}>
+        <Button
+          variant="outline"
+          onClick={onToggleEdit}
+          data-tour="profile-edit"
+        >
           {isEditing ? <X aria-hidden /> : <Pencil aria-hidden />}
           {isEditing ? t("cancel") : t("edit")}
         </Button>

@@ -1,10 +1,10 @@
 import type { ActivityEntryView } from "@jigswap/contracts";
 import {
+  buildActivityFeed,
+  toMemberId,
   type ActivityEntry,
   type ActivityKind,
-  buildActivityFeed,
   type MemberId,
-  toMemberId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";

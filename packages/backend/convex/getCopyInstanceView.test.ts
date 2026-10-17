@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -8,7 +8,7 @@ import schema from "./schema";
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
-const asViewer = (t: ReturnType<typeof convexTest>) =>
+const asViewer = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_viewer" });
 
 type AnyEntry = {
@@ -49,7 +49,7 @@ const mkUser = (ctx: MutationCtx, clerkId: string, name: string, now: number) =>
 
 // Seed a single copy currently owned by the viewer that was previously held by `prevOwner` (a
 // historical custody transfer). Returns the user ids + copy id so each test sets visibility/follows.
-const seedCopy = async (t: ReturnType<typeof convexTest>) =>
+const seedCopy = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = 1_000_000;
     const viewer = await mkUser(ctx, "clerk_viewer", "Viewer", now);
@@ -91,7 +91,7 @@ const seedCopy = async (t: ReturnType<typeof convexTest>) =>
   });
 
 const setVisibility = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   memberId: Id<"users">,
   visibility: "public" | "private",
 ) =>
@@ -106,7 +106,7 @@ const setVisibility = (
   });
 
 const follow = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   followerId: Id<"users">,
   followeeId: Id<"users">,
 ) =>

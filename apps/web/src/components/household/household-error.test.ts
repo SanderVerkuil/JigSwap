@@ -14,6 +14,11 @@ describe("householdErrorKey", () => {
         new ConvexError({ code: "InviteeAlreadyInHousehold", message: "x" }),
       ),
     ).toBe("errors.InviteeAlreadyInHousehold");
+    expect(
+      householdErrorKey(
+        new ConvexError({ code: "PermissionBatchTooLarge", message: "x" }),
+      ),
+    ).toBe("errors.PermissionBatchTooLarge");
   });
 
   it("falls back to the generic key for unknown codes and non-Convex errors", () => {

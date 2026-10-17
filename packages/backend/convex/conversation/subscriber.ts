@@ -47,7 +47,8 @@ export const handleDomainEvent = async (
   ctx: MutationCtx,
   event: Doc<"domainEvents">,
 ): Promise<void> => {
-  if (!Object.hasOwn(LIFECYCLE_BODIES, event.name)) return;
+  if (!Object.prototype.hasOwnProperty.call(LIFECYCLE_BODIES, event.name))
+    return;
   const body = LIFECYCLE_BODIES[event.name] as string;
 
   const p = event.payload as Record<string, unknown>;

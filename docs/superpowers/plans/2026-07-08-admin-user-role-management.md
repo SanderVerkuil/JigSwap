@@ -601,9 +601,6 @@ Extend `/admin/users` with a trailing actions cell: one inline `Button` per row 
 - [ ] **Step 4.1:** Replace `apps/web/src/routes/_dashboard/admin/users.tsx` with:
 
 ```tsx
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
-
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import {
   AlertDialog,
@@ -621,8 +618,10 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, type Id } from "@/gateway";
+import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexAction } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
 import { Search, UserX } from "lucide-react";
@@ -872,12 +871,12 @@ function AdminUsersPage() {
 import {
   CheckCircle,
   Flag,
-  type LucideIcon,
   ShieldCheck,
   ShieldOff,
   Trash2,
   Undo2,
   XCircle,
+  type LucideIcon,
 } from "lucide-react";
 ```
 

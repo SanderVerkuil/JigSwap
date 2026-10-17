@@ -8,6 +8,8 @@
   "scripts": {
     "type-check": "tsc --noEmit",
     "test": "vitest run",
-    "mutation": "stryker run"
+    "mutation": "stryker run",
+    "lint": "oxlint --type-aware .",
+    "coverage": "vitest run --coverage"
   }
 }

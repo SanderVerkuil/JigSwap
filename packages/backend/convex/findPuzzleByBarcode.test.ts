@@ -1,11 +1,15 @@
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { internal } from "./_generated/api";
+import type { Doc } from "./_generated/dataModel";
 import schema from "./schema";
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
-const seedPuzzle = (extra: Record<string, unknown>) => ({
+const seedPuzzle = (
+  extra: Pick<Doc<"puzzles">, "submittedBy"> &
+    Partial<Pick<Doc<"puzzles">, "ean" | "upc" | "status">>,
+) => ({
   title: "Mountain Vista",
   pieceCount: 1000,
   status: "approved" as const,

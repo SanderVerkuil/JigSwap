@@ -1,6 +1,6 @@
 import {
-  type DomainEventPublisher,
   makeNotifyMember,
+  type DomainEventPublisher,
   type NotifyMember,
 } from "@jigswap/domain";
 import type { MutationCtx } from "../../_generated/server";

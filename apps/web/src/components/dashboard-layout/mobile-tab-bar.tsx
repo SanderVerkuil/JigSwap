@@ -6,10 +6,11 @@
 // library pages light Library, community pages light Community — except
 // /trades, which lights its dedicated Swaps tab. Safe-area padded for
 // home-indicator phones.
-
 import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
+import { UnreadDot } from "@/components/whats-new/badges";
+import { useWhatsNewUnreadCount } from "@/components/whats-new/use-whats-new-state";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
@@ -18,9 +19,9 @@ import {
   ArrowLeftRight,
   BookOpen,
   LayoutDashboard,
-  type LucideIcon,
   Plus,
   Users,
+  type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
@@ -57,6 +58,8 @@ export function MobileTabBar() {
   const pathname = usePathname();
   const [sheetOpen, setSheetOpen] = useState(false);
   const active = activeTab(pathname);
+  // No room for a fifth tab: What's new lives in the quick sheet, flagged by a dot on the "+".
+  const whatsNewCount = useWhatsNewUnreadCount();
 
   // Incoming swap requests still awaiting an answer — the same definition the
   // dashboard's pending banner uses; Convex dedupes the shared subscription.
@@ -109,10 +112,17 @@ export function MobileTabBar() {
           <button
             type="button"
             onClick={() => setSheetOpen(true)}
-            aria-label={t("openQuickActions")}
-            className="bg-jigsaw-primary ring-card -mt-[22px] inline-flex size-[52px] items-center justify-center rounded-full text-white shadow-[0_8px_22px_-6px_color-mix(in_oklab,var(--jigsaw-primary)_65%,transparent)] ring-4"
+            aria-label={
+              whatsNewCount > 0
+                ? t("openQuickActionsUnread", { count: whatsNewCount })
+                : t("openQuickActions")
+            }
+            className="bg-jigsaw-primary ring-card relative -mt-[22px] inline-flex size-[52px] items-center justify-center rounded-full text-white shadow-[0_8px_22px_-6px_color-mix(in_oklab,var(--jigsaw-primary)_65%,transparent)] ring-4"
           >
             <Plus className="size-6" />
+            {whatsNewCount > 0 && (
+              <UnreadDot className="ring-card top-0.5 right-0.5 size-2.5" />
+            )}
           </button>
         </div>
         {TABS.slice(2).map((tab) => (
@@ -124,7 +134,11 @@ export function MobileTabBar() {
           />
         ))}
       </nav>
-      <MobileQuickSheet open={sheetOpen} onOpenChange={setSheetOpen} />
+      <MobileQuickSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        whatsNewCount={whatsNewCount}
+      />
     </>
   );
 }

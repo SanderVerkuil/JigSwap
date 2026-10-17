@@ -1,4 +1,4 @@
-import { UserJSON } from "@clerk/backend";
+import type { EmailAddressJSON, UserJSON } from "@clerk/backend";
 import { normalizeMemberName } from "@jigswap/contracts";
 import { v } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
@@ -15,10 +15,24 @@ import { requireMember } from "./identity/requireMember";
 const toSearchableName = (name?: string, username?: string): string =>
   [name, username].filter(Boolean).join(" ").toLowerCase();
 
+// The UserJSON fields updateOrCreateUser reads. The Clerk webhook passes a full UserJSON; tests
+// pass just these, so the handler's contract is checked against what it actually uses.
+type ClerkUserSync = Pick<
+  UserJSON,
+  | "id"
+  | "first_name"
+  | "last_name"
+  | "username"
+  | "image_url"
+  | "created_at"
+  | "updated_at"
+  | "public_metadata"
+> & { email_addresses: Pick<EmailAddressJSON, "email_address">[] };
+
 // The Clerk publicMetadata.role, mirrored onto the users row for display (admin users page).
 // Display-only: authorization stays JWT-based (identity/isAdmin) and never reads this field.
 // UserPublicMetadata is an open record, so read the claim defensively.
-const roleOf = (clerkUser: UserJSON): string | undefined => {
+const roleOf = (clerkUser: ClerkUserSync): string | undefined => {
   const role = (
     clerkUser.public_metadata as Record<string, unknown> | null | undefined
   )?.role;
@@ -123,7 +137,7 @@ const verifiedPrimaryEmailOf = (clerkUser: UserJSON): string | undefined => {
 /** Create a new Clerk user or update existing Clerk user data. */
 export const updateOrCreateUser = internalMutation({
   args: { clerkUser: v.any() }, // no runtime validation, trust Clerk
-  async handler(ctx, { clerkUser }: { clerkUser: UserJSON }) {
+  async handler(ctx, { clerkUser }: { clerkUser: ClerkUserSync }) {
     const userRecord = await userQuery(ctx, clerkUser.id);
 
     // Clerk sends `null` for a missing first/last name; interpolating them directly persisted the

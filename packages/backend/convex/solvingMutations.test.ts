@@ -1,5 +1,5 @@
-import { convexTest } from "convex-test";
-import { ConvexError } from "convex/values";
+import { convexTest, type TestConvex } from "convex-test";
+import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -10,7 +10,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 // Seed a member, a catalog puzzle (with aggregateId), and an owned copy of it so completions can
 // reference either a puzzle definition or a specific copy.
-const seed = async (t: ReturnType<typeof convexTest>) =>
+const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const alice = await ctx.db.insert("users", {
@@ -68,12 +68,12 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
     };
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asBob = (t: ReturnType<typeof convexTest>) =>
+const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
 
-const completionRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
+const completionRow = (t: TestConvex<typeof schema>, aggregateId: string) =>
   t.run(async (ctx) =>
     ctx.db
       .query("completions")
@@ -81,7 +81,7 @@ const completionRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
       .unique(),
   );
 
-const goalRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
+const goalRow = (t: TestConvex<typeof schema>, aggregateId: string) =>
   t.run(async (ctx) =>
     ctx.db
       .query("goals")
@@ -90,11 +90,11 @@ const goalRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
   );
 
 // A real stored blob so fileId is a valid `_storage` id.
-const storeBlob = (t: ReturnType<typeof convexTest>) =>
+const storeBlob = (t: TestConvex<typeof schema>) =>
   t.run((ctx) => ctx.storage.store(new Blob(["img"], { type: "image/png" })));
 
 const completionImagesFor = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   completionId: string,
 ) =>
   t.run(async (ctx) =>
@@ -106,7 +106,7 @@ const completionImagesFor = (
 
 // Lend the seeded copy to Bob: ownership stays with Alice, possession (heldBy) moves to Bob.
 const lendToBob = async (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   ownedPuzzleId: Id<"ownedPuzzles">,
   bob: Id<"users">,
 ) =>
@@ -116,7 +116,7 @@ const lendToBob = async (
 
 // convex-test serializes ConvexError.data to a JSON string at the function boundary; normalise.
 const dataOf = (e: unknown): { code?: string } => {
-  const data = (e as ConvexError<unknown>).data;
+  const data = (e as ConvexError<Value>).data;
   return typeof data === "string"
     ? JSON.parse(data)
     : (data as { code?: string });
@@ -133,7 +133,7 @@ const HOUR = 60 * 60 * 1000;
 
 // Helper: Alice records a finished completion of the seeded copy, returning the new CompletionId.
 const recordForAlice = async (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   copyAggregateId: string,
   overrides: Record<string, unknown> = {},
 ) =>
@@ -978,7 +978,7 @@ describe("solving.listMyInProgress", () => {
 describe("solving.listMyCompletions — row enrichment", () => {
   // Insert a real-stored ownedPuzzleImages row for a copy and return its id + resolved URL.
   const addCoverPhoto = (
-    t: ReturnType<typeof convexTest>,
+    t: TestConvex<typeof schema>,
     copyId: Id<"ownedPuzzles">,
     uploaderId: Id<"users">,
     moderationStatus?: "pending" | "approved" | "rejected",
@@ -1004,7 +1004,7 @@ describe("solving.listMyCompletions — row enrichment", () => {
   // `aggregateId` is required even though schema-optional: recordCompletion resolves the copy via
   // `by_aggregate_id`, and throws "Copy not found" without it.
   const insertBobCopyHeldByAlice = (
-    t: ReturnType<typeof convexTest>,
+    t: TestConvex<typeof schema>,
     puzzleAggregateId: string,
     puzzleId: Id<"puzzles">,
     bob: Id<"users">,

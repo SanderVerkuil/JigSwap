@@ -8,7 +8,9 @@
   "scripts": {
     "type-check": "tsc --noEmit",
     "test": "vitest run",
-    "mutation": "stryker run"
+    "mutation": "stryker run",
+    "lint": "oxlint --type-aware .",
+    "coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@jigswap/domain": "workspace:^",
@@ -18,6 +20,6 @@
   },
   "devDependencies": {
     "@types/react": "^19.3.0",
-    "vitest": "^4.1.12"
+    "vitest": "^5.0.5"
   }
 }

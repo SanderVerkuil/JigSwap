@@ -6,7 +6,6 @@
 // renders and calls back. The destructive action uses the app's two-step
 // inline confirm (see photo-lightbox): first click arms, second fires, and an
 // armed button disarms itself after 3s.
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";

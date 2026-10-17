@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -10,7 +10,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 const OPEN = { forTrade: true, forSale: false, forLend: false };
 const CLOSED = { forTrade: false, forSale: false, forLend: false };
 
-const asViewer = (t: ReturnType<typeof convexTest>) =>
+const asViewer = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_viewer" });
 
 // Seed the viewer plus three other members (public / private / private-in-circle), a shared puzzle
@@ -18,7 +18,7 @@ const asViewer = (t: ReturnType<typeof convexTest>) =>
 // exactly as `collectCircleSharedCopies` reads them: `circleMembers.by_member` for the viewer's
 // circles, `circleCopyShares.by_circle` keyed on the circle aggregateId, and copy resolution via
 // `ownedPuzzles.by_aggregate_id`.
-const seed = async (t: ReturnType<typeof convexTest>) =>
+const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string, name: string) =>
@@ -121,11 +121,11 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
       sharedAt: now,
     });
 
-    return { viewer };
+    return { viewer, puzzle };
   });
 
 const browse = async (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   args: Record<string, unknown> = {},
 ) => asViewer(t).query(api.library.browseOwnedPuzzles.browseOwnedPuzzles, args);
 
@@ -206,5 +206,92 @@ describe("library.browseOwnedPuzzles privacy gating", () => {
     expect(shown?.acquisitionPrice).toBeUndefined();
     expect(shown?.acquisitionSource).toBeUndefined();
     expect(JSON.stringify(view)).not.toContain("owner private notes");
+  });
+});
+
+describe("library.browseOwnedPuzzles puzzleId filter", () => {
+  // A second definition with a public-open copy and a private (unreachable) open copy, so the
+  // filter is checked both for narrowing and for keeping the visibility rules intact.
+  const seedSecondPuzzle = async (t: TestConvex<typeof schema>) =>
+    t.run(async (ctx) => {
+      const now = Date.now();
+      const owner = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", "clerk_public"))
+        .unique();
+      const privateOwner = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", "clerk_private"))
+        .unique();
+      const other = await ctx.db.insert("puzzles", {
+        aggregateId: "def-2",
+        title: "Harbour Lights",
+        pieceCount: 500,
+        status: "approved",
+        submittedBy: owner!._id,
+        createdAt: now,
+        updatedAt: now,
+      });
+      for (const [aggregateId, ownerId] of [
+        ["copy-other-public", owner!._id],
+        ["copy-other-private", privateOwner!._id],
+      ] as const) {
+        await ctx.db.insert("ownedPuzzles", {
+          aggregateId,
+          puzzleId: other,
+          ownerId,
+          condition: "good",
+          availability: OPEN,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+      return other;
+    });
+
+  test("returns only copies of that definition", async () => {
+    const t = convexTest(schema, modules);
+    const { puzzle } = await seed(t);
+    await seedSecondPuzzle(t);
+    const view = await browse(t, { puzzleId: puzzle });
+    expect(ids(view)).toEqual(
+      new Set(["copy-public-open", "copy-circle-open"]),
+    );
+    expect(view.total).toBe(2);
+  });
+
+  test("still hides a private owner's copy of the filtered definition", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const other = await seedSecondPuzzle(t);
+    const view = await browse(t, { puzzleId: other });
+    expect(ids(view)).toEqual(new Set(["copy-other-public"]));
+  });
+
+  test("a malformed id yields an empty result, not an error", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const view = await browse(t, { puzzleId: "not-a-real-id" });
+    expect(view.ownedPuzzles).toEqual([]);
+    expect(view.total).toBe(0);
+  });
+
+  test("a well-formed id of a deleted definition yields an empty result", async () => {
+    const t = convexTest(schema, modules);
+    const { viewer } = await seed(t);
+    const gone = await t.run(async (ctx) => {
+      const id = await ctx.db.insert("puzzles", {
+        title: "Gone",
+        pieceCount: 100,
+        status: "approved",
+        submittedBy: viewer,
+        createdAt: 0,
+        updatedAt: 0,
+      });
+      await ctx.db.delete(id);
+      return id;
+    });
+    const view = await browse(t, { puzzleId: gone });
+    expect(view.ownedPuzzles).toEqual([]);
   });
 });

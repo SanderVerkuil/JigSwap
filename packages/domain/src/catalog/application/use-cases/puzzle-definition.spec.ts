@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { toPuzzleDefinitionId, toSubmitterId } from "../../../shared-kernel";
-
 import {
   FixedClock,
   InMemoryPuzzleDefinitionRepository,

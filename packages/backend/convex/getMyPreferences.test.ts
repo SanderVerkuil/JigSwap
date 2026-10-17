@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
@@ -6,7 +6,7 @@ import schema from "./schema";
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
-const seedMember = (t: ReturnType<typeof convexTest>) =>
+const seedMember = (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     return ctx.db.insert("users", {
@@ -19,7 +19,7 @@ const seedMember = (t: ReturnType<typeof convexTest>) =>
     });
   });
 
-const asMember = (t: ReturnType<typeof convexTest>) =>
+const asMember = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
 
 describe("getMyPreferences", () => {
@@ -42,7 +42,7 @@ describe("getMyPreferences", () => {
       {},
     );
 
-    expect(Object.keys(prefs)).toHaveLength(23);
+    expect(Object.keys(prefs)).toHaveLength(24);
     // The stored email wins; the absent inApp key falls back to its default (true).
     expect(prefs.trade_request).toEqual({
       inApp: true,
@@ -51,6 +51,12 @@ describe("getMyPreferences", () => {
     });
     // A type never in the stored row resolves to the plain default triple.
     expect(prefs.goal_achieved).toEqual({
+      inApp: true,
+      email: false,
+      push: false,
+    });
+    // Product news defaults to in-app only, like every type.
+    expect(prefs.whats_new).toEqual({
       inApp: true,
       email: false,
       push: false,

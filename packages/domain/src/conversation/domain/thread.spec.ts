@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  toCopyId,
   toExchangeId,
   toMemberId,
   toMessageId,
@@ -198,6 +199,31 @@ describe("Thread.postMessage", () => {
     });
     expect(thread.pullEvents()).toHaveLength(1);
     expect(thread.pullEvents()).toHaveLength(0);
+  });
+
+  it("carries an optional copy reference onto the message (absent by default)", () => {
+    const thread = openThread();
+    const copyId = toCopyId("copy-1");
+
+    const about = thread.postMessage({
+      id: msg1,
+      authorId: alice,
+      kind: "text",
+      body: "is this still available?",
+      sentAt: NOW,
+      copyId,
+    });
+    const plain = thread.postMessage({
+      id: msg2,
+      authorId: bob,
+      kind: "text",
+      body: "yes",
+      sentAt: LATER,
+    });
+
+    expect(about.isOk && about.value.copyId).toBe(copyId);
+    expect(plain.isOk && plain.value.copyId).toBeUndefined();
+    expect(thread.toState().messages[0]?.copyId).toBe(copyId);
   });
 });
 
