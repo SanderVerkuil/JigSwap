@@ -3751,6 +3751,9 @@
       "grantError": "Kon de beheerdersrol niet toekennen.",
       "revokeSuccess": "{name} is geen beheerder meer.",
       "revokeError": "Kon de beheerdersrol niet intrekken.",
+      "viewProfile": "Communityprofiel bekijken",
+      "viewProfileName": "Communityprofiel van {name} bekijken",
+      "profileUnavailable": "Gedeactiveerde leden hebben geen communityprofiel.",
       "detail": {
         "loading": "Lid laden…",
         "notFoundTitle": "Lid niet gevonden",

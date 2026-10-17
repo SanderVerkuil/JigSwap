@@ -3751,6 +3751,9 @@
       "grantError": "Could not grant the admin role.",
       "revokeSuccess": "{name} is no longer an admin.",
       "revokeError": "Could not remove the admin role.",
+      "viewProfile": "View community profile",
+      "viewProfileName": "View {name}'s community profile",
+      "profileUnavailable": "Deactivated members have no community profile.",
       "detail": {
         "loading": "Loading member…",
         "notFoundTitle": "Member not found",
