@@ -7,10 +7,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { gateway, Id } from "@/gateway";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ChevronDown, Clock, UserMinus, UserPlus } from "lucide-react";
+import { ChevronDown, Clock, Loader2, UserMinus, UserPlus } from "lucide-react";
+import type { ReactElement } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
@@ -23,14 +29,18 @@ const STALE_REQUEST_MS = 48 * 60 * 60 * 1000;
 // with no answer the label admits it ("hasn't responded yet"). The server decides
 // instant-vs-request — this component only renders what the relation says.
 // `memberName` (optional) personalises the stale-request label.
+// `iconOnly` (opt-in, for compact cards) renders a square icon button with a tooltip
+// and a name-qualified aria-label; without it the labelled button is unchanged.
 export function FollowButton({
   memberId,
   size = "default",
   memberName,
+  iconOnly = false,
 }: {
   memberId: Id<"users">;
   size?: "default" | "sm";
   memberName?: string;
+  iconOnly?: boolean;
 }) {
   const t = useTranslations("follow");
   const { data: relation } = useQuery(
@@ -52,6 +62,21 @@ export function FollowButton({
     follow.isPending || unfollow.isPending || cancelRequest.isPending;
 
   if (relation === undefined) {
+    if (iconOnly) {
+      return (
+        <Button
+          variant="outline"
+          size="icon"
+          className={ICON_BUTTON_CLASS}
+          disabled
+          aria-label={
+            memberName ? t("followName", { name: memberName }) : t("follow")
+          }
+        >
+          <UserPlus aria-hidden="true" />
+        </Button>
+      );
+    }
     return (
       <Button variant="outline" size={size} disabled>
         <UserPlus className="mr-2 h-4 w-4" />
@@ -95,6 +120,24 @@ export function FollowButton({
   };
 
   if (relation.following) {
+    if (iconOnly) {
+      return withTooltip(
+        <Button
+          variant="outline"
+          size="icon"
+          className={ICON_BUTTON_CLASS}
+          onClick={handleUnfollow}
+          disabled={pending}
+          aria-busy={pending || undefined}
+          aria-label={
+            memberName ? t("unfollowName", { name: memberName }) : t("unfollow")
+          }
+        >
+          {pending ? <BusyIcon /> : <UserMinus aria-hidden="true" />}
+        </Button>,
+        t("unfollow"),
+      );
+    }
     return (
       <Button
         variant="outline"
@@ -115,6 +158,40 @@ export function FollowButton({
         ? t("requestedStale", { name: memberName })
         : t("requestedStaleNoName")
       : t("requested");
+    if (iconOnly) {
+      // The stale label already names the member; otherwise qualify "Requested".
+      const ariaLabel = stale
+        ? label
+        : memberName
+          ? t("requestedName", { name: memberName })
+          : label;
+      return (
+        <DropdownMenu>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className={ICON_BUTTON_CLASS}
+                  disabled={pending}
+                  aria-busy={pending || undefined}
+                  aria-label={ariaLabel}
+                >
+                  {pending ? <BusyIcon /> : <Clock aria-hidden="true" />}
+                </Button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent>{label}</TooltipContent>
+          </Tooltip>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={handleCancel}>
+              {t("cancelRequest")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    }
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -134,6 +211,29 @@ export function FollowButton({
   }
 
   const requestMode = relation.targetIsPrivate && !relation.followsYou;
+  if (iconOnly) {
+    const ariaLabel = memberName
+      ? requestMode
+        ? t("requestToFollowName", { name: memberName })
+        : t("followName", { name: memberName })
+      : requestMode
+        ? t("requestToFollow")
+        : t("follow");
+    return withTooltip(
+      <Button
+        variant="default"
+        size="icon"
+        className={ICON_BUTTON_CLASS}
+        onClick={handleFollow}
+        disabled={pending}
+        aria-busy={pending || undefined}
+        aria-label={ariaLabel}
+      >
+        {pending ? <BusyIcon /> : <UserPlus aria-hidden="true" />}
+      </Button>,
+      requestMode ? t("requestToFollow") : t("follow"),
+    );
+  }
   return (
     <Button
       variant="default"
@@ -144,5 +244,26 @@ export function FollowButton({
       <UserPlus className="mr-2 h-4 w-4" />
       {requestMode ? t("requestToFollow") : t("follow")}
     </Button>
+  );
+}
+
+// Compact (iconOnly) mode: 36px, growing to a 44px target on touch screens.
+const ICON_BUTTON_CLASS = "pointer-coarse:size-11";
+
+function BusyIcon() {
+  return (
+    <Loader2
+      className="animate-spin motion-reduce:animate-none"
+      aria-hidden="true"
+    />
+  );
+}
+
+function withTooltip(trigger: ReactElement, label: string) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   );
 }
