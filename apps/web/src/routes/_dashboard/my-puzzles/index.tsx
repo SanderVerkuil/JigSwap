@@ -1,3 +1,4 @@
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -116,6 +117,7 @@ function PuzzlesPage() {
   const { user } = useUser();
   const router = useRouter();
   const t = useTranslations("puzzles");
+  const displayName = useMemberDisplayName();
   const tLending = useTranslations("lending");
   const tCommon = useTranslations("common");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -434,8 +436,9 @@ function PuzzlesPage() {
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="text-xs">
                         {tLending("onLoanTo", {
-                          name:
-                            loan.borrower?.name ?? tLending("unknownMember"),
+                          name: loan.borrower
+                            ? displayName(loan.borrower)
+                            : tLending("unknownMember"),
                         })}
                       </Badge>
                       <Button

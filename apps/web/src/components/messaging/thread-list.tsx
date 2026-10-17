@@ -7,9 +7,11 @@
 
 import { Link } from "@/compat/link";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
+import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { gateway } from "@/gateway";
 import { useDateFnsLocale } from "@/lib/date-locale";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
@@ -30,18 +32,16 @@ export function ThreadSubjectAvatar({
 }: {
   subject: InboxThread["subject"];
 }) {
+  const displayName = useMemberDisplayName();
   if (subject.kind === "dm" && !subject.otherMember.anonymous) {
-    const name = subject.otherMember.member.name;
+    const name = displayName(subject.otherMember.member);
     return (
       <Avatar className="size-10 shrink-0">
         {subject.otherMember.member.avatar && (
           <AvatarImage src={subject.otherMember.member.avatar} alt={name} />
         )}
         <AvatarFallback>
-          {name
-            .split(" ")
-            .map((n) => n[0])
-            .join("")}
+          <MemberInitial source={subject.otherMember.member} />
         </AvatarFallback>
       </Avatar>
     );
@@ -116,6 +116,7 @@ function ThreadRow({
   isLast: boolean;
 }) {
   const t = useTranslations("messages");
+  const displayName = useMemberDisplayName();
   const dateLocale = useDateFnsLocale();
 
   const unread = thread.unreadCount > 0;
@@ -141,7 +142,7 @@ function ThreadRow({
             unread ? "font-bold" : "font-semibold",
           )}
         >
-          {threadSubjectTitle(thread.subject, t)}
+          {threadSubjectTitle(thread.subject, t, displayName)}
         </p>
         <p
           className={cn(

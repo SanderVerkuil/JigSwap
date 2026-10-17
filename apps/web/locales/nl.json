@@ -1,5 +1,6 @@
 {
   "common": {
+    "genericMember": "Puzzelaar",
     "loading": "Laden...",
     "saving": "Opslaan...",
     "error": "Fout",

@@ -11,6 +11,9 @@ import {
 // interpolating — enough to assert both the key chosen and what was passed.
 const t = (key: string, values?: Record<string, string | number>) =>
   values ? `${key}:${Object.values(values).join("|")}` : key;
+// Stand-in for useMemberDisplayName: the name, or a marker for the generic label.
+const displayName = (source: { name?: string | null }) =>
+  source.name ?? "generic";
 
 describe("conversationErrorCode", () => {
   it("extracts the code from a ConvexError carrying one", () => {
@@ -45,7 +48,15 @@ describe("threadSubjectTitle", () => {
       kind: "dm",
       otherMember: { anonymous: false, member: { name: "Alice Johnson" } },
     } as InboxThread["subject"];
-    expect(threadSubjectTitle(subject, t)).toBe("Alice Johnson");
+    expect(threadSubjectTitle(subject, t, displayName)).toBe("Alice Johnson");
+  });
+
+  it("delegates a nameless revealed member to the display-name resolver", () => {
+    const subject = {
+      kind: "dm",
+      otherMember: { anonymous: false, member: {} },
+    } as InboxThread["subject"];
+    expect(threadSubjectTitle(subject, t, displayName)).toBe("generic");
   });
 
   it("uses the anonymous label for an anonymised DM partner — never an id", () => {
@@ -53,7 +64,7 @@ describe("threadSubjectTitle", () => {
       kind: "dm",
       otherMember: { anonymous: true, anonRef: "anon-123" },
     } as InboxThread["subject"];
-    expect(threadSubjectTitle(subject, t)).toBe("anonymous");
+    expect(threadSubjectTitle(subject, t, displayName)).toBe("anonymous");
   });
 
   it("titles an exchange thread with its type and puzzle title", () => {
@@ -63,7 +74,7 @@ describe("threadSubjectTitle", () => {
       exchangeType: "trade",
       puzzleTitle: "Neuschwanstein Castle",
     } as InboxThread["subject"];
-    expect(threadSubjectTitle(subject, t)).toBe(
+    expect(threadSubjectTitle(subject, t, displayName)).toBe(
       "exchangeThread:exchangeType.trade|Neuschwanstein Castle",
     );
   });
@@ -75,7 +86,7 @@ describe("threadSubjectTitle", () => {
       exchangeType: "loan",
       puzzleTitle: null,
     } as InboxThread["subject"];
-    expect(threadSubjectTitle(subject, t)).toBe(
+    expect(threadSubjectTitle(subject, t, displayName)).toBe(
       "exchangeThread:exchangeType.loan|untitledPuzzle",
     );
   });

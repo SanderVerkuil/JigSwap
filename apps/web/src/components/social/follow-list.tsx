@@ -1,8 +1,10 @@
 "use client";
 
+import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { gateway } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "use-intl";
@@ -17,6 +19,7 @@ export function FollowList({
   emptyHint: string;
 }) {
   const tCommon = useTranslations("common");
+  const displayName = useMemberDisplayName();
   const { data: edges } = useQuery(
     convexQuery(
       variant === "followers"
@@ -56,10 +59,12 @@ export function FollowList({
           >
             <Avatar className="h-8 w-8">
               <AvatarFallback>
-                {edge.displayName.charAt(0).toUpperCase()}
+                <MemberInitial source={{ name: edge.displayName }} />
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm font-medium">{edge.displayName}</span>
+            <span className="text-sm font-medium">
+              {displayName({ name: edge.displayName })}
+            </span>
           </li>
         ))}
       </ul>

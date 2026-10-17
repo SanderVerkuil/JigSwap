@@ -6,9 +6,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 
 export function UserProfile() {
   const { user } = useUser();
+  const displayName = useMemberDisplayName();
 
   if (!user) {
     return null;
@@ -34,7 +36,10 @@ export function UserProfile() {
           />
           <div className="grid flex-1 text-left text-sm leading-right">
             <span className="truncate font-medium">
-              {user.firstName} {user.lastName}
+              {displayName({
+                name: [user.firstName, user.lastName].filter(Boolean).join(" "),
+                username: user.username,
+              })}
             </span>
             <span className="truncate text-xs">
               {user.username || user.primaryEmailAddress?.emailAddress || ""}

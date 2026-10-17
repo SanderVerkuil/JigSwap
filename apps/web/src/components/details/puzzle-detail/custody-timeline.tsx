@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { gateway, Id } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
@@ -22,6 +23,7 @@ type ProjectedMember = CustodyTimelineView["currentOwner"];
 // each settled transfer -> current owner) from the custody read-model via the gateway.
 export function CustodyTimeline({ copyId }: CustodyTimelineProps) {
   const t = useTranslations("custody");
+  const displayName = useMemberDisplayName();
   const { data: timeline, isPending } = useQuery(
     convexQuery(gateway.custody.timeline, { copyId }),
   );
@@ -47,7 +49,7 @@ export function CustodyTimeline({ copyId }: CustodyTimelineProps) {
   // Render a privacy-projected member's name: a revealed member shows their name; an anonymised one
   // shows the "Anonymous user" label — never a real name.
   const ownerName = (member: ProjectedMember): string =>
-    member.anonymous ? t("anonymous") : member.member.name;
+    member.anonymous ? t("anonymous") : displayName(member.member);
 
   return (
     <Card>

@@ -3,6 +3,7 @@
 import { EmptyState } from "@/components/community/primitives";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
@@ -15,6 +16,7 @@ import { ACTIVITY_META, isKnownActivityKind } from "./activity-feed-meta";
 
 export function ActivityFeed() {
   const t = useTranslations("activity");
+  const displayName = useMemberDisplayName();
   const format = useFormatter();
   const { data: feed } = useQuery(convexQuery(gateway.social.activityFeed, {}));
   const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
@@ -56,7 +58,7 @@ export function ActivityFeed() {
                 {isYou
                   ? t(`${entry.kind}.you`)
                   : t.rich(`${entry.kind}.other`, {
-                      name: entry.actorName,
+                      name: displayName({ name: entry.actorName }),
                       strong: (chunks) => <strong>{chunks}</strong>,
                     })}
               </p>

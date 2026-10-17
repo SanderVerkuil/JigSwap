@@ -1,10 +1,12 @@
 "use client";
 
 import { useUser } from "@/compat/clerk";
+import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { gateway, Id } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { AtSign, Calendar, MapPin, Pencil, Star, X } from "lucide-react";
@@ -26,6 +28,7 @@ export function IdentityHeader({
   onToggleEdit: () => void;
 }) {
   const t = useTranslations("profile");
+  const displayName = useMemberDisplayName();
   const { user } = useUser();
   const { data: reputation } = useQuery(
     convexQuery(gateway.reputation.profile, {
@@ -41,26 +44,20 @@ export function IdentityHeader({
   );
 
   const avatarSrc = member.avatar ?? user?.imageUrl;
-  const initials = (member.name ?? "?")
-    .split(/\s+/)
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
   const memberYear = new Date(member.createdAt).getFullYear();
 
   return (
     <header className="flex flex-wrap items-center gap-x-5 gap-y-4 border-b pb-6">
       <Avatar className="size-[84px]">
-        <AvatarImage src={avatarSrc} alt={member.name} />
+        <AvatarImage src={avatarSrc} alt={displayName(member)} />
         <AvatarFallback className="font-heading bg-jigsaw-primary/10 text-jigsaw-primary text-2xl font-bold">
-          {initials}
+          <MemberInitial source={member} />
         </AvatarFallback>
       </Avatar>
 
       <div className="min-w-0 flex-1">
         <h2 className="font-heading text-3xl font-bold tracking-tight">
-          {member.name}
+          {displayName(member)}
         </h2>
         <div className="text-muted-foreground mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
           {member.username && (

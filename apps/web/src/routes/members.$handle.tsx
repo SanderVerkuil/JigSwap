@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { safeStorage } from "@/lib/safe-storage";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -71,7 +72,7 @@ export const Route = createFileRoute("/members/$handle")({
   head: ({ loaderData, match }) => ({
     meta: [
       {
-        title: loaderData?.profile
+        title: loaderData?.profile?.hero.displayName
           ? `${loaderData.profile.hero.displayName} — JigSwap`
           : pageTitle(match.context, "members"),
       },
@@ -93,6 +94,7 @@ function MemberPending() {
 
 function MemberPage() {
   const { userId } = useRouteContext({ from: "__root__" });
+  const displayName = useMemberDisplayName();
   const { handle } = Route.useParams();
   const { invite } = Route.useSearch();
   const { data: profile } = useQuery(
@@ -142,7 +144,11 @@ function MemberPage() {
             profile={profile}
             viewer="public"
             returnToHref={returnToHref}
-            invitedName={inviteValid ? profile.hero.displayName : undefined}
+            invitedName={
+              inviteValid
+                ? displayName({ name: profile.hero.displayName })
+                : undefined
+            }
           />
           {!profile.locked && <ProfileCtaBand returnToHref={returnToHref} />}
         </main>
@@ -172,6 +178,8 @@ function AuthedMemberPage({
   inviteValid: boolean;
 }) {
   const tShell = useTranslations("shell");
+  const displayName = useMemberDisplayName();
+  const name = displayName({ name: profile.hero.displayName });
   const memberId = profile.hero.memberId as Id<"users">;
 
   const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
@@ -190,14 +198,14 @@ function AuthedMemberPage({
   // under a Community › Members trail. Hook stays above the early return.
   usePageHeader(
     () => ({
-      title: profile.hero.displayName,
+      title: name,
       crumbs: [
         { label: tShell("groups.community.label"), href: "/community" },
         { label: tShell("pages.members.title"), href: "/people" },
       ],
       activeNavKey: "people",
     }),
-    [profile.hero.displayName, tShell],
+    [name, tShell],
   );
 
   // `me` unresolved -> loading OR the post-signup provisioning race (null):
@@ -208,7 +216,7 @@ function AuthedMemberPage({
     <>
       {isSelf && <OwnerPreviewBanner locked={profile.locked} />}
       {!isSelf && invite && inviteValid && (
-        <QrFollowPrompt token={invite} name={profile.hero.displayName} />
+        <QrFollowPrompt token={invite} name={name} />
       )}
       <ProfileBody
         profile={profile}

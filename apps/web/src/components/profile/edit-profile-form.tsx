@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
@@ -135,6 +136,7 @@ function EditProfileFormLoaded({
   onDone: () => void;
 }) {
   const t = useTranslations("profile");
+  const displayName = useMemberDisplayName();
   const { user } = useUser();
   // Wrap the Clerk username change so a session that needs step-up
   // reverification triggers Clerk's built-in modal and the update retries
@@ -234,14 +236,12 @@ function EditProfileFormLoaded({
           errors.slug = convexErrorMessage(err) ?? t("saveError");
         }
       }
-      // Bio lives on the Social profile (the public "story"). editProfile always
-      // writes displayName + bio together (a full replace), so the current
-      // displayName is sent through unchanged to avoid clobbering it.
+      // Bio lives on the Social profile (the public "story"). displayName is
+      // omitted so editProfile keeps the current one (or none) unchanged.
       const trimmedBio = bio.trim();
       if (trimmedBio !== (socialProfile?.bio ?? "")) {
         try {
           await editProfile({
-            displayName: socialProfile?.displayName ?? member.name,
             bio: trimmedBio === "" ? undefined : trimmedBio,
           });
         } catch (err) {
@@ -353,7 +353,10 @@ function EditProfileFormLoaded({
           <Label>{t("displayName.label")}</Label>
           <p className="text-muted-foreground text-sm">
             {t("displayName.helper", {
-              name: socialProfile?.displayName ?? member.name,
+              name: displayName({
+                ...member,
+                name: socialProfile?.displayName ?? member.name,
+              }),
             })}
           </p>
         </div>

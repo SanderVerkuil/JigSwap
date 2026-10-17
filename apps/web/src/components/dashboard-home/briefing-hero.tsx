@@ -1,10 +1,12 @@
 "use client";
 
 import { Link } from "@/compat/link";
+import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
@@ -103,6 +105,7 @@ function Headline({
 function PendingRequestBanner({ exchange }: { exchange: ExchangeRow }) {
   const t = useTranslations("dashboard.pendingBanner");
   const format = useFormatter();
+  const displayName = useMemberDisplayName();
 
   const requester = exchange.requester;
   const mine = exchange.requestedPuzzle?.title;
@@ -111,7 +114,7 @@ function PendingRequestBanner({ exchange }: { exchange: ExchangeRow }) {
 
   const message = theirs
     ? t.rich("swap", {
-        name: requester.name,
+        name: displayName(requester),
         theirs,
         mine,
         strong: (chunks) => (
@@ -128,7 +131,7 @@ function PendingRequestBanner({ exchange }: { exchange: ExchangeRow }) {
             ? "buy"
             : "want",
         {
-          name: requester.name,
+          name: displayName(requester),
           mine,
           strong: (chunks) => (
             <strong className="text-foreground">{chunks}</strong>
@@ -143,10 +146,10 @@ function PendingRequestBanner({ exchange }: { exchange: ExchangeRow }) {
     <div className="border-jigsaw-primary/20 bg-jigsaw-primary/5 flex flex-wrap items-center gap-3.5 rounded-xl border px-4 py-3">
       <Avatar className="size-10">
         {requester.avatar && (
-          <AvatarImage src={requester.avatar} alt={requester.name} />
+          <AvatarImage src={requester.avatar} alt={displayName(requester)} />
         )}
         <AvatarFallback>
-          {requester.name.charAt(0).toUpperCase()}
+          <MemberInitial source={requester} />
         </AvatarFallback>
       </Avatar>
       <div className="text-muted-foreground min-w-0 flex-1 text-sm">

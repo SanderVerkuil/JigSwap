@@ -4,6 +4,7 @@ import {
   type Translator,
 } from "@/components/messaging/format";
 import { gateway } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import usePresence from "@convex-dev/presence/react";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
@@ -52,6 +53,7 @@ function MessagesPresence({ memberId }: { memberId: string }) {
 function MessageToastWatcher() {
   const t = useTranslations("notifications");
   const tMessages = useTranslations("messages");
+  const displayName = useMemberDisplayName();
   const navigate = useNavigate();
   const { member } = useCurrentMember();
   const { threadId: activeThreadId } = useParams({ strict: false });
@@ -79,6 +81,7 @@ function MessageToastWatcher() {
         const name = threadSubjectTitle(
           thread.subject,
           tMessages as Translator,
+          displayName,
         );
         toast(t("newMessageToast", { name }), {
           action: {
@@ -93,7 +96,7 @@ function MessageToastWatcher() {
       }
     }
     lastSeen.current = next;
-  }, [inbox, member, activeThreadId, navigate, t, tMessages]);
+  }, [inbox, member, activeThreadId, navigate, t, tMessages, displayName]);
 
   return null;
 }

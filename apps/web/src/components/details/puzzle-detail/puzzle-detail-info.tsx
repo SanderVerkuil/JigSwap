@@ -1,4 +1,5 @@
 "use client";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +23,7 @@ export function PuzzleDetailInfo({
   showOwner = false,
 }: PuzzleDetailInfoProps) {
   const t = useTranslations("puzzles");
+  const displayName = useMemberDisplayName();
 
   // Early return if no puzzle data
   if (!puzzle.puzzle) {
@@ -96,7 +98,7 @@ export function PuzzleDetailInfo({
           <CardContent>
             <div className="flex items-center gap-3">
               <User className="h-5 w-5 text-muted-foreground" />
-              <span className="font-medium">{puzzle.owner.name}</span>
+              <span className="font-medium">{displayName(puzzle.owner)}</span>
             </div>
           </CardContent>
         </Card>

@@ -1,3 +1,5 @@
+import { MemberInitial } from "@/components/members/member-initial";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -40,6 +42,7 @@ const STATUS_VARIANT: Record<string, "secondary" | "outline" | "destructive"> =
 function AdminUserDetailPage() {
   const { userId } = Route.useParams();
   const t = useTranslations("admin.users");
+  const displayName = useMemberDisplayName();
   const format = useFormatter();
 
   const { data, isPending, isError } = useQuery(
@@ -75,18 +78,17 @@ function AdminUserDetailPage() {
         <div className="flex flex-wrap items-start gap-4">
           <Avatar className="size-16 shrink-0">
             {profile.avatar && (
-              <AvatarImage src={profile.avatar} alt={profile.name} />
+              <AvatarImage src={profile.avatar} alt={displayName(profile)} />
             )}
             <AvatarFallback>
-              {profile.name
-                .split(" ")
-                .map((part) => part[0])
-                .join("")}
+              <MemberInitial source={profile} />
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-lg font-semibold">{profile.name}</span>
+              <span className="text-lg font-semibold">
+                {displayName(profile)}
+              </span>
               {profile.isActive ? (
                 <Badge variant="secondary">{t("active")}</Badge>
               ) : (
@@ -106,7 +108,7 @@ function AdminUserDetailPage() {
           </div>
           <UserRoleAction
             userId={profile._id}
-            name={profile.name}
+            name={displayName(profile)}
             role={profile.role}
           />
         </div>

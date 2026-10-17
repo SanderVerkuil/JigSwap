@@ -7,6 +7,7 @@ import { toPlankBox } from "@/components/profile/to-plank-box";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, Settings2 } from "lucide-react";
@@ -22,6 +23,7 @@ import type { Member } from "./member-view";
 // curate and reorder up to 6 copies (sub-project ④).
 export function ProfileShelfSection({ member }: { member: Member }) {
   const t = useTranslations("profile.shelf");
+  const displayName = useMemberDisplayName();
   const tDashboardShelf = useTranslations("dashboard.shelf");
 
   const [arrangeOpen, setArrangeOpen] = useState(false);
@@ -44,7 +46,8 @@ export function ProfileShelfSection({ member }: { member: Member }) {
     }),
   );
 
-  const firstName = member.name?.split(/\s+/)[0] ?? member.name;
+  const name = displayName(member);
+  const firstName = name.split(/\s+/)[0] || name;
   const title = t("title", { name: firstName });
 
   // Current featured copy ids for seeding the arrange dialog.

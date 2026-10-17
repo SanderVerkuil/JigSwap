@@ -1,3 +1,4 @@
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -33,6 +34,7 @@ function BorrowedPending() {
 
 function BorrowedPage() {
   const t = useTranslations("lending");
+  const displayName = useMemberDisplayName();
   const tCommon = useTranslations("common");
   const tSolve = useTranslations("solving.logSolve");
   const tStart = useTranslations("solving.startSolve");
@@ -159,7 +161,9 @@ function BorrowedPage() {
                     <User className="h-4 w-4" />
                     <span>
                       {t("borrowedFrom", {
-                        name: loan.lender?.name ?? t("unknownMember"),
+                        name: loan.lender
+                          ? displayName(loan.lender)
+                          : t("unknownMember"),
                       })}
                     </span>
                   </div>

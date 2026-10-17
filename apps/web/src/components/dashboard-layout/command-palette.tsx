@@ -20,6 +20,7 @@ import { gateway } from "@/gateway";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 // sanctioned convex/react exception: useConvexAuth (see tanstack-query migration spec)
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { useConvexAuth } from "convex/react";
 import {
   CircleCheck,
@@ -53,6 +54,7 @@ export function CommandPalette({
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const t = useTranslations("shell");
+  const displayName = useMemberDisplayName();
   const router = useRouter();
   const { isAuthenticated } = useConvexAuth();
   const { user } = useUser();
@@ -203,7 +205,7 @@ export function CommandPalette({
                     ) : (
                       <User />
                     )}
-                    <span>{hit.name}</span>
+                    <span>{displayName({ name: hit.name })}</span>
                   </CommandItem>
                 ))}
               </CommandGroup>

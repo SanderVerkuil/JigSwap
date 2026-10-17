@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
@@ -397,11 +398,14 @@ function PublicReviewRow({
   last: boolean;
 }) {
   const t = useTranslations("publicCatalog");
-  const name = review.author?.name ?? t("anonymousReviewer");
+  const displayName = useMemberDisplayName();
+  const name = review.author
+    ? displayName(review.author)
+    : t("anonymousReviewer");
   return (
     <div className={cn("flex gap-3 py-3.5", !last && "border-border border-b")}>
       {review.author ? (
-        <MemberAvatar name={review.author.name} avatar={review.author.avatar} />
+        <MemberAvatar source={review.author} avatar={review.author.avatar} />
       ) : (
         <span className="bg-muted text-muted-foreground flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
           <UserRound className="h-4 w-4" />

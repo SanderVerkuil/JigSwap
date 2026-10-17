@@ -13,6 +13,7 @@
 import { Link } from "@/compat/link";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { gateway } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -33,6 +34,7 @@ export function ThreadView({
   hideHeader?: boolean;
 }) {
   const t = useTranslations("messages");
+  const displayName = useMemberDisplayName();
   const format = useFormatter();
   const { member } = useCurrentMember();
   const me = member?._id;
@@ -121,7 +123,7 @@ export function ThreadView({
             <>
               <ThreadSubjectAvatar subject={thread.subject} />
               <p className="font-heading min-w-0 truncate text-base font-bold">
-                {threadSubjectTitle(thread.subject, t)}
+                {threadSubjectTitle(thread.subject, t, displayName)}
               </p>
             </>
           ) : (

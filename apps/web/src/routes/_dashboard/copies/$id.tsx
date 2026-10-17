@@ -1,4 +1,6 @@
+import { MemberInitial } from "@/components/members/member-initial";
 import { durationParts } from "@/lib/humanize-duration";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -1130,6 +1132,7 @@ function CopyReviewsSection({
   reviews: CopyInstanceView["copyReviews"];
 }) {
   const t = useTranslations("copyInstance");
+  const displayName = useMemberDisplayName();
   const format = useFormatter();
   const formatDay = (timestamp: number) =>
     format.dateTime(new Date(timestamp), {
@@ -1173,13 +1176,15 @@ function CopyReviewsSection({
                   {!review.author.anonymous && review.author.member.avatar && (
                     <AvatarImage
                       src={review.author.member.avatar}
-                      alt={review.author.member.name}
+                      alt={displayName(review.author.member)}
                     />
                   )}
                   <AvatarFallback className="text-xs font-medium">
-                    {(review.author.anonymous ? "?" : review.author.member.name)
-                      .slice(0, 1)
-                      .toUpperCase()}
+                    <MemberInitial
+                      source={
+                        review.author.anonymous ? null : review.author.member
+                      }
+                    />
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
@@ -1220,6 +1225,7 @@ function StarGlyph() {
 
 function CommentsSection({ copyId }: { copyId: string }) {
   const t = useTranslations("copyInstance");
+  const displayName = useMemberDisplayName();
   const format = useFormatter();
   const { data: comments } = useQuery(
     convexQuery(gateway.social.listPuzzleComments, {
@@ -1265,9 +1271,9 @@ function CommentsSection({ copyId }: { copyId: string }) {
       {/* Composer */}
       <div className="mb-4 flex gap-2.5">
         <Avatar className="h-8 w-8">
-          {me?.avatar && <AvatarImage src={me.avatar} alt={me.name} />}
+          {me?.avatar && <AvatarImage src={me.avatar} alt={displayName(me)} />}
           <AvatarFallback className="text-xs font-medium">
-            {(me?.name ?? "?").slice(0, 1).toUpperCase()}
+            <MemberInitial source={me} />
           </AvatarFallback>
         </Avatar>
         <div className="flex flex-1 gap-2">
@@ -1320,7 +1326,8 @@ function CommentRow({
   relative: (timestamp: number) => string;
   last: boolean;
 }) {
-  const name = comment.author.name;
+  const displayName = useMemberDisplayName();
+  const name = displayName(comment.author);
   return (
     <div className={cn("flex gap-3 py-3.5", !last && "border-border border-b")}>
       <Avatar className="h-8 w-8">
@@ -1328,7 +1335,7 @@ function CommentRow({
           <AvatarImage src={comment.author.avatar} alt={name} />
         )}
         <AvatarFallback className="text-xs font-medium">
-          {name.slice(0, 1).toUpperCase()}
+          <MemberInitial source={comment.author} />
         </AvatarFallback>
       </Avatar>
       <div className="min-w-0 flex-1">
@@ -1350,8 +1357,9 @@ function CommentRow({
 // anonymised one shows the i18n "Anonymous user" label — never a real name.
 function ProjectedName({ member }: { member: ProjectedMember }) {
   const t = useTranslations("copyInstance");
+  const displayName = useMemberDisplayName();
   if (member.anonymous) {
     return <span className="font-semibold">{t("anonymousUser")}</span>;
   }
-  return <span className="font-semibold">{member.member.name}</span>;
+  return <span className="font-semibold">{displayName(member.member)}</span>;
 }

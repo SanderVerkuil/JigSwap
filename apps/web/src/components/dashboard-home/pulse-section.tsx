@@ -1,12 +1,14 @@
 "use client";
 
 import { Link } from "@/compat/link";
+import { MemberInitial } from "@/components/members/member-initial";
 import { isKnownActivityKind } from "@/components/social/activity-feed-meta";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
@@ -67,6 +69,7 @@ function ExchangeTimelineRow({
   isLast: boolean;
 }) {
   const t = useTranslations("dashboard.pulse.inMotion");
+  const displayName = useMemberDisplayName();
 
   const incoming = exchange.userRole === "owner";
   // On an exchange the REQUESTED puzzle belongs to the owner; the OFFERED one
@@ -79,8 +82,8 @@ function ExchangeTimelineRow({
     : exchange.requestedPuzzle?.title;
   const primary = mineTitle ?? theirsTitle;
   const secondary = mineTitle ? theirsTitle : undefined;
-  const who =
-    (incoming ? exchange.requester?.name : exchange.owner?.name) ?? "";
+  const counterparty = incoming ? exchange.requester : exchange.owner;
+  const who = counterparty ? displayName(counterparty) : "";
 
   const KindIcon = exchange.type === "loan" ? Package : ArrowLeftRight;
 
@@ -308,6 +311,7 @@ function ActivityRow({
 }) {
   const t = useTranslations("dashboard.pulse.latest");
   const format = useFormatter();
+  const displayName = useMemberDisplayName();
 
   const isMe = entry.memberId === me._id;
   // The feed entry only carries the member id; resolve the display identity
@@ -332,12 +336,16 @@ function ActivityRow({
   return (
     <div className={cn("flex gap-3 py-2.5", !isLast && "border-b")}>
       <Avatar className="size-8">
-        {actor.avatar && <AvatarImage src={actor.avatar} alt={actor.name} />}
-        <AvatarFallback>{actor.name.charAt(0).toUpperCase()}</AvatarFallback>
+        {actor.avatar && (
+          <AvatarImage src={actor.avatar} alt={displayName(actor)} />
+        )}
+        <AvatarFallback>
+          <MemberInitial source={actor} />
+        </AvatarFallback>
       </Avatar>
       <div className="text-muted-foreground min-w-0 flex-1 text-sm leading-snug">
         {t.rich(entry.kind, {
-          name: actor.name,
+          name: displayName(actor),
           strong: (chunks) => (
             <strong className="text-foreground">{chunks}</strong>
           ),

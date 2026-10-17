@@ -1,4 +1,5 @@
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -395,6 +396,7 @@ function AvailableToSwap({
   totalAvailable: number;
 }) {
   const t = useTranslations("puzzleDefinition");
+  const displayName = useMemberDisplayName();
   return (
     <section>
       <SectionHead
@@ -416,12 +418,12 @@ function AvailableToSwap({
               )}
             >
               <MemberAvatar
-                name={copy.owner.name}
+                source={{ name: copy.owner.name }}
                 avatar={copy.owner.avatarUrl}
               />
               <div className="min-w-0 flex-1">
                 <div className="text-foreground truncate text-sm font-medium">
-                  {copy.owner.name}
+                  {displayName({ name: copy.owner.name })}
                 </div>
                 <div className="text-muted-foreground truncate text-xs">
                   {copy.owner.location ?? ""}
@@ -535,7 +537,7 @@ function ReviewsSection({
 
       {/* Composer */}
       <div className="mb-4 flex gap-2.5">
-        <MemberAvatar name={me?.name ?? "?"} avatar={me?.avatar} />
+        <MemberAvatar source={me} avatar={me?.avatar} />
         <div className="flex flex-1 flex-col gap-2">
           <div className="flex gap-2">
             <Input
@@ -598,10 +600,11 @@ function ReviewRow({
   relative: (timestamp: number) => string;
   last: boolean;
 }) {
-  const name = review.author.name;
+  const displayName = useMemberDisplayName();
+  const name = displayName(review.author);
   return (
     <div className={cn("flex gap-3 py-3.5", !last && "border-border border-b")}>
-      <MemberAvatar name={name} avatar={review.author.avatar} />
+      <MemberAvatar source={review.author} avatar={review.author.avatar} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-foreground text-sm font-semibold">{name}</span>
