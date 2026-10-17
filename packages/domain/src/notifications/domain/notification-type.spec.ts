@@ -27,6 +27,7 @@ describe("NOTIFICATION_TYPES", () => {
       "follow_request_approved",
       "household_invite_received",
       "household_invite_accepted",
+      "whats_new",
     ]);
   });
 });
@@ -49,6 +50,10 @@ describe("EMAIL_ELIGIBLE_TYPES", () => {
         "follow_request_approved",
       ].sort(),
     );
+  });
+
+  it("never emails product news (whats_new is in-app/push only)", () => {
+    expect(EMAIL_ELIGIBLE_TYPES.has("whats_new")).toBe(false);
   });
 
   it("only contains canonical notification types", () => {
