@@ -341,7 +341,8 @@ function NotificationsPage() {
                         category:
                           CATEGORY_BY_TYPE[row.type as NotificationType],
                         onOpen: handleOpen,
-                        onMarkRead: handleMarkRead,
+                        // handleMarkRead catches its own errors (toast).
+                        onMarkRead: (row) => void handleMarkRead(row),
                       }),
                     )}
                   </ul>
