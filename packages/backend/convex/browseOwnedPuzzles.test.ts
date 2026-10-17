@@ -212,7 +212,7 @@ describe("library.browseOwnedPuzzles privacy gating", () => {
 describe("library.browseOwnedPuzzles puzzleId filter", () => {
   // A second definition with a public-open copy and a private (unreachable) open copy, so the
   // filter is checked both for narrowing and for keeping the visibility rules intact.
-  const seedSecondPuzzle = async (t: ReturnType<typeof convexTest>) =>
+  const seedSecondPuzzle = async (t: TestConvex<typeof schema>) =>
     t.run(async (ctx) => {
       const now = Date.now();
       const owner = await ctx.db

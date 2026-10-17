@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { beforeEach, describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
@@ -10,7 +10,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 // Bulk household permission: Ann and Bob share a household, Cat is in none. Ann owns three copies
 // (absent = manage, explicit view, explicit manage); Bob and Cat own one each.
 
-type T = ReturnType<typeof convexTest>;
+type T = TestConvex<typeof schema>;
 type Who = "ann" | "bob" | "cat";
 
 const as = (t: T, who: Who) => t.withIdentity({ subject: `clerk_${who}` });

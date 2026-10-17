@@ -1,5 +1,5 @@
 import type { WhatsNewManifestEntry } from "@jigswap/contracts";
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
@@ -43,7 +43,7 @@ beforeEach(() => {
   fixture.manifest = [NEW, MID, OLD];
 });
 
-type T = ReturnType<typeof convexTest>;
+type T = TestConvex<typeof schema>;
 
 // Ann joined between OLD and MID; Bob joined after every entry.
 const seed = async (t: T) =>
