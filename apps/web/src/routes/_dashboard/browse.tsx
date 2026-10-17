@@ -202,7 +202,16 @@ function BrowsePage() {
               }
               onRequestExchange={
                 canRequestTrade(puzzle, convexUser?._id)
-                  ? () => setRequestCopy(puzzle)
+                  ? () =>
+                      setRequestCopy({
+                        copyId: puzzle._id,
+                        ownerId: puzzle.ownerId,
+                        owner: puzzle.owner,
+                        title: puzzle.puzzle?.title ?? "",
+                        pieceCount: puzzle.puzzle?.pieceCount,
+                        coverUrl: puzzle.coverUrl,
+                        availability: puzzle.availability,
+                      })
                   : undefined
               }
               onMessage={

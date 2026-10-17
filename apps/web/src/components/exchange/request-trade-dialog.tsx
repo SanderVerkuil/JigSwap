@@ -23,7 +23,7 @@ import {
 import { gateway, type Id } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
-import type { OwnedCopyView } from "@jigswap/contracts";
+import type { MemberNameSource } from "@jigswap/contracts";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
@@ -31,16 +31,22 @@ import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import {
   allowedProposeTypes,
+  type Availability,
   parsePriceCents,
   proposeErrorKey,
   type ProposeType,
 } from "./request-trade";
 
-// The copy being requested, as the browse read ships it (with the owner joined).
-export type RequestableCopy = Pick<
-  OwnedCopyView,
-  "_id" | "ownerId" | "availability" | "puzzle" | "owner" | "coverUrl"
->;
+// The copy being requested, normalized by each surface (browse card, copy page).
+export interface RequestableCopy {
+  copyId: string;
+  ownerId: string;
+  owner: (MemberNameSource & { avatar?: string }) | null | undefined;
+  title: string;
+  pieceCount?: number;
+  coverUrl?: string | null;
+  availability: Availability;
+}
 
 interface RequestTradeDialogProps {
   copy: RequestableCopy | null;
@@ -59,7 +65,7 @@ export function RequestTradeDialog({
       <DialogContent>
         {copy && (
           <RequestTradeForm
-            key={copy._id}
+            key={copy.copyId}
             copy={copy}
             onDone={() => onOpenChange(false)}
           />
@@ -92,13 +98,12 @@ function RequestTradeForm({
     convexQuery(
       gateway.exchange.offerableCopies,
       type === "trade"
-        ? { requestedPuzzleId: copy._id as Id<"ownedPuzzles"> }
+        ? { requestedPuzzleId: copy.copyId as Id<"ownedPuzzles"> }
         : "skip",
     ),
   );
 
   const ownerName = displayName(copy.owner);
-  const title = copy.puzzle?.title ?? "";
   const priceCents = parsePriceCents(price);
   const ready =
     (type === "trade" && offeredId !== "") ||
@@ -111,7 +116,7 @@ function RequestTradeForm({
       await propose.mutateAsync({
         recipientId: copy.ownerId as Id<"users">,
         type,
-        requestedPuzzleId: copy._id as Id<"ownedPuzzles">,
+        requestedPuzzleId: copy.copyId as Id<"ownedPuzzles">,
         ...(type === "trade"
           ? { offeredPuzzleId: offeredId as Id<"ownedPuzzles"> }
           : {}),
@@ -144,10 +149,10 @@ function RequestTradeForm({
             />
           ) : null}
           <div className="min-w-0 flex-1">
-            <p className="truncate font-medium">{title}</p>
-            {copy.puzzle ? (
+            <p className="truncate font-medium">{copy.title}</p>
+            {copy.pieceCount !== undefined ? (
               <p className="text-muted-foreground text-sm">
-                {t("pieces", { count: copy.puzzle.pieceCount })}
+                {t("pieces", { count: copy.pieceCount })}
               </p>
             ) : null}
             <div className="mt-1 flex items-center gap-2">

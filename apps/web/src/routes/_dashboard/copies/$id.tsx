@@ -16,6 +16,10 @@ import {
   type NavContext,
 } from "@/components/dashboard-layout/nav-context";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import {
+  RequestTradeDialog,
+  type RequestableCopy,
+} from "@/components/exchange/request-trade-dialog";
 import { HouseholdAccess } from "@/components/household/household-access";
 import { ImageEditorDialog } from "@/components/image-editor/image-editor-dialog";
 import { EmptyState } from "@/components/library/empty-state";
@@ -230,6 +234,8 @@ function CopyInstanceDetail({
   // copy editor (also reachable from the page-head Edit button registered below).
   const [logOpen, setLogOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  // The trade-request dialog's target (null = closed); set from the non-owner Request action.
+  const [requestCopy, setRequestCopy] = useState<RequestableCopy | null>(null);
   // Start/Finish solve swap: `startOpen` drives the start dialog; `finishTarget` holds the
   // in-progress completion being finished (null = finish dialog closed).
   const [startOpen, setStartOpen] = useState(false);
@@ -593,10 +599,27 @@ function CopyInstanceDetail({
               </>
             ) : (
               <>
-                <Button variant="brand" onClick={() => router.push("/trades")}>
-                  <ArrowLeftRight className="h-4 w-4" />
-                  {t("actions.requestSwap")}
-                </Button>
+                {/* An anonymous (privacy-projected) owner can't be named as the recipient. */}
+                {isAvailable && !copy.owner.anonymous && (
+                  <Button
+                    variant="brand"
+                    onClick={() => {
+                      if (copy.owner.anonymous) return;
+                      setRequestCopy({
+                        copyId: copy.copyId,
+                        ownerId: copy.owner.member._id,
+                        owner: copy.owner.member,
+                        title: snapshot.title,
+                        pieceCount: snapshot.pieceCount,
+                        coverUrl: snapshot.image,
+                        availability,
+                      });
+                    }}
+                  >
+                    <ArrowLeftRight className="h-4 w-4" />
+                    {t("actions.requestSwap")}
+                  </Button>
+                )}
                 {!copy.owner.anonymous && (
                   <Button
                     variant="outline"
@@ -612,6 +635,12 @@ function CopyInstanceDetail({
           {copy.household && (
             <HouseholdAccess copyId={copyId} household={copy.household} />
           )}
+          <RequestTradeDialog
+            copy={requestCopy}
+            onOpenChange={(open) => {
+              if (!open) setRequestCopy(null);
+            }}
+          />
         </div>
       </section>
 
