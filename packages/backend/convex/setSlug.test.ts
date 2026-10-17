@@ -2,6 +2,7 @@ import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -32,8 +33,8 @@ const asBob = (t: TestConvex<typeof schema>) =>
 // t.run's return value round-trips through Convex value normalization, which turns a bare
 // `undefined` into `null` — so fetch the whole doc inside t.run and destructure OUTSIDE it,
 // where an absent `slug` key genuinely reads back as `undefined`.
-const getSlug = async (t: TestConvex<typeof schema>, userId: string) => {
-  const doc = await t.run(async (ctx) => ctx.db.get(userId as never));
+const getSlug = async (t: TestConvex<typeof schema>, userId: Id<"users">) => {
+  const doc = await t.run(async (ctx) => ctx.db.get(userId));
   return doc?.slug;
 };
 
