@@ -1427,6 +1427,56 @@
     "updatedAgo": "Updated {time}",
     "added": "Added"
   },
+  "household": {
+    "loading": "Loading your household...",
+    "joined": "You joined the household",
+    "explainer": "Everyone in your household sees each other's puzzles in My puzzles. Puzzles stay owned by whoever added them; owners choose per puzzle whether the household can manage it (edit, lend, swap) or only view it. Solves stay personal.",
+    "empty": {
+      "title": "You're not in a household yet",
+      "sub": "Create a household to share your puzzle library with the people you live with, then invite them.",
+      "create": "Create household"
+    },
+    "invites": {
+      "title": "Household invites",
+      "from": "invited you",
+      "accept": "Accept",
+      "decline": "Decline"
+    },
+    "members": {
+      "title": "Members",
+      "you": "(you)",
+      "admin": "Admin",
+      "remove": "Remove",
+      "removeTitle": "Remove {name} from the household?",
+      "removeBody": "Their puzzles leave the household with them, and they will no longer see yours."
+    },
+    "invite": {
+      "title": "Invite someone",
+      "searchPlaceholder": "Search members by name",
+      "action": "Invite",
+      "sent": "Invite sent",
+      "pending": "Waiting for a response",
+      "pendingBadge": "Invited"
+    },
+    "leave": {
+      "action": "Leave household",
+      "title": "Leave the household?",
+      "body": "Your puzzles leave the household with you, and you will no longer see the others' puzzles.",
+      "bodyLast": "You are the last member, so the household will be dissolved and any pending invites cancelled."
+    },
+    "errors": {
+      "generic": "Something went wrong. Please try again.",
+      "AlreadyInHousehold": "You are already in a household.",
+      "NotInHousehold": "You are not in a household.",
+      "InviteeAlreadyInHousehold": "This member is already in a household.",
+      "DuplicateInvite": "This member already has a pending invite.",
+      "InviteNotFound": "This invite no longer exists.",
+      "HouseholdNotFound": "This household no longer exists.",
+      "NotHouseholdAdmin": "Only the household admin can do this.",
+      "InviteNotPending": "This invite has already been answered.",
+      "MemberNotFound": "This member could not be found."
+    }
+  },
   "circles": {
     "yourCircles": "Your Circles",
     "meta": "Private groups to swap within",
