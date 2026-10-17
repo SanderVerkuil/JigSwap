@@ -782,6 +782,16 @@
       },
       "arrangeShelf": "Arrange shelf"
     },
+    "puzzles": {
+      "title": "{name}'s puzzles",
+      "showMore": "Show more"
+    },
+    "completions": {
+      "title": "{name}'s completions",
+      "untitled": "A puzzle",
+      "pieces": "{count, plural, one {# piece} other {# pieces}}",
+      "showMore": "Show more"
+    },
     "currentlySolving": {
       "title": "{name} is currently solving",
       "untitled": "A puzzle",

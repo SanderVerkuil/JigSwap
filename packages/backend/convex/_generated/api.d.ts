@@ -308,6 +308,8 @@ import type * as social_knownFollowers from "../social/knownFollowers.js";
 import type * as social_listFollowees from "../social/listFollowees.js";
 import type * as social_listFollowers from "../social/listFollowers.js";
 import type * as social_listIncomingFollowRequests from "../social/listIncomingFollowRequests.js";
+import type * as social_listProfileCompletions from "../social/listProfileCompletions.js";
+import type * as social_listProfileCopies from "../social/listProfileCopies.js";
 import type * as social_listPublicPuzzleReviews from "../social/listPublicPuzzleReviews.js";
 import type * as social_listPuzzleComments from "../social/listPuzzleComments.js";
 import type * as social_listPuzzleReviews from "../social/listPuzzleReviews.js";
@@ -658,6 +660,8 @@ declare const fullApi: ApiFromModules<{
   "social/listFollowees": typeof social_listFollowees;
   "social/listFollowers": typeof social_listFollowers;
   "social/listIncomingFollowRequests": typeof social_listIncomingFollowRequests;
+  "social/listProfileCompletions": typeof social_listProfileCompletions;
+  "social/listProfileCopies": typeof social_listProfileCopies;
   "social/listPublicPuzzleReviews": typeof social_listPublicPuzzleReviews;
   "social/listPuzzleComments": typeof social_listPuzzleComments;
   "social/listPuzzleReviews": typeof social_listPuzzleReviews;

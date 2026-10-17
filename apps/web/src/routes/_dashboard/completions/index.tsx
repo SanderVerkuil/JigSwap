@@ -30,6 +30,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { gateway, Id } from "@/gateway";
+import { formatSolveTime, hrefForLink } from "@/lib/completion-format";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -55,16 +56,6 @@ type DialogState =
     }
   | { kind: "delete"; completionId: string }
   | null;
-
-// Route target for a completion's server-resolved navigation link (ids are doc _ids).
-function hrefForLink(link: {
-  kind: "myCopy" | "copy" | "definition";
-  id: string;
-}): string {
-  if (link.kind === "myCopy") return `/my-puzzles/${link.id}`;
-  if (link.kind === "copy") return `/copies/${link.id}`;
-  return `/puzzles/${link.id}`;
-}
 
 export const Route = createFileRoute("/_dashboard/completions/")({
   head: ({ match }) => ({
@@ -165,21 +156,7 @@ function CompletionsPage() {
     return <CompletionsSkeleton />;
   }
 
-  const formatTime = (minutes?: number): string => {
-    if (minutes === undefined) return t("noTime");
-    const days = Math.floor(minutes / 1440);
-    const rest = minutes % 1440;
-    const h = Math.floor(rest / 60);
-    const m = rest % 60;
-    if (days > 0) {
-      return h === 0 && m === 0
-        ? t("timeDays", { days })
-        : t("timeDaysHours", { days, hours: h, minutes: m });
-    }
-    return h > 0
-      ? t("time", { hours: h, minutes: m })
-      : t("timeMinutes", { minutes: m });
-  };
+  const formatTime = (minutes?: number): string => formatSolveTime(t, minutes);
 
   const formatDate = (ms: number) => new Date(ms).toLocaleDateString();
 

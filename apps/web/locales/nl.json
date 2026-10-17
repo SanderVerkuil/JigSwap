@@ -782,6 +782,16 @@
       },
       "arrangeShelf": "Plank indelen"
     },
+    "puzzles": {
+      "title": "Puzzels van {name}",
+      "showMore": "Meer tonen"
+    },
+    "completions": {
+      "title": "Voltooid door {name}",
+      "untitled": "Een puzzel",
+      "pieces": "{count, plural, one {# stukje} other {# stukjes}}",
+      "showMore": "Meer tonen"
+    },
     "currentlySolving": {
       "title": "{name} is nu bezig met",
       "untitled": "Een puzzel",
