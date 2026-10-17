@@ -472,7 +472,10 @@ function CompletionsPage() {
           <>
             {inProgress.length > 0 && (
               <>
-                <h2 className="text-muted-foreground mb-2 text-sm font-medium">
+                <h2
+                  className="text-muted-foreground mb-2 text-sm font-medium"
+                  data-tour="completions-in-progress"
+                >
                   {t("inProgressSection")}
                 </h2>
                 <div className="mb-6 flex flex-col">

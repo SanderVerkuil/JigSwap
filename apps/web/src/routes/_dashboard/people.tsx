@@ -234,7 +234,11 @@ function PeoplePage() {
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className={UNDERLINE_TABS_LIST_CLASS}>
-          <TabsTrigger value="network" className={TAB_TRIGGER_CLASS}>
+          <TabsTrigger
+            value="network"
+            className={TAB_TRIGGER_CLASS}
+            data-tour="people-network"
+          >
             <Users aria-hidden />
             {t("tabs.network")}
             <TabCount count={pendingCount > 0 ? pendingCount : undefined} />

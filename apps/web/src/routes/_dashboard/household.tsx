@@ -160,6 +160,7 @@ function HouseholdPage() {
           action={
             <Button
               variant="brand"
+              data-tour="household-main"
               disabled={create.isPending}
               onClick={() => create.mutate({})}
             >
@@ -231,7 +232,7 @@ function HouseholdDetails({
         {t("explainer")}
       </p>
 
-      <section className="space-y-2">
+      <section className="space-y-2" data-tour="household-main">
         <h2 className="font-heading text-lg font-bold">{t("members.title")}</h2>
         <div className="divide-y rounded-lg border px-4">
           {household.members.map((member) => (
@@ -278,6 +279,7 @@ function HouseholdDetails({
             placeholder={t("invite.searchPlaceholder")}
             aria-label={t("invite.searchPlaceholder")}
             className="max-w-md"
+            data-tour="household-invite"
           />
           {candidates.length > 0 && (
             <div className="divide-y rounded-lg border px-4">

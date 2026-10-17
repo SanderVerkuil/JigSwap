@@ -59,6 +59,7 @@ export function UserFooter() {
   return (
     <div
       ref={rootRef}
+      data-tour="account-menu"
       className="flex items-center gap-2 rounded-md p-1.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
     >
       <ShellUserButton />
