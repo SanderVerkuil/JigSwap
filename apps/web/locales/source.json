@@ -635,6 +635,38 @@
       "disputed": "Disputed"
     }
   },
+  "tradeRequest": {
+    "title": "Request this puzzle",
+    "description": "Send {name} a request for this copy.",
+    "ownedBy": "Owned by {name}",
+    "pieces": "{count} pieces",
+    "typeLabel": "Exchange type",
+    "types": {
+      "trade": "Swap",
+      "sale": "Buy",
+      "loan": "Borrow"
+    },
+    "offerLabel": "Puzzle you offer",
+    "offerPlaceholder": "Choose one of your puzzles",
+    "offerHousehold": "{title} ({name}, household)",
+    "noOfferable": "You have no puzzles you can offer in a swap.",
+    "priceLabel": "Your offer (EUR)",
+    "pricePlaceholder": "e.g. 15.00",
+    "priceInvalid": "Enter an amount above zero, like 15 or 15.50.",
+    "cancel": "Cancel",
+    "submit": "Send request",
+    "submitting": "Sending...",
+    "success": "Trade request sent",
+    "errors": {
+      "notAvailable": "This puzzle is no longer available for that exchange.",
+      "notFound": "This puzzle is no longer available.",
+      "offeredNotOwned": "You can't offer that puzzle in this swap.",
+      "duplicate": "You already have an open request for this puzzle.",
+      "ownCopy": "You can't request your own puzzle.",
+      "missingTerms": "Some details are missing. Check the form and try again.",
+      "generic": "Couldn't send the request. Please try again."
+    }
+  },
   "reputation": {
     "title": "Reputation",
     "subtitle": "Trust signals from completed exchanges.",
