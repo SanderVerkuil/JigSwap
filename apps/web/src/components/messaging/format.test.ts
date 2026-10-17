@@ -3,7 +3,11 @@ import { describe, expect, it } from "vitest";
 import type { InboxThread } from "./format";
 import {
   conversationErrorCode,
+  formatCompactTime,
+  formatDayLabel,
+  formatFullDateTime,
   formatUnreadCount,
+  groupThreadMessages,
   threadSubjectTitle,
 } from "./format";
 
@@ -89,5 +93,187 @@ describe("threadSubjectTitle", () => {
     expect(threadSubjectTitle(subject, t, displayName)).toBe(
       "exchangeThread:exchangeType.loan|untitledPuzzle",
     );
+  });
+});
+
+// Real ICU-backed translator for the time/day keys, per locale, mirroring the
+// en/nl message catalogues (§10 of the message-center spec).
+const catalogue: Record<string, Record<string, string>> = {
+  en: {
+    "time.now": "now",
+    "time.minutes": "{count}m",
+    "time.hours": "{count}h",
+    dayToday: "Today",
+    dayYesterday: "Yesterday",
+  },
+  nl: {
+    "time.now": "nu",
+    "time.minutes": "{count} min",
+    "time.hours": "{count} u",
+    dayToday: "Vandaag",
+    dayYesterday: "Gisteren",
+  },
+};
+const tFor =
+  (locale: string) => (key: string, values?: Record<string, string | number>) =>
+    catalogue[locale][key].replace(/\{(\w+)\}/g, (_, name: string) =>
+      String(values?.[name]),
+    );
+// ICU separates time and day period with a narrow no-break space; compare on plain spaces.
+const plain = (value: string) => value.replace(/\s/g, " ");
+
+// Local-time fixtures so the assertions hold in any test-runner time zone.
+// "now" is Monday 19 Oct 2026, 15:00.
+const NOW = new Date(2026, 9, 19, 15, 0).getTime();
+const MIN = 60_000;
+const HOUR = 60 * MIN;
+
+describe("formatCompactTime", () => {
+  it.each([
+    ["en", NOW - 30_000, "now"],
+    ["nl", NOW - 30_000, "nu"],
+    ["en", NOW - 5 * MIN, "5m"],
+    ["nl", NOW - 5 * MIN, "5 min"],
+    ["en", NOW - 2 * HOUR, "2h"],
+    ["nl", NOW - 2 * HOUR, "2 u"],
+    // Thu 15 Oct (4 days back) → weekday
+    ["en", new Date(2026, 9, 15, 9, 0).getTime(), "Thu"],
+    ["nl", new Date(2026, 9, 15, 9, 0).getTime(), "do"],
+    // Same year, ≥ 7 days → day + month
+    ["en", new Date(2026, 9, 12, 14, 5).getTime(), "Oct 12"],
+    ["nl", new Date(2026, 9, 12, 14, 5).getTime(), "12 okt"],
+    // Previous year → with year
+    ["en", new Date(2025, 9, 12, 14, 5).getTime(), "Oct 12, 2025"],
+    ["nl", new Date(2025, 9, 12, 14, 5).getTime(), "12 okt 2025"],
+  ])("%s: renders %i compactly as %s", (locale, at, expected) => {
+    expect(formatCompactTime(at, NOW, locale, tFor(locale))).toBe(expected);
+  });
+
+  it("treats a slightly-future timestamp (clock skew) as now", () => {
+    expect(formatCompactTime(NOW + 5_000, NOW, "en", tFor("en"))).toBe("now");
+  });
+
+  it("switches from minutes to hours at 60 minutes", () => {
+    expect(formatCompactTime(NOW - 59 * MIN, NOW, "en", tFor("en"))).toBe(
+      "59m",
+    );
+    expect(formatCompactTime(NOW - 60 * MIN, NOW, "en", tFor("en"))).toBe("1h");
+  });
+});
+
+describe("formatFullDateTime", () => {
+  it.each([
+    ["en", "Monday, October 12, 2026 at 2:05 PM"],
+    ["nl", "maandag 12 oktober 2026 om 14:05"],
+  ])("%s: renders the full date and time", (locale, expected) => {
+    const at = new Date(2026, 9, 12, 14, 5).getTime();
+    expect(plain(formatFullDateTime(at, locale))).toBe(expected);
+  });
+});
+
+describe("formatDayLabel", () => {
+  it.each([
+    ["en", new Date(2026, 9, 19, 0, 5).getTime(), "Today"],
+    ["nl", new Date(2026, 9, 19, 0, 5).getTime(), "Vandaag"],
+    ["en", new Date(2026, 9, 18, 23, 55).getTime(), "Yesterday"],
+    ["nl", new Date(2026, 9, 18, 23, 55).getTime(), "Gisteren"],
+    // 6 calendar days back → long weekday
+    ["en", new Date(2026, 9, 13, 10, 0).getTime(), "Tuesday"],
+    ["nl", new Date(2026, 9, 13, 10, 0).getTime(), "dinsdag"],
+    // 7 calendar days back, this year → short weekday + date
+    ["en", new Date(2026, 9, 12, 10, 0).getTime(), "Mon, Oct 12"],
+    ["nl", new Date(2026, 9, 12, 10, 0).getTime(), "ma 12 okt"],
+    // Older year → date with year
+    ["en", new Date(2025, 9, 12, 10, 0).getTime(), "Oct 12, 2025"],
+    ["nl", new Date(2025, 9, 12, 10, 0).getTime(), "12 okt 2025"],
+  ])("%s: labels %i as %s", (locale, at, expected) => {
+    expect(formatDayLabel(at, NOW, locale, tFor(locale))).toBe(expected);
+  });
+});
+
+describe("groupThreadMessages", () => {
+  const ME = "me";
+  const msg = (
+    id: string,
+    authorId: string | null,
+    sentAt: number,
+    kind: "text" | "system" = authorId === null ? "system" : "text",
+  ) => ({ id, authorId, kind, body: id, sentAt });
+  const at = (hour: number, minute: number, day = 19) =>
+    new Date(2026, 9, day, hour, minute).getTime();
+  // Compact shape for assertions: day labels, system ids, and groups as "own|other:ids".
+  const shape = (items: ReturnType<typeof groupThreadMessages>) =>
+    items.map((item) =>
+      item.type === "day"
+        ? `day:${item.label}`
+        : item.type === "system"
+          ? `system:${item.message.id}`
+          : `${item.own ? "own" : "other"}:${item.messages.map((m) => m.id).join(",")}`,
+    );
+
+  it("returns nothing for an empty thread", () => {
+    expect(groupThreadMessages([], ME, NOW, "en", tFor("en"))).toEqual([]);
+  });
+
+  it("groups consecutive same-author messages within 5 minutes", () => {
+    const items = groupThreadMessages(
+      [
+        msg("a", "her", at(10, 0)),
+        msg("b", "her", at(10, 3)),
+        msg("c", "her", at(10, 8)), // exactly 5 min after b → same group
+        msg("d", ME, at(10, 9)),
+        msg("e", ME, at(10, 10)),
+      ],
+      ME,
+      NOW,
+      "en",
+      tFor("en"),
+    );
+    expect(shape(items)).toEqual(["day:Today", "other:a,b,c", "own:d,e"]);
+  });
+
+  it("starts a new group after a gap of more than 5 minutes", () => {
+    const items = groupThreadMessages(
+      [
+        msg("a", "her", at(10, 0)),
+        msg("b", "her", at(10, 5, 19) + 1), // 5 min + 1 ms
+      ],
+      ME,
+      NOW,
+      "en",
+      tFor("en"),
+    );
+    expect(shape(items)).toEqual(["day:Today", "other:a", "other:b"]);
+  });
+
+  it("breaks groups and inserts a day separator at a calendar-day boundary", () => {
+    const items = groupThreadMessages(
+      [msg("a", "her", at(23, 58, 18)), msg("b", "her", at(0, 1, 19))],
+      ME,
+      NOW,
+      "nl",
+      tFor("nl"),
+    );
+    expect(shape(items)).toEqual([
+      "day:Gisteren",
+      "other:a",
+      "day:Vandaag",
+      "other:b",
+    ]);
+  });
+
+  it("renders system messages on their own and lets them break a group", () => {
+    const items = groupThreadMessages(
+      [
+        msg("a", ME, at(10, 0)),
+        msg("sys", null, at(10, 1)),
+        msg("b", ME, at(10, 2)),
+      ],
+      ME,
+      NOW,
+      "en",
+      tFor("en"),
+    );
+    expect(shape(items)).toEqual(["day:Today", "own:a", "system:sys", "own:b"]);
   });
 });
