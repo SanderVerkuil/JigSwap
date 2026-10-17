@@ -406,7 +406,7 @@ export function PuzzleCard({
       )}
       {isSelected && (
         <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-          <Check className="h-8 w-8 text-primary" />
+          <Check className="h-8 w-8 text-primary-text" />
         </div>
       )}
       {variant === "selection" && (

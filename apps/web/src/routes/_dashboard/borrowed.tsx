@@ -143,7 +143,7 @@ function BorrowedPage() {
               <CardContent className="flex flex-1 flex-col gap-4 p-6">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    <Package className="h-5 w-5 text-primary" />
+                    <Package className="h-5 w-5 text-primary-text" />
                   </div>
                   <div className="min-w-0 flex-1 space-y-1">
                     <h3 className="font-semibold truncate">

@@ -36,7 +36,7 @@ export function PieceCountField({
             className={[
               "rounded-full border px-2.5 py-1 font-mono text-xs cursor-pointer transition-colors",
               value === n
-                ? "bg-jigsaw-primary-tint text-primary border-border"
+                ? "bg-jigsaw-primary-tint text-primary-text border-border"
                 : "bg-card text-muted-foreground border-border hover:bg-accent",
             ].join(" ")}
           >

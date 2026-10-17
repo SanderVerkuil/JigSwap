@@ -14,6 +14,8 @@
   /* Brand violet is the everyday primary (vivid Jig Violet ≈ #6048e8). */
   --primary: oklch(0.52 0.22 279);
   --primary-foreground: oklch(0.985 0.002 286);
+  /* Primary as TEXT (links, chips, icons) on page surfaces; identical to --primary in light mode. */
+  --primary-text: var(--primary);
   --secondary: oklch(0.965 0.012 286);
   --secondary-foreground: oklch(0.32 0.08 281);
   --muted: oklch(0.965 0.012 286);
@@ -74,6 +76,10 @@
      the lighter 0.62, so focus rings stay 4.24:1 on the background. */
   --primary: oklch(0.57 0.21 282);
   --primary-foreground: oklch(0.99 0.005 286);
+  /* --primary stays dark enough for white text on fills, which makes it too dark as text on these
+     surfaces (3.44:1 on the background). Same hue, lifted: 7.87:1 on the background, 5.26:1 on
+     accent, 4.98:1 at the 80% hover opacity on card. */
+  --primary-text: oklch(0.78 0.14 282);
   --secondary: oklch(0.33 0.05 285);
   --secondary-foreground: oklch(0.965 0.01 286);
   --muted: oklch(0.33 0.05 285);
@@ -132,6 +138,7 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-text: var(--primary-text);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);

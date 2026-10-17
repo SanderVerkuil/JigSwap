@@ -121,7 +121,7 @@ export function SubmissionDetail({
               {submission.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary"
+                  className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary-text"
                 >
                   {tag}
                 </span>

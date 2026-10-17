@@ -158,7 +158,7 @@ export function ArrangeShelfDialog({
                       className={cn(
                         "flex items-center gap-2 rounded-md border px-3 py-2 text-left text-sm transition-colors",
                         isSelected
-                          ? "border-primary bg-primary/10 text-primary"
+                          ? "border-primary bg-primary/10 text-primary-text"
                           : "hover:bg-accent border-transparent bg-muted",
                         isDisabled && "cursor-not-allowed opacity-40",
                       )}
