@@ -9,6 +9,7 @@ import {
   Lightbulb,
   type LucideIcon,
   MessageSquare,
+  Sparkles,
   Star,
   Target,
   UserCheck,
@@ -42,7 +43,8 @@ export type NotificationType =
   | "follow_request_received"
   | "follow_request_approved"
   | "household_invite_received"
-  | "household_invite_accepted";
+  | "household_invite_accepted"
+  | "whats_new";
 
 export const NOTIFICATION_TYPES: NotificationType[] = [
   "trade_request",
@@ -68,6 +70,7 @@ export const NOTIFICATION_TYPES: NotificationType[] = [
   "follow_request_approved",
   "household_invite_received",
   "household_invite_accepted",
+  "whats_new",
 ];
 
 // Types only admins ever receive; hidden from non-admin preference matrices.
@@ -77,7 +80,7 @@ export const ADMIN_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = new Set([
 ]);
 
 export type NotificationCategoryKey =
-  "trades" | "messages" | "social" | "submissions" | "admin";
+  "trades" | "messages" | "social" | "submissions" | "product" | "admin";
 
 export interface NotificationCategory {
   readonly key: NotificationCategoryKey;
@@ -124,6 +127,8 @@ export const NOTIFICATION_CATEGORIES: readonly NotificationCategory[] = [
       "photo_removed",
     ],
   },
+  // Product news gets its own row so members can mute it without muting social activity.
+  { key: "product", types: ["whats_new"] },
   {
     key: "admin",
     types: ["admin_proposal_filed", "admin_definition_submitted"],
@@ -236,6 +241,8 @@ export function notificationIcon(type: string): LucideIcon {
     case "household_invite_received":
     case "household_invite_accepted":
       return House;
+    case "whats_new":
+      return Sparkles;
     default:
       return Bell;
   }
@@ -273,6 +280,9 @@ export function notificationAccent(type: string): string {
     case "admin_proposal_filed":
     case "admin_definition_submitted":
       return "text-primary";
+    // Brand violet, matching the What's new feature chip.
+    case "whats_new":
+      return "text-jigsaw-primary";
     default:
       return "text-primary";
   }
@@ -327,6 +337,9 @@ export function notificationHref(row: NotificationRow): string | null {
     case "household_invite_received":
     case "household_invite_accepted":
       return "/household";
+    // relatedId is the entry id; the What's new page anchors each card as #entry-<id>.
+    case "whats_new":
+      return relatedId ? `/whats-new#entry-${relatedId}` : "/whats-new";
     default:
       return null;
   }

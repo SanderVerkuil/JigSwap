@@ -1697,7 +1697,8 @@
       "follow_request_received": "Follow requests",
       "follow_request_approved": "Follow request approved",
       "household_invite_received": "Household invites",
-      "household_invite_accepted": "Household invite accepted"
+      "household_invite_accepted": "Household invite accepted",
+      "whats_new": "What's new"
     },
     "categories": {
       "trades": {
@@ -1715,6 +1716,10 @@
       "submissions": {
         "title": "My submissions",
         "description": "Outcomes of your puzzle submissions and suggested edits"
+      },
+      "product": {
+        "title": "Product updates",
+        "description": "New features and changes to JigSwap"
       },
       "admin": {
         "title": "Admin",
@@ -1813,6 +1818,10 @@
       "household_invite_accepted": {
         "title": "Invite accepted",
         "message": "Someone joined your household."
+      },
+      "whats_new": {
+        "title": "New in JigSwap",
+        "message": "See what's new in JigSwap."
       }
     },
     "pushDeviceTitle": "Push on this device",
@@ -1851,7 +1860,8 @@
       "follow_request_received": "When someone asks to follow you.",
       "follow_request_approved": "When a follow request you sent is approved.",
       "household_invite_received": "When someone invites you to their household.",
-      "household_invite_accepted": "When someone accepts your household invite."
+      "household_invite_accepted": "When someone accepts your household invite.",
+      "whats_new": "When a new feature or change to JigSwap is announced."
     },
     "pushServiceUnreachable": "Your browser couldn't reach its push service. Some privacy browsers block or remove it — Brave disables it by default (enable 'Use Google services for push messaging' in Settings), and de-Googled Chromium builds like Helium strip it out. Firefox, Chrome, or Edge will work."
   },
