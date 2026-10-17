@@ -4,4 +4,5 @@ export * from "./events";
 export * from "./ids";
 export * from "./notification";
 export * from "./notification-preference";
+export * from "./notification-subject";
 export * from "./notification-type";

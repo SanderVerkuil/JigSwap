@@ -3,18 +3,23 @@ import { Channel } from "./channel";
 import { NotificationError } from "./errors";
 import { NotificationCreated, NotificationRead } from "./events";
 import { MemberId, NotificationId } from "./ids";
+import { NotificationSubject } from "./notification-subject";
 import { NotificationType } from "./notification-type";
 
 // Input to Notification.create(): the structured notification plus its addressing. `params` carries
 // the render-ready values for this type's copy (e.g. actorName, puzzleTitle); rendering happens at
 // the EDGES (web in the viewer's locale, email in the recipient's language) — never here.
-// `relatedId` points at the upstream entity as an opaque string.
+// `relatedId` points at the upstream entity as an opaque string. `actorId` (the member who caused
+// it) and `subject` (what it is about) are optional typed references the edges resolve at read
+// time; both are absent for notifications that have no actor or subject.
 export interface CreateNotificationProps {
   readonly id: NotificationId;
   readonly userId: MemberId;
   readonly type: NotificationType;
   readonly params?: Readonly<Record<string, string>>;
   readonly relatedId?: string;
+  readonly actorId?: MemberId;
+  readonly subject?: NotificationSubject;
   readonly channel: Channel;
   readonly now: Date;
 }
@@ -32,6 +37,8 @@ export interface NotificationState {
   readonly message?: string;
   readonly params?: Readonly<Record<string, string>>;
   readonly relatedId?: string;
+  readonly actorId?: MemberId;
+  readonly subject?: NotificationSubject;
   readonly channel: Channel;
   readonly isRead: boolean;
   readonly createdAt: Date;
@@ -71,6 +78,8 @@ export class Notification {
       type: props.type,
       params: props.params,
       relatedId: props.relatedId,
+      actorId: props.actorId,
+      subject: props.subject,
       channel: props.channel,
       isRead: false,
       createdAt: props.now,
