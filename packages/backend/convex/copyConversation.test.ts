@@ -1,5 +1,5 @@
 import { convexTest, type TestConvex } from "convex-test";
-import { ConvexError } from "convex/values";
+import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -84,7 +84,7 @@ const threadCount = (t: TestConvex<typeof schema>) =>
 
 // convex-test serializes ConvexError.data to a JSON string at the function boundary; normalise.
 const dataOf = (e: unknown): { code?: string } => {
-  const data = (e as ConvexError<unknown>).data;
+  const data = (e as ConvexError<Value>).data;
   return typeof data === "string"
     ? JSON.parse(data)
     : (data as { code?: string });

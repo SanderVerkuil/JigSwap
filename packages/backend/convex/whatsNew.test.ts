@@ -1,6 +1,6 @@
 import type { WhatsNewManifestEntry } from "@jigswap/contracts";
 import { convexTest, type TestConvex } from "convex-test";
-import { ConvexError } from "convex/values";
+import { ConvexError, type Value } from "convex/values";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -84,7 +84,7 @@ const codeOf = async (
     await promise;
   } catch (error) {
     expect(error).toBeInstanceOf(ConvexError);
-    const data = (error as ConvexError<unknown>).data;
+    const data = (error as ConvexError<Value>).data;
     return (typeof data === "string" ? JSON.parse(data) : data)?.code;
   }
   throw new Error("expected the call to reject");
