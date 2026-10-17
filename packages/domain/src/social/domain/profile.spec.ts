@@ -26,7 +26,7 @@ describe("Profile.create", () => {
     if (!result.isOk) return;
 
     const profile = result.value;
-    expect(profile.displayName.value).toBe("Alice");
+    expect(profile.displayName?.value).toBe("Alice");
     expect(profile.bio).toBe("Loves 1000-piece landscapes");
     expect(profile.visibility).toBe("public");
 
@@ -51,6 +51,19 @@ describe("Profile.create", () => {
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("InvalidDisplayName");
   });
+
+  it("opens a profile without a display name when the member has none (it stays optional)", () => {
+    const result = Profile.create(profileId, member, { now: NOW });
+    expect(result.isOk).toBe(true);
+    if (!result.isOk) return;
+
+    const profile = result.value;
+    expect(profile.displayName).toBeUndefined();
+    const updated = profile.pullEvents()[0] as unknown as {
+      displayName?: string;
+    };
+    expect(updated.displayName).toBeUndefined();
+  });
 });
 
 describe("Profile.edit", () => {
@@ -67,7 +80,7 @@ describe("Profile.edit", () => {
       editProps({ displayName: "Alice B.", bio: "Updated" }),
     );
     expect(edited.isOk).toBe(true);
-    expect(profile.displayName.value).toBe("Alice B.");
+    expect(profile.displayName?.value).toBe("Alice B.");
     expect(profile.bio).toBe("Updated");
 
     const events = profile.pullEvents();
@@ -89,14 +102,14 @@ describe("Profile.edit", () => {
     expect(edited.isErr).toBe(true);
     if (edited.isErr) expect(edited.error.code).toBe("InvalidDisplayName");
     expect(profile.pullEvents()).toHaveLength(0);
-    expect(profile.displayName.value).toBe("Alice"); // unchanged
+    expect(profile.displayName?.value).toBe("Alice"); // unchanged
   });
 
   it("round-trips through toState/rehydrate without re-emitting events", () => {
     const profile = open();
     const rehydrated = Profile.rehydrate(profile.toState());
     expect(rehydrated.id).toBe(profileId);
-    expect(rehydrated.displayName.value).toBe("Alice");
+    expect(rehydrated.displayName?.value).toBe("Alice");
     expect(rehydrated.memberId).toBe(member);
     expect(rehydrated.pullEvents()).toHaveLength(0);
   });
@@ -157,7 +170,7 @@ describe("Profile.changeVisibility", () => {
   it("leaves the display name and bio untouched when visibility changes", () => {
     const profile = open();
     profile.changeVisibility("private", LATER);
-    expect(profile.displayName.value).toBe("Alice");
+    expect(profile.displayName?.value).toBe("Alice");
     expect(profile.bio).toBe("Loves 1000-piece landscapes");
   });
 });

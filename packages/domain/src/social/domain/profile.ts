@@ -24,12 +24,19 @@ export interface EditProps {
   readonly now: Date;
 }
 
+// Input to create(): like EditProps, but the display name is OPTIONAL — a profile can be opened
+// lazily (visibility toggle, shelf curation) for a member who never chose a name. Absent means
+// "not chosen"; readers fall back to the account name via resolveMemberDisplayName.
+export type CreateProps = Omit<EditProps, "displayName"> & {
+  readonly displayName?: string;
+};
+
 // The persistable shape of a member's public profile, kept deliberately close to a `profiles`
 // table so the 1b mapper is a trivial field-for-field translation (DisplayName <-> string).
 export interface ProfileState {
   readonly id: ProfileId;
   readonly memberId: MemberId;
-  readonly displayName: DisplayName;
+  readonly displayName?: DisplayName;
   readonly bio?: string;
   readonly visibility: ProfileVisibility;
   // Ordered, curated set of owned copies featured on the profile shelf (sub-project ④).
@@ -39,7 +46,7 @@ export interface ProfileState {
 }
 
 // Profile: the per-member aggregate root for the public face of a member (display name, bio).
-// One profile per member; it is created with a valid display name and emits ProfileUpdated on
+// One profile per member; it is created with a valid (or no) display name and emits ProfileUpdated on
 // every successful edit so follower feeds and Notifications can react.
 export class Profile {
   private events: DomainEvent[] = [];
@@ -54,7 +61,7 @@ export class Profile {
     return this.state.memberId;
   }
 
-  get displayName(): DisplayName {
+  get displayName(): DisplayName | undefined {
     return this.state.displayName;
   }
 
@@ -70,27 +77,32 @@ export class Profile {
     return this.state.featuredCopyIds;
   }
 
-  // Open a brand-new profile for a member. Validates the display name; an invalid one fails the
-  // whole creation. Records ProfileUpdated so the initial public state propagates like any edit.
+  // Open a brand-new profile for a member. Validates a supplied display name; an invalid one fails
+  // the whole creation, an absent one leaves it unset. Records ProfileUpdated so the initial public
+  // state propagates like any edit.
   static create(
     id: ProfileId,
     memberId: MemberId,
-    props: EditProps,
+    props: CreateProps,
   ): Result<Profile, SocialError> {
-    const displayName = DisplayName.create(props.displayName);
-    if (displayName.isErr) return err(displayName.error);
+    let displayName: DisplayName | undefined;
+    if (props.displayName !== undefined) {
+      const created = DisplayName.create(props.displayName);
+      if (created.isErr) return err(created.error);
+      displayName = created.value;
+    }
 
     const profile = new Profile({
       id,
       memberId,
-      displayName: displayName.value,
+      displayName,
       bio: props.bio,
       visibility: "public",
       featuredCopyIds: [],
       updatedAt: props.now,
     });
     profile.record(
-      new ProfileUpdated(id, memberId, displayName.value.value, props.now),
+      new ProfileUpdated(id, memberId, displayName?.value, props.now),
     );
     return ok(profile);
   }
