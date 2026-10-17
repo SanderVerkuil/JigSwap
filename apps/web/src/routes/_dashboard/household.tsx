@@ -1,9 +1,10 @@
 import { householdErrorKey } from "@/components/household/household-error";
 import { HouseholdInviteLink } from "@/components/household/household-invite-link";
+import { HouseholdMemberInvite } from "@/components/household/household-member-invite";
 import { HouseholdSettings } from "@/components/household/household-settings";
 import { MyHouseholdCopies } from "@/components/household/my-household-copies";
+import { PersonRow, type Person } from "@/components/household/person-row";
 import { EmptyState } from "@/components/library/empty-state";
-import { MemberInitial } from "@/components/members/member-initial";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,10 +15,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
@@ -26,8 +25,8 @@ import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
-import { Check, House, LogOut, UserPlus, X } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { Check, House, LogOut, X } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
@@ -47,44 +46,6 @@ function HouseholdPending() {
 type HouseholdData = NonNullable<
   FunctionReturnType<typeof gateway.household.mine>
 >;
-
-interface Person {
-  memberId: string;
-  // Absent when the member has no identifiable name: render via useMemberDisplayName.
-  name?: string;
-  avatar?: string;
-}
-
-function PersonRow({
-  person,
-  children,
-  badge,
-}: {
-  person: Person;
-  children?: ReactNode;
-  badge?: ReactNode;
-}) {
-  const displayName = useMemberDisplayName();
-  return (
-    <div className="flex items-center justify-between gap-3 py-2">
-      <div className="flex min-w-0 items-center gap-3">
-        <Avatar className="h-9 w-9">
-          <AvatarImage src={person.avatar} />
-          <AvatarFallback>
-            <MemberInitial source={person} />
-          </AvatarFallback>
-        </Avatar>
-        <span className="truncate text-sm font-medium">
-          {displayName(person)}
-        </span>
-        {badge}
-      </div>
-      {children && (
-        <div className="flex shrink-0 items-center gap-2">{children}</div>
-      )}
-    </div>
-  );
-}
 
 function HouseholdPage() {
   const t = useTranslations("household");
@@ -191,27 +152,9 @@ function HouseholdDetails({
   const isAdmin = household.viewerRole === "admin";
   const viewerId =
     household.members.find((member) => member.isYou)?.memberId ?? "";
-  const [search, setSearch] = useState("");
   const [removeTarget, setRemoveTarget] = useState<Person | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
 
-  const { data: searchResults } = useQuery(
-    convexQuery(
-      gateway.identity.search,
-      isAdmin && search.trim().length >= 2
-        ? { searchTerm: search.trim() }
-        : "skip",
-    ),
-  );
-
-  const invite = useMutation({
-    mutationFn: useConvexMutation(gateway.household.invite),
-    onSuccess: () => {
-      setSearch("");
-      toast.success(t("invite.sent"));
-    },
-    onError,
-  });
   const remove = useMutation({
     mutationFn: useConvexMutation(gateway.household.removeMember),
     onError,
@@ -226,9 +169,6 @@ function HouseholdDetails({
     ...household.members.map((m) => m.memberId),
     ...household.pendingInvites.map((i) => i.invitee.memberId),
   ]);
-  const candidates = (searchResults ?? []).filter(
-    (result) => !excluded.has(result._id as string),
-  );
 
   return (
     <div className="flex flex-col gap-8">
@@ -277,40 +217,7 @@ function HouseholdDetails({
           <h2 className="font-heading text-lg font-bold">
             {t("invite.title")}
           </h2>
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("invite.searchPlaceholder")}
-            aria-label={t("invite.searchPlaceholder")}
-            className="max-w-md"
-            data-tour="household-invite"
-          />
-          {candidates.length > 0 && (
-            <div className="divide-y rounded-lg border px-4">
-              {candidates.map((result) => (
-                <PersonRow
-                  key={result._id}
-                  person={{
-                    memberId: result._id as string,
-                    name: displayName(result),
-                    avatar: result.avatar,
-                  }}
-                >
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={invite.isPending}
-                    onClick={() =>
-                      invite.mutate({ inviteeId: result._id as Id<"users"> })
-                    }
-                  >
-                    <UserPlus className="h-4 w-4" />
-                    {t("invite.action")}
-                  </Button>
-                </PersonRow>
-              ))}
-            </div>
-          )}
+          <HouseholdMemberInvite excludedIds={excluded} onError={onError} />
 
           <HouseholdInviteLink memberId={viewerId} />
 
