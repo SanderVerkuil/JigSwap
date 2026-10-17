@@ -732,7 +732,9 @@
   "messages": {
     "anonymous": "Anonymous user",
     "backToInbox": "Back to messages",
+    "contextCopy": "About {title}",
     "conversationsLabel": "Conversations",
+    "copyUnavailable": "This puzzle is no longer available",
     "dayToday": "Today",
     "dayYesterday": "Yesterday",
     "empty": "No conversations yet",
@@ -743,6 +745,9 @@
       "sale": "Sale",
       "loan": "Loan"
     },
+    "goToExchange": "View exchange",
+    "goToProfile": "View profile",
+    "goToPuzzle": "View puzzle",
     "inboxError": "Couldn't load your conversations.",
     "messageButton": "Message",
     "messageName": "Message {name}",
@@ -758,6 +763,7 @@
     "selectConversationHint": "Choose a conversation from the list to start messaging",
     "sendError": "Your message couldn't be sent. Please try again.",
     "sendMessage": "Send message",
+    "threadActions": "Conversation options",
     "threadFallbackTitle": "Conversation",
     "time": {
       "now": "now",

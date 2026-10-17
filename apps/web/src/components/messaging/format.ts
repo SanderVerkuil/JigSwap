@@ -198,3 +198,35 @@ export function groupThreadMessages<M extends GroupableMessage>(
   }
   return items;
 }
+
+export type ThreadQuickLink = {
+  kind: "profile" | "puzzle" | "exchange";
+  href: string;
+};
+
+// Header quick links for a thread, in display order; each appears only when the
+// server says the target is reachable (profileHandle / contextCopy non-null).
+// DM: profile + puzzle. Exchange: the exchange on /trades (+ its puzzle).
+export function threadQuickLinks(thread: InboxThread): ThreadQuickLink[] {
+  const links: ThreadQuickLink[] = [];
+  const { subject, contextCopy } = thread;
+  if (subject.kind === "dm" && subject.profileHandle !== null) {
+    links.push({
+      kind: "profile",
+      href: `/members/${encodeURIComponent(subject.profileHandle)}`,
+    });
+  }
+  if (subject.kind === "exchange") {
+    links.push({
+      kind: "exchange",
+      href: `/trades?exchange=${encodeURIComponent(subject.exchangeId)}`,
+    });
+  }
+  if (contextCopy !== null) {
+    links.push({
+      kind: "puzzle",
+      href: `/copies/${encodeURIComponent(contextCopy.copyId)}`,
+    });
+  }
+  return links;
+}

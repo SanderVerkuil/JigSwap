@@ -8,6 +8,7 @@ import {
   formatFullDateTime,
   formatUnreadCount,
   groupThreadMessages,
+  threadQuickLinks,
   threadSubjectTitle,
 } from "./format";
 
@@ -275,5 +276,48 @@ describe("groupThreadMessages", () => {
       tFor("en"),
     );
     expect(shape(items)).toEqual(["day:Today", "own:a", "system:sys", "own:b"]);
+  });
+});
+
+describe("threadQuickLinks", () => {
+  const dm = (profileHandle: string | null) =>
+    ({
+      kind: "dm",
+      otherMember: { anonymous: false, member: { name: "Joost" } },
+      profileHandle,
+    }) as InboxThread["subject"];
+  const thread = (
+    subject: InboxThread["subject"],
+    contextCopy: InboxThread["contextCopy"],
+  ) => ({ subject, contextCopy }) as InboxThread;
+
+  it("links a DM to the member profile and the puzzle it is about", () => {
+    expect(
+      threadQuickLinks(
+        thread(dm("joost"), { copyId: "copy1", title: "Canals" }),
+      ),
+    ).toEqual([
+      { kind: "profile", href: "/members/joost" },
+      { kind: "puzzle", href: "/copies/copy1" },
+    ]);
+  });
+
+  it("omits the profile link when the server withholds the handle", () => {
+    expect(threadQuickLinks(thread(dm(null), null))).toEqual([]);
+  });
+
+  it("links an exchange thread to /trades?exchange=<id> and its puzzle", () => {
+    const subject = {
+      kind: "exchange",
+      exchangeId: "ex 1",
+      exchangeType: "trade",
+      puzzleTitle: "Canals",
+    } as InboxThread["subject"];
+    expect(
+      threadQuickLinks(thread(subject, { copyId: "copy2", title: "Canals" })),
+    ).toEqual([
+      { kind: "exchange", href: "/trades?exchange=ex%201" },
+      { kind: "puzzle", href: "/copies/copy2" },
+    ]);
   });
 });
