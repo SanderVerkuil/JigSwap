@@ -1186,6 +1186,26 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_member_tour", ["memberId", "tourId"]),
 
+  // Quick start (onboarding): at most one row per member, created lazily by the first
+  // onboarding/recordQuickStart write; no row means nothing skipped or dismissed. Only the member's
+  // choices are stored: step "done" is never stored, it is derived from real data (getQuickStart).
+  memberOnboarding: defineTable({
+    memberId: v.id("users"),
+    // Steps the member chose to skip, in step order.
+    skippedSteps: v.array(
+      v.union(
+        v.literal("puzzles"),
+        v.literal("solves"),
+        v.literal("people"),
+        v.literal("household"),
+        v.literal("profile"),
+      ),
+    ),
+    welcomeDismissedAt: v.optional(v.number()),
+    cardDismissedAt: v.optional(v.number()),
+    updatedAt: v.number(),
+  }).index("by_member", ["memberId"]),
+
   // One row per notify:true What's new entry whose whats_new notification fan-out has started
   // (whatsNew/publishPending). The row is the idempotency key: an entry with a row is never fanned
   // out again. `completedAt` is set when the last member batch has run.

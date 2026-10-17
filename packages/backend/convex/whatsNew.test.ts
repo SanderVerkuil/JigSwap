@@ -315,6 +315,19 @@ describe("whatsNew: tour progress", () => {
     ).toBe("unknown_tour");
   });
 
+  test("accepts a registered standalone tour id no manifest entry references", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await record(t, "ann", {
+      tourId: "getting-started",
+      status: "in_progress",
+      step: 0,
+    });
+    expect((await stateOf(t, "ann")).tours).toMatchObject([
+      { tourId: "getting-started", status: "in_progress", step: 0 },
+    ]);
+  });
+
   test.each([
     ["a negative step", -1],
     ["a fractional step", 1.5],

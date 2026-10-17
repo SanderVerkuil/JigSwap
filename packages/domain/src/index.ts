@@ -21,6 +21,7 @@ export * from "./identity";
 export * from "./insights";
 export * from "./library";
 export * from "./notifications";
+export * from "./onboarding";
 export * from "./reputation";
 export * from "./shared-kernel";
 export * from "./sharing";
