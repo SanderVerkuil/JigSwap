@@ -20,7 +20,6 @@ import { AlertTriangle, ImagePlus, X } from "lucide-react";
 import {
   createContext,
   useContext,
-  useEffect,
   useRef,
   useState,
   type ReactNode,
@@ -88,8 +87,8 @@ export function CompletionFollowUpProvider({
   const [copyRating, setCopyRating] = useState(0);
   // Snapshot of the caller's existing reviews, taken ONCE per follow-up when the query first
   // resolves (the review dialog's seed-once semantics; here the form state lives in the
-  // provider, so a one-shot effect seeds it). Dirty tracking compares against this — null
-  // means "not seeded yet" (skeleton; nothing can be dirty).
+  // provider, so a one-shot render-time adjustment seeds it). Dirty tracking compares against
+  // this — null means "not seeded yet" (skeleton; nothing can be dirty).
   const [seed, setSeed] = useState<{
     puzzleRating: number;
     puzzleText: string;
@@ -125,10 +124,15 @@ export function CompletionFollowUpProvider({
   );
 
   // Seed once per follow-up session, on first resolve; closeAndReset clears the seed so the
-  // next session re-seeds from its own query.
-  useEffect(() => {
-    if (target === null || target.puzzleId === null) return;
-    if (seed !== null || reviewsData === undefined) return;
+  // next session re-seeds from its own query. Done during render (guarded by `seed === null`,
+  // so it runs once per session) rather than in an effect, so the skeleton never paints a
+  // frame after the data is already there.
+  if (
+    target !== null &&
+    target.puzzleId !== null &&
+    seed === null &&
+    reviewsData !== undefined
+  ) {
     const next = {
       puzzleRating: reviewsData.puzzle?.rating ?? 0,
       puzzleText: reviewsData.puzzle?.text ?? "",
@@ -140,7 +144,7 @@ export function CompletionFollowUpProvider({
     setPuzzleRating(next.puzzleRating);
     setPuzzleText(next.puzzleText);
     setCopyRating(next.copyRating);
-  }, [target, seed, reviewsData]);
+  }
 
   const requestFollowUp = (next: FollowUpTarget) => {
     if (activeRef.current) return; // first-wins per open
