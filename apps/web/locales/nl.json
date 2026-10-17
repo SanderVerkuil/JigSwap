@@ -1519,7 +1519,8 @@
       "view": "Alleen bekijken",
       "memberManage": "Puzzel van je huishouden — jij mag hem beheren",
       "memberView": "Puzzel van je huishouden — alleen bekijken",
-      "saveFailed": "Toegang voor het huishouden kon niet worden bijgewerkt"
+      "saveFailed": "Toegang voor het huishouden kon niet worden bijgewerkt",
+      "useDefault": "Standaard van het huishouden gebruiken (nu: {permission, select, view {Alleen bekijken} other {Mag beheren}})"
     },
     "errors": {
       "generic": "Er ging iets mis. Probeer het opnieuw.",
@@ -1554,7 +1555,22 @@
       "confirmManage": "Je huishouden kan {count, plural, one {deze puzzel} other {deze puzzels}} dan beheren: bewerken, uitlenen en ruilen.",
       "confirmView": "Je huishouden kan {count, plural, one {deze puzzel} other {deze puzzels}} dan alleen bekijken.",
       "confirm": "Toegang wijzigen",
-      "changed": "{count, plural, =0 {Er hoefde niets te veranderen} one {# puzzel bijgewerkt} other {# puzzels bijgewerkt}}"
+      "changed": "{count, plural, =0 {Er hoefde niets te veranderen} one {# puzzel bijgewerkt} other {# puzzels bijgewerkt}}",
+      "setDefault": "Standaard van het huishouden gebruiken (nu: {permission, select, view {Alleen bekijken} other {Mag beheren}})",
+      "confirmDefault": "{count, plural, one {Deze puzzel volgt} other {Deze puzzels volgen}} dan de standaard van het huishouden (nu: {permission, select, view {Alleen bekijken} other {Mag beheren}}) en veranderen mee.",
+      "sourceDefault": "Standaard van het huishouden",
+      "sourceExplicit": "Ingesteld voor deze puzzel"
+    },
+    "settings": {
+      "title": "Instellingen huishouden",
+      "defaultLabel": "Standaardtoegang voor puzzels",
+      "defaultHelp": "Geldt voor de puzzels van alle leden die geen eigen toegangsinstelling hebben. Een instelling voor een specifieke puzzel gaat altijd voor.",
+      "affected": "{count, plural, =0 {Er volgen nu geen exemplaren de standaard van het huishouden} one {Geldt voor # exemplaar dat de standaard van het huishouden volgt} other {Geldt voor # exemplaren die de standaard van het huishouden volgen}}",
+      "adminOnly": "Alleen de beheerder van het huishouden kan dit wijzigen.",
+      "confirmTitle": "Standaard van het huishouden wijzigen naar {permission, select, view {Alleen bekijken} other {Mag beheren}}?",
+      "confirmBody": "{count, plural, =0 {Er volgen nu geen exemplaren de standaard, dus er verandert nog niets.} one {Dit geldt meteen voor # exemplaar dat de standaard van het huishouden volgt.} other {Dit geldt meteen voor # exemplaren die de standaard van het huishouden volgen.}} Puzzels met een eigen toegangsinstelling houden die.",
+      "confirm": "Standaard wijzigen",
+      "saved": "Standaard van het huishouden bijgewerkt"
     }
   },
   "circles": {

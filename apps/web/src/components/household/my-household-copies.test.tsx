@@ -21,6 +21,7 @@ const copy = (
   title: string,
   householdPermission: "manage" | "view",
   coverUrl?: string,
+  permissionSource: "explicit" | "default" = "explicit",
 ) => ({
   _id: id,
   puzzleId: "p",
@@ -33,6 +34,7 @@ const copy = (
   snapshot: { title, pieceCount: 1000 },
   coverUrl,
   householdPermission,
+  permissionSource,
 });
 
 const render = (copies: unknown[], locale: "en" | "nl" = "en") => {
@@ -54,7 +56,7 @@ const render = (copies: unknown[], locale: "en" | "nl" = "en") => {
           messages={locale === "en" ? en : nl}
           timeZone="Europe/Amsterdam"
         >
-          <MyHouseholdCopies onError={() => {}} />
+          <MyHouseholdCopies householdDefault="view" onError={() => {}} />
         </IntlProvider>
       </QueryClientProvider>
     </ConvexProviderWithAuth>,
@@ -99,14 +101,17 @@ describe("MyHouseholdCopies", () => {
     const els = elementsOf(
       render([
         copy("a", "Harbour", "manage", "https://img/a.jpg"),
-        copy("b", "Forest", "view"),
+        copy("b", "Forest", "view", undefined, "default"),
       ]),
     );
     expect(textOf(els.find((e) => e.tagName === "h2")!)).toBe(
       "My puzzles in this household",
     );
     const rows = els.filter((e) => e.tagName === "li");
-    expect(rows.map(textOf)).toEqual(["HarbourCan manage", "ForestView only"]);
+    expect(rows.map(textOf)).toEqual([
+      "HarbourSet for this puzzleCan manage",
+      "ForestHousehold defaultView only",
+    ]);
     const boxes = els.filter((e) => attr(e, "role") === "checkbox");
     expect(boxes.map((b) => attr(b, "aria-label"))).toEqual([
       "Select Harbour",
@@ -124,6 +129,9 @@ describe("MyHouseholdCopies", () => {
       els.find((e) => e.tagName === "button" && textOf(e) === label)!;
     expect(attr(action("Set to Can manage"), "disabled")).toBeDefined();
     expect(attr(action("Set to View only"), "disabled")).toBeDefined();
+    expect(
+      attr(action("Use household default (currently: View only)"), "disabled"),
+    ).toBeDefined();
     expect(attr(action("Select all"), "disabled")).toBeUndefined();
   });
 

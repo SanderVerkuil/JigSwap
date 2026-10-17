@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   filterByPermission,
+  ownerChoiceOf,
   selectAll,
   selectedVisibleIds,
   toggleSelected,
@@ -49,5 +50,19 @@ describe("selectedVisibleIds", () => {
     expect(
       selectedVisibleIds(selected, filterByPermission(copies, "manage")),
     ).toEqual(["c"]);
+  });
+});
+
+describe("ownerChoiceOf", () => {
+  it("shows 'default' for an inheriting copy and the explicit value otherwise", () => {
+    expect(ownerChoiceOf({ permission: "view", inheritsDefault: true })).toBe(
+      "default",
+    );
+    expect(ownerChoiceOf({ permission: "view", inheritsDefault: false })).toBe(
+      "view",
+    );
+    expect(
+      ownerChoiceOf({ permission: "manage", inheritsDefault: false }),
+    ).toBe("manage");
   });
 });
