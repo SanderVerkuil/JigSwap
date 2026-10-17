@@ -45,8 +45,34 @@ Why `manage`:
   sharing to circles, collections, the profile shelf — see the matrix), so
   the default cannot cost the owner the record of their copy.
 
-No household-wide default setting is introduced (the ticket marked it
-optional; it is listed as an open question).
+**Resolved (household-wide default, user decision):** a household carries an
+optional `defaultCopyPermission: "manage" | "view"` (absent = `manage`, so
+no backfill). A copy's effective permission is resolved at read time, by the
+single domain helper `resolveHouseholdCopyPermission(stored, householdDefault)`,
+in this order:
+
+1. the copy's explicit `ownedPuzzles.householdPermission`, if set;
+2. else the owner's household `defaultCopyPermission`, if set;
+3. else `manage` (`DEFAULT_HOUSEHOLD_COPY_PERMISSION`).
+
+Every reader (copy access / co-manager policy, the exchange co-manager list,
+the copy view, the household listings and the bulk editor) goes through that
+helper; a guard test (`householdPermissionFallback.test.ts`) fails on any
+other `householdPermission ?? …` fallback.
+
+- Only the household **admin** changes the default
+  (`household/setDefaultCopyPermission`), like invite/remove. The change
+  applies immediately to every member copy without an explicit value; the
+  settings card shows that count (computed server-side across all members)
+  and asks for confirmation. No notifications.
+- Owners keep control: an explicit per-copy value always wins. The copy-page
+  select and the bulk editor offer "Use household default (currently: X)",
+  "Can manage" and "View only"; "Use household default" clears the explicit
+  value. An explicit choice is written even when it equals what the copy
+  inherits today, so it is pinned against later default changes.
+- The default belongs to the household, not to the copies: a member who
+  leaves takes their copies out of it, and those copies then follow whatever
+  household the owner joins next (or none).
 
 ### D2. Roles: one `admin` (the creator) and `member`s
 
@@ -147,7 +173,8 @@ clearing `householdPermission` when ownership moves.
 ## Schema
 
 ```ts
-households: { aggregateId, createdAt }                // index by_aggregate_id
+households: { aggregateId, createdAt,
+              defaultCopyPermission?: "manage" | "view" } // index by_aggregate_id; absent = "manage"
 householdMembers: { householdId: string /* HouseholdId */, memberId: Id<"users">,
                     role: "admin" | "member", joinedAt }
                   // indexes by_member (memberId), by_household (householdId)
@@ -155,7 +182,7 @@ householdInvites: { aggregateId, householdId, inviterId, inviteeId,
                     status: "pending" | "accepted" | "declined",
                     createdAt, respondedAt? }
                   // indexes by_aggregate_id, by_invitee_status, by_household
-ownedPuzzles.householdPermission?: "manage" | "view"  // absent = "manage"
+ownedPuzzles.householdPermission?: "manage" | "view"  // absent = household default, else "manage"
 notifications.type += household_invite_received | household_invite_accepted
 ```
 
@@ -262,7 +289,7 @@ Web: notification-meta tests updated for the two types; route-meta entry.
 
 ## Out of scope
 
-Household names/avatars, household-wide default permission, invite revoke,
+Household names/avatars, invite revoke,
 admin transfer, intra-household exchanges guard beyond the offered-copy rule,
 email delivery of household notifications, Browse filtering of household
 copies.
