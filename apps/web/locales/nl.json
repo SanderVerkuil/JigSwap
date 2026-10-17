@@ -2227,7 +2227,27 @@
     "findThem": "Zoek ze",
     "loopTitle": "Nog iemand hier?",
     "loopBody": "Laat ze deze code zien zodat ze jou ook kunnen volgen.",
-    "loopSkip": "Niet nu"
+    "loopSkip": "Niet nu",
+    "householdInvitedYou": "{name} heeft je uitgenodigd voor hun huishouden op JigSwap",
+    "householdExplainer": "Meld je eerst aan. Daarna kies je of je meedoet; er wordt niets gedeeld tot je accepteert.",
+    "householdExistingMember": "Je hebt al een account. Vraag {name} om je uit te nodigen via de huishoudenpagina.",
+    "linkExpired": "Deze uitnodigingslink is verlopen of al gebruikt."
+  },
+  "inviteShare": {
+    "share": "Uitnodigingslink delen",
+    "email": "E-mail",
+    "whatsapp": "WhatsApp",
+    "subject": "Kom ook op JigSwap",
+    "message": "Kom ook op JigSwap, daar houd ik mijn puzzels bij: {url}",
+    "householdMessage": "Word lid van ons huishouden op JigSwap, dan delen we één puzzelplank: {url}",
+    "privacy": "JigSwap ziet en bewaart niet naar wie je dit stuurt.",
+    "inviteLink": "Uitnodigen met een link",
+    "createLink": "Uitnodigingslink maken",
+    "linkNote": "De link werkt één keer en verloopt na 14 dagen.",
+    "revokeLinks": "Open links intrekken",
+    "revoked": "{count, plural, =0 {Geen open links om in te trekken} one {# link ingetrokken} other {# links ingetrokken}}",
+    "rateLimited": "Je hebt vandaag veel uitnodigingslinks gemaakt. Probeer het morgen opnieuw.",
+    "createFailed": "Kon geen uitnodigingslink maken. Probeer het opnieuw."
   },
   "forms": {
     "owned-puzzle-form": {
