@@ -8,8 +8,7 @@ import {
   NOTIFICATION_CATEGORIES,
   NOTIFICATION_TYPES,
   notificationCopy,
-  notificationHref,
-  type NotificationRow,
+  type NotificationCopySource,
 } from "./notification-meta";
 
 describe("NOTIFICATION_CATEGORIES", () => {
@@ -21,21 +20,13 @@ describe("NOTIFICATION_CATEGORIES", () => {
 });
 
 describe("household notifications", () => {
-  it("are social notifications that deep-link to the household page", () => {
+  it("are social notifications", () => {
     const social = NOTIFICATION_CATEGORIES.find((c) => c.key === "social");
     for (const type of [
       "household_invite_received",
       "household_invite_accepted",
     ] as const) {
       expect(social?.types).toContain(type);
-      expect(
-        notificationHref({
-          _id: "n1",
-          type,
-          isRead: false,
-          createdAt: 0,
-        }),
-      ).toBe("/household");
     }
   });
 });
@@ -44,14 +35,6 @@ describe("whats_new notifications", () => {
   it("are their own product category", () => {
     const product = NOTIFICATION_CATEGORIES.find((c) => c.key === "product");
     expect(product?.types).toEqual(["whats_new"]);
-  });
-
-  it("deep-link to the entry's anchor on /whats-new, else the page", () => {
-    const row = { _id: "n1", type: "whats_new", isRead: false, createdAt: 0 };
-    expect(notificationHref({ ...row, relatedId: "households" })).toBe(
-      "/whats-new#entry-households",
-    );
-    expect(notificationHref(row)).toBe("/whats-new");
   });
 
   it("are never emailed", () => {
@@ -72,13 +55,7 @@ describe("notificationCopy", () => {
   const row = (
     type: string,
     params?: Record<string, string>,
-  ): NotificationRow => ({
-    _id: "n1",
-    type,
-    params,
-    isRead: false,
-    createdAt: 0,
-  });
+  ): NotificationCopySource => ({ type, params });
   const message = (
     locale: "en" | "nl",
     type: string,
@@ -180,5 +157,6 @@ describe("notifications locale parity", () => {
 
   it("source mirrors en for the notification copy", () => {
     expect(source.notifications.copy).toEqual(en.notifications.copy);
+    expect(source.notifications.rich).toEqual(en.notifications.rich);
   });
 });

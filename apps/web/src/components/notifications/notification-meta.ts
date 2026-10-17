@@ -19,7 +19,7 @@ import {
 
 // The notification `type` literals the backend emits (kept in sync with the domain
 // NotificationType union surfaced by updateNotificationPreference). Centralised here so the bell,
-// the list page, and the preference matrix all agree on icon, accent, and routing.
+// the list page, and the preference matrix all agree on icon and accent (links are server-computed).
 export type NotificationType =
   | "trade_request"
   | "trade_accepted"
@@ -162,25 +162,13 @@ export const NOTIFICATION_CHANNELS: NotificationChannel[] = [
   "push",
 ];
 
-// A row as it reaches the UI. The list query returns full Convex docs; we read only this subset.
-// `aggregateId` is the domain id markRead expects; legacy rows may lack it, so callers fall back.
-export interface NotificationRow {
-  _id: string;
-  aggregateId?: string;
+// What the legacy copy renders from: the type, its params snapshot, and (for a type the web no longer
+// knows) the stored title/message.
+export interface NotificationCopySource {
   type: string;
   title?: string;
   message?: string;
   params?: Record<string, string>;
-  relatedId?: string;
-  channel?: string;
-  isRead: boolean;
-  createdAt: number;
-}
-
-// The id markNotificationRead expects: the aggregateId, with a fallback to the Convex _id for
-// pre-domain rows that were backfilled without one.
-export function notificationId(row: NotificationRow): string {
-  return row.aggregateId ?? row._id;
 }
 
 // The params the subscriber stores on a row (see packages/backend/convex/notifications/subscriber.ts).
@@ -207,11 +195,12 @@ function copyValues(
 }
 
 // Localized title + message for a notification, rendered from its `type` via the
-// `notifications.copy.<type>` i18n keys. The stored `title`/`message` only exist on legacy rows
-// (predating the type+params model), so they're only a fallback for an unknown/legacy type.
+// `notifications.copy.<type>` i18n keys: the fallback for rows without actor/subject refs (the rich
+// `notifications.rich.<type>` sentences need them). The stored `title`/`message` only exist on
+// legacy rows (predating the type+params model), so they're only a fallback for an unknown type.
 // `t` is a `useTranslations("notifications")` translator.
 export function notificationCopy(
-  row: NotificationRow,
+  row: NotificationCopySource,
   t: (key: string, values?: Record<string, string>) => string,
 ): { title: string; message: string } {
   if ((NOTIFICATION_TYPES as string[]).includes(row.type)) {
@@ -281,7 +270,7 @@ export function notificationAccent(type: string): string {
     case "proposal_approved":
     case "follow_request_approved":
     case "household_invite_accepted":
-      return "text-green-600";
+      return "text-green-600 dark:text-green-400";
     case "trade_declined":
     case "trade_cancelled":
     case "exchange_disputed":
@@ -291,15 +280,15 @@ export function notificationAccent(type: string): string {
       return "text-destructive";
     case "review_received":
     case "goal_achieved":
-      return "text-yellow-600";
+      return "text-yellow-600 dark:text-yellow-400";
     case "puzzle_favorited":
       return "text-pink-500";
     case "message_received":
-      return "text-blue-500";
+      return "text-blue-500 dark:text-blue-400";
     case "new_follower":
     case "follow_request_received":
     case "household_invite_received":
-      return "text-blue-500";
+      return "text-blue-500 dark:text-blue-400";
     case "admin_proposal_filed":
     case "admin_definition_submitted":
       return "text-primary-text";
@@ -308,62 +297,5 @@ export function notificationAccent(type: string): string {
       return "text-jigsaw-primary";
     default:
       return "text-primary-text";
-  }
-}
-
-// Where clicking a notification should take the member, when it carries a sensible related entity.
-// Returns null when there is no useful destination (we then just mark it read). The puzzle route is
-// only used when relatedId looks like a puzzle/copy id the puzzle detail page can resolve.
-export function notificationHref(row: NotificationRow): string | null {
-  const { type, relatedId } = row;
-  switch (type) {
-    case "trade_request":
-    case "trade_accepted":
-    case "trade_declined":
-    case "trade_completed":
-    case "trade_cancelled":
-    case "exchange_proposed":
-    case "exchange_disputed":
-      return "/trades";
-    case "message_received":
-      // relatedId carries the thread aggregateId (see the contracts docstring),
-      // which is exactly what /messages/$threadId resolves.
-      return relatedId ? `/messages/${relatedId}` : "/messages";
-    case "review_received":
-      return "/profile";
-    case "goal_achieved":
-      return "/goals";
-    case "puzzle_favorited":
-    case "puzzle_approved":
-      return relatedId ? `/puzzles/${relatedId}` : "/puzzles";
-    case "puzzle_rejected":
-      return "/puzzles";
-    // relatedId is the copy the photo belonged to; /my-puzzles/$id is the
-    // owner's view of that copy.
-    case "photo_removed":
-      return relatedId ? `/my-puzzles/${relatedId}` : "/my-puzzles";
-    case "proposal_approved":
-    case "proposal_rejected":
-      return relatedId ? `/puzzles/${relatedId}` : "/puzzles";
-    case "admin_proposal_filed":
-      return relatedId
-        ? `/admin/puzzles/proposals/${relatedId}`
-        : "/admin/puzzles/proposals";
-    case "admin_definition_submitted":
-      return "/admin/moderation";
-    // Follow activity resolves on the People page (requests strip + network grid).
-    case "new_follower":
-    case "follow_request_received":
-    case "follow_request_approved":
-      return "/people";
-    // Household invites are answered (and the household managed) on the Household page.
-    case "household_invite_received":
-    case "household_invite_accepted":
-      return "/household";
-    // relatedId is the entry id; the What's new page anchors each card as #entry-<id>.
-    case "whats_new":
-      return relatedId ? `/whats-new#entry-${relatedId}` : "/whats-new";
-    default:
-      return null;
   }
 }
