@@ -465,7 +465,7 @@ function PuzzlesPage() {
                             household.viewerAccess === "view"
                               ? "householdBadgeView"
                               : "householdBadge",
-                            { name: household.owner.name },
+                            { name: displayName(household.owner) },
                           )}
                         </Badge>
                       )}

@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { householdErrorKey } from "@/components/household/household-error";
 import { EmptyState } from "@/components/library/empty-state";
+import { MemberInitial } from "@/components/members/member-initial";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +20,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
@@ -46,7 +48,8 @@ type HouseholdData = NonNullable<
 
 interface Person {
   memberId: string;
-  name: string;
+  // Absent when the member has no identifiable name: render via useMemberDisplayName.
+  name?: string;
   avatar?: string;
 }
 
@@ -59,14 +62,19 @@ function PersonRow({
   children?: ReactNode;
   badge?: ReactNode;
 }) {
+  const displayName = useMemberDisplayName();
   return (
     <div className="flex items-center justify-between gap-3 py-2">
       <div className="flex min-w-0 items-center gap-3">
         <Avatar className="h-9 w-9">
           <AvatarImage src={person.avatar} />
-          <AvatarFallback>{person.name.charAt(0).toUpperCase()}</AvatarFallback>
+          <AvatarFallback>
+            <MemberInitial source={person} />
+          </AvatarFallback>
         </Avatar>
-        <span className="truncate text-sm font-medium">{person.name}</span>
+        <span className="truncate text-sm font-medium">
+          {displayName(person)}
+        </span>
         {badge}
       </div>
       {children && (
@@ -176,6 +184,7 @@ function HouseholdDetails({
 }) {
   const t = useTranslations("household");
   const tCommon = useTranslations("common");
+  const displayName = useMemberDisplayName();
   const isAdmin = household.viewerRole === "admin";
   const [search, setSearch] = useState("");
   const [removeTarget, setRemoveTarget] = useState<Person | null>(null);
@@ -277,7 +286,7 @@ function HouseholdDetails({
                   key={result._id}
                   person={{
                     memberId: result._id as string,
-                    name: result.name,
+                    name: displayName(result),
                     avatar: result.avatar,
                   }}
                 >
@@ -332,7 +341,7 @@ function HouseholdDetails({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {t("members.removeTitle", { name: removeTarget?.name ?? "" })}
+              {t("members.removeTitle", { name: displayName(removeTarget) })}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {t("members.removeBody")}
