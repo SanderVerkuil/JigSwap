@@ -206,6 +206,27 @@ describe("acceptHouseholdInvite", () => {
     expect((await invites.findById(inviteId))?.status).toBe("pending");
   });
 
+  it("rejects without persisting when the household already lists the invitee", async () => {
+    // A stale membership lookup misses the invitee, but the household itself already holds them.
+    class StaleMembershipLookup extends InMemoryHouseholdRepository {
+      override async findByMember(memberId: MemberId) {
+        return memberId === bob ? null : super.findByMember(memberId);
+      }
+    }
+    deps.households = households = new StaleMembershipLookup();
+    const householdId = await create();
+    const inviteId = await invite();
+    const household = await households.findById(householdId);
+    household?.admit(bob, clock.now());
+    if (household) await households.save(household);
+    events.published.length = 0;
+
+    const result = await accept(bob, inviteId);
+    expect(result.isErr && result.error.code).toBe("AlreadyMember");
+    expect((await invites.findById(inviteId))?.status).toBe("pending");
+    expect(events.published).toEqual([]);
+  });
+
   it("rejects when the household has dissolved", async () => {
     await create();
     const inviteId = await invite();
