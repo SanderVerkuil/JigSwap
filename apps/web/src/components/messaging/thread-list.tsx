@@ -4,7 +4,6 @@
 // open divided rows (the previous mock's ConversationRow styling, now on real
 // data). PROVISIONAL layout per the design doc — all data access lives in the
 // messaging components so a designer pass can restyle presentation only.
-
 import { Link } from "@/compat/link";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { MemberInitial } from "@/components/members/member-initial";

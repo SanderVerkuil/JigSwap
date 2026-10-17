@@ -1,20 +1,19 @@
-import { MemberInitial } from "@/components/members/member-initial";
-import { useMemberDisplayName } from "@/lib/member-display-name";
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute, Link } from "@tanstack/react-router";
-
 import { PuzzleLifecycleAction } from "@/components/admin/puzzles/puzzle-lifecycle-action";
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { AuditList } from "@/components/admin/users/audit-list";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import { MemberInitial } from "@/components/members/member-initial";
 import { ChangedFieldChips } from "@/components/suggest-edit/changed-field-chips";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, type Id } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
+import { pageTitle } from "@/lib/page-title";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { Pencil, Puzzle as PuzzleIcon } from "lucide-react";
 import { useFormatter, useTranslations } from "use-intl";

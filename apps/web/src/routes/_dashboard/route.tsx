@@ -1,7 +1,5 @@
-import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
-
-import { AppNotFound } from "@/components/NotFound";
 import { DashboardShell } from "@/components/dashboard-layout/shell";
+import { AppNotFound } from "@/components/NotFound";
 import { InviteRedeemer } from "@/components/social/invite-redeemer";
 import { CompletionFollowUpProvider } from "@/components/solving/completion-follow-up-provider";
 import { DurationPromptProvider } from "@/components/solving/duration-prompt-provider";
@@ -9,6 +7,7 @@ import { TourProvider } from "@/components/tour/tour-provider";
 import { PageLoading } from "@/components/ui/loading";
 import { WhatsNewHighlight } from "@/components/whats-new/highlight-dialog";
 import { requireAuth } from "@/lib/require-auth";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 // Pathless layout for the logged-in app. Auth: requireAuth reads the Clerk
 // userId off the root context in beforeLoad and redirects to sign-in when

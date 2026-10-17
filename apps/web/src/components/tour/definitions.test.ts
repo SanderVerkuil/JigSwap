@@ -1,7 +1,7 @@
-import { getRouteMeta } from "@/components/dashboard-layout/route-meta";
-import { WHATS_NEW_MANIFEST } from "@jigswap/contracts";
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { getRouteMeta } from "@/components/dashboard-layout/route-meta";
+import { WHATS_NEW_MANIFEST } from "@jigswap/contracts";
 import { describe, expect, it } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";

@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { toExchangeId, toMemberId } from "../../../shared-kernel";
-
 import {
   InMemoryThreadRepository,
   SequentialThreadIdGenerator,

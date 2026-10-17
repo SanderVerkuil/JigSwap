@@ -3,13 +3,13 @@ import {
   CatalogSnapshot,
   Copy,
   CopyImage,
-  type CopyState,
   Price,
   SharingSetting,
   toCopyId,
   toFileId,
   toOwnerId,
   toPuzzleDefinitionId,
+  type CopyState,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 

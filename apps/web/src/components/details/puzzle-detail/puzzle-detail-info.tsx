@@ -1,9 +1,9 @@
 "use client";
-import { useMemberDisplayName } from "@/lib/member-display-name";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { gateway } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import type { FunctionReturnType } from "convex/server";
 import { Calendar, User } from "lucide-react";
 import { useTranslations } from "use-intl";

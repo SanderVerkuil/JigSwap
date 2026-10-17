@@ -1,10 +1,10 @@
 import {
-  type MemberId,
   ReputationProfile,
-  type ReputationProfileRepository,
-  type ReputationProfileState,
   toMemberId,
   toReputationProfileId,
+  type MemberId,
+  type ReputationProfileRepository,
+  type ReputationProfileState,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";

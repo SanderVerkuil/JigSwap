@@ -72,8 +72,8 @@ arrangeShelf(copyIds: readonly string[], now: Date): Result<void, SocialError> {
 ```ts
 import { Result } from "../../../shared-kernel";
 import { SocialError } from "../../domain";
-import { SocialApplicationError } from "../errors";
 import { MemberId } from "../../domain/ids";
+import { SocialApplicationError } from "../errors";
 
 export interface ArrangeShelfCommand {
   readonly memberId: MemberId;

@@ -8,7 +8,6 @@
 // onEdit (the shared dialog); (de)activation — the domain's soft delete — is
 // handled here, with deactivation behind an AlertDialog confirm and
 // reactivation firing directly (safe direction).
-
 import {
   AlertDialog,
   AlertDialogAction,

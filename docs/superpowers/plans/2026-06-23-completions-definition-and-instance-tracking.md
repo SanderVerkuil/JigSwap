@@ -481,10 +481,10 @@ describe("solving.recordCompletion — borrowing, snapshot, pieces", () => {
 import {
   makeRecordCompletion,
   makeStartCompletion,
-  type MemberId,
   toCopyId,
   toFileId,
   toPuzzleDefinitionId,
+  type MemberId,
 } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
@@ -930,11 +930,11 @@ git commit -m "feat(backend): solvingPreferences table"
 
 ```typescript
 import {
-  type MemberId,
   SolvingPreferences,
+  toMemberId,
+  type MemberId,
   type SolvingPreferencesRepository,
   type SolvingPreferencesState,
-  toMemberId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../../_generated/server";
@@ -1491,6 +1491,7 @@ export function useDurationPrompt(): DurationPromptApi {
 
 ```tsx
 import { DurationPromptProvider } from "@/components/solving/duration-prompt-provider";
+
 // ...
 <DurationPromptProvider>
   {/* existing shell children / <Outlet /> */}
@@ -1529,6 +1530,7 @@ git commit -m "feat(web): DurationPromptProvider secondary modal mounted in the 
 ```tsx
 "use client";
 
+import { useDurationPrompt } from "@/components/solving/duration-prompt-provider";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -1543,7 +1545,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
-import { useDurationPrompt } from "@/components/solving/duration-prompt-provider";
 import { useUserSettings } from "@/hooks/use-user-settings";
 import { useMutation } from "convex/react";
 import { useState } from "react";

@@ -1,6 +1,4 @@
 "use client";
-import { MemberInitial } from "@/components/members/member-initial";
-import { useMemberDisplayName } from "@/lib/member-display-name";
 
 // The single shared body for the redesigned public member profile
 // (/members/$handle), rendered for every viewer tier: logged-out ("public"),
@@ -8,11 +6,11 @@ import { useMemberDisplayName } from "@/lib/member-display-name";
 // the discriminated `gateway.social.publicProfile` payload — unlocked (hero +
 // story + stats + records + shelf) or locked (hero + private card + follow
 // action). All tokens resolve in both the marketing and dashboard shells.
-
 import { Image } from "@/compat/image";
 import { PuzzlePlank3D } from "@/components/common/puzzle-plank-3d";
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import { contentWidthClass } from "@/components/dashboard-layout/content-width";
+import { MemberInitial } from "@/components/members/member-initial";
 import {
   ProfileCompletionsSection,
   ProfilePuzzlesSection,
@@ -31,6 +29,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { gateway, Id } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";

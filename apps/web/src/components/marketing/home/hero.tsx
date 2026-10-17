@@ -1,4 +1,5 @@
 import { Link } from "@/compat/link";
+import coverSand from "@/components/marketing/assets/cover-sand.webp";
 import { type PlankBox } from "@/components/marketing/plank";
 import { JigPlank3D } from "@/components/marketing/plank-3d";
 import { Reveal } from "@/components/marketing/reveal";
@@ -12,8 +13,6 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
 import * as React from "react";
 import { useFormatter, useTranslations } from "use-intl";
-
-import coverSand from "@/components/marketing/assets/cover-sand.webp";
 
 // Fallback boxes for the signature PuzzlePlank — used during loading and when
 // the catalog has fewer than 3 puzzles. Themed brand colours + one real cover.

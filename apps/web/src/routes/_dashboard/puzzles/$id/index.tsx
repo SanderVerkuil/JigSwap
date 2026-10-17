@@ -1,15 +1,7 @@
-import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
-import { useMemberDisplayName } from "@/lib/member-display-name";
-import { pageTitle } from "@/lib/page-title";
-import {
-  createFileRoute,
-  Link as RouterLink,
-  useNavigate,
-} from "@tanstack/react-router";
-
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
 import { ImageZoom } from "@/components/common/image-zoom";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
 import {
   difficultyClasses,
@@ -26,9 +18,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
 import { useFavorites } from "@/hooks/use-favorites";
+import { useMemberDisplayName } from "@/lib/member-display-name";
+import { pageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  createFileRoute,
+  Link as RouterLink,
+  useNavigate,
+} from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import {
   ArrowLeftRight,

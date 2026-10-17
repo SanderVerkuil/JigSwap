@@ -1,3 +1,4 @@
+import coverSand from "@/components/marketing/assets/cover-sand.webp";
 import { MkBadge, type MkBadgeTone } from "@/components/marketing/badge";
 import { Container } from "@/components/marketing/container";
 import { FitToWidth } from "@/components/marketing/fit-to-width";
@@ -7,8 +8,6 @@ import { Eyebrow, Section } from "@/components/marketing/section";
 import { Check } from "lucide-react";
 import * as React from "react";
 import { useTranslations } from "use-intl";
-
-import coverSand from "@/components/marketing/assets/cover-sand.webp";
 
 // Alternating feature rows (open layout, no cards — per the design system's
 // "cards are a last resort" rule). Copy is aligned with shipped features:

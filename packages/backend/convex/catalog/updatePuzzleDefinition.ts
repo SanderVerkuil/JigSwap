@@ -1,8 +1,8 @@
 import {
   makeUpdatePuzzleDefinition,
-  type PuzzleDefinitionChanges,
   toCatalogCategoryId,
   toPuzzleDefinitionId,
+  type PuzzleDefinitionChanges,
 } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";

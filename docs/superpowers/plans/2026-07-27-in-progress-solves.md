@@ -521,9 +521,9 @@ and add the import: `import { denormalizeCopyOntoCompletion } from "./copySnapsh
 ```ts
 import {
   makeStartCompletion,
-  type MemberId,
   toCopyId,
   toPuzzleDefinitionId,
+  type MemberId,
 } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";

@@ -1,12 +1,12 @@
 import {
+  toCopyId,
+  toPuzzleDefinitionId,
   type Completion,
   type CompletionId,
   type CompletionRepository,
   type CopyId,
   type MemberId,
   type PuzzleDefinitionId,
-  toCopyId,
-  toPuzzleDefinitionId,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";

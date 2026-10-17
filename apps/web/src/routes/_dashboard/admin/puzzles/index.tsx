@@ -1,17 +1,16 @@
-import { pageTitle } from "@/lib/page-title";
-import { convexQuery } from "@convex-dev/react-query";
-import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
-
 import { PuzzleLifecycleAction } from "@/components/admin/puzzles/puzzle-lifecycle-action";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
-import type { FunctionReturnType } from "convex/server";
+import { pageTitle } from "@/lib/page-title";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import { Lightbulb, Puzzle as PuzzleIcon } from "lucide-react";
 import { useFormatter, useTranslations } from "use-intl";
 

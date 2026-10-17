@@ -1,7 +1,7 @@
 import type { AdminUserDetailView } from "@jigswap/contracts";
 import { ConvexError, v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
-import { type QueryCtx, query } from "../_generated/server";
+import { query, type QueryCtx } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";

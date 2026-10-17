@@ -752,8 +752,8 @@ Restyle the existing import feature into the violet-tinted card (Ref: `addpuzzle
 
 ```tsx
 // apps/web/src/components/add-puzzle/match-confirm.tsx
-import { Button } from "@/components/ui/button";
 import type { ImportedMatch } from "@/components/puzzle-import/use-puzzle-import";
+import { Button } from "@/components/ui/button";
 
 export function MatchConfirm({
   match,
@@ -791,13 +791,13 @@ export function MatchConfirm({
 
 ```tsx
 // apps/web/src/components/add-puzzle/import-zone.tsx
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   usePuzzleImport,
   type ImportedDraft,
   type ImportedMatch,
 } from "@/components/puzzle-import/use-puzzle-import";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { CircleCheck, Link, Link2, Loader2, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "use-intl";

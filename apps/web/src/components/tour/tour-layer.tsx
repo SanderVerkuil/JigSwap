@@ -12,15 +12,15 @@ import { cn } from "@/lib/utils";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Check, ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
 import {
-  type KeyboardEvent,
-  type ReactNode,
-  type RefObject,
   useEffect,
   useId,
   useMemo,
   useRef,
   useState,
   useSyncExternalStore,
+  type KeyboardEvent,
+  type ReactNode,
+  type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "use-intl";

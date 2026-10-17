@@ -1,10 +1,10 @@
 import {
+  toPuzzleDefinitionId,
   type CatalogApplicationError,
   type CatalogError,
   type DefinitionActionDeps,
   type PuzzleDefinitionId,
   type Result,
-  toPuzzleDefinitionId,
 } from "@jigswap/domain";
 import type { MutationCtx } from "../_generated/server";
 import { convexPuzzleDefinitionRepository } from "./adapters/convexPuzzleDefinitionRepository";

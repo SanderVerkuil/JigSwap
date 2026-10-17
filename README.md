@@ -101,6 +101,11 @@ Before you begin, ensure you have the following installed:
    pnpm install
    ```
 
+   The repo uses TypeScript 7 only. In VS Code, install the
+   [TypeScript 7 extension](https://marketplace.visualstudio.com/items?itemName=TypeScriptTeam.native-preview)
+   (`TypeScriptTeam.native-preview`), because TS 7 doesn't ship the `tsserver.js` the
+   built-in TypeScript support needs. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
 3. **Set up environment variables**
    Copy the example environment file and fill in your values:
 

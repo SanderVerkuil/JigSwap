@@ -1,8 +1,8 @@
 import {
-  type Condition,
   makeChangeCopyCondition,
-  type OwnerId,
   toCopyId,
+  type Condition,
+  type OwnerId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";

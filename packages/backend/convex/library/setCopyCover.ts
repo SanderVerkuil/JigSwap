@@ -1,4 +1,4 @@
-import { makeSetCopyCover, type OwnerId, toCopyId } from "@jigswap/domain";
+import { makeSetCopyCover, toCopyId, type OwnerId } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";

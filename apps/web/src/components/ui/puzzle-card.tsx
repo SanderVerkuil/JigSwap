@@ -1,5 +1,4 @@
 "use client";
-import { useMemberDisplayName } from "@/lib/member-display-name";
 
 import {
   PuzzleCardShell,
@@ -31,6 +30,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { gateway, Id } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import type { FunctionReturnType } from "convex/server";
 import {
   Check,

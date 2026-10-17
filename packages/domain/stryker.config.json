@@ -1,6 +1,6 @@
 {
   "$schema": "../../node_modules/@stryker-mutator/core/schema/stryker-schema.json",
-  "_comment": "Mutation testing for the pure @jigswap/domain package. Uses the vitest runner (vite.config.ts type-strips TS). coverageAnalysis perTest keeps re-runs fast by only re-running tests that cover a mutant. Thresholds are documented in MUTATION-TESTING.md. The break gate is 95: the measured baseline is ~98%, so CI stays green now while any regression below 95% breaks the build.",
+  "_comment": "Mutation testing for the pure @jigswap/domain package. Uses the vitest runner (vite.config.ts type-strips TS). coverageAnalysis perTest keeps re-runs fast by only re-running tests that cover a mutant. inPlace mutates the package directly instead of a sandbox copy: the sandbox path rewrites tsconfig.json through the TypeScript compiler API, which TS 7 does not have. Thresholds are documented in MUTATION-TESTING.md. The break gate is 95: the measured baseline is ~98%, so CI stays green now while any regression below 95% breaks the build.",
   "packageManager": "pnpm",
   "plugins": ["@stryker-mutator/vitest-runner"],
   "testRunner": "vitest",
@@ -8,6 +8,7 @@
     "configFile": "vite.config.ts"
   },
   "coverageAnalysis": "perTest",
+  "inPlace": true,
   "mutate": [
     "src/**/*.ts",
     "!src/**/*.spec.ts",

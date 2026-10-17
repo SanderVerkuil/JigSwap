@@ -21,12 +21,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import {
-  type NotificationRow,
   notificationAccent,
   notificationCopy,
   notificationHref,
   notificationIcon,
   notificationId,
+  type NotificationRow,
 } from "./notification-meta";
 
 // How many recent rows the dropdown shows; the rest live on the full page.

@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { toGoalId, toMemberId } from "../../../shared-kernel";
 import { Goal } from "../../domain";
 import type { CompletionRepository } from "../ports/out/completion.repository";
-
 import {
   FixedClock,
   InMemoryCompletionRepository,

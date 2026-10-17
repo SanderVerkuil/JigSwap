@@ -1,7 +1,7 @@
 import {
+  StorePageFetchError,
   type JsonLdProduct,
   type RawProductPage,
-  StorePageFetchError,
 } from "@jigswap/domain";
 
 export const asArray = (value: unknown): unknown[] =>

@@ -8,7 +8,6 @@
 // "kind — target" line instead of crashing on a missing message. The known-kind
 // list is derived from the Activity Log's exhaustively-typed KIND_META, so new
 // kinds added there flow through without a second hand-maintained list.
-
 import { MODERATION_ACTIVITY_KINDS } from "@/components/admin/moderation/activity-log";
 import { gateway } from "@/gateway";
 import type { FunctionReturnType } from "convex/server";

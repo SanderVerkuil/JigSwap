@@ -3,7 +3,6 @@
 // The console's header line: a violet ADMIN shield pill plus a static muted
 // subtitle. (The design's moderator roster was cut by spec amendment —
 // adminship lives only in Clerk JWTs, so there is no roster to show.)
-
 import { Shield } from "lucide-react";
 import { useTranslations } from "use-intl";
 

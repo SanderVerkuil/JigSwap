@@ -1,9 +1,9 @@
 import {
-  type ExchangeId,
   PartnerReview,
-  type PartnerReviewState,
   toMemberId,
   toPartnerReviewId,
+  type ExchangeId,
+  type PartnerReviewState,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 

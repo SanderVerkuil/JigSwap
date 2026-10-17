@@ -1,4 +1,8 @@
 import {
+  toCollectionId,
+  toCopyId,
+  toLoanId,
+  toPersonalCategoryId,
   type CollectionId,
   type CollectionIdGenerator,
   type CopyId,
@@ -7,10 +11,6 @@ import {
   type LoanIdGenerator,
   type PersonalCategoryId,
   type PersonalCategoryIdGenerator,
-  toCollectionId,
-  toCopyId,
-  toLoanId,
-  toPersonalCategoryId,
 } from "@jigswap/domain";
 
 // Driven adapters for the Library id-generator ports. crypto.randomUUID is available in the

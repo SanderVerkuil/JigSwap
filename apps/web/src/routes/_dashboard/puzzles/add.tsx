@@ -1,6 +1,3 @@
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
-
 import { useRouter } from "@/compat/navigation";
 import {
   AddPuzzleLayout,
@@ -35,12 +32,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { gateway, Id } from "@/gateway";
+import { pageTitle } from "@/lib/page-title";
 import {
   convexQuery,
   useConvexAction,
   useConvexMutation,
 } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";

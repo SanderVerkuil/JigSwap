@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  type CopyBreakdownInput,
   computeCollectionBreakdown,
+  type CopyBreakdownInput,
 } from "./collection-breakdown";
 
 const copy = (over: Partial<CopyBreakdownInput>): CopyBreakdownInput => ({

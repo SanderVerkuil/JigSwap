@@ -7,7 +7,6 @@ import {
 } from "../../shared-kernel";
 import { ALLOWED_APPROVAL_TRANSITIONS } from "./approval";
 import { PuzzleDefinitionSubmitted } from "./events";
-
 import {
   PuzzleDefinition,
   SubmitPuzzleDefinitionProps,

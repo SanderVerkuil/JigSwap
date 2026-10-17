@@ -1,13 +1,12 @@
+import { ThreadList } from "@/components/messaging/thread-list";
+import { ThreadView } from "@/components/messaging/thread-view";
+import { AppNotFound } from "@/components/NotFound";
 import { pageTitle } from "@/lib/page-title";
 import {
   createFileRoute,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { ConvexError } from "convex/values";
-
-import { AppNotFound } from "@/components/NotFound";
-import { ThreadList } from "@/components/messaging/thread-list";
-import { ThreadView } from "@/components/messaging/thread-view";
 
 // This route is deep-linked (message notifications carry thread ids), so a
 // stale or foreign id surfaces here as a ConvexError from getThreadMessages.

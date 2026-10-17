@@ -11,7 +11,6 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Grid, List, Plus, Search } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
-
 import { CollectionDetailActions } from "./collection-detail-actions";
 import { CollectionDetailHeader } from "./collection-detail-header";
 

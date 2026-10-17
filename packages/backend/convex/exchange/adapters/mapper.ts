@@ -1,13 +1,13 @@
 import {
   Exchange,
-  type ExchangeKind,
-  type ExchangeState,
-  type ExchangeStatus,
-  type LegacyExchangeKind,
   Money,
   toCopyId,
   toExchangeId,
   toMemberId,
+  type ExchangeKind,
+  type ExchangeState,
+  type ExchangeStatus,
+  type LegacyExchangeKind,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 

@@ -1,10 +1,10 @@
 import {
+  toCompletionId,
+  toGoalId,
   type CompletionId,
   type CompletionIdGenerator,
   type GoalId,
   type GoalIdGenerator,
-  toCompletionId,
-  toGoalId,
 } from "@jigswap/domain";
 
 // Driven adapters for the Solving id-generator ports. crypto.randomUUID is available in the

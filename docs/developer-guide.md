@@ -373,8 +373,10 @@ Run with `pnpm test` (all) or `pnpm turbo run test --filter=<package>` (e.g. `--
 ### 4.3 Prettier & lint
 
 **CI runs `format:check` first.** Always format changed files before committing
-(`pnpm format` or `pnpm lint:fix`). oxlint config lives in `.oxlintrc.json`; Prettier uses
-`prettier-plugin-organize-imports`.
+(`pnpm format` or `pnpm lint:fix`). oxlint config lives in `.oxlintrc.json`. Prettier sorts
+imports with `@ianvs/prettier-plugin-sort-imports` (Babel-based, so it doesn't need the
+TypeScript compiler API): built-ins, then `@/` aliases, then packages, then relative imports.
+It doesn't remove unused imports; oxlint's `no-unused-vars` flags those.
 
 Lint runs `oxlint --type-aware` (types come from `oxlint-tsgolint`, which runs on
 typescript-go). Floating promises are errors: `await` them, `.catch` them, or mark a

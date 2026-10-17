@@ -282,8 +282,8 @@ plus codegen/api entry and a gateway entry `identity: { ..., myMemberId: api.ide
 
 ```tsx
 import { gateway } from "@/gateway";
-import { convexQuery } from "@convex-dev/react-query";
 import { usePresence } from "@convex-dev/presence/react";
+import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 

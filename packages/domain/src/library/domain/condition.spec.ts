@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CONDITIONS, Condition, isCondition } from "./condition";
+import { Condition, CONDITIONS, isCondition } from "./condition";
 
 describe("CONDITIONS", () => {
   it("lists every grade best→worst with no gaps", () => {

@@ -12,7 +12,6 @@
 // instant, then let Clerk's reconciled value take over once the round-trip
 // resolves. While the user is loading / signed out (incl. SSR first paint) we
 // fall back to DEFAULTS so nothing flashes or throws.
-
 import { useUser } from "@/compat/clerk";
 import {
   createContext,

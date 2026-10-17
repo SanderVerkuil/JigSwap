@@ -297,12 +297,12 @@ nl:
 ```tsx
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
+import { EmptyState } from "@/components/library/empty-state";
 import { PuzzleDefinitionFields } from "@/components/suggest-edit/definition-fields";
 import {
   buildProposalArgs,
   formFromView,
 } from "@/components/suggest-edit/proposal-diff";
-import { EmptyState } from "@/components/library/empty-state";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";

@@ -1,6 +1,3 @@
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
-
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { EditProfileForm } from "@/components/profile/edit-profile-form";
 import { IdentityHeader } from "@/components/profile/identity-header";
@@ -10,8 +7,10 @@ import { ReputationSection } from "@/components/reputation/reputation-section";
 import { QrDialog } from "@/components/social/qr-dialog";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
+import { pageTitle } from "@/lib/page-title";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
 

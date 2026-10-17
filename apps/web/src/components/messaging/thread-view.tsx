@@ -9,7 +9,6 @@
 //
 // TODO: only the newest page (50 messages) renders — the getThreadMessages
 // `before` cursor exists but a "load older messages" affordance is unbuilt.
-
 import { Link } from "@/compat/link";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { gateway } from "@/gateway";

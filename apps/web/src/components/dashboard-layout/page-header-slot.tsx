@@ -10,14 +10,13 @@
 // When a page publishes a `title`, the page head treats the route's own static
 // title as a middle breadcrumb (linking to the route's base page) and shows the
 // published title as the current leaf — e.g. My Library › Collections › Test.
-
 import {
   createContext,
-  type DependencyList,
-  type ReactNode,
   useContext,
   useEffect,
   useState,
+  type DependencyList,
+  type ReactNode,
 } from "react";
 
 export type PageHeaderCrumb = { label: ReactNode; href?: string };

@@ -5,7 +5,6 @@ import {
   toPersonalCategoryId,
   toPuzzleDefinitionId,
 } from "../../shared-kernel";
-
 import { LibraryApplicationError } from "./errors";
 
 const copy = toCopyId("copy1");

@@ -6,7 +6,6 @@
 // language switchers (tucked on the right, desktop only) and the Add Puzzle
 // CTA. No user avatar here — user identity lives bottom-left in the sidebar.
 // Desktop-only (md+): below the breakpoint the MobileTopBar replaces it.
-
 import { Link } from "@/compat/link";
 import { HeaderLogo } from "@/components/common/header-logo";
 import { NotificationBell } from "@/components/notifications/notification-bell";

@@ -36,7 +36,7 @@
 
 ```ts
 import { describe, expect, it } from "vitest";
-import { boxWorldSize, BOX_SCALE, PX } from "./box";
+import { BOX_SCALE, boxWorldSize, PX } from "./box";
 
 describe("boxWorldSize", () => {
   it("derives width and height from a no-cover box", () => {
