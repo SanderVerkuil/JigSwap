@@ -9,7 +9,6 @@
 // stretched link on the name (::after overlay); the actions sit above it
 // (relative z-10), so no interactive element is nested in another.
 // Design: docs/superpowers/specs/2026-10-17-network-card-redesign-design.md
-
 import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";

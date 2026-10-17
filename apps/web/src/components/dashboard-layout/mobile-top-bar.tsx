@@ -6,7 +6,6 @@
 // then search (command palette), notifications and the profile avatar on the
 // right. Every control is a 44px touch target and the bar is safe-area padded
 // for notched phones.
-
 import { useUser } from "@/compat/clerk";
 import { Image } from "@/compat/image";
 import { Link } from "@/compat/link";

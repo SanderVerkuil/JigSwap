@@ -187,8 +187,8 @@ entire point and is impossible against today's inline-in-mutation logic.
 
 ```ts
 // @jigswap/backend/convex/exchange/adapters/convex-exchange.repository.ts
-import type { MutationCtx } from "../../_generated/server";
 import type { ExchangeRepository } from "@jigswap/domain/exchange/application/ports/out/exchange.repository";
+import type { MutationCtx } from "../../_generated/server";
 import { toDomain, toRow } from "./exchange.mapper";
 
 export const convexExchangeRepository = (
@@ -236,15 +236,15 @@ subscribers. Each subscriber is its own Convex internal mutation = inbound adapt
 
 ```ts
 // @jigswap/backend/convex/exchange/propose.ts
-import { mutation } from "../_generated/server";
-import { v } from "convex/values";
 import { makeProposeExchange } from "@jigswap/domain/exchange/application/use-cases/propose-exchange";
-import { convexExchangeRepository } from "./adapters/convex-exchange.repository";
-import { convexCopyAvailability } from "../library/adapters/convex-copy-availability.adapter";
-import { convexVisibilityPolicy } from "../friend-circles/adapters/convex-visibility.adapter";
-import { convexEventPublisher } from "../_shared/convex-event-publisher";
+import { v } from "convex/values";
+import { mutation } from "../_generated/server";
 import { systemClock } from "../_shared/clock";
+import { convexEventPublisher } from "../_shared/convex-event-publisher";
+import { convexVisibilityPolicy } from "../friend-circles/adapters/convex-visibility.adapter";
 import { requireMember } from "../identity/require-member"; // ACL over ctx.auth → MemberId
+import { convexCopyAvailability } from "../library/adapters/convex-copy-availability.adapter";
+import { convexExchangeRepository } from "./adapters/convex-exchange.repository";
 
 export const propose = mutation({
   args: {
@@ -350,7 +350,7 @@ These are guardrails, not suggestions — add them in Phase 0:
   never `_generated`).
 - **`dependency-cruiser`** rule: forbid any import of `convex`, `convex/values`, `@clerk/*`, `react`
   from `packages/domain/**`.
-- **ESLint `no-restricted-imports`** in `apps/web/**`: ban `@jigswap/backend/convex/_generated/api`
+- **Lint `no-restricted-imports`** (oxlint) in `apps/web/**`: ban `@jigswap/backend/convex/_generated/api`
   (the UI must use the gateway).
 - **Domain unit tests** run with **no Convex** (Vitest, already in the stack) — fast, the regression net
   that makes the refactor safe.

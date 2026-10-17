@@ -4,7 +4,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import type { ImportedDraft } from "./draft-to-form-defaults";
-import { type ImportedMatch, usePuzzleImport } from "./use-puzzle-import";
+import { usePuzzleImport, type ImportedMatch } from "./use-puzzle-import";
 
 interface PuzzleImportBarProps {
   onDraft: (draft: ImportedDraft) => void;

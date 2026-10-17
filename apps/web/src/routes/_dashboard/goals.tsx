@@ -1,6 +1,3 @@
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
-
 import { useUser } from "@/compat/clerk";
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
@@ -20,9 +17,11 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
+import { pageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { Plus, Target, Trophy } from "lucide-react";
 import { useState } from "react";

@@ -8,7 +8,6 @@
 //     becomes a middle crumb linking back to the listing).
 // No crumbs on Dashboard, Profile or the landings themselves. Desktop-only:
 // below md the mobile top bar owns the title and the back affordance.
-
 import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";

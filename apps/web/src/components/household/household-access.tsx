@@ -12,8 +12,8 @@ import { House } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import {
-  type HouseholdPermissionChoice,
   ownerChoiceOf,
+  type HouseholdPermissionChoice,
 } from "./bulk-permission";
 
 type Permission = "manage" | "view";

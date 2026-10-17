@@ -1,5 +1,5 @@
-import { convexTest } from "convex-test";
-import { ConvexError } from "convex/values";
+import { convexTest, type TestConvex } from "convex-test";
+import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -8,7 +8,7 @@ import schema from "./schema";
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
-const seed = (t: ReturnType<typeof convexTest>) =>
+const seed = (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string) =>
@@ -26,16 +26,16 @@ const seed = (t: ReturnType<typeof convexTest>) =>
     return { alice, bob, carol };
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asBob = (t: ReturnType<typeof convexTest>) =>
+const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
-const asCarol = (t: ReturnType<typeof convexTest>) =>
+const asCarol = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_carol" });
 
 // Seed a mutual follow between the pair so the ConnectionPolicy's first clause passes.
 const followMutually = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   a: Id<"users">,
   b: Id<"users">,
 ) =>
@@ -53,7 +53,7 @@ const followMutually = (
   });
 
 // Seed a puzzle + a for-sale copy owned by `owner` so exchange.propose can run for real.
-const seedSaleCopy = (t: ReturnType<typeof convexTest>, owner: Id<"users">) =>
+const seedSaleCopy = (t: TestConvex<typeof schema>, owner: Id<"users">) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const puzzleId = await ctx.db.insert("puzzles", {
@@ -76,7 +76,7 @@ const seedSaleCopy = (t: ReturnType<typeof convexTest>, owner: Id<"users">) =>
 
 // Drain the async event dispatcher: yield a macrotask so the pending runAfter(0) job fires, then
 // await any in-progress jobs — looped a few times to settle the chain.
-const flushScheduled = async (t: ReturnType<typeof convexTest>) => {
+const flushScheduled = async (t: TestConvex<typeof schema>) => {
   for (let i = 0; i < 10; i++) {
     await new Promise((resolve) => setTimeout(resolve, 0));
     await t.finishInProgressScheduledFunctions();
@@ -90,7 +90,7 @@ const tick = () => new Promise((resolve) => setTimeout(resolve, 3));
 
 // convex-test serializes ConvexError.data to a JSON string at the function boundary; normalise.
 const dataOf = (e: unknown): { code?: string } => {
-  const data = (e as ConvexError<unknown>).data;
+  const data = (e as ConvexError<Value>).data;
   return typeof data === "string"
     ? JSON.parse(data)
     : (data as { code?: string });
@@ -105,7 +105,7 @@ const expectConvexCode = async (p: Promise<unknown>, code: string) => {
 
 // Open a DM between alice and bob (mutual follow) and post the given bodies as alice.
 const openDmWithMessages = async (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   bob: Id<"users">,
   bodies: string[],
 ) => {

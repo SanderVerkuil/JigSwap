@@ -1,5 +1,5 @@
-import { convexTest } from "convex-test";
-import { ConvexError } from "convex/values";
+import { convexTest, type TestConvex } from "convex-test";
+import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
@@ -13,7 +13,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 // outbox. Nothing is deleted.
 
 // Seed a single member; the Clerk subject maps to the user via by_clerk_id.
-const seedMember = async (t: ReturnType<typeof convexTest>) =>
+const seedMember = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     return ctx.db.insert("users", {
@@ -26,13 +26,13 @@ const seedMember = async (t: ReturnType<typeof convexTest>) =>
     });
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asAdmin = (t: ReturnType<typeof convexTest>) =>
+const asAdmin = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice", metadata: { role: "admin" } });
 
 // Alice submits a pending definition, returning the aggregateId.
-const submitPending = async (t: ReturnType<typeof convexTest>) => {
+const submitPending = async (t: TestConvex<typeof schema>) => {
   const id = await asAlice(t).mutation(
     api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
     { title: "Mountain Vista", pieceCount: 1000 },
@@ -41,7 +41,7 @@ const submitPending = async (t: ReturnType<typeof convexTest>) => {
 };
 
 // Submit + approve, returning an APPROVED definition's aggregateId.
-const submitApproved = async (t: ReturnType<typeof convexTest>) => {
+const submitApproved = async (t: TestConvex<typeof schema>) => {
   const id = await submitPending(t);
   await asAdmin(t).mutation(
     api.catalog.approvePuzzleDefinition.approvePuzzleDefinition,
@@ -50,7 +50,7 @@ const submitApproved = async (t: ReturnType<typeof convexTest>) => {
   return id;
 };
 
-const puzzleRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
+const puzzleRow = (t: TestConvex<typeof schema>, aggregateId: string) =>
   t.run(async (ctx) =>
     ctx.db
       .query("puzzles")
@@ -58,17 +58,17 @@ const puzzleRow = (t: ReturnType<typeof convexTest>, aggregateId: string) =>
       .unique(),
   );
 
-const allActions = (t: ReturnType<typeof convexTest>) =>
+const allActions = (t: TestConvex<typeof schema>) =>
   t.run((ctx) => ctx.db.query("moderationActions").collect());
 
-const outboxNames = (t: ReturnType<typeof convexTest>) =>
+const outboxNames = (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) =>
     (await ctx.db.query("domainEvents").collect()).map((e) => e.name),
   );
 
 // convex-test serializes ConvexError.data to a JSON string at the function boundary; normalise.
 const dataOf = (e: unknown): { code?: string } => {
-  const data = (e as ConvexError<unknown>).data;
+  const data = (e as ConvexError<Value>).data;
   return typeof data === "string"
     ? JSON.parse(data)
     : (data as { code?: string });

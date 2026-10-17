@@ -209,8 +209,8 @@ In `packages/gateway/src/operations.ts`, after the `allTags` line add:
 - [ ] **Step 4: Implement `getAllPublishers.ts`:**
 
 ```ts
-import { KNOWN_PUBLISHERS } from "@jigswap/domain";
 import type { PublisherView } from "@jigswap/contracts";
+import { KNOWN_PUBLISHERS } from "@jigswap/domain";
 import { stream } from "convex-helpers/server/stream";
 import { query } from "../_generated/server";
 import schema from "../schema";
@@ -399,13 +399,13 @@ Expected: PASS (4/4).
 - [ ] **Step 5: Implement `suggest-input.tsx`.** Purely presentational; input stays the source of truth; suggestions never block free text:
 
 ```tsx
-import { Input } from "@/components/ui/input";
 import {
   Command,
   CommandGroup,
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverAnchor,

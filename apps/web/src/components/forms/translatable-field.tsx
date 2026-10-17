@@ -10,7 +10,6 @@
 // Only the field marked `primaryToggle` exposes its toggle to keyboard and
 // screen readers; the other toggles are pointer-only duplicates, so Tab goes
 // input → input instead of stopping at every copy of the same control.
-
 import { FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

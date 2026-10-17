@@ -31,9 +31,9 @@ import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import {
   allowedProposeTypes,
-  type Availability,
   parsePriceCents,
   proposeErrorKey,
+  type Availability,
   type ProposeType,
 } from "./request-trade";
 

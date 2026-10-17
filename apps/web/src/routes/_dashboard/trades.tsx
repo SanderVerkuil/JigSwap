@@ -1,7 +1,3 @@
-import { useMemberDisplayName } from "@/lib/member-display-name";
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
-
 import { useUser } from "@/compat/clerk";
 import {
   CoverChip,
@@ -15,9 +11,12 @@ import { ReputationBadge } from "@/components/reputation/reputation-badge";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
+import { pageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import {
   ArrowLeftRight,

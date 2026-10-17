@@ -7,7 +7,7 @@ import {
   SheetDescription,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Outlet, createFileRoute, useLocation } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useLocation } from "@tanstack/react-router";
 import * as React from "react";
 import { useTranslations } from "use-intl";
 

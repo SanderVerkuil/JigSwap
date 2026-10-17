@@ -5,7 +5,6 @@ import {
   toPersonalCategoryId,
 } from "../../shared-kernel";
 import { PersonalCategoryCreated } from "./events";
-
 import { PersonalCategory } from "./personal-category";
 
 const id = toPersonalCategoryId("pc1");

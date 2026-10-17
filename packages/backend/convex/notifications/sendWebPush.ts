@@ -1,4 +1,5 @@
 "use node";
+
 import { v } from "convex/values";
 import webpush from "web-push";
 import { internal } from "../_generated/api";
@@ -8,8 +9,8 @@ import { logEvent, type WideEvent } from "../lib/logEvent";
 import {
   isGoneStatus,
   toWebPushPayload,
-  type VapidConfig,
   vapidConfigFromEnv,
+  type VapidConfig,
   type WebPushSender,
 } from "./adapters/webPush";
 

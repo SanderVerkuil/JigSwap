@@ -1,8 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-
-import { pageTitle } from "@/lib/page-title";
-
 import { Link } from "@/compat/link";
+import coverSand from "@/components/marketing/assets/cover-sand.webp";
 import { Container } from "@/components/marketing/container";
 import { FitToWidth } from "@/components/marketing/fit-to-width";
 import { PageHero } from "@/components/marketing/page-hero";
@@ -10,10 +7,10 @@ import { JigPlank } from "@/components/marketing/plank";
 import { Reveal } from "@/components/marketing/reveal";
 import { Eyebrow, Section, SectionHead } from "@/components/marketing/section";
 import { Button } from "@/components/ui/button";
+import { pageTitle } from "@/lib/page-title";
+import { createFileRoute } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { useTranslations } from "use-intl";
-
-import coverSand from "@/components/marketing/assets/cover-sand.webp";
 
 export const Route = createFileRoute("/_public/about")({
   head: ({ match }) => ({

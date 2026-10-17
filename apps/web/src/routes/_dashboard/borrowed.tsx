@@ -1,7 +1,3 @@
-import { useMemberDisplayName } from "@/lib/member-display-name";
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
-
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
@@ -12,8 +8,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
 import { useDateFnsLocale } from "@/lib/date-locale";
+import { useMemberDisplayName } from "@/lib/member-display-name";
+import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import { HandHelping, Package, User } from "lucide-react";
 import { useMemo, useState } from "react";

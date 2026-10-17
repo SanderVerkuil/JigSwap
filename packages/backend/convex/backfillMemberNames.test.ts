@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -9,7 +9,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 // Rows as the buggy Clerk sync (`${first_name} ${last_name}`) and the old lazy profile creation
 // ("Member" placeholder / copied account name) left them.
-const seed = (t: ReturnType<typeof convexTest>) =>
+const seed = (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string, name: string, username?: string) =>
@@ -54,7 +54,7 @@ const seed = (t: ReturnType<typeof convexTest>) =>
   });
 
 const runToCompletion = async (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   table: "users" | "profiles",
 ) => {
   let cursor: string | undefined;

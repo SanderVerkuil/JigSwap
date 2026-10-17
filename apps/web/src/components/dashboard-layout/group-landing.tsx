@@ -6,7 +6,6 @@
 // design (tile grid deliberately chosen over a row directory so these pages
 // feel like a "home" surface). Driven entirely by the route-meta nav groups,
 // so the IA stays defined in exactly one place.
-
 import { Link } from "@/compat/link";
 import { ChevronRight } from "lucide-react";
 import { useTranslations } from "use-intl";

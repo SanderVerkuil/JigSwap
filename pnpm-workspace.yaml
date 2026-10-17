@@ -8,7 +8,6 @@ allowBuilds:
   "@swc/core": true
   core-js: true
   esbuild: true
-  nx: true
   sharp: true
   unrs-resolver: true
 
@@ -18,13 +17,18 @@ linkWorkspacePackages: true
 # zodResolver-based forms type-check against. Raised to 4.6.7 alongside resolvers 5.9.1.
 # Pin less: it's an optional CSS-preprocessor peer of vite (unused here); 4.5.1 added a
 # postinstall script that makes `pnpm install` exit non-zero, breaking Nx's pre-install.
-# Pin eslint-plugin-react-hooks: keep the whole workspace (incl. the copy pulled
-# transitively by eslint-config-next) on one version, so lint results don't depend on
-# which copy the flat config resolves. 7.1.1's `set-state-in-effect`/`refs` findings are fixed.
+# Pin eslint-plugin-react-hooks (oxlint runs it as a jsPlugin): keep the whole workspace
+# on one version, so lint results don't depend on which copy resolves.
+# 7.1.1's `set-state-in-effect`/`refs` findings are fixed.
 overrides:
   zod: 4.6.7
   less: 4.4.0
   eslint-plugin-react-hooks: 7.1.1
+  # Drop optional peers that eslint-module-utils / eslint-import-resolver-typescript
+  # (used by the boundaries jsPlugin) would otherwise pull in. oxlint never loads them,
+  # and @typescript-eslint/parser would keep a TypeScript 6 peer in the tree.
+  "@typescript-eslint/parser": "-"
+  eslint-plugin-import: "-"
   # Security patches for transitive deps flagged by Dependabot — each pins only
   # the vulnerable range to its first patched version (selective overrides).
   # Vite 8 accepts esbuild ^0.27.0 || ^0.28.0, so 0.28.1 is in range.
@@ -57,7 +61,6 @@ onlyBuiltDependencies:
   - "@vercel/speed-insights"
   - core-js
   - esbuild
-  - nx
   - sharp
   - unrs-resolver
 
@@ -81,7 +84,6 @@ minimumReleaseAgeExclude:
   - "@tanstack/start-plugin-core@1.171.54"
   - "@tanstack/start-server-core@1.169.44"
   - "@tanstack/start-storage-context@1.167.40"
-  - eslint@10.13.0
   - lucide-react@1.59.0
 
 patchedDependencies:

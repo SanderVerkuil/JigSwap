@@ -1,16 +1,15 @@
-import { MemberInitial } from "@/components/members/member-initial";
-import { useMemberDisplayName } from "@/lib/member-display-name";
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute, Link } from "@tanstack/react-router";
-
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { UserRoleAction } from "@/components/admin/users/user-role-action";
+import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
+import { pageTitle } from "@/lib/page-title";
+import { createFileRoute, Link } from "@tanstack/react-router";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
 import { Search, UserX } from "lucide-react";

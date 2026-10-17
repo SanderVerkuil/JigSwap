@@ -801,8 +801,8 @@ import {
   RequestFollow,
   RequestFollowCommand,
 } from "../ports/in/request-follow.port";
-import { FollowRepository } from "../ports/out/follow.repository";
 import { FollowRequestRepository } from "../ports/out/follow-request.repository";
+import { FollowRepository } from "../ports/out/follow.repository";
 import { FollowRequestIdGenerator } from "../ports/out/id-generators";
 
 // How long after a (silent) decline the requester's next attempt is swallowed. Chosen in the
@@ -1132,8 +1132,8 @@ import {
   ApproveFollowRequestCommand,
   ApproveFollowRequestResult,
 } from "../ports/in/approve-follow-request.port";
-import { FollowRepository } from "../ports/out/follow.repository";
 import { FollowRequestRepository } from "../ports/out/follow-request.repository";
+import { FollowRepository } from "../ports/out/follow.repository";
 import { FollowIdGenerator } from "../ports/out/id-generators";
 
 export interface ApproveFollowRequestDeps {
@@ -1757,10 +1757,10 @@ export const getFollowRelation = query({
 `packages/backend/convex/social/listIncomingFollowRequests.ts`:
 
 ```typescript
+import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { toMemberView } from "../identity/toMemberView";
-import type { Id } from "../_generated/dataModel";
 
 // Read side: the acting member's pending incoming follow requests, joined with the
 // requester's member view and whether the member already follows them back (drives the

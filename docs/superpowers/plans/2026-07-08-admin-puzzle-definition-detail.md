@@ -676,9 +676,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 Create `apps/web/src/routes/_dashboard/admin/puzzles/$puzzleId.tsx`:
 
 ```tsx
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute, Link } from "@tanstack/react-router";
-
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { AuditList } from "@/components/admin/users/audit-list";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
@@ -697,8 +694,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, type Id } from "@/gateway";
+import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Puzzle as PuzzleIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";

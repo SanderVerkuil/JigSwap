@@ -2,7 +2,6 @@
 
 // Shared empty state for the admin triage queues: a dashed panel with a
 // success-toned icon, a bold "all clear" title and a muted per-queue label.
-
 import { CheckCircle, type LucideIcon } from "lucide-react";
 
 export function QueueEmpty({

@@ -4,7 +4,6 @@
 // Each stamp kind maps to an icon + tone, the sentence is i18n-interpolated
 // from the kind, and the actor falls back to "System" for the automated
 // pipeline's rows (photo_auto_rejected has no actorId).
-
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
@@ -16,13 +15,13 @@ import {
   Eye,
   EyeOff,
   Flag,
-  type LucideIcon,
   Pencil,
   ShieldCheck,
   ShieldOff,
   Trash2,
   Undo2,
   XCircle,
+  type LucideIcon,
 } from "lucide-react";
 import { useFormatter, useTranslations } from "use-intl";
 

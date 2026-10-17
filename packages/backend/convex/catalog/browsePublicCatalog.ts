@@ -1,5 +1,5 @@
 import type { PublicCatalogCardView } from "@jigswap/contracts";
-import { type PaginationResult, paginationOptsValidator } from "convex/server";
+import { paginationOptsValidator, type PaginationResult } from "convex/server";
 import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";

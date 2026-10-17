@@ -19,7 +19,6 @@ import {
   Globe,
   House,
   LayoutDashboard,
-  type LucideIcon,
   Mail,
   MessageSquare,
   Puzzle,
@@ -30,6 +29,7 @@ import {
   Target,
   ThumbsUp,
   Users,
+  type LucideIcon,
 } from "lucide-react";
 
 export type ShellGroupKey = "library" | "community" | "admin";

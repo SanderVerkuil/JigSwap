@@ -190,7 +190,7 @@ export const clampCropArea = (
 - [ ] Create `apps/web/src/components/image-editor/bake-image.ts`:
 
 ```ts
-import { clampCropArea, type PixelArea, rotateSize } from "./crop-math";
+import { clampCropArea, rotateSize, type PixelArea } from "./crop-math";
 
 // Browser-only canvas bake for the image editor. Loads the source with
 // crossOrigin="anonymous" BEFORE setting src (the box-art precedent in

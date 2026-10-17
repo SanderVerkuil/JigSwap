@@ -1,6 +1,6 @@
 import {
-  type CollectionVisibility,
   makeCreateCollection,
+  type CollectionVisibility,
   type OwnerId,
 } from "@jigswap/domain";
 import { v } from "convex/values";

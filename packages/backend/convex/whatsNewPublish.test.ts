@@ -1,5 +1,5 @@
 import type { WhatsNewManifestEntry } from "@jigswap/contracts";
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -35,7 +35,7 @@ beforeEach(() => {
   fixture.manifest = [NOTIFY, QUIET];
 });
 
-type T = ReturnType<typeof convexTest>;
+type T = TestConvex<typeof schema>;
 
 const BEFORE = day("2026-10-01");
 const AFTER = day("2026-11-01");

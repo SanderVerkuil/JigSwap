@@ -1,6 +1,5 @@
-import { convexQuery } from "@convex-dev/react-query";
-
 import { gateway } from "@/gateway";
+import { convexQuery } from "@convex-dev/react-query";
 
 // Shared TanStack-Query options for the platform counts shown on the marketing landing (the hero
 // trust-row member count + the stats strip). Routed through @convex-dev/react-query so the home

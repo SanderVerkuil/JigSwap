@@ -1,8 +1,3 @@
-import { MemberInitial } from "@/components/members/member-initial";
-import { useMemberDisplayName } from "@/lib/member-display-name";
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
-
 import { useUser } from "@/compat/clerk";
 import {
   CoverChip,
@@ -10,6 +5,7 @@ import {
   MiniStat,
 } from "@/components/community/primitives";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
+import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,8 +30,11 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
+import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { Plus, Settings, Trash2, Users } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";

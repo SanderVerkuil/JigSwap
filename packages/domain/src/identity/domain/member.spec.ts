@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { toMemberId } from "../../shared-kernel";
-
 import { Member, RegisterProps } from "./member";
 
 const memberId = toMemberId("member-1");

@@ -1,5 +1,5 @@
 import { resolveMemberDisplayName } from "@jigswap/contracts";
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
@@ -12,7 +12,7 @@ const HIDDEN_EMAIL = "nameless.secret@example.com";
 
 // A viewer (Alice) and a member with NO name and NO username (the "null null" population after the
 // sync fix) whose email Alice is not allowed to see.
-const seed = (t: ReturnType<typeof convexTest>) =>
+const seed = (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const alice = await ctx.db.insert("users", {

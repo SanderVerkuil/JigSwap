@@ -1,7 +1,7 @@
 import {
   memberInitials,
-  type MemberNameSource,
   resolveMemberDisplayName,
+  type MemberNameSource,
 } from "@jigswap/contracts";
 import { useCallback } from "react";
 import { useTranslations } from "use-intl";

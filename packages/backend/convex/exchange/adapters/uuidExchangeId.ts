@@ -1,7 +1,7 @@
 import {
+  toExchangeId,
   type ExchangeId,
   type ExchangeIdGenerator,
-  toExchangeId,
 } from "@jigswap/domain";
 
 // Driven adapter for the ExchangeIdGenerator port. crypto.randomUUID is available in the

@@ -2,7 +2,6 @@
 
 // Compact card for the copy a conversation is about: shown in the new-conversation composer
 // header and inside a message that references a copy. Links to the copy page.
-
 import { Image } from "@/compat/image";
 import { Link } from "@/compat/link";
 import type { gateway } from "@/gateway";

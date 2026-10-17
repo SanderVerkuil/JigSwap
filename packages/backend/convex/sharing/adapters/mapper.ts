@@ -1,11 +1,11 @@
 import {
   Circle,
-  type CircleState,
-  type MembershipState,
-  type PermissionLevel,
   toCircleId,
   toMemberId,
   toMembershipId,
+  type CircleState,
+  type MembershipState,
+  type PermissionLevel,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 

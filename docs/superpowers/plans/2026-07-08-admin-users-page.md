@@ -523,10 +523,10 @@ export * from "./admin-user";
 
 ```ts
 import type { AdminUserView } from "@jigswap/contracts";
-import { type PaginationResult, paginationOptsValidator } from "convex/server";
+import { paginationOptsValidator, type PaginationResult } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
-import { type QueryCtx, query } from "../_generated/server";
+import { query, type QueryCtx } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
 
@@ -761,9 +761,6 @@ The page renders inside the existing `/admin` gate layout (`routes/_dashboard/ad
 - [ ] **Step 5.1:** Create `apps/web/src/routes/_dashboard/admin/users.tsx`:
 
 ```tsx
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
-
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -771,6 +768,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
+import { pageTitle } from "@/lib/page-title";
+import { createFileRoute } from "@tanstack/react-router";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
 import { Search, UserX } from "lucide-react";

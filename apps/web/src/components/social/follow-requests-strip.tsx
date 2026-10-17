@@ -4,7 +4,6 @@
 // page (Phase 4 moves the count onto a tab badge). Approve creates the edge; the second
 // button also follows back in the same gesture (mutuality is what unlocks content for the
 // requester). Decline is silent for the requester. Renders nothing when there are none.
-
 import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";

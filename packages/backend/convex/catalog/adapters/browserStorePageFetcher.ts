@@ -1,4 +1,6 @@
 "use node";
+
+import { lookup as dnsLookup } from "node:dns/promises";
 import {
   err,
   isPrivateIp,
@@ -6,7 +8,6 @@ import {
   StorePageFetchError,
   type StorePageFetcher,
 } from "@jigswap/domain";
-import { lookup as dnsLookup } from "node:dns/promises";
 import { extractFromHtml } from "ogie";
 import { enrichWithHtmlFallback } from "./htmlFallback";
 import { mapOgieError, toRawProductPage } from "./ogieRawProductPage";

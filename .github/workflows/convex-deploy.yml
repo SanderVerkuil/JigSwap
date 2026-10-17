@@ -14,6 +14,10 @@ name: Convex Deploy
 #
 # `npx convex deploy` only targets production/preview, so the dev deployment is pushed with
 # `npx convex dev --once` (a single non-interactive push), selected by a dev deploy key.
+#
+# Both pushes pass `--typecheck enable`: a type error in packages/backend/convex (tests
+# included, per convex/tsconfig.json) fails the deploy. The CLI default `try` silently
+# skips the check when packages/backend has no local `typescript`.
 on:
   push:
     branches: [main]
@@ -52,7 +56,7 @@ jobs:
         env:
           # A dev deploy key (format "dev:<name>|...") selects the development deployment.
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_DEV }}
-        run: pnpm exec convex dev --once
+        run: pnpm exec convex dev --once --typecheck enable
 
       # Start the whats_new notification fan-out for notify:true What's new entries this deploy
       # shipped. Idempotent (one whatsNewPublications row per entry), so it is safe on every
@@ -117,7 +121,7 @@ jobs:
         env:
           # A production deploy key targets prod non-interactively (no confirmation prompt).
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_PROD }}
-        run: pnpm exec convex deploy
+        run: pnpm exec convex deploy --typecheck enable
 
       # Start the whats_new notification fan-out for notify:true What's new entries this deploy
       # shipped. Idempotent (one whatsNewPublications row per entry), so it is safe on every

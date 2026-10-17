@@ -1,5 +1,5 @@
-import { convexTest } from "convex-test";
-import { ConvexError } from "convex/values";
+import { convexTest, type TestConvex } from "convex-test";
+import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
@@ -12,7 +12,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 // cannot be newly acquired by other members, while existing owned copies (cached snapshots)
 // are untouched. Re-enabling restores public visibility and acquirability.
 
-const seedMembers = (t: ReturnType<typeof convexTest>) =>
+const seedMembers = (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const alice = await ctx.db.insert("users", {
@@ -34,15 +34,15 @@ const seedMembers = (t: ReturnType<typeof convexTest>) =>
     return { alice, bob };
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asBob = (t: ReturnType<typeof convexTest>) =>
+const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
-const asAdmin = (t: ReturnType<typeof convexTest>) =>
+const asAdmin = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice", metadata: { role: "admin" } });
 
 // Alice submits, admin approves. Returns the aggregateId.
-const seedApprovedDefinition = async (t: ReturnType<typeof convexTest>) => {
+const seedApprovedDefinition = async (t: TestConvex<typeof schema>) => {
   const id = (await asAlice(t).mutation(
     api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
     { title: "Mountain Vista", brand: "Ravensburger", pieceCount: 1000 },
@@ -54,19 +54,19 @@ const seedApprovedDefinition = async (t: ReturnType<typeof convexTest>) => {
   return id;
 };
 
-const disable = (t: ReturnType<typeof convexTest>, id: string) =>
+const disable = (t: TestConvex<typeof schema>, id: string) =>
   asAdmin(t).mutation(
     api.catalog.disablePuzzleDefinition.disablePuzzleDefinition,
     { puzzleDefinitionId: id },
   );
 
-const reenable = (t: ReturnType<typeof convexTest>, id: string) =>
+const reenable = (t: TestConvex<typeof schema>, id: string) =>
   asAdmin(t).mutation(
     api.catalog.reenablePuzzleDefinition.reenablePuzzleDefinition,
     { puzzleDefinitionId: id },
   );
 
-const browseTitles = async (t: ReturnType<typeof convexTest>) => {
+const browseTitles = async (t: TestConvex<typeof schema>) => {
   const result = await t.query(api.catalog.listAllPuzzles.listAllPuzzles, {
     paginationOpts: { numItems: 10, cursor: null },
   });
@@ -75,7 +75,7 @@ const browseTitles = async (t: ReturnType<typeof convexTest>) => {
 
 // convex-test serializes ConvexError.data to a JSON string at the function boundary; normalise.
 const dataOf = (e: unknown): { code?: string } => {
-  const data = (e as ConvexError<unknown>).data;
+  const data = (e as ConvexError<Value>).data;
   return typeof data === "string"
     ? JSON.parse(data)
     : (data as { code?: string });

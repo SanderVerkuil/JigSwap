@@ -1,4 +1,4 @@
-import { makeRecallLoan, type OwnerId, toLoanId } from "@jigswap/domain";
+import { makeRecallLoan, toLoanId, type OwnerId } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { convexCopyManagerPolicy } from "../household/copyAccess";

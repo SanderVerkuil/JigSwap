@@ -1,17 +1,17 @@
 import {
-  type Comment,
   DisplayName,
   Follow,
   FollowRequest,
-  type FollowRequestState,
-  type FollowState,
-  type PhotoComment,
   Profile,
-  type ProfileState,
   toFollowId,
   toFollowRequestId,
   toMemberId,
   toProfileId,
+  type Comment,
+  type FollowRequestState,
+  type FollowState,
+  type PhotoComment,
+  type ProfileState,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 

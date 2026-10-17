@@ -1,13 +1,14 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
-const seed = (t: ReturnType<typeof convexTest>) =>
+const seed = (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string, email: string, name: string) =>
@@ -24,16 +25,16 @@ const seed = (t: ReturnType<typeof convexTest>) =>
     return { alice, bob };
   });
 
-const asAlice = (t: ReturnType<typeof convexTest>) =>
+const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
-const asBob = (t: ReturnType<typeof convexTest>) =>
+const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
 
 // t.run's return value round-trips through Convex value normalization, which turns a bare
 // `undefined` into `null` — so fetch the whole doc inside t.run and destructure OUTSIDE it,
 // where an absent `slug` key genuinely reads back as `undefined`.
-const getSlug = async (t: ReturnType<typeof convexTest>, userId: string) => {
-  const doc = await t.run(async (ctx) => ctx.db.get(userId as never));
+const getSlug = async (t: TestConvex<typeof schema>, userId: Id<"users">) => {
+  const doc = await t.run(async (ctx) => ctx.db.get(userId));
   return doc?.slug;
 };
 

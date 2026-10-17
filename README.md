@@ -69,9 +69,9 @@ Our mission is to make puzzle sharing sustainable, accessible, and enjoyable for
 
 ### Development Tools
 
-- **Nx** - Monorepo build system and development tools
+- **Turborepo** - Monorepo task runner and cache
 - **pnpm** - Fast, disk space efficient package manager (v10.13.1)
-- **ESLint** - Code linting
+- **oxlint** - Code linting
 - **TypeScript** - Static type checking
 - **Turbopack** - Fast development builds
 - **Prettier** - Code formatting
@@ -95,11 +95,16 @@ Before you begin, ensure you have the following installed:
    ```
 
 2. **Install dependencies**
-   This project uses a monorepo structure with Nx workspace:
+   This project is a pnpm workspace monorepo (tasks run via Turborepo):
 
    ```bash
    pnpm install
    ```
+
+   The repo uses TypeScript 7 only. In VS Code, install the
+   [TypeScript 7 extension](https://marketplace.visualstudio.com/items?itemName=TypeScriptTeam.native-preview)
+   (`TypeScriptTeam.native-preview`), because TS 7 doesn't ship the `tsserver.js` the
+   built-in TypeScript support needs. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 3. **Set up environment variables**
    Copy the example environment file and fill in your values:
@@ -214,7 +219,7 @@ jigswap/
 │   ├── api-specification.md  # API specification
 │   └── feature-roadmap.md    # Development roadmap
 ├── package.json               # Root workspace configuration
-├── nx.json                    # Nx workspace configuration
+├── turbo.json                 # Turborepo task pipeline
 └── pnpm-workspace.yaml        # pnpm workspace configuration
 ```
 
@@ -228,21 +233,21 @@ jigswap/
 - `pnpm build:web` - Build web app for production
 - `pnpm start` - Start production server for web app
 - `pnpm start:web` - Start web app production server
-- `pnpm lint` - Run ESLint on all projects
-- `pnpm lint:fix` - Fix ESLint errors on all projects
+- `pnpm lint` - Run oxlint on all projects
+- `pnpm lint:fix` - Fix oxlint errors on all projects
 - `pnpm type-check` - Run TypeScript type checking on all projects
 - `pnpm test` - Run tests on all projects
-- `pnpm clean` - Clean build artifacts and reset Nx cache
+- `pnpm clean` - Clean build artifacts and the Turborepo cache
 - `pnpm format` - Format code with Prettier
-- `pnpm graph` - View Nx dependency graph
+- `pnpm graph` - Write the task graph to graph.html
 
 ### Web App Scripts (apps/web)
 
 - `pnpm dev` - Start Next.js development server with Turbopack
 - `pnpm build` - Build for production
 - `pnpm start` - Start production server
-- `pnpm lint` - Run ESLint
-- `pnpm lint:fix` - Fix ESLint errors
+- `pnpm lint` - Run oxlint
+- `pnpm lint:fix` - Fix oxlint errors
 - `pnpm type-check` - Run TypeScript type checking
 - `pnpm build:analyze` - Build with bundle analyzer
 - `pnpm build:production` - Build with production environment

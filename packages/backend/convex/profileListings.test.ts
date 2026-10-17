@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -16,7 +16,7 @@ const PAGE = { numItems: 20, cursor: null };
 // carol: PRIVATE profile with a finished solve, an open copy and an in-progress solve.
 // bob: mutual follower of alice AND carol. eve: signed in, follows nobody (non-mutual).
 // Follow edges are seeded directly (followMember on a private target creates a request).
-const seed = async (t: ReturnType<typeof convexTest>) =>
+const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const user = (clerkId: string, name: string) =>
@@ -152,11 +152,11 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
     };
   });
 
-const as = (t: ReturnType<typeof convexTest>, who: string) =>
+const as = (t: TestConvex<typeof schema>, who: string) =>
   t.withIdentity({ subject: `clerk_${who}` });
 
 const listCopies = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   who: string,
   memberId: Id<"users">,
 ) =>
@@ -166,7 +166,7 @@ const listCopies = (
   });
 
 const listCompletions = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   who: string,
   memberId: Id<"users">,
 ) =>

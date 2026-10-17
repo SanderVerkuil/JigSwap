@@ -1,11 +1,10 @@
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
-
 import { BriefingHero } from "@/components/dashboard-home/briefing-hero";
 import { FreshSection } from "@/components/dashboard-home/fresh-section";
 import { PulseSection } from "@/components/dashboard-home/pulse-section";
 import { ShelfSection } from "@/components/dashboard-home/shelf-section";
 import { SolvingNowSection } from "@/components/dashboard-home/solving-now-section";
+import { pageTitle } from "@/lib/page-title";
+import { createFileRoute } from "@tanstack/react-router";
 
 // The (dashboard) landing (URL: /dashboard): the editorial "morning briefing".
 // Narrative headline → pending-request banner + quick actions → the shelf with

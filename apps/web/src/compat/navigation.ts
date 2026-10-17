@@ -16,8 +16,14 @@ export function useRouter() {
   const router = useTanstackRouter();
 
   return {
-    push: (href: string) => navigate({ to: href }),
-    replace: (href: string) => navigate({ to: href, replace: true }),
+    // Next's push/replace return void; navigation failures surface through the
+    // router's own error handling, so the TanStack promise is deliberately dropped.
+    push: (href: string) => {
+      void navigate({ to: href });
+    },
+    replace: (href: string) => {
+      void navigate({ to: href, replace: true });
+    },
     back: () => router.history.back(),
     forward: () => router.history.forward(),
     // Next's refresh re-runs loaders; TanStack's invalidate is the closest match.

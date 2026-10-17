@@ -1,5 +1,5 @@
 import { gateway } from "@/gateway";
-import { ConvexQueryClient, convexQuery } from "@convex-dev/react-query";
+import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConvexProviderWithAuth, ConvexReactClient } from "convex/react";
 import { parseFragment, type DefaultTreeAdapterMap } from "parse5";

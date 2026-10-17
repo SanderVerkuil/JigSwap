@@ -298,8 +298,9 @@ export function createBoxArtTexture(
   }
 
   // brand font may not be loaded yet on first draw; redraw when ready
+  // (document.fonts.ready never rejects, so there is nothing to catch)
   if (spec.mode === "gradient") {
-    document.fonts?.ready.then(() => {
+    void document.fonts?.ready.then(() => {
       if (disposed) return;
       drawBoxArt(spec, canvas, fonts);
       texture.needsUpdate = true;

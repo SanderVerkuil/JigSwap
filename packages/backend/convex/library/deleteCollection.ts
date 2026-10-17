@@ -1,7 +1,7 @@
 import {
   makeDeleteCollection,
-  type OwnerId,
   toCollectionId,
+  type OwnerId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";

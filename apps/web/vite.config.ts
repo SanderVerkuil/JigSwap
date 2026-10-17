@@ -51,8 +51,8 @@ export default defineConfig({
     // are untouched. TanStack Start runs one Rollup build per environment;
     // applyToEnvironment keeps the report scoped to the client bundle instead
     // of letting the last (SSR/server) build overwrite it.
-    // NOTE: an ANALYZE build must bypass the Nx cache (Nx doesn't key on this
-    // env var) — CI runs `vite build` directly instead of `nx build web`.
+    // NOTE: an ANALYZE build must bypass the task cache (turbo.json doesn't key
+    // on this env var) — CI runs `vite build` directly instead of `turbo run build`.
     !!process.env.ANALYZE && {
       ...visualizer({
         filename: "stats.html",

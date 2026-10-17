@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -7,7 +7,7 @@ import schema from "./schema";
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 const insertUser = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   clerkId: string,
   name: string,
   username: string,
@@ -27,7 +27,7 @@ const insertUser = (
   });
 
 const setVisibility = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   memberId: Id<"users">,
   visibility: "public" | "private",
 ) =>
@@ -41,7 +41,7 @@ const setVisibility = (
   });
 
 const follow = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   followerId: Id<"users">,
   followeeId: Id<"users">,
 ) =>
@@ -49,7 +49,7 @@ const follow = (
     await ctx.db.insert("follows", { followerId, followeeId, createdAt: 1 });
   });
 
-const asUser = (t: ReturnType<typeof convexTest>, clerkId: string) =>
+const asUser = (t: TestConvex<typeof schema>, clerkId: string) =>
   t.withIdentity({ subject: clerkId });
 
 describe("search.global people results", () => {

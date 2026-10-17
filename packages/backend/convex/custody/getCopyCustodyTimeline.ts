@@ -59,8 +59,8 @@ export const getCopyCustodyTimeline = query({
       })),
     );
 
-    const first = entries.at(0);
-    const last = entries.at(-1);
+    const first = entries[0];
+    const last = entries[entries.length - 1];
     const originalOwner = await project(
       first ? first.previousOwner : copy.ownerId,
     );

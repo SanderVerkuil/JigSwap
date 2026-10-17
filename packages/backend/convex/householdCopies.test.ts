@@ -1,5 +1,5 @@
-import { convexTest } from "convex-test";
-import { ConvexError } from "convex/values";
+import { convexTest, type TestConvex } from "convex-test";
+import { ConvexError, type Value } from "convex/values";
 import { beforeEach, describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -12,7 +12,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 // copies for Bob — "manage" (the default, absent field) lets him act as co-owner, "view" only lets
 // him see it. Completions stay personal.
 
-type T = ReturnType<typeof convexTest>;
+type T = TestConvex<typeof schema>;
 type Who = "ann" | "bob" | "cat";
 
 const as = (t: T, who: Who) => t.withIdentity({ subject: `clerk_${who}` });
@@ -26,7 +26,7 @@ const flush = async (t: T) => {
 
 // convex-test serializes ConvexError.data to a JSON string at the function boundary; normalise.
 const dataOf = (e: unknown): { code?: string } => {
-  const data = (e as ConvexError<unknown>).data;
+  const data = (e as ConvexError<Value>).data;
   if (typeof data !== "string") return data as { code?: string };
   try {
     return JSON.parse(data);

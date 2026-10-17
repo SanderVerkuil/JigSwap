@@ -7,7 +7,7 @@ import {
   toThreadId,
   type MemberId,
 } from "@jigswap/domain";
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { convexThreadRepository } from "./conversation/adapters/convexThreadRepository";
 import schema from "./schema";
@@ -17,7 +17,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 // Seed two members and one exchange between them. The exchange row carries an aggregateId so the
 // repository's `by_aggregate_id` resolution path is exercised; tests that want the raw-`_id`
 // fallback pass the document id itself as the ExchangeId.
-const seed = (t: ReturnType<typeof convexTest>) =>
+const seed = (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
     const mkUser = (clerkId: string) =>

@@ -3,9 +3,9 @@ import {
   DEFAULT_PARAMS,
   EMAIL_COPY,
   EMAIL_TYPES,
+  FOOTER,
   type EmailLocale,
   type EmailType,
-  FOOTER,
 } from "./copy";
 import { NotificationEmail } from "./notification-email";
 import { ctaPath } from "./urls";

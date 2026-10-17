@@ -1,4 +1,4 @@
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -10,7 +10,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 const DAY = 86_400_000;
 
-const asViewer = (t: ReturnType<typeof convexTest>) =>
+const asViewer = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_viewer" });
 
 const mkUser = (
@@ -33,7 +33,7 @@ const mkUser = (
   });
 
 // Seed the viewer + one approved catalog puzzle. Returns ids for per-test enrichment.
-const seed = async (t: ReturnType<typeof convexTest>) =>
+const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = 1_000_000;
     const viewer = await mkUser(ctx, "clerk_viewer", "Viewer", now);
@@ -56,7 +56,7 @@ const seed = async (t: ReturnType<typeof convexTest>) =>
   });
 
 const setVisibility = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   memberId: Id<"users">,
   visibility: "public" | "private",
 ) =>
@@ -71,7 +71,7 @@ const setVisibility = (
   });
 
 const mkCopy = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   args: {
     aggregateId: string;
     puzzleId: Id<"puzzles">;
@@ -97,7 +97,7 @@ const mkCopy = (
     }),
   );
 
-const get = (t: ReturnType<typeof convexTest>, puzzleId: Id<"puzzles">) =>
+const get = (t: TestConvex<typeof schema>, puzzleId: Id<"puzzles">) =>
   asViewer(t).query(
     api.library.getPuzzleDefinitionView.getPuzzleDefinitionView,
     { puzzleId },

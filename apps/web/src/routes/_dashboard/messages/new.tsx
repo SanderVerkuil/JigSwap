@@ -1,9 +1,8 @@
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
-
 import { parseCopyMessageSearch } from "@/components/messaging/copy-conversation";
 import { NewCopyConversation } from "@/components/messaging/new-copy-conversation";
 import { ThreadList } from "@/components/messaging/thread-list";
+import { pageTitle } from "@/lib/page-title";
+import { createFileRoute } from "@tanstack/react-router";
 import { useTranslations } from "use-intl";
 
 // New conversation about a copy: /messages/new?copy=<ownedPuzzleId>. Only the copy travels in

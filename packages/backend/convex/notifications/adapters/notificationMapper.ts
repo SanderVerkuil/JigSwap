@@ -1,10 +1,10 @@
 import {
-  type Channel,
   Notification,
-  type NotificationState,
-  type NotificationType,
   toMemberId,
   toNotificationId,
+  type Channel,
+  type NotificationState,
+  type NotificationType,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 

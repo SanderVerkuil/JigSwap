@@ -16,6 +16,7 @@
     "convex-helpers": "0.1.128",
     "jimp": "^1.6.1",
     "ogie": "^2.1.0",
+    "string_decoder": "1.3.0",
     "svix": "^2.8.0",
     "tslib": "^2.8.1",
     "web-push": "^3.6.7"
@@ -24,11 +25,16 @@
     "@edge-runtime/vm": "^5.0.0",
     "@types/web-push": "^3.6.4",
     "convex-test": "^0.0.62",
+    "typescript": "7.0.2",
     "vitest": "^5.0.5"
   },
   "scripts": {
     "convex:dev": "convex dev",
     "convex:deploy": "convex deploy",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "dev": "convex dev",
+    "lint": "oxlint --type-aware .",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage"
   }
 }

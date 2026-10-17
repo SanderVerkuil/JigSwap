@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  type ExchangeActivityInput,
   computeTradeActivity,
+  type ExchangeActivityInput,
 } from "./trade-activity";
 
 const at = (year: number, monthIndex: number): number =>

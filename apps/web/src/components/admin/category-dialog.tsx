@@ -11,7 +11,6 @@
 // Name and description are TranslatableFields (one locale visible at a time,
 // synced across fields); in create mode the color live-follows the English
 // name until the picker is touched.
-
 import {
   TranslatableField,
   TranslatableFieldsProvider,
@@ -50,7 +49,6 @@ import { useForm, useWatch, type FieldErrors } from "react-hook-form";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { z } from "zod";
-
 import type { Category } from "./category-list";
 import { deriveColorFromName } from "./derive-color";
 

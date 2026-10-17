@@ -1,7 +1,8 @@
-import fg from "fast-glob"; // fast-glob ships with vite's deps; if unresolved, `pnpm -C apps/web add -D fast-glob`
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import fg from "fast-glob"; // fast-glob ships with vite's deps; if unresolved, `pnpm -C apps/web add -D fast-glob`
+
 import type { Plugin } from "vite";
 import { compileMarkdown } from "./src/docs/markdown";
 import type { DocPage } from "./src/docs/types";

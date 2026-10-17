@@ -1009,10 +1009,10 @@ import {
   PuzzleImportDraft,
   StorePageFetchError,
 } from "../../domain";
+import { ImportPuzzleFromUrl } from "../ports/in/import-puzzle-from-url.port";
 import { ImportDraftCache } from "../ports/out/import-draft-cache";
 import { PuzzleMatchLookup } from "../ports/out/puzzle-match-lookup";
 import { StorePageFetcher } from "../ports/out/store-page-fetcher";
-import { ImportPuzzleFromUrl } from "../ports/in/import-puzzle-from-url.port";
 
 const DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -1406,15 +1406,15 @@ Using the d.ts read in Task 9 Step 2 (and optionally the `dobroslavradosavljevic
 
 ```typescript
 // packages/backend/convex/catalog/adapters/ogieStorePageFetcher.ts
-import { extract } from "ogie";
 import {
   err,
   ok,
+  StorePageFetchError,
   type JsonLdProduct,
   type RawProductPage,
   type StorePageFetcher,
-  StorePageFetchError,
 } from "@jigswap/domain";
+import { extract } from "ogie";
 
 const asArray = (value: unknown): unknown[] =>
   Array.isArray(value) ? value : value == null ? [] : [value];
@@ -1543,10 +1543,11 @@ git commit -m "feat(backend): add ogie store-page fetcher adapter"
 ```typescript
 // packages/backend/convex/catalog/extractFromUrl.ts
 "use node";
+
 import {
+  makeImportPuzzleFromUrl,
   type CachedImportDraft,
   type ImportDraftCache,
-  makeImportPuzzleFromUrl,
   type PuzzleMatchLookup,
 } from "@jigswap/domain";
 import { v } from "convex/values";
@@ -1644,9 +1645,10 @@ git commit -m "feat(backend): add extractFromUrl node action"
 ```typescript
 // packages/backend/convex/catalog/importPuzzleImage.ts
 "use node";
+
+import { lookup as dnsLookup } from "node:dns/promises";
 import { isPrivateIp } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
-import { lookup as dnsLookup } from "node:dns/promises";
 import { action } from "../_generated/server";
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
@@ -1991,7 +1993,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import type { ImportedDraft } from "./draft-to-form-defaults";
-import { type ImportedMatch, usePuzzleImport } from "./use-puzzle-import";
+import { usePuzzleImport, type ImportedMatch } from "./use-puzzle-import";
 
 interface PuzzleImportBarProps {
   onDraft: (draft: ImportedDraft) => void;
@@ -2238,12 +2240,13 @@ git commit -m "feat(web): wire puzzle import into /puzzles/add"
 Add near the other hooks in `AddPuzzlePage`:
 
 ```tsx
-import { PuzzleImportBar } from "@/components/puzzle-import/puzzle-import-bar";
 import {
   draftToFormDefaults,
   type ImportedDraft,
 } from "@/components/puzzle-import/draft-to-form-defaults";
+import { PuzzleImportBar } from "@/components/puzzle-import/puzzle-import-bar";
 import { useAction } from "convex/react";
+
 // ...
 
 const importImage = useAction(gateway.catalog.importPuzzleImage);

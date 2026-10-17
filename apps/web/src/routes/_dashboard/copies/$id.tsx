@@ -1,9 +1,3 @@
-import { MemberInitial } from "@/components/members/member-initial";
-import { durationParts } from "@/lib/humanize-duration";
-import { useMemberDisplayName } from "@/lib/member-display-name";
-import { pageTitle } from "@/lib/page-title";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
 import { availabilityToSharing } from "@/components/add-puzzle";
@@ -23,6 +17,7 @@ import {
 import { HouseholdAccess } from "@/components/household/household-access";
 import { ImageEditorDialog } from "@/components/image-editor/image-editor-dialog";
 import { EmptyState } from "@/components/library/empty-state";
+import { MemberInitial } from "@/components/members/member-initial";
 import { copyMessageRoute } from "@/components/messaging/copy-conversation";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
@@ -34,9 +29,13 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
+import { durationParts } from "@/lib/humanize-duration";
+import { useMemberDisplayName } from "@/lib/member-display-name";
+import { pageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import {
   ArrowLeftRight,

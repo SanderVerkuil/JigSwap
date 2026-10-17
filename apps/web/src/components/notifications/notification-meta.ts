@@ -7,7 +7,6 @@ import {
   ImageOff,
   Inbox,
   Lightbulb,
-  type LucideIcon,
   MessageSquare,
   Sparkles,
   Star,
@@ -15,6 +14,7 @@ import {
   UserCheck,
   UserPlus,
   XCircle,
+  type LucideIcon,
 } from "lucide-react";
 
 // The notification `type` literals the backend emits (kept in sync with the domain

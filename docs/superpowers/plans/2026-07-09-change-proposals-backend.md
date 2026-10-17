@@ -1857,13 +1857,13 @@ const proposalFields = v.object({
 
 ```ts
 import {
-  type PuzzleChangeProposalState,
-  type PuzzleDefinitionChanges,
   PuzzleChangeProposal,
   toCatalogCategoryId,
   toChangeProposalId,
   toPuzzleDefinitionId,
   toSubmitterId,
+  type PuzzleChangeProposalState,
+  type PuzzleDefinitionChanges,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 
@@ -2009,10 +2009,10 @@ All three mutations share the arg shape of `updatePuzzleDefinition` (`packages/b
 ```ts
 import {
   makeFileChangeProposal,
-  type PuzzleDefinitionChanges,
   toCatalogCategoryId,
   toPuzzleDefinitionId,
   toSubmitterId,
+  type PuzzleDefinitionChanges,
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
@@ -2515,8 +2515,7 @@ describe("catalog.editChangeProposal / withdrawChangeProposal", () => {
 - [ ] Create `packages/backend/convex/catalog/approveChangeProposal.ts`:
 
 ```ts
-import { makeApproveChangeProposal } from "@jigswap/domain";
-import { toChangeProposalId } from "@jigswap/domain";
+import { makeApproveChangeProposal, toChangeProposalId } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";

@@ -5,7 +5,6 @@
 // bar) and no border walls. Group labels are small uppercase mono labels
 // that link to their landing pages (/library, /community, /admin — the admin
 // group renders only for backend-confirmed admins).
-
 import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";

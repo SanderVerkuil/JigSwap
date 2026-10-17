@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { toCopyId, toExchangeId } from "../../shared-kernel";
-
 import { ApplicationError } from "./errors";
 
 const copy = toCopyId("copy1");

@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { toMemberId } from "../../../shared-kernel";
-
 import {
   FixedClock,
   InMemoryFollowRepository,

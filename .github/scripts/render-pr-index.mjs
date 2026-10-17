@@ -12,7 +12,7 @@
  * Writes <staging-dir>/index.html and <staging-dir>/summary.json (consumed by
  * render-reports-comment.mjs in the publish job).
  */
-import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 

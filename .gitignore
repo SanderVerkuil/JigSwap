@@ -77,3 +77,6 @@ vitest.config.*.timestamp*
 
 # Brainstorming visual-companion sessions (superpowers plugin)
 .superpowers/
+
+# Turborepo local cache
+.turbo
