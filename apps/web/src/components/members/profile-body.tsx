@@ -12,6 +12,10 @@ import { useMemberDisplayName } from "@/lib/member-display-name";
 import { Image } from "@/compat/image";
 import { PuzzlePlank3D } from "@/components/common/puzzle-plank-3d";
 import { SectionHead } from "@/components/dashboard-home/section-head";
+import {
+  ProfileCompletionsSection,
+  ProfilePuzzlesSection,
+} from "@/components/members/profile-listings";
 import { toPlankBox, type ShelfCopy } from "@/components/profile/to-plank-box";
 import { FollowButton } from "@/components/social/follow-button";
 import { MessageButton } from "@/components/social/message-button";
@@ -112,7 +116,20 @@ export function ProfileBody({
             firstName={firstName}
             items={profile.currentlySolving ?? []}
           />
+          {/* Auth-gated paginated listings: signed-in viewers only. */}
+          {viewer !== "public" && (
+            <ProfileCompletionsSection
+              memberId={hero.memberId as Id<"users">}
+              firstName={firstName}
+            />
+          )}
           <ShelfSection firstName={firstName} shelf={shelf} />
+          {viewer !== "public" && (
+            <ProfilePuzzlesSection
+              memberId={hero.memberId as Id<"users">}
+              firstName={firstName}
+            />
+          )}
         </>
       )}
     </div>
