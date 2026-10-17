@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toExchangeId, toMemberId, toThreadId } from "../../../shared-kernel";
+import {
+  toCopyId,
+  toExchangeId,
+  toMemberId,
+  toThreadId,
+} from "../../../shared-kernel";
 import { MemberId, Thread } from "../../domain";
 import {
   FixedClock,
@@ -57,6 +62,15 @@ describe("makePostMessage", () => {
     };
     expect(posted.authorId).toBe(alice);
     expect(posted.kind).toBe("text");
+  });
+
+  it("persists the command's copy reference on the posted message", async () => {
+    const copyId = toCopyId("copy-1");
+    const result = await post(cmd({ copyId }));
+
+    expect(result.isOk).toBe(true);
+    const reloaded = await threads.findById(threadId);
+    expect(reloaded?.messages[0]?.copyId).toBe(copyId);
   });
 
   it("rejects ThreadNotFound and writes nothing", async () => {

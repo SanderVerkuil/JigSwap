@@ -39,6 +39,7 @@ export const makePostMessage =
       kind: cmd.kind,
       body: cmd.body,
       sentAt: deps.clock.now(),
+      copyId: cmd.copyId,
     });
     if (message.isErr) return err(message.error);
 

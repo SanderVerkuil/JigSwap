@@ -674,6 +674,16 @@
       "generic": "Je review kon niet worden verstuurd. Probeer het opnieuw."
     }
   },
+  "copyConversation": {
+    "title": "Bericht aan {name}",
+    "aboutPuzzle": "Over deze puzzel",
+    "pieces": "{count} stukjes",
+    "placeholder": "Schrijf een bericht over deze puzzel…",
+    "firstMessageHint": "Je gesprek begint zodra je het eerste bericht verstuurt.",
+    "self": "Dit is je eigen puzzel.",
+    "unavailable": "Over deze puzzel kun je geen bericht sturen.",
+    "backToPuzzle": "Terug naar de puzzel"
+  },
   "messages": {
     "anonymous": "Anonieme gebruiker",
     "backToInbox": "Terug naar berichten",

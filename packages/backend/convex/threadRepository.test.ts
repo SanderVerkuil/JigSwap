@@ -1,5 +1,6 @@
 import {
   Thread,
+  toCopyId,
   toExchangeId,
   toMemberId,
   toMessageId,
@@ -57,7 +58,7 @@ const seed = (t: ReturnType<typeof convexTest>) =>
       createdAt: now,
       updatedAt: now,
     });
-    return { alice, bob, exchangeAggregateId, exchangeDocId };
+    return { alice, bob, copyId, exchangeAggregateId, exchangeDocId };
   });
 
 const openDm = (a: MemberId, b: MemberId): Thread => {
@@ -204,6 +205,39 @@ describe("convexThreadRepository", () => {
     expect(roundTripped).toEqual([
       { authorId: null, kind: "system", body: "exchange shipped" },
     ]);
+  });
+
+  test("a message's copy reference round-trips; plain messages store none", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, copyId } = await seed(t);
+    const thread = openDm(toMemberId(alice), toMemberId(bob));
+    const about = thread.postMessage({
+      id: toMessageId(crypto.randomUUID()),
+      authorId: toMemberId(alice),
+      kind: "text",
+      body: "still available?",
+      sentAt: new Date(1_000),
+      copyId: toCopyId(copyId),
+    });
+    expect(about.isOk).toBe(true);
+    postText(thread, toMemberId(bob), "yes", 2_000);
+    await t.run((ctx) => convexThreadRepository(ctx).save(thread));
+
+    const raw = await t.run((ctx) =>
+      ctx.db
+        .query("threadMessages")
+        .withIndex("by_thread_sent", (q) =>
+          q.eq("threadAggregateId", thread.id as string),
+        )
+        .collect(),
+    );
+    expect(raw.map((r) => r.copyId)).toEqual([copyId, undefined]);
+
+    const roundTripped = await t.run(async (ctx) => {
+      const found = await convexThreadRepository(ctx).findById(thread.id);
+      return found?.messages.map((m) => m.copyId ?? null) ?? null;
+    });
+    expect(roundTripped).toEqual([copyId, null]);
   });
 
   test("re-saving prunes a stale hand-inserted participant row back to the aggregate's set", async () => {

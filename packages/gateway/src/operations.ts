@@ -188,6 +188,10 @@ export const gateway = {
       api.conversation.getThreadByExchange.getThreadByExchange,
     canMessage: api.conversation.canMessage.canMessage,
     getUnreadTotal: api.conversation.getUnreadTotal.getUnreadTotal,
+    getCopyConversation:
+      api.conversation.getCopyConversation.getCopyConversation,
+    startCopyConversation:
+      api.conversation.startCopyConversation.startCopyConversation,
   },
 
   // Chain-of-Custody: a Copy's provenance (original owner -> each settled transfer -> current

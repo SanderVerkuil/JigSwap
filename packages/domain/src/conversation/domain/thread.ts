@@ -1,7 +1,7 @@
 import { DomainEvent, err, ok, Result } from "../../shared-kernel";
 import { ConversationError, MAX_MESSAGE_LENGTH } from "./errors";
 import { MessagePosted } from "./events";
-import { ExchangeId, MemberId, MessageId, ThreadId } from "./ids";
+import { CopyId, ExchangeId, MemberId, MessageId, ThreadId } from "./ids";
 import { Message, MessageState } from "./message";
 
 // A thread's subject: what the conversation is about. Exchange threads are opened by the
@@ -26,6 +26,8 @@ export interface PostMessageProps {
   readonly kind: "text" | "image";
   readonly body: string;
   readonly sentAt: Date;
+  // Optional reference to the copy the message is about (see MessageState.copyId).
+  readonly copyId?: CopyId;
 }
 
 // Input to post a service-authored system message: no member author, just the body and instant.
@@ -137,6 +139,7 @@ export class Thread {
           kind: props.kind,
           body: props.body,
           sentAt: props.sentAt,
+          ...(props.copyId !== undefined && { copyId: props.copyId }),
         },
         props.sentAt,
       ),

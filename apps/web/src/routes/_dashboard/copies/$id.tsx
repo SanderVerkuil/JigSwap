@@ -2,7 +2,7 @@ import { MemberInitial } from "@/components/members/member-initial";
 import { durationParts } from "@/lib/humanize-duration";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
@@ -19,6 +19,7 @@ import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { HouseholdAccess } from "@/components/household/household-access";
 import { ImageEditorDialog } from "@/components/image-editor/image-editor-dialog";
 import { EmptyState } from "@/components/library/empty-state";
+import { copyMessageRoute } from "@/components/messaging/copy-conversation";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
 import { StartSolveDialog } from "@/components/solving/start-solve-dialog";
@@ -207,6 +208,7 @@ function CopyInstanceDetail({
   navContext: NavContext | null;
 }) {
   const router = useRouter();
+  const navigate = useNavigate();
   const t = useTranslations("copyInstance");
   const tShell = useTranslations("shell");
   const tOwner = useTranslations("copyOwner");
@@ -598,7 +600,7 @@ function CopyInstanceDetail({
                 {!copy.owner.anonymous && (
                   <Button
                     variant="outline"
-                    onClick={() => router.push("/messages")}
+                    onClick={() => navigate(copyMessageRoute(copyId))}
                   >
                     <MessageCircle className="h-4 w-4" />
                     {t("actions.message")}
