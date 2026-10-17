@@ -52,7 +52,8 @@ export const findPuzzleByBarcode = internalQuery({
 });
 
 // Member-facing barcode lookup for the add-copy picker. The raw code is re-normalised here (the
-// client's detection is a convenience, not trusted): only an 8/12/13-digit code is looked up. It
+// client's detection is a convenience, not trusted): only a 12/13-digit code is looked up (the
+// catalogue stores no EAN-8). It
 // returns the same summary DTO the picker's search rows use, so the match renders as a card.
 // A 12-digit code is a UPC-A, which may also have been stored as its 0-prefixed EAN-13.
 export const lookupPuzzleByBarcode = query({
@@ -60,7 +61,7 @@ export const lookupPuzzleByBarcode = query({
   handler: async (ctx, { code }): Promise<PuzzleSummaryView | null> => {
     await requireMember(ctx);
     const digits = code.replace(/[\s-]/g, "");
-    if (!/^(\d{8}|\d{12}|\d{13})$/.test(digits)) return null;
+    if (!/^(\d{12}|\d{13})$/.test(digits)) return null;
     const match =
       digits.length === 12
         ? await findApprovedByBarcode(ctx, { upc: digits, ean: `0${digits}` })

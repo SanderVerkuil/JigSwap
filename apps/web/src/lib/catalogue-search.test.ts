@@ -2,8 +2,7 @@ import { describe, expect, it } from "vitest";
 import { catalogueSearchKey, detectBarcode } from "./catalogue-search";
 
 describe("detectBarcode", () => {
-  it("accepts 8, 12 and 13 digit codes", () => {
-    expect(detectBarcode("12345670")).toBe("12345670");
+  it("accepts 12 and 13 digit codes", () => {
     expect(detectBarcode("036000291452")).toBe("036000291452");
     expect(detectBarcode("4006381333931")).toBe("4006381333931");
   });
@@ -16,6 +15,8 @@ describe("detectBarcode", () => {
   it("rejects other lengths and anything with non-digits", () => {
     expect(detectBarcode("")).toBeNull();
     expect(detectBarcode("1000")).toBeNull();
+    // EAN-8 is not stored by the catalogue, so 8 digits fall through to text search.
+    expect(detectBarcode("12345670")).toBeNull();
     expect(detectBarcode("12345678901")).toBeNull();
     expect(detectBarcode("40063813339310")).toBeNull();
     expect(detectBarcode("Lake 1000")).toBeNull();

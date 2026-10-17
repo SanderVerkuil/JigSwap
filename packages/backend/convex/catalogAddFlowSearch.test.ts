@@ -189,6 +189,27 @@ describe("add-flow barcode lookup", () => {
     expect(await lookup(t, "9780201379624")).toBeNull();
     expect(await lookup(t, "lake")).toBeNull();
     expect(await lookup(t, "12345")).toBeNull();
+
+    // An 8-digit code is not looked up, even when a row carries it as its EAN.
+    await t.run(async (ctx) => {
+      const alice = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", "clerk_alice"))
+        .unique();
+      await ctx.db.insert("puzzles", {
+        aggregateId: "ean-8",
+        title: "Eight Digits",
+        pieceCount: 500,
+        tags: [],
+        searchableText: "eight digits",
+        ean: "12345670",
+        status: "approved",
+        submittedBy: alice!._id,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+    expect(await lookup(t, "12345670")).toBeNull();
   });
 
   test("lookup requires a signed-in member", async () => {
