@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_PARAMS, EMAIL_COPY, EMAIL_TYPES, FOOTER } from "./copy";
+import {
+  DEFAULT_PARAMS,
+  EMAIL_COPY,
+  EMAIL_TYPES,
+  FOOTER,
+  FORMER_MEMBER,
+} from "./copy";
 
 describe("copy catalog", () => {
   it("pins the copy catalog verbatim (mutation guard + copy change review gate)", () => {
@@ -7,6 +13,7 @@ describe("copy catalog", () => {
       EMAIL_TYPES,
       DEFAULT_PARAMS,
       FOOTER,
+      FORMER_MEMBER,
       EMAIL_COPY,
     }).toMatchSnapshot();
   });
