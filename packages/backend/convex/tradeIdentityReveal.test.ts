@@ -831,3 +831,27 @@ describe("backfillIdentityReveals", () => {
     expect(await grants(t)).toHaveLength(expected);
   });
 });
+
+describe("trade identity reveal: data export", () => {
+  test("the requester's export omits a hidden owner's id until the owner accepts", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    const ex = await propose(t, "requester", w.copy);
+    const exportOf = (who: string) =>
+      as(t, who).query(api.insights.exportUserData.exportUserData, {});
+
+    const before = await exportOf("requester");
+    expect(before.exchanges).toHaveLength(1);
+    expect(before.exchanges[0]).not.toHaveProperty("recipientId");
+    expect(before.exchanges[0]!.initiatorId).toBe(w.requester);
+    expect(JSON.stringify(before)).not.toContain(w.owner);
+    // The owner's own export always names the requester (revealed on propose).
+    expect((await exportOf("owner")).exchanges[0]!.initiatorId).toBe(
+      w.requester,
+    );
+
+    await act(t, "owner", "accept", ex);
+    const after = await exportOf("requester");
+    expect(after.exchanges[0]!.recipientId).toBe(w.owner);
+  });
+});
