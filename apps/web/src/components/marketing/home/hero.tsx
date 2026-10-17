@@ -184,6 +184,22 @@ const AVATAR_COLORS = [
   "var(--mk-violet-600)",
 ] as const;
 
+const noopSubscribe = () => () => {};
+
+// A random seed drawn once per mount that reads as null on the server and
+// during hydration, so seeded queries only start on the client. The
+// isClient flag comes from useSyncExternalStore (server snapshot false), not
+// a setState-in-effect, so there's no extra mount render.
+export function useClientSeed(): number | null {
+  const isClient = React.useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
+  const [seed] = React.useState(() => Math.floor(Math.random() * 0xffffffff));
+  return isClient ? seed : null;
+}
+
 // Real member count instead of the prototype's invented "4.200+".
 function TrustRow() {
   const t = useTranslations("marketing.home");
@@ -191,11 +207,10 @@ function TrustRow() {
   // Prefetched in the home route loader, so the count is present on first paint.
   const { data: stats } = useQuery(globalStatsQuery);
 
-  // Stable per-visit seed: generated client-side after mount (SSR-safe).
-  // The query is skipped until the seed is ready; FALLBACK_AVATARS fills the
-  // cluster meanwhile as a decorative placeholder.
-  const [seed, setSeed] = React.useState<number | null>(null);
-  React.useEffect(() => setSeed(Math.floor(Math.random() * 0xffffffff)), []);
+  // Stable per-visit seed, client-only (SSR-safe). The query is skipped until
+  // the seed is ready; FALLBACK_AVATARS fills the cluster meanwhile as a
+  // decorative placeholder.
+  const seed = useClientSeed();
   const { data } = useQuery(
     convexQuery(
       gateway.insights.communityAvatars,
@@ -281,11 +296,10 @@ function HeroCTAs() {
 export function Hero() {
   const t = useTranslations("marketing.home");
 
-  // Stable per-visit seed: generated client-side after mount (SSR-safe).
-  // The query is skipped until the seed is ready; PLANK_WIDE fills the plank
-  // meanwhile as a loading fallback.
-  const [seed, setSeed] = React.useState<number | null>(null);
-  React.useEffect(() => setSeed(Math.floor(Math.random() * 0xffffffff)), []);
+  // Stable per-visit seed, client-only (SSR-safe). The query is skipped until
+  // the seed is ready; PLANK_WIDE fills the plank meanwhile as a loading
+  // fallback.
+  const seed = useClientSeed();
   const { data: livePuzzles } = useQuery(
     convexQuery(
       gateway.insights.plankPuzzles,
