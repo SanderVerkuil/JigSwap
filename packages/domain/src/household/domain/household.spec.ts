@@ -32,6 +32,11 @@ describe("Household.admit", () => {
     expect(h.admit(bob, t1).isOk).toBe(true);
     expect(h.isMember(bob)).toBe(true);
     expect(h.isAdmin(bob)).toBe(false);
+    expect(h.members).toContainEqual({
+      memberId: bob,
+      role: "member",
+      joinedAt: t1,
+    });
     expect(h.pullEvents().map((e) => e.name)).toEqual([
       "HouseholdMemberJoined",
     ]);
@@ -64,6 +69,42 @@ describe("Household.leave", () => {
     const h = founded();
     h.admit(cat, t2);
     h.admit(bob, t1);
+    expect(h.leave(ann, t2).isOk).toBe(true);
+    expect(h.isAdmin(bob)).toBe(true);
+    expect(h.isAdmin(cat)).toBe(false);
+  });
+
+  it("keeps the admin and promotes no one when a plain member leaves", () => {
+    // The admin is not the longest-standing member, so a needless promotion would be visible.
+    const h = Household.rehydrate({
+      id,
+      members: [
+        { memberId: bob, role: "member", joinedAt: t0 },
+        { memberId: ann, role: "admin", joinedAt: t1 },
+        { memberId: cat, role: "member", joinedAt: t2 },
+      ],
+      createdAt: t0,
+    });
+    expect(h.leave(cat, t2).isOk).toBe(true);
+    expect(h.members).toEqual([
+      { memberId: bob, role: "member", joinedAt: t0 },
+      { memberId: ann, role: "admin", joinedAt: t1 },
+    ]);
+  });
+
+  it("promotes the senior member even when they are not listed last", () => {
+    const h = founded();
+    h.admit(bob, t1);
+    h.admit(cat, t2);
+    expect(h.leave(ann, t2).isOk).toBe(true);
+    expect(h.isAdmin(bob)).toBe(true);
+    expect(h.isAdmin(cat)).toBe(false);
+  });
+
+  it("promotes the earlier-listed member when join times tie", () => {
+    const h = founded();
+    h.admit(bob, t1);
+    h.admit(cat, t1);
     expect(h.leave(ann, t2).isOk).toBe(true);
     expect(h.isAdmin(bob)).toBe(true);
     expect(h.isAdmin(cat)).toBe(false);
