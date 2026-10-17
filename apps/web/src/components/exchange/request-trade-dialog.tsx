@@ -38,10 +38,11 @@ import {
   type ProposeType,
 } from "./request-trade";
 
-// The copy being requested, normalized by each surface (browse card, copy page).
+// The copy being requested, normalized by each surface (browse card, copy page). `ownerId` is
+// absent when the owner is anonymous to the viewer; propose then derives the recipient server-side.
 export interface RequestableCopy {
   copyId: string;
-  ownerId: string;
+  ownerId?: string;
   owner: (MemberNameSource & { avatar?: string }) | null | undefined;
   title: string;
   pieceCount?: number;
@@ -125,7 +126,7 @@ function RequestTradeForm({
     if (!type || !ready || !disclosureLoaded) return;
     try {
       await propose.mutateAsync({
-        recipientId: copy.ownerId as Id<"users">,
+        ...(copy.ownerId ? { recipientId: copy.ownerId as Id<"users"> } : {}),
         type,
         requestedPuzzleId: copy.copyId as Id<"ownedPuzzles">,
         ...(type === "trade"

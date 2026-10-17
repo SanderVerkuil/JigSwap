@@ -2,7 +2,13 @@
 import { gateway } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
 import { getFunctionName } from "convex/server";
 import { IntlProvider } from "use-intl";
@@ -144,5 +150,31 @@ describe("RequestTradeDialog identity disclosure", () => {
       screen.queryByText("The owner will see who sent this request."),
     ).toBeNull();
     expect(submit().disabled).toBe(true);
+  });
+});
+
+describe("RequestTradeDialog propose", () => {
+  it("names the owner as recipient when their id is known", async () => {
+    renderDialog(copy(), { disclosure: { revealsRequester: false } });
+    fireEvent.click(submit());
+    await waitFor(() => expect(mocks.mutation).toHaveBeenCalledOnce());
+    expect(mocks.mutation).toHaveBeenCalledWith(PROPOSE, {
+      recipientId: "user_owner",
+      type: "loan",
+      requestedPuzzleId: "copy_1",
+    });
+  });
+
+  it("omits the recipient for an anonymous owner and names them generically", async () => {
+    renderDialog(copy({ ownerId: undefined, owner: null }), {
+      disclosure: { revealsRequester: true },
+    });
+    expect(screen.getByText("Owned by Puzzler")).toBeTruthy();
+    fireEvent.click(submit());
+    await waitFor(() => expect(mocks.mutation).toHaveBeenCalledOnce());
+    expect(mocks.mutation).toHaveBeenCalledWith(PROPOSE, {
+      type: "loan",
+      requestedPuzzleId: "copy_1",
+    });
   });
 });

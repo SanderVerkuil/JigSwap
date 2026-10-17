@@ -599,16 +599,17 @@ function CopyInstanceDetail({
               </>
             ) : (
               <>
-                {/* An anonymous (privacy-projected) owner can't be named as the recipient. */}
-                {isAvailable && !copy.owner.anonymous && (
+                {/* An anonymous (privacy-projected) owner goes unnamed: propose derives the recipient. */}
+                {isAvailable && (
                   <Button
                     variant="brand"
                     onClick={() => {
-                      if (copy.owner.anonymous) return;
                       setRequestCopy({
                         copyId: copy.copyId,
-                        ownerId: copy.owner.member._id,
-                        owner: copy.owner.member,
+                        ownerId: copy.owner.anonymous
+                          ? undefined
+                          : copy.owner.member._id,
+                        owner: copy.owner.anonymous ? null : copy.owner.member,
                         title: snapshot.title,
                         pieceCount: snapshot.pieceCount,
                         coverUrl: snapshot.image,

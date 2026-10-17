@@ -34,6 +34,12 @@ describe("canRequestTrade", () => {
     expect(canRequestTrade(copy, "owner")).toBe(false);
   });
 
+  it("allows a copy whose anonymous owner carries no id", () => {
+    expect(canRequestTrade({ availability: copy.availability }, "viewer")).toBe(
+      true,
+    );
+  });
+
   it("is false when the copy isn't available", () => {
     expect(canRequestTrade({ ...copy, availability: none }, "viewer")).toBe(
       false,
