@@ -150,25 +150,38 @@ export function PuzzleBox({
   );
   React.useEffect(() => () => releaseArt(key), [key]);
 
-  // Height in CSS-plank pixels; corrected to the cover's real aspect when the
-  // image loads (possibly long ago, on the cached entry).
-  const [hPx, setHPx] = React.useState(() =>
-    entry.aspect != null ? widthPx / entry.aspect : defaultHPx,
+  // The cached entry is an external store: the cover's real aspect and edge
+  // strips land on it when the image loads (possibly long ago), and its sub
+  // sets notify after each write. Read both through useSyncExternalStore.
+  const subscribeAspect = React.useCallback(
+    (onChange: () => void) => {
+      entry.aspectSubs.add(onChange);
+      return () => {
+        entry.aspectSubs.delete(onChange);
+      };
+    },
+    [entry],
   );
-  const [edges, setEdges] = React.useState<CoverEdges | null>(entry.edges);
+  const subscribeEdges = React.useCallback(
+    (onChange: () => void) => {
+      entry.edgeSubs.add(onChange);
+      return () => {
+        entry.edgeSubs.delete(onChange);
+      };
+    },
+    [entry],
+  );
+  const getAspect = () => entry.aspect;
+  const getEdges = () => entry.edges;
+  const aspect = React.useSyncExternalStore(
+    subscribeAspect,
+    getAspect,
+    getAspect,
+  );
+  const edges = React.useSyncExternalStore(subscribeEdges, getEdges, getEdges);
 
-  React.useEffect(() => {
-    setHPx(entry.aspect != null ? widthPx / entry.aspect : defaultHPx);
-    setEdges(entry.edges);
-    const onAspect = (aspect: number) => setHPx(widthPx / aspect);
-    const onEdges = (e: CoverEdges) => setEdges(e);
-    entry.aspectSubs.add(onAspect);
-    entry.edgeSubs.add(onEdges);
-    return () => {
-      entry.aspectSubs.delete(onAspect);
-      entry.edgeSubs.delete(onEdges);
-    };
-  }, [entry, widthPx, defaultHPx]);
+  // Height in CSS-plank pixels; corrected to the cover's real aspect once known.
+  const hPx = aspect != null ? widthPx / aspect : defaultHPx;
 
   const texture = entry.texture;
   const h = hPx * worldScale;
