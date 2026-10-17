@@ -32,6 +32,7 @@
     "type-check": "node ../../node_modules/typescript7/bin/tsc --noEmit",
     "dev": "convex dev",
     "lint": "eslint .",
+    "test": "vitest run",
     "coverage": "vitest run --coverage"
   }
 }
