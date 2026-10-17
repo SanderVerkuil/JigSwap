@@ -1,7 +1,7 @@
 # TypeScript 7 and monorepo tooling: oxlint, Turborepo, then one TypeScript
 
 **Date:** 2026-10-17 (revised the same day, after the user asked to go beyond "keep Nx")
-**Status:** Proposed. This is the decision spec; the stages below are separate PRs.
+**Status:** Decided. See "Final decisions". Each stage is a separate PR in one stack.
 **Ticket:** T7
 **Branch:** `spike/ts7-monorepo-tooling` (PR #80), rebased on `df4a553ef`
 
@@ -310,6 +310,83 @@ independent changes:
 - run Stryker `inPlace`
 
 None of the three is a compiler-API dependency we can't remove.
+
+## Final decisions (user, 2026-10-17)
+
+The user decided after reading the analysis above. Where this section and the
+earlier sections differ, this section wins.
+
+### Lint: oxlint, ESLint dropped entirely
+
+- **oxlint native rules** for everything oxlint implements: 81 of today's 89
+  active rules, mapped 1:1.
+- **jsPlugins:**
+  - `eslint-plugin-react-hooks`, for the React Compiler rules oxlint lacks
+    natively (`component-hook-factories`, `config`, `gating`) and for exact
+    parity with today's findings
+  - `eslint-plugin-boundaries`, for the hexagonal package policies
+- **`oxlint-tsgolint`** for type-aware linting. It runs on typescript-go, so
+  it's TS-7-native. Today we have zero type-aware rules. The stage-3 PR picks
+  the initial set and fixes or justifies its findings (for example,
+  `no-floating-promises` currently has 23).
+- **Out:** ESLint, typescript-eslint, `eslint-config-next`, and the `next`
+  devDependency stage 2 had to add.
+- **The 3 rules we lose.** Each is listed here and in the stage-3 PR:
+  1. `react/no-deprecated`. oxlint has no port. Low impact: React 19
+     removed most of the APIs it flags.
+  2. `@next/next/no-location-assign-relative-destination`. A Next.js-only
+     rule, and the app is TanStack Start.
+  3. `@nx/dependency-checks` (declared deps vs imports in `package.json`).
+     oxlint doesn't lint JSON. An undeclared workspace import still fails
+     `tsc` with TS2307.
+  - Not counted as losses: `react/jsx-uses-react` and `react/jsx-uses-vars`.
+    oxlint's `no-unused-vars` already counts JSX usage.
+
+### Stack order and why
+
+1. **#80, this spec.** Records the decisions; the dual-TS type-check stays until stage 6.
+2. **Nx → Turborepo.** Removes Nx's TS-API dependency (`readConfigFile`,
+   `@nx/js`, `@swc-node/register`). It goes first because the oxlint migration
+   replaces `@nx/enforce-module-boundaries`, which must already work without
+   Nx (`eslint-plugin-boundaries`). It also fixes the web route-tree race, the
+   0-file backend type-check and the missing backend `test` gate.
+3. **oxlint.** Removes typescript-eslint, the other hard TS 6 consumer.
+   Moves boundaries to an oxlint jsPlugin.
+4. **Convex type errors + CI gate.** Fixes the ~199 errors in
+   `convex/*.test.ts` with real types: no blanket `any`, no `@ts-expect-error`.
+   Then `convex/tsconfig.json` (tests included) type-checks clean, and the
+   gate type-checks it. This comes before TS 7 so the compiler swap isn't mixed
+   with error fixes, and before stage 5 so the deploy typecheck has a clean
+   tree to enforce.
+5. **Convex deploy typecheck runs and gates.**
+   - `packages/backend` gets its own `typescript` devDependency, so
+     `convex deploy` finds `node_modules/typescript/bin/tsc`.
+   - Deploys pass `--typecheck=enable` (or equivalent) in
+     `.github/workflows/convex-deploy.yml` and `scripts/vercel-build.sh`, so a
+     type error fails the deploy.
+   - The PR must prove the typecheck actually runs, from the CLI's own
+     output.
+6. **TS 7 as the only TypeScript.**
+   - Rename `typescript7` back to `typescript@7` and drop the explicit-path
+     scripts.
+   - The 3 tool swaps from "Stage 4 feasibility":
+     - replace `prettier-plugin-organize-imports`
+     - dependency-cruiser `parser: "swc"`
+     - Stryker `inPlace: true`
+   - Last, because every earlier stage removes a TS 6 consumer.
+
+### Scoped TS 6 contingency
+
+TS 7 becomes the only version. The one exception: if the Convex CLI's
+typecheck (stage 5) truly needs the TS 6 compiler API, rather than just
+spawning `bin/tsc`, keep a TS 6 scoped to `packages/backend` only. That would
+be its own `typescript@6` devDependency there, with the root and every other
+package on 7.
+
+Current evidence says this won't be needed. The CLI spawns
+`node_modules/typescript/bin/tsc --project convex --listFiles` with no API use,
+and TS 7's `tsc` handles those flags (it listed 1719 files). Stage 5 confirms
+or refutes this. Stage 6 records the outcome.
 
 ## Why the dual-TS prototype commit stays on this branch
 
