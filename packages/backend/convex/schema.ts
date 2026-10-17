@@ -1157,4 +1157,13 @@ export default defineSchema({
     step: v.optional(v.number()),
     updatedAt: v.number(),
   }).index("by_member_tour", ["memberId", "tourId"]),
+
+  // One row per notify:true What's new entry whose whats_new notification fan-out has started
+  // (whatsNew/publishPending). The row is the idempotency key: an entry with a row is never fanned
+  // out again. `completedAt` is set when the last member batch has run.
+  whatsNewPublications: defineTable({
+    entryId: v.string(),
+    startedAt: v.number(),
+    completedAt: v.optional(v.number()),
+  }).index("by_entry", ["entryId"]),
 });
