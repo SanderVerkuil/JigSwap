@@ -401,6 +401,17 @@ const scheduledArgs = async (s: Setup, name: string) => {
 };
 
 describe("channels", () => {
+  // The channels schedule the real sendEmail/sendWebPush actions (runAfter 0), and convex-test
+  // runs those on real timers. These tests only assert on the scheduled rows, so keep the jobs
+  // from ever running: under CI load they otherwise fired during the later "sendEmail action"
+  // tests and hit that block's stubbed fetch (3 calls instead of 1). useRealTimers drops them.
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   test("the email channel forwards the recipient and the refs", async () => {
     const s = await setup();
     await s.t.run((ctx) => emailChannel(ctx)(notification(s, {})));
