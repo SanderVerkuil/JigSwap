@@ -37,7 +37,7 @@ export default defineConfig({
       },
     }),
     viteReact(),
-    // Reverse-proxy PostHog through /ingest (the paths posthog-provider.tsx targets),
+    // Reverse-proxy PostHog through /ingest (the paths analytics-client.ts targets),
     // replacing the next.config rewrites; static assets first as the more specific rule.
     nitro({
       routeRules: {

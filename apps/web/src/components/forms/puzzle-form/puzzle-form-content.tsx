@@ -1,3 +1,4 @@
+import { useFeatureFlagEnabled } from "@/components/analytics-provider";
 import { Button } from "@/components/ui/button";
 import { TagsInput } from "@/components/ui/extension/tags-input";
 import {
@@ -21,7 +22,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { useFeatureFlagEnabled } from "posthog-js/react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
 import { FileUpload } from "../file-upload";
