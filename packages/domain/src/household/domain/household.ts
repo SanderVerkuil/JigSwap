@@ -1,4 +1,8 @@
 import { DomainEvent, err, ok, Result } from "../../shared-kernel";
+import {
+  type HouseholdCopyPermission,
+  resolveHouseholdCopyPermission,
+} from "./copy-access";
 import { HouseholdError } from "./errors";
 import {
   HouseholdDissolved,
@@ -21,6 +25,9 @@ export interface HouseholdState {
   readonly id: HouseholdId;
   readonly members: readonly HouseholdMember[];
   readonly createdAt: Date;
+  // The permission a member's copy grants the household when the copy has no explicit value.
+  // Absent = the global default (manage), so existing households need no backfill.
+  readonly defaultCopyPermission?: HouseholdCopyPermission;
 }
 
 // Household: the members who pool their libraries. The founder is the admin (invites + removes);
@@ -106,6 +113,22 @@ export class Household {
     this.drop(target);
     this.record(new HouseholdMemberRemoved(this.state.id, target, by, now));
     return ok(undefined);
+  }
+
+  // The admin sets the household-wide default for copies without an explicit permission. It
+  // applies at read time to every such copy; no event (no notifications by decision).
+  setDefaultCopyPermission(
+    by: MemberId,
+    permission: HouseholdCopyPermission,
+  ): Result<{ readonly changed: boolean }, HouseholdError> {
+    if (!this.isAdmin(by)) return err(HouseholdError.notHouseholdAdmin());
+    const changed =
+      resolveHouseholdCopyPermission(
+        undefined,
+        this.state.defaultCopyPermission,
+      ) !== permission;
+    this.state = { ...this.state, defaultCopyPermission: permission };
+    return ok({ changed });
   }
 
   pullEvents(): readonly DomainEvent[] {

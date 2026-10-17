@@ -152,3 +152,59 @@ describe("Household.remove", () => {
     expect(result.isErr && result.error.code).toBe("NotAMember");
   });
 });
+
+describe("Household.setDefaultCopyPermission", () => {
+  it("starts without a household default", () => {
+    expect(founded().toState().defaultCopyPermission).toBeUndefined();
+  });
+
+  it("lets the admin set the default, reporting whether it changed, without events", () => {
+    const h = founded();
+    expect(h.setDefaultCopyPermission(ann, "view")).toEqual({
+      isOk: true,
+      isErr: false,
+      value: { changed: true },
+    });
+    expect(h.toState().defaultCopyPermission).toBe("view");
+    expect(h.setDefaultCopyPermission(ann, "view")).toEqual({
+      isOk: true,
+      isErr: false,
+      value: { changed: false },
+    });
+    expect(h.setDefaultCopyPermission(ann, "manage")).toEqual({
+      isOk: true,
+      isErr: false,
+      value: { changed: true },
+    });
+    expect(h.toState().defaultCopyPermission).toBe("manage");
+    expect(h.pullEvents()).toEqual([]);
+  });
+
+  it("treats an unset default as manage when deciding whether it changed", () => {
+    expect(founded().setDefaultCopyPermission(ann, "manage")).toEqual({
+      isOk: true,
+      isErr: false,
+      value: { changed: false },
+    });
+  });
+
+  it("rejects a non-admin member and an outsider", () => {
+    const h = founded();
+    h.admit(bob, t1);
+    for (const actor of [bob, cat]) {
+      const result = h.setDefaultCopyPermission(actor, "view");
+      expect(result.isErr && result.error.code).toBe("NotHouseholdAdmin");
+    }
+    expect(h.toState().defaultCopyPermission).toBeUndefined();
+  });
+
+  it("keeps the default across member changes and rehydration", () => {
+    const h = founded();
+    h.setDefaultCopyPermission(ann, "view");
+    h.admit(bob, t1);
+    h.leave(ann, t2);
+    expect(
+      Household.rehydrate(h.toState()).toState().defaultCopyPermission,
+    ).toBe("view");
+  });
+});

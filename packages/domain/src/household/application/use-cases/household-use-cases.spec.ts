@@ -6,6 +6,7 @@ import {
   makeInviteToHousehold,
   makeLeaveHousehold,
   makeRemoveHouseholdMember,
+  makeSetHouseholdDefaultCopyPermission,
 } from ".";
 import { toMemberId } from "../../../shared-kernel";
 import {
@@ -340,6 +341,40 @@ describe("removeHouseholdMember", () => {
       actorId: ann,
       memberId: bob,
     });
+    expect(result.isErr && result.error.code).toBe("NotInHousehold");
+  });
+});
+
+describe("setHouseholdDefaultCopyPermission", () => {
+  const setDefault = (actorId: MemberId, permission: "manage" | "view") =>
+    makeSetHouseholdDefaultCopyPermission(deps)({ actorId, permission });
+
+  it("lets the admin set the household default and persists it", async () => {
+    const id = await create();
+    const publishedBefore = events.published.length;
+    expect(await setDefault(ann, "view")).toEqual({
+      isOk: true,
+      isErr: false,
+      value: { changed: true },
+    });
+    expect(
+      (await households.findById(id))?.toState().defaultCopyPermission,
+    ).toBe("view");
+    expect(events.published.length).toBe(publishedBefore);
+  });
+
+  it("rejects a non-admin member without saving", async () => {
+    const id = await create();
+    await accept(bob, await invite());
+    const result = await setDefault(bob, "view");
+    expect(result.isErr && result.error.code).toBe("NotHouseholdAdmin");
+    expect(
+      (await households.findById(id))?.toState().defaultCopyPermission,
+    ).toBeUndefined();
+  });
+
+  it("rejects an actor without a household", async () => {
+    const result = await setDefault(cat, "view");
     expect(result.isErr && result.error.code).toBe("NotInHousehold");
   });
 });
