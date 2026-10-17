@@ -65,15 +65,13 @@ describe("postPuzzleComment / listPuzzleComments", () => {
       text: "Beautiful cut",
     });
 
-    // Persisted with the catalog puzzleId (for context) AND scoped to the owned copy. Comments are
-    // plain text now — no rating is ever written (copy-level opinions live in copyReviews).
+    // Persisted with the catalog puzzleId (for context) AND scoped to the owned copy.
     const stored = await t.run((ctx) =>
       ctx.db.query("puzzleComments").collect(),
     );
     expect(stored).toHaveLength(1);
     expect(stored[0].puzzleId).toBe(puzzleId);
     expect(stored[0].copyId).toBe(aliceCopy);
-    expect(stored[0].rating).toBeUndefined();
     expect(stored[0].aggregateId).toBeDefined();
 
     const list = await asAlice(t).query(

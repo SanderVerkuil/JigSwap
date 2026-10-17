@@ -120,8 +120,6 @@ export interface OwnedCopyCompletionView {
   startDate: number;
   endDate?: number;
   completionTimeMinutes?: number;
-  rating?: number;
-  review?: string;
   notes?: string;
   photos: DocId[];
   isCompleted: boolean;
