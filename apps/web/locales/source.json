@@ -3015,6 +3015,11 @@
     "photoCover": "Cover",
     "photoPending": "Pending review"
   },
+  "copyOwner": {
+    "label": "Owner",
+    "you": "you",
+    "anonymous": "Anonymous user"
+  },
   "puzzleDefinition": {
     "notFound": "Puzzle not found",
     "notFoundSub": "This puzzle may have been removed from the catalog, or the link is wrong.",
