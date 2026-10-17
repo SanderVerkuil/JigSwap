@@ -2,6 +2,7 @@
 
 import { Link } from "@/compat/link";
 import { MemberInitial } from "@/components/members/member-initial";
+import { ActivityBatchCovers } from "@/components/social/activity-batch-covers";
 import { isKnownActivityKind } from "@/components/social/activity-feed-meta";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -346,10 +347,19 @@ function ActivityRow({
       <div className="text-muted-foreground min-w-0 flex-1 text-sm leading-snug">
         {t.rich(entry.kind, {
           name: displayName(actor),
+          // A grouped batch add reads "added N puzzles"; the other kinds ignore the count.
+          count: entry.batch?.count ?? 1,
           strong: (chunks) => (
             <strong className="text-foreground">{chunks}</strong>
           ),
         })}
+        {entry.batch && (
+          <ActivityBatchCovers
+            memberId={entry.memberId}
+            batch={entry.batch}
+            size={28}
+          />
+        )}
         <span className="mt-0.5 block text-xs">
           {format.relativeTime(entry.occurredAt)}
         </span>

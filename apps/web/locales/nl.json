@@ -290,6 +290,11 @@
       "you": "Je hebt een puzzel op je plank gezet",
       "other": "<strong>{name}</strong> heeft een puzzel op de plank gezet"
     },
+    "acquisitionBatch": {
+      "you": "Je hebt {count, plural, one {# puzzel} other {# puzzels}} op je plank gezet",
+      "other": "<strong>{name}</strong> heeft {count, plural, one {# puzzel} other {# puzzels}} op de plank gezet",
+      "covers": "Bekijk {count, plural, one {deze puzzel} other {deze # puzzels}} op het profiel"
+    },
     "exchange": {
       "you": "Je hebt een ruil afgerond",
       "other": "<strong>{name}</strong> heeft een ruil afgerond"
@@ -969,6 +974,7 @@
         "title": "Recent",
         "completion": "<strong>{name}</strong> heeft een puzzel afgemaakt",
         "acquisition": "<strong>{name}</strong> heeft een puzzel op de plank gezet",
+        "acquisitionBatch": "<strong>{name}</strong> heeft {count, plural, one {# puzzel} other {# puzzels}} op de plank gezet",
         "exchange": "<strong>{name}</strong> heeft een ruil afgerond",
         "started": "<strong>{name}</strong> is aan een puzzel begonnen",
         "empty": "Voorlopig alles rustig — volg medepuzzelaars en hun nieuwste stappen verschijnen hier. 🧩"

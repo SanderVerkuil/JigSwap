@@ -61,7 +61,8 @@ export function ProfilePuzzlesSection({
   // page that can still load more keeps the section (and its Show more) visible.
   if (results.length === 0 && status !== "CanLoadMore") return null;
   return (
-    <section>
+    // `puzzles` is the anchor a grouped "added N puzzles" feed entry links to.
+    <section id="puzzles" className="scroll-mt-20">
       <SectionHead title={t("title", { name: firstName })} icon={Puzzle} />
       {/* The provider renders the app's shared auto-fill puzzle grid; cards are its direct children. */}
       <PuzzleViewProvider viewMode="grid">

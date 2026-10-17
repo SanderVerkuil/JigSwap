@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { useFormatter, useTranslations } from "use-intl";
+import { ActivityBatchCovers } from "./activity-batch-covers";
 import { ACTIVITY_META, isKnownActivityKind } from "./activity-feed-meta";
 
 // The acting member's activity feed: their own activity plus everyone they follow, newest-first.
@@ -42,6 +43,8 @@ export function ActivityFeed() {
         const meta = ACTIVITY_META[entry.kind];
         const Icon = meta.icon;
         const isYou = me != null && entry.memberId === me._id;
+        // A grouped batch add reads "added N puzzles"; the other kinds ignore the count.
+        const count = entry.batch?.count ?? 1;
         return (
           <div
             key={`${entry.ref}-${entry.memberId}-${entry.occurredAt}`}
@@ -56,12 +59,19 @@ export function ActivityFeed() {
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium">
                 {isYou
-                  ? t(`${entry.kind}.you`)
+                  ? t(`${entry.kind}.you`, { count })
                   : t.rich(`${entry.kind}.other`, {
                       name: displayName({ name: entry.actorName }),
+                      count,
                       strong: (chunks) => <strong>{chunks}</strong>,
                     })}
               </p>
+              {entry.batch && (
+                <ActivityBatchCovers
+                  memberId={entry.memberId}
+                  batch={entry.batch}
+                />
+              )}
               <p className="text-muted-foreground text-xs">
                 {format.relativeTime(new Date(entry.occurredAt))}
               </p>

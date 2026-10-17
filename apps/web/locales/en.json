@@ -290,6 +290,11 @@
       "you": "You added a puzzle to your shelf",
       "other": "<strong>{name}</strong> added a puzzle to their shelf"
     },
+    "acquisitionBatch": {
+      "you": "You added {count, plural, one {# puzzle} other {# puzzles}} to your shelf",
+      "other": "<strong>{name}</strong> added {count, plural, one {# puzzle} other {# puzzles}} to their shelf",
+      "covers": "View {count, plural, one {this puzzle} other {these # puzzles}} on the profile"
+    },
     "exchange": {
       "you": "You completed a swap",
       "other": "<strong>{name}</strong> completed a swap"
@@ -969,6 +974,7 @@
         "title": "Latest",
         "completion": "<strong>{name}</strong> finished a puzzle",
         "acquisition": "<strong>{name}</strong> added a puzzle to their shelf",
+        "acquisitionBatch": "<strong>{name}</strong> added {count, plural, one {# puzzle} other {# puzzles}} to their shelf",
         "exchange": "<strong>{name}</strong> completed a swap",
         "started": "<strong>{name}</strong> started a puzzle",
         "empty": "All quiet for now — follow fellow puzzlers and their latest moves will show up here. 🧩"

@@ -4,7 +4,13 @@
 import type { gateway } from "@/gateway";
 import type { FunctionReturnType } from "convex/server";
 import type { LucideIcon } from "lucide-react";
-import { ArrowRightLeft, CircleCheck, Package, Puzzle } from "lucide-react";
+import {
+  ArrowRightLeft,
+  Boxes,
+  CircleCheck,
+  Package,
+  Puzzle,
+} from "lucide-react";
 
 type FeedEntryKind = FunctionReturnType<
   typeof gateway.social.activityFeed
@@ -16,6 +22,7 @@ type FeedEntryKind = FunctionReturnType<
 export const ACTIVITY_KINDS = [
   "completion",
   "acquisition",
+  "acquisitionBatch",
   "exchange",
   "started",
 ] as const;
@@ -35,6 +42,7 @@ export const ACTIVITY_META: Record<
 > = {
   completion: { icon: CircleCheck, accent: "text-green-500" },
   acquisition: { icon: Package, accent: "text-blue-500" },
+  acquisitionBatch: { icon: Boxes, accent: "text-blue-500" },
   exchange: { icon: ArrowRightLeft, accent: "text-amber-500" },
   started: { icon: Puzzle, accent: "text-sky-500" },
 };
