@@ -28,9 +28,19 @@ export interface ResolvedMemberName {
 
 // The Clerk sync used to build `${first_name} ${last_name}` from nullable fields, persisting
 // literal "null"/"undefined" halves ("null null", "Mara null", "null Jansen"). Only an exact
-// token at the start or end is stripped, never a substring of a real name.
-const PLACEHOLDER_EDGE =
-  /^(?:(?:null|undefined)(?:\s+|$))+|(?:\s+(?:null|undefined))+$/g;
+// token at the start or end is stripped, never a substring of a real name. Done as a token
+// scan rather than an edge regex, which backtracks polynomially on long whitespace runs.
+const PLACEHOLDERS = new Set(["null", "undefined"]);
+
+const stripPlaceholderEdges = (trimmed: string): string => {
+  // [word, sep, word, sep, ..., word]: words at even indices, separators kept verbatim.
+  const parts = trimmed.split(/(\s+)/);
+  let start = 0;
+  let end = parts.length;
+  while (start < end && PLACEHOLDERS.has(parts[start])) start += 2;
+  while (end > start && PLACEHOLDERS.has(parts[end - 1])) end -= 2;
+  return parts.slice(start, end).join("");
+};
 
 /**
  * Trim a stored person name and strip legacy "null"/"undefined" placeholder halves. Returns
@@ -41,7 +51,7 @@ export const normalizeMemberName = (
   raw: string | null | undefined,
 ): string | undefined => {
   if (raw == null) return undefined;
-  const cleaned = raw.trim().replace(PLACEHOLDER_EDGE, "").trim();
+  const cleaned = stripPlaceholderEdges(raw.trim()).trim();
   return cleaned.length > 0 ? cleaned : undefined;
 };
 

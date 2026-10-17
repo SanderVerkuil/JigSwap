@@ -22,6 +22,17 @@ describe("normalizeMemberName", () => {
   ])("%j -> %j", (raw, expected) => {
     expect(normalizeMemberName(raw)).toBe(expected);
   });
+
+  it("keeps the spacing inside a real name", () => {
+    expect(normalizeMemberName("null Mara  Jansen")).toBe("Mara  Jansen");
+  });
+
+  it("stays linear on long whitespace runs (no ReDoS)", () => {
+    const hostile = `a${" ".repeat(50_000)}x`;
+    const started = performance.now();
+    expect(normalizeMemberName(hostile)).toBe(hostile);
+    expect(performance.now() - started).toBeLessThan(200);
+  });
 });
 
 describe("resolveMemberDisplayName", () => {
