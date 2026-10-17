@@ -175,6 +175,8 @@ export const gateway = {
     cancel: api.exchange.cancel.cancel,
     dispute: api.exchange.raiseDispute.raiseDispute,
     stats: api.exchange.getExchangeStats.getExchangeStats,
+    // The viewer's copies they may offer in a swap for a requested copy (propose's offer rule).
+    offerableCopies: api.exchange.getOfferableCopies.getOfferableCopies,
   },
 
   // Conversation: threads, DMs, exchange chat, inbox.

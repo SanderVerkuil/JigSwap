@@ -11,6 +11,11 @@ import {
   type QueryBuilderState,
 } from "@/components/browse/query-builder";
 import { EmptyState } from "@/components/community/primitives";
+import { canRequestTrade } from "@/components/exchange/request-trade";
+import {
+  type RequestableCopy,
+  RequestTradeDialog,
+} from "@/components/exchange/request-trade-dialog";
 import {
   copyMessageRoute,
   isOwnCopy,
@@ -52,6 +57,7 @@ function BrowsePage() {
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [query, setQuery] = useState<QueryBuilderState>(EMPTY_QUERY);
+  const [requestCopy, setRequestCopy] = useState<RequestableCopy | null>(null);
 
   // Debounce the free-text condition (~200ms) so typing narrows results without
   // refetching the browse query on every keystroke. Every other condition is
@@ -194,7 +200,20 @@ function BrowsePage() {
                   params: { id: ownedPuzzleId },
                 })
               }
-              onRequestExchange={() => navigate({ to: "/trades" })}
+              onRequestExchange={
+                canRequestTrade(puzzle, convexUser?._id)
+                  ? () =>
+                      setRequestCopy({
+                        copyId: puzzle._id,
+                        ownerId: puzzle.ownerId,
+                        owner: puzzle.owner,
+                        title: puzzle.puzzle?.title ?? "",
+                        pieceCount: puzzle.puzzle?.pieceCount,
+                        coverUrl: puzzle.coverUrl,
+                        availability: puzzle.availability,
+                      })
+                  : undefined
+              }
               onMessage={
                 isOwnCopy(puzzle.ownerId, convexUser?._id)
                   ? undefined
@@ -205,6 +224,13 @@ function BrowsePage() {
           ))}
         </PuzzleViewProvider>
       )}
+
+      <RequestTradeDialog
+        copy={requestCopy}
+        onOpenChange={(open) => {
+          if (!open) setRequestCopy(null);
+        }}
+      />
     </div>
   );
 }

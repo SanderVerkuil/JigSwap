@@ -635,6 +635,38 @@
       "disputed": "In geschil"
     }
   },
+  "tradeRequest": {
+    "title": "Deze puzzel aanvragen",
+    "description": "Stuur {name} een aanvraag voor dit exemplaar.",
+    "ownedBy": "Van {name}",
+    "pieces": "{count} stukjes",
+    "typeLabel": "Soort uitwisseling",
+    "types": {
+      "trade": "Ruilen",
+      "sale": "Kopen",
+      "loan": "Lenen"
+    },
+    "offerLabel": "Puzzel die je aanbiedt",
+    "offerPlaceholder": "Kies een van je puzzels",
+    "offerHousehold": "{title} ({name}, huishouden)",
+    "noOfferable": "Je hebt geen puzzels die je kunt aanbieden om te ruilen.",
+    "priceLabel": "Jouw bod (EUR)",
+    "pricePlaceholder": "bijv. 15,00",
+    "priceInvalid": "Vul een bedrag boven nul in, zoals 15 of 15,50.",
+    "cancel": "Annuleren",
+    "submit": "Aanvraag versturen",
+    "submitting": "Versturen...",
+    "success": "Ruilaanvraag verstuurd",
+    "errors": {
+      "notAvailable": "Deze puzzel is niet meer beschikbaar voor die uitwisseling.",
+      "notFound": "Deze puzzel is niet meer beschikbaar.",
+      "offeredNotOwned": "Je kunt die puzzel niet aanbieden in deze ruil.",
+      "duplicate": "Je hebt al een openstaande aanvraag voor deze puzzel.",
+      "ownCopy": "Je kunt je eigen puzzel niet aanvragen.",
+      "missingTerms": "Er ontbreken gegevens. Controleer het formulier en probeer het opnieuw.",
+      "generic": "De aanvraag kon niet worden verstuurd. Probeer het opnieuw."
+    }
+  },
   "reputation": {
     "title": "Reputatie",
     "subtitle": "Vertrouwenssignalen uit voltooide uitwisselingen.",
