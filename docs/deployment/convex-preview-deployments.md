@@ -186,6 +186,15 @@ workflow before its key is configured.
   A preview that already has data is left untouched, so data created on the preview
   survives pushes — and a preview first created empty by the Vercel build, or recreated
   empty after expiry, gets seeded by the next run automatically.
+- **Concurrent pushes are retried**: every PR push makes the Vercel build and this
+  workflow push to the same preview at the same time, and the loser fails with
+  `503 … OptimisticConcurrencyControlFailure` (`start_push`) or `409 RaceDetected` /
+  "… was created by a concurrent push". The CLI does not retry those (they are POSTs),
+  so both sides run `convex deploy` through `scripts/convex-deploy-retry.sh`, which
+  retries up to 4 attempts (15/30/60s apart) **only** on those race messages; a
+  typecheck or any other failure exits at once. A retry re-pushes the same code (the
+  CLI uploads only modules the server lacks) and keeps `--typecheck enable`. On Vercel,
+  `--cmd` runs before the push, so a retry also rebuilds the web app.
 - **Seeding cannot hit dev/prod**: the import step only has the preview deploy key,
   with which the CLI resolves `--preview-name` project-scoped to preview deployments;
   the dev key (which would make the CLI ignore `--preview-name`) is only exposed to the

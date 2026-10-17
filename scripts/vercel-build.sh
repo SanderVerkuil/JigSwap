@@ -14,9 +14,15 @@
 # `npx convex env set` (with a code default of https://jigswap.site).
 set -euo pipefail
 
+scripts_dir="$(cd "$(dirname "$0")" && pwd)"
+
 if [ "${VERCEL_ENV:-}" = "preview" ]; then
   cd ../../packages/backend
-  npx convex deploy --typecheck enable --cmd-url-env-var-name VITE_CONVEX_URL --cmd 'pnpm --filter @jigswap/web build'
+  # The Convex Preview workflow pushes to this same preview at the same time; the retry
+  # wrapper re-runs the deploy only when it lost that race (see convex-deploy-retry.sh).
+  # `--cmd` runs before the push, so a retry rebuilds the web app too (same URL, same code).
+  bash "$scripts_dir/convex-deploy-retry.sh" npx convex deploy --typecheck enable \
+    --cmd-url-env-var-name VITE_CONVEX_URL --cmd 'pnpm --filter @jigswap/web build'
   # Deliberately best-effort: a flag regression must not fail an otherwise-good preview build.
   npx convex env set --preview-name "$VERCEL_GIT_COMMIT_REF" EMAIL_BASE_URL "https://$VERCEL_BRANCH_URL" \
     || echo "warning: EMAIL_BASE_URL not set on the preview deployment (email links fall back to https://jigswap.site)"
