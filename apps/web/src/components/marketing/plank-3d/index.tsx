@@ -6,25 +6,44 @@ import type { SceneProps } from "./scene";
 
 const PlankScene = React.lazy(() => import("./scene"));
 
+// Probed once per page load: useSyncExternalStore calls the snapshot on every
+// render, and each probe would otherwise allocate a canvas + GL context.
+let webGLSupport: boolean | undefined;
 function supportsWebGL(): boolean {
+  if (webGLSupport !== undefined) return webGLSupport;
   try {
     const canvas = document.createElement("canvas");
-    return !!(canvas.getContext("webgl2") || canvas.getContext("webgl"));
+    webGLSupport = !!(
+      canvas.getContext("webgl2") || canvas.getContext("webgl")
+    );
   } catch {
-    return false;
+    webGLSupport = false;
   }
+  return webGLSupport;
+}
+
+const noopSubscribe = () => () => {};
+
+// False on the server and during hydration (CSS fallback only), the real
+// WebGL support on the client.
+function useSupportsWebGL(): boolean {
+  return React.useSyncExternalStore(noopSubscribe, supportsWebGL, () => false);
+}
+
+const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
+
+function subscribeReducedMotion(onChange: () => void) {
+  const mq = window.matchMedia(REDUCED_MOTION);
+  mq.addEventListener("change", onChange);
+  return () => mq.removeEventListener("change", onChange);
 }
 
 function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = React.useState(false);
-  React.useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduced(mq.matches);
-    const onChange = (e: MediaQueryListEvent) => setReduced(e.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-  return reduced;
+  return React.useSyncExternalStore(
+    subscribeReducedMotion,
+    () => window.matchMedia(REDUCED_MOTION).matches,
+    () => false,
+  );
 }
 
 /** Render-nothing error boundary: any 3D failure leaves the CSS plank. */
@@ -46,20 +65,17 @@ class SceneBoundary extends React.Component<
 
 export function JigPlank3D({ rows = [] }: { rows?: PlankBox[][] }) {
   const container = React.useRef<HTMLDivElement>(null);
-  const [mounted, setMounted] = React.useState(false);
   const [sceneReady, setSceneReady] = React.useState(false);
   const [visible, setVisible] = React.useState(true);
   const [resolved, setResolved] = React.useState<SceneProps["resolved"] | null>(
     null,
   );
   const [headingFont, setHeadingFont] = React.useState("system-ui, sans-serif");
+  // `mounted` = client-side with WebGL available; gates every 3D path.
+  const mounted = useSupportsWebGL();
   const reducedMotion = usePrefersReducedMotion();
   const { resolvedTheme } = useTheme();
   const theme: "light" | "dark" = resolvedTheme === "dark" ? "dark" : "light";
-
-  React.useEffect(() => {
-    setMounted(supportsWebGL());
-  }, []);
 
   // Resolve CSS-var colors + font from the live DOM; re-resolve when the
   // theme flips (the whole --mk-* ramp changes under .dark).
