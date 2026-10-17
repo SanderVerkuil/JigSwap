@@ -40,7 +40,8 @@ export interface OwnedCopyPuzzleView {
 /** The owner summary a browse/detail read joins onto a Copy. */
 export interface OwnedCopyOwnerView {
   _id: DocId;
-  name: string;
+  /** Raw account name; may be absent. Render via resolveMemberDisplayName / useMemberDisplayName. */
+  name?: string;
   username?: string;
   avatar?: string;
 }
@@ -469,7 +470,8 @@ export interface CopyOfferView {
   copyId: DocId;
   swapType: CopyOfferSwapType;
   owner: {
-    name: string;
+    /** Already resolved (resolveMemberDisplayName, no email); absent = render the generic member label. */
+    name?: string;
     location: string | null;
     avatarUrl: string | null;
     avgRating: number | null;

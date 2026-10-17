@@ -3,6 +3,7 @@ import { type PaginationResult, paginationOptsValidator } from "convex/server";
 import { ConvexError } from "convex/values";
 import { query } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
+import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 
 // Admin read model: EVERY catalog definition regardless of status, newest first, paginated.
@@ -44,7 +45,7 @@ export const listPuzzleDefinitions = query({
             pieceCount: puzzle.pieceCount,
             status: puzzle.status,
             createdAt: puzzle.createdAt,
-            submitterName: submitter?.name ?? null,
+            submitterName: submitter ? adminMemberLabelOf(submitter) : null,
             image: puzzle.image ? await ctx.storage.getUrl(puzzle.image) : null,
             ownerCount: distinctOwners.size,
           };

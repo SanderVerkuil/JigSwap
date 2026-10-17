@@ -2,6 +2,7 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { internalMutation, internalQuery } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
+import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 import { stampModerationAction } from "./stampModerationAction";
 
@@ -35,7 +36,7 @@ export const gate = internalQuery({
 
     return {
       clerkId: target.clerkId,
-      name: target.name,
+      name: adminMemberLabelOf(target),
       actorId: memberId as unknown as Id<"users">,
     };
   },

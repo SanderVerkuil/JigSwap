@@ -9,7 +9,8 @@ import type { ConvexSystemFields } from "../shared/convex";
  * authorization stays JWT-based (identity/isAdmin) and must never read this field.
  */
 export interface AdminUserView extends ConvexSystemFields {
-  name: string;
+  /** Raw account name; may be absent. Render via resolveMemberDisplayName / useMemberDisplayName. */
+  name?: string;
   username?: string;
   email: string;
   avatar?: string;
@@ -57,7 +58,7 @@ export interface AdminUserDetailView {
   profile: {
     _id: string;
     clerkId: string;
-    name: string;
+    name?: string;
     username?: string;
     email: string;
     avatar?: string;

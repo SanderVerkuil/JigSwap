@@ -1,6 +1,7 @@
 import type { PublicMemberTeaserView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
+import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { optionalActingMember } from "../identity/optionalActingMember";
 import { resolveMemberByHandle } from "../identity/resolveMemberByHandle";
 import { profileVisibilityOf } from "./privacy";
@@ -47,7 +48,7 @@ export const getPublicMemberTeaser = query({
 
     return {
       memberId,
-      displayName: profile?.displayName ?? user.name,
+      displayName: memberDisplayNameOf(user, profile),
       username: user.username,
       slug: user.slug,
       avatar,

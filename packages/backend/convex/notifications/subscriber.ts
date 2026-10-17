@@ -5,6 +5,7 @@ import {
 } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
+import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { makeNotify } from "./adapters/makeNotify";
 import { isViewingMessages } from "./presenceGate";
 
@@ -35,7 +36,9 @@ const memberName = async (
   id: string | Id<"users">,
 ): Promise<Record<string, string>> => {
   const user = await ctx.db.get(id as Id<"users">);
-  return user?.name ? { actorName: user.name } : {};
+  // Never the email: the recipient is another member.
+  const actorName = memberDisplayNameOf(user);
+  return actorName ? { actorName } : {};
 };
 
 // Resolve the persisted exchange row from its ExchangeId aggregateId so we can address the real

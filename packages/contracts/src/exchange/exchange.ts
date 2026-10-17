@@ -75,7 +75,8 @@ export type ExchangeStatsView = z.infer<typeof exchangeStatsView>;
 /** The sender summary embedded on a message (legacy joined `_id`/`name`/`avatar` only). */
 export interface ExchangeMessageSenderView {
   _id: string;
-  name: string;
+  /** Already resolved (resolveMemberDisplayName, no email); absent = render the generic member label. */
+  name?: string;
   avatar?: string;
 }
 

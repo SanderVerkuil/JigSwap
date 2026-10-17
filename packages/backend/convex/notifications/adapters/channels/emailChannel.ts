@@ -1,3 +1,4 @@
+import { resolveMemberDisplayName } from "@jigswap/contracts";
 import type { Notification } from "@jigswap/domain";
 import { internal } from "../../../_generated/api";
 import type { Id } from "../../../_generated/dataModel";
@@ -16,7 +17,13 @@ export const emailChannel =
     if (!user) return;
     await ctx.scheduler.runAfter(0, internal.notifications.sendEmail.send, {
       to: user.email,
-      toName: user.name,
+      // The recipient's OWN label, so their email is a fine fallback.
+      toName:
+        resolveMemberDisplayName({
+          name: user.name,
+          email: user.email,
+          username: user.username,
+        })?.text ?? user.email,
       type: state.type as string,
       params: (state.params ?? {}) as Record<string, string>,
       locale: user.preferredLanguage === "nl" ? "nl" : "en",

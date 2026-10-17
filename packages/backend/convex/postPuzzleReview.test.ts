@@ -283,7 +283,7 @@ describe("listPuzzleReviews — sourced from puzzleReviews", () => {
     ]);
   });
 
-  test("a vanished author falls back to a synthetic 'Member' view", async () => {
+  test("a vanished author falls back to a synthetic, nameless view", async () => {
     const t = convexTest(schema, modules);
     const { puzzleId } = await seed(t);
     const bob = await mkMember(t, "clerk_bob", "Bob");
@@ -300,7 +300,8 @@ describe("listPuzzleReviews — sourced from puzzleReviews", () => {
     expect(list).toHaveLength(1);
     expect(list[0].text).toBe("Orphaned");
     expect(list[0].author._id).toBe(bob as string);
-    expect(list[0].author.name).toBe("Member");
+    // No hardcoded English placeholder: the web renders its localized generic label.
+    expect(list[0].author.name).toBeUndefined();
     expect(list[0].author.isActive).toBe(false);
   });
 

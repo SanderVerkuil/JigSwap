@@ -1,6 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { query } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
+import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 
 // Activity feed for the moderation console: the latest moderation decisions, newest first,
@@ -19,15 +20,16 @@ export const getModerationActivity = query({
       .take(limit ?? 30);
 
     return Promise.all(
-      rows.map(async (row) => ({
-        kind: row.kind,
-        actorName: row.actorId
-          ? ((await ctx.db.get(row.actorId))?.name ?? null)
-          : null,
-        targetLabel: row.targetLabel,
-        targetId: row.targetId,
-        at: row.at,
-      })),
+      rows.map(async (row) => {
+        const actor = row.actorId ? await ctx.db.get(row.actorId) : null;
+        return {
+          kind: row.kind,
+          actorName: actor ? adminMemberLabelOf(actor) : null,
+          targetLabel: row.targetLabel,
+          targetId: row.targetId,
+          at: row.at,
+        };
+      }),
     );
   },
 });

@@ -36,7 +36,7 @@ export const toCircleDetail = async (
       return {
         membershipId: m.id,
         memberId: m.memberId,
-        name: user?.name ?? "Unknown member",
+        name: user?.name,
         username: user?.username,
         avatar: user?.avatar,
         permission: m.permission,

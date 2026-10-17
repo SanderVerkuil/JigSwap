@@ -1,4 +1,4 @@
-import type { ProjectedMember } from "@jigswap/contracts";
+import { normalizeMemberName, type ProjectedMember } from "@jigswap/contracts";
 import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { toMemberView } from "../identity/toMemberView";
@@ -108,7 +108,7 @@ export const projectMemberIdentity = async (
 };
 
 /** The public projection of a review author: name + (consent-gated) avatar, or null. */
-export type PublicAuthorView = { name: string; avatar: string | null } | null;
+export type PublicAuthorView = { name?: string; avatar: string | null } | null;
 
 /**
  * UNAUTHENTICATED identity projection for public (logged-out, indexable) surfaces — the public
@@ -138,7 +138,8 @@ export const projectPublicAuthor = async (
     .unique();
   if (profile?.visibility !== "public") return null;
   return {
-    name: user.name,
+    // Account name only (no username/email on public pages); absent = generic member label.
+    name: normalizeMemberName(user.name),
     avatar: user.shareAvatarPublicly === true ? (user.avatar ?? null) : null,
   };
 };

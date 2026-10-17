@@ -9,7 +9,8 @@ import type { ConvexSystemFields } from "../shared/convex";
 export interface ProfileView extends ConvexSystemFields {
   aggregateId?: string;
   memberId: string;
-  displayName: string;
+  /** Member-chosen profile name; absent until the member sets one. */
+  displayName?: string;
   bio?: string;
   /**
    * Who can see this profile. "public" reveals the member's identity to anyone; "private" hides
@@ -27,7 +28,8 @@ export interface ProfileView extends ConvexSystemFields {
 export interface FollowEdgeView {
   followId?: string;
   memberId: string;
-  displayName: string;
+  /** Resolved server-side (profile displayName → account name → username, never email); absent = render the generic member label. */
+  displayName?: string;
   createdAt: number;
 }
 
@@ -44,7 +46,8 @@ export interface ActivityEntryView {
   kind: "completion" | "acquisition" | "exchange" | "started";
   occurredAt: number;
   ref: string;
-  actorName: string;
+  /** Resolved server-side (profile displayName → account name → username, never email); absent = render the generic member label. */
+  actorName?: string;
 }
 
 /**
@@ -113,7 +116,8 @@ export interface FollowersYouKnowView {
   total: number;
   members: {
     memberId: string;
-    displayName: string;
+    /** Resolved server-side (profile displayName → account name → username, never email); absent = render the generic member label. */
+    displayName?: string;
     avatar?: string;
     username?: string;
     slug?: string;
@@ -130,7 +134,8 @@ export interface FollowersYouKnowView {
  */
 export interface PublicMemberTeaserView {
   memberId: string;
-  displayName: string;
+  /** Resolved server-side (profile displayName → account name → username, never email); absent = render the generic member label. */
+  displayName?: string;
   username?: string;
   /** The member's Convex-owned profile handle (identity/setSlug), if they've chosen one. */
   slug?: string;
@@ -153,7 +158,8 @@ export interface PublicMemberTeaserView {
  */
 export interface PublicProfileHero {
   memberId: string;
-  displayName: string;
+  /** Resolved server-side (profile displayName → account name → username, never email); absent = render the generic member label. */
+  displayName?: string;
   username?: string;
   slug?: string;
   avatar?: string;

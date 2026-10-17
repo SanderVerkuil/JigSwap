@@ -11,7 +11,7 @@ import { requireMember } from "./identity/requireMember";
 
 // The lowercased text backing the `by_searchable_name` people-search index. Kept in sync on every
 // user write so member search is an index lookup, not a full-table scan + in-memory filter.
-const toSearchableName = (name: string, username?: string): string =>
+const toSearchableName = (name?: string, username?: string): string =>
   [name, username].filter(Boolean).join(" ").toLowerCase();
 
 // The Clerk publicMetadata.role, mirrored onto the users row for display (admin users page).
@@ -31,7 +31,7 @@ export const createOrUpdateUser = internalMutation({
   args: {
     clerkId: v.string(),
     email: v.string(),
-    name: v.string(),
+    name: v.optional(v.string()),
     username: v.optional(v.string()),
     avatar: v.optional(v.string()),
   },
@@ -113,7 +113,13 @@ export const updateOrCreateUser = internalMutation({
   async handler(ctx, { clerkUser }: { clerkUser: UserJSON }) {
     const userRecord = await userQuery(ctx, clerkUser.id);
 
-    const name = `${clerkUser.first_name} ${clerkUser.last_name}`;
+    // Clerk sends `null` for a missing first/last name; interpolating them directly persisted the
+    // literal "null null". Keep only the present, non-blank halves; no name at all stays absent.
+    const name =
+      [clerkUser.first_name, clerkUser.last_name]
+        .map((part) => part?.trim())
+        .filter(Boolean)
+        .join(" ") || undefined;
     const username = clerkUser.username ?? undefined;
     if (userRecord === null) {
       await ctx.db.insert("users", {

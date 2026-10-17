@@ -3,6 +3,7 @@ import { ConvexError, v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { type QueryCtx, query } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
+import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 
 // Admin read model for ONE member: full profile (email + clerkId — admin-only by
@@ -16,15 +17,16 @@ import { requireMember } from "../identity/requireMember";
 const SUBMISSIONS_CAP = 50;
 const AUDIT_CAP = 20;
 
-const toAuditEntry = async (ctx: QueryCtx, row: Doc<"moderationActions">) => ({
-  kind: row.kind,
-  actorName: row.actorId
-    ? ((await ctx.db.get(row.actorId))?.name ?? null)
-    : null,
-  targetLabel: row.targetLabel,
-  targetId: row.targetId,
-  at: row.at,
-});
+const toAuditEntry = async (ctx: QueryCtx, row: Doc<"moderationActions">) => {
+  const actor = row.actorId ? await ctx.db.get(row.actorId) : null;
+  return {
+    kind: row.kind,
+    actorName: actor ? adminMemberLabelOf(actor) : null,
+    targetLabel: row.targetLabel,
+    targetId: row.targetId,
+    at: row.at,
+  };
+};
 
 export const getUserDetail = query({
   args: { userId: v.id("users") },

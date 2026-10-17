@@ -11,8 +11,8 @@ import type {
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
-import { toMemberView } from "../identity/toMemberView";
 import { projectMemberIdentity } from "../social/privacy";
 import { canViewCopy } from "./canViewCopy";
 import { ratingBreakdownOf } from "./definitionAggregates";
@@ -285,7 +285,7 @@ export const getCopyInstanceView = query({
             caption: img.title ?? img.tag ?? null,
             tag: img.tag ?? null,
             description: img.description ?? null,
-            uploaderName: uploader ? toMemberView(uploader).name : null,
+            uploaderName: memberDisplayNameOf(uploader) ?? null,
             takenAt: img.takenAt ?? null,
             createdAt: img.createdAt,
             // Only "approved" or the viewer's own "pending" survive the filter above; an absent

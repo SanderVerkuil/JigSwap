@@ -5,6 +5,7 @@ import type {
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 import { profileVisibilityOf } from "../social/privacy";
 import { collectCircleSharedCopies } from "./circleSharedCopies";
@@ -111,7 +112,7 @@ export const getPuzzleDefinitionView = query({
     const ownerCache = new Map<
       string,
       Promise<{
-        name: string;
+        name?: string;
         location: string | null;
         avatarUrl: string | null;
         avgRating: number | null;
@@ -132,7 +133,7 @@ export const getPuzzleDefinitionView = query({
             ? reputation.averageRating
             : null;
         return {
-          name: user?.name ?? "Member",
+          name: memberDisplayNameOf(user),
           location: user?.location ?? null,
           avatarUrl: user?.avatar ?? null,
           avgRating,

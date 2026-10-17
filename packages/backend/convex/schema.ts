@@ -51,7 +51,10 @@ export default defineSchema({
   users: defineTable({
     clerkId: v.string(),
     email: v.string(),
-    name: v.string(),
+    // Full name as synced from Clerk ("<first> <last>", either half may be missing). Optional:
+    // Clerk users without a first/last name have none — render via resolveMemberDisplayName
+    // (@jigswap/contracts), never the raw field.
+    name: v.optional(v.string()),
     username: v.optional(v.string()),
     // Member-chosen, Convex-owned profile handle (e.g. "sander-verkuil"). Unlike `username`
     // (Clerk-owned, synced by the webhook), this is set directly via identity/setSlug and
@@ -894,7 +897,9 @@ export default defineSchema({
   profiles: defineTable({
     aggregateId: v.optional(v.string()),
     memberId: v.id("users"),
-    displayName: v.string(),
+    // Member-chosen display name. Optional: profiles opened lazily (visibility toggle / shelf
+    // curation) carry none, and readers fall back to the live account name.
+    displayName: v.optional(v.string()),
     bio: v.optional(v.string()),
     // Who can see this profile. Optional so existing rows stay valid; absent means "public".
     visibility: v.optional(v.union(v.literal("public"), v.literal("private"))),

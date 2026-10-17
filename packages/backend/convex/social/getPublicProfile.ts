@@ -5,6 +5,7 @@ import type {
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { computeMemberStats } from "../identity/getUserStats";
+import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { optionalActingMember } from "../identity/optionalActingMember";
 import { resolveMemberByHandle } from "../identity/resolveMemberByHandle";
 import { areMutualFollowers, profileVisibilityOf } from "./privacy";
@@ -67,7 +68,7 @@ export const getPublicProfile = query({
 
     const hero = {
       memberId,
-      displayName: profile?.displayName ?? user.name,
+      displayName: memberDisplayNameOf(user, profile),
       username: user.username,
       slug: user.slug,
       avatar,

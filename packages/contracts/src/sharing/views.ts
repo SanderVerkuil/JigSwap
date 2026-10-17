@@ -14,7 +14,8 @@ export interface CircleMemberView {
   membershipId: string;
   // The member's user _id (the resolved MemberId).
   memberId: DocId;
-  name: string;
+  /** Raw account name; may be absent. Render via resolveMemberDisplayName / useMemberDisplayName. */
+  name?: string;
   username?: string;
   avatar?: string;
   permission: CirclePermissionLevel;
