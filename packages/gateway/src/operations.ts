@@ -56,6 +56,10 @@ export const gateway = {
     allSeries: api.catalog.getAllSeries.getAllSeries,
     puzzleCategories: api.catalog.getPuzzleCategories.getPuzzleCategories,
     puzzleSuggestions: api.catalog.getPuzzleSuggestions.getPuzzleSuggestions,
+    // Member add-copy picker: paginated server-side search, and the EAN/UPC lookup (both
+    // member-gated, approved-only).
+    search: api.catalog.searchCatalog.searchCatalog,
+    lookupBarcode: api.catalog.findPuzzleByBarcode.lookupPuzzleByBarcode,
     // Unauthenticated public-catalog reads (the /catalog pages; approved-only, member-free).
     publicBrowse: api.catalog.browsePublicCatalog.browsePublicCatalog,
     publicDefinitionView:

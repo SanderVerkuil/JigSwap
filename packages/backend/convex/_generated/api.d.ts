@@ -76,6 +76,7 @@ import type * as catalog_rejectChangeProposal from "../catalog/rejectChangePropo
 import type * as catalog_rejectPuzzleDefinition from "../catalog/rejectPuzzleDefinition.js";
 import type * as catalog_reorderCatalogCategories from "../catalog/reorderCatalogCategories.js";
 import type * as catalog_runDefinitionAction from "../catalog/runDefinitionAction.js";
+import type * as catalog_searchCatalog from "../catalog/searchCatalog.js";
 import type * as catalog_setCatalogCategoryActive from "../catalog/setCatalogCategoryActive.js";
 import type * as catalog_submitPuzzleDefinition from "../catalog/submitPuzzleDefinition.js";
 import type * as catalog_toggleFavorite from "../catalog/toggleFavorite.js";
@@ -461,6 +462,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/rejectPuzzleDefinition": typeof catalog_rejectPuzzleDefinition;
   "catalog/reorderCatalogCategories": typeof catalog_reorderCatalogCategories;
   "catalog/runDefinitionAction": typeof catalog_runDefinitionAction;
+  "catalog/searchCatalog": typeof catalog_searchCatalog;
   "catalog/setCatalogCategoryActive": typeof catalog_setCatalogCategoryActive;
   "catalog/submitPuzzleDefinition": typeof catalog_submitPuzzleDefinition;
   "catalog/toggleFavorite": typeof catalog_toggleFavorite;
