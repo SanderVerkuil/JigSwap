@@ -43,6 +43,7 @@ export function ImageZoom({
   panelSize = 360,
   lensSize = 200,
   fill = false,
+  disabled = false,
   className,
   wrapperClassName,
 }: {
@@ -58,6 +59,8 @@ export function ImageZoom({
   lensSize?: number;
   /** Fill a positioned parent (absolute inset-0) — for cover images in an aspect box. */
   fill?: boolean;
+  /** Turn the hover zoom off (e.g. while the image is already zoomed by other means). */
+  disabled?: boolean;
   /** Extra classes on the <img>. */
   className?: string;
   /** Extra classes on the wrapper. */
@@ -77,6 +80,7 @@ export function ImageZoom({
     mq.addEventListener("change", sync);
     return () => mq.removeEventListener("change", sync);
   }, []);
+  const hoverZoom = finePointer && !disabled;
 
   const clear = () => setActive(null);
 
@@ -179,10 +183,10 @@ export function ImageZoom({
         decoding="async"
         className={cn(
           fill && "h-full w-full object-contain",
-          finePointer && cursorClass,
+          hoverZoom && cursorClass,
           className,
         )}
-        onMouseMove={finePointer ? onMove : undefined}
+        onMouseMove={hoverZoom ? onMove : undefined}
         onMouseLeave={clear}
       />
 

@@ -3171,7 +3171,11 @@
       "photoRemoved": "Photo removed",
       "removeFailed": "Couldn't remove the photo",
       "cancel": "Cancel",
-      "unsetCover": "Unset as cover"
+      "unsetCover": "Unset as cover",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "resetZoom": "Reset zoom",
+      "zoomLevel": "Zoom {percent}%"
     },
     "offerForSwap": "Offer for Swap",
     "offeredForSwap": "Offered for Swap",

@@ -1,6 +1,6 @@
 "use client";
 
-import { ImageZoom } from "@/components/common/image-zoom";
+import { PhotoZoom } from "@/components/copies/photo-zoom";
 import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -180,14 +180,13 @@ export function PhotoLightbox({
 
         {/* Image stage */}
         <div className="relative flex min-h-0 items-center justify-center bg-neutral-950">
-          {/* In-place magnifying glass (not a side panel): the photo is already large here, so the
-              cursor itself becomes the magnifier, confined to the image. */}
-          <ImageZoom
+          {/* Touch pinch/pan/double-tap zoom + zoom buttons, around the mouse hover lens. Keyed on
+              the photo so the zoom resets when navigating; closing unmounts it. */}
+          <PhotoZoom
+            key={photo.id}
             src={photo.url}
             alt={photo.caption ?? ""}
-            mode="lens"
-            className="max-h-full max-w-full object-contain"
-            wrapperClassName="flex h-full w-full items-center justify-center"
+            onSwipe={count > 1 ? go : undefined}
           />
 
           {count > 1 && (
