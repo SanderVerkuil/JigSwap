@@ -43,11 +43,33 @@ export interface FollowEdgeView {
  */
 export interface ActivityEntryView {
   memberId: string;
-  kind: "completion" | "acquisition" | "exchange" | "started";
+  kind:
+    "completion" | "acquisition" | "acquisitionBatch" | "exchange" | "started";
   occurredAt: number;
   ref: string;
   /** Resolved server-side (profile displayName → account name → username, never email); absent = render the generic member label. */
   actorName?: string;
+  /** Present only on "acquisitionBatch" entries (`ref` is then the batch id). */
+  batch?: ActivityBatchView;
+}
+
+/**
+ * One batch add (a single quick-start acquireCopies call) folded into one feed entry. `count` and
+ * `covers` cover only the copies THIS viewer may see (canViewCopy + the profile unlock rule), so a
+ * batch never reveals hidden copies; a batch with no visible copy is not in the feed at all.
+ */
+export interface ActivityBatchView {
+  count: number;
+  /** The first few visible copies in pick order (at most 4). */
+  covers: ActivityBatchCoverView[];
+}
+
+export interface ActivityBatchCoverView {
+  /** The copy's Library aggregateId. */
+  copyId: string;
+  title: string;
+  /** Approved cover photo, else the puzzle's box art; null = render the placeholder. */
+  coverUrl: string | null;
 }
 
 /**

@@ -231,53 +231,41 @@ describe("library.acquireCopies", () => {
     expect(definitions).toEqual([approved[0], approved[1]].sort());
   });
 
-  test("tags each batch CopyAcquired as bulk; a single add stays untagged", async () => {
+  test("tags a batch's CopyAcquired events and copies with one batchId; a single add has none", async () => {
     const t = convexTest(schema, modules);
-    const { approved } = await seed(t);
+    const { alice, approved } = await seed(t);
 
     await asUser(t, "alice").mutation(api.library.acquireCopy.acquireCopy, {
       puzzleDefinitionId: approved[0],
       condition: "good",
     });
-    const { copyIds } = await acquireCopies(t, {
+    const first = await acquireCopies(t, {
       items: itemsOf([approved[1], approved[2]]),
     });
+    const second = await acquireCopies(t, { items: itemsOf([approved[3]]) });
 
     const events = await acquiredEvents(t);
-    expect(events).toHaveLength(3);
-    const bulk = events.filter((e) => e.payload.bulk === true);
-    expect(bulk.map((e) => e.payload.copyId).sort()).toEqual(
-      [...copyIds].sort(),
+    expect(events).toHaveLength(4);
+    const batchOf = (copyId: string) =>
+      events.find((e) => e.payload.copyId === copyId)?.payload.batchId;
+    const firstBatch = batchOf(first.copyIds[0]);
+    expect(typeof firstBatch).toBe("string");
+    expect(batchOf(first.copyIds[1])).toBe(firstBatch);
+    expect(batchOf(second.copyIds[0])).not.toBe(firstBatch);
+    const single = events.find(
+      (e) => ![...first.copyIds, ...second.copyIds].includes(e.payload.copyId),
     );
-    const single = events.find((e) => !copyIds.includes(e.payload.copyId));
+    expect(single?.payload.batchId).toBeUndefined();
     expect(single?.payload.bulk).toBeUndefined();
-  });
 
-  test("the activity feed skips bulk adds but keeps single adds", async () => {
-    const t = convexTest(schema, modules);
-    const { alice, bob, approved } = await seed(t);
-    await t.run(async (ctx) => {
-      await ctx.db.insert("follows", {
-        followerId: bob,
-        followeeId: alice,
-        createdAt: Date.now(),
-      });
-    });
-
-    const singleCopyId = await asUser(t, "alice").mutation(
-      api.library.acquireCopy.acquireCopy,
-      { puzzleDefinitionId: approved[0], condition: "good" },
-    );
-    await acquireCopies(t, { items: itemsOf(approved.slice(1, 6)) });
-
-    for (const viewer of ["bob", "alice"]) {
-      const feed = await asUser(t, viewer).query(
-        api.social.getActivityFeed.getActivityFeed,
-        {},
-      );
-      const acquisitions = feed.filter((e) => e.kind === "acquisition");
-      expect(acquisitions).toHaveLength(1);
-      expect(acquisitions[0].ref).toBe(singleCopyId);
-    }
+    const copies = await copiesOf(t, alice);
+    const copyBatch = (copyId: string) =>
+      copies.find((c) => c.aggregateId === copyId)?.acquisitionBatchId;
+    expect(copyBatch(first.copyIds[0])).toBe(firstBatch);
+    expect(copyBatch(first.copyIds[1])).toBe(firstBatch);
+    expect(copyBatch(second.copyIds[0])).toBe(batchOf(second.copyIds[0]));
+    expect(
+      copies.filter((c) => c.acquisitionBatchId === undefined),
+    ).toHaveLength(1);
   });
 });

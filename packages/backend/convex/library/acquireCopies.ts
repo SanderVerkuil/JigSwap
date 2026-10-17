@@ -10,7 +10,7 @@ import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { convexCopyManagerPolicy } from "../household/copyAccess";
 import { requireMember } from "../identity/requireMember";
-import { bulkEventPublisher } from "./adapters/bulkEventPublisher";
+import { batchEventPublisher } from "./adapters/batchEventPublisher";
 import { convexCatalogSnapshotProvider } from "./adapters/convexCatalogSnapshotProvider";
 import { convexCopyRepository } from "./adapters/convexCopyRepository";
 import { convexCopyReservationPort } from "./adapters/convexCopyReservationPort";
@@ -31,8 +31,9 @@ const condition = v.union(
 // caller. Each item runs the same makeAcquireCopy use case as acquireCopy (so the same catalogue
 // rule applies: approved, or the caller's own submission). An item marked forTrade is then offered
 // for swap through the same makeUpdateCopySharing use case as updateCopySharing. Any refusal throws,
-// and one mutation is one transaction, so the batch is all or nothing. The CopyAcquired events are
-// tagged `bulk: true` so the activity feed doesn't flood followers with a shelf backfill.
+// and one mutation is one transaction, so the batch is all or nothing. One call is one batch: its
+// fresh batch id is on every CopyAcquired event (the activity feed groups them into one entry
+// instead of one per box) and on every copy row it creates (provenance).
 export const acquireCopies = mutation({
   args: {
     items: v.array(
@@ -54,11 +55,12 @@ export const acquireCopies = mutation({
     );
     if (plan.isErr) throw toConvexError(plan.error);
 
+    const batchId = crypto.randomUUID();
     const acquire = makeAcquireCopy({
       copies: convexCopyRepository(ctx),
       snapshots: convexCatalogSnapshotProvider(ctx),
       ids: copyIdGenerator,
-      events: bulkEventPublisher(libraryEventPublisher(ctx)),
+      events: batchEventPublisher(libraryEventPublisher(ctx), batchId),
       clock: systemClock,
     });
     const share = makeUpdateCopySharing({
@@ -77,6 +79,13 @@ export const acquireCopies = mutation({
         condition: (args.condition ?? "good") as Condition,
       });
       if (acquired.isErr) throw toConvexError(acquired.error);
+      const row = await ctx.db
+        .query("ownedPuzzles")
+        .withIndex("by_aggregate_id", (q) =>
+          q.eq("aggregateId", acquired.value as string),
+        )
+        .unique();
+      if (row) await ctx.db.patch(row._id, { acquisitionBatchId: batchId });
 
       if (item.forTrade) {
         const shared = await share({

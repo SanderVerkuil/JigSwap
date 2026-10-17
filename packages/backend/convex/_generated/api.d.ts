@@ -183,7 +183,7 @@ import type * as lib_axiom from "../lib/axiom.js";
 import type * as lib_logEvent from "../lib/logEvent.js";
 import type * as library_acquireCopies from "../library/acquireCopies.js";
 import type * as library_acquireCopy from "../library/acquireCopy.js";
-import type * as library_adapters_bulkEventPublisher from "../library/adapters/bulkEventPublisher.js";
+import type * as library_adapters_batchEventPublisher from "../library/adapters/batchEventPublisher.js";
 import type * as library_adapters_circleAwareVisibilityPolicy from "../library/adapters/circleAwareVisibilityPolicy.js";
 import type * as library_adapters_convexCatalogSnapshotProvider from "../library/adapters/convexCatalogSnapshotProvider.js";
 import type * as library_adapters_convexCollectionRepository from "../library/adapters/convexCollectionRepository.js";
@@ -571,7 +571,7 @@ declare const fullApi: ApiFromModules<{
   "lib/logEvent": typeof lib_logEvent;
   "library/acquireCopies": typeof library_acquireCopies;
   "library/acquireCopy": typeof library_acquireCopy;
-  "library/adapters/bulkEventPublisher": typeof library_adapters_bulkEventPublisher;
+  "library/adapters/batchEventPublisher": typeof library_adapters_batchEventPublisher;
   "library/adapters/circleAwareVisibilityPolicy": typeof library_adapters_circleAwareVisibilityPolicy;
   "library/adapters/convexCatalogSnapshotProvider": typeof library_adapters_convexCatalogSnapshotProvider;
   "library/adapters/convexCollectionRepository": typeof library_adapters_convexCollectionRepository;
