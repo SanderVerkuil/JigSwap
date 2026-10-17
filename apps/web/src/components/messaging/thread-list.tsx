@@ -14,9 +14,11 @@ import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeftRight, MessageSquare, Puzzle, User } from "lucide-react";
+import { ArrowLeftRight, MessageSquare, User } from "lucide-react";
 import { useLocale, useNow, useTranslations } from "use-intl";
+import { CoverStack } from "./cover-stack";
 import {
+  coverStackSummary,
   formatCompactTime,
   formatFullDateTime,
   formatUnreadCount,
@@ -179,8 +181,7 @@ function ThreadRow({
   const displayName = useMemberDisplayName();
 
   const unread = thread.unreadCount > 0;
-  // Stub: first context copy only, until the cover stack lands.
-  const contextCopy = thread.contextCopies[0] ?? null;
+  const { contextCopies } = thread;
   const last = thread.lastMessage;
   const isSystem = last?.kind === "system";
   const body = last?.body.replace(/\s+/g, " ").trim();
@@ -235,22 +236,20 @@ function ThreadRow({
           </time>
         </div>
         <div className="mt-0.5 flex items-center gap-2 text-[13px] leading-5">
-          {/* What the DM is about (exchange rows already name it in the title). */}
-          {thread.subject.kind === "dm" && contextCopy && (
-            <>
-              <span className="text-primary-text inline-flex max-w-[45%] shrink-0 items-center gap-1 font-medium">
-                <Puzzle className="size-3.5 shrink-0" aria-hidden />
-                <span className="truncate" aria-hidden>
-                  {contextCopy.title}
-                </span>
-                <span className="sr-only">
-                  {t("contextCopy", { title: contextCopy.title })}
-                </span>
-              </span>
-              <span aria-hidden className="text-muted-foreground -mx-1">
-                ·
-              </span>
-            </>
+          {contextCopies.length > 0 && (
+            <CoverStack
+              copies={contextCopies}
+              label={coverStackSummary(
+                contextCopies.map((copy) => copy.title),
+                locale,
+                t,
+              )}
+              ringClass={
+                selected
+                  ? "ring-jigsaw-primary-tint"
+                  : "ring-background md:ring-card"
+              }
+            />
           )}
           <span
             className={cn(

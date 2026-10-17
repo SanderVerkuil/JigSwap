@@ -732,7 +732,6 @@
   "messages": {
     "anonymous": "Anonymous user",
     "backToInbox": "Back to messages",
-    "contextCopy": "About {title}",
     "conversationsLabel": "Conversations",
     "copyUnavailable": "This puzzle is no longer available",
     "coverStackSummary": "{count, plural, one {About 1 puzzle: {list}} other {About # puzzles: {list}}}",

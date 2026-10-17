@@ -732,7 +732,6 @@
   "messages": {
     "anonymous": "Anonieme gebruiker",
     "backToInbox": "Terug naar berichten",
-    "contextCopy": "Over {title}",
     "conversationsLabel": "Gesprekken",
     "copyUnavailable": "Deze puzzel is niet meer beschikbaar",
     "coverStackSummary": "{count, plural, one {Over 1 puzzel: {list}} other {Over # puzzels: {list}}}",
