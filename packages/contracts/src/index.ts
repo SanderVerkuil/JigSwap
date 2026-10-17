@@ -2,6 +2,7 @@ export * from "./catalog";
 export * from "./conversation";
 export * from "./custody";
 export * from "./exchange";
+export * from "./household";
 export * from "./identity";
 export * from "./insights";
 export * from "./lending";
