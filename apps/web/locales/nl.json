@@ -4040,5 +4040,17 @@
       "goToShelf": "Naar mijn plank",
       "tour": "Geef me een rondleiding"
     }
+  },
+  "installApp": {
+    "title": "Zet JigSwap op je beginscherm",
+    "promptBody": "Open het als een app: schermvullend, met één tik.",
+    "install": "App installeren",
+    "notNow": "Niet nu",
+    "dontShowAgain": "Niet meer tonen",
+    "iosStepShare": "Tik op <icon></icon> <b>Deel</b> (onder <b>⋯</b> als je het niet ziet)",
+    "iosStepAdd": "Kies <icon></icon> <b>Zet op beginscherm</b>",
+    "iosPush": "Na installeren kan JigSwap je ook meldingen sturen op iPhone en iPad.",
+    "menuTitle": "App installeren",
+    "menuSub": "Open JigSwap vanaf je beginscherm"
   }
 }

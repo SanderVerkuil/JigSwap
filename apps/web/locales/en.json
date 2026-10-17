@@ -4040,5 +4040,17 @@
       "goToShelf": "Go to my shelf",
       "tour": "Show me around"
     }
+  },
+  "installApp": {
+    "title": "Add JigSwap to your home screen",
+    "promptBody": "Open it like an app: full screen, one tap away.",
+    "install": "Install app",
+    "notNow": "Not now",
+    "dontShowAgain": "Don't show again",
+    "iosStepShare": "Tap <icon></icon> <b>Share</b> (under <b>⋯</b> if hidden)",
+    "iosStepAdd": "Choose <icon></icon> <b>Add to Home Screen</b>",
+    "iosPush": "Installing also lets JigSwap send you notifications on iPhone and iPad.",
+    "menuTitle": "Install app",
+    "menuSub": "Open JigSwap from your home screen"
   }
 }

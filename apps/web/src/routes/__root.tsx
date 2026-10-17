@@ -20,6 +20,8 @@ import { NotFound } from "../components/NotFound";
 import { Providers } from "../components/providers";
 import { ErrorBoundary } from "../components/ui/error-boundary";
 import { getIntlCached, seedIntlCache } from "../lib/i18n";
+// Side effect: start listening for beforeinstallprompt before any route chunk loads.
+import "../lib/install-prompt";
 // Tailwind 4 entry + theme tokens; CSS-based config travels with this import.
 import appCss from "../styles/globals.css?url";
 
