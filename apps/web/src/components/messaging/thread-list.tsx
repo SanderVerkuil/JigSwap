@@ -14,7 +14,7 @@ import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeftRight, MessageSquare, User } from "lucide-react";
+import { ArrowLeftRight, MessageSquare, Puzzle, User } from "lucide-react";
 import { useLocale, useNow, useTranslations } from "use-intl";
 import {
   formatCompactTime,
@@ -233,6 +233,23 @@ function ThreadRow({
           </time>
         </div>
         <div className="mt-0.5 flex items-center gap-2 text-[13px] leading-5">
+          {/* What the DM is about (exchange rows already name it in the title). */}
+          {thread.subject.kind === "dm" && thread.contextCopy && (
+            <>
+              <span className="text-primary-text inline-flex max-w-[45%] shrink-0 items-center gap-1 font-medium">
+                <Puzzle className="size-3.5 shrink-0" aria-hidden />
+                <span className="truncate" aria-hidden>
+                  {thread.contextCopy.title}
+                </span>
+                <span className="sr-only">
+                  {t("contextCopy", { title: thread.contextCopy.title })}
+                </span>
+              </span>
+              <span aria-hidden className="text-muted-foreground -mx-1">
+                ·
+              </span>
+            </>
+          )}
           <span
             className={cn(
               "min-w-0 flex-1 truncate",
