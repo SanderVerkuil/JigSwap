@@ -1,6 +1,7 @@
 import { normalizeMemberName, type ProjectedMember } from "@jigswap/contracts";
 import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { householdMateIds } from "../household/memberships";
 import { toMemberView } from "../identity/toMemberView";
 
 // Privacy chokepoint for surfacing other members inside a copy's history. The rules below run
@@ -57,6 +58,22 @@ export const canSeeProfileContent = async (
 ): Promise<boolean> => {
   if (viewerId === memberId) return true;
   if ((await profileVisibilityOf(ctx, memberId)) === "public") return true;
+  return areMutualFollowers(ctx, viewerId, memberId);
+};
+
+/**
+ * Whether the viewer sees a member's WHOLE library on their profile (every owned copy, open or not)
+ * rather than only the copies offered for swap/lend/trade: the member themself, a household mate,
+ * or a mutual follower. Mirrors canViewCopy's identity/household/mutual rules (1, 5, 6). Computed
+ * server-side only — never taken from a client flag.
+ */
+export const seesFullLibrary = async (
+  ctx: QueryCtx,
+  viewerId: Id<"users">,
+  memberId: Id<"users">,
+): Promise<boolean> => {
+  if (viewerId === memberId) return true;
+  if ((await householdMateIds(ctx, viewerId)).has(memberId)) return true;
   return areMutualFollowers(ctx, viewerId, memberId);
 };
 

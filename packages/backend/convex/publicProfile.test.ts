@@ -520,6 +520,55 @@ const clearSeededInProgress = (t: TestConvex<typeof schema>) =>
     }
   });
 
+describe("getPublicProfile — libraryScope", () => {
+  const scopeOf = async (
+    t: TestConvex<typeof schema>,
+    handle: string,
+    who?: string,
+  ) => {
+    const caller = who ? t.withIdentity({ subject: `clerk_${who}` }) : t;
+    const view = await caller.query(
+      api.social.getPublicProfile.getPublicProfile,
+      { handle },
+    );
+    if (!view || view.locked) return "locked";
+    return view.libraryScope;
+  };
+
+  test("'all' for self and a mutual follower; 'available' for one-way, stranger and anonymous", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, eve, frank } = await seed(t);
+    // eve follows alice one-way; alice follows frank one-way.
+    await t.run(async (ctx) => {
+      await ctx.db.insert("follows", {
+        followerId: eve,
+        followeeId: alice,
+        createdAt: 1,
+      });
+      await ctx.db.insert("follows", {
+        followerId: alice,
+        followeeId: frank,
+        createdAt: 1,
+      });
+    });
+    expect(await scopeOf(t, "alice", "alice")).toBe("all");
+    expect(await scopeOf(t, "alice", "bob")).toBe("all");
+    expect(await scopeOf(t, "alice", "eve")).toBe("available");
+    expect(await scopeOf(t, "alice", "frank")).toBe("available");
+    expect(await scopeOf(t, "alice", "dave")).toBe("available");
+    expect(await scopeOf(t, "alice")).toBe("available");
+  });
+
+  test("a private profile: 'all' for a mutual follower, locked for everyone else", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    expect(await scopeOf(t, "carol", "dave")).toBe("all");
+    expect(await scopeOf(t, "carol", "carol")).toBe("all");
+    expect(await scopeOf(t, "carol", "eve")).toBe("locked");
+    expect(await scopeOf(t, "carol")).toBe("locked");
+  });
+});
+
 describe("getPublicProfile — currentlySolving gating", () => {
   test("anonymous viewer on a public profile never sees currentlySolving even when sharing is on", async () => {
     const t = convexTest(schema, modules);
