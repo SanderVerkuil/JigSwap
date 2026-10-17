@@ -291,7 +291,7 @@ function PublicPuzzleDetail({
             </div>
             <Button variant="brand" size="sm" asChild>
               <Link
-                href={`/sign-up?redirect_url=${encodeURIComponent(`/catalog/${puzzleId}`)}`}
+                href={`/sign-up?redirect_url=${encodeURIComponent(`/browse?puzzle=${puzzleId}`)}`}
               >
                 {t("joinToSeeWho")}
               </Link>
