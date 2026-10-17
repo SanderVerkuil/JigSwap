@@ -1,306 +1,345 @@
-# TypeScript 7 and monorepo tooling: keep Nx, run two TypeScripts
+# TypeScript 7 and monorepo tooling: oxlint, Turborepo, then one TypeScript
 
-**Date:** 2026-10-17
-**Status:** Proposed (spike; the user decides)
+**Date:** 2026-10-17 (revised the same day, after the user asked to go beyond "keep Nx")
+**Status:** Proposed. This is the decision spec; the stages below are separate PRs.
 **Ticket:** T7
-**Prototype:** on this branch (`spike/ts7-monorepo-tooling`), option (a) only
+**Branch:** `spike/ts7-monorepo-tooling` (PR #80), rebased on `df4a553ef`
 
 ## Problem
 
-PR #71 held `typescript` at `6.0.3`. TypeScript 7 (the native Go port) is
-now stable, but it ships no JavaScript compiler API. The `typescript@7.0.2`
-package's main export (`.`) is `./lib/version.cjs`. Its only other exports
-are `./unstable/*` (sync/async IPC API, AST). Anything that does
-`require("typescript").readConfigFile(...)` or `createProgram(...)` breaks
-when it gets 7:
+TypeScript 7 (the native Go port, `typescript@7.0.2`) has no JavaScript
+compiler API. Its main export is `{ version, versionMajorMinor }`:
+`require("typescript7").createSourceFile` and `.readConfigFile` are
+`undefined`, which I checked on this branch. Every tool that calls the API
+breaks when it gets 7. Earlier I recommended keeping Nx and running two
+TypeScripts. The user wants to go further: drop Nx and find a lint path
+without typescript-eslint, so that TS 7 can become the only TypeScript.
 
-- **Nx**: its project graph reads tsconfigs through `tsModule.readConfigFile`.
-  The `@nx/js:tsc` executor (the backend `build` target) drives the compiler
-  API.
-- **typescript-eslint**: every published line still has peer
-  `typescript: ">=4.8.4 <6.1.0"`.
-- **vite and Convex tooling** reach for `typescript` too (Convex's CLI runs
-  `node_modules/typescript/bin/tsc` for its deploy typecheck, see below).
+This spec answers two questions:
 
-The user asked two things: can we get TS 7, and should we drop Nx (and
-would an alternative make the repo simpler)?
+- **(A)** Is typescript-eslint needed at all, and which linter replaces it?
+- **(B)** What is the concrete Nx → Turborepo plan?
 
-**The key finding: dropping Nx does not get us TS 7.** typescript-eslint is
-the harder blocker, and Turborepo or plain pnpm don't touch it. It comes in
-through `eslint-config-next@16.4.2 -> typescript-eslint@8.61.0`, and the
-root `eslint.config.mjs` uses it. Every option has to keep `typescript@6`
-installed for API consumers until typescript-eslint ships TS-7 support. So
-"TS 7" and "drop Nx" are two separate decisions, and this spec treats them
-separately.
+It ends with a feasibility check for "TS 7 only".
 
-## Upstream status (npm registry, queried 2026-10-17)
+Stages:
 
-| Package                      | Finding                                                                                                                                                                                                                                                                     |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `typescript`                 | `latest` = `7.0.2` (published 2026-07-08), `next` = `7.1.0-dev.20261017.1`. bin: `tsc` only. Native binaries come as optional deps `@typescript/typescript-<os>-<arch>@7.0.2`.                                                                                              |
-| `@typescript/native-preview` | Frozen: `latest` = `7.0.0-dev.20260707.2` (last modified 2026-07-07), bin `tsgo`. It was the pre-release channel. Don't use it now that `typescript@7` is stable.                                                                                                           |
-| `typescript-eslint`          | `latest` = `8.71.2`, `canary` = `8.71.3-alpha.10`: both peer `typescript >=4.8.4 <6.1.0`. No `9.x` published. `@typescript-eslint/typescript-estree@latest` has the same peer. **Not TS-7-compatible.**                                                                     |
-| `nx`                         | `latest` = `23.3.0` (ours), `next` = `24.0.0-beta.2`. Neither declares a `typescript` peer, and 24 beta pulls no `typescript` dependency. Nothing in the registry metadata says Nx 24 drops `readConfigFile`, so assume **not TS-7-compatible** until release notes say so. |
+| Stage | PR                                      | Content                                                                   |
+| ----- | --------------------------------------- | ------------------------------------------------------------------------- |
+| 1     | #80 (this, draft)                       | This spec, plus the dual-TS type-check prototype (TS 7 runs `type-check`) |
+| 2     | `chore/nx-to-turborepo`, stacked on #80 | Plan (B), implemented and verified                                        |
+| 3     | later                                   | Lint migration per (A): ESLint → oxlint                                   |
+| 4     | later                                   | TS 7 as the only TypeScript (see "Stage 4 feasibility")                   |
 
-## How this repo really uses Nx (inventory)
+## (A) Is typescript-eslint needed at all?
 
-Six projects, each with a `project.json`: `apps/web`, `packages/backend`,
-`packages/contracts`, `packages/domain`, `packages/email`, `packages/gateway`.
+### What we lint with today
 
-### Task running
+These are the effective rules from `eslint --print-config` on
+`apps/web/src/router.tsx`, `packages/backend/convex/schema.ts` and
+`packages/domain/src/index.ts`. Config files:
 
-- **CI** (`.github/workflows/ci.yml:48`):
-  `pnpm exec nx run-many -t lint type-check test build arch-check --parallel=4`
-  is the single gate step, after `format:check`.
-- **Root scripts** (`package.json`): `dev`, `build`, `start`, `lint`,
-  `lint:fix`, `type-check`, `test`, `clean` (`nx reset`), `graph`, `affected`,
-  `mutation:domain` all wrap `nx`. `arch:check` already calls `depcruise`
-  directly.
-- **`project.json` targets.** Almost all of them are
-  `nx:run-commands` → `pnpm run <script>`, so the package scripts already do
-  the real work:
-  - `apps/web/project.json`: `build` (`vite build`, with an extra input
-    `{workspaceRoot}/docs/user/**/*`), `dev`, `serve`, `start`, `type-check`,
-    `test`, `lint` (`@nx/eslint:lint`). Tags `type:app`, `scope:web`.
-  - `packages/backend/project.json`: `build` (**`@nx/js:tsc`**, `main:
-packages/backend/src/index.ts`, but there is no `src/` directory, so it
-    builds nothing), `dev` (`convex dev`), `type-check`, `coverage`, `deploy`.
-    No `test` target, so CI never runs backend tests (convex-test).
-    Tags `type:backend-adapter`, `scope:backend`.
-  - `packages/contracts/project.json`: `type-check`. Tags `type:contracts`.
-  - `packages/domain/project.json`: `type-check`, `test`, `coverage`,
-    `arch-check` (`depcruise --config .dependency-cruiser.cjs
-packages/domain/src`), `mutation` (`cache: false`). Tags `type:domain`.
-  - `packages/email/project.json`: `type-check`, `test`, `coverage`,
-    `mutation`. Tags `type:backend-adapter`.
-  - `packages/gateway/project.json`: `type-check`. Tags `type:gateway`.
-- **Inferred targets** from `nx.json` plugins (`nx show project`):
-  `@nx/eslint/plugin` gives `lint` for the packages. `@nx/vite/plugin` gives
-  `typecheck` (bare `tsc --noEmit -p ...`; nothing runs it, and it duplicates
-  `type-check`), `build-deps`, `watch-deps`, `preview`, `serve-static`.
-  `@nx/next/plugin` infers nothing (there is no `next.config.*`), but the
-  `@nx/next` dependency pulls in `next@16.2.7` (167 MB in the store) and
-  `sharp`. Neither is used by the app. **It is stale and can go regardless of
-  this decision.**
-- **Other workflows**: `.github/workflows/mutation.yml:45`
-  (`nx run @jigswap/domain:mutation`) and `.github/workflows/reports.yml:42`
-  (`nx run-many -t coverage --parallel=2`). `reports.yml:49` already calls
-  `vite build` directly because Nx doesn't key on `ANALYZE`. The
-  `convex-*.yml` and `pages-maintenance.yml` workflows don't use Nx.
-- **Vercel** (`scripts/vercel-build.sh`): does **not** use Nx. Production
-  runs `pnpm build` from `apps/web` (the package script `vite build`). Preview
-  runs `convex deploy --cmd 'pnpm --filter @jigswap/web build'`.
+- root `eslint.config.mjs`
+- `packages/{backend,contracts,domain,gateway}/eslint.config.mjs`
+- `apps/web` and `packages/email` have no config of their own and use the root one.
 
-### Caching
+There are **89 distinct active rules**:
 
-- `nx.json` `targetDefaults`: `build`, `lint`, `test`, `type-check` have
-  `cache: true`. `namedInputs` has the usual `default`/`production`.
-- **No Nx Cloud**: no `nxCloudId`/`accessToken` in `nx.json`, no `NX_CLOUD_*`
-  in workflows.
-- CI keeps the local cache in GitHub's cache (`ci.yml:35-40`,
-  `actions/cache` on `.nx/cache`, key `nx-<os>-<sha>`, restore-key
-  `nx-<os>-`). So CI replays unchanged projects.
-- Locally the cache gets in the way as often as it helps: the team convention
-  is to verify with `--skip-nx-cache` because cached replays hid fresh
-  failures.
+| Source                                      | Active rules                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Comes in via                                                                                                                                               |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@typescript-eslint/*` (20)                 | ban-ts-comment, no-array-constructor, no-duplicate-enum-values, no-empty-object-type, no-explicit-any, no-extra-non-null-assertion, no-misused-new, no-namespace, no-non-null-asserted-optional-chain, no-require-imports, no-this-alias, no-unnecessary-type-constraint, no-unsafe-declaration-merging, no-unsafe-function-type, no-unused-expressions, no-unused-vars (options set in root config), no-wrapper-object-types, prefer-as-const, prefer-namespace-keyword, triple-slash-reference | `eslint-config-next/typescript` → `typescript-eslint@8.61.0`                                                                                               |
+| `react-hooks/*` (17)                        | rules-of-hooks, exhaustive-deps, and the React Compiler rules: component-hook-factories, config, error-boundaries, gating, globals, immutability, incompatible-library, preserve-manual-memoization, purity, refs, set-state-in-effect, set-state-in-render, static-components, unsupported-syntax, use-memo                                                                                                                                                                                     | `eslint-config-next` → `eslint-plugin-react-hooks`, **pinned to 7.0.1** by a `pnpm-workspace.yaml` override (7.1.1 flags existing setState-in-effect code) |
+| `react/*` (17)                              | display-name, jsx-key, jsx-no-comment-textnodes, jsx-no-duplicate-props, jsx-no-undef, jsx-uses-react, jsx-uses-vars, no-children-prop, no-danger-with-children, no-deprecated, no-direct-mutation-state, no-find-dom-node, no-is-mounted, no-render-return-value, no-string-refs, no-unescaped-entities, require-render-return                                                                                                                                                                  | `eslint-config-next`                                                                                                                                       |
+| `@next/next/*` (20 + 2 non-web)             | google-font-*, inline-script-id, no-img-element (18 warnings today), no-head-element / no-html-link-for-pages (off for `apps/web`), …                                                                                                                                                                                                                                                                                                                                                            | `eslint-config-next`. Mostly irrelevant: the app is TanStack Start, not Next.js                                                                            |
+| `jsx-a11y/*` (6), `import/*` (1), core (5)  | alt-text, aria-_, role-_; import/no-anonymous-default-export; no-var, prefer-const, prefer-rest-params, prefer-spread, no-restricted-imports (web: no direct `_generated` imports)                                                                                                                                                                                                                                                                                                               | `eslint-config-next` + root config                                                                                                                         |
+| `@nx/enforce-module-boundaries` (1)         | the hexagonal tag policies                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | root config (+ a backend override)                                                                                                                         |
+| `@nx/dependency-checks` (on `package.json`) | declared deps vs imports                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | the 4 per-package configs                                                                                                                                  |
 
-### Module boundaries
+- **Type-aware rules: none.** No config sets `parserOptions.project` or
+  `projectService`. `.ts(x)` files are parsed by `@typescript-eslint/parser`
+  (`typescript-eslint/parser@8.61.0`), and `.js` files by next's Babel parser.
+- So the typescript-eslint dependency is **only the parser plus 20 syntactic
+  rules**. The parser still needs the TS 6 API (`typescript-estree` calls
+  `ts.createSourceFile`), and the plugin's dist `require("typescript")` in 72
+  files.
+- `react-hooks` 7.x parses with its own Babel/Hermes. Its compiler rules don't
+  depend on the TS parser.
+- `@nx/enforce-module-boundaries` needs Nx's project graph.
+- There are no custom rules.
+- Baseline result: **0 errors, 30 warnings** (18 `no-img-element`, 12
+  `no-unused-vars`).
 
-- Root `eslint.config.mjs:32-87`: `@nx/enforce-module-boundaries` with
-  `depConstraints` on tags. `type:domain` → domain only. `type:contracts` →
-  contracts only. `type:backend-adapter` → domain/contracts/backend-adapter.
-  `type:gateway` → contracts/backend-adapter/gateway. `type:app` →
-  contracts/backend-adapter/gateway/app. `scope:*` is non-restrictive. It
-  also sets `enforceBuildableLibDependency: true`. **This rule needs the Nx
-  project graph**, so it is the main thing Nx gives us beyond running tasks.
-- Per-package `eslint.config.mjs` in `packages/{backend,contracts,domain,gateway}`:
-  `@nx/dependency-checks` on `package.json` (declared deps match imports).
-- `.dependency-cruiser.cjs` (`arch-check`, domain only):
-  `domain-stays-framework-free` and `domain-no-sibling-packages`. This
-  overlaps the `type:domain` tag rule.
-- `packages/{backend,domain,email}/vite.config.ts` import
-  `nxViteTsPaths` (and the backend imports `nxCopyAssetsPlugin`) from `@nx/vite`.
+### ESLint without typescript-eslint: not viable
 
-### Side findings (not fixed here)
+- ESLint's default parser (espree) can't parse TypeScript. On
+  `packages/domain/src/index.ts` it gives `Parsing error: Unexpected token
+type` (checked).
+- `@babel/eslint-parser` with the TS preset could parse it, but the 20
+  `@typescript-eslint/*` rules ship in a plugin that requires `typescript` at
+  load time. `eslint-config-next/typescript` also always pulls typescript-eslint
+  in.
+- So "ESLint, no typescript-eslint" means losing those 20 rules and
+  hand-assembling a Babel config. It saves nothing over switching linters.
 
-- `packages/backend` `type-check` (`tsc --noEmit` on `tsconfig.json`) checks
-  **zero files**: `files: []`, `include: []`, and the references point at
-  `tsconfig.lib.json`/`tsconfig.spec.json`, which include a non-existent
-  `src/`. The Convex code (`convex/tsconfig.json`) is type-checked by no CI
-  target. It has 202 errors under both TS 6 and TS 7, 199 of them in
-  `*.test.ts` (mostly `import.meta.glob` typing, plus test-only casts) and 3
-  in non-test files.
-- The backend `build` (`@nx/js:tsc`) is a no-op for the same reason.
+### Candidates measured on this repo
 
-## Options
+Lint wall time over `apps/web/src` + `packages/*`. Medians of 3, local Ryzen
+7 9800X3D. Background load (other agents) was high during some runs; the
+spread is in brackets.
 
-### (a) Keep Nx, run two TypeScripts (recommended)
+| Setup                                                                                | Wall time (ms)                | Result vs ESLint baseline                                                                                                             |
+| ------------------------------------------------------------------------------------ | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| **ESLint today** via `nx run-many -t lint --parallel=4 --skip-nx-cache`              | **11453** [14602 11453 10793] | 0 errors / 30 warnings                                                                                                                |
+| ESLint today, one serial `eslint apps/web/src packages/…`                            | 14067 [14067 14236 13971]     | same                                                                                                                                  |
+| oxlint 1.88.0 native, rules mapped 1:1 (incl. oxlint's own React Compiler rules)     | **163** [198 163 160]         | 30 identical + 2 extra a11y warnings, **+11 errors** (9 `set-state-in-effect`, 2 `purity`)                                            |
+| oxlint native + `eslint-plugin-boundaries` as jsPlugin                               | 1405 [1405 1400 1410]         | as above; boundaries clean                                                                                                            |
+| oxlint + `eslint-plugin-react-hooks@7.0.1` as jsPlugin (native compiler rules off)   | 5842 [5846 5801 5842]         | **exact parity**: same 30 locations, plus 2 extra `jsx-a11y/role-has-required-aria-props` warnings (combobox without `aria-controls`) |
+| oxlint + react-hooks 7.0.1 + boundaries, both as jsPlugins                           | **7310** [7335 7296 7310]     | as above; boundaries clean, and an illegal import is caught                                                                           |
+| oxlint + `eslint-plugin-react-hooks@7.1.1` as jsPlugin                               | 4471 [4548 4471 4365]         | +15 errors (10 set-state-in-effect, 5 refs), which is why 7.0.1 is pinned                                                             |
+| oxlint `--type-aware` (oxlint-tsgolint 7.0.2004) + `typescript/no-floating-promises` | 1356 [1462 1356 1356]         | works on TS 7 (tsgolint builds programs with typescript-go); 23 new floating-promise findings                                         |
+| Biome 2.5.15, `biome migrate eslint` output                                          | 141 [161 141 138]             | **15 errors / 79 warnings**: different rule semantics; see below                                                                      |
 
-`typescript@6.0.3` stays as `typescript`, so `require("typescript")` keeps
-working for Nx, typescript-eslint, vite plugins and `@nx/js:tsc`. TS 7 goes
-in under an npm alias, and only the `type-check` targets call it.
+Notes on the runs:
 
-- **Install, verified:** `"typescript7": "npm:typescript@7.0.2"` in root
-  `devDependencies`. `pnpm install` resolves cleanly. The lockfile adds
-  `typescript@7.0.2` plus its 20 optional platform packages, and no existing
-  resolution changes.
-- **Gotcha, verified:** both packages publish a bin named `tsc`. After the
-  install, the root `node_modules/.bin/tsc` points at **TS 7**. Packages
-  without their own `typescript` dep (backend, contracts, domain, email,
-  gateway) then pick up TS 7 for bare `tsc`. `apps/web` keeps 6.0.3 because
-  it declares `typescript` itself. Which bin wins is a pnpm link detail, not a
-  contract. So the prototype calls the compiler by explicit path in every
-  `type-check` script: `node ../../node_modules/typescript7/bin/tsc --noEmit`.
-- **Convex:** its CLI deploy typecheck looks up
-  `node_modules/typescript/bin/tsc` (or `@typescript/native/bin/tsc`) by path,
-  not via `.bin`. So it keeps using 6.0.3 and nothing changes. (It also
-  supports `typescriptCompiler: "tsgo"`. Not needed.)
-- **What breaks:** nothing observed. Every project type-checks with 0 errors
-  under both versions. On the out-of-CI Convex tsconfig, both versions report
-  errors at the same 202 locations. Only 4 error codes differ (TS2345 vs
-  TS2741) and some union printing differs. A deliberately wrong file fails
-  `type-check` under TS 7 as expected.
-- **Migration size:** 8 files (root `package.json`, 6 package `package.json`
-  `type-check` scripts, `pnpm-lock.yaml`).
-- **CI changes:** none. The same `run-many` line runs.
-- **Caching:** unchanged.
-- **Effort:** under an hour, already prototyped. **Risk:** low and reversible
-  (revert one commit). The one ongoing cost is two TypeScripts. An editor
-  using the workspace TS gets 6.0.3, so IDE and CI can disagree in edge cases
-  until TS 7 becomes the only compiler.
-- **Exit:** once typescript-eslint (and Nx) support TS 7, rename the
-  dependency back to `typescript` and drop the alias and explicit paths.
+- The tools were installed in a scratch directory, not committed.
+- oxlint skipped every file while the worktree sat under the main repo's
+  gitignored `.claude/worktrees/`. Explicit paths worked. CI checkouts are
+  unaffected.
 
-### (b) Replace Nx with Turborepo + eslint-plugin-boundaries / dependency-cruiser
+### Rule parity per candidate
 
-- **TS 7?** No help: typescript-eslint still needs `typescript@6`, so (a)'s
-  two-TypeScript setup is still required.
-- **What breaks / must be replaced:** `@nx/enforce-module-boundaries`
-  (rewrite the 6 tag rules as `eslint-plugin-boundaries` element types keyed
-  on path, or as dependency-cruiser rules; dependency-cruiser is already a
-  devDep and covers domain). `@nx/dependency-checks` (4 configs; replace with
-  e.g. `knip` or drop). `nxViteTsPaths`/`nxCopyAssetsPlugin` in 3 vite
-  configs (replace with `vite-tsconfig-paths`, which `apps/web` already uses).
-  The `@nx/js:tsc` backend build (drop, it is a no-op). The extra `inputs` for
-  web's `docs/user/**` (express as turbo `inputs`).
-- **Migration size:** about 25 config files. Delete 6 `project.json` +
-  `nx.json`, add `turbo.json`, edit root `package.json` scripts and devDeps,
-  root + 4 package eslint configs, 3 vite configs, 3 workflows
-  (`ci.yml`, `mutation.yml`, `reports.yml`), README/CONTRIBUTING/
-  developer-guide. Plus lockfile churn. About 35 historical plan docs mention
-  `nx` (leave them).
-- **CI changes:** the gate becomes
-  `turbo run lint type-check test build arch-check`. Cache `.turbo` with
-  `actions/cache`, or use Vercel Remote Cache (free on Vercel, which we
-  already deploy to; needs a `TURBO_TOKEN`/`TURBO_TEAM` secret).
-- **Caching:** about the same. Turbo hashes package-script inputs much like
-  Nx. Remote cache would be new, but our CI cache already gives most of the
-  benefit.
-- **Effort:** 1–2 days including re-proving every boundary rule with
-  negative tests. **Risk:** medium. Boundary enforcement is the easy thing to
-  regress silently. Turbo's `^build` dependency model also differs from
-  `dependsOn: ["^build"]` + `@nx/js:tsc`.
+**oxlint 1.88 (native)** covers 81 of the 89 rules. It has its own ports of the
+React Compiler rules: `react/purity`, `react/refs`, `react/set-state-in-effect`
+and so on. They are **stricter than the pinned 7.0.1**: they flag the same
+setState-in-effect code that 7.1.1 flags, plus `new Date()` in render
+(`footer.tsx:58`, `completions/index.tsx:176`).
 
-### (c) Plain pnpm workspaces + a boundaries tool, no task runner
+| Lost with oxlint native                                    | With jsPlugins                                    | Impact                                                                    |
+| ---------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------- |
+| `@nx/enforce-module-boundaries`                            | ✅ `eslint-plugin-boundaries` jsPlugin (verified) | see "Module boundaries" below                                             |
+| `react-hooks/component-hook-factories`, `config`, `gating` | ✅ react-hooks jsPlugin                           | none                                                                      |
+| `react/jsx-uses-react`, `react/jsx-uses-vars`              | obsolete                                          | none. oxlint's `no-unused-vars` already counts JSX usage                  |
+| `react/no-deprecated`                                      | ❌                                                | low. React 19 already removed most of the APIs it flags                   |
+| `@next/next/no-location-assign-relative-destination`       | ❌                                                | none. A Next.js-only rule, and the app isn't Next                         |
+| `@nx/dependency-checks` (package.json)                     | ❌ (oxlint doesn't lint JSON)                     | low. An undeclared workspace import already fails `tsc` (TS2307, checked) |
 
-- **TS 7?** Same as (b): still needs (a)'s two TypeScripts.
-- **What breaks:** everything in (b), plus caching. CI would run
-  `pnpm -r --parallel run lint`, `... type-check`, and so on (or one
-  `pnpm -r run verify`), with no replay of unchanged projects.
-- **Migration size:** as (b) minus `turbo.json`, about 24 files.
-- **CI changes:** replace the `run-many` step with `pnpm -r` steps and remove
-  the `.nx/cache` step.
-- **Caching:** lost. Today's full uncached gate takes **14.6 s** on this
-  machine (18 tasks, `--parallel=4`), and the TS 7 type-check part drops
-  from about 8.6 s to about 1.9 s. On a GitHub runner it would be a few times
-  slower, but the gate is not cache-dependent in practice.
-- **Effort:** about 1 day. **Risk:** medium, the same boundary-regression
-  risk as (b). This is the simplest end state: fewest concepts, and
-  `pnpm --filter` is already used by Vercel.
+- **Maturity:**
+  - oxlint core is 1.x stable.
+  - JS plugins are **alpha** ("currently in alpha, and remain under active
+    development" per oxc.rs docs). They worked unmodified for both plugins here.
+  - Type-aware linting is through `oxlint-tsgolint`, which runs on
+    typescript-go, so it is **TS-7-native**. It supports 59 of 61 typescript-eslint
+    type-aware rules. We use none today, so this is an upside, not a
+    requirement.
+- **TS 7 compatibility:** oxlint parses TS natively (oxc) and needs no
+  `typescript` package. The jsPlugins don't need it either.
 
-### Comparison
+**Biome 2.5.15.**
 
-|                      | (a) Nx + two TS | (b) Turborepo           | (c) pnpm only         |
-| -------------------- | --------------- | ----------------------- | --------------------- |
-| Gets TS 7 type-check | yes (proven)    | only with (a)'s alias   | only with (a)'s alias |
-| Files touched        | 8               | ~25                     | ~24                   |
-| CI change            | none            | gate step + cache       | gate step, drop cache |
-| Caching              | unchanged       | ≈ same, + remote option | none                  |
-| Module boundaries    | unchanged       | rewrite + re-prove      | rewrite + re-prove    |
-| Effort / risk        | < 1 h / low     | 1–2 d / medium          | ~1 d / medium         |
+- `biome migrate eslint` maps **48 of the 87** rules active for `apps/web`.
+- Unsupported, "not yet implemented":
+  - 14 of the 15 React Compiler rules (only `component-hook-factories` maps,
+    to a nursery rule)
+  - 11 `react/*` rules, including `display-name`, `jsx-no-undef` and
+    `no-unescaped-entities`
+  - `import/no-anonymous-default-export`
+  - `@typescript-eslint/no-unused-expressions`, `triple-slash-reference`
+- Unknown to Biome: `@nx/enforce-module-boundaries` and 10 `@next/next/*` rules.
+- Biome has no ESLint-plugin runtime. Its GritQL plugins match syntax patterns,
+  so they can't run react-hooks' compiler analysis or resolve imports into
+  packages. Boundaries would have to move to dependency-cruiser.
+- Its results also diverge: 15 errors and 79 warnings, versus 0 and 30. It
+  reports 34 `useExhaustiveDependencies` findings that ESLint doesn't, and 4
+  `noExplicitAny`.
+- Biome has its own type inference, not a TypeScript program, so it's
+  TS-7-neutral.
+- **Not viable without losing the React Compiler rules**, and the repo's
+  lint-guard notes treat those as errors.
 
-## Measurements
+### Module boundaries without Nx
 
-Cold `tsc --noEmit -p tsconfig.json` per project: `*.tsbuildinfo` deleted
-before every run, 3 runs each, invoked as `node node_modules/<pkg>/bin/tsc`.
-`hyperfine` isn't installed, so a bash loop timed with `date +%s%N`. Machine:
-AMD Ryzen 7 9800X3D (16 threads), 60 GB RAM, Node 26.3.0, Linux. The web
-project has a generated `routeTree.gen.ts`. Milliseconds, median of 3 (raw
-runs in brackets):
+- **`eslint-plugin-boundaries@7.2.0`**. One element per package, with the same
+  5 type policies as the Nx tags (`!(allowed|types)` negation). It is verified
+  in stage 2 under ESLint: web → `@jigswap/domain`, web → relative
+  `../../../packages/domain/src` and domain → `@jigswap/gateway` all fail, and
+  the repo is clean.
+- **Under oxlint as a jsPlugin**:
+  - It catches violations through relative paths and through declared
+    workspace deps (verified with a temporary web → gateway prohibition).
+  - It can't classify an import of a package the importer doesn't declare
+    (no `node_modules` link). That import already fails `tsc` with TS2307
+    (verified).
+- **What Nx did that boundaries doesn't:**
+  - It flagged relative imports into an _allowed_ package
+    ("Projects cannot be imported by a relative or absolute path").
+  - It flagged cross-project cycles.
+  - dependency-cruiser's `no-circular` can cover cycles if wanted.
+- **dependency-cruiser** (`.dependency-cruiser.cjs`, `arch:check`) keeps its
+  current job: domain purity (no Convex/Clerk/React/zod, no sibling packages).
+  It could take over package boundaries too, but it runs as a separate task and
+  its TS parsing (`tsPreCompilationDeps`) uses the TS 6 API (see stage 4).
 
-| Project                                          | TS 6.0.3              | TS 7.0.2              | Speed-up |
-| ------------------------------------------------ | --------------------- | --------------------- | -------- |
-| `apps/web`                                       | 7241 [7241 7231 7470] | 1275 [1275 1247 1298] | 5.7×     |
-| `packages/gateway`                               | 2814 [2806 3020 2814] | 604 [616 604 584]     | 4.7×     |
-| `packages/domain`                                | 983 [1077 983 960]    | 112 [112 110 113]     | 8.8×     |
-| `packages/email`                                 | 719 [719 726 709]     | 86 [86 86 81]         | 8.4×     |
-| `packages/contracts`                             | 255 [241 255 276]     | 41 [41 41 42]         | 6.2×     |
-| `packages/backend` (0 files)                     | 47 [47 45 47]         | 15 [15 14 15]         | —        |
-| **Sum of CI type-check targets**                 | **12059**             | **2133**              | **5.7×** |
-| `backend/convex/tsconfig.json` (not a CI target) | 3693 [3747 3646 3693] | 660 [663 660 644]     | 5.6×     |
+### Recommendation (A): oxlint, no ESLint
 
-End to end through Nx, cold, as CI runs it:
-`NX_DAEMON=false nx run-many -t type-check --parallel=4 --skip-nx-cache`, 3
-runs. Same scripts, only the compiler path switched:
+Replace ESLint, typescript-eslint, `eslint-config-next` and the `next`
+devDependency with oxlint:
 
-| Compiler | Runs (ms)        | Median |
-| -------- | ---------------- | ------ |
-| TS 6.0.3 | 8660, 8222, 8642 | 8642   |
-| TS 7.0.2 | 2018, 1915, 1869 | 1915   |
+- an `.oxlintrc.json` mapping the 81 native rules
+- the `boundaries` jsPlugin for the hexagonal policies
+- the `react-hooks` jsPlugin pinned to 7.0.1, for exact compiler-rule parity
 
-That is 4.5× faster end to end, because Nx and pnpm startup overhead stays the
-same.
+That gives the same findings in about 7.3 s instead of about 11–14 s. No
+residual ESLint is needed.
 
-## Recommendation: (a)
+Then, as a follow-up, fix or annotate the 11 findings from oxlint's native
+compiler rules and drop the react-hooks jsPlugin. That brings lint to about
+1.4 s and removes the alpha dependency for that part.
 
-Keep Nx and run TS 7's native `tsc` for the `type-check` targets under the
-`typescript7` npm alias. Keep `typescript@6.0.3` for API consumers. This is
-the only option that delivers TS 7 today. Options (b) and (c) need exactly the
-same two-TypeScript setup, because typescript-eslint (via
-`eslint-config-next`) still caps at `<6.1.0`. Replacing Nx would be a separate
-1–2 day migration whose main effect is rewriting and re-proving the
-architecture boundary rules (`@nx/enforce-module-boundaries`), with little
-gain. Our Nx use is thin (run-commands wrappers around package scripts plus a
-CI cache), so Nx isn't costing much either. It is mostly install weight, and
-most of that is the stale `@nx/next` plugin.
+This takes typescript-eslint out of the tree entirely, which is what stage 4
+needs. Biome is rejected (no React Compiler rules, no boundary story). ESLint
+without typescript-eslint is not viable.
 
-If the user still wants a simpler repo, the cheap win is Nx hygiene, not a
-replacement:
+## (B) Turborepo plan
 
-1. Remove `@nx/next` (and its `nx.json` plugin entry). That drops `next` and
-   `sharp` from the install. It probably also lets `@nx/web` go (only the
-   inferred `serve-static` target uses it).
-2. Drop the duplicate inferred `typecheck` targets
-   (`typecheckTargetName` in the `@nx/vite/plugin` options).
-3. Give the backend a real type-check target for `convex/tsconfig.json` once
-   its 202 errors are fixed, and delete the no-op `build`/`type-check`.
+This is what stage 2 implements; its PR carries the details and measurements.
 
-If the team later wants off Nx, choose (c) over (b). The CI gate is fast
-enough without a cache, and the end state has the fewest concepts. Do it
-after typescript-eslint supports TS 7, so it is one clean step.
+- **`turbo.json` tasks:**
+  - `build`: `dependsOn ^build`, outputs `.output/**` and `dist/**`, env `VITE_*`.
+  - `@jigswap/web#build`: also takes `$TURBO_ROOT$/docs/user/**` as input,
+    like the old Nx input.
+  - `lint`: inputs + `$TURBO_ROOT$/eslint.config.mjs`.
+  - `type-check`: inputs + `tsconfig.base.json`.
+  - `test`: cached.
+  - `coverage`: `cache: false`, as under Nx. Its reports live outside the
+    package, in `coverage/packages/*`.
+  - `//#arch:check`: a root task over `.dependency-cruiser.cjs` and
+    `packages/domain/src`.
+  - `mutation`: `cache: false`.
+  - `dev` and `start`: `cache: false`, `persistent`.
+  - `cacheDir: ".turbo/cache"` is set explicitly. Otherwise turbo shares one
+    cache across git worktrees, and outputs contain absolute paths.
+  - `agentGuidance: false`. Otherwise turbo writes an `AGENTS.md` when it
+    detects an agent.
+- **Package scripts are the source of truth.** Each package gets
+  `lint`/`coverage`/`dev` where Nx used to infer them. Root scripts become
+  `turbo run …`: `affected` → `--affected`, `graph` → `--graph=graph.html`.
+- **Removed:**
+  - `nx.json`, `.nxignore`, all 6 `project.json`, the 4 per-package
+    `eslint.config.mjs` (they only held `@nx/*` rules)
+  - `@nx/*`, `nx`, `@swc-node/*`, `@swc/core`, `@swc/helpers`,
+    `jsonc-eslint-parser`
+  - the `nx` build-allow entries in `pnpm-workspace.yaml`
+  - the `@nx/vite` `nxViteTsPaths`/`nxCopyAssetsPlugin` in 4 vite configs.
+    They were no-ops: `tsconfig.base.json` has no `paths`.
+  - `node_modules/.pnpm` shrinks from 1.3 GB to 912 MB.
+- **Surprise: `next` is not dead weight yet.** `eslint-config-next` loads
+  `next/dist/compiled/babel/eslint-parser`, and `@nx/next` was the only thing
+  providing `next`. Stage 2 adds `next@16.2.7` (the version that was resolved
+  before) as an explicit devDependency. Stage 3 removes it together with
+  `eslint-config-next`.
+- **CI:**
+  - `ci.yml`: gate becomes
+    `turbo run lint type-check test build arch:check --concurrency=4`, and
+    `actions/cache` caches `.turbo/cache`.
+  - `mutation.yml`: `turbo run mutation --filter=@jigswap/domain`.
+  - `reports.yml`: `turbo run coverage --concurrency=2`. ANALYZE still uses
+    plain `vite build`.
+  - The `convex-*.yml` and `pages-maintenance.yml` workflows don't use Nx.
+- **`scripts/vercel-build.sh`**: unchanged. It never used Nx (`pnpm build`
+  in `apps/web`, `pnpm --filter @jigswap/web build`).
+- **Docs:** README, CONTRIBUTING, `docs/developer-guide.md`,
+  `packages/backend/README.md`, `packages/domain/MUTATION-TESTING.md`.
+  `CLAUDE.md` has no Nx references. Historical plan docs under
+  `docs/superpowers/plans` keep theirs.
+- **Agent memory notes that go stale:**
+  - `ci-verify-mirror` (`--skip-nx-cache` → `turbo … --force` or
+    `rm -rf .turbo`)
+  - `jigswap-tooling-gotchas` ("backend nx target is `coverage`": there is now
+    a `test` script)
+  - the backend-tests line in the conventions file
+  - The user should update these. This spec doesn't edit them.
+- **Gaps:**
+  - **Fixed: web type-check race.**
+    - `src/routeTree.gen.ts` is gitignored and only written by the Start
+      plugin. Under Nx, web type-check passed only because the concurrent build
+      wrote it first. On a clean checkout turbo exposed about 80 errors.
+    - The `type-check` script now runs `generate-route-tree.mjs` first. It
+      resolves the Vite config, takes 0.5 s, and produces byte-identical
+      output to `vite build`.
+  - **Fixed: backend type-check covered 0 files.**
+    - `tsconfig.json` now extends `convex/tsconfig.json` and covers 828 files,
+      excluding `*.test.ts`.
+    - The 3 errors this surfaced (`Object.hasOwn`, `Array#at`, which aren't in
+      Convex's required ES2021 lib) are rewritten to ES2021 equivalents.
+    - Related finding: Convex's deploy-time typecheck has been **silently
+      skipped**. It looks for `packages/backend/node_modules/typescript`, which
+      doesn't exist ("No `tsc` binary found, so skipping typecheck").
+  - **Fixed: the backend had no `test` script.** Its 860 tests now run in the
+    gate (+about 8 s of CPU).
+  - **Surfaced, not fixed:** the ~199 type errors in `convex/*.test.ts`.
+    These are mostly `import.meta.glob` typing and loose `Doc` unions. It's
+    not cheap, and is better as its own PR.
 
-## Prototype (this branch)
+## Stage 4 feasibility: TS 7 as the only TypeScript
 
-- Root `package.json`: `"typescript7": "npm:typescript@7.0.2"`.
-- `type-check` scripts in `apps/web` and `packages/{backend,contracts,domain,email,gateway}`:
-  `node ../../node_modules/typescript7/bin/tsc --noEmit`.
-- Full CI-mirroring verify suite passes (see the PR).
+Every package that reaches for the TS API, checked on this branch. The method
+was to grep for `require/import("typescript")` in the installed dist code, plus
+the `typescript` dep or peer declarations:
+
+| Consumer                                                                                        | Uses TS API?                                                                                           | Under TS 7 only                                                                                                                                                    |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Nx (`nx`, `@nx/js`, `@swc-node/register`)                                                       | yes                                                                                                    | gone after stage 2                                                                                                                                                 |
+| typescript-eslint, `eslint-config-next`, `ts-api-utils`                                         | yes (parser + plugin)                                                                                  | gone after stage 3 (oxlint)                                                                                                                                        |
+| **prettier-plugin-organize-imports**                                                            | **yes: TS language service** (5 files). `format:check` runs it.                                        | **blocker.** Replace it, e.g. oxlint `sort-imports` + `no-unused-vars` autofix, or a Babel-based import sorter; or keep an aliased TS 6 just for it                |
+| **dependency-cruiser** (`arch:check`)                                                           | yes, when `tsPreCompilationDeps: true` (`extract/tsc/*`)                                               | **needs a config change**: set `parser: "swc"` (`@swc/core` is still in the tree via webpack/terser), which loses type-only-import detection; or keep TS 6 aliased |
+| **Stryker** core `ts-config-preprocessor`                                                       | yes: `ts.parseConfigFileTextToJson` on the sandbox's `tsconfig.json` unless `inPlace`                  | **needs `inPlace: true`** in both stryker configs, or a TS 6 alias. Not tested                                                                                     |
+| Convex CLI (deploy typecheck, codegen, bundling)                                                | no API. It spawns `node_modules/typescript/bin/tsc --project convex --listFiles`. Bundling is esbuild. | works. TS 7's `tsc --project convex --listFiles` lists 1719 files fine. Add `typescript` to `packages/backend` devDeps so the typecheck stops being skipped        |
+| vite, `@tanstack/router-plugin`, `start-plugin-core`, `router-generator`, `vite-tsconfig-paths` | no                                                                                                     | works                                                                                                                                                              |
+| `tsconfck` (via vite-tsconfig-paths)                                                            | only for optional `parseNative`                                                                        | works (not used)                                                                                                                                                   |
+| vitest, `@vitest/coverage-v8`, convex-test                                                      | no (oxc/esbuild transforms)                                                                            | works                                                                                                                                                              |
+| `convex-helpers` / `frimousse`                                                                  | optional peer, types only (`convex-helpers` peer already allows `^7`)                                  | works                                                                                                                                                              |
+| `@types/*`                                                                                      | declaration files only                                                                                 | works. All 6 projects type-check clean under TS 7 today                                                                                                            |
+| Editors                                                                                         | VS Code's built-in TS uses `tsserver.js`, which TS 7 doesn't ship                                      | needs the TS 7 native language-server extension. A DX change, not a CI blocker                                                                                     |
+
+**Verdict:** stage 4 is feasible after stages 2 and 3, with three small,
+independent changes:
+
+- replace prettier-plugin-organize-imports
+- switch dependency-cruiser to the swc parser (or accept losing
+  type-only-import detection)
+- run Stryker `inPlace`
+
+None of the three is a compiler-API dependency we can't remove.
+
+## Why the dual-TS prototype commit stays on this branch
+
+`chore(tooling): type-check with TypeScript 7 alongside TypeScript 6` stays.
+Until stage 3 removes typescript-eslint and stage 4 handles the three
+consumers above, `typescript@6.0.3` must stay the `typescript` package for its
+API consumers. `typescript7` (`npm:typescript@7.0.2`) runs the `type-check`
+scripts, by explicit path, because both packages ship a `tsc` bin.
+
+Measured on the earlier base (`b9fd1550f`), medians of 3:
+
+| Project / run                                                        | TS 6.0.3 (ms) | TS 7.0.2 (ms) |
+| -------------------------------------------------------------------- | ------------- | ------------- |
+| `apps/web`                                                           | 7241          | 1275          |
+| `packages/gateway`                                                   | 2814          | 604           |
+| `packages/domain`                                                    | 983           | 112           |
+| `packages/email`                                                     | 719           | 86            |
+| `packages/contracts`                                                 | 255           | 41            |
+| `packages/backend/convex/tsconfig.json`                              | 3693          | 660           |
+| `nx run-many -t type-check --parallel=4 --skip-nx-cache`, end to end | 8642          | 1915          |
+
+Stage 4 collapses this back to a single `typescript@7` and removes the alias
+and the explicit paths.
 
 ## Not determined
 
-- Whether Nx 24 (still beta) removes the `readConfigFile` dependency. The
-  registry metadata can't show that, and I didn't install the beta.
-- typescript-eslint's TS 7 timeline. No `9.x` or TS-7-peer canary exists.
-- Runtimes on GitHub's runners. All numbers above are local.
-- Editor (tsserver) behaviour with two TypeScripts. VS Code uses the
-  workspace `typescript` (6.0.3) unless pointed at the alias.
+- oxlint jsPlugins are alpha. Stage 3 should pin oxlint exactly and keep the
+  parity check (the same 30 findings) in its PR.
+- Whether Nx 24 (beta) drops its TS-API dependency. Moot after stage 2.
+- typescript-eslint's TS 7 timeline. No `9.x` or TS-7-peer canary is published.
+  Moot after stage 3.
+- Runtimes on GitHub runners. All numbers here are local, and some ran under
+  load from parallel agents.
