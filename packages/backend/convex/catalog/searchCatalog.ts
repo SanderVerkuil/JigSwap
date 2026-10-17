@@ -1,5 +1,5 @@
 import type { PuzzleSummaryView } from "@jigswap/contracts";
-import { type PaginationResult, paginationOptsValidator } from "convex/server";
+import { paginationOptsValidator, type PaginationResult } from "convex/server";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
