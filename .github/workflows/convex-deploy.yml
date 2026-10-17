@@ -8,6 +8,9 @@ name: Convex Deploy
 #   - production: only after the CI workflow succeeds on main (workflow_run gate), so prod
 #     never deploys code that failed lint/type-check/test/build.
 # _generated/* is committed, so a deploy only needs the deploy-key secrets.
+# After each push, `whatsNew/publishPending` starts the What's new notification fan-out (idempotent).
+# Preview deployments (convex-preview.yml) deliberately skip it: they are seeded from a dev snapshot
+# and are throwaway, so notifying that copied member list would only add noise.
 #
 # `npx convex deploy` only targets production/preview, so the dev deployment is pushed with
 # `npx convex dev --once` (a single non-interactive push), selected by a dev deploy key.
@@ -51,6 +54,15 @@ jobs:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_DEV }}
         run: pnpm exec convex dev --once
 
+      # Start the whats_new notification fan-out for notify:true What's new entries this deploy
+      # shipped. Idempotent (one whatsNewPublications row per entry), so it is safe on every
+      # deploy and a no-op when nothing is pending. The deploy key selects the same deployment.
+      - name: Publish pending What's new notifications
+        working-directory: packages/backend
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_DEV }}
+        run: pnpm exec convex run whatsNew/publishPending:publishPending
+
   production:
     name: Deploy production deployment
     # Only when the CI workflow completed successfully on main.
@@ -85,3 +97,12 @@ jobs:
           # A production deploy key targets prod non-interactively (no confirmation prompt).
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_PROD }}
         run: pnpm exec convex deploy
+
+      # Start the whats_new notification fan-out for notify:true What's new entries this deploy
+      # shipped. Idempotent (one whatsNewPublications row per entry), so it is safe on every
+      # deploy and a no-op when nothing is pending. The deploy key selects the same deployment.
+      - name: Publish pending What's new notifications
+        working-directory: packages/backend
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_PROD }}
+        run: pnpm exec convex run whatsNew/publishPending:publishPending

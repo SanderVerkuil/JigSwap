@@ -380,6 +380,9 @@ import type * as whatsNew_getWhatsNewState from "../whatsNew/getWhatsNewState.js
 import type * as whatsNew_manifest from "../whatsNew/manifest.js";
 import type * as whatsNew_markAllSeen from "../whatsNew/markAllSeen.js";
 import type * as whatsNew_markWhatsNewSeen from "../whatsNew/markWhatsNewSeen.js";
+import type * as whatsNew_notifyBatch from "../whatsNew/notifyBatch.js";
+import type * as whatsNew_publications from "../whatsNew/publications.js";
+import type * as whatsNew_publishPending from "../whatsNew/publishPending.js";
 import type * as whatsNew_readState from "../whatsNew/readState.js";
 import type * as whatsNew_recordTourProgress from "../whatsNew/recordTourProgress.js";
 
@@ -762,6 +765,9 @@ declare const fullApi: ApiFromModules<{
   "whatsNew/manifest": typeof whatsNew_manifest;
   "whatsNew/markAllSeen": typeof whatsNew_markAllSeen;
   "whatsNew/markWhatsNewSeen": typeof whatsNew_markWhatsNewSeen;
+  "whatsNew/notifyBatch": typeof whatsNew_notifyBatch;
+  "whatsNew/publications": typeof whatsNew_publications;
+  "whatsNew/publishPending": typeof whatsNew_publishPending;
   "whatsNew/readState": typeof whatsNew_readState;
   "whatsNew/recordTourProgress": typeof whatsNew_recordTourProgress;
 }>;

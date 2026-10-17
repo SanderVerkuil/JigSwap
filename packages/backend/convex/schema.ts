@@ -801,6 +801,7 @@ export default defineSchema({
       v.literal("follow_request_approved"),
       v.literal("household_invite_received"),
       v.literal("household_invite_accepted"),
+      v.literal("whats_new"),
     ),
     // Legacy pre-rendered English copy. Optional since notifications went structured: new rows
     // store `params` and the edges render copy (web via i18n keys, email via @jigswap/email).
@@ -1165,4 +1166,13 @@ export default defineSchema({
     step: v.optional(v.number()),
     updatedAt: v.number(),
   }).index("by_member_tour", ["memberId", "tourId"]),
+
+  // One row per notify:true What's new entry whose whats_new notification fan-out has started
+  // (whatsNew/publishPending). The row is the idempotency key: an entry with a row is never fanned
+  // out again. `completedAt` is set when the last member batch has run.
+  whatsNewPublications: defineTable({
+    entryId: v.string(),
+    startedAt: v.number(),
+    completedAt: v.optional(v.number()),
+  }).index("by_entry", ["entryId"]),
 });

@@ -1783,7 +1783,8 @@
       "follow_request_received": "Volgverzoeken",
       "follow_request_approved": "Volgverzoek goedgekeurd",
       "household_invite_received": "Uitnodigingen voor een huishouden",
-      "household_invite_accepted": "Uitnodiging voor huishouden geaccepteerd"
+      "household_invite_accepted": "Uitnodiging voor huishouden geaccepteerd",
+      "whats_new": "Wat is er nieuw"
     },
     "categories": {
       "trades": {
@@ -1801,6 +1802,10 @@
       "submissions": {
         "title": "Mijn inzendingen",
         "description": "Uitkomsten van je puzzelinzendingen en voorgestelde wijzigingen"
+      },
+      "product": {
+        "title": "Productupdates",
+        "description": "Nieuwe functies en wijzigingen in JigSwap"
       },
       "admin": {
         "title": "Beheer",
@@ -1899,6 +1904,10 @@
       "household_invite_accepted": {
         "title": "Uitnodiging geaccepteerd",
         "message": "Iemand is lid geworden van je huishouden."
+      },
+      "whats_new": {
+        "title": "Nieuw in JigSwap",
+        "message": "Bekijk wat er nieuw is in JigSwap."
       }
     },
     "pushDeviceTitle": "Push op dit apparaat",
@@ -1937,7 +1946,8 @@
       "follow_request_received": "Wanneer iemand vraagt om je te volgen.",
       "follow_request_approved": "Wanneer een volgverzoek dat je stuurde wordt goedgekeurd.",
       "household_invite_received": "Wanneer iemand je uitnodigt voor hun huishouden.",
-      "household_invite_accepted": "Wanneer iemand je uitnodiging voor het huishouden accepteert."
+      "household_invite_accepted": "Wanneer iemand je uitnodiging voor het huishouden accepteert.",
+      "whats_new": "Wanneer een nieuwe functie of wijziging in JigSwap wordt aangekondigd."
     },
     "pushServiceUnreachable": "Je browser kon zijn pushdienst niet bereiken. Sommige privacybrowsers blokkeren of verwijderen die — Brave schakelt het standaard uit (zet 'Google-services voor pushberichten gebruiken' aan in Instellingen), en de-Googled Chromium-browsers zoals Helium verwijderen het. Firefox, Chrome of Edge werkt wel."
   },
