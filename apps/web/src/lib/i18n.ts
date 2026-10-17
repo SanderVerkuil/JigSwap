@@ -65,18 +65,39 @@ function detectLocale(): Locale {
   return negotiateLocale(getRequestHeader("accept-language")) ?? defaultLocale;
 }
 
-// Dev falls back to source.json (Crowdin OTA catalogs are populated in prod);
-// mirrors getCrowdinMessages in the web app.
+// Deep-merge `overlay` onto `base`: overlay wins per leaf, keys missing from the overlay keep the
+// base value. Pure, for loadMessages and its tests.
+export function mergeMessages(base: Messages, overlay: Messages): Messages {
+  const merged: Record<string, unknown> = { ...base };
+  for (const [key, value] of Object.entries(overlay)) {
+    const prev = merged[key];
+    merged[key] =
+      isMessageMap(prev) && isMessageMap(value)
+        ? mergeMessages(prev, value)
+        : value;
+  }
+  return merged as Messages;
+}
+
+function isMessageMap(value: unknown): value is Messages {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+// Dev shows the locale's catalog over source.json, so translated keys appear in their language and
+// keys not yet translated (prod gets them from Crowdin) fall back to the source text instead of
+// the whole app staying in English; mirrors getCrowdinMessages in the web app.
 async function loadMessages(locale: Locale): Promise<Messages> {
   // Catalogs contain arrays in places; cast through unknown since
   // AbstractIntlMessages models only strings/nested maps (use-intl tolerates both).
   try {
-    if (process.env.NODE_ENV === "development") {
-      return (await import("../../locales/source.json"))
-        .default as unknown as Messages;
-    }
-    return (await import(`../../locales/${locale}.json`))
+    const catalog = (await import(`../../locales/${locale}.json`))
       .default as unknown as Messages;
+    if (process.env.NODE_ENV === "development") {
+      const source = (await import("../../locales/source.json"))
+        .default as unknown as Messages;
+      return mergeMessages(source, catalog);
+    }
+    return catalog;
   } catch (error) {
     console.error(`Error loading translations for ${locale}:`, error);
     return (await import("../../locales/source.json"))
