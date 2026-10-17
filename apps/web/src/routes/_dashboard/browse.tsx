@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 import { useUser } from "@/compat/clerk";
+import { PuzzleFilterChip } from "@/components/browse/puzzle-filter-chip";
 import {
   type CategoryOption,
   EMPTY_QUERY,
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { gateway, Id } from "@/gateway";
+import { validateBrowseSearch } from "@/lib/browse-search";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { Grid, List } from "lucide-react";
@@ -21,6 +23,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/browse")({
+  // `?puzzle=<definitionId>` narrows Browse to copies of one catalogue puzzle (the catalogue's
+  // "Find a copy to swap" CTA). Kept in the URL so back/forward and shared links keep the filter.
+  validateSearch: validateBrowseSearch,
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "browse") }],
   }),
@@ -35,6 +40,7 @@ function BrowsePending() {
 
 function BrowsePage() {
   const navigate = useNavigate();
+  const { puzzle: puzzleFilter } = Route.useSearch();
   const { user } = useUser();
   const t = useTranslations("puzzles");
   const tCommon = useTranslations("common");
@@ -72,6 +78,7 @@ function BrowsePage() {
       minPieceCount: query.minPieces ? parseInt(query.minPieces) : undefined,
       maxPieceCount: query.maxPieces ? parseInt(query.maxPieces) : undefined,
       searchTerm: debouncedText || undefined,
+      puzzleId: puzzleFilter,
       includeOwnPuzzles: false,
       limit: 50,
     }),
@@ -113,6 +120,12 @@ function BrowsePage() {
 
   return (
     <div className="flex flex-col gap-[18px]">
+      {puzzleFilter && (
+        <PuzzleFilterChip
+          puzzleId={puzzleFilter}
+          onRemove={() => navigate({ to: "/browse", search: {} })}
+        />
+      )}
       {/* Query builder + result count + view toggle. Members compose multiple
           AND-combined conditions (one of them the free-text filter); the global
           ⌘K palette stays the quick known-item lookup. The shell owns the page
