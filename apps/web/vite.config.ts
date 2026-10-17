@@ -9,7 +9,7 @@ import { docsPlugin } from "./vite-plugin-docs";
 import { whatsNewPlugin } from "./vite-plugin-whats-new";
 
 // root pinned to this dir so Vite resolves config/paths from the app, not the
-// monorepo root, when Nx invokes the build from a different cwd.
+// monorepo root, when the build is invoked from a different cwd.
 export default defineConfig({
   root: __dirname,
   server: { port: 3001 },

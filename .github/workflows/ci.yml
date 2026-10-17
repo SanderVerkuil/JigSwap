@@ -43,6 +43,6 @@ jobs:
         run: pnpm run format:check
 
       # Convex _generated/* is committed, so no deployment or secrets are needed here.
-      # arch-check enforces the DDD/hexagonal boundaries via dependency-cruiser.
-      - name: Verify (lint, type-check, test, build, arch-check)
+      # arch:check enforces the DDD/hexagonal boundaries via dependency-cruiser.
+      - name: Verify (lint, type-check, test, build, arch:check)
         run: pnpm exec turbo run lint type-check test build arch:check --concurrency=4

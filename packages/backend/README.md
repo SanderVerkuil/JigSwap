@@ -4,7 +4,7 @@ Convex functions, schema and their convex-test suites.
 
 ## Type-checking
 
-Run `pnpm type-check` to type-check the Convex functions (tests excluded; see `tsconfig.json`).
+Run `pnpm type-check` to type-check the Convex functions and their `convex-test` suites (see `tsconfig.json`).
 
 Every Convex deploy also type-checks, and fails on a type error. The CLI runs
 `node_modules/typescript/bin/tsc --project convex` from this package, so `typescript` (7.0.2,
