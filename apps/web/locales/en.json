@@ -1847,7 +1847,7 @@
     "copy": {
       "trade_request": {
         "title": "New exchange request",
-        "message": "Someone wants to trade for one of your puzzles."
+        "message": "{hasActorName, select, yes {{actorName} wants to trade for one of your puzzles.} other {Someone wants to trade for one of your puzzles.}}"
       },
       "trade_accepted": {
         "title": "Exchange accepted",
@@ -1875,7 +1875,7 @@
       },
       "message_received": {
         "title": "New message",
-        "message": "You have a new message in your trade conversation."
+        "message": "{hasActorName, select, yes {{actorName} sent you a new message.} other {You have a new message in your trade conversation.}}"
       },
       "review_received": {
         "title": "New review",
@@ -1887,27 +1887,27 @@
       },
       "puzzle_approved": {
         "title": "Puzzle approved",
-        "message": "Your puzzle submission was approved."
+        "message": "{hasPuzzleTitle, select, yes {Your puzzle submission “{puzzleTitle}” was approved.} other {Your puzzle submission was approved.}}"
       },
       "puzzle_rejected": {
         "title": "Puzzle rejected",
-        "message": "Your puzzle submission was rejected."
+        "message": "{hasPuzzleTitle, select, yes {Your puzzle submission “{puzzleTitle}” was rejected.} other {Your puzzle submission was rejected.}}"
       },
       "proposal_approved": {
         "title": "Suggestion approved",
-        "message": "Your suggested edit was approved and is now live."
+        "message": "{hasPuzzleTitle, select, yes {Your suggested edit to “{puzzleTitle}” was approved and is now live.} other {Your suggested edit was approved and is now live.}}"
       },
       "proposal_rejected": {
         "title": "Suggestion declined",
-        "message": "Your suggested edit was declined."
+        "message": "{hasPuzzleTitle, select, yes {Your suggested edit to “{puzzleTitle}” was declined.} other {Your suggested edit was declined.}}{hasReason, select, yes { Reason: {reason}} other {}}"
       },
       "admin_proposal_filed": {
         "title": "Suggestion to review",
-        "message": "A member suggested an edit to a catalogue puzzle."
+        "message": "{hasPuzzleTitle, select, yes {A member suggested an edit to “{puzzleTitle}”.} other {A member suggested an edit to a catalogue puzzle.}}"
       },
       "admin_definition_submitted": {
         "title": "Submission to moderate",
-        "message": "A new puzzle submission awaits moderation."
+        "message": "{hasPuzzleTitle, select, yes {A new puzzle submission, “{puzzleTitle}”, awaits moderation.} other {A new puzzle submission awaits moderation.}}"
       },
       "photo_removed": {
         "title": "Photo removed",
@@ -1915,27 +1915,27 @@
       },
       "goal_achieved": {
         "title": "Goal achieved",
-        "message": "You reached one of your goals!"
+        "message": "{hasGoalTitle, select, yes {You reached your goal “{goalTitle}”!} other {You reached one of your goals!}}"
       },
       "new_follower": {
         "title": "New follower",
-        "message": "Someone started following you."
+        "message": "{hasActorName, select, yes {{actorName} started following you.} other {Someone started following you.}}"
       },
       "follow_request_received": {
         "title": "Follow request",
-        "message": "Someone asked to follow you."
+        "message": "{hasActorName, select, yes {{actorName} asked to follow you.} other {Someone asked to follow you.}}"
       },
       "follow_request_approved": {
         "title": "Request approved",
-        "message": "Your follow request was approved."
+        "message": "{hasActorName, select, yes {{actorName} approved your follow request.} other {Your follow request was approved.}}"
       },
       "household_invite_received": {
         "title": "Household invite",
-        "message": "Someone invited you to their household."
+        "message": "{hasActorName, select, yes {{actorName} invited you to their household.} other {Someone invited you to their household.}}"
       },
       "household_invite_accepted": {
         "title": "Invite accepted",
-        "message": "Someone joined your household."
+        "message": "{hasActorName, select, yes {{actorName} joined your household.} other {Someone joined your household.}}"
       },
       "whats_new": {
         "title": "New in JigSwap",

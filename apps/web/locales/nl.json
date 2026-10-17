@@ -1847,7 +1847,7 @@
     "copy": {
       "trade_request": {
         "title": "Nieuw ruilverzoek",
-        "message": "Iemand wil ruilen voor een van je puzzels."
+        "message": "{hasActorName, select, yes {{actorName} wil ruilen voor een van je puzzels.} other {Iemand wil ruilen voor een van je puzzels.}}"
       },
       "trade_accepted": {
         "title": "Ruil geaccepteerd",
@@ -1875,7 +1875,7 @@
       },
       "message_received": {
         "title": "Nieuw bericht",
-        "message": "Je hebt een nieuw bericht in je ruilgesprek."
+        "message": "{hasActorName, select, yes {{actorName} heeft je een nieuw bericht gestuurd.} other {Je hebt een nieuw bericht in je ruilgesprek.}}"
       },
       "review_received": {
         "title": "Nieuwe beoordeling",
@@ -1887,27 +1887,27 @@
       },
       "puzzle_approved": {
         "title": "Puzzel goedgekeurd",
-        "message": "Je puzzelinzending is goedgekeurd."
+        "message": "{hasPuzzleTitle, select, yes {Je puzzelinzending “{puzzleTitle}” is goedgekeurd.} other {Je puzzelinzending is goedgekeurd.}}"
       },
       "puzzle_rejected": {
         "title": "Puzzel afgewezen",
-        "message": "Je puzzelinzending is afgewezen."
+        "message": "{hasPuzzleTitle, select, yes {Je puzzelinzending “{puzzleTitle}” is afgewezen.} other {Je puzzelinzending is afgewezen.}}"
       },
       "proposal_approved": {
         "title": "Wijzigingsvoorstel goedgekeurd",
-        "message": "Jouw voorgestelde wijziging is goedgekeurd en staat nu live."
+        "message": "{hasPuzzleTitle, select, yes {Jouw voorgestelde wijziging aan “{puzzleTitle}” is goedgekeurd en staat nu live.} other {Jouw voorgestelde wijziging is goedgekeurd en staat nu live.}}"
       },
       "proposal_rejected": {
         "title": "Wijzigingsvoorstel afgewezen",
-        "message": "Jouw voorgestelde wijziging is afgewezen."
+        "message": "{hasPuzzleTitle, select, yes {Jouw voorgestelde wijziging aan “{puzzleTitle}” is afgewezen.} other {Jouw voorgestelde wijziging is afgewezen.}}{hasReason, select, yes { Reden: {reason}} other {}}"
       },
       "admin_proposal_filed": {
         "title": "Voorstel om te beoordelen",
-        "message": "Een lid heeft een wijziging voor een cataloguspuzzel voorgesteld."
+        "message": "{hasPuzzleTitle, select, yes {Een lid heeft een wijziging voor “{puzzleTitle}” voorgesteld.} other {Een lid heeft een wijziging voor een cataloguspuzzel voorgesteld.}}"
       },
       "admin_definition_submitted": {
         "title": "Inzending om te modereren",
-        "message": "Een nieuwe puzzelinzending wacht op moderatie."
+        "message": "{hasPuzzleTitle, select, yes {Een nieuwe puzzelinzending, “{puzzleTitle}”, wacht op moderatie.} other {Een nieuwe puzzelinzending wacht op moderatie.}}"
       },
       "photo_removed": {
         "title": "Foto verwijderd",
@@ -1915,27 +1915,27 @@
       },
       "goal_achieved": {
         "title": "Doel behaald",
-        "message": "Je hebt een van je doelen bereikt!"
+        "message": "{hasGoalTitle, select, yes {Je hebt je doel “{goalTitle}” bereikt!} other {Je hebt een van je doelen bereikt!}}"
       },
       "new_follower": {
         "title": "Nieuwe volger",
-        "message": "Iemand volgt je nu."
+        "message": "{hasActorName, select, yes {{actorName} volgt je nu.} other {Iemand volgt je nu.}}"
       },
       "follow_request_received": {
         "title": "Volgverzoek",
-        "message": "Iemand wil je graag volgen."
+        "message": "{hasActorName, select, yes {{actorName} wil je graag volgen.} other {Iemand wil je graag volgen.}}"
       },
       "follow_request_approved": {
         "title": "Verzoek goedgekeurd",
-        "message": "Je volgverzoek is goedgekeurd."
+        "message": "{hasActorName, select, yes {{actorName} heeft je volgverzoek goedgekeurd.} other {Je volgverzoek is goedgekeurd.}}"
       },
       "household_invite_received": {
         "title": "Uitnodiging voor huishouden",
-        "message": "Iemand heeft je uitgenodigd voor hun huishouden."
+        "message": "{hasActorName, select, yes {{actorName} heeft je uitgenodigd voor hun huishouden.} other {Iemand heeft je uitgenodigd voor hun huishouden.}}"
       },
       "household_invite_accepted": {
         "title": "Uitnodiging geaccepteerd",
-        "message": "Iemand is lid geworden van je huishouden."
+        "message": "{hasActorName, select, yes {{actorName} is lid geworden van je huishouden.} other {Iemand is lid geworden van je huishouden.}}"
       },
       "whats_new": {
         "title": "Nieuw in JigSwap",
