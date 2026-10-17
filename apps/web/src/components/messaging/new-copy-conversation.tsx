@@ -135,7 +135,11 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
     );
   }
 
-  const subject = { kind: "dm" as const, otherMember: view.owner };
+  const subject = {
+    kind: "dm" as const,
+    otherMember: view.owner,
+    profileHandle: null,
+  };
   const ownerName = threadSubjectTitle(subject, tMessages, displayName);
 
   return (

@@ -1,7 +1,15 @@
-import type { MessageCopyView } from "@jigswap/contracts";
+import type {
+  InboxThreadContextCopy,
+  MessageCopyView,
+} from "@jigswap/contracts";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
-import { canViewCopy } from "../library/canViewCopy";
+import {
+  buildCopyViewContext,
+  canViewCopy,
+  canViewCopyWithContext,
+  type CopyViewContext,
+} from "../library/canViewCopy";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
 
 // The compact copy card a copy-referencing conversation shows (composer header, message card).
@@ -40,5 +48,38 @@ export const viewableCopyCards = (ctx: QueryCtx, viewerId: Id<"users">) => {
       memo.set(copyId, card);
     }
     return card;
+  };
+};
+
+// Per-request resolver for the inbox header's context copy: `{ copyId, title }` only while
+// `viewerId` may view the copy, null otherwise (including a deleted copy). Memoised per copy, and
+// the viewer's copy-view context (circle shares, household) is built lazily at most once — the
+// inbox resolves many threads, so per-copy canViewCopy would rebuild it per thread.
+export const viewableContextCopies = (ctx: QueryCtx, viewerId: Id<"users">) => {
+  let context: Promise<CopyViewContext> | undefined;
+  const memo = new Map<
+    Id<"ownedPuzzles">,
+    Promise<InboxThreadContextCopy | null>
+  >();
+  return (
+    copyId: Id<"ownedPuzzles">,
+  ): Promise<InboxThreadContextCopy | null> => {
+    let resolved = memo.get(copyId);
+    if (!resolved) {
+      resolved = (async () => {
+        const copy = await ctx.db.get(copyId);
+        if (!copy) return null;
+        context ??= buildCopyViewContext(ctx, viewerId);
+        if (!(await canViewCopyWithContext(ctx, copy, await context)))
+          return null;
+        const puzzle = await ctx.db.get(copy.puzzleId);
+        return {
+          copyId: copy._id,
+          title: copy.snapshot?.title ?? puzzle?.title ?? "",
+        };
+      })();
+      memo.set(copyId, resolved);
+    }
+    return resolved;
   };
 };

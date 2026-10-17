@@ -20,6 +20,12 @@ export interface ThreadMessageView {
    * (including inbox previews).
    */
   readonly copy?: MessageCopyView;
+  /**
+   * Set (getThreadMessages only) when the message references a copy the reader can no longer
+   * view — deleted, or its visibility changed. `copy` is absent then; the UI renders a
+   * "no longer available" placeholder instead of the card.
+   */
+  readonly copyUnavailable?: true;
 }
 
 /** A compact card for the copy a conversation is about. */
@@ -65,7 +71,23 @@ export type InboxThreadSubjectView =
       /** The requested copy's puzzle title, if it resolves. */
       readonly puzzleTitle: string | null;
     }
-  | { readonly kind: "dm"; readonly otherMember: ProjectedMember };
+  | {
+      readonly kind: "dm";
+      readonly otherMember: ProjectedMember;
+      /**
+       * The `/members/<handle>` handle (slug ?? username ?? member id) of the other member; null
+       * when they are anonymised to the viewer (their profile would be locked to them) or their
+       * account is inactive.
+       */
+      readonly profileHandle: string | null;
+    };
+
+/** The puzzle copy an inbox thread is currently about, for the header's "Go to puzzle" link. */
+export interface InboxThreadContextCopy {
+  /** The copy's ownedPuzzles `_id`. */
+  readonly copyId: string;
+  readonly title: string;
+}
 
 /** One row of a member's inbox: the thread, its subject, and the caller's unread state. */
 export interface InboxThreadView {
@@ -79,6 +101,12 @@ export interface InboxThreadView {
    * 50 qualifying messages, so 50 genuinely means "50 or more" and reads as "50+".
    */
   readonly unreadCount: number;
+  /**
+   * The copy the thread is about, only while the viewer may view it. DM: the most recent of the
+   * newest 50 messages that references a viewable copy. Exchange: the requested copy. Null
+   * otherwise.
+   */
+  readonly contextCopy: InboxThreadContextCopy | null;
   /** Inbox ordering instant: the newest message's sentAt, or the thread's creation. */
   readonly updatedAt: number;
 }
