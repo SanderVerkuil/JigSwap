@@ -1,3 +1,5 @@
+import type { OwnedCopyView } from "../library/views";
+
 // Household read models (queries under `household/*`). Household members accepted each other, so
 // they see each other's name/avatar; an invitee sees the inviter (who initiated contact), and the
 // admin sees the members they invited.
@@ -38,4 +40,16 @@ export interface HouseholdIncomingInviteView {
   inviteId: string;
   inviter: HouseholdPersonView;
   createdAt: number;
+}
+
+/**
+ * `household.copies`: another member's copy as it appears in the viewer's library. `viewerAccess`
+ * is the owner's per-copy permission for the household (absent on the row = "manage"). Owner-only
+ * fields (notes, acquisition) are included only for "manage" (co-owner) access.
+ */
+export interface HouseholdCopyView extends OwnedCopyView {
+  household: {
+    owner: HouseholdPersonView;
+    viewerAccess: HouseholdCopyPermission;
+  };
 }

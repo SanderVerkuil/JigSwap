@@ -29,8 +29,13 @@ export const handleDomainEvent = async (
     clock: systemClock,
   });
   // The new owner is the event's member id, which is the resolved users _id the copy row stores.
-  await transfer({
+  const result = await transfer({
     copyId: toCopyId(copy.aggregateId),
     newOwner: toOwnerId(p.newOwner as string),
   });
+  // The household permission was the PREVIOUS owner's choice for their household; the new owner
+  // starts from the default (absent = "manage") for theirs.
+  if (result.isOk && copy.householdPermission !== undefined) {
+    await ctx.db.patch(copy._id, { householdPermission: undefined });
+  }
 };

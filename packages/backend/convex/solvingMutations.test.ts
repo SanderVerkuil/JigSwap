@@ -839,7 +839,7 @@ describe("solving.startCompletion — first-class start", () => {
         copyId: copyAggregateId,
         startDate: Date.now(),
       }),
-    ).rejects.toThrow("Only the owner or current holder");
+    ).rejects.toThrow("Only the owner, current holder or a household member");
   });
 
   test("rejects an unknown copyId", async () => {

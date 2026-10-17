@@ -1,9 +1,10 @@
 import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
+import { canManageCopy } from "../household/copyAccess";
 import { requireMember } from "../identity/requireMember";
 
-// Owner-only removal of an uploaded copy photo: deletes the `ownedPuzzleImages` row AND its storage
+// Owner (or household manage member) removal of an uploaded copy photo: deletes the `ownedPuzzleImages` row AND its storage
 // blob, and clears the copy's cover when this photo was the cover (so it falls back to the
 // catalogue image). Keyed by the image id; the gallery (getCopyInstanceView) reads the same table,
 // so Convex reactivity drops it from the UI. Mirrors addCopyPhoto's direct read-model write.
@@ -17,7 +18,8 @@ export const removeCopyPhoto = mutation({
 
     const copy = await ctx.db.get(image.ownedPuzzleId);
     if (!copy) throw new ConvexError("Copy not found");
-    if (copy.ownerId !== memberId) {
+    // Owner, or a household member the owner left at "manage" (co-owner).
+    if (!(await canManageCopy(ctx, memberId, copy))) {
       throw new ConvexError("Only the owner can remove a photo from this copy");
     }
 
