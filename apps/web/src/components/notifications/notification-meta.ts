@@ -183,18 +183,41 @@ export function notificationId(row: NotificationRow): string {
   return row.aggregateId ?? row._id;
 }
 
+// The params the subscriber stores on a row (see packages/backend/convex/notifications/subscriber.ts).
+const COPY_PARAMS = [
+  "actorName",
+  "puzzleTitle",
+  "goalTitle",
+  "reason",
+] as const;
+
+// ICU values for `copy.<type>.message`. Every param is always present (empty when the row lacks
+// it) alongside a `has<Param>` "yes"/"no" flag the messages `select` on, so older rows without a
+// value render the generic sentence instead of a blank or "undefined".
+function copyValues(
+  params: Record<string, string> | undefined,
+): Record<string, string> {
+  const values: Record<string, string> = {};
+  for (const key of COPY_PARAMS) {
+    const value = params?.[key]?.trim() ?? "";
+    values[key] = value;
+    values[`has${key[0].toUpperCase()}${key.slice(1)}`] = value ? "yes" : "no";
+  }
+  return values;
+}
+
 // Localized title + message for a notification, rendered from its `type` via the
 // `notifications.copy.<type>` i18n keys. The stored `title`/`message` only exist on legacy rows
 // (predating the type+params model), so they're only a fallback for an unknown/legacy type.
 // `t` is a `useTranslations("notifications")` translator.
 export function notificationCopy(
   row: NotificationRow,
-  t: (key: string) => string,
+  t: (key: string, values?: Record<string, string>) => string,
 ): { title: string; message: string } {
   if ((NOTIFICATION_TYPES as string[]).includes(row.type)) {
     return {
       title: t(`copy.${row.type}.title`),
-      message: t(`copy.${row.type}.message`),
+      message: t(`copy.${row.type}.message`, copyValues(row.params)),
     };
   }
   return { title: row.title ?? "", message: row.message ?? "" };
@@ -279,12 +302,12 @@ export function notificationAccent(type: string): string {
       return "text-blue-500";
     case "admin_proposal_filed":
     case "admin_definition_submitted":
-      return "text-primary";
+      return "text-primary-text";
     // Brand violet, matching the What's new feature chip.
     case "whats_new":
       return "text-jigsaw-primary";
     default:
-      return "text-primary";
+      return "text-primary-text";
   }
 }
 

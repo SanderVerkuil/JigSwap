@@ -27,7 +27,7 @@ export function TagInput({
       {value.map((t) => (
         <span
           key={t}
-          className="inline-flex items-center gap-1 rounded-full bg-jigsaw-primary-tint py-0.5 pl-2.5 pr-1.5 text-xs font-semibold text-primary"
+          className="inline-flex items-center gap-1 rounded-full bg-jigsaw-primary-tint py-0.5 pl-2.5 pr-1.5 text-xs font-semibold text-primary-text"
         >
           {t}
           <button

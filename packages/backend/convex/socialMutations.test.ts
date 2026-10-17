@@ -313,7 +313,26 @@ describe("activity feed projection", () => {
       base,
       "solving",
     );
-    // Bob's acquisition (followed).
+    // Bob's acquisition (followed), of an open copy Alice may view (the feed gates it per copy).
+    await t.run(async (ctx) => {
+      const puzzleId = await ctx.db.insert("puzzles", {
+        title: "P",
+        pieceCount: 100,
+        status: "approved",
+        submittedBy: bob,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      await ctx.db.insert("ownedPuzzles", {
+        aggregateId: "copy-bob",
+        puzzleId,
+        ownerId: bob,
+        condition: "good",
+        availability: { forTrade: true, forSale: false, forLend: false },
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
     await insertEvent(
       t,
       "CopyAcquired",

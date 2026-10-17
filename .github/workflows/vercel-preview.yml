@@ -1,0 +1,141 @@
+name: Vercel Preview
+
+permissions:
+  contents: read
+
+# Label-gated Vercel web previews (docs/deployment/convex-preview-deployments.md).
+#
+# apps/web/vercel.json turns off Vercel's Git-integration deploys for every branch except
+# main, so a PR push no longer spends a deployment from the daily quota by itself. (Builds
+# cancelled by an Ignored Build Step still count toward that quota, which is why the gate
+# lives here and not in an ignoreCommand.) Instead this workflow deploys a preview with the
+# Vercel CLI, but only for a PR that carries the `preview` label and is not a draft:
+#   - adding the `preview` label deploys the current head,
+#   - every later push (synchronize) redeploys it while the label stays on,
+#   - marking a labeled draft ready for review deploys it,
+#   - workflow_dispatch deploys any branch by name (no label check).
+# convex-preview.yml uses the same gate, so a Convex preview only exists next to a web one.
+#
+# The build runs remotely on Vercel (`vercel deploy` uploads the source), so the dashboard
+# Build Command (scripts/vercel-build.sh) and the Preview-scoped env vars apply exactly as
+# for a Git-triggered build. The branch is passed explicitly as JIGSWAP_PREVIEW_BRANCH:
+# per the Vercel docs a CLI deployment can lack the Git branch association that sets
+# VERCEL_GIT_COMMIT_REF. The `githubDeployment`/`githubCommitRef` metadata is Vercel's
+# documented way to give a CLI deployment that branch association (branch-scoped Preview
+# env vars and the per-branch URL alias).
+#
+# The Vercel build and convex-preview.yml push to the same Convex preview at the same time;
+# both go through scripts/convex-deploy-retry.sh, which retries only on that race. They
+# stay separate workflows so seeding (dev export + import) never delays the web preview.
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, labeled, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to deploy as a Vercel preview (no label check)"
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    name: Deploy web preview
+    # `labeled` fires for every label; react only when the added one is `preview`.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.draft == false &&
+      contains(github.event.pull_request.labels.*.name, 'preview') &&
+      (github.event.action != 'labeled' || github.event.label.name == 'preview'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # A newer push to the same branch supersedes an in-flight run. Note: cancelling this
+    # job does not cancel a Vercel build that already started.
+    concurrency:
+      group: vercel-preview-${{ github.event_name == 'workflow_dispatch' && inputs.branch || github.head_ref }}
+      cancel-in-progress: true
+    env:
+      BRANCH_NAME: ${{ github.event_name == 'workflow_dispatch' && inputs.branch || github.head_ref }}
+      # Until the owner adds the Vercel secrets, the job is a documented green no-op.
+      # (Fork PRs never receive secrets, so they take this path too.)
+      HAS_VERCEL: ${{ secrets.VERCEL_TOKEN != '' && secrets.VERCEL_ORG_ID != '' && secrets.VERCEL_PROJECT_ID != '' }}
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - name: Skip when the Vercel secrets are not configured
+        if: env.HAS_VERCEL != 'true'
+        run: echo "::notice::VERCEL_TOKEN / VERCEL_ORG_ID / VERCEL_PROJECT_ID not configured — skipping Vercel preview (see docs/deployment/convex-preview-deployments.md)"
+
+      - uses: actions/checkout@v4
+        if: env.HAS_VERCEL == 'true'
+        with:
+          # The PR branch itself, not the pull_request merge ref: the CLI reads Git
+          # metadata from the checkout, and a detached merge commit has no branch.
+          ref: ${{ env.BRANCH_NAME }}
+
+      - uses: actions/setup-node@v4
+        if: env.HAS_VERCEL == 'true'
+        with:
+          node-version: 22
+
+      - name: Deploy preview to Vercel
+        id: deploy
+        if: env.HAS_VERCEL == 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        # Run from the repo root (Vercel: never invoke the CLI from a monorepo
+        # subdirectory); the project's Root Directory setting (apps/web) applies remotely.
+        # The deployment URL is the last line of stdout (progress and logs go to stderr).
+        run: |
+          url="$(npx --yes vercel@62.2.0 deploy --target=preview --yes --logs \
+            --token "$VERCEL_TOKEN" \
+            --build-env "JIGSWAP_PREVIEW_BRANCH=$BRANCH_NAME" \
+            --meta githubDeployment=1 \
+            --meta "githubCommitRef=$BRANCH_NAME" | tail -n 1)"
+          case "$url" in
+            https://*) ;;
+            *) echo "::error::vercel deploy printed no deployment URL (got '$url')"; exit 1 ;;
+          esac
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "::notice::Vercel preview for '$BRANCH_NAME': $url"
+          echo "Vercel preview for \`$BRANCH_NAME\`: $url" >> "$GITHUB_STEP_SUMMARY"
+
+  comment:
+    name: Post preview URL
+    needs: deploy
+    if: needs.deploy.outputs.url != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      BRANCH_NAME: ${{ github.event_name == 'workflow_dispatch' && inputs.branch || github.head_ref }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      PREVIEW_URL: ${{ needs.deploy.outputs.url }}
+      SHA: ${{ github.event.pull_request.head.sha }}
+    # One sticky comment per PR, found by its marker and edited on every deploy.
+    steps:
+      - name: Create or update the sticky comment
+        run: |
+          if [ -z "$PR_NUMBER" ]; then
+            PR_NUMBER="$(gh pr list --repo "$REPO" --head "$BRANCH_NAME" --state open \
+              --json number --jq '.[0].number // empty')"
+          fi
+          if [ -z "$PR_NUMBER" ]; then
+            echo "::notice::No open PR for '$BRANCH_NAME' — not commenting"
+            exit 0
+          fi
+
+          marker='<!-- vercel-preview -->'
+          body="$marker"$'\n'"**Vercel preview** for \`$BRANCH_NAME\`${SHA:+ at ${SHA:0:7}}: $PREVIEW_URL"
+
+          id="$(gh api --paginate "repos/$REPO/issues/$PR_NUMBER/comments" \
+            --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | head -n 1)"
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$id" -f body="$body" > /dev/null
+          else
+            gh api -X POST "repos/$REPO/issues/$PR_NUMBER/comments" -f body="$body" > /dev/null
+          fi

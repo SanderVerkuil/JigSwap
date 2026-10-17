@@ -35,7 +35,8 @@ import { areMutualFollowers, canSeeProfileContent } from "./privacy";
 //                                    (opt-in + mutual-followers-only, filtered below)
 //   CopyAcquired       (Library)  -> "acquisition", member = payload.ownerId, ref = copyId
 //                                    or, with payload.batchId (one acquireCopies call), ONE
-//                                    "acquisitionBatch" per batch, ref = batchId (grouped below)
+//                                    "acquisitionBatch" per batch, ref = batchId (grouped below);
+//                                    both are gated per copy on what the viewer may see
 //   ExchangeCompleted  (Exchange) -> "exchange",    members = both parties (row),  ref = exchangeId
 const FEED_EVENT_NAMES = [
   "CompletionRecorded",
@@ -99,8 +100,9 @@ export const getActivityFeed = query({
       ),
     );
 
-    // batchId -> the copy ids its CopyAcquired events name, collected while mapping.
-    const batchCopyIds = new Map<string, string[]>();
+    // Acquisition entry ref (copyId, or batchId for a grouped batch) -> the copy ids its
+    // CopyAcquired events name, collected while mapping.
+    const entryCopyIds = new Map<string, string[]>();
     const entries: ActivityEntry[] = [];
     for (const batch of eventBatches) {
       for (const event of batch) {
@@ -108,7 +110,7 @@ export const getActivityFeed = query({
           ctx,
           event,
           audience,
-          batchCopyIds,
+          entryCopyIds,
         );
         entries.push(...mapped);
       }
@@ -158,18 +160,18 @@ export const getActivityFeed = query({
         startedActorAllowed.get(e.memberId as string) === true,
     );
 
-    // A grouped batch shows only the copies THIS viewer may see; one with none is dropped. Resolved
-    // BEFORE the limit slice (like "started") so pages are never short.
-    const batchCopies = await visibleBatchCopies(
+    // An acquisition (single or grouped batch) shows only the copies THIS viewer may see; one with
+    // none is dropped. Resolved BEFORE the limit slice (like "started") so pages are never short.
+    const isAcquisition = (e: ActivityEntry) =>
+      e.kind === "acquisition" || e.kind === "acquisitionBatch";
+    const acquiredCopies = await visibleAcquiredCopies(
       ctx,
       meId,
-      visible.filter((e) => e.kind === "acquisitionBatch"),
-      batchCopyIds,
+      visible.filter(isAcquisition),
+      entryCopyIds,
     );
     const shown = visible.filter(
-      (e) =>
-        e.kind !== "acquisitionBatch" ||
-        (batchCopies.get(e.ref)?.length ?? 0) > 0,
+      (e) => !isAcquisition(e) || (acquiredCopies.get(e.ref)?.length ?? 0) > 0,
     );
 
     const feed = buildActivityFeed(shown, {
@@ -195,7 +197,7 @@ export const getActivityFeed = query({
           entry,
           actorNames.get(entry.memberId as string),
           entry.kind === "acquisitionBatch"
-            ? await toBatchView(ctx, batchCopies.get(entry.ref) ?? [])
+            ? await toBatchView(ctx, acquiredCopies.get(entry.ref) ?? [])
             : undefined,
         ),
       ),
@@ -203,20 +205,21 @@ export const getActivityFeed = query({
   },
 });
 
-// The copies of each grouped batch that `viewerId` may see, in pick order. Same two gates as the
-// member's profile puzzles (listProfileCopies), which the entry links to: the profile unlock rule
-// (self, public profile, or mutual follower), then the per-copy canViewCopy gate. A copy that was
-// deleted or has since changed hands no longer counts toward the actor's batch.
-const visibleBatchCopies = async (
+// The copies of each acquisition entry (a single add or a grouped batch) that `viewerId` may see,
+// in pick order. Same two gates as the member's profile puzzles (listProfileCopies), which the entry
+// links to: the profile unlock rule (self, public profile, or mutual follower), then the per-copy
+// canViewCopy gate. A copy that was deleted or has since changed hands no longer counts toward the
+// actor's entry.
+const visibleAcquiredCopies = async (
   ctx: QueryCtx,
   viewerId: Id<"users">,
-  batchEntries: ActivityEntry[],
-  batchCopyIds: Map<string, string[]>,
+  acquisitionEntries: ActivityEntry[],
+  entryCopyIds: Map<string, string[]>,
 ): Promise<Map<string, Doc<"ownedPuzzles">[]>> => {
   const result = new Map<string, Doc<"ownedPuzzles">[]>();
   // Sequential: the context's ownerVisibility memo isn't safe to share across a Promise.all.
   let context: CopyViewContext | null = null;
-  for (const entry of batchEntries) {
+  for (const entry of acquisitionEntries) {
     const actorId = entry.memberId as unknown as Id<"users">;
     const isSelf = actorId === viewerId;
     if (!isSelf && !(await canSeeProfileContent(ctx, viewerId, actorId))) {
@@ -224,7 +227,7 @@ const visibleBatchCopies = async (
       continue;
     }
     // Collected newest-first from the event read; reverse for the order they were picked in.
-    const copyIds = [...(batchCopyIds.get(entry.ref) ?? [])].reverse();
+    const copyIds = [...(entryCopyIds.get(entry.ref) ?? [])].reverse();
     const copies: Doc<"ownedPuzzles">[] = [];
     for (const copyId of copyIds) {
       const copy = await ctx.db
@@ -289,7 +292,7 @@ const toActivityEntries = async (
   ctx: QueryCtx,
   event: Doc<"domainEvents">,
   audience: Set<string>,
-  batchCopyIds: Map<string, string[]>,
+  entryCopyIds: Map<string, string[]>,
 ): Promise<ActivityEntry[]> => {
   const p = event.payload as Record<string, unknown>;
   const occurredAt = new Date(event.occurredAt);
@@ -323,15 +326,19 @@ const toActivityEntries = async (
     case "CopyAcquired": {
       // A batch add (acquireCopies) tags every event with one batch id; they fold into a single
       // "acquisitionBatch" entry (deduped by ref = batchId) instead of one entry per box.
+      // Either way the entry's copies are recorded so the caller can gate it per copy.
+      const copyId = p.copyId as string;
       const batchId = p.batchId;
       if (typeof batchId !== "string") {
-        return make(p.ownerId as string, "acquisition", p.copyId as string);
+        const single = make(p.ownerId as string, "acquisition", copyId);
+        if (single.length > 0) entryCopyIds.set(copyId, [copyId]);
+        return single;
       }
       const grouped = make(p.ownerId as string, "acquisitionBatch", batchId);
       if (grouped.length > 0) {
-        batchCopyIds.set(batchId, [
-          ...(batchCopyIds.get(batchId) ?? []),
-          p.copyId as string,
+        entryCopyIds.set(batchId, [
+          ...(entryCopyIds.get(batchId) ?? []),
+          copyId,
         ]);
       }
       return grouped;
