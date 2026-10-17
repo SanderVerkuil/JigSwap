@@ -242,6 +242,7 @@ import type * as library_transferOnSettlement from "../library/transferOnSettlem
 import type * as library_updateCollection from "../library/updateCollection.js";
 import type * as library_updateCopyDetails from "../library/updateCopyDetails.js";
 import type * as library_updateCopySharing from "../library/updateCopySharing.js";
+import type * as notifications_act from "../notifications/act.js";
 import type * as notifications_adapters_ahasendEmailSender from "../notifications/adapters/ahasendEmailSender.js";
 import type * as notifications_adapters_channels_emailChannel from "../notifications/adapters/channels/emailChannel.js";
 import type * as notifications_adapters_channels_inAppChannel from "../notifications/adapters/channels/inAppChannel.js";
@@ -338,6 +339,7 @@ import type * as social_followMember from "../social/followMember.js";
 import type * as social_followersYouKnow from "../social/followersYouKnow.js";
 import type * as social_getActivityFeed from "../social/getActivityFeed.js";
 import type * as social_getFollowRelation from "../social/getFollowRelation.js";
+import type * as social_getFollowRequesterPreview from "../social/getFollowRequesterPreview.js";
 import type * as social_getHouseholdLinkInvite from "../social/getHouseholdLinkInvite.js";
 import type * as social_getInviteContext from "../social/getInviteContext.js";
 import type * as social_getMyInviteLink from "../social/getMyInviteLink.js";
@@ -649,6 +651,7 @@ declare const fullApi: ApiFromModules<{
   "library/updateCollection": typeof library_updateCollection;
   "library/updateCopyDetails": typeof library_updateCopyDetails;
   "library/updateCopySharing": typeof library_updateCopySharing;
+  "notifications/act": typeof notifications_act;
   "notifications/adapters/ahasendEmailSender": typeof notifications_adapters_ahasendEmailSender;
   "notifications/adapters/channels/emailChannel": typeof notifications_adapters_channels_emailChannel;
   "notifications/adapters/channels/inAppChannel": typeof notifications_adapters_channels_inAppChannel;
@@ -745,6 +748,7 @@ declare const fullApi: ApiFromModules<{
   "social/followersYouKnow": typeof social_followersYouKnow;
   "social/getActivityFeed": typeof social_getActivityFeed;
   "social/getFollowRelation": typeof social_getFollowRelation;
+  "social/getFollowRequesterPreview": typeof social_getFollowRequesterPreview;
   "social/getHouseholdLinkInvite": typeof social_getHouseholdLinkInvite;
   "social/getInviteContext": typeof social_getInviteContext;
   "social/getMyInviteLink": typeof social_getMyInviteLink;

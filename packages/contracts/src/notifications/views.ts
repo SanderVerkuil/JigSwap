@@ -105,3 +105,27 @@ export interface NotificationView {
   /** Empty unless state === "actionable". */
   availableActions: NotificationActionKind[];
 }
+
+/**
+ * The inline actions notifications.act performs. reply_message is not one: the web posts the reply
+ * through the conversation context directly.
+ */
+export type NotificationActAction = Exclude<
+  NotificationActionKind,
+  "reply_message"
+>;
+
+/** notifications.act's result: the row's resolved state after the action. */
+export interface NotificationActResult {
+  resolvedAs: NotificationResolvedAs;
+}
+
+/**
+ * The ConvexError data notifications.act throws when the action is no longer available (done
+ * elsewhere, withdrawn, grouped row). `resolvedAs` is the row's current resolved state, when it has
+ * one; the UI renders that chip instead of an error.
+ */
+export type NotificationActionStaleError = {
+  code: "NOTIFICATION_ACTION_STALE";
+  resolvedAs?: NotificationResolvedAs;
+};

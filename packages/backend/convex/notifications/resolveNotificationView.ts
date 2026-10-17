@@ -96,6 +96,32 @@ const follows = (
     return edge !== null;
   });
 
+/**
+ * A requester -> target pair's current follow request. A pair can hold several rows (a declined
+ * request followed by a new one), so prefer the pending row, else the newest. Shared with
+ * notifications.act so both target the same request.
+ */
+export const currentFollowRequest = async (
+  ctx: QueryCtx,
+  requesterId: Id<"users">,
+  targetId: Id<"users">,
+): Promise<Doc<"followRequests"> | null> => {
+  const rows = await ctx.db
+    .query("followRequests")
+    .withIndex("by_requester_target", (q) =>
+      q.eq("requesterId", requesterId).eq("targetId", targetId),
+    )
+    .collect();
+  return (
+    rows.find((row) => row.status === "pending") ??
+    rows.reduce<Doc<"followRequests"> | null>(
+      (newest, row) =>
+        !newest || row.createdAt > newest.createdAt ? row : newest,
+      null,
+    )
+  );
+};
+
 const latestRequest = (
   ctx: QueryCtx,
   cache: NotificationViewCache,
@@ -103,12 +129,7 @@ const latestRequest = (
   targetId: Id<"users">,
 ) =>
   memoized(cache, `request:${requesterId}>${targetId}`, () =>
-    ctx.db
-      .query("followRequests")
-      .withIndex("by_requester_target", (q) =>
-        q.eq("requesterId", requesterId).eq("targetId", targetId),
-      )
-      .first(),
+    currentFollowRequest(ctx, requesterId, targetId),
   );
 
 // viewer -> target request reads as pending, with the same silent-decline masking as
