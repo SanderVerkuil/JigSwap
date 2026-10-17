@@ -136,4 +136,17 @@ describe("toWebPushPayload", () => {
       url: "/messages",
     });
   });
+
+  test("uses the resolved deep link when given, else the per-type URL", () => {
+    const base = {
+      title: "New message",
+      message: "Hi",
+      type: "message_received",
+      relatedId: "thread-1",
+    };
+    expect(toWebPushPayload({ ...base, url: "/messages/thread-1" }).url).toBe(
+      "/messages/thread-1",
+    );
+    expect(toWebPushPayload({ ...base, url: null }).url).toBe("/messages");
+  });
 });

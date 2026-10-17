@@ -90,6 +90,8 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
     "@types/hast": "^3.0.5",
     "@types/negotiator": "^0.6.5",
     "@types/react": "^19.3.0",
@@ -97,7 +99,7 @@
     "@types/three": "^0.186.0",
     "@vitejs/plugin-react": "^6.1.2",
     "fast-glob": "^3.3.3",
-    "happy-dom": "20.14.4",
+    "happy-dom": "^21.0.3",
     "nitro": "3.0.260903-beta",
     "parse5": "7.3.0",
     "rollup-plugin-visualizer": "^7.1.1",

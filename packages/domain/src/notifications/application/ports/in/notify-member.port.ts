@@ -3,6 +3,7 @@ import {
   Channel,
   MemberId,
   NotificationId,
+  NotificationSubject,
   NotificationType,
 } from "../../../domain";
 
@@ -11,11 +12,15 @@ import {
 // type's copy; rendering happens at the edges (web, email), not in Notifications (Notifications owns
 // delivery + preferences, not copywriting policy of other contexts). `channels` optionally narrows
 // the fan-out to a subset; omitted ⇒ consider all channels, gated by the member's preference.
+// `actorId`/`subject` are optional opaque references (who caused it, what it is about) copied onto
+// every created notification, whatever the channel.
 export interface NotifyMemberCommand {
   readonly memberId: MemberId;
   readonly type: NotificationType;
   readonly params?: Readonly<Record<string, string>>;
   readonly relatedId?: string;
+  readonly actorId?: MemberId;
+  readonly subject?: NotificationSubject;
   readonly channels?: readonly Channel[];
 }
 

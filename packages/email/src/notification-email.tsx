@@ -15,6 +15,8 @@ import {
 export interface NotificationEmailProps {
   readonly heading: string;
   readonly body: string;
+  /** Optional second paragraph with resolved context (a message preview, a rating). */
+  readonly detail?: string;
   readonly ctaLabel: string;
   readonly ctaUrl: string;
   readonly footerText: string;
@@ -62,8 +64,8 @@ const styles = {
 };
 
 // The single shared layout for all JigSwap notification emails: brand line, heading, one body
-// paragraph, one CTA button, and the mandatory preferences footer. Per-type variation lives in
-// the copy catalog, not in components.
+// paragraph (plus an optional context paragraph), one CTA button, and the mandatory preferences
+// footer. Per-type variation lives in the copy catalog, not in components.
 export const NotificationEmail = (props: NotificationEmailProps) => (
   <Html>
     <Head />
@@ -75,6 +77,7 @@ export const NotificationEmail = (props: NotificationEmailProps) => (
           {props.heading}
         </Heading>
         <Text style={styles.text}>{props.body}</Text>
+        {props.detail ? <Text style={styles.text}>{props.detail}</Text> : null}
         <Section>
           <Button href={props.ctaUrl} style={styles.button}>
             {props.ctaLabel}

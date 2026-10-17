@@ -112,7 +112,9 @@ describe("whatsNew.publishPending", () => {
       relatedId: "households",
       channel: "inApp",
       isRead: false,
+      subject: { kind: "whatsNew", entryId: "households" },
     });
+    expect(rows[0]?.actorIds).toBeUndefined();
   });
 
   test("never notifies an account created after publishedAt", async () => {

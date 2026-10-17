@@ -3,10 +3,12 @@ import type { Notification } from "@jigswap/domain";
 import { internal } from "../../../_generated/api";
 import type { Id } from "../../../_generated/dataModel";
 import type { MutationCtx } from "../../../_generated/server";
+import { deliveryRefsOf } from "../../deliveryContent";
 
 // Email channel: resolves the recipient's email/name/language and schedules the out-of-band send
-// (notifications/sendEmail) after commit. The action renders the localized template — this channel
-// only forwards structure (type + params + locale). Scheduling keeps the delivering mutation
+// (notifications/sendEmail) after commit. The action resolves the delivery for the recipient (actor,
+// live context, deep link) and renders the localized template — this channel only forwards
+// structure (type + params + refs + locale). Scheduling keeps the delivering mutation
 // transactional; a mutation rollback also rolls the schedule back, so the notification's
 // aggregateId doubles as a safe idempotency key.
 export const emailChannel =
@@ -30,5 +32,7 @@ export const emailChannel =
       locale: user.preferredLanguage === "nl" ? "nl" : "en",
       relatedId: state.relatedId,
       idempotencyKey: state.id as string,
+      userId: user._id,
+      ...deliveryRefsOf(state),
     });
   };

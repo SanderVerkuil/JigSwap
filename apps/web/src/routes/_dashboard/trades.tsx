@@ -13,6 +13,7 @@ import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
+import { validateTradesSearch } from "@/lib/trades-search";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -27,7 +28,7 @@ import {
   User,
   XCircle,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFormatter, useTranslations } from "use-intl";
 
 type ExchangeStatus =
@@ -44,6 +45,7 @@ type ExchangeTab = "all" | "incoming" | "outgoing" | "completed" | "borrowed";
 type Direction = "incoming" | "outgoing";
 
 export const Route = createFileRoute("/_dashboard/trades")({
+  validateSearch: validateTradesSearch,
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "trades") }],
   }),
@@ -90,6 +92,7 @@ function ExchangesPage() {
   const t = useTranslations("trades");
   const tCommon = useTranslations("common");
   const tLending = useTranslations("lending");
+  const { exchange: focusedExchange } = Route.useSearch();
 
   const [tab, setTab] = useState<ExchangeTab>("all");
   const [statusFilter, setStatusFilter] = useState<ExchangeStatus | "all">(
@@ -204,16 +207,24 @@ function ExchangesPage() {
         />
       ) : (
         <div className="flex flex-col">
-          {rows.map(({ exchange, direction }, index) => (
-            <ExchangeListRow
-              key={`${exchange._id}-${direction}`}
-              exchange={exchange}
-              direction={direction}
-              gradientIndex={index}
-              viewerId={convexUser?._id}
-              isLast={index === rows.length - 1}
-            />
-          ))}
+          {rows.map(({ exchange, direction }, index) => {
+            const focused =
+              focusedExchange !== undefined &&
+              (exchange.aggregateId === focusedExchange ||
+                exchange._id === focusedExchange);
+            return (
+              <ExchangeListRow
+                // Re-mount when the deep-linked exchange changes so it opens.
+                key={`${exchange._id}-${direction}-${focused}`}
+                focused={focused}
+                exchange={exchange}
+                direction={direction}
+                gradientIndex={index}
+                viewerId={convexUser?._id}
+                isLast={index === rows.length - 1}
+              />
+            );
+          })}
         </div>
       )}
     </div>
@@ -232,7 +243,9 @@ function ExchangeListRow({
   gradientIndex,
   viewerId,
   isLast,
+  focused = false,
 }: {
+  focused?: boolean;
   exchange: ExchangeRow;
   direction: Direction;
   gradientIndex: number;
@@ -243,7 +256,11 @@ function ExchangeListRow({
   const displayName = useMemberDisplayName();
   const tCommon = useTranslations("common");
   const format = useFormatter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(focused);
+  const rowRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (focused) rowRef.current?.scrollIntoView({ block: "center" });
+  }, [focused]);
 
   const incoming = direction === "incoming";
   // On an exchange the REQUESTED puzzle belongs to the owner, the OFFERED one
@@ -262,7 +279,16 @@ function ExchangeListRow({
   const KindIcon = KIND_ICONS[exchange.type] ?? ArrowLeftRight;
 
   return (
-    <div className={cn("py-3", !isLast && "border-b")}>
+    <div
+      ref={rowRef}
+      data-focused={focused || undefined}
+      className={cn(
+        "py-3",
+        !isLast && "border-b",
+        focused &&
+          "bg-jigsaw-primary/5 ring-jigsaw-primary/40 -mx-3 rounded-lg px-3 ring-2",
+      )}
+    >
       <div className="flex items-center gap-3.5">
         <CoverChip icon={KindIcon} size={44} gradientIndex={gradientIndex} />
         <div className="min-w-0 flex-1">

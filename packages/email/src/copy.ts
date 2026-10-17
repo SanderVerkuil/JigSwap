@@ -24,6 +24,15 @@ export interface EmailCopy {
   readonly heading: string;
   readonly body: string;
   readonly cta: string;
+  /**
+   * Replaces `body` when every context token in it (any token other than {actorName}, which always
+   * has a fallback) has a value in the render params, i.e. the live context resolved at send time.
+   */
+  readonly richBody?: string;
+  /** An extra paragraph, rendered only when every token in it has a value in the render params. */
+  readonly detail?: string;
+  /** Replaces `cta` when the button deep-links to the specific item rather than its list page. */
+  readonly deepCta?: string;
 }
 
 // Locale-appropriate fallbacks merged UNDER params at render time, so copy may reference
@@ -31,6 +40,12 @@ export interface EmailCopy {
 export const DEFAULT_PARAMS: Record<EmailLocale, Record<string, string>> = {
   en: { actorName: "Someone", goalTitle: "your goal", puzzleTitle: "a puzzle" },
   nl: { actorName: "Iemand", goalTitle: "je doel", puzzleTitle: "een puzzel" },
+};
+
+// The actor label for a deleted or deactivated member: never their old name, avatar or handle.
+export const FORMER_MEMBER: Record<EmailLocale, string> = {
+  en: "Former member",
+  nl: "Voormalig lid",
 };
 
 export const FOOTER: Record<EmailLocale, { text: string; linkLabel: string }> =
@@ -52,12 +67,16 @@ export const EMAIL_COPY: Record<EmailType, Record<EmailLocale, EmailCopy>> = {
       heading: "New trade request",
       body: "{actorName} wants to trade for one of your puzzles.",
       cta: "View trade requests",
+      richBody: "{actorName} wants to trade for “{puzzleTitle}”.",
+      deepCta: "View trade request",
     },
     nl: {
       subject: "Nieuw ruilverzoek op JigSwap",
       heading: "Nieuw ruilverzoek",
       body: "{actorName} wil ruilen voor een van je puzzels.",
       cta: "Bekijk ruilverzoeken",
+      richBody: "{actorName} wil ruilen voor “{puzzleTitle}”.",
+      deepCta: "Bekijk ruilverzoek",
     },
   },
   trade_accepted: {
@@ -66,12 +85,18 @@ export const EMAIL_COPY: Record<EmailType, Record<EmailLocale, EmailCopy>> = {
       heading: "Trade request accepted",
       body: "Good news — your trade request has been accepted! Time to arrange the exchange.",
       cta: "View trades",
+      richBody:
+        "Good news — {actorName} accepted your trade request for “{puzzleTitle}”! Time to arrange the exchange.",
+      deepCta: "View trade",
     },
     nl: {
       subject: "Je ruilverzoek is geaccepteerd",
       heading: "Ruilverzoek geaccepteerd",
       body: "Goed nieuws — je ruilverzoek is geaccepteerd! Tijd om de ruil te regelen.",
       cta: "Bekijk uitwisselingen",
+      richBody:
+        "Goed nieuws — {actorName} heeft je ruilverzoek voor “{puzzleTitle}” geaccepteerd! Tijd om de ruil te regelen.",
+      deepCta: "Bekijk ruil",
     },
   },
   trade_declined: {
@@ -80,12 +105,18 @@ export const EMAIL_COPY: Record<EmailType, Record<EmailLocale, EmailCopy>> = {
       heading: "Trade request declined",
       body: "Unfortunately your trade request has been declined.",
       cta: "View trades",
+      richBody:
+        "Unfortunately {actorName} declined your trade request for “{puzzleTitle}”.",
+      deepCta: "View trade",
     },
     nl: {
       subject: "Je ruilverzoek is afgewezen",
       heading: "Ruilverzoek afgewezen",
       body: "Helaas is je ruilverzoek afgewezen.",
       cta: "Bekijk uitwisselingen",
+      richBody:
+        "Helaas heeft {actorName} je ruilverzoek voor “{puzzleTitle}” afgewezen.",
+      deepCta: "Bekijk ruil",
     },
   },
   trade_completed: {
@@ -94,12 +125,18 @@ export const EMAIL_COPY: Record<EmailType, Record<EmailLocale, EmailCopy>> = {
       heading: "Trade completed",
       body: "Your exchange has been marked as completed. Enjoy the puzzle!",
       cta: "View trades",
+      richBody:
+        "Your exchange of “{puzzleTitle}” with {actorName} has been marked as completed. Enjoy the puzzle!",
+      deepCta: "View trade",
     },
     nl: {
       subject: "Je ruil is afgerond",
       heading: "Ruil afgerond",
       body: "Je ruil is gemarkeerd als afgerond. Veel puzzelplezier!",
       cta: "Bekijk uitwisselingen",
+      richBody:
+        "Je ruil van “{puzzleTitle}” met {actorName} is gemarkeerd als afgerond. Veel puzzelplezier!",
+      deepCta: "Bekijk ruil",
     },
   },
   trade_cancelled: {
@@ -108,12 +145,17 @@ export const EMAIL_COPY: Record<EmailType, Record<EmailLocale, EmailCopy>> = {
       heading: "Trade cancelled",
       body: "A trade request involving you has been cancelled.",
       cta: "View trades",
+      richBody: "{actorName} cancelled the trade request for “{puzzleTitle}”.",
+      deepCta: "View trade",
     },
     nl: {
       subject: "Een ruil is geannuleerd",
       heading: "Ruil geannuleerd",
       body: "Een ruilverzoek waar jij bij betrokken bent is geannuleerd.",
       cta: "Bekijk uitwisselingen",
+      richBody:
+        "{actorName} heeft het ruilverzoek voor “{puzzleTitle}” geannuleerd.",
+      deepCta: "Bekijk ruil",
     },
   },
   message_received: {
@@ -122,12 +164,14 @@ export const EMAIL_COPY: Record<EmailType, Record<EmailLocale, EmailCopy>> = {
       heading: "New message",
       body: "{actorName} sent you a message on JigSwap.",
       cta: "Read message",
+      detail: "“{messagePreview}”",
     },
     nl: {
       subject: "Nieuw bericht van {actorName} op JigSwap",
       heading: "Nieuw bericht",
       body: "{actorName} heeft je een bericht gestuurd op JigSwap.",
       cta: "Lees bericht",
+      detail: "“{messagePreview}”",
     },
   },
   review_received: {
@@ -136,12 +180,17 @@ export const EMAIL_COPY: Record<EmailType, Record<EmailLocale, EmailCopy>> = {
       heading: "New review",
       body: "A trade partner left you a review.",
       cta: "View your profile",
+      richBody: "{actorName} left you a review after your trade.",
+      detail: "Rating: {rating} out of 5",
     },
     nl: {
       subject: "Je hebt een nieuwe beoordeling ontvangen",
       heading: "Nieuwe beoordeling",
       body: "Een ruilpartner heeft een beoordeling voor je achtergelaten.",
       cta: "Bekijk je profiel",
+      richBody:
+        "{actorName} heeft een beoordeling voor je achtergelaten na jullie ruil.",
+      detail: "Waardering: {rating} van 5",
     },
   },
   puzzle_favorited: {
@@ -178,12 +227,14 @@ export const EMAIL_COPY: Record<EmailType, Record<EmailLocale, EmailCopy>> = {
       heading: "New follower",
       body: "{actorName} started following you on JigSwap.",
       cta: "View people",
+      deepCta: "View profile",
     },
     nl: {
       subject: "{actorName} volgt je nu op JigSwap",
       heading: "Nieuwe volger",
       body: "{actorName} is je gaan volgen op JigSwap.",
       cta: "Bekijk leden",
+      deepCta: "Bekijk profiel",
     },
   },
   follow_request_received: {
@@ -206,12 +257,14 @@ export const EMAIL_COPY: Record<EmailType, Record<EmailLocale, EmailCopy>> = {
       heading: "Follow request approved",
       body: "{actorName} approved your follow request. You can now see their profile and puzzles.",
       cta: "View people",
+      deepCta: "View profile",
     },
     nl: {
       subject: "Je volgverzoek is goedgekeurd",
       heading: "Volgverzoek goedgekeurd",
       body: "{actorName} heeft je volgverzoek goedgekeurd. Je kunt nu hun profiel en puzzels bekijken.",
       cta: "Bekijk leden",
+      deepCta: "Bekijk profiel",
     },
   },
 };

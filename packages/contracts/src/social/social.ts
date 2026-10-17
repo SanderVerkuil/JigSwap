@@ -170,6 +170,26 @@ export interface PublicMemberTeaserView {
 }
 
 /**
+ * Who is asking to follow the viewer: the minimal identity the target of a PENDING follow request
+ * may see to decide Approve/Decline, even when the requester's profile is private. Identity only —
+ * never email, bio, location, counts or follower lists. Null unless the requester has a pending
+ * request to the viewer.
+ */
+export interface FollowRequesterPreviewView {
+  memberId: string;
+  /** Resolved server-side (profile displayName → account name → username, never email); absent = render the generic member label. */
+  displayName?: string;
+  /** The /members/$handle param (slug, else username, else the member id). */
+  handle: string;
+  avatar?: string;
+  /** users.createdAt (ms). */
+  memberSince: number;
+  visibility: "public" | "private";
+  /** When the pending request was sent (ms). */
+  requestedAt: number;
+}
+
+/**
  * The identity card shown on the public member profile, disclosed regardless of lock state (an
  * Instagram-style private-account header: name, avatar, follow counts, and rating are always
  * visible; only the deeper `story`/`stats`/`records` are gated). `avatar` is consent-gated for

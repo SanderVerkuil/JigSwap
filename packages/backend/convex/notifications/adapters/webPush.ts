@@ -133,16 +133,18 @@ export const notificationUrl = (type: string, relatedId?: string): string => {
 };
 
 // Map a delivered notification's facts to the SW payload (+ click URL). Centralised so the action
-// and the tests agree on the wire shape.
+// and the tests agree on the wire shape. `url` is the resolved in-app deep link
+// (notifications/resolveForDelivery); absent or null falls back to the per-type notificationUrl.
 export const toWebPushPayload = (n: {
   title: string;
   message: string;
   type: string;
   relatedId?: string;
+  url?: string | null;
 }): WebPushPayload => ({
   title: n.title,
   body: n.message,
   type: n.type,
   relatedId: n.relatedId,
-  url: notificationUrl(n.type, n.relatedId),
+  url: n.url ?? notificationUrl(n.type, n.relatedId),
 });

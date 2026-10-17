@@ -1766,7 +1766,6 @@
     "seeAll": "Alle meldingen bekijken",
     "empty": "Nog geen meldingen",
     "emptyHint": "Ruilactiviteit, beoordelingen en doelmijlpalen verschijnen hier.",
-    "unread": "Ongelezen",
     "unreadStat": "Ongelezen",
     "filterAll": "Alle",
     "unreadOnly": "Alleen ongelezen",
@@ -1981,7 +1980,148 @@
       "household_invite_accepted": "Wanneer iemand je uitnodiging voor het huishouden accepteert.",
       "whats_new": "Wanneer een nieuwe functie of wijziging in JigSwap wordt aangekondigd."
     },
-    "pushServiceUnreachable": "Je browser kon zijn pushdienst niet bereiken. Sommige privacybrowsers blokkeren of verwijderen die — Brave schakelt het standaard uit (zet 'Google-services voor pushberichten gebruiken' aan in Instellingen), en de-Googled Chromium-browsers zoals Helium verwijderen het. Firefox, Chrome of Edge werkt wel."
+    "pushServiceUnreachable": "Je browser kon zijn pushdienst niet bereiken. Sommige privacybrowsers blokkeren of verwijderen die — Brave schakelt het standaard uit (zet 'Google-services voor pushberichten gebruiken' aan in Instellingen), en de-Googled Chromium-browsers zoals Helium verwijderen het. Firefox, Chrome of Edge werkt wel.",
+    "rich": {
+      "formerMember": "Voormalig lid",
+      "unread": "Ongelezen, ",
+      "unavailable": "Niet meer beschikbaar",
+      "loadMore": "Meer laden",
+      "moreActions": "Meer acties voor {actor}",
+      "undo": "Ongedaan maken",
+      "followedToast": "Je volgt {actor} nu.",
+      "requestedToast": "Volgverzoek verstuurd naar {actor}.",
+      "undoError": "Ongedaan maken is mislukt. Probeer het opnieuw.",
+      "context": {
+        "reason": "Reden: {reason}",
+        "rating": "{rating} van de 5 sterren",
+        "messagePreview": "“{preview}”"
+      },
+      "requester": {
+        "viewProfile": "Profiel bekijken",
+        "viewProfileAria": "Profielsamenvatting van {actor} bekijken",
+        "memberSince": "Lid sinds {date}",
+        "public": "Openbaar profiel",
+        "private": "Privéprofiel",
+        "openProfile": "Profiel openen"
+      },
+      "trade_request": {
+        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> wil ruilen voor <b>{puzzle}</b>.} other {<b>{actor}</b> wil ruilen voor een van je puzzels.}}"
+      },
+      "trade_accepted": {
+        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> heeft je ruil voor <b>{puzzle}</b> geaccepteerd.} other {<b>{actor}</b> heeft je ruilverzoek geaccepteerd.}}"
+      },
+      "trade_declined": {
+        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> heeft je ruil voor <b>{puzzle}</b> afgewezen.} other {<b>{actor}</b> heeft je ruilverzoek afgewezen.}}"
+      },
+      "trade_cancelled": {
+        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> heeft de ruil voor <b>{puzzle}</b> geannuleerd.} other {<b>{actor}</b> heeft de ruil geannuleerd.}}"
+      },
+      "trade_completed": {
+        "sentence": "Je ruil met <b>{actor}</b> is voltooid."
+      },
+      "exchange_disputed": {
+        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> heeft een probleem gemeld met je ruil voor <b>{puzzle}</b>.} other {<b>{actor}</b> heeft een probleem gemeld met je ruil.}}"
+      },
+      "message_received": {
+        "sentence": "<b>{actor}</b> heeft je een bericht gestuurd.",
+        "actions": {
+          "reply": "Beantwoorden",
+          "replyAria": "{actor} beantwoorden"
+        }
+      },
+      "review_received": {
+        "sentence": "<b>{actor}</b> heeft je ruil beoordeeld."
+      },
+      "goal_achieved": {
+        "sentence": "{hasGoal, select, yes {Je hebt <b>{goal}</b> bereikt!} other {Je hebt een van je doelen bereikt!}}"
+      },
+      "puzzle_approved": {
+        "sentence": "{hasPuzzle, select, yes {Je puzzel <b>{puzzle}</b> is goedgekeurd.} other {Je puzzelinzending is goedgekeurd.}}"
+      },
+      "puzzle_rejected": {
+        "sentence": "{hasPuzzle, select, yes {Je puzzel <b>{puzzle}</b> is afgewezen.} other {Je puzzelinzending is afgewezen.}}"
+      },
+      "proposal_approved": {
+        "sentence": "{hasPuzzle, select, yes {Je voorgestelde wijziging aan <b>{puzzle}</b> staat nu live.} other {Je voorgestelde wijziging staat nu live.}}"
+      },
+      "proposal_rejected": {
+        "sentence": "{hasPuzzle, select, yes {Je voorgestelde wijziging aan <b>{puzzle}</b> is afgewezen.} other {Je voorgestelde wijziging is afgewezen.}}"
+      },
+      "photo_removed": {
+        "sentence": "{hasPuzzle, select, yes {Een moderator heeft een foto van <b>{puzzle}</b> verwijderd.} other {Een moderator heeft een van je puzzelfoto's verwijderd.}}"
+      },
+      "admin_proposal_filed": {
+        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> heeft een wijziging voor <b>{puzzle}</b> voorgesteld.} other {<b>{actor}</b> heeft een wijziging voor een cataloguspuzzel voorgesteld.}}"
+      },
+      "admin_definition_submitted": {
+        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> heeft <b>{puzzle}</b> ingediend voor moderatie.} other {<b>{actor}</b> heeft een nieuwe puzzel ingediend voor moderatie.}}"
+      },
+      "new_follower": {
+        "sentence": "<b>{actor}</b> volgt je nu.",
+        "sentenceGrouped": "{others, plural, =0 {<b>{actor}</b> en <b>{actor2}</b> volgen je nu.} one {<b>{actor}</b>, <b>{actor2}</b> en # ander volgen je nu.} other {<b>{actor}</b>, <b>{actor2}</b> en # anderen volgen je nu.}}",
+        "actions": {
+          "followBack": "Terugvolgen",
+          "followBackAria": "{actor} terugvolgen",
+          "followBackError": "Kon {actor} niet volgen. Probeer het opnieuw."
+        },
+        "resolved": {
+          "following_each_other": "Jullie volgen elkaar",
+          "following": "Je volgt",
+          "requested": "Aangevraagd"
+        }
+      },
+      "follow_request_received": {
+        "sentence": "<b>{actor}</b> wil je graag volgen.",
+        "actions": {
+          "approve": "Goedkeuren",
+          "approveAria": "Volgverzoek van {actor} goedkeuren",
+          "approveError": "Kon het verzoek van {actor} niet goedkeuren. Probeer het opnieuw.",
+          "approveAndFollowBack": "Goedkeuren en terugvolgen",
+          "approveAndFollowBackAria": "Volgverzoek van {actor} goedkeuren en terugvolgen",
+          "approveAndFollowBackError": "Kon het verzoek van {actor} niet goedkeuren. Probeer het opnieuw.",
+          "decline": "Afwijzen",
+          "declineAria": "Volgverzoek van {actor} afwijzen",
+          "declineError": "Kon het verzoek van {actor} niet afwijzen. Probeer het opnieuw."
+        },
+        "resolved": {
+          "approved": "Goedgekeurd",
+          "declined": "Afgewezen",
+          "expired": "Verzoek ingetrokken"
+        }
+      },
+      "follow_request_approved": {
+        "sentence": "<b>{actor}</b> heeft je volgverzoek goedgekeurd.",
+        "actions": {
+          "followBack": "Terugvolgen",
+          "followBackAria": "{actor} terugvolgen",
+          "followBackError": "Kon {actor} niet volgen. Probeer het opnieuw."
+        },
+        "resolved": {
+          "following_each_other": "Jullie volgen elkaar",
+          "following": "Je volgt",
+          "requested": "Aangevraagd"
+        }
+      },
+      "household_invite_received": {
+        "sentence": "<b>{actor}</b> heeft je uitgenodigd voor hun huishouden.",
+        "actions": {
+          "accept": "Accepteren",
+          "acceptAria": "Uitnodiging van {actor} voor het huishouden accepteren",
+          "acceptError": "Kon de uitnodiging van {actor} niet accepteren. Probeer het opnieuw.",
+          "decline": "Afwijzen",
+          "declineAria": "Uitnodiging van {actor} voor het huishouden afwijzen",
+          "declineError": "Kon de uitnodiging van {actor} niet afwijzen. Probeer het opnieuw."
+        },
+        "resolved": {
+          "joined": "Lid geworden",
+          "declined": "Afgewezen",
+          "expired": "Uitnodiging verlopen of ingetrokken"
+        }
+      },
+      "household_invite_accepted": {
+        "sentence": "<b>{actor}</b> is lid geworden van je huishouden."
+      }
+    }
   },
   "solving": {
     "title": "Oplossen",

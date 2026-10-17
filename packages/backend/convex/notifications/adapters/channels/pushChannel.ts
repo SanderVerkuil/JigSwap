@@ -3,11 +3,13 @@ import { internal } from "../../../_generated/api";
 import type { Id } from "../../../_generated/dataModel";
 import type { MutationCtx } from "../../../_generated/server";
 import { renderNotificationText } from "../../copy";
+import { deliveryRefsOf } from "../../deliveryContent";
 
 // Web Push channel: schedules the out-of-band send (notifications/sendWebPush) after commit, which
-// fans the notification out to every active push subscription of the recipient via VAPID. Copy is
-// rendered HERE from the structured type+params (English-only by design — push localization is out
-// of scope); the notification row itself carries no pre-rendered strings anymore. No-ops downstream
+// fans the notification out to every active push subscription of the recipient via VAPID. The
+// action re-renders the copy from the delivery resolved for the recipient (actor, live context,
+// deep link); the snapshot title/message rendered HERE from type+params stay as the args the action
+// has always taken. English-only by design (push localization is out of scope). No-ops downstream
 // when push is unconfigured or the member has no subscriptions.
 export const pushChannel =
   (ctx: MutationCtx) =>
@@ -23,5 +25,7 @@ export const pushChannel =
       title,
       message,
       relatedId: state.relatedId,
+      params: (state.params ?? {}) as Record<string, string>,
+      ...deliveryRefsOf(state),
     });
   };

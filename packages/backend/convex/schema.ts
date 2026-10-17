@@ -826,8 +826,40 @@ export default defineSchema({
     channel: v.optional(v.string()),
     isRead: v.boolean(),
     createdAt: v.number(),
+    // Structured references the read side resolves live (names, avatars, status), so the row never
+    // has to snapshot them. All optional: legacy rows carry none. `actorIds` is newest first;
+    // `actorCount` is the total distinct actors (>= actorIds.length once rows are grouped).
+    actorIds: v.optional(v.array(v.id("users"))),
+    actorCount: v.optional(v.number()),
+    // What the notification is about (mirrors the domain NotificationSubject). Exchange, thread,
+    // follow request, invite, household, review, proposal and whats-new ids are opaque aggregate
+    // ids; puzzle/copy/goal are the Convex `_id`s every producer already holds.
+    subject: v.optional(
+      v.union(
+        v.object({ kind: v.literal("exchange"), exchangeId: v.string() }),
+        v.object({ kind: v.literal("thread"), threadId: v.string() }),
+        v.object({ kind: v.literal("followRequest"), requestId: v.string() }),
+        v.object({ kind: v.literal("householdInvite"), inviteId: v.string() }),
+        v.object({ kind: v.literal("household"), householdId: v.string() }),
+        v.object({ kind: v.literal("puzzle"), puzzleId: v.id("puzzles") }),
+        v.object({ kind: v.literal("copy"), copyId: v.id("ownedPuzzles") }),
+        v.object({ kind: v.literal("goal"), goalId: v.id("goals") }),
+        v.object({ kind: v.literal("review"), reviewId: v.string() }),
+        v.object({
+          kind: v.literal("changeProposal"),
+          proposalId: v.string(),
+        }),
+        v.object({ kind: v.literal("whatsNew"), entryId: v.string() }),
+      ),
+    ),
+    // Grouping (write-time merge of e.g. new_follower rows): the group a row belongs to and the
+    // last time it absorbed an actor. Absent = never grouped.
+    groupKey: v.optional(v.string()),
+    updatedAt: v.optional(v.number()),
   })
     .index("by_user", ["userId"])
+    .index("by_user_read", ["userId", "isRead"])
+    .index("by_user_group", ["userId", "groupKey", "isRead"])
     .index("by_type", ["type"])
     .index("by_read_status", ["isRead"])
     .index("by_created_at", ["createdAt"])

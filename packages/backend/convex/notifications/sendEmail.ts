@@ -2,10 +2,12 @@
 
 import { isEmailType, renderEmail, type EmailLocale } from "@jigswap/email";
 import { v } from "convex/values";
+import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
 import { ingestToAxiom } from "../lib/axiom";
 import { logEvent, type WideEvent } from "../lib/logEvent";
 import { makeEmailSenderFromEnv } from "./adapters/email";
+import { deliveryRefsValidator, type DeliveryContent } from "./deliveryContent";
 
 const errMsg = (e: unknown): string =>
   e instanceof Error ? e.message : String(e);
@@ -13,9 +15,12 @@ const errMsg = (e: unknown): string =>
 // Out-of-band email delivery for ONE notification, scheduled (runAfter 0) by the email channel
 // after the originating mutation commits. Renders the localized react-email template here (the
 // recipient's language travels with the args) and hands the rendered message to the configured
-// EmailSender (AhaSend, or the no-op when unconfigured). FAIL-OPEN: any failure is logged as a
-// wide event and dropped — the in-app row already exists, and Convex-scheduled actions run at
-// most once (no retry), which the spec accepts for notification email.
+// EmailSender (AhaSend, or the no-op when unconfigured). Payloads carrying the recipient (`userId`)
+// are first resolved for them (notifications/resolveForDelivery: the in-app read model's actor,
+// live context and deep link); older payloads render from their params snapshot. FAIL-OPEN: any
+// failure is logged as a wide event and dropped — the in-app row already exists, and
+// Convex-scheduled actions run at most once (no retry), which the spec accepts for notification
+// email.
 export const send = internalAction({
   args: {
     to: v.string(),
@@ -25,8 +30,11 @@ export const send = internalAction({
     locale: v.string(),
     relatedId: v.optional(v.string()),
     idempotencyKey: v.string(),
+    // Optional so a payload scheduled before rich delivery still validates (snapshot render).
+    userId: v.optional(v.id("users")),
+    ...deliveryRefsValidator,
   },
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
     const startedAt = Date.now();
     const event: WideEvent = {
       event: "notifications.email",
@@ -61,13 +69,36 @@ export const send = internalAction({
         return;
       }
 
+      let content: DeliveryContent | null = null;
+      if (args.userId !== undefined) {
+        content = await ctx.runQuery(
+          internal.notifications.resolveForDelivery.resolveForDelivery,
+          {
+            recipientId: args.userId,
+            type: args.type,
+            params: args.params,
+            relatedId: args.relatedId,
+            actorId: args.actorId,
+            subject: args.subject,
+          },
+        );
+        event.resolved = content !== null;
+        if (content === null) {
+          event.skipped = true;
+          event.skip_reason = "not_visible";
+          return;
+        }
+      }
+
       const baseUrl = process.env["EMAIL_BASE_URL"] ?? "https://jigswap.site";
       const rendered = await renderEmail({
         type: args.type,
-        params: args.params,
+        params: content?.params ?? args.params,
         locale,
         baseUrl,
         relatedId: args.relatedId,
+        href: content?.href,
+        actorAnonymous: content?.actorAnonymous,
       });
       await makeEmailSenderFromEnv().send({
         to: args.to,

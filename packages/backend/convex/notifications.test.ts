@@ -269,15 +269,15 @@ describe("read flows + queries", () => {
       await asBob(t).query(api.notifications.unreadCount.unreadCount, {}),
     ).toBe(1);
 
-    const list = await asBob(t).query(
-      api.notifications.listMyNotifications.listMyNotifications,
-      {},
+    const { page: list } = await asBob(t).query(
+      api.notifications.listMyNotificationViews.listMyNotificationViews,
+      { paginationOpts: { numItems: 30, cursor: null } },
     );
     expect(list).toHaveLength(1);
     await asBob(t).mutation(
       api.notifications.markNotificationRead.markNotificationRead,
       {
-        notificationId: list[0].aggregateId!,
+        notificationId: list[0]!.id,
       },
     );
 
@@ -309,9 +309,9 @@ describe("read flows + queries", () => {
     const t = convexTest(schema, modules);
     await proposeSale(t);
     await flushScheduled(t);
-    const list = await asBob(t).query(
-      api.notifications.listMyNotifications.listMyNotifications,
-      {},
+    const { page: list } = await asBob(t).query(
+      api.notifications.listMyNotificationViews.listMyNotificationViews,
+      { paginationOpts: { numItems: 30, cursor: null } },
     );
 
     // Alice (not the addressee) cannot mark Bob's notification read.
@@ -319,7 +319,7 @@ describe("read flows + queries", () => {
       asAlice(t).mutation(
         api.notifications.markNotificationRead.markNotificationRead,
         {
-          notificationId: list[0].aggregateId!,
+          notificationId: list[0]!.id,
         },
       ),
     ).rejects.toThrow();
