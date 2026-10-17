@@ -1,6 +1,7 @@
 import {
   toMemberId,
   type MemberId,
+  type NotificationSubject,
   type NotifyMemberCommand,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
@@ -122,31 +123,83 @@ const translate = async (
           "trade_request",
           row._id,
           await memberName(ctx, row.initiatorId),
+          { actor: row.initiatorId, subject: exchangeSubject(p) },
         ),
       ];
     }
     case "ExchangeAccepted": {
       const row = await loadExchange(ctx, p.exchangeId as string);
       if (!row) return [];
-      return [cmd(row.initiatorId, "trade_accepted", row._id)];
+      return [
+        cmd(
+          row.initiatorId,
+          "trade_accepted",
+          row._id,
+          {},
+          {
+            actor: row.recipientId,
+            subject: exchangeSubject(p),
+          },
+        ),
+      ];
     }
     case "ExchangeRejected": {
       const row = await loadExchange(ctx, p.exchangeId as string);
       if (!row) return [];
-      return [cmd(row.initiatorId, "trade_declined", row._id)];
+      return [
+        cmd(
+          row.initiatorId,
+          "trade_declined",
+          row._id,
+          {},
+          {
+            actor: row.recipientId,
+            subject: exchangeSubject(p),
+          },
+        ),
+      ];
     }
     case "ExchangeCancelled": {
       const row = await loadExchange(ctx, p.exchangeId as string);
       if (!row) return [];
-      return [cmd(row.recipientId, "trade_cancelled", row._id)];
+      return [
+        cmd(
+          row.recipientId,
+          "trade_cancelled",
+          row._id,
+          {},
+          {
+            actor: row.initiatorId,
+            subject: exchangeSubject(p),
+          },
+        ),
+      ];
     }
     case "ExchangeCompleted": {
       const row = await loadExchange(ctx, p.exchangeId as string);
       if (!row) return [];
-      // The event carries no actor; notify both parties (each gets "the other party" signal).
+      // The event carries no actor; notify both parties, each with the OTHER party as the actor.
       return [
-        cmd(row.initiatorId, "trade_completed", row._id),
-        cmd(row.recipientId, "trade_completed", row._id),
+        cmd(
+          row.initiatorId,
+          "trade_completed",
+          row._id,
+          {},
+          {
+            actor: row.recipientId,
+            subject: exchangeSubject(p),
+          },
+        ),
+        cmd(
+          row.recipientId,
+          "trade_completed",
+          row._id,
+          {},
+          {
+            actor: row.initiatorId,
+            subject: exchangeSubject(p),
+          },
+        ),
       ];
     }
     case "DisputeRaised": {
@@ -158,7 +211,18 @@ const translate = async (
         (raisedBy as unknown as Id<"users">) === row.initiatorId
           ? row.recipientId
           : row.initiatorId;
-      return [cmd(counterparty, "exchange_disputed", row._id)];
+      return [
+        cmd(
+          counterparty,
+          "exchange_disputed",
+          row._id,
+          {},
+          {
+            actor: raisedBy,
+            subject: exchangeSubject(p),
+          },
+        ),
+      ];
     }
 
     // --- Conversation ---
@@ -183,7 +247,10 @@ const translate = async (
         }
       }
       return absent.map((participant) =>
-        cmd(participant, "message_received", thread.aggregateId, author),
+        cmd(participant, "message_received", thread.aggregateId, author, {
+          actor: authorId,
+          subject: { kind: "thread", threadId: thread.aggregateId },
+        }),
       );
     }
 
@@ -192,16 +259,32 @@ const translate = async (
       const goal = await loadGoal(ctx, p.goalId as string);
       if (!goal) return [];
       return [
-        cmd(goal.userId, "goal_achieved", goal._id, {
-          goalTitle: goal.title,
-        }),
+        cmd(
+          goal.userId,
+          "goal_achieved",
+          goal._id,
+          { goalTitle: goal.title },
+          { subject: { kind: "goal", goalId: goal._id } },
+        ),
       ];
     }
 
     // --- Reputation ---
     case "PartnerReviewSubmitted": {
+      // The rating is snapshotted into params (immutable once submitted) so every channel can
+      // show it without a review lookup.
+      const rating = p.rating;
       return [
-        cmd(p.revieweeId as string, "review_received", p.reviewId as string),
+        cmd(
+          p.revieweeId as string,
+          "review_received",
+          p.reviewId as string,
+          typeof rating === "number" ? { rating: String(rating) } : {},
+          {
+            actor: p.reviewerId as string,
+            subject: { kind: "review", reviewId: p.reviewId as string },
+          },
+        ),
       ];
     }
 
@@ -210,27 +293,39 @@ const translate = async (
       const puzzle = await loadPuzzle(ctx, p.puzzleDefinitionId as string);
       if (!puzzle) return [];
       return [
-        cmd(puzzle.submittedBy, "puzzle_approved", puzzle._id, {
-          puzzleTitle: puzzle.title,
-        }),
+        cmd(
+          puzzle.submittedBy,
+          "puzzle_approved",
+          puzzle._id,
+          { puzzleTitle: puzzle.title },
+          { subject: puzzleSubject(puzzle) }, // moderator-driven: no actor
+        ),
       ];
     }
     case "PuzzleDefinitionRejected": {
       const puzzle = await loadPuzzle(ctx, p.puzzleDefinitionId as string);
       if (!puzzle) return [];
       return [
-        cmd(puzzle.submittedBy, "puzzle_rejected", puzzle._id, {
-          puzzleTitle: puzzle.title,
-        }),
+        cmd(
+          puzzle.submittedBy,
+          "puzzle_rejected",
+          puzzle._id,
+          { puzzleTitle: puzzle.title },
+          { subject: puzzleSubject(puzzle) }, // moderator-driven: no actor
+        ),
       ];
     }
     case "ChangeProposalApproved": {
       const puzzle = await loadPuzzle(ctx, p.puzzleDefinitionId as string);
       if (!puzzle) return [];
       return [
-        cmd(p.proposedBy as string, "proposal_approved", puzzle._id, {
-          puzzleTitle: puzzle.title,
-        }),
+        cmd(
+          p.proposedBy as string,
+          "proposal_approved",
+          puzzle._id,
+          { puzzleTitle: puzzle.title },
+          { subject: puzzleSubject(puzzle) }, // moderator-driven: no actor
+        ),
       ];
     }
     case "ChangeProposalRejected": {
@@ -238,10 +333,13 @@ const translate = async (
       if (!puzzle) return [];
       const reason = p.reason as string | undefined;
       return [
-        cmd(p.proposedBy as string, "proposal_rejected", puzzle._id, {
-          puzzleTitle: puzzle.title,
-          ...(reason ? { reason } : {}),
-        }),
+        cmd(
+          p.proposedBy as string,
+          "proposal_rejected",
+          puzzle._id,
+          { puzzleTitle: puzzle.title, ...(reason ? { reason } : {}) },
+          { subject: puzzleSubject(puzzle) }, // moderator-driven: no actor
+        ),
       ];
     }
     case "ChangeProposalFiled": {
@@ -253,6 +351,13 @@ const translate = async (
           "admin_proposal_filed",
           p.changeProposalId as string, // the review route's param — no lookup needed
           puzzle ? { puzzleTitle: puzzle.title } : {},
+          {
+            actor: p.proposedBy as string,
+            subject: {
+              kind: "changeProposal",
+              proposalId: p.changeProposalId as string,
+            },
+          },
         ),
       );
     }
@@ -265,6 +370,11 @@ const translate = async (
           "admin_definition_submitted",
           puzzle?._id ?? (p.puzzleDefinitionId as string),
           puzzle ? { puzzleTitle: puzzle.title } : {},
+          // The puzzle subject is a Convex `_id`: omitted when the row cannot be resolved.
+          {
+            actor: p.submittedBy as string,
+            ...(puzzle ? { subject: puzzleSubject(puzzle) } : {}),
+          },
         ),
       );
     }
@@ -305,6 +415,7 @@ const translate = async (
           "new_follower",
           followerId, // the follower's users _id; the UI deep-links to /people
           await memberName(ctx, followerId),
+          { actor: followerId }, // the follower IS the subject
         ),
       ];
     }
@@ -315,6 +426,13 @@ const translate = async (
           "follow_request_received",
           p.requesterId as string,
           await memberName(ctx, p.requesterId as string),
+          {
+            actor: p.requesterId as string,
+            subject: {
+              kind: "followRequest",
+              requestId: p.requestId as string,
+            },
+          },
         ),
       ];
     }
@@ -325,6 +443,7 @@ const translate = async (
           "follow_request_approved",
           p.targetId as string,
           await memberName(ctx, p.targetId as string),
+          { actor: p.targetId as string },
         ),
       ];
     }
@@ -338,6 +457,13 @@ const translate = async (
           "household_invite_received",
           p.inviteId as string,
           await memberName(ctx, p.inviterId as string),
+          {
+            actor: p.inviterId as string,
+            subject: {
+              kind: "householdInvite",
+              inviteId: p.inviteId as string,
+            },
+          },
         ),
       ];
     }
@@ -348,6 +474,13 @@ const translate = async (
           "household_invite_accepted",
           p.householdId as string,
           await memberName(ctx, p.inviteeId as string),
+          {
+            actor: p.inviteeId as string,
+            subject: {
+              kind: "household",
+              householdId: p.householdId as string,
+            },
+          },
         ),
       ];
     }
@@ -358,18 +491,37 @@ const translate = async (
   }
 };
 
+// The exchange subject is the ExchangeId aggregateId the event carries (what exchange use cases
+// take), not the row's Convex `_id` kept in relatedId.
+const exchangeSubject = (p: Record<string, unknown>): NotificationSubject => ({
+  kind: "exchange",
+  exchangeId: p.exchangeId as string,
+});
+
+const puzzleSubject = (puzzle: Doc<"puzzles">): NotificationSubject => ({
+  kind: "puzzle",
+  puzzleId: puzzle._id,
+});
+
 // Build a NotifyMemberCommand. `recipient` is a user id (string or Convex Id); relatedId points at
 // the upstream entity's Convex `_id` (opaque to Notifications); `params` carries the render-ready
 // values for this type's copy (contract documented in notifications/copy.ts) — rendering happens at
-// the edges (web i18n, email templates, push copy table), never here.
+// the edges (web i18n, email templates, push copy table), never here. `refs` adds the typed
+// references the read side resolves live: the member who caused it (never set for moderator-driven
+// outcomes, so a moderator is never exposed) and what it is about.
 const cmd = (
   recipient: string | Id<"users">,
   type: NotifyMemberCommand["type"],
   relatedId: string,
   params: Record<string, string> = {},
+  refs: { actor?: string | Id<"users">; subject?: NotificationSubject } = {},
 ): NotifyMemberCommand => ({
   memberId: asMember(recipient as string),
   type,
   params,
   relatedId,
+  ...(refs.actor !== undefined
+    ? { actorId: asMember(refs.actor as string) }
+    : {}),
+  ...(refs.subject !== undefined ? { subject: refs.subject } : {}),
 });
