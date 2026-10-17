@@ -12,6 +12,9 @@ const KNOWN_CODES = new Set([
   "NotHouseholdAdmin",
   "InviteNotPending",
   "MemberNotFound",
+  "NotCopyOwner",
+  "PermissionBatchTooLarge",
+  "CopyNotFound",
 ]);
 
 // The `household` namespace i18n key describing why a household mutation failed.
