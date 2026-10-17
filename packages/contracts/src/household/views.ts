@@ -54,3 +54,11 @@ export interface HouseholdCopyView extends OwnedCopyView {
     viewerAccess: HouseholdCopyPermission;
   };
 }
+
+/**
+ * `household.myCopyPermissions`: one of the viewer's OWN copies with the household permission it
+ * currently grants (absent on the row = "manage"), for the household page's bulk editor.
+ */
+export interface HouseholdOwnCopyView extends OwnedCopyView {
+  householdPermission: HouseholdCopyPermission;
+}

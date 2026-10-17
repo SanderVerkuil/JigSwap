@@ -331,12 +331,13 @@ describe("view-only member cannot mutate; manage member can", () => {
       }),
       "NotOwner",
     );
-    await expect(
+    await expectConvexCode(
       as(t, "bob").mutation(
         api.library.setCopyHouseholdPermission.setCopyHouseholdPermission,
         { copyId: w.manageCopy, permission: "view" },
       ),
-    ).rejects.toThrow(/owner/i);
+      "NotCopyOwner",
+    );
 
     await as(t, "ann").mutation(
       api.library.setCopyHouseholdPermission.setCopyHouseholdPermission,
