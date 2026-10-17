@@ -33,7 +33,7 @@ at Part B sections; Part A sections are numbered A1, A2, ….
 | D7  | `whats_new` notifications get their own `product` preferences category                                     | A6, resolves O4          |
 | D8  | Dark-mode chips and pills use the Tailwind palette `violet-300`, no new token                              | Part B §1.4, resolves O5 |
 | D9  | The highlight modal is the lowest-priority surface and never stacks on another prompt                      | A6                       |
-| D10 | Tour library is not chosen here; W4 evaluates the candidates                                               | A7                       |
+| D10 | Tours are a custom runner on our Radix Popover/Dialog primitives, no tour library (decided in W4)          | A7                       |
 
 ---
 
@@ -365,9 +365,9 @@ mute product news without muting social notifications; this follows the
 designer's recommendation and the enum fan-out listed in Part B §6. Opening the
 notification also calls `markWhatsNewSeen([entryId])`.
 
-## A7. Tour architecture (placeholder for W4)
+## A7. Tour architecture
 
-W4 chooses the implementation. Requirements from Part B §5: spotlight with
+Requirements from Part B §5: spotlight with
 cut-out and click shield, anchored popover with arrow on desktop, docked card
 on mobile, cross-route steps with a pending state, missing-target fallback,
 focus management and `aria-*` per §5.4, reduced-motion handling, i18n copy, and
@@ -382,11 +382,89 @@ resume from a saved step (`recordTourProgress`).
 | **Reactour** (`@reactour/tour`)    | Small React lib with a mask. Check: maintenance, React 19, a11y.                                                                                                                                                                                                                     |
 | **Custom on Radix Popover**        | Reuses `components/ui/popover.tsx` (focus trap, collision handling, `PopoverAnchor virtualRef`), our tokens and i18n directly; the spotlight is a fixed div with a box-shadow (Part B §5.2). Cost: we own geometry updates, scroll-into-view, cross-route waits and the mobile card. |
 
-W4 should decide by building the hardest step (cross-route plus mobile docked
-card) with the top one or two candidates. Tour definitions (steps, targets via
-`data-tour="…"` attributes, routes) live in web code keyed by the `tour` id
-from the manifest; their copy lives in the locale files
-(`tours.<tourId>.steps.<stepId>.title|body`).
+Tour definitions (steps, targets via `data-tour="…"` attributes, routes) live
+in web code keyed by the `tour` id from the manifest; their copy lives in the
+locale files (`tours.<tourId>.steps.<stepId>.title|body`).
+
+### Decision (W4): custom runner on Radix, no tour library
+
+Evaluated on 2026-10-17 against the latest release of each candidate that is
+at least two weeks old. Sizes are minified + gzipped, measured with esbuild
+0.25.10 bundling each library's tour entry point with React and React DOM
+external (CSS listed separately where the library ships it).
+
+| Candidate                                    | Version | Size (min+gz)        | React 19            | a11y (from its source)                                                                                            | Licence      | Last release |
+| -------------------------------------------- | ------- | -------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------ | ------------ |
+| driver.js                                    | 1.9.0   | 7.7 KB + 1.0 KB CSS  | n/a (DOM, no React) | `role="dialog"`, Esc and arrow keys, focus handling; no `aria-modal`                                              | MIT          | 2026-10-15   |
+| react-joyride                                | 3.2.0   | 27.5 KB              | peer `16.8 - 19`    | focus trap, `aria-modal`, Esc                                                                                     | MIT          | 2026-07-09   |
+| react-shepherd (+ shepherd.js 15.3.0)        | 7.0.6   | 16.4 KB + 1.0 KB CSS | peer `^18 \|\| ^19` | `role="dialog"`, labelledby                                                                                       | **AGPL-3.0** | 2026-08-24   |
+| @reactour/tour                               | 3.8.0   | 9.8 KB               | peer `16.x … 19.x`  | Esc / arrows via key codes, `aria-label`s; no dialog role, no focus trap                                          | MIT          | 2025-05-07   |
+| Intro.js                                     | 8.6.0   | not measured         | n/a                 | not evaluated                                                                                                     | **AGPL-3.0** | 2026-09-21   |
+| **Custom (Radix Popover + Dialog, shipped)** | in-repo | **4.7 KB**           | yes (our code)      | Radix modal focus trap, `aria-hidden` on the rest, Esc; `aria-modal`, labelledby eyebrow + title, roledescription | ours         | n/a          |
+
+driver.js 1.10.x was released two days before the evaluation, so 1.9.0 was
+measured. The custom figure is the tour runner, layer and definitions only;
+Radix Popover and Dialog are already in the app bundle.
+
+**Why custom.**
+
+- **Shepherd and Intro.js are out on licence** (AGPL-3.0).
+- **The spec's UI is ours either way.** Every library ships its own popover.
+  To meet Part B §5 (our card anatomy, tokens, the mobile docked card, the
+  centred pending and missing-target card, and the eyebrow-plus-title
+  labelledby) we would override or replace most of its rendering. driver.js
+  builds the popover as HTML strings outside React, so our `Button`s, icons and
+  `use-intl` copy cannot render in it. react-joyride is the heaviest option and
+  still needs a custom tooltip component and its own controlled mode for
+  resume. Reactour has no dialog role or focus trap and has not had a release in
+  17 months.
+- **Cross-route steps are app logic in every option.** None of the libraries
+  knows TanStack Router: each would need our own "navigate, wait for the anchor,
+  then continue" loop. That loop is most of the runner.
+- **The primitives already exist.** Radix `Popover` (modal) gives the desktop
+  card its focus trap, collision handling and arrow, anchored to the target
+  element through `PopoverAnchor virtualRef`. Radix `Dialog` (modal, no
+  overlay) does the same for the docked and centred cards. Both are already
+  dependencies, so the runner adds no package and about 4.7 KB.
+
+The decision rests on the measured sizes, the licences and reading each
+library's source and docs. It was not made by prototyping the hardest step in
+each library.
+
+### How the runner works
+
+- **`components/tour/definitions.ts`**: `TOURS`, keyed by tour id. A step is
+  `{ id, route, target?, side?, align? }`. A step without `target` explains
+  something that is not on screen and shows as the centred card.
+- **`components/tour/controller.ts`**: a framework-free state machine
+  (`TourController`) with `start(tourId, index)`, `next`, `back`, `pause` and
+  `handleKey`. Entering a step saves `in_progress` with its index, navigates when
+  the step's route is not the current one, and then waits for
+  `data-tour="<target>"` on the new page: 3 s after navigating, 0.5 s on the
+  same page (the target may still be loading). If the target does not appear,
+  the step shows as the centred card (`missing`) and the tour carries on. The
+  last Next saves `completed`. Pause (Esc or the close button) writes nothing
+  more, because the current step is already saved. Stale waits are dropped when
+  the member moves on.
+- **`components/tour/tour-provider.tsx`**: the real `TourLauncher`, mounted in
+  the dashboard layout above the `Outlet` so a tour survives its own page
+  changes. It connects the controller to TanStack Router (the resolved
+  location, so a shell anchor such as the account menu is not taken from the
+  old page), `document` (the first anchor with a non-zero box, since some are
+  mounted twice for desktop and mobile) and `recordTourProgress`. It reports
+  `useReportSurfaceBusy("tour", running)`, restores focus to `returnFocus` (or
+  `main`) when the tour ends, and shows the paused (with Resume) and completed
+  toasts.
+- **`components/tour/tour-layer.tsx`**: the click shield, the spotlight (or the
+  full dim when no target is lit), and the card: Radix Popover anchored to the
+  target on desktop, and a Radix Dialog card docked to the bottom, or to the top
+  when the target sits in the bottom 45%, on mobile. The centred card is used
+  for pending and missing steps. Focus moves to the step title on every step.
+  Arrow keys move between steps inside the card.
+- **Resume and restart.** "Take the tour" resumes a paused tour at its saved
+  step; the entry card then reads "Resume tour (step k of n)" with "Start over"
+  beside it, and "Replay the tour" after completing it (Part B §1.7). The
+  highlight modal shows the same label but no "Start over".
 
 ## A8. Test plan
 

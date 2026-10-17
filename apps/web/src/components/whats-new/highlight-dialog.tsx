@@ -15,6 +15,7 @@ import { safeStorage } from "@/lib/safe-storage";
 import { cn } from "@/lib/utils";
 import type { WhatsNewEntry } from "@/whats-new/types";
 import { useConvexMutation } from "@convex-dev/react-query";
+import type { WhatsNewTourProgressView } from "@jigswap/contracts";
 import { Link as RouterLink } from "@tanstack/react-router";
 import { ArrowRight, Compass, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -23,6 +24,7 @@ import { CategoryChip } from "./category-chip";
 import { WHATS_NEW_ENTRIES } from "./entries";
 import { canOpenHighlight, contentFor, pickHighlightEntry } from "./logic";
 import { isAnyDialogOpen, isSurfaceBusy } from "./surface-busy";
+import { useTourButton } from "./tour-button";
 import { useTourLauncher } from "./tour-launcher";
 import { useWhatsNewState } from "./use-whats-new-state";
 
@@ -38,7 +40,7 @@ const OPEN_DELAY_MS = 600;
 // the dashboard's prompt providers so the surface-busy signal covers them.
 export function WhatsNewHighlight() {
   const pathname = usePathname();
-  const { unreadIds } = useWhatsNewState();
+  const { unreadIds, tours } = useWhatsNewState();
   const candidateId = unreadIds
     ? pickHighlightEntry(WHATS_NEW_ENTRIES, unreadIds)?.id
     : undefined;
@@ -73,16 +75,20 @@ export function WhatsNewHighlight() {
 
   return (
     <Dialog open={entry !== null} onOpenChange={(open) => !open && close()}>
-      {entry && <HighlightContent entry={entry} onClose={close} />}
+      {entry && (
+        <HighlightContent entry={entry} tours={tours} onClose={close} />
+      )}
     </Dialog>
   );
 }
 
 function HighlightContent({
   entry,
+  tours,
   onClose,
 }: {
   entry: WhatsNewEntry;
+  tours: readonly WhatsNewTourProgressView[] | undefined;
   onClose: () => void;
 }) {
   const t = useTranslations("whatsNew");
@@ -90,6 +96,7 @@ function HighlightContent({
   const { startTour } = useTourLauncher();
   const contentRef = useRef<HTMLDivElement>(null);
   const tour = entry.tour;
+  const tourButton = useTourButton(tour ?? "", tours);
   const cta =
     entry.ctaTo && content.ctaLabel
       ? { to: entry.ctaTo, label: content.ctaLabel }
@@ -112,7 +119,7 @@ function HighlightContent({
       }}
     >
       <Compass aria-hidden />
-      {t("tour.take")}
+      {tourButton.label}
     </Button>
   ) : (
     <Button asChild data-whats-new-primary className={primaryLook}>

@@ -3622,7 +3622,70 @@
       "later": "Misschien later"
     },
     "tour": {
-      "take": "Doe de rondleiding"
+      "take": "Doe de rondleiding",
+      "replay": "Rondleiding opnieuw bekijken",
+      "resume": "Rondleiding hervatten (stap {step} van {total})",
+      "restart": "Opnieuw beginnen"
+    }
+  },
+  "tour": {
+    "stepOf": "Stap {step} van {total}",
+    "roleDescription": "rondleidingsstap",
+    "back": "Terug",
+    "next": "Volgende",
+    "nextOnPage": "Volgende: {page}",
+    "done": "Klaar",
+    "end": "Rondleiding stoppen",
+    "opening": "{page} openen…",
+    "paused": "Rondleiding gepauzeerd. Je kunt verder gaan via Wat is er nieuw.",
+    "resumeAction": "Hervatten",
+    "completedTitle": "Je bent er klaar voor",
+    "completed": "Rondleiding afgerond. Veel plezier met de nieuwe functie!"
+  },
+  "tours": {
+    "households": {
+      "steps": {
+        "start": {
+          "title": "Je huishouden",
+          "body": "Maak een huishouden aan voor de mensen met wie je samenwoont, of bekijk wie er in het jouwe zit. Iedereen erin ziet elkaars puzzels in Mijn Puzzels."
+        },
+        "invite": {
+          "title": "Nodig je huisgenoten uit",
+          "body": "Zoek een lid en stuur een uitnodiging; ze doen mee zodra ze accepteren. Beheerders van het huishouden versturen de uitnodigingen."
+        },
+        "copy-access": {
+          "title": "Jij kiest per puzzel",
+          "body": "Je puzzels blijven van jou. Open er een en kies bij Toegang huishouden: met Mag beheren kunnen huisgenoten hem bewerken, uitlenen en ruilen; met Alleen bekijken zien ze hem alleen."
+        }
+      }
+    },
+    "member-profiles": {
+      "steps": {
+        "network": {
+          "title": "Bekijk een lid",
+          "body": "Open iemand uit je netwerk en zie welke puzzels die heeft en welke die heeft afgemaakt, met datum, tijd en foto's."
+        },
+        "your-profile": {
+          "title": "Wie het jouwe ziet",
+          "body": "Je puzzels en afgemaakte puzzels staan op je profiel voor ingelogde leden die het mogen zien: iedereen als het openbaar is, wederzijdse volgers als het privé is. Je wijzigt dit via Profiel Bewerken."
+        }
+      }
+    },
+    "in-progress-solves": {
+      "steps": {
+        "solving-now": {
+          "title": "Nu aan het puzzelen",
+          "body": "Puzzels waar je aan begonnen bent staan op je dashboard, met één klik op Afronden als je klaar bent."
+        },
+        "in-progress": {
+          "title": "Eerst bezig, dan geschiedenis",
+          "body": "Voltooiingen toont bovenaan de puzzels waar je mee bezig bent en daaronder de afgeronde. Begin aan een puzzel vanuit je eigen puzzels, met een startdatum in het verleden of de toekomst."
+        },
+        "sharing": {
+          "title": "Deel het met vrienden, als je wilt",
+          "body": "Delen staat standaard uit. Open je accountmenu, kies Account beheren en dan Voorkeuren, en zet Deel puzzels waar je mee bezig bent met vrienden aan."
+        }
+      }
     }
   }
 }

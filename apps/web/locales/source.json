@@ -3622,7 +3622,70 @@
       "later": "Maybe later"
     },
     "tour": {
-      "take": "Take the tour"
+      "take": "Take the tour",
+      "replay": "Replay the tour",
+      "resume": "Resume tour (step {step} of {total})",
+      "restart": "Start over"
+    }
+  },
+  "tour": {
+    "stepOf": "Step {step} of {total}",
+    "roleDescription": "tour step",
+    "back": "Back",
+    "next": "Next",
+    "nextOnPage": "Next: {page}",
+    "done": "Done",
+    "end": "End tour",
+    "opening": "Opening {page}…",
+    "paused": "Tour paused. You can pick it up again from What's new.",
+    "resumeAction": "Resume",
+    "completedTitle": "You're all set",
+    "completed": "Tour finished. Enjoy the new feature!"
+  },
+  "tours": {
+    "households": {
+      "steps": {
+        "start": {
+          "title": "Your household",
+          "body": "Create a household for the people you live with, or see who is in yours. Everyone in it sees each other's puzzles in My Puzzles."
+        },
+        "invite": {
+          "title": "Invite your housemates",
+          "body": "Search for a member and send an invite; they join once they accept. Household admins send the invites."
+        },
+        "copy-access": {
+          "title": "You decide per puzzle",
+          "body": "Your puzzles stay yours. Open one and set Household access: Can manage lets housemates edit, lend and swap it; View only lets them see it."
+        }
+      }
+    },
+    "member-profiles": {
+      "steps": {
+        "network": {
+          "title": "Visit a member",
+          "body": "Open anyone in your network to see the puzzles they own and the ones they've finished, with dates, times and photos."
+        },
+        "your-profile": {
+          "title": "Who sees yours",
+          "body": "Your puzzles and finished solves show on your profile to signed-in members who can see it: anyone when it's public, mutual followers when it's private. Change it under Edit Profile."
+        }
+      }
+    },
+    "in-progress-solves": {
+      "steps": {
+        "solving-now": {
+          "title": "Solving now",
+          "body": "Puzzles you've started show up on your dashboard, with a one-click Finish when you're done."
+        },
+        "in-progress": {
+          "title": "In progress, then history",
+          "body": "Completions lists your open solves on top and finished ones below. Start a solve from any of your puzzles, with a start date in the past or the future."
+        },
+        "sharing": {
+          "title": "Share with friends, if you like",
+          "body": "Sharing is off by default. Open your account menu, choose Manage account, then Preferences, and turn on Share in-progress puzzles with friends."
+        }
+      }
     }
   }
 }

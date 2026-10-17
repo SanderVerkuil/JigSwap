@@ -1,0 +1,75 @@
+// Multi-step tours as data (spec §A7). A tour id must be the `tour` of a What's new entry, or the
+// backend rejects its progress with `unknown_tour`. Step copy lives in the locale files under
+// `tours.<tourId>.steps.<stepId>.title|body`; targets are `data-tour="<anchor>"` attributes on
+// existing components.
+
+export type TourSide = "top" | "right" | "bottom" | "left";
+export type TourAlign = "start" | "center" | "end";
+
+export interface TourStep {
+  /** Stable within the tour; also the i18n key segment. */
+  id: string;
+  /** In-app path the step lives on. The runner navigates there first when it is another page. */
+  route: string;
+  /**
+   * `data-tour` value of the element to spotlight. Omitted for a step that explains something not
+   * on screen: it shows as a centred card, like a target that never appeared.
+   */
+  target?: string;
+  /** Desktop popover placement (defaults: bottom, start). Mobile always uses the docked card. */
+  side?: TourSide;
+  align?: TourAlign;
+}
+
+export interface TourDefinition {
+  id: string;
+  steps: readonly TourStep[];
+}
+
+const tours: readonly TourDefinition[] = [
+  {
+    id: "households",
+    steps: [
+      { id: "start", route: "/household", target: "household-main" },
+      { id: "invite", route: "/household", target: "household-invite" },
+      // Per-copy access is set on a copy page, which needs a concrete copy; this step explains it
+      // from the library instead of guessing one of the member's copies.
+      { id: "copy-access", route: "/my-puzzles" },
+    ],
+  },
+  {
+    id: "member-profiles",
+    steps: [
+      { id: "network", route: "/people", target: "people-network" },
+      { id: "your-profile", route: "/profile", target: "profile-edit" },
+    ],
+  },
+  {
+    id: "in-progress-solves",
+    steps: [
+      { id: "solving-now", route: "/dashboard", target: "solving-now" },
+      {
+        id: "in-progress",
+        route: "/completions",
+        target: "completions-in-progress",
+      },
+      {
+        id: "sharing",
+        route: "/completions",
+        target: "account-menu",
+        side: "right",
+        align: "end",
+      },
+    ],
+  },
+];
+
+export const TOURS: ReadonlyMap<string, TourDefinition> = new Map(
+  tours.map((tour) => [tour.id, tour]),
+);
+
+/** i18n keys for a step's copy, relative to the root namespace. */
+export function stepMessageKeys(tourId: string, stepId: string) {
+  const base = `tours.${tourId}.steps.${stepId}`;
+  return { title: `${base}.title`, body: `${base}.body` };
+}

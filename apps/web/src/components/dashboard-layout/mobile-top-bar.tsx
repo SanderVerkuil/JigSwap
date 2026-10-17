@@ -114,7 +114,9 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
             <span className="bg-jigsaw-primary-accent ring-card absolute top-2.5 right-2.5 size-2 rounded-full ring-2" />
           )}
         </Link>
-        <ShellUserButton tapTarget />
+        <span data-tour="account-menu" className="flex">
+          <ShellUserButton tapTarget />
+        </span>
       </div>
     </header>
   );
