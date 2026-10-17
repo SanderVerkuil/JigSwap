@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { optionalActingMember } from "../identity/optionalActingMember";
+import { canViewCopy } from "../library/canViewCopy";
 import { hasIdentityReveal } from "../social/identityReveals";
 import {
   areMutualFollowers,
@@ -12,8 +13,9 @@ import {
 // The request-flow notice: "sending this request shares your profile with the owner". Proposing an
 // exchange grants the copy's owner a reveal of the requester (social/identityRevealSubscriber), so
 // the requester is told up front whenever that changes anything — i.e. whenever they are currently
-// ANONYMOUS to the owner. Returns null when unauthenticated, the copy is missing, or the caller owns
-// it (no request to make).
+// ANONYMOUS to the owner. Returns null when unauthenticated, the copy is missing, the caller owns
+// it (no request to make), or the caller may not view it (canViewCopy) — a missing and an
+// unviewable copy answer the same, so this is not a copy-existence oracle.
 //
 // WHY this leaks nothing about the owner: the answer depends only on facts the caller already
 // knows — their OWN profile visibility, whether they and the owner follow each other (a mutual
@@ -30,6 +32,7 @@ export const getRequestDisclosure = query({
     if (callerId === null) return null;
     const copy = await ctx.db.get(args.requestedPuzzleId);
     if (!copy || copy.ownerId === callerId) return null;
+    if (!(await canViewCopy(ctx, callerId, copy))) return null;
     const ownerId: Id<"users"> = copy.ownerId;
 
     return {

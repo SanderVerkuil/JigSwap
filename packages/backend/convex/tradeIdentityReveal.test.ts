@@ -595,9 +595,23 @@ describe("getRequestDisclosure", () => {
       requestedPuzzleId,
     });
 
-  test("true for a private requester the owner can't see yet", async () => {
+  // A private owner's copy is only viewable to the requester through canViewCopy's other paths;
+  // the requester holding it is the smallest fixture that keeps the owner private.
+  const seedViewable = async (t: T) => {
+    const w = await seed(t);
+    await t.run((ctx) => ctx.db.patch(w.copy, { heldBy: w.requester }));
+    return w;
+  };
+
+  test("null when the caller can't view the copy (same as a missing copy)", async () => {
     const t = convexTest(schema, modules);
     const w = await seed(t);
+    expect(await disclosure(t, "requester", w.copy)).toBeNull();
+  });
+
+  test("true for a private requester the owner can't see yet", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seedViewable(t);
     expect(await disclosure(t, "requester", w.copy)).toEqual({
       revealsRequester: true,
     });
@@ -605,7 +619,7 @@ describe("getRequestDisclosure", () => {
 
   test("false for a public requester", async () => {
     const t = convexTest(schema, modules);
-    const w = await seed(t);
+    const w = await seedViewable(t);
     await setVisibility(t, w.requester, "public");
     expect(await disclosure(t, "requester", w.copy)).toEqual({
       revealsRequester: false,
@@ -614,7 +628,7 @@ describe("getRequestDisclosure", () => {
 
   test("false for mutual followers", async () => {
     const t = convexTest(schema, modules);
-    const w = await seed(t);
+    const w = await seedViewable(t);
     await t.run(async (ctx) => {
       await ctx.db.insert("follows", {
         followerId: w.requester,
@@ -634,7 +648,7 @@ describe("getRequestDisclosure", () => {
 
   test("false once already granted to an owner the requester can identify", async () => {
     const t = convexTest(schema, modules);
-    const w = await seed(t);
+    const w = await seedViewable(t);
     const ex = await propose(t, "requester", w.copy);
     await act(t, "owner", "accept", ex);
     expect(await disclosure(t, "requester", w.copy)).toEqual({
@@ -644,7 +658,7 @@ describe("getRequestDisclosure", () => {
 
   test("a grant toward a still-anonymous owner does not link their other copies", async () => {
     const t = convexTest(schema, modules);
-    const w = await seed(t);
+    const w = await seedViewable(t);
     await propose(t, "requester", w.copy); // owner sees requester; owner stays anonymous
     expect(await disclosure(t, "requester", w.copy)).toEqual({
       revealsRequester: true,
@@ -653,7 +667,7 @@ describe("getRequestDisclosure", () => {
 
   test("null for the owner's own copy, a missing copy, or a signed-out caller", async () => {
     const t = convexTest(schema, modules);
-    const w = await seed(t);
+    const w = await seedViewable(t);
     expect(await disclosure(t, "owner", w.copy)).toBeNull();
     expect(
       await t.query(api.exchange.getRequestDisclosure.getRequestDisclosure, {
