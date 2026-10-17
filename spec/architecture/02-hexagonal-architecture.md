@@ -344,10 +344,11 @@ legible: domain on one side, its Convex adapters on the other.
 
 These are guardrails, not suggestions — add them in Phase 0:
 
-- **Nx module boundaries** (`@nx/enforce-module-boundaries`) with tags:
-  `type:domain` may depend on `type:domain` only; `type:backend-adapter` may depend on `type:domain` +
-  `type:contracts`; `type:web-bff` may depend on `type:contracts` only (never `type:domain`,
-  never `_generated`).
+- **Module boundaries** (`eslint-plugin-boundaries`, run by oxlint as a jsPlugin; elements in
+  `.oxlintrc.json`): `domain` may depend on `domain` only; `contracts` on `contracts` only;
+  `backend-adapter` on `domain`, `contracts` and other adapters; `gateway` on `contracts` and
+  `backend-adapter`; the web `app` on `contracts`, `backend-adapter` and `gateway` (never `domain`;
+  `_generated` is banned by the lint rule below).
 - **`dependency-cruiser`** rule: forbid any import of `convex`, `convex/values`, `@clerk/*`, `react`
   from `packages/domain/**`.
 - **Lint `no-restricted-imports`** (oxlint) in `apps/web/**`: ban `@jigswap/backend/convex/_generated/api`

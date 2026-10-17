@@ -73,7 +73,7 @@
 ### Development Requirements
 
 - **Package Manager**: pnpm for fast, efficient dependency management
-- **Monorepo**: Nx workspace for scalable development
+- **Monorepo**: pnpm workspace with Turborepo as the task runner
 - **Testing**: Vitest for unit testing
 - **Linting**: oxlint for code quality
 - **Formatting**: Prettier for consistent code style
