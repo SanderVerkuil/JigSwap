@@ -1,4 +1,5 @@
 import type { WhatsNewEntry } from "@/whats-new/types";
+import type { WhatsNewTourProgressView } from "@jigswap/contracts";
 import { parseFragment, type DefaultTreeAdapterMap } from "parse5";
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -50,7 +51,7 @@ const entry = (
 
 const ENTRIES: WhatsNewEntry[] = [
   entry("households", "2026-10-14T00:00:00Z", {
-    tour: "households-intro",
+    tour: "households", // a real tour (3 steps), for the resume label
     ctaTo: "/household",
     content: {
       en: content("EN households", { ctaLabel: "Open household" }),
@@ -69,7 +70,11 @@ const ENTRIES: WhatsNewEntry[] = [
 ];
 
 const render = (
-  props: { entries?: WhatsNewEntry[]; unreadIds?: string[] },
+  props: {
+    entries?: WhatsNewEntry[];
+    unreadIds?: string[];
+    tours?: WhatsNewTourProgressView[];
+  },
   locale: "en" | "nl" = "en",
 ) =>
   renderToStaticMarkup(
@@ -81,6 +86,7 @@ const render = (
       <WhatsNewList
         entries={props.entries ?? ENTRIES}
         unreadIds={props.unreadIds}
+        tours={props.tours}
       />
     </IntlProvider>,
   );
@@ -236,6 +242,39 @@ describe("WhatsNewList", () => {
       ["a", "Open household"],
     ]);
     expect(attr(actions[1]!, "href")).toBe("/household");
+  });
+
+  it("offers Resume (with the saved step) and Start over for a paused tour, Replay after completing it", () => {
+    const actionsFor = (
+      tours: WhatsNewTourProgressView[],
+      locale: "en" | "nl" = "en",
+    ) =>
+      elementsOf(
+        article(parse(render({ unreadIds: [], tours }, locale)), "households"),
+      )
+        .filter((el) => el.tagName === "button")
+        .map(textOf);
+    const paused: WhatsNewTourProgressView = {
+      tourId: "households",
+      status: "in_progress",
+      step: 1,
+      updatedAt: 1,
+    };
+    expect(actionsFor([paused])).toEqual([
+      "Resume tour (step 2 of 3)",
+      "Start over",
+    ]);
+    expect(actionsFor([paused], "nl")).toEqual([
+      "Rondleiding hervatten (stap 2 van 3)",
+      "Opnieuw beginnen",
+    ]);
+    expect(
+      actionsFor([{ tourId: "households", status: "completed", updatedAt: 1 }]),
+    ).toEqual(["Replay the tour"]);
+    // Progress for another tour does not change this entry's button.
+    expect(actionsFor([{ ...paused, tourId: "other" }])).toEqual([
+      "Take the tour",
+    ]);
   });
 
   it("makes the CTA the primary action when there is no tour, and omits actions without either", () => {

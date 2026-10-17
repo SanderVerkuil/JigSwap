@@ -5,23 +5,27 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { WhatsNewEntry } from "@/whats-new/types";
+import type { WhatsNewTourProgressView } from "@jigswap/contracts";
 import { ArrowRight, Compass, Sparkles } from "lucide-react";
 import { useFormatter, useLocale, useTranslations } from "use-intl";
 import { CategoryChip, COUNT_PILL_COLORS } from "./category-chip";
 import { contentFor, groupByMonth, isoDateUtc } from "./logic";
 import { WHATS_NEW_PROSE } from "./prose";
+import { useTourButton } from "./tour-button";
 import { useTourLauncher } from "./tour-launcher";
 
 // The /whats-new reading column (spec Part B §1): one section per UTC month, newest first, each an
 // ordered list of entry cards. `unreadIds` is the snapshot taken when the page mounted, or
 // undefined while the read state loads: the cards render without pills until then (entries are
-// bundled, so there is no skeleton).
+// bundled, so there is no skeleton). `tours` is the member's saved tour progress (resume labels).
 export function WhatsNewList({
   entries,
   unreadIds,
+  tours,
 }: {
   entries: readonly WhatsNewEntry[];
   unreadIds: readonly string[] | undefined;
+  tours?: readonly WhatsNewTourProgressView[];
 }) {
   const format = useFormatter();
 
@@ -48,7 +52,11 @@ export function WhatsNewList({
             <ol className="flex flex-col gap-4">
               {group.entries.map((entry) => (
                 <li key={entry.id}>
-                  <EntryCard entry={entry} unread={unread.has(entry.id)} />
+                  <EntryCard
+                    entry={entry}
+                    unread={unread.has(entry.id)}
+                    tours={tours}
+                  />
                 </li>
               ))}
             </ol>
@@ -62,9 +70,11 @@ export function WhatsNewList({
 function EntryCard({
   entry,
   unread,
+  tours,
 }: {
   entry: WhatsNewEntry;
   unread: boolean;
+  tours: readonly WhatsNewTourProgressView[] | undefined;
 }) {
   const t = useTranslations("whatsNew");
   const format = useFormatter();
@@ -142,15 +152,13 @@ function EntryCard({
         {(tour || cta) && (
           <div className="flex flex-col flex-wrap gap-2 pt-1 sm:flex-row">
             {tour && (
-              <Button
-                className="bg-jigsaw-primary hover:bg-jigsaw-primary/90 w-full text-white sm:w-auto"
-                onClick={(event) =>
-                  startTour(tour, { returnFocus: event.currentTarget })
+              <TourButtons
+                tourId={tour}
+                tours={tours}
+                onStart={(returnFocus, restart) =>
+                  startTour(tour, { returnFocus, restart })
                 }
-              >
-                <Compass aria-hidden />
-                {t("tour.take")}
-              </Button>
+              />
             )}
             {cta && (
               <Button
@@ -172,6 +180,41 @@ function EntryCard({
         )}
       </Card>
     </article>
+  );
+}
+
+// Primary: take / resume / replay; "Start over" next to it while a tour is paused (Part B §1.7).
+function TourButtons({
+  tourId,
+  tours,
+  onStart,
+}: {
+  tourId: string;
+  tours: readonly WhatsNewTourProgressView[] | undefined;
+  onStart: (returnFocus: HTMLElement, restart: boolean) => void;
+}) {
+  const t = useTranslations("whatsNew");
+  const { label, resumable } = useTourButton(tourId, tours);
+  return (
+    <>
+      <Button
+        className="bg-jigsaw-primary hover:bg-jigsaw-primary/90 w-full text-white sm:w-auto"
+        onClick={(event) => onStart(event.currentTarget, false)}
+      >
+        <Compass aria-hidden />
+        {label}
+      </Button>
+      {resumable && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full self-center sm:w-auto"
+          onClick={(event) => onStart(event.currentTarget, true)}
+        >
+          {t("tour.restart")}
+        </Button>
+      )}
+    </>
   );
 }
 

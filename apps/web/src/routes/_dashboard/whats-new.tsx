@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_dashboard/whats-new")({
 const MAX_SEEN_BATCH = 50;
 
 function WhatsNewPage() {
-  const { unreadIds } = useWhatsNewState();
+  const { unreadIds, tours } = useWhatsNewState();
   const markSeen = useConvexMutation(gateway.whatsNew.markSeen);
 
   // Snapshot rule (spec Part B §1.5): keep the unread set captured when the state first loads, so
@@ -62,5 +62,11 @@ function WhatsNewPage() {
     article.querySelector<HTMLElement>("h3")?.focus({ preventScroll: true });
   }, []);
 
-  return <WhatsNewList entries={WHATS_NEW_ENTRIES} unreadIds={snapshot} />;
+  return (
+    <WhatsNewList
+      entries={WHATS_NEW_ENTRIES}
+      unreadIds={snapshot}
+      tours={tours}
+    />
+  );
 }
