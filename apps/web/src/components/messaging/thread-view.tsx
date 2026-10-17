@@ -89,6 +89,13 @@ export function ThreadView({
     : otherMember.anonymous
       ? t("anonymous")
       : displayName(otherMember.member);
+  // The attach picker's "their puzzles" tab, named for the DM or trading
+  // partner; absent for an anonymised member (the backend lists none of their
+  // copies).
+  const theirsLabel =
+    !otherMember || otherMember.anonymous
+      ? null
+      : t("tabTheirs", { name: displayName(otherMember.member) });
 
   // mutateAsync is referentially stable, so the effect deps below behave as before.
   const { mutateAsync: markThreadRead } = useMutation({
@@ -299,7 +306,11 @@ export function ThreadView({
         className="sr-only"
       />
 
-      <MessageComposer threadId={threadId} recipientName={title} />
+      <MessageComposer
+        threadId={threadId}
+        recipientName={title}
+        theirsLabel={theirsLabel}
+      />
     </div>
   );
 }
