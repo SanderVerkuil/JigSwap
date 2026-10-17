@@ -89,7 +89,7 @@ function calloutsFromBlockquotes() {
       const tone = TONES[key];
       if (!tone) return;
       node.tagName = "aside";
-      node.properties = { className: "docs-callout", "data-tone": tone };
+      node.properties = { className: ["docs-callout"], "data-tone": tone };
     });
   };
 }
