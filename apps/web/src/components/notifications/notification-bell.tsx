@@ -2,7 +2,6 @@
 
 import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
-import { useRouter } from "@/compat/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,23 +10,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { gateway } from "@/gateway";
-import { useDateFnsLocale } from "@/lib/date-locale";
-import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import type { NotificationView } from "@jigswap/contracts";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { formatDistanceToNow } from "date-fns";
 import { Bell, CheckCheck } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
-import {
-  notificationAccent,
-  notificationCopy,
-  notificationHref,
-  notificationIcon,
-  notificationId,
-  type NotificationRow,
-} from "./notification-meta";
+import { NotificationItem } from "./notification-item";
 
 // How many recent rows the dropdown shows; the rest live on the full page.
 const PREVIEW_COUNT = 6;
@@ -35,8 +25,6 @@ const PREVIEW_COUNT = 6;
 export function NotificationBell() {
   const { user } = useUser();
   const t = useTranslations("notifications");
-  const dateLocale = useDateFnsLocale();
-  const router = useRouter();
   const [open, setOpen] = useState(false);
 
   // Both reactive: the badge and the preview update live as events land. Gated on a signed-in
@@ -46,8 +34,13 @@ export function NotificationBell() {
     convexQuery(gateway.notifications.unreadCount, signedIn ? {} : "skip"),
   );
   const notifications = useQuery(
-    convexQuery(gateway.notifications.list, signedIn && open ? {} : "skip"),
-  ).data as NotificationRow[] | undefined;
+    convexQuery(
+      gateway.notifications.listViews,
+      signedIn && open
+        ? { paginationOpts: { numItems: PREVIEW_COUNT, cursor: null } }
+        : "skip",
+    ),
+  ).data?.page;
 
   const markRead = useMutation({
     mutationFn: useConvexMutation(gateway.notifications.markRead),
@@ -57,20 +50,16 @@ export function NotificationBell() {
   });
 
   const unreadCount = unread ?? 0;
-  const preview = (notifications ?? []).slice(0, PREVIEW_COUNT);
+  const preview = notifications ?? [];
 
-  const handleOpen = async (row: NotificationRow) => {
-    setOpen(false);
-    // Optimistic-feeling: fire the read mutation but don't block navigation on it.
-    if (!row.isRead) {
-      markRead
-        .mutateAsync({ notificationId: notificationId(row) })
-        .catch(() => {
-          toast.error(t("markError"));
-        });
+  // The row link navigates; opening closes the popover and marks the row read without blocking.
+  const handleOpen = (view: NotificationView) => {
+    if (view.href) setOpen(false);
+    if (!view.isRead) {
+      markRead.mutateAsync({ notificationId: view.id }).catch(() => {
+        toast.error(t("markError"));
+      });
     }
-    const href = notificationHref(row);
-    if (href) router.push(href);
   };
 
   const handleMarkAll = async () => {
@@ -142,53 +131,14 @@ export function NotificationBell() {
             </div>
           ) : (
             <ul className="divide-y">
-              {preview.map((row) => {
-                const Icon = notificationIcon(row.type);
-                const copy = notificationCopy(row, t);
-                return (
-                  <li key={row._id}>
-                    <button
-                      type="button"
-                      onClick={() => handleOpen(row)}
-                      className={cn(
-                        "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-accent",
-                        !row.isRead && "bg-accent/40",
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted",
-                          notificationAccent(row.type),
-                        )}
-                      >
-                        <Icon className="h-4 w-4" />
-                      </span>
-                      <span className="flex-1 space-y-0.5">
-                        <span className="flex items-center gap-2">
-                          <span className="line-clamp-1 text-sm font-medium">
-                            {copy.title}
-                          </span>
-                          {!row.isRead && (
-                            <span
-                              className="h-2 w-2 shrink-0 rounded-full bg-primary"
-                              aria-label={t("unread")}
-                            />
-                          )}
-                        </span>
-                        <span className="line-clamp-2 text-xs text-muted-foreground">
-                          {copy.message}
-                        </span>
-                        <span className="block text-[11px] text-muted-foreground">
-                          {formatDistanceToNow(new Date(row.createdAt), {
-                            addSuffix: true,
-                            locale: dateLocale,
-                          })}
-                        </span>
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
+              {preview.map((view) => (
+                <NotificationItem
+                  key={view.id}
+                  view={view}
+                  surface="popover"
+                  onOpen={handleOpen}
+                />
+              ))}
             </ul>
           )}
         </div>
