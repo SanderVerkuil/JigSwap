@@ -13,7 +13,14 @@ const clerkUser = (publicMetadata: Record<string, unknown>) => ({
   first_name: "Mara",
   last_name: "Jansen",
   username: "mara",
-  email_addresses: [{ email_address: "mara@example.com" }],
+  primary_email_address_id: "idn_mara",
+  email_addresses: [
+    {
+      id: "idn_mara",
+      email_address: "mara@example.com",
+      verification: { status: "verified" as const },
+    },
+  ],
   image_url: "https://img.clerk.com/mara.png",
   created_at: 1_700_000_000_000,
   updated_at: 1_700_000_000_000,

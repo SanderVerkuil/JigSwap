@@ -1,5 +1,5 @@
 import { Notification } from "@jigswap/domain";
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { internal } from "./_generated/api";
 import { emailChannel } from "./notifications/adapters/channels/emailChannel";
@@ -25,7 +25,9 @@ const clerkUser = (
     id: e.id,
     object: "email_address",
     email_address: e.email_address,
-    verification: { status: e.verified ? "verified" : "unverified" },
+    verification: {
+      status: e.verified ? ("verified" as const) : ("unverified" as const),
+    },
   })),
   image_url: "https://img.clerk.com/mara.png",
   created_at: 1_700_000_000_000,
@@ -34,11 +36,11 @@ const clerkUser = (
 });
 
 const sync = (
-  t: ReturnType<typeof convexTest>,
+  t: TestConvex<typeof schema>,
   user: ReturnType<typeof clerkUser>,
 ) => t.mutation(internal.users.updateOrCreateUser, { clerkUser: user });
 
-const findRow = (t: ReturnType<typeof convexTest>) =>
+const findRow = (t: TestConvex<typeof schema>) =>
   t.run((ctx) =>
     ctx.db
       .query("users")

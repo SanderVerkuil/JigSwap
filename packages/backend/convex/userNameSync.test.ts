@@ -17,7 +17,14 @@ const clerkUser = (
   first_name,
   last_name,
   username,
-  email_addresses: [{ email_address: "anon@example.com" }],
+  primary_email_address_id: "idn_anon",
+  email_addresses: [
+    {
+      id: "idn_anon",
+      email_address: "anon@example.com",
+      verification: { status: "verified" as const },
+    },
+  ],
   image_url: "https://img.clerk.com/anon.png",
   created_at: 1_700_000_000_000,
   updated_at: 1_700_000_000_000,
