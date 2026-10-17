@@ -2230,8 +2230,16 @@
     "loopSkip": "Not now",
     "householdInvitedYou": "{name} invited you to join their household on JigSwap",
     "householdExplainer": "Sign up first. You'll then choose whether to join; nothing is shared until you accept.",
-    "householdExistingMember": "You already have an account. Ask {name} to invite you from their household page.",
-    "linkExpired": "This invite link has expired or was already used."
+    "linkExpired": "This invite link has expired or was already used.",
+    "householdLinkTitle": "{name} invited you to their household",
+    "householdLinkBody": "Joining shares your puzzle library with the household, and you'll see theirs. Your puzzles stay yours, and you can leave at any time.",
+    "householdLinkAlreadyInHousehold": "You're already in a household. You can only be in one at a time, so you can't join this one.",
+    "householdLinkExpired": "This invite link has expired. Ask {name} for a new one.",
+    "householdLinkUsed": "This invite link was already used. Ask {name} for a new one.",
+    "householdLinkInvalid": "This invite link is no longer valid.",
+    "householdLinkJoined": "You joined {name}'s household",
+    "householdLinkDeclined": "Invite declined",
+    "householdLinkFailed": "Couldn't respond to the invite. Please try again."
   },
   "inviteShare": {
     "share": "Share invite link",

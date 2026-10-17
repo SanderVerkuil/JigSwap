@@ -2230,8 +2230,16 @@
     "loopSkip": "Niet nu",
     "householdInvitedYou": "{name} heeft je uitgenodigd voor hun huishouden op JigSwap",
     "householdExplainer": "Meld je eerst aan. Daarna kies je of je meedoet; er wordt niets gedeeld tot je accepteert.",
-    "householdExistingMember": "Je hebt al een account. Vraag {name} om je uit te nodigen via de huishoudenpagina.",
-    "linkExpired": "Deze uitnodigingslink is verlopen of al gebruikt."
+    "linkExpired": "Deze uitnodigingslink is verlopen of al gebruikt.",
+    "householdLinkTitle": "{name} heeft je uitgenodigd voor hun huishouden",
+    "householdLinkBody": "Als je meedoet, deel je je puzzelcollectie met het huishouden en zie je die van hen. Je puzzels blijven van jou, en je kunt altijd weer vertrekken.",
+    "householdLinkAlreadyInHousehold": "Je zit al in een huishouden. Je kunt maar in één tegelijk zitten, dus je kunt hier niet bij.",
+    "householdLinkExpired": "Deze uitnodigingslink is verlopen. Vraag {name} om een nieuwe.",
+    "householdLinkUsed": "Deze uitnodigingslink is al gebruikt. Vraag {name} om een nieuwe.",
+    "householdLinkInvalid": "Deze uitnodigingslink is niet meer geldig.",
+    "householdLinkJoined": "Je bent lid van het huishouden van {name}",
+    "householdLinkDeclined": "Uitnodiging geweigerd",
+    "householdLinkFailed": "Reageren op de uitnodiging is niet gelukt. Probeer het opnieuw."
   },
   "inviteShare": {
     "share": "Uitnodigingslink delen",

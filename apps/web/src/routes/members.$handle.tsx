@@ -3,11 +3,11 @@ import { DashboardShell } from "@/components/dashboard-layout/shell";
 import { MarketingFooter } from "@/components/marketing/footer";
 import { MarketingHeader } from "@/components/marketing/header";
 import {
-  InviteExpiredNotice,
   ProfileBody,
   ProfileCtaBand,
   type PublicProfileView,
 } from "@/components/members/profile-body";
+import { HouseholdLinkInvite } from "@/components/social/household-link-invite";
 import {
   INVITE_KEY,
   shouldHandOffInvite,
@@ -30,7 +30,7 @@ import {
 } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { Eye } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
@@ -177,7 +177,6 @@ function MemberPage() {
         invite={invite}
         inviteValid={inviteValid}
         inviteKind={inviteKind}
-        inviteExpired={inviteExpired}
       />
     </DashboardShell>
   );
@@ -188,13 +187,11 @@ function AuthedMemberPage({
   invite,
   inviteValid,
   inviteKind,
-  inviteExpired,
 }: {
   profile: PublicProfileView;
   invite: string | undefined;
   inviteValid: boolean;
   inviteKind: "network" | "household";
-  inviteExpired: boolean;
 }) {
   const tShell = useTranslations("shell");
   const displayName = useMemberDisplayName();
@@ -210,23 +207,25 @@ function AuthedMemberPage({
   // member on a live invite: (re)store the token — the ?invite on the URL
   // re-seeds it even if storage was lost across the redirect — and go to the
   // dashboard, where InviteRedeemer redeems it. Existing members stay here.
+  // The page's first-render time: Date.now() can't run during render, and a stale "now" only
+  // matters at the 15-minute boundary, which the server enforces anyway.
+  const [now] = useState(() => Date.now());
+  const handingOff =
+    me !== null &&
+    me !== undefined &&
+    invite !== undefined &&
+    shouldHandOffInvite({
+      memberCreatedAt: me.createdAt,
+      isSelf,
+      invite,
+      inviteValid,
+      now,
+    });
   useEffect(() => {
-    if (
-      !me ||
-      !invite ||
-      !shouldHandOffInvite({
-        memberCreatedAt: me.createdAt,
-        isSelf,
-        invite,
-        inviteValid,
-        now: Date.now(),
-      })
-    ) {
-      return;
-    }
+    if (!handingOff || !invite) return;
     safeStorage.setItem("local", INVITE_KEY, invite);
     void navigate({ to: "/dashboard", replace: true });
-  }, [me, isSelf, invite, inviteValid, navigate]);
+  }, [handingOff, invite, navigate]);
 
   // The featured shelf is auth-gated (requireMember) and only exists on an
   // unlocked profile; skip it while `me` is unresolved and for locked profiles.
@@ -261,13 +260,8 @@ function AuthedMemberPage({
       {!isSelf && invite && inviteValid && inviteKind === "network" && (
         <QrFollowPrompt token={invite} name={name} />
       )}
-      {!isSelf && inviteValid && inviteKind === "household" && (
-        <HouseholdLinkExistingMember name={name} />
-      )}
-      {!isSelf && inviteExpired && (
-        <div className="mb-6">
-          <InviteExpiredNotice />
-        </div>
+      {!isSelf && !handingOff && invite && inviteKind === "household" && (
+        <HouseholdLinkInvite token={invite} fallbackName={name} />
       )}
       <ProfileBody
         profile={profile}
@@ -304,19 +298,6 @@ function QrFollowPrompt({ token, name }: { token: string; name: string }) {
       >
         {t("followEachOtherCta")}
       </Button>
-    </div>
-  );
-}
-
-// An existing member opening someone's household link: redemption is for new
-// accounts only (no invite, no follow), so point them at the in-app invite.
-function HouseholdLinkExistingMember({ name }: { name: string }) {
-  const t = useTranslations("invite");
-  return (
-    <div className="border-jigsaw-primary/20 bg-jigsaw-primary/5 mb-6 w-full rounded-xl border px-4 py-3">
-      <p className="text-muted-foreground text-sm">
-        {t("householdExistingMember", { name })}
-      </p>
     </div>
   );
 }
