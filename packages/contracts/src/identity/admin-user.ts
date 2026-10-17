@@ -12,7 +12,8 @@ export interface AdminUserView extends ConvexSystemFields {
   /** Raw account name; may be absent. Render via resolveMemberDisplayName / useMemberDisplayName. */
   name?: string;
   username?: string;
-  email: string;
+  /** Verified primary Clerk email; absent until the member has one. */
+  email?: string;
   avatar?: string;
   isActive: boolean;
   role?: string;
@@ -60,7 +61,8 @@ export interface AdminUserDetailView {
     clerkId: string;
     name?: string;
     username?: string;
-    email: string;
+    /** Verified primary Clerk email; absent until the member has one. */
+    email?: string;
     avatar?: string;
     bio?: string;
     location?: string;

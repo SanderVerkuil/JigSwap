@@ -22,14 +22,14 @@ export const memberDisplayNameOf = (
 
 /**
  * A member's label on ADMIN-ONLY surfaces (moderation audit trail, admin tables), where the email
- * is visible by design: account name, else email, else username. Every users row has an email, so
- * this always yields a label.
+ * is visible by design: account name, else email, else username, else (a member with none of
+ * those, e.g. no verified email yet) the Clerk id, so this always yields a label.
  */
 export const adminMemberLabelOf = (
-  user: Pick<Doc<"users">, "name" | "username" | "email">,
+  user: Pick<Doc<"users">, "name" | "username" | "email" | "clerkId">,
 ): string =>
   resolveMemberDisplayName({
     name: user.name,
     email: user.email,
     username: user.username,
-  })?.text ?? user.email;
+  })?.text ?? user.clerkId;

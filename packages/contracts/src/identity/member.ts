@@ -28,7 +28,8 @@ export interface MemberView extends ConvexSystemFields {
  */
 export interface CurrentMemberView extends MemberView {
   clerkId: string;
-  email: string;
+  /** Verified primary Clerk email; absent until the member has one. */
+  email?: string;
   slug?: string;
 }
 

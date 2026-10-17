@@ -50,7 +50,10 @@ const proposalFields = v.object({
 export default defineSchema({
   users: defineTable({
     clerkId: v.string(),
-    email: v.string(),
+    // The member's VERIFIED primary Clerk email (users.updateOrCreateUser). Optional: a member whose
+    // primary address is not (yet) verified, or who has none, has no email — email notifications
+    // are skipped for them.
+    email: v.optional(v.string()),
     // Full name as synced from Clerk ("<first> <last>", either half may be missing). Optional:
     // Clerk users without a first/last name have none — render via resolveMemberDisplayName
     // (@jigswap/contracts), never the raw field.
