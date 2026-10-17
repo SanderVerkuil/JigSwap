@@ -71,7 +71,8 @@ export function CoverStack({
             <span
               className={cn(
                 tileClass(index, ringClass),
-                "bg-muted hover:z-10 hover:-translate-y-0.5",
+                // A hairline edge so each card in the deck reads as its own puzzle.
+                "bg-muted border-foreground/20 border hover:z-10 hover:-translate-y-0.5",
                 // Keyboard users get the same lift on the front cover.
                 index === 0 && "group-focus-visible:-translate-y-0.5",
               )}
@@ -89,10 +90,10 @@ export function CoverStack({
                     aria-hidden
                     className={cn(
                       "text-muted-foreground size-3.5",
-                      // Behind the front tile only a sliver would show, so back
-                      // glyph tiles read as plain cards until the stack spreads.
+                      // Behind the front tile only the right half shows, so a back
+                      // tile's glyph sits right of centre until the stack spreads.
                       index > 0 &&
-                        "opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none motion-reduce:duration-0",
+                        "translate-x-1 transition-transform duration-200 group-hover:translate-x-0 group-focus-visible:translate-x-0 motion-reduce:transition-none motion-reduce:duration-0",
                     )}
                   />
                 </span>
