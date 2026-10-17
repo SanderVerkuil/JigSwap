@@ -16,6 +16,7 @@ import {
   decideHouseholdInvite,
   decideMessage,
   INFORMATIONAL,
+  INITIATOR_NOTIFICATION_TYPES,
   isActorRevealed,
   isActorSubjectType,
   messagePreviewOf,
@@ -516,6 +517,14 @@ export const resolveNotificationView = async (
   const context: NotificationViewContext = {
     ...paramsContext(row.params),
     ...subjectFacts?.context,
+    // A row without actor refs (pre-refs, or the backfill could not derive one) has only the name
+    // snapshot left. Initiator types reveal their actor to the viewer anyway, and the snapshot was
+    // written with the same display-name rules (never an email).
+    ...(actorIds.length === 0 &&
+    INITIATOR_NOTIFICATION_TYPES.has(type) &&
+    row.params?.actorName
+      ? { actorNameSnapshot: row.params.actorName }
+      : {}),
   };
   return {
     id: row.aggregateId ?? row._id,
