@@ -14,6 +14,7 @@ import {
   LoanId,
 } from "../../domain";
 import {
+  FakeCopyManagerPolicy,
   FixedClock,
   InMemoryCopyRepository,
   InMemoryLoanRepository,
@@ -173,6 +174,35 @@ describe("loan use cases", () => {
       expect(events.names()).toEqual(
         expect.arrayContaining(["LoanClosed", "CopyReturnedToOwner"]),
       );
+    });
+
+    it("a policy-approved household manager may recall on the lender's behalf", async () => {
+      const managers = new FakeCopyManagerPolicy();
+      const mate = toOwnerId("mate");
+      managers.allow(copyId, mate);
+      const result = await makeRecallLoan({
+        loans,
+        copies,
+        events,
+        clock: new FixedClock(LATER),
+        managers,
+      })({ loanId, actingMemberId: mate });
+      expect(result.isOk).toBe(true);
+      expect((await copies.findById(copyId))?.heldBy).toBe(owner);
+      expect((await loans.findById(loanId))?.toState().lenderId).toBe(owner);
+    });
+
+    it("the borrower cannot recall even with a policy wired", async () => {
+      const managers = new FakeCopyManagerPolicy();
+      managers.allow(copyId, toOwnerId("mate"));
+      const result = await makeRecallLoan({
+        loans,
+        copies,
+        events,
+        clock: new FixedClock(LATER),
+        managers,
+      })({ loanId, actingMemberId: borrower });
+      expect(result.isErr && result.error.code).toBe("NotLender");
     });
 
     it("a non-owner cannot recall", async () => {

@@ -5,12 +5,18 @@ import {
   ChangeCopyCondition,
   ChangeCopyConditionCommand,
 } from "../ports/in/change-copy-condition.port";
+import {
+  CopyManagerPolicy,
+  mayManageCopy,
+} from "../ports/out/copy-manager.policy";
 import { CopyRepository } from "../ports/out/copy.repository";
 
 export interface ChangeCopyConditionDeps {
   readonly copies: CopyRepository;
   readonly events: DomainEventPublisher;
   readonly clock: Clock;
+  // Household co-management (optional): absent ⇒ owner-only.
+  readonly managers?: CopyManagerPolicy;
 }
 
 // Transaction script: load (→ CopyNotFound), check ownership, delegate the re-grade to the
@@ -20,7 +26,7 @@ export const makeChangeCopyCondition =
   async (cmd: ChangeCopyConditionCommand) => {
     const copy = await deps.copies.findById(cmd.copyId);
     if (!copy) return err(LibraryApplicationError.copyNotFound(cmd.copyId));
-    if (copy.ownerId !== cmd.actingMemberId) {
+    if (!(await mayManageCopy(copy, cmd.actingMemberId, deps.managers))) {
       return err(LibraryError.notOwner("change this copy's condition"));
     }
 

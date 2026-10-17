@@ -1,4 +1,5 @@
 export * from "./fake-catalog-snapshot.provider";
+export * from "./fake-copy-manager.policy";
 export * from "./fake-copy-reservation.port";
 export * from "./fixed-clock";
 export * from "./in-memory-collection.repository";
