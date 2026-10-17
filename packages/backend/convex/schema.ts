@@ -48,6 +48,9 @@ const proposalFields = v.object({
 });
 
 export default defineSchema({
+  // THROWAWAY (test/preview-seed-new-table): proves preview seeding survives a new table.
+  previewSeedProbe: defineTable({ note: v.string() }),
+
   users: defineTable({
     clerkId: v.string(),
     email: v.string(),
