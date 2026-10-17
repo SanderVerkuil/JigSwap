@@ -10,8 +10,9 @@
 // kinds added there flow through without a second hand-maintained list.
 import { MODERATION_ACTIVITY_KINDS } from "@/components/admin/moderation/activity-log";
 import { gateway } from "@/gateway";
+import { useRelativeTime } from "@/hooks/use-relative-time";
 import type { FunctionReturnType } from "convex/server";
-import { useFormatter, useTranslations } from "use-intl";
+import { useTranslations } from "use-intl";
 
 // The web tier derives Convex view types from the gateway (not @jigswap/contracts directly).
 type AuditEntry = FunctionReturnType<
@@ -26,7 +27,7 @@ export function AuditList({
   emptyLabel: string;
 }) {
   const t = useTranslations("admin.moderation");
-  const format = useFormatter();
+  const relativeTime = useRelativeTime();
 
   if (entries.length === 0) {
     return (
@@ -55,7 +56,7 @@ export function AuditList({
               : `${row.kind} — ${row.targetLabel}`}
           </p>
           <span className="shrink-0 text-xs text-muted-foreground">
-            {format.relativeTime(row.at)}
+            {relativeTime(row.at)}
           </span>
         </div>
       ))}

@@ -7,6 +7,7 @@
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
+import { useRelativeTime } from "@/hooks/use-relative-time";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
@@ -23,7 +24,7 @@ import {
   XCircle,
   type LucideIcon,
 } from "lucide-react";
-import { useFormatter, useTranslations } from "use-intl";
+import { useTranslations } from "use-intl";
 
 type ActivityRow = FunctionReturnType<
   typeof gateway.admin.getModerationActivity
@@ -54,7 +55,7 @@ export const MODERATION_ACTIVITY_KINDS: readonly string[] =
 
 export function ActivityLog({ emptyTitle }: { emptyTitle: string }) {
   const t = useTranslations("admin.moderation");
-  const format = useFormatter();
+  const relativeTime = useRelativeTime();
   const { data: activity, isPending } = useQuery(
     convexQuery(gateway.admin.getModerationActivity, {}),
   );
@@ -88,7 +89,7 @@ export function ActivityLog({ emptyTitle }: { emptyTitle: string }) {
               })}
             </p>
             <span className="shrink-0 text-xs text-muted-foreground">
-              {format.relativeTime(row.at)}
+              {relativeTime(row.at)}
             </span>
           </div>
         );

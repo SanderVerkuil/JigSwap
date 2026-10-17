@@ -7,20 +7,43 @@ import { ThemeProvider } from "next-themes";
 import * as React from "react";
 import { IntlProvider } from "use-intl";
 
+const noopSubscribe = () => () => {};
+
 // Ports apps/web/src/app/providers.tsx. Clerk + Convex stay in __root.tsx (they
 // wrap this tree); next-intl is swapped for use-intl with locale/messages
 // resolved in the root loader so SSR has them.
 export function Providers({
   locale,
   messages,
+  now: serverNow,
   children,
 }: {
   locale: string;
   messages: Messages;
+  now: number;
   children: React.ReactNode;
 }) {
+  // Global `now` from the server render, so SSR and hydration agree on relative
+  // times (and use-intl never falls back to the environment clock). Dropped
+  // once hydrated: the intl payload is cached client-side, so this instant goes
+  // stale in long sessions; useNow() in components mounted later then starts
+  // from the live clock instead. Callers pass `now` explicitly via
+  // useRelativeTime().
+  const hydrated = React.useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
+  const ssrNow = React.useMemo(() => new Date(serverNow), [serverNow]);
+  const now = hydrated ? undefined : ssrNow;
+
   return (
-    <IntlProvider locale={locale} messages={messages} timeZone={timeZone}>
+    <IntlProvider
+      locale={locale}
+      messages={messages}
+      timeZone={timeZone}
+      now={now}
+    >
       <ThemeProvider
         attribute="class"
         defaultTheme="system"

@@ -29,6 +29,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { gateway, Id } from "@/gateway";
+import { useRelativeTime } from "@/hooks/use-relative-time";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
@@ -51,7 +52,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useFormatter, useTranslations } from "use-intl";
+import { useTranslations } from "use-intl";
 
 // The web tier derives Convex view types from the gateway (not @jigswap/contracts directly).
 export type PublicProfileView = NonNullable<
@@ -550,7 +551,7 @@ function CurrentlySolvingSection({
   items: NonNullable<UnlockedProfile["currentlySolving"]>;
 }) {
   const t = useTranslations("profile.currentlySolving");
-  const format = useFormatter();
+  const relativeTime = useRelativeTime();
   if (items.length === 0) return null;
   return (
     <section>
@@ -584,7 +585,7 @@ function CurrentlySolvingSection({
               <p className="text-muted-foreground text-xs">
                 {item.pieceCount !== undefined &&
                   `${t("pieces", { count: item.pieceCount })} · `}
-                {format.relativeTime(new Date(item.startDate))}
+                {relativeTime(new Date(item.startDate))}
               </p>
             </div>
           </div>

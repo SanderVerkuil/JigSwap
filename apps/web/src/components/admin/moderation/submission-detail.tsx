@@ -7,12 +7,13 @@
 // and calls back.
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
+import { useRelativeTime } from "@/hooks/use-relative-time";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import { AlertTriangle, Check, Pencil, Puzzle, X } from "lucide-react";
-import { useFormatter, useTranslations } from "use-intl";
+import { useTranslations } from "use-intl";
 
 export type PendingSubmission = FunctionReturnType<
   typeof gateway.catalog.pending
@@ -78,7 +79,7 @@ export function SubmissionDetail({
 }) {
   const t = useTranslations("admin.moderation");
   const tDifficulty = useTranslations("puzzles.puzzles.difficulty");
-  const format = useFormatter();
+  const relativeTime = useRelativeTime();
 
   // Possible-dup check for the SELECTED submission only: the approved-only
   // suggestions index is the catalog's existing cheap title lookup.
@@ -91,7 +92,7 @@ export function SubmissionDetail({
   const dup = findTitleMatch(submission.title, suggestions);
 
   const meta: [string, string][] = [
-    [t("detail.submitted"), format.relativeTime(submission.createdAt)],
+    [t("detail.submitted"), relativeTime(submission.createdAt)],
   ];
   if (submission.difficulty) {
     meta.push([t("detail.difficulty"), tDifficulty(submission.difficulty)]);

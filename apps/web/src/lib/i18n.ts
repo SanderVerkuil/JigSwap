@@ -106,10 +106,12 @@ async function loadMessages(locale: Locale): Promise<Messages> {
 }
 
 // Root beforeLoad calls this so SSR has locale + messages before first paint.
+// `now` is the server's clock at render time; it travels with the dehydrated
+// payload so SSR and hydration format relative times against the same instant.
 export const getIntl = createServerFn({ method: "GET" }).handler(async () => {
   const locale = detectLocale();
   const messages = await loadMessages(locale);
-  return { locale, messages, timeZone };
+  return { locale, messages, timeZone, now: Date.now() };
 });
 
 export type IntlPayload = Awaited<ReturnType<typeof getIntl>>;
