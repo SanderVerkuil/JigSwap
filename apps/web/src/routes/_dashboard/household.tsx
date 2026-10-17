@@ -2,6 +2,7 @@ import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { householdErrorKey } from "@/components/household/household-error";
+import { MyHouseholdCopies } from "@/components/household/my-household-copies";
 import { EmptyState } from "@/components/library/empty-state";
 import { MemberInitial } from "@/components/members/member-initial";
 import {
@@ -326,6 +327,8 @@ function HouseholdDetails({
           )}
         </section>
       )}
+
+      <MyHouseholdCopies onError={onError} />
 
       <section>
         <Button variant="outline" onClick={() => setConfirmLeave(true)}>

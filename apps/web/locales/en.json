@@ -1531,7 +1531,30 @@
       "HouseholdNotFound": "This household no longer exists.",
       "NotHouseholdAdmin": "Only the household admin can do this.",
       "InviteNotPending": "This invite has already been answered.",
-      "MemberNotFound": "This member could not be found."
+      "MemberNotFound": "This member could not be found.",
+      "NotCopyOwner": "Only the owner can change a puzzle's household access.",
+      "PermissionBatchTooLarge": "You can change at most 200 puzzles at once.",
+      "CopyNotFound": "One of these puzzles no longer exists."
+    },
+    "bulkPermission": {
+      "title": "My puzzles in this household",
+      "sub": "Choose what your household may do with each of your puzzles. Only you can change this for your own puzzles.",
+      "empty": "You haven't added any puzzles yet.",
+      "filterLabel": "Filter by household access",
+      "filterAll": "All puzzles",
+      "selectAll": "Select all",
+      "selectNone": "Select none",
+      "selectedCount": "{count, plural, one {# selected} other {# selected}}",
+      "setManage": "Set to Can manage",
+      "setView": "Set to View only",
+      "selectLabel": "Select {title}",
+      "noMatches": "None of your puzzles match this filter.",
+      "untitled": "Untitled puzzle",
+      "confirmTitle": "{count, plural, one {Change # puzzle?} other {Change # puzzles?}}",
+      "confirmManage": "Your household will be able to manage {count, plural, one {this puzzle} other {these puzzles}}: edit, lend and swap {count, plural, one {it} other {them}}.",
+      "confirmView": "Your household will only be able to view {count, plural, one {this puzzle} other {these puzzles}}.",
+      "confirm": "Change access",
+      "changed": "{count, plural, =0 {No puzzles needed changing} one {# puzzle updated} other {# puzzles updated}}"
     }
   },
   "circles": {

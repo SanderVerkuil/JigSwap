@@ -88,6 +88,10 @@ export const gateway = {
     // ("view") this copy. Keyed by the copy's Convex id.
     setHouseholdPermission:
       api.library.setCopyHouseholdPermission.setCopyHouseholdPermission,
+    // Bulk form for the household page: the owner sets many of their copies at once. Every copy
+    // must be the caller's (else the whole batch is rejected); deduped, capped, returns counts.
+    setHouseholdPermissions:
+      api.library.setCopiesHouseholdPermission.setCopiesHouseholdPermission,
     // Reads go through the domain-driven library module (file.export namespacing); each is a thin
     // Convex query returning a typed @jigswap/contracts view DTO, not a raw row.
     ownedByOwner: api.library.getOwnedPuzzlesByOwner.getOwnedPuzzlesByOwner,
@@ -131,6 +135,10 @@ export const gateway = {
     mine: api.household.getMyHousehold.getMyHousehold,
     myInvites: api.household.listMyHouseholdInvites.listMyHouseholdInvites,
     copies: api.household.listHouseholdCopies.listHouseholdCopies,
+    // The viewer's own copies with the household permission each grants (absent = "manage").
+    myCopyPermissions:
+      api.household.listMyHouseholdCopyPermissions
+        .listMyHouseholdCopyPermissions,
     create: api.household.createHousehold.createHousehold,
     invite: api.household.inviteToHousehold.inviteToHousehold,
     acceptInvite: api.household.acceptHouseholdInvite.acceptHouseholdInvite,

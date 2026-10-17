@@ -1531,7 +1531,30 @@
       "HouseholdNotFound": "Dit huishouden bestaat niet meer.",
       "NotHouseholdAdmin": "Alleen de beheerder van het huishouden kan dit doen.",
       "InviteNotPending": "Deze uitnodiging is al beantwoord.",
-      "MemberNotFound": "Dit lid kon niet worden gevonden."
+      "MemberNotFound": "Dit lid kon niet worden gevonden.",
+      "NotCopyOwner": "Alleen de eigenaar kan de toegang voor het huishouden van een puzzel wijzigen.",
+      "PermissionBatchTooLarge": "Je kunt maximaal 200 puzzels tegelijk wijzigen.",
+      "CopyNotFound": "Een van deze puzzels bestaat niet meer."
+    },
+    "bulkPermission": {
+      "title": "Mijn puzzels in dit huishouden",
+      "sub": "Kies wat je huishouden met elk van je puzzels mag doen. Alleen jij kunt dit voor je eigen puzzels wijzigen.",
+      "empty": "Je hebt nog geen puzzels toegevoegd.",
+      "filterLabel": "Filteren op toegang voor het huishouden",
+      "filterAll": "Alle puzzels",
+      "selectAll": "Alles selecteren",
+      "selectNone": "Niets selecteren",
+      "selectedCount": "{count, plural, one {# geselecteerd} other {# geselecteerd}}",
+      "setManage": "Instellen op Mag beheren",
+      "setView": "Instellen op Alleen bekijken",
+      "selectLabel": "{title} selecteren",
+      "noMatches": "Geen van je puzzels past bij dit filter.",
+      "untitled": "Puzzel zonder titel",
+      "confirmTitle": "{count, plural, one {# puzzel wijzigen?} other {# puzzels wijzigen?}}",
+      "confirmManage": "Je huishouden kan {count, plural, one {deze puzzel} other {deze puzzels}} dan beheren: bewerken, uitlenen en ruilen.",
+      "confirmView": "Je huishouden kan {count, plural, one {deze puzzel} other {deze puzzels}} dan alleen bekijken.",
+      "confirm": "Toegang wijzigen",
+      "changed": "{count, plural, =0 {Er hoefde niets te veranderen} one {# puzzel bijgewerkt} other {# puzzels bijgewerkt}}"
     }
   },
   "circles": {

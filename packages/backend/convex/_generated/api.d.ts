@@ -148,6 +148,7 @@ import type * as household_getMyHousehold from "../household/getMyHousehold.js";
 import type * as household_inviteToHousehold from "../household/inviteToHousehold.js";
 import type * as household_leaveHousehold from "../household/leaveHousehold.js";
 import type * as household_listHouseholdCopies from "../household/listHouseholdCopies.js";
+import type * as household_listMyHouseholdCopyPermissions from "../household/listMyHouseholdCopyPermissions.js";
 import type * as household_listMyHouseholdInvites from "../household/listMyHouseholdInvites.js";
 import type * as household_memberships from "../household/memberships.js";
 import type * as household_removeHouseholdMember from "../household/removeHouseholdMember.js";
@@ -229,6 +230,7 @@ import type * as library_removeCopyFromCollection from "../library/removeCopyFro
 import type * as library_removeCopyPhoto from "../library/removeCopyPhoto.js";
 import type * as library_resolveCoverUrl from "../library/resolveCoverUrl.js";
 import type * as library_returnLoan from "../library/returnLoan.js";
+import type * as library_setCopiesHouseholdPermission from "../library/setCopiesHouseholdPermission.js";
 import type * as library_setCopyCover from "../library/setCopyCover.js";
 import type * as library_setCopyHouseholdPermission from "../library/setCopyHouseholdPermission.js";
 import type * as library_transferOnSettlement from "../library/transferOnSettlement.js";
@@ -521,6 +523,7 @@ declare const fullApi: ApiFromModules<{
   "household/inviteToHousehold": typeof household_inviteToHousehold;
   "household/leaveHousehold": typeof household_leaveHousehold;
   "household/listHouseholdCopies": typeof household_listHouseholdCopies;
+  "household/listMyHouseholdCopyPermissions": typeof household_listMyHouseholdCopyPermissions;
   "household/listMyHouseholdInvites": typeof household_listMyHouseholdInvites;
   "household/memberships": typeof household_memberships;
   "household/removeHouseholdMember": typeof household_removeHouseholdMember;
@@ -602,6 +605,7 @@ declare const fullApi: ApiFromModules<{
   "library/removeCopyPhoto": typeof library_removeCopyPhoto;
   "library/resolveCoverUrl": typeof library_resolveCoverUrl;
   "library/returnLoan": typeof library_returnLoan;
+  "library/setCopiesHouseholdPermission": typeof library_setCopiesHouseholdPermission;
   "library/setCopyCover": typeof library_setCopyCover;
   "library/setCopyHouseholdPermission": typeof library_setCopyHouseholdPermission;
   "library/transferOnSettlement": typeof library_transferOnSettlement;
