@@ -259,6 +259,7 @@ import type * as notifications_adapters_webPush from "../notifications/adapters/
 import type * as notifications_backfill from "../notifications/backfill.js";
 import type * as notifications_backfillRefs from "../notifications/backfillRefs.js";
 import type * as notifications_copy from "../notifications/copy.js";
+import type * as notifications_deliveryContent from "../notifications/deliveryContent.js";
 import type * as notifications_errors from "../notifications/errors.js";
 import type * as notifications_getMyPreferences from "../notifications/getMyPreferences.js";
 import type * as notifications_getPushConfig from "../notifications/getPushConfig.js";
@@ -268,6 +269,7 @@ import type * as notifications_markAllRead from "../notifications/markAllRead.js
 import type * as notifications_markNotificationRead from "../notifications/markNotificationRead.js";
 import type * as notifications_preferenceValidators from "../notifications/preferenceValidators.js";
 import type * as notifications_pushSubscriptions from "../notifications/pushSubscriptions.js";
+import type * as notifications_resolveForDelivery from "../notifications/resolveForDelivery.js";
 import type * as notifications_resolveNotificationView from "../notifications/resolveNotificationView.js";
 import type * as notifications_sendEmail from "../notifications/sendEmail.js";
 import type * as notifications_sendWebPush from "../notifications/sendWebPush.js";
@@ -668,6 +670,7 @@ declare const fullApi: ApiFromModules<{
   "notifications/backfill": typeof notifications_backfill;
   "notifications/backfillRefs": typeof notifications_backfillRefs;
   "notifications/copy": typeof notifications_copy;
+  "notifications/deliveryContent": typeof notifications_deliveryContent;
   "notifications/errors": typeof notifications_errors;
   "notifications/getMyPreferences": typeof notifications_getMyPreferences;
   "notifications/getPushConfig": typeof notifications_getPushConfig;
@@ -677,6 +680,7 @@ declare const fullApi: ApiFromModules<{
   "notifications/markNotificationRead": typeof notifications_markNotificationRead;
   "notifications/preferenceValidators": typeof notifications_preferenceValidators;
   "notifications/pushSubscriptions": typeof notifications_pushSubscriptions;
+  "notifications/resolveForDelivery": typeof notifications_resolveForDelivery;
   "notifications/resolveNotificationView": typeof notifications_resolveNotificationView;
   "notifications/sendEmail": typeof notifications_sendEmail;
   "notifications/sendWebPush": typeof notifications_sendWebPush;
