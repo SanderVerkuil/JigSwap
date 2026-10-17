@@ -9,12 +9,14 @@
 import { UserButton, useUser } from "@/compat/clerk";
 import { NotificationPreferencesPanel } from "@/components/notifications/notification-preferences-panel";
 import { Switch } from "@/components/ui/switch";
+import { UnreadDot } from "@/components/whats-new/badges";
+import { useWhatsNewUnreadCount } from "@/components/whats-new/use-whats-new-state";
 import { gateway } from "@/gateway";
 import { useUserSettings } from "@/hooks/use-user-settings";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, Shield, SlidersHorizontal, User } from "lucide-react";
+import { Bell, Shield, SlidersHorizontal, Sparkles, User } from "lucide-react";
 import { useTranslations } from "use-intl";
 import { useShellPreferences } from "./preferences";
 
@@ -27,7 +29,9 @@ export function ShellUserButton({
   tapTarget?: boolean;
 }) {
   const t = useTranslations("shell");
+  const tWhatsNew = useTranslations("whatsNew");
   const { user } = useUser();
+  const whatsNewCount = useWhatsNewUnreadCount();
 
   // Backend-confirmed admin role — same source as the /admin route guard and
   // the sidebar's gated group; Convex dedupes the shared subscription. This
@@ -58,6 +62,24 @@ export function ShellUserButton({
           label={t("pages.profile.title")}
           labelIcon={<User className="size-4" />}
           href="/profile"
+        />
+        {/* Clerk's label is a plain string, so the count goes in the text ("What's new (2)"),
+            which also gives screen readers the count; the icon dot is decorative. */}
+        <UserButton.Link
+          label={
+            whatsNewCount > 0
+              ? tWhatsNew("menuLabelUnread", { count: whatsNewCount })
+              : tWhatsNew("menuLabel")
+          }
+          labelIcon={
+            <span className="relative">
+              <Sparkles className="size-4" />
+              {whatsNewCount > 0 && (
+                <UnreadDot className="ring-popover -top-1 -right-1 size-2" />
+              )}
+            </span>
+          }
+          href="/whats-new"
         />
         {isAdmin && (
           <UserButton.Link

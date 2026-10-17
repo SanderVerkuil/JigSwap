@@ -14,6 +14,7 @@
 // its trigger lives in the (hidden) desktop top bar.
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { WhatsNewAnnouncer } from "@/components/whats-new/announcer";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { AppSidebar } from "./app-sidebar";
@@ -60,6 +61,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
           <MobileTabBar />
           <CommandPalette open={paletteOpen} setOpen={setPaletteOpen} />
+          <WhatsNewAnnouncer />
         </SidebarProvider>
       </PageHeaderSlotProvider>
     </ShellPreferencesProvider>
