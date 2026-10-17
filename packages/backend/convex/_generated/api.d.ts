@@ -263,7 +263,6 @@ import type * as notifications_deliveryContent from "../notifications/deliveryCo
 import type * as notifications_errors from "../notifications/errors.js";
 import type * as notifications_getMyPreferences from "../notifications/getMyPreferences.js";
 import type * as notifications_getPushConfig from "../notifications/getPushConfig.js";
-import type * as notifications_listMyNotifications from "../notifications/listMyNotifications.js";
 import type * as notifications_listMyNotificationViews from "../notifications/listMyNotificationViews.js";
 import type * as notifications_markAllRead from "../notifications/markAllRead.js";
 import type * as notifications_markNotificationRead from "../notifications/markNotificationRead.js";
@@ -674,7 +673,6 @@ declare const fullApi: ApiFromModules<{
   "notifications/errors": typeof notifications_errors;
   "notifications/getMyPreferences": typeof notifications_getMyPreferences;
   "notifications/getPushConfig": typeof notifications_getPushConfig;
-  "notifications/listMyNotifications": typeof notifications_listMyNotifications;
   "notifications/listMyNotificationViews": typeof notifications_listMyNotificationViews;
   "notifications/markAllRead": typeof notifications_markAllRead;
   "notifications/markNotificationRead": typeof notifications_markNotificationRead;

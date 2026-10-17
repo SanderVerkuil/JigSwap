@@ -83,6 +83,11 @@ export interface NotificationViewContext {
   exchangeStatus?: NotificationExchangeStatus;
   /** The latest text message in the thread, ~80 chars (thread participants only). */
   messagePreview?: string;
+  /**
+   * The stored actor name of a row without actor refs (legacy), for types whose actor contacted
+   * the viewer. Absent whenever `actors` is resolved.
+   */
+  actorNameSnapshot?: string;
 }
 
 export interface NotificationView {

@@ -54,8 +54,10 @@ export function NotificationSentence({ view }: { view: NotificationView }) {
   const { type, actors, actorCount, context } = view;
 
   if (LEGACY_ONLY.has(type) || (!ACTORLESS.has(type) && actors.length === 0)) {
-    // Ref-less (pre-N2) row: only the stored params snapshot is left (no actor name).
+    // Ref-less (pre-N2) row: only the stored params snapshot is left; the server exposes the
+    // stored actor name for types that may name their actor.
     const params: Record<string, string> = {};
+    if (context.actorNameSnapshot) params.actorName = context.actorNameSnapshot;
     if (context.puzzleTitle) params.puzzleTitle = context.puzzleTitle;
     if (context.goalTitle) params.goalTitle = context.goalTitle;
     if (context.reason) params.reason = context.reason;

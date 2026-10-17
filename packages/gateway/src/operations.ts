@@ -289,9 +289,7 @@ export const gateway = {
   // (events from other contexts produce rows); the UI only reads its own and toggles read/prefs.
   // `markRead` takes the notification aggregateId, not the Convex _id.
   notifications: {
-    list: api.notifications.listMyNotifications.listMyNotifications,
-    // Resolved, paginated views (actor, live context, deep link, inline actions); replaces `list`
-    // once the web migrates.
+    // Resolved, paginated views (actor, live context, deep link, inline actions).
     listViews:
       api.notifications.listMyNotificationViews.listMyNotificationViews,
     unreadCount: api.notifications.unreadCount.unreadCount,

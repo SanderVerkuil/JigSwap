@@ -285,6 +285,25 @@ describe("NotificationItem rendering", () => {
     );
   });
 
+  it.each([
+    ["en", "Unread, Mara started following you."],
+    ["nl", "Ongelezen, Mara volgt je nu."],
+  ] as const)(
+    "names a ref-less row's actor from the stored snapshot (%s)",
+    (locale, text) => {
+      const { container } = renderItem(
+        base({
+          actors: [],
+          actorCount: 0,
+          href: "/people",
+          context: { actorNameSnapshot: "Mara" },
+        }),
+        { locale },
+      );
+      expect(rowLink(container)!.textContent).toBe(text);
+    },
+  );
+
   it("renders a grouped new_follower with stacked avatars and a grouped sentence", () => {
     const { container } = renderItem(
       base({

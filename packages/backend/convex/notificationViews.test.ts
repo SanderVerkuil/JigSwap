@@ -815,6 +815,35 @@ describe("legacy rows without refs", () => {
     expect(page[0]!.id).toMatch(/.+/);
     expect(page[2]!.actorCount).toBe(0);
   });
+
+  test("expose the stored actor name only for initiator types without actor refs", async () => {
+    const s = await setup();
+    await s.t.run(async (ctx) => {
+      // Legacy initiator row: the snapshot is all that is left of the actor.
+      await notify(ctx, s.viewer, {
+        type: "new_follower",
+        params: { actorName: "Mara" },
+      });
+      // Not an initiator type (a moderator's outcome): the name never surfaces.
+      await notify(ctx, s.viewer, {
+        type: "puzzle_rejected",
+        params: { actorName: "Moderator", puzzleTitle: "Sky" },
+      });
+      // Refs present: the resolved actor wins, no snapshot.
+      await notify(ctx, s.viewer, {
+        type: "new_follower",
+        actorIds: [s.mara],
+        actorCount: 1,
+        params: { actorName: "Old Mara" },
+      });
+    });
+    const page = await viewsAs(s);
+    expect(page.map((v) => v.context.actorNameSnapshot)).toEqual([
+      undefined,
+      undefined,
+      "Mara",
+    ]);
+  });
 });
 
 describe("pagination", () => {
