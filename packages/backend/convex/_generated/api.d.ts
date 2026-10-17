@@ -369,6 +369,12 @@ import type * as solving_setTrackCompletionDuration from "../solving/setTrackCom
 import type * as solving_startCompletion from "../solving/startCompletion.js";
 import type * as solving_submitReviews from "../solving/submitReviews.js";
 import type * as users from "../users.js";
+import type * as whatsNew_getWhatsNewState from "../whatsNew/getWhatsNewState.js";
+import type * as whatsNew_manifest from "../whatsNew/manifest.js";
+import type * as whatsNew_markAllSeen from "../whatsNew/markAllSeen.js";
+import type * as whatsNew_markWhatsNewSeen from "../whatsNew/markWhatsNewSeen.js";
+import type * as whatsNew_readState from "../whatsNew/readState.js";
+import type * as whatsNew_recordTourProgress from "../whatsNew/recordTourProgress.js";
 
 import type {
   ApiFromModules,
@@ -738,6 +744,12 @@ declare const fullApi: ApiFromModules<{
   "solving/startCompletion": typeof solving_startCompletion;
   "solving/submitReviews": typeof solving_submitReviews;
   users: typeof users;
+  "whatsNew/getWhatsNewState": typeof whatsNew_getWhatsNewState;
+  "whatsNew/manifest": typeof whatsNew_manifest;
+  "whatsNew/markAllSeen": typeof whatsNew_markAllSeen;
+  "whatsNew/markWhatsNewSeen": typeof whatsNew_markWhatsNewSeen;
+  "whatsNew/readState": typeof whatsNew_readState;
+  "whatsNew/recordTourProgress": typeof whatsNew_recordTourProgress;
 }>;
 
 /**
