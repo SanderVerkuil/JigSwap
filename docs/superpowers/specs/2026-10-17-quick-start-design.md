@@ -1,7 +1,7 @@
 # Quick start: a first-sign-in setup members can choose to follow
 
 **Date:** 2026-10-17
-**Status:** Draft for review (PR Q1, spec only). The visual section (§5) goes to UI review first.
+**Status:** Draft for review (PR Q1, spec only). The visual section (§5) has been through UI review.
 **Lands on:** `docs/quick-start-spec`, stacked on the What's new stack (`feat/whats-new-tours`, which follows #89, #95 and #96). It will be rebased onto `main` once that stack merges.
 
 ## Problem
@@ -89,6 +89,7 @@ the end.
 | D6  | Pending household invites are handled **inside step 4**, not as a separate "step 0".                                           | §2.4    |
 | D7  | `InviteRedeemer`'s loop-QR dialog and fallback toast are **suppressed while the quick start is eligible**; step 3 covers both. | §2.1    |
 | D8  | Q7 is **split into Q7a (backend) and Q7b (web)** to keep each diff reviewable.                                                 | §7      |
+| D9  | The progress bar is **four segments**, not a continuous bar with a ring, so its binding contrast is 4.24:1 dark, not 3.16:1.   | §5.6    |
 
 ---
 
@@ -174,20 +175,22 @@ member who deep-links elsewhere sees it the next time they open the dashboard.
 **Anatomy.** Same as the What's new highlight modal (`highlight-dialog.tsx`):
 `DialogContent p-0 sm:max-w-md`, a header band `h-28 bg-jigsaw-primary-tint`
 with a `Puzzle` icon tile, `DialogTitle className="font-heading text-2xl"`, the
-body, then the footer `border-t bg-muted/40`.
+body, then the footer `border-t bg-muted/40`. The primary button uses the
+highlight's `bg-jigsaw-primary text-white` look, and focus starts on it. The
+exact classes are in §5.1.
 
 **Copy.**
 
-| Element | en                                                                                                             | nl                                                                                              |
-| ------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Title   | Welcome to JigSwap!                                                                                            | Welkom bij JigSwap!                                                                             |
-| Body    | Shall we set up your shelf? Add the puzzles you own, the ones you've finished, and the people you puzzle with. | Zullen we je plank inrichten? Voeg je puzzels toe, wat je al gelegd hebt en met wie je puzzelt. |
-| Line 1  | Add the puzzles on your shelf                                                                                  | Voeg de puzzels op je plank toe                                                                 |
-| Line 2  | Mark the ones you've finished                                                                                  | Vink aan welke je al gelegd hebt                                                                |
-| Line 3  | Find the people you puzzle with                                                                                | Vind de mensen met wie je puzzelt                                                               |
-| Time    | Takes about 3 minutes. You can stop at any time.                                                               | Duurt ongeveer 3 minuten. Je kunt altijd stoppen.                                               |
-| Primary | Start quick setup                                                                                              | Snel instellen                                                                                  |
-| Ghost   | Explore on my own                                                                                              | Zelf rondkijken                                                                                 |
+| Element | en                                                                                                             | nl                                                                                                   |
+| ------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Title   | Welcome to JigSwap!                                                                                            | Welkom bij JigSwap!                                                                                  |
+| Body    | Shall we set up your shelf? Add the puzzles you own, the ones you've finished, and the people you puzzle with. | Zullen we je plank inrichten? Voeg je puzzels toe, welke je al hebt afgemaakt en met wie je puzzelt. |
+| Line 1  | Add the puzzles on your shelf                                                                                  | Voeg de puzzels op je plank toe                                                                      |
+| Line 2  | Mark the ones you've finished                                                                                  | Vink aan welke je al hebt afgemaakt                                                                  |
+| Line 3  | Find the people you puzzle with                                                                                | Vind de mensen met wie je puzzelt                                                                    |
+| Time    | Takes about 3 minutes. You can stop at any time.                                                               | Duurt ongeveer 3 minuten. Je kunt altijd stoppen.                                                    |
+| Primary | Start quick setup                                                                                              | Snel instellen                                                                                       |
+| Ghost   | Explore on my own                                                                                              | Zelf rondkijken                                                                                      |
 
 The three lines are an `<ol>` with numbered markers. On mobile the primary
 button sits on top (`flex-col-reverse sm:flex-row`).
@@ -233,10 +236,11 @@ button sits on top (`flex-col-reverse sm:flex-row`).
   and `canOpenHighlight` (`components/whats-new/logic.ts`) also treats
   `/welcome` like `/whats-new` (a pathname exclusion), so the highlight never
   opens over the flow even between steps.
-- **Layout:** a stepper header, the step body, and a sticky footer
-  `border-t bg-card p-4 pb-[max(1rem,env(safe-area-inset-bottom))]` with
-  `Skip` (ghost) and `Continue` (primary). There is also a "Finish later" link
-  in the header back to `/dashboard`.
+- **Layout:** a stepper header, the step body (titled by an `h2`; `PageHead`
+  owns the `h1`), and a sticky footer `border-t bg-card` with `Skip` (ghost)
+  and `Continue` (primary). Below `md` the footer docks above the sticky
+  `MobileTabBar` instead of at `bottom-0` (§5.3). There is also a "Finish
+  later" link in the header back to `/dashboard`.
   - **Skip** calls `recordQuickStart({ kind: "skipStep", step })` and moves to
     the next step.
   - **Continue** moves to the next step without writing anything. Done-ness is
@@ -264,16 +268,16 @@ button sits on top (`flex-col-reverse sm:flex-row`).
 
 **States:**
 
-- **Active:** `SectionHead` with a `ListChecks` icon, the title "Quick setup",
-  meta "2 of 4", and a ghost icon button `X` labelled "Hide quick setup". Then
-  a progress bar and one row per step (§5.2). Each row links to
-  `/welcome?step=<id>`.
+- **Active:** a card-free `<section>`, like `ShelfSection`. A `SectionHead`
+  with a `ListChecks` icon, the title "Quick setup", meta "2 of 4", and a ghost
+  icon button `X` labelled "Hide quick setup". Then a four-segment progress
+  bar and one row per step (§5.2). Each row links to `/welcome?step=<id>`.
 - **All required steps done or skipped:** for the rest of that browser
   session (sessionStorage key `jigswap.quickStart.doneShown`), the card shrinks
   to one row: "Your shelf is set up ✓ · Hide". On a later session it is gone.
   "Hide" calls `dismissCard`.
 - **Hidden:** "Hide quick setup" calls `recordQuickStart({ kind: "dismissCard" })`,
-  focus moves to the next section heading, and a toast says it can be reopened
+  focus moves to the Shelf section's heading (§5.7), and a toast says it can be reopened
   from the account menu. The account menu always has a "Quick setup" item that
   opens `/welcome` and, if the card was dismissed, calls
   `recordQuickStart({ kind: "restoreCard" })`. Dismissal is stored on the
@@ -289,13 +293,13 @@ All "done" rules are evaluated server-side in `getQuickStart` from real rows.
 `cardDismissedAt`. A skipped step that later becomes done shows as done: done
 wins.
 
-| #   | Step id     | Title (en / nl)                                           | Done when (derived)                                                                                                   | Row meta when done      |
-| --- | ----------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| 1   | `puzzles`   | Add your puzzles / Voeg je puzzels toe                    | ≥ **3** `ownedPuzzles` rows with `ownerId = me` (D3)                                                                  | "7 added"               |
-| 2   | `solves`    | Log puzzles you finished / Leg vast wat je al gelegd hebt | ≥ 1 `completions` row with `userId = me`, `isCompleted = true`, any precision                                         | "3 logged"              |
-| 3   | `people`    | Find your people / Vind je puzzelmaatjes                  | ≥ 1 `follows` row with `followerId = me`, **or** ≥ 1 pending `followRequests` row with `requesterId = me`             | "Following 2"           |
-| 4   | `household` | Household / Huishouden (optional)                         | a `householdMembers` row with `memberId = me`                                                                         | "You're in a household" |
-| 5   | `profile`   | Make it yours / Maak het persoonlijk                      | `users.location` is set, **or** the member's `profiles.visibility` is explicitly set (absent means public by default) | "Profile set"           |
+| #   | Step id     | Title (en / nl)                                              | Done when (derived)                                                                                                   | Row meta when done      |
+| --- | ----------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| 1   | `puzzles`   | Add your puzzles / Voeg je puzzels toe                       | ≥ **3** `ownedPuzzles` rows with `ownerId = me` (D3)                                                                  | "7 added"               |
+| 2   | `solves`    | Log puzzles you finished / Leg vast wat je al hebt afgemaakt | ≥ 1 `completions` row with `userId = me`, `isCompleted = true`, any precision                                         | "3 logged"              |
+| 3   | `people`    | Find your people / Vind je puzzelmaatjes                     | ≥ 1 `follows` row with `followerId = me`, **or** ≥ 1 pending `followRequests` row with `requesterId = me`             | "Following 2"           |
+| 4   | `household` | Household / Huishouden (optional)                            | a `householdMembers` row with `memberId = me`                                                                         | "You're in a household" |
+| 5   | `profile`   | Make it yours / Maak het persoonlijk                         | `users.location` is set, **or** the member's `profiles.visibility` is explicitly set (absent means public by default) | "Profile set"           |
 
 Counts are read with a cap (`take(51)`, shown as "50+"), so the query stays
 bounded.
@@ -388,7 +392,7 @@ bounded.
 - Avatar: a "Change photo" button opening Clerk's profile UI (the avatar is
   Clerk-owned and synced by the webhook). It is not part of the done rule,
   because Clerk always provides a generated image.
-- City: a text input (optional, at most 80 characters) saved with the new
+- Location: a text input labelled with the existing `profile.location` ("Location"; meant for a city; optional, at most 80 characters) saved with the new
   `identity.setLocation`.
 - Profile visibility: `SegmentedPills` "Everyone" / "Only people you approve",
   saved with the existing `social.setProfileVisibility`. Saving either value
@@ -398,11 +402,12 @@ bounded.
   value (public) is preselected.
 
 **Done** (`?step=done`): a centred panel. The member's `PuzzlePlank` shows the
-new copies sliding in (`fade-in-0 slide-in-from-bottom-2`, 60 ms stagger), then
-"Your shelf is ready" and a summary ("7 puzzles · 3 finished · 2 following")
-announced through `role="status"`. One `Puzzle` icon scales from 0.9 to 1 with
-one ring pulse. No confetti. `motion-reduce:animate-none` everywhere. Buttons:
-"Go to my shelf" (primary) and "Show me around" (the tour hand-off, §2.8).
+new copies sliding in (60 ms stagger), then "Your shelf is ready" and a
+summary ("7 puzzles · 3 finished · 2 following") announced through
+`role="status"`. One `Puzzle` icon scales from 0.9 to 1 with one ring pulse.
+No confetti. Every animation is `motion-safe:` only, so under reduced motion
+the panel renders static (§5.5). Buttons: "Go to my shelf" (primary) and "Show
+me around" (the tour hand-off, §2.8).
 
 ### 2.5 Exit and resume
 
@@ -757,68 +762,160 @@ household link creates is an ordinary `householdInvites` row.
 
 Everything here uses existing pieces only: the `globals.css` tokens,
 `font-heading`, the `ui/` primitives (`Dialog`, `Button`, `Badge`, `Command`,
-`Checkbox`), `SectionHead`, `SegmentedPills`, `AvailabilityChips`, `MemberTile`,
-`PuzzlePlank`, and the What's new modal anatomy. No new tokens, so `.dark`
-works as is. The two contrast rules from the decisions are enforced with the
-numbers in §5.5.
+`Checkbox`), `SectionHead`, `SegmentedPills`, `MemberTile`, `PuzzlePlank`,
+`UnreadDot`, and the anatomy of the What's new highlight modal and the tour
+card. No new tokens, so `.dark` works as is. The contrast numbers are in §5.6.
+
+**Shared conventions** (taken from `highlight-dialog.tsx` and
+`tour-layer.tsx`, so the three surfaces read as one family):
+
+- **Primary action look.** Every primary action in this track uses the look
+  the highlight modal and the tour card already use:
+  `<Button className="bg-jigsaw-primary hover:bg-jigsaw-primary/90 text-white">`,
+  not the default `bg-primary` variant. That covers the welcome dialog's "Start
+  quick setup", the flow's Continue and submit buttons ("Add 3 puzzles", "Log 1
+  puzzle"), "Share invite link", "Turn on notifications", Accept, and the done
+  panel's "Go to my shelf". This look is 4.48:1 in dark mode; the default
+  variant is 3.80:1 (§5.6, §9 Q8).
+- **Eyebrow.** Step labels ("Step 2 of 4") use the tour and highlight eyebrow:
+  `text-muted-foreground font-mono text-[11px] tracking-[0.09em] uppercase`.
+- **Motion.** Entrances use `motion-safe:animate-in motion-safe:fade-in-0 …`,
+  as the tour layer does. Radix dialog content gets `motion-reduce:animate-none`,
+  as the highlight does. Transitions get `motion-reduce:transition-none`.
+- **Touch targets.** Icon buttons are `size-9 pointer-coarse:size-11`, as
+  `FollowButton` is. Text buttons get `pointer-coarse:min-h-11`, as the tour
+  card's buttons do on touch.
 
 ### 5.1 Welcome dialog
 
-As §2.1. Header band `h-28 bg-jigsaw-primary-tint` with a `Puzzle` tile
-(`size-14 rounded-2xl bg-card text-jigsaw-primary shadow-sm`, as in the
-highlight modal), title `font-heading text-2xl`, numbered lines with
-`size-6 rounded-full border-2 border-border text-foreground` markers, the time
-line in `text-sm text-muted-foreground`, footer `border-t bg-muted/40 p-4`.
+It copies `highlight-dialog.tsx` class for class:
 
-### 5.2 Dashboard card
+- `DialogContent className="max-w-[calc(100%-2rem)] gap-0 overflow-hidden p-0 motion-reduce:animate-none sm:max-w-md"`.
+- **Header band**, `aria-hidden`: `bg-jigsaw-primary-tint flex h-28 items-center justify-center`.
+  It holds the tile `bg-card text-jigsaw-primary flex size-14 items-center justify-center rounded-2xl shadow-sm`
+  with a `Puzzle` icon (`size-7`).
+- **Body** `flex flex-col gap-2 p-6 pt-5`, in this order:
+  - `DialogTitle className="font-heading text-left text-2xl leading-tight font-semibold"`.
+  - `DialogDescription className="text-muted-foreground text-left"` for the body copy.
+  - The three lines as `<ol role="list">`, with `text-sm` labels and
+    `aria-hidden` number markers (`size-6 rounded-full border-2 border-border text-xs font-semibold`).
+    The explicit `role` keeps the list semantics that Safari drops under `list-none`.
+  - The time line in `text-sm text-muted-foreground`.
+- **Footer** `DialogFooter className="bg-muted/40 border-t px-6 py-4"`. The
+  primitive is already `flex-col-reverse sm:flex-row sm:justify-end`, so the
+  primary is on top on mobile. It holds the ghost "Explore on my own", then the
+  primary, both `w-full sm:w-auto`.
+- **Focus.** `onOpenAutoFocus` focuses the primary (marked
+  `data-quickstart-primary`), not the close X, as the highlight does. Tab
+  order follows the DOM (X, ghost, primary). On mobile the visual order is
+  reversed, the same trade-off the highlight already makes.
+
+At 360 px the dialog is 328 px wide. The title fits on one line in both
+locales, and the footer buttons stack full width.
+
+### 5.2 Dashboard checklist (`QuickSetupCard`)
+
+The dashboard is card-free (`dashboard.tsx`: "whitespace-separated blocks").
+So despite its name, `QuickSetupCard` is a plain `<section>`, like
+`ShelfSection`: a `SectionHead` and content directly on `bg-background`, with
+no bordered box. It sits in the page's `flex-col gap-6 md:gap-10`, between
+`<BriefingHero />` and `<ShelfSection />`.
 
 ```
-Quick setup ─────────────────────────── 2 of 4  ✕
-[■■■■■■■■□□□□□□□□]   h-1.5 rounded-full bg-muted, fill bg-primary
-(✓) Add your puzzles              7 added
-(✓) Log puzzles you finished      3 logged
-(3) Find your people                     ›
-(·) Household  [Optional]   Skipped · Do it now
-(5) Make it yours                        ›
+☰ Quick setup ───────────────────────────── 2 of 4  ✕
+[■■■■■■■■■■] [■■■■■■■■■■] [··········] [··········]
+(✓) Add your puzzles                               ›
+    7 added
+(✓) Log puzzles you finished                       ›
+    3 logged
+(3) Find your people                               ›
+(–) Household  [Optional]                          ›
+    Skipped · Do it now
+(5) Make it yours                                  ›
 ```
 
-| State                      | Marker (`size-6 rounded-full`, centred icon or number)                                    | Row text                                                  |
-| -------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| todo                       | `border-2 border-border`, step number in `text-foreground`                                | `font-semibold`, chevron                                  |
-| in progress                | `border-2 border-primary`, number in **`text-primary dark:text-foreground`**              | sub-line "Continue · 2 of 3" in `text-muted-foreground`   |
-| done                       | **`bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200`**, `Check` icon  | `text-muted-foreground` with the count; no strike-through |
-| skipped                    | `border-2 border-dashed border-muted-foreground`, `Minus` icon in `text-muted-foreground` | "Skipped" plus a `link`-variant button "Do it now"        |
-| optional                   | as its state, plus `Badge variant="secondary"` "Optional"                                 | never counted in "x of 4"                                 |
-| pending invite (household) | todo marker plus a `bg-jigsaw-primary` 8 px dot                                           | "Invitation waiting"                                      |
+- **Head:** `SectionHead` with `title="Quick setup"`, `icon={ListChecks}` and
+  `meta="2 of 4"`. Its `action` is a ghost icon `Button` with an `X`,
+  `aria-label="Hide quick setup"`, `size-9 pointer-coarse:size-11`.
+- **Progress:** four equal segments, one per required step, in `flex gap-1`.
+  This is the tour card's step-dot pattern, stretched. Each segment is
+  `h-1.5 flex-1 rounded-full`: done segments are `bg-primary` and the others
+  `bg-muted`, with `transition-colors motion-reduce:transition-none`. The bar is
+  segmented, not continuous, for contrast (§5.6).
+- **Rows:** an `<ol>`. Each row follows ShelfSection's `StatRow` pattern:
+  - One `Link` per row: `group flex min-h-11 items-center gap-3.5 border-t py-3 first:border-t-0`.
+  - The marker, then `min-w-0 flex-1` holding the label (`block text-sm font-semibold`)
+    and the sub-line (`text-muted-foreground mt-px block text-xs`).
+  - `ChevronRight` in `text-muted-foreground group-hover:text-foreground size-4`.
+  - The row link is the only interactive element. There is no nested button.
 
-- **Done is never `text-jigsaw-secondary` on `bg-jigsaw-secondary-tint`**
-  (2.13:1 light, 4.18:1 dark; both fail 4.5:1). The measured Tailwind green
-  pill is used instead (6.45:1 / 10.29:1).
-- **"In progress"** = the step was opened in this session, or it has a partial
-  count (e.g. 2 of 3 copies). The dark-mode number uses `text-foreground`,
-  because `text-primary` on `card` is only 3.71:1 there, too low for a
-  12–14 px numeral. The `border-primary` ring (3.71:1) still meets the 3:1
-  non-text rule, so the state stays visible.
-- The todo marker's `border-border` ring is only 1.29:1. It is decorative: the
-  numeral (20.17:1) and the row label carry the state. State is never shown by
-  colour alone; each state has its own icon or numeral and its own text.
-- Rows are at least 44 px high (`min-h-11`), the whole row is the link, and the
-  `X` is `size-9 pointer-coarse:size-11`.
+| State                      | Marker (`size-6 shrink-0 rounded-full`, centred icon or number)                                   | Label and sub-line                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| todo                       | `border-2 border-border`, number in `text-xs font-semibold text-foreground`                       | `font-semibold`; no sub-line                                        |
+| in progress                | `border-2 border-primary`, number in **`text-primary dark:text-foreground`**                      | sub-line "Continue · 2 of 3"                                        |
+| done                       | **`bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200`**, `Check` (`size-3.5`)  | label in `text-muted-foreground`; sub-line is the count ("7 added") |
+| skipped                    | `border-2 border-dashed border-muted-foreground`, `Minus` in `text-muted-foreground`              | sub-line "Skipped · Do it now", plain text (the row is the link)    |
+| optional (household)       | as its state, plus `Badge variant="secondary"` "Optional" after the label                         | never counted in "x of 4"                                           |
+| pending invite (household) | todo marker with the existing `UnreadDot` (`-top-0.5 -right-0.5 size-2.5 ring-2 ring-background`) | sub-line "Invitation waiting"                                       |
 
-**Mobile.** Same card, full width. The meta "2 of 4" stays in the head and the
-counts wrap under the label.
+- **Done is never `text-jigsaw-secondary` on `bg-jigsaw-secondary-tint`.**
+  That pair is 2.13:1 in light mode and 4.18:1 in dark mode, and both fail
+  4.5:1. It is also `AvailabilityChips`' "on" look, so that look is not copied
+  anywhere in this track. The Tailwind green pill (6.45:1 light, 11.27:1 dark)
+  is used instead. No strike-through.
+- **"In progress"** means the step was opened in this session, or it has a
+  partial count (for example 2 of 3 copies). The dark-mode number uses
+  `text-foreground`, because `text-primary` on the page background is 4.24:1
+  there, too low for a 12 px numeral. The `border-primary` ring (4.24:1) still
+  meets the 3:1 non-text rule.
+- **Todo ring.** The todo marker's `border-border` ring is 1.27:1 and purely
+  decorative. The numeral and the label carry the state.
+- **Never colour alone.** Each state has its own icon or numeral, its own text,
+  and an `sr-only` state word (§5.7).
+- **"Do it now" is not a separate button.** A `link`-variant button inside the
+  row link would nest one interactive element in another. It would also fail
+  in dark mode (`text-primary` 4.24:1).
+- **All required steps done:** the section shrinks to one `min-h-11` row: a
+  done marker, "Your shelf is set up" and a ghost `size="sm"` "Hide" button.
+  There is no `SectionHead` and no progress bar.
 
-### 5.3 Stepper inside `/welcome`
+**Mobile (360 px).** The section is 328 px wide. The head fits: "Snel
+instellen" (the `h2` is `whitespace-nowrap`), "2 van 4" and the 44 px `X`. The
+sub-line already sits under the label, so long Dutch labels ("Leg vast wat je
+al hebt afgemaakt") wrap inside `min-w-0 flex-1` and the chevron stays put.
 
-- **Mobile:** a sticky header "Step 2 of 4 · Past solves" above the same
-  progress bar (only the 4 required steps are numbered; the household step
-  reads "Optional step").
-- **`md` and up:** an `<ol>` of markers using the card's marker styles, with
-  `aria-current="step"` on the current one.
-- **Sticky footer:** `border-t bg-card p-4`, padded for the safe area, with
-  `Skip` (ghost) and `Continue` (primary). On mobile `Continue` is full width
-  and `Skip` sits to its left as a text button.
-- A step change moves focus to that step's `h1`.
+### 5.3 `/welcome` layout and stepper
+
+- **Heading levels.** `PageHead` already renders the route-meta title ("Quick
+  setup") as the page `h1` on `md` and up. Each step title is therefore an
+  `h2`: `font-heading text-xl font-semibold`, `tabIndex={-1}` and
+  `focus-visible:outline-none`, as the tour card's title is. A step change
+  moves focus to it.
+- **Mobile stepper:**
+  - Compact and sticky: `sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 bg-background py-2`.
+    This docks it under the `MobileTopBar`, which is `h-14` plus the safe area.
+  - One `truncate` eyebrow line, "Step 2 of 4 · Log puzzles you finished".
+    The household step reads "Optional step · Household".
+  - Below it, the four-segment progress from §5.2.
+- **`md` and up:** an `<ol>` of the checklist's markers with the step titles,
+  and `aria-current="step"` on the current one. It is not sticky.
+- **Sticky footer** `border-t bg-card px-4 py-3`. `Skip` (ghost) sits on the
+  left, and `Continue` or the step's submit (primary look) on the right.
+  - **Below `md`:** the `MobileTabBar` is itself `sticky bottom-0`: a 56 px
+    bar with a raised centre button that rises 22 px, plus a 4 px ring, above
+    it. A `bottom-0` footer would sit underneath it. So the footer is
+    `sticky bottom-14 z-20 pb-[30px]`: it docks on top of the tab bar, and its
+    buttons clear the centre button's overhang.
+  - There is no `env(safe-area-inset-bottom)` pad. The shell deliberately
+    leaves the bottom unpadded (see the comment in `mobile-tab-bar.tsx`).
+  - `Continue` is `flex-1`; `Skip` keeps its natural width.
+  - **`md` and up:** `sticky bottom-0` inside the shell's scroll container.
+- **Vertical budget at 360 × 640:** top bar 56 + stepper about 40 + footer
+  about 90 + tab bar 56 ≈ 242 px of chrome, which leaves about 400 px for the
+  step. That is acceptable. The on-screen keyboard is an open question (§9,
+  Q11).
+- **Focus order:** stepper → step `h2` → step body → footer (Skip, then
+  Continue). The footer is last in the DOM even though it is sticky.
 
 ### 5.4 Per-step sketches (360 px)
 
@@ -826,23 +923,28 @@ counts wrap under the label.
 
 ```
 ┌ Search brand, title or barcode… 🔍 ┐
-│ ▢ [img] Ravensburger              │
-│   Mountain Lake · 1000      (+)   │  ← (+) → (✓) on bg-jigsaw-primary-tint
-│ ▣ [img] Jumbo · Cats · 500   ✓    │
+│ [img] Ravensburger                │
+│       Mountain Lake · 1000   (+)  │  ← (+) → (✓): row turns bg-jigsaw-primary-tint
+│ [img] Jumbo · Cats · 500     (✓)  │
 │ ── Can't find it? ─────────────── │
 │ [+ Register "Cats at nig…"]       │  → /my-puzzles/add/new?…&returnTo=…
 └───────────────────────────────────┘
  Picked (3)  [Mountain Lake ×][Cats ×]…
  Added puzzles are not offered for swap or loan…
- [ Skip ]               [ Add 3 puzzles ]
+ [ Skip ]          [ Add 3 puzzles      ]
 ```
 
-A picked row is `bg-jigsaw-primary-tint` with `text-foreground` (17.78:1 light,
-10.39:1 dark). The check icon is `text-jigsaw-primary dark:text-foreground`:
-the brand violet on its own tint is 5.16:1 in light mode but only 2.57:1 in
-dark mode, below 3:1 even for an icon. The toggle button's accessible name is
-"Add Mountain Lake" / "Remove Mountain Lake", and a polite live region
-announces "3 picked".
+- Each result row is an `aria-pressed` toggle with the `AvailabilityChips`
+  shape (`Plus` → `Check`) but **not** its "on" colours (see §5.2).
+- A picked row is `bg-jigsaw-primary-tint` with `text-foreground` (17.78:1
+  light, 10.39:1 dark).
+- The check icon is `text-jigsaw-primary dark:text-foreground`. The brand
+  violet on its own tint is 5.16:1 in light mode but only 2.57:1 in dark mode,
+  below 3:1 even for an icon.
+- The toggle's accessible name is "Add Mountain Lake" / "Remove Mountain Lake",
+  and a polite live region announces "3 picked".
+- The tray chips are removable. Each × is a button named "Remove
+  {title}", sized `pointer-coarse:size-11`.
 
 **Past solves.**
 
@@ -851,77 +953,168 @@ announces "3 picked".
    When?  (● I don't remember) (○ Which year) (○ Pick a date)
           [ 2023 ▾ ]   or   [ 2026-03-14 ]
 ☐ Cats · 500
- [ Skip ]               [ Log 1 puzzle ]
+ [ Skip ]          [ Log 1 puzzle       ]
 ```
 
+The three `SegmentedPills` wrap onto two lines at 360 px (`flex-wrap`), which
+is fine.
+
 **Find people.** "People you may know" as `MemberTile` cards with the compact
-icon `FollowButton`, then `FindPeople`, then the invite block:
+icon `FollowButton`, then `FindPeople`, then the share sheet
+(`InviteShareActions`):
 
 ```
  Invite someone who isn't on JigSwap yet
  Share your invite link. When they sign up, you'll follow each other.
- [ Share invite link ]                       (Web Share API)
- [Copy link] [Email] [WhatsApp]              (outline buttons)
+ [ ⇪ Share invite link                 ]    primary look; only if navigator.share
+ [⧉ Copy link] [✉ Email] [💬 WhatsApp]       outline, flex-wrap gap-2
  JigSwap doesn't see or store who you send this to.
- ┌ Want a notification when someone follows you back? ┐   (inline, §2.7)
- │ [Turn on notifications]  [Not now]                 │
- └────────────────────────────────────────────────────┘
+ ┌ 🔔 Want a notification when someone follows you back? ┐  inline, §2.7
+ │ [Turn on notifications]  [Not now]                     │
+ └────────────────────────────────────────────────────────┘
 ```
 
-**Household.** A pending invite card (avatar, "<name> invited you to their
-household", the explainer, Accept primary / Decline ghost), or
-`SegmentedPills` "Create a household" / "I puzzle alone", then
-`HouseholdInvitePanel` with the "Invite with a link" block and the "works once,
-expires in 14 days" note in `text-muted-foreground`.
+- **Share button.** "Share invite link" uses `Share2` and is `w-full sm:w-auto`.
+- **Fallback buttons.** These are outline `Button`s:
+  - "Copy link" uses `Copy`, which swaps to `Check` and "Copied!", exactly as
+    in `qr-dialog.tsx`.
+  - "Email" uses `Mail`, and "WhatsApp" uses `MessageCircle` (no brand
+    icons).
+  - They sit in `flex flex-wrap gap-2`, so "Link kopiëren · E-mail · WhatsApp"
+    wraps instead of overflowing 328 px. Each gets `pointer-coarse:min-h-11`.
+- **Privacy line** in `text-xs text-muted-foreground`.
+- **Push card.** `rounded-xl border bg-card p-4` with a `Bell` icon, the
+  primary-look "Turn on notifications" and a ghost "Not now". It is inserted
+  directly after the triggering action in the DOM, so it is next in tab order.
+  Focus is not moved, because the card is not modal.
 
-**Make it yours.** The avatar with "Change photo", the "City" input, the
-visibility `SegmentedPills` and a "What others see" `MemberTile` preview.
+**Household.**
 
-### 5.5 Contrast, computed from the real theme values
+- **Pending invite.** It reuses `BriefingHero`'s pending-request banner look:
+  `border-jigsaw-primary/20 bg-jigsaw-primary/5 rounded-xl border px-4 py-3`
+  with an `Avatar` (`size-10`). It shows "<name> invited you to their
+  household", the explainer, and Accept (primary look) / Decline (ghost).
+- **Otherwise:** `SegmentedPills` "Create a household" / "I puzzle alone",
+  then the `HouseholdInvitePanel`. That panel has the "Invite with a link"
+  block, the same share buttons as above, and the "works once, expires in 14
+  days" note in `text-xs text-muted-foreground`.
 
-Values come from `apps/web/src/styles/globals.css` (`:root` and `.dark`):
-OKLCH tokens are converted to sRGB, `color-mix(in oklab, …)` tints are mixed in
-OKLab exactly as the CSS declares them, Tailwind `/NN` alpha is blended over
-`--card`, and Tailwind v4's green palette supplies the pill. Ratios are WCAG
-2.x relative-luminance contrast.
+**Make it yours.** The avatar with "Change photo" (outline), the location input
+(the existing `profile.location` label), the visibility `SegmentedPills` and a
+"What others see" `MemberTile` preview.
 
-| Pair                                                                                            | Light      | Dark       | Needed | Verdict                                          |
-| ----------------------------------------------------------------------------------------------- | ---------- | ---------- | ------ | ------------------------------------------------ |
-| `text-jigsaw-secondary` on `bg-jigsaw-secondary-tint` (rejected)                                | **2.13:1** | **4.18:1** | 4.5    | fails both: not used                             |
-| Done pill: `text-green-800` on `bg-green-100` / `text-green-200` on `bg-green-900/40` over card | 6.45:1     | 10.29:1    | 4.5    | pass                                             |
-| **Progress fill `bg-primary` vs track `bg-muted`**                                              | **5.42:1** | **3.16:1** | 3.0    | pass both                                        |
-| Progress fill `bg-primary` vs `card` (bar edge)                                                 | 6.01:1     | 3.71:1     | 3.0    | pass                                             |
-| In-progress ring `border-primary` vs `card`                                                     | 6.01:1     | 3.71:1     | 3.0    | pass                                             |
-| In-progress numeral `text-primary` on `card`                                                    | 6.01:1     | 3.71:1     | 4.5    | dark fails: use `dark:text-foreground`           |
-| Row meta `text-muted-foreground` on `card`                                                      | 4.82:1     | 5.80:1     | 4.5    | pass                                             |
-| Skipped ring `border-muted-foreground` vs `card`                                                | 4.82:1     | 5.80:1     | 3.0    | pass                                             |
-| Todo numeral `text-foreground` on `card`                                                        | 20.17:1    | n/a        | 4.5    | pass                                             |
-| Picked row `text-foreground` on `bg-jigsaw-primary-tint`                                        | 17.78:1    | 10.39:1    | 4.5    | pass                                             |
-| Picked check `text-jigsaw-primary` on `bg-jigsaw-primary-tint`                                  | 5.16:1     | 2.57:1     | 3.0    | dark fails: use `dark:text-foreground` (10.39:1) |
-| "Optional" `Badge variant="secondary"`                                                          | 11.68:1    | 11.16:1    | 4.5    | pass                                             |
-| Primary button text on `bg-primary`                                                             | 5.75:1     | 3.80:1     | 4.5    | dark fails: pre-existing, system-wide (§9, Q8)   |
+### 5.5 Done panel
+
+- **Layout:** a centred `flex flex-col items-center gap-4 text-center`, like
+  the QR dialog's body.
+- **Animation** (always `motion-safe:`, so under reduced motion the panel
+  renders static):
+  - The `PuzzlePlank` copies use `motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2`,
+    with a 60 ms `animation-delay` stagger.
+  - The `Puzzle` icon tile uses `motion-safe:zoom-in-90`, and its ring pulses
+    once (`motion-safe:animate-ping [animation-iteration-count:1]`).
+- **Text:** the title "Your shelf is ready" is an `h2` that takes focus on
+  arrival, as a step title does. The summary line is in `role="status"`.
+- **Buttons:** "Go to my shelf" (primary look) and "Show me around" (outline,
+  with the `Compass` icon the highlight uses for tours).
+
+### 5.6 Contrast, computed from the real theme values
+
+The values come from `apps/web/src/styles/globals.css` (`:root` and `.dark`):
+
+- OKLCH tokens are converted to sRGB.
+- `color-mix(in oklab, …)` tints are mixed in OKLab, exactly as the CSS
+  declares them.
+- Tailwind `/NN` alpha is blended over the surface underneath.
+- Tailwind v4's green palette supplies the pill.
+
+The dashboard and `/welcome` content sit on **`--background`**, not `--card`,
+so the checklist pairs are measured against the background. That surface is
+darker than the card in dark mode. Ratios are WCAG 2.x relative-luminance
+contrast. They were re-run in UI review.
+
+| Pair                                                                                                | Light      | Dark       | Needed | Verdict                                             |
+| --------------------------------------------------------------------------------------------------- | ---------- | ---------- | ------ | --------------------------------------------------- |
+| `text-jigsaw-secondary` on `bg-jigsaw-secondary-tint` (also `AvailabilityChips` "on"); rejected     | **2.13:1** | **4.18:1** | 4.5    | fails both: not used                                |
+| Done pill: `text-green-800` on `bg-green-100` / `text-green-200` on `bg-green-900/40` over the page | 6.45:1     | 11.27:1    | 4.5    | pass                                                |
+| **Progress segment `bg-primary` vs page `bg-background` (each segment's edge)**                     | **5.92:1** | **4.24:1** | 3.0    | pass: the binding pair                              |
+| Progress segment `bg-primary` vs a `bg-muted` segment (not adjacent: 4 px gap)                      | 5.42:1     | 3.16:1     | 3.0    | pass; no longer the boundary that shows the value   |
+| In-progress ring `border-primary` vs page                                                           | 5.92:1     | 4.24:1     | 3.0    | pass                                                |
+| In-progress numeral `text-primary` on page                                                          | 5.92:1     | 4.24:1     | 4.5    | dark fails: `dark:text-foreground` (14.96:1)        |
+| Label and todo numeral `text-foreground` on page                                                    | 19.86:1    | 14.96:1    | 4.5    | pass                                                |
+| Sub-line and meta `text-muted-foreground` on page                                                   | 4.75:1     | 6.63:1     | 4.5    | pass                                                |
+| Dialog time line `text-muted-foreground` on `card`                                                  | 4.82:1     | 5.80:1     | 4.5    | pass                                                |
+| Skipped ring `border-muted-foreground` vs page                                                      | 4.75:1     | 6.63:1     | 3.0    | pass                                                |
+| Pending `UnreadDot` (`jigsaw-primary-accent`) vs page                                               | 3.47:1     | 4.70:1     | 3.0    | pass (the text "Invitation waiting" carries it too) |
+| `SectionHead` icon `text-jigsaw-primary` on page                                                    | 5.76:1     | 3.70:1     | 3.0    | pass                                                |
+| Picked row `text-foreground` on `bg-jigsaw-primary-tint`                                            | 17.78:1    | 10.39:1    | 4.5    | pass                                                |
+| Picked check `text-jigsaw-primary` on `bg-jigsaw-primary-tint`                                      | 5.16:1     | 2.57:1     | 3.0    | dark fails: `dark:text-foreground` (10.39:1)        |
+| "Optional" `Badge variant="secondary"`                                                              | 11.68:1    | 11.16:1    | 4.5    | pass                                                |
+| "Do it now" as a `link` button (`text-primary` on page); rejected                                   | 5.92:1     | 4.24:1     | 4.5    | dark fails: plain sub-line text instead             |
+| Primary look `text-white` on `bg-jigsaw-primary` (What's new, tour, this track)                     | 5.85:1     | **4.48:1** | 4.5    | dark misses by 0.02: pre-existing (§9, Q8)          |
+| Default `Button` and `SegmentedPills` "on": `primary-foreground` on `primary`                       | 5.75:1     | **3.80:1** | 4.5    | dark fails: pre-existing (§9, Q8)                   |
 
 Resolved sRGB values for reference:
 
-- light: primary `#574be2`, muted `#f2f2fb`, card `#ffffff`,
-  secondary-tint `#e6f8e4`, primary-tint `#eef0ff`
-- dark: primary `#786cfe`, muted `#33324e`, card `#282642`,
-  secondary-tint `#2e4746`, primary-tint `#373365`
+- light: background `#fdfdff`, card `#ffffff`, primary `#574be2`, muted
+  `#f2f2fb`, jigsaw-primary `#6048e8`, primary-tint `#eef0ff`, secondary-tint
+  `#e6f8e4`
+- dark: background `#1d1c34`, card `#282642`, primary `#786cfe`, muted
+  `#33324e`, jigsaw-primary `#7560f0`, primary-tint `#373365`, secondary-tint
+  `#2e4746`
 
-The dark progress fill passes with little margin (3.16:1). If UI review wants
-more headroom, a 1 px `ring-1 ring-primary/40` on the track is the option that
-changes no token.
+**The progress-bar decision.** A continuous bar would rest on its dark
+fill-to-track pair, `bg-primary` against `bg-muted`. That pair is 3.16:1: a
+pass with no margin, which any later tweak to `--muted` could break. Two
+options were rejected:
 
-### 5.6 Accessibility
+- **A mandatory `ring-1 ring-primary/40` on the track** does not change the
+  fill-to-track pair, so it adds nothing where the value is read.
+- **A stronger fill token.** `--sidebar-accent-foreground` would give 7.42:1,
+  but it ties the checklist to sidebar chrome. `bg-jigsaw-primary` is weaker
+  (2.76:1).
 
-- The progress bar is `role="progressbar"` with `aria-valuemin=0`,
-  `aria-valuemax=4`, `aria-valuenow`, and `aria-valuetext="2 of 4 steps done"`.
-- The card's rows are a list. Each link's name includes its state ("Add your
-  puzzles, done, 7 added").
-- Keyboard: arrows and Enter in `Command`, the arrow-key radiogroup in
-  `SegmentedPills`, Backspace removes a picked chip. Nothing needs hover.
-- Every animation has `motion-reduce:animate-none`.
-- Touch targets are at least 44 px (`pointer-coarse:size-11`).
+The bar is therefore segmented instead (§5.2). Each done segment is bounded by
+the page background, at 4.24:1 dark and 5.92:1 light. The `ring-1` option is
+dropped. The meta "2 of 4" and the `progressbar` values are the text
+equivalent.
+
+### 5.7 Accessibility
+
+- **Progress.** The segment row is one element with `role="progressbar"`,
+  labelled by the section's `h2`:
+  - `aria-valuemin={0}`, `aria-valuemax={4}`, `aria-valuenow={done}`.
+  - `aria-valuetext="2 of 4 steps done"` (`card.progressLabel`).
+  - The segments are `aria-hidden`.
+  - The mobile stepper's bar uses the same markup.
+- **Rows.** The rows are an `<ol>`, because step order is meaningful.
+  - Each link's name is the label, an `sr-only` state word (`card.state.*`) and
+    the sub-line, for example "Add your puzzles, done, 7 added".
+  - Marker icons are `aria-hidden`.
+  - The section is not a live region: it shows server state on load, and the
+    changes happen on other pages.
+- **Hide.** Hiding the checklist moves focus to the Shelf section's heading.
+  `SectionHead` gains an optional `headingProps` passthrough, so that `h2` can
+  take `tabIndex={-1}`.
+- **Keyboard:**
+  - arrows and Enter in `Command`;
+  - the arrow-key radiogroup that `SegmentedPills` already has;
+  - Backspace in an empty search removes the last picked chip.
+
+  Nothing needs hover.
+
+- **Announcements**, all polite, one `sr-only` region per surface:
+  - "3 picked" in the picker;
+  - "Copied!" after "Copy link";
+  - the done summary.
+- **Motion:** see the shared conventions. Under `prefers-reduced-motion` the
+  welcome dialog, the push card and the done panel appear without animation,
+  and the segments change without a transition.
+- **Forced colours:** the segments may flatten. The meta text and the
+  `progressbar` values carry the state, and each marker keeps its icon or
+  numeral.
+- **Touch targets:** at least 44 px on coarse pointers (`min-h-11` rows,
+  `pointer-coarse:size-11` icon buttons).
 
 ---
 
@@ -934,9 +1127,9 @@ unless noted. ICU plurals follow the existing style.
 | Key                                                 | en                                                                                                             | nl                                                                                                              |
 | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | `welcome.title`                                     | Welcome to JigSwap!                                                                                            | Welkom bij JigSwap!                                                                                             |
-| `welcome.body`                                      | Shall we set up your shelf? Add the puzzles you own, the ones you've finished, and the people you puzzle with. | Zullen we je plank inrichten? Voeg je puzzels toe, wat je al gelegd hebt en met wie je puzzelt.                 |
+| `welcome.body`                                      | Shall we set up your shelf? Add the puzzles you own, the ones you've finished, and the people you puzzle with. | Zullen we je plank inrichten? Voeg je puzzels toe, welke je al hebt afgemaakt en met wie je puzzelt.            |
 | `welcome.stepPuzzles`                               | Add the puzzles on your shelf                                                                                  | Voeg de puzzels op je plank toe                                                                                 |
-| `welcome.stepSolves`                                | Mark the ones you've finished                                                                                  | Vink aan welke je al gelegd hebt                                                                                |
+| `welcome.stepSolves`                                | Mark the ones you've finished                                                                                  | Vink aan welke je al hebt afgemaakt                                                                             |
 | `welcome.stepPeople`                                | Find the people you puzzle with                                                                                | Vind de mensen met wie je puzzelt                                                                               |
 | `welcome.time`                                      | Takes about 3 minutes. You can stop at any time.                                                               | Duurt ongeveer 3 minuten. Je kunt altijd stoppen.                                                               |
 | `welcome.start`                                     | Start quick setup                                                                                              | Snel instellen                                                                                                  |
@@ -950,13 +1143,17 @@ unless noted. ICU plurals follow the existing style.
 | `card.skipped`                                      | Skipped                                                                                                        | Overgeslagen                                                                                                    |
 | `card.doItNow`                                      | Do it now                                                                                                      | Nu doen                                                                                                         |
 | `card.continue`                                     | Continue · {progress}                                                                                          | Verder · {progress}                                                                                             |
+| `card.state.todo`                                   | to do                                                                                                          | nog te doen                                                                                                     |
+| `card.state.inProgress`                             | in progress                                                                                                    | bezig                                                                                                           |
+| `card.state.done`                                   | done                                                                                                           | klaar                                                                                                           |
+| `card.state.skipped`                                | skipped                                                                                                        | overgeslagen                                                                                                    |
 | `card.allDone`                                      | Your shelf is set up                                                                                           | Je plank is ingericht                                                                                           |
 | `card.hideDone`                                     | Hide                                                                                                           | Verbergen                                                                                                       |
 | `menu.quickSetup`                                   | Quick setup                                                                                                    | Snel instellen                                                                                                  |
 | `steps.puzzles.title`                               | Add your puzzles                                                                                               | Voeg je puzzels toe                                                                                             |
 | `steps.puzzles.count`                               | {count} added                                                                                                  | {count} toegevoegd                                                                                              |
 | `steps.puzzles.partial`                             | {count} of 3                                                                                                   | {count} van 3                                                                                                   |
-| `steps.solves.title`                                | Log puzzles you finished                                                                                       | Leg vast wat je al gelegd hebt                                                                                  |
+| `steps.solves.title`                                | Log puzzles you finished                                                                                       | Leg vast wat je al hebt afgemaakt                                                                               |
 | `steps.solves.count`                                | {count} logged                                                                                                 | {count} vastgelegd                                                                                              |
 | `steps.people.title`                                | Find your people                                                                                               | Vind je puzzelmaatjes                                                                                           |
 | `steps.people.count`                                | Following {count}                                                                                              | {count} gevolgd                                                                                                 |
@@ -980,8 +1177,8 @@ unless noted. ICU plurals follow the existing style.
 | `picker.register`                                   | Register "{query}"                                                                                             | "{query}" registreren                                                                                           |
 | `picker.submit`                                     | {count, plural, one {Add # puzzle} other {Add # puzzles}}                                                      | {count, plural, one {# puzzel toevoegen} other {# puzzels toevoegen}}                                           |
 | `picker.availabilityNote`                           | Added puzzles are not offered for swap or loan. You can change that per puzzle later.                          | Toegevoegde puzzels worden niet aangeboden om te ruilen of uit te lenen. Dat kun je later per puzzel aanpassen. |
-| `solves.lead`                                       | Did you finish any of these?                                                                                   | Heb je een van deze al gelegd?                                                                                  |
-| `solves.finished`                                   | I finished {title}                                                                                             | Ik heb {title} gelegd                                                                                           |
+| `solves.lead`                                       | Did you finish any of these?                                                                                   | Heb je een van deze al afgemaakt?                                                                               |
+| `solves.finished`                                   | I finished {title}                                                                                             | Ik heb {title} afgemaakt                                                                                        |
 | `solves.when`                                       | When?                                                                                                          | Wanneer?                                                                                                        |
 | `solves.dontRemember`                               | I don't remember                                                                                               | Weet ik niet meer                                                                                               |
 | `solves.whichYear`                                  | Which year                                                                                                     | Welk jaar                                                                                                       |
@@ -1009,8 +1206,7 @@ unless noted. ICU plurals follow the existing style.
 | `household.pendingTitle`                            | {name} invited you to their household                                                                          | {name} heeft je uitgenodigd voor hun huishouden                                                                 |
 | `profile.lead`                                      | Help people recognise you.                                                                                     | Help anderen je te herkennen.                                                                                   |
 | `profile.changePhoto`                               | Change photo                                                                                                   | Foto wijzigen                                                                                                   |
-| `profile.city`                                      | City                                                                                                           | Woonplaats                                                                                                      |
-| `profile.cityHint`                                  | Optional. Shown on your profile.                                                                               | Optioneel. Zichtbaar op je profiel.                                                                             |
+| `profile.locationHint`                              | Optional. Shown on your profile.                                                                               | Optioneel. Zichtbaar op je profiel.                                                                             |
 | `profile.visibility`                                | Who can see your profile?                                                                                      | Wie kan je profiel zien?                                                                                        |
 | `profile.public`                                    | Everyone                                                                                                       | Iedereen                                                                                                        |
 | `profile.private`                                   | Only people you approve                                                                                        | Alleen mensen die je toelaat                                                                                    |
@@ -1019,7 +1215,7 @@ unless noted. ICU plurals follow the existing style.
 | `push.enable`                                       | Turn on notifications                                                                                          | Meldingen aanzetten                                                                                             |
 | `push.notNow`                                       | Not now                                                                                                        | Niet nu                                                                                                         |
 | `done.title`                                        | Your shelf is ready                                                                                            | Je plank staat klaar                                                                                            |
-| `done.summary`                                      | {copies, plural, one {# puzzle} other {# puzzles}} · {solves} finished · {following} following                 | {copies, plural, one {# puzzel} other {# puzzels}} · {solves} gelegd · {following} gevolgd                      |
+| `done.summary`                                      | {copies, plural, one {# puzzle} other {# puzzles}} · {solves} finished · {following} following                 | {copies, plural, one {# puzzel} other {# puzzels}} · {solves} afgemaakt · {following} gevolgd                   |
 | `done.goToShelf`                                    | Go to my shelf                                                                                                 | Naar mijn plank                                                                                                 |
 | `done.tour`                                         | Show me around                                                                                                 | Geef me een rondleiding                                                                                         |
 | `errors.inviteRateLimited`                          | You've created a lot of invite links today. Try again tomorrow.                                                | Je hebt vandaag veel uitnodigingslinks gemaakt. Probeer het morgen opnieuw.                                     |
@@ -1040,6 +1236,7 @@ unless noted. ICU plurals follow the existing style.
 | `tours.getting-started.steps.account-menu.body`     | Your profile, notifications and Quick setup live here.                                                         | Je profiel, meldingen en Snel instellen vind je hier.                                                           |
 
 Existing keys reused as is: `invite.copyLink`, `invite.copied`,
+`profile.location` (Location / Locatie, the field's label on the profile page),
 `invite.needUsernameTitle`/`Body`, `household.explainer`,
 `household.invites.accept`/`decline`, and the existing "Pending review" badge
 copy.
@@ -1169,11 +1366,25 @@ not blocked.
    verification. _Default: keep it_; the in-app invite is the fallback.
 7. **Step 1 threshold: 3 copies or 1?** _Default: 3 (D3)_, so the checklist
    drives what activation measures. The row shows "2 of 3" until then.
-8. **The dark-mode primary button is 3.80:1** (`--primary-foreground` on
-   `--primary`), below 4.5:1 for its label. It is pre-existing and affects
-   every primary button. _Default: out of scope here_; flagged for a separate
-   theme PR.
+8. **Dark-mode primary contrast is pre-existing and below 4.5:1.**
+   - The default `Button` and the `SegmentedPills` "on" state
+     (`--primary-foreground` on `--primary`) are 3.80:1.
+   - The brand look that What's new and the tour use (`text-white` on
+     `--jigsaw-primary`) is 4.48:1.
+
+   This track uses the brand look for its primary actions (§5), because it is
+   closer and consistent with the modal and the tour. It still uses
+   `SegmentedPills` as is. _Default: out of scope here_; flagged for a
+   separate theme PR. Darkening the dark `--jigsaw-primary` slightly would fix
+   the brand look app-wide.
+
 9. **Card visibility for existing members** with 0 copies who signed up long
    ago. _Default: show the card (no welcome dialog)_; they can hide it.
 10. **Activation's household link** requires the other member to join inside
     the window too. _Default: yes_; a household of one isn't a connection.
+11. **The sticky `/welcome` footer with the on-screen keyboard open** (step 1's
+    search, step 5's location field). On phones the footer docks above the
+    tab bar (§5.3). With the keyboard up, the two can cover most of the
+    remaining viewport. _Default: keep the footer sticky._ The Q7b manual pass
+    checks this at 360 × 640. If it is cramped, the footer becomes static
+    while a text input in the step has focus.
