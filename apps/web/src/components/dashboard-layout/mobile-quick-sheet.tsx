@@ -5,12 +5,18 @@
 // one-line sub, chevron — sliding up over the dimmed backdrop, with a drag
 // handle and safe-area bottom padding.
 import { useRouter } from "@/compat/navigation";
+import {
+  requestInstallTip,
+  runInstallPrompt,
+  useInstallMethod,
+} from "@/components/install-app/use-install-app";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { WhatsNewCountPill } from "@/components/whats-new/badges";
 import {
   ArrowLeftRight,
   ChevronRight,
   CircleCheck,
+  Download,
   Plus,
   Search,
   Sparkles,
@@ -80,6 +86,7 @@ export function MobileQuickSheet({
 }) {
   const t = useTranslations("shell");
   const tWhatsNew = useTranslations("whatsNew");
+  const tInstall = useTranslations("installApp");
   const router = useRouter();
   const countFor = (href: string) =>
     href === "/whats-new" ? whatsNewCount : 0;
@@ -87,6 +94,15 @@ export function MobileQuickSheet({
   const go = (href: string) => {
     onOpenChange(false);
     router.push(href);
+  };
+
+  // The persistent install entry (the tip itself can be snoozed or turned off): the browser's
+  // install dialog where Chromium offers one, else the tip's iOS Share steps.
+  const installMethod = useInstallMethod();
+  const install = () => {
+    onOpenChange(false);
+    if (installMethod === "prompt") void runInstallPrompt("menu");
+    else requestInstallTip();
   };
 
   return (
@@ -131,6 +147,26 @@ export function MobileQuickSheet({
                 <ChevronRight className="text-muted-foreground size-4 shrink-0" />
               </button>
             ))}
+            {installMethod && (
+              <button
+                type="button"
+                onClick={install}
+                className="hover:bg-accent flex min-h-14 items-center gap-3.5 rounded-xl px-2.5 py-2 text-left transition-colors"
+              >
+                <span className="bg-jigsaw-primary/10 text-jigsaw-primary inline-flex size-[42px] shrink-0 items-center justify-center rounded-full">
+                  <Download className="size-[19px]" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold">
+                    {tInstall("menuTitle")}
+                  </span>
+                  <span className="text-muted-foreground block text-sm">
+                    {tInstall("menuSub")}
+                  </span>
+                </span>
+                <ChevronRight className="text-muted-foreground size-4 shrink-0" />
+              </button>
+            )}
           </div>
         </div>
       </SheetContent>

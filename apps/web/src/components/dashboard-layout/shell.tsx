@@ -12,6 +12,7 @@
 // sheet; the content sits on the plain background with no inset card or page
 // head. The shadcn sidebar's mobile offcanvas becomes unreachable by design —
 // its trigger lives in the (hidden) desktop top bar.
+import { InstallAppTip } from "@/components/install-app/install-app-tip";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { WhatsNewAnnouncer } from "@/components/whats-new/announcer";
 import { cn } from "@/lib/utils";
@@ -59,6 +60,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               </div>
             </SidebarInset>
           </div>
+          {/* Mobile-only, sticks just above the tab bar. */}
+          <InstallAppTip />
           <MobileTabBar />
           <CommandPalette open={paletteOpen} setOpen={setPaletteOpen} />
           <WhatsNewAnnouncer />
