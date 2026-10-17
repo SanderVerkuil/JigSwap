@@ -2,6 +2,7 @@
 // runtime imports so they unit-test in a plain node environment.
 
 import type { gateway } from "@/gateway";
+import type { MemberNameSource } from "@jigswap/contracts";
 import type { FunctionReturnType } from "convex/server";
 import { ConvexError } from "convex/values";
 
@@ -34,16 +35,18 @@ export function formatUnreadCount(count: number): string {
 }
 
 // A thread's display title: the other member for a DM (an anonymised member
-// renders the app's anonymous label — never a real identity), or
-// "<Type>: <puzzle>" for an exchange thread.
+// renders the app's anonymous label — never a real identity; a revealed one is
+// named via `displayName`, i.e. useMemberDisplayName), or "<Type>: <puzzle>"
+// for an exchange thread.
 export function threadSubjectTitle(
   subject: InboxThread["subject"],
   t: Translator,
+  displayName: (source: MemberNameSource) => string,
 ): string {
   if (subject.kind === "dm") {
     return subject.otherMember.anonymous
       ? t("anonymous")
-      : subject.otherMember.member.name;
+      : displayName(subject.otherMember.member);
   }
   return t("exchangeThread", {
     type: t(`exchangeType.${subject.exchangeType}`),

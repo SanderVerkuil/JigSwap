@@ -29,10 +29,14 @@ export type PhotoCommentRow = Omit<
 
 // Row -> Profile aggregate. The row MUST carry an aggregateId (only domain-written rows do).
 // DisplayName re-validation here is total: a persisted name was already valid, so `create` succeeds.
+// An absent displayName (lazily-opened profile) stays absent.
 export const profileToDomain = (row: Doc<"profiles">): Profile => {
   // A persisted name was valid when written, so a failure here means row corruption, not user input.
-  const displayName = DisplayName.create(row.displayName);
-  if (!displayName.isOk) {
+  const displayName =
+    row.displayName === undefined
+      ? undefined
+      : DisplayName.create(row.displayName);
+  if (displayName && !displayName.isOk) {
     throw new Error(
       `Corrupt profile row: invalid displayName "${row.displayName}"`,
     );
@@ -40,7 +44,7 @@ export const profileToDomain = (row: Doc<"profiles">): Profile => {
   const state: ProfileState = {
     id: toProfileId(row.aggregateId as string),
     memberId: toMemberId(row.memberId),
-    displayName: displayName.value,
+    displayName: displayName?.value,
     bio: row.bio,
     // Legacy rows written before visibility existed are treated as public.
     visibility: row.visibility ?? "public",
@@ -58,7 +62,7 @@ export const profileToRow = (profile: Profile): ProfileRow => {
   return {
     aggregateId: state.id as string,
     memberId: state.memberId as unknown as Id<"users">,
-    displayName: state.displayName.value,
+    displayName: state.displayName?.value,
     bio: state.bio,
     visibility: state.visibility,
     featuredCopyIds:

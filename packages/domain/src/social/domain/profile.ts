@@ -16,10 +16,13 @@ export const MAX_FEATURED = 6;
 // whether to surface the member or treat them as anonymous.
 export type ProfileVisibility = "public" | "private";
 
-// Input to edit(): the still-unvalidated display name plus an optional bio. The bio is free
-// text (or cleared by passing undefined); the display name is validated by the DisplayName VO.
+// Input to create()/edit(): the still-unvalidated display name plus an optional bio. The bio is
+// free text (or cleared by passing undefined); a supplied display name is validated by the
+// DisplayName VO. The display name is OPTIONAL: a profile can be opened lazily (visibility toggle,
+// shelf curation) for a member who never chose one, and an edit that omits it keeps the current
+// one (bio-only save). Readers fall back to the account name via resolveMemberDisplayName.
 export interface EditProps {
-  readonly displayName: string;
+  readonly displayName?: string;
   readonly bio?: string;
   readonly now: Date;
 }
@@ -29,7 +32,7 @@ export interface EditProps {
 export interface ProfileState {
   readonly id: ProfileId;
   readonly memberId: MemberId;
-  readonly displayName: DisplayName;
+  readonly displayName?: DisplayName;
   readonly bio?: string;
   readonly visibility: ProfileVisibility;
   // Ordered, curated set of owned copies featured on the profile shelf (sub-project ④).
@@ -39,7 +42,7 @@ export interface ProfileState {
 }
 
 // Profile: the per-member aggregate root for the public face of a member (display name, bio).
-// One profile per member; it is created with a valid display name and emits ProfileUpdated on
+// One profile per member; it is created with a valid (or no) display name and emits ProfileUpdated on
 // every successful edit so follower feeds and Notifications can react.
 export class Profile {
   private events: DomainEvent[] = [];
@@ -54,7 +57,7 @@ export class Profile {
     return this.state.memberId;
   }
 
-  get displayName(): DisplayName {
+  get displayName(): DisplayName | undefined {
     return this.state.displayName;
   }
 
@@ -70,40 +73,50 @@ export class Profile {
     return this.state.featuredCopyIds;
   }
 
-  // Open a brand-new profile for a member. Validates the display name; an invalid one fails the
-  // whole creation. Records ProfileUpdated so the initial public state propagates like any edit.
+  // Open a brand-new profile for a member. Validates a supplied display name; an invalid one fails
+  // the whole creation, an absent one leaves it unset. Records ProfileUpdated so the initial public
+  // state propagates like any edit.
   static create(
     id: ProfileId,
     memberId: MemberId,
     props: EditProps,
   ): Result<Profile, SocialError> {
-    const displayName = DisplayName.create(props.displayName);
-    if (displayName.isErr) return err(displayName.error);
+    let displayName: DisplayName | undefined;
+    if (props.displayName !== undefined) {
+      const created = DisplayName.create(props.displayName);
+      if (created.isErr) return err(created.error);
+      displayName = created.value;
+    }
 
     const profile = new Profile({
       id,
       memberId,
-      displayName: displayName.value,
+      displayName,
       bio: props.bio,
       visibility: "public",
       featuredCopyIds: [],
       updatedAt: props.now,
     });
     profile.record(
-      new ProfileUpdated(id, memberId, displayName.value.value, props.now),
+      new ProfileUpdated(id, memberId, displayName?.value, props.now),
     );
     return ok(profile);
   }
 
   // Apply an edit to the editable fields. Decides only from its own data: rejects an invalid
-  // display name. Emits ProfileUpdated carrying the new display name for subscribers.
+  // display name; an omitted one keeps the current. Emits ProfileUpdated carrying the resulting
+  // display name for subscribers.
   edit(props: EditProps): Result<void, SocialError> {
-    const displayName = DisplayName.create(props.displayName);
-    if (displayName.isErr) return err(displayName.error);
+    let displayName = this.state.displayName;
+    if (props.displayName !== undefined) {
+      const created = DisplayName.create(props.displayName);
+      if (created.isErr) return err(created.error);
+      displayName = created.value;
+    }
 
     this.state = {
       ...this.state,
-      displayName: displayName.value,
+      displayName,
       bio: props.bio,
       updatedAt: props.now,
     };
@@ -112,7 +125,7 @@ export class Profile {
       new ProfileUpdated(
         this.state.id,
         this.state.memberId,
-        displayName.value.value,
+        displayName?.value,
         props.now,
       ),
     );

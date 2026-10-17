@@ -13,6 +13,7 @@
 // sidebar group and the user menu's Admin link (shell-user-button.tsx).
 
 import { useUser } from "@/compat/clerk";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { useRef } from "react";
 import { useShellPreferences } from "./preferences";
@@ -20,6 +21,7 @@ import { ShellUserButton } from "./shell-user-button";
 
 export function UserFooter() {
   const { user } = useUser();
+  const displayName = useMemberDisplayName();
   const { hideEmail } = useShellPreferences();
   const rootRef = useRef<HTMLDivElement>(null);
   const menuWasOpenRef = useRef(false);
@@ -68,7 +70,11 @@ export function UserFooter() {
         className="grid min-w-0 flex-1 rounded-md px-1 py-0.5 text-left text-sm leading-tight transition-colors hover:bg-accent group-data-[collapsible=icon]:hidden"
       >
         <span className="truncate font-medium">
-          {user.firstName} {user.lastName}
+          {/* No email fallback: the email line below honours hideEmail. */}
+          {displayName({
+            name: [user.firstName, user.lastName].filter(Boolean).join(" "),
+            username: user.username,
+          })}
         </span>
         <span
           aria-hidden={hideEmail}

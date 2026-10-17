@@ -1,4 +1,5 @@
 "use client";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 
 import {
   PuzzleCardShell,
@@ -287,6 +288,7 @@ export function PuzzleCard({
   className = "",
 }: PuzzleCardProps) {
   const t = useTranslations("puzzles");
+  const displayName = useMemberDisplayName();
   const tCompletions = useTranslations("solving.completions");
 
   // Early return if no puzzle data
@@ -351,7 +353,7 @@ export function PuzzleCard({
         <div className="flex items-center gap-2 mb-2">
           <User className="h-3 w-3 text-muted-foreground" />
           <span className="text-xs text-muted-foreground">
-            {puzzle.owner.name}
+            {displayName(puzzle.owner)}
           </span>
         </div>
       )}

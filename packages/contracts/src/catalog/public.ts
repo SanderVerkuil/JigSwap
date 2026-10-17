@@ -63,7 +63,8 @@ export interface PublicDefinitionDetailView {
  * "A JigSwap member". */
 export interface PublicPuzzleReviewView {
   id: string;
-  author: { name: string; avatar: string | null } | null;
+  /** `name` is absent when the member has no account name (render the generic member label). */
+  author: { name?: string; avatar: string | null } | null;
   rating: number | null;
   text: string | null;
   updatedAt: number;

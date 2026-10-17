@@ -1,6 +1,7 @@
 "use client";
 
 import { ImageZoom } from "@/components/common/image-zoom";
+import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { gateway, Id } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -64,6 +66,7 @@ export function PhotoLightbox({
   coverImageId: string | null;
 }) {
   const t = useTranslations("copyInstance.photoLightbox");
+  const displayName = useMemberDisplayName();
   const format = useFormatter();
   const setCopyCover = useMutation({
     mutationFn: useConvexMutation(gateway.library.setCopyCover),
@@ -228,7 +231,9 @@ export function PhotoLightbox({
             )}
             <dl className="text-sm">
               <div className="text-muted-foreground">
-                {t("uploadedBy", { name: photo.uploaderName ?? "—" })}
+                {t("uploadedBy", {
+                  name: displayName({ name: photo.uploaderName }),
+                })}
               </div>
               <div className="text-muted-foreground">
                 {t("takenOn", { date: takenLabel })}
@@ -316,6 +321,7 @@ export function PhotoLightbox({
 
 function PhotoComments({ photoId }: { photoId: Id<"ownedPuzzleImages"> }) {
   const t = useTranslations("copyInstance.photoLightbox");
+  const displayName = useMemberDisplayName();
   const format = useFormatter();
 
   // Keyed on the ACTIVE photo's id: navigating in the lightbox swaps `photoId`, which re-runs
@@ -358,9 +364,9 @@ function PhotoComments({ photoId }: { photoId: Id<"ownedPuzzleImages"> }) {
       {/* Composer */}
       <div className="mb-3 flex gap-2.5">
         <Avatar className="h-8 w-8">
-          {me?.avatar && <AvatarImage src={me.avatar} alt={me.name} />}
+          {me?.avatar && <AvatarImage src={me.avatar} alt={displayName(me)} />}
           <AvatarFallback className="text-xs font-medium">
-            {(me?.name ?? "?").slice(0, 1).toUpperCase()}
+            <MemberInitial source={me} />
           </AvatarFallback>
         </Avatar>
         <Input
@@ -411,7 +417,8 @@ function PhotoCommentRow({
   relative: (timestamp: number) => string;
   last: boolean;
 }) {
-  const name = comment.author.name;
+  const displayName = useMemberDisplayName();
+  const name = displayName(comment.author);
   return (
     <div className={cn("flex gap-3 py-3", !last && "border-border border-b")}>
       <Avatar className="h-8 w-8">
@@ -419,7 +426,7 @@ function PhotoCommentRow({
           <AvatarImage src={comment.author.avatar} alt={name} />
         )}
         <AvatarFallback className="text-xs font-medium">
-          {name.slice(0, 1).toUpperCase()}
+          <MemberInitial source={comment.author} />
         </AvatarFallback>
       </Avatar>
       <div className="min-w-0 flex-1">

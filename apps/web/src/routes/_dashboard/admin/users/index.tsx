@@ -1,3 +1,5 @@
+import { MemberInitial } from "@/components/members/member-initial";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
@@ -31,6 +33,7 @@ const PAGE_SIZE = 25;
 // UserRoleAction (confirm dialog + setUserRole action + own-row hiding).
 function AdminUsersPage() {
   const t = useTranslations("admin.users");
+  const displayName = useMemberDisplayName();
   const format = useFormatter();
 
   const [searchInput, setSearchInput] = useState("");
@@ -96,17 +99,17 @@ function AdminUsersPage() {
                     >
                       <Avatar className="size-8 shrink-0">
                         {user.avatar && (
-                          <AvatarImage src={user.avatar} alt={user.name} />
+                          <AvatarImage
+                            src={user.avatar}
+                            alt={displayName(user)}
+                          />
                         )}
                         <AvatarFallback>
-                          {user.name
-                            .split(" ")
-                            .map((part) => part[0])
-                            .join("")}
+                          <MemberInitial source={user} />
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="font-medium">{user.name}</div>
+                        <div className="font-medium">{displayName(user)}</div>
                         {user.username && (
                           <div className="text-xs text-muted-foreground">
                             @{user.username}
@@ -139,7 +142,7 @@ function AdminUsersPage() {
                   <td className="px-4 py-3 text-right">
                     <UserRoleAction
                       userId={user._id}
-                      name={user.name}
+                      name={displayName(user)}
                       role={user.role}
                     />
                   </td>

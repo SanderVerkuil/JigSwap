@@ -9,7 +9,7 @@ import { canViewCopy } from "../library/canViewCopy";
 // Read side: the COPY-scoped comments on the given owned copy (the owner's own plain-text notes),
 // newest first — NOT the shared community reviews (those live on the catalog page via
 // listPuzzleReviews). Each comment joins its REAL author (comments are voluntary public posts —
-// never anonymised). A missing copy returns []. The author join falls back to a synthetic "Member"
+// never anonymised). A missing copy returns []. The author join falls back to a synthetic, nameless
 // view if the user row vanished, so an orphaned comment never breaks the list.
 //
 // SECURITY: auth-gated, and the copy is run through the SAME reachability gate as getCopyInstanceView
@@ -40,7 +40,6 @@ export const listPuzzleComments = query({
             : {
                 _id: row.authorId,
                 _creationTime: 0,
-                name: "Member",
                 isActive: false,
                 createdAt: 0,
                 updatedAt: 0,

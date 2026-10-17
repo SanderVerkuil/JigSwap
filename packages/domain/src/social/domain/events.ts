@@ -73,7 +73,8 @@ export class ProfileUpdated implements DomainEvent {
   constructor(
     readonly profileId: ProfileId,
     readonly memberId: MemberId,
-    readonly displayName: string,
+    // Absent when a profile is opened without a chosen display name.
+    readonly displayName: string | undefined,
     readonly occurredAt: Date,
   ) {}
 }

@@ -1,6 +1,7 @@
 import { ConvexError } from "convex/values";
 import { query } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
+import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 
 // The flagged-photos review queue: every auto-rejected copy photo, with enough context (image url,
@@ -24,6 +25,7 @@ export const listRejectedPhotos = query({
         // Puzzle title via the copy's cached snapshot, falling back to the puzzle row, then the
         // image id (same resolution as the pipeline's photo_auto_rejected stamp).
         const copy = await ctx.db.get(row.ownedPuzzleId);
+        const uploader = await ctx.db.get(row.uploaderId);
         const title =
           copy?.snapshot?.title ??
           (copy ? (await ctx.db.get(copy.puzzleId))?.title : undefined);
@@ -32,7 +34,7 @@ export const listRejectedPhotos = query({
           url: await ctx.storage.getUrl(row.fileId),
           score: row.moderationScore ?? null,
           label: row.moderationLabel ?? null,
-          uploaderName: (await ctx.db.get(row.uploaderId))?.name ?? null,
+          uploaderName: uploader ? adminMemberLabelOf(uploader) : null,
           puzzleTitle: title ?? row._id,
           uploadedAt: row.createdAt,
         };

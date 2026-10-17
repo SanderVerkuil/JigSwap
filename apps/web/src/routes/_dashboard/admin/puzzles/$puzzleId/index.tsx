@@ -1,3 +1,5 @@
+import { MemberInitial } from "@/components/members/member-initial";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
@@ -55,6 +57,7 @@ function AdminPuzzleDetailPage() {
   const { puzzleId } = Route.useParams();
   const t = useTranslations("admin.puzzles");
   const tp = useTranslations("admin.proposals");
+  const displayName = useMemberDisplayName();
   const format = useFormatter();
 
   const { data, isPending, isError } = useQuery(
@@ -237,17 +240,17 @@ function AdminPuzzleDetailPage() {
                 >
                   <Avatar className="size-8 shrink-0">
                     {owner.avatar && (
-                      <AvatarImage src={owner.avatar} alt={owner.name} />
+                      <AvatarImage
+                        src={owner.avatar}
+                        alt={displayName(owner)}
+                      />
                     )}
                     <AvatarFallback>
-                      {owner.name
-                        .split(" ")
-                        .map((part) => part[0])
-                        .join("")}
+                      <MemberInitial source={owner} />
                     </AvatarFallback>
                   </Avatar>
                   <span className="min-w-0 flex-1 truncate text-sm font-medium underline-offset-4 hover:underline">
-                    {owner.name}
+                    {displayName(owner)}
                     {owner.username && (
                       <span className="text-muted-foreground font-normal">
                         {" "}

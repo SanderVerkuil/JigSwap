@@ -9,6 +9,7 @@ import {
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
+import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 import { areMutualFollowers } from "./privacy";
 
@@ -151,7 +152,7 @@ export const getActivityFeed = query({
     );
 
     return feed.map((entry) =>
-      toActivityEntryView(entry, actorNames.get(entry.memberId as string)!),
+      toActivityEntryView(entry, actorNames.get(entry.memberId as string)),
     );
   },
 });
@@ -161,7 +162,7 @@ export const getActivityFeed = query({
 const resolveActorName = async (
   ctx: QueryCtx,
   memberId: string,
-): Promise<string> => {
+): Promise<string | undefined> => {
   const id = memberId as unknown as Id<"users">;
   const [profile, user] = await Promise.all([
     ctx.db
@@ -170,7 +171,7 @@ const resolveActorName = async (
       .unique(),
     ctx.db.get(id),
   ]);
-  return profile?.displayName ?? user?.name ?? "Member";
+  return memberDisplayNameOf(user, profile);
 };
 
 const asMember = (id: string): MemberId => toMemberId(id);
@@ -235,7 +236,7 @@ const loadExchange = (
 
 const toActivityEntryView = (
   entry: ActivityEntry,
-  actorName: string,
+  actorName: string | undefined,
 ): ActivityEntryView => ({
   memberId: entry.memberId as string,
   kind: entry.kind,

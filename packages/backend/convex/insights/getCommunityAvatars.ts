@@ -1,4 +1,7 @@
-import type { CommunityAvatarView } from "@jigswap/contracts";
+import {
+  normalizeMemberName,
+  type CommunityAvatarView,
+} from "@jigswap/contracts";
 import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
@@ -17,7 +20,8 @@ const LIMIT_MAX = 8;
 export const toCommunityAvatarView = (
   user: Doc<"users">,
 ): CommunityAvatarView => {
-  const name = user.name?.trim() ?? "";
+  // normalizeMemberName drops legacy "null null" names, which would otherwise render "NN".
+  const name = normalizeMemberName(user.name) ?? "";
   let initials: string;
 
   if (name.length === 0) {

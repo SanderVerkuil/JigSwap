@@ -3,11 +3,11 @@ import { MemberId, SocialError } from "../../../domain";
 import { SocialApplicationError } from "../../errors";
 
 // The command to edit a member's profile. `memberId` is resolved from auth by the transport
-// adapter. The raw `displayName` is validated by the Profile aggregate; `bio` is optional and
-// passing undefined clears it.
+// adapter. The raw `displayName` is validated by the Profile aggregate (omitted = keep the current
+// one); `bio` is optional and passing undefined clears it.
 export interface EditProfileCommand {
   readonly memberId: MemberId;
-  readonly displayName: string;
+  readonly displayName?: string;
   readonly bio?: string;
 }
 

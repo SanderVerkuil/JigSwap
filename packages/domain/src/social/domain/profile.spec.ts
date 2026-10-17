@@ -26,7 +26,7 @@ describe("Profile.create", () => {
     if (!result.isOk) return;
 
     const profile = result.value;
-    expect(profile.displayName.value).toBe("Alice");
+    expect(profile.displayName?.value).toBe("Alice");
     expect(profile.bio).toBe("Loves 1000-piece landscapes");
     expect(profile.visibility).toBe("public");
 
@@ -51,6 +51,19 @@ describe("Profile.create", () => {
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("InvalidDisplayName");
   });
+
+  it("opens a profile without a display name when the member has none (it stays optional)", () => {
+    const result = Profile.create(profileId, member, { now: NOW });
+    expect(result.isOk).toBe(true);
+    if (!result.isOk) return;
+
+    const profile = result.value;
+    expect(profile.displayName).toBeUndefined();
+    const updated = profile.pullEvents()[0] as unknown as {
+      displayName?: string;
+    };
+    expect(updated.displayName).toBeUndefined();
+  });
 });
 
 describe("Profile.edit", () => {
@@ -67,13 +80,29 @@ describe("Profile.edit", () => {
       editProps({ displayName: "Alice B.", bio: "Updated" }),
     );
     expect(edited.isOk).toBe(true);
-    expect(profile.displayName.value).toBe("Alice B.");
+    expect(profile.displayName?.value).toBe("Alice B.");
     expect(profile.bio).toBe("Updated");
 
     const events = profile.pullEvents();
     expect(events.map((e) => e.name)).toEqual(["ProfileUpdated"]);
     const updated = events[0] as unknown as { displayName: string };
     expect(updated.displayName).toBe("Alice B.");
+  });
+
+  it("keeps the current display name when an edit omits it (bio-only save)", () => {
+    const profile = open();
+    const edited = profile.edit({ bio: "Only the story", now: NOW });
+    expect(edited.isOk).toBe(true);
+    expect(profile.displayName?.value).toBe("Alice");
+    expect(profile.bio).toBe("Only the story");
+  });
+
+  it("allows a bio-only save on a profile that has no display name", () => {
+    const created = Profile.create(profileId, member, { now: NOW });
+    if (!created.isOk) throw new Error("setup");
+    const edited = created.value.edit({ bio: "Hi", now: NOW });
+    expect(edited.isOk).toBe(true);
+    expect(created.value.displayName).toBeUndefined();
   });
 
   it("clears the bio when edited with no bio", () => {
@@ -89,14 +118,14 @@ describe("Profile.edit", () => {
     expect(edited.isErr).toBe(true);
     if (edited.isErr) expect(edited.error.code).toBe("InvalidDisplayName");
     expect(profile.pullEvents()).toHaveLength(0);
-    expect(profile.displayName.value).toBe("Alice"); // unchanged
+    expect(profile.displayName?.value).toBe("Alice"); // unchanged
   });
 
   it("round-trips through toState/rehydrate without re-emitting events", () => {
     const profile = open();
     const rehydrated = Profile.rehydrate(profile.toState());
     expect(rehydrated.id).toBe(profileId);
-    expect(rehydrated.displayName.value).toBe("Alice");
+    expect(rehydrated.displayName?.value).toBe("Alice");
     expect(rehydrated.memberId).toBe(member);
     expect(rehydrated.pullEvents()).toHaveLength(0);
   });
@@ -157,7 +186,7 @@ describe("Profile.changeVisibility", () => {
   it("leaves the display name and bio untouched when visibility changes", () => {
     const profile = open();
     profile.changeVisibility("private", LATER);
-    expect(profile.displayName.value).toBe("Alice");
+    expect(profile.displayName?.value).toBe("Alice");
     expect(profile.bio).toBe("Loves 1000-piece landscapes");
   });
 });

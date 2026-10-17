@@ -1,4 +1,4 @@
-import type { MemberView } from "@jigswap/contracts";
+import { normalizeMemberName, type MemberView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
@@ -31,10 +31,11 @@ const matchBucketOf = (
   searchTerm: string,
   user: Pick<Doc<"users">, "name" | "username">,
 ): MatchBucket => {
-  const name = user.name.toLowerCase();
+  const name = normalizeMemberName(user.name)?.toLowerCase();
   const username = user.username?.toLowerCase();
   if (name === searchTerm || username === searchTerm) return 0;
-  if (name.startsWith(searchTerm) || username?.startsWith(searchTerm)) return 1;
+  if (name?.startsWith(searchTerm) || username?.startsWith(searchTerm))
+    return 1;
   return 2;
 };
 

@@ -8,7 +8,7 @@ import { canViewCopy } from "./canViewCopy";
 
 // Read side: the discussion comments on a single shared PHOTO, newest first. Keyed by the
 // `ownedPuzzleImages` _id the lightbox shows. Each comment joins its REAL author (photo comments are
-// voluntary public posts — never anonymised). The author join falls back to a synthetic "Member"
+// voluntary public posts — never anonymised). The author join falls back to a synthetic, nameless
 // view if the user row vanished, so an orphaned comment never breaks the list.
 //
 // SECURITY: auth-gated, and the photo's parent copy is run through the SAME reachability gate as
@@ -41,7 +41,6 @@ export const listPhotoComments = query({
             : {
                 _id: row.authorId,
                 _creationTime: 0,
-                name: "Member",
                 isActive: false,
                 createdAt: 0,
                 updatedAt: 0,

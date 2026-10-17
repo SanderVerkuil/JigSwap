@@ -1,4 +1,6 @@
 "use client";
+import { MemberInitial } from "@/components/members/member-initial";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 
 // The single shared body for the redesigned public member profile
 // (/members/$handle), rendered for every viewer tier: logged-out ("public"),
@@ -78,8 +80,9 @@ export function ProfileBody({
   // of the page as "{name} invited you to JigSwap" (Phase 3 growth loop).
   invitedName?: string;
 }) {
+  const displayName = useMemberDisplayName();
   const hero = profile.hero;
-  const firstName = firstNameOf(hero.displayName);
+  const firstName = firstNameOf(displayName({ name: hero.displayName }));
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-4 py-10">
@@ -129,6 +132,8 @@ function HeroSection({
   returnToHref?: string;
 }) {
   const t = useTranslations("members.profile");
+  const displayName = useMemberDisplayName();
+  const name = displayName({ name: hero.displayName });
   const memberSinceYear = new Date(hero.memberSince).getFullYear();
   const handle = hero.slug ?? hero.username;
 
@@ -136,17 +141,15 @@ function HeroSection({
     <section className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
       <div className="flex min-w-0 items-start gap-5">
         <Avatar className="size-24 shrink-0">
-          {hero.avatar && (
-            <AvatarImage src={hero.avatar} alt={hero.displayName} />
-          )}
+          {hero.avatar && <AvatarImage src={hero.avatar} alt={name} />}
           <AvatarFallback className="text-3xl">
-            {hero.displayName.charAt(0).toUpperCase()}
+            <MemberInitial source={{ name: hero.displayName }} />
           </AvatarFallback>
         </Avatar>
 
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            <h1 className="font-heading text-3xl">{hero.displayName}</h1>
+            <h1 className="font-heading text-3xl">{name}</h1>
             {hero.reviewCount > 0 && (
               <span className="bg-jigsaw-secondary/10 text-jigsaw-secondary inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm font-medium">
                 <Star className="size-3.5 fill-current" />
@@ -260,6 +263,7 @@ type FollowersYouKnowMember = NonNullable<
 
 function FollowersYouKnowRow({ memberId }: { memberId: Id<"users"> }) {
   const t = useTranslations("members.followersYouKnow");
+  const displayName = useMemberDisplayName();
   const [open, setOpen] = useState(false);
   const { data } = useQuery(
     convexQuery(gateway.social.followersYouKnow, { memberId }),
@@ -278,13 +282,16 @@ function FollowersYouKnowRow({ memberId }: { memberId: Id<"users"> }) {
   // fall back to the single-name copy rather than interpolating an undefined name.
   let copy: string;
   if (data.total === 1 || !second) {
-    copy = t("one", { name: first.displayName });
+    copy = t("one", { name: displayName({ name: first.displayName }) });
   } else if (data.total === 2) {
-    copy = t("two", { name1: first.displayName, name2: second.displayName });
+    copy = t("two", {
+      name1: displayName({ name: first.displayName }),
+      name2: displayName({ name: second.displayName }),
+    });
   } else {
     copy = t("more", {
-      name1: first.displayName,
-      name2: second.displayName,
+      name1: displayName({ name: first.displayName }),
+      name2: displayName({ name: second.displayName }),
       count: data.total - 2,
     });
   }
@@ -300,17 +307,20 @@ function FollowersYouKnowRow({ memberId }: { memberId: Id<"users"> }) {
           {stack.map((member, i) => (
             <Avatar
               key={member.memberId}
-              title={member.displayName}
+              title={displayName({ name: member.displayName })}
               className={cn(
                 "border-background size-7 border-2",
                 i > 0 && "-ml-2",
               )}
             >
               {member.avatar && (
-                <AvatarImage src={member.avatar} alt={member.displayName} />
+                <AvatarImage
+                  src={member.avatar}
+                  alt={displayName({ name: member.displayName })}
+                />
               )}
               <AvatarFallback className="text-xs">
-                {member.displayName.charAt(0).toUpperCase()}
+                <MemberInitial source={{ name: member.displayName }} />
               </AvatarFallback>
             </Avatar>
           ))}
@@ -344,6 +354,8 @@ function FollowersYouKnowListItem({
 }: {
   member: FollowersYouKnowMember;
 }) {
+  const displayName = useMemberDisplayName();
+  const name = displayName({ name: member.displayName });
   return (
     <li>
       <Link
@@ -352,14 +364,12 @@ function FollowersYouKnowListItem({
         className="flex items-center gap-3 hover:underline"
       >
         <Avatar className="size-8">
-          {member.avatar && (
-            <AvatarImage src={member.avatar} alt={member.displayName} />
-          )}
+          {member.avatar && <AvatarImage src={member.avatar} alt={name} />}
           <AvatarFallback className="text-xs">
-            {member.displayName.charAt(0).toUpperCase()}
+            <MemberInitial source={{ name: member.displayName }} />
           </AvatarFallback>
         </Avatar>
-        <span className="font-medium">{member.displayName}</span>
+        <span className="font-medium">{name}</span>
       </Link>
     </li>
   );

@@ -6,6 +6,7 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
+import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 
 // Admin read model for ONE catalog definition: the getUserDetail counterpart on the
@@ -95,15 +96,16 @@ export const getPuzzleDefinitionDetail = query({
           .take(AUDIT_CAP)
       : [];
     const audit = await Promise.all(
-      auditRows.map(async (row) => ({
-        kind: row.kind,
-        actorName: row.actorId
-          ? ((await ctx.db.get(row.actorId))?.name ?? null)
-          : null,
-        targetLabel: row.targetLabel,
-        targetId: row.targetId,
-        at: row.at,
-      })),
+      auditRows.map(async (row) => {
+        const actor = row.actorId ? await ctx.db.get(row.actorId) : null;
+        return {
+          kind: row.kind,
+          actorName: actor ? adminMemberLabelOf(actor) : null,
+          targetLabel: row.targetLabel,
+          targetId: row.targetId,
+          at: row.at,
+        };
+      }),
     );
 
     return {
@@ -118,7 +120,7 @@ export const getPuzzleDefinitionDetail = query({
         updatedAt: puzzle.updatedAt,
         image: puzzle.image ? await ctx.storage.getUrl(puzzle.image) : null,
         submitter: submitter
-          ? { _id: submitter._id, name: submitter.name }
+          ? { _id: submitter._id, name: adminMemberLabelOf(submitter) }
           : null,
       },
       stats: {

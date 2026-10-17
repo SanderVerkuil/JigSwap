@@ -304,6 +304,9 @@ importers:
       '@jigswap/backend':
         specifier: workspace:^
         version: link:../../packages/backend
+      '@jigswap/contracts':
+        specifier: workspace:^
+        version: link:../../packages/contracts
       '@jigswap/gateway':
         specifier: workspace:^
         version: link:../../packages/gateway

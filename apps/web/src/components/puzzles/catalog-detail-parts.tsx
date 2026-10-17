@@ -1,7 +1,10 @@
 "use client";
 
+import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
+import type { MemberNameSource } from "@jigswap/contracts";
 import { Puzzle } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -35,21 +38,22 @@ export function PuzzleCoverFallback() {
   );
 }
 
-// Two-letter-ish initials avatar for a member, with optional avatar image.
+// Initial avatar for a member (person icon when nameless), with optional avatar image.
 export function MemberAvatar({
-  name,
+  source,
   avatar,
   className,
 }: {
-  name: string;
+  source: MemberNameSource | null | undefined;
   avatar?: string | null;
   className?: string;
 }) {
+  const displayName = useMemberDisplayName();
   return (
     <Avatar className={cn("h-8 w-8", className)}>
-      {avatar && <AvatarImage src={avatar} alt={name} />}
+      {avatar && <AvatarImage src={avatar} alt={displayName(source)} />}
       <AvatarFallback className="text-xs font-medium">
-        {name.slice(0, 1).toUpperCase()}
+        <MemberInitial source={source} />
       </AvatarFallback>
     </Avatar>
   );

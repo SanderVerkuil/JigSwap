@@ -1,4 +1,5 @@
 import { UserJSON } from "@clerk/backend";
+import { normalizeMemberName } from "@jigswap/contracts";
 import { v } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
 import {
@@ -11,7 +12,7 @@ import { requireMember } from "./identity/requireMember";
 
 // The lowercased text backing the `by_searchable_name` people-search index. Kept in sync on every
 // user write so member search is an index lookup, not a full-table scan + in-memory filter.
-const toSearchableName = (name: string, username?: string): string =>
+const toSearchableName = (name?: string, username?: string): string =>
   [name, username].filter(Boolean).join(" ").toLowerCase();
 
 // The Clerk publicMetadata.role, mirrored onto the users row for display (admin users page).
@@ -31,7 +32,7 @@ export const createOrUpdateUser = internalMutation({
   args: {
     clerkId: v.string(),
     email: v.string(),
-    name: v.string(),
+    name: v.optional(v.string()),
     username: v.optional(v.string()),
     avatar: v.optional(v.string()),
   },
@@ -113,7 +114,13 @@ export const updateOrCreateUser = internalMutation({
   async handler(ctx, { clerkUser }: { clerkUser: UserJSON }) {
     const userRecord = await userQuery(ctx, clerkUser.id);
 
-    const name = `${clerkUser.first_name} ${clerkUser.last_name}`;
+    // Clerk sends `null` for a missing first/last name; interpolating them directly persisted the
+    // literal "null null". Keep only the present, non-blank halves; no name at all stays absent.
+    const name =
+      [clerkUser.first_name, clerkUser.last_name]
+        .map((part) => part?.trim())
+        .filter(Boolean)
+        .join(" ") || undefined;
     const username = clerkUser.username ?? undefined;
     if (userRecord === null) {
       await ctx.db.insert("users", {
@@ -167,6 +174,65 @@ export const backfillSearchableName = internalMutation({
     return {
       patched,
       scanned: page.page.length,
+      isDone: page.isDone,
+      // Pass this back in as `cursor` to continue paging until `isDone` is true.
+      continueCursor: page.isDone ? null : page.continueCursor,
+    };
+  },
+});
+
+// One-shot, idempotent cleanup of member names written by the old Clerk sync, which interpolated
+// nullable first/last names (`${first_name} ${last_name}`) into "null null" / "Mara null", and by
+// the old lazy profile creation, which copied that name (or a hardcoded "Member" placeholder when
+// the account name was blank) into profiles.displayName. Internal-only; run per table, users
+// FIRST (the profile pass reads the cleaned account name), paging with `cursor` until `isDone`:
+//   npx convex run users:backfillMemberNames '{"table":"users"}'
+//   npx convex run users:backfillMemberNames '{"table":"profiles"}'
+// Re-running is a no-op: rows already clean are left untouched.
+export const backfillMemberNames = internalMutation({
+  args: {
+    table: v.union(v.literal("users"), v.literal("profiles")),
+    batchSize: v.optional(v.number()),
+    cursor: v.optional(v.string()),
+  },
+  async handler(ctx, { table, batchSize, cursor }) {
+    const opts = { cursor: cursor ?? null, numItems: batchSize ?? 200 };
+    let scanned = 0;
+    let patched = 0;
+    let page;
+
+    if (table === "users") {
+      page = await ctx.db.query("users").paginate(opts);
+      for (const user of page.page) {
+        const name = normalizeMemberName(user.name);
+        const searchableName = toSearchableName(name, user.username);
+        if (user.name !== name || user.searchableName !== searchableName) {
+          await ctx.db.patch(user._id, { name, searchableName });
+          patched += 1;
+        }
+      }
+      scanned = page.page.length;
+    } else {
+      page = await ctx.db.query("profiles").paginate(opts);
+      for (const profile of page.page) {
+        let displayName = normalizeMemberName(profile.displayName);
+        // "Member" was only ever seeded for an account without a usable name; a named member who
+        // typed "Member" themselves keeps it.
+        if (displayName === "Member") {
+          const account = await ctx.db.get(profile.memberId);
+          if (!normalizeMemberName(account?.name)) displayName = undefined;
+        }
+        if (profile.displayName !== displayName) {
+          await ctx.db.patch(profile._id, { displayName });
+          patched += 1;
+        }
+      }
+      scanned = page.page.length;
+    }
+
+    return {
+      patched,
+      scanned,
       isDone: page.isDone,
       // Pass this back in as `cursor` to continue paging until `isDone` is true.
       continueCursor: page.isDone ? null : page.continueCursor,

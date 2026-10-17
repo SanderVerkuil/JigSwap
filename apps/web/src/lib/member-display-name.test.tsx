@@ -1,0 +1,71 @@
+import { MemberInitial } from "@/components/members/member-initial";
+import type { MemberNameSource } from "@jigswap/contracts";
+import { renderToStaticMarkup } from "react-dom/server";
+import { IntlProvider } from "use-intl";
+import { describe, expect, it } from "vitest";
+import en from "../../locales/en.json";
+import nl from "../../locales/nl.json";
+import { useMemberDisplayName } from "./member-display-name";
+
+function Name({ source }: { source: MemberNameSource | null }) {
+  const displayName = useMemberDisplayName();
+  return <>{displayName(source)}</>;
+}
+
+const render = (node: React.ReactNode, locale: "en" | "nl" = "en") =>
+  renderToStaticMarkup(
+    <IntlProvider
+      locale={locale}
+      messages={locale === "en" ? en : nl}
+      timeZone="Europe/Amsterdam"
+    >
+      {node}
+    </IntlProvider>,
+  );
+
+describe("useMemberDisplayName", () => {
+  it("renders the full name when present", () => {
+    expect(
+      render(<Name source={{ name: "Mara Jansen", username: "mara" }} />),
+    ).toBe("Mara Jansen");
+  });
+
+  it('never renders "null null": falls back to email, then username', () => {
+    expect(
+      render(
+        <Name
+          source={{
+            name: "null null",
+            email: "me@example.com",
+            username: "mara",
+          }}
+        />,
+      ),
+    ).toBe("me@example.com");
+    expect(
+      render(<Name source={{ name: "null null", username: "mara" }} />),
+    ).toBe("mara");
+  });
+
+  it("falls back to the localized generic label", () => {
+    expect(render(<Name source={{ name: "null null" }} />)).toBe("Puzzler");
+    expect(render(<Name source={null} />, "nl")).toBe("Puzzelaar");
+  });
+});
+
+describe("MemberInitial", () => {
+  it("uses the initial of the resolved source", () => {
+    expect(render(<MemberInitial source={{ name: "mara jansen" }} />)).toBe(
+      "M",
+    );
+    expect(
+      render(<MemberInitial source={{ name: "null null", username: "jan" }} />),
+    ).toBe("J");
+  });
+
+  it('renders a person icon instead of "N" for a nameless member', () => {
+    const html = render(<MemberInitial source={{ name: "null null" }} />);
+    expect(html).toContain("<svg");
+    expect(html).not.toContain("N<");
+  });
+});

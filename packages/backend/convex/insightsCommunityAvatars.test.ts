@@ -81,6 +81,18 @@ describe("toCommunityAvatarView — initials derivation", () => {
     expect(toCommunityAvatarView(makeDoc({ name: "   " })).initials).toBe("PZ");
   });
 
+  test('legacy "null null" name → fallback PZ, not "NN"', () => {
+    expect(toCommunityAvatarView(makeDoc({ name: "null null" })).initials).toBe(
+      "PZ",
+    );
+  });
+
+  test("absent name → fallback PZ", () => {
+    expect(toCommunityAvatarView(makeDoc({ name: undefined })).initials).toBe(
+      "PZ",
+    );
+  });
+
   test("three-word name uses first + last initial", () => {
     expect(
       toCommunityAvatarView(makeDoc({ name: "Alice Bob Carol" })).initials,

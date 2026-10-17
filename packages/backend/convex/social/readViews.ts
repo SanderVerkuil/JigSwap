@@ -1,6 +1,7 @@
 import type { FollowEdgeView, ProfileView } from "@jigswap/contracts";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { memberDisplayNameOf } from "../identity/memberDisplayName";
 
 // Shared row->DTO mapping for the Social reads, so every adapter emits typed view DTOs rather than
 // leaking raw documents.
@@ -35,7 +36,7 @@ export const toFollowEdgeView = async (
   return {
     followId,
     memberId,
-    displayName: profile?.displayName ?? user?.name ?? "Member",
+    displayName: memberDisplayNameOf(user, profile),
     createdAt,
   };
 };

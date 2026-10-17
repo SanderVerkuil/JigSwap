@@ -55,10 +55,9 @@ export const arrangeShelf = mutation({
     // edit still works.
     const existing = await profiles.findByMember(memberId);
     if (!existing) {
-      const account = await ctx.db.get(memberId as unknown as Id<"users">);
-      const displayName = account?.name?.trim() || "Member";
+      // No display name is seeded: copying the account name froze a stale (or "null null") snapshot
+      // and the "Member" placeholder was stored unlocalized. Readers fall back to the live account.
       const created = Profile.create(profileIdGenerator.next(), memberId, {
-        displayName,
         now: clock.now(),
       });
       if (created.isErr) throw toConvexError(created.error);

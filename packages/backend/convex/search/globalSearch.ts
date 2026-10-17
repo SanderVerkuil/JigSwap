@@ -2,6 +2,7 @@ import type { GlobalSearchResults } from "@jigswap/contracts";
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
 
 // Global search: the single read behind the ⌘K command palette. Given a term it returns a small
@@ -86,7 +87,7 @@ export const global = query({
       if (!visible) continue;
       people.push({
         id: u._id,
-        name: u.name,
+        name: memberDisplayNameOf(u),
         image: u.avatar ?? null,
         // Canonical member page; username-first, id fallback (matches the
         // /members/$handle resolution rules).

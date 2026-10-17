@@ -1,3 +1,5 @@
+import { MemberInitial } from "@/components/members/member-initial";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -55,7 +57,7 @@ interface CircleSummaryView {
 interface CircleMemberView {
   membershipId: string;
   memberId: string;
-  name: string;
+  name?: string;
   username?: string;
   avatar?: string;
   permission: CirclePermissionLevel;
@@ -245,6 +247,7 @@ function CircleRow({
 // from the (member-gated) circle detail read; while it loads we hold the space
 // with a skeleton so rows don't jump.
 function CircleAvatarStack({ circleId }: { circleId: string }) {
+  const displayName = useMemberDisplayName();
   const { data: detail, isPending } = useQuery(
     convexQuery(gateway.sharing.circle, { circleId }),
   );
@@ -265,10 +268,10 @@ function CircleAvatarStack({ circleId }: { circleId: string }) {
           style={{ marginLeft: i === 0 ? 0 : -10 }}
         >
           {member.avatar && (
-            <AvatarImage src={member.avatar} alt={member.name} />
+            <AvatarImage src={member.avatar} alt={displayName(member)} />
           )}
           <AvatarFallback className="text-xs">
-            {member.name.charAt(0).toUpperCase()}
+            <MemberInitial source={member} />
           </AvatarFallback>
         </Avatar>
       ))}
@@ -286,6 +289,7 @@ function ManageCircleDialog({
   onClose: () => void;
 }) {
   const t = useTranslations("circles");
+  const displayName = useMemberDisplayName();
   const { data: detail, isPending: detailPending } = useQuery(
     convexQuery(gateway.sharing.circle, { circleId }),
   );
@@ -410,11 +414,13 @@ function ManageCircleDialog({
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={member.avatar} />
                       <AvatarFallback>
-                        {member.name.charAt(0).toUpperCase()}
+                        <MemberInitial source={member} />
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="text-sm font-medium">{member.name}</p>
+                      <p className="text-sm font-medium">
+                        {displayName(member)}
+                      </p>
                       {member.isOwner && (
                         <Badge variant="outline" className="text-xs">
                           {t("manage.owner")}

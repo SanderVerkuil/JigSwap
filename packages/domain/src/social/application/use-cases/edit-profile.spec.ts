@@ -46,7 +46,7 @@ describe("makeEditProfile", () => {
 
     expect(result.isOk).toBe(true);
     const stored = await profiles.findByMember(alice);
-    expect(stored?.displayName.value).toBe("Alice B.");
+    expect(stored?.displayName?.value).toBe("Alice B.");
     expect(stored?.bio).toBe("Updated");
 
     expect(events.names()).toEqual(["ProfileUpdated"]);
@@ -62,7 +62,7 @@ describe("makeEditProfile", () => {
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("InvalidDisplayName");
     const stored = await profiles.findByMember(alice);
-    expect(stored?.displayName.value).toBe("Alice"); // unchanged
+    expect(stored?.displayName?.value).toBe("Alice"); // unchanged
     expect(events.published).toHaveLength(0);
   });
 

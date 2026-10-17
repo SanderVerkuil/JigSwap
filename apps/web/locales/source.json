@@ -1,5 +1,6 @@
 {
   "common": {
+    "genericMember": "Puzzler",
     "loading": "Loading...",
     "saving": "Saving...",
     "error": "Error",

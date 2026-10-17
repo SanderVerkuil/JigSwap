@@ -118,7 +118,8 @@ export type TagView = string;
  */
 export interface AdminPuzzleDefinitionOwnerView {
   _id: DocId;
-  name: string;
+  /** Raw account name; may be absent. Render via resolveMemberDisplayName / useMemberDisplayName. */
+  name?: string;
   username?: string;
   avatar?: string;
   copyCount: number;

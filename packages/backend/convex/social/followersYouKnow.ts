@@ -2,6 +2,7 @@ import type { FollowersYouKnowView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 import { knownFollowerIds } from "./knownFollowers";
 import { areMutualFollowers, profileVisibilityOf } from "./privacy";
@@ -53,7 +54,7 @@ export const followersYouKnow = query({
         if (!user) return null;
         return {
           memberId,
-          displayName: profile?.displayName ?? user.name,
+          displayName: memberDisplayNameOf(user, profile),
           avatar: user.avatar,
           username: user.username,
           slug: user.slug,

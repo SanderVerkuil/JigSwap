@@ -1,3 +1,4 @@
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -240,6 +241,7 @@ function ExchangeListRow({
   isLast: boolean;
 }) {
   const t = useTranslations("trades");
+  const displayName = useMemberDisplayName();
   const tCommon = useTranslations("common");
   const format = useFormatter();
   const [open, setOpen] = useState(false);
@@ -255,8 +257,8 @@ function ExchangeListRow({
     : exchange.requestedPuzzle?.title;
   const primary = mineTitle ?? theirsTitle;
   const secondary = mineTitle ? theirsTitle : undefined;
-  const who =
-    (incoming ? exchange.requester?.name : exchange.owner?.name) ?? "";
+  const counterparty = incoming ? exchange.requester : exchange.owner;
+  const who = counterparty ? displayName(counterparty) : "";
 
   const KindIcon = KIND_ICONS[exchange.type] ?? ArrowLeftRight;
 
@@ -319,6 +321,7 @@ function ExchangeDetail({
   viewerId?: string;
 }) {
   const t = useTranslations("trades");
+  const displayName = useMemberDisplayName();
   const [chatOpen, setChatOpen] = useState(false);
 
   const acceptExchange = useMutation({
@@ -353,10 +356,9 @@ function ExchangeDetail({
       ? exchange.owner?._id
       : exchange.requester?._id
   ) as Id<"users"> | undefined;
-  const partnerName =
-    exchange.requester?._id === viewerId
-      ? exchange.owner?.name
-      : exchange.requester?.name;
+  const partner =
+    exchange.requester?._id === viewerId ? exchange.owner : exchange.requester;
+  const partnerName = partner ? displayName(partner) : undefined;
 
   return (
     <div className="mt-3 ml-[60px] flex flex-col gap-4">
@@ -379,8 +381,8 @@ function ExchangeDetail({
         <User className="h-4 w-4" />
         <span>
           {incoming
-            ? `${t("from")} ${exchange.requester?.name}`
-            : `${t("to")} ${exchange.owner?.name}`}
+            ? `${t("from")} ${displayName(exchange.requester)}`
+            : `${t("to")} ${displayName(exchange.owner)}`}
         </span>
         <ReputationBadge memberId={partnerId} />
       </div>
@@ -523,6 +525,7 @@ function PuzzleSummary({
 // standalone page.
 function BorrowedList({ borrowed }: { borrowed: BorrowedLoan[] | undefined }) {
   const t = useTranslations("lending");
+  const displayName = useMemberDisplayName();
   const format = useFormatter();
   const returnLoan = useMutation({
     mutationFn: useConvexMutation(gateway.lending.returnLoan),
@@ -572,7 +575,9 @@ function BorrowedList({ borrowed }: { borrowed: BorrowedLoan[] | undefined }) {
             </div>
             <div className="text-muted-foreground mt-0.5 truncate text-xs">
               {t("borrowedFrom", {
-                name: loan.lender?.name ?? t("unknownMember"),
+                name: loan.lender
+                  ? displayName(loan.lender)
+                  : t("unknownMember"),
               })}{" "}
               ·{" "}
               {t("openedRelative", {

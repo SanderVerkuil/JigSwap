@@ -15,7 +15,8 @@ export interface PuzzleSearchHit {
 /** A member (person) hit. `href` points at the people surface. */
 export interface PersonSearchHit {
   id: string;
-  name: string;
+  /** Already resolved (resolveMemberDisplayName, no email); absent = render the generic member label. */
+  name?: string;
   /** Avatar URL (null when unset). */
   image: string | null;
   href: string;

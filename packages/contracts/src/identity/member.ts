@@ -8,7 +8,8 @@ import type { ConvexSystemFields } from "../shared/convex";
  * returns {@link CurrentMemberView}, which adds those fields back for the signed-in member.
  */
 export interface MemberView extends ConvexSystemFields {
-  name: string;
+  /** Raw account name; may be absent. Render via resolveMemberDisplayName / useMemberDisplayName. */
+  name?: string;
   username?: string;
   avatar?: string;
   bio?: string;

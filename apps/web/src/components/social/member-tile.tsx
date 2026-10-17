@@ -7,11 +7,13 @@
 // badge plus the follow/unfollow toggle and the connection-gated Message
 // button keep the social actions on the tile.
 
+import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -44,6 +46,7 @@ export function MemberTile({
   hideLocation?: boolean;
 }) {
   const t = useTranslations("people");
+  const displayName = useMemberDisplayName();
   const { data: member } = useQuery(
     convexQuery(gateway.identity.byId, { userId: memberId }),
   );
@@ -61,8 +64,12 @@ export function MemberTile({
   return (
     <Card className="flex flex-row items-center gap-3.5 p-3.5">
       <Avatar className="size-12 shrink-0">
-        {member.avatar && <AvatarImage src={member.avatar} alt={member.name} />}
-        <AvatarFallback>{member.name.charAt(0).toUpperCase()}</AvatarFallback>
+        {member.avatar && (
+          <AvatarImage src={member.avatar} alt={displayName(member)} />
+        )}
+        <AvatarFallback>
+          <MemberInitial source={member} />
+        </AvatarFallback>
       </Avatar>
 
       <div className="min-w-0 flex-1">
@@ -72,7 +79,7 @@ export function MemberTile({
             params={{ handle: member.username ?? member._id }}
             className="truncate text-base font-bold hover:underline"
           >
-            {member.name}
+            {displayName(member)}
           </Link>
           {followsYou && (
             <Badge variant="secondary" className="shrink-0">
@@ -117,7 +124,11 @@ export function MemberTile({
       </div>
 
       <div className="flex shrink-0 flex-col items-stretch gap-1.5">
-        <FollowButton memberId={memberId} size="sm" memberName={member.name} />
+        <FollowButton
+          memberId={memberId}
+          size="sm"
+          memberName={displayName(member)}
+        />
         <MessageButton memberId={memberId} size="sm" />
       </div>
     </Card>

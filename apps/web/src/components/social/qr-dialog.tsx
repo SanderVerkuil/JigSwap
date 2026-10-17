@@ -1,3 +1,4 @@
+import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,6 +8,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { gateway } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -23,7 +25,9 @@ const DIALOG_CONTENT_CLASS =
 
 type QrDialogProps = {
   memberId: string;
-  displayName: string;
+  // The member's raw account name (may be absent); resolved via useMemberDisplayName with the
+  // username fallback — never the email, since the QR card is shown to other people.
+  displayName?: string;
   username: string | null | undefined;
   avatarUrl?: string | null;
 };
@@ -36,6 +40,8 @@ type QrDialogProps = {
 // dialog lingers open over the settings page (whose route can be the same one it navigates to).
 function QrDialogContent(props: QrDialogProps & { onNavigate?: () => void }) {
   const t = useTranslations("invite");
+  const displayName = useMemberDisplayName();
+  const nameSource = { name: props.displayName, username: props.username };
   const [copied, setCopied] = useState(false);
 
   const { mutate: fetchLink, data: link } = useMutation({
@@ -84,9 +90,11 @@ function QrDialogContent(props: QrDialogProps & { onNavigate?: () => void }) {
       <div className="flex flex-col items-center gap-2">
         <Avatar className="size-16">
           {props.avatarUrl ? <AvatarImage src={props.avatarUrl} /> : null}
-          <AvatarFallback>{props.displayName.slice(0, 2)}</AvatarFallback>
+          <AvatarFallback>
+            <MemberInitial source={nameSource} />
+          </AvatarFallback>
         </Avatar>
-        <span className="font-heading text-lg">{props.displayName}</span>
+        <span className="font-heading text-lg">{displayName(nameSource)}</span>
       </div>
       {/* Always-white card: ≥16px padding is the QR quiet zone. */}
       <div className="rounded-2xl bg-white p-5 shadow-md">

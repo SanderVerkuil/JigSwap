@@ -5,10 +5,12 @@
 // button also follows back in the same gesture (mutuality is what unlocks content for the
 // requester). Decline is silent for the requester. Renders nothing when there are none.
 
+import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { gateway, Id } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -18,6 +20,7 @@ import { useTranslations } from "use-intl";
 
 export function FollowRequestsStrip() {
   const t = useTranslations("people");
+  const displayName = useMemberDisplayName();
   const { data: requests } = useQuery(
     convexQuery(gateway.social.incomingFollowRequests, {}),
   );
@@ -90,11 +93,11 @@ export function FollowRequestsStrip() {
                   {request.requester.avatar && (
                     <AvatarImage
                       src={request.requester.avatar}
-                      alt={request.requester.name}
+                      alt={displayName(request.requester)}
                     />
                   )}
                   <AvatarFallback>
-                    {request.requester.name.charAt(0).toUpperCase()}
+                    <MemberInitial source={request.requester} />
                   </AvatarFallback>
                 </Avatar>
                 <Link
@@ -104,7 +107,7 @@ export function FollowRequestsStrip() {
                   }}
                   className="truncate font-medium hover:underline"
                 >
-                  {request.requester.name}
+                  {displayName(request.requester)}
                 </Link>
               </div>
               <span className="flex gap-2">

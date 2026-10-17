@@ -83,8 +83,8 @@ describe("setProfileVisibility", () => {
       {},
     );
     expect(profile?.visibility).toBe("private");
-    // Display name defaulted to the account name.
-    expect(profile?.displayName).toBe("Alice");
+    // No display name is seeded: readers fall back to the live account name.
+    expect(profile?.displayName).toBeUndefined();
     expect(profile?.aggregateId).toBeDefined();
   });
 

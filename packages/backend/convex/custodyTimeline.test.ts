@@ -9,7 +9,7 @@ import schema from "./schema";
 // Read a privacy-projected member's name: revealed -> their name; anonymised -> null. The members in
 // this suite have no profiles row (default "public"), so they always resolve revealed.
 const projectedName = (m: ProjectedMember): string | null =>
-  m.anonymous ? null : m.member.name;
+  m.anonymous ? null : (m.member.name ?? null);
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);

@@ -8,7 +8,7 @@ import { toMemberView } from "../identity/toMemberView";
 // row per (member, puzzle), keyed by puzzleId directly (the catalog detail page has no copyId).
 // Most-recently-updated first: the `by_puzzle` index orders by _creationTime, so rows are sorted by
 // `updatedAt` in JS after collect. Each review joins its REAL author (reviews are voluntary public
-// posts — never anonymised); the author join falls back to a synthetic "Member" view if the user
+// posts — never anonymised); the author join falls back to a synthetic, nameless view if the user
 // row vanished, so an orphaned review never breaks the list.
 //
 // SECURITY: auth-gated. Each review is projected through `toMemberView`, which exposes member
@@ -38,7 +38,6 @@ export const listPuzzleReviews = query({
             : {
                 _id: row.userId,
                 _creationTime: 0,
-                name: "Member",
                 isActive: false,
                 createdAt: 0,
                 updatedAt: 0,
