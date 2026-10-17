@@ -41,6 +41,7 @@ export const notifyBatch = internalMutation({
         memberId: toMemberId(user._id),
         type: "whats_new",
         relatedId: entry.id,
+        subject: { kind: "whatsNew", entryId: entry.id },
       });
     }
 
