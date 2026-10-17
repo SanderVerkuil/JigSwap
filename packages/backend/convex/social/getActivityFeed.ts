@@ -207,6 +207,8 @@ const toActivityEntries = async (
       return make(p.userId as string, "started", p.completionId as string);
     }
     case "CopyAcquired":
+      // A batch add (acquireCopies) is a shelf backfill, not news; only single adds show.
+      if (p.bulk === true) return [];
       return make(p.ownerId as string, "acquisition", p.copyId as string);
     case "ExchangeCompleted": {
       // ExchangeCompleted carries no member; resolve both parties from the persisted exchange row
