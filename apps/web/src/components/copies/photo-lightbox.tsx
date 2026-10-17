@@ -82,10 +82,14 @@ export function PhotoLightbox({
   const photo = gallery[index];
 
   // Reset the remove-confirmation when the shown photo changes, so a primed confirm never carries
-  // over to a different photo after navigating.
-  useEffect(() => {
+  // over to a different photo after navigating. Adjusted during render (React's "storing
+  // information from previous renders" pattern) rather than in an effect, so the stale confirm is
+  // never painted for the new photo.
+  const [confirmIndex, setConfirmIndex] = useState(index);
+  if (confirmIndex !== index) {
+    setConfirmIndex(index);
     setConfirmRemove(false);
-  }, [index]);
+  }
 
   const setAsCover = async () => {
     if (!photo) return;

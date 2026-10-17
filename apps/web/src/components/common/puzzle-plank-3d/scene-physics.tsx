@@ -443,13 +443,16 @@ function PhysicsArrangement({
   // only at body creation, so when the box count changes (arrange-shelf), the
   // refs of already-mounted bodies must be kept by IDENTITY — a rebuilt ref
   // would stay null forever and its box would silently become ungrabbable.
-  // Render-time reconcile is idempotent; the array identity changes exactly
-  // when the count does, which is what the drag hook's deps key on.
-  const refsStore = React.useRef<React.RefObject<RapierRigidBody | null>[]>([]);
-  if (refsStore.current.length !== boxes.length) {
-    refsStore.current = reconcileBodyRefs(refsStore.current, boxes.length);
+  // The array lives in state and is reconciled during render when the count
+  // changes (React's adjust-state-on-prop-change pattern), so its identity
+  // changes exactly when the count does, which is what the drag hook's deps
+  // key on — and no ref is read during render.
+  const [rigidBodyRefs, setRigidBodyRefs] = React.useState(() =>
+    reconcileBodyRefs<RapierRigidBody>([], boxes.length),
+  );
+  if (rigidBodyRefs.length !== boxes.length) {
+    setRigidBodyRefs(reconcileBodyRefs(rigidBodyRefs, boxes.length));
   }
-  const rigidBodyRefs = refsStore.current;
 
   // Lowest each box center may be dragged (its half-height), so a held box never
   // sinks below the shelf top (y = 0).
