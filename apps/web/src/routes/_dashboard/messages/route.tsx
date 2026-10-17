@@ -86,11 +86,12 @@ function MessageToastWatcher() {
         toast(t("newMessageToast", { name }), {
           action: {
             label: t("newMessageToastOpen"),
-            onClick: () =>
-              navigate({
+            onClick: () => {
+              void navigate({
                 to: "/messages/$threadId",
                 params: { threadId: thread.threadId },
-              }),
+              });
+            },
           },
         });
       }

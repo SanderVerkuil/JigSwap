@@ -169,7 +169,7 @@ The basic format is: `<type>(<scope>): <subject>`
 
 ### Code Style
 
-We use [Prettier](https://prettier.io/) for code formatting and [ESLint](https://eslint.org/) for linting. The rules are defined in the repository. Please run `pnpm lint:fix` before committing your changes to automatically format your code.
+We use [Prettier](https://prettier.io/) for code formatting and [oxlint](https://oxc.rs/docs/guide/usage/linter) for linting. The rules are defined in the repository. Please run `pnpm lint:fix` before committing your changes to automatically format your code.
 
 ---
 
