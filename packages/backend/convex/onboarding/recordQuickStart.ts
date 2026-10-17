@@ -12,8 +12,8 @@ const stepId = v.union(
   v.literal("profile"),
 );
 
-// Record a quick start choice for the acting member: skip/unskip a step, or dismiss the welcome,
-// dismiss/restore the dashboard card. `step` is required for skip/unskip and refused otherwise
+// Record a quick start choice for the acting member: skip/unskip a step, dismiss the welcome,
+// dismiss/restore the dashboard card, or mark the flow as started (first /welcome visit). `step` is required for skip/unskip and refused otherwise
 // (`invalid_change`). Writes only the caller's own row (created lazily) and only when something
 // changes, so repeating a call is a no-op.
 export const recordQuickStart = mutation({
@@ -24,6 +24,7 @@ export const recordQuickStart = mutation({
       v.literal("dismissWelcome"),
       v.literal("dismissCard"),
       v.literal("restoreCard"),
+      v.literal("startQuickStart"),
     ),
     step: v.optional(stepId),
   },
@@ -47,6 +48,7 @@ export const recordQuickStart = mutation({
       skippedSteps: next.skippedSteps,
       welcomeDismissedAt: next.welcomeDismissedAt,
       cardDismissedAt: next.cardDismissedAt,
+      startedAt: next.startedAt,
       updatedAt: now,
     };
     if (row) {

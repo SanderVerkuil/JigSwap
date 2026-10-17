@@ -1203,6 +1203,8 @@ export default defineSchema({
     ),
     welcomeDismissedAt: v.optional(v.number()),
     cardDismissedAt: v.optional(v.number()),
+    // When the member first opened the /welcome flow (a funnel fact for the activation report).
+    startedAt: v.optional(v.number()),
     updatedAt: v.number(),
   }).index("by_member", ["memberId"]),
 

@@ -22,4 +22,5 @@ export const quickStartStateOf = (
   ...(row?.cardDismissedAt !== undefined
     ? { cardDismissedAt: row.cardDismissedAt }
     : {}),
+  ...(row?.startedAt !== undefined ? { startedAt: row.startedAt } : {}),
 });

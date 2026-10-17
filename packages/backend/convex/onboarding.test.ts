@@ -164,7 +164,10 @@ const stepOf = async (t: T, who: string, id: QuickStartStepId) =>
 
 type Command =
   | { kind: "skipStep" | "unskipStep"; step: QuickStartStepId }
-  | { kind: "dismissWelcome" | "dismissCard" | "restoreCard" };
+  | {
+      kind:
+        "dismissWelcome" | "dismissCard" | "restoreCard" | "startQuickStart";
+    };
 
 const record = (t: T, who: string, command: Command) =>
   as(t, who).mutation(
@@ -451,6 +454,23 @@ describe("onboarding.recordQuickStart", () => {
     await record(t, "ann", { kind: "unskipStep", step: "solves" });
     expect((await rowsOf(t, ann))[0].skippedSteps).toEqual(["profile"]);
     expect((await stepOf(t, "ann", "solves"))?.status).toBe("todo");
+  });
+
+  test("startQuickStart stores the first start once and keeps other state", async () => {
+    const t = convexTest(schema, modules);
+    const ann = await insertUser(t, "ann");
+    await record(t, "ann", { kind: "skipStep", step: "solves" });
+    await record(t, "ann", { kind: "startQuickStart" });
+    const [first] = await rowsOf(t, ann);
+    expect(first.startedAt).toEqual(expect.any(Number));
+    expect(first.skippedSteps).toEqual(["solves"]);
+    await record(t, "ann", { kind: "startQuickStart" });
+    const [again] = await rowsOf(t, ann);
+    expect(again.startedAt).toBe(first.startedAt);
+    expect(again.updatedAt).toBe(first.updatedAt);
+    // A later change keeps the start mark.
+    await record(t, "ann", { kind: "dismissCard" });
+    expect((await rowsOf(t, ann))[0].startedAt).toBe(first.startedAt);
   });
 
   test("a no-op on a member without a row writes nothing", async () => {
