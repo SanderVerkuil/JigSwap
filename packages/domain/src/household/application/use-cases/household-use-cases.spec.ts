@@ -4,6 +4,7 @@ import {
   makeCreateHousehold,
   makeDeclineHouseholdInvite,
   makeInviteToHousehold,
+  makeJoinHouseholdByLink,
   makeLeaveHousehold,
   makeRemoveHouseholdMember,
   makeSetHouseholdDefaultCopyPermission,
@@ -376,5 +377,76 @@ describe("setHouseholdDefaultCopyPermission", () => {
   it("rejects an actor without a household", async () => {
     const result = await setDefault(cat, "view");
     expect(result.isErr && result.error.code).toBe("NotInHousehold");
+  });
+});
+
+describe("joinHouseholdByLink", () => {
+  const join = (actorId: MemberId, inviterId: MemberId = ann) =>
+    makeJoinHouseholdByLink(deps)({ actorId, inviterId });
+
+  it("joins the inviter's household through an accepted invite", async () => {
+    const householdId = await create();
+    events.published.length = 0;
+
+    const result = await join(bob);
+    expect(result.isOk && result.value).toBe(householdId);
+    expect((await households.findById(householdId))?.isMember(bob)).toBe(true);
+    const stored = await invites.findById(
+      "household-invite-1" as HouseholdInviteId,
+    );
+    expect(stored?.status).toBe("accepted");
+    expect(stored?.inviterId).toBe(ann);
+    expect(stored?.inviteeId).toBe(bob);
+  });
+
+  it("publishes the acceptance and the join, but no invite-sent event", async () => {
+    await create();
+    events.published.length = 0;
+    await join(bob);
+    expect(events.names()).toEqual([
+      "HouseholdInviteAccepted",
+      "HouseholdMemberJoined",
+    ]);
+  });
+
+  it("accepts an invite already pending from that household instead of a duplicate", async () => {
+    const householdId = await create();
+    const pendingId = await invite();
+    events.published.length = 0;
+
+    const result = await join(bob);
+    expect(result.isOk && result.value).toBe(householdId);
+    expect((await invites.findById(pendingId))?.status).toBe("accepted");
+    expect(
+      await invites.findById("household-invite-2" as HouseholdInviteId),
+    ).toBeNull();
+    expect(events.names()).toEqual([
+      "HouseholdInviteAccepted",
+      "HouseholdMemberJoined",
+    ]);
+  });
+
+  it("rejects a member who is already in a household, publishing nothing", async () => {
+    await create();
+    await create(bob);
+    events.published.length = 0;
+    const result = await join(bob);
+    expect(result.isErr && result.error.code).toBe("InviteeAlreadyInHousehold");
+    expect(events.published).toEqual([]);
+  });
+
+  it("rejects an inviter who is no longer the admin", async () => {
+    await create();
+    await accept(bob, await invite());
+    events.published.length = 0;
+    const result = await join(cat, bob);
+    expect(result.isErr && result.error.code).toBe("NotHouseholdAdmin");
+    expect(events.published).toEqual([]);
+  });
+
+  it("rejects an inviter without a household", async () => {
+    const result = await join(bob);
+    expect(result.isErr && result.error.code).toBe("NotInHousehold");
+    expect(events.published).toEqual([]);
   });
 });
