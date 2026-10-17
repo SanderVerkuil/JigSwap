@@ -1,4 +1,4 @@
-import { useFeatureFlagEnabled } from "@/components/posthog-provider";
+import { useFeatureFlagEnabled } from "@/components/analytics-provider";
 import { Button } from "@/components/ui/button";
 import { TagsInput } from "@/components/ui/extension/tags-input";
 import {

@@ -1,6 +1,6 @@
 import { useUser } from "@/compat/clerk";
 import { usePathname, useSearchParams } from "@/compat/navigation";
-import { usePostHog } from "@/components/posthog-provider";
+import { usePostHog } from "@/components/analytics-provider";
 // sanctioned convex/react exception: useConvexAuth (see tanstack-query migration spec)
 import { useConvexAuth } from "convex/react";
 import { useEffect } from "react";

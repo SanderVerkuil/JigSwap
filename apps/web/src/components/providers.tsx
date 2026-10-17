@@ -1,6 +1,6 @@
+import { PostHogPageView } from "@/components/analytics-page-view";
+import { initPostHog, PostHogProvider } from "@/components/analytics-provider";
 import CookieConsent from "@/components/blocks/cookie-consent";
-import { PostHogPageView } from "@/components/posthog-page-view";
-import { initPostHog, PostHogProvider } from "@/components/posthog-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { timeZone, type Messages } from "@/lib/i18n";
 import { ThemeProvider } from "next-themes";
