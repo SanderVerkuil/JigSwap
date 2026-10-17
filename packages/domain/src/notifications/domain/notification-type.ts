@@ -26,7 +26,9 @@ export type NotificationType =
   | "admin_definition_submitted" // Catalog: PuzzleDefinitionSubmitted — admins are asked to moderate a new submission
   | "new_follower" // Social: MemberFollowed (instant follow; suppressed when it came from an approval)
   | "follow_request_received" // Social: FollowRequested — a private-profile member has a pending request
-  | "follow_request_approved"; // Social: FollowRequestApproved — the requester's access was granted
+  | "follow_request_approved" // Social: FollowRequestApproved — the requester's access was granted
+  | "household_invite_received" // Household: HouseholdInviteSent — someone invited the member to their household
+  | "household_invite_accepted"; // Household: HouseholdInviteAccepted — the member's invite was accepted
 
 // All notification types, for iteration (e.g. seeding default preferences). Kept in sync with the
 // union above by construction.
@@ -52,6 +54,8 @@ export const NOTIFICATION_TYPES: readonly NotificationType[] = [
   "new_follower",
   "follow_request_received",
   "follow_request_approved",
+  "household_invite_received",
+  "household_invite_accepted",
 ];
 
 // Types that may be delivered by EMAIL. Deliberately a subset: only high-value, act-on-it

@@ -81,6 +81,11 @@ describe("notificationUrl", () => {
     expect(notificationUrl("follow_request_approved")).toBe("/people");
   });
 
+  test("routes household invites to /household", () => {
+    expect(notificationUrl("household_invite_received")).toBe("/household");
+    expect(notificationUrl("household_invite_accepted")).toBe("/household");
+  });
+
   test("deep-links an admin proposal review by relatedId, else the proposals queue", () => {
     expect(notificationUrl("admin_proposal_filed", "cp-1")).toBe(
       "/admin/puzzles/proposals/cp-1",

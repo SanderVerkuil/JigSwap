@@ -9,7 +9,8 @@ import type { NotificationType } from "@jigswap/domain";
 // use what they need — e.g. this push table keeps follow_request_approved static while the email
 // templates interpolate its actorName):
 //   actorName   — trade_request (initiator), message_received (author), new_follower (follower),
-//                 follow_request_received (requester), follow_request_approved (target)
+//                 follow_request_received (requester), follow_request_approved (target),
+//                 household_invite_received (inviter), household_invite_accepted (invitee)
 //   puzzleTitle — puzzle_approved/rejected, proposal_approved/rejected, admin_proposal_filed,
 //                 admin_definition_submitted
 //   goalTitle   — goal_achieved
@@ -129,6 +130,18 @@ const COPY: Record<NotificationType, (p: Params) => NotificationText> = {
   follow_request_approved: () => ({
     title: "Request approved",
     message: "Your follow request was approved",
+  }),
+  household_invite_received: (p) => ({
+    title: "Household invite",
+    message: p["actorName"]
+      ? `${p["actorName"]} invited you to their household`
+      : "You were invited to a household",
+  }),
+  household_invite_accepted: (p) => ({
+    title: "Invite accepted",
+    message: p["actorName"]
+      ? `${p["actorName"]} joined your household`
+      : "Someone joined your household",
   }),
 };
 

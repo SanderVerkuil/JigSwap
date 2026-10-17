@@ -24,6 +24,8 @@ export const notificationTypeValidator = v.union(
   v.literal("new_follower"),
   v.literal("follow_request_received"),
   v.literal("follow_request_approved"),
+  v.literal("household_invite_received"),
+  v.literal("household_invite_accepted"),
 );
 
 export const channelValidator = v.union(
