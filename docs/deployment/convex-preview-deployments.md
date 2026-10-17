@@ -1,16 +1,62 @@
 # Convex preview deployments (per-PR backends)
 
-Every pull request gets its own isolated Convex **preview deployment**, named after the
-PR branch, instead of all PRs sharing the single dev deployment. Preview deployments are
+Every pull request labeled **`preview`** (and not a draft) gets a Vercel web preview and
+its own isolated Convex **preview deployment**, named after the PR branch, instead of all
+PRs sharing the single dev deployment. Preview deployments are
 available on every Convex plan, including Free/Starter (they expire faster there — see
 [Behavior](#behavior)).
 
+- `.github/workflows/vercel-preview.yml` deploys the web preview with the Vercel CLI
+  (see [Label-gated previews](#label-gated-previews)).
 - `.github/workflows/convex-preview.yml` deploys the branch's backend to its preview on
-  every PR push, then checks whether the preview's database is empty and seeds it from
+  every push to a labeled PR, then checks whether the preview's database is empty and seeds it from
   a snapshot of the shared dev deployment only if so (state-based seeding — a non-empty
   preview is never touched).
 - `.github/workflows/convex-deploy.yml`'s `dev` job now runs **only on pushes to main** —
   the shared dev deployment tracks main.
+
+## Label-gated previews
+
+Vercel's daily deployment quota counts every deployment, including builds cancelled by an
+Ignored Build Step, so skipping builds there would not save anything.
+[`apps/web/vercel.json`](../../apps/web/vercel.json) instead sets
+`git.deploymentEnabled` to `{"**": false, "main": true}`: the Git integration deploys
+only `main` (production, unchanged) and no longer creates a preview for each PR push. The
+setting is read from the pushed commit, so a branch created before this change still gets
+Git previews until it is rebased onto main.
+
+Previews are opt-in per PR with the `preview` label. `vercel-preview.yml` and
+`convex-preview.yml` share one gate: the PR has the `preview` label and is not a draft.
+They run when the label is added, on every push while it is on, and when a labeled draft
+is marked ready for review. Both also have a manual `workflow_dispatch` that takes a
+branch name and skips the label check. Removing the label (or closing the PR) deletes the
+Convex preview through `convex-preview-teardown.yml`. The Vercel web preview stays, but it
+is not redeployed.
+
+`vercel-preview.yml` checks out the PR branch (not the merge ref) and runs
+`vercel deploy --target=preview` from the repo root with a pinned CLI. The build runs
+remotely on Vercel, so the dashboard Build Command (`scripts/vercel-build.sh`) and the
+Preview-scoped env vars apply as before. The Vercel docs say a CLI deployment can lack the
+Git branch association that sets `VERCEL_GIT_COMMIT_REF`, so the workflow:
+
+- passes the branch as the build env `JIGSWAP_PREVIEW_BRANCH`, which `vercel-build.sh`
+  prefers over `VERCEL_GIT_COMMIT_REF` and hands to `convex deploy --preview-name`, and
+- adds the documented `--meta githubDeployment=1 --meta githubCommitRef=<branch>` so the
+  deployment gets the branch association (branch-scoped env vars and the branch URL).
+
+Then it posts the deployment URL as a single sticky PR comment, edited on every deploy.
+Without the Vercel secrets (or on a fork PR) the job does nothing and emits a notice.
+
+### One-time owner setup (label-gated previews)
+
+1. Create the label: `gh label create preview --color 0E8A16 --description "Deploy a Vercel + Convex preview for this PR"`.
+2. Vercel → Account Settings → Tokens: create a token scoped to the team and add it as
+   the GitHub Actions secret **`VERCEL_TOKEN`**.
+3. Add **`VERCEL_ORG_ID`** (team ID, Team Settings → General) and
+   **`VERCEL_PROJECT_ID`** (Project Settings → General) as GitHub Actions secrets.
+4. Optional: in Vercel project Settings → Git, turn off the PR comments of the Vercel bot
+   if they become noise. Production deploys from `main` keep working through the Git
+   integration with no change.
 
 ## One-time owner setup
 
@@ -84,9 +130,10 @@ bash ../../scripts/vercel-build.sh
 If you previously pasted the inline one-liner as the Build Command, replace it with the
 line above.
 
-How it resolves on previews: the deploy runs from `packages/backend`, auto-detects the
-branch from `VERCEL_GIT_COMMIT_REF` (landing on the **same** branch-named preview the
-GitHub Action creates/seeds), then runs `pnpm --filter @jigswap/web build` with
+How it resolves on previews: the deploy runs from `packages/backend` with
+`--preview-name` set to `JIGSWAP_PREVIEW_BRANCH` (falling back to `VERCEL_GIT_COMMIT_REF`
+for a Git-triggered build), landing on the **same** branch-named preview the GitHub
+Action creates/seeds, then runs `pnpm --filter @jigswap/web build` with
 `VITE_CONVEX_URL` injected. The filter flag works from any directory in the workspace
 and output still lands in `apps/web/.output`, so the Output Directory setting stays
 valid. (`VITE_CONVEX_URL` is read in `apps/web/src/router.tsx` and
@@ -94,8 +141,8 @@ valid. (`VITE_CONVEX_URL` is read in `apps/web/src/router.tsx` and
 SSR bundles.)
 
 After the Convex deploy, the script also sets `EMAIL_BASE_URL` on that same preview
-deployment: `npx convex env set --preview-name "$VERCEL_GIT_COMMIT_REF" EMAIL_BASE_URL
-"https://$VERCEL_BRANCH_URL"`. Email CTA/preferences links
+deployment: `npx convex env set --preview-name "$branch" EMAIL_BASE_URL
+"https://$VERCEL_BRANCH_URL"` (or `VERCEL_URL` if a CLI deployment has no branch URL). Email CTA/preferences links
 (`packages/backend/convex/notifications/sendEmail.ts`) need the web app's own origin,
 but on previews that origin is only known once Vercel assigns it — so it can't be a
 preview default env var (those apply only at deployment creation, see
@@ -124,8 +171,8 @@ build container.
 ## Teardown on PR close
 
 `.github/workflows/convex-preview-teardown.yml` deletes the branch's preview
-deployment when its PR is merged or closed, so review environments don't linger
-until expiry. It calls the
+deployment when its PR is merged or closed, or when the PR's `preview` label is removed,
+so review environments don't linger until expiry. It calls the
 [Convex Management API](https://docs.convex.dev/management-api) directly (the CLI
 has no `deployment delete` — see
 [convex-backend#455](https://github.com/get-convex/convex-backend/issues/455)):
@@ -186,7 +233,7 @@ workflow before its key is configured.
   A preview that already has data is left untouched, so data created on the preview
   survives pushes — and a preview first created empty by the Vercel build, or recreated
   empty after expiry, gets seeded by the next run automatically.
-- **Concurrent pushes are retried**: every PR push makes the Vercel build and this
+- **Concurrent pushes are retried**: every push to a labeled PR makes the Vercel build and this
   workflow push to the same preview at the same time, and the loser fails with
   `503 … OptimisticConcurrencyControlFailure` (`start_push`) or `409 RaceDetected` /
   "… was created by a concurrent push". The CLI does not retry those (they are POSTs),
@@ -204,8 +251,8 @@ workflow before its key is configured.
   **5 days** on Free/Starter (**14 days** on Pro+). The Convex CLI has **no delete
   command** for preview deployments (verified against the CLI reference and
   `convex deployment --help`), which is why the teardown uses the Management API.
-- **Revive after expiry is automatic**: the next workflow run (any PR push, or a manual
-  run with the branch name) recreates the expired preview, finds it empty, and seeds it
+- **Revive after expiry is automatic**: the next workflow run (any push to a labeled PR,
+  or a manual run with the branch name) recreates the expired preview, finds it empty, and seeds it
   — no special event needed. To deliberately **re-seed a preview that still has data**,
   run the workflow manually (Actions → Convex Preview → Run workflow) with the branch
   name and the **force** checkbox enabled; this replaces the preview's data with a
