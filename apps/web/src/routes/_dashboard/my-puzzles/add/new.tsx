@@ -59,11 +59,22 @@ export const Route = createFileRoute("/_dashboard/my-puzzles/add/new")({
   // (useSearchParams -> useSearch({ strict: false })); validate it so the
   // typed search carries it through. When present the form switches to
   // "copy mode": acquiring a copy of an existing catalogue definition.
+  // ?ean / ?upc prefill the barcode when registering a code the add-copy
+  // picker's barcode lookup did not find (the router JSON-parses search
+  // values, so a code without a leading zero arrives as a number).
   validateSearch: (search: Record<string, unknown>) => ({
     puzzleId: typeof search.puzzleId === "string" ? search.puzzleId : undefined,
+    ean: barcodeParam(search.ean),
+    upc: barcodeParam(search.upc),
   }),
   component: AddPuzzlePage,
 });
+
+function barcodeParam(value: unknown): string | undefined {
+  return typeof value === "string" || typeof value === "number"
+    ? String(value)
+    : undefined;
+}
 
 interface FormState {
   title: string;
@@ -122,12 +133,19 @@ function AddPuzzlePage() {
   const t = useTranslations("puzzles");
   const tf = useTranslations("forms.puzzle-form");
 
-  const [form, setForm] = useState<FormState>(DEFAULT_FORM);
+  const [form, setForm] = useState<FormState>(() => ({
+    ...DEFAULT_FORM,
+    ean: searchParams.get("ean") ?? "",
+    upc: searchParams.get("upc") ?? "",
+  }));
   const [selectedDefinitionId, setSelectedDefinitionId] = useState<
     string | null
   >(null);
   const [pendingMatch, setPendingMatch] = useState<ImportedMatch | null>(null);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
+  // Open when a prefilled barcode lives in the advanced fields.
+  const [advancedOpen, setAdvancedOpen] = useState(
+    () => searchParams.has("ean") || searchParams.has("upc"),
+  );
 
   // Convex mutations & actions, called inside the submitPuzzle wrapper below.
   const createPuzzle = useConvexMutation(gateway.catalog.createPuzzle);
