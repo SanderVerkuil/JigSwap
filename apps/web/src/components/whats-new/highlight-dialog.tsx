@@ -143,7 +143,7 @@ function HighlightContent({
     <DialogContent
       ref={contentRef}
       className={cn(
-        "max-w-[calc(100%-2rem)] gap-0 overflow-hidden p-0 motion-reduce:animate-none sm:max-w-md",
+        "max-w-[calc(100%-2rem)] gap-0 overflow-hidden p-0 [&>*]:min-w-0 motion-reduce:animate-none sm:max-w-md",
         entry.image &&
           "[&>[data-slot=dialog-close]]:bg-background/80 [&>[data-slot=dialog-close]]:rounded-full [&>[data-slot=dialog-close]]:p-1 [&>[data-slot=dialog-close]]:backdrop-blur-sm",
       )}
@@ -186,30 +186,31 @@ function HighlightContent({
           {content.summary}
         </DialogDescription>
       </div>
-      {/* flex-col-reverse on mobile: the primary ends up on top, "See all" at the bottom. */}
-      <DialogFooter className="bg-muted/40 border-t px-6 py-4">
-        <Button
-          asChild
-          variant="link"
-          size="sm"
-          className={cn(fullWidth, "sm:mr-auto")}
-        >
-          <Link href="/whats-new" onClick={onClose}>
-            {t("seeAll")}
-          </Link>
-        </Button>
-        <Button variant="ghost" className={fullWidth} onClick={onClose}>
-          {t("modal.later")}
-        </Button>
-        {tour && cta && (
-          <Button asChild variant="outline" className={fullWidth}>
-            <Link href={cta.to} onClick={onClose}>
-              {cta.label}
-              <ArrowRight aria-hidden />
+      {/* Two rows so up to four actions never outgrow the dialog (long labels in nl): the actions
+          on top (flex-col-reverse puts the primary first on mobile), "See all" and "Maybe later"
+          below. */}
+      <DialogFooter className="bg-muted/40 flex-col gap-3 border-t px-6 py-4 sm:flex-col">
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          {tour && cta && (
+            <Button asChild variant="outline" className={fullWidth}>
+              <Link href={cta.to} onClick={onClose}>
+                {cta.label}
+                <ArrowRight aria-hidden />
+              </Link>
+            </Button>
+          )}
+          {primary}
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <Button asChild variant="link" size="sm" className="px-0">
+            <Link href="/whats-new" onClick={onClose}>
+              {t("seeAll")}
             </Link>
           </Button>
-        )}
-        {primary}
+          <Button variant="ghost" onClick={onClose}>
+            {t("modal.later")}
+          </Button>
+        </div>
       </DialogFooter>
     </DialogContent>
   );
