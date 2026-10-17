@@ -1,4 +1,5 @@
 import { convexTest } from "convex-test";
+import { Webhook } from "svix";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import schema from "./schema";
 
@@ -28,5 +29,25 @@ describe("clerk users webhook", () => {
       body: "{}",
     });
     expect(response.status).toBe(400);
+  });
+
+  test("accepts a correctly signed event and parses its payload", async () => {
+    const secret = "whsec_dGVzdHNlY3JldA==";
+    vi.stubEnv("CLERK_WEBHOOK_SECRET", secret);
+    const t = convexTest(schema, modules);
+    const body = JSON.stringify({ type: "session.created", data: {} });
+    const msgId = "msg_test";
+    const timestamp = new Date();
+    const signature = new Webhook(secret).sign(msgId, timestamp, body);
+    const response = await t.fetch("/clerk-users-webhook", {
+      method: "POST",
+      headers: {
+        "svix-id": msgId,
+        "svix-timestamp": String(Math.floor(timestamp.getTime() / 1000)),
+        "svix-signature": signature,
+      },
+      body,
+    });
+    expect(response.status).toBe(200);
   });
 });
