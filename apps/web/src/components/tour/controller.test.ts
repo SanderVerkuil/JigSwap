@@ -441,6 +441,29 @@ describe("TourController: action steps", () => {
     });
   });
 
+  it("walks back past steps whose anchors also depend on that action", async () => {
+    const { world } = actionSetup();
+    const tour: TourDefinition = {
+      id: "deep",
+      steps: [
+        { id: "a", route: "/one", target: "one-a" },
+        { id: "b", route: "/one", target: "one-b" },
+        { id: "c", route: "/one", target: "one-c" },
+      ],
+    };
+    const deep = new TourController<string>({
+      tours: new Map([[tour.id, tour]]),
+      currentPath: () => world.path,
+      navigate: () => {},
+      findTarget: (anchor) => (world.anchors.has(anchor) ? anchor : null),
+      isActionTarget: (target) => world.actions.has(target),
+    });
+    // Resumed at the last step; only the first step's action target is on the page.
+    deep.start("deep", 2);
+    await vi.advanceTimersByTimeAsync(SAME_PAGE_GRACE_MS + 100);
+    expect(running(deep)).toMatchObject({ index: 0, action: true });
+  });
+
   it("keeps a missing card when the previous step is not an action", async () => {
     const { world, controller } = setup("/one");
     world.anchors.add("one-a");
