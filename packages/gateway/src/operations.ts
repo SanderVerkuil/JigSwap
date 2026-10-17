@@ -145,6 +145,9 @@ export const gateway = {
     declineInvite: api.household.declineHouseholdInvite.declineHouseholdInvite,
     leave: api.household.leaveHousehold.leaveHousehold,
     removeMember: api.household.removeHouseholdMember.removeHouseholdMember,
+    // Admin-only: the household-wide permission for member copies without an explicit value.
+    setDefaultCopyPermission:
+      api.household.setDefaultCopyPermission.setDefaultCopyPermission,
   },
 
   // Personal Library: collections (a member's private organisation of copies). Writes go through
