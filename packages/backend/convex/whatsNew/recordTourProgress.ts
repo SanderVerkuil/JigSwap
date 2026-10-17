@@ -1,3 +1,4 @@
+import { STANDALONE_TOUR_IDS } from "@jigswap/contracts";
 import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { whatsNewManifest } from "./manifest";
@@ -9,6 +10,7 @@ export const MAX_TOUR_STEPS = 50;
 // Save where the acting member is in a tour (started/paused at `step`, completed, or dismissed).
 // Last write wins, so replaying a completed tour moves it back to in_progress. Unlike entry ids,
 // an unknown tour id is rejected: this is an explicit write of a row, not a fire-and-forget mark.
+// Known ids are those a manifest entry references plus the registered STANDALONE_TOUR_IDS.
 export const recordTourProgress = mutation({
   args: {
     tourId: v.string(),
@@ -21,7 +23,10 @@ export const recordTourProgress = mutation({
   },
   handler: async (ctx, { tourId, status, step }) => {
     const member = await requireMemberUser(ctx);
-    if (!whatsNewManifest().some((entry) => entry.tour === tourId)) {
+    const known =
+      (STANDALONE_TOUR_IDS as readonly string[]).includes(tourId) ||
+      whatsNewManifest().some((entry) => entry.tour === tourId);
+    if (!known) {
       throw new ConvexError({ code: "unknown_tour" });
     }
     const validStep =

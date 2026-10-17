@@ -308,7 +308,8 @@ export const gateway = {
   // What's new: the member's own unread entry ids (newest first; entries published before the
   // account existed are never unread) and tour progress, plus marking entries seen. Unknown ids
   // are ignored server-side (web/Convex deploy skew); at most 50 ids per markSeen call. Tour
-  // progress is rejected for a tour no manifest entry references (`unknown_tour`).
+  // progress is rejected for a tour that no manifest entry references and that is not in
+  // STANDALONE_TOUR_IDS (@jigswap/contracts) (`unknown_tour`).
   whatsNew: {
     state: api.whatsNew.getWhatsNewState.getWhatsNewState,
     markSeen: api.whatsNew.markWhatsNewSeen.markWhatsNewSeen,
