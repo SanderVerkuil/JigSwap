@@ -7,9 +7,11 @@ import { MemberId } from "./ids";
 
 // The kinds of activity Social surfaces in a feed, translated from foreign events at the seam.
 // "started" (CompletionStarted) is opt-in + friends-only — that policy lives at the read seam
-// (getActivityFeed), not here; the projection stays pure.
+// (getActivityFeed), not here; the projection stays pure. "acquisitionBatch" is one batch add
+// (several CopyAcquired events sharing a batch id) folded into a single entry; its ref is the batch
+// id, and it sorts at the batch time like any other entry.
 export type ActivityKind =
-  "completion" | "acquisition" | "exchange" | "started";
+  "completion" | "acquisition" | "acquisitionBatch" | "exchange" | "started";
 
 // Social's local, anti-corruption view of one piece of activity. `ref` is an opaque pointer back
 // to the originating record (e.g. a completion or exchange id) for the UI to deep-link; Social
