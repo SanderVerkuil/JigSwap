@@ -238,6 +238,9 @@
     "eslint-plugin-boundaries"
   ],
   "settings": {
+    // Lint scripts run in each package (apps/web, packages/*), so cwd is two levels below the
+    // repo root; boundaries resolves files against this path and skips anything outside it.
+    "boundaries/root-path": "../..",
     "import/resolver": {
       "typescript": {
         "project": ["apps/*/tsconfig.json", "packages/*/tsconfig.json"],
