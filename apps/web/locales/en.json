@@ -303,6 +303,10 @@
       "you": "You started a puzzle",
       "other": "<strong>{name}</strong> started a puzzle"
     },
+    "open": {
+      "puzzle": "View the puzzle",
+      "trades": "View your exchanges"
+    },
     "empty": "No recent activity yet",
     "emptyHint": "Follow other members to see what they are up to."
   },

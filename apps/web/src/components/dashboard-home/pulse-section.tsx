@@ -4,6 +4,10 @@ import { Link } from "@/compat/link";
 import { MemberInitial } from "@/components/members/member-initial";
 import { ActivityBatchCovers } from "@/components/social/activity-batch-covers";
 import { isKnownActivityKind } from "@/components/social/activity-feed-meta";
+import {
+  ActivityTargetLink,
+  ActorLink,
+} from "@/components/social/activity-links";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -334,36 +338,62 @@ function ActivityRow({
   }
   if (actor === null) return null;
 
+  // A grouped batch add reads "added N puzzles"; the other kinds ignore the count.
+  const count = entry.batch?.count ?? 1;
+  const avatar = (
+    <Avatar className="size-8">
+      {actor.avatar && (
+        <AvatarImage src={actor.avatar} alt={displayName(actor)} />
+      )}
+      <AvatarFallback>
+        <MemberInitial source={actor} />
+      </AvatarFallback>
+    </Avatar>
+  );
+
+  // A row with a server-decided target is one stretched link to it; the avatar and name link to
+  // the actor's profile as siblings (the avatar is a duplicate, so it is hidden from AT and tab).
   return (
-    <div className={cn("flex gap-3 py-2.5", !isLast && "border-b")}>
-      <Avatar className="size-8">
-        {actor.avatar && (
-          <AvatarImage src={actor.avatar} alt={displayName(actor)} />
-        )}
-        <AvatarFallback>
-          <MemberInitial source={actor} />
-        </AvatarFallback>
-      </Avatar>
+    <div
+      className={cn(
+        "relative flex gap-3 py-2.5",
+        entry.target && "hover:bg-muted/40 transition-colors",
+        !isLast && "border-b",
+      )}
+    >
+      {entry.actor ? (
+        <ActorLink
+          actor={entry.actor}
+          className="-m-1.5 h-fit shrink-0 rounded-full p-1.5"
+          aria-hidden
+          tabIndex={-1}
+        >
+          {avatar}
+        </ActorLink>
+      ) : (
+        avatar
+      )}
       <div className="text-muted-foreground min-w-0 flex-1 text-sm leading-snug">
         {t.rich(entry.kind, {
           name: displayName(actor),
-          // A grouped batch add reads "added N puzzles"; the other kinds ignore the count.
-          count: entry.batch?.count ?? 1,
-          strong: (chunks) => (
-            <strong className="text-foreground">{chunks}</strong>
-          ),
+          count,
+          strong: (chunks) =>
+            entry.actor ? (
+              <ActorLink actor={entry.actor} className="py-3">
+                <strong className="text-foreground">{chunks}</strong>
+              </ActorLink>
+            ) : (
+              <strong className="text-foreground">{chunks}</strong>
+            ),
         })}
-        {entry.batch && (
-          <ActivityBatchCovers
-            memberId={entry.memberId}
-            batch={entry.batch}
-            size={28}
-          />
-        )}
+        {entry.batch && <ActivityBatchCovers batch={entry.batch} size={28} />}
         <span className="mt-0.5 block text-xs">
           {format.relativeTime(entry.occurredAt)}
         </span>
       </div>
+      {entry.target && (
+        <ActivityTargetLink target={entry.target} count={count} />
+      )}
     </div>
   );
 }
