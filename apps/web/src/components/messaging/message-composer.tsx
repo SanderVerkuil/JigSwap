@@ -4,7 +4,7 @@
 // append into the exact getThreadMessages subscription the thread view holds
 // (the established withOptimisticUpdate pattern — see use-favorites); Convex
 // replaces the local patch when the server result streams back, so pending
-// messages clear themselves. PROVISIONAL layout per the design doc.
+// messages clear themselves. Layout per the message-center redesign spec §7.
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { conversationErrorCode } from "@/components/messaging/format";
 import { Button } from "@/components/ui/button";
@@ -51,7 +51,14 @@ const optimisticAppend =
     );
   };
 
-export function MessageComposer({ threadId }: { threadId: string }) {
+export function MessageComposer({
+  threadId,
+  recipientName,
+}: {
+  threadId: string;
+  // Names the textarea ("Message Esther"); falls back to the generic label.
+  recipientName?: string;
+}) {
   const t = useTranslations("messages");
   const { member } = useCurrentMember();
   const me = member?._id;
@@ -93,7 +100,7 @@ export function MessageComposer({ threadId }: { threadId: string }) {
   };
 
   return (
-    <div className="border-t pt-3">
+    <div className="bg-card shrink-0 border-t px-3 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] md:px-4 md:pb-3">
       <div className="flex items-end gap-2">
         <Textarea
           value={body}
@@ -103,15 +110,20 @@ export function MessageComposer({ threadId }: { threadId: string }) {
           }}
           onKeyDown={handleKeyDown}
           placeholder={t("typeMessage")}
-          aria-label={t("typeMessage")}
+          aria-label={
+            recipientName
+              ? t("messageName", { name: recipientName })
+              : t("typeMessage")
+          }
           maxLength={MAX_MESSAGE_LENGTH}
           rows={1}
-          className="max-h-40 min-h-9 flex-1 resize-none"
+          className="max-h-40 min-h-11 flex-1 resize-none rounded-[20px] px-4 py-2.5 md:min-h-10"
         />
         <Button
           onClick={() => void send()}
           disabled={!body.trim() || !me}
-          size="sm"
+          size="icon"
+          className="size-11 rounded-full md:size-10"
           aria-label={t("sendMessage")}
         >
           <Send className="size-4" />
