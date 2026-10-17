@@ -11,6 +11,13 @@
         "command": "pnpm run type-check",
         "cwd": "packages/contracts"
       }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm run test",
+        "cwd": "packages/contracts"
+      }
     }
   }
 }
