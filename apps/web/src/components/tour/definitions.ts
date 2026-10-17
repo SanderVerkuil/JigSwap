@@ -1,7 +1,10 @@
-// Multi-step tours as data (spec §A7). A tour id must be the `tour` of a What's new entry, or the
-// backend rejects its progress with `unknown_tour`. Step copy lives in the locale files under
+// Multi-step tours as data (spec §A7). A tour id must be the `tour` of a What's new entry or be
+// listed in STANDALONE_TOUR_IDS (@jigswap/contracts), or the backend rejects its progress with
+// `unknown_tour`; definitions.test.ts checks both ways. Step copy lives in the locale files under
 // `tours.<tourId>.steps.<stepId>.title|body`; targets are `data-tour="<anchor>"` attributes on
 // existing components.
+
+import { STANDALONE_TOUR_IDS } from "@jigswap/contracts";
 
 export type TourSide = "top" | "right" | "bottom" | "left";
 export type TourAlign = "start" | "center" | "end";
@@ -27,6 +30,22 @@ export interface TourDefinition {
 }
 
 const tours: readonly TourDefinition[] = [
+  // Standalone: the quick start's "Show me around" hand-off (quick start spec §2.8).
+  {
+    id: "getting-started",
+    steps: [
+      { id: "shelf", route: "/dashboard", target: "dashboard-shelf" },
+      { id: "solving-now", route: "/dashboard", target: "solving-now" },
+      { id: "people", route: "/people", target: "people-network" },
+      {
+        id: "account-menu",
+        route: "/dashboard",
+        target: "account-menu",
+        side: "right",
+        align: "end",
+      },
+    ],
+  },
   {
     id: "households",
     steps: [
@@ -67,6 +86,11 @@ const tours: readonly TourDefinition[] = [
 export const TOURS: ReadonlyMap<string, TourDefinition> = new Map(
   tours.map((tour) => [tour.id, tour]),
 );
+
+/** A tour started outside What's new, so a paused one is resumed from elsewhere. */
+export function isStandaloneTour(tourId: string): boolean {
+  return (STANDALONE_TOUR_IDS as readonly string[]).includes(tourId);
+}
 
 /** i18n keys for a step's copy, relative to the root namespace. */
 export function stepMessageKeys(tourId: string, stepId: string) {

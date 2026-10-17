@@ -9,8 +9,10 @@ import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import { QuickStartDonePanel, QuickStartFlowView } from "./flow-view";
 import { HouseholdChoiceView } from "./household-step";
+import { ProfileStepView } from "./profile-step";
 import { PushPromptCard } from "./push-prompt";
 import { QuickSetupCardView } from "./quick-setup-card";
+import { TourHandoffButton } from "./tour-handoff";
 import { WelcomeDialogBody } from "./welcome-dialog";
 
 // Router-free Link: the tests assert the DOM, not routing. The search object is serialised the
@@ -463,5 +465,126 @@ describe("PushPromptCard", () => {
     ]);
     expect(attr(buttons[0]!, "class")).toContain("bg-jigsaw-primary");
     expect(all(html).some((el) => attr(el, "role") === "dialog")).toBe(false);
+  });
+});
+
+describe("QuickStartDonePanel: tour hand-off", () => {
+  const noop = () => {};
+
+  it("shows Show me around next to the shelf link", () => {
+    const html = render(
+      <QuickStartDonePanel
+        view={VIEW}
+        tourAction={
+          <TourHandoffButton state={{ kind: "take" }} onStart={noop} />
+        }
+      />,
+    );
+    expect(controls(html).map((el) => nameOf(el))).toEqual([
+      "Go to my shelf",
+      "Show me around",
+    ]);
+    const [button] = byTag(html, "button");
+    expect(attr(button!, "type")).toBe("button");
+  });
+
+  it("reads as a resume while the tour is paused, and in Dutch", () => {
+    const resume = { kind: "resume" as const, step: 2, total: 4 };
+    expect(
+      nameOf(
+        byTag(
+          render(<TourHandoffButton state={resume} onStart={noop} />),
+          "button",
+        )[0]!,
+      ),
+    ).toBe("Resume tour (step 2 of 4)");
+    expect(
+      nameOf(
+        byTag(
+          render(
+            <TourHandoffButton state={{ kind: "replay" }} onStart={noop} />,
+            "nl",
+          ),
+          "button",
+        )[0]!,
+      ),
+    ).toBe("Geef me een rondleiding");
+  });
+});
+
+describe("ProfileStepView", () => {
+  const noop = () => {};
+  const props = {
+    avatarUrl: "https://img.example/ann.png",
+    nameSource: { name: "Ann Example" },
+    location: "",
+    savedLocation: "",
+    savingLocation: false,
+    visibility: "public" as const,
+    savingVisibility: false,
+    onLocationChange: noop,
+    onLocationSave: noop,
+    onVisibilityChange: noop,
+    onChangePhoto: noop,
+  };
+
+  it("shows the avatar with Change photo, a labelled location field and the visibility choice", () => {
+    const html = render(<ProfileStepView {...props} />);
+    expect(text(byTag(html, "p")[0]!)).toBe("Help people recognise you.");
+    // Radix renders the fallback until the image has loaded, so SSR shows the initial.
+    const avatar = all(html).find((el) => attr(el, "data-slot") === "avatar");
+    expect(attr(avatar!, "aria-hidden")).toBe("true");
+    expect(text(avatar!)).toBe("A");
+    const [input] = byTag(html, "input");
+    const [label] = byTag(html, "label");
+    expect(text(label!)).toBe("Location");
+    expect(attr(label!, "for")).toBe(attr(input!, "id"));
+    expect(attr(input!, "maxlength")).toBe("80");
+    expect(attr(input!, "autocomplete")).toBe("address-level2");
+    const hint = all(html).find(
+      (el) => attr(el, "id") === attr(input!, "aria-describedby"),
+    );
+    expect(text(hint!)).toBe("Optional. Shown on your profile.");
+
+    const group = all(html).find((el) => attr(el, "role") === "radiogroup");
+    expect(attr(group!, "aria-label")).toBe("Who can see your profile?");
+    const radios = all(html).filter((el) => attr(el, "role") === "radio");
+    expect(radios.map((r) => [text(r), attr(r, "aria-checked")])).toEqual([
+      ["Everyone", "true"],
+      ["Only people you approve", "false"],
+    ]);
+    expect(controls(html).map((el) => nameOf(el))).toEqual([
+      "Change photo",
+      "Save",
+      "Everyone",
+      "Only people you approve",
+    ]);
+  });
+
+  it("disables Save until the location changed, and while saving", () => {
+    const save = (over: Partial<typeof props>) =>
+      byTag(render(<ProfileStepView {...props} {...over} />), "button").find(
+        (b) => nameOf(b) === "Save" || nameOf(b) === "Saving…",
+      )!;
+    expect(attr(save({}), "disabled")).toBeDefined();
+    expect(attr(save({ location: "Utrecht" }), "disabled")).toBeUndefined();
+    // Trimmed: whitespace alone is no change.
+    expect(attr(save({ location: "  " }), "disabled")).toBeDefined();
+    expect(
+      attr(save({ location: "Utrecht", savingLocation: true }), "disabled"),
+    ).toBeDefined();
+  });
+
+  it("preselects a private choice, in Dutch", () => {
+    const html = render(
+      <ProfileStepView {...props} avatarUrl={undefined} visibility="private" />,
+      "nl",
+    );
+    const radios = all(html).filter((el) => attr(el, "role") === "radio");
+    expect(radios.map((r) => [text(r), attr(r, "aria-checked")])).toEqual([
+      ["Iedereen", "false"],
+      ["Alleen mensen die je toelaat", "true"],
+    ]);
+    expect(text(byTag(html, "label")[0]!)).toBe("Locatie");
   });
 });

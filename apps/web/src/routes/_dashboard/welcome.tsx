@@ -12,17 +12,24 @@ import {
   type FlowStep,
 } from "@/components/quick-start/logic";
 import { PeopleStep } from "@/components/quick-start/people-step";
+import { ProfileStep } from "@/components/quick-start/profile-step";
 import { useMarkQuickStartUsed } from "@/components/quick-start/session";
+import { TourHandoffButton } from "@/components/quick-start/tour-handoff";
 import { PastSolvesForm } from "@/components/solving/past-solves-form";
+import { tourButtonState } from "@/components/tour/controller";
+import { TOURS } from "@/components/tour/definitions";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { useReportSurfaceBusy } from "@/components/whats-new/surface-busy";
+import { useTourLauncher } from "@/components/whats-new/tour-launcher";
+import { useWhatsNewState } from "@/components/whats-new/use-whats-new-state";
 import { gateway } from "@/gateway";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import type { QuickStartStepId, QuickStartView } from "@jigswap/contracts";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { useTranslations } from "use-intl";
 
 // The quick start flow (spec §2.2): one URL per step, so the browser back button walks back
@@ -50,13 +57,20 @@ function WelcomePage() {
   const tCommon = useTranslations("common");
   useReportSurfaceBusy("quickstart", true);
   useMarkQuickStartUsed(true);
+  // Funnel fact for the activation report: the member opened the flow. Stored once server-side.
+  const memberId = member?._id;
+  useEffect(() => {
+    if (!memberId) return;
+    record({ kind: "startQuickStart" }).catch((error: unknown) =>
+      console.error("Failed to record the quick start start:", error),
+    );
+  }, [memberId, record]);
 
   const step = resolveFlowStep(requested, view);
   if (!step || !view) return <PageLoading message={tCommon("loading")} />;
 
   if (step === "done") {
-    // Q8 passes its "Show me around" tour hand-off as `tourAction`.
-    return <QuickStartDonePanel view={view} />;
+    return <QuickStartDonePanel view={view} tourAction={<TourHandoff />} />;
   }
 
   const go = (next: FlowStep) => void navigate({ search: { step: next } });
@@ -117,8 +131,25 @@ function StepBody({
     case "household":
       return <HouseholdStep onAlone={onSkip} />;
     case "profile":
-      // Step 5 "Make it yours" is built in Q8 (spec §2.4); until then the step is its title
-      // with Skip and Continue.
-      return null;
+      return <ProfileStep />;
   }
+}
+
+const HANDOFF_TOUR = "getting-started";
+
+// "Show me around" (spec §2.8): the standalone getting-started tour through the shared runner,
+// resuming at the saved step when it was paused.
+function TourHandoff() {
+  const { startTour } = useTourLauncher();
+  const { tours } = useWhatsNewState();
+  const state = tourButtonState(
+    tours?.find((p) => p.tourId === HANDOFF_TOUR),
+    TOURS.get(HANDOFF_TOUR)?.steps.length ?? 0,
+  );
+  return (
+    <TourHandoffButton
+      state={state}
+      onStart={(returnFocus) => startTour(HANDOFF_TOUR, { returnFocus })}
+    />
+  );
 }
