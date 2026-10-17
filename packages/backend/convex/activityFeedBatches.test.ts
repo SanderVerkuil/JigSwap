@@ -63,6 +63,25 @@ const addBatch = (
     })),
   });
 
+// One acquireCopy call (no batch id). A fresh copy is closed; `open` lists it for trade.
+const addSingle = async (
+  t: TestConvex<typeof schema>,
+  puzzleDefinitionId: string,
+  open: boolean,
+) => {
+  const copyId = await asUser(t, "alice").mutation(
+    api.library.acquireCopy.acquireCopy,
+    { puzzleDefinitionId, condition: "good" },
+  );
+  if (open) {
+    await asUser(t, "alice").mutation(
+      api.library.updateCopySharing.updateCopySharing,
+      { copyId, visibility: "visible", forTrade: true },
+    );
+  }
+  return copyId;
+};
+
 const feedOf = (t: TestConvex<typeof schema>, viewer: string) =>
   asUser(t, viewer).query(api.social.getActivityFeed.getActivityFeed, {});
 
@@ -155,11 +174,8 @@ describe("social.getActivityFeed — grouped batch adds", () => {
     const newerAt = Date.now() - HOUR;
     await backdate(t, older.copyIds, olderAt);
     await backdate(t, newer.copyIds, newerAt);
-    // A single add between the two batches sorts between them.
-    const single = await asUser(t, "alice").mutation(
-      api.library.acquireCopy.acquireCopy,
-      { puzzleDefinitionId: definitions[5], condition: "good" },
-    );
+    // A single add between the two batches sorts between them (open, so bob may see it).
+    const single = await addSingle(t, definitions[5], true);
     const singleAt = Date.now() - 2 * HOUR;
     await backdate(t, [single], singleAt);
 
@@ -232,5 +248,62 @@ describe("social.getActivityFeed — grouped batch adds", () => {
     const [entry] = await batchEntries(t, "bob");
     expect(entry.batch?.count).toBe(2);
     expect(entry.batch?.covers.map((c) => c.copyId)).toEqual(copyIds.slice(1));
+  });
+});
+
+describe("social.getActivityFeed — single adds respect copy visibility", () => {
+  const singleRefs = async (t: TestConvex<typeof schema>, viewer: string) =>
+    (await feedOf(t, viewer))
+      .filter((e) => e.kind === "acquisition")
+      .map((e) => e.ref);
+
+  test("a follower does not see a single add of a copy they cannot view", async () => {
+    const t = convexTest(schema, modules);
+    const { definitions } = await seed(t);
+
+    const closed = await addSingle(t, definitions[0], false);
+
+    expect(await singleRefs(t, "bob")).toEqual([]);
+    expect(await singleRefs(t, "alice")).toEqual([closed]);
+  });
+
+  test("a follower sees a single add of a copy they can view", async () => {
+    const t = convexTest(schema, modules);
+    const { definitions } = await seed(t);
+
+    const open = await addSingle(t, definitions[0], true);
+    const closed = await addSingle(t, definitions[1], false);
+
+    expect(await singleRefs(t, "bob")).toEqual([open]);
+    expect((await singleRefs(t, "alice")).sort()).toEqual(
+      [open, closed].sort(),
+    );
+  });
+
+  test("a private profile hides even an open single add from a one-way follower", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, definitions } = await seed(t);
+    await setVisibility(t, alice, "private");
+
+    const open = await addSingle(t, definitions[0], true);
+
+    expect(await singleRefs(t, "bob")).toEqual([]);
+    expect(await singleRefs(t, "alice")).toEqual([open]);
+  });
+
+  test("the member holding a closed copy still sees its single add", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, definitions } = await seed(t);
+
+    const closed = await addSingle(t, definitions[0], false);
+    await t.run(async (ctx) => {
+      const row = await ctx.db
+        .query("ownedPuzzles")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", closed))
+        .unique();
+      if (row) await ctx.db.patch(row._id, { heldBy: bob });
+    });
+
+    expect(await singleRefs(t, "bob")).toEqual([closed]);
   });
 });
