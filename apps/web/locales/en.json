@@ -2032,7 +2032,9 @@
       "deleteConfirmBody": "This will permanently remove the completion from your history. This can't be undone.",
       "deleteConfirm": "Delete",
       "deleteSuccess": "Completion deleted",
-      "deleteError": "Could not delete completion"
+      "deleteError": "Could not delete completion",
+      "dateUnknown": "Date unknown",
+      "inYear": "In {year}"
     },
     "logSolve": {
       "trigger": "Log a solve",
@@ -3723,6 +3725,21 @@
           "body": "Sharing is off by default. Open your account menu, choose Manage account, then Preferences, and turn on Share in-progress puzzles with friends."
         }
       }
+    }
+  },
+  "quickStart": {
+    "solves": {
+      "lead": "Did you finish any of these?",
+      "finished": "I finished {title}",
+      "when": "When?",
+      "dontRemember": "I don't remember",
+      "whichYear": "Which year",
+      "pickDate": "Pick a date",
+      "showMore": "Show more",
+      "empty": "Add a puzzle first, then come back to log it.",
+      "submit": "{count, plural, one {Log # puzzle} other {Log # puzzles}}",
+      "saved": "{count, plural, one {# puzzle logged} other {# puzzles logged}}",
+      "saveError": "Couldn't log these puzzles. Nothing was saved, so you can try again."
     }
   }
 }

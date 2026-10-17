@@ -29,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
+import { formatCompletionDate } from "@/lib/completion-format";
 import { durationParts } from "@/lib/humanize-duration";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
@@ -718,9 +719,14 @@ function CopyInstanceDetail({
                   </>
                 }
                 sub={
-                  c.finishMinutes != null
-                    ? `${formatDay(c.occurredAt)} · ${t("finishedIn", { duration: formatDuration(c.finishMinutes) })}`
-                    : formatDay(c.occurredAt)
+                  (c.datePrecision ?? "day") !== "day"
+                    ? formatCompletionDate(tCompletions, {
+                        startDate: c.occurredAt,
+                        datePrecision: c.datePrecision,
+                      })
+                    : c.finishMinutes != null
+                      ? `${formatDay(c.occurredAt)} · ${t("finishedIn", { duration: formatDuration(c.finishMinutes) })}`
+                      : formatDay(c.occurredAt)
                 }
               />
             ))}

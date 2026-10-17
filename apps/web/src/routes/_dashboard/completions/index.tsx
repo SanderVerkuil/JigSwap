@@ -27,7 +27,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { gateway, Id } from "@/gateway";
-import { formatSolveTime, hrefForLink } from "@/lib/completion-format";
+import {
+  countsTowardThisYear,
+  formatCompletionDate,
+  formatSolveTime,
+  hrefForLink,
+} from "@/lib/completion-format";
 import { pageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -47,6 +52,7 @@ type DialogState =
       endDate?: number;
       timeMinutes?: number;
       notes?: string;
+      datePrecision?: "day" | "year" | "unknown";
     }
   | {
       kind: "review";
@@ -173,8 +179,9 @@ function CompletionsPage() {
     return sum + (info?.pieceCount ?? snapshot?.pieceCount ?? 0);
   }, 0);
   const yearStart = new Date(new Date().getFullYear(), 0, 1).getTime();
-  const thisYear = finished.filter(
-    (completion) => (completion.endDate ?? completion.startDate) >= yearStart,
+  // Undated solves never count toward "this year"; year-only ones do when the year is this one.
+  const thisYear = finished.filter((completion) =>
+    countsTowardThisYear(completion, yearStart),
   ).length;
 
   // Most recent activity first, matching the log's promise.
@@ -205,6 +212,8 @@ function CompletionsPage() {
     const title = info?.title ?? snapshot?.title ?? t("title");
     const pieceCount = info?.pieceCount ?? snapshot?.pieceCount;
     const done = completion.isCompleted;
+    // A year-only or undated solve has sentinel dates: never derive days or a date from them.
+    const dated = (completion.datePrecision ?? "day") === "day";
     // Whole days between start and finish, floored at one — "finished
     // in 3 days" reads better than raw milliseconds.
     const days =
@@ -214,8 +223,9 @@ function CompletionsPage() {
             Math.round((completion.endDate - completion.startDate) / 86400000),
           )
         : undefined;
-    const metaLine =
-      done && pieceCount && days !== undefined
+    const metaLine = !dated
+      ? t("completed")
+      : done && pieceCount && days !== undefined
         ? t("piecesFinished", { pieces: pieceCount, days })
         : done && completion.endDate !== undefined
           ? completion.completionTimeMinutes !== undefined
@@ -370,7 +380,7 @@ function CompletionsPage() {
         </div>
 
         <span className="text-muted-foreground w-[78px] text-right text-xs whitespace-nowrap">
-          {formatDate(completion.endDate ?? completion.startDate)}
+          {formatCompletionDate(t, completion)}
         </span>
 
         <div className="relative z-10 flex items-center gap-1">
@@ -423,6 +433,7 @@ function CompletionsPage() {
                   endDate: completion.endDate,
                   timeMinutes: completion.completionTimeMinutes,
                   notes: completion.notes,
+                  datePrecision: completion.datePrecision,
                 })
               }
             >
@@ -535,6 +546,7 @@ function CompletionsPage() {
           initialEndDate={dialog.endDate}
           initialTimeMinutes={dialog.timeMinutes}
           initialNotes={dialog.notes}
+          datePrecision={dialog.datePrecision}
         />
       )}
       {dialog?.kind === "delete" && (
