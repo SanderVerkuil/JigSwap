@@ -169,7 +169,11 @@ function RootComponent() {
       <ConvexProviderWithClerk client={context.convexClient} useAuth={useAuth}>
         <AuthCacheSync />
         <RootDocument locale={intl.locale}>
-          <Providers locale={intl.locale} messages={intl.messages}>
+          <Providers
+            locale={intl.locale}
+            messages={intl.messages}
+            now={intl.now}
+          >
             <ErrorBoundary>
               <Outlet />
             </ErrorBoundary>
