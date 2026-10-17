@@ -154,6 +154,7 @@ export const toOwnedCopyCompletionView = (
   startDate: row.startDate,
   endDate: row.endDate,
   completionTimeMinutes: row.completionTimeMinutes,
+  datePrecision: row.datePrecision,
   notes: row.notes,
   photos: row.photos,
   isCompleted: row.isCompleted,

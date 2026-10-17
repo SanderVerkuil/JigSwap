@@ -61,6 +61,7 @@ export const getPersonalStats = query({
       completions: completions.map((c) => ({
         completionTimeMinutes: c.completionTimeMinutes,
         isCompleted: c.isCompleted,
+        datePrecision: c.datePrecision,
       })),
       // A copy's catalog definition: prefer the snapshot-backed PuzzleDefinitionId, fall back to the
       // legacy puzzleId so distinct-definition counting works on both new and legacy rows.

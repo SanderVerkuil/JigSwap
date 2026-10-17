@@ -422,6 +422,10 @@ export default defineSchema({
       }),
     ),
     isCompleted: v.boolean(), // true = completed, false = in progress
+    // How precisely a FINISHED solve is dated. Absent = "day" (every legacy row, and every new
+    // dated row: writers store it only when it isn't "day", so no backfill is needed). "year" and
+    // "unknown" rows hold sentinel dates and no duration; every reader uses `?? "day"`.
+    datePrecision: v.optional(v.union(v.literal("year"), v.literal("unknown"))),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

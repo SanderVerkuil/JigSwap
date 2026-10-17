@@ -5,6 +5,7 @@ import { requireMember } from "../identity/requireMember";
 
 // Insights read query: the member's completions per month over the last ~12 months, for the trend
 // chart. Only finished solves (with an endDate) contribute; the timestamp is the solve's endDate.
+// Year-only and undated solves are passed with their precision and skipped by the projection.
 export const getCompletionTrends = query({
   args: {},
   handler: async (ctx) => {
@@ -25,6 +26,7 @@ export const getCompletionTrends = query({
       finished.map((c) => ({
         completedAt: c.endDate,
         completionTimeMinutes: c.completionTimeMinutes,
+        datePrecision: c.datePrecision,
       })),
     );
   },

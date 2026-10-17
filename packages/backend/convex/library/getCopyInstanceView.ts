@@ -159,6 +159,7 @@ export const getCopyInstanceView = query({
         startDate: c.startDate,
         endDate: c.endDate,
         timeMinutes: c.completionTimeMinutes,
+        datePrecision: c.datePrecision,
         occurredAt: c.endDate ?? c.startDate,
       })),
     );
@@ -215,6 +216,7 @@ export const getCopyInstanceView = query({
           solver: await project(c.userId),
           isYou: c.userId === viewerId,
           occurredAt: c.endDate ?? c.startDate,
+          datePrecision: c.datePrecision,
           finishMinutes: finishMinutesOf(c),
         })),
     );

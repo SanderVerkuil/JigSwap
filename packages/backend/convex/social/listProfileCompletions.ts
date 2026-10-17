@@ -1,4 +1,4 @@
-import { paginationOptsValidator } from "convex/server";
+import { paginationOptsValidator, type PaginationOptions } from "convex/server";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
@@ -26,6 +26,10 @@ type ProfileCompletionLink = {
 // a thumbnail and a link. The member's private solve `notes`, the legacy rating/review columns and
 // the copy snapshot (owner id, borrow flag) are not carried. The copy-specific thumbnail and link
 // are only used when the viewer may reach that copy (canViewCopy); otherwise the puzzle definition.
+//
+// Each row carries its `datePrecision` (absent = "day") for the "In 2023" / "Date unknown" label.
+// Undated solves sort LAST (spec 2026-10-17 §3.2): the dated rows (day and year) page first,
+// newest first, then the undated ones (see pageDatedThenUndated).
 export const listProfileCompletions = query({
   args: { memberId: v.id("users"), paginationOpts: paginationOptsValidator },
   handler: async (ctx, args) => {
@@ -34,13 +38,11 @@ export const listProfileCompletions = query({
       return { page: [], isDone: true, continueCursor: "" };
     }
 
-    const result = await ctx.db
-      .query("completions")
-      .withIndex("by_user_completed", (q) =>
-        q.eq("userId", args.memberId).eq("isCompleted", true),
-      )
-      .order("desc")
-      .paginate(args.paginationOpts);
+    const result = await pageDatedThenUndated(
+      ctx,
+      args.memberId,
+      args.paginationOpts,
+    );
 
     // Sequential: the lazily built copy-view context and its memo aren't Promise.all-safe.
     let context: CopyViewContext | null = null;
@@ -86,6 +88,7 @@ export const listProfileCompletions = query({
         startDate: row.startDate,
         endDate: row.endDate ?? row.startDate,
         completionTimeMinutes: row.completionTimeMinutes,
+        datePrecision: row.datePrecision ?? ("day" as const),
         photoUrls: await approvedPhotoUrls(ctx, row),
         thumbnailUrl,
         link,
@@ -94,6 +97,75 @@ export const listProfileCompletions = query({
     return { ...result, page };
   },
 });
+
+// Two pagination phases behind one cursor: the member's finished DATED solves (newest first), then
+// their UNDATED ones (newest first). The phase is a cursor prefix ("d:" / "u:") around Convex's own
+// cursor; a null cursor starts the dated phase. Convex allows one `.paginate()` per call, so the
+// page where the dated phase runs out may be short; it hands over to the undated phase with "u:".
+// `endCursor` (sent by the client to keep pages contiguous) is decoded the same way.
+type Phase = { undated: boolean; cursor: string | null };
+const decodeCursor = (cursor: string): Phase => ({
+  undated: cursor.startsWith("u:"),
+  cursor: cursor.slice(2) || null,
+});
+const encodeCursor = (phase: Phase): string =>
+  `${phase.undated ? "u:" : "d:"}${phase.cursor ?? ""}`;
+
+const pageDatedThenUndated = async (
+  ctx: QueryCtx,
+  memberId: Id<"users">,
+  opts: PaginationOptions,
+): Promise<{
+  page: Doc<"completions">[];
+  isDone: boolean;
+  continueCursor: string;
+}> => {
+  const start: Phase =
+    opts.cursor === null
+      ? { undated: false, cursor: null }
+      : decodeCursor(opts.cursor);
+  const end = opts.endCursor ? decodeCursor(opts.endCursor) : null;
+  // Within the dated phase, a page only ends early when the client pinned its end there.
+  const datedEnd = !start.undated && end && !end.undated ? end : null;
+
+  const result = await ctx.db
+    .query("completions")
+    .withIndex("by_user_completed", (q) =>
+      q.eq("userId", memberId).eq("isCompleted", true),
+    )
+    .order("desc")
+    .filter((q) =>
+      start.undated
+        ? q.eq(q.field("datePrecision"), "unknown")
+        : q.neq(q.field("datePrecision"), "unknown"),
+    )
+    .paginate({
+      ...opts,
+      cursor: start.cursor,
+      endCursor: start.undated ? end?.cursor : datedEnd?.cursor,
+    });
+
+  if (start.undated) {
+    return {
+      page: result.page,
+      isDone: result.isDone,
+      continueCursor: encodeCursor({
+        undated: true,
+        cursor: result.continueCursor,
+      }),
+    };
+  }
+  const handOver = result.isDone && !datedEnd;
+  return {
+    page: result.page,
+    isDone: false,
+    continueCursor: encodeCursor(
+      handOver
+        ? { undated: true, cursor: null }
+        : { undated: false, cursor: result.continueCursor },
+    ),
+  };
+};
 
 // Approved photos only: unlike the self-facing log (which shows pending with a badge), a profile is
 // seen by others, so a photo awaiting moderation stays hidden. No sidecar = legacy = approved.

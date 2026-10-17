@@ -6,6 +6,7 @@
 import type { DocId, PuzzleDifficulty } from "../catalog/views";
 import type { HouseholdPersonView } from "../household/views";
 import type { ProjectedMember } from "../social/social";
+import type { CompletionDatePrecision } from "../solving/views";
 
 export type CopyCondition =
   "new_sealed" | "like_new" | "good" | "fair" | "poor";
@@ -122,6 +123,8 @@ export interface OwnedCopyCompletionView {
   startDate: number;
   endDate?: number;
   completionTimeMinutes?: number;
+  /** Absent = "day". */
+  datePrecision?: CompletionDatePrecision;
   notes?: string;
   photos: DocId[];
   isCompleted: boolean;
@@ -250,6 +253,8 @@ export interface CopyInstanceCompletionEntry {
   startDate: number;
   endDate?: number;
   timeMinutes?: number;
+  /** Absent = "day"; for "year"/"unknown" the dates are sentinels, not facts. */
+  datePrecision?: CompletionDatePrecision;
   /** Sort key: the completion's `endDate` if finished, else its `startDate`. */
   occurredAt: number;
 }
@@ -287,6 +292,8 @@ export interface CopyCompletionEntry {
   isYou: boolean;
   /** Epoch millis the completion is sorted/dated on (its `endDate`, else `startDate`). */
   occurredAt: number;
+  /** Absent = "day"; label "year"/"unknown" solves instead of showing `occurredAt` as a date. */
+  datePrecision?: CompletionDatePrecision;
   /**
    * How long the solve took, in whole MINUTES: `endDate - startDate` when both are present, else
    * `completionTimeMinutes`, else null. Raw minutes so the UI can humanize (hours/days/weeks).
