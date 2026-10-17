@@ -339,6 +339,7 @@ import type * as social_followMember from "../social/followMember.js";
 import type * as social_followersYouKnow from "../social/followersYouKnow.js";
 import type * as social_getActivityFeed from "../social/getActivityFeed.js";
 import type * as social_getFollowRelation from "../social/getFollowRelation.js";
+import type * as social_getFollowRequesterPreview from "../social/getFollowRequesterPreview.js";
 import type * as social_getHouseholdLinkInvite from "../social/getHouseholdLinkInvite.js";
 import type * as social_getInviteContext from "../social/getInviteContext.js";
 import type * as social_getMyInviteLink from "../social/getMyInviteLink.js";
@@ -747,6 +748,7 @@ declare const fullApi: ApiFromModules<{
   "social/followersYouKnow": typeof social_followersYouKnow;
   "social/getActivityFeed": typeof social_getActivityFeed;
   "social/getFollowRelation": typeof social_getFollowRelation;
+  "social/getFollowRequesterPreview": typeof social_getFollowRequesterPreview;
   "social/getHouseholdLinkInvite": typeof social_getHouseholdLinkInvite;
   "social/getInviteContext": typeof social_getInviteContext;
   "social/getMyInviteLink": typeof social_getMyInviteLink;
