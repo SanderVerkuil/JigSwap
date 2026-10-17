@@ -87,7 +87,7 @@ private requester no longer sees the owner of an older accepted exchange (exchan
 views now hide anonymous parties). New exchanges are covered by the subscriber, so run
 it soon after deploying.
 
-**What it does:** pages through `exchanges` (50 rows per batch, each batch its own
+**What it does:** pages through `exchanges` (25 rows per batch, each batch its own
 transaction, rescheduling itself until the table is exhausted) and, per exchange,
 applies the domain rule (`exchangeIdentityReveals` / `ownerActedInHistory`):
 
@@ -95,9 +95,10 @@ applies the domain rule (`exchangeIdentityReveals` / `ownerActedInHistory`):
 - requester -> owner: only when the owner acted (`reason: "exchange_owner_acted"`):
   status `accepted` / `completed` / `disputed`, or, for `proposed` / `rejected` /
   `cancelled`, positive evidence in that exchange's own thread (an owner-authored
-  message, or the "Exchange accepted" lifecycle system message) or an owner-sent row in
-  the legacy `messages` chat. No evidence -> no grant (fails closed: the owner stays
-  anonymous).
+  message, or the "Exchange accepted" lifecycle system message) or an owner-sent,
+  non-system row in the legacy `messages` chat. Only the oldest 200 messages of each
+  thread / legacy chat are read (bounded per transaction). No evidence -> no grant
+  (fails closed: the owner stays anonymous).
 
 It only inserts `identityReveals` rows; it never modifies exchanges, threads or
 messages.

@@ -669,7 +669,7 @@ describe("backfillIdentityReveals", () => {
   type Case = {
     status: "proposed" | "accepted" | "rejected" | "cancelled";
     thread?: { author: "owner" | "requester" | null; body: string }[];
-    legacyOwnerMessage?: boolean;
+    legacyOwnerMessage?: "text" | "system";
     ownerActed: boolean;
   };
   const CASES: Record<string, Case> = {
@@ -703,8 +703,25 @@ describe("backfillIdentityReveals", () => {
     },
     cancelledLegacyReply: {
       status: "cancelled",
-      legacyOwnerMessage: true,
+      legacyOwnerMessage: "text",
       ownerActed: true,
+    },
+    // Evidence past the per-thread read cap is not seen: fails closed.
+    rejectedReplyPastCap: {
+      status: "rejected",
+      thread: [
+        ...Array.from({ length: 200 }, () => ({
+          author: "requester" as const,
+          body: "ping",
+        })),
+        { author: "owner", body: "Finally: no" },
+      ],
+      ownerActed: false,
+    },
+    cancelledLegacySystemOnly: {
+      status: "cancelled",
+      legacyOwnerMessage: "system",
+      ownerActed: false,
     },
   };
 
@@ -784,7 +801,7 @@ describe("backfillIdentityReveals", () => {
             senderId: owner,
             receiverId: requester,
             content: "Let me check",
-            messageType: "text",
+            messageType: c.legacyOwnerMessage,
             isRead: true,
             createdAt: 1,
           });
@@ -806,14 +823,15 @@ describe("backfillIdentityReveals", () => {
     const t = convexTest(schema, modules);
     const { requester, owners } = await seedHistory(t);
     const actedCount = Object.values(CASES).filter((c) => c.ownerActed).length;
-    const expected = Object.keys(CASES).length + actedCount;
+    const scanned = Object.keys(CASES).length;
+    const expected = scanned + actedCount;
 
     const dry = await run(t, true);
-    expect(dry).toEqual({ scanned: 7, created: expected, existing: 0 });
+    expect(dry).toEqual({ scanned, created: expected, existing: 0 });
     expect(await grants(t)).toHaveLength(0);
 
     const real = await run(t, false);
-    expect(real).toEqual({ scanned: 7, created: expected, existing: 0 });
+    expect(real).toEqual({ scanned, created: expected, existing: 0 });
     const rows = await grants(t);
     expect(rows).toHaveLength(expected);
     for (const [name, c] of Object.entries(CASES)) {
@@ -827,7 +845,7 @@ describe("backfillIdentityReveals", () => {
     }
 
     const again = await run(t, false);
-    expect(again).toEqual({ scanned: 7, created: 0, existing: expected });
+    expect(again).toEqual({ scanned, created: 0, existing: expected });
     expect(await grants(t)).toHaveLength(expected);
   });
 });
