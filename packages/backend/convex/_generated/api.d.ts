@@ -329,6 +329,7 @@ import type * as social_adapters_mappers from "../social/adapters/mappers.js";
 import type * as social_adapters_systemClock from "../social/adapters/systemClock.js";
 import type * as social_approveFollowRequest from "../social/approveFollowRequest.js";
 import type * as social_arrangeShelf from "../social/arrangeShelf.js";
+import type * as social_backfillIdentityReveals from "../social/backfillIdentityReveals.js";
 import type * as social_cancelFollowRequest from "../social/cancelFollowRequest.js";
 import type * as social_createHouseholdInviteLink from "../social/createHouseholdInviteLink.js";
 import type * as social_declineFollowRequest from "../social/declineFollowRequest.js";
@@ -742,6 +743,7 @@ declare const fullApi: ApiFromModules<{
   "social/adapters/systemClock": typeof social_adapters_systemClock;
   "social/approveFollowRequest": typeof social_approveFollowRequest;
   "social/arrangeShelf": typeof social_arrangeShelf;
+  "social/backfillIdentityReveals": typeof social_backfillIdentityReveals;
   "social/cancelFollowRequest": typeof social_cancelFollowRequest;
   "social/createHouseholdInviteLink": typeof social_createHouseholdInviteLink;
   "social/declineFollowRequest": typeof social_declineFollowRequest;

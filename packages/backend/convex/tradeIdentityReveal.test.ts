@@ -1,6 +1,6 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 import { projectMemberIdentity } from "./social/privacy";
@@ -641,5 +641,172 @@ describe("getRequestDisclosure", () => {
     ).toBeNull();
     await t.run((ctx) => ctx.db.delete(w.thirdCopy));
     expect(await disclosure(t, "requester", w.thirdCopy)).toBeNull();
+  });
+});
+
+describe("backfillIdentityReveals", () => {
+  type Case = {
+    status: "proposed" | "accepted" | "rejected" | "cancelled";
+    thread?: { author: "owner" | "requester" | null; body: string }[];
+    legacyOwnerMessage?: boolean;
+    ownerActed: boolean;
+  };
+  const CASES: Record<string, Case> = {
+    proposed: { status: "proposed", ownerActed: false },
+    accepted: { status: "accepted", ownerActed: true },
+    rejectedSilently: {
+      status: "rejected",
+      thread: [{ author: null, body: "Exchange proposed" }],
+      ownerActed: false,
+    },
+    rejectedAfterReply: {
+      status: "rejected",
+      thread: [{ author: "owner", body: "No thanks" }],
+      ownerActed: true,
+    },
+    cancelledAfterAccept: {
+      status: "cancelled",
+      thread: [
+        { author: null, body: "Exchange proposed" },
+        { author: null, body: "Exchange accepted" },
+      ],
+      ownerActed: true,
+    },
+    cancelledRequesterOnly: {
+      status: "cancelled",
+      thread: [
+        { author: null, body: "Exchange proposed" },
+        { author: "requester", body: "Hello?" },
+      ],
+      ownerActed: false,
+    },
+    cancelledLegacyReply: {
+      status: "cancelled",
+      legacyOwnerMessage: true,
+      ownerActed: true,
+    },
+  };
+
+  // One private requester; a distinct private owner per case (grants are global per pair).
+  const seedHistory = (t: T) =>
+    t.run(async (ctx) => {
+      const mkUser = (who: string) =>
+        ctx.db.insert("users", {
+          clerkId: `clerk_${who}`,
+          email: `${who}@example.com`,
+          name: who,
+          isActive: true,
+          createdAt: 1,
+          updatedAt: 1,
+        });
+      const requester = await mkUser("requester");
+      const owners: Record<string, Id<"users">> = {};
+      for (const [name, c] of Object.entries(CASES)) {
+        const owner = await mkUser(`owner-${name}`);
+        owners[name] = owner;
+        const puzzleId = await ctx.db.insert("puzzles", {
+          title: name,
+          pieceCount: 500,
+          status: "approved",
+          submittedBy: owner,
+          createdAt: 1,
+          updatedAt: 1,
+        });
+        const copy = await ctx.db.insert("ownedPuzzles", {
+          puzzleId,
+          ownerId: owner,
+          condition: "good",
+          availability: { forTrade: false, forSale: true, forLend: false },
+          createdAt: 1,
+          updatedAt: 1,
+        });
+        const exchangeId = await ctx.db.insert("exchanges", {
+          aggregateId: `ex-${name}`,
+          initiatorId: requester,
+          recipientId: owner,
+          type: "sale",
+          requestedPuzzleId: copy,
+          status: c.status,
+          createdAt: 1,
+          updatedAt: 1,
+        });
+        if (c.thread) {
+          const threadAggregateId = `thread-${name}`;
+          await ctx.db.insert("threads", {
+            aggregateId: threadAggregateId,
+            subjectKind: "exchange",
+            exchangeId,
+            participants: [requester, owner],
+            participantsKey: [requester, owner].sort().join("|"),
+            readReceipts: [],
+            createdAt: 1,
+          });
+          let sentAt = 1;
+          for (const m of c.thread) {
+            await ctx.db.insert("threadMessages", {
+              threadAggregateId,
+              messageId: `${name}-${sentAt}`,
+              ...(m.author === "owner"
+                ? { authorId: owner }
+                : m.author === "requester"
+                  ? { authorId: requester }
+                  : {}),
+              kind: m.author === null ? "system" : "text",
+              body: m.body,
+              sentAt: sentAt++,
+            });
+          }
+        }
+        if (c.legacyOwnerMessage) {
+          await ctx.db.insert("messages", {
+            exchangeId,
+            senderId: owner,
+            receiverId: requester,
+            content: "Let me check",
+            messageType: "text",
+            isRead: true,
+            createdAt: 1,
+          });
+        }
+      }
+      return { requester, owners };
+    });
+
+  const run = async (t: T, dryRun: boolean) => {
+    const first = await t.mutation(
+      internal.social.backfillIdentityReveals.backfillIdentityReveals,
+      dryRun ? { dryRun } : {},
+    );
+    await flush(t);
+    return first;
+  };
+
+  test("dry run counts without writing; the real run creates the expected grants; a re-run creates 0", async () => {
+    const t = convexTest(schema, modules);
+    const { requester, owners } = await seedHistory(t);
+    const actedCount = Object.values(CASES).filter((c) => c.ownerActed).length;
+    const expected = Object.keys(CASES).length + actedCount;
+
+    const dry = await run(t, true);
+    expect(dry).toEqual({ scanned: 7, created: expected, existing: 0 });
+    expect(await grants(t)).toHaveLength(0);
+
+    const real = await run(t, false);
+    expect(real).toEqual({ scanned: 7, created: expected, existing: 0 });
+    const rows = await grants(t);
+    expect(rows).toHaveLength(expected);
+    for (const [name, c] of Object.entries(CASES)) {
+      const owner = owners[name]!;
+      expect(
+        rows.some((g) => g.viewerId === owner && g.targetId === requester),
+      ).toBe(true);
+      expect(
+        rows.some((g) => g.viewerId === requester && g.targetId === owner),
+      ).toBe(c.ownerActed);
+    }
+
+    const again = await run(t, false);
+    expect(again).toEqual({ scanned: 7, created: 0, existing: expected });
+    expect(await grants(t)).toHaveLength(expected);
   });
 });

@@ -74,3 +74,64 @@ Follow it with `npx convex logs` (add `--prod` for prod) or in the dashboard Log
 3. In the dashboard data view, spot-check a few older `notifications` rows: they now
    carry `actorIds`/`actorCount`/`subject` and their `isRead`/`createdAt`/`params` are
    unchanged; the bell shows names instead of "Someone" for those rows.
+
+---
+
+## `social/backfillIdentityReveals` — trade identity reveals for existing exchanges
+
+**When:** once per deployment, right after the trade identity-reveal backend (the
+`identityReveals` table, its dispatch subscriber and the exchange-view projection) is
+deployed there. Until it runs, exchanges created before that deploy carry no grants:
+a private owner sees a private requester of an older exchange as anonymous, and a
+private requester no longer sees the owner of an older accepted exchange (exchange
+views now hide anonymous parties). New exchanges are covered by the subscriber, so run
+it soon after deploying.
+
+**What it does:** pages through `exchanges` (50 rows per batch, each batch its own
+transaction, rescheduling itself until the table is exhausted) and, per exchange,
+applies the domain rule (`exchangeIdentityReveals` / `ownerActedInHistory`):
+
+- owner (recipient) -> requester (initiator): always (`reason: "exchange_requested"`).
+- requester -> owner: only when the owner acted (`reason: "exchange_owner_acted"`):
+  status `accepted` / `completed` / `disputed`, or, for `proposed` / `rejected` /
+  `cancelled`, positive evidence in that exchange's own thread (an owner-authored
+  message, or the "Exchange accepted" lifecycle system message) or an owner-sent row in
+  the legacy `messages` chat. No evidence -> no grant (fails closed: the owner stays
+  anonymous).
+
+It only inserts `identityReveals` rows; it never modifies exchanges, threads or
+messages.
+
+**Safe to re-run:** yes. A (viewer, target) pair that already holds a grant is skipped
+(counted as `existing`), so a second run creates 0 rows.
+
+**Commands:**
+
+```bash
+cd packages/backend
+
+# dev: dry run (counts only, writes nothing), then the real run
+npx convex run social/backfillIdentityReveals:backfillIdentityReveals '{"dryRun":true}'
+npx convex run social/backfillIdentityReveals:backfillIdentityReveals '{}'
+
+# prod: same, after dev looks right
+npx convex run --prod social/backfillIdentityReveals:backfillIdentityReveals '{"dryRun":true}'
+npx convex run --prod social/backfillIdentityReveals:backfillIdentityReveals '{}'
+```
+
+The command returns the FIRST batch's `{ scanned, created, existing }`; the remaining
+batches run as scheduled functions. Each batch logs a line
+`social/backfillIdentityReveals batch {...,"totals":{...},"isDone":...}` (prefixed
+`(dry run)` for dry runs); the line with `"isDone":true` carries the whole run's totals.
+Follow it with `npx convex logs` (add `--prod` for prod) or in the dashboard Logs.
+
+**Verify:**
+
+1. The real run's final `totals.created` is at most the dry run's (the dry run counts a
+   pair that repeats across several exchanges once per exchange), give or take
+   exchanges created in between, which the subscriber already covers.
+2. Run the dry run again: its final totals show `"created":0`.
+3. In the dashboard data view, `identityReveals` holds rows; spot-check an older
+   accepted exchange between two private members: each party now sees the other's
+   name in the exchange view, while an older proposal the owner never answered still
+   shows the owner as "member" to the requester.
