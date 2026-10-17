@@ -79,6 +79,9 @@ export function ThreadView({
   });
   const messageCount = messages?.length;
   const newestAuthorId = messages?.at(-1)?.authorId;
+  // Changes when a pending send is confirmed (pending-… → real id) even though
+  // the count doesn't: the confirmed group grows a time row, so follow again.
+  const newestId = messages?.at(-1)?.id;
 
   // Per-thread one-shot flags, reset when navigating between threads.
   const hasMarkedReadRef = useRef(false);
@@ -125,7 +128,7 @@ export function ThreadView({
         behavior: reduceMotion ? "auto" : "smooth",
       });
     }
-  }, [messageCount, newestAuthorId, me]);
+  }, [messageCount, newestId, newestAuthorId, me]);
 
   // Thread switch: move focus to the header title so keyboard and screen-reader
   // users land in the new conversation (once per thread, after it renders).
