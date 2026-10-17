@@ -8,7 +8,7 @@
   "scripts": {
     "type-check": "node ../../node_modules/typescript7/bin/tsc --noEmit",
     "test": "vitest run",
-    "lint": "eslint ."
+    "lint": "oxlint ."
   },
   "dependencies": {
     "zod": "^4.6.7"
