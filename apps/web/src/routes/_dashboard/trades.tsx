@@ -18,7 +18,7 @@ import { validateTradesSearch } from "@/lib/trades-search";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import {
   ArrowLeftRight,
@@ -275,7 +275,7 @@ function ExchangeListRow({
   const primary = mineTitle ?? theirsTitle;
   const secondary = mineTitle ? theirsTitle : undefined;
   const counterparty = incoming ? exchange.requester : exchange.owner;
-  const who = counterparty ? displayName(counterparty) : "";
+  const who = displayName(counterparty);
 
   const KindIcon = KIND_ICONS[exchange.type] ?? ArrowLeftRight;
 
@@ -385,6 +385,8 @@ function ExchangeDetail({
   const partner =
     exchange.requester?._id === viewerId ? exchange.owner : exchange.requester;
   const partnerName = partner ? displayName(partner) : undefined;
+  // Who the from/to line names: the requester for incoming rows, else the owner (null while hidden).
+  const counterparty = incoming ? exchange.requester : exchange.owner;
 
   return (
     <div className="mt-3 ml-[60px] flex flex-col gap-4">
@@ -406,9 +408,18 @@ function ExchangeDetail({
       <div className="text-muted-foreground flex items-center gap-2 text-sm">
         <User className="h-4 w-4" />
         <span>
-          {incoming
-            ? `${t("from")} ${displayName(exchange.requester)}`
-            : `${t("to")} ${displayName(exchange.owner)}`}
+          {incoming ? t("from") : t("to")}{" "}
+          {counterparty ? (
+            <Link
+              to="/members/$handle"
+              params={{ handle: counterparty.username ?? counterparty._id }}
+              className="text-foreground hover:underline"
+            >
+              {displayName(counterparty)}
+            </Link>
+          ) : (
+            displayName(counterparty)
+          )}
         </span>
         <ReputationBadge memberId={partnerId} />
       </div>

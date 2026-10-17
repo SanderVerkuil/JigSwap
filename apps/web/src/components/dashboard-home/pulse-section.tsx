@@ -89,7 +89,7 @@ function ExchangeTimelineRow({
   const primary = mineTitle ?? theirsTitle;
   const secondary = mineTitle ? theirsTitle : undefined;
   const counterparty = incoming ? exchange.requester : exchange.owner;
-  const who = counterparty ? displayName(counterparty) : "";
+  const who = displayName(counterparty);
 
   const KindIcon = exchange.type === "loan" ? Package : ArrowLeftRight;
 

@@ -266,6 +266,27 @@ describe("NotificationItem rendering", () => {
     expect(screen.getByText("Puzzler")).toBeTruthy();
   });
 
+  it.each([
+    ["en", "Puzzler declined your trade for Starry Night."],
+    ["nl", "Puzzelaar"],
+  ] as const)(
+    "names a privacy-hidden trade_declined actor generically, not 'Former member' (%s)",
+    (locale, text) => {
+      const { container } = renderItem(
+        base({
+          type: "trade_declined",
+          actors: [{ anonymous: true }],
+          href: "/trades?exchange=ex_1",
+          context: { puzzleTitle: "Starry Night" },
+        }),
+        { locale },
+      );
+      const sentence = rowLink(container)!.textContent;
+      expect(sentence).toContain(text);
+      expect(sentence).not.toMatch(/Former member|Voormalig lid/);
+    },
+  );
+
   it("an unread row without a destination is a stretched mark-read button", () => {
     const { container, onOpen } = renderItem(
       base({ actors: [{ anonymous: true }], href: null }),
