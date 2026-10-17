@@ -39,7 +39,7 @@ cd jigswap
 
 ### 2. Install Dependencies
 
-This project uses a monorepo structure with Nx workspace. Install all dependencies using `pnpm`:
+This project is a pnpm workspace monorepo (tasks run via Turborepo). Install all dependencies using `pnpm`:
 
 ```bash
 pnpm install
@@ -102,7 +102,7 @@ You should now be able to access the app at `http://localhost:3000`.
 
 ### Project Structure
 
-This is a monorepo managed by Nx with the following structure:
+This is a pnpm workspace monorepo, with tasks run by Turborepo, with the following structure:
 
 ```
 jigswap/
@@ -119,7 +119,7 @@ jigswap/
 │       ├── convex/          # Convex functions and schema
 │       └── package.json     # Backend dependencies
 ├── package.json             # Root workspace configuration
-└── nx.json                  # Nx workspace configuration
+└── turbo.json               # Turborepo task pipeline
 ```
 
 ## Pull Request Workflow

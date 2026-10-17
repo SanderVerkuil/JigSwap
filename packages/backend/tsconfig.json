@@ -1,23 +1,8 @@
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "module": "es2022",
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "importHelpers": true,
-    "noImplicitOverride": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "noPropertyAccessFromIndexSignature": true
-  },
-  "files": [],
-  "include": [],
-  "references": [
-    {
-      "path": "./tsconfig.lib.json"
-    },
-    {
-      "path": "./tsconfig.spec.json"
-    }
-  ]
+  // Type-checks the Convex functions with their own compiler settings (convex/tsconfig.json).
+  // Tests are excluded: convex-test files carry ~200 pre-existing type errors (import.meta.glob
+  // typing and loose Doc unions) and run under vitest, which strips types without checking.
+  "extends": "./convex/tsconfig.json",
+  "include": ["convex/**/*"],
+  "exclude": ["convex/_generated", "convex/**/*.test.ts"]
 }

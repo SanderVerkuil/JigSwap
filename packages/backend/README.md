@@ -1,11 +1,11 @@
 # backend
 
-This library was generated with [Nx](https://nx.dev).
+Convex functions, schema and their convex-test suites.
 
-## Building
+## Type-checking
 
-Run `nx build backend` to build the library.
+Run `pnpm type-check` to type-check the Convex functions (tests excluded; see `tsconfig.json`).
 
 ## Running unit tests
 
-Run `nx test backend` to execute the unit tests via [Vitest](https://vitest.dev/).
+Run `pnpm test` to execute the unit tests via [Vitest](https://vitest.dev/).

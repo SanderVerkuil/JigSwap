@@ -69,7 +69,7 @@ Our mission is to make puzzle sharing sustainable, accessible, and enjoyable for
 
 ### Development Tools
 
-- **Nx** - Monorepo build system and development tools
+- **Turborepo** - Monorepo task runner and cache
 - **pnpm** - Fast, disk space efficient package manager (v10.13.1)
 - **ESLint** - Code linting
 - **TypeScript** - Static type checking
@@ -95,7 +95,7 @@ Before you begin, ensure you have the following installed:
    ```
 
 2. **Install dependencies**
-   This project uses a monorepo structure with Nx workspace:
+   This project is a pnpm workspace monorepo (tasks run via Turborepo):
 
    ```bash
    pnpm install
@@ -214,7 +214,7 @@ jigswap/
 │   ├── api-specification.md  # API specification
 │   └── feature-roadmap.md    # Development roadmap
 ├── package.json               # Root workspace configuration
-├── nx.json                    # Nx workspace configuration
+├── turbo.json                 # Turborepo task pipeline
 └── pnpm-workspace.yaml        # pnpm workspace configuration
 ```
 
@@ -232,9 +232,9 @@ jigswap/
 - `pnpm lint:fix` - Fix ESLint errors on all projects
 - `pnpm type-check` - Run TypeScript type checking on all projects
 - `pnpm test` - Run tests on all projects
-- `pnpm clean` - Clean build artifacts and reset Nx cache
+- `pnpm clean` - Clean build artifacts and the Turborepo cache
 - `pnpm format` - Format code with Prettier
-- `pnpm graph` - View Nx dependency graph
+- `pnpm graph` - Write the task graph to graph.html
 
 ### Web App Scripts (apps/web)
 

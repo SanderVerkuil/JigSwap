@@ -1,6 +1,6 @@
-import nx from "@nx/eslint-plugin";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import typescript from "eslint-config-next/typescript";
+import boundaries from "eslint-plugin-boundaries";
 
 // Flat-config plugins are block-scoped; reuse next's "import" plugin so the
 // rule below resolves even when the Nx graph parser reads this block in isolation.
@@ -27,60 +27,54 @@ const eslintConfig = [
       ],
     },
   },
-  // Hexagonal architecture: enforce dependency direction via Nx project tags.
+  // Hexagonal architecture: enforce dependency direction between workspace packages.
+  // Each package is one element; a package may only import the element types listed for it.
   {
     files: ["**/*.{ts,tsx,js,jsx}"],
-    plugins: { "@nx": nx },
+    plugins: { boundaries },
+    settings: {
+      // Element patterns are repo-relative; the plugin resolves them against the CWD unless told
+      // otherwise, and every package's `lint` script runs from inside its own package.
+      "boundaries/root-path": import.meta.dirname,
+      "import/resolver": {
+        typescript: {
+          project: ["apps/*/tsconfig.json", "packages/*/tsconfig.json"],
+          noWarnOnMultipleProjects: true,
+        },
+      },
+      "boundaries/elements": [
+        { type: "app", pattern: "apps/web" },
+        { type: "gateway", pattern: "packages/gateway" },
+        { type: "backend-adapter", pattern: "packages/backend" },
+        { type: "backend-adapter", pattern: "packages/email" },
+        { type: "contracts", pattern: "packages/contracts" },
+        { type: "domain", pattern: "packages/domain" },
+      ],
+    },
     rules: {
-      "@nx/enforce-module-boundaries": [
+      "boundaries/dependencies": [
         "error",
         {
-          allow: [],
-          enforceBuildableLibDependency: true,
-          depConstraints: [
+          default: "allow",
+          policies: Object.entries({
             // The domain core is pure: it may only depend on other domain code.
-            {
-              sourceTag: "type:domain",
-              onlyDependOnLibsWithTags: ["type:domain"],
-            },
+            domain: ["domain"],
             // Contracts are the published language: self-contained.
-            {
-              sourceTag: "type:contracts",
-              onlyDependOnLibsWithTags: ["type:contracts"],
-            },
+            contracts: ["contracts"],
             // Backend adapters wire domain + contracts behind ports.
-            {
-              sourceTag: "type:backend-adapter",
-              onlyDependOnLibsWithTags: [
-                "type:domain",
-                "type:contracts",
-                "type:backend-adapter",
-              ],
-            },
+            "backend-adapter": ["domain", "contracts", "backend-adapter"],
             // The gateway is the shared transport seam: it alone reaches the Convex generated API,
             // so every web tier depends on it instead of _generated directly.
-            {
-              sourceTag: "type:gateway",
-              onlyDependOnLibsWithTags: [
-                "type:contracts",
-                "type:backend-adapter",
-                "type:gateway",
-              ],
-            },
+            gateway: ["contracts", "backend-adapter", "gateway"],
             // App (BFF + UI) speaks contracts and reaches the backend through the gateway;
-            // type:backend-adapter stays allowed transitionally (removed in a later phase).
-            {
-              sourceTag: "type:app",
-              onlyDependOnLibsWithTags: [
-                "type:contracts",
-                "type:backend-adapter",
-                "type:gateway",
-                "type:app",
-              ],
+            // backend-adapter stays allowed transitionally (removed in a later phase).
+            app: ["contracts", "backend-adapter", "gateway", "app"],
+          }).map(([from, allowed]) => ({
+            from: { element: { type: from } },
+            disallow: {
+              to: { element: { type: `!(${allowed.join("|")})` } },
             },
-            // Scope is non-restrictive for now; tag-based type rules above do the enforcing.
-            { sourceTag: "scope:*", onlyDependOnLibsWithTags: ["scope:*"] },
-          ],
+          })),
         },
       ],
     },

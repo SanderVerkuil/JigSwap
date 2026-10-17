@@ -39,10 +39,10 @@ jobs:
         run: sudo apt-get update -q && sudo apt-get install -y -q graphviz
 
       - name: Test coverage (domain + backend)
-        run: pnpm exec nx run-many -t coverage --parallel=2
+        run: pnpm exec turbo run coverage --concurrency=2
 
-      # vite build is invoked directly (not `nx build web`): Nx doesn't key its
-      # cache on ANALYZE, so a cached replay would silently skip stats.html.
+      # vite build is invoked directly (not `turbo run build`): turbo.json doesn't key
+      # the build on ANALYZE, so a cached replay would silently skip stats.html.
       - name: Build with bundle analysis
         env:
           ANALYZE: "1"
