@@ -51,7 +51,28 @@ export interface ActivityEntryView {
   actorName?: string;
   /** Present only on "acquisitionBatch" entries (`ref` is then the batch id). */
   batch?: ActivityBatchView;
+  /**
+   * The actor's profile link, present only when their profile page resolves (an active member).
+   * `handle` is the member id: profile handles resolve id-first, and the page redirects to the
+   * canonical slug/username.
+   */
+  actor?: { handle: string };
+  /** Where the entry links. Absent = the entry renders as plain text. */
+  target?: ActivityTargetView;
 }
+
+/**
+ * Where an activity entry navigates, decided server-side and emitted ONLY after the same gate the
+ * target page's own read applies (ids are doc _ids, as the routes parse them):
+ *   - "myCopy" / "copy": the copy page (canViewCopy); "myCopy" when the viewer owns it.
+ *   - "definition": the puzzle definition page (any member).
+ *   - "memberPuzzles": the actor's profile puzzles (the profile unlock rule).
+ *   - "trades": the viewer's own trades page (only when the viewer is a party to the exchange).
+ */
+export type ActivityTargetView =
+  | { kind: "myCopy" | "copy" | "definition"; id: string }
+  | { kind: "memberPuzzles"; handle: string }
+  | { kind: "trades" };
 
 /**
  * One batch add (a single quick-start acquireCopies call) folded into one feed entry. `count` and

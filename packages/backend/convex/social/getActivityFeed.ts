@@ -1,6 +1,7 @@
 import type {
   ActivityBatchCoverView,
   ActivityEntryView,
+  ActivityTargetView,
 } from "@jigswap/contracts";
 import {
   buildActivityFeed,
@@ -183,22 +184,42 @@ export const getActivityFeed = query({
     const distinctActorIds = [
       ...new Set(feed.map((e) => e.memberId as string)),
     ];
-    const actorNames = new Map(
+    const actors = new Map(
       await Promise.all(
         distinctActorIds.map(
-          async (id) => [id, await resolveActorName(ctx, id)] as const,
+          async (id) => [id, await resolveActor(ctx, id)] as const,
         ),
       ),
     );
 
+    // Each entry's link target, decided only for the entries that made the page. Sequential: the
+    // lazily built copy-view context and its memo aren't Promise.all-safe.
+    const targets: (ActivityTargetView | undefined)[] = [];
+    const targetContext: { copyView: CopyViewContext | null } = {
+      copyView: null,
+    };
+    for (const entry of feed) {
+      targets.push(
+        await resolveTarget(
+          ctx,
+          meId,
+          entry,
+          acquiredCopies,
+          actors.get(entry.memberId as string)?.linkable === true,
+          targetContext,
+        ),
+      );
+    }
+
     return Promise.all(
-      feed.map(async (entry) =>
+      feed.map(async (entry, index) =>
         toActivityEntryView(
           entry,
-          actorNames.get(entry.memberId as string),
+          actors.get(entry.memberId as string),
           entry.kind === "acquisitionBatch"
             ? await toBatchView(ctx, acquiredCopies.get(entry.ref) ?? [])
             : undefined,
+          targets[index],
         ),
       ),
     );
@@ -267,12 +288,93 @@ const toBatchView = async (
   ),
 });
 
+// Where an entry links, decided with the SAME gate the target page's own read applies, so the
+// client never guesses an id or a visibility:
+//   acquisition      -> the copy page. The entry's copy already passed canViewCopy (and the profile
+//                       unlock rule) in visibleAcquiredCopies, which is getCopyInstanceView's gate.
+//   acquisitionBatch -> the actor's profile puzzles. The batch already passed the profile unlock rule
+//                       (listProfileCopies' gate); the profile page itself needs an active member.
+//   completion/started -> the solve's copy when the viewer may reach it (canViewCopy), else the
+//                       puzzle definition, exactly like the profile's solves list
+//                       (listProfileCompletions), behind its profile unlock rule.
+//   exchange         -> the viewer's trades page, only when the viewer is a party; a follower who is
+//                       not a party gets no target (the actor link still goes to the profile).
+const resolveTarget = async (
+  ctx: QueryCtx,
+  viewerId: Id<"users">,
+  entry: ActivityEntry,
+  acquiredCopies: Map<string, Doc<"ownedPuzzles">[]>,
+  actorLinkable: boolean,
+  context: { copyView: CopyViewContext | null },
+): Promise<ActivityTargetView | undefined> => {
+  const actorId = entry.memberId as unknown as Id<"users">;
+  switch (entry.kind) {
+    case "acquisition": {
+      const copy = acquiredCopies.get(entry.ref)?.[0];
+      if (!copy) return undefined;
+      return {
+        kind: copy.ownerId === viewerId ? "myCopy" : "copy",
+        id: copy._id as string,
+      };
+    }
+    case "acquisitionBatch":
+      return actorLinkable
+        ? { kind: "memberPuzzles", handle: entry.memberId as string }
+        : undefined;
+    case "completion":
+    case "started": {
+      if (!(await canSeeProfileContent(ctx, viewerId, actorId))) {
+        return undefined;
+      }
+      const completion = await ctx.db
+        .query("completions")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", entry.ref))
+        .unique();
+      if (!completion || completion.userId !== actorId) return undefined;
+      const copy = completion.ownedPuzzleId
+        ? await ctx.db.get(completion.ownedPuzzleId)
+        : null;
+      let reachable = false;
+      if (copy) {
+        if (copy.ownerId === viewerId || copy.heldBy === viewerId) {
+          reachable = true;
+        } else {
+          context.copyView ??= await buildCopyViewContext(ctx, viewerId);
+          reachable = await canViewCopyWithContext(ctx, copy, context.copyView);
+        }
+      }
+      if (copy && reachable) {
+        return {
+          kind: copy.ownerId === viewerId ? "myCopy" : "copy",
+          id: copy._id as string,
+        };
+      }
+      const puzzleId =
+        completion.puzzleId ?? (copy && reachable ? copy.puzzleId : undefined);
+      const puzzle = puzzleId ? await ctx.db.get(puzzleId) : null;
+      return puzzle
+        ? { kind: "definition", id: puzzle._id as string }
+        : undefined;
+    }
+    case "exchange": {
+      const row = await loadExchange(ctx, entry.ref);
+      const isParty =
+        row !== null &&
+        (row.initiatorId === viewerId || row.recipientId === viewerId);
+      return isParty ? { kind: "trades" } : undefined;
+    }
+    default:
+      return undefined;
+  }
+};
+
 // Prefer the actor's Social profile display name, falling back to their account name (mirrors
 // `toFollowEdgeView`'s counterparty-name resolution) so an actor without a profile still renders.
-const resolveActorName = async (
+// `linkable` mirrors resolveMemberByHandle: the profile page only resolves an active member.
+const resolveActor = async (
   ctx: QueryCtx,
   memberId: string,
-): Promise<string | undefined> => {
+): Promise<{ name: string | undefined; linkable: boolean }> => {
   const id = memberId as unknown as Id<"users">;
   const [profile, user] = await Promise.all([
     ctx.db
@@ -281,7 +383,10 @@ const resolveActorName = async (
       .unique(),
     ctx.db.get(id),
   ]);
-  return memberDisplayNameOf(user, profile);
+  return {
+    name: memberDisplayNameOf(user, profile),
+    linkable: user?.isActive === true,
+  };
 };
 
 const asMember = (id: string): MemberId => toMemberId(id);
@@ -371,13 +476,16 @@ const loadExchange = (
 
 const toActivityEntryView = (
   entry: ActivityEntry,
-  actorName: string | undefined,
+  actor: { name: string | undefined; linkable: boolean } | undefined,
   batch: ActivityEntryView["batch"],
+  target: ActivityTargetView | undefined,
 ): ActivityEntryView => ({
   memberId: entry.memberId as string,
   kind: entry.kind,
   occurredAt: entry.occurredAt.getTime(),
   ref: entry.ref,
-  actorName,
+  actorName: actor?.name,
   ...(batch ? { batch } : {}),
+  ...(actor?.linkable ? { actor: { handle: entry.memberId as string } } : {}),
+  ...(target ? { target } : {}),
 });
