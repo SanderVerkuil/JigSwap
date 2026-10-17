@@ -1,5 +1,6 @@
 "use node";
 
+import type { NotificationType } from "@jigswap/domain";
 import { v } from "convex/values";
 import webpush from "web-push";
 import { internal } from "../_generated/api";
@@ -13,6 +14,8 @@ import {
   type VapidConfig,
   type WebPushSender,
 } from "./adapters/webPush";
+import { pushTextOf } from "./copy";
+import { deliveryRefsValidator } from "./deliveryContent";
 
 const errMsg = (e: unknown): string =>
   e instanceof Error ? e.message : String(e);
@@ -52,8 +55,12 @@ const makeRealSender = (vapid: VapidConfig): WebPushSender => {
 
 // Out-of-band push delivery for ONE recipient, scheduled (runAfter 0) by the push channel after the
 // originating mutation commits. Fans the notification out to every active subscription, prunes the
-// dead ones, and emits ONE wide event so a missing push is diagnosable. FAIL-OPEN: with VAPID unset
-// it logs and drops (the in-app row already exists), so push is disabled-by-default.
+// dead ones, and emits ONE wide event so a missing push is diagnosable. Payloads carrying `params`
+// are resolved for the recipient first (notifications/resolveForDelivery): the text names the
+// resolved actor and context and the click URL is the in-app deep link; an admin-only type for a
+// recipient who lost the role is dropped. Older payloads send their snapshot title/message with the
+// legacy notificationUrl. FAIL-OPEN: with VAPID unset it logs and drops (the in-app row already
+// exists), so push is disabled-by-default.
 export const send = internalAction({
   args: {
     userId: v.id("users"),
@@ -61,6 +68,9 @@ export const send = internalAction({
     title: v.string(),
     message: v.string(),
     relatedId: v.optional(v.string()),
+    // Optional so a payload scheduled before rich delivery still validates (snapshot send).
+    params: v.optional(v.record(v.string(), v.string())),
+    ...deliveryRefsValidator,
   },
   handler: async (ctx, args) => {
     const startedAt = Date.now();
@@ -93,8 +103,33 @@ export const send = internalAction({
         return;
       }
 
+      let payload = toWebPushPayload(args);
+      if (args.params !== undefined) {
+        const content = await ctx.runQuery(
+          internal.notifications.resolveForDelivery.resolveForDelivery,
+          {
+            recipientId: args.userId,
+            type: args.type as NotificationType,
+            params: args.params,
+            relatedId: args.relatedId,
+            actorId: args.actorId,
+            subject: args.subject,
+          },
+        );
+        event.resolved = content !== null;
+        if (content === null) {
+          event.skipped = true;
+          event.skip_reason = "not_visible";
+          return;
+        }
+        payload = toWebPushPayload({
+          ...args,
+          ...pushTextOf(args.type as NotificationType, content),
+          url: content.href,
+        });
+      }
+
       const sender = makeRealSender(vapid);
-      const payload = toWebPushPayload(args);
 
       let sent = 0;
       let pruned = 0;

@@ -10,7 +10,16 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { emailChannel } from "./notifications/adapters/channels/emailChannel";
+import { pushChannel } from "./notifications/adapters/channels/pushChannel";
 import schema from "./schema";
+
+// web-push signs and POSTs to the push service over https; replace it so the send action's payload
+// can be inspected. Only sendWebPush imports it.
+const webPushMock = vi.hoisted(() => ({
+  setVapidDetails: vi.fn(),
+  sendNotification: vi.fn(async () => ({ statusCode: 201 })),
+}));
+vi.mock("web-push", () => ({ default: webPushMock }));
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
@@ -407,6 +416,23 @@ describe("channels", () => {
     ]);
   });
 
+  test("the push channel forwards params and refs next to the snapshot text", async () => {
+    const s = await setup();
+    await s.t.run((ctx) =>
+      pushChannel(ctx)(notification(s, { channel: "push" })),
+    );
+    expect(await scheduledArgs(s, "sendWebPush")).toEqual([
+      expect.objectContaining({
+        userId: s.viewer,
+        title: "New Exchange Request",
+        message: "Mara Display wants to trade for one of your puzzles",
+        params: { actorName: "Mara Display" },
+        actorId: s.mara,
+        subject: { kind: "exchange", exchangeId: "ex-1" },
+      }),
+    ]);
+  });
+
   test("a delivery without refs forwards none", async () => {
     const s = await setup();
     await s.t.run((ctx) =>
@@ -513,5 +539,142 @@ describe("sendEmail action", () => {
     expect(body.html_content).toContain(
       "https://jigswap.site/messages/thread-9",
     );
+  });
+});
+
+describe("sendWebPush action", () => {
+  beforeEach(() => {
+    webPushMock.sendNotification.mockClear();
+    vi.stubEnv("VAPID_PUBLIC_KEY", "pub");
+    vi.stubEnv("VAPID_PRIVATE_KEY", "priv");
+  });
+  afterEach(() => vi.unstubAllEnvs());
+
+  const subscribe = (s: Setup, userId: Id<"users">) =>
+    s.t.run((ctx) =>
+      ctx.db.insert("pushSubscriptions", {
+        userId,
+        endpoint: `https://push.example/${userId}`,
+        p256dh: "p",
+        auth: "a",
+        createdAt: now,
+      }),
+    );
+
+  const sentPayload = () => {
+    expect(webPushMock.sendNotification).toHaveBeenCalledTimes(1);
+    const call = webPushMock.sendNotification.mock.calls[0] as unknown as [
+      unknown,
+      string,
+    ];
+    return JSON.parse(call[1]) as { title: string; body: string; url: string };
+  };
+
+  test("names the actor, quotes the message and links the thread", async () => {
+    const s = await setup();
+    await subscribe(s, s.viewer);
+    await seedThread(s, [s.viewer, s.mara]);
+    await s.t.action(internal.notifications.sendWebPush.send, {
+      userId: s.viewer,
+      type: "message_received",
+      title: "New message",
+      message: "Stale sent you a message",
+      relatedId: "thread-1",
+      params: { actorName: "Stale" },
+      actorId: s.mara,
+      subject: { kind: "thread", threadId: "thread-1" },
+    });
+    expect(sentPayload()).toMatchObject({
+      title: "New message from Mara Display",
+      body: "Still have the Ravensburger?",
+      url: "/messages/thread-1",
+    });
+  });
+
+  test("links the specific exchange", async () => {
+    const s = await setup();
+    await subscribe(s, s.viewer);
+    await seedExchange(s);
+    await s.t.action(internal.notifications.sendWebPush.send, {
+      userId: s.viewer,
+      type: "trade_request",
+      title: "New Exchange Request",
+      message: "x",
+      params: {},
+      actorId: s.mara,
+      subject: { kind: "exchange", exchangeId: "ex-1" },
+    });
+    expect(sentPayload()).toMatchObject({
+      body: 'Mara Display wants to trade for "Starry Night"',
+      url: "/trades?exchange=ex-1",
+    });
+  });
+
+  test("labels a deactivated actor as a former member and falls back to the legacy URL", async () => {
+    const s = await setup();
+    await subscribe(s, s.viewer);
+    await s.t.action(internal.notifications.sendWebPush.send, {
+      userId: s.viewer,
+      type: "new_follower",
+      title: "New follower",
+      message: "gone name started following you",
+      params: { actorName: "gone name" },
+      actorId: s.gone,
+    });
+    expect(sentPayload()).toMatchObject({
+      body: "Former member started following you",
+      url: "/people",
+    });
+  });
+
+  test("drops an admin type for a recipient who lost the role", async () => {
+    const s = await setup();
+    await subscribe(s, s.admin);
+    await s.t.run((ctx) => ctx.db.patch(s.admin, { role: "member" }));
+    await s.t.action(internal.notifications.sendWebPush.send, {
+      userId: s.admin,
+      type: "admin_definition_submitted",
+      title: "Submission to Moderate",
+      message: "x",
+      params: { puzzleTitle: "Sky" },
+      actorId: s.priv,
+    });
+    expect(webPushMock.sendNotification).not.toHaveBeenCalled();
+  });
+
+  test("still sends an admin type to a current admin", async () => {
+    const s = await setup();
+    await subscribe(s, s.admin);
+    await s.t.action(internal.notifications.sendWebPush.send, {
+      userId: s.admin,
+      type: "admin_definition_submitted",
+      title: "Submission to Moderate",
+      message: "x",
+      params: { puzzleTitle: "Sky" },
+      actorId: s.priv,
+    });
+    expect(sentPayload()).toMatchObject({
+      body: '"Sky" awaits moderation',
+      url: "/admin/moderation",
+    });
+  });
+
+  test("a payload scheduled before rich delivery sends its snapshot with the legacy URL", async () => {
+    const s = await setup();
+    await subscribe(s, s.viewer);
+    await s.t.action(internal.notifications.sendWebPush.send, {
+      userId: s.viewer,
+      type: "message_received",
+      title: "New message",
+      message: "Anna sent you a message",
+      relatedId: "thread-1",
+    });
+    expect(sentPayload()).toEqual({
+      title: "New message",
+      body: "Anna sent you a message",
+      type: "message_received",
+      relatedId: "thread-1",
+      url: "/messages",
+    });
   });
 });

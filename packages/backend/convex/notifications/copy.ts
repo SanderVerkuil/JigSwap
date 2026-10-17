@@ -1,4 +1,5 @@
 import type { NotificationType } from "@jigswap/domain";
+import type { DeliveryContent } from "./deliveryContent";
 
 // English render table for notification copy, used ONLY where a server-side plain string is
 // needed today: the push channel payload. Web renders localized copy from i18n keys; email
@@ -15,6 +16,10 @@ import type { NotificationType } from "@jigswap/domain";
 //                 admin_definition_submitted
 //   goalTitle   — goal_achieved
 //   reason      — proposal_rejected (moderator-entered, may be absent)
+//   rating      — review_received (1-5, snapshotted)
+// The push send action renders from the delivery resolved for the recipient (pushTextOf), which
+// overlays the live actor name and context: puzzleTitle on the trade types (the exchanged copy),
+// messagePreview on message_received, and actorName on every type that has an actor.
 // whats_new carries no params: relatedId is the entry id, and the entry title is per-locale content
 // the backend manifest doesn't hold, so push uses a static line.
 
@@ -25,36 +30,59 @@ export interface NotificationText {
 
 type Params = Readonly<Record<string, string>>;
 
+// ` for "<title>"` / ` of "<title>"` when the puzzle is known, else nothing.
+const about = (p: Params, word: "for" | "of"): string =>
+  p["puzzleTitle"] ? ` ${word} "${p["puzzleTitle"]}"` : "";
+
 const COPY: Record<NotificationType, (p: Params) => NotificationText> = {
   trade_request: (p) => ({
     title: "New Exchange Request",
-    message: `${p["actorName"] ?? "Someone"} wants to trade for one of your puzzles`,
+    message: p["puzzleTitle"]
+      ? `${p["actorName"] ?? "Someone"} wants to trade for "${p["puzzleTitle"]}"`
+      : `${p["actorName"] ?? "Someone"} wants to trade for one of your puzzles`,
   }),
-  trade_accepted: () => ({
+  trade_accepted: (p) => ({
     title: "Exchange Accepted",
-    message: "Your trade request has been accepted!",
-  }),
-  trade_declined: () => ({
-    title: "Exchange Declined",
-    message: "Your trade request has been declined",
-  }),
-  trade_completed: () => ({
-    title: "Exchange Completed",
-    message: "Exchange has been marked as completed",
-  }),
-  trade_cancelled: () => ({
-    title: "Exchange Cancelled",
-    message: "Exchange request has been cancelled",
-  }),
-  message_received: (p) => ({
-    title: "New message",
     message: p["actorName"]
-      ? `${p["actorName"]} sent you a message`
-      : "You have a new message",
+      ? `${p["actorName"]} accepted your trade request${about(p, "for")}`
+      : "Your trade request has been accepted!",
   }),
-  review_received: () => ({
+  trade_declined: (p) => ({
+    title: "Exchange Declined",
+    message: p["actorName"]
+      ? `${p["actorName"]} declined your trade request${about(p, "for")}`
+      : "Your trade request has been declined",
+  }),
+  trade_completed: (p) => ({
+    title: "Exchange Completed",
+    message: p["actorName"]
+      ? `Your exchange${about(p, "of")} with ${p["actorName"]} was marked as completed`
+      : "Exchange has been marked as completed",
+  }),
+  trade_cancelled: (p) => ({
+    title: "Exchange Cancelled",
+    message: p["actorName"]
+      ? `${p["actorName"]} cancelled the trade request${about(p, "for")}`
+      : "Exchange request has been cancelled",
+  }),
+  message_received: (p) => {
+    const actor = p["actorName"];
+    const preview = p["messagePreview"];
+    if (actor && preview) {
+      return { title: `New message from ${actor}`, message: preview };
+    }
+    return {
+      title: "New message",
+      message: actor ? `${actor} sent you a message` : "You have a new message",
+    };
+  },
+  review_received: (p) => ({
     title: "New Review",
-    message: "You received a new partner review",
+    message: p["actorName"]
+      ? p["rating"]
+        ? `${p["actorName"]} left you a ${p["rating"]}-star review`
+        : `${p["actorName"]} left you a review`
+      : "You received a new partner review",
   }),
   puzzle_favorited: () => ({
     title: "Puzzle Favorited",
@@ -86,9 +114,11 @@ const COPY: Record<NotificationType, (p: Params) => NotificationText> = {
     title: "New Exchange Request",
     message: `${p["actorName"] ?? "Someone"} wants to trade for one of your puzzles`,
   }),
-  exchange_disputed: () => ({
+  exchange_disputed: (p) => ({
     title: "Exchange Disputed",
-    message: "The other party has flagged an issue with your exchange",
+    message: p["actorName"]
+      ? `${p["actorName"]} flagged an issue with your exchange${about(p, "of")}`
+      : "The other party has flagged an issue with your exchange",
   }),
   proposal_approved: (p) => ({
     title: "Suggestion Applied",
@@ -129,9 +159,11 @@ const COPY: Record<NotificationType, (p: Params) => NotificationText> = {
       ? `${p["actorName"]} asked to follow you`
       : "Someone asked to follow you",
   }),
-  follow_request_approved: () => ({
+  follow_request_approved: (p) => ({
     title: "Request approved",
-    message: "Your follow request was approved",
+    message: p["actorName"]
+      ? `${p["actorName"]} approved your follow request`
+      : "Your follow request was approved",
   }),
   household_invite_received: (p) => ({
     title: "Household invite",
@@ -155,3 +187,18 @@ export const renderNotificationText = (
   type: NotificationType,
   params: Params = {},
 ): NotificationText => COPY[type](params);
+
+/** The push label for a deleted or deactivated actor (push is English-only). */
+export const FORMER_MEMBER = "Former member";
+
+/** Push text for a delivery resolved for its recipient (notifications/resolveForDelivery). */
+export const pushTextOf = (
+  type: NotificationType,
+  content: DeliveryContent,
+): NotificationText =>
+  renderNotificationText(
+    type,
+    content.actorAnonymous
+      ? { ...content.params, actorName: FORMER_MEMBER }
+      : content.params,
+  );
