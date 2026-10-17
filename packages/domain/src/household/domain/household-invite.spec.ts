@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { toId, toMemberId } from "../../shared-kernel";
+import { HouseholdInviteDeclined } from "./events";
 import { HouseholdInvite } from "./household-invite";
 import { HouseholdId, HouseholdInviteId } from "./ids";
 
@@ -35,6 +36,10 @@ describe("HouseholdInvite.send", () => {
     expect(result.isOk).toBe(true);
     if (result.isErr) return;
     expect(result.value.status).toBe("pending");
+    expect(result.value.id).toBe(id);
+    expect(result.value.householdId).toBe(householdId);
+    expect(result.value.inviterId).toBe(ann);
+    expect(result.value.inviteeId).toBe(bob);
     expect(result.value.pullEvents().map((e) => e.name)).toEqual([
       "HouseholdInviteSent",
     ]);
@@ -75,5 +80,15 @@ describe("HouseholdInvite.accept / decline", () => {
     expect(invite.decline(bob, t1).isOk).toBe(true);
     expect(invite.status).toBe("declined");
     expect(invite.toState().respondedAt).toEqual(t1);
+  });
+
+  it("records HouseholdInviteDeclined with the invite's parties", () => {
+    const invite = sent();
+    expect(invite.decline(bob, t1).isOk).toBe(true);
+    const events = invite.pullEvents();
+    expect(events.map((e) => e.name)).toEqual(["HouseholdInviteDeclined"]);
+    expect(events).toEqual([
+      new HouseholdInviteDeclined(id, householdId, ann, bob, t1),
+    ]);
   });
 });
