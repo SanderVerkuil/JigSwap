@@ -15,6 +15,7 @@ import {
   type NavContext,
 } from "@/components/dashboard-layout/nav-context";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import { HouseholdAccess } from "@/components/household/household-access";
 import { ImageEditorDialog } from "@/components/image-editor/image-editor-dialog";
 import { EmptyState } from "@/components/library/empty-state";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
@@ -109,7 +110,12 @@ export function CopyInstanceScreen({
     }),
   );
 
-  const notOwner = owned && copy != null && copy.viewerIsOwner === false;
+  // Household members may open a housemate's copy under /my-puzzles too (it is in their library).
+  const notOwner =
+    owned &&
+    copy != null &&
+    copy.viewerIsOwner === false &&
+    copy.household === null;
   useEffect(() => {
     if (notOwner) router.push(`/copies/${copyId}`);
   }, [notOwner, copyId, router]);
@@ -227,15 +233,17 @@ function CopyInstanceDetail({
     startDate: number;
   } | null>(null);
 
+  // Who may log their own solves here: the owner and any household member (view or manage) —
+  // completions stay personal. Management (sharing toggles, edit, photos) needs viewerCanManage.
+  const canSolve = copy.viewerIsOwner || copy.household !== null;
+
   // The caller's solve history on this copy (caller-scoped server-side), powering the
-  // Start puzzle ↔ Finish solve swap below. Owner-only: the swap button renders only in the
-  // viewerIsOwner branch, so non-owner viewers skip the query entirely.
+  // Start puzzle ↔ Finish solve swap below. Only for viewers who may solve here, so other
+  // viewers skip the query entirely.
   const { data: myHistory } = useQuery(
     convexQuery(
       gateway.solving.completionHistory,
-      copy.viewerIsOwner && copy.aggregateId
-        ? { copyId: copy.aggregateId }
-        : "skip",
+      canSolve && copy.aggregateId ? { copyId: copy.aggregateId } : "skip",
     ),
   );
   // The CALLER's most recent in-progress solve on this copy (caller-scoped server-side).
@@ -250,7 +258,7 @@ function CopyInstanceDetail({
   // Toggle a single sharing flag on the copy. Optimistic from the user's view via Convex
   // reactivity; on failure we surface a toast and the next query refresh restores the real state.
   const toggleSharing = async (flag: "forTrade" | "forLend") => {
-    if (!copy.viewerIsOwner || copy.aggregateId == null) return;
+    if (!copy.viewerCanManage || copy.aggregateId == null) return;
     try {
       await updateSharing.mutateAsync(
         availabilityToSharing(copy.aggregateId, {
@@ -302,7 +310,7 @@ function CopyInstanceDetail({
               { label: tShell("groups.community.label"), href: "/community" },
               { label: tShell("crumbs.ownedCopies"), href: "/browse" },
             ],
-      actions: copy.viewerIsOwner ? (
+      actions: copy.viewerCanManage ? (
         <Button variant="outline" onClick={() => setEditOpen(true)}>
           <Edit className="h-4 w-4" />
           {t("actions.edit")}
@@ -314,14 +322,15 @@ function CopyInstanceDetail({
       // arriving from one via the resolved nav context).
       activeNavKey: navCollection
         ? "collections"
-        : copy.viewerIsOwner
+        : canSolve
           ? "myPuzzles"
           : "browse",
     }),
     [
       snapshot.title,
       owned,
-      copy.viewerIsOwner,
+      canSolve,
+      copy.viewerCanManage,
       t,
       tShell,
       navContext?.id,
@@ -505,30 +514,34 @@ function CopyInstanceDetail({
 
           {/* Actions */}
           <div className="mt-5 flex flex-wrap gap-2.5">
-            {copy.viewerIsOwner ? (
+            {canSolve ? (
               <>
-                <Button
-                  variant={availability.forTrade ? "brand" : "outline"}
-                  aria-pressed={availability.forTrade}
-                  disabled={copy.aggregateId == null}
-                  onClick={() => void toggleSharing("forTrade")}
-                >
-                  <ArrowLeftRight className="h-4 w-4" />
-                  {availability.forTrade
-                    ? t("offeredForSwap")
-                    : t("offerForSwap")}
-                </Button>
-                <Button
-                  variant={availability.forLend ? "brand" : "outline"}
-                  aria-pressed={availability.forLend}
-                  disabled={copy.aggregateId == null}
-                  onClick={() => void toggleSharing("forLend")}
-                >
-                  <Package className="h-4 w-4" />
-                  {availability.forLend
-                    ? t("offeredForLend")
-                    : t("offerForLend")}
-                </Button>
+                {copy.viewerCanManage && (
+                  <>
+                    <Button
+                      variant={availability.forTrade ? "brand" : "outline"}
+                      aria-pressed={availability.forTrade}
+                      disabled={copy.aggregateId == null}
+                      onClick={() => void toggleSharing("forTrade")}
+                    >
+                      <ArrowLeftRight className="h-4 w-4" />
+                      {availability.forTrade
+                        ? t("offeredForSwap")
+                        : t("offerForSwap")}
+                    </Button>
+                    <Button
+                      variant={availability.forLend ? "brand" : "outline"}
+                      aria-pressed={availability.forLend}
+                      disabled={copy.aggregateId == null}
+                      onClick={() => void toggleSharing("forLend")}
+                    >
+                      <Package className="h-4 w-4" />
+                      {availability.forLend
+                        ? t("offeredForLend")
+                        : t("offerForLend")}
+                    </Button>
+                  </>
+                )}
                 {!myInProgress && (
                   <Button
                     variant="outline"
@@ -580,6 +593,9 @@ function CopyInstanceDetail({
               </>
             )}
           </div>
+          {copy.household && (
+            <HouseholdAccess copyId={copyId} household={copy.household} />
+          )}
         </div>
       </section>
 
@@ -616,7 +632,7 @@ function CopyInstanceDetail({
         />
         <PhotoStrip
           gallery={gallery}
-          canAdd={copy.viewerIsOwner}
+          canAdd={copy.viewerCanManage}
           copyId={copyId}
           coverImageId={snapshot.coverImageId}
         />
@@ -739,15 +755,16 @@ function CopyInstanceDetail({
         </div>
       </div>
 
-      {/* Owner dialogs: completion logger (keyed by aggregateId) + inline copy editor. */}
-      {copy.viewerIsOwner && (
+      {/* Solve dialogs (owner + household members; keyed by aggregateId) + the inline copy editor
+          (managers only). */}
+      {canSolve && (
         <>
           <LogSolveDialog
             open={logOpen}
             onOpenChange={setLogOpen}
             copyId={copy.aggregateId ?? ""}
             puzzleTitle={snapshot.title}
-            viewerIsOwner={copy.viewerIsOwner}
+            viewerIsOwner={copy.viewerCanManage}
           />
           <StartSolveDialog
             open={startOpen}
@@ -763,11 +780,13 @@ function CopyInstanceDetail({
               minEndDate={finishTarget.startDate}
             />
           )}
-          <EditCopyDialog
-            open={editOpen}
-            onOpenChange={setEditOpen}
-            copy={copy}
-          />
+          {copy.viewerCanManage && (
+            <EditCopyDialog
+              open={editOpen}
+              onOpenChange={setEditOpen}
+              copy={copy}
+            />
+          )}
         </>
       )}
     </div>

@@ -1466,6 +1466,14 @@
       "body": "Your puzzles leave the household with you, and you will no longer see the others' puzzles.",
       "bodyLast": "You are the last member, so the household will be dissolved and any pending invites cancelled."
     },
+    "copyAccess": {
+      "label": "Household access",
+      "manage": "Can manage",
+      "view": "View only",
+      "memberManage": "Household copy — you can manage it",
+      "memberView": "Household copy — view only",
+      "saveFailed": "Couldn't update household access"
+    },
     "errors": {
       "generic": "Something went wrong. Please try again.",
       "AlreadyInHousehold": "You are already in a household.",

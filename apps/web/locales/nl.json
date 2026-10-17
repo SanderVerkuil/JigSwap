@@ -1466,6 +1466,14 @@
       "body": "Je puzzels verlaten het huishouden met je mee, en je ziet de puzzels van de anderen niet meer.",
       "bodyLast": "Je bent het laatste lid, dus het huishouden wordt opgeheven en openstaande uitnodigingen vervallen."
     },
+    "copyAccess": {
+      "label": "Toegang huishouden",
+      "manage": "Mag beheren",
+      "view": "Alleen bekijken",
+      "memberManage": "Puzzel van je huishouden — jij mag hem beheren",
+      "memberView": "Puzzel van je huishouden — alleen bekijken",
+      "saveFailed": "Toegang voor het huishouden kon niet worden bijgewerkt"
+    },
     "errors": {
       "generic": "Er ging iets mis. Probeer het opnieuw.",
       "AlreadyInHousehold": "Je zit al in een huishouden.",
