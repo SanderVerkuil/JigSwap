@@ -194,6 +194,29 @@ describe("household invites", () => {
   });
 });
 
+describe("member names", () => {
+  test("a member without a name is shown without one — never by email", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+    const ann = await t.run(async (ctx) => {
+      const row = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", "clerk_ann"))
+        .unique();
+      await ctx.db.patch(row!._id, { name: undefined });
+      return row!._id;
+    });
+    await annInvitesBob(t, bob);
+
+    const [invite] = await as(t, "bob").query(
+      api.household.listMyHouseholdInvites.listMyHouseholdInvites,
+      {},
+    );
+    expect(invite.inviter).toEqual({ memberId: ann });
+    expect(JSON.stringify(invite)).not.toContain("@example.com");
+  });
+});
+
 describe("at most one household", () => {
   test("cannot create a second household", async () => {
     const t = convexTest(schema, modules);

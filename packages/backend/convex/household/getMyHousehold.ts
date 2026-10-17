@@ -6,6 +6,7 @@ import type {
 import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { query } from "../_generated/server";
+import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 import { membershipOf, membersOfHousehold } from "./memberships";
 
@@ -14,9 +15,12 @@ export const personView = async (
   memberId: Id<"users">,
 ): Promise<HouseholdPersonView> => {
   const user = await ctx.db.get(memberId);
+  // Shared resolver (account name, else username — never the email); absent when the member has
+  // no identifiable name, and the web renders its localized generic label.
+  const name = memberDisplayNameOf(user);
   return {
     memberId: memberId as string,
-    name: user?.name ?? "",
+    ...(name ? { name } : {}),
     ...(user?.avatar ? { avatar: user.avatar } : {}),
   };
 };

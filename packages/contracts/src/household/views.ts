@@ -10,7 +10,8 @@ export type HouseholdCopyPermission = "manage" | "view";
 /** A member shown on a household surface (never carries email or Clerk ids). */
 export interface HouseholdPersonView {
   memberId: string;
-  name: string;
+  /** Resolved display name (never the email); absent when the member has none — render the generic label. */
+  name?: string;
   avatar?: string;
 }
 
