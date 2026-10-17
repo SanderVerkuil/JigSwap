@@ -4,7 +4,9 @@ export function DefaultCatchBoundary({ error }: ErrorComponentProps) {
   return (
     <div style={{ padding: "1rem" }}>
       <h1>Something went wrong</h1>
-      <pre style={{ whiteSpace: "pre-wrap" }}>{error.message}</pre>
+      <pre style={{ whiteSpace: "pre-wrap" }}>
+        {error instanceof Error ? error.message : String(error)}
+      </pre>
     </div>
   );
 }

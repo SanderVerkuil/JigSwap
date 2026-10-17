@@ -15,14 +15,14 @@ allowBuilds:
 linkWorkspacePackages: true
 
 # Pin zod: keep the whole workspace on one zod version that @hookform/resolvers and the
-# zodResolver-based forms type-check against. Raised to 4.4.3 alongside resolver 5.4.0.
+# zodResolver-based forms type-check against. Raised to 4.6.7 alongside resolvers 5.9.1.
 # Pin less: it's an optional CSS-preprocessor peer of vite (unused here); 4.5.1 added a
 # postinstall script that makes `pnpm install` exit non-zero, breaking Nx's pre-install.
 # Pin eslint-plugin-react-hooks: 7.1.1 (pulled transitively by eslint-config-next) adds a
 # `set-state-in-effect` rule that flags pre-existing, intentional setState-in-effect code
 # (useIsMobile, my-puzzles/add). Keep 7.0.1 so `nx lint @jigswap/web` stays 0/0.
 overrides:
-  zod: 4.4.3
+  zod: 4.6.7
   less: 4.4.0
   eslint-plugin-react-hooks: 7.0.1
   # Security patches for transitive deps flagged by Dependabot — each pins only
@@ -62,9 +62,24 @@ onlyBuiltDependencies:
   - unrs-resolver
 
 minimumReleaseAgeExclude:
-  - "@clerk/backend@3.7.0 || 3.11.1"
+  - "@clerk/backend@3.7.0 || 3.11.1 || 3.25.0"
   - "@clerk/react@6.9.1 || 6.12.0"
   - "@clerk/shared@4.17.1 || 4.25.0"
-  - "@clerk/tanstack-react-start@1.4.2 || 1.4.14"
+  - "@clerk/tanstack-react-start@1.4.2 || 1.4.14 || 1.7.3"
   - posthog-js@1.386.6 || 1.398.2
   - "@clerk/localizations@4.13.0"
+  - "@react-email/render@2.1.1"
+  - "@tanstack/react-router@1.170.45"
+  - "@tanstack/react-start-client@1.168.43"
+  - "@tanstack/react-start-rsc@0.1.64"
+  - "@tanstack/react-start-server@1.167.51"
+  - "@tanstack/react-start@1.169.3"
+  - "@tanstack/router-core@1.171.38"
+  - "@tanstack/router-generator@1.167.45"
+  - "@tanstack/router-plugin@1.168.47"
+  - "@tanstack/start-client-core@1.170.38"
+  - "@tanstack/start-plugin-core@1.171.54"
+  - "@tanstack/start-server-core@1.169.44"
+  - "@tanstack/start-storage-context@1.167.40"
+  - eslint@10.13.0
+  - lucide-react@1.59.0

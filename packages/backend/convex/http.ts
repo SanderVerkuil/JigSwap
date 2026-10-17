@@ -72,15 +72,15 @@ async function validateRequest(
     "svix-signature": req.headers.get("svix-signature")!,
   };
   const wh = new Webhook(webhookSecret);
-  let evt: Event | null = null;
   try {
-    evt = wh.verify(payloadString, svixHeaders) as Event;
+    // svix 2: verify() only throws on a bad signature and no longer returns the payload.
+    wh.verify(payloadString, svixHeaders);
   } catch (_) {
     console.log("error verifying");
     return;
   }
 
-  return evt as unknown as WebhookEvent;
+  return JSON.parse(payloadString) as WebhookEvent;
 }
 
 export default http;
