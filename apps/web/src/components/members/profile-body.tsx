@@ -72,6 +72,8 @@ export function ProfileBody({
   viewer,
   returnToHref,
   invitedName,
+  invitedKind = "network",
+  inviteExpired = false,
 }: {
   profile: PublicProfileView;
   // The auth-gated featured shelf (fetched only for logged-in viewers of an
@@ -83,6 +85,10 @@ export function ProfileBody({
   // When a logged-out visitor arrives via a live invite link, reframe the top
   // of the page as "{name} invited you to JigSwap" (Phase 3 growth loop).
   invitedName?: string;
+  // A household link reframes the banner as a household invitation (accepting comes later).
+  invitedKind?: "network" | "household";
+  // The visitor's household link has expired or was already used; the teaser still renders.
+  inviteExpired?: boolean;
 }) {
   const displayName = useMemberDisplayName();
   const hero = profile.hero;
@@ -98,7 +104,8 @@ export function ProfileBody({
         viewer === "public" && contentWidthClass(false),
       )}
     >
-      {invitedName && <InvitedBanner name={invitedName} />}
+      {invitedName && <InvitedBanner name={invitedName} kind={invitedKind} />}
+      {inviteExpired && <InviteExpiredNotice />}
       <HeroSection
         hero={hero}
         viewer={viewer}
@@ -653,12 +660,38 @@ function LockedCard({
 }
 
 // ── Invited-you banner (logged-out visitor via a live invite link) ───────────
-function InvitedBanner({ name }: { name: string }) {
+function InvitedBanner({
+  name,
+  kind,
+}: {
+  name: string;
+  kind: "network" | "household";
+}) {
   const t = useTranslations("invite");
+  if (kind === "household") {
+    return (
+      <div className="border-jigsaw-primary/20 bg-jigsaw-primary/5 flex flex-col items-center gap-1 rounded-xl border px-4 py-3 text-center text-sm">
+        <p className="text-jigsaw-primary flex items-center justify-center gap-2 font-medium">
+          <Sparkles className="size-4 shrink-0" />
+          {t("householdInvitedYou", { name })}
+        </p>
+        <p className="text-muted-foreground">{t("householdExplainer")}</p>
+      </div>
+    );
+  }
   return (
     <div className="border-jigsaw-primary/20 bg-jigsaw-primary/5 text-jigsaw-primary flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-center text-sm font-medium">
       <Sparkles className="size-4 shrink-0" />
       {t("invitedYou", { name })}
+    </div>
+  );
+}
+
+export function InviteExpiredNotice() {
+  const t = useTranslations("invite");
+  return (
+    <div className="text-muted-foreground rounded-xl border px-4 py-3 text-center text-sm">
+      {t("linkExpired")}
     </div>
   );
 }
