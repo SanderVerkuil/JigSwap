@@ -30,6 +30,11 @@ export type TourSnapshot<T> =
       phase: TourPhase;
       /** Set only in the "shown" phase. */
       target: T | null;
+      /**
+       * The lit target asks the member to press it (`data-tour-action`): no Next, and the tour
+       * moves on by itself once the target is gone (spec: action steps).
+       */
+      action: boolean;
       /** The step lives on another page than the one the tour came from (pending copy). */
       crossRoute: boolean;
       /** Route of the following step, for "Next: <page>"; undefined on the last step. */
@@ -50,6 +55,8 @@ export interface TourControllerDeps<T> {
   navigate: (route: string) => void;
   /** The visible element carrying `data-tour="<anchor>"`, if any. */
   findTarget: (anchor: string) => T | null;
+  /** The target waits for the member to press it instead of offering Next. */
+  isActionTarget: (target: T) => boolean;
 }
 
 /** Side effects the provider connects after mount (they change across renders). */
@@ -229,6 +236,8 @@ export class TourController<T> {
     const s = this.snapshot;
     if (s.status !== "running") return false;
     const action = tourKeyAction(key, { isFirstStep: s.index === 0 });
+    // An action step has no Next: only pressing its target moves the tour on.
+    if (action === "next" && s.action) return false;
     if (action === "next") this.next();
     else if (action === "back") this.back();
     else if (action === "pause") this.pause();
@@ -257,11 +266,23 @@ export class TourController<T> {
       step.target !== undefined ? this.deps.findTarget(step.target) : null;
     const settle = () => {
       const found = onPage() ? target() : null;
+      const action = found !== null && this.deps.isActionTarget(found);
       this.set({
         ...base,
         phase: found ? "shown" : "missing",
         target: found,
+        action,
       });
+      // Pressing an action target changes the page (the empty state's button gives way to the new
+      // content): once the anchor no longer resolves to that element, the action is done.
+      if (action) {
+        void waitFor(() => target() !== found, {
+          timeoutMs: Number.POSITIVE_INFINITY,
+          cancelled: () => generation !== this.generation,
+        }).then((done) => {
+          if (done && generation === this.generation) this.next();
+        });
+      }
     };
 
     // Fast path: already on the page with the anchor (or nothing to wait for) — no pending flash.
@@ -270,7 +291,7 @@ export class TourController<T> {
       return;
     }
 
-    this.set({ ...base, phase: "pending", target: null });
+    this.set({ ...base, phase: "pending", target: null, action: false });
     void waitFor(
       () => onPage() && (step.target === undefined || target() !== null),
       {

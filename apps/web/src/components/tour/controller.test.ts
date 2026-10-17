@@ -29,6 +29,8 @@ function setup(path = "/start") {
   const world = {
     path,
     anchors: new Set<string>(),
+    // Anchors whose element carries `data-tour-action`.
+    actions: new Set<string>(),
     // The router commits navigation later in reality; tests can hold it back.
     commitNavigation: true,
   };
@@ -42,6 +44,7 @@ function setup(path = "/start") {
     currentPath: () => world.path,
     navigate,
     findTarget: (anchor) => (world.anchors.has(anchor) ? anchor : null),
+    isActionTarget: (target) => world.actions.has(target),
   });
   controller.connect({ record, onEnd });
   return { world, record, navigate, onEnd, controller };
@@ -325,6 +328,115 @@ describe("keyboard", () => {
       expect.objectContaining({ reason: "paused" }),
     );
     expect(controller.handleKey("ArrowRight")).toBe(false);
+  });
+});
+
+describe("TourController: action steps", () => {
+  const actionSetup = () => {
+    const ctx = setup("/one");
+    ctx.world.anchors.add("one-a");
+    ctx.world.actions.add("one-a");
+    return ctx;
+  };
+
+  it("flags a lit action target and ignores ArrowRight", () => {
+    const { controller } = actionSetup();
+    controller.start("demo");
+    expect(running(controller)).toMatchObject({
+      index: 0,
+      phase: "shown",
+      action: true,
+    });
+    expect(controller.handleKey("ArrowRight")).toBe(false);
+    expect(running(controller).index).toBe(0);
+    expect(controller.handleKey("Escape")).toBe(true);
+    expect(controller.getSnapshot()).toEqual({ status: "idle" });
+  });
+
+  it("moves on by itself once the target leaves the page", async () => {
+    const { world, controller } = actionSetup();
+    controller.start("demo");
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(running(controller).index).toBe(0);
+    // The member pressed it: the page re-renders without the button, with the next anchor.
+    world.anchors.delete("one-a");
+    world.anchors.add("one-b");
+    await vi.advanceTimersByTimeAsync(100);
+    expect(running(controller)).toMatchObject({
+      index: 1,
+      phase: "shown",
+      action: false,
+    });
+  });
+
+  it("completes the tour when the last step's action is done", async () => {
+    const { world, record, onEnd } = setup("/two");
+    world.anchors.add("two-c");
+    world.actions.add("two-c");
+    const tour: TourDefinition = {
+      id: "demo",
+      steps: [{ id: "c", route: "/two", target: "two-c" }],
+    };
+    const solo = new TourController<string>({
+      tours: new Map([[tour.id, tour]]),
+      currentPath: () => world.path,
+      navigate: () => {},
+      findTarget: (anchor) => (world.anchors.has(anchor) ? anchor : null),
+      isActionTarget: (target) => world.actions.has(target),
+    });
+    solo.connect({ record, onEnd });
+    solo.start("demo");
+    expect(running(solo).action).toBe(true);
+    world.anchors.delete("two-c");
+    await vi.advanceTimersByTimeAsync(100);
+    expect(solo.getSnapshot()).toEqual({ status: "idle" });
+    expect(record).toHaveBeenLastCalledWith({
+      tourId: "demo",
+      status: "completed",
+    });
+    expect(onEnd).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: "completed" }),
+    );
+  });
+
+  it("stops watching after the member pauses or goes back", async () => {
+    const { world, controller, onEnd } = actionSetup();
+    controller.start("demo");
+    controller.pause();
+    world.anchors.delete("one-a");
+    await vi.advanceTimersByTimeAsync(500);
+    expect(controller.getSnapshot()).toEqual({ status: "idle" });
+    expect(onEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it("lets Back return from the step after an action", async () => {
+    const { world, controller } = actionSetup();
+    controller.start("demo");
+    world.anchors.delete("one-a");
+    world.anchors.add("one-b");
+    await vi.advanceTimersByTimeAsync(100);
+    expect(running(controller).index).toBe(1);
+    // The first anchor now resolves to the new (non-action) content.
+    world.anchors.add("one-a");
+    world.actions.delete("one-a");
+    controller.back();
+    expect(running(controller)).toMatchObject({
+      index: 0,
+      phase: "shown",
+      action: false,
+    });
+    expect(controller.handleKey("ArrowRight")).toBe(true);
+    expect(running(controller).index).toBe(1);
+  });
+
+  it("leaves normal steps untouched", () => {
+    const { world, controller } = setup("/one");
+    world.anchors.add("one-a");
+    world.anchors.add("one-b");
+    controller.start("demo");
+    expect(running(controller).action).toBe(false);
+    expect(controller.handleKey("ArrowRight")).toBe(true);
+    expect(running(controller).index).toBe(1);
   });
 });
 
