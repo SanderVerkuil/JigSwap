@@ -63,17 +63,16 @@ export function ProfilePuzzlesSection({
   return (
     <section>
       <SectionHead title={t("title", { name: firstName })} icon={Puzzle} />
+      {/* The provider renders the app's shared auto-fill puzzle grid; cards are its direct children. */}
       <PuzzleViewProvider viewMode="grid">
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          {results.map((copy) => (
-            <PuzzleCard
-              key={copy._id}
-              puzzle={copy}
-              showActions={false}
-              imageFit="contain"
-            />
-          ))}
-        </div>
+        {results.map((copy) => (
+          <PuzzleCard
+            key={copy._id}
+            puzzle={copy}
+            showActions={false}
+            imageFit="contain"
+          />
+        ))}
       </PuzzleViewProvider>
       <ShowMore
         status={status}
