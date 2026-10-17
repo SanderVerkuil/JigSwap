@@ -95,6 +95,35 @@ export const toOwnedCopyView = (
   coverUrl: opts?.coverUrl,
 });
 
+/** An owned copy as seen on a member's public profile: the owner-only keys are not present at all. */
+export type PublicCopyView = Omit<
+  OwnedCopyView,
+  "notes" | "acquisitionDate" | "acquisitionSource" | "acquisitionPrice"
+>;
+
+/**
+ * The public projection of an owned copy for profile listings. Built on `toOwnedCopyView` with
+ * `includeOwnerOnly: false`, then drops the owner-only KEYS entirely (not just their values), so
+ * the profile payload is identical for every viewer, the owner included.
+ */
+export const toPublicCopyView = (
+  row: Doc<"ownedPuzzles">,
+  puzzle: Doc<"puzzles"> | null,
+  opts?: { coverUrl?: string | null },
+): PublicCopyView => {
+  const {
+    notes: _notes,
+    acquisitionDate: _acquisitionDate,
+    acquisitionSource: _acquisitionSource,
+    acquisitionPrice: _acquisitionPrice,
+    ...rest
+  } = toOwnedCopyView(row, puzzle, {
+    coverUrl: opts?.coverUrl,
+    includeOwnerOnly: false,
+  });
+  return rest;
+};
+
 /** A stored image row for an owned copy. */
 export const toOwnedCopyImageView = (
   row: Doc<"ownedPuzzleImages">,

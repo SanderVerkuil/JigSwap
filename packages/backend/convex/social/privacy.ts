@@ -45,6 +45,21 @@ export const areMutualFollowers = async (
   return bFollowsA !== null;
 };
 
+/**
+ * The profile-content unlock rule (mirrors getPublicProfile's `unlocked`): the viewer may see a
+ * member's deeper profile content (puzzles, solves) iff it is the member themself, the member's
+ * profile is public, or the two are mutual followers.
+ */
+export const canSeeProfileContent = async (
+  ctx: QueryCtx,
+  viewerId: Id<"users">,
+  memberId: Id<"users">,
+): Promise<boolean> => {
+  if (viewerId === memberId) return true;
+  if ((await profileVisibilityOf(ctx, memberId)) === "public") return true;
+  return areMutualFollowers(ctx, viewerId, memberId);
+};
+
 // A tiny deterministic, non-reversible string hash (cyrb53) folded to base36. No crypto import: this
 // is an obfuscating reference token, not a security primitive. Same input -> same token, so one
 // hidden member reads consistently within a timeline; a different salt (the copyId) yields a

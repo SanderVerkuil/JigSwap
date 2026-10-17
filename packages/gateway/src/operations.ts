@@ -294,6 +294,11 @@ export const gateway = {
     // The visibility-gated read behind the redesigned public member profile page. Unauthenticated-
     // capable; returns a discriminated { locked } payload (see PublicProfileView).
     publicProfile: api.social.getPublicProfile.getPublicProfile,
+    // Paginated profile listings (auth-gated; profile-unlock + canViewCopy gated server-side):
+    // the member's puzzles (public copy projection, no owner-only keys) and finished solves.
+    profileCopies: api.social.listProfileCopies.listProfileCopies,
+    profileCompletions:
+      api.social.listProfileCompletions.listProfileCompletions,
     followers: api.social.listFollowers.listFollowers,
     following: api.social.listFollowees.listFollowees,
     isFollowing: api.social.isFollowing.isFollowing,
