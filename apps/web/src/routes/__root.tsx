@@ -68,6 +68,16 @@ export const Route = createRootRouteWithContext<{
           "width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content",
       },
       { title: "JigSwap" },
+      // Installed-app ("Add to Home Screen") chrome. theme-color lives in
+      // RootDocument: HeadContent dedupes metas by name, which would drop the
+      // light/dark pair down to one.
+      { name: "application-name", content: "JigSwap" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-title", content: "JigSwap" },
+      // "default" keeps iOS's status bar opaque above the page, so the shell's
+      // safe-area padding isn't doubled under a translucent bar.
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
     ],
     links: [
       // Favicon set generated from the JigSwap puzzle-piece mark (source:
@@ -80,6 +90,9 @@ export const Route = createRootRouteWithContext<{
         sizes: "512x512",
       },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      // Makes the site installable (Android/Chromium "Install app"). No
+      // service-worker caching is involved; /sw.js stays push-only.
+      { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "stylesheet", href: appCss },
       // Fonts that next/font loaded in the web app, now via Google Fonts so
       // globals.css --font-sans (Poppins) / --font-heading (Baloo 2) resolve.
@@ -210,6 +223,19 @@ function RootDocument({
     <html lang={locale} suppressHydrationWarning>
       <head>
         <HeadContent />
+        {/* Tints the browser / installed-app status bar to the mobile top
+            bar's surface (bg-card) per OS colour scheme; the manifest carries
+            the light value. */}
+        <meta
+          name="theme-color"
+          media="(prefers-color-scheme: light)"
+          content="#ffffff"
+        />
+        <meta
+          name="theme-color"
+          media="(prefers-color-scheme: dark)"
+          content="#282642"
+        />
       </head>
       <body className="font-sans antialiased bg-background text-foreground">
         {children}
