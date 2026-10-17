@@ -28,6 +28,13 @@ export interface ThreadMessageView {
   readonly copyUnavailable?: true;
 }
 
+/**
+ * Which participant's copies the attach picker lists (listAttachableCopies): `mine` = the
+ * caller's copies the other participant can view; `theirs` = the other participant's copies the
+ * caller can view (always empty when that member is anonymised to the caller).
+ */
+export type AttachableCopySide = "mine" | "theirs";
+
 /** A compact card for the copy a conversation is about. */
 export interface MessageCopyView {
   /** The copy's ownedPuzzles `_id`. */
