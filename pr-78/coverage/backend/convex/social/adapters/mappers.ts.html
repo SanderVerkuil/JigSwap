@@ -30,9 +30,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">83.33% </span>
+                <span class="strong">87.5% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>10/12</span>
+                <span class='fraction'>14/16</span>
             </div>
         
             
@@ -226,7 +226,12 @@
 <a name='L161'></a><a href='#L161'>161</a>
 <a name='L162'></a><a href='#L162'>162</a>
 <a name='L163'></a><a href='#L163'>163</a>
-<a name='L164'></a><a href='#L164'>164</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L164'></a><a href='#L164'>164</a>
+<a name='L165'></a><a href='#L165'>165</a>
+<a name='L166'></a><a href='#L166'>166</a>
+<a name='L167'></a><a href='#L167'>167</a>
+<a name='L168'></a><a href='#L168'>168</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -259,13 +264,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">16x</span>
-<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">20x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -276,14 +284,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">10x</span>
-<span class="cline-any cline-yes">29x</span>
-<span class="cline-any cline-yes">29x</span>
+<span class="cline-any cline-yes">32x</span>
+<span class="cline-any cline-yes">32x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -420,10 +428,14 @@ export type PhotoCommentRow = Omit&lt;
 &nbsp;
 // Row -&gt; Profile aggregate. The row MUST carry an aggregateId (only domain-written rows do).
 // DisplayName re-validation here is total: a persisted name was already valid, so `create` succeeds.
+// An absent displayName (lazily-opened profile) stays absent.
 export const profileToDomain = (row: Doc&lt;"profiles"&gt;): Profile =&gt; {
   // A persisted name was valid when written, so a failure here means row corruption, not user input.
-  const displayName = DisplayName.create(row.displayName);
-  <span class="missing-if-branch" title="if path not taken" >I</span>if (!displayName.isOk) {
+  const displayName =
+    row.displayName === undefined
+      ? undefined
+      : DisplayName.create(row.displayName);
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (displayName &amp;&amp; !displayName.isOk) {
 <span class="cstat-no" title="statement not covered" >    throw new Error(</span>
       `Corrupt profile row: invalid displayName "${row.displayName}"`,
     );
@@ -431,7 +443,7 @@ export const profileToDomain = (row: Doc&lt;"profiles"&gt;): Profile =&gt; {
   const state: ProfileState = {
     id: toProfileId(row.aggregateId as string),
     memberId: toMemberId(row.memberId),
-    displayName: displayName.value,
+    displayName: displayName?.value,
     bio: row.bio,
     // Legacy rows written before visibility existed are treated as public.
     visibility: row.visibility ?? <span class="branch-1 cbranch-no" title="branch not covered" >"public",</span>
@@ -449,7 +461,7 @@ export const profileToRow = (profile: Profile): ProfileRow =&gt; {
   return {
     aggregateId: state.id as string,
     memberId: state.memberId as unknown as Id&lt;"users"&gt;,
-    displayName: state.displayName.value,
+    displayName: state.displayName?.value,
     bio: state.bio,
     visibility: state.visibility,
     featuredCopyIds:
@@ -559,7 +571,7 @@ export const photoCommentToRow = (comment: PhotoComment): PhotoCommentRow =&gt; 
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-17T08:25:13.105Z
+                at 2026-10-17T12:25:04.511Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
