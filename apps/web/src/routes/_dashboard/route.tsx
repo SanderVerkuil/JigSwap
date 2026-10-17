@@ -5,6 +5,7 @@ import { DashboardShell } from "@/components/dashboard-layout/shell";
 import { InviteRedeemer } from "@/components/social/invite-redeemer";
 import { CompletionFollowUpProvider } from "@/components/solving/completion-follow-up-provider";
 import { DurationPromptProvider } from "@/components/solving/duration-prompt-provider";
+import { TourProvider } from "@/components/tour/tour-provider";
 import { PageLoading } from "@/components/ui/loading";
 import { WhatsNewHighlight } from "@/components/whats-new/highlight-dialog";
 import { requireAuth } from "@/lib/require-auth";
@@ -45,10 +46,13 @@ function DashboardLayout() {
     <DashboardShell>
       <DurationPromptProvider>
         <CompletionFollowUpProvider>
-          <InviteRedeemer />
-          {/* Inside both prompt providers: it yields to their prompts (surface-busy signal). */}
-          <WhatsNewHighlight />
-          <Outlet />
+          {/* Above the Outlet so a running tour survives its own page changes. */}
+          <TourProvider>
+            <InviteRedeemer />
+            {/* Inside both prompt providers: it yields to their prompts (surface-busy signal). */}
+            <WhatsNewHighlight />
+            <Outlet />
+          </TourProvider>
         </CompletionFollowUpProvider>
       </DurationPromptProvider>
     </DashboardShell>
