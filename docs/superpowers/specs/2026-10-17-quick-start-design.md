@@ -1341,50 +1341,36 @@ rebased onto `main` when that merges.
 
 ---
 
-## 9. Open questions
+## 9. Resolved questions (user decisions, 2026-10-17)
 
-Each has the conservative default this spec builds on, so implementation is
-not blocked.
+These were open questions with conservative defaults. The user has answered all of them; the answers are final. Where an answer changes the default, the implementing PR is named.
 
-1. **Should `year` solves count toward goals?** A backfill of "in 2023" solves
-   makes a fresh goal start partly done. The decisions only exclude `unknown`.
-   _Default: count them, as decided._ Revisit if goals gain a start date.
-2. **Should `year` solves appear in the activity feed?** _Default: hidden (D4)_,
-   because they are backfills by definition.
-3. **Bulk adds flooding the feed.** `acquireCopies` of 25 copies would put 25
-   "acquired" entries in followers' feeds, often the inviter's. _Default: Q4
-   tags batch-created copies `bulk: true` and the feed skips them._ Single adds
-   still show.
-4. **Dating an undated solve later.** The domain's 24-hour edit window means an
-   undated backfill can't be dated a week later. _Default: keep the window._ A
-   follow-up could exempt "add a date to an undated solve" from it.
-5. **An existing member opens a household link.** Redemption is new-member-only
-   (15-minute window). _Default: no household invite and no follow; the
-   landing tells them to ask for an in-app invite_, which already works by
-   member search.
-6. **The 15-minute new-member window** may be short for a slow Clerk
-   verification. _Default: keep it_; the in-app invite is the fallback.
-7. **Step 1 threshold: 3 copies or 1?** _Default: 3 (D3)_, so the checklist
-   drives what activation measures. The row shows "2 of 3" until then.
-8. **Dark-mode primary contrast is pre-existing and below 4.5:1.**
-   - The default `Button` and the `SegmentedPills` "on" state
-     (`--primary-foreground` on `--primary`) are 3.80:1.
-   - The brand look that What's new and the tour use (`text-white` on
-     `--jigsaw-primary`) is 4.48:1.
-
-   This track uses the brand look for its primary actions (§5), because it is
-   closer and consistent with the modal and the tour. It still uses
-   `SegmentedPills` as is. _Default: out of scope here_; flagged for a
-   separate theme PR. Darkening the dark `--jigsaw-primary` slightly would fix
-   the brand look app-wide.
-
-9. **Card visibility for existing members** with 0 copies who signed up long
-   ago. _Default: show the card (no welcome dialog)_; they can hide it.
-10. **Activation's household link** requires the other member to join inside
-    the window too. _Default: yes_; a household of one isn't a connection.
-11. **The sticky `/welcome` footer with the on-screen keyboard open** (step 1's
-    search, step 5's location field). On phones the footer docks above the
-    tab bar (§5.3). With the keyboard up, the two can cover most of the
-    remaining viewport. _Default: keep the footer sticky._ The Q7b manual pass
-    checks this at 360 × 640. If it is cramped, the footer becomes static
-    while a text input in the step has focus.
+1. **`year` solves count toward goals.** Unchanged from the default. Revisit if goals gain a start date.
+2. **`year` solves stay hidden from the activity feed.** Unchanged (D4).
+3. **Bulk adds are GROUPED in the feed, not hidden.** _Changed; implemented in Q4 (#105)._
+   - One `acquireCopies` call is a batch, with a batch id carried on its events and copies.
+   - The feed shows one entry per batch, e.g. "Sander added 10 puzzles", with a few covers, linking to the member's profile puzzles.
+   - Covers and the count respect each viewer's copy visibility, and the entry is dropped if nothing is visible.
+   - Single adds are unchanged.
+   - en/nl plurals.
+   - **Bulk past solves (Q5, #107):** the user asked for the same grouping, while still hiding `year`/`unknown` precision. The shepherd chose to hide grouped past-solves entries entirely, because they are all backfill. Q5 keeps them out of the feed, explicitly and with tests.
+4. **Dating an undated solve later:** a follow-up. The 24-hour edit window stays.
+5. **An existing member opening a household link gets a landing with Accept/Decline.** _Changed; implemented in Q6 (#108)._
+   - The landing reads "<Inviter> invited you to their household <name>".
+   - Accept joins through the same domain path as accepting a pending invite: the one-household rule, the single-use token consumed, the admin notified via `household_invite_accepted`.
+   - No auto-follow.
+   - A member already in a household is shown why they can't join.
+   - The token stays single-use with 14-day expiry, validated server-side.
+   - Decline behaviour (leave the token unused or expire it) is decided and justified in Q6.
+   - New members are unchanged: redeeming creates a PENDING invite.
+6. **The 15-minute new-member redeem window** is fine. Unchanged.
+7. **Step 1 threshold: 3 copies.** Unchanged (D3).
+8. **Dark-mode primary contrast is fixed in this stack.** _Changed; implemented in Q7b._
+   - The dark-theme tokens are adjusted in lightness only, keeping the brand hue, so that `--primary-foreground` on `--primary` (including the `SegmentedPills` "on" state) and `text-white` on `--jigsaw-primary` both reach ≥ 4.5:1.
+   - Hover/active states and focus rings are re-checked.
+   - Before/after ratios for both themes are reported in the PR.
+9. **Long-ago members with 0 copies see the card** (no welcome dialog) and can hide it. Unchanged.
+10. **Activation's household link.** _Changed; implemented in Q8._
+    - It counts when the new member created or joined a household within their 7-day window, and that household has at least one other member, whenever that member joined.
+    - Activation can therefore flip to true after day 7, when a second member joins later. The activation report documents this.
+11. **The sticky `/welcome` footer stays sticky, but is collapsible on mobile.** _Changed; implemented in Q7b._ Q7b picks the simplest mechanism, e.g. hiding it while a text input in the step has focus, and states which.
