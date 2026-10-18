@@ -8,4 +8,6 @@ export interface CircleRepository {
   // and an owner's circles yields the `sharedCircles` facts the policy needs.
   listForMember(memberId: MemberId): Promise<readonly Circle[]>;
   save(circle: Circle): Promise<void>;
+  // Remove the circle and its memberships (the member lookup with it), as one unit.
+  delete(circle: Circle): Promise<void>;
 }

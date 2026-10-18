@@ -51,6 +51,7 @@ export type NotificationType =
   | "connection_offer_received"
   | "circle_invite_received"
   | "circle_invite_accepted"
+  | "circle_deleted"
   | "whats_new"
   | "report_decided"
   | "content_removed"
@@ -83,6 +84,7 @@ export const NOTIFICATION_TYPES: NotificationType[] = [
   "connection_offer_received",
   "circle_invite_received",
   "circle_invite_accepted",
+  "circle_deleted",
   "whats_new",
   "report_decided",
   "content_removed",
@@ -137,6 +139,7 @@ export const NOTIFICATION_CATEGORIES: readonly NotificationCategory[] = [
       "connection_offer_received",
       "circle_invite_received",
       "circle_invite_accepted",
+      "circle_deleted",
       "puzzle_favorited",
       "review_received",
       "goal_achieved",
@@ -295,6 +298,7 @@ export function notificationIcon(type: string): LucideIcon {
       return House;
     case "circle_invite_received":
     case "circle_invite_accepted":
+    case "circle_deleted":
       return Users;
     case "whats_new":
       return Sparkles;

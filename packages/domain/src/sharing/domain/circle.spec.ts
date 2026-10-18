@@ -8,7 +8,7 @@ import {
 } from "../../shared-kernel";
 import { Circle, MAX_CIRCLE_MEMBERS } from "./circle";
 import { CircleInvite } from "./circle-invite";
-import { MemberJoinedCircle, MemberLeftCircle } from "./events";
+import { CircleDeleted, MemberJoinedCircle, MemberLeftCircle } from "./events";
 import { CircleId, MembershipId } from "./ids";
 
 const owner = toMemberId("owner");
@@ -302,6 +302,76 @@ describe("Circle", () => {
       expect(circle.members).toHaveLength(1);
       expect(circle.pullEvents()).toHaveLength(0);
     });
+  });
+
+  describe("delete", () => {
+    it("lets the owner delete by typing the exact name, naming every other member", () => {
+      const circle = newCircle();
+      circle.addMember(owner, membershipId(), alice, "Admin", NOW);
+      circle.addMember(owner, membershipId(), bob, "ViewOnly", NOW);
+      circle.pullEvents();
+
+      const result = circle.delete(owner, "Family", NOW);
+
+      expect(result.isOk).toBe(true);
+      const events = circle.pullEvents();
+      expect(events).toHaveLength(1);
+      const event = events[0] as CircleDeleted;
+      expect(event).toBeInstanceOf(CircleDeleted);
+      expect(event.name).toBe("CircleDeleted");
+      expect(event.circleId).toBe(circleId);
+      expect(event.ownerId).toBe(owner);
+      expect(event.memberIds).toEqual([alice, bob]);
+      expect(event.circleName).toBe("Family");
+      expect(event.occurredAt).toBe(NOW);
+    });
+
+    it("names no one when the owner is alone", () => {
+      const circle = newCircle();
+      circle.pullEvents();
+
+      expect(circle.delete(owner, "Family", NOW).isOk).toBe(true);
+      expect((circle.pullEvents()[0] as CircleDeleted).memberIds).toEqual([]);
+    });
+
+    it("refuses an Admin who is not the owner", () => {
+      const circle = newCircle();
+      circle.addMember(owner, membershipId(), alice, "Admin", NOW);
+      circle.pullEvents();
+
+      const result = circle.delete(alice, "Family", NOW);
+
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("NotCircleOwner");
+      expect(circle.pullEvents()).toHaveLength(0);
+    });
+
+    it("refuses a non-member as NotAMember, before looking at the name", () => {
+      const circle = newCircle();
+      circle.pullEvents();
+
+      const result = circle.delete(stranger, "wrong", NOW);
+
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("NotAMember");
+      expect(circle.pullEvents()).toHaveLength(0);
+    });
+
+    it.each(["family", "Family ", " Family", ""])(
+      "refuses the owner when the confirmation is %j",
+      (confirmName) => {
+        const circle = newCircle();
+        circle.pullEvents();
+
+        const result = circle.delete(owner, confirmName, NOW);
+
+        expect(result.isErr).toBe(true);
+        if (result.isErr) {
+          expect(result.error.code).toBe("ConfirmationMismatch");
+        }
+        expect(circle.pullEvents()).toHaveLength(0);
+      },
+    );
   });
 
   describe("changePermission", () => {

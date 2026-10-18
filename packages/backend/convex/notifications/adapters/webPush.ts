@@ -131,6 +131,7 @@ export const notificationUrl = (type: string, relatedId?: string): string => {
     case "circle_invite_received":
       return relatedId ? `/circles?invite=${relatedId}` : "/circles";
     case "circle_invite_accepted":
+    case "circle_deleted":
       return "/circles";
     // What's new: relatedId is the entry id; the page anchors each card as #entry-<id>.
     case "whats_new":

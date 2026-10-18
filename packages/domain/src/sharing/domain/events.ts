@@ -114,6 +114,21 @@ export class CircleInviteExpired implements DomainEvent {
   ) {}
 }
 
+// The owner deleted the circle. Carries everything its subscribers need, because the circle is
+// gone by the time they run: `memberIds` are the members told about it (the owner excluded) and
+// `name` is snapshotted for their notification. Drives the inline cleanup (invites, scheduled
+// copy-share purge) and the circle_deleted notifications.
+export class CircleDeleted implements DomainEvent {
+  readonly name = "CircleDeleted";
+  constructor(
+    readonly circleId: CircleId,
+    readonly ownerId: MemberId,
+    readonly memberIds: readonly MemberId[],
+    readonly circleName: string,
+    readonly occurredAt: Date,
+  ) {}
+}
+
 export type SharingDomainEvent =
   | CircleCreated
   | MemberJoinedCircle
@@ -123,4 +138,5 @@ export type SharingDomainEvent =
   | CircleInviteAccepted
   | CircleInviteDeclined
   | CircleInviteRevoked
-  | CircleInviteExpired;
+  | CircleInviteExpired
+  | CircleDeleted;

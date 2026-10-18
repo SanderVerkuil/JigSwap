@@ -323,6 +323,45 @@ describe("NotificationItem rendering", () => {
     },
   );
 
+  it.each([
+    ["en", "Saturday Puzzlers was deleted."],
+    ["nl", "Saturday Puzzlers is verwijderd."],
+  ] as const)(
+    "%s: circle_deleted names the snapshotted circle, no actor, and reads unavailable",
+    (locale, text) => {
+      const { container } = renderItem(
+        base({
+          type: "circle_deleted",
+          actors: [],
+          actorCount: 0,
+          href: "/circles",
+          state: "unavailable",
+          context: { circleName: "Saturday Puzzlers" },
+        }),
+        { locale },
+      );
+      const sentence = rowLink(container)!.textContent;
+      expect(sentence).toContain(text);
+      expect(sentence).not.toMatch(/Former member|Voormalig lid/);
+      expect(container.querySelector("li")?.className).toContain("opacity-70");
+    },
+  );
+
+  it("falls back to a nameless circle_deleted sentence", () => {
+    const { container } = renderItem(
+      base({
+        type: "circle_deleted",
+        actors: [],
+        actorCount: 0,
+        href: "/circles",
+        state: "unavailable",
+      }),
+    );
+    expect(rowLink(container)!.textContent).toContain(
+      "A circle you were in was deleted.",
+    );
+  });
+
   it("names a privacy-hidden circle inviter generically and falls back to 'a circle'", () => {
     const { container } = renderItem(
       base({

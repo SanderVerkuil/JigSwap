@@ -266,6 +266,7 @@ export const legacyNotificationHref = (
       return "/people";
     case "circle_invite_received":
     case "circle_invite_accepted":
+    case "circle_deleted":
       return "/circles";
     case "whats_new":
       return relatedId ? `/whats-new#entry-${relatedId}` : "/whats-new";

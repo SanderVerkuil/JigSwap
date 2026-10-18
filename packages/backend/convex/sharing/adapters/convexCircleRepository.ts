@@ -82,4 +82,22 @@ export const convexCircleRepository = (
       }
     }
   },
+
+  // Remove the circle row and every `circleMembers` link (≤ MAX_CIRCLE_MEMBERS) together. Every
+  // circle reader gates on these two, so from this write on nobody sees anything through it.
+  async delete(circle: Circle): Promise<void> {
+    const db = (ctx as MutationCtx).db;
+    const circleId = circle.id as string;
+    const row = await ctx.db
+      .query("circles")
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", circleId))
+      .unique();
+    if (row) await db.delete(row._id);
+
+    const links = await ctx.db
+      .query("circleMembers")
+      .withIndex("by_circle", (q) => q.eq("circleAggregateId", circleId))
+      .collect();
+    for (const link of links) await db.delete(link._id);
+  },
 });

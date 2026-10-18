@@ -1690,6 +1690,12 @@
     "leaveConfirmTitle": "{circle} verlaten?",
     "leaveConfirmBody": "Je verliest de toegang tot deze kring en de puzzels die erin gedeeld zijn. Een beheerder kan je opnieuw uitnodigen.",
     "leaveError": "Kon de kring niet verlaten. Probeer het opnieuw.",
+    "delete": "Kring verwijderen",
+    "deleteConfirmTitle": "{circle} verwijderen?",
+    "deleteConfirmBody": "Hiermee verdwijnt de kring voor iedereen: leden, uitnodigingen en de puzzels die erin gedeeld zijn. Gedeelde puzzels blijven in de bibliotheek van hun eigenaar. Dit kan niet ongedaan worden gemaakt.",
+    "deleteConfirmLabel": "Typ {circle} om te bevestigen",
+    "deleted": "Kring verwijderd",
+    "deleteError": "Kon de kring niet verwijderen. Probeer het opnieuw.",
     "invitations": {
       "title": "Uitnodigingen",
       "invitedBy": "Uitgenodigd door {name}",
@@ -1930,6 +1936,7 @@
       "connection_offer_received": "Uitnodigingen om elkaar te volgen",
       "circle_invite_received": "Uitnodigingen voor een kring",
       "circle_invite_accepted": "Uitnodiging voor een kring geaccepteerd",
+      "circle_deleted": "Kring verwijderd",
       "whats_new": "Wat is er nieuw",
       "report_decided": "Uitkomst van meldingen",
       "content_removed": "Inhoud verwijderd",
@@ -2070,6 +2077,10 @@
         "title": "Uitnodiging geaccepteerd",
         "message": "{hasActorName, select, yes {{actorName} heeft je uitnodiging voor een kring geaccepteerd.} other {Iemand heeft je uitnodiging voor een kring geaccepteerd.}}"
       },
+      "circle_deleted": {
+        "title": "Kring verwijderd",
+        "message": "Een kring waar je lid van was, is verwijderd."
+      },
       "whats_new": {
         "title": "Nieuw in JigSwap",
         "message": "Bekijk wat er nieuw is in JigSwap."
@@ -2127,6 +2138,7 @@
       "connection_offer_received": "Wanneer degene die je voor JigSwap heeft uitgenodigd vraagt om elkaar te volgen.",
       "circle_invite_received": "Wanneer een kringbeheerder je uitnodigt voor hun kring.",
       "circle_invite_accepted": "Wanneer iemand je uitnodiging voor een kring accepteert.",
+      "circle_deleted": "Wanneer de eigenaar een kring verwijdert waar je lid van bent.",
       "whats_new": "Wanneer een nieuwe functie of wijziging in JigSwap wordt aangekondigd.",
       "report_decided": "Wanneer een moderator een besluit neemt over een melding die je hebt gedaan.",
       "content_removed": "Wanneer een moderator na een melding een bericht of foto van je verwijdert.",
@@ -2282,6 +2294,9 @@
       },
       "circle_invite_accepted": {
         "sentence": "<b>{actor}</b> heeft je uitnodiging voor {hasCircle, select, yes {<b>{circle}</b>} other {je kring}} geaccepteerd."
+      },
+      "circle_deleted": {
+        "sentence": "{hasCircle, select, yes {<b>{circle}</b>} other {Een kring waar je lid van was}} is verwijderd."
       },
       "report_decided": {
         "sentence": "{decision, select, dismissed {We hebben je melding beoordeeld en geen overtreding gevonden, dus er is niets veranderd.} content_removed {We hebben je melding beoordeeld en de inhoud verwijderd.} warned {We hebben je melding beoordeeld en het lid gewaarschuwd.} other {We hebben je melding beoordeeld.}}"

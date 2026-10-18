@@ -32,6 +32,7 @@ export type NotificationType =
   | "connection_offer_received" // Social: ConnectionOffered — their inviter offers to follow each other
   | "circle_invite_received" // Sharing: CircleInviteIssued — a circle Admin invited the member to join
   | "circle_invite_accepted" // Sharing: CircleInviteAccepted — the member's circle invite was accepted
+  | "circle_deleted" // Sharing: CircleDeleted — the owner deleted a circle the member was in
   | "whats_new" // Product: a What's new entry marked `notify: true` was published (not a domain event)
   | "report_decided" // Safety: a moderator decided a report the member filed (DSA Art. 16(5))
   | "content_removed" // Safety: a moderator removed the member's reported content (DSA Art. 17)
@@ -66,6 +67,7 @@ export const NOTIFICATION_TYPES: readonly NotificationType[] = [
   "connection_offer_received",
   "circle_invite_received",
   "circle_invite_accepted",
+  "circle_deleted",
   "whats_new",
   "report_decided",
   "content_removed",

@@ -11,6 +11,7 @@ import {
 import { makeAddMember } from "./add-member";
 import { makeChangePermission } from "./change-permission";
 import { makeCreateCircle } from "./create-circle";
+import { makeDeleteCircle } from "./delete-circle";
 import { makeLeaveCircle } from "./leave-circle";
 import { makeRemoveMember } from "./remove-member";
 import { makeShareCopyToCircle } from "./share-copy-to-circle";
@@ -32,6 +33,7 @@ describe("Sharing circle use cases", () => {
   let addMember: ReturnType<typeof makeAddMember>;
   let removeMember: ReturnType<typeof makeRemoveMember>;
   let leaveCircle: ReturnType<typeof makeLeaveCircle>;
+  let deleteCircle: ReturnType<typeof makeDeleteCircle>;
   let changePermission: ReturnType<typeof makeChangePermission>;
   let shareCopy: ReturnType<typeof makeShareCopyToCircle>;
 
@@ -51,6 +53,7 @@ describe("Sharing circle use cases", () => {
     addMember = makeAddMember({ circles, membershipIds, events, clock });
     removeMember = makeRemoveMember({ circles, events, clock });
     leaveCircle = makeLeaveCircle({ circles, events, clock });
+    deleteCircle = makeDeleteCircle({ circles, events, clock });
     changePermission = makeChangePermission({ circles, events });
     shareCopy = makeShareCopyToCircle({ circles, events, clock });
   });
@@ -250,6 +253,77 @@ describe("Sharing circle use cases", () => {
       const result = await leaveCircle({
         circleId: missingCircle,
         memberId: alice,
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("CircleNotFound");
+    });
+  });
+
+  describe("makeDeleteCircle", () => {
+    it("deletes the circle and publishes CircleDeleted naming the other members", async () => {
+      const circleId = await openCircle();
+      await addMember({
+        circleId,
+        actorId: owner,
+        memberId: alice,
+        permission: "ViewOnly",
+      });
+      events.published.length = 0;
+
+      const result = await deleteCircle({
+        circleId,
+        actorId: owner,
+        confirmName: "Family",
+      });
+
+      expect(result.isOk).toBe(true);
+      expect(await circles.findById(circleId)).toBeNull();
+      expect(circles.size()).toBe(0);
+      expect(events.names()).toEqual(["CircleDeleted"]);
+      expect(events.published[0]).toMatchObject({
+        circleId,
+        ownerId: owner,
+        memberIds: [alice],
+        circleName: "Family",
+        occurredAt: NOW,
+      });
+    });
+
+    it.each([
+      ["a member who is not the owner", alice, "Family", "NotCircleOwner"],
+      ["a non-member", bob, "Family", "NotAMember"],
+      [
+        "the owner with the wrong name",
+        owner,
+        "family",
+        "ConfirmationMismatch",
+      ],
+    ] as const)(
+      "refuses %s and keeps the circle",
+      async (_label, actorId, confirmName, code) => {
+        const circleId = await openCircle();
+        await addMember({
+          circleId,
+          actorId: owner,
+          memberId: alice,
+          permission: "Admin",
+        });
+        events.published.length = 0;
+
+        const result = await deleteCircle({ circleId, actorId, confirmName });
+
+        expect(result.isErr).toBe(true);
+        if (result.isErr) expect(result.error.code).toBe(code);
+        expect(await circles.findById(circleId)).not.toBeNull();
+        expect(events.published).toHaveLength(0);
+      },
+    );
+
+    it("returns CircleNotFound for an unknown circle", async () => {
+      const result = await deleteCircle({
+        circleId: missingCircle,
+        actorId: owner,
+        confirmName: "Family",
       });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("CircleNotFound");

@@ -3,6 +3,7 @@ import type { CircleInvite } from "./circle-invite";
 import { SharingError } from "./errors";
 import {
   CircleCreated,
+  CircleDeleted,
   CopySharedToCircle,
   MemberJoinedCircle,
   MemberLeftCircle,
@@ -192,6 +193,36 @@ export class Circle {
     if (gate.isErr) return err(gate.error);
 
     this.record(new CopySharedToCircle(this.state.id, copyId, now));
+    return ok(undefined);
+  }
+
+  // Delete the circle. Only the owner may, and only by typing its exact name back (`confirmName`,
+  // compared untrimmed). A non-member is told NotAMember (so the transport can answer not-found),
+  // a member who isn't the owner NotCircleOwner. Emits CircleDeleted naming every other member,
+  // so they can be told after the circle is gone; the repository then deletes it.
+  delete(
+    actor: MemberId,
+    confirmName: string,
+    now: Date,
+  ): Result<void, SharingError> {
+    if (!this.isMember(actor)) return err(SharingError.notAMember());
+    if (actor !== this.state.ownerId) return err(SharingError.notCircleOwner());
+    if (confirmName !== this.state.name) {
+      return err(SharingError.confirmationMismatch());
+    }
+
+    const memberIds = this.memberships
+      .map((m) => m.memberId)
+      .filter((id) => id !== this.state.ownerId);
+    this.record(
+      new CircleDeleted(
+        this.state.id,
+        this.state.ownerId,
+        memberIds,
+        this.state.name,
+        now,
+      ),
+    );
     return ok(undefined);
   }
 

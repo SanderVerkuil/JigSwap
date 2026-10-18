@@ -1690,6 +1690,12 @@
     "leaveConfirmTitle": "Leave {circle}?",
     "leaveConfirmBody": "You'll lose access to this circle and the puzzles shared in it. An admin can invite you again.",
     "leaveError": "Couldn't leave the circle. Please try again.",
+    "delete": "Delete circle",
+    "deleteConfirmTitle": "Delete {circle}?",
+    "deleteConfirmBody": "This removes the circle for everyone: members, invitations and the puzzles shared in it. Shared puzzles stay in their owners' libraries. This can't be undone.",
+    "deleteConfirmLabel": "Type {circle} to confirm",
+    "deleted": "Circle deleted",
+    "deleteError": "Couldn't delete the circle. Please try again.",
     "invitations": {
       "title": "Invitations",
       "invitedBy": "Invited by {name}",
@@ -1930,6 +1936,7 @@
       "connection_offer_received": "Invitations to follow each other",
       "circle_invite_received": "Circle invites",
       "circle_invite_accepted": "Circle invite accepted",
+      "circle_deleted": "Circle deleted",
       "whats_new": "What's new",
       "report_decided": "Report outcomes",
       "content_removed": "Content removed",
@@ -2070,6 +2077,10 @@
         "title": "Invite accepted",
         "message": "{hasActorName, select, yes {{actorName} accepted your circle invitation.} other {Someone accepted your circle invitation.}}"
       },
+      "circle_deleted": {
+        "title": "Circle deleted",
+        "message": "A circle you were in was deleted."
+      },
       "whats_new": {
         "title": "New in JigSwap",
         "message": "See what's new in JigSwap."
@@ -2127,6 +2138,7 @@
       "connection_offer_received": "When the person who invited you to JigSwap asks to follow each other.",
       "circle_invite_received": "When a circle admin invites you to join their circle.",
       "circle_invite_accepted": "When someone accepts your invitation to a circle.",
+      "circle_deleted": "When the owner deletes a circle you're in.",
       "whats_new": "When a new feature or change to JigSwap is announced.",
       "report_decided": "When a moderator decides on a report you filed.",
       "content_removed": "When a moderator removes one of your messages or photos after a report.",
@@ -2282,6 +2294,9 @@
       },
       "circle_invite_accepted": {
         "sentence": "<b>{actor}</b> accepted your invitation to {hasCircle, select, yes {<b>{circle}</b>} other {your circle}}."
+      },
+      "circle_deleted": {
+        "sentence": "{hasCircle, select, yes {<b>{circle}</b>} other {A circle you were in}} was deleted."
       },
       "report_decided": {
         "sentence": "{decision, select, dismissed {We reviewed your report and found no violation, so no action was taken.} content_removed {We reviewed your report and removed the content.} warned {We reviewed your report and warned the member.} other {We reviewed your report.}}"
