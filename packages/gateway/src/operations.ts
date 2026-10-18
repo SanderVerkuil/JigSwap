@@ -510,6 +510,9 @@ export const gateway = {
     // Photo-screening health (configured? how many photos are waiting unscored?).
     getPhotoScreeningHealth:
       api.admin.getPhotoScreeningHealth.getPhotoScreeningHealth,
+    // Manual review of photos the classifier has not decided (pending / unscored).
+    listUncheckedPhotos: api.admin.listUncheckedPhotos.listUncheckedPhotos,
+    decideUncheckedPhoto: api.admin.decideUncheckedPhoto.decideUncheckedPhoto,
     // Admin users directory (read-only v1 — no user actions). Paginated; an optional
     // `search` arg switches to the by_searchable_name index. Rows are AdminUserView
     // DTOs whose `role` is the display-only Clerk mirror (authz stays JWT-based).

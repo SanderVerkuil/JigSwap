@@ -415,5 +415,9 @@ describe("needsRescreen", () => {
       needsRescreen({ moderationStatus: "rejected", moderationScore: 0.9 }),
     ).toBe(false);
     expect(needsRescreen({ moderationStatus: "pending" })).toBe(false);
+    // An admin's manual decision is final.
+    expect(
+      needsRescreen({ moderationStatus: "approved", moderatedBy: "u1" }),
+    ).toBe(false);
   });
 });

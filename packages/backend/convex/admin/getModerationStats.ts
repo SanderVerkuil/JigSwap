@@ -34,7 +34,9 @@ export const getModerationStats = query({
       } else if (
         row.kind === "photo_restored" ||
         row.kind === "photo_removal_confirmed" ||
-        row.kind === "photo_auto_rejected"
+        row.kind === "photo_auto_rejected" ||
+        row.kind === "photo_manually_approved" ||
+        row.kind === "photo_manually_rejected"
       ) {
         flagsCleared += 1;
       }

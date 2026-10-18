@@ -3536,7 +3536,9 @@
         "edited": "Approved (edited) “{title}” — {count} left in queue.",
         "rejected": "Rejected “{title}” — {count} left in queue.",
         "removed": "Removed image on “{title}” — {count} left in queue.",
-        "restored": "Restored photo on “{title}” — {count} left in queue."
+        "restored": "Restored photo on “{title}” — {count} left in queue.",
+        "manualApproved": "Approved photo on “{title}” — {count} left in queue.",
+        "manualRejected": "Rejected photo on “{title}” — {count} left in queue."
       },
       "banner": {
         "pill": "ADMIN",
@@ -3552,7 +3554,8 @@
       "tabs": {
         "submissions": "Submissions",
         "flagged": "Flagged Images",
-        "activity": "Activity Log"
+        "activity": "Activity Log",
+        "unchecked": "Unchecked Photos"
       },
       "detail": {
         "submitted": "Submitted",
@@ -3602,7 +3605,9 @@
         "photo_auto_rejected": "<strong>{actor}</strong> auto-flagged a photo on <strong>{target}</strong>",
         "photo_restored": "<strong>{actor}</strong> restored a photo on <strong>{target}</strong>",
         "role_granted": "<strong>{actor}</strong> made <strong>{target}</strong> an admin",
-        "role_revoked": "<strong>{actor}</strong> removed the admin role from <strong>{target}</strong>"
+        "role_revoked": "<strong>{actor}</strong> removed the admin role from <strong>{target}</strong>",
+        "photo_manually_approved": "<strong>{actor}</strong> approved an unchecked photo on <strong>{target}</strong>",
+        "photo_manually_rejected": "<strong>{actor}</strong> rejected an unchecked photo on <strong>{target}</strong>"
       },
       "activityEmpty": "No moderation activity yet.",
       "screening": {
@@ -3610,6 +3615,40 @@
         "missingToken": "Screening is not configured on this deployment (HF_MODERATION_TOKEN is not set). New photos stay visible to their uploader only until they can be checked.",
         "disabled": "Screening is turned off on this deployment (MODERATION_PROVIDER=none). New photos are published without a check.",
         "unscored": "{countLabel} {count, plural, one {photo} other {photos}} could not be checked yet and {count, plural, one {is} other {are}} visible to the uploader only. Once screening works, run the re-screen from the one-shot migrations runbook."
+      },
+      "uncheckedEmpty": "No photos are waiting for a check.",
+      "unchecked": {
+        "loading": "Loading unchecked photos…",
+        "reveal": "Hover or tap to reveal the photo",
+        "status": {
+          "pending": "Being checked",
+          "unscored": "Could not be checked"
+        },
+        "source": {
+          "copy": "Copy photo",
+          "completion": "Completion photo"
+        },
+        "reason": {
+          "missing_token": "Screening not configured",
+          "auth": "Provider rejected the credentials",
+          "rate_limited": "Provider rate limit",
+          "model_unavailable": "Model unavailable",
+          "provider_error": "Provider error",
+          "network": "Provider unreachable",
+          "bad_response": "Unexpected provider response",
+          "missing_file": "File missing",
+          "download_error": "File could not be read",
+          "internal_error": "Internal error",
+          "unknown": "Unknown"
+        },
+        "onPuzzle": "On puzzle",
+        "uploadedBy": "Uploaded by",
+        "statusLabel": "Status",
+        "reasonLabel": "Reason",
+        "approve": "Approve Photo",
+        "reject": "Reject Photo",
+        "rejectArm": "Are you sure?",
+        "hint": "Approving publishes the photo to other members. Rejecting hides it; a rejected copy photo moves to Flagged Images, a rejected completion photo is deleted."
       }
     },
     "contact": {
