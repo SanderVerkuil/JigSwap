@@ -68,6 +68,8 @@ function PrivacyPolicyPage() {
         { type: "p", text: t("dataStorage.vercel.description") },
         { type: "sub", text: t("dataStorage.huggingface.title") },
         { type: "p", text: t("dataStorage.huggingface.description") },
+        { type: "sub", text: t("dataStorage.sightengine.title") },
+        { type: "p", text: t("dataStorage.sightengine.description") },
         { type: "sub", text: t("dataStorage.axiom.title") },
         { type: "p", text: t("dataStorage.axiom.description") },
       ],

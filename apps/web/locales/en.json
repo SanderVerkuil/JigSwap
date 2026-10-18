@@ -1143,6 +1143,10 @@
         "title": "Hugging Face",
         "description": "Photo screening. Each photo you upload is sent to a content-safety model hosted by Hugging Face, which checks it for explicit content and returns a score. Hugging Face processes the image only to return that result. Hugging Face is based in the United States, so this processing may take place outside the European Union."
       },
+      "sightengine": {
+        "title": "Sightengine",
+        "description": "Photo screening (replacing Hugging Face). Sightengine is operated by Kozelo SAS in Paris, France. Each photo you upload is sent to its content-safety service, which checks it for explicit content and returns a score; it processes the image only to return that result. Sightengine's data centres are mainly in the European Union, but depending on availability it may also process images in Canada or the United States."
+      },
       "axiom": {
         "title": "Axiom",
         "description": "Technical logs. Our technical event logs (for example, that a photo check ran and how it ended, with internal account and record identifiers) are sent to Axiom and stored in its EU region. These logs do not contain your messages or your photos."
@@ -1153,7 +1157,7 @@
       "description": "Photos you add to your library or to a finished puzzle go through an automatic pipeline before other members can see them:",
       "steps": [
         "The image is re-encoded, which strips hidden metadata such as EXIF data — including any embedded location",
-        "An automated content-safety check screens the image; for this we currently use a model hosted by Hugging Face, which processes the image for this purpose only",
+        "An automated content-safety check screens the image; for this we use one of the screening services listed above (Hugging Face or Sightengine), which processes the image for this purpose only",
         "Until this finishes, the photo is visible only to you. If the check cannot be completed (for example because the screening service is unavailable), the photo stays visible only to you until it has been checked"
       ]
     },
