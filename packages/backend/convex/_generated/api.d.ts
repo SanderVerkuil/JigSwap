@@ -197,6 +197,7 @@ import type * as insights_getRecommendations from "../insights/getRecommendation
 import type * as insights_getTradeActivity from "../insights/getTradeActivity.js";
 import type * as insights_sampling from "../insights/sampling.js";
 import type * as lib_axiom from "../lib/axiom.js";
+import type * as lib_imageModeration_blobMetadata from "../lib/imageModeration/blobMetadata.js";
 import type * as lib_logEvent from "../lib/logEvent.js";
 import type * as library_acquireCopies from "../library/acquireCopies.js";
 import type * as library_acquireCopy from "../library/acquireCopy.js";
@@ -616,6 +617,7 @@ declare const fullApi: ApiFromModules<{
   "insights/getTradeActivity": typeof insights_getTradeActivity;
   "insights/sampling": typeof insights_sampling;
   "lib/axiom": typeof lib_axiom;
+  "lib/imageModeration/blobMetadata": typeof lib_imageModeration_blobMetadata;
   "lib/logEvent": typeof lib_logEvent;
   "library/acquireCopies": typeof library_acquireCopies;
   "library/acquireCopy": typeof library_acquireCopy;

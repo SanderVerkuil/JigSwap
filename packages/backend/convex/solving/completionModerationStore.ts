@@ -25,6 +25,7 @@ export const getImageForModeration = internalQuery({
     return {
       fileId: row.fileId,
       moderationStatus: row.moderationStatus,
+      reencodedAt: row.reencodedAt,
       // Business context for the wide event (which completion / who uploaded).
       completionId: row.completionId,
       uploaderId: row.uploaderId,
@@ -48,7 +49,13 @@ export const setModerationFile = internalMutation({
     const row = await ctx.db.get(imageId);
     if (!row) return;
     const oldFileId = row.fileId;
-    await ctx.db.patch(imageId, { fileId, blurhash, updatedAt: Date.now() });
+    const now = Date.now();
+    await ctx.db.patch(imageId, {
+      fileId,
+      blurhash,
+      reencodedAt: now,
+      updatedAt: now,
+    });
 
     const completion = await ctx.db
       .query("completions")

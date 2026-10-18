@@ -75,10 +75,19 @@ const recordForAlice = async (
   ).completionId;
 
 // Unique content per blob — convex-test content-addresses storage, so identical bytes would
-// yield identical URLs and blunt the "which photo survived" assertions below.
+// yield identical URLs and blunt the "which photo survived" assertions below. The bytes start
+// with a valid 2x2 WebP (VP8L) header, stored as image/webp, so they pass the pipeline's input
+// guards and take its WebP best-effort path: jimp cannot decode WebP and the blob already has the
+// right type, so no file swap happens and the photo is classified as uploaded.
+const WEBP_HEADER = new Uint8Array([
+  0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50, 0x56, 0x50, 0x38,
+  0x4c, 0, 0, 0, 0, 0x2f, 0x01, 0x40, 0x00, 0x00,
+]);
 const storeBlob = (t: TestConvex<typeof schema>) =>
   t.run((ctx) =>
-    ctx.storage.store(new Blob([crypto.randomUUID()], { type: "image/png" })),
+    ctx.storage.store(
+      new Blob([WEBP_HEADER, crypto.randomUUID()], { type: "image/webp" }),
+    ),
   );
 
 const completionRow = (t: TestConvex<typeof schema>, aggregateId: string) =>
@@ -126,8 +135,7 @@ const settleScheduledJobs = async (t: TestConvex<typeof schema>) => {
 };
 
 // Attach one photo and return its sidecar row, reset to "pending": the background-drained
-// action marks it unscored (verdict-only — decode fails on non-image bytes, so no file
-// swap), so settle that job first, then re-open the sidecar so each test exercises the FIRST
+// action marks it unscored (verdict-only — the WebP path, so no file swap), so settle that job first, then re-open the sidecar so each test exercises the FIRST
 // verdict deterministically.
 const attachOne = async (
   t: TestConvex<typeof schema>,
