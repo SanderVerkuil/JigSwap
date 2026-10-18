@@ -1,16 +1,17 @@
 ---
 title: Berichten
 order: 2
-summary: "Chat met andere leden, voeg puzzels, foto's en locaties toe en vind oudere berichten terug."
+summary: "Chat met andere leden en je kringen, voeg puzzels, foto's en locaties toe, zie wie er typt of online is en vind oudere berichten terug."
 ---
 
 # Berichten
 
 **Waar:** **Community → Berichten** (`/messages`).
 
-In Berichten praat je één op één met andere leden: over een puzzel die je
-zag, een ruil die je aan het regelen bent of waar jullie afspreken. Elk gesprek
-is met één lid, en elke uitwisseling heeft ook een eigen gesprek.
+In Berichten praat je met andere leden: één op één over een puzzel die je
+zag, een ruil die je aan het regelen bent of waar jullie afspreken, of samen in
+de groepschat van een vriendenkring. Elke uitwisseling heeft ook een eigen
+gesprek.
 
 ## Wie je een bericht kunt sturen
 
@@ -41,6 +42,11 @@ Elke rij in het overzicht toont:
 - Het aantal ongelezen berichten, als die er zijn.
 - De omslag van de laatste puzzel waar het gesprek over gaat, als die er is.
 
+De groepschat van een kring toont de naam van de kring met maximaal twee
+avatars van leden, en het voorbeeld begint met de naam van wie het laatst
+schreef (bijvoorbeeld "Bas: Wie heeft de Wasgij?"). Een gedempt gesprek toont
+een doorgestreepte bel, en het aantal ongelezen berichten is grijs.
+
 ## Een gesprek beginnen
 
 **Vanaf het profiel van een lid of hun tegel bij Mensen:**
@@ -59,6 +65,149 @@ Elke rij in het overzicht toont:
 Heb je al een gesprek met de eigenaar, dan brengt JigSwap je daar direct
 naartoe. Over je eigen puzzel kun je geen bericht sturen. Sommige eigenaren
 houden hun profiel privé; dan kun je ze vanaf hun puzzel geen bericht sturen.
+
+**Met een vriendenkring:**
+
+1. Klik bij de kring op **Groepschat openen**, op **Kringen** of op de eigen
+   pagina van de kring. Of klik in Berichten op **Nieuw**, kies **Kringchat**
+   en kies de kring.
+2. Schrijf je bericht en verstuur het.
+
+De chat van een kring verschijnt in je overzicht zodra iemand erin heeft
+geschreven, of zodra jij hem hebt geopend.
+
+## Groepschats in kringen
+
+Elke vriendenkring heeft één groepschat voor al zijn leden. Hoe je kringen
+maakt en mensen uitnodigt, lees je bij
+[Vriendenkringen](/docs/sharing-and-exchanges/friend-circles).
+
+### Wie het kan lezen
+
+- Alleen de huidige leden van de kring kunnen in de chat lezen en schrijven.
+- Kom je erbij, dan zie je de berichten van na het moment dat je erbij kwam,
+  niet de eerdere. Dat geldt ook als je opnieuw meedoet: berichten van de tijd
+  dat je weg was, blijven verborgen.
+- De chat toont een korte regel als iemand erbij komt of vertrekt, zoals
+  "Anna doet nu mee" of "Anna zit niet meer in de kring". Vertrekken en
+  verwijderd worden zien er hetzelfde uit, en de chat zegt nooit wie iemand
+  heeft verwijderd. Kun je niet op een andere manier zien wie het was, dan staat
+  er "Er doet een nieuw lid mee" of "Een lid zit niet meer in de kring".
+- Bij elke reeks berichten staan de naam en avatar van wie ze schreef. Leden van
+  dezelfde kring zien altijd elkaars naam.
+
+### Leden en opties
+
+Klik op het aantal leden onder de naam van de kring (bijvoorbeeld
+**6 leden**) om het ledenpaneel te openen. Daarin staat iedereen in de kring
+met zijn rol, met een meldknop naast elk lid, en verder **Gesprek dempen** en
+**Kring verlaten**.
+
+Het menu **Gespreksopties** (**⋯**) in de kop heeft **Gesprek dempen**,
+**Leden**, **Kring openen**, **Een lid melden…** en **Kring verlaten**. Met
+**Kring** in de kop open je de pagina van de kring.
+
+### Een chat dempen
+
+Kies **Gesprek dempen** om alle meldingen van dat gesprek stop te zetten:
+in de app, per e-mail en als pushmelding. Nieuwe berichten komen nog steeds
+binnen, maar het aantal ongelezen berichten is grijs en telt niet mee in het
+getal bij Berichten. Kies **Dempen opheffen** om de meldingen weer aan te
+zetten.
+
+### Vertrekken of verwijderd worden
+
+Verlaat je een kring, of verwijdert een beheerder je:
+
+- dan verdwijnt de chat uit je overzicht en kun je hem niet meer lezen;
+- de berichten die je stuurde, blijven in de chat staan voor de andere leden.
+
+Berichten van iemand die is vertrokken, blijven ook staan. Je ziet de naam
+alleen als je die ook buiten de kring zou kunnen zien, bijvoorbeeld omdat
+jullie elkaar volgen; anders staat er **Anonieme gebruiker**.
+
+De eigenaar kan een kring niet verlaten; die kan hem wel verwijderen, en dan
+verdwijnt de chat ook.
+
+### Iemand blokkeren in een kring
+
+Blokkeer je een lid, dan blijven jullie allebei in de kringen die jullie
+delen. In de chat van zo'n kring:
+
+- Worden diens berichten voor jou ingeklapt als "Bericht van een lid dat je
+  hebt geblokkeerd". Klik op **Tonen** om de tekst te lezen; diens foto's
+  blijven ingeklapt.
+- Tellen diens berichten niet mee als ongelezen en krijg je er geen melding
+  van.
+- Ziet diegene jouw berichten gewoon, en krijgt niets te horen over de
+  blokkering.
+- Zien jullie niet van elkaar of je typt of online bent.
+
+Wil je liever niet samen in de groep zitten, dan kun je de kring verlaten.
+
+### Meldingen van kringchats
+
+- Nieuwe berichten in een gesprek worden samengevoegd tot één melding, zoals
+  "**Anna** en 2 anderen schreven in **Puzzelclub**."
+- Pushmeldingen voor kringberichten staan standaard aan (zodra je push op dit
+  apparaat hebt aangezet), en komen hoogstens één keer per 2 minuten per chat.
+  Ze tonen de tekst van het bericht niet.
+- Kringchats sturen nooit een e-mail per bericht. Zet je in je
+  [meldingsvoorkeuren](/docs/staying-informed/notifications) e-mail aan voor
+  **Kringberichten**, dan krijg je ongeveer 30 minuten na een bericht dat je
+  nog niet hebt gelezen één korte samenvatting, hoogstens één keer per 6 uur
+  per chat. E-mail staat standaard uit.
+
+## Zien wie er typt
+
+Schrijft iemand in een gesprek waar jij in zit, dan staat dat boven het
+berichtvak: "Anna typt…", "Anna en Bas typen…" of "Meerdere mensen typen…". De
+regel verdwijnt een paar seconden nadat diegene stopt, of zodra het bericht
+verstuurd is.
+
+- Iedereen in het gesprek ziet het, ook kringleden die je niet wederzijds
+  volgt.
+- Het is nooit te zien tussen jou en een lid dat jij hebt geblokkeerd of dat
+  jou heeft geblokkeerd.
+- Zolang je **Offline weergeven** gebruikt, zien anderen niet dat je typt.
+
+## Online status
+
+Je kunt mensen die je wederzijds volgt laten zien wanneer je online bent. Dit
+staat uit tot je kiest om het te delen.
+
+**Aan- of uitzetten:** de eerste keer dat je Berichten opent, vraagt een kaart
+of je je online status wilt delen. Kies **Delen** of **Niet nu**. Je kunt dit
+altijd veranderen met de instelling **Online-status** op
+**Privacy en veiligheid** (open je accountmenu → **Account beheren** →
+**Privacy en veiligheid**).
+
+**Wie het ziet:** iemand kan je status alleen zien als dit allemaal klopt:
+
+- jullie delen allebei je online status;
+- jullie volgen elkaar;
+- geen van jullie heeft de ander geblokkeerd;
+- je gebruikt niet **Offline weergeven**.
+
+Het werkt twee kanten op: deel je die van jou niet, dan zie je die van
+anderen ook niet. Kringleden die je niet wederzijds volgt, zien je status niet,
+ook niet in de kringchat. JigSwap laat nooit zien wanneer je voor het laatst
+online was, en houdt niet bij wanneer je online was.
+
+**Waar je het ziet:** een groene stip op de avatar van een lid betekent
+online, een half gevulde stip betekent afwezig. Je ziet dit bij gesprekken in
+je overzicht, in de kop van een gesprek en in het ledenpaneel van een kring,
+waar de kop ook telt wie er online is, zoals "6 leden · 2 online". Daarin tellen
+alleen leden die online zijn (niet afwezig) en van wie je de status mag zien.
+
+**Je status instellen:** open je accountmenu en kies je status:
+
+- **Automatisch**: je bent online zolang JigSwap open is, afwezig na 5 minuten
+  zonder activiteit, en offline als het tabblad verborgen of gesloten is.
+- **Afwezig**: je bent afwezig zolang je op JigSwap bent.
+- **Offline weergeven**: iedereen ziet je als offline, en anderen zien niet dat
+  je typt. Je kunt zelf nog wel de status zien van anderen die die van hen
+  delen.
 
 ## Een gesprek lezen
 

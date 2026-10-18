@@ -54,7 +54,8 @@ After you act, the buttons are replaced by the result, such as **Following**,
 
 Email and push notifications carry the same details as the in-app ones: who
 did it, which puzzle or trade it's about, and a link straight to it. A push
-notification for a new message shows a preview of the message.
+notification for a new message shows a preview of the message, except in a
+circle's group chat.
 
 ## Notification preferences
 
@@ -68,7 +69,8 @@ also see **Admin**). Use **Jump to** to go to a category.
 - Turn each notification type on or off for each channel: **In-app**,
   **Email** and **Push**.
 - By default, every type is on for **In-app**; email and push are off until
-  you turn them on.
+  you turn them on. **Circle messages** is the exception: push is on for it by
+  default.
 - Email isn't offered for every type.
 - A few safety notices, such as when a moderator removes your content or warns
   you, are marked **Always on: legally required notices**. They always appear
@@ -91,6 +93,9 @@ notifications cover newer features:
 - **Circle invites** and **Circle invite accepted**: someone invites you to a
   friend circle, or accepts your invitation.
 - **Circle deleted**: the owner deleted a circle you were in.
+- **Circle messages**: someone wrote in the group chat of one of your circles.
+  Messages in one conversation are combined into one notification. See
+  [Messages](/docs/staying-informed/messages#notifications-from-circle-chats).
 - **Report outcomes**: a moderator decided on a report you filed.
 - **Content removed** and **Moderator warnings**: a moderator acted on one of
   your messages or photos after a report.

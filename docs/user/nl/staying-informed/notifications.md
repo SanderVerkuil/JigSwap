@@ -56,7 +56,8 @@ Nadat je hebt gereageerd, worden de knoppen vervangen door het resultaat, zoals
 
 E-mail- en pushmeldingen bevatten dezelfde gegevens als de meldingen in de app:
 wie het deed, over welke puzzel of ruil het gaat, en een link er direct naartoe.
-Een pushmelding voor een nieuw bericht toont een voorbeeld van het bericht.
+Een pushmelding voor een nieuw bericht toont een voorbeeld van het bericht,
+behalve in de groepschat van een kring.
 
 ## Meldingsvoorkeuren
 
@@ -70,7 +71,7 @@ springen.
 - Zet elk meldingstype aan of uit per kanaal: **In-app**, **E-mail** en
   **Push**.
 - Standaard staat elk type aan voor **In-app**; e-mail en push staan uit totdat
-  je ze aanzet.
+  je ze aanzet. Alleen voor **Kringberichten** staat push standaard aan.
 - E-mail is niet voor elk type beschikbaar.
 - Een paar veiligheidsberichten, zoals wanneer een moderator inhoud van je
   verwijdert of je waarschuwt, zijn gemarkeerd met **Altijd aan: wettelijk
@@ -95,6 +96,9 @@ catalogus gaan deze meldingen over nieuwere functies:
   geaccepteerd**: iemand nodigt je uit voor een vriendenkring, of accepteert
   jouw uitnodiging.
 - **Kring verwijderd**: de eigenaar heeft een kring verwijderd waar je in zat.
+- **Kringberichten**: iemand schreef in de groepschat van een van je kringen.
+  Berichten in één gesprek worden samengevoegd tot één melding. Zie
+  [Berichten](/docs/staying-informed/messages#meldingen-van-kringchats).
 - **Uitkomst van meldingen**: een moderator heeft een besluit genomen over een
   melding die jij hebt gedaan.
 - **Inhoud verwijderd** en **Waarschuwingen van moderators**: een moderator
