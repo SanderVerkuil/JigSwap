@@ -4779,5 +4779,9 @@
         "attachment": "A message photo"
       }
     }
+  },
+  "presence": {
+    "online": "Online",
+    "away": "Away"
   }
 }

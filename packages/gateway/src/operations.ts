@@ -367,8 +367,9 @@ export const gateway = {
     recordTourProgress: api.whatsNew.recordTourProgress.recordTourProgress,
   },
 
-  // Presence (messages page): heartbeat/list/disconnect consumed by @convex-dev/presence's
-  // usePresence hook; used to suppress message notifications for members already viewing.
+  // Presence (messages page + dashboard shell): heartbeat/list/disconnect consumed by
+  // @convex-dev/presence's usePresence hook; the "messages" room suppresses message notifications
+  // for members already viewing, "app:online"/"app:away" back social.presenceOf.
   presence: {
     heartbeat: api.presence.heartbeat,
     list: api.presence.list,
@@ -460,6 +461,13 @@ export const gateway = {
     listPuzzleReviews: api.social.listPuzzleReviews.listPuzzleReviews,
     listPublicPuzzleReviews:
       api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
+    // Presence (opt-in, mutual-only, reciprocal): the caller's own share/override settings and
+    // their setter, and which of up to 50 members the caller may see online or away (offline
+    // and hidden members are absent). The heartbeats live under `presence` above.
+    presenceSettings: api.social.getMyPresenceSettings.getMyPresenceSettings,
+    setPresencePreferences:
+      api.social.setPresencePreferences.setPresencePreferences,
+    presenceOf: api.social.getPresenceOf.getPresenceOf,
   },
 
   // Email invitations (follow / household) for people not on JigSwap yet. Every send answers
