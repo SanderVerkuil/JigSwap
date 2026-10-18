@@ -3,6 +3,10 @@ import { internal } from "../_generated/api";
 import type { Doc } from "../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../_generated/server";
 import {
+  CIRCLE_MEMBERSHIP_EVENTS,
+  handleCircleMembershipEvent,
+} from "../conversation/circleSubscriber";
+import {
   handleDomainEvent as handleConversationEvent,
   LIFECYCLE_BODIES,
 } from "../conversation/subscriber";
@@ -55,6 +59,16 @@ const HANDLERS: readonly {
     retry: false,
     // Derived from the handler's own LIFECYCLE_BODIES table, so it tracks new lifecycle events.
     events: Object.keys(LIFECYCLE_BODIES),
+  },
+  // Mirrors circle membership into the circle's thread (participants + join/leave rows).
+  // Convergent: it applies a change only while it is still true of the circle, so a retry, or a
+  // stale event run after a later one, never re-adds a member who left (or drops one who
+  // re-joined), and an already-applied change writes nothing.
+  {
+    name: "circleThread",
+    run: handleCircleMembershipEvent,
+    retry: true,
+    events: CIRCLE_MEMBERSHIP_EVENTS,
   },
   // ONE sub-transaction for custody + the library transfer: custody records the pre-transfer owner
   // (so it runs first), and the two must commit or roll back together — a custody row without the
