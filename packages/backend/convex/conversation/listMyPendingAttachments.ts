@@ -24,7 +24,7 @@ export const listMyPendingAttachments = query({
       .collect();
     return Promise.all(
       rows
-        .filter((row) => row.messageId === undefined)
+        .filter((row) => row.messageId === undefined && !row.hiddenFromSender)
         .sort((a, b) => a.createdAt - b.createdAt)
         .map((row) => pendingAttachmentViewOf(ctx, row)),
     );

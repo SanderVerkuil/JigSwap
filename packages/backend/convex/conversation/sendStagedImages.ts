@@ -1,5 +1,6 @@
 import { MAX_CAPTION_LENGTH } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
+import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
@@ -9,6 +10,7 @@ import {
   MAX_PHOTOS_PER_SEND,
   participantThreadOf,
   settleSendBatch,
+  UNDELIVERED_ATTACHMENT_TTL_MS,
 } from "./messageAttachments";
 
 const notFound = () =>
@@ -81,6 +83,11 @@ export const sendStagedImages = mutation({
     while (used.has(sendRequestedAt)) sendRequestedAt += 1;
 
     for (const [sendIndex, row] of rows.entries()) {
+      await ctx.scheduler.runAfter(
+        UNDELIVERED_ATTACHMENT_TTL_MS,
+        internal.conversation.attachmentModerationStore.purgeUndelivered,
+        { attachmentId: row._id, rule: "undelivered" },
+      );
       await ctx.db.patch(row._id, {
         sendRequestedAt,
         sendIndex,

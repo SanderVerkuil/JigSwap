@@ -25,7 +25,21 @@ const fakes: { score: number; hcs: "match" | "no_match" | number } = {
   hcs: "no_match",
 };
 
+// convex-test runs a scheduled function through setTimeout with its real delay, and Node fires a
+// timeout above 2^31 - 1 ms (~24.8 days) at once. The 30-day purge must stay pending in tests (they
+// run it by hand), so a timer that long is dropped instead of firing immediately.
+const realSetTimeout = globalThis.setTimeout;
+const MAX_TIMEOUT_MS = 2 ** 31 - 1;
+
 beforeEach(() => {
+  vi.spyOn(globalThis, "setTimeout").mockImplementation(((
+    handler: () => void,
+    ms?: number,
+    ...rest: unknown[]
+  ) =>
+    (ms ?? 0) > MAX_TIMEOUT_MS
+      ? realSetTimeout(() => {}, 0)
+      : realSetTimeout(handler, ms, ...rest)) as typeof setTimeout);
   fakes.score = 0.01;
   fakes.hcs = "no_match";
   vi.spyOn(console, "log").mockImplementation(() => {});
@@ -1131,6 +1145,105 @@ describe("expiry", () => {
     expect(await blobExists(t, unsentFile)).toBe(false);
     for (const kept of [sent, held, rejected]) {
       expect(await attachment(t, kept)).not.toBeNull();
+    }
+  });
+});
+
+describe("purging undelivered photos", () => {
+  const purgeJobs = (t: T) =>
+    t.run(async (ctx) =>
+      (await ctx.db.system.query("_scheduled_functions").collect()).filter(
+        (job) =>
+          job.name ===
+            "conversation/attachmentModerationStore:purgeUndelivered" &&
+          job.state.kind === "pending",
+      ),
+    );
+  const purge = (
+    t: T,
+    attachmentId: Id<"messageAttachments">,
+    rule: "rejected" | "undelivered",
+  ) => t.mutation(store.purgeUndelivered, { attachmentId, rule });
+  const DAY = 24 * 60 * 60_000;
+
+  test("a rejected photo is purged 30 days on unless appealed", async () => {
+    fakes.score = 0.97;
+    const t = convexTest(schema, modules);
+    const { threadId } = await openThread(t);
+    const id = await stage(t, threadId);
+    const appealed = await stage(t, threadId);
+    await settleDueJobs(t);
+    const jobs = await purgeJobs(t);
+    expect(jobs).toHaveLength(2);
+    for (const job of jobs) {
+      expect(job.args[0]).toMatchObject({ rule: "rejected" });
+      expect(job.scheduledTime - job._creationTime).toBeGreaterThanOrEqual(
+        30 * DAY - 1000,
+      );
+    }
+    await asAlice(t).mutation(
+      api.conversation.requestImageReview.requestImageReview,
+      { attachmentId: appealed },
+    );
+    const fileId = (await attachment(t, id))!.fileId;
+    await purge(t, id, "rejected");
+    await purge(t, appealed, "rejected");
+    expect(await attachment(t, id)).toBeNull();
+    expect(await blobExists(t, fileId)).toBe(false);
+    expect(await attachment(t, appealed)).not.toBeNull();
+  });
+
+  test("a sent photo still undelivered after 7 days is purged; held ones stay", async () => {
+    fakes.hcs = 503;
+    const t = convexTest(schema, modules);
+    const { threadId } = await openThread(t);
+    const id = await stage(t, threadId);
+    const held = await stage(t, threadId);
+    await settleDueJobs(t);
+    await send(t, threadId, [id, held]);
+    const jobs = (await purgeJobs(t)).filter(
+      (job) => (job.args[0] as { rule: string }).rule === "undelivered",
+    );
+    expect(jobs).toHaveLength(2);
+    expect(
+      jobs[0].scheduledTime - jobs[0]._creationTime,
+    ).toBeGreaterThanOrEqual(7 * DAY - 1000);
+    await t.run((ctx) => ctx.db.patch(held, { evidenceHold: true }));
+    await purge(t, id, "undelivered");
+    await purge(t, held, "undelivered");
+    expect(await attachment(t, id)).toBeNull();
+    expect(await attachment(t, held)).not.toBeNull();
+    expect(await outbox(t, threadId)).toHaveLength(1);
+  });
+
+  test("a quarantined photo is hidden from the outbox where a rejected one is deleted, and kept", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, threadId } = await openThread(t);
+    fakes.hcs = "match";
+    const purged = await stage(t, threadId);
+    const blocked = await stage(t, threadId);
+    await settleDueJobs(t);
+    expect(await outbox(t, threadId)).toHaveLength(2);
+    // The 30-day purge.
+    await purge(t, purged, "rejected");
+    // The block settle.
+    await send(t, threadId, [blocked]);
+    await t.run((ctx) =>
+      ctx.db.insert("blocks", {
+        blockerId: bob,
+        blockedId: alice,
+        createdAt: 1,
+      }),
+    );
+    await t.mutation(store.setHashCheck, {
+      imageId: blocked,
+      status: "no_match",
+    });
+    expect(await outbox(t, threadId)).toEqual([]);
+    for (const id of [purged, blocked]) {
+      const row = (await attachment(t, id))!;
+      expect(row.moderationStatus).toBe("quarantined");
+      expect(await blobExists(t, row.fileId)).toBe(true);
     }
   });
 });

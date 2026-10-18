@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { internal } from "../_generated/api";
 import { internalMutation, internalQuery } from "../_generated/server";
 import { stampModerationAction } from "../admin/stampModerationAction";
 import {
@@ -11,6 +12,8 @@ import {
   expireStagedAttachment,
   MESSAGE_IMAGE_BLUR_THRESHOLD,
   MESSAGE_PHOTO_LABEL,
+  purgeUndeliveredAttachment,
+  REJECTED_ATTACHMENT_TTL_MS,
   settleSendBatch,
 } from "./messageAttachments";
 
@@ -80,6 +83,11 @@ export const setModerationVerdict = internalMutation({
       updatedAt: Date.now(),
     });
     if (status === "rejected") {
+      await ctx.scheduler.runAfter(
+        REJECTED_ATTACHMENT_TTL_MS,
+        internal.conversation.attachmentModerationStore.purgeUndelivered,
+        { attachmentId: imageId, rule: "rejected" },
+      );
       await stampModerationAction(ctx, {
         kind: "message_image_auto_rejected",
         targetLabel: MESSAGE_PHOTO_LABEL,
@@ -97,6 +105,12 @@ export const quarantineImage = internalMutation({
   args: { imageId: v.id("messageAttachments"), ...quarantineArgs },
   handler: async (ctx, { imageId, ...match }) => {
     if (await ctx.db.get(imageId)) {
+      // Same 30-day point as a rejection, where it is hidden (never deleted) from the sender.
+      await ctx.scheduler.runAfter(
+        REJECTED_ATTACHMENT_TTL_MS,
+        internal.conversation.attachmentModerationStore.purgeUndelivered,
+        { attachmentId: imageId, rule: "rejected" },
+      );
       await ctx.db.patch(imageId, {
         moderationStatus: "quarantined",
         ...(match.fileId ? { fileId: match.fileId } : {}),
@@ -122,6 +136,16 @@ export const setHashCheck = internalMutation({
     await applyHashCheckResult(ctx, imageId, result);
     if (result.status === "no_match") await settleSendBatch(ctx, imageId);
   },
+});
+
+// Scheduled at a verdict / the send request: purge a photo that was never delivered.
+export const purgeUndelivered = internalMutation({
+  args: {
+    attachmentId: v.id("messageAttachments"),
+    rule: v.union(v.literal("rejected"), v.literal("undelivered")),
+  },
+  handler: (ctx, { attachmentId, rule }) =>
+    purgeUndeliveredAttachment(ctx, attachmentId, rule),
 });
 
 // Scheduled at staging: drop a photo that was never sent (messageAttachments.ts).

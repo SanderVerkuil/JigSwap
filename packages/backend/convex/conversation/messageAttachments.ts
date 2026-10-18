@@ -45,6 +45,10 @@ export const MESSAGE_IMAGE_TYPES: readonly string[] = [
 export const MAX_PHOTOS_PER_SEND = 4;
 /** A staged photo whose send was never requested is deleted after this long. */
 export const STAGED_ATTACHMENT_TTL_MS = 24 * 60 * 60_000;
+/** A rejected photo nobody appealed is purged after this long (spec 2.8: 30 days for appeals). */
+export const REJECTED_ATTACHMENT_TTL_MS = 30 * 24 * 60 * 60_000;
+/** A sent photo that was never delivered (still being checked) is purged after this long. */
+export const UNDELIVERED_ATTACHMENT_TTL_MS = 7 * 24 * 60 * 60_000;
 /**
  * Scores from here up to the reject threshold (MODERATION_NSFW_THRESHOLD, default 0.85) deliver
  * the photo blurred ("sensitive content"): fine-art puzzles produce false positives (spec 2.2).
@@ -152,12 +156,53 @@ export const releaseEvidenceHold = async (
   });
 };
 
-// Drop a photo that will never be delivered (expired, or its pair is now blocked): blobs and row.
-// A quarantined or evidence-held row is kept whole.
+// Drop a photo that will never be delivered (expired, purged, or its pair is now blocked): blobs
+// and row. An evidence-held row is kept. A quarantined row is kept whole too (the CSAM preservation
+// owns it) but hidden from the sender's outbox exactly where a rejected one would disappear.
 const discardAttachment = async (ctx: MutationCtx, row: Attachment) => {
-  if (row.moderationStatus === "quarantined" || row.evidenceHold) return;
+  if (row.evidenceHold) return;
+  if (row.moderationStatus === "quarantined") {
+    await ctx.db.patch(row._id, {
+      hiddenFromSender: true,
+      updatedAt: Date.now(),
+    });
+    return;
+  }
   await deleteAttachmentBlobs(ctx, row);
   await ctx.db.delete(row._id);
+};
+
+/**
+ * The scheduled purge of an undelivered photo (spec 2.8), scheduled when the state is reached:
+ * - "rejected" (at the verdict, REJECTED_ATTACHMENT_TTL_MS): a rejected or quarantined photo
+ *   nobody asked a review for. An appealed one is left to the review (uphold deletes the blob).
+ * - "undelivered" (at the send request, UNDELIVERED_ATTACHMENT_TTL_MS): a sent photo still not
+ *   delivered; a rejected/quarantined one is left to its own rule.
+ * Never touches a delivered or evidence-held photo; a quarantined one is only hidden.
+ */
+export const purgeUndeliveredAttachment = async (
+  ctx: MutationCtx,
+  attachmentId: Id<"messageAttachments">,
+  rule: "rejected" | "undelivered",
+): Promise<void> => {
+  const row = await ctx.db.get(attachmentId);
+  if (!row || row.messageId !== undefined) return;
+  const stopped =
+    row.moderationStatus === "rejected" ||
+    row.moderationStatus === "quarantined";
+  if (
+    rule === "rejected" &&
+    (!stopped || row.reviewRequestedAt !== undefined)
+  ) {
+    return;
+  }
+  if (
+    rule === "undelivered" &&
+    (stopped || row.moderationStatus === "removed")
+  ) {
+    return;
+  }
+  await discardAttachment(ctx, row);
 };
 
 // Append the photo's image message through the domain path (participant rule, caption rule, the
@@ -294,7 +339,8 @@ export const expireStagedAttachment = async (
     !row ||
     row.messageId !== undefined ||
     row.sendRequestedAt !== undefined ||
-    row.moderationStatus === "rejected"
+    row.moderationStatus === "rejected" ||
+    row.moderationStatus === "quarantined"
   ) {
     return;
   }

@@ -953,6 +953,9 @@ export default defineSchema({
     reviewDecidedAt: v.optional(v.number()),
     // The admin who restored or upheld it on review.
     moderatedBy: v.optional(v.id("users")),
+    // A quarantined photo at a point where a rejected one would be deleted (purge, block): kept
+    // whole for the CSAM preservation, but gone from the sender's outbox just the same.
+    hiddenFromSender: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
