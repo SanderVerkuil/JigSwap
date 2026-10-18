@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
-import { requireMember } from "../identity/requireMember";
+import { requireActiveMember } from "../identity/requireActiveMember";
 import {
   findPresencePreferences,
   presenceOverrideValidator,
@@ -15,7 +15,7 @@ export const setPresencePreferences = mutation({
     override: v.optional(presenceOverrideValidator),
   },
   handler: async (ctx, { share, override }): Promise<null> => {
-    const memberId = (await requireMember(ctx)) as unknown as Id<"users">;
+    const memberId = (await requireActiveMember(ctx)) as unknown as Id<"users">;
     const updatedAt = Date.now();
     const existing = await findPresencePreferences(ctx, memberId);
     if (existing) {

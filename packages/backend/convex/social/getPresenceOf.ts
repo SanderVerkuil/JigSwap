@@ -3,6 +3,7 @@ import { canSeePresence, effectiveStatus, toMemberId } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { isActiveMember } from "../identity/requireActiveMember";
 import { requireMember } from "../identity/requireMember";
 import { APP_AWAY_ROOM, APP_ONLINE_ROOM, presence } from "../presence";
 import { blockedEitherWaySet } from "./blocks";
@@ -28,6 +29,8 @@ export const getPresenceOf = query({
         message: `At most ${MAX_PRESENCE_TARGETS} members per call`,
       });
     }
+    // A deactivated or tombstoned viewer sees nobody.
+    if (!(await isActiveMember(ctx, viewerId))) return [];
     const viewerShare = (await findPresencePreferences(ctx, viewerId))?.share;
     // Reciprocity is a canSeePresence clause too; checking it first spares a non-sharing
     // viewer every per-target read.

@@ -2,7 +2,7 @@ import { Presence } from "@convex-dev/presence";
 import { ConvexError, v } from "convex/values";
 import { components } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
-import { requireMember } from "./identity/requireMember";
+import { requireActiveMember } from "./identity/requireActiveMember";
 import { logEvent } from "./lib/logEvent";
 
 // The presence rooms JigSwap allows. "messages": the member is somewhere on /messages, which
@@ -39,7 +39,7 @@ export const heartbeat = mutation({
     interval: v.number(),
   },
   handler: async (ctx, { roomId, userId, sessionId, interval }) => {
-    const memberId = await requireMember(ctx);
+    const memberId = await requireActiveMember(ctx);
     if (!PRESENCE_ROOMS.includes(roomId))
       throw new ConvexError("Unknown presence room");
     if (userId !== (memberId as string))

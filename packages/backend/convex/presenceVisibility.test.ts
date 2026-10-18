@@ -378,3 +378,36 @@ describe("account deletion", () => {
     expect(left).toEqual({ prefs: [alice], bobRooms: [] });
   });
 });
+
+describe("inactive (tombstoned) members", () => {
+  const deactivate = (t: T, id: Id<"users">) =>
+    t.run((ctx) => ctx.db.patch(id, { isActive: false }));
+
+  test("can't heartbeat, so no component row comes back after the purge", async () => {
+    const t = setup();
+    const alice = await seedMember(t, "alice");
+    await deactivate(t, alice);
+    await expect(heartbeat(t, "alice", alice, APP_ONLINE_ROOM)).rejects.toThrow(
+      /Member not found/,
+    );
+    expect(
+      await t.run((ctx) => presence.listUser(ctx, alice as string, false)),
+    ).toEqual([]);
+  });
+
+  test("can't change presence settings", async () => {
+    const t = setup();
+    const alice = await seedMember(t, "alice");
+    await deactivate(t, alice);
+    await expect(share(t, "alice")).rejects.toThrow(/Member not found/);
+    expect(
+      await t.run((ctx) => ctx.db.query("presencePreferences").collect()),
+    ).toEqual([]);
+  });
+
+  test("see nobody", async () => {
+    const { t, alice, bob } = await seed();
+    await deactivate(t, alice);
+    expect(await presenceOf(t, "alice", [bob])).toEqual([]);
+  });
+});

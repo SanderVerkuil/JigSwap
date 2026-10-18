@@ -223,6 +223,7 @@ import type * as identity_isCurrentUserAdmin from "../identity/isCurrentUserAdmi
 import type * as identity_listRecentPublicMembers from "../identity/listRecentPublicMembers.js";
 import type * as identity_memberDisplayName from "../identity/memberDisplayName.js";
 import type * as identity_optionalActingMember from "../identity/optionalActingMember.js";
+import type * as identity_requireActiveMember from "../identity/requireActiveMember.js";
 import type * as identity_requireMember from "../identity/requireMember.js";
 import type * as identity_resolveMemberByHandle from "../identity/resolveMemberByHandle.js";
 import type * as identity_searchUsers from "../identity/searchUsers.js";
@@ -734,6 +735,7 @@ declare const fullApi: ApiFromModules<{
   "identity/listRecentPublicMembers": typeof identity_listRecentPublicMembers;
   "identity/memberDisplayName": typeof identity_memberDisplayName;
   "identity/optionalActingMember": typeof identity_optionalActingMember;
+  "identity/requireActiveMember": typeof identity_requireActiveMember;
   "identity/requireMember": typeof identity_requireMember;
   "identity/resolveMemberByHandle": typeof identity_resolveMemberByHandle;
   "identity/searchUsers": typeof identity_searchUsers;
