@@ -473,7 +473,7 @@ describe("deferred append", () => {
     ]);
   });
 
-  test("a rejected last photo: the others are delivered and the caption follows as text", async () => {
+  test("a rejected last photo: the others are delivered, its caption never is", async () => {
     const t = convexTest(schema, modules);
     const { threadId } = await openThread(t);
     const ok = await stage(t, threadId);
@@ -483,10 +483,10 @@ describe("deferred append", () => {
     await settleDueJobs(t);
     await send(t, threadId, [ok, flagged], "for you");
     const messages = await threadOf(t, asBob, threadId);
-    expect(messages.map((m) => [m.kind, m.body])).toEqual([
-      ["image", ""],
-      ["text", "for you"],
-    ]);
+    expect(messages.map((m) => [m.kind, m.body])).toEqual([["image", ""]]);
+    expect(JSON.stringify(await messageRows(t, threadId))).not.toContain(
+      "for you",
+    );
   });
 
   test("a block before delivery drops the undelivered photo", async () => {

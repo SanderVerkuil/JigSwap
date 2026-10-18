@@ -128,13 +128,12 @@ const discardAttachment = async (ctx: MutationCtx, row: Attachment) => {
   await ctx.db.delete(row._id);
 };
 
-// Append one thread message through the domain path (participant rule, caption rule, the
+// Append the photo's image message through the domain path (participant rule, caption rule, the
 // MessagePosted event), authored by the uploader, at the current instant.
 const appendMessage = async (
   ctx: MutationCtx,
   row: Attachment,
-  kind: "image" | "text",
-  body: string,
+  caption: string,
 ): Promise<string | null> => {
   const post = makePostMessage({
     threads: convexThreadRepository(ctx),
@@ -145,9 +144,9 @@ const appendMessage = async (
   const result = await post({
     threadId: toThreadId(row.threadAggregateId),
     authorId: toMemberId(row.uploaderId as string),
-    kind,
-    body,
-    ...(kind === "image" ? { attachmentRef: row._id as string } : {}),
+    kind: "image",
+    body: caption,
+    attachmentRef: row._id as string,
   });
   if (result.isErr) {
     // E.g. the uploader left the thread. The photo stays undelivered (outbox: pending).
@@ -194,9 +193,9 @@ const notifyRejection = async (ctx: MutationCtx, row: Attachment) => {
  * requested yet is left alone. In batch order: delivered photos are skipped, undeliverable ones
  * (rejected / quarantined / removed) are passed over, a deliverable one is appended, and the walk
  * stops at the first photo still being checked, so photos arrive in the order they were sent. The
- * first appender wins (`messageId`), which makes repeated calls no-ops. When the batch has settled
- * and its captioned (last) photo will not be delivered, the caption is delivered on its own as a
- * text message. A blocked pair gets nothing: undelivered photos are dropped.
+ * first appender wins (`messageId`), which makes repeated calls no-ops. A caption is delivered only
+ * with its photo: the caption of a photo that never delivers never reaches anyone. A blocked pair
+ * gets nothing: undelivered photos are dropped.
  */
 export const settleSendBatch = async (
   ctx: MutationCtx,
@@ -239,39 +238,13 @@ export const settleSendBatch = async (
   }
   for (const row of batch) await notifyRejection(ctx, row);
 
-  let settled = true;
   for (const row of batch) {
     if (row.messageId !== undefined) continue;
     if (UNDELIVERABLE.has(row.moderationStatus)) continue;
-    if (!isDeliverable(row)) {
-      settled = false;
-      break;
-    }
-    const messageId = await appendMessage(ctx, row, "image", row.caption ?? "");
-    if (messageId === null) {
-      settled = false;
-      break;
-    }
+    if (!isDeliverable(row)) return;
+    const messageId = await appendMessage(ctx, row, row.caption ?? "");
+    if (messageId === null) return;
     await ctx.db.patch(row._id, { messageId, updatedAt: Date.now() });
-  }
-  if (!settled) return;
-
-  // The caption rides on the batch's last photo; if that one will not be delivered, the words
-  // still are (as text, after the photos that made it), and only once.
-  for (const row of batch) {
-    if (
-      row.caption !== undefined &&
-      row.messageId === undefined &&
-      UNDELIVERABLE.has(row.moderationStatus)
-    ) {
-      const messageId = await appendMessage(ctx, row, "text", row.caption);
-      if (messageId !== null) {
-        await ctx.db.patch(row._id, {
-          caption: undefined,
-          updatedAt: Date.now(),
-        });
-      }
-    }
   }
 };
 
