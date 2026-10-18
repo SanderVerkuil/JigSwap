@@ -474,40 +474,43 @@ function ManageCircleDialog({
             />
 
             {/* Share a copy — surface the friend-circle VisibilityScope */}
-            <section className="space-y-3">
-              <h3 className="font-medium">{t("manage.shareCopy")}</h3>
-              <p className="text-xs text-muted-foreground">
-                {t.rich("manage.shareDescription", {
-                  scope: (chunks) => (
-                    <span className="font-medium">{chunks}</span>
-                  ),
-                })}
-              </p>
-              <div className="flex items-center gap-2">
-                <Select value={shareCopyId} onValueChange={setShareCopyId}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder={t("manage.chooseCopy")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(myCopies ?? [])
-                      .filter((copy) => copy.aggregateId)
-                      .map((copy) => (
-                        <SelectItem
-                          key={copy._id}
-                          value={copy.aggregateId as string}
-                        >
-                          {copy.puzzle?.title ??
-                            copy.snapshot?.title ??
-                            t("manage.copyFallback")}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-                <Button onClick={handleShare} disabled={!shareCopyId}>
-                  {t("manage.share")}
-                </Button>
-              </div>
-            </section>
+            {/* Admin only, read live: a viewer who loses Admin loses it at once */}
+            {canManageCircle(detail.viewerPermission) && (
+              <section className="space-y-3">
+                <h3 className="font-medium">{t("manage.shareCopy")}</h3>
+                <p className="text-xs text-muted-foreground">
+                  {t.rich("manage.shareDescription", {
+                    scope: (chunks) => (
+                      <span className="font-medium">{chunks}</span>
+                    ),
+                  })}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Select value={shareCopyId} onValueChange={setShareCopyId}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder={t("manage.chooseCopy")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(myCopies ?? [])
+                        .filter((copy) => copy.aggregateId)
+                        .map((copy) => (
+                          <SelectItem
+                            key={copy._id}
+                            value={copy.aggregateId as string}
+                          >
+                            {copy.puzzle?.title ??
+                              copy.snapshot?.title ??
+                              t("manage.copyFallback")}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={handleShare} disabled={!shareCopyId}>
+                    {t("manage.share")}
+                  </Button>
+                </div>
+              </section>
+            )}
 
             <CircleDeleteSection
               circleId={circleId}
