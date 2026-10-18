@@ -13,6 +13,8 @@ export type ConversationErrorCode =
   | "CaptionTooLong"
   | "AttachmentRequired"
   | "AttachmentNotAllowed"
+  | "InvalidCoordinates"
+  | "LocationLabelTooLong"
   | "SystemMessageNotAuthorable"
   | "DmRequiresTwoParticipants";
 
@@ -22,6 +24,9 @@ export const MAX_MESSAGE_LENGTH = 4000;
 
 // The maximum accepted caption length in characters for a media (image/location) message.
 export const MAX_CAPTION_LENGTH = 1000;
+
+// The maximum accepted label length in characters for a shared location (after trimming).
+export const MAX_LOCATION_LABEL_LENGTH = 80;
 
 export class ConversationError extends DomainError {
   override readonly name = "ConversationError";
@@ -78,6 +83,22 @@ export class ConversationError extends DomainError {
     return new ConversationError(
       "AttachmentNotAllowed",
       "A text message cannot carry an attachment",
+    );
+  }
+
+  // A shared location needs finite coordinates within lat [-90, 90] and lng [-180, 180].
+  static invalidCoordinates(): ConversationError {
+    return new ConversationError(
+      "InvalidCoordinates",
+      "A location needs a latitude in [-90, 90] and a longitude in [-180, 180]",
+    );
+  }
+
+  // A shared location's label may not exceed MAX_LOCATION_LABEL_LENGTH characters.
+  static locationLabelTooLong(): ConversationError {
+    return new ConversationError(
+      "LocationLabelTooLong",
+      `A location label must be at most ${MAX_LOCATION_LABEL_LENGTH} characters`,
     );
   }
 
