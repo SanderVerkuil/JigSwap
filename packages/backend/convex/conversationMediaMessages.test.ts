@@ -172,6 +172,7 @@ const postMedia = (
       contentType: "image/jpeg",
       moderationStatus: "approved",
       hashCheckedAt: 1,
+      reencodedAt: 1,
       createdAt: 1,
       updatedAt: 1,
     });

@@ -105,9 +105,14 @@ const UNDELIVERABLE: ReadonlySet<Status> = new Set([
   "removed",
 ]);
 
-/** Whether the photo may be delivered and served: a deliverable verdict AND a passed hash check. */
+/**
+ * Whether the photo may be delivered and served: a deliverable verdict, a passed hash check, and
+ * its blob swapped to the pipeline's re-encode (never the upload as sent, with its EXIF/GPS).
+ */
 export const isDeliverable = (row: Attachment): boolean =>
-  DELIVERABLE.has(row.moderationStatus) && row.hashCheckedAt !== undefined;
+  DELIVERABLE.has(row.moderationStatus) &&
+  row.hashCheckedAt !== undefined &&
+  row.reencodedAt !== undefined;
 
 /**
  * Delete a photo's blobs, unless they must be kept: an open report's evidence hold, or a CSAM

@@ -543,6 +543,38 @@ describe("deferred append", () => {
     expect(await messageRows(t, threadId)).toHaveLength(1);
   });
 
+  test("only the re-encoded (EXIF-free) blob is ever delivered", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, threadId } = await openThread(t);
+    // The pipeline marks the swap: a staged photo ends up re-encoded.
+    const staged = await stage(t, threadId);
+    await settleDueJobs(t);
+    expect((await attachment(t, staged))!.reencodedAt).toEqual(
+      expect.any(Number),
+    );
+    // Approved and hash-cleared, but still the upload as sent: never delivered.
+    const id = await t.run(async (ctx) =>
+      ctx.db.insert("messageAttachments", {
+        kind: "image",
+        threadAggregateId: threadId,
+        uploaderId: alice,
+        fileId: await ctx.storage.store(new Blob(["x"])),
+        byteSize: 1,
+        contentType: "image/jpeg",
+        moderationStatus: "approved",
+        hashCheckedAt: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    await send(t, threadId, [id]);
+    expect(await messageRows(t, threadId)).toEqual([]);
+    const clean = await t.run((ctx) => ctx.storage.store(new Blob(["y"])));
+    await t.mutation(store.setModerationFile, { imageId: id, fileId: clean });
+    await t.mutation(store.setHashCheck, { imageId: id, status: "no_match" });
+    expect(await messageRows(t, threadId)).toHaveLength(1);
+  });
+
   test("a photo that is deliverable but not sent stays out of the thread", async () => {
     const t = convexTest(schema, modules);
     const { bob, threadId } = await openThread(t);
@@ -806,6 +838,7 @@ describe("blur, per viewer", () => {
         contentType: "image/jpeg",
         moderationStatus: "pending",
         hashCheckedAt: 1,
+        reencodedAt: 1,
         createdAt: 1,
         updatedAt: 1,
       }),

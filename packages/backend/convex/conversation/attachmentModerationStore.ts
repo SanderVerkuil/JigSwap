@@ -32,6 +32,7 @@ export const getImageForModeration = internalQuery({
       moderationStatus: row.moderationStatus,
       hashCheckedAt: row.hashCheckedAt,
       pendingHashes: row.pendingHashes,
+      reencodedAt: row.reencodedAt,
       uploaderId: row.uploaderId,
       // Business context for the wide event: never the thread's content or the other member.
       threadAggregateId: row.threadAggregateId,
@@ -39,7 +40,8 @@ export const getImageForModeration = internalQuery({
   },
 });
 
-// Point the row at the re-encoded (EXIF-free) blob and store its blurhash.
+// Point the row at the re-encoded (EXIF-free) blob, store its blurhash and mark it re-encoded
+// (the pipeline stops re-encoding, and the photo may now be delivered).
 export const setModerationFile = internalMutation({
   args: {
     imageId: v.id("messageAttachments"),
@@ -48,7 +50,13 @@ export const setModerationFile = internalMutation({
   },
   handler: async (ctx, { imageId, fileId, blurhash }) => {
     if (!(await ctx.db.get(imageId))) return;
-    await ctx.db.patch(imageId, { fileId, blurhash, updatedAt: Date.now() });
+    const now = Date.now();
+    await ctx.db.patch(imageId, {
+      fileId,
+      blurhash,
+      reencodedAt: now,
+      updatedAt: now,
+    });
   },
 });
 

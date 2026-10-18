@@ -939,6 +939,10 @@ export default defineSchema({
     // Blurhash (lib/blurhash) of the clean image, from the pipeline's re-encode. Kept on removal
     // so a removed photo can keep a placeholder; never exposed for a rejected/quarantined row.
     blurhash: v.optional(v.string()),
+    // When the pipeline swapped the row to its re-encoded (EXIF/GPS-stripped) blob. Absent = still
+    // the upload as sent: the pipeline re-encodes on any attempt until it is set, and the photo is
+    // never delivered before it is.
+    reencodedAt: v.optional(v.number()),
     // CSAM hash-check bookkeeping + publication gate (lib/imageModeration/hashCheckFields).
     ...hashCheckFields,
     // Set by sendStagedImages: the batch's request time (shared by up to 4 photos) and each
