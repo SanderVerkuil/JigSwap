@@ -17,7 +17,7 @@ describe("renderInviteEmail", () => {
         const label = `${kind}/${locale}`;
         expect(email.subject, label).toContain("Anna");
         expect(email.html, label).toContain("JigSwap");
-        expect(email.html, label).toContain(URL.replace("&", "&amp;"));
+        expect(email.html, label).toContain(URL.replaceAll("&", "&amp;"));
         expect(email.html, label).toContain(INVITE_COPY[kind][locale].cta);
         expect(email.text, label).toContain(URL);
         expect(email.text, label).not.toContain("{inviterName}");
