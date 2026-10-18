@@ -177,6 +177,29 @@ export const deleteReveals = async (
 };
 
 /**
+ * Delete an attachment whose thread is gone (a deleted circle's purge kept it only for an open
+ * report's evidence hold), with its blobs and reveals, once nothing holds it: nothing can reach it
+ * any more. True when it was deleted. A held row, a live thread's row, and a quarantined photo
+ * (csamEscalations.rowId points at it; the CSAM preservation owns it) are left alone.
+ */
+export const deleteIfOrphaned = async (
+  ctx: MutationCtx,
+  row: Doc<"messageAttachments">,
+): Promise<boolean> => {
+  if (row.evidenceHold) return false;
+  if (row.kind === "image" && row.moderationStatus === "quarantined") {
+    return false;
+  }
+  if ((await threadRowByAggregateId(ctx, row.threadAggregateId)) !== null) {
+    return false;
+  }
+  await deleteAttachmentBlobs(ctx, row);
+  if (row.kind === "image") await deleteReveals(ctx, row._id);
+  await ctx.db.delete(row._id);
+  return true;
+};
+
+/**
  * Clear a photo's evidence hold once no OPEN report references it any more (a report on the photo
  * itself, or on its image message). Called when a report is decided.
  */
@@ -202,15 +225,7 @@ export const releaseEvidenceHold = async (
       .first();
     if (open) return;
   }
-  // Its thread is gone (a deleted circle's purge kept it only for the report): nothing can
-  // reach it any more, so it goes now, with its blobs and reveals.
-  if ((await threadRowByAggregateId(ctx, row.threadAggregateId)) === null) {
-    const released = { ...row, evidenceHold: undefined };
-    await deleteAttachmentBlobs(ctx, released);
-    if (row.kind === "image") await deleteReveals(ctx, row._id);
-    await ctx.db.delete(row._id);
-    return;
-  }
+  if (await deleteIfOrphaned(ctx, { ...row, evidenceHold: undefined })) return;
   await ctx.db.patch(attachmentId, {
     evidenceHold: undefined,
     updatedAt: Date.now(),

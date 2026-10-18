@@ -1351,6 +1351,73 @@ describe("reports and evidence after deletion", () => {
     await expectCode(reportAlice("dave"), "NotFound");
   });
 
+  test("recording a report's evidence deletes a deleted circle's kept location, row included", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    const messageId = (await post(t, "bob", threadId, "rude")) as string;
+    const { reportId } = await as(t, "alice").mutation(
+      api.reports.fileReport.fileReport,
+      { targetKind: "message", targetId: messageId, reason: "harassment_hate" },
+    );
+    const place = await t.run(async (ctx) => {
+      const now = Date.now();
+      return ctx.db.insert("messageAttachments", {
+        kind: "location",
+        threadAggregateId: threadId,
+        uploaderId: bob,
+        lat: 52.1,
+        lng: 5.1,
+        precision: "exact",
+        mapStatus: "ready",
+        evidenceHold: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+    await as(t, "alice").mutation(api.sharing.deleteCircle.deleteCircle, {
+      circleId,
+      confirmName: "Puzzle Club",
+    });
+    await flush(t);
+    expect(await t.run((ctx) => ctx.db.get(place))).not.toBeNull();
+    await t.mutation(internal.reports.attachmentEvidence.recordEvidence, {
+      reportId,
+      attachmentId: place,
+    });
+    expect(await t.run((ctx) => ctx.db.get(place))).toBeNull();
+  });
+
+  test("a deleted circle's quarantined photo only loses its hold, never its row", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    const photo = await t.run(async (ctx) => {
+      const now = Date.now();
+      return ctx.db.insert("messageAttachments", {
+        kind: "image",
+        threadAggregateId: threadId,
+        uploaderId: bob,
+        fileId: await ctx.storage.store(new Blob(["x"])),
+        byteSize: 1,
+        contentType: "image/jpeg",
+        moderationStatus: "quarantined",
+        evidenceHold: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+    await as(t, "alice").mutation(api.sharing.deleteCircle.deleteCircle, {
+      circleId,
+      confirmName: "Puzzle Club",
+    });
+    await flush(t);
+    await t.run((ctx) => releaseEvidenceHold(ctx, photo));
+    const kept = await t.run((ctx) => ctx.db.get(photo));
+    expect(kept).not.toBeNull();
+    expect(kept?.evidenceHold).toBeUndefined();
+  });
+
   test("releasing the hold on a deleted circle's kept attachment deletes it", async () => {
     const t = convexTest(schema, modules);
     const { bob, circleId } = await seed(t);
