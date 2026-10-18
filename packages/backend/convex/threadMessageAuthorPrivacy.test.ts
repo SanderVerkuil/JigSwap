@@ -100,7 +100,9 @@ describe("thread message author privacy", () => {
 
     // Precondition: Priya is anonymous to Nora through the privacy chokepoint.
     expect(inbox).toHaveLength(1);
-    expect(inbox[0].subject.otherMember.anonymous).toBe(true);
+    expect(inbox[0].subject).toMatchObject({
+      otherMember: { anonymous: true },
+    });
 
     for (const payload of [messages, inbox, unread]) {
       const json = JSON.stringify(payload);

@@ -1,5 +1,6 @@
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import {
+  pairThreads,
   threadSubjectTitle,
   type Translator,
 } from "@/components/messaging/format";
@@ -60,9 +61,10 @@ function MessageToastWatcher() {
   const navigate = useNavigate();
   const { member } = useCurrentMember();
   const { threadId: activeThreadId } = useParams({ strict: false });
-  const { data: inbox } = useQuery(
-    convexQuery(gateway.conversation.getMyInbox, member?._id ? {} : "skip"),
-  );
+  const { data: inbox } = useQuery({
+    ...convexQuery(gateway.conversation.getMyInbox, member?._id ? {} : "skip"),
+    select: pairThreads,
+  });
   const lastSeen = React.useRef<Map<string, number> | null>(null);
 
   React.useEffect(() => {

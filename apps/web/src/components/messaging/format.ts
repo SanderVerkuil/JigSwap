@@ -7,9 +7,20 @@ import type { FunctionReturnType } from "convex/server";
 import { ConvexError } from "convex/values";
 
 // The web tier derives Convex view types from the gateway (not @jigswap/contracts directly).
-export type InboxThread = FunctionReturnType<
+type AnyInboxThread = FunctionReturnType<
   typeof gateway.conversation.getMyInbox
 >[number];
+
+// The messaging surfaces render exchange and DM threads. Circle group threads get their own UI
+// (G6); until then every getMyInbox subscription leaves them out through `select: pairThreads`.
+export type InboxThread = AnyInboxThread & {
+  subject: Exclude<AnyInboxThread["subject"], { kind: "circle" }>;
+};
+
+export const pairThreads = (inbox: readonly AnyInboxThread[]): InboxThread[] =>
+  inbox.filter(
+    (thread): thread is InboxThread => thread.subject.kind !== "circle",
+  );
 
 // A `useTranslations("messages")` translator, loosened so these helpers can be
 // shared between the list rows, the thread header, and the nav badge.

@@ -273,9 +273,8 @@ describe("account deletion: messages and read models", () => {
       api.conversation.getMyInbox.getMyInbox,
       {},
     )) as InboxThreadView[];
-    expect(inbox[0].subject.otherMember).toMatchObject({
-      anonymous: true,
-      departed: true,
+    expect(inbox[0].subject).toMatchObject({
+      otherMember: { anonymous: true, departed: true },
     });
     expect(await bobThread(t, threadId)).toEqual([]);
   });
