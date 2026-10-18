@@ -15,8 +15,12 @@ import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftRight, MessageSquare, User } from "lucide-react";
+import { useState } from "react";
 import { useLocale, useNow, useTranslations } from "use-intl";
+import { CoverTooltipProvider, RowCover } from "./cover-stack";
 import {
+  copyOwnerHint,
+  coverStackSummary,
   formatCompactTime,
   formatFullDateTime,
   formatUnreadCount,
@@ -142,21 +146,23 @@ function ThreadListBody({ activeThreadId }: { activeThreadId?: string }) {
   }
 
   return (
-    <nav aria-label={t("conversationsLabel")}>
-      <ul role="list" className="flex flex-col gap-0.5 p-2 max-md:-mx-2">
-        {inbox.map((thread) => (
-          <li key={thread.threadId}>
-            <ThreadRow
-              thread={thread}
-              selected={thread.threadId === activeThreadId}
-              me={me}
-              now={now}
-              locale={locale}
-            />
-          </li>
-        ))}
-      </ul>
-    </nav>
+    <CoverTooltipProvider>
+      <nav aria-label={t("conversationsLabel")}>
+        <ul role="list" className="flex flex-col gap-0.5 p-2 max-md:-mx-2">
+          {inbox.map((thread) => (
+            <li key={thread.threadId}>
+              <ThreadRow
+                thread={thread}
+                selected={thread.threadId === activeThreadId}
+                me={me}
+                now={now}
+                locale={locale}
+              />
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </CoverTooltipProvider>
   );
 }
 
@@ -177,8 +183,12 @@ function ThreadRow({
 }) {
   const t = useTranslations("messages");
   const displayName = useMemberDisplayName();
+  // Keyboard (focus-visible) focus on the row: the row's cover lifts and
+  // names itself, as hovering it does.
+  const [keyboardFocused, setKeyboardFocused] = useState(false);
 
   const unread = thread.unreadCount > 0;
+  const { contextCopies } = thread;
   const last = thread.lastMessage;
   const isSystem = last?.kind === "system";
   const body = last?.body.replace(/\s+/g, " ").trim();
@@ -196,6 +206,10 @@ function ThreadRow({
     <Link
       href={`/messages/${thread.threadId}`}
       aria-current={selected ? "page" : undefined}
+      onFocus={(event) =>
+        setKeyboardFocused(event.currentTarget.matches(":focus-visible"))
+      }
+      onBlur={() => setKeyboardFocused(false)}
       className={cn(
         "group focus-visible:ring-ring relative flex h-[68px] items-center gap-3 rounded-lg px-3 outline-none transition-colors focus-visible:ring-2",
         selected
@@ -233,6 +247,27 @@ function ThreadRow({
           </time>
         </div>
         <div className="mt-0.5 flex items-center gap-2 text-[13px] leading-5">
+          {/* The most recent puzzle; the label summarises all of them. */}
+          {contextCopies.length > 0 && (
+            <RowCover
+              copy={contextCopies[0]}
+              label={coverStackSummary(
+                contextCopies.map((copy) => copy.title),
+                locale,
+                t,
+                1,
+              )}
+              keyboardFocused={keyboardFocused}
+              describe={(copy) =>
+                `${copy.title} · ${copyOwnerHint(
+                  copy.owner,
+                  thread.subject.otherMember,
+                  t,
+                  displayName,
+                )}`
+              }
+            />
+          )}
           <span
             className={cn(
               "min-w-0 flex-1 truncate",

@@ -1,13 +1,20 @@
 import { ConvexError } from "convex/values";
+import { createTranslator } from "use-intl";
 import { describe, expect, it } from "vitest";
-import type { InboxThread } from "./format";
+import enMessages from "../../../locales/en.json";
+import nlMessages from "../../../locales/nl.json";
+import type { InboxThread, Translator } from "./format";
 import {
+  contextCopyHref,
   conversationErrorCode,
+  copyOwnerHint,
+  coverStackSummary,
   formatCompactTime,
   formatDayLabel,
   formatFullDateTime,
   formatUnreadCount,
   groupThreadMessages,
+  threadQuickLinks,
   threadSubjectTitle,
 } from "./format";
 
@@ -275,5 +282,152 @@ describe("groupThreadMessages", () => {
       tFor("en"),
     );
     expect(shape(items)).toEqual(["day:Today", "own:a", "system:sys", "own:b"]);
+  });
+});
+
+describe("threadQuickLinks", () => {
+  const member = { anonymous: false, member: { name: "Joost" } };
+  const dm = (profileHandle: string | null) =>
+    ({
+      kind: "dm",
+      otherMember: member,
+      profileHandle,
+    }) as InboxThread["subject"];
+  const exchange = (profileHandle: string | null) =>
+    ({
+      kind: "exchange",
+      exchangeId: "ex 1",
+      exchangeType: "trade",
+      puzzleTitle: "Canals",
+      otherMember: member,
+      profileHandle,
+    }) as InboxThread["subject"];
+  const thread = (subject: InboxThread["subject"]) =>
+    ({ subject, contextCopies: [] }) as unknown as InboxThread;
+
+  it("links a DM to the member profile", () => {
+    expect(threadQuickLinks(thread(dm("joost")))).toEqual([
+      { kind: "profile", href: "/members/joost" },
+    ]);
+  });
+
+  it("omits the profile link when the server withholds the handle", () => {
+    expect(threadQuickLinks(thread(dm(null)))).toEqual([]);
+  });
+
+  it("links an exchange thread to the partner and /trades?exchange=<id>", () => {
+    expect(threadQuickLinks(thread(exchange("joost")))).toEqual([
+      { kind: "profile", href: "/members/joost" },
+      { kind: "exchange", href: "/trades?exchange=ex%201" },
+    ]);
+  });
+
+  it("drops the exchange partner's profile when anonymised or inactive", () => {
+    expect(threadQuickLinks(thread(exchange(null)))).toEqual([
+      { kind: "exchange", href: "/trades?exchange=ex%201" },
+    ]);
+  });
+});
+
+describe("contextCopyHref", () => {
+  it("links to the copy page, escaping the id", () => {
+    expect(
+      contextCopyHref({
+        copyId: "c 1",
+        title: "x",
+        brand: null,
+        pieceCount: null,
+        coverUrl: null,
+        owner: "viewer",
+      }),
+    ).toBe("/copies/c%201");
+  });
+});
+
+describe("coverStackSummary", () => {
+  // The real catalogues through use-intl's ICU formatter.
+  const en = createTranslator({
+    locale: "en",
+    messages: enMessages,
+    namespace: "messages",
+  }) as unknown as Translator;
+  const nl = createTranslator({
+    locale: "nl",
+    messages: nlMessages,
+    namespace: "messages",
+  }) as unknown as Translator;
+
+  it("names a single puzzle", () => {
+    expect(coverStackSummary(["Canals"], "en", en)).toBe(
+      "About 1 puzzle: Canals",
+    );
+  });
+
+  it("lists up to three titles", () => {
+    expect(coverStackSummary(["A", "B", "C"], "en", en)).toBe(
+      "About 3 puzzles: A, B, and C",
+    );
+  });
+
+  it("names only as many titles as asked (an inbox row names one)", () => {
+    expect(coverStackSummary(["A", "B", "C", "D", "E"], "en", en, 1)).toBe(
+      "About 5 puzzles: A and 4 more",
+    );
+    expect(coverStackSummary(["A", "B", "C", "D", "E"], "nl", nl, 1)).toBe(
+      "Over 5 puzzels: A en nog 4",
+    );
+  });
+
+  it("counts the titles beyond the visible three", () => {
+    expect(coverStackSummary(["A", "B", "C", "D", "E"], "en", en)).toBe(
+      "About 5 puzzles: A, B, C, and 2 more",
+    );
+    expect(coverStackSummary(["A", "B", "C", "D", "E"], "nl", nl)).toBe(
+      "Over 5 puzzels: A, B, C en nog 2",
+    );
+  });
+});
+
+describe("copyOwnerHint", () => {
+  const translators = {
+    en: createTranslator({
+      locale: "en",
+      messages: enMessages,
+      namespace: "messages",
+    }) as unknown as Translator,
+    nl: createTranslator({
+      locale: "nl",
+      messages: nlMessages,
+      namespace: "messages",
+    }) as unknown as Translator,
+  };
+  const named = {
+    anonymous: false,
+    member: { name: "Esther" },
+  } as InboxThread["subject"]["otherMember"];
+  const anonymised = {
+    anonymous: true,
+    anonRef: "anon-1",
+  } as InboxThread["subject"]["otherMember"];
+  const displayName = (source: { name?: string | null }) =>
+    source.name ?? "generic";
+
+  it.each([
+    ["en", "viewer", named, "Your copy"],
+    ["nl", "viewer", named, "Jouw exemplaar"],
+    ["en", "other", named, "Esther's copy"],
+    ["nl", "other", named, "Exemplaar van Esther"],
+    ["en", "other", anonymised, "The other member's copy"],
+    ["nl", "other", anonymised, "Exemplaar van de ander"],
+  ] as const)("%s: %s copy → %s", (locale, owner, member, expected) => {
+    expect(copyOwnerHint(owner, member, translators[locale], displayName)).toBe(
+      expected,
+    );
+  });
+
+  it("never names an anonymised owner", () => {
+    expect(
+      copyOwnerHint("other", anonymised, translators.en, () => "Leaked Name"),
+    ).not.toContain("Leaked");
   });
 });

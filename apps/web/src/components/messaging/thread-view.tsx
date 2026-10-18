@@ -18,7 +18,12 @@ import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
-import { ChevronLeft, Info, MessageSquare } from "lucide-react";
+import {
+  ChevronLeft,
+  Info,
+  MessageSquare,
+  Puzzle as PuzzleIcon,
+} from "lucide-react";
 import { Fragment, useEffect, useRef } from "react";
 import { useLocale, useNow, useTranslations } from "use-intl";
 import { MessageCopyCard } from "./copy-card";
@@ -31,6 +36,8 @@ import {
 } from "./format";
 import { MessageComposer } from "./message-composer";
 import { ThreadSubjectAvatar } from "./thread-list";
+import { ThreadPuzzleStack } from "./thread-puzzle-stack";
+import { ThreadQuickLinks } from "./thread-quick-links";
 
 type ThreadMessage = FunctionReturnType<
   typeof gateway.conversation.getThreadMessages
@@ -73,11 +80,15 @@ export function ThreadView({
   const title = thread
     ? threadSubjectTitle(thread.subject, t, displayName)
     : undefined;
-  // Who wrote the other side's messages, for screen readers: the DM partner's
-  // name (or the anonymous label); exchange titles name the puzzle, not a
-  // person, so those use a generic label.
-  const otherAuthor =
-    thread?.subject.kind === "dm" && title ? title : t("otherMember");
+  // Who wrote the other side's messages, for screen readers: the DM or trading
+  // partner's display name, the anonymous label when they're anonymised, and a
+  // generic label until the inbox row has loaded.
+  const otherMember = thread?.subject.otherMember;
+  const otherAuthor = !otherMember
+    ? t("otherMember")
+    : otherMember.anonymous
+      ? t("anonymous")
+      : displayName(otherMember.member);
 
   // mutateAsync is referentially stable, so the effect deps below behave as before.
   const { mutateAsync: markThreadRead } = useMutation({
@@ -215,10 +226,24 @@ export function ThreadView({
                 <Heading
                   ref={headingRef}
                   tabIndex={-1}
-                  className="font-heading decoration-primary-text/60 min-w-0 flex-1 truncate text-base font-bold underline-offset-4 outline-none focus-visible:underline"
+                  className="font-heading decoration-primary-text/60 min-w-0 truncate text-base font-bold underline-offset-4 outline-none focus-visible:underline"
                 >
                   {title ?? t("threadFallbackTitle")}
                 </Heading>
+                {/* The conversation's puzzles, right beside the name. */}
+                {thread && <ThreadPuzzleStack thread={thread} />}
+                <div className="ml-auto flex shrink-0 items-center">
+                  {thread && (
+                    <ThreadQuickLinks
+                      thread={thread}
+                      compact={
+                        thread.subject.kind === "exchange" &&
+                        thread.subject.profileHandle !== null &&
+                        thread.contextCopies.length > 0
+                      }
+                    />
+                  )}
+                </div>
               </>
             )}
           </div>
@@ -346,6 +371,9 @@ function ThreadItemView({
                 className={cn("w-72 max-w-full", pending && "opacity-70")}
               />
             )}
+            {message.copyUnavailable && (
+              <CopyUnavailableCard className={cn(pending && "opacity-70")} />
+            )}
             <div
               title={formatFullDateTime(message.sentAt, locale)}
               className={cn(
@@ -371,6 +399,25 @@ function ThreadItemView({
         </time>
       )}
     </li>
+  );
+}
+
+// Placeholder in the copy card's slot when the referenced copy is gone or no
+// longer visible to the reader: same geometry, not a link.
+function CopyUnavailableCard({ className }: { className?: string }) {
+  const t = useTranslations("messages");
+  return (
+    <div
+      className={cn(
+        "text-muted-foreground flex w-72 max-w-full items-center gap-3 rounded-lg border border-dashed p-2",
+        className,
+      )}
+    >
+      <span className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-md">
+        <PuzzleIcon className="size-5" aria-hidden />
+      </span>
+      <span className="text-sm">{t("copyUnavailable")}</span>
+    </div>
   );
 }
 

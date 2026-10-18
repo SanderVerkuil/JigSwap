@@ -198,3 +198,69 @@ export function groupThreadMessages<M extends GroupableMessage>(
   }
   return items;
 }
+
+export type InboxContextCopy = InboxThread["contextCopies"][number];
+
+export type ThreadQuickLink = {
+  kind: "profile" | "exchange";
+  href: string;
+};
+
+// Header quick links for a thread, in display order; each appears only when the
+// server says the target is reachable: the DM or trading partner's profile
+// (profileHandle non-null — not anonymised or inactive), then the exchange on
+// /trades. The puzzles live in the header's cover stack, not here.
+export function threadQuickLinks(thread: InboxThread): ThreadQuickLink[] {
+  const links: ThreadQuickLink[] = [];
+  const { subject } = thread;
+  if (subject.profileHandle !== null) {
+    links.push({
+      kind: "profile",
+      href: `/members/${encodeURIComponent(subject.profileHandle)}`,
+    });
+  }
+  if (subject.kind === "exchange") {
+    links.push({
+      kind: "exchange",
+      href: `/trades?exchange=${encodeURIComponent(subject.exchangeId)}`,
+    });
+  }
+  return links;
+}
+
+export function contextCopyHref(copy: InboxContextCopy): string {
+  return `/copies/${encodeURIComponent(copy.copyId)}`;
+}
+
+// Screen-reader summary of a thread's puzzles: "About 5 puzzles: A, B, C and
+// 2 more" — the first `shown` titles named, the rest counted (an inbox row,
+// which shows one cover, names one: "About 5 puzzles: A and 4 more").
+export function coverStackSummary(
+  titles: readonly string[],
+  locale: string,
+  t: Translator,
+  shown = 3,
+): string {
+  const named = titles.slice(0, shown);
+  const rest = titles.length - named.length;
+  const items = rest > 0 ? [...named, t("moreCount", { count: rest })] : named;
+  const list = new Intl.ListFormat(locale, {
+    style: "long",
+    type: "conjunction",
+  }).format(items);
+  return t("coverStackSummary", { count: titles.length, list });
+}
+
+// Whose copy a context copy is, for the header puzzle menu and the cover
+// tooltips: "Your copy", "<Name>'s copy", or a generic label when the other
+// member is anonymised (never a real identity).
+export function copyOwnerHint(
+  owner: InboxContextCopy["owner"],
+  otherMember: InboxThread["subject"]["otherMember"],
+  t: Translator,
+  displayName: (source: MemberNameSource) => string,
+): string {
+  if (owner === "viewer") return t("copyOwnerYou");
+  if (otherMember.anonymous) return t("copyOwnerOther");
+  return t("copyOwnerNamed", { name: displayName(otherMember.member) });
+}
