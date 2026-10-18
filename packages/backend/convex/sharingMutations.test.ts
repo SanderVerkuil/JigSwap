@@ -1,7 +1,7 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -121,13 +121,13 @@ describe("sharing.createCircle", () => {
   });
 });
 
-describe("sharing.addMember", () => {
+describe("sharing.addMember (internal)", () => {
   test("an admin adds a member, projecting the lookup row", async () => {
     const t = convexTest(schema, modules);
     const { bob } = await seed(t);
     const circleId = await createCircleForAlice(t);
 
-    await asAlice(t).mutation(api.sharing.addMember.addMember, {
+    await asAlice(t).mutation(internal.sharing.addMember.addMember, {
       circleId,
       memberId: bob,
       permission: "Exchange",
@@ -151,14 +151,14 @@ describe("sharing.addMember", () => {
     const t = convexTest(schema, modules);
     const { bob, carol } = await seed(t);
     const circleId = await createCircleForAlice(t);
-    await asAlice(t).mutation(api.sharing.addMember.addMember, {
+    await asAlice(t).mutation(internal.sharing.addMember.addMember, {
       circleId,
       memberId: bob,
       permission: "ViewOnly",
     });
 
     await expectConvexCode(
-      asBob(t).mutation(api.sharing.addMember.addMember, {
+      asBob(t).mutation(internal.sharing.addMember.addMember, {
         circleId,
         memberId: carol,
         permission: "ViewOnly",
@@ -172,7 +172,7 @@ describe("sharing.addMember", () => {
     const { bob } = await seed(t);
     const circleId = await createCircleForAlice(t);
     const add = () =>
-      asAlice(t).mutation(api.sharing.addMember.addMember, {
+      asAlice(t).mutation(internal.sharing.addMember.addMember, {
         circleId,
         memberId: bob,
         permission: "ViewOnly",
@@ -200,7 +200,7 @@ describe("sharing.removeMember / changePermission", () => {
     const t = convexTest(schema, modules);
     const { bob } = await seed(t);
     const circleId = await createCircleForAlice(t);
-    await asAlice(t).mutation(api.sharing.addMember.addMember, {
+    await asAlice(t).mutation(internal.sharing.addMember.addMember, {
       circleId,
       memberId: bob,
       permission: "ViewOnly",
@@ -224,7 +224,7 @@ describe("sharing.removeMember / changePermission", () => {
     const t = convexTest(schema, modules);
     const { bob } = await seed(t);
     const circleId = await createCircleForAlice(t);
-    await asAlice(t).mutation(api.sharing.addMember.addMember, {
+    await asAlice(t).mutation(internal.sharing.addMember.addMember, {
       circleId,
       memberId: bob,
       permission: "ViewOnly",
@@ -255,7 +255,7 @@ describe("sharing.getCircle visibility", () => {
     const t = convexTest(schema, modules);
     const { bob } = await seed(t);
     const circleId = await createCircleForAlice(t);
-    await asAlice(t).mutation(api.sharing.addMember.addMember, {
+    await asAlice(t).mutation(internal.sharing.addMember.addMember, {
       circleId,
       memberId: bob,
       permission: "Admin",
@@ -311,7 +311,7 @@ describe("library.browseOwnedPuzzles circle-aware visibility", () => {
     const { bob, puzzleAggregateId } = await seed(t);
     const copyId = await acquirePrivateForAlice(t, puzzleAggregateId);
     const circleId = await createCircleForAlice(t);
-    await asAlice(t).mutation(api.sharing.addMember.addMember, {
+    await asAlice(t).mutation(internal.sharing.addMember.addMember, {
       circleId,
       memberId: bob,
       permission: "ViewOnly",

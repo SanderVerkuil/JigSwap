@@ -53,12 +53,12 @@ const seed = async (t: T) => {
     api.sharing.createCircle.createCircle,
     { name: "Saturday Puzzlers" },
   )) as string;
-  await as(t, "alice").mutation(api.sharing.addMember.addMember, {
+  await as(t, "alice").mutation(internal.sharing.addMember.addMember, {
     circleId,
     memberId: ids.bob,
     permission: "Admin",
   });
-  await as(t, "alice").mutation(api.sharing.addMember.addMember, {
+  await as(t, "alice").mutation(internal.sharing.addMember.addMember, {
     circleId,
     memberId: ids.dave,
     permission: "ViewOnly",
@@ -227,7 +227,7 @@ const backdate = (t: T, inviteId: string) =>
     });
   });
 
-// Seat `count` fresh members in the circle through the public addMember path.
+// Seat `count` fresh members in the circle through the internal addMember path.
 const fillSeats = async (t: T, circleId: string, count: number) => {
   for (let i = 0; i < count; i++) {
     const memberId = await t.run((ctx) =>
@@ -239,7 +239,7 @@ const fillSeats = async (t: T, circleId: string, count: number) => {
         updatedAt: Date.now(),
       }),
     );
-    await as(t, "alice").mutation(api.sharing.addMember.addMember, {
+    await as(t, "alice").mutation(internal.sharing.addMember.addMember, {
       circleId,
       memberId,
       permission: "ViewOnly",
@@ -395,7 +395,7 @@ describe("sharing.inviteToCircle", () => {
       api.sharing.createCircle.createCircle,
       { name: "Other" },
     )) as string;
-    await as(t, "bob").mutation(api.sharing.addMember.addMember, {
+    await as(t, "bob").mutation(internal.sharing.addMember.addMember, {
       circleId: other,
       memberId: carol,
       permission: "ViewOnly",

@@ -7,7 +7,7 @@ import {
   type PermissionLevel,
 } from "@jigswap/domain";
 import { v } from "convex/values";
-import { mutation } from "../_generated/server";
+import { internalMutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { isBlockedEitherWay } from "../social/blocks";
 import { convexCircleRepository } from "./adapters/convexCircleRepository";
@@ -16,13 +16,13 @@ import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
 
-// Composition root for adding a member to a circle. The actor is derived from auth; the aggregate
-// gates the add on the actor holding Admin. `circleId` is the domain CircleId aggregateId;
+// Composition root for adding a member to a circle. The actor comes from the caller's identity
+// (in practice only tests, via withIdentity: no server-side caller has one); the aggregate gates
+// the add on the actor holding Admin. `circleId` is the domain CircleId aggregateId;
 // `memberId` is the target user's _id (the resolved MemberId).
-// Still PUBLIC for now because the web "add member" flow calls it; circle invitations
-// (inviteToCircle / acceptCircleInvite) replace that flow, and the follow-up PR that switches the
-// UI to invites makes this an internal mutation.
-export const addMember = mutation({
+// INTERNAL: members join only by accepting an invite (inviteToCircle / acceptCircleInvite), never
+// by being added blindly, so no client can reach this.
+export const addMember = internalMutation({
   args: {
     circleId: v.string(),
     memberId: v.id("users"),
