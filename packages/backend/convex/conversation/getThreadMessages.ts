@@ -3,10 +3,9 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { viewableCopyCards } from "./copyCard";
 import {
+  threadMessageViewOf,
   threadRowByAggregateId,
-  toThreadMessageView,
 } from "./readModelHelpers";
 
 const DEFAULT_PAGE_SIZE = 50;
@@ -46,20 +45,6 @@ export const getThreadMessages = query({
       })
       .order("desc")
       .take(args.limit ?? DEFAULT_PAGE_SIZE);
-    // A message's copy reference surfaces as a card only while the reader may view the copy;
-    // otherwise as `copyUnavailable`, never revealing anything about the copy.
-    const cardOf = viewableCopyCards(ctx, me);
-    return Promise.all(
-      page.reverse().map(async (row) => {
-        const view = toThreadMessageView(row, me);
-        if (!row.copyId) return view;
-        const copy = await cardOf(row.copyId);
-        // A reference the reader can no longer follow (deleted, or no longer viewable) is
-        // flagged rather than dropped, so the UI can say "no longer available".
-        return copy
-          ? { ...view, copy }
-          : { ...view, copyUnavailable: true as const };
-      }),
-    );
+    return Promise.all(page.reverse().map(threadMessageViewOf(ctx, me)));
   },
 });

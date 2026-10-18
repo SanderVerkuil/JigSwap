@@ -114,6 +114,7 @@ import type * as conversation_getThreadByExchange from "../conversation/getThrea
 import type * as conversation_getThreadMessages from "../conversation/getThreadMessages.js";
 import type * as conversation_getUnreadTotal from "../conversation/getUnreadTotal.js";
 import type * as conversation_listAttachableCopies from "../conversation/listAttachableCopies.js";
+import type * as conversation_listThreadMessages from "../conversation/listThreadMessages.js";
 import type * as conversation_markThreadRead from "../conversation/markThreadRead.js";
 import type * as conversation_openDmThread from "../conversation/openDmThread.js";
 import type * as conversation_postMessage from "../conversation/postMessage.js";
@@ -539,6 +540,7 @@ declare const fullApi: ApiFromModules<{
   "conversation/getThreadMessages": typeof conversation_getThreadMessages;
   "conversation/getUnreadTotal": typeof conversation_getUnreadTotal;
   "conversation/listAttachableCopies": typeof conversation_listAttachableCopies;
+  "conversation/listThreadMessages": typeof conversation_listThreadMessages;
   "conversation/markThreadRead": typeof conversation_markThreadRead;
   "conversation/openDmThread": typeof conversation_openDmThread;
   "conversation/postMessage": typeof conversation_postMessage;

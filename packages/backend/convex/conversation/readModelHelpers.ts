@@ -1,6 +1,7 @@
 import type { ThreadMessageView } from "@jigswap/contracts";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { viewableCopyCards } from "./copyCard";
 
 // Shared row->DTO mapping and unread logic for the conversation read models. Read models page
 // the companion `threadMessages` rows via `by_thread_sent` directly and NEVER hydrate the Thread
@@ -112,3 +113,22 @@ export const subjectRenders = async (
   thread.subjectKind !== "exchange" ||
   (thread.exchangeId !== undefined &&
     (await ctx.db.get(thread.exchangeId)) !== null);
+
+/**
+ * Per-request mapper from a message row to the reader's DTO. A copy reference surfaces as a card
+ * only while the reader may view the copy; otherwise as `copyUnavailable`, never revealing
+ * anything about the copy. Shared by getThreadMessages and listThreadMessages.
+ */
+export const threadMessageViewOf = (ctx: QueryCtx, me: Id<"users">) => {
+  const cardOf = viewableCopyCards(ctx, me);
+  return async (row: Doc<"threadMessages">): Promise<ThreadMessageView> => {
+    const view = toThreadMessageView(row, me);
+    if (!row.copyId) return view;
+    const copy = await cardOf(row.copyId);
+    // A reference the reader can no longer follow (deleted, or no longer viewable) is
+    // flagged rather than dropped, so the UI can say "no longer available".
+    return copy
+      ? { ...view, copy }
+      : { ...view, copyUnavailable: true as const };
+  };
+};

@@ -1,5 +1,6 @@
 import { toMemberId, toMessageId, toThreadId } from "@jigswap/domain";
 import { convexTest, type TestConvex } from "convex-test";
+import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -363,5 +364,94 @@ describe("read fallback parity", () => {
 
     await stripDenormalised(t, threadId);
     expect(await read()).toEqual(denormalised);
+  });
+});
+
+// convex-test serializes ConvexError.data to a JSON string at the function boundary; normalise.
+const codeOf = (e: unknown): string | undefined => {
+  const data = (e as ConvexError<Value>).data;
+  return (
+    typeof data === "string" ? JSON.parse(data) : (data as { code?: string })
+  ).code;
+};
+
+describe("listThreadMessages", () => {
+  const page = (
+    t: T,
+    threadId: string,
+    numItems: number,
+    cursor: string | null,
+  ) =>
+    asBob(t).query(api.conversation.listThreadMessages.listThreadMessages, {
+      threadId,
+      paginationOpts: { numItems, cursor },
+    });
+
+  test("pages newest first with stable cursor continuation", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+    const threadId = await openDm(t, bob);
+    for (const body of ["m1", "m2", "m3", "m4", "m5"]) {
+      await post(t, asAlice, threadId, body);
+    }
+
+    const first = await page(t, threadId, 2, null);
+    expect(first.page.map((m) => m.body)).toEqual(["m5", "m4"]);
+    expect(first.isDone).toBe(false);
+    const second = await page(t, threadId, 2, first.continueCursor);
+    expect(second.page.map((m) => m.body)).toEqual(["m3", "m2"]);
+    const third = await page(t, threadId, 2, second.continueCursor);
+    expect(third.page.map((m) => m.body)).toEqual(["m1"]);
+    expect(third.isDone).toBe(true);
+  });
+
+  test("maps rows exactly like getThreadMessages", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+    const threadId = await openDm(t, bob);
+    await post(t, asAlice, threadId, "hello");
+    await post(t, asBob, threadId, "hi back");
+    await postSystem(t, threadId, "exchange shipped");
+
+    const paged = await page(t, threadId, 10, null);
+    const legacy = await asBob(t).query(
+      api.conversation.getThreadMessages.getThreadMessages,
+      { threadId },
+    );
+    expect([...paged.page].reverse()).toEqual(legacy);
+  });
+
+  test("a new message appears at the top of the first page", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+    const threadId = await openDm(t, bob);
+    await post(t, asAlice, threadId, "old");
+    const before = await page(t, threadId, 20, null);
+    expect(before.page.map((m) => m.body)).toEqual(["old"]);
+
+    await post(t, asAlice, threadId, "new");
+    const after = await page(t, threadId, 20, null);
+    expect(after.page.map((m) => m.body)).toEqual(["new", "old"]);
+  });
+
+  test("refuses a non-participant and an unknown thread", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+    const threadId = await openDm(t, bob);
+    const asCarol = t.withIdentity({ subject: "clerk_carol" });
+    const args = { paginationOpts: { numItems: 10, cursor: null } };
+
+    const refused = asCarol.query(
+      api.conversation.listThreadMessages.listThreadMessages,
+      { threadId, ...args },
+    );
+    await expect(refused).rejects.toBeInstanceOf(ConvexError);
+    expect(await refused.catch(codeOf)).toBe("NotParticipant");
+
+    const missing = asCarol.query(
+      api.conversation.listThreadMessages.listThreadMessages,
+      { threadId: "no-such-thread", ...args },
+    );
+    expect(await missing.catch(codeOf)).toBe("ThreadNotFound");
   });
 });
