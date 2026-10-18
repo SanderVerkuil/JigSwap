@@ -1734,6 +1734,8 @@
       "createDescription": "Een kring is besloten. Je wordt het eerste lid en de beheerder.",
       "nameLabel": "Naam",
       "namePlaceholder": "bijv. Zaterdagpuzzelaars",
+      "nameCounter": "{count}/{max}",
+      "nameInvalid": "Een kringnaam moet 1 tot 100 tekens lang zijn.",
       "cancel": "Annuleren",
       "create": "Aanmaken",
       "title": "{name} beheren",
