@@ -546,3 +546,128 @@ describe("the circle-reveal view is identity only", () => {
     ]);
   });
 });
+
+describe("circle membership follows the real junction", () => {
+  test("adding a member through the REAL addMember reveals; removeMember ends it", async () => {
+    const t = convexTest(schema, modules);
+    const { viewer, stranger } = await seed(t);
+    expect((await project(t, viewer, stranger)).anonymous).toBe(true);
+
+    await asHost(t).mutation(api.sharing.addMember.addMember, {
+      circleId: CIRCLE,
+      memberId: stranger,
+      permission: "ViewOnly",
+    });
+    expect(nameOf(await project(t, viewer, stranger))).toBe("Strange");
+
+    await asHost(t).mutation(api.sharing.removeMember.removeMember, {
+      circleId: CIRCLE,
+      memberId: stranger,
+    });
+    expect((await project(t, viewer, stranger)).anonymous).toBe(true);
+  });
+
+  test("a circles.memberships entry WITHOUT a junction row does not reveal", async () => {
+    const t = convexTest(schema, modules);
+    const { viewer, stranger } = await seed(t);
+    await t.run(async (ctx) => {
+      await ctx.db.insert("circles", {
+        aggregateId: "circle-desync",
+        ownerId: viewer,
+        name: "Desynced",
+        memberships: [
+          { id: "d-1", memberId: viewer, permission: "Admin", joinedAt: 1 },
+          {
+            id: "d-2",
+            memberId: stranger,
+            permission: "ViewOnly",
+            joinedAt: 1,
+          },
+        ],
+        createdAt: 1,
+      });
+      // Junction row for the viewer only — the stranger's seat was never projected.
+      await ctx.db.insert("circleMembers", {
+        circleAggregateId: "circle-desync",
+        memberId: viewer,
+      });
+    });
+
+    expect((await project(t, viewer, stranger)).anonymous).toBe(true);
+  });
+});
+
+describe("conversation surfaces for a circle-mate", () => {
+  const dmWithPrivy = async (t: TestConvex<typeof schema>) => {
+    const s = await seed(t);
+    // Private copies of Privy that are NOT circle-shared: one open, one closed.
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      for (const [aggregateId, forTrade] of [
+        ["copy-privy-unshared", true],
+        ["copy-privy-closed", false],
+      ] as const) {
+        await ctx.db.insert("ownedPuzzles", {
+          aggregateId,
+          puzzleId: s.puzzle,
+          ownerId: s.privy,
+          condition: "good",
+          availability: { forTrade, forSale: false, forLend: false },
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    });
+    // Circle-mates are "connected", so the viewer may open a DM with Privy.
+    const threadId = await asViewer(t).mutation(
+      api.conversation.openDmThread.openDmThread,
+      { recipientId: s.privy },
+    );
+    await asViewer(t).mutation(api.conversation.postMessage.postMessage, {
+      threadId,
+      kind: "text",
+      body: "Hi",
+    });
+    return { ...s, threadId };
+  };
+
+  test("listAttachableCopies('theirs') returns only copies passing canViewCopy", async () => {
+    const t = convexTest(schema, modules);
+    const { threadId } = await dmWithPrivy(t);
+
+    const copies = await asViewer(t).query(
+      api.conversation.listAttachableCopies.listAttachableCopies,
+      { threadId, side: "theirs" },
+    );
+    const ids = await t.run(async (ctx) =>
+      Promise.all(
+        copies.map(
+          async (c) =>
+            (await ctx.db.get(c.copyId as Id<"ownedPuzzles">))?.aggregateId,
+        ),
+      ),
+    );
+    expect(ids).toEqual(["copy-privy"]);
+  });
+
+  test("getMyInbox reveals the circle-mate with a profileHandle, but their profile stays locked", async () => {
+    const t = convexTest(schema, modules);
+    const { threadId } = await dmWithPrivy(t);
+
+    const inbox = await asViewer(t).query(
+      api.conversation.getMyInbox.getMyInbox,
+      {},
+    );
+    const row = inbox.find((r) => r.threadId === threadId)!;
+    expect(row.subject.kind).toBe("dm");
+    if (row.subject.kind !== "dm") return;
+    expect(nameOf(row.subject.otherMember)).toBe("Privy");
+    expect(row.subject.profileHandle).toBe("privy_handle");
+
+    const profile = await asViewer(t).query(
+      api.social.getPublicProfile.getPublicProfile,
+      { handle: row.subject.profileHandle! },
+    );
+    expect(profile?.locked).toBe(true);
+  });
+});
