@@ -774,6 +774,56 @@ describe("global MapTiler budget", () => {
   });
 });
 
+describe("a render that never settles", () => {
+  test("sendLocation schedules a backstop 10 minutes out; a still-pending location is then delivered as a text card", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, threadId } = await openThread(t);
+    const before = Date.now();
+    const id = await send(t, threadId);
+    const jobs = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect(),
+    );
+    const backstop = jobs.find((job) =>
+      job.name.includes("expireLocationRender"),
+    )!;
+    expect(backstop.scheduledTime).toBeGreaterThanOrEqual(before + 10 * 60_000);
+
+    // A row whose render action died: pending, no map.
+    const stuck = await t.run((ctx) =>
+      ctx.db.insert("messageAttachments", {
+        kind: "location",
+        threadAggregateId: threadId,
+        uploaderId: alice,
+        lat: 52.1,
+        lng: 5.1,
+        precision: "exact",
+        mapStatus: "pending",
+        caption: "Here",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      }),
+    );
+    await t.mutation(internal.conversation.locationStore.expireLocationRender, {
+      attachmentId: stuck,
+    });
+    expect((await row(t, stuck))!.mapStatus).toBe("failed");
+    const messages = await messageRows(t, threadId);
+    expect(messages.map((m) => m.attachmentId)).toContain(stuck);
+
+    // A location that did settle is left alone by its backstop.
+    await settleDueJobs(t);
+    const settled = (await row(t, id))!;
+    expect(settled.mapStatus).toBe("ready");
+    await t.mutation(internal.conversation.locationStore.expireLocationRender, {
+      attachmentId: id,
+    });
+    expect((await row(t, id))!.mapStatus).toBe("ready");
+    expect(
+      (await messageRows(t, threadId)).filter((m) => m.attachmentId === id),
+    ).toHaveLength(1);
+  });
+});
+
 describe("search query rules and response caps", () => {
   test("';' is stripped and a bare coordinate pair gets no results without a call", async () => {
     const t = convexTest(schema, modules);

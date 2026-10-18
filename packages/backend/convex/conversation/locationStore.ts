@@ -86,3 +86,17 @@ export const chargeRender = internalMutation({
   handler: async (ctx, { upstreamRequests }): Promise<boolean> =>
     chargeMapTilerBudget(ctx, upstreamRequests),
 });
+
+/**
+ * A location still "pending" LOCATION_RENDER_TIMEOUT_MS after it was sent (its render action
+ * never settled it): settle it as failed, so it arrives as a text card. A settled one is left
+ * alone.
+ */
+export const expireLocationRender = internalMutation({
+  args: { attachmentId: v.id("messageAttachments") },
+  handler: async (ctx, { attachmentId }) => {
+    const row = await ctx.db.get(attachmentId);
+    if (row?.kind !== "location" || row.mapStatus !== "pending") return;
+    await settleLocation(ctx, attachmentId, undefined);
+  },
+});

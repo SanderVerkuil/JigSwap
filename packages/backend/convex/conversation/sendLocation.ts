@@ -11,7 +11,11 @@ import { requireMember } from "../identity/requireMember";
 import { enforceRateLimit } from "../lib/rateLimits";
 import { assertThreadNotBlocked } from "../social/blocks";
 import { participantThreadOf } from "./messageAttachments";
-import { assertLocationAvailable, isMutualWithOthers } from "./sharedLocations";
+import {
+  assertLocationAvailable,
+  isMutualWithOthers,
+  LOCATION_RENDER_TIMEOUT_MS,
+} from "./sharedLocations";
 
 const precisionValidator = v.union(
   v.literal("exact"),
@@ -92,6 +96,11 @@ export const sendLocation = mutation({
     await ctx.scheduler.runAfter(
       0,
       internal.conversation.renderLocationMap.renderLocationMap,
+      { attachmentId },
+    );
+    await ctx.scheduler.runAfter(
+      LOCATION_RENDER_TIMEOUT_MS,
+      internal.conversation.locationStore.expireLocationRender,
       { attachmentId },
     );
     return { attachmentId };

@@ -39,6 +39,12 @@ export const PICKER_MAP_HEIGHT = 360;
 /** Picker images are temporary: each blob is deleted this long after it was rendered. */
 export const PICKER_MAP_TTL_MS = 10 * 60_000;
 
+/**
+ * A location whose render has not settled this long after sendLocation is settled as failed
+ * (expireLocationRender): it is appended as a text card rather than never arriving.
+ */
+export const LOCATION_RENDER_TIMEOUT_MS = 10 * 60_000;
+
 /** Feature gate (spec R.6): no MapTiler key means no location sharing at all. */
 export const assertLocationAvailable = (): void => {
   if (!isLocationConfigured(process.env)) {
