@@ -30,9 +30,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">62.5% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>7/14</span>
+                <span class='fraction'>10/16</span>
             </div>
         
             
@@ -107,7 +107,9 @@
 <a name='L42'></a><a href='#L42'>42</a>
 <a name='L43'></a><a href='#L43'>43</a>
 <a name='L44'></a><a href='#L44'>44</a>
-<a name='L45'></a><a href='#L45'>45</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -115,30 +117,32 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -156,6 +160,7 @@ import { query } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
+import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 &nbsp;
 // The flagged-photos review queue: every auto-rejected copy photo, with enough context (image url,
 // classifier verdict, uploader, puzzle title) for an admin to restore or confirm removal.
@@ -184,9 +189,10 @@ export const listRejectedPhotos = query({
           (<span class="branch-1 cbranch-no" title="branch not covered" >copy ? (await ctx.db.get(copy.puzzleId))?.title : undefined);</span>
         return {
           imageId: row._id,
-          url: await ctx.storage.getUrl(row.fileId),
-          score: row.moderationScore ?? <span class="branch-1 cbranch-no" title="branch not covered" >null,</span>
-          label: row.moderationLabel ?? <span class="branch-1 cbranch-no" title="branch not covered" >null,</span>
+          // No URL before the CSAM hash check has passed (hashCheckFields).
+          url: isHashCleared(row) ? await ctx.storage.getUrl(row.fileId) : <span class="branch-1 cbranch-no" title="branch not covered" >null,</span>
+          score: row.moderationScore ?? null,
+          label: row.moderationLabel ?? null,
           uploaderName: uploader ? adminMemberLabelOf(uploader) : <span class="branch-1 cbranch-no" title="branch not covered" >null,</span>
           puzzleTitle: title ?? <span class="branch-1 cbranch-no" title="branch not covered" >row._id,</span>
           uploadedAt: row.createdAt,
@@ -202,7 +208,7 @@ export const listRejectedPhotos = query({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-18T08:14:48.969Z
+                at 2026-10-18T11:19:27.969Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
