@@ -3,6 +3,7 @@ import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { projectCircleMember } from "./conversation/threadMemberProjection";
 import schema from "./schema";
 import {
   canSeeProfileContent,
@@ -733,6 +734,30 @@ describe("a block vetoes the circle reveal on the chokepoint only", () => {
     const seat = circle!.members.find((m) => m.memberId === gone)!;
     expect(seat.departed).toBe(true);
     expect(seat.name).toBeUndefined();
+  });
+});
+
+describe("projectCircleMember checks the viewer's membership itself", () => {
+  test("a viewer outside the circle gets the plain chokepoint, even for a co-member who blocked them", async () => {
+    const t = convexTest(schema, modules);
+    const { viewer, privy, stranger } = await seed(t);
+    const viaCircle = (viewerId: Id<"users">) =>
+      t.run((ctx) => projectCircleMember(ctx, viewerId, privy, CIRCLE, "salt"));
+
+    // A blocked current member still gets the circle reveal.
+    await t.run((ctx) =>
+      ctx.db.insert("blocks", {
+        blockerId: privy,
+        blockedId: viewer,
+        createdAt: Date.now(),
+      }),
+    );
+    expect(nameOf(await viaCircle(viewer))).toBe("Privy");
+
+    // A non-member asking about the same circle does not.
+    const p = await viaCircle(stranger);
+    expect(p.anonymous).toBe(true);
+    expect(JSON.stringify(p)).not.toContain("Privy");
   });
 });
 

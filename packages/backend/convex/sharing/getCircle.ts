@@ -21,6 +21,6 @@ export const getCircle = query({
     // Only members may see a circle's contents.
     if (!row.memberships.some((m) => m.memberId === viewerId)) return null;
 
-    return toCircleDetail(ctx, row, viewerId);
+    return toCircleDetail(ctx, row, args.circleId, viewerId);
   },
 });

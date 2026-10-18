@@ -6,7 +6,6 @@ import type {
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { projectCircleMember } from "../conversation/threadMemberProjection";
-import { projectMemberIdentity } from "../social/privacy";
 
 // Shared row->DTO mapping for the Sharing reads, so every sharing adapter emits typed view DTOs
 // (faithful supersets of the joined rows) rather than leaking raw documents.
@@ -33,27 +32,25 @@ export const toCircleSummary = (
 
 // A circle with its members resolved through the identity chokepoint. Each membership is joined to
 // the member's projected identity; the owner's seat is flagged (permanent, implicitly Admin).
+// `circleId` is the aggregateId the row was looked up by.
 export const toCircleDetail = async (
   ctx: QueryCtx,
   row: Doc<"circles">,
+  circleId: string,
   viewerId: Id<"users">,
 ): Promise<CircleDetailView> => {
   const members: CircleMemberView[] = await Promise.all(
     row.memberships.map(async (m) => {
       // As the circle chat projects them (salt = the circle id): circle-mates are revealed by the
       // circle rule even when they blocked the viewer, so the list can't give a block away; a
-      // departed member is anonymous, so only the seat (id + departed) is surfaced. A legacy row
-      // without an aggregateId has no circleMembers mirror: plain chokepoint.
-      const projected =
-        row.aggregateId === undefined
-          ? await projectMemberIdentity(ctx, viewerId, m.memberId, row._id)
-          : await projectCircleMember(
-              ctx,
-              viewerId,
-              m.memberId,
-              row.aggregateId,
-              row._id,
-            );
+      // departed member is anonymous, so only the seat (id + departed) is surfaced.
+      const projected = await projectCircleMember(
+        ctx,
+        viewerId,
+        m.memberId,
+        circleId,
+        row._id,
+      );
       const user = projected.anonymous ? null : projected.member;
       return {
         membershipId: m.id,

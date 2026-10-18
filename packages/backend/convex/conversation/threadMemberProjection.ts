@@ -23,8 +23,9 @@ export const isCurrentCircleMember = async (
     .first()) !== null;
 
 /**
- * Project a member of circle `circleId` for `viewerId` (a current member: the caller gates that),
- * salted with `salt`. A target who is a CURRENT member of the circle is always revealed, identity
+ * Project a member of circle `circleId` for `viewerId`, salted with `salt`. The circle rule applies
+ * only while the VIEWER is a current member too (checked here, not trusted to the caller); a
+ * non-member viewer gets plain projectMemberIdentity. A target who is a CURRENT member of the circle is always revealed, identity
  * only, as the circle rule (#152) does, and that holds even when the target blocked the viewer:
  * anonymising them there would tell the blocked side about the block (Q8). Everyone else, a
  * former member included, falls through to projectMemberIdentity (departed members stay "Former
@@ -42,6 +43,7 @@ export const projectCircleMember = async (
   if (
     !projected.anonymous ||
     projected.departed ||
+    !(await isCurrentCircleMember(ctx, circleId, viewerId)) ||
     !(await isCurrentCircleMember(ctx, circleId, targetId))
   ) {
     return projected;
