@@ -1,10 +1,13 @@
+import { toMemberId } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { mutation, type MutationCtx } from "../_generated/server";
+import { participantsKeyOf } from "../conversation/adapters/threadMapper";
 import { requireMember } from "../identity/requireMember";
 import { enforceRateLimit } from "../lib/rateLimits";
 import { canViewCopy } from "../library/canViewCopy";
 import schema from "../schema";
+import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
 
 const reportFields = schema.tables.reports.validator.fields;
 
@@ -138,12 +141,12 @@ const resolveTarget = async (
     case "message":
       return messageTarget(ctx, reporterId, targetId);
     case "user": {
-      // Any existing member: still reportable after a block, so no block gate here.
       const userId = ctx.db.normalizeId("users", targetId);
       const user = userId ? await ctx.db.get(userId) : null;
-      return user
-        ? { targetId: user._id, reportedUserId: user._id, evidence: {} }
-        : null;
+      if (!user || !(await canReportMember(ctx, reporterId, user._id))) {
+        return null;
+      }
+      return { targetId: user._id, reportedUserId: user._id, evidence: {} };
     }
     case "copy": {
       const copyId = ctx.db.normalizeId("ownedPuzzles", targetId);
@@ -195,6 +198,41 @@ const resolveTarget = async (
       };
     }
   }
+};
+
+// A member is reportable by someone who can see them: their profile content would be visible
+// (public, or mutual followers), or the two share a thread or an exchange. A block in either
+// direction is deliberately ignored (block-and-report), so this is canSeeProfileContent without
+// its block veto, plus the pair relations.
+const canReportMember = async (
+  ctx: MutationCtx,
+  reporterId: Id<"users">,
+  memberId: Id<"users">,
+): Promise<boolean> => {
+  if ((await profileVisibilityOf(ctx, memberId)) === "public") return true;
+  if (await areMutualFollowers(ctx, reporterId, memberId)) return true;
+  const sharedThread = await ctx.db
+    .query("threads")
+    .withIndex("by_participants_key", (q) =>
+      q.eq(
+        "participantsKey",
+        participantsKeyOf([toMemberId(reporterId), toMemberId(memberId)]),
+      ),
+    )
+    .first();
+  if (sharedThread) return true;
+  for (const [initiatorId, recipientId] of [
+    [reporterId, memberId],
+    [memberId, reporterId],
+  ] as const) {
+    const exchange = await ctx.db
+      .query("exchanges")
+      .withIndex("by_initiator", (q) => q.eq("initiatorId", initiatorId))
+      .filter((q) => q.eq(q.field("recipientId"), recipientId))
+      .first();
+    if (exchange) return true;
+  }
+  return false;
 };
 
 // A message the reporter can read (a participant of its thread), authored by someone. The

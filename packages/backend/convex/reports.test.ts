@@ -235,6 +235,99 @@ describe("fileReport: target visibility", () => {
     );
   });
 
+  test("user: a member the reporter can see: a public profile, mutual followers, a shared thread or exchange", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, carol } = await seed(t);
+    const dave = await t.run(async (ctx) => {
+      const now = Date.now();
+      const id = await ctx.db.insert("users", {
+        clerkId: "clerk_dave",
+        email: "dave@example.com",
+        name: "Dave",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      // carol and dave are private from here on.
+      for (const memberId of [carol, id]) {
+        await ctx.db.insert("profiles", {
+          memberId,
+          visibility: "private",
+          updatedAt: now,
+        });
+      }
+      return id;
+    });
+    const asDave = t.withIdentity({ subject: "clerk_dave" });
+
+    // Private and unrelated: not visible, so NotFound.
+    await expectCode(
+      file(asAlice(t), { targetKind: "user", targetId: carol }),
+      "NotFound",
+    );
+    // Mutual followers.
+    await t.run(async (ctx) => {
+      for (const [followerId, followeeId] of [
+        [alice, carol],
+        [carol, alice],
+      ] as const) {
+        await ctx.db.insert("follows", {
+          aggregateId: crypto.randomUUID(),
+          followerId,
+          followeeId,
+          createdAt: Date.now(),
+        });
+      }
+    });
+    await file(asAlice(t), { targetKind: "user", targetId: carol });
+
+    // A shared exchange (no thread yet), from either side.
+    await expectCode(
+      file(asDave, { targetKind: "user", targetId: carol }),
+      "NotFound",
+    );
+    await t.run(async (ctx) => {
+      const copy = await ctx.db.query("ownedPuzzles").first();
+      await ctx.db.insert("exchanges", {
+        aggregateId: "exchange-cd",
+        initiatorId: carol,
+        recipientId: dave,
+        type: "trade",
+        requestedPuzzleId: copy!._id,
+        status: "proposed",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+    await file(asDave, { targetKind: "user", targetId: carol });
+    await file(asCarol(t), { targetKind: "user", targetId: dave });
+  });
+
+  test("user: a private member who blocked the reporter is still reportable over a shared thread", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+    await t.run(async (ctx) => {
+      await ctx.db.insert("profiles", {
+        memberId: bob,
+        visibility: "private",
+        updatedAt: Date.now(),
+      });
+      await ctx.db.insert("blocks", {
+        blockerId: bob,
+        blockedId: alice,
+        createdAt: Date.now(),
+      });
+    });
+    // alice and bob share THREAD (and an exchange).
+    const { reportId } = await file(asAlice(t), {
+      targetKind: "user",
+      targetId: bob,
+    });
+    expect((await reportRow(t, reportId)).reportedUserId).toBe(bob);
+    // The blocker can report back too.
+    await file(asBob(t), { targetKind: "user", targetId: alice });
+  });
+
   test("user: any other existing member, also after a block; never yourself", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob, carol } = await seed(t);
