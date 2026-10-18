@@ -142,4 +142,10 @@ export interface InboxThreadView {
   readonly contextCopies: readonly InboxThreadContextCopy[];
   /** Inbox ordering instant: the newest message's sentAt, or the thread's creation. */
   readonly updatedAt: number;
+  /**
+   * Set when the pair is blocked: "byMe" when the caller blocked the other participant (also
+   * when both did), "byThem" when only they did. The thread stays listed but is read-only; render
+   * "byThem" as the generic "You can't reply to this conversation".
+   */
+  readonly blocked?: "byMe" | "byThem";
 }

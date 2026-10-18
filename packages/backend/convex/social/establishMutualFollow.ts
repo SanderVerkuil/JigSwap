@@ -5,9 +5,10 @@ import { convexFollowRepository } from "./adapters/convexFollowRepository";
 import { followIdGenerator } from "./adapters/idGenerators";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
+import { isBlockedEitherWay } from "./blocks";
 
 // What establishMutualFollow did, so callers can bookkeep truthfully:
-// - established: false ONLY when the decline-cooldown gate refused (no edges, no row flips).
+// - established: false ONLY when the decline-cooldown or block gate refused (no edges, no row flips).
 // - edgesCreated: count of NEWLY created follow edges (0..2); 0 means both already existed
 //   (an already-mutual repeat), so callers must NOT bump their "follows established" counter.
 export type EstablishMutualFollowResult = {
@@ -59,6 +60,12 @@ export async function establishMutualFollow(
   b: Id<"users">,
 ): Promise<EstablishMutualFollowResult> {
   const now = Date.now();
+
+  // A block either way refuses every token path too (spec 2.6), exactly like the cooldown below:
+  // no edges, no row flips.
+  if (await isBlockedEitherWay(ctx, a, b)) {
+    return { established: false, edgesCreated: 0 };
+  }
 
   // Anti-pester invariant (Phase 2), enforced structurally for ALL callers: while a decline of
   // EITHER party against the other is inside its cooldown, NO token path may force a connection.

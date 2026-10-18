@@ -1,6 +1,7 @@
 import type { ConnectionPolicy, MemberId } from "@jigswap/domain";
 import type { Id } from "../../_generated/dataModel";
 import type { QueryCtx } from "../../_generated/server";
+import { isBlockedEitherWay } from "../../social/blocks";
 import { participantsKeyOf } from "./threadMapper";
 
 // Driven adapter for the ConnectionPolicy port. "Connected" = mutual follow, shared circle, or
@@ -13,6 +14,9 @@ export const convexConnectionPolicy = (ctx: QueryCtx): ConnectionPolicy => ({
   async canMessage(initiator: MemberId, recipient: MemberId) {
     const a = initiator as unknown as Id<"users">;
     const b = recipient as unknown as Id<"users">;
+
+    // A block either way revokes every clause below, including the pair-thread one (spec 2.6).
+    if (await isBlockedEitherWay(ctx, a, b)) return false;
 
     // Mutual follow. `.first()` keeps the check duplicate-tolerant (same as isFollowing).
     const follows = async (x: Id<"users">, y: Id<"users">) =>

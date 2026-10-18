@@ -1265,6 +1265,18 @@ export default defineSchema({
     .index("by_requester_target", ["requesterId", "targetId"])
     .index("by_aggregate_id", ["aggregateId"]),
 
+  // Social: member blocks (spec 2.6). Silent and two-way in effect: a row means `blockerId`
+  // blocked `blockedId`, and every gate checks both directions (social/blocks.ts). The list is the
+  // blocker's personal data and is never exposed to the blocked member. Deleted on unblock.
+  blocks: defineTable({
+    blockerId: v.id("users"),
+    blockedId: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_blocker", ["blockerId"])
+    .index("by_blocked", ["blockedId"])
+    .index("by_pair", ["blockerId", "blockedId"]),
+
   // Household context: members who pool their libraries (copies stay owned by whoever added them;
   // household visibility/management is derived from membership at read time). A member belongs to
   // at most one household — enforced by the use cases via `householdMembers.by_member`.

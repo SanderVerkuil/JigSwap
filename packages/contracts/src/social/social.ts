@@ -200,6 +200,21 @@ export type MemberTeaserIdentity = Pick<
 >;
 
 /**
+ * One row of the caller's own "Blocked members" list (social/listMyBlocks), newest first. Just
+ * enough identity to recognise and unblock the member; only the blocker ever sees it.
+ */
+export interface BlockedMemberView {
+  memberId: string;
+  /** Raw account name; may be absent. Render via resolveMemberDisplayName / useMemberDisplayName. */
+  name?: string;
+  avatar?: string;
+  /** The /members/$handle param (slug, else username, else the member id). */
+  handle: string;
+  /** When the block was made (ms). */
+  blockedAt: number;
+}
+
+/**
  * The unauthenticated "who is this member" read behind /members/$handle. Deliberately tiny:
  * identity fields only — never bio, shelf, stats, or location. A private member IS named here:
  * reachable by direct link (the spec's Instagram-style interstitial) but not enumerable (search

@@ -363,6 +363,12 @@ export const gateway = {
     featuredShelf: api.social.featuredShelf.featuredShelf,
     follow: api.social.followMember.followMember,
     unfollow: api.social.unfollowMember.unfollowMember,
+    // Member blocks (silent, two-way in effect). block also severs follows, declines pending follow
+    // requests and cancels pending proposals between the pair; unblock restores nothing.
+    // listMyBlocks is the caller's own list, newest first.
+    blockMember: api.social.blockMember.blockMember,
+    unblockMember: api.social.unblockMember.unblockMember,
+    listMyBlocks: api.social.listMyBlocks.listMyBlocks,
     // Invite links / QR growth loop (Phase 3). getInviteContext + recordInviteLanding are PUBLIC
     // (unauthenticated landings); the rest require the acting member.
     myInviteLink: api.social.getMyInviteLink.getMyInviteLink,

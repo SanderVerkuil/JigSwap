@@ -9,6 +9,7 @@ import {
 import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { assertPairNotBlocked } from "../social/blocks";
 import { convexCopyPort } from "./adapters/convexCopyPort";
 import { convexExchangeRepository } from "./adapters/convexExchangeRepository";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
@@ -46,6 +47,8 @@ export const propose = mutation({
         message: `Copy ${args.requestedPuzzleId} could not be found`,
       });
     }
+    // Against the derived owner, never the ignored client `recipientId`.
+    await assertPairNotBlocked(ctx, initiatorId, recipientId);
 
     const kind: ExchangeKind = TYPE_TO_KIND[args.type];
     const terms = buildTerms(kind, args);
