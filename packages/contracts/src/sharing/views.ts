@@ -34,12 +34,13 @@ export interface CircleMemberView {
   isOwner: boolean;
 }
 
-// A circle as it appears in the signed-in member's list: identity, name, owner, and a member count.
+// A circle as it appears in the signed-in member's list: identity, name and a member count. The
+// owner's user id is deliberately absent (a departed owner's id must never reach members);
+// `isOwnedByViewer` covers the UI.
 export interface CircleSummaryView {
   _id: DocId;
   // The domain CircleId; circle mutations take this aggregateId, not the Convex _id.
   aggregateId?: string;
-  ownerId: DocId;
   name: string;
   memberCount: number;
   // Whether the signed-in viewer owns this circle (surfaces admin affordances in the UI).

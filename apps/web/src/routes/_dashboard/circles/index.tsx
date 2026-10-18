@@ -52,7 +52,6 @@ import { useTranslations } from "use-intl";
 interface CircleSummaryView {
   _id: string;
   aggregateId?: string;
-  ownerId: string;
   name: string;
   memberCount: number;
   isOwnedByViewer: boolean;

@@ -53,6 +53,10 @@ export const listCircleSharedCopies = query({
       if (!copy || !memberIds.has(copy.ownerId) || isCopyPrivate(copy)) {
         continue;
       }
+      // A member who deleted their account keeps a seat until the deletion cascade removes it;
+      // their copies are not shown (a tombstoned or missing user row).
+      const owner = await ctx.db.get(copy.ownerId);
+      if (owner?.isActive !== true) continue;
       if (!(await canViewCopyWithContext(ctx, copy, context))) continue;
       cards.push(await messageCopyViewOf(ctx, copy));
     }

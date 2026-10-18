@@ -94,6 +94,22 @@ describe("a departed circle seat", () => {
     expect(detail!.members.find((m) => m.memberId === carol)).toBeDefined();
   });
 
+  test("a departed OWNER's id is nowhere in the circle views either", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, circleId } = await seed(t);
+    await t.run((ctx) => ctx.db.patch(alice, { isActive: false }));
+
+    const detail = await detailAs(t, "carol", circleId);
+    expect(detail!.members.find((m) => m.isOwner)?.departed).toBe(true);
+    expect(JSON.stringify(detail)).not.toContain(alice);
+    const mine = await as(t, "carol").query(
+      api.sharing.listMyCircles.listMyCircles,
+      {},
+    );
+    expect(mine.length).toBeGreaterThan(0);
+    expect(JSON.stringify(mine)).not.toContain(alice);
+  });
+
   test("an Admin removes it by membershipId", async () => {
     const t = convexTest(schema, modules);
     const { bob, circleId } = await seed(t);

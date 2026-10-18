@@ -17,7 +17,6 @@ export const toCircleSummary = (
 ): CircleSummaryView => ({
   _id: row._id,
   aggregateId: row.aggregateId,
-  ownerId: row.ownerId,
   name: row.name,
   memberCount: row.memberships.length,
   isOwnedByViewer: row.ownerId === viewerId,

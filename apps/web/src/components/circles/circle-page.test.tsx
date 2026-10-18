@@ -82,7 +82,6 @@ const seat = (id: string, name: string, extra: object = {}) => ({
 const detail = (fields: Partial<Detail> = {}): Detail => ({
   _id: "row_1",
   aggregateId: CIRCLE,
-  ownerId: "u_anna",
   name: "Puzzle Club",
   memberCount: 3,
   isOwnedByViewer: false,
@@ -209,7 +208,6 @@ describe("CirclePage", () => {
       circle: detail({
         isOwnedByViewer: true,
         viewerPermission: "Admin",
-        ownerId: "me",
       }),
     });
     expect(
