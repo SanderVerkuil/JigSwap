@@ -199,7 +199,7 @@ describe("actor privacy", () => {
     });
   });
 
-  test("a deleted actor is anonymous; their follow row has no link or actions", async () => {
+  test("a deleted actor is anonymous and departed; their follow row has no link or actions", async () => {
     const s = await setup();
     await s.t.run(async (ctx) => {
       await follow(ctx, s.other, s.viewer);
@@ -211,13 +211,13 @@ describe("actor privacy", () => {
       await ctx.db.delete(s.other);
     });
     const view = await onlyView(s);
-    expect(view.actors).toEqual([{ anonymous: true }]);
+    expect(view.actors).toEqual([{ anonymous: true, departed: true }]);
     expect(view.href).toBeNull();
     expect(view.state).toBe("unavailable");
     expect(view.availableActions).toEqual([]);
   });
 
-  test("a deactivated actor is anonymous", async () => {
+  test("a deactivated actor is anonymous and departed", async () => {
     const s = await setup();
     await s.t.run(async (ctx) => {
       await ctx.db.patch(s.mara, { isActive: false });
@@ -227,7 +227,9 @@ describe("actor privacy", () => {
         actorCount: 1,
       });
     });
-    expect((await onlyView(s)).actors).toEqual([{ anonymous: true }]);
+    expect((await onlyView(s)).actors).toEqual([
+      { anonymous: true, departed: true },
+    ]);
   });
 
   test("no email appears anywhere in the payload", async () => {
@@ -371,7 +373,7 @@ describe("new_follower / follow_request_approved live state", () => {
       await ctx.db.delete(s.other);
     });
     const view = await onlyView(s);
-    expect(view.actors[0]).toEqual({ anonymous: true });
+    expect(view.actors[0]).toEqual({ anonymous: true, departed: true });
     expect(view.state).toBe("informational");
     expect(view.href).toBe("/people");
   });

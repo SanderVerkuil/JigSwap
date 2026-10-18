@@ -12,7 +12,7 @@ import {
 // Exchange read (thin adapter): a single exchange with its parties and the requested/offered owned
 // copies. Join targets and the legacy ownerPuzzle/requesterPuzzle naming are preserved verbatim
 // (these are the requested/offered OWNED copies, not the catalog definitions). Parties are
-// projected through the privacy chokepoint (projectExchangeParties): an anonymous counterparty is
+// projected through the per-trade chokepoint (projectExchangeParties): a hidden counterparty is
 // null and their raw id is omitted everywhere in the view.
 export const getExchangeById = query({
   args: { exchangeId: v.id("exchanges") },
@@ -37,6 +37,8 @@ export const getExchangeById = query({
       ...toExchangeFields(exchange, parties.hidden),
       requester: parties.requester,
       owner: parties.owner,
+      requesterState: parties.requesterState,
+      ownerState: parties.ownerState,
       // Gate each copy independently on the acting member: a party never sees the counterparty's
       // owner-only fields (notes / acquisition provenance), only those on the copy they own.
       ownerPuzzle: toOwnedPuzzleView(ownerPuzzle, member, parties.hidden),

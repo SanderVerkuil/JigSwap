@@ -14,11 +14,10 @@ export type ExchangeStatus =
  * the legacy `...exchange` spread is preserved verbatim (UI reads `_id`, `aggregateId`, `status`,
  * `createdAt`, etc.).
  *
- * PRIVACY: `initiatorId` / `recipientId` are present only for a party the viewer may identify
- * (projectMemberIdentity: self, public profile, mutual follower, or a trade identity reveal). A
- * party who is anonymous to the viewer has their raw id OMITTED (a raw id is itself a leak), and the
- * matching `requester` / `owner` is null. The viewer's own id is always present. In practice only
- * the owner (recipient) can be hidden, from the requester, until the owner accepts or replies.
+ * PRIVACY: `initiatorId` / `recipientId` are OMITTED for a party whose state is "hidden" (a raw id
+ * is itself a leak); the matching `requester` / `owner` is then null. The viewer's own id is always
+ * present. In practice only the owner (recipient) can be hidden, from the requester, until the
+ * owner accepts or replies in this trade. See {@link ExchangePartyState}.
  */
 export interface ExchangeFields extends ConvexSystemFields {
   aggregateId?: string;
@@ -37,15 +36,31 @@ export interface ExchangeFields extends ConvexSystemFields {
 }
 
 /**
+ * How the viewer sees one party of an exchange, INSIDE that exchange only:
+ * - "visible": the viewer themself, a public profile, or a mutual follower — full MemberView; the
+ *   web may link their normal profile.
+ * - "tradeRevealed": revealed by this trade only (the owner always sees the requester; the requester
+ *   sees the owner once the owner accepted or replied). The MemberView is TRIMMED to `_id`,
+ *   `_creationTime`, `name`, `username`, `isActive`, `createdAt`, `updatedAt` (no avatar, bio,
+ *   location, preferredLanguage); this does NOT unlock their profile anywhere else, so don't link it.
+ * - "hidden": a living member the viewer may not identify — MemberView null, raw id omitted.
+ * - "departed": the account was deleted or deactivated — MemberView null (raw id kept).
+ */
+export type ExchangePartyState =
+  "visible" | "tradeRevealed" | "hidden" | "departed";
+
+/**
  * Single-exchange detail (legacy `getExchangeById`). The puzzle joins resolve to the OWNED copies
  * (the legacy names `ownerPuzzle`/`requesterPuzzle` were the requested/offered owned copies, not
  * the catalog definition); preserved verbatim.
  */
 export interface ExchangeView extends ExchangeFields {
-  /** null when the requester is anonymous to the viewer (or their account is gone). */
+  /** null when hidden or departed; trimmed when tradeRevealed (see {@link ExchangePartyState}). */
   requester: MemberView | null;
-  /** null when the owner is anonymous to the viewer (or their account is gone). */
+  /** null when hidden or departed; trimmed when tradeRevealed (see {@link ExchangePartyState}). */
   owner: MemberView | null;
+  requesterState: ExchangePartyState;
+  ownerState: ExchangePartyState;
   ownerPuzzle: ExchangeOwnedPuzzleView | null;
   requesterPuzzle: ExchangeOwnedPuzzleView | null;
 }
@@ -57,10 +72,12 @@ export interface ExchangeView extends ExchangeFields {
  */
 export interface ExchangeSummaryView extends ExchangeFields {
   userRole?: "requester" | "owner";
-  /** null when the requester is anonymous to the viewer (or their account is gone). */
+  /** null when hidden or departed; trimmed when tradeRevealed (see {@link ExchangePartyState}). */
   requester: MemberView | null;
-  /** null when the owner is anonymous to the viewer (or their account is gone). */
+  /** null when hidden or departed; trimmed when tradeRevealed (see {@link ExchangePartyState}). */
   owner: MemberView | null;
+  requesterState: ExchangePartyState;
+  ownerState: ExchangePartyState;
   requestedOwnedPuzzle: ExchangeOwnedPuzzleView | null;
   requestedPuzzle: ExchangePuzzleView | null;
   offeredOwnedPuzzle: ExchangeOwnedPuzzleView | null;

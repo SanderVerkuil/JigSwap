@@ -2,7 +2,6 @@ import { normalizeMemberName, type ProjectedMember } from "@jigswap/contracts";
 import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { toMemberView } from "../identity/toMemberView";
-import { hasIdentityReveal } from "./identityReveals";
 
 // Privacy chokepoint for surfacing other members inside a copy's history. The rules below run
 // SERVER-SIDE so a hidden member's real identity (id/name/username/avatar) never leaves the
@@ -49,8 +48,7 @@ export const areMutualFollowers = async (
 /**
  * The profile-content unlock rule (mirrors getPublicProfile's `unlocked`): the viewer may see a
  * member's deeper profile content (puzzles, solves) iff it is the member themself, the member's
- * profile is public, the two are mutual followers, or the viewer holds a trade identity reveal
- * toward the member (social/identityReveals).
+ * profile is public, or the two are mutual followers.
  */
 export const canSeeProfileContent = async (
   ctx: QueryCtx,
@@ -59,8 +57,7 @@ export const canSeeProfileContent = async (
 ): Promise<boolean> => {
   if (viewerId === memberId) return true;
   if ((await profileVisibilityOf(ctx, memberId)) === "public") return true;
-  if (await areMutualFollowers(ctx, viewerId, memberId)) return true;
-  return hasIdentityReveal(ctx, viewerId, memberId);
+  return areMutualFollowers(ctx, viewerId, memberId);
 };
 
 // A tiny deterministic, non-reversible string hash (cyrb53) folded to base36. No crypto import: this
@@ -95,10 +92,7 @@ const anonRefOf = (targetId: string, salt: string): string =>
  *   2. target user row missing -> anonymous.
  *   3. target's profile is public -> revealed.
  *   4. viewer and target are mutual followers -> revealed.
- *   5. viewer holds a trade identity reveal toward target (social/identityReveals: the owner of a
- *      requested copy sees the requester; the requester sees the owner once the owner acted) ->
- *      revealed.
- *   6. otherwise -> anonymous.
+ *   5. otherwise -> anonymous.
  * In the anonymous branch the returned object carries ONLY `{ anonymous: true, anonRef }` — no real
  * id, name, username, or avatar.
  */
@@ -122,10 +116,6 @@ export const projectMemberIdentity = async (
   }
 
   if (await areMutualFollowers(ctx, viewerId, targetId)) {
-    return { anonymous: false, member: toMemberView(target) };
-  }
-
-  if (await hasIdentityReveal(ctx, viewerId, targetId)) {
     return { anonymous: false, member: toMemberView(target) };
   }
 

@@ -671,6 +671,17 @@ export default defineSchema({
     .index("by_requested_copy", ["requestedPuzzleId"])
     .index("by_offered_copy", ["offeredPuzzleId"]),
 
+  // Exchange: per-trade owner reveal. One APPEND-ONLY row per exchange, written the first time the
+  // OWNER (recipient) acts on it — accepts, or posts a member-authored message in its thread
+  // (exchange/tradeRevealSubscriber). From then on the requester sees the owner's limited trade card
+  // (name, handle, email, reviews received) INSIDE THIS TRADE ONLY; it never unlocks the owner's
+  // profile elsewhere. The owner seeing the requester needs no row (derived: the requester asked).
+  tradeReveals: defineTable({
+    exchangeId: v.id("exchanges"),
+    revealedAt: v.number(),
+    reason: v.union(v.literal("accepted"), v.literal("owner_replied")),
+  }).index("by_exchange", ["exchangeId"]),
+
   messages: defineTable({
     exchangeId: v.id("exchanges"),
     senderId: v.id("users"),
@@ -1009,22 +1020,6 @@ export default defineSchema({
     .index("by_followee", ["followeeId"])
     .index("by_follower_followee", ["followerId", "followeeId"])
     .index("by_aggregate_id", ["aggregateId"]),
-
-  // Social: trade identity reveals. One APPEND-ONLY grant per directed (viewer, target) pair: the
-  // viewer may see the target's real identity and full profile, like a mutual follower. Written by
-  // social/identityRevealSubscriber (the owner sees the requester on propose; the requester sees
-  // the owner once the owner accepts or replies). Never deleted — a reveal persists forever.
-  // GLOBAL per pair, not per trade: `exchangeId` / `reason` record only the FIRST grant's origin.
-  identityReveals: defineTable({
-    viewerId: v.id("users"),
-    targetId: v.id("users"),
-    exchangeId: v.id("exchanges"),
-    reason: v.union(
-      v.literal("exchange_requested"),
-      v.literal("exchange_owner_acted"),
-    ),
-    createdAt: v.number(),
-  }).index("by_viewer_target", ["viewerId", "targetId"]),
 
   // Social: a member's shareable invite link. One ACTIVE row per member (revokedAt undefined);
   // resets revoke the old row and insert a new one so historical counters survive. The token rides

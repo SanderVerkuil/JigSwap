@@ -1,36 +1,37 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
+import { projectTradeParty, type TradePartyMemo } from "../exchange/tradeParty";
 import { requireMember } from "../identity/requireMember";
 import { onboardingRowOf } from "../onboarding/memberOnboarding";
-import { projectMemberIdentity } from "../social/privacy";
 
 // Per-context cap on rows pulled into a single export. Convex queries have a read budget; a member
 // with a very large history is capped so the export stays a single, bounded query return. The UI
 // download is "most of your data" rather than a guaranteed-complete archive when capped.
 const EXPORT_LIMIT = 5000;
 
-// Exchange rows as the exporting member may see them: a counterparty who is anonymous to them (a
-// private owner who has not accepted or replied yet — the staged trade reveal) has their raw id
-// OMITTED, exactly like the exchange views (exchange/readViews.ts). Resolved once per distinct
-// counterparty, so a long history costs a few reads per partner, not per exchange.
+// Exchange rows as the exporting member may see them: a counterparty who is hidden from them in
+// that trade (a private owner who has not accepted or replied to it yet — exchange/tradeParty) has
+// their raw id OMITTED, exactly like the exchange views. Counterparty facts are memoized, so a long
+// history costs a few reads per partner plus one point read per exchange.
 const exportableExchanges = async (
   ctx: QueryCtx,
   userId: Id<"users">,
   rows: Doc<"exchanges">[],
 ) => {
-  const hidden = new Map<Id<"users">, boolean>();
-  for (const e of rows) {
-    for (const party of [e.initiatorId, e.recipientId]) {
-      if (party === userId || hidden.has(party)) continue;
-      const projected = await projectMemberIdentity(ctx, userId, party, e._id);
-      hidden.set(party, projected.anonymous);
-    }
+  const memo: TradePartyMemo = new Map();
+  const out = [];
+  for (const row of rows) {
+    const { initiatorId, recipientId, ...rest } = row;
+    const hidden = async (party: Id<"users">) =>
+      (await projectTradeParty(ctx, userId, row, party, memo)).state ===
+      "hidden";
+    out.push({
+      ...rest,
+      ...((await hidden(initiatorId)) ? {} : { initiatorId }),
+      ...((await hidden(recipientId)) ? {} : { recipientId }),
+    });
   }
-  return rows.map(({ initiatorId, recipientId, ...rest }) => ({
-    ...rest,
-    ...(hidden.get(initiatorId) ? {} : { initiatorId }),
-    ...(hidden.get(recipientId) ? {} : { recipientId }),
-  }));
+  return out;
 };
 
 // Insights read query: a JSON-serialisable bundle of the member's own data for a client-side

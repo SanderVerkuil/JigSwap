@@ -3,16 +3,14 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { hasIdentityReveal } from "./identityReveals";
 import { areMutualFollowers } from "./privacy";
 import { toProfileView } from "./readViews";
 
 // Read side: a member's profile, or null if they have none yet. When `memberId` is omitted the
 // acting member's own profile is returned. Always auth-gated: the acting member is resolved
 // UNCONDITIONALLY (passing a memberId must not bypass authentication). A profile whose visibility is
-// "private" is hidden from everyone except the owner, the member's mutual followers, and holders of
-// a trade identity reveal toward the member (social/identityReveals). Returns a typed ProfileView
-// DTO.
+// "private" is hidden from everyone except the owner and the member's mutual followers. Returns a
+// typed ProfileView DTO.
 export const getProfile = query({
   args: { memberId: v.optional(v.id("users")) },
   handler: async (ctx, args): Promise<ProfileView | null> => {
@@ -29,8 +27,7 @@ export const getProfile = query({
     if (
       row.visibility === "private" &&
       target !== viewer &&
-      !(await areMutualFollowers(ctx, viewer, target)) &&
-      !(await hasIdentityReveal(ctx, viewer, target))
+      !(await areMutualFollowers(ctx, viewer, target))
     ) {
       return null;
     }

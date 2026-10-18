@@ -2,10 +2,10 @@ import { v } from "convex/values";
 import { internalMutation } from "../_generated/server";
 import { handleDomainEvent as handleConversationEvent } from "../conversation/subscriber";
 import { handleDomainEvent as handleCustodyEvent } from "../custody/subscriber";
+import { handleDomainEvent as handleTradeRevealEvent } from "../exchange/tradeRevealSubscriber";
 import { handleDomainEvent as handleOpenLoanEvent } from "../library/openLoanOnSettlement";
 import { handleDomainEvent as handleLibraryTransferEvent } from "../library/transferOnSettlement";
 import { handleDomainEvent as handleNotificationEvent } from "../notifications/subscriber";
-import { handleDomainEvent as handleIdentityRevealEvent } from "../social/identityRevealSubscriber";
 
 // The central async dispatcher. Scheduled once per recorded domain event; it loads the row, routes
 // it to every registered ASYNC subscriber (Notifications, Conversation, Custody, the Library
@@ -24,8 +24,8 @@ export const dispatch = internalMutation({
 
     // Fan out to every async subscriber. A throw in any propagates so the scheduler retries the
     // whole mutation (see module comment); both run in this transaction.
-    // Trade identity reveals land BEFORE notifications so a notification sees the fresh grant.
-    await handleIdentityRevealEvent(ctx, event);
+    // The per-trade owner reveal lands BEFORE notifications so a notification sees the fresh row.
+    await handleTradeRevealEvent(ctx, event);
     await handleNotificationEvent(ctx, event);
     // Conversation opens the exchange thread + appends the lifecycle system message.
     await handleConversationEvent(ctx, event);

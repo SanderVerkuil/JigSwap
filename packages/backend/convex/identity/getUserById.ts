@@ -2,7 +2,6 @@ import type { MemberView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
-import { hasIdentityReveal } from "../social/identityReveals";
 import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
 import { requireMember } from "./requireMember";
 import { toMemberView } from "./toMemberView";
@@ -24,8 +23,7 @@ export const getUserById = query({
     if (
       target !== viewer &&
       (await profileVisibilityOf(ctx, target)) === "private" &&
-      !(await areMutualFollowers(ctx, viewer, target)) &&
-      !(await hasIdentityReveal(ctx, viewer, target))
+      !(await areMutualFollowers(ctx, viewer, target))
     ) {
       return null;
     }

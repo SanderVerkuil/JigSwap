@@ -1,49 +1,60 @@
 import type {
   ExchangeFields,
   ExchangeOwnedPuzzleView,
+  ExchangePartyState,
   ExchangePuzzleView,
   ExchangeSummaryView,
   MemberView,
 } from "@jigswap/contracts";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
-import { projectMemberIdentity } from "../social/privacy";
+import {
+  projectTradeParty,
+  tradePartyMemberView,
+  type ProjectedTradeParty,
+} from "./tradeParty";
 
 // Shared row->DTO mapping for the exchange reads, so every exchange adapter emits typed view DTOs
 // (faithful supersets of the joined rows) rather than leaking raw documents.
 
 /**
- * Both parties as the viewer may see them. Each party goes through the privacy chokepoint
- * (projectMemberIdentity, salt = the exchange `_id`): a party anonymous to the viewer becomes
- * `null` and is flagged hidden, so every view also OMITS their raw id (a raw user id is itself a
- * leak — e.g. a locked profile hero discloses name/avatar to anyone holding it). The owner is
- * revealed to the requester only once the owner acted (social/identityRevealSubscriber).
+ * Both parties as the viewer may see them inside THIS exchange, via the per-trade chokepoint
+ * (exchange/tradeParty): a visible party (self, public, mutual) gets the full MemberView; a party
+ * revealed only by the trade gets the TRIMMED view (no avatar/bio/location); a hidden or departed
+ * party is `null`. A hidden party is also flagged so every view OMITS their raw id (a raw user id is
+ * itself a leak — e.g. a locked profile hero discloses name/avatar to anyone holding it). A departed
+ * party keeps their id (the account is gone; nothing private is behind it).
  */
 export type ExchangeParties = {
   readonly requester: MemberView | null;
   readonly owner: MemberView | null;
+  readonly requesterState: ExchangePartyState;
+  readonly ownerState: ExchangePartyState;
   /** Party ids the viewer may NOT see (never contains the viewer). */
   readonly hidden: ReadonlySet<Id<"users">>;
 };
+
+// The contract has no "self": the viewer's own party is simply visible.
+const contractStateOf = (party: ProjectedTradeParty): ExchangePartyState =>
+  party.state === "self" ? "visible" : party.state;
 
 export const projectExchangeParties = async (
   ctx: QueryCtx,
   e: Doc<"exchanges">,
   viewerId: Id<"users">,
 ): Promise<ExchangeParties> => {
-  const salt = e._id as string;
   const [requester, owner] = await Promise.all([
-    projectMemberIdentity(ctx, viewerId, e.initiatorId, salt),
-    projectMemberIdentity(ctx, viewerId, e.recipientId, salt),
+    projectTradeParty(ctx, viewerId, e, e.initiatorId),
+    projectTradeParty(ctx, viewerId, e, e.recipientId),
   ]);
   const hidden = new Set<Id<"users">>();
-  if (requester.anonymous && e.initiatorId !== viewerId) {
-    hidden.add(e.initiatorId);
-  }
-  if (owner.anonymous && e.recipientId !== viewerId) hidden.add(e.recipientId);
+  if (requester.state === "hidden") hidden.add(e.initiatorId);
+  if (owner.state === "hidden") hidden.add(e.recipientId);
   return {
-    requester: requester.anonymous ? null : requester.member,
-    owner: owner.anonymous ? null : owner.member,
+    requester: tradePartyMemberView(requester),
+    owner: tradePartyMemberView(owner),
+    requesterState: contractStateOf(requester),
+    ownerState: contractStateOf(owner),
     hidden,
   };
 };
@@ -173,6 +184,8 @@ export const enrichExchangeSummary = async (
     ...(userRole ? { userRole } : {}),
     requester: parties.requester,
     owner: parties.owner,
+    requesterState: parties.requesterState,
+    ownerState: parties.ownerState,
     // Gate each copy independently: the viewer sees owner-only fields only on the copy they own.
     requestedOwnedPuzzle: toOwnedPuzzleView(
       requestedOwnedPuzzle,

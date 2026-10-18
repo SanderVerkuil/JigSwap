@@ -34,15 +34,28 @@ export type NotificationViewType =
  * viewer) carries nothing else: no id, name, avatar or handle. Never carries an email.
  */
 export type NotificationActorView =
-  | { anonymous: true }
+  | {
+      anonymous: true;
+      /**
+       * Set when the actor's account is gone (users row missing or deactivated): render "Former
+       * member". Absent for a LIVING member the viewer may not identify: render the generic label.
+       */
+      departed?: true;
+    }
   | {
       anonymous: false;
       memberId: string;
       /** Resolved display name; absent when the member has none (render the generic label). */
       name?: string;
+      /** Never present when `tradeRevealed`. */
       avatar?: string;
       /** The /members/$handle param (slug, else username, else the member id). */
       handle: string;
+      /**
+       * Set on a trade notification whose actor is revealed by THAT trade only (not public, not a
+       * mutual follower): name + handle, no avatar, and their profile stays private — don't link it.
+       */
+      tradeRevealed?: true;
     };
 
 /** An inline action the viewer can still take on the notification (recomputed on every read). */

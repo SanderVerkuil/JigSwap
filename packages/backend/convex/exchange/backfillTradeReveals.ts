@@ -1,29 +1,30 @@
-import {
-  exchangeIdentityReveals,
-  ownerActedInHistory,
-  toMemberId,
-} from "@jigswap/domain";
+import { tradeRevealReasonFromHistory } from "@jigswap/domain";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import type { Doc, Id } from "../_generated/dataModel";
+import type { Doc } from "../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../_generated/server";
-import { grantIdentityReveal, hasIdentityReveal } from "./identityReveals";
+import { hasTradeReveal, recordTradeReveal } from "./tradeParty";
 
-// Exchanges per batch. Each exchange costs two grant point reads (+ up to two inserts) and, only
+// Exchanges per batch. Each exchange costs one tradeReveals point read (+ at most one insert) and, only
 // when its status alone doesn't prove the owner acted, a BOUNDED read of that exchange's thread and
-// legacy chat (MESSAGE_SCAN_CAP rows each). Worst case ~25 * (2 * 200 + 4) ≈ 10k documents per
+// legacy chat (MESSAGE_SCAN_CAP rows each). Worst case ~25 * (2 * 200 + 3) ≈ 10k documents per
 // batch, well inside Convex's per-transaction read limits.
-export const BACKFILL_IDENTITY_REVEALS_BATCH = 25;
+export const BACKFILL_TRADE_REVEALS_BATCH = 25;
 
 // Oldest messages read per thread / legacy chat when looking for evidence. An owner who acted did so
 // early in practice (the reply or acceptance comes first); evidence past the cap is not seen, which
-// FAILS CLOSED (the owner stays anonymous) rather than blowing the transaction.
+// FAILS CLOSED (the owner stays hidden) rather than blowing the transaction.
 export const MESSAGE_SCAN_CAP = 200;
 
 // The lifecycle system message conversation/subscriber posts on ExchangeAccepted.
 const ACCEPTED_LIFECYCLE_BODY = "Exchange accepted";
 
-type Counts = { scanned: number; created: number; existing: number };
+type Counts = {
+  scanned: number;
+  created: number;
+  existing: number;
+  notActed: number;
+};
 
 // Positive evidence that the owner acted on a pre-existing exchange whose status is ambiguous
 // (proposed / rejected / cancelled): an owner-authored message in the exchange's own thread, the
@@ -60,15 +61,15 @@ const historyOf = async (ctx: MutationCtx, exchange: Doc<"exchanges">) => {
   };
 };
 
-// One-shot, idempotent backfill of trade identity reveals for exchanges created before the
-// identityReveals subscriber existed. Pages through `exchanges`, rescheduling itself until the table
-// is exhausted; each batch is its own transaction. Per exchange the domain rule decides the grants:
-// owner -> requester always; requester -> owner iff the owner acted (ownerActedInHistory — a
-// post-accept status, or positive evidence; otherwise FAIL CLOSED, the owner stays anonymous).
-// Pairs that already hold a grant are skipped, so re-running creates nothing new. `dryRun` walks
-// every page and counts without writing (its `created` may over-count a pair that repeats across
-// exchanges, since nothing is inserted to dedupe against).
-export const backfillIdentityReveals = internalMutation({
+// One-shot, idempotent backfill of per-trade owner reveals (`tradeReveals`) for exchanges created
+// before exchange/tradeRevealSubscriber existed. Pages through `exchanges`, rescheduling itself
+// until the table is exhausted; each batch is its own transaction. Per exchange the domain rule
+// (tradeRevealReasonFromHistory) decides: a post-accept status or the "Exchange accepted" lifecycle
+// message -> "accepted"; an owner-authored message -> "owner_replied"; otherwise nothing (FAIL
+// CLOSED, the owner stays hidden). The owner seeing the requester is derived and needs no row.
+// Exchanges that already hold a row are skipped, so re-running creates nothing new. `dryRun` walks
+// every page and counts without writing.
+export const backfillTradeReveals = internalMutation({
   args: {
     cursor: v.optional(v.union(v.string(), v.null())),
     dryRun: v.optional(v.boolean()),
@@ -78,69 +79,54 @@ export const backfillIdentityReveals = internalMutation({
         scanned: v.number(),
         created: v.number(),
         existing: v.number(),
+        notActed: v.number(),
       }),
     ),
   },
   handler: async (ctx, { cursor, dryRun, totals }): Promise<Counts> => {
     const page = await ctx.db.query("exchanges").paginate({
-      numItems: BACKFILL_IDENTITY_REVEALS_BATCH,
+      numItems: BACKFILL_TRADE_REVEALS_BATCH,
       cursor: cursor ?? null,
     });
 
     const now = Date.now();
-    const batch: Counts = { scanned: 0, created: 0, existing: 0 };
+    const batch: Counts = { scanned: 0, created: 0, existing: 0, notActed: 0 };
     for (const exchange of page.page) {
       batch.scanned++;
-      const recipient = toMemberId(exchange.recipientId);
-      const statusOnly = ownerActedInHistory({
-        status: exchange.status,
-        ownerAuthoredMessage: false,
-        acceptedLifecycleMessage: false,
-      });
-      const ownerActed =
-        statusOnly || ownerActedInHistory(await historyOf(ctx, exchange));
-      const reveals = exchangeIdentityReveals({
-        initiator: toMemberId(exchange.initiatorId),
-        recipient,
-        ownerActed,
-      });
-      for (const reveal of reveals) {
-        const viewerId = reveal.viewer as unknown as Id<"users">;
-        const targetId = reveal.target as unknown as Id<"users">;
-        if (await hasIdentityReveal(ctx, viewerId, targetId)) {
-          batch.existing++;
-          continue;
-        }
-        if (!dryRun) {
-          await grantIdentityReveal(ctx, {
-            viewerId,
-            targetId,
-            exchangeId: exchange._id,
-            reason:
-              reveal.target === recipient
-                ? "exchange_owner_acted"
-                : "exchange_requested",
-            createdAt: now,
-          });
-        }
-        batch.created++;
+      if (await hasTradeReveal(ctx, exchange._id)) {
+        batch.existing++;
+        continue;
       }
+      // A post-accept status decides alone; only read the thread when it doesn't.
+      const reason =
+        tradeRevealReasonFromHistory({
+          status: exchange.status,
+          ownerAuthoredMessage: false,
+          acceptedLifecycleMessage: false,
+        }) ?? tradeRevealReasonFromHistory(await historyOf(ctx, exchange));
+      if (reason === null) {
+        batch.notActed++;
+        continue;
+      }
+      if (!dryRun) await recordTradeReveal(ctx, exchange._id, reason, now);
+      batch.created++;
     }
 
     const runTotals: Counts = {
       scanned: (totals?.scanned ?? 0) + batch.scanned,
       created: (totals?.created ?? 0) + batch.created,
       existing: (totals?.existing ?? 0) + batch.existing,
+      notActed: (totals?.notActed ?? 0) + batch.notActed,
     };
     console.log(
-      `social/backfillIdentityReveals${dryRun ? " (dry run)" : ""} batch`,
+      `exchange/backfillTradeReveals${dryRun ? " (dry run)" : ""} batch`,
       JSON.stringify({ ...batch, totals: runTotals, isDone: page.isDone }),
     );
 
     if (!page.isDone) {
       await ctx.scheduler.runAfter(
         0,
-        internal.social.backfillIdentityReveals.backfillIdentityReveals,
+        internal.exchange.backfillTradeReveals.backfillTradeReveals,
         {
           cursor: page.continueCursor,
           totals: runTotals,

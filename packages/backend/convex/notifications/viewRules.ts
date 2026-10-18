@@ -18,21 +18,15 @@ export const ADMIN_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = new Set([
 
 /**
  * Types whose actor contacted the viewer (or answered the viewer) through the notification itself:
- * follower, requester, approver, inviter, invitee, trade counterparty, dispute raiser, messenger,
- * reviewer. Their identity is shown even when their profile is private (the viewer already
- * learned it from the interaction, like listIncomingFollowRequests / listMyHouseholdInvites).
+ * follower, requester, approver, inviter, invitee, messenger, reviewer. Their identity is shown
+ * even when their profile is private (the viewer already learned it from the interaction, like
+ * listIncomingFollowRequests / listMyHouseholdInvites).
  *
- * `trade_declined` is deliberately NOT here: declining is not a reveal (the staged trade reveal —
- * social/identityRevealSubscriber), so a private owner who declines without ever replying stays
- * anonymous to the requester; an owner who did reply is revealed via `identityRevealed`.
+ * Trade types are deliberately NOT here: their actor is a trade counterparty, resolved by the
+ * per-trade rule (TRADE_NOTIFICATION_TYPES).
  */
 export const INITIATOR_NOTIFICATION_TYPES: ReadonlySet<NotificationType> =
   new Set([
-    "trade_request",
-    "trade_accepted",
-    "trade_completed",
-    "trade_cancelled",
-    "exchange_disputed",
     "message_received",
     "review_received",
     "new_follower",
@@ -41,6 +35,21 @@ export const INITIATOR_NOTIFICATION_TYPES: ReadonlySet<NotificationType> =
     "household_invite_received",
     "household_invite_accepted",
   ]);
+
+/**
+ * Types about one exchange whose actor is the other party of it. The actor is resolved by the
+ * PER-TRADE rule (exchange/tradeParty) for that exchange: visible by the ordinary rules, revealed
+ * by this trade only (limited: no avatar), hidden, or departed. A reveal never leaks across trades.
+ * When the exchange can't be resolved the ordinary public / mutual rule applies (fails closed).
+ */
+export const TRADE_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = new Set([
+  "trade_request",
+  "trade_accepted",
+  "trade_declined",
+  "trade_completed",
+  "trade_cancelled",
+  "exchange_disputed",
+]);
 
 /** Types whose deep link and actions target the actor (the actor IS the subject). */
 const ACTOR_SUBJECT_TYPES: ReadonlySet<NotificationType> = new Set([
@@ -59,8 +68,6 @@ export interface ActorFacts {
   /** The actor's profile visibility is public (an absent profile row counts as public). */
   readonly isPublic: boolean;
   readonly mutualFollowers: boolean;
-  /** The viewer holds a trade identity reveal toward the actor (social/identityReveals). */
-  readonly identityRevealed?: boolean;
 }
 
 /** Whether the viewer may see who the actor is. Deleted or deactivated actors are never shown. */
@@ -73,9 +80,7 @@ export const isActorRevealed = (
   if (facts.isViewer) return true;
   if (INITIATOR_NOTIFICATION_TYPES.has(type)) return true;
   if (ADMIN_NOTIFICATION_TYPES.has(type) && viewerIsAdmin) return true;
-  return (
-    facts.isPublic || facts.mutualFollowers || facts.identityRevealed === true
-  );
+  return facts.isPublic || facts.mutualFollowers;
 };
 
 export interface ViewDecision {
