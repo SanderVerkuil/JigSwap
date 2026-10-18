@@ -288,7 +288,16 @@ describe("a departed member's circle shares are withdrawn", () => {
     const before = (await carolBrowses(t)).map((c) => c.aggregateId);
     expect(before).toContain(bobsCopy);
     expect(before).toContain(alicesCopy);
-    return { t, alice, bob, circleId, bobsCopy, alicesCopy };
+    return {
+      t,
+      alice,
+      bob,
+      carol,
+      puzzleAggregateId,
+      circleId,
+      bobsCopy,
+      alicesCopy,
+    };
   };
 
   const sharesOf = (t: T, circleId: string) =>
@@ -326,5 +335,65 @@ describe("a departed member's circle shares are withdrawn", () => {
     expect((await carolBrowses(t)).map((c) => c.aggregateId)).not.toContain(
       bobsCopy,
     );
+  });
+
+  test("at scale, leave touches only the leaver's links in this circle", async () => {
+    const {
+      t,
+      alice,
+      carol,
+      puzzleAggregateId,
+      circleId,
+      bobsCopy,
+      alicesCopy,
+    } = await setUp();
+    // 300 more copies from the other members, all shared into the circle, seeded directly.
+    const OTHER_SHARES = 300;
+    await t.run(async (ctx) => {
+      const puzzle = await ctx.db
+        .query("puzzles")
+        .withIndex("by_aggregate_id", (q) =>
+          q.eq("aggregateId", puzzleAggregateId),
+        )
+        .unique();
+      if (!puzzle) throw new Error("seed: puzzle not found");
+      const now = Date.now();
+      for (let i = 0; i < OTHER_SHARES; i += 1) {
+        const copyId = `other-copy-${i}`;
+        await ctx.db.insert("ownedPuzzles", {
+          aggregateId: copyId,
+          puzzleId: puzzle._id,
+          ownerId: i % 2 === 0 ? alice : carol,
+          condition: "good",
+          availability: { forTrade: false, forSale: false, forLend: true },
+          createdAt: now,
+          updatedAt: now,
+        });
+        await ctx.db.insert("circleCopyShares", {
+          circleId,
+          copyId,
+          sharedAt: now,
+        });
+      }
+    });
+    // Bob also shares the same copy into a circle of his own: that link must survive.
+    const bobsCircle = (await asBob(t).mutation(
+      api.sharing.createCircle.createCircle,
+      { name: "Bob's circle" },
+    )) as string;
+    await asBob(t).mutation(api.sharing.shareCopyToCircle.shareCopyToCircle, {
+      circleId: bobsCircle,
+      copyId: bobsCopy,
+    });
+
+    await asBob(t).mutation(api.sharing.leaveCircle.leaveCircle, { circleId });
+
+    const remaining = (await sharesOf(t, circleId)).map((s) => s.copyId);
+    expect(remaining).toHaveLength(OTHER_SHARES + 1);
+    expect(remaining).toContain(alicesCopy);
+    expect(remaining).not.toContain(bobsCopy);
+    expect((await sharesOf(t, bobsCircle)).map((s) => s.copyId)).toEqual([
+      bobsCopy,
+    ]);
   });
 });

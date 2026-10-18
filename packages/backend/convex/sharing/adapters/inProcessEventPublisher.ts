@@ -51,20 +51,26 @@ const projectCopyShare = async (
 // Drop the `circleCopyShares` links in this circle whose copy the departed member owns. Without
 // this, an OPEN copy stays reachable to the remaining members through the stale link (the
 // circle-aware policy passes any open copy, so it never checks the owner is still a member).
+// Works from the member's own library (one point probe per copy) rather than scanning the
+// circle's shares, so the cost scales with what the member owns, not with the whole circle.
 const withdrawMemberShares = async (
   ctx: MutationCtx,
   circleId: string,
   memberId: Id<"users">,
 ): Promise<void> => {
-  const shares = await ctx.db
-    .query("circleCopyShares")
-    .withIndex("by_circle", (q) => q.eq("circleId", circleId))
+  const copies = await ctx.db
+    .query("ownedPuzzles")
+    .withIndex("by_owner", (q) => q.eq("ownerId", memberId))
     .collect();
-  for (const share of shares) {
-    const copy = await ctx.db
-      .query("ownedPuzzles")
-      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", share.copyId))
+  for (const copy of copies) {
+    const copyId = copy.aggregateId;
+    if (!copyId) continue; // legacy rows without an aggregate id can't have been shared
+    const share = await ctx.db
+      .query("circleCopyShares")
+      .withIndex("by_circle_copy", (q) =>
+        q.eq("circleId", circleId).eq("copyId", copyId),
+      )
       .unique();
-    if (copy?.ownerId === memberId) await ctx.db.delete(share._id);
+    if (share) await ctx.db.delete(share._id);
   }
 };
