@@ -35,11 +35,12 @@ import {
 //      then the magic bytes and the header's pixel count before any decode. A refused upload is
 //      "rejected" with label "invalid_image" (the guard's reason in moderationReason), never
 //      classified, and its blob is deleted. Never fails open. WebP passes the guards but jimp
-//      cannot decode it, so it takes step 3's fallback (see guards.ts for why it is kept).
+//      cannot decode it: it is classified as uploaded (no EXIF strip, no blurhash) and stored again
+//      as "image/webp" when the client claimed another type (see guards.ts for why it is kept).
 //   3. (first attempt only) Re-encode via jimp — PNG when it has transparency, else JPEG — which
 //      DROPS all EXIF/metadata, compute the blurhash from the same decode, swap the row to the
-//      clean blob (setFile) and delete the original. Best-effort: on a decode failure the original
-//      bytes are classified instead and no swap happens.
+//      clean blob (setFile) and delete the original. A decode failure is refused as
+//      "decode_failed", except WebP (see below).
 //   4. Classify the clean bytes via the configured PhotoModerationPort.
 //   5. Record the verdict (setVerdict), or re-schedule `retry` with backoff for a retryable
 //      unscored result with attempts left.
@@ -295,52 +296,71 @@ export const runImageModeration = async <R extends ModerationRow>(
     event.image_height = guard.height;
 
     // Re-encode (strip EXIF/metadata) on the first attempt only — a retry finds the row already
-    // pointing at the clean blob. Best-effort: on decode failure, classify the original.
+    // pointing at the clean blob. A decode failure is refused (a header that says JPEG/PNG/GIF
+    // over a body that is not one is a polyglot or a corrupt file), except for WebP, which jimp
+    // cannot decode: it keeps the best-effort path and is classified as uploaded, but is stored
+    // again as "image/webp" when the client claimed another type, so the blob is never served
+    // as HTML or SVG.
     let cleanBytes = bytes;
     if (attempt === 1) {
-      // Tracks the just-stored clean blob across the try/catch. If `setFile` throws AFTER the
-      // store succeeded, the row still points at the original, so the clean blob is unreferenced.
-      // There is no storage GC, so we must delete it ourselves.
-      let storedFileId: Id<"_storage"> | null = null;
+      let encoded: Awaited<ReturnType<typeof reencodeImage>> | null = null;
       try {
-        const {
-          bytes: encoded,
-          mime: encodedMime,
-          blurhash,
-        } = await reencodeImage(bytes);
-        cleanBytes = encoded;
-        mime = encodedMime;
+        encoded = await reencodeImage(bytes);
         event.reencoded = true;
-        event.reencoded_mime = encodedMime;
-        event.reencoded_bytes = encoded.length;
-        const newFileId = await ctx.storage.store(
-          new Blob([toArrayBuffer(cleanBytes)], { type: encodedMime }),
-        );
-        storedFileId = newFileId;
-        await ctx.runMutation(steps.setFile, {
-          imageId,
-          fileId: newFileId,
-          blurhash,
-        });
-        // Swap succeeded: the row now points at the clean blob, so it is no longer the one to
-        // clean up on failure; drop the original instead (best-effort).
-        storedFileId = null;
-        try {
-          await ctx.storage.delete(row.fileId);
-        } catch (error) {
-          event.delete_original_error = errMsg(error);
-        }
+        event.reencoded_mime = encoded.mime;
+        event.reencoded_bytes = encoded.bytes.length;
       } catch (error) {
         event.reencoded = false;
         event.reencode_error = errMsg(error);
-        cleanBytes = bytes;
-        // If the clean blob was stored but the row swap failed, the blob is now orphaned (the
-        // row still references the original). Delete it best-effort before falling back.
-        if (storedFileId !== null) {
+      }
+      if (!encoded && guard.format !== "webp") {
+        await refuse("decode_failed");
+        return;
+      }
+      const replacement = encoded
+        ? encoded
+        : mime !== "image/webp"
+          ? { bytes, mime: "image/webp", blurhash: undefined }
+          : null;
+      if (!encoded && replacement) event.restored_as = "image/webp";
+      if (replacement) {
+        // Tracks the just-stored blob across the try/catch. If `setFile` throws AFTER the store
+        // succeeded, the row still points at the original, so the new blob is unreferenced.
+        // There is no storage GC, so we must delete it ourselves.
+        let storedFileId: Id<"_storage"> | null = null;
+        try {
+          const newFileId = await ctx.storage.store(
+            new Blob([toArrayBuffer(replacement.bytes)], {
+              type: replacement.mime,
+            }),
+          );
+          storedFileId = newFileId;
+          await ctx.runMutation(steps.setFile, {
+            imageId,
+            fileId: newFileId,
+            blurhash: replacement.blurhash,
+          });
+          // Swap succeeded: the row now points at the new blob, so it is no longer the one to
+          // clean up on failure; drop the original instead (best-effort).
+          storedFileId = null;
+          cleanBytes = replacement.bytes;
+          mime = replacement.mime;
           try {
-            await ctx.storage.delete(storedFileId);
-          } catch (cleanupError) {
-            event.orphan_cleanup_error = errMsg(cleanupError);
+            await ctx.storage.delete(row.fileId);
+          } catch (error) {
+            event.delete_original_error = errMsg(error);
+          }
+        } catch (error) {
+          event.reencoded = false;
+          event.swap_error = errMsg(error);
+          // If the new blob was stored but the row swap failed, it is orphaned (the row still
+          // references the original). Delete it best-effort before falling back.
+          if (storedFileId !== null) {
+            try {
+              await ctx.storage.delete(storedFileId);
+            } catch (cleanupError) {
+              event.orphan_cleanup_error = errMsg(cleanupError);
+            }
           }
         }
       }

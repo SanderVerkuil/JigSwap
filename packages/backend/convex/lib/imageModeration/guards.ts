@@ -32,7 +32,8 @@ export type ImageGuardFailure =
   | "too_large" // more than MAX_IMAGE_UPLOAD_BYTES
   | "unsupported_format" // the magic bytes are not JPEG / PNG / WebP / GIF
   | "unreadable_header" // a supported format whose header has no usable dimensions
-  | "too_many_pixels"; // more than MAX_IMAGE_PIXELS // a JPEG / PNG / GIF header over a body jimp cannot decode (set by the pipeline)
+  | "too_many_pixels" // more than MAX_IMAGE_PIXELS
+  | "decode_failed"; // a JPEG / PNG / GIF header over a body jimp cannot decode (set by the pipeline)
 
 /** The verdict label a refused upload is recorded with. */
 export const INVALID_IMAGE_LABEL = "invalid_image";

@@ -132,6 +132,25 @@ const PNG_BOMB = new Uint8Array([
   0x52, 0, 0, 0x17, 0x70, 0, 0, 0x13, 0x88, 8, 6, 0, 0, 0,
 ]);
 
+// A lossless 2x2 WebP header (VP8L) with an undecodable body: jimp has no WebP decoder anyway.
+const WEBP_BYTES = new Uint8Array([
+  ...new TextEncoder().encode("RIFF"),
+  0,
+  0,
+  0,
+  0,
+  ...new TextEncoder().encode("WEBPVP8L"),
+  0,
+  0,
+  0,
+  0,
+  0x2f,
+  0x01,
+  0x40,
+  0x00,
+  0x00,
+]);
+
 describe("input guards (copy photos)", () => {
   test.each([
     [
@@ -210,25 +229,7 @@ describe("input guards (copy photos)", () => {
     vi.stubGlobal("fetch", fetchMock);
     const t = convexTest(schema, modules);
     const { copy } = await seed(t);
-    // A lossless 2x2 WebP header (VP8L) with an undecodable body: jimp has no WebP decoder anyway.
-    const webp = new Uint8Array([
-      ...new TextEncoder().encode("RIFF"),
-      0,
-      0,
-      0,
-      0,
-      ...new TextEncoder().encode("WEBPVP8L"),
-      0,
-      0,
-      0,
-      0,
-      0x2f,
-      0x01,
-      0x40,
-      0x00,
-      0x00,
-    ]);
-    const fileId = await store(t, webp, "image/webp");
+    const fileId = await store(t, WEBP_BYTES, "image/webp");
 
     const row = await addCopyPhoto(t, copy, fileId);
 
@@ -236,6 +237,49 @@ describe("input guards (copy photos)", () => {
     expect(row.fileId).toBe(fileId);
     expect(row.blurhash).toBeUndefined();
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("decode failures and polyglots (copy photos)", () => {
+  test("a PNG header over an undecodable body is refused as decode_failed", async () => {
+    const fetchMock = cleanReply();
+    vi.stubGlobal("fetch", fetchMock);
+    const t = convexTest(schema, modules);
+    const { copy } = await seed(t);
+    const png = new Uint8Array([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48,
+      0x44, 0x52, 0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0,
+    ]);
+    const polyglot = new Uint8Array([
+      ...png,
+      ...new TextEncoder().encode("<html><script>alert(1)</script></html>"),
+    ]);
+    const fileId = await store(t, polyglot, "text/html");
+
+    const row = await addCopyPhoto(t, copy, fileId);
+
+    expect(row.moderationStatus).toBe("rejected");
+    expect(row.moderationLabel).toBe("invalid_image");
+    expect(row.moderationReason).toBe("decode_failed");
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(await blobExists(t, fileId)).toBe(false);
+  });
+
+  test("WebP claimed as another type is stored again as image/webp and the original deleted", async () => {
+    vi.stubGlobal("fetch", cleanReply());
+    const t = convexTest(schema, modules);
+    const { copy } = await seed(t);
+    const fileId = await store(t, WEBP_BYTES, "text/html");
+
+    const row = await addCopyPhoto(t, copy, fileId);
+
+    expect(row.moderationStatus).toBe("approved");
+    expect(row.fileId).not.toBe(fileId);
+    expect(await blobExists(t, fileId)).toBe(false);
+    const storedType = await t.run(
+      async (ctx) => (await ctx.storage.get(row.fileId))?.type,
+    );
+    expect(storedType).toBe("image/webp");
   });
 });
 
