@@ -208,8 +208,9 @@ export const takeForRevoke = internalMutation({
 });
 
 /**
- * Scheduled at the row's expiresAt: delete it and revoke its Clerk invitation (best-effort, in a
- * scheduled action). A no-op once the row is gone, or for a call before its expiry.
+ * Scheduled at the row's expiresAt: withdraw a still-pending in-app fallback, delete the row,
+ * and revoke and delete its Clerk invitation (best-effort, in a scheduled action). A no-op once
+ * the row is gone, or for a call before its expiry.
  */
 export const expireEmailInvite = internalMutation({
   args: { inviteRef: v.string() },
@@ -219,6 +220,7 @@ export const expireEmailInvite = internalMutation({
       .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", inviteRef))
       .unique();
     if (row === null || row.expiresAt > Date.now()) return;
+    await withdrawFallback(ctx, row);
     await ctx.db.delete(row._id);
     if (row.clerkInvitationId !== undefined) {
       await ctx.scheduler.runAfter(
