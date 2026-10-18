@@ -5,6 +5,7 @@ import { HouseholdInviteLink } from "@/components/household/household-invite-lin
 import { HouseholdMemberInvite } from "@/components/household/household-member-invite";
 import { PersonRow } from "@/components/household/person-row";
 import { MemberInitial } from "@/components/members/member-initial";
+import { EmailInvite } from "@/components/social/email-invite";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -193,6 +194,7 @@ function InHousehold({
             memberId={viewerId}
             onShared={() => setShared(true)}
           />
+          <EmailInvite kind="household" />
           <PushPrompt triggered={shared} />
         </section>
       )}

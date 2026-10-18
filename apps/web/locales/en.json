@@ -1962,7 +1962,8 @@
       "recentlyJoinedEmptyTitle": "No new members to show yet",
       "recentlyJoinedEmptySub": "Know a fellow puzzler? Show them your QR code.",
       "noResultsTitle": "Can't find them?",
-      "noResultsSub": "Ask for their profile link — or scan their QR."
+      "noResultsSub": "Ask for their profile link — or scan their QR.",
+      "emailInviteTitle": "Not on JigSwap yet?"
     },
     "discoverableNotice": {
       "body": "JigSwap now has a Find people directory. Members with a public profile can be found by name — check or change who can find you.",

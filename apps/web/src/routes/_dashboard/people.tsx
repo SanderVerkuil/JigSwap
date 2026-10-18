@@ -1,7 +1,9 @@
 import { EmptyState } from "@/components/community/primitives";
+import { SectionHead } from "@/components/dashboard-home/section-head";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { ActivityFeed } from "@/components/social/activity-feed";
 import { ConnectionOffersStrip } from "@/components/social/connection-offers";
+import { EmailInvite } from "@/components/social/email-invite";
 import { FindPeople } from "@/components/social/find-people";
 import { FollowRequestsStrip } from "@/components/social/follow-requests-strip";
 import {
@@ -21,7 +23,7 @@ import { safeStorage } from "@/lib/safe-storage";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Bell, Search, Users, X } from "lucide-react";
+import { Bell, Mail, Search, Users, X } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
 import { useTranslations } from "use-intl";
 
@@ -259,8 +261,14 @@ function PeoplePage() {
         <TabsContent value="network" className="mt-4">
           <NetworkTab members={members} loading={loading} />
         </TabsContent>
-        <TabsContent value="find" className="mt-4">
+        <TabsContent value="find" className="mt-4 flex flex-col gap-8">
           <FindPeople />
+          <EmailInvite
+            kind="follow"
+            heading={
+              <SectionHead title={t("find.emailInviteTitle")} icon={Mail} />
+            }
+          />
         </TabsContent>
         <TabsContent value="activity" className="mt-4">
           <ActivityTab />

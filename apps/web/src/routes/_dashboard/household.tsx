@@ -5,6 +5,7 @@ import { HouseholdSettings } from "@/components/household/household-settings";
 import { MyHouseholdCopies } from "@/components/household/my-household-copies";
 import { PersonRow, type Person } from "@/components/household/person-row";
 import { EmptyState } from "@/components/library/empty-state";
+import { EmailInvite } from "@/components/social/email-invite";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -221,6 +222,8 @@ function HouseholdDetails({
           <HouseholdMemberInvite excludedIds={excluded} onError={onError} />
 
           <HouseholdInviteLink memberId={viewerId} />
+
+          <EmailInvite kind="household" />
 
           {household.pendingInvites.length > 0 && (
             <div className="space-y-2">

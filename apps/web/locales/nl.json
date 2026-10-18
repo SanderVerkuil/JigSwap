@@ -1962,7 +1962,8 @@
       "recentlyJoinedEmptyTitle": "Nog geen nieuwe leden om te tonen",
       "recentlyJoinedEmptySub": "Ken je een medepuzzelaar? Laat je QR-code zien.",
       "noResultsTitle": "Kun je ze niet vinden?",
-      "noResultsSub": "Vraag om hun profiellink — of scan hun QR-code."
+      "noResultsSub": "Vraag om hun profiellink — of scan hun QR-code.",
+      "emailInviteTitle": "Nog niet op JigSwap?"
     },
     "discoverableNotice": {
       "body": "JigSwap heeft nu een Mensen vinden-overzicht. Leden met een openbaar profiel zijn op naam te vinden — bekijk of wijzig wie jou kan vinden.",
