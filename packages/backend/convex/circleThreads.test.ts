@@ -3,7 +3,10 @@ import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { settleSendBatch } from "./conversation/messageAttachments";
+import {
+  releaseEvidenceHold,
+  settleSendBatch,
+} from "./conversation/messageAttachments";
 import { settleLocation } from "./conversation/sharedLocations";
 import schema from "./schema";
 
@@ -1328,5 +1331,53 @@ describe("re-join sync races", () => {
     expect(
       (await participantRowsOf(t, threadId)).map((r) => r.memberId),
     ).not.toContain(carol);
+  });
+});
+
+describe("reports and evidence after deletion", () => {
+  test("a current circle co-member can be reported; an outsider can't", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, circleId } = await seed(t);
+    void circleId;
+    const reportAlice = (clerkId: string) =>
+      as(t, clerkId).mutation(api.reports.fileReport.fileReport, {
+        targetKind: "user",
+        targetId: alice,
+        reason: "harassment_hate",
+      });
+    await expect(reportAlice("carol")).resolves.toMatchObject({
+      reportId: expect.any(String),
+    });
+    await expectCode(reportAlice("dave"), "NotFound");
+  });
+
+  test("releasing the hold on a deleted circle's kept attachment deletes it", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    const held = await t.run(async (ctx) => {
+      const now = Date.now();
+      return ctx.db.insert("messageAttachments", {
+        kind: "image",
+        threadAggregateId: threadId,
+        uploaderId: bob,
+        fileId: await ctx.storage.store(new Blob(["x"])),
+        byteSize: 1,
+        contentType: "image/jpeg",
+        moderationStatus: "approved",
+        evidenceHold: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+    await as(t, "alice").mutation(api.sharing.deleteCircle.deleteCircle, {
+      circleId,
+      confirmName: "Puzzle Club",
+    });
+    await flush(t);
+    expect(await t.run((ctx) => ctx.db.get(held))).not.toBeNull();
+    // No open report references it any more: the hold is released and the row goes.
+    await t.run((ctx) => releaseEvidenceHold(ctx, held));
+    expect(await t.run((ctx) => ctx.db.get(held))).toBeNull();
   });
 });

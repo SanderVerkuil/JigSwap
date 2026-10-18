@@ -12,7 +12,11 @@ import { requireMember } from "../identity/requireMember";
 import { enforceRateLimit } from "../lib/rateLimits";
 import { canViewCopy } from "../library/canViewCopy";
 import schema from "../schema";
-import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
+import {
+  areMutualFollowers,
+  profileVisibilityOf,
+  shareACircle,
+} from "../social/privacy";
 
 const reportFields = schema.tables.reports.validator.fields;
 
@@ -230,7 +234,8 @@ const resolveTarget = async (
 };
 
 // A member is reportable by someone who can see them: their profile content would be visible
-// (public, or mutual followers), or the two share a thread or an exchange. A block in either
+// (public, or mutual followers), they are current members of a common circle (the circle
+// reveal; the members sheet offers "Report {name}"), or the two share a thread or an exchange. A block in either
 // direction is deliberately ignored (block-and-report), so this is canSeeProfileContent without
 // its block veto, plus the pair relations.
 const canReportMember = async (
@@ -240,6 +245,7 @@ const canReportMember = async (
 ): Promise<boolean> => {
   if ((await profileVisibilityOf(ctx, memberId)) === "public") return true;
   if (await areMutualFollowers(ctx, reporterId, memberId)) return true;
+  if (await shareACircle(ctx, reporterId, memberId)) return true;
   const sharedThread = await ctx.db
     .query("threads")
     .withIndex("by_participants_key", (q) =>
