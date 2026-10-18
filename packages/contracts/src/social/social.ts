@@ -173,7 +173,7 @@ export interface ConnectionOfferView {
   readonly offerId: string;
   /** Teaser-shaped: exactly what the invite landing (/members/$handle) already disclosed. */
   readonly from: MemberTeaserIdentity;
-  readonly source: "inviteLink" | "householdLink";
+  readonly source: "inviteLink" | "householdLink" | "emailInvite";
   readonly createdAt: number;
 }
 

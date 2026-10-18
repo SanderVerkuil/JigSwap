@@ -51,7 +51,8 @@ export async function offerConnection(
     fromId: Id<"users">;
     toId: Id<"users">;
     source: ConnectionOfferSource;
-    inviteLinkId: Id<"inviteLinks">;
+    // The link the offer came through; absent for an email invitation.
+    inviteLinkId?: Id<"inviteLinks">;
   },
 ): Promise<"pending" | "skipped"> {
   const now = Date.now();
@@ -91,7 +92,7 @@ export async function offerConnection(
     fromId: args.fromId,
     toId: args.toId,
     source: state.source,
-    inviteLinkId: args.inviteLinkId,
+    ...(args.inviteLinkId !== undefined && { inviteLinkId: args.inviteLinkId }),
     status: state.status,
     createdAt: state.createdAt.getTime(),
     expiresAt: state.expiresAt.getTime(),

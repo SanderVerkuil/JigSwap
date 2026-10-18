@@ -1435,13 +1435,18 @@ export default defineSchema({
   // Social: confirm-first connection offers (ConnectionOffer aggregate). Redeeming an invite link
   // at sign-up offers the new member (toId) a mutual follow with the link's owner (fromId); nothing
   // is followed until they accept. inviteLinkId attributes an accept to the link's
-  // followsEstablished. At most one pending row per ordered pair (by_from_to_status); expiry is
-  // lazy (reads check expiresAt) plus a scheduled expire at expiresAt.
+  // followsEstablished; an email invitation (source "emailInvite") offers the same with none. At
+  // most one pending row per ordered pair (by_from_to_status); expiry is lazy (reads check
+  // expiresAt) plus a scheduled expire at expiresAt.
   connectionOffers: defineTable({
     aggregateId: v.string(),
     fromId: v.id("users"),
     toId: v.id("users"),
-    source: v.union(v.literal("inviteLink"), v.literal("householdLink")),
+    source: v.union(
+      v.literal("inviteLink"),
+      v.literal("householdLink"),
+      v.literal("emailInvite"),
+    ),
     inviteLinkId: v.optional(v.id("inviteLinks")),
     status: v.union(
       v.literal("pending"),
