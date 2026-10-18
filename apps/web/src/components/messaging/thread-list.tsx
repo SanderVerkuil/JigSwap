@@ -7,6 +7,7 @@ import { Link } from "@/compat/link";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { MemberInitial } from "@/components/members/member-initial";
 import { PresenceDot } from "@/components/presence/presence-dot";
+import { PresenceSharePrompt } from "@/components/presence/presence-sharing";
 import {
   usePresenceOf,
   type PresenceStatus,
@@ -109,6 +110,8 @@ export function ThreadList({ activeThreadId }: { activeThreadId?: string }) {
       </div>
       {/* Desktop scrolls inside the frame; mobile scrolls the document. */}
       <div className="md:min-h-0 md:flex-1 md:overflow-y-auto">
+        {/* One-time "show when you're online?" card, until the member chooses. */}
+        <PresenceSharePrompt />
         <ThreadListBody activeThreadId={activeThreadId} />
       </div>
     </div>

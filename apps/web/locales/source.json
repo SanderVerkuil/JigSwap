@@ -4782,6 +4782,13 @@
   },
   "presence": {
     "online": "Online",
-    "away": "Away"
+    "away": "Away",
+    "shareTitle": "Online status",
+    "shareLabel": "Show when I'm online to people I follow mutually. If off, you won't see others' status either.",
+    "saveFailed": "Couldn't save your choice. Try again.",
+    "promptTitle": "Show when you're online?",
+    "promptBody": "People who follow you back will see when you're online or away, and you'll see theirs. You can change this anytime in Privacy & safety.",
+    "promptShare": "Share",
+    "promptNotNow": "Not now"
   }
 }

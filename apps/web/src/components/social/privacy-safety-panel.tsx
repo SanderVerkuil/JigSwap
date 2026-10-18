@@ -1,11 +1,13 @@
 "use client";
 
 // "Privacy & safety" page inside Clerk's profile modal (shell-user-button): the
-// caller's own "Blocked members" list (social/listMyBlocks, newest first), each
-// row with Unblock behind a confirm, then "Your reports". Self-contained like
+// presence-sharing toggle, then the caller's own "Blocked members" list
+// (social/listMyBlocks, newest first), each row with Unblock behind a confirm,
+// then "Your reports". Self-contained like
 // NotificationPreferencesPanel: no route dependencies.
 import { useUser } from "@/compat/clerk";
 import { MemberInitial } from "@/components/members/member-initial";
+import { PresenceSharingSetting } from "@/components/presence/presence-sharing";
 import { MyReports } from "@/components/safety/my-reports";
 import { BlockMemberDialog } from "@/components/social/block-member-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -48,6 +50,8 @@ export function PrivacySafetyPanel() {
       <header>
         <h1 className="text-lg font-semibold">{tShell("privacySafety")}</h1>
       </header>
+
+      <PresenceSharingSetting />
 
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-medium">{t("blockedMembers")}</h2>
