@@ -7,17 +7,16 @@ import {
   type VisibilityPolicy,
   type VisibilityScope,
 } from "@jigswap/domain";
-import type { QueryCtx } from "../../_generated/server";
-import { convexCircleRepository } from "../../sharing/adapters/convexCircleRepository";
 
 // Cross-context wiring: a friend-circle-aware VisibilityPolicy that REPLACES DefaultVisibilityPolicy
-// in the Library reads. All circle I/O happens here in the adapter; the actual decision delegates to
+// in the Library reads. Circle I/O happens in the caller (collectCircleSharedCopies); the decision delegates to
 // Sharing's PURE VisibilityPolicy service (re-exported as SharingVisibilityPolicy to dodge the
 // flat-barrel name clash with this very Library port).
 //
-// The Library port is synchronous, so circle facts must be pre-resolved. `prepare` loads the
-// viewer's circles once and, per owner, the owner's circles, caching the intersected sharedCircles.
-// The returned policy is then a pure, synchronous function of those precomputed facts.
+// The Library port is synchronous, so circle facts must be pre-resolved by the caller: per copy, the
+// circles that copy was shared into which the viewer AND the copy's owner currently belong to
+// (#181 — never merely any circle the two happen to share). The returned policy is then a pure,
+// synchronous function of those precomputed facts.
 
 // Map a Library Copy's SharingSetting to a Sharing VisibilityScope. The current SharingSetting has
 // no explicit "friendCircle" value; a private-but-circle-shared copy is treated as friendCircle so
@@ -40,41 +39,16 @@ const transactKindOf = (copy: Copy): "lend" | "swap" | "trade" | null => {
   return null;
 };
 
-export const makeCircleAwareVisibilityPolicy = async (
-  ctx: QueryCtx,
-  viewerId: OwnerId,
-  ownerIds: readonly OwnerId[],
-): Promise<VisibilityPolicy> => {
-  const circles = convexCircleRepository(ctx);
-  const viewer = viewerId as unknown as MemberId;
-
-  // Load the viewer's circles once; index by CircleId for cheap intersection.
-  const viewerCircles = await circles.listForMember(viewer);
-  const viewerCircleIds = new Set(viewerCircles.map((c) => c.id as string));
-
-  // Per distinct owner, the circles the viewer and owner BOTH belong to (the only fact the policy
-  // needs). Loading the owner's circles and intersecting is the entire I/O surface.
-  const sharedByOwner = new Map<string, CircleId[]>();
-  for (const ownerId of new Set(ownerIds.map((o) => o as string))) {
-    const ownerCircles = await circles.listForMember(
-      ownerId as unknown as MemberId,
-    );
-    const shared = ownerCircles
-      .map((c) => c.id)
-      .filter((id) => viewerCircleIds.has(id as string));
-    sharedByOwner.set(ownerId, shared);
-  }
-
-  const sharedCircles = (ownerId: OwnerId): readonly CircleId[] =>
-    sharedByOwner.get(ownerId as string) ?? [];
-
+export const makeCircleAwareVisibilityPolicy = (
+  sharedCircles: (copy: Copy) => readonly CircleId[],
+): VisibilityPolicy => {
   return {
     canView(viewer: OwnerId, copy: Copy): boolean {
       return SharingVisibilityPolicy.canView(
         viewer as unknown as MemberId,
         copy.ownerId as unknown as MemberId,
         scopeOf(copy),
-        sharedCircles(copy.ownerId),
+        sharedCircles(copy),
       );
     },
 
@@ -87,7 +61,7 @@ export const makeCircleAwareVisibilityPolicy = async (
         viewer as unknown as MemberId,
         copy.ownerId as unknown as MemberId,
         scopeOf(copy),
-        sharedCircles(copy.ownerId),
+        sharedCircles(copy),
         kind,
       );
     },
