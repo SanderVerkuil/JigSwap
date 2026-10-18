@@ -1,4 +1,5 @@
 import {
+  HouseholdApplicationError,
   makeAcceptHouseholdInvite,
   toHouseholdInviteId,
   type MemberId,
@@ -6,6 +7,7 @@ import {
 import { v } from "convex/values";
 import { mutation, type MutationCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { isBlockedEitherWay } from "../social/blocks";
 import { householdDeps } from "./adapters/deps";
 import { toConvexError } from "./errors";
 
@@ -17,6 +19,14 @@ export const acceptHouseholdInviteUseCase = async (
   actorId: MemberId,
   args: { inviteId: string },
 ): Promise<string> => {
+  // An invite between a pair blocked either way reads as missing (spec 2.6: generic refusal).
+  const invite = await ctx.db
+    .query("householdInvites")
+    .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", args.inviteId))
+    .unique();
+  if (invite && (await isBlockedEitherWay(ctx, actorId, invite.inviterId))) {
+    throw toConvexError(HouseholdApplicationError.inviteNotFound());
+  }
   const result = await makeAcceptHouseholdInvite(householdDeps(ctx))({
     actorId,
     inviteId: toHouseholdInviteId(args.inviteId),
