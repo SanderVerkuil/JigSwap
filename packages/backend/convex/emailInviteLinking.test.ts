@@ -22,6 +22,12 @@ vi.mock("./invitations/adapters/invitationGateway", async (orig) => ({
   makeInvitationGatewayFromEnv: () => gate.gateway,
 }));
 
+// The response floor's sleep is a no-op here (emailInvites.test.ts pins the floor itself).
+vi.mock("./invitations/config", async (orig) => ({
+  ...(await orig<typeof import("./invitations/config")>()),
+  waitUntil: async () => {},
+}));
+
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 type T = TestConvex<typeof schema>;
 type Who = "alice" | "bob" | "carol";
@@ -386,29 +392,80 @@ describe("household invite to an existing member", () => {
     ).toEqual([]);
   });
 
-  test("an in-app invite of the same member takes the invite over: named, and kept on revoke", async () => {
+  test("an in-app invite of the same member answers exactly as a fresh invite: a new, named invite", async () => {
     const t = convexTest(schema, modules);
     const s = await seed(t);
     await seedHousehold(t, s.alice, s.bob);
     await send(t, "alice", "carol@example.com", "household");
-    const [invite] = await householdInvites(t);
+    const [hidden] = await householdInvites(t);
 
     // No DuplicateInvite: that would reveal whose address the email invitation went to.
-    expect(
-      await as(t, "alice").mutation(
-        api.household.inviteToHousehold.inviteToHousehold,
-        { inviteeId: s.carol },
-      ),
-    ).toBe(invite.aggregateId);
+    const before = Date.now();
+    const inviteId = await as(t, "alice").mutation(
+      api.household.inviteToHousehold.inviteToHousehold,
+      { inviteeId: s.carol },
+    );
+    await settleDueJobs(t);
+
+    expect(inviteId).not.toBe(hidden.aggregateId);
+    const [invite] = await householdInvites(t);
+    expect(invite).toMatchObject({
+      aggregateId: inviteId,
+      inviterId: s.alice,
+      inviteeId: s.carol,
+      status: "pending",
+    });
+    expect(invite.viaEmail).toBeUndefined();
+    expect(invite.createdAt).toBeGreaterThanOrEqual(before);
     expect(
       (await myHouseholdPending(t, "alice")).map((view) => view.inviteId),
-    ).toEqual([invite.aggregateId]);
+    ).toEqual([inviteId]);
+    // One notification, for the new invite only.
+    expect(
+      (await notificationsOf(t, s.carol, "household_invite_received")).map(
+        (n) => (n.subject as { inviteId?: string } | undefined)?.inviteId,
+      ),
+    ).toEqual([inviteId]);
 
+    // The email invitation no longer owns it: a revoke leaves it alone.
     const [row] = await emailInviteRows(t);
     await revoke(t, "alice", row.aggregateId);
     expect((await householdInvites(t)).map((r) => r.aggregateId)).toEqual([
-      invite.aggregateId,
+      inviteId,
     ]);
+  });
+
+  test("an in-app invite of the same member refuses exactly as a fresh invite would", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await seedHousehold(t, s.alice, s.bob);
+    await send(t, "alice", "carol@example.com", "household");
+    // Meanwhile Carol joined another household.
+    await t.run(async (ctx) => {
+      await ctx.db.insert("households", {
+        aggregateId: "hh_2",
+        createdAt: Date.now(),
+      });
+      await ctx.db.insert("householdMembers", {
+        householdId: "hh_2",
+        memberId: s.carol,
+        role: "admin",
+        joinedAt: Date.now(),
+      });
+    });
+    const codeOf = (inviteeId: Id<"users">) =>
+      as(t, "alice")
+        .mutation(api.household.inviteToHousehold.inviteToHousehold, {
+          inviteeId,
+        })
+        .then(
+          () => "ok",
+          (e: { data?: { code?: string } }) => e.data?.code,
+        );
+
+    // Bob, already in a household, is the fresh-invite baseline.
+    expect(await codeOf(s.carol)).toBe(await codeOf(s.bob));
+    expect(await codeOf(s.carol)).toBe("InviteeAlreadyInHousehold");
   });
 
   test("an accepted invite stays when the invitation is revoked", async () => {

@@ -1542,7 +1542,8 @@ export default defineSchema({
     // Made by an email invitation whose address already had an account (invitations/fallbacks).
     // Left out of the admin's named pending list (getMyHousehold), which shows it only as the
     // email invitation's "Invitation sent", so the list never reveals that the address had an
-    // account. Cleared when the admin also invites the member in-app (inviteToHousehold).
+    // account. Replaced by a fresh invite when the admin also invites the member in-app
+    // (inviteToHousehold).
     viaEmail: v.optional(v.boolean()),
   })
     .index("by_aggregate_id", ["aggregateId"])

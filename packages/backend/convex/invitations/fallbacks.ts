@@ -107,8 +107,8 @@ export const applyExistingMemberFallback = async (
   return { householdInviteId: inviteId };
 };
 
-// Delete the recipient's notifications of `type` about one offer or invite.
-const deleteNotificationsAbout = async (
+/** Delete the recipient's notifications of `type` about one offer or invite. */
+export const deleteNotificationsAbout = async (
   ctx: MutationCtx,
   recipientId: Id<"users">,
   type: "connection_offer_received" | "household_invite_received",
@@ -135,8 +135,8 @@ const deleteNotificationsAbout = async (
 /**
  * Withdraw the row's in-app fallback while it is still pending (revoke, account deletion): the
  * offer or invite goes, with the notification about it. Only what the invitation itself made: an
- * offer of another source, or a household invite the admin also made in-app (no longer viaEmail),
- * is left alone. An answered one is the member's own decision and stays.
+ * offer of another source, or a household invite the admin made in-app instead (which replaced
+ * the viaEmail one), is left alone. An answered one is the member's own decision and stays.
  */
 export const withdrawFallback = async (
   ctx: MutationCtx,
