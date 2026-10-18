@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">98.3% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>60/60</span>
+                <span class='fraction'>58/59</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">87.8% </span>
+                <span class="strong">86.04% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>36/41</span>
+                <span class='fraction'>37/43</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>13/13</span>
+                <span class='fraction'>12/12</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>57/57</span>
+                <span class='fraction'>55/55</span>
             </div>
         
             
@@ -266,7 +266,10 @@
 <a name='L201'></a><a href='#L201'>201</a>
 <a name='L202'></a><a href='#L202'>202</a>
 <a name='L203'></a><a href='#L203'>203</a>
-<a name='L204'></a><a href='#L204'>204</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L204'></a><a href='#L204'>204</a>
+<a name='L205'></a><a href='#L205'>205</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -345,22 +348,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">27x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">27x</span>
-<span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">27x</span>
 <span class="cline-any cline-yes">27x</span>
-<span class="cline-any cline-yes">19x</span>
-<span class="cline-any cline-yes">19x</span>
-<span class="cline-any cline-yes">19x</span>
-<span class="cline-any cline-yes">18x</span>
-<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-yes">25x</span>
+<span class="cline-any cline-yes">25x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -368,10 +365,15 @@
 <span class="cline-any cline-yes">39x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">27x</span>
 <span class="cline-any cline-yes">27x</span>
 <span class="cline-any cline-yes">27x</span>
 <span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -479,8 +481,9 @@ import { query } from "../_generated/server";
 import { householdMateIds } from "../household/memberships";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
+import { blockedEitherWaySet } from "../social/blocks";
 import { profileVisibilityOf, projectMemberIdentity } from "../social/privacy";
-import { collectCircleSharedCopies } from "./circleSharedCopies";
+import { isCircleSharedWithViewer } from "./circleSharedCopies";
 import {
   categoryNameOf,
   communityOwnersOf,
@@ -493,9 +496,10 @@ import {
 // Auth-gated catalog detail read for a puzzle DEFINITION (not a single copy). Aggregates the
 // community's review-rating distribution, ownership/completion stats, the viewer's own ownership, and
 // a short list of REACHABLE available copies the viewer could acquire. The reachability gate —
-// owner profile PUBLIC, OR the copy is shared into a circle the viewer belongs to — is replicated
-// from browseOwnedPuzzles/circleSharedCopies so this matches Browse exactly. Returns null for an
-// unknown puzzle.
+// owner profile PUBLIC, OR the copy is shared into a circle the viewer belongs to — mirrors
+// browseOwnedPuzzles, but decides the circle clause per copy (isCircleSharedWithViewer, uncapped in
+// effect) where Browse uses the capped batched collector, so a copy shared long ago into a very busy
+// circle can appear here and not in Browse. Returns null for an unknown puzzle.
 export const getPuzzleDefinitionView = query({
   args: { puzzleId: v.id("puzzles") },
   handler: async (ctx, args): Promise&lt;PuzzleDefinitionDetailView | null&gt; =&gt; {
@@ -547,14 +551,8 @@ export const getPuzzleDefinitionView = query({
 &nbsp;
     // --- reachability gate (replicated from browseOwnedPuzzles/circleSharedCopies) --------------
     // An available copy is shown iff its owner's profile is PUBLIC, OR the copy is shared into a
-    // circle the viewer belongs to. The viewer's own copies are excluded.
-    const circleShared = (
-      await collectCircleSharedCopies(ctx, viewerId)
-    ).filter(isOpen);
-    const circleSharedIds = new Set(
-      circleShared.map((c) =&gt; c._id as unknown as string),
-    );
-&nbsp;
+    // circle the viewer belongs to. The viewer's own copies are excluded. The circle clause is
+    // checked per candidate copy (O(shares of that copy), #190), not via the batched collector.
     const visibilityCache = new Map&lt;string, "public" | "private"&gt;();
     const ownerIsPublic = async (ownerId: Id&lt;"users"&gt;): Promise&lt;boolean&gt; =&gt; {
       const key = ownerId as unknown as string;
@@ -571,10 +569,15 @@ export const getPuzzleDefinitionView = query({
       (c) =&gt; c.ownerId !== viewerId &amp;&amp; isOpen(c),
     );
 &nbsp;
+    // Copies of members blocked either way with the viewer are never offered (spec 2.6).
+    const blockedIds = await blockedEitherWaySet(ctx, viewerId);
     const reachable: Doc&lt;"ownedPuzzles"&gt;[] = [];
     for (const copy of availableNotOwn) {
-      const id = copy._id as unknown as string;
-      if (circleSharedIds.has(id) || (await ownerIsPublic(copy.ownerId))) {
+      <span class="missing-if-branch" title="if path not taken" >I</span>if (blockedIds.has(copy.ownerId)) <span class="cstat-no" title="statement not covered" >continue;</span>
+      if (
+        (await ownerIsPublic(copy.ownerId)) ||
+        (await isCircleSharedWithViewer(ctx, viewerId, copy))
+      ) {
         reachable.push(copy);
       }
     }
@@ -679,7 +682,7 @@ export const getPuzzleDefinitionView = query({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-18T11:24:44.650Z
+                at 2026-10-18T15:24:31.964Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
