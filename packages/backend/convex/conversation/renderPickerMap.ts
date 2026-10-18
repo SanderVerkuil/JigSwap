@@ -10,6 +10,7 @@ import {
   clampZoom,
   MapTilerError,
   readMapTilerConfig,
+  upstreamRequestsFor,
 } from "./adapters/mapTiler";
 import {
   PICKER_MAP_HEIGHT,
@@ -30,8 +31,9 @@ const unavailable = () =>
 // composed server-side into a PICKER_MAP_WIDTH x PICKER_MAP_HEIGHT PNG with the pin at its centre
 // and the attribution, so the sender's browser never contacts MapTiler. Every pan, zoom and tap
 // re-renders through here. Gated like every picker call (gateLocationCall: participant, not
-// blocked, the locationPicker limit). The image is a temporary blob, deleted PICKER_MAP_TTL_MS
-// later; its URL goes only to the caller. The wide event carries no coordinates.
+// blocked, the locationPicker limit, the global MapTiler budget). The image is a temporary
+// blob, deleted PICKER_MAP_TTL_MS later; its URL goes only to the caller. The wide event carries
+// no coordinates.
 export const renderPickerMap = action({
   args: {
     threadId: v.string(),
@@ -52,15 +54,7 @@ export const renderPickerMap = action({
         message: "Those coordinates are not valid",
       });
     }
-    await ctx.runMutation(
-      internal.conversation.locationStore.gateLocationCall,
-      {
-        threadId: args.threadId,
-        limit: "locationPicker",
-      },
-    );
     const config = readMapTilerConfig(process.env);
-    if (config.status !== "ok") throw unavailable();
     const view = {
       lat: Math.max(-MAX_LAT, Math.min(MAX_LAT, args.lat)),
       lng: args.lng,
@@ -68,6 +62,16 @@ export const renderPickerMap = action({
       width: PICKER_MAP_WIDTH,
       height: PICKER_MAP_HEIGHT,
     };
+    await ctx.runMutation(
+      internal.conversation.locationStore.gateLocationCall,
+      {
+        threadId: args.threadId,
+        limit: "locationPicker",
+        upstreamRequests:
+          config.status === "ok" ? upstreamRequestsFor(config, view) : 0,
+      },
+    );
+    if (config.status !== "ok") throw unavailable();
     let png: Uint8Array;
     try {
       png = await renderMap(config, view, {

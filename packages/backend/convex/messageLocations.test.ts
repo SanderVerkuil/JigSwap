@@ -682,6 +682,93 @@ describe("reports and removal", () => {
   });
 });
 
+describe("global MapTiler budget", () => {
+  const spend = (t: T, key: string, count: number) =>
+    t.run((ctx) =>
+      ctx.db.insert("rateLimits", { key, windowStart: Date.now(), count }),
+    );
+
+  test("an exhausted hourly budget refuses picker views and searches with LocationUnavailable", async () => {
+    const t = convexTest(schema, modules);
+    const { threadId } = await openThread(t);
+    vi.stubEnv("MAPTILER_HOURLY_CAP", "10");
+    await spend(t, "maptiler:global:hour", 9);
+    // A 600x360 view needs more than the one request left.
+    await expect(
+      asAlice(t).action(api.conversation.renderPickerMap.renderPickerMap, {
+        threadId,
+        lat: 52.09,
+        lng: 5.12,
+        zoom: 14,
+      }),
+    ).rejects.toThrow(/LocationUnavailable/);
+    // One geocoding request still fits; the next does not.
+    await asAlice(t).action(api.conversation.searchPlaces.searchPlaces, {
+      threadId,
+      query: "Domplein",
+    });
+    await expect(
+      asAlice(t).action(api.conversation.searchPlaces.searchPlaces, {
+        threadId,
+        query: "Domplein",
+      }),
+    ).rejects.toThrow(/LocationUnavailable/);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("the daily cap counts too, and every upstream request is charged", async () => {
+    const t = convexTest(schema, modules);
+    const { threadId } = await openThread(t);
+    vi.stubEnv("MAPTILER_DAILY_CAP", "100");
+    await asAlice(t).action(api.conversation.renderPickerMap.renderPickerMap, {
+      threadId,
+      lat: 52.09,
+      lng: 5.12,
+      zoom: 14,
+    });
+    const counts = await t.run(async (ctx) =>
+      Object.fromEntries(
+        (await ctx.db.query("rateLimits").collect()).map((r) => [
+          r.key,
+          r.count,
+        ]),
+      ),
+    );
+    expect(counts["maptiler:global:hour"]).toBe(fetchMock.mock.calls.length);
+    expect(counts["maptiler:global:day"]).toBe(fetchMock.mock.calls.length);
+    await t.run(async (ctx) => {
+      const day = (await ctx.db.query("rateLimits").collect()).find(
+        (r) => r.key === "maptiler:global:day",
+      )!;
+      await ctx.db.patch(day._id, { count: 100 });
+    });
+    await expect(
+      asAlice(t).action(api.conversation.searchPlaces.searchPlaces, {
+        threadId,
+        query: "Domplein",
+      }),
+    ).rejects.toThrow(/LocationUnavailable/);
+  });
+
+  test("a final render over budget settles as a text card, still delivered", async () => {
+    const t = convexTest(schema, modules);
+    const { threadId } = await openThread(t);
+    vi.stubEnv("MAPTILER_HOURLY_CAP", "1");
+    const id = await send(t, threadId);
+    await settleDueJobs(t);
+    expect((await row(t, id))!.mapStatus).toBe("failed");
+    expect(await messageRows(t, threadId)).toHaveLength(1);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  test("the picker's own limit is 60 an hour", () => {
+    expect(RATE_LIMITS.locationPicker).toEqual({
+      windowMs: 60 * 60_000,
+      max: 60,
+    });
+  });
+});
+
 describe("search query rules and response caps", () => {
   test("';' is stripped and a bare coordinate pair gets no results without a call", async () => {
     const t = convexTest(schema, modules);

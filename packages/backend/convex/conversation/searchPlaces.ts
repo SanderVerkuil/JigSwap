@@ -47,7 +47,8 @@ export const normalizeSearchQuery = (raw: string): string | null => {
 
 // Place search for the location picker (spec R.6): a proxy for MapTiler Geocoding, so the
 // sender's browser never contacts MapTiler. Gated like every picker call (gateLocationCall:
-// participant, not blocked, the locationSearch limit). Searches the default countries (nl, be, de) including POIs, ranked in the member's
+// participant, not blocked, the locationSearch limit, one request charged to the global MapTiler
+// budget). Searches the default countries (nl, be, de) including POIs, ranked in the member's
 // preferred language and, when given, near `near`, which is always snapped to the ~1 km grid
 // first (it may come from the device's GPS). A query that is too short or only coordinates gets
 // no results without any call. Returns at most 5 { label, lat, lng }, never the provider payload;
@@ -64,7 +65,11 @@ export const searchPlaces = action({
     if (query === null) return [];
     const { preferredLanguage } = await ctx.runMutation(
       internal.conversation.locationStore.gateLocationCall,
-      { threadId: args.threadId, limit: "locationSearch" },
+      {
+        threadId: args.threadId,
+        limit: "locationSearch",
+        upstreamRequests: 1,
+      },
     );
     const config = readMapTilerConfig(process.env);
     if (config.status !== "ok") throw unavailable();

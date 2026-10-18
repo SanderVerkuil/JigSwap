@@ -5,7 +5,11 @@ import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
 import { logEvent } from "../lib/logEvent";
 import { renderMap } from "./adapters/mapRender";
-import { MapTilerError, readMapTilerConfig } from "./adapters/mapTiler";
+import {
+  MapTilerError,
+  readMapTilerConfig,
+  upstreamRequestsFor,
+} from "./adapters/mapTiler";
 import {
   APPROXIMATE_MAP_ZOOM,
   APPROXIMATE_RADIUS_METRES,
@@ -17,7 +21,8 @@ import {
 // The final map preview of a shared location, rendered ONCE at send time (spec 2.4, R.6) and
 // stored in Convex storage, so recipients load it from us and no map provider ever sees them.
 // Scheduled by sendLocation. Exact: a pin at street level; approximate: a shaded ~1 km area.
-// Whatever happens (no key any more, a provider error), the render settles: "ready" with the
+// The tiles are charged to the global MapTiler budget first. Whatever happens (no key any more,
+// the budget spent, a provider error), the render settles: "ready" with the
 // map, or "failed" (a text card with the coordinates), and the message is appended either way.
 // The wide event carries no coordinates, label or URL.
 export const renderLocationMap = internalAction({
@@ -32,18 +37,27 @@ export const renderLocationMap = internalAction({
     let mapFileId;
     let failure: string | undefined;
     const config = readMapTilerConfig(process.env);
-    if (config.status === "ok") {
+    const exact = location.precision === "exact";
+    const view = {
+      lat: location.lat,
+      lng: location.lng,
+      zoom: exact ? EXACT_MAP_ZOOM : APPROXIMATE_MAP_ZOOM,
+      width: LOCATION_MAP_WIDTH,
+      height: LOCATION_MAP_HEIGHT,
+    };
+    const charged =
+      config.status === "ok" &&
+      (await ctx.runMutation(internal.conversation.locationStore.chargeRender, {
+        upstreamRequests: upstreamRequestsFor(config, view),
+      }));
+    if (config.status === "ok" && !charged) {
+      // The global MapTiler budget is spent: a text card instead of a map.
+      failure = "budget_exhausted";
+    } else if (config.status === "ok") {
       try {
-        const exact = location.precision === "exact";
         const png = await renderMap(
           config,
-          {
-            lat: location.lat,
-            lng: location.lng,
-            zoom: exact ? EXACT_MAP_ZOOM : APPROXIMATE_MAP_ZOOM,
-            width: LOCATION_MAP_WIDTH,
-            height: LOCATION_MAP_HEIGHT,
-          },
+          view,
           exact
             ? { lat: location.lat, lng: location.lng, style: "pin" }
             : {

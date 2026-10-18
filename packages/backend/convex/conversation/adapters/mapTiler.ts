@@ -208,6 +208,12 @@ export const tilesForView = (view: MapView): TilePlacement[] => {
   return tiles;
 };
 
+/** The upstream requests one render of `view` makes: its tiles, or one Static Maps image. */
+export const upstreamRequestsFor = (
+  config: Extract<MapTilerConfig, { status: "ok" }>,
+  view: MapView,
+): number => (config.staticApi ? 1 : tilesForView(view).length);
+
 /** Where a lat/lng lands on the view's image, in image pixels. */
 export const pixelInView = (
   view: MapView,
