@@ -154,7 +154,6 @@ function ThreadListBody({ activeThreadId }: { activeThreadId?: string }) {
               <ThreadRow
                 thread={thread}
                 selected={thread.threadId === activeThreadId}
-                me={me}
                 now={now}
                 locale={locale}
               />
@@ -171,13 +170,11 @@ function ThreadListBody({ activeThreadId }: { activeThreadId?: string }) {
 function ThreadRow({
   thread,
   selected,
-  me,
   now,
   locale,
 }: {
   thread: InboxThread;
   selected: boolean;
-  me: string | undefined;
   now: number;
   locale: string;
 }) {
@@ -195,7 +192,7 @@ function ThreadRow({
   const snippet =
     body === undefined
       ? t("noMessages")
-      : last?.authorId != null && last.authorId === me
+      : last?.isMine
         ? t("youPrefix", { body })
         : body;
   const fullTime = formatFullDateTime(thread.updatedAt, locale);

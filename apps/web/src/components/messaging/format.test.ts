@@ -199,13 +199,15 @@ describe("formatDayLabel", () => {
 });
 
 describe("groupThreadMessages", () => {
-  const ME = "me";
-  const msg = (
-    id: string,
-    authorId: string | null,
-    sentAt: number,
-    kind: "text" | "system" = authorId === null ? "system" : "text",
-  ) => ({ id, authorId, kind, body: id, sentAt });
+  // Who wrote it, from the viewer's side: "me", "her" (the other party), or a
+  // system message (never isMine).
+  const msg = (id: string, from: "me" | "her" | "system", sentAt: number) => ({
+    id,
+    isMine: from === "me",
+    kind: from === "system" ? "system" : "text",
+    body: id,
+    sentAt,
+  });
   const at = (hour: number, minute: number, day = 19) =>
     new Date(2026, 9, day, hour, minute).getTime();
   // Compact shape for assertions: day labels, system ids, and groups as "own|other:ids".
@@ -219,7 +221,7 @@ describe("groupThreadMessages", () => {
     );
 
   it("returns nothing for an empty thread", () => {
-    expect(groupThreadMessages([], ME, NOW, "en", tFor("en"))).toEqual([]);
+    expect(groupThreadMessages([], NOW, "en", tFor("en"))).toEqual([]);
   });
 
   it("groups consecutive same-author messages within 5 minutes", () => {
@@ -228,10 +230,9 @@ describe("groupThreadMessages", () => {
         msg("a", "her", at(10, 0)),
         msg("b", "her", at(10, 3)),
         msg("c", "her", at(10, 8)), // exactly 5 min after b → same group
-        msg("d", ME, at(10, 9)),
-        msg("e", ME, at(10, 10)),
+        msg("d", "me", at(10, 9)),
+        msg("e", "me", at(10, 10)),
       ],
-      ME,
       NOW,
       "en",
       tFor("en"),
@@ -245,7 +246,6 @@ describe("groupThreadMessages", () => {
         msg("a", "her", at(10, 0)),
         msg("b", "her", at(10, 5, 19) + 1), // 5 min + 1 ms
       ],
-      ME,
       NOW,
       "en",
       tFor("en"),
@@ -256,7 +256,6 @@ describe("groupThreadMessages", () => {
   it("breaks groups and inserts a day separator at a calendar-day boundary", () => {
     const items = groupThreadMessages(
       [msg("a", "her", at(23, 58, 18)), msg("b", "her", at(0, 1, 19))],
-      ME,
       NOW,
       "nl",
       tFor("nl"),
@@ -272,16 +271,49 @@ describe("groupThreadMessages", () => {
   it("renders system messages on their own and lets them break a group", () => {
     const items = groupThreadMessages(
       [
-        msg("a", ME, at(10, 0)),
-        msg("sys", null, at(10, 1)),
-        msg("b", ME, at(10, 2)),
+        msg("a", "me", at(10, 0)),
+        msg("sys", "system", at(10, 1)),
+        msg("b", "me", at(10, 2)),
       ],
-      ME,
       NOW,
       "en",
       tFor("en"),
     );
     expect(shape(items)).toEqual(["day:Today", "own:a", "system:sys", "own:b"]);
+  });
+
+  it("starts a new group for the other party's message after a system message", () => {
+    const items = groupThreadMessages(
+      [
+        msg("a", "her", at(10, 0)),
+        msg("sys", "system", at(10, 1)),
+        msg("b", "her", at(10, 2)),
+        msg("c", "her", at(10, 3)),
+      ],
+      NOW,
+      "en",
+      tFor("en"),
+    );
+    expect(shape(items)).toEqual([
+      "day:Today",
+      "other:a",
+      "system:sys",
+      "other:b,c",
+    ]);
+  });
+
+  it("splits alternating own and other messages into separate groups", () => {
+    const items = groupThreadMessages(
+      [
+        msg("a", "me", at(10, 0)),
+        msg("b", "her", at(10, 1)),
+        msg("c", "me", at(10, 2)),
+      ],
+      NOW,
+      "en",
+      tFor("en"),
+    );
+    expect(shape(items)).toEqual(["day:Today", "own:a", "other:b", "own:c"]);
   });
 });
 

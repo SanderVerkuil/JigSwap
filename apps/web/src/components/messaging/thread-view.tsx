@@ -102,7 +102,7 @@ export function ThreadView({
     mutationFn: useConvexMutation(gateway.conversation.markThreadRead),
   });
   const messageCount = messages?.length;
-  const newestAuthorId = messages?.at(-1)?.authorId;
+  const newestIsMine = messages?.at(-1)?.isMine;
   // Changes when a pending send is confirmed (pending-… → real id) even though
   // the count doesn't: the confirmed group grows a time row, so follow again.
   const newestId = messages?.at(-1)?.id;
@@ -119,14 +119,14 @@ export function ThreadView({
     // Mark read once the subscription has data — never while loading or
     // unauthenticated. After the initial receipt, skip changes whose newest
     // message is our own (optimistic) send: only others' messages (including
-    // system messages, authorId null) create unread state.
+    // system messages, never isMine) create unread state.
     if (!me || messageCount === undefined) return;
-    if (hasMarkedReadRef.current && newestAuthorId === me) return;
+    if (hasMarkedReadRef.current && newestIsMine) return;
     hasMarkedReadRef.current = true;
     markThreadRead({ threadId }).catch(() => {
       // Non-fatal: the receipt catches up on the next message.
     });
-  }, [me, messageCount, newestAuthorId, threadId, markThreadRead]);
+  }, [me, messageCount, newestIsMine, threadId, markThreadRead]);
 
   const scrollerRef = useRef<HTMLOListElement>(null);
   useEffect(() => {
@@ -143,7 +143,7 @@ export function ThreadView({
     }
     const nearBottom =
       scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 120;
-    if (nearBottom || newestAuthorId === me) {
+    if (nearBottom || newestIsMine) {
       const reduceMotion = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       ).matches;
@@ -152,7 +152,7 @@ export function ThreadView({
         behavior: reduceMotion ? "auto" : "smooth",
       });
     }
-  }, [messageCount, newestId, newestAuthorId, me]);
+  }, [messageCount, newestId, newestIsMine]);
 
   // Thread switch: move focus to the header title so keyboard and screen-reader
   // users land in the new conversation (once per thread, after it renders).
@@ -184,7 +184,7 @@ export function ThreadView({
     lastSeenRef.current = { threadId, id: newest?.id };
     if (!previous || previous.threadId !== threadId) return;
     if (!newest || newest.id === previous.id) return;
-    if (newest.authorId === null || newest.authorId === me) return;
+    if (newest.kind === "system" || newest.isMine) return;
     const text = newest.body.replace(/\s+/g, " ").trim();
     const region = liveRegionRef.current;
     if (!region) return;
@@ -202,12 +202,12 @@ export function ThreadView({
       region.textContent = announcement;
     });
     return () => cancelAnimationFrame(frame);
-  }, [messages, newest, threadId, me, title, t]);
+  }, [messages, newest, threadId, title, t]);
 
   const items =
     messages === undefined
       ? undefined
-      : groupThreadMessages(messages, me, now, locale, t);
+      : groupThreadMessages(messages, now, locale, t);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">

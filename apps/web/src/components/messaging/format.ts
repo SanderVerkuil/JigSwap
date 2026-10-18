@@ -135,7 +135,7 @@ export function formatDayLabel(
 // The fields grouping needs; ThreadMessageView satisfies it.
 type GroupableMessage = {
   readonly id: string;
-  readonly authorId: string | null;
+  readonly isMine: boolean;
   readonly kind: string;
   readonly sentAt: number;
 };
@@ -153,7 +153,6 @@ const GROUP_GAP = 5 * MINUTE;
 // author on the same local day, each ≤ 5 minutes after the previous one.
 export function groupThreadMessages<M extends GroupableMessage>(
   messages: readonly M[],
-  me: string | undefined,
   now: number,
   locale: string,
   t: Translator,
@@ -182,7 +181,7 @@ export function groupThreadMessages<M extends GroupableMessage>(
     if (
       group &&
       previous &&
-      previous.authorId === message.authorId &&
+      previous.isMine === message.isMine &&
       message.sentAt - previous.sentAt <= GROUP_GAP
     ) {
       group.messages.push(message);
@@ -191,7 +190,7 @@ export function groupThreadMessages<M extends GroupableMessage>(
     group = {
       type: "group",
       key: `group-${message.id}`,
-      own: message.authorId !== null && message.authorId === me,
+      own: message.isMine,
       messages: [message],
     };
     items.push(group);
