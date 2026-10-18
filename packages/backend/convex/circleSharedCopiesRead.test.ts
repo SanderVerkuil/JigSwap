@@ -203,6 +203,16 @@ describe("listCircleSharedCopies", () => {
     expect(await listAs(t, "bob", circleId)).toEqual([]);
   });
 
+  test("a copy of a member who deleted their account is left out", async () => {
+    const t = convexTest(schema, modules);
+    const { carol, circleId } = await seed(t);
+    await shareCopy(t, circleId, carol, "Wasgij", 1);
+    // Account deletion tombstones the user row but (for now) keeps the circle seat.
+    await t.run((ctx) => ctx.db.patch(carol, { isActive: false }));
+
+    expect(await listAs(t, "bob", circleId)).toEqual([]);
+  });
+
   test("a copy of a member blocked either way is left out (canViewCopy)", async () => {
     const t = convexTest(schema, modules);
     const { bob, carol, circleId } = await seed(t);
