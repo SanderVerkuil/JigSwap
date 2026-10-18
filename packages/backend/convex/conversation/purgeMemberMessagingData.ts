@@ -12,6 +12,10 @@ import { removeForDeletedMember } from "./messageAttachments";
 
 // Account deletion for messaging data (spec R.9, 2.8), scheduled by users.deleteUser. Text
 // messages stay: their author renders as "deleted member" (social/privacy projectMemberIdentity).
+// Likewise their id stays in other members' message notifications (a thread's grouped row lists
+// its authors in actorIds): it resolves as a departed actor, "Former member", never a name, so
+// those rows are deliberately not rewritten (spec 5.4: past messages stay, shown as a former
+// member).
 // Everything else the member left behind in messaging, blocking and reporting goes:
 //   attachments  their photos and locations (conversation/messageAttachments removeForDeletedMember)
 //   reveals      their own taps on "Show"

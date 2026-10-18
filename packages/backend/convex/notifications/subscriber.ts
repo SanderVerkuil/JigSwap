@@ -11,6 +11,7 @@ import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { blockStateBetween, isBlockedEitherWay } from "../social/blocks";
 import { makeNotify } from "./adapters/makeNotify";
 import { isViewingMessages } from "./presenceGate";
+import { armThreadDigest } from "./threadDigest";
 
 // The Notifications subscriber: the bridge from other contexts' event LANGUAGE to member-facing
 // notifications. Given a recorded domainEvents row, it enriches via DB reads (to resolve the right
@@ -41,6 +42,13 @@ export const handleDomainEvent = async (
       continue;
     }
     await notify(cmd);
+    // A circle message is never emailed on its own: it may arm the member's delayed digest.
+    if (
+      cmd.type === "circle_message_received" &&
+      cmd.subject?.kind === "thread"
+    ) {
+      await armThreadDigest(ctx, cmd.subject.threadId, cmd.memberId);
+    }
   }
 };
 
@@ -55,7 +63,9 @@ const blocksSilence = async (
 ): Promise<boolean> => {
   const actorId = cmd.actorId!;
   const threadId =
-    cmd.type === "message_received" && cmd.subject?.kind === "thread"
+    (cmd.type === "message_received" ||
+      cmd.type === "circle_message_received") &&
+    cmd.subject?.kind === "thread"
       ? cmd.subject.threadId
       : undefined;
   if (threadId !== undefined) {
@@ -75,11 +85,13 @@ const blocksSilence = async (
 
 const CIRCLE_MESSAGE_CHANNELS: readonly Channel[] = ["inApp", "push"];
 
-// Each current circle member's floor in the thread: the later of their participant row's and
-// their seat's joinedAt. Members without a seat, or with a row lacking joinedAt, are absent.
+// Each current circle member's floor in the thread, from its participant rows: the later of
+// their row's and their seat's joinedAt. Members without a seat, or with a row lacking joinedAt,
+// are absent.
 const circleFloors = async (
   ctx: MutationCtx,
   thread: Doc<"threads">,
+  rows: readonly Doc<"threadParticipants">[],
 ): Promise<Map<string, number>> => {
   const floors = new Map<string, number>();
   if (thread.circleId === undefined) return floors;
@@ -91,12 +103,7 @@ const circleFloors = async (
   const seatOf = new Map(
     (circle?.memberships ?? []).map((m) => [m.memberId as string, m.joinedAt]),
   );
-  for (const row of await ctx.db
-    .query("threadParticipants")
-    .withIndex("by_thread", (q) =>
-      q.eq("threadAggregateId", thread.aggregateId),
-    )
-    .collect()) {
+  for (const row of rows) {
     const seat = seatOf.get(row.memberId as string);
     if (seat !== undefined && row.joinedAt !== undefined) {
       floors.set(row.memberId as string, Math.max(seat, row.joinedAt));
@@ -333,14 +340,28 @@ const translate = async (
       // A circle thread notifies only members who can see the message: a current seat (an
       // ex-member whose participant sync is pending or failed gets nothing) and a floor before it
       // (the later of their row's and seat's joinedAt; a row without one fails closed). A blocked
-      // author's message is dropped for the blocker below (handleDomainEvent).
+      // author's message is dropped for the blocker below (handleDomainEvent). A member who muted
+      // the thread gets nothing from it on any channel.
+      // One scan of the participant rows serves both the floors and the mutes.
+      const rows = await ctx.db
+        .query("threadParticipants")
+        .withIndex("by_thread", (q) =>
+          q.eq("threadAggregateId", thread.aggregateId),
+        )
+        .collect();
       const circle = thread.subjectKind === "circle";
       const floorOf = circle
-        ? await circleFloors(ctx, thread)
+        ? await circleFloors(ctx, thread, rows)
         : new Map<string, number>();
+      const mutedBy = new Set(
+        rows
+          .filter((row) => row.muted === true)
+          .map((row) => row.memberId as string),
+      );
       const recipients = thread.participants.filter(
         (participant) =>
           (participant as string) !== authorId &&
+          !mutedBy.has(participant as string) &&
           (!circle ||
             (floorOf.get(participant as string) ?? Infinity) <
               event.occurredAt),
@@ -354,13 +375,19 @@ const translate = async (
           absent.push(participant);
         }
       }
+      // A circle thread's messages are their own type, and never emailed one by one: email
+      // comes only as the delayed per-thread digest (armed in handleDomainEvent).
       return absent.map((participant) => ({
-        ...cmd(participant, "message_received", thread.aggregateId, author, {
-          actor: authorId,
-          subject: { kind: "thread", threadId: thread.aggregateId },
-        }),
-        // No per-message email in a circle thread: one per message to every absent member is a
-        // cost and spam vector. In-app and push only, until G5's delayed digest replaces this.
+        ...cmd(
+          participant,
+          circle ? "circle_message_received" : "message_received",
+          thread.aggregateId,
+          author,
+          {
+            actor: authorId,
+            subject: { kind: "thread", threadId: thread.aggregateId },
+          },
+        ),
         ...(circle && { channels: CIRCLE_MESSAGE_CHANNELS }),
       }));
     }

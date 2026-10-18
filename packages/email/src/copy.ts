@@ -15,6 +15,7 @@ export const EMAIL_TYPES = [
   "follow_request_received",
   "follow_request_approved",
   "circle_invite_received",
+  "circle_message_received",
 ] as const;
 
 export type EmailType = (typeof EMAIL_TYPES)[number];
@@ -297,6 +298,24 @@ export const EMAIL_COPY: Record<EmailType, Record<EmailLocale, EmailCopy>> = {
       cta: "Bekijk kringen",
       richBody: "{actorName} heeft je uitgenodigd voor {circleName}.",
       deepCta: "Bekijk uitnodiging",
+    },
+  },
+  // The delayed per-thread digest of a circle (group) thread: names no author and quotes no
+  // message, only where there is something new.
+  circle_message_received: {
+    en: {
+      subject: "New messages in your circle on JigSwap",
+      heading: "New messages",
+      body: "There are new messages in one of your circles on JigSwap.",
+      cta: "Read messages",
+      richBody: "There are new messages in {circleName}.",
+    },
+    nl: {
+      subject: "Nieuwe berichten in je kring op JigSwap",
+      heading: "Nieuwe berichten",
+      body: "Er zijn nieuwe berichten in een van je kringen op JigSwap.",
+      cta: "Lees berichten",
+      richBody: "Er zijn nieuwe berichten in {circleName}.",
     },
   },
 };

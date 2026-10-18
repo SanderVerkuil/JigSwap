@@ -1092,6 +1092,13 @@ export default defineSchema({
     joinedAt: v.optional(v.number()),
     // The member muted the thread: left out of the shell's unread badge. Absent = not muted.
     muted: v.optional(v.boolean()),
+    // The last time a message in this thread was pushed to the member: the push throttle (at most
+    // one per thread per member per PUSH_THROTTLE_MS). Absent = never pushed.
+    lastPushedAt: v.optional(v.number()),
+    // Circle thread email digest: a digest is scheduled to fire at emailPendingUntil (absent = none
+    // pending), and lastEmailedAt is when the member was last sent one (at most one per 6 h).
+    emailPendingUntil: v.optional(v.number()),
+    lastEmailedAt: v.optional(v.number()),
   })
     .index("by_member", ["memberId"])
     .index("by_thread", ["threadAggregateId"])
@@ -1180,6 +1187,7 @@ export default defineSchema({
       v.literal("circle_invite_received"),
       v.literal("circle_invite_accepted"),
       v.literal("circle_deleted"),
+      v.literal("circle_message_received"),
       v.literal("whats_new"),
       v.literal("report_decided"),
       v.literal("content_removed"),

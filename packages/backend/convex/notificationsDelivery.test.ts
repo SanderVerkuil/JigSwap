@@ -472,9 +472,17 @@ describe("channels", () => {
 
   test("the push channel forwards params and refs next to the snapshot text", async () => {
     const s = await setup();
-    await s.t.run((ctx) =>
-      pushChannel(ctx)(notification(s, { channel: "push" })),
-    );
+    await s.t.run(async (ctx) => {
+      // Push is only scheduled for a member with a push subscription.
+      await ctx.db.insert("pushSubscriptions", {
+        userId: s.viewer,
+        endpoint: "https://push.example/viewer",
+        p256dh: "p",
+        auth: "a",
+        createdAt: Date.now(),
+      });
+      await pushChannel(ctx)(notification(s, { channel: "push" }));
+    });
     expect(await scheduledArgs(s, "sendWebPush")).toEqual([
       expect.objectContaining({
         userId: s.viewer,
@@ -642,6 +650,8 @@ describe("sendWebPush action", () => {
       title: "New message from Mara Display",
       body: "Still have the Ravensburger?",
       url: "/messages/thread-1",
+      // One OS notification per thread: a later push replaces this one.
+      tag: "thread:thread-1",
     });
   });
 
@@ -661,6 +671,7 @@ describe("sendWebPush action", () => {
     expect(sentPayload()).toMatchObject({
       body: 'Mara Display wants to trade for "Starry Night"',
       url: "/trades?exchange=ex-1",
+      tag: "trade_request",
     });
   });
 
@@ -729,6 +740,7 @@ describe("sendWebPush action", () => {
       type: "message_received",
       relatedId: "thread-1",
       url: "/messages",
+      tag: "message_received",
     });
   });
 });

@@ -42,7 +42,7 @@ describe("noopWebPushSender", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const result = await noopWebPushSender("test").send(
       { endpoint: "e", p256dh: "p", auth: "a" },
-      { title: "t", body: "b", type: "x", url: "/notifications" },
+      { title: "t", body: "b", type: "x", url: "/notifications", tag: "x" },
     );
     expect(result).toEqual({ ok: false, gone: false, statusCode: null });
     expect(warn).toHaveBeenCalledOnce();
@@ -135,7 +135,34 @@ describe("toWebPushPayload", () => {
       type: "message_received",
       relatedId: "conv-1",
       url: "/messages",
+      tag: "message_received",
     });
+  });
+
+  test("tags a thread's pushes with the thread, so the OS replaces instead of stacking", () => {
+    const base = { title: "New messages", message: "Hi", relatedId: "t-1" };
+    expect(
+      toWebPushPayload({
+        ...base,
+        type: "circle_message_received",
+        subject: { kind: "thread", threadId: "t-1" },
+      }).tag,
+    ).toBe("thread:t-1");
+    expect(
+      toWebPushPayload({
+        ...base,
+        type: "message_received",
+        subject: { kind: "thread", threadId: "t-2" },
+      }).tag,
+    ).toBe("thread:t-2");
+    // Not a thread: one tag per type, as before.
+    expect(
+      toWebPushPayload({
+        ...base,
+        type: "trade_accepted",
+        subject: { kind: "exchange" },
+      }).tag,
+    ).toBe("trade_accepted");
   });
 
   test("uses the resolved deep link when given, else the per-type URL", () => {

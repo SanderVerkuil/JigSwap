@@ -346,6 +346,7 @@ import type * as notifications_sendEmail from "../notifications/sendEmail.js";
 import type * as notifications_sendWebPush from "../notifications/sendWebPush.js";
 import type * as notifications_setNotificationPreferences from "../notifications/setNotificationPreferences.js";
 import type * as notifications_subscriber from "../notifications/subscriber.js";
+import type * as notifications_threadDigest from "../notifications/threadDigest.js";
 import type * as notifications_unreadCount from "../notifications/unreadCount.js";
 import type * as notifications_updateNotificationPreference from "../notifications/updateNotificationPreference.js";
 import type * as notifications_viewRules from "../notifications/viewRules.js";
@@ -845,6 +846,7 @@ declare const fullApi: ApiFromModules<{
   "notifications/sendWebPush": typeof notifications_sendWebPush;
   "notifications/setNotificationPreferences": typeof notifications_setNotificationPreferences;
   "notifications/subscriber": typeof notifications_subscriber;
+  "notifications/threadDigest": typeof notifications_threadDigest;
   "notifications/unreadCount": typeof notifications_unreadCount;
   "notifications/updateNotificationPreference": typeof notifications_updateNotificationPreference;
   "notifications/viewRules": typeof notifications_viewRules;

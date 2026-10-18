@@ -14,9 +14,10 @@ import type { DeliveryContent } from "./deliveryContent";
 //                 household_invite_received (inviter), household_invite_accepted (invitee),
 //                 connection_offer_received (inviter)
 //                 circle_invite_received (inviter), circle_invite_accepted (invitee)
-//   circleName  — circle_invite_received/accepted: never stored; overlaid live by the delivery
-//                 resolution when the recipient may see the circle. circle_deleted: snapshotted
-//                 at deletion (the circle is gone), for the members it was deleted under
+//   circleName  — circle_invite_received/accepted, circle_message_received: never stored;
+//                 overlaid live by the delivery resolution when the recipient may see the circle.
+//                 circle_deleted: snapshotted at deletion (the circle is gone), for the members it
+//                 was deleted under
 //   puzzleTitle — puzzle_approved/rejected, proposal_approved/rejected, admin_proposal_filed,
 //                 admin_definition_submitted
 //   goalTitle   — goal_achieved
@@ -228,6 +229,18 @@ const COPY: Record<NotificationType, (p: Params) => NotificationText> = {
       ? `${p["circleName"]} was deleted`
       : "A circle you were in was deleted",
   }),
+  // Never a message preview: a group thread's push only says where something was written.
+  circle_message_received: (p) => {
+    const where = p["circleName"] ?? "your circle";
+    return {
+      title: p["circleName"]
+        ? `New messages in ${p["circleName"]}`
+        : "New messages",
+      message: p["actorName"]
+        ? `${p["actorName"]} wrote in ${where}`
+        : `New messages in ${where}`,
+    };
+  },
   whats_new: () => ({
     title: "New in JigSwap",
     message: "See what's new in JigSwap",

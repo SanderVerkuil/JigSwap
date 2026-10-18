@@ -25,6 +25,8 @@ export interface WebPushPayload {
   readonly type: string;
   readonly url: string; // where notificationclick navigates
   readonly relatedId?: string;
+  // The OS notification tag: a later push with the same tag replaces the shown one.
+  readonly tag: string;
 }
 
 // Outcome of ONE send. `gone` flags a permanently-dead subscription (404/410) the caller must prune;
@@ -94,6 +96,7 @@ export const notificationUrl = (type: string, relatedId?: string): string => {
     case "exchange_disputed":
       return "/trades";
     case "message_received":
+    case "circle_message_received":
       return "/messages";
     case "review_received":
       return "/profile";
@@ -150,10 +153,22 @@ export const toWebPushPayload = (n: {
   type: string;
   relatedId?: string;
   url?: string | null;
+  subject?: { kind: string; threadId?: string };
 }): WebPushPayload => ({
   title: n.title,
   body: n.message,
   type: n.type,
   relatedId: n.relatedId,
   url: n.url ?? notificationUrl(n.type, n.relatedId),
+  tag: pushTagOf(n.type, n.subject),
 });
+
+// A thread's pushes share `thread:<threadId>`, so the OS shows one notification per thread;
+// everything else coalesces per type, as before.
+export const pushTagOf = (
+  type: string,
+  subject?: { kind: string; threadId?: string },
+): string =>
+  subject?.kind === "thread" && subject.threadId !== undefined
+    ? `thread:${subject.threadId}`
+    : type;

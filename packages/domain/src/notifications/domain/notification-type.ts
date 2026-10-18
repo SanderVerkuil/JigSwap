@@ -33,6 +33,7 @@ export type NotificationType =
   | "circle_invite_received" // Sharing: CircleInviteIssued — a circle Admin invited the member to join
   | "circle_invite_accepted" // Sharing: CircleInviteAccepted — the member's circle invite was accepted
   | "circle_deleted" // Sharing: CircleDeleted — the owner deleted a circle the member was in
+  | "circle_message_received" // Conversation: MessagePosted in a circle (group) thread
   | "whats_new" // Product: a What's new entry marked `notify: true` was published (not a domain event)
   | "report_decided" // Safety: a moderator decided a report the member filed (DSA Art. 16(5))
   | "content_removed" // Safety: a moderator removed the member's reported content (DSA Art. 17)
@@ -69,6 +70,7 @@ export const NOTIFICATION_TYPES: readonly NotificationType[] = [
   "circle_invite_received",
   "circle_invite_accepted",
   "circle_deleted",
+  "circle_message_received",
   "whats_new",
   "report_decided",
   "content_removed",
@@ -95,6 +97,8 @@ export const EMAIL_ELIGIBLE_TYPES: ReadonlySet<NotificationType> = new Set([
   "follow_request_received",
   "follow_request_approved",
   "circle_invite_received",
+  // Never sent per message: the backend batches circle messages into a delayed per-thread digest.
+  "circle_message_received",
 ]);
 
 // Types the member cannot switch off in-app: the DSA Art. 17 statement of reasons must reach the

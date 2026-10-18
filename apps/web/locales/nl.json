@@ -2088,6 +2088,7 @@
       "exchange_proposed": "Ruil voorgesteld",
       "exchange_disputed": "Ruilgeschil",
       "message_received": "Nieuwe berichten",
+      "circle_message_received": "Kringberichten",
       "review_received": "Ontvangen beoordelingen",
       "puzzle_favorited": "Puzzel favoriet gemaakt",
       "puzzle_approved": "Puzzel goedgekeurd",
@@ -2120,7 +2121,7 @@
       },
       "messages": {
         "title": "Berichten",
-        "description": "Directe berichten van andere leden"
+        "description": "Directe berichten van andere leden en de groepschats van je kringen"
       },
       "social": {
         "title": "Sociaal",
@@ -2175,6 +2176,10 @@
       "message_received": {
         "title": "Nieuw bericht",
         "message": "{hasActorName, select, yes {{actorName} heeft je een nieuw bericht gestuurd.} other {Je hebt een nieuw bericht in je ruilgesprek.}}"
+      },
+      "circle_message_received": {
+        "title": "Nieuwe berichten in een kring",
+        "message": "Er zijn nieuwe berichten in een van je kringen."
       },
       "review_received": {
         "title": "Nieuwe beoordeling",
@@ -2295,6 +2300,7 @@
       "exchange_proposed": "Wanneer iemand een uitwisseling voorstelt — ruil, verkoop of uitlenen.",
       "exchange_disputed": "Wanneer een uitwisseling waaraan je deelneemt wordt betwist.",
       "message_received": "Wanneer je een nieuw bericht ontvangt.",
+      "circle_message_received": "Wanneer iemand schrijft in de groepschat van een van je kringen. E-mail komt als korte samenvatting, nooit per bericht.",
       "review_received": "Wanneer iemand je een beoordeling geeft na een uitwisseling.",
       "puzzle_favorited": "Wanneer iemand een puzzel die je hebt toegevoegd als favoriet markeert.",
       "puzzle_approved": "Wanneer een puzzel die je hebt ingediend is goedgekeurd voor de catalogus.",
@@ -2365,6 +2371,13 @@
       "message_received": {
         "sentence": "{media, select, image {<b>{actor}</b> heeft een foto gestuurd.} location {<b>{actor}</b> heeft een locatie gedeeld.} other {<b>{actor}</b> heeft je een bericht gestuurd.}}",
         "sentenceAnonymous": "Je hebt een nieuw bericht.",
+        "actions": {
+          "reply": "Beantwoorden",
+          "replyAria": "{actor} beantwoorden"
+        }
+      },
+      "circle_message_received": {
+        "sentence": "{moreActors, plural, =0 {<b>{actor}</b> schreef} one {<b>{actor}</b> en # ander schreven} other {<b>{actor}</b> en # anderen schreven}} in {hasCircle, select, yes {<b>{circle}</b>} other {je kring}}.",
         "actions": {
           "reply": "Beantwoorden",
           "replyAria": "{actor} beantwoorden"

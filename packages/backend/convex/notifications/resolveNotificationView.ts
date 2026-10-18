@@ -7,11 +7,16 @@ import { COOLDOWN_MS, type NotificationSubject } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { circleFloorOf } from "../conversation/readModelHelpers";
+import {
+  isCurrentCircleMember,
+  projectThreadMember,
+} from "../conversation/threadMemberProjection";
 import { projectTradeParty } from "../exchange/tradeParty";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { canViewCopy } from "../library/canViewCopy";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
 import { circleOfOpenInvite } from "../sharing/circleAccess";
+import { projectMemberIdentity } from "../social/privacy";
 import {
   ADMIN_NOTIFICATION_TYPES,
   decideFollowBack,
@@ -312,12 +317,36 @@ const resolveActor = async (
   actorId: Id<"users">,
   /** For message_received: the exchange its (exchange) thread is about, when it resolves. */
   messageExchange: Doc<"exchanges"> | null,
+  /** For circle_message_received: the circle thread it is about, when it resolves. */
+  circleThread: Doc<"threads"> | null,
 ): Promise<ResolvedActor> => {
   const type = row.type;
   const user = await loadUser(ctx, cache, actorId);
   if (!user || !user.isActive) return DEPARTED;
   const profile = await loadProfile(ctx, cache, actorId);
   const isViewer = actorId === viewerId;
+
+  // A circle message's author is projected exactly as the thread shows them: a current co-member
+  // is named by the circle rule (even one who blocked the viewer, so the block stays silent);
+  // anyone else, or anyone once the viewer has left, goes through projectMemberIdentity.
+  if (circleThread) {
+    const projected = await memoized(
+      cache,
+      `circleAuthor:${circleThread.aggregateId}:${actorId}`,
+      async () =>
+        circleThread.circleId !== undefined &&
+        (await isCurrentCircleMember(ctx, circleThread.circleId, viewerId))
+          ? projectThreadMember(ctx, viewerId, actorId, circleThread)
+          : projectMemberIdentity(
+              ctx,
+              viewerId,
+              actorId,
+              circleThread.aggregateId,
+            ),
+    );
+    if (!projected.anonymous) return revealedActor(user, profile, false);
+    return projected.departed ? DEPARTED : ANONYMOUS;
+  }
 
   // Trade types, and a message in an exchange thread: the per-trade rule for THAT exchange (only
   // when both are its parties).
@@ -461,6 +490,12 @@ const resolveSubject = async (
           ? await circleFloorOf(ctx, thread, viewerId)
           : undefined;
       if (circleFloor === null) return { available: false, context: {} };
+      // A circle thread is named by its circle's live name, for its participants only.
+      const circle =
+        thread.subjectKind === "circle" && thread.circleId !== undefined
+          ? await loadCircle(ctx, cache, thread.circleId)
+          : null;
+      const circleContext = circle ? { circleName: circle.name } : {};
       const last = await memoized(
         cache,
         `lastMessage:${thread.aggregateId}`,
@@ -481,7 +516,11 @@ const resolveSubject = async (
         circleFloor !== undefined &&
         !(await circleMessagePreviewable(ctx, viewerId, last, circleFloor))
       ) {
-        return { available: true, context: {}, decision: decideMessage(true) };
+        return {
+          available: true,
+          context: circleContext,
+          decision: decideMessage(true),
+        };
       }
       const preview =
         last && last.kind === "text" && last.removedAt === undefined
@@ -498,11 +537,14 @@ const resolveSubject = async (
           : undefined;
       return {
         available: true,
-        context: preview
-          ? { messagePreview: preview }
-          : messageKind
-            ? { messageKind }
-            : {},
+        context: {
+          ...circleContext,
+          ...(preview
+            ? { messagePreview: preview }
+            : messageKind
+              ? { messageKind }
+              : {}),
+        },
         decision: decideMessage(true),
       };
     }
@@ -680,8 +722,14 @@ export const resolveNotificationView = async (
   const messageThreadId =
     subject?.kind === "thread" ? subject.threadId : row.relatedId;
   const messageThread =
-    type === "message_received" && messageThreadId !== undefined
+    (type === "message_received" || type === "circle_message_received") &&
+    messageThreadId !== undefined
       ? await loadThread(ctx, cache, messageThreadId)
+      : null;
+  const circleThread =
+    type === "circle_message_received" &&
+    messageThread?.subjectKind === "circle"
+      ? messageThread
       : null;
   const messageExchangeId =
     messageThread?.subjectKind === "exchange"
@@ -697,7 +745,15 @@ export const resolveNotificationView = async (
     actorIds
       .slice(0, MAX_ACTORS)
       .map((id) =>
-        resolveActor(ctx, cache, viewerId, row, id, messageExchange),
+        resolveActor(
+          ctx,
+          cache,
+          viewerId,
+          row,
+          id,
+          messageExchange,
+          circleThread,
+        ),
       ),
   );
   const firstActor = actors[0] ?? null;

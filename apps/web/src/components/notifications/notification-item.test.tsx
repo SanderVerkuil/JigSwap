@@ -487,6 +487,47 @@ describe("NotificationItem rendering", () => {
     expect(container.textContent).toContain("+2");
   });
 
+  it.each([
+    ["en", 3, "Puzzle Club", "Unread, Mara and 2 others wrote in Puzzle Club."],
+    ["en", 2, "Puzzle Club", "Unread, Mara and 1 other wrote in Puzzle Club."],
+    ["en", 1, undefined, "Unread, Mara wrote in your circle."],
+    [
+      "nl",
+      3,
+      "Puzzelclub",
+      "Ongelezen, Mara en 2 anderen schreven in Puzzelclub.",
+    ],
+    ["nl", 1, "Puzzelclub", "Ongelezen, Mara schreef in Puzzelclub."],
+  ] as const)(
+    "renders a grouped circle_message_received (%s, %i actors)",
+    (locale, actorCount, circleName, text) => {
+      const { container } = renderItem(
+        base({
+          type: "circle_message_received",
+          actorCount,
+          context: circleName ? { circleName } : {},
+          href: "/messages/thread-1",
+        }),
+        { locale },
+      );
+      expect(rowLink(container)!.textContent).toBe(text);
+    },
+  );
+
+  it("names a privacy-hidden circle message author with the generic label, not 'Former member'", () => {
+    const { container } = renderItem(
+      base({
+        type: "circle_message_received",
+        actors: [{ anonymous: true }],
+        context: { circleName: "Puzzle Club" },
+        href: "/messages/thread-1",
+      }),
+    );
+    expect(rowLink(container)!.textContent).toBe(
+      "Unread, Puzzler wrote in Puzzle Club.",
+    );
+  });
+
   it("shows the review rating and the reject reason as context", () => {
     renderItem(base({ type: "review_received", context: { rating: 4 } }));
     expect(screen.getByRole("img", { name: "4 out of 5 stars" })).toBeTruthy();

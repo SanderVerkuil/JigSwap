@@ -16,11 +16,13 @@ const EXPECTED: Record<EmailType, string> = {
   follow_request_received: "/people",
   follow_request_approved: "/people",
   circle_invite_received: "/circles",
+  circle_message_received: "/messages",
 };
 
 const EXPECTED_WITH_RELATED_ID: Record<EmailType, string> = {
   ...EXPECTED,
   message_received: "/messages/rel-1",
+  circle_message_received: "/messages/rel-1",
   puzzle_favorited: "/puzzles/rel-1",
 };
 

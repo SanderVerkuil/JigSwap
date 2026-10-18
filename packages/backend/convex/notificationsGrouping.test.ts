@@ -232,6 +232,14 @@ describe("out-of-band channels", () => {
         toggles: { new_follower: { inApp: true, email: true, push: true } },
         updatedAt: t0,
       });
+      // Push is only scheduled for a member with a push subscription.
+      await ctx.db.insert("pushSubscriptions", {
+        userId: s.viewer,
+        endpoint: "https://push.example/viewer",
+        p256dh: "p",
+        auth: "a",
+        createdAt: t0,
+      });
       for (const follower of [a, b]) {
         const eventId = await ctx.db.insert("domainEvents", {
           name: "MemberFollowed",

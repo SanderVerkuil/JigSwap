@@ -233,6 +233,7 @@ export const legacyNotificationHref = (
     case "exchange_disputed":
       return "/trades";
     case "message_received":
+    case "circle_message_received":
     case "message_image_rejected":
       return relatedId ? `/messages/${relatedId}` : "/messages";
     case "review_received":
@@ -307,6 +308,7 @@ export const notificationHref = (input: HrefInput): string | null => {
   }
   switch (type) {
     case "message_received":
+    case "circle_message_received":
       return subject?.kind === "thread" && input.subjectAvailable
         ? `/messages/${seg(subject.threadId)}`
         : "/messages";

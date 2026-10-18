@@ -31,6 +31,7 @@ describe("NOTIFICATION_TYPES", () => {
       "circle_invite_received",
       "circle_invite_accepted",
       "circle_deleted",
+      "circle_message_received",
       "whats_new",
       "report_decided",
       "content_removed",
@@ -57,6 +58,7 @@ describe("EMAIL_ELIGIBLE_TYPES", () => {
         "follow_request_received",
         "follow_request_approved",
         "circle_invite_received",
+        "circle_message_received",
       ].sort(),
     );
   });

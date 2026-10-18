@@ -33,6 +33,22 @@ exports[`copy catalog > pins the copy catalog verbatim (mutation guard + copy ch
         "subject": "{actorName} heeft je uitgenodigd voor een kring op JigSwap",
       },
     },
+    "circle_message_received": {
+      "en": {
+        "body": "There are new messages in one of your circles on JigSwap.",
+        "cta": "Read messages",
+        "heading": "New messages",
+        "richBody": "There are new messages in {circleName}.",
+        "subject": "New messages in your circle on JigSwap",
+      },
+      "nl": {
+        "body": "Er zijn nieuwe berichten in een van je kringen op JigSwap.",
+        "cta": "Lees berichten",
+        "heading": "Nieuwe berichten",
+        "richBody": "Er zijn nieuwe berichten in {circleName}.",
+        "subject": "Nieuwe berichten in je kring op JigSwap",
+      },
+    },
     "follow_request_approved": {
       "en": {
         "body": "{actorName} approved your follow request. You can now see their profile and puzzles.",
@@ -254,6 +270,7 @@ exports[`copy catalog > pins the copy catalog verbatim (mutation guard + copy ch
     "follow_request_received",
     "follow_request_approved",
     "circle_invite_received",
+    "circle_message_received",
   ],
   "FOOTER": {
     "en": {
