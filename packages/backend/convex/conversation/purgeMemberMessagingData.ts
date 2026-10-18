@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../_generated/server";
 import { logEvent } from "../lib/logEvent";
 import { RATE_LIMITS, type RateLimitName } from "../lib/rateLimits";
@@ -16,6 +16,10 @@ import { removeForDeletedMember } from "./messageAttachments";
 //   blocksIn     the blocks placed on them
 //   reports      the reports they FILED are anonymised (reports ABOUT them are kept until their
 //                retention purge, reports/retention)
+//   invitesOut   the circle invites they sent    } deleted whatever their status, with the
+//   invitesIn    the circle invites they received } notifications pointing at them, so the other
+//   offersOut    the connection offers they made  } party has nothing left to open (like
+//   offersIn     the connection offers made them  } purgeDeletedCircle, nothing is announced)
 //   rateLimits   their own counters (never the deployment-wide MapTiler budget keys)
 // One phase at a time, PURGE_BATCH_SIZE rows per run: a run that did not finish its phase
 // schedules the next run with the page cursor, so each run stays well inside Convex's per-mutation
@@ -32,6 +36,10 @@ const PHASES = [
   "blocksOut",
   "blocksIn",
   "reports",
+  "invitesOut",
+  "invitesIn",
+  "offersOut",
+  "offersIn",
   "rateLimits",
 ] as const;
 type Phase = (typeof PHASES)[number];
@@ -43,10 +51,60 @@ const phaseValidator = v.union(
   v.literal("blocksOut"),
   v.literal("blocksIn"),
   v.literal("reports"),
+  v.literal("invitesOut"),
+  v.literal("invitesIn"),
+  v.literal("offersOut"),
+  v.literal("offersIn"),
   v.literal("rateLimits"),
 );
 
 type Page = { isDone: boolean; continueCursor: string };
+
+// Delete the recipient's notifications of `type` whose subject is `subjectId`. A member holds few
+// of one invite type, so the by_user_type read stays small.
+const deleteNotificationsAbout = async (
+  ctx: MutationCtx,
+  recipientId: Id<"users">,
+  type: "circle_invite_received" | "connection_offer_received",
+  subjectId: string,
+): Promise<void> => {
+  const rows = await ctx.db
+    .query("notifications")
+    .withIndex("by_user_type", (q) =>
+      q.eq("userId", recipientId).eq("type", type),
+    )
+    .collect();
+  for (const row of rows) {
+    const subject = row.subject;
+    const id =
+      subject?.kind === "circleInvite"
+        ? subject.inviteId
+        : subject?.kind === "connectionOffer"
+          ? subject.offerId
+          : undefined;
+    if (id === subjectId) await ctx.db.delete(row._id);
+  }
+};
+
+const deleteInvite = async (ctx: MutationCtx, row: Doc<"circleInvites">) => {
+  await deleteNotificationsAbout(
+    ctx,
+    row.inviteeId,
+    "circle_invite_received",
+    row.aggregateId,
+  );
+  await ctx.db.delete(row._id);
+};
+
+const deleteOffer = async (ctx: MutationCtx, row: Doc<"connectionOffers">) => {
+  await deleteNotificationsAbout(
+    ctx,
+    row.toId,
+    "connection_offer_received",
+    row.aggregateId,
+  );
+  await ctx.db.delete(row._id);
+};
 
 const runPhase = async (
   ctx: MutationCtx,
@@ -111,6 +169,38 @@ const runPhase = async (
           }),
         });
       }
+      return page;
+    }
+    case "invitesOut": {
+      const page = await ctx.db
+        .query("circleInvites")
+        .withIndex("by_inviter", (q) => q.eq("inviterId", memberId))
+        .paginate(opts);
+      for (const row of page.page) await deleteInvite(ctx, row);
+      return page;
+    }
+    case "invitesIn": {
+      const page = await ctx.db
+        .query("circleInvites")
+        .withIndex("by_invitee_status", (q) => q.eq("inviteeId", memberId))
+        .paginate(opts);
+      for (const row of page.page) await deleteInvite(ctx, row);
+      return page;
+    }
+    case "offersOut": {
+      const page = await ctx.db
+        .query("connectionOffers")
+        .withIndex("by_from_to_status", (q) => q.eq("fromId", memberId))
+        .paginate(opts);
+      for (const row of page.page) await deleteOffer(ctx, row);
+      return page;
+    }
+    case "offersIn": {
+      const page = await ctx.db
+        .query("connectionOffers")
+        .withIndex("by_to_status", (q) => q.eq("toId", memberId))
+        .paginate(opts);
+      for (const row of page.page) await deleteOffer(ctx, row);
       return page;
     }
     case "rateLimits": {

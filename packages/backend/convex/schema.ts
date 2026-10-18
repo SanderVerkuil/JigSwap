@@ -1210,6 +1210,9 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_user_read", ["userId", "isRead"])
     .index("by_user_group", ["userId", "groupKey", "isRead"])
+    // Account deletion: a recipient's notifications of one type, to find those pointing at a
+    // purged invite or offer (conversation/purgeMemberMessagingData).
+    .index("by_user_type", ["userId", "type"])
     .index("by_type", ["type"])
     .index("by_read_status", ["isRead"])
     .index("by_created_at", ["createdAt"])
@@ -1318,7 +1321,9 @@ export default defineSchema({
     .index("by_aggregate_id", ["aggregateId"])
     .index("by_invitee_status", ["inviteeId", "status"])
     .index("by_circle_status", ["circleAggregateId", "status"])
-    .index("by_circle_invitee", ["circleAggregateId", "inviteeId"]),
+    .index("by_circle_invitee", ["circleAggregateId", "inviteeId"])
+    // Account deletion: the invites a member sent (conversation/purgeMemberMessagingData).
+    .index("by_inviter", ["inviterId"]),
 
   // Read model of copies shared into a circle, projected from the CopySharedToCircle event. Sharing
   // owns no copy state; this link makes a friend-circle copy discoverable to the circle's members.

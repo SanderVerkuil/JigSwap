@@ -304,8 +304,9 @@ export const deleteUser = internalMutation({
       console.warn("can't delete user, does not exist", id);
       return;
     }
-    // Their messaging data (attachments, reveals, blocks, filed reports, rate-limit counters), in
-    // batches after this mutation (conversation/purgeMemberMessagingData). Also for a tombstoned
+    // Their messaging data (attachments, reveals, blocks, filed reports, rate-limit counters) and
+    // their circle invites and connection offers both ways, in batches after this mutation
+    // (conversation/purgeMemberMessagingData). Also for a tombstoned
     // member below: a quarantined photo is left whole by the purge, so the CSAM preservation is
     // unaffected. [LAWYER] A lawyer should confirm that purging the rest of a member under an open
     // CSAM escalation is right (versus preserving it with the account).
