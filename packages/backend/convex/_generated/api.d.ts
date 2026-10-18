@@ -327,6 +327,7 @@ import type * as onboarding_quickStartFacts from "../onboarding/quickStartFacts.
 import type * as onboarding_recordQuickStart from "../onboarding/recordQuickStart.js";
 import type * as presence from "../presence.js";
 import type * as puzzles from "../puzzles.js";
+import type * as reports_attachmentEvidence from "../reports/attachmentEvidence.js";
 import type * as reports_fileReport from "../reports/fileReport.js";
 import type * as reports_listMyReports from "../reports/listMyReports.js";
 import type * as reputation_adapters_convexExchangeCompletionPort from "../reputation/adapters/convexExchangeCompletionPort.js";
@@ -795,6 +796,7 @@ declare const fullApi: ApiFromModules<{
   "onboarding/recordQuickStart": typeof onboarding_recordQuickStart;
   presence: typeof presence;
   puzzles: typeof puzzles;
+  "reports/attachmentEvidence": typeof reports_attachmentEvidence;
   "reports/fileReport": typeof reports_fileReport;
   "reports/listMyReports": typeof reports_listMyReports;
   "reputation/adapters/convexExchangeCompletionPort": typeof reputation_adapters_convexExchangeCompletionPort;

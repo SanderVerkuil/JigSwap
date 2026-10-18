@@ -1,9 +1,10 @@
 import { toMemberId } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
+import { internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
 import { mutation, type MutationCtx } from "../_generated/server";
 import { toLastMessage } from "../conversation/adapters/threadMapper";
-import { deleteAttachmentBlobs } from "../conversation/messageAttachments";
+import { releaseEvidenceHold } from "../conversation/messageAttachments";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
 import { makeNotify } from "../notifications/adapters/makeNotify";
@@ -87,6 +88,19 @@ export const decideReport = mutation({
       });
     }
 
+    // A reported message photo: on removal, copy its bytes into report-only evidence (which then
+    // deletes the served blob and releases the hold); otherwise just release the hold.
+    const attachmentId = await reportedAttachmentOf(ctx, report);
+    if (attachmentId && decision === "content_removed") {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.reports.attachmentEvidence.preserveEvidence,
+        { reportId: report._id, attachmentId },
+      );
+    } else if (attachmentId) {
+      await releaseEvidenceHold(ctx, attachmentId);
+    }
+
     await stampModerationAction(ctx, {
       actorId: adminId,
       kind: STAMP_KIND[decision],
@@ -151,8 +165,7 @@ const blankLastMessageSummary = async (ctx: MutationCtx, messageId: string) => {
 };
 
 // Tombstone a message: its body and copy reference are cleared, and an image message's photo is
-// removed too (status "removed"; its blobs are deleted unless a report holds them as evidence,
-// which the reporting one does: the retention job purges them later). Idempotent.
+// marked "removed" (its blobs go once reports/attachmentEvidence has copied them). Idempotent.
 const tombstoneMessage = async (
   ctx: MutationCtx,
   messageId: string,
@@ -178,8 +191,24 @@ const tombstoneMessage = async (
       moderationStatus: "removed",
       updatedAt: Date.now(),
     });
-    await deleteAttachmentBlobs(ctx, attachment);
   }
+};
+
+// The message photo a report is about: the attachment target itself, or the photo of a reported
+// image message. Null for every other report.
+const reportedAttachmentOf = async (
+  ctx: MutationCtx,
+  report: Doc<"reports">,
+): Promise<Id<"messageAttachments"> | null> => {
+  if (report.targetKind === "attachment") {
+    return ctx.db.normalizeId("messageAttachments", report.targetId);
+  }
+  if (report.targetKind !== "message") return null;
+  const message = await ctx.db
+    .query("threadMessages")
+    .withIndex("by_message_id", (q) => q.eq("messageId", report.targetId))
+    .first();
+  return message?.attachmentId ?? null;
 };
 
 // Remove the reported content: tombstone a message (its body and copy reference are cleared too,

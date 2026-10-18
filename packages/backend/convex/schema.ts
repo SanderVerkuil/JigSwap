@@ -1673,6 +1673,11 @@ export default defineSchema({
       ),
     ),
     statementOfReasons: v.optional(v.string()),
+    // content_removed on a message photo: a copy of its bytes in a NEW blob that only this report
+    // references (admin evidence; the served blob is deleted, so issued URLs die), kept until
+    // `evidenceRetainUntil` (decision + 6 months, spec 2.8; purged by the retention job).
+    evidenceFileId: v.optional(v.id("_storage")),
+    evidenceRetainUntil: v.optional(v.number()),
     decidedBy: v.optional(v.id("users")),
     decidedAt: v.optional(v.number()),
     createdAt: v.number(),

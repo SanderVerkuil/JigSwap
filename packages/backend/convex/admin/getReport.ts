@@ -42,6 +42,10 @@ export const getReport = query({
           ? await ctx.storage.getUrl(attachment.fileId)
           : null;
     }
+    // A removed message photo: its report-only evidence copy (the served blob is gone).
+    if (report.evidenceFileId) {
+      photoUrl = await ctx.storage.getUrl(report.evidenceFileId);
+    }
 
     // The notice stores the notifier email only when it differs from the account's.
     const notifierEmail =

@@ -989,7 +989,7 @@ describe("reporting a photo", () => {
     ).rejects.toThrow(/NotFound/);
   });
 
-  test("content_removed removes the photo, tombstones its message and keeps the held blob", async () => {
+  test("content_removed removes the photo, tombstones its message and moves the bytes to an admin-only evidence blob", async () => {
     const t = convexTest(schema, modules);
     const { alice, id, threadId } = await deliveredPhoto(t);
     const { reportId } = await asBob(t).mutation(
@@ -1001,9 +1001,24 @@ describe("reporting a photo", () => {
       decision: "content_removed",
       statementOfReasons: "Explicit photo",
     });
-    const row = (await attachment(t, id))!;
-    expect(row.moderationStatus).toBe("removed");
-    expect(await blobExists(t, row.fileId)).toBe(true); // evidence hold
+    const served = (await attachment(t, id))!;
+    expect(served.moderationStatus).toBe("removed");
+    await settleDueJobs(t);
+    // The served blob is gone, so every URL already handed out dies; the bytes live on in a NEW
+    // blob that only the report references, kept until decision + 6 months.
+    expect(await blobExists(t, served.fileId)).toBe(false);
+    const report = (await t.run((ctx) => ctx.db.get(reportId)))!;
+    expect(report.evidenceFileId).toBeDefined();
+    expect(report.evidenceFileId).not.toBe(served.fileId);
+    expect(await blobExists(t, report.evidenceFileId!)).toBe(true);
+    const sixMonths = new Date(report.decidedAt!);
+    sixMonths.setUTCMonth(sixMonths.getUTCMonth() + 6);
+    expect(report.evidenceRetainUntil).toBe(sixMonths.getTime());
+    expect((await attachment(t, id))!.evidenceHold).toBeUndefined();
+    const detail = await asAdmin(t).query(api.admin.getReport.getReport, {
+      reportId,
+    });
+    expect(detail.photoUrl).toEqual(expect.any(String));
     for (const as of [asAlice, asBob]) {
       const [message] = await threadOf(t, as, threadId);
       expect(message).toMatchObject({ body: "", removed: true });
@@ -1019,6 +1034,57 @@ describe("reporting a photo", () => {
       (n) => n.type === "content_removed",
     );
     expect(notice!.params).toMatchObject({ restricted: "photo" });
+  });
+
+  test("the evidence copy holds the same bytes as the photo", async () => {
+    const t = convexTest(schema, modules);
+    const { id } = await deliveredPhoto(t);
+    const fileId = (await attachment(t, id))!.fileId;
+    const bytesOf = (id: Id<"_storage">) =>
+      t.run(async (ctx) =>
+        Array.from(
+          new Uint8Array(await (await ctx.storage.get(id))!.arrayBuffer()),
+        ).join(","),
+      );
+    const before = await bytesOf(fileId);
+    const { reportId } = await asBob(t).mutation(
+      api.reports.fileReport.fileReport,
+      { targetKind: "attachment", targetId: id, reason: "sexual" },
+    );
+    await asAdmin(t).mutation(api.admin.decideReport.decideReport, {
+      reportId,
+      decision: "content_removed",
+      statementOfReasons: "Explicit photo",
+    });
+    await settleDueJobs(t);
+    const report = (await t.run((ctx) => ctx.db.get(reportId)))!;
+    expect(await bytesOf(report.evidenceFileId!)).toBe(before);
+  });
+
+  test("dismissing releases the hold unless another open report still references the photo", async () => {
+    const t = convexTest(schema, modules);
+    const { id } = await deliveredPhoto(t);
+    const messageId = (await attachment(t, id))!.messageId!;
+    const first = await asBob(t).mutation(api.reports.fileReport.fileReport, {
+      targetKind: "attachment",
+      targetId: id,
+      reason: "sexual",
+    });
+    const second = await asBob(t).mutation(api.reports.fileReport.fileReport, {
+      targetKind: "message",
+      targetId: messageId,
+      reason: "other",
+    });
+    const dismiss = (reportId: Id<"reports">) =>
+      asAdmin(t).mutation(api.admin.decideReport.decideReport, {
+        reportId,
+        decision: "dismissed",
+        statementOfReasons: "Not against the rules",
+      });
+    await dismiss(first.reportId);
+    expect((await attachment(t, id))!.evidenceHold).toBe(true);
+    await dismiss(second.reportId);
+    expect((await attachment(t, id))!.evidenceHold).toBeUndefined();
   });
 
   test("a message report on an image message holds and, on removal, removes its photo", async () => {

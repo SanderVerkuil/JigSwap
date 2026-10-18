@@ -120,6 +120,38 @@ export const deleteAttachmentBlobs = async (
   }
 };
 
+/**
+ * Clear a photo's evidence hold once no OPEN report references it any more (a report on the photo
+ * itself, or on its image message). Called when a report is decided.
+ */
+export const releaseEvidenceHold = async (
+  ctx: MutationCtx,
+  attachmentId: Id<"messageAttachments">,
+): Promise<void> => {
+  const row = await ctx.db.get(attachmentId);
+  if (!row?.evidenceHold) return;
+  const targets: [Doc<"reports">["targetKind"], string][] = [
+    ["attachment", row._id as string],
+    ...(row.messageId !== undefined
+      ? [["message", row.messageId] as [Doc<"reports">["targetKind"], string]]
+      : []),
+  ];
+  for (const [targetKind, targetId] of targets) {
+    const open = await ctx.db
+      .query("reports")
+      .withIndex("by_target", (q) =>
+        q.eq("targetKind", targetKind).eq("targetId", targetId),
+      )
+      .filter((q) => q.eq(q.field("status"), "open"))
+      .first();
+    if (open) return;
+  }
+  await ctx.db.patch(attachmentId, {
+    evidenceHold: undefined,
+    updatedAt: Date.now(),
+  });
+};
+
 // Drop a photo that will never be delivered (expired, or its pair is now blocked): blobs and row.
 // A quarantined or evidence-held row is kept whole.
 const discardAttachment = async (ctx: MutationCtx, row: Attachment) => {
