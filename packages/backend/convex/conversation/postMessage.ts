@@ -5,6 +5,7 @@ import { mutation, type QueryCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { enforceRateLimit } from "../lib/rateLimits";
 import { canViewCopy } from "../library/canViewCopy";
+import { assertThreadNotBlocked } from "../social/blocks";
 import { convexThreadRepository } from "./adapters/convexThreadRepository";
 import { messageIdGenerator } from "./adapters/idGenerators";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
@@ -47,6 +48,7 @@ export const postMessage = mutation({
   handler: async (ctx, args) => {
     const authorId = await requireMember(ctx);
     await enforceRateLimit(ctx, "messagePost", authorId);
+    await assertThreadNotBlocked(ctx, args.threadId, authorId);
 
     if (args.copyId !== undefined) {
       const thread = await threadRowByAggregateId(ctx, args.threadId);

@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { isBlockedEitherWay } from "./blocks";
 import {
   connectionOfferUnavailable,
   loadOfferForRecipient,
@@ -22,7 +23,10 @@ export const acceptConnection = mutation({
     if (offer.accept(toMemberId(me), now).isErr) {
       throw connectionOfferUnavailable();
     }
-    // TODO(blocks): when social/blocks.ts lands, refuse here if isBlockedEitherWay(fromId, toId).
+    // A block either way since the offer (spec 2.6): the same generic refusal as a gone offer.
+    if (await isBlockedEitherWay(ctx, row.fromId, row.toId)) {
+      throw connectionOfferUnavailable();
+    }
     const inviter = await ctx.db.get(row.fromId);
     if (inviter === null || !inviter.isActive) {
       throw connectionOfferUnavailable();

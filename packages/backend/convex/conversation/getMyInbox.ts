@@ -11,6 +11,7 @@ import {
   tradePartyMemberView,
 } from "../exchange/tradeParty";
 import { requireMember } from "../identity/requireMember";
+import { blockStateBetween } from "../social/blocks";
 import { anonymousMemberOf, projectMemberIdentity } from "../social/privacy";
 import { toLastMessage } from "./adapters/threadMapper";
 import { viewableContextCopies } from "./copyCard";
@@ -238,6 +239,10 @@ const toInboxThreadView = async (
     resolveCopy,
     budget,
   );
+  const otherId = thread.participants.find((p) => p !== me);
+  const blocked = otherId
+    ? await blockStateBetween(ctx, me, otherId)
+    : undefined;
   return {
     threadId: thread.aggregateId,
     subject,
@@ -245,6 +250,9 @@ const toInboxThreadView = async (
     unreadCount: await participantUnreadCountOf(ctx, thread, membership),
     contextCopies,
     updatedAt: thread.lastMessageAt ?? thread.createdAt,
+    // Only the blocker learns of the block; the blocked side just sees a read-only thread.
+    ...(blocked === "byMe" ? { blocked } : {}),
+    ...(blocked === "byThem" ? { readOnly: true as const } : {}),
   };
 };
 

@@ -8,7 +8,9 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import { canViewCopy } from "../library/canViewCopy";
+import { assertPairNotBlocked } from "../social/blocks";
 import { convexConnectionPolicy } from "./adapters/connectionPolicy";
 import { convexThreadRepository } from "./adapters/convexThreadRepository";
 import { messageIdGenerator, threadIdGenerator } from "./adapters/idGenerators";
@@ -19,14 +21,16 @@ import { toConvexError } from "./errors";
 // Composition root for the first message of a conversation about a copy: open (or land on) the
 // DM with the copy's owner and post the message referencing the copy, in ONE transaction — so a
 // rejected first message (empty, too long) rolls the freshly opened thread back and no empty
-// thread is ever left behind. Gates, in order: authenticated member; the copy exists and the
-// caller may view it (CopyNotFound, no existence leak); then the use cases' own rules — not
+// thread is ever left behind. Gates, in order: authenticated member; the messagePost rate limit
+// (shared with postMessage); the copy exists and the caller may view it (CopyNotFound, no
+// existence leak); the pair isn't blocked either way (NotConnected); then the use cases' own rules — not
 // yourself (DmRequiresTwoParticipants), the ConnectionPolicy (NotConnected), one DM per pair.
 // The recipient is derived from the copy, never client-supplied. Returns the thread's id.
 export const startCopyConversation = mutation({
   args: { copyId: v.id("ownedPuzzles"), body: v.string() },
   handler: async (ctx, args) => {
     const me = await requireMember(ctx);
+    await enforceRateLimit(ctx, "messagePost", me);
 
     const copy = await ctx.db.get(args.copyId);
     if (
@@ -38,6 +42,8 @@ export const startCopyConversation = mutation({
         message: "Copy not found",
       });
     }
+
+    await assertPairNotBlocked(ctx, me, copy.ownerId);
 
     const threads = convexThreadRepository(ctx);
     const opened = await makeOpenDmThread({

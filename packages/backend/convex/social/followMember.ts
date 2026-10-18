@@ -16,6 +16,7 @@ import {
 } from "./adapters/idGenerators";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
+import { assertPairNotBlocked } from "./blocks";
 import { toConvexError } from "./errors";
 import { profileVisibilityOf } from "./privacy";
 
@@ -30,6 +31,7 @@ export const followMemberUseCase = async (
   followerId: MemberId,
   args: { followeeId: Id<"users"> },
 ): Promise<{ kind: "followed" | "requested"; id: string }> => {
+  await assertPairNotBlocked(ctx, followerId, args.followeeId);
   const visibility = await profileVisibilityOf(ctx, args.followeeId);
   const reverseEdge = await ctx.db
     .query("follows")

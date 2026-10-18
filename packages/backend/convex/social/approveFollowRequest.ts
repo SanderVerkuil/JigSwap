@@ -11,6 +11,7 @@ import { convexFollowRequestRepository } from "./adapters/convexFollowRequestRep
 import { followIdGenerator } from "./adapters/idGenerators";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
+import { assertPairNotBlocked } from "./blocks";
 import { toConvexError } from "./errors";
 
 // Composition root: the acting member approves a follow request they received. The actor
@@ -22,6 +23,13 @@ export const approveFollowRequestUseCase = async (
   actorId: MemberId,
   args: { requestId: string },
 ): Promise<{ requesterId: string; alreadyFollowsBack: boolean }> => {
+  const request = await ctx.db
+    .query("followRequests")
+    .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", args.requestId))
+    .unique();
+  if (request) {
+    await assertPairNotBlocked(ctx, request.requesterId, request.targetId);
+  }
   const approve = makeApproveFollowRequest({
     requests: convexFollowRequestRepository(ctx),
     follows: convexFollowRepository(ctx),
