@@ -1727,6 +1727,15 @@
       "declined": "Request declined",
       "error": "Something went wrong. Please try again."
     },
+    "connectionOffers": {
+      "title": "Invitations",
+      "invitedYou": "<b>{name}</b> invited you to JigSwap. Follow each other?",
+      "followEachOther": "Follow each other",
+      "notNow": "Not now",
+      "connected": "You and {name} now follow each other",
+      "notConnected": "You can't follow each other right now.",
+      "error": "Something went wrong. Please try again."
+    },
     "ownedLabel": "owned",
     "swapsLabel": "swaps",
     "ratingSr": "Average rating {rating} out of 5 from {count, plural, one {# review} other {# reviews}}",
@@ -4176,7 +4185,7 @@
     "people": {
       "suggested": "People you may know",
       "inviteTitle": "Invite someone who isn't on JigSwap yet",
-      "inviteBody": "Share your invite link. When they sign up, you'll follow each other."
+      "inviteBody": "Share your invite link. When they sign up, we'll ask them whether you two should follow each other."
     },
     "household": {
       "lead": "Live with someone who puzzles? Share one shelf.",

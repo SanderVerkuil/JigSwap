@@ -1,6 +1,7 @@
 import { EmptyState } from "@/components/community/primitives";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { ActivityFeed } from "@/components/social/activity-feed";
+import { ConnectionOffersStrip } from "@/components/social/connection-offers";
 import { FindPeople } from "@/components/social/find-people";
 import { FollowRequestsStrip } from "@/components/social/follow-requests-strip";
 import {
@@ -105,11 +106,11 @@ function DiscoverabilityNotice() {
   );
 }
 
-// Your-network tab body: the pending follow-request strip above the deduped
-// follower/following grid — the pre-tabs page content. The network is computed
-// by the parent (which also publishes the count into the page header) and
-// passed down, so the count and grid stay in sync without duplicating the
-// follow queries.
+// Your-network tab body: open connection offers (an inviter asking to follow each other) and the
+// pending follow-request strip above the deduped follower/following grid — the pre-tabs page
+// content. The network is computed by the parent (which also publishes the count into the page
+// header) and passed down, so the count and grid stay in sync without duplicating the follow
+// queries.
 function NetworkTab({
   members,
   loading,
@@ -121,6 +122,7 @@ function NetworkTab({
 
   return (
     <section className="flex flex-col gap-4">
+      <ConnectionOffersStrip />
       <FollowRequestsStrip />
       {loading ? (
         <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">

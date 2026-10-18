@@ -1727,6 +1727,15 @@
       "declined": "Verzoek geweigerd",
       "error": "Er ging iets mis. Probeer het opnieuw."
     },
+    "connectionOffers": {
+      "title": "Uitnodigingen",
+      "invitedYou": "<b>{name}</b> heeft je uitgenodigd voor JigSwap. Elkaar volgen?",
+      "followEachOther": "Elkaar volgen",
+      "notNow": "Niet nu",
+      "connected": "Jij en {name} volgen elkaar nu",
+      "notConnected": "Jullie kunnen elkaar nu niet volgen.",
+      "error": "Er ging iets mis. Probeer het opnieuw."
+    },
     "ownedLabel": "in bezit",
     "swapsLabel": "ruilen",
     "ratingSr": "Gemiddelde beoordeling {rating} van 5 uit {count, plural, one {# review} other {# reviews}}",
@@ -4176,7 +4185,7 @@
     "people": {
       "suggested": "Mensen die je misschien kent",
       "inviteTitle": "Nodig iemand uit die nog niet op JigSwap zit",
-      "inviteBody": "Deel je uitnodigingslink. Als ze zich aanmelden, volgen jullie elkaar."
+      "inviteBody": "Deel je uitnodigingslink. Als ze zich aanmelden, vragen we of jullie elkaar willen volgen."
     },
     "household": {
       "lead": "Woon je samen met iemand die puzzelt? Deel één plank.",
