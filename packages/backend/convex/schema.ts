@@ -348,6 +348,10 @@ export default defineSchema({
     // other members in place of a photo that is still pending/unscored; never exposed for a
     // rejected one. Absent on rows processed before it existed or whose decode failed.
     blurhash: v.optional(v.string()),
+    // When the moderation pipeline swapped the row to its re-encoded (EXIF/GPS-stripped) blob, or
+    // re-stored a WebP under its real type. Absent = the stored blob is still the upload as sent;
+    // the pipeline re-encodes on any attempt until this is set.
+    reencodedAt: v.optional(v.number()),
     // The admin who decided this photo by hand (approve/reject of a pending or unscored photo).
     // A manual decision is final: the re-screen backfill skips such rows.
     moderatedBy: v.optional(v.id("users")),
@@ -477,6 +481,10 @@ export default defineSchema({
     // other members in place of a photo that is still pending/unscored; never exposed for a
     // rejected one. Absent on rows processed before it existed or whose decode failed.
     blurhash: v.optional(v.string()),
+    // When the moderation pipeline swapped the row to its re-encoded (EXIF/GPS-stripped) blob, or
+    // re-stored a WebP under its real type. Absent = the stored blob is still the upload as sent;
+    // the pipeline re-encodes on any attempt until this is set.
+    reencodedAt: v.optional(v.number()),
     // The admin who decided this photo by hand (approve/reject of a pending or unscored photo).
     // A manual decision is final: the re-screen backfill skips such rows.
     moderatedBy: v.optional(v.id("users")),

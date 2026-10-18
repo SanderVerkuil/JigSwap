@@ -7,6 +7,7 @@ import type { Id } from "../../_generated/dataModel";
 import type { ActionCtx } from "../../_generated/server";
 import {
   makeModerationPortFromEnv,
+  nextRetryDelayMs,
   planModerationStep,
   readScreeningConfig,
   screeningLogFields,
@@ -37,7 +38,7 @@ import {
 //      classified, and its blob is deleted. Never fails open. WebP passes the guards but jimp
 //      cannot decode it: it is classified as uploaded (no EXIF strip, no blurhash) and stored again
 //      as "image/webp" when the client claimed another type (see guards.ts for why it is kept).
-//   3. (first attempt only) Re-encode via jimp — PNG when it has transparency, else JPEG — which
+//   3. (any attempt until the row is marked `reencodedAt`) Re-encode via jimp — PNG when it has transparency, else JPEG — which
 //      DROPS all EXIF/metadata, compute the blurhash from the same decode, swap the row to the
 //      clean blob (setFile) and delete the original. A decode failure is refused as
 //      "decode_failed", except WebP (see below).
@@ -102,6 +103,8 @@ export const reencodeImage = async (
 export type ModerationRow = {
   fileId: Id<"_storage">;
   moderationStatus?: string;
+  /** Set by `setFile` once the row holds its re-encoded blob (absent = still the upload). */
+  reencodedAt?: number;
 };
 
 /** The verdict the pipeline writes through a table's `setVerdict`. */
@@ -295,14 +298,15 @@ export const runImageModeration = async <R extends ModerationRow>(
     event.image_width = guard.width;
     event.image_height = guard.height;
 
-    // Re-encode (strip EXIF/metadata) on the first attempt only — a retry finds the row already
-    // pointing at the clean blob. A decode failure is refused (a header that says JPEG/PNG/GIF
+    // Re-encode (strip EXIF/metadata) on ANY attempt until the row is marked re-encoded, so a
+    // retry after a download or swap failure never classifies (and so never publishes) the
+    // original with its EXIF/GPS. A decode failure is refused (a header that says JPEG/PNG/GIF
     // over a body that is not one is a polyglot or a corrupt file), except for WebP, which jimp
     // cannot decode: it keeps the best-effort path and is classified as uploaded, but is stored
     // again as "image/webp" when the client claimed another type, so the blob is never served
     // as HTML or SVG.
     let cleanBytes = bytes;
-    if (attempt === 1) {
+    if (row.reencodedAt === undefined) {
       let encoded: Awaited<ReturnType<typeof reencodeImage>> | null = null;
       try {
         encoded = await reencodeImage(bytes);
@@ -354,7 +358,7 @@ export const runImageModeration = async <R extends ModerationRow>(
           event.reencoded = false;
           event.swap_error = errMsg(error);
           // If the new blob was stored but the row swap failed, it is orphaned (the row still
-          // references the original). Delete it best-effort before falling back.
+          // references the original). Delete it best-effort.
           if (storedFileId !== null) {
             try {
               await ctx.storage.delete(storedFileId);
@@ -362,6 +366,20 @@ export const runImageModeration = async <R extends ModerationRow>(
               event.orphan_cleanup_error = errMsg(cleanupError);
             }
           }
+          // Never classify (and so never publish) the original: retry the whole attempt, and
+          // once the retries are spent refuse it rather than approve it.
+          const delayMs = nextRetryDelayMs(attempt);
+          if (delayMs !== null) {
+            event.decision = "retry_scheduled";
+            event.retry_in_ms = delayMs;
+            await ctx.scheduler.runAfter(delayMs, steps.retry, {
+              imageId,
+              attempt: attempt + 1,
+            });
+          } else {
+            await refuse("decode_failed");
+          }
+          return;
         }
       }
     }

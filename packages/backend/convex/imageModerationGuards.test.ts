@@ -1,6 +1,7 @@
 import { convexTest, type TestConvex } from "convex-test";
+import { Jimp } from "jimp";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { MAX_IMAGE_UPLOAD_BYTES } from "./lib/imageModeration/guards";
 import schema from "./schema";
@@ -236,6 +237,43 @@ describe("input guards (copy photos)", () => {
     expect(row.moderationStatus).toBe("approved");
     expect(row.fileId).toBe(fileId);
     expect(row.blurhash).toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("re-encode on a retry (EXIF/GPS never kept)", () => {
+  test("after an attempt-1 download error, attempt 2 re-encodes and swaps before classifying", async () => {
+    const fetchMock = cleanReply();
+    vi.stubGlobal("fetch", fetchMock);
+    const t = convexTest(schema, modules);
+    const { copy } = await seed(t);
+    const jpeg = new Uint8Array(
+      await new Jimp({ width: 8, height: 8, color: 0x336699ff }).getBuffer(
+        "image/jpeg",
+      ),
+    );
+    const fileId = await store(t, jpeg, "image/jpeg");
+    // The pipeline's download (blob.arrayBuffer) fails once: a retryable download_error.
+    vi.spyOn(Blob.prototype, "arrayBuffer").mockRejectedValueOnce(
+      new Error("connection reset"),
+    );
+
+    const first = await addCopyPhoto(t, copy, fileId);
+    expect(first.moderationStatus).toBe("pending");
+    expect(first.fileId).toBe(fileId);
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    await t.action(internal.library.moderatePhoto.moderatePhoto, {
+      imageId: first._id,
+      attempt: 2,
+    });
+
+    const after = await t.run((ctx) => ctx.db.get(first._id));
+    expect(after?.moderationStatus).toBe("approved");
+    expect(after?.fileId).not.toBe(fileId);
+    expect(after?.reencodedAt).toBeGreaterThan(0);
+    expect(after?.blurhash).toMatch(/^L/);
+    expect(await blobExists(t, fileId)).toBe(false);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

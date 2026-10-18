@@ -21,6 +21,7 @@ export const getImageForModeration = internalQuery({
     return {
       fileId: row.fileId,
       moderationStatus: row.moderationStatus,
+      reencodedAt: row.reencodedAt,
       // Business context for the wide event (which copy / who uploaded / what kind of shot).
       ownedPuzzleId: row.ownedPuzzleId,
       uploaderId: row.uploaderId,
@@ -41,7 +42,13 @@ export const setModerationFile = internalMutation({
   handler: async (ctx, { imageId, fileId, blurhash }) => {
     const exists = await ctx.db.get(imageId);
     if (!exists) return;
-    await ctx.db.patch(imageId, { fileId, blurhash, updatedAt: Date.now() });
+    const now = Date.now();
+    await ctx.db.patch(imageId, {
+      fileId,
+      blurhash,
+      reencodedAt: now,
+      updatedAt: now,
+    });
   },
 });
 
