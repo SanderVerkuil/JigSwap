@@ -1104,3 +1104,47 @@ describe("media in circle threads", () => {
     );
   });
 });
+
+describe("the floor fails closed", () => {
+  test("a circle participant row without a joinedAt reads nothing", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    await post(t, "alice", threadId, "hello");
+    await t.run(async (ctx) => {
+      const row = await ctx.db
+        .query("threadParticipants")
+        .withIndex("by_thread_member", (q) =>
+          q.eq("threadAggregateId", threadId).eq("memberId", bob),
+        )
+        .unique();
+      await ctx.db.patch(row!._id, { joinedAt: undefined });
+    });
+    await expectCode(messagesOf(t, "bob", threadId), "NotParticipant");
+    expect(await inboxOf(t, "bob")).toEqual([]);
+  });
+
+  test("the seat's newer join time wins over a stale participant row", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    const old = await floorOf(t, threadId, bob);
+    // The seat says Bob (re-)joined later than his row records, as after an unsynced re-join.
+    await t.run(async (ctx) => {
+      const circle = await ctx.db
+        .query("circles")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", circleId))
+        .unique();
+      await ctx.db.patch(circle!._id, {
+        memberships: circle!.memberships.map((m) =>
+          m.memberId === bob ? { ...m, joinedAt: old + 1_000 } : m,
+        ),
+      });
+    });
+    await insertMessage(t, threadId, alice, "while away", old + 500);
+    await insertMessage(t, threadId, alice, "after return", old + 1_500);
+    expect((await messagesOf(t, "bob", threadId)).map((m) => m.body)).toEqual([
+      "after return",
+    ]);
+  });
+});

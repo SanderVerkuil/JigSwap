@@ -17,6 +17,7 @@ import { toLastMessage } from "./adapters/threadMapper";
 import { viewableContextCopies } from "./copyCard";
 import {
   circleDecorations,
+  circleFloorOf,
   circleRowOf,
   inboxListable,
   participantUnreadCountOf,
@@ -287,10 +288,15 @@ const toInboxThreadView = async (
         )
         .order("desc")
         .first();
+  const floor =
+    thread.subjectKind === "circle"
+      ? await circleFloorOf(ctx, thread, me)
+      : undefined;
+  if (floor === null) return null;
   const last = visibleLastMessage(
     thread.lastMessage ?? (newestRow ? toLastMessage(newestRow) : null),
     me,
-    thread.subjectKind === "circle" ? membership.joinedAt : undefined,
+    floor,
   );
   if (thread.subjectKind === "circle") {
     if (!circleRowShows(membership, last)) return null;

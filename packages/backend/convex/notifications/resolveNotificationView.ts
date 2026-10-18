@@ -6,7 +6,7 @@ import type {
 import { COOLDOWN_MS, type NotificationSubject } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
-import { participantRowOf } from "../conversation/readModelHelpers";
+import { circleFloorOf } from "../conversation/readModelHelpers";
 import { projectTradeParty } from "../exchange/tradeParty";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { canViewCopy } from "../library/canViewCopy";
@@ -454,6 +454,13 @@ const resolveSubject = async (
       if (!thread || !isParticipant) {
         return { available: false, context: {} };
       }
+      // A circle thread is unavailable to anyone without a current seat and floor in it (an
+      // ex-member whose participant sync is pending or failed), like a former participant.
+      const circleFloor =
+        thread.subjectKind === "circle"
+          ? await circleFloorOf(ctx, thread, viewerId)
+          : undefined;
+      if (circleFloor === null) return { available: false, context: {} };
       const last = await memoized(
         cache,
         `lastMessage:${thread.aggregateId}`,
@@ -471,8 +478,8 @@ const resolveSubject = async (
       // blocked (shown collapsed in the thread): then nothing of it is previewed.
       if (
         last &&
-        thread.subjectKind === "circle" &&
-        !(await circleMessagePreviewable(ctx, thread, viewerId, last))
+        circleFloor !== undefined &&
+        !(await circleMessagePreviewable(ctx, viewerId, last, circleFloor))
       ) {
         return { available: true, context: {}, decision: decideMessage(true) };
       }
@@ -779,17 +786,14 @@ export const resolveNotificationView = async (
 };
 
 // Whether a circle thread's message may be previewed to this member: sent strictly after their
-// joinedAt, and not by a member they blocked.
+// floor (circleFloorOf), and not by a member they blocked.
 const circleMessagePreviewable = async (
   ctx: QueryCtx,
-  thread: Doc<"threads">,
   viewerId: Id<"users">,
   message: Doc<"threadMessages">,
+  floor: number,
 ): Promise<boolean> => {
-  const row = await participantRowOf(ctx, thread.aggregateId, viewerId);
-  if (!row || (row.joinedAt !== undefined && message.sentAt <= row.joinedAt)) {
-    return false;
-  }
+  if (message.sentAt <= floor) return false;
   if (message.authorId === undefined) return true;
   const authorId = message.authorId;
   const blocked = await ctx.db

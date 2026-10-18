@@ -6,10 +6,7 @@ import { isUnattachedMedia } from "./adapters/threadMapper";
 import { viewableCopyCards } from "./copyCard";
 import { messageAttachmentViews } from "./messageAttachments";
 import { locationAttachmentViewOf } from "./sharedLocations";
-import {
-  isCurrentCircleMember,
-  threadMemberProjector,
-} from "./threadMemberProjection";
+import { threadMemberProjector } from "./threadMemberProjection";
 
 // Shared row->DTO mapping and unread logic for the conversation read models. Read models page
 // the companion `threadMessages` rows via `by_thread_sent` directly and NEVER hydrate the Thread
@@ -43,8 +40,8 @@ export const participantRowOf = (
  * NotParticipant for anyone who isn't one of its participants. A circle thread additionally
  * requires a CURRENT circle membership (the participant set follows the circle asynchronously,
  * so a member who just left or was removed is refused even before the sync ran), and its
- * `floor` is the member's joinedAt: they see only messages sent strictly after it. Exchange/DM
- * threads have no floor.
+ * `floor` is circleFloorOf: they see only messages sent strictly after it. Exchange/DM threads
+ * have no floor.
  */
 export const readableThreadOf = async (
   ctx: QueryCtx,
@@ -64,15 +61,32 @@ export const readableThreadOf = async (
   });
   if (!thread.participants.includes(me)) throw notParticipant;
   if (thread.subjectKind !== "circle") return { thread, floor: undefined };
-  const participant = await participantRowOf(ctx, threadAggregateId, me);
-  if (
-    !participant ||
-    thread.circleId === undefined ||
-    !(await isCurrentCircleMember(ctx, thread.circleId, me))
-  ) {
-    throw notParticipant;
+  const floor = await circleFloorOf(ctx, thread, me);
+  if (floor === null) throw notParticipant;
+  return { thread, floor };
+};
+
+/**
+ * A member's history floor in a circle thread (they see only messages sent strictly after it),
+ * or null when they may see nothing of it: no current seat in the circle, no participant row, or
+ * a row without a joinedAt (fails closed). The floor is the LATER of the row's joinedAt and the
+ * seat's: after a leave and re-join whose sync is still pending (or arrived out of order), the
+ * row can still carry the old join time, and the seat's newer one must win.
+ */
+export const circleFloorOf = async (
+  ctx: QueryCtx,
+  thread: Doc<"threads">,
+  memberId: Id<"users">,
+): Promise<number | null> => {
+  if (thread.subjectKind !== "circle" || thread.circleId === undefined) {
+    return null;
   }
-  return { thread, floor: participant.joinedAt };
+  const circle = await circleRowOf(ctx, thread.circleId);
+  const seat = circle?.memberships.find((m) => m.memberId === memberId);
+  if (!seat) return null;
+  const participant = await participantRowOf(ctx, thread.aggregateId, memberId);
+  if (participant?.joinedAt === undefined) return null;
+  return Math.max(participant.joinedAt, seat.joinedAt);
 };
 
 /**
@@ -272,8 +286,9 @@ export const circleRowOf = (
 
 /**
  * Whether a thread the member has a participant row in belongs in their inbox and badge: its
- * subject renders (subjectRenders) and, for a circle thread, they are still a current member
- * (a leaver's row is deleted by the async sync; this closes the gap before it runs).
+ * subject renders (subjectRenders) and, for a circle thread, they may read it at all
+ * (circleFloorOf: a current seat and a floor; a leaver's row is deleted by the async sync, and
+ * this closes the gap before it runs).
  */
 export const inboxListable = async (
   ctx: QueryCtx,
@@ -282,8 +297,7 @@ export const inboxListable = async (
 ): Promise<boolean> =>
   (await subjectRenders(ctx, thread)) &&
   (thread.subjectKind !== "circle" ||
-    (thread.circleId !== undefined &&
-      (await isCurrentCircleMember(ctx, thread.circleId, me))));
+    (await circleFloorOf(ctx, thread, me)) !== null);
 
 /**
  * A thread's lastMessage summary as `me` may see it: in a circle thread only a message sent

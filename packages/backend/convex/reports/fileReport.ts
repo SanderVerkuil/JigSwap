@@ -7,7 +7,7 @@ import {
   participantsKeyOf,
 } from "../conversation/adapters/threadMapper";
 import { asImage, isDeliverable } from "../conversation/messageAttachments";
-import { participantRowOf } from "../conversation/readModelHelpers";
+import { circleFloorOf } from "../conversation/readModelHelpers";
 import { requireMember } from "../identity/requireMember";
 import { enforceRateLimit } from "../lib/rateLimits";
 import { canViewCopy } from "../library/canViewCopy";
@@ -325,10 +325,12 @@ const messageTarget = async (
     )
     .unique();
   if (!thread?.participants.includes(reporterId)) return null;
+  // circleFloorOf fails closed (null) for a member without a current seat or recorded floor.
   const floor =
     thread.subjectKind === "circle"
-      ? (await participantRowOf(ctx, thread.aggregateId, reporterId))?.joinedAt
+      ? await circleFloorOf(ctx, thread, reporterId)
       : undefined;
+  if (floor === null) return null;
   if (floor !== undefined && message.sentAt <= floor) return null;
 
   const preceding = await ctx.db
