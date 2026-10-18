@@ -319,4 +319,67 @@ describe("collections on ownership transfer", () => {
     expect(reads.json).not.toContain(NOAH_NOTE);
     expect(reads.json).not.toContain(String(NOAH_PRICE));
   });
+  test("a stale row for a copy the viewer CAN otherwise see is still not listed in the collection", async () => {
+    const t = convexTest(schema, modules);
+    const { noah, puzzleAggregateId } = await seed(t);
+
+    // Noah's copy is reachable on its own (Noah public, copy open), so only the "a collection holds
+    // its owner's own copies" rule keeps it out of Alice's collection.
+    const alices = await acquire(t, asAlice, puzzleAggregateId, "alice-note");
+    const aliceCollection = await collectionWith(
+      t,
+      asAlice,
+      "Alice shelf",
+      alices.copyAggregateId,
+    );
+    const noahs = await acquire(t, asNoah, puzzleAggregateId, NOAH_NOTE);
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_member", (q) => q.eq("memberId", noah))
+        .unique();
+      if (!profile) throw new Error("seed: profile not found");
+      await ctx.db.patch(profile._id, { visibility: "public" });
+      await ctx.db.patch(noahs.copy, { availability: OPEN });
+      await ctx.db.patch(alices.copy, { availability: OPEN });
+      const mia = await ctx.db.insert("users", {
+        clerkId: "clerk_mia",
+        email: "clerk_mia@example.com",
+        name: "clerk_mia",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("profiles", {
+        memberId: mia,
+        displayName: "Member",
+        visibility: "public",
+        updatedAt: now,
+      });
+      await ctx.db.insert("collectionMembers", {
+        collectionId: aliceCollection,
+        ownedPuzzleId: noahs.copy,
+        addedAt: now,
+      });
+    });
+
+    // Control: both copies are visible to a third party on their own.
+    expect(
+      await as(t, "clerk_mia").query(
+        api.library.getCopyInstanceView.getCopyInstanceView,
+        { copyId: noahs.copy },
+      ),
+    ).not.toBeNull();
+
+    for (const viewer of ["clerk_alice", "clerk_mia", "clerk_noah"]) {
+      const view = await as(t, viewer).query(
+        api.library.getCollectionById.getCollectionById,
+        { collectionId: aliceCollection },
+      );
+      expect(view?.puzzles.map((p) => p._id)).toEqual([alices.copy]);
+      expect(JSON.stringify(view)).not.toContain(noahs.copy);
+      expect(JSON.stringify(view)).not.toContain(NOAH_NOTE);
+    }
+  });
 });
