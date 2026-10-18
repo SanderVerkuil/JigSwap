@@ -3,6 +3,7 @@ import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { mutation, type QueryCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import { canViewCopy } from "../library/canViewCopy";
 import { convexThreadRepository } from "./adapters/convexThreadRepository";
 import { messageIdGenerator } from "./adapters/idGenerators";
@@ -45,6 +46,7 @@ export const postMessage = mutation({
   },
   handler: async (ctx, args) => {
     const authorId = await requireMember(ctx);
+    await enforceRateLimit(ctx, "messagePost", authorId);
 
     if (args.copyId !== undefined) {
       const thread = await threadRowByAggregateId(ctx, args.threadId);
