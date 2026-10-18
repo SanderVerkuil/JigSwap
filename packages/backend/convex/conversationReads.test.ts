@@ -450,3 +450,46 @@ describe("getUnreadTotal", () => {
     ).toBe(0);
   });
 });
+
+describe("legacy image messages", () => {
+  // postMessage no longer accepts images, but a row written before that (kind "image" with an
+  // arbitrary client-supplied body) must never reach a renderer.
+  const seedLegacyImage = async (t: TestConvex<typeof schema>) => {
+    const { alice, bob } = await seed(t);
+    await followMutually(t, alice, bob);
+    const threadId = await openDmWithMessages(t, bob, ["hi"]);
+    await tick();
+    await t.run((ctx) =>
+      ctx.db.insert("threadMessages", {
+        threadAggregateId: threadId,
+        messageId: "legacy-image",
+        authorId: alice,
+        kind: "image",
+        body: "https://evil.example/x.png",
+        sentAt: Date.now(),
+      }),
+    );
+    return { threadId };
+  };
+
+  test("the thread view and the inbox preview blank an image row's body", async () => {
+    const t = convexTest(schema, modules);
+    const { threadId } = await seedLegacyImage(t);
+
+    const messages = await asBob(t).query(
+      api.conversation.getThreadMessages.getThreadMessages,
+      { threadId },
+    );
+    const image = messages.find((m) => m.id === "legacy-image");
+    expect(image?.kind).toBe("image");
+    expect(image?.body).toBe("");
+    expect(messages.find((m) => m.kind === "text")?.body).toBe("hi");
+
+    const inbox = await asBob(t).query(
+      api.conversation.getMyInbox.getMyInbox,
+      {},
+    );
+    expect(inbox[0].lastMessage?.id).toBe("legacy-image");
+    expect(inbox[0].lastMessage?.body).toBe("");
+  });
+});

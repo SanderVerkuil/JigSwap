@@ -235,6 +235,28 @@ describe("postMessage", () => {
     );
   });
 
+  test("an image message is rejected server-side and nothing is persisted", async () => {
+    const t = convexTest(schema, modules);
+    const { threadId } = await openThread(t);
+    // A hand-crafted call (the typed client only allows "text"): the argument validator refuses
+    // any kind other than text, so an arbitrary "image" body can never be stored.
+    const args = {
+      threadId,
+      kind: "image",
+      body: "https://evil.example/x.png",
+    } as unknown as { threadId: string; kind: "text"; body: string };
+    await expect(
+      asAlice(t).mutation(api.conversation.postMessage.postMessage, args),
+    ).rejects.toThrow(/Expected `text`, got `image`/);
+    const rows = await t.run((ctx) =>
+      ctx.db
+        .query("threadMessages")
+        .withIndex("by_thread_sent", (q) => q.eq("threadAggregateId", threadId))
+        .collect(),
+    );
+    expect(rows).toHaveLength(0);
+  });
+
   test("a missing thread is rejected with ThreadNotFound", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
