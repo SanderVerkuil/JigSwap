@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>3/3</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>3/3</span>
             </div>
         
             
@@ -151,7 +151,24 @@
 <a name='L86'></a><a href='#L86'>86</a>
 <a name='L87'></a><a href='#L87'>87</a>
 <a name='L88'></a><a href='#L88'>88</a>
-<a name='L89'></a><a href='#L89'>89</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -224,6 +241,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -236,6 +256,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -273,7 +301,10 @@ export type NotificationType =
   | "circle_invite_received" // Sharing: CircleInviteIssued — a circle Admin invited the member to join
   | "circle_invite_accepted" // Sharing: CircleInviteAccepted — the member's circle invite was accepted
   | "circle_deleted" // Sharing: CircleDeleted — the owner deleted a circle the member was in
-  | "whats_new"; // Product: a What's new entry marked `notify: true` was published (not a domain event)
+  | "whats_new" // Product: a What's new entry marked `notify: true` was published (not a domain event)
+  | "report_decided" // Safety: a moderator decided a report the member filed (DSA Art. 16(5))
+  | "content_removed" // Safety: a moderator removed the member's reported content (DSA Art. 17)
+  | "member_warned"; // Safety: a moderator warned the member over a report (DSA Art. 17)
 &nbsp;
 // All notification types, for iteration (e.g. seeding default preferences). Kept in sync with the
 // union above by construction.
@@ -305,6 +336,9 @@ export const NOTIFICATION_TYPES: readonly NotificationType[] = [
   "circle_invite_accepted",
   "circle_deleted",
   "whats_new",
+  "report_decided",
+  "content_removed",
+  "member_warned",
 ];
 &nbsp;
 // Types that may be delivered by EMAIL. Deliberately a subset: only high-value, act-on-it
@@ -327,6 +361,14 @@ export const EMAIL_ELIGIBLE_TYPES: ReadonlySet&lt;NotificationType&gt; = new Set
   "follow_request_approved",
   "circle_invite_received",
 ]);
+&nbsp;
+// Types the member cannot switch off in-app: the DSA Art. 17 statement of reasons must reach the
+// member whose content a moderator restricted, whatever their preferences say. Other channels
+// (push/email) still follow the preference.
+export const MANDATORY_IN_APP_TYPES: ReadonlySet&lt;NotificationType&gt; = new Set([
+  "content_removed",
+  "member_warned",
+]);
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -334,7 +376,7 @@ export const EMAIL_ELIGIBLE_TYPES: ReadonlySet&lt;NotificationType&gt; = new Set
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-18T09:49:32.639Z
+                at 2026-10-18T09:52:50.992Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
