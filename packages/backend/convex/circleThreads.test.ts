@@ -3,6 +3,8 @@ import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { settleSendBatch } from "./conversation/messageAttachments";
+import { settleLocation } from "./conversation/sharedLocations";
 import schema from "./schema";
 
 // Circle group threads (G4): opening, membership sync, the joinedAt history floor, projection,
@@ -1028,5 +1030,77 @@ describe("reports", () => {
     const evidence = JSON.stringify(row?.evidence);
     expect(evidence).toContain("after dave");
     expect(evidence).not.toContain("before dave");
+  });
+});
+
+describe("media in circle threads", () => {
+  const seedPhoto = (t: T, threadId: string, uploaderId: Id<"users">) =>
+    t.run(async (ctx) => {
+      const now = Date.now();
+      return ctx.db.insert("messageAttachments", {
+        kind: "image",
+        threadAggregateId: threadId,
+        uploaderId,
+        fileId: await ctx.storage.store(new Blob(["x"])),
+        byteSize: 1,
+        contentType: "image/jpeg",
+        moderationStatus: "approved",
+        hashCheckedAt: now,
+        reencodedAt: now,
+        sendRequestedAt: now,
+        sendIndex: 0,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+  const seedLocation = (t: T, threadId: string, uploaderId: Id<"users">) =>
+    t.run(async (ctx) => {
+      const now = Date.now();
+      return ctx.db.insert("messageAttachments", {
+        kind: "location",
+        threadAggregateId: threadId,
+        uploaderId,
+        lat: 52.1,
+        lng: 5.1,
+        precision: "approximate",
+        mapStatus: "pending",
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+  test("a blocked member's photo and location reach the blocker and everyone else", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    await block(t, alice, bob);
+    const photo = await seedPhoto(t, threadId, bob);
+    const place = await seedLocation(t, threadId, bob);
+    await t.run(async (ctx) => {
+      await settleSendBatch(ctx, photo);
+      await settleLocation(ctx, place, undefined);
+    });
+    for (const viewer of ["alice", "carol"]) {
+      const kinds = (await messagesOf(t, viewer, threadId)).map((m) => m.kind);
+      expect(kinds).toEqual(["image", "location"]);
+    }
+  });
+
+  test("the shared attachment gate refuses a removed member before the sync has run", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    await as(t, "alice").mutation(api.sharing.removeMember.removeMember, {
+      circleId,
+      memberId: bob,
+    });
+    // Before the sync has run, the thread still lists Bob; the circle no longer does.
+    await expectCode(
+      as(t, "bob").query(
+        api.conversation.listMyPendingAttachments.listMyPendingAttachments,
+        { threadId },
+      ),
+      "NotParticipant",
+    );
   });
 });
