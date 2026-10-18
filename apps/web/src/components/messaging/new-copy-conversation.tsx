@@ -169,7 +169,7 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
         </p>
       </div>
 
-      <div className="bg-card shrink-0 border-t px-3 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] md:px-4 md:pb-3">
+      <div className="bg-card shrink-0 border-t px-3 pt-2.5 pb-2.5 md:px-4 md:pb-3">
         {/* The puzzle this conversation is about, pre-staged and fixed —
             the same chip model as an attachment in a thread. */}
         <StagedCopyChip copy={view.copy} />
