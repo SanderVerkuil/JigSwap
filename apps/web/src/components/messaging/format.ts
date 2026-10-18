@@ -53,3 +53,148 @@ export function threadSubjectTitle(
     title: subject.puzzleTitle ?? t("untitledPuzzle"),
   });
 }
+
+const MINUTE = 60_000;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
+
+// Local-calendar-day index (DST-safe: rounds the 23h/25h days to whole days).
+function dayNumber(at: number): number {
+  const date = new Date(at);
+  return Math.round(
+    new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime() /
+      DAY,
+  );
+}
+
+// Full date + time for `title` attributes and screen-reader labels:
+// "Monday, October 12, 2026 at 2:05 PM" / "maandag 12 oktober 2026 om 14:05".
+export function formatFullDateTime(at: number, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: "full",
+    timeStyle: "short",
+  }).format(at);
+}
+
+// Time of day under a message group: "2:05 PM" / "14:05".
+export function formatMessageTime(at: number, locale: string): string {
+  return new Intl.DateTimeFormat(locale, { timeStyle: "short" }).format(at);
+}
+
+// Fixed-width-ish inbox row timestamp (≤ ~11 chars) so every row's name and
+// snippet truncate at the same x: now / 5m / 2h / Mon / Oct 12 / Oct 12, 2025.
+export function formatCompactTime(
+  at: number,
+  now: number,
+  locale: string,
+  t: Translator,
+): string {
+  const age = Math.max(0, now - at);
+  if (age < MINUTE) return t("time.now");
+  if (age < HOUR) return t("time.minutes", { count: Math.floor(age / MINUTE) });
+  if (age < DAY) return t("time.hours", { count: Math.floor(age / HOUR) });
+  if (age < 7 * DAY) {
+    return new Intl.DateTimeFormat(locale, { weekday: "short" }).format(at);
+  }
+  const sameYear = new Date(at).getFullYear() === new Date(now).getFullYear();
+  return new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "short",
+    ...(sameYear ? {} : { year: "numeric" }),
+  }).format(at);
+}
+
+// Day-separator label in a thread: Today / Yesterday / Monday (< 7 days) /
+// Mon, Oct 12 (this year) / Oct 12, 2025 (older).
+export function formatDayLabel(
+  at: number,
+  now: number,
+  locale: string,
+  t: Translator,
+): string {
+  const daysAgo = dayNumber(now) - dayNumber(at);
+  if (daysAgo <= 0) return t("dayToday");
+  if (daysAgo === 1) return t("dayYesterday");
+  if (daysAgo < 7) {
+    return new Intl.DateTimeFormat(locale, { weekday: "long" }).format(at);
+  }
+  if (new Date(at).getFullYear() === new Date(now).getFullYear()) {
+    return new Intl.DateTimeFormat(locale, {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    }).format(at);
+  }
+  return new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(at);
+}
+
+// The fields grouping needs; ThreadMessageView satisfies it.
+type GroupableMessage = {
+  readonly id: string;
+  readonly authorId: string | null;
+  readonly kind: string;
+  readonly sentAt: number;
+};
+
+export type ThreadItem<M extends GroupableMessage> =
+  | { type: "day"; key: string; label: string }
+  | { type: "system"; key: string; message: M }
+  | { type: "group"; key: string; own: boolean; messages: M[] };
+
+// Consecutive messages within this gap (same author, same day) share a group.
+const GROUP_GAP = 5 * MINUTE;
+
+// Lay out an ascending message list as day separators, standalone system
+// messages, and author groups: consecutive non-system messages by the same
+// author on the same local day, each ≤ 5 minutes after the previous one.
+export function groupThreadMessages<M extends GroupableMessage>(
+  messages: readonly M[],
+  me: string | undefined,
+  now: number,
+  locale: string,
+  t: Translator,
+): ThreadItem<M>[] {
+  const items: ThreadItem<M>[] = [];
+  let currentDay: number | undefined;
+  let group: Extract<ThreadItem<M>, { type: "group" }> | undefined;
+
+  for (const message of messages) {
+    const day = dayNumber(message.sentAt);
+    if (day !== currentDay) {
+      currentDay = day;
+      group = undefined;
+      items.push({
+        type: "day",
+        key: `day-${message.id}`,
+        label: formatDayLabel(message.sentAt, now, locale, t),
+      });
+    }
+    if (message.kind === "system") {
+      group = undefined;
+      items.push({ type: "system", key: message.id, message });
+      continue;
+    }
+    const previous = group?.messages.at(-1);
+    if (
+      group &&
+      previous &&
+      previous.authorId === message.authorId &&
+      message.sentAt - previous.sentAt <= GROUP_GAP
+    ) {
+      group.messages.push(message);
+      continue;
+    }
+    group = {
+      type: "group",
+      key: `group-${message.id}`,
+      own: message.authorId !== null && message.authorId === me,
+      messages: [message],
+    };
+    items.push(group);
+  }
+  return items;
+}

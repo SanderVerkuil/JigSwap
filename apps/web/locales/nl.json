@@ -732,6 +732,9 @@
   "messages": {
     "anonymous": "Anonieme gebruiker",
     "backToInbox": "Terug naar berichten",
+    "conversationsLabel": "Gesprekken",
+    "dayToday": "Vandaag",
+    "dayYesterday": "Gisteren",
     "empty": "Nog geen gesprekken",
     "emptyHint": "Stuur een lid een bericht via hun profiel of begin er een vanuit een uitwisseling.",
     "exchangeThread": "{type}: {title}",
@@ -740,22 +743,33 @@
       "sale": "Verkoop",
       "loan": "Uitleen"
     },
+    "inboxError": "Je gesprekken konden niet worden geladen.",
     "messageButton": "Bericht",
     "messageName": "Bericht sturen aan {name}",
+    "newMessageAnnouncement": "Nieuw bericht van {name}: {body}",
     "noMessages": "Nog geen berichten",
     "noMessagesHint": "Zeg hallo om het gesprek op gang te brengen.",
     "noThreadYet": "Nog geen gesprek voor deze uitwisseling.",
     "notConnected": "Je kunt alleen berichten sturen naar leden met wie je verbonden bent",
     "openError": "Het gesprek kon niet worden geopend. Probeer het opnieuw.",
+    "otherMember": "Ander lid",
+    "retry": "Opnieuw proberen",
     "selectConversation": "Selecteer een gesprek",
     "selectConversationHint": "Kies een gesprek uit de lijst om te beginnen met chatten",
     "sendError": "Je bericht kon niet worden verzonden. Probeer het opnieuw.",
-    "sendMessage": "Bericht Versturen",
+    "sendMessage": "Bericht versturen",
     "threadFallbackTitle": "Gesprek",
+    "time": {
+      "now": "nu",
+      "minutes": "{count} min",
+      "hours": "{count} u"
+    },
     "tooLong": "Dat bericht is te lang (maximaal 4.000 tekens).",
-    "typeMessage": "Type je bericht...",
+    "typeMessage": "Typ je bericht…",
     "unreadCount": "{count, plural, one {# ongelezen bericht} other {# ongelezen berichten}}",
-    "untitledPuzzle": "Naamloze puzzel"
+    "untitledPuzzle": "Naamloze puzzel",
+    "you": "Jij",
+    "youPrefix": "Jij: {body}"
   },
   "profile": {
     "title": "Profiel",
