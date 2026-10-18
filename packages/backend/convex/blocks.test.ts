@@ -244,12 +244,14 @@ describe("blocked pair is refused", () => {
         );
         await block(t, ids);
 
+        // The blocked pair's copies are unviewable for each other (canViewCopy), so the copy
+        // gate refuses first with its generic CopyNotFound.
         await expectCode(
           asAlice(t).mutation(
             api.conversation.startCopyConversation.startCopyConversation,
             { copyId, body: "hello again" },
           ),
-          "NotConnected",
+          "CopyNotFound",
         );
       });
 
