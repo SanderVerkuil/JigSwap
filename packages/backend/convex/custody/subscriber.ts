@@ -10,8 +10,9 @@ import type { MutationCtx } from "../_generated/server";
 // so loans never enter the ownership chain. previousOwner is the copy's owner read here, BEFORE the
 // library transfer subscriber reassigns it (dispatch runs custody first).
 //
-// Not idempotent (a plain insert): a throw rolls back this subscriber's sub-transaction, and the
-// dispatcher marks it failed instead of retrying it (events/dispatch), so no duplicate row lands.
+// Not idempotent (a plain insert). The dispatcher runs it in ONE sub-transaction with the library
+// transfer (events/dispatch "ownershipTransfer"), so a failure in either rolls both back and is
+// marked failed rather than retried — no orphan or duplicate custody row lands.
 export const handleDomainEvent = async (
   ctx: MutationCtx,
   event: Doc<"domainEvents">,

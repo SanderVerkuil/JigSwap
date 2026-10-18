@@ -24,7 +24,7 @@ import { toConvexError } from "./errors";
 //
 // Message idempotency relies on Exchange emitting each lifecycle transition exactly once; the
 // dispatcher's processedAt guard covers re-scheduling of the same event row.
-const LIFECYCLE_BODIES: Partial<Record<string, string>> = {
+export const LIFECYCLE_BODIES: Partial<Record<string, string>> = {
   ExchangeProposed: "Exchange proposed",
   ExchangeAccepted: "Exchange accepted",
   ExchangeRejected: "Exchange rejected",

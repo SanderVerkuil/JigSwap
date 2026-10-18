@@ -15,7 +15,8 @@ import schema from "./schema";
 // Every async subscriber the dispatcher calls is wrapped so a test can make it throw (a set number
 // of times) and see which ones ran. The wrapper delegates to the real handler otherwise.
 const control = vi.hoisted(() => {
-  const fail = new Map<string, number>(); // handler -> remaining throws
+  const fail = new Map<string, number>(); // handler -> remaining throws (before its real work)
+  const failAfter = new Set<string>(); // handler -> does its real work (writes rows), THEN throws
   const calls: string[] = [];
   const wrap =
     (name: string, real: (...args: never[]) => Promise<void>) =>
@@ -26,9 +27,11 @@ const control = vi.hoisted(() => {
         fail.set(name, remaining - 1);
         throw new Error(`${name} exploded`);
       }
-      return real(...args);
+      await real(...args);
+      if (failAfter.has(name))
+        throw new Error(`${name} exploded after writing`);
     };
-  return { fail, calls, wrap };
+  return { fail, failAfter, calls, wrap };
 });
 
 vi.mock("./exchange/tradeRevealSubscriber", async (orig) => {
@@ -79,6 +82,7 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 let errorSpy: MockInstance<typeof console.error>;
 beforeEach(() => {
   control.fail.clear();
+  control.failAfter.clear();
   control.calls.length = 0;
   errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 });
@@ -171,6 +175,20 @@ const recordEvent = (
     }),
   );
 
+const notesFor = (
+  t: TestConvex<typeof schema>,
+  userId: Id<"users">,
+  type: string,
+) =>
+  t.run(async (ctx) =>
+    (
+      await ctx.db
+        .query("notifications")
+        .withIndex("by_user", (q) => q.eq("userId", userId))
+        .collect()
+    ).filter((n) => n.type === type),
+  );
+
 const tradeRequestsFor = (t: TestConvex<typeof schema>, userId: Id<"users">) =>
   t.run(async (ctx) =>
     (
@@ -205,11 +223,11 @@ const pendingDispatches = (
 describe("dispatch failure visibility + retry policy", () => {
   test("a throwing idempotent handler is logged, retried with backoff up to the cap, then marked failed", async () => {
     const t = convexTest(schema, modules);
-    const { bob, exchangeAggregateId } = await proposeSale(t);
+    const { alice, exchangeAggregateId } = await proposeSale(t);
     vi.useFakeTimers();
     control.fail.set("tradeReveal", Number.POSITIVE_INFINITY);
 
-    const eventId = await recordEvent(t, "ExchangeProposed", {
+    const eventId = await recordEvent(t, "ExchangeAccepted", {
       exchangeId: exchangeAggregateId,
     });
     await t.mutation(internal.events.dispatch.dispatch, { eventId });
@@ -221,7 +239,7 @@ describe("dispatch failure visibility + retry policy", () => {
       event: "events.dispatch",
       outcome: "error",
       event_id: eventId,
-      event_name: "ExchangeProposed",
+      event_name: "ExchangeAccepted",
       event_context: "test",
       handler: "tradeReveal",
       attempt: 1,
@@ -234,7 +252,7 @@ describe("dispatch failure visibility + retry policy", () => {
 
     // The other handlers' work committed despite the failure; the event is not processed and a
     // retry is scheduled.
-    expect(await tradeRequestsFor(t, bob)).toHaveLength(2); // auto + this event
+    expect(await notesFor(t, alice, "trade_accepted")).toHaveLength(1);
     let event = await t.run((ctx) => ctx.db.get(eventId));
     expect(event?.processedAt).toBeUndefined();
     expect(event?.failedAt).toBeUndefined();
@@ -266,8 +284,8 @@ describe("dispatch failure visibility + retry policy", () => {
     expect(event?.processedAt).toBeUndefined();
     expect(event?.failedHandlers).toEqual(["tradeReveal"]);
     // Successful handlers ran exactly once — retries only re-run the failing one.
-    expect(await tradeRequestsFor(t, bob)).toHaveLength(2);
-    expect(await systemMessages(t, "Exchange proposed")).toHaveLength(2);
+    expect(await notesFor(t, alice, "trade_accepted")).toHaveLength(1);
+    expect(await systemMessages(t, "Exchange accepted")).toHaveLength(1);
   });
 
   test("a transient idempotent failure recovers on retry and the event is stamped processed", async () => {
@@ -331,10 +349,10 @@ describe("dispatch failure visibility + retry policy", () => {
     expect(await tradeRequestsFor(t, bob)).toHaveLength(2);
   });
 
-  test("custody failing blocks the library transfer that depends on it", async () => {
+  test("custody and the library transfer commit together: a transfer throw after the custody write leaves no custody row", async () => {
     const t = convexTest(schema, modules);
-    const { copy, alice } = await seedExchange(t);
-    control.fail.set("custody", 1);
+    const { copy, alice, bob } = await seedExchange(t);
+    control.fail.set("libraryTransfer", 1);
 
     const eventId = await recordEvent(t, "OwnershipTransferred", {
       copyId: copy,
@@ -343,12 +361,47 @@ describe("dispatch failure visibility + retry policy", () => {
     });
     await t.mutation(internal.events.dispatch.dispatch, { eventId });
 
+    // Custody really ran (and inserted) before the transfer threw; both rolled back together.
     expect(control.calls).toContain("custody");
-    expect(control.calls).not.toContain("libraryTransfer");
-    expect(control.calls).toContain("openLoan");
+    expect(control.calls).toContain("libraryTransfer");
+    const custody = await t.run((ctx) =>
+      ctx.db.query("copyCustodyEntries").collect(),
+    );
+    expect(custody).toHaveLength(0);
+    expect((await t.run((ctx) => ctx.db.get(copy)))?.ownerId).toBe(bob);
+
     const event = await t.run((ctx) => ctx.db.get(eventId));
     expect(event?.failedAt).toBeDefined();
-    expect(event?.failedHandlers).toEqual(["custody", "libraryTransfer"]);
+    expect(event?.failedHandlers).toEqual(["ownershipTransfer"]);
+    // The other handler that reacts to every event still completed.
+    expect(event?.completedHandlers).toEqual(["notifications"]);
+    expect(dispatchErrorLines()[0]).toMatchObject({
+      handler: "ownershipTransfer",
+      retryable: false,
+      will_retry: false,
+    });
+  });
+
+  test("a handler that writes rows and then throws leaves none of them; the others' rows stay", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, exchangeAggregateId } = await proposeSale(t);
+    control.failAfter.add("notifications");
+
+    const eventId = await recordEvent(t, "ExchangeProposed", {
+      exchangeId: exchangeAggregateId,
+    });
+    await t.mutation(internal.events.dispatch.dispatch, { eventId });
+
+    // The real notification handler inserted a trade_request, then threw: rolled back.
+    expect(await tradeRequestsFor(t, bob)).toHaveLength(1); // the auto one only
+    // Conversation's system message for this event committed.
+    expect(await systemMessages(t, "Exchange proposed")).toHaveLength(2);
+    const event = await t.run((ctx) => ctx.db.get(eventId));
+    expect(event?.failedHandlers).toEqual(["notifications"]);
+    expect(event?.lastError).toEqual({
+      handler: "notifications",
+      message: "notifications exploded after writing",
+    });
   });
 
   test("a clean dispatch keeps the original row shape (processedAt only)", async () => {
@@ -361,19 +414,13 @@ describe("dispatch failure visibility + retry policy", () => {
     expect(event?.attempts).toBeUndefined();
     expect(event?.failedAt).toBeUndefined();
     expect(dispatchErrorLines()).toHaveLength(0);
-    expect(control.calls).toEqual([
-      "tradeReveal",
-      "notifications",
-      "conversation",
-      "custody",
-      "libraryTransfer",
-      "openLoan",
-    ]);
+    // Only the handler without an event-name filter runs; the others open no sub-transaction.
+    expect(control.calls).toEqual(["notifications"]);
   });
 
   test("a failed event is a no-op on re-dispatch", async () => {
     const t = convexTest(schema, modules);
-    control.fail.set("custody", 1);
+    control.fail.set("notifications", 1);
     const eventId = await recordEvent(t, "SomethingUnrelated", {});
     await t.mutation(internal.events.dispatch.dispatch, { eventId });
     control.calls.length = 0;

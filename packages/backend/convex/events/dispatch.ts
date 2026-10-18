@@ -2,7 +2,10 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Doc } from "../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../_generated/server";
-import { handleDomainEvent as handleConversationEvent } from "../conversation/subscriber";
+import {
+  handleDomainEvent as handleConversationEvent,
+  LIFECYCLE_BODIES,
+} from "../conversation/subscriber";
 import { handleDomainEvent as handleCustodyEvent } from "../custody/subscriber";
 import { handleDomainEvent as handleTradeRevealEvent } from "../exchange/tradeRevealSubscriber";
 import { logEvent } from "../lib/logEvent";
@@ -11,8 +14,8 @@ import { handleDomainEvent as handleLibraryTransferEvent } from "../library/tran
 import { handleDomainEvent as handleNotificationEvent } from "../notifications/subscriber";
 
 // The central async dispatcher. Scheduled once per recorded domain event; it loads the row, routes
-// it to every registered ASYNC subscriber (Notifications, Conversation, Custody, the Library
-// transfer + open-loan reactions), then stamps processedAt.
+// it to every registered ASYNC subscriber that reacts to its name (trade reveal, Notifications,
+// Conversation, Custody + the Library transfer, the open-loan reaction), then stamps processedAt.
 //
 // Failure semantics: Convex retries a scheduled mutation only on ITS OWN internal errors, never on
 // an application error thrown by our code. So each subscriber runs in its own sub-transaction
@@ -23,33 +26,54 @@ import { handleDomainEvent as handleNotificationEvent } from "../notifications/s
 //                    exponential backoff, up to MAX_ATTEMPTS passes; completed handlers are skipped.
 //   - retry: false — re-running could duplicate a member-visible effect, so it gives up at once.
 // A handler that gave up lands in failedHandlers; once nothing is left to retry the event gets
-// failedAt (queryable via by_failed) and needs an operator. `after` keeps an ordering dependency:
-// the handler waits for (or, if it gave up, gives up with) the handler it depends on.
-const HANDLERS = [
-  // The per-trade owner reveal lands BEFORE notifications so a notification sees the fresh row.
-  // Idempotent: recordTradeReveal is a no-op once the exchange has a reveal.
-  { name: "tradeReveal", run: handleTradeRevealEvent, retry: true },
-  // Inserts notification rows + schedules email/push with no dedupe key.
-  { name: "notifications", run: handleNotificationEvent, retry: false },
-  // Opens the exchange thread (idempotent) but APPENDS a lifecycle system message.
-  { name: "conversation", run: handleConversationEvent, retry: false },
-  // Records the pre-transfer owner with a plain insert, so it MUST run before the library transfer.
-  { name: "custody", run: handleCustodyEvent, retry: false },
-  // Reassigns the owner and resets owner-scoped fields; a re-run re-emits CopyOwnershipTransferred.
-  {
-    name: "libraryTransfer",
-    run: handleLibraryTransferEvent,
-    retry: false,
-    after: "custody",
-  },
-  // A settled lend opens a loan (reacts to PossessionTransferred); a re-run opens a second loan.
-  { name: "openLoan", run: handleOpenLoanEvent, retry: false },
-] as const satisfies readonly {
+// failedAt (queryable via by_failed) and needs an operator (replay: docs/developer-guide.md 1.5).
+// `events` lists the event names a handler reacts to, so dispatch opens no sub-transaction for the
+// rest; omitted = every event (Notifications translates ~20 names in its own switch, and a copied
+// list here would silently drop a newly added one).
+const HANDLERS: readonly {
   name: string;
   run: (ctx: MutationCtx, event: Doc<"domainEvents">) => Promise<void>;
   retry: boolean;
-  after?: string;
-}[];
+  events?: readonly string[];
+}[] = [
+  // The per-trade owner reveal lands BEFORE notifications so a notification sees the fresh row.
+  // Idempotent: recordTradeReveal is a no-op once the exchange has a reveal.
+  {
+    name: "tradeReveal",
+    run: handleTradeRevealEvent,
+    retry: true,
+    events: ["ExchangeAccepted", "MessagePosted"],
+  },
+  // Inserts notification rows + schedules email/push with no dedupe key.
+  { name: "notifications", run: handleNotificationEvent, retry: false },
+  // Opens the exchange thread (idempotent) but APPENDS a lifecycle system message.
+  {
+    name: "conversation",
+    run: handleConversationEvent,
+    retry: false,
+    events: Object.keys(LIFECYCLE_BODIES),
+  },
+  // ONE sub-transaction for custody + the library transfer: custody records the pre-transfer owner
+  // (so it runs first), and the two must commit or roll back together — a custody row without the
+  // transfer would claim the new owner holds a copy still owned by the old one. Not idempotent:
+  // custody is a plain insert and a re-run re-emits CopyOwnershipTransferred.
+  {
+    name: "ownershipTransfer",
+    run: async (ctx, event) => {
+      await handleCustodyEvent(ctx, event);
+      await handleLibraryTransferEvent(ctx, event);
+    },
+    retry: false,
+    events: ["OwnershipTransferred"],
+  },
+  // A settled lend opens a loan; a re-run opens a second loan.
+  {
+    name: "openLoan",
+    run: handleOpenLoanEvent,
+    retry: false,
+    events: ["PossessionTransferred"],
+  },
+];
 
 export const MAX_ATTEMPTS = 5;
 // Backoff before pass n+1 is RETRY_BASE_MS * 2^(n-1): 1, 2, 4, 8 minutes.
@@ -88,13 +112,12 @@ export const dispatch = internalMutation({
     const gaveUp = new Set<string>(event.failedHandlers ?? []);
     const failures: { handler: (typeof HANDLERS)[number]; message: string }[] =
       [];
+    const handlers = HANDLERS.filter(
+      (h) => h.events === undefined || h.events.includes(event.name),
+    );
 
-    for (const h of HANDLERS) {
+    for (const h of handlers) {
       if (completed.has(h.name) || gaveUp.has(h.name)) continue;
-      if ("after" in h && !completed.has(h.after)) {
-        if (gaveUp.has(h.after)) gaveUp.add(h.name);
-        continue; // wait for the dependency's retry.
-      }
       try {
         await ctx.runMutation(internal.events.dispatch.runSubscriber, {
           eventId,
@@ -113,7 +136,7 @@ export const dispatch = internalMutation({
       return;
     }
 
-    const pending = HANDLERS.filter(
+    const pending = handlers.filter(
       (h) => !completed.has(h.name) && !gaveUp.has(h.name),
     );
     const willRetry = pending.length > 0 && attempt < MAX_ATTEMPTS;
