@@ -2,7 +2,10 @@ import { toMemberId } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { mutation, type MutationCtx } from "../_generated/server";
-import { participantsKeyOf } from "../conversation/adapters/threadMapper";
+import {
+  isUnattachedMedia,
+  participantsKeyOf,
+} from "../conversation/adapters/threadMapper";
 import { requireMember } from "../identity/requireMember";
 import { enforceRateLimit } from "../lib/rateLimits";
 import { canViewCopy } from "../library/canViewCopy";
@@ -258,8 +261,9 @@ const canReportMember = async (
 
 // A message the reporter can read (a participant of its thread), authored by someone. The
 // evidence is the message plus up to EVIDENCE_PRECEDING_MESSAGES before it, ascending. A message
-// a moderator already removed is snapshotted as removed, with an empty body and no copy. A legacy
-// image row's body is blanked as in toThreadMessageView (an unverified client string, #145).
+// a moderator already removed is snapshotted as removed, with an empty body and no copy. A media
+// row without an attachment (legacy image rows) is blanked as in toThreadMessageView (an
+// unverified client string, #145); an attached media row keeps its caption.
 const messageTarget = async (
   ctx: MutationCtx,
   reporterId: Id<"users">,
@@ -293,7 +297,7 @@ const messageTarget = async (
       messageId: row.messageId,
       ...(row.authorId !== undefined ? { authorId: row.authorId } : {}),
       kind: row.kind,
-      body: removed || row.kind === "image" ? "" : row.body,
+      body: removed || isUnattachedMedia(row) ? "" : row.body,
       sentAt: row.sentAt,
       ...(row.copyId !== undefined && !removed ? { copyId: row.copyId } : {}),
       ...(removed ? { removed: true as const } : {}),

@@ -1520,6 +1520,7 @@ export default defineSchema({
             kind: v.union(
               v.literal("text"),
               v.literal("image"),
+              v.literal("location"),
               v.literal("system"),
             ),
             body: v.string(),

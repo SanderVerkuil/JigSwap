@@ -554,6 +554,36 @@ describe("fileReport: rules", () => {
     });
   });
 
+  test("an attached media message keeps its caption; a location row is snapshotted", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await t.run(async (ctx) => {
+      for (const [messageId, kind, attachmentId] of [
+        ["m8", "image", "att-1"],
+        ["m9", "location", "att-2"],
+      ] as const) {
+        const row = await ctx.db
+          .query("threadMessages")
+          .withIndex("by_message_id", (q) => q.eq("messageId", messageId))
+          .first();
+        await ctx.db.patch(row!._id, { kind, body: "caption", attachmentId });
+      }
+    });
+    const { reportId } = await file(asBob(t), {
+      targetKind: "message",
+      targetId: "m11",
+    });
+    const messages = (await reportRow(t, reportId)).evidence.messages!;
+    expect(messages.find((m) => m.messageId === "m8")).toMatchObject({
+      kind: "image",
+      body: "caption",
+    });
+    expect(messages.find((m) => m.messageId === "m9")).toMatchObject({
+      kind: "location",
+      body: "caption",
+    });
+  });
+
   test("a non-message target carries no message evidence", async () => {
     const t = convexTest(schema, modules);
     const { bob } = await seed(t);
