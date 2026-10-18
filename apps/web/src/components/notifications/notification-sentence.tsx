@@ -28,6 +28,7 @@ const ACTORLESS: ReadonlySet<NotificationViewType> = new Set([
   "content_removed",
   "member_warned",
   "circle_deleted",
+  "message_image_rejected",
 ]);
 
 /**

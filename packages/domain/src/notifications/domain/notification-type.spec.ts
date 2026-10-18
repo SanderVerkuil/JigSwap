@@ -35,6 +35,7 @@ describe("NOTIFICATION_TYPES", () => {
       "report_decided",
       "content_removed",
       "member_warned",
+      "message_image_rejected",
     ]);
   });
 });

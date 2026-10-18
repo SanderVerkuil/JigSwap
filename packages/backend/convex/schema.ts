@@ -1065,6 +1065,7 @@ export default defineSchema({
       v.literal("report_decided"),
       v.literal("content_removed"),
       v.literal("member_warned"),
+      v.literal("message_image_rejected"),
     ),
     // Legacy pre-rendered English copy. Optional since notifications went structured: new rows
     // store `params` and the edges render copy (web via i18n keys, email via @jigswap/email).

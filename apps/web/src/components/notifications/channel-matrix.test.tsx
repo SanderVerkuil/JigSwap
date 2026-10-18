@@ -44,7 +44,11 @@ afterEach(cleanup);
 describe("ChannelMatrix mandatory in-app notices", () => {
   it("shows the in-app switch of a legally required notice on and disabled", () => {
     renderMatrix();
-    for (const type of ["content_removed", "member_warned"]) {
+    for (const type of [
+      "content_removed",
+      "member_warned",
+      "message_image_rejected",
+    ]) {
       const inApp = switchFor(type, "inApp");
       expect(inApp.getAttribute("aria-checked")).toBe("true");
       expect(inApp.disabled).toBe(true);
@@ -54,7 +58,7 @@ describe("ChannelMatrix mandatory in-app notices", () => {
     }
     expect(
       screen.getAllByText("Always on: legally required notices"),
-    ).toHaveLength(2);
+    ).toHaveLength(3);
   });
 
   it("leaves other notices' in-app switch toggleable", () => {

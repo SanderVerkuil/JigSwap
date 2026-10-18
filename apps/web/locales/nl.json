@@ -1943,7 +1943,8 @@
       "whats_new": "Wat is er nieuw",
       "report_decided": "Uitkomst van meldingen",
       "content_removed": "Inhoud verwijderd",
-      "member_warned": "Waarschuwingen van moderators"
+      "member_warned": "Waarschuwingen van moderators",
+      "message_image_rejected": "Niet verstuurde foto's"
     },
     "categories": {
       "trades": {
@@ -2099,6 +2100,10 @@
       "member_warned": {
         "title": "Waarschuwing van een moderator",
         "message": "Een moderator heeft je een waarschuwing gestuurd.{hasReason, select, yes { Reden: {reason}} other {}}"
+      },
+      "message_image_rejected": {
+        "title": "Foto niet verstuurd",
+        "message": "Onze automatische controle heeft een foto die je stuurde tegengehouden, dus hij is niet bezorgd."
       }
     },
     "pushDeviceTitle": "Push op dit apparaat",
@@ -2145,7 +2150,8 @@
       "whats_new": "Wanneer een nieuwe functie of wijziging in JigSwap wordt aangekondigd.",
       "report_decided": "Wanneer een moderator een besluit neemt over een melding die je hebt gedaan.",
       "content_removed": "Wanneer een moderator na een melding een bericht of foto van je verwijdert.",
-      "member_warned": "Wanneer een moderator je na een melding waarschuwt."
+      "member_warned": "Wanneer een moderator je na een melding waarschuwt.",
+      "message_image_rejected": "Wanneer onze automatische controle een foto tegenhoudt die je in een bericht stuurde."
     },
     "pushServiceUnreachable": "Je browser kon zijn pushdienst niet bereiken. Sommige privacybrowsers blokkeren of verwijderen die — Brave schakelt het standaard uit (zet 'Google-services voor pushberichten gebruiken' aan in Instellingen), en de-Googled Chromium-browsers zoals Helium verwijderen het. Firefox, Chrome of Edge werkt wel.",
     "rich": {
@@ -2309,6 +2315,9 @@
       },
       "member_warned": {
         "sentence": "Een moderator heeft je gewaarschuwd wegens {ground, select, spam_scam {spam of oplichting} harassment_hate {intimidatie of haat} sexual {seksuele of ongepaste inhoud} fake_trade {een nepruil of niet komen opdagen} illegal {illegale inhoud} other {het overtreden van de communityregels}}. Dit besluit is door een mens genomen, niet automatisch. Reageer via de contactpagina om een herbeoordeling te vragen."
+      },
+      "message_image_rejected": {
+        "sentence": "Een foto die je stuurde is niet bezorgd: onze automatische controle heeft hem tegengehouden. Dit is automatisch besloten, niet door een mens. Open het gesprek en kies Vraag om herbeoordeling als je denkt dat dit een vergissing is."
       }
     },
     "mandatoryInApp": "Altijd aan: wettelijk verplichte meldingen"

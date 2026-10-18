@@ -36,7 +36,8 @@ export type NotificationType =
   | "whats_new" // Product: a What's new entry marked `notify: true` was published (not a domain event)
   | "report_decided" // Safety: a moderator decided a report the member filed (DSA Art. 16(5))
   | "content_removed" // Safety: a moderator removed the member's reported content (DSA Art. 17)
-  | "member_warned"; // Safety: a moderator warned the member over a report (DSA Art. 17)
+  | "member_warned" // Safety: a moderator warned the member over a report (DSA Art. 17)
+  | "message_image_rejected"; // Conversation: the automated check stopped a photo the member sent (DSA Art. 17)
 
 // All notification types, for iteration (e.g. seeding default preferences). Kept in sync with the
 // union above by construction.
@@ -72,6 +73,7 @@ export const NOTIFICATION_TYPES: readonly NotificationType[] = [
   "report_decided",
   "content_removed",
   "member_warned",
+  "message_image_rejected",
 ];
 
 // Types that may be delivered by EMAIL. Deliberately a subset: only high-value, act-on-it
@@ -101,4 +103,5 @@ export const EMAIL_ELIGIBLE_TYPES: ReadonlySet<NotificationType> = new Set([
 export const MANDATORY_IN_APP_TYPES: ReadonlySet<NotificationType> = new Set([
   "content_removed",
   "member_warned",
+  "message_image_rejected",
 ]);
