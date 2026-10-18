@@ -4318,6 +4318,13 @@
         "illegalNoticeIncomplete": "Add a name and email to your account to report illegal content.",
         "generic": "Couldn't send your report. Please try again."
       }
-    }
+    },
+    "messageActions": "More actions for message from {name}",
+    "copyText": "Copy text",
+    "textCopied": "Text copied",
+    "copyFailed": "Couldn't copy the text.",
+    "reportMessage": "Report message",
+    "messageRemoved": "This message was removed by a moderator.",
+    "otherMember": "the other member"
   }
 }

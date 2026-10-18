@@ -4318,6 +4318,13 @@
         "illegalNoticeIncomplete": "Voeg een naam en e-mailadres toe aan je account om illegale inhoud te melden.",
         "generic": "Je melding versturen is niet gelukt. Probeer het opnieuw."
       }
-    }
+    },
+    "messageActions": "Meer acties voor bericht van {name}",
+    "copyText": "Tekst kopiëren",
+    "textCopied": "Tekst gekopieerd",
+    "copyFailed": "Kopiëren is niet gelukt.",
+    "reportMessage": "Bericht melden",
+    "messageRemoved": "Dit bericht is verwijderd door een moderator.",
+    "otherMember": "het andere lid"
   }
 }

@@ -10,7 +10,7 @@
 import { Link } from "@/compat/link";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { Skeleton } from "@/components/ui/skeleton";
-import { gateway } from "@/gateway";
+import { gateway, type Id } from "@/gateway";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
@@ -35,8 +35,10 @@ import {
   threadSubjectTitle,
   type ThreadItem,
 } from "./format";
+import { MessageActions } from "./message-actions";
 import { MessageComposer } from "./message-composer";
 import { OlderMessagesSlot } from "./older-messages-slot";
+import { RemovedMessage } from "./removed-message";
 import { ThreadSubjectAvatar } from "./thread-list";
 import { threadPartner } from "./thread-partner";
 import { ThreadPuzzleStack } from "./thread-puzzle-stack";
@@ -105,6 +107,8 @@ export function ThreadView({
     : otherMember.anonymous
       ? t("anonymous")
       : displayName(otherMember.member);
+  // The other side's author, for their messages' Report: absent when anonymised.
+  const otherAuthorId = thread ? threadPartner(thread)?._id : undefined;
   // The attach picker's "their puzzles" tab, named for the DM or trading
   // partner; absent for an anonymised member (the backend lists none of their
   // copies).
@@ -388,6 +392,7 @@ export function ThreadView({
               item={item}
               locale={locale}
               otherAuthor={otherAuthor}
+              otherAuthorId={otherAuthorId as Id<"users"> | undefined}
             />
           ))}
         </ol>
@@ -439,10 +444,12 @@ function ThreadItemView({
   item,
   locale,
   otherAuthor,
+  otherAuthorId,
 }: {
   item: ThreadItem<ThreadMessage>;
   locale: string;
   otherAuthor: string;
+  otherAuthorId: Id<"users"> | undefined;
 }) {
   const t = useTranslations("messages");
   if (item.type === "day") {
@@ -476,6 +483,21 @@ function ThreadItemView({
       <span className="sr-only">{own ? t("you") : otherAuthor}:</span>
       {messages.map((message, index) => {
         const pending = message.id.startsWith("pending-");
+        const bubble = (
+          <div
+            title={formatFullDateTime(message.sentAt, locale)}
+            className={cn(
+              "max-w-[min(80%,30rem)] rounded-2xl px-3.5 py-2 text-sm leading-5 break-words whitespace-pre-wrap",
+              own
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-foreground",
+              bubbleCorners(own, index, messages.length),
+              pending && "opacity-70",
+            )}
+          >
+            {message.body}
+          </div>
+        );
         return (
           <Fragment key={message.id}>
             {message.copy && (
@@ -487,19 +509,23 @@ function ThreadItemView({
             {message.copyUnavailable && (
               <CopyUnavailableCard className={cn(pending && "opacity-70")} />
             )}
-            <div
-              title={formatFullDateTime(message.sentAt, locale)}
-              className={cn(
-                "max-w-[min(80%,30rem)] rounded-2xl px-3.5 py-2 text-sm leading-5 break-words whitespace-pre-wrap",
-                own
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-foreground",
-                bubbleCorners(own, index, messages.length),
-                pending && "opacity-70",
-              )}
-            >
-              {message.body}
-            </div>
+            {message.removed ? (
+              <RemovedMessage
+                title={formatFullDateTime(message.sentAt, locale)}
+                className={bubbleCorners(own, index, messages.length)}
+              />
+            ) : own ? (
+              bubble
+            ) : (
+              <MessageActions
+                messageId={message.id}
+                body={message.body}
+                authorName={otherAuthor}
+                authorId={otherAuthorId}
+              >
+                {bubble}
+              </MessageActions>
+            )}
           </Fragment>
         );
       })}
