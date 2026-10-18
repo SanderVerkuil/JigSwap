@@ -1,6 +1,7 @@
 import type { EmailAddressJSON, UserJSON } from "@clerk/backend";
 import { normalizeMemberName } from "@jigswap/contracts";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 import { Doc, Id } from "./_generated/dataModel";
 import {
   internalMutation,
@@ -303,6 +304,16 @@ export const deleteUser = internalMutation({
       console.warn("can't delete user, does not exist", id);
       return;
     }
+    // Their messaging data (attachments, reveals, blocks, filed reports, rate-limit counters), in
+    // batches after this mutation (conversation/purgeMemberMessagingData). Also for a tombstoned
+    // member below: a quarantined photo is left whole by the purge, so the CSAM preservation is
+    // unaffected. [LAWYER] A lawyer should confirm that purging the rest of a member under an open
+    // CSAM escalation is right (versus preserving it with the account).
+    await ctx.scheduler.runAfter(
+      0,
+      internal.conversation.purgeMemberMessagingData.purgeMemberMessagingData,
+      { memberId: userRecord._id },
+    );
     // A member referenced by a CSAM escalation that is not closed yet is TOMBSTONED instead of
     // hard-deleted: the row stays (deactivated, profile and contact fields cleared) so the
     // escalation's uploader reference stays valid while the operator reports it. The escalation

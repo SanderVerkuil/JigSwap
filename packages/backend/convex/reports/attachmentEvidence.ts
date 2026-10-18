@@ -8,6 +8,7 @@ import {
   type MutationCtx,
 } from "../_generated/server";
 import {
+  clearLocationCoordinates,
   deleteAttachmentBlobs,
   deleteReveals,
 } from "../conversation/messageAttachments";
@@ -206,12 +207,7 @@ export const recordEvidence = internalMutation({
     // A removed location keeps nothing that places anyone: with its map copied (or known to be
     // missing), its coordinates and label are cleared too.
     if (row.kind === "location" && row.removedAt !== undefined) {
-      await ctx.db.patch(attachmentId, {
-        lat: undefined,
-        lng: undefined,
-        label: undefined,
-        updatedAt: Date.now(),
-      });
+      await clearLocationCoordinates(ctx, attachmentId);
     }
   },
 });

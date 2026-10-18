@@ -34,6 +34,15 @@ export function formatUnreadCount(count: number): string {
   return count >= 50 ? "50+" : String(count);
 }
 
+// The label of an anonymised member: "Deleted member" once their account is
+// gone (`departed`), the app's anonymous label otherwise.
+export function anonymousLabel(
+  member: { anonymous: true; departed?: true },
+  t: Translator,
+): string {
+  return member.departed ? t("deletedMember") : t("anonymous");
+}
+
 // A thread's display title: the other member for a DM (an anonymised member
 // renders the app's anonymous label — never a real identity; a revealed one is
 // named via `displayName`, i.e. useMemberDisplayName), or "<Type>: <puzzle>"
@@ -45,7 +54,7 @@ export function threadSubjectTitle(
 ): string {
   if (subject.kind === "dm") {
     return subject.otherMember.anonymous
-      ? t("anonymous")
+      ? anonymousLabel(subject.otherMember, t)
       : displayName(subject.otherMember.member);
   }
   return t("exchangeThread", {

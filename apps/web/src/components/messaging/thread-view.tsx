@@ -29,6 +29,7 @@ import { useLocale, useNow, useTranslations } from "use-intl";
 import { ComposerClosed } from "./composer-closed";
 import { MessageCopyCard } from "./copy-card";
 import {
+  anonymousLabel,
   formatFullDateTime,
   formatMessageTime,
   groupThreadMessages,
@@ -118,7 +119,7 @@ export function ThreadView({
   const otherAuthor = !otherMember
     ? t("otherMember")
     : otherMember.anonymous
-      ? t("anonymous")
+      ? anonymousLabel(otherMember, t)
       : displayName(otherMember.member);
   // The other side's author, for their messages' Report: absent when anonymised.
   const otherAuthorId = thread ? threadPartner(thread)?._id : undefined;

@@ -741,6 +741,7 @@
   },
   "messages": {
     "anonymous": "Anonieme gebruiker",
+    "deletedMember": "Verwijderd lid",
     "attachPuzzle": "Puzzel bijvoegen",
     "attachTitle": "Puzzel bijvoegen",
     "attached": "Bijgevoegd: {title}",
@@ -830,6 +831,7 @@
       "altOwn": "Jouw foto",
       "tileLabel": "Foto {index} van {count}, openen",
       "removed": "Foto verwijderd",
+      "noLongerAvailable": "Foto niet meer beschikbaar",
       "sensitive": "Gevoelige inhoud",
       "notChecked": "Niet gecontroleerd",
       "show": "Tonen",
@@ -3962,6 +3964,7 @@
         "reportedMessage": "Gemeld",
         "system": "Systeem",
         "deletedMember": "Verwijderd lid",
+        "anonymisedReporter": "Geanonimiseerd",
         "otherParticipant": "Andere deelnemer",
         "otherReports": "{count, plural, =0 {Geen andere meldingen tegen dit lid} one {# andere melding tegen dit lid} other {# andere meldingen tegen dit lid}}",
         "decisions": {

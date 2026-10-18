@@ -112,8 +112,10 @@ export const decideReport = mutation({
 
     // No actorId and no subject on any of these: the moderator is never exposed, and the
     // outcome lives entirely in params (see notifications/copy.ts for the contract).
+    // An anonymised reporter (account deleted) and a deleted reported member get nothing.
     const notify = makeNotify(ctx);
     for (const row of sameTarget) {
+      if (!row.reporterId) continue;
       await notify({
         memberId: toMemberId(row.reporterId),
         type: "report_decided",
@@ -121,7 +123,10 @@ export const decideReport = mutation({
         params: { decision },
       });
     }
-    if (decision !== "dismissed") {
+    if (
+      decision !== "dismissed" &&
+      (await ctx.db.get(report.reportedUserId)) !== null
+    ) {
       await notify({
         memberId: toMemberId(report.reportedUserId),
         type:

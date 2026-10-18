@@ -741,6 +741,7 @@
   },
   "messages": {
     "anonymous": "Anonymous user",
+    "deletedMember": "Deleted member",
     "attachPuzzle": "Attach a puzzle",
     "attachTitle": "Attach a puzzle",
     "attached": "Attached: {title}",
@@ -830,6 +831,7 @@
       "altOwn": "Your photo",
       "tileLabel": "Photo {index} of {count}, open",
       "removed": "Photo removed",
+      "noLongerAvailable": "Photo no longer available",
       "sensitive": "Sensitive content",
       "notChecked": "Not checked",
       "show": "Show",
@@ -3962,6 +3964,7 @@
         "reportedMessage": "Reported",
         "system": "System",
         "deletedMember": "Deleted member",
+        "anonymisedReporter": "Anonymised",
         "otherParticipant": "Other participant",
         "otherReports": "{count, plural, =0 {No other reports against this member} one {# other report against this member} other {# other reports against this member}}",
         "decisions": {
