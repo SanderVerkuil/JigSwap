@@ -610,6 +610,47 @@ describe("deferred append", () => {
   });
 });
 
+describe("blocking", () => {
+  test("a block drops the pair's sent, undelivered photos, so an unblock can't resurrect them", async () => {
+    fakes.hcs = 503;
+    const t = convexTest(schema, modules);
+    const { alice, threadId } = await openThread(t);
+    const id = await stage(t, threadId);
+    await settleDueJobs(t);
+    await send(t, threadId, [id]);
+    const fileId = (await attachment(t, id))!.fileId;
+    await asBob(t).mutation(api.social.blockMember.blockMember, {
+      memberId: alice,
+    });
+    expect(await attachment(t, id)).toBeNull();
+    expect(await blobExists(t, fileId)).toBe(false);
+    await asBob(t).mutation(api.social.unblockMember.unblockMember, {
+      memberId: alice,
+    });
+    expect(await messageRows(t, threadId)).toEqual([]);
+  });
+
+  test("a quarantined or evidence-held photo survives the block", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, threadId } = await openThread(t);
+    fakes.hcs = "match";
+    const matched = await stage(t, threadId);
+    await settleDueJobs(t);
+    fakes.hcs = 503;
+    const held = await stage(t, threadId);
+    await settleDueJobs(t);
+    await send(t, threadId, [matched, held]);
+    await t.run((ctx) => ctx.db.patch(held, { evidenceHold: true }));
+    await asBob(t).mutation(api.social.blockMember.blockMember, {
+      memberId: alice,
+    });
+    expect((await attachment(t, matched))!.moderationStatus).toBe(
+      "quarantined",
+    );
+    expect(await attachment(t, held)).not.toBeNull();
+  });
+});
+
 describe("never delivered", () => {
   test("rejected: no message; the sender gets an automated statement of reasons; audit stamped", async () => {
     fakes.score = 0.97;

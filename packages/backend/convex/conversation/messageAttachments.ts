@@ -16,6 +16,7 @@ import { convexThreadRepository } from "./adapters/convexThreadRepository";
 import { messageIdGenerator } from "./adapters/idGenerators";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
+import { participantsKeyOf } from "./adapters/threadMapper";
 import { threadRowByAggregateId } from "./readModelHelpers";
 
 // Message image attachments (spec 2.1/2.2, R.1-R.3, R.10, R.12): the shared rules behind staging
@@ -322,6 +323,44 @@ export const settleSendBatch = async (
     const messageId = await appendMessage(ctx, row, row.caption ?? "");
     if (messageId === null) return;
     await ctx.db.patch(row._id, { messageId, updatedAt: Date.now() });
+  }
+};
+
+/**
+ * Block side effect (social/blockMember): drop every photo either member SENT in a thread they
+ * share that was not delivered yet, whatever its state (blobs and row; a quarantined one is only
+ * hidden from its sender, an evidence-held one kept). So an unblock can't resurrect a delivery.
+ */
+export const dropUndeliveredPairAttachments = async (
+  ctx: MutationCtx,
+  a: Id<"users">,
+  b: Id<"users">,
+): Promise<void> => {
+  const threads = await ctx.db
+    .query("threads")
+    .withIndex("by_participants_key", (q) =>
+      q.eq(
+        "participantsKey",
+        participantsKeyOf([toMemberId(a as string), toMemberId(b as string)]),
+      ),
+    )
+    .collect();
+  for (const thread of threads) {
+    for (const uploaderId of [a, b]) {
+      const rows = await ctx.db
+        .query("messageAttachments")
+        .withIndex("by_thread_uploader", (q) =>
+          q
+            .eq("threadAggregateId", thread.aggregateId)
+            .eq("uploaderId", uploaderId),
+        )
+        .collect();
+      for (const row of rows) {
+        if (row.messageId === undefined && row.sendRequestedAt !== undefined) {
+          await discardAttachment(ctx, row);
+        }
+      }
+    }
   }
 };
 
