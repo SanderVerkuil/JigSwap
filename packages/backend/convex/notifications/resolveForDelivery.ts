@@ -13,7 +13,7 @@ import {
 // no row exists).
 //
 // Returns null when the recipient must not get it at all: an admin-only type for a recipient who is
-// no longer an admin, or a circle invite that is no longer on offer. There is no JWT in a scheduled action, so admin status comes from the
+// no longer an admin, or a circle invite or connection offer that is no longer on offer. There is no JWT in a scheduled action, so admin status comes from the
 // recipient's `users.role` mirror (the same source the subscriber's admin fan-out targets).
 export const resolveForDelivery = internalQuery({
   args: deliveryResolutionArgs,
@@ -45,9 +45,11 @@ export const resolveForDelivery = internalQuery({
     );
     if (!view) return null;
     // A circle invite that is no longer on offer (answered, revoked, expired, its inviter blocked
-    // or no longer an Admin) is not emailed or pushed at all.
+    // or no longer an Admin) is not emailed or pushed at all. Nor is a connection offer that is no
+    // longer open (answered, expired, or gone with its inviter's account).
     if (
-      args.type === "circle_invite_received" &&
+      (args.type === "circle_invite_received" ||
+        args.type === "connection_offer_received") &&
       view.state === "unavailable"
     ) {
       return null;

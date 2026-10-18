@@ -8,7 +8,7 @@ import schema from "./schema";
 // conversation/purgeMemberMessagingData, which deletes every circle invite the member sent or
 // received and every connection offer they made or were made, of any status, together with the
 // notifications that point at them. The other party is left with nothing to open: no invite or
-// offer listed and no notification for it.
+// offer listed, no notification for it, and no email or push still to come.
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 type T = TestConvex<typeof schema>;
@@ -295,6 +295,24 @@ describe("account deletion: circle invites and connection offers", () => {
     expect(await viewTypes(t, "newbie")).not.toContain(
       "connection_offer_received",
     );
+  });
+
+  test("an email or push still due for her offer is not sent", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const deliver = () =>
+      t.query(internal.notifications.resolveForDelivery.resolveForDelivery, {
+        recipientId: s.newbie,
+        type: "connection_offer_received",
+        relatedId: s.sentOffer,
+        actorId: s.alice,
+        subject: { kind: "connectionOffer", offerId: s.sentOffer },
+      });
+    expect(await deliver()).not.toBeNull();
+
+    await deleteAlice(t);
+
+    expect(await deliver()).toBeNull();
   });
 
   test("other members' invites and offers are untouched", async () => {
