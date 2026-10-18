@@ -268,6 +268,44 @@ describe("sharing.getCircle visibility", () => {
   });
 });
 
+describe("sharing circle reads: viewerPermission", () => {
+  test("is each viewer's own seat: Admin for the owner, then the member's level", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, carol } = await seed(t);
+    const circleId = await createCircleForAlice(t);
+    await asAlice(t).mutation(internal.sharing.addMember.addMember, {
+      circleId,
+      memberId: bob,
+      permission: "Admin",
+    });
+    await asAlice(t).mutation(internal.sharing.addMember.addMember, {
+      circleId,
+      memberId: carol,
+      permission: "ViewOnly",
+    });
+
+    const cases = [
+      [asAlice, "Admin", true],
+      [asBob, "Admin", false],
+      [asCarol, "ViewOnly", false],
+    ] as const;
+    for (const [as, permission, owns] of cases) {
+      const [summary] = await as(t).query(
+        api.sharing.listMyCircles.listMyCircles,
+        {},
+      );
+      expect(summary).toMatchObject({
+        viewerPermission: permission,
+        isOwnedByViewer: owns,
+      });
+      const detail = await as(t).query(api.sharing.getCircle.getCircle, {
+        circleId,
+      });
+      expect(detail?.viewerPermission).toBe(permission);
+    }
+  });
+});
+
 // --- Circle-aware visibility (cross-context) ---------------------------------------------------
 
 // Alice acquires an OPEN copy (forLend) but keeps her PROFILE private, so the only way another

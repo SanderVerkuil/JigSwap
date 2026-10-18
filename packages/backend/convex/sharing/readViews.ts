@@ -20,6 +20,12 @@ export const toCircleSummary = (
   name: row.name,
   memberCount: row.memberships.length,
   isOwnedByViewer: row.ownerId === viewerId,
+  // Callers only map circles the viewer belongs to; the owner's seat is always Admin.
+  viewerPermission:
+    row.ownerId === viewerId
+      ? "Admin"
+      : (row.memberships.find((m) => m.memberId === viewerId)?.permission ??
+        "ViewOnly"),
   createdAt: row.createdAt,
 });
 
