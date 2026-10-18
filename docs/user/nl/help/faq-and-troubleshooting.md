@@ -76,7 +76,8 @@ daarvan **Deblokkeren**. Zie
 
 Foto's zijn eerst vervaagd als de automatische controle het niet zeker wist
 (**Gevoelige inhoud**), als de controle niet kon worden uitgevoerd (**Niet
-gecontroleerd**), of als ze komen van iemand die je niet wederzijds volgt. Klik
+gecontroleerd**), of als ze komen van iemand met wie je elkaar niet volgt (**Jullie volgen
+elkaar niet**). Klik
 op **Tonen** om de foto te zien.
 
 </details>

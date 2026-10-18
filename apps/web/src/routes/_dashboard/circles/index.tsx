@@ -484,7 +484,7 @@ function ManageCircleDialog({
                       <SelectContent>
                         {PERMISSIONS.map((p) => (
                           <SelectItem key={p} value={p}>
-                            {p}
+                            {t(`permissions.${p}`)}
                           </SelectItem>
                         ))}
                       </SelectContent>

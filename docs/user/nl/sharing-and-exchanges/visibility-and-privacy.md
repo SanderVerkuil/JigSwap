@@ -106,9 +106,9 @@ lid begint weer verborgen.
 Nieuwe foto's van je puzzels en voltooiingen worden automatisch gecontroleerd
 voordat andere leden ze kunnen zien.
 
-- **Jij** ziet je nieuwe foto meteen, met het label **Wordt gecontroleerd**.
+- **Jij** ziet je nieuwe foto meteen, met het label **Wacht op controle**.
 - **Andere leden** zien een vervaagde plaatshouder met het label
-  **Wordt gecontroleerd** tot de controle klaar is.
+  **Wacht op controle** tot de controle klaar is.
 - Wordt een foto afgekeurd, dan verdwijnt hij voor alle anderen.
 
 Alleen foto's die door de controle zijn gekomen, kunnen voor andere leden als

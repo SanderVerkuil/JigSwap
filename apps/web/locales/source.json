@@ -834,6 +834,7 @@
       "noLongerAvailable": "Photo no longer available",
       "sensitive": "Sensitive content",
       "notChecked": "Not checked",
+      "notMutual": "You don't follow each other",
       "show": "Show",
       "revealFailed": "Couldn't show this photo. Please try again.",
       "checking": "Checking photo…",
@@ -1854,6 +1855,11 @@
     "deleteConfirmLabel": "Type {circle} to confirm",
     "deleted": "Circle deleted",
     "deleteError": "Couldn't delete the circle. Please try again.",
+    "permissions": {
+      "ViewOnly": "View only",
+      "Exchange": "Can exchange",
+      "Admin": "Admin"
+    },
     "invitations": {
       "title": "Invitations",
       "invitedBy": "Invited by {name}",
@@ -1904,7 +1910,7 @@
       "members": "Members",
       "owner": "Owner",
       "shareCopy": "Share a copy",
-      "shareDescription": "Shared copies become visible to circle members at the <scope>friendCircle</scope> visibility scope, even if otherwise private.",
+      "shareDescription": "Shared copies become visible to circle members at the <scope>friendCircle</scope> visibility scope. A copy you've marked private stays private.",
       "chooseCopy": "Choose one of your copies…",
       "copyFallback": "Copy",
       "share": "Share",

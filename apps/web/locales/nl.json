@@ -22,7 +22,7 @@
     "removeOption": "Verwijder {option} optie",
     "removeOptionButton": "knop om optie te verwijderen",
     "inputTag": "invoertag",
-    "photoPendingReview": "Wordt gecontroleerd"
+    "photoPendingReview": "Wacht op controle"
   },
   "notFound": {
     "title": "Pagina Niet Gevonden",
@@ -343,8 +343,8 @@
     "selectPuzzleDescription": "Zoek naar een bestaande puzzel of maak een nieuwe",
     "searchPuzzle": "Zoek naar een puzzel",
     "searchPlaceholder": "Zoek puzzels...",
-    "yourPendingSubmissions": "Jouw inzendingen (in afwachting van beoordeling)",
-    "pendingReview": "In afwachting van beoordeling",
+    "yourPendingSubmissions": "Jouw inzendingen (wachten op controle)",
+    "pendingReview": "Wacht op controle",
     "noPuzzlesFound": "Geen puzzels gevonden",
     "createNewPuzzle": "Nieuwe Puzzel Maken",
     "createNewPuzzleDescription": "Maak een nieuwe puzzel die nog niet bestaat",
@@ -834,6 +834,7 @@
       "noLongerAvailable": "Foto niet meer beschikbaar",
       "sensitive": "Gevoelige inhoud",
       "notChecked": "Niet gecontroleerd",
+      "notMutual": "Jullie volgen elkaar niet",
       "show": "Tonen",
       "revealFailed": "Deze foto kon niet worden getoond. Probeer het opnieuw.",
       "checking": "Foto wordt gecontroleerd…",
@@ -1854,6 +1855,11 @@
     "deleteConfirmLabel": "Typ {circle} om te bevestigen",
     "deleted": "Kring verwijderd",
     "deleteError": "Kon de kring niet verwijderen. Probeer het opnieuw.",
+    "permissions": {
+      "ViewOnly": "Alleen bekijken",
+      "Exchange": "Mag ruilen",
+      "Admin": "Beheerder"
+    },
     "invitations": {
       "title": "Uitnodigingen",
       "invitedBy": "Uitgenodigd door {name}",
@@ -1904,7 +1910,7 @@
       "members": "Leden",
       "owner": "Eigenaar",
       "shareCopy": "Een exemplaar delen",
-      "shareDescription": "Gedeelde exemplaren worden zichtbaar voor kringleden op het zichtbaarheidsniveau <scope>friendCircle</scope>, ook als ze verder privé zijn.",
+      "shareDescription": "Gedeelde exemplaren worden zichtbaar voor kringleden op het zichtbaarheidsniveau <scope>friendCircle</scope>. Een exemplaar dat je op privé hebt gezet, blijft privé.",
       "chooseCopy": "Kies een van je exemplaren…",
       "copyFallback": "Exemplaar",
       "share": "Delen",
@@ -3663,7 +3669,7 @@
       "currentCover": "Huidige omslag",
       "coverUpdated": "Omslag bijgewerkt",
       "coverFailed": "Kon de omslag niet bijwerken",
-      "pendingReview": "Wordt beoordeeld",
+      "pendingReview": "Wacht op controle",
       "removePhoto": "Foto verwijderen",
       "confirmRemove": "Verwijderen",
       "photoRemoved": "Foto verwijderd",
@@ -3701,7 +3707,7 @@
       }
     },
     "photoCover": "Omslag",
-    "photoPending": "Wordt beoordeeld"
+    "photoPending": "Wacht op controle"
   },
   "copyOwner": {
     "label": "Eigenaar",

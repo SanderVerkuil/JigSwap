@@ -29,7 +29,7 @@ describe("PendingPhotoPlaceholder", () => {
     expect(enHtml).toContain('role="img"');
     expect(enHtml).toContain('aria-label="Pending review"');
     expect(enHtml).toContain(">Pending review<");
-    expect(render("nl", null)).toContain(">Wordt gecontroleerd<");
+    expect(render("nl", null)).toContain(">Wacht op controle<");
   });
 
   it("never renders a real photo: without a decodable hash there is no <img> at all", () => {

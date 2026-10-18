@@ -75,7 +75,8 @@ you blocked them yourself, the conversation offers **Unblock** instead. See
 
 Photos are blurred at first when the automatic check wasn't sure about them
 (**Sensitive content**), when the check couldn't run (**Not checked**), or when
-they come from someone you don't follow each other with. Click **Show** to see
+they come from someone you don't follow each other with (**You don't follow
+each other**). Click **Show** to see
 the photo.
 
 </details>

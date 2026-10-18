@@ -282,6 +282,11 @@ function PhotoTile({
   }
 
   if (view.status === "blurred" || !view.url) {
+    const blurLabel = view.notChecked
+      ? t("notChecked")
+      : view.notMutual
+        ? t("notMutual")
+        : t("sensitive");
     return (
       <div
         style={style}
@@ -310,7 +315,7 @@ function PhotoTile({
               aria-hidden
               className="line-clamp-2 px-1 text-center text-[11px] font-semibold text-white drop-shadow"
             >
-              {view.notChecked ? t("notChecked") : t("sensitive")}
+              {blurLabel}
             </span>
           )}
           {onShow && (
@@ -320,7 +325,7 @@ function PhotoTile({
               size="sm"
               disabled={showing}
               onClick={onShow}
-              aria-label={`${view.notChecked ? t("notChecked") : t("sensitive")} · ${t("show")}`}
+              aria-label={`${blurLabel} · ${t("show")}`}
               className={cn(
                 "h-11 max-w-full rounded-full md:h-8",
                 compact && "px-2 text-xs",
@@ -328,8 +333,7 @@ function PhotoTile({
             >
               <EyeOff className="size-4" aria-hidden />
               <span className="truncate">
-                {!compact &&
-                  `${view.notChecked ? t("notChecked") : t("sensitive")} · `}
+                {!compact && `${blurLabel} · `}
                 {t("show")}
               </span>
             </Button>

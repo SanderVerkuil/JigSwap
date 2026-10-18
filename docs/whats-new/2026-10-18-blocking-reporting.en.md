@@ -29,5 +29,6 @@ We'll let you know what we decided.
 ## Privacy & safety
 
 Open your account menu, choose **Manage account** and then **Privacy &
-safety** to see the members you've blocked and unblock them. Unblocking doesn't
+safety** to see the members you've blocked and unblock them, and to follow
+what you've reported under **Your reports**. Unblocking doesn't
 bring back the follows the block removed.

@@ -30,6 +30,7 @@ van wie de melding komt. We laten je weten wat we hebben besloten.
 ## Privacy en veiligheid
 
 Open je accountmenu, kies **Account beheren** en dan **Privacy en
-veiligheid** om te zien welke leden je hebt geblokkeerd en ze te deblokkeren.
+veiligheid** om te zien welke leden je hebt geblokkeerd en ze te deblokkeren,
+en om onder **Jouw meldingen** te volgen wat je hebt gemeld.
 Deblokkeren brengt de volgrelaties die door het blokkeren zijn verdwenen niet
 terug.

@@ -927,6 +927,9 @@ describe("blur, per viewer", () => {
     const [blurred] = await threadOf(t, asBob, threadId);
     expect(photoOf(blurred)!.status).toBe("blurred");
     expect(blurred.attachment).not.toHaveProperty("url");
+    // It passed the check, so it's labelled for the follow, not as sensitive or not checked.
+    expect(blurred.attachment).toMatchObject({ notMutual: true });
+    expect(blurred.attachment).not.toHaveProperty("notChecked");
     expect((await attachment(t, id))!.moderationStatus).toBe("approved");
     expect(photoOf((await threadOf(t, asAlice, threadId))[0])!.status).toBe(
       "ready",

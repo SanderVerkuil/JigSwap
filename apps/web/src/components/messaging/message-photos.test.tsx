@@ -220,6 +220,24 @@ describe("MessagePhotos", () => {
     ).toBeTruthy();
   });
 
+  it("blurred because the sender isn't a mutual follower says so, not sensitive", () => {
+    wrap(
+      <MessagePhotos
+        messages={[photo("m1", { status: "blurred", notMutual: true })]}
+        own={false}
+        authorName="Mara"
+      />,
+    );
+    expect(
+      screen.getByRole("button", {
+        name: "You don't follow each other · Show",
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: /Sensitive content/ }),
+    ).toBeNull();
+  });
+
   it("blurred tile's Report reports the attachment", async () => {
     wrap(
       <MessagePhotos
