@@ -1,5 +1,6 @@
 import {
   makeSubmitPartnerReview,
+  ReputationApplicationError,
   toExchangeId,
   toMemberId,
   type MemberId,
@@ -7,6 +8,7 @@ import {
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { isBlockedEitherWay } from "../social/blocks";
 import { convexExchangeCompletionPort } from "./adapters/convexExchangeCompletionPort";
 import { convexPartnerReviewRepository } from "./adapters/convexPartnerReviewRepository";
 import { convexReputationProfileRepository } from "./adapters/convexReputationProfileRepository";
@@ -24,7 +26,8 @@ import { toConvexError } from "./errors";
 // exchange, runs the entity rules (self-review, rating bounds), and folds the review into the
 // reviewee's ReputationProfile in the SAME transaction. `exchangeId` is the Exchange aggregateId
 // (a string); the repository/port resolve it to the real FK document id. `revieweeId` is a user
-// `_id`, which is the domain MemberId directly.
+// `_id`, which is the domain MemberId directly. A pair blocked either way is refused with the
+// generic ExchangeNotCompleted (no review window), never a block-specific error.
 export const submitPartnerReview = mutation({
   args: {
     exchangeId: v.string(),
@@ -40,6 +43,13 @@ export const submitPartnerReview = mutation({
   },
   handler: async (ctx, args) => {
     const reviewerId = await requireMember(ctx);
+    if (await isBlockedEitherWay(ctx, reviewerId, args.revieweeId)) {
+      throw toConvexError(
+        ReputationApplicationError.exchangeNotCompleted(
+          toExchangeId(args.exchangeId),
+        ),
+      );
+    }
 
     const submit = makeSubmitPartnerReview({
       reviews: convexPartnerReviewRepository(ctx),
