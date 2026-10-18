@@ -56,6 +56,23 @@ const asAlice = (t: TestConvex<typeof schema>) =>
 const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
 
+// Ends the mutual follow (Alice stops following Bob): mutual followers see each other's whole
+// library, so a closed copy only becomes unviewable to the partner once they are no longer mutual.
+const endMutualFollow = (
+  t: TestConvex<typeof schema>,
+  follower: Id<"users">,
+  followee: Id<"users">,
+) =>
+  t.run(async (ctx) => {
+    const edge = await ctx.db
+      .query("follows")
+      .withIndex("by_follower_followee", (q) =>
+        q.eq("followerId", follower).eq("followeeId", followee),
+      )
+      .unique();
+    if (edge) await ctx.db.delete(edge._id);
+  });
+
 const followMutually = (
   t: TestConvex<typeof schema>,
   a: Id<"users">,
@@ -244,6 +261,7 @@ describe("getMyInbox contextCopies", () => {
     await dmAboutBoth(t, first, second);
 
     await closeCopy(t, second);
+    await endMutualFollow(t, alice, bob);
     expect(await contextIdsOf(asAlice(t))).toEqual([first]);
     // The owner still sees their own closed copy.
     expect(await contextIdsOf(asBob(t))).toEqual([second, first]);
@@ -564,6 +582,7 @@ describe("getThreadMessages copyUnavailable", () => {
     await followMutually(t, alice, bob);
     const threadId = await startAbout(t, first);
     await closeCopy(t, first);
+    await endMutualFollow(t, alice, bob);
     const message = await firstMessage(t, threadId);
     expect(message.copy).toBeUndefined();
     expect(message.copyUnavailable).toBe(true);
