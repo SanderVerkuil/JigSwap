@@ -71,6 +71,7 @@ export function MessageComposer({
   theirsLabel,
   placeholder,
   canAttachCopy = true,
+  locationGroup,
 }: {
   threadId: string;
   // Names the textarea ("Message Esther"); falls back to the generic label.
@@ -81,6 +82,8 @@ export function MessageComposer({
   placeholder?: string;
   // Whether "Attach a puzzle" is offered (not yet in circle threads).
   canAttachCopy?: boolean;
+  // A circle thread: the location consent addresses the group.
+  locationGroup?: { circle: string; others: number };
 }) {
   const t = useTranslations("messages");
   const { member } = useCurrentMember();
@@ -328,6 +331,7 @@ export function MessageComposer({
           onOpenChange={setLocationOpen}
           threadId={threadId}
           recipientName={recipientName ?? t("locations.recipientFallback")}
+          group={locationGroup}
           exactCurrentLocation={location?.exactCurrentLocation === true}
           onSent={() => setError(null)}
           onCannotReply={() => {

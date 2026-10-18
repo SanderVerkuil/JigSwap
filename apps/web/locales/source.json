@@ -853,6 +853,7 @@
       "attachLocation": "Location",
       "pickerTitle": "Share a location",
       "consent": "Share this spot with {name}? They'll see it on a map in this conversation. Pick a public meet-up place rather than your home address.",
+      "consentGroup": "Share this spot with the {count, plural, one {# member} other {# members}} of {circle}? They'll see it on a map in this conversation. Pick a public meet-up place rather than your home address.",
       "searchLabel": "Search for a place",
       "searchPlaceholder": "Station, café, street…",
       "searching": "Searching…",

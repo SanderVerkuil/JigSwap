@@ -510,6 +510,11 @@ export function ThreadView({
             }),
             // listAttachableCopies has nothing for circle threads yet.
             canAttachCopy: false,
+            locationGroup: {
+              circle: circleThread.subject.name,
+              // Everyone but the sender sees the spot.
+              others: Math.max(1, circleThread.subject.memberCount - 1),
+            },
           })}
         />
       )}

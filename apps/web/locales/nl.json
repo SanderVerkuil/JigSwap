@@ -853,6 +853,7 @@
       "attachLocation": "Locatie",
       "pickerTitle": "Locatie delen",
       "consent": "Deze plek delen met {name}? Diegene ziet hem op een kaart in dit gesprek. Kies liever een openbare ontmoetingsplek dan je huisadres.",
+      "consentGroup": "Deel deze plek met de {count, plural, one {# lid} other {# leden}} van {circle}? Zij zien hem op een kaart in dit gesprek. Kies liever een openbare ontmoetingsplek dan je huisadres.",
       "searchLabel": "Zoek een plek",
       "searchPlaceholder": "Station, café, straat…",
       "searching": "Zoeken…",

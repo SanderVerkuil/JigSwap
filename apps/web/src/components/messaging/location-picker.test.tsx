@@ -15,7 +15,7 @@ import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import { pixelToLatLng, project } from "./location-math";
-import { LocationPickerBody } from "./location-picker";
+import { LocationPicker, LocationPickerBody } from "./location-picker";
 
 const SEARCH = getFunctionName(gateway.conversation.searchPlaces);
 const RENDER = getFunctionName(gateway.conversation.renderPickerMap);
@@ -358,5 +358,37 @@ describe("LocationPickerBody", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("LocationPicker consent", () => {
+  const renderDialog = (group?: { circle: string; others: number }) =>
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+          <LocationPicker
+            open
+            onOpenChange={() => {}}
+            onCloseAutoFocus={() => {}}
+            threadId="thread_1"
+            recipientName={group ? group.circle : "Mara"}
+            exactCurrentLocation={false}
+            group={group}
+            {...callbacks}
+          />
+        </IntlProvider>
+      </QueryClientProvider>,
+    );
+
+  it("asks to share with the recipient in a DM", () => {
+    renderDialog();
+    expect(screen.getByText(/^Share this spot with Mara\?/)).toBeTruthy();
+  });
+
+  it("names the circle and how many members see it in a circle thread", () => {
+    renderDialog({ circle: "Puzzle Club", others: 5 });
+    expect(
+      screen.getByText(/^Share this spot with the 5 members of Puzzle Club\?/),
+    ).toBeTruthy();
   });
 });
