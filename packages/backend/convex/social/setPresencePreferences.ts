@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
+import { stopLiveTypingOf } from "../conversation/appearingOffline";
 import { requireActiveMember } from "../identity/requireActiveMember";
 import {
   findPresencePreferences,
@@ -32,6 +33,9 @@ export const setPresencePreferences = mutation({
         updatedAt,
       });
     }
+    // Appearing offline also ends any typing indicator already showing (spec Q13).
+    if (override === "invisible")
+      await stopLiveTypingOf(ctx, memberId, updatedAt);
     return null;
   },
 });
