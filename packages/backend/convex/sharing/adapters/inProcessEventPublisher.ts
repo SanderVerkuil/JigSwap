@@ -1,5 +1,6 @@
 import {
   makeWithdrawInvitesFrom,
+  MAX_CIRCLE_MEMBERS,
   type CircleId,
   type DomainEventPublisher,
   type MemberId,
@@ -19,8 +20,8 @@ import { systemClock } from "./systemClock";
 // circle-copy link so a freshly shared copy is immediately discoverable to circle members, and
 // MemberLeftCircle withdraws the departed member's own links so their copies stop being reachable
 // through the circle the moment they are out of it, and withdraws the invites they still had
-// pending there (see withdrawInvitesFrom). CircleDeleted deletes the circle's invites inline and
-// schedules the batched purge of what can be large (purgeDeletedCircle). CircleInviteIssued
+// pending there (see withdrawInvitesFrom). CircleDeleted deletes the circle's pending invites inline
+// and schedules the batched purge of what can be large (purgeDeletedCircle). CircleInviteIssued
 // schedules the invite's expiry at its expiresAt (expiry is also applied lazily on every read and
 // transition).
 export const inProcessEventPublisher = (
@@ -43,7 +44,7 @@ export const inProcessEventPublisher = (
         );
         await withdrawInvitesFrom(ctx, event.circleId, event.memberId);
       } else if (event.name === "CircleDeleted") {
-        await deleteCircleInvites(ctx, event.circleId as string);
+        await deletePendingInvites(ctx, event.circleId as string);
         await ctx.scheduler.runAfter(
           0,
           internal.sharing.purgeDeletedCircle.purgeDeletedCircle,
@@ -75,17 +76,21 @@ export const withdrawInvitesFrom = (
     clock: systemClock,
   })({ circleId, inviterId });
 
-// Delete every invite to a deleted circle, pending or decided (≤ MAX_CIRCLE_MEMBERS pending; the
-// decided ones only fed the re-invite cooldown, which means nothing once the circle is gone).
-// Pending invitees are not told: their invite simply stops being listed.
-const deleteCircleInvites = async (
+// Delete a deleted circle's PENDING invites in the deleting transaction. Pending invites hold seats
+// against the member cap, so there are at most MAX_CIRCLE_MEMBERS of them (the take() bounds the
+// write even if stale ones linger). Decided invites pile up over a circle's life, so they, and any
+// pending one past the bound, go in purgeDeletedCircle's batches instead. Either way they grant
+// nothing once the circle is gone. Pending invitees are not told: their invite stops being listed.
+const deletePendingInvites = async (
   ctx: MutationCtx,
   circleId: string,
 ): Promise<void> => {
   const invites = await ctx.db
     .query("circleInvites")
-    .withIndex("by_circle_invitee", (q) => q.eq("circleAggregateId", circleId))
-    .collect();
+    .withIndex("by_circle_status", (q) =>
+      q.eq("circleAggregateId", circleId).eq("status", "pending"),
+    )
+    .take(MAX_CIRCLE_MEMBERS);
   for (const invite of invites) await ctx.db.delete(invite._id);
 };
 

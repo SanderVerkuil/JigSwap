@@ -2,12 +2,12 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
 
-// How many circleCopyShares links one purge run deletes before rescheduling itself.
+// How many rows (copy-share links, then invites) one purge run deletes before rescheduling itself.
 export const PURGE_BATCH_SIZE = 200;
 
-// Scheduled by the sharing publisher on CircleDeleted. The circle, its memberships and its invites
-// went in the deleting transaction; what is left can be large, so it goes here in batches that
-// reschedule themselves until none remain. It is hygiene, not access control: every reader gates
+// Scheduled by the sharing publisher on CircleDeleted. The circle, its memberships and its pending
+// invites went in the deleting transaction; what is left (its circleCopyShares links, its decided
+// invites) can be large, so it goes here in batches that reschedule themselves until none remain. It is hygiene, not access control: every reader gates
 // on membership, which is already gone, so these rows are unreachable while they wait.
 //
 // Evidence holds: nothing under this circle can be held yet (there is no reports table or
@@ -24,13 +24,26 @@ export const purgeDeletedCircle = internalMutation({
       .take(PURGE_BATCH_SIZE);
     for (const share of shares) await ctx.db.delete(share._id);
 
-    if (shares.length === PURGE_BATCH_SIZE) {
+    // Fill the rest of the batch with invites of any status.
+    const invites =
+      shares.length < PURGE_BATCH_SIZE
+        ? await ctx.db
+            .query("circleInvites")
+            .withIndex("by_circle_invitee", (q) =>
+              q.eq("circleAggregateId", args.circleId),
+            )
+            .take(PURGE_BATCH_SIZE - shares.length)
+        : [];
+    for (const invite of invites) await ctx.db.delete(invite._id);
+
+    const deleted = shares.length + invites.length;
+    if (deleted === PURGE_BATCH_SIZE) {
       await ctx.scheduler.runAfter(
         0,
         internal.sharing.purgeDeletedCircle.purgeDeletedCircle,
         args,
       );
     }
-    return shares.length;
+    return deleted;
   },
 });

@@ -123,6 +123,31 @@ const inviteDave = (t: T, circleId: string, dave: Id<"users">) =>
     permission: "ViewOnly",
   }) as Promise<string>;
 
+// Seed `count` DECIDED invites to the circle directly (declined, from Alice to Dave): they pile up
+// over a circle's life and are only purged in batches.
+const seedDecidedInvites = (
+  t: T,
+  circleId: string,
+  inviterId: Id<"users">,
+  inviteeId: Id<"users">,
+  count: number,
+) =>
+  t.run(async (ctx) => {
+    for (let i = 0; i < count; i++) {
+      await ctx.db.insert("circleInvites", {
+        aggregateId: `decided-${i}`,
+        circleAggregateId: circleId,
+        inviteeId,
+        inviterId,
+        permission: "ViewOnly",
+        status: "declined",
+        createdAt: i,
+        expiresAt: i + 1,
+        decidedAt: i + 1,
+      });
+    }
+  });
+
 const deleteCircle = (t: T, who: Who, circleId: string, confirmName = NAME) =>
   as(t, who).mutation(api.sharing.deleteCircle.deleteCircle, {
     circleId,
@@ -192,14 +217,15 @@ const errorDataOf = (p: Promise<unknown>) =>
   );
 
 describe("sharing.deleteCircle", () => {
-  test("the owner deletes: circle, memberships and invites go at once, shares after the purge", async () => {
+  test("the owner deletes: circle, memberships and pending invites go at once, the rest after the purge", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob, carol, dave, circleId } = await seed(t);
     await shareAlicesCopy(t, circleId);
     await inviteDave(t, circleId, dave);
+    await seedDecidedInvites(t, circleId, alice, dave, 1);
     const before = await rowsOf(t, circleId);
     expect(before.circleMembers).toHaveLength(3);
-    expect(before.circleInvites).toHaveLength(1);
+    expect(before.circleInvites).toHaveLength(2);
     expect(before.circleCopyShares).toHaveLength(1);
 
     await deleteCircle(t, "alice", circleId);
@@ -207,7 +233,8 @@ describe("sharing.deleteCircle", () => {
     const after = await rowsOf(t, circleId);
     expect(after.circles).toHaveLength(0);
     expect(after.circleMembers).toHaveLength(0);
-    expect(after.circleInvites).toHaveLength(0);
+    // Only the decided invite is left for the purge.
+    expect(after.circleInvites.map((i) => i.status)).toEqual(["declined"]);
 
     const events = await deletedEvents(t);
     expect(events).toHaveLength(1);
@@ -220,7 +247,9 @@ describe("sharing.deleteCircle", () => {
     });
 
     await flushScheduled(t);
-    expect((await rowsOf(t, circleId)).circleCopyShares).toHaveLength(0);
+    const purged = await rowsOf(t, circleId);
+    expect(purged.circleCopyShares).toHaveLength(0);
+    expect(purged.circleInvites).toHaveLength(0);
   });
 
   test("requires authentication", async () => {
@@ -369,6 +398,28 @@ describe("sharing.deleteCircle", () => {
     expect((await rowsOf(t, "another-circle")).circleCopyShares).toHaveLength(
       1,
     );
+  });
+
+  test("more decided invites than one batch: the delete still commits, the purge clears them across batches", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, dave, circleId } = await seed(t);
+    const total = PURGE_BATCH_SIZE * 2 + 50;
+    await seedDecidedInvites(t, circleId, alice, dave, total);
+
+    await deleteCircle(t, "alice", circleId);
+    expect((await rowsOf(t, circleId)).circleInvites).toHaveLength(total);
+
+    expect(
+      await t.mutation(internal.sharing.purgeDeletedCircle.purgeDeletedCircle, {
+        circleId,
+      }),
+    ).toBe(PURGE_BATCH_SIZE);
+    expect((await rowsOf(t, circleId)).circleInvites).toHaveLength(
+      total - PURGE_BATCH_SIZE,
+    );
+
+    await flushScheduled(t);
+    expect((await rowsOf(t, circleId)).circleInvites).toHaveLength(0);
   });
 });
 
