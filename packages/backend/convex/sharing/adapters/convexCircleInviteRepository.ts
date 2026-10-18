@@ -37,6 +37,16 @@ export const convexCircleInviteRepository = (
       .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", id as string))
       .unique();
 
+  const rowsForInvitee = (circleId: CircleId, inviteeId: MemberId) =>
+    ctx.db
+      .query("circleInvites")
+      .withIndex("by_circle_invitee", (q) =>
+        q
+          .eq("circleAggregateId", circleId as string)
+          .eq("inviteeId", inviteeId as unknown as Id<"users">),
+      )
+      .collect();
+
   return {
     async findById(id) {
       const row = await rowById(id);
@@ -44,16 +54,14 @@ export const convexCircleInviteRepository = (
     },
 
     async findPending(circleId: CircleId, inviteeId: MemberId) {
-      const rows = await ctx.db
-        .query("circleInvites")
-        .withIndex("by_circle_invitee", (q) =>
-          q
-            .eq("circleAggregateId", circleId as string)
-            .eq("inviteeId", inviteeId as unknown as Id<"users">),
-        )
-        .collect();
-      const row = rows.find((r) => r.status === "pending");
+      const row = (await rowsForInvitee(circleId, inviteeId)).find(
+        (r) => r.status === "pending",
+      );
       return row ? toCircleInvite(row) : null;
+    },
+
+    async listForInvitee(circleId: CircleId, inviteeId: MemberId) {
+      return (await rowsForInvitee(circleId, inviteeId)).map(toCircleInvite);
     },
 
     async listPendingForCircle(circleId: CircleId) {

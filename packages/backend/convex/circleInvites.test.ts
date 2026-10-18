@@ -489,6 +489,41 @@ describe("sharing.inviteToCircle", () => {
     expect((await inviteRow(t, second))?.status).toBe("pending");
   });
 
+  test("after a decline or revoke the same invitee can't be re-invited for 7 days", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, carol, eve, circleId } = await seed(t);
+    await mutualFollow(t, alice, carol);
+    await mutualFollow(t, bob, carol);
+    await mutualFollow(t, alice, eve);
+    const toCarol = await invite(t, "alice", circleId, carol);
+    await decline(t, "carol", toCarol);
+    const toEve = await invite(t, "alice", circleId, eve);
+    await revoke(t, "bob", toEve);
+
+    // Any Admin, any permission: the same generic refusal.
+    await expectConvexCode(invite(t, "bob", circleId, carol), "CannotInvite");
+    await expectConvexCode(invite(t, "alice", circleId, eve), "CannotInvite");
+    const picker = await as(t, "alice").query(
+      api.sharing.listInvitableMembers.listInvitableMembers,
+      { circleId },
+    );
+    expect(picker.map((m) => m.member._id)).not.toContain(carol);
+    expect(picker.map((m) => m.member._id)).not.toContain(eve);
+
+    // Once the decisions are more than 7 days old, inviting works again.
+    for (const inviteId of [toCarol, toEve]) {
+      await t.run(async (ctx) => {
+        const row = await ctx.db
+          .query("circleInvites")
+          .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", inviteId))
+          .unique();
+        await ctx.db.patch(row!._id, { decidedAt: row!.decidedAt! - 7 * DAY });
+      });
+    }
+    expect(await invite(t, "bob", circleId, carol)).not.toBe(toCarol);
+    expect(await invite(t, "alice", circleId, eve)).not.toBe(toEve);
+  });
+
   test("pending invites count against the 50 cap", async () => {
     const t = convexTest(schema, modules);
     const { alice, circleId } = await seed(t);

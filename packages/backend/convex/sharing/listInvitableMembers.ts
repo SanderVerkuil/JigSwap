@@ -5,7 +5,11 @@ import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { blockedEitherWaySet } from "../social/blocks";
 import { projectMemberIdentity } from "../social/privacy";
-import { openInvitesOf, requireCircleAdmin } from "./circleAccess";
+import {
+  openInvitesOf,
+  reinviteHeldOff,
+  requireCircleAdmin,
+} from "./circleAccess";
 
 /** The most candidates one read returns. */
 export const MAX_INVITABLE_RESULTS = 50;
@@ -14,18 +18,21 @@ export const MAX_FOLLOW_EDGES_SCANNED = 500;
 
 // The members a circle Admin may invite, for the invite picker. Built ONLY from the Admin's own
 // mutual follows (the contact rule), never from global search or threads. Drops current members,
-// open invitees and anyone blocked either way, and only lists members whose identity the Admin
-// may see. `search` narrows by name or username (case-insensitive substring).
+// open invitees, anyone inside the re-invite cooldown and anyone blocked either way, and only
+// lists members whose identity the Admin may see. `search` narrows by name or username
+// (case-insensitive substring).
 export const listInvitableMembers = query({
   args: { circleId: v.string(), search: v.optional(v.string()) },
   handler: async (ctx, args): Promise<InvitableMemberView[]> => {
     const viewerId = (await requireMember(ctx)) as unknown as Id<"users">;
     const circle = await requireCircleAdmin(ctx, args.circleId, viewerId);
 
+    const now = Date.now();
     const excluded = new Set<Id<"users">>([
+      ...(await reinviteHeldOff(ctx, args.circleId, now)),
       viewerId,
       ...circle.memberships.map((m) => m.memberId),
-      ...(await openInvitesOf(ctx, args.circleId, Date.now())).map(
+      ...(await openInvitesOf(ctx, args.circleId, now)).map(
         (invite) => invite.inviteeId,
       ),
       ...(await blockedEitherWaySet(ctx, viewerId)),

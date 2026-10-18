@@ -27,6 +27,17 @@ export class InMemoryCircleInviteRepository implements CircleInviteRepository {
     return pending.find((invite) => invite.inviteeId === inviteeId) ?? null;
   }
 
+  async listForInvitee(
+    circleId: CircleId,
+    inviteeId: MemberId,
+  ): Promise<readonly CircleInvite[]> {
+    return [...this.store.values()]
+      .filter(
+        (state) => state.circleId === circleId && state.inviteeId === inviteeId,
+      )
+      .map((state) => CircleInvite.rehydrate(state));
+  }
+
   async listPendingForCircle(
     circleId: CircleId,
   ): Promise<readonly CircleInvite[]> {

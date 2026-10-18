@@ -1,6 +1,7 @@
 import { SharingApplicationError, toCircleId } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { toCircleInvite } from "./adapters/convexCircleInviteRepository";
 import { toConvexError } from "./errors";
 
 /** The circle row by its domain CircleId, or null. */
@@ -51,3 +52,26 @@ export const openInvitesOf = async (
       )
       .collect()
   ).filter((invite) => invite.expiresAt > now);
+
+/** Invitees of this circle still inside the re-invite cooldown (a recent decline or revoke). */
+export const reinviteHeldOff = async (
+  ctx: QueryCtx,
+  circleId: string,
+  now: number,
+): Promise<Set<Id<"users">>> => {
+  const held = new Set<Id<"users">>();
+  for (const status of ["declined", "revoked"] as const) {
+    const rows = await ctx.db
+      .query("circleInvites")
+      .withIndex("by_circle_status", (q) =>
+        q.eq("circleAggregateId", circleId).eq("status", status),
+      )
+      .collect();
+    for (const row of rows) {
+      if (toCircleInvite(row).holdsOffReinviteAt(new Date(now))) {
+        held.add(row.inviteeId);
+      }
+    }
+  }
+  return held;
+};

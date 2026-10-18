@@ -6,9 +6,10 @@ import { CircleInviteDeps } from "./circle-invite-deps";
 
 // An Admin invites a member they may contact. Order matters: a non-member actor gets
 // CircleNotFound (no probing which circles exist), the contact rule runs before the idempotency
-// lookup so a now-uncontactable member is refused even with an old invite, and the cap counts
-// members plus every still-open invite. One open invite per (circle, invitee): a repeat returns
-// it; a stale pending one (past its expiry, not yet flipped) is expired here first.
+// lookup so a now-uncontactable member is refused even with an old invite, a recent decline or
+// revoke holds off a new invite (the same generic CannotInvite), and the cap counts members plus
+// every still-open invite. One open invite per (circle, invitee): a repeat returns it; a stale
+// pending one (past its expiry, not yet flipped) is expired here first.
 export const makeInviteToCircle =
   (
     deps: Pick<
@@ -29,6 +30,11 @@ export const makeInviteToCircle =
     }
 
     const now = deps.clock.now();
+    const history = await deps.invites.listForInvitee(circle.id, cmd.inviteeId);
+    if (history.some((past) => past.holdsOffReinviteAt(now))) {
+      return err(SharingError.cannotInvite());
+    }
+
     const pending: DomainEvent[] = [];
     const existing = await deps.invites.findPending(circle.id, cmd.inviteeId);
     if (existing) {

@@ -14,6 +14,10 @@ import { PermissionLevel } from "./permission-level";
 // How long an unanswered circle invite stays open.
 export const CIRCLE_INVITE_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 
+// After the invitee declines or an invite is revoked, the same (circle, invitee) can't be invited
+// again for this long, so an Admin can't keep re-sending an invite someone turned down.
+export const CIRCLE_REINVITE_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+
 export type CircleInviteStatus =
   "pending" | "accepted" | "declined" | "revoked" | "expired";
 
@@ -108,6 +112,17 @@ export class CircleInvite {
   // Pending and not yet past its expiry: the only state in which the invite can still be answered.
   isOpenAt(now: Date): boolean {
     return this.state.status === "pending" && now < this.state.expiresAt;
+  }
+
+  // Whether this decided invite still holds off a new invite to the same invitee at `now`: it was
+  // declined or revoked less than CIRCLE_REINVITE_COOLDOWN_MS ago.
+  holdsOffReinviteAt(now: Date): boolean {
+    const { status, decidedAt } = this.state;
+    return (
+      (status === "declined" || status === "revoked") &&
+      decidedAt !== undefined &&
+      now.getTime() < decidedAt.getTime() + CIRCLE_REINVITE_COOLDOWN_MS
+    );
   }
 
   accept(by: MemberId, now: Date): Result<void, SharingError> {

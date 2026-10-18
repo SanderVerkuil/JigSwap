@@ -6,7 +6,11 @@ import {
   toMembershipId,
 } from "../../shared-kernel";
 import { Circle } from "./circle";
-import { CIRCLE_INVITE_TTL_MS, CircleInvite } from "./circle-invite";
+import {
+  CIRCLE_INVITE_TTL_MS,
+  CIRCLE_REINVITE_COOLDOWN_MS,
+  CircleInvite,
+} from "./circle-invite";
 import {
   CircleInviteAccepted,
   CircleInviteDeclined,
@@ -275,6 +279,45 @@ describe("CircleInvite", () => {
       expect(codeOf(decided.expire(EXPIRES))).toBe("InviteNotPending");
       expect(decided.status).toBe("accepted");
       expect(decided.pullEvents()).toEqual([]);
+    });
+  });
+
+  describe("holdsOffReinviteAt", () => {
+    const WEEK = 7 * 24 * 60 * 60 * 1000;
+
+    it("lasts 7 days", () => {
+      expect(CIRCLE_REINVITE_COOLDOWN_MS).toBe(WEEK);
+    });
+
+    it("holds off for 7 days after a decline or a revoke, to the millisecond", () => {
+      const declined = issue();
+      declined.decline(invitee, NOW);
+      const revoked = issue();
+      revoked.revoke(owner, circle(), NOW);
+      for (const invite of [declined, revoked]) {
+        expect(invite.holdsOffReinviteAt(NOW)).toBe(true);
+        expect(invite.holdsOffReinviteAt(at(WEEK - 1))).toBe(true);
+        expect(invite.holdsOffReinviteAt(at(WEEK))).toBe(false);
+      }
+    });
+
+    it("never holds off for a pending, accepted or expired invite", () => {
+      expect(issue().holdsOffReinviteAt(NOW)).toBe(false);
+      const accepted = issue();
+      accepted.accept(invitee, NOW);
+      expect(accepted.holdsOffReinviteAt(NOW)).toBe(false);
+      const expired = issue();
+      expired.expire(EXPIRES);
+      expect(expired.holdsOffReinviteAt(EXPIRES)).toBe(false);
+    });
+
+    it("needs a decision time (a malformed decided row holds nothing off)", () => {
+      const { decidedAt: _drop, ...state } = (() => {
+        const i = issue();
+        i.decline(invitee, NOW);
+        return i.toState();
+      })();
+      expect(CircleInvite.rehydrate(state).holdsOffReinviteAt(NOW)).toBe(false);
     });
   });
 

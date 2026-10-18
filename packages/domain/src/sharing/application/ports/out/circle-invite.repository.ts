@@ -14,6 +14,11 @@ export interface CircleInviteRepository {
     circleId: CircleId,
     inviteeId: MemberId,
   ): Promise<CircleInvite | null>;
+  // Every invite ever sent to this (circle, invitee), any status, for the re-invite cooldown.
+  listForInvitee(
+    circleId: CircleId,
+    inviteeId: MemberId,
+  ): Promise<readonly CircleInvite[]>;
   // Every stored-pending invite to the circle, for the member cap.
   listPendingForCircle(circleId: CircleId): Promise<readonly CircleInvite[]>;
   save(invite: CircleInvite): Promise<void>;

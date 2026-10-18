@@ -204,6 +204,29 @@ describe("Sharing circle-invite use cases", () => {
       ]);
     });
 
+    it("holds off a re-invite for 7 days after a decline or revoke, with CannotInvite", async () => {
+      const WEEK = 7 * 24 * 60 * 60 * 1000;
+      const declined = await invited();
+      await decline(declined);
+      expect(codeOf(await invite(invitee, admin))).toBe("CannotInvite");
+
+      const other = toMemberId("other");
+      policy.allowContact(owner, other);
+      await revoke(await invited(other), owner);
+      expect(codeOf(await invite(other))).toBe("CannotInvite");
+
+      clock.set(later(WEEK));
+      expect((await invite()).isOk).toBe(true);
+      expect((await invite(other)).isOk).toBe(true);
+    });
+
+    it("does not hold off after an expiry", async () => {
+      const first = await invited();
+      clock.set(later(CIRCLE_INVITE_TTL_MS));
+      await expire(first);
+      expect((await invite()).isOk).toBe(true);
+    });
+
     it("counts open invites against the member cap", async () => {
       // 3 members; fill the remaining seats with open invites.
       const free = MAX_CIRCLE_MEMBERS - 3;
