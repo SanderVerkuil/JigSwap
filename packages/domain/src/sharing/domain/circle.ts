@@ -20,6 +20,11 @@ export const MAX_CIRCLE_MEMBERS = 50;
 // never re-checks, so circles stored before the limit keep their longer names.
 export const MAX_CIRCLE_NAME_LENGTH = 100;
 
+// Unicode control (Cc) and format (Cf) characters: bidi overrides/isolates, zero-width spaces and
+// joiners, BOMs. Invisible in a name, they can disguise it or pad an empty one, so a new name drops
+// them before it is trimmed and measured.
+const INVISIBLE_CHARACTERS = /[\p{Cc}\p{Cf}]/gu;
+
 // Input to create(): a new private group and its first (owner) membership.
 export interface CreateCircleProps {
   readonly id: CircleId;
@@ -68,11 +73,11 @@ export class Circle {
     return this.memberships;
   }
 
-  // Open a new circle. The name is trimmed and must be 1 to MAX_CIRCLE_NAME_LENGTH characters
-  // (InvalidCircleName otherwise). The owner is seeded as the first membership at Admin — the
+  // Open a new circle. The name loses its control/format characters, is trimmed, and must then be
+  // 1 to MAX_CIRCLE_NAME_LENGTH characters (InvalidCircleName otherwise). The owner is seeded as the first membership at Admin — the
   // owner is implicitly Admin and can never be demoted or removed.
   static create(props: CreateCircleProps): Result<Circle, SharingError> {
-    const name = props.name.trim();
+    const name = props.name.replace(INVISIBLE_CHARACTERS, "").trim();
     if (name.length === 0 || name.length > MAX_CIRCLE_NAME_LENGTH) {
       return err(SharingError.invalidCircleName());
     }

@@ -102,10 +102,49 @@ describe("Circle", () => {
       }
     });
 
+    it("drops bidi overrides and isolates from a new name", () => {
+      const result = createNamed("\u202Egnp.exe \u2066Family\u2069");
+      expect(result.isOk && result.value.name).toBe("gnp.exe Family");
+    });
+
+    it("drops zero-width and control characters, before trimming", () => {
+      const result = createNamed("\u200B Fam\u0000il\u200Dy\uFEFF ");
+      expect(result.isOk && result.value.name).toBe("Family");
+    });
+
+    it("refuses a name of only zero-width characters with InvalidCircleName", () => {
+      for (const name of ["\u200B\u200C\u200D\uFEFF", " \u200B \u2060 "]) {
+        const result = createNamed(name);
+        expect(result.isErr && result.error.code).toBe("InvalidCircleName");
+      }
+    });
+
+    it("measures the 100-character limit after dropping invisible characters", () => {
+      const name = "x".repeat(100);
+      const result = createNamed(`${name}\u200B\u200B\u202E`);
+      expect(result.isOk && result.value.name).toBe(name);
+    });
+
+    it("keeps accents and emoji intact", () => {
+      for (const name of [
+        "Puzzelclub Zoë & Renée",
+        "Café Crème",
+        "Puzzels 🧩❤️👍🏽🇳🇱",
+      ]) {
+        const result = createNamed(name);
+        expect(result.isOk && result.value.name).toBe(name);
+      }
+    });
+
     it("rehydrates a stored name longer than the limit without re-checking it", () => {
       const long = "x".repeat(150);
       const circle = Circle.rehydrate({ ...newCircle().toState(), name: long });
       expect(circle.name).toBe(long);
+      // Nor strips a stored name's invisible characters.
+      const odd = "Fam\u200Bily\u202E";
+      expect(
+        Circle.rehydrate({ ...newCircle().toState(), name: odd }).name,
+      ).toBe(odd);
       expect(circle.delete(owner, long, NOW).isOk).toBe(true);
     });
   });
