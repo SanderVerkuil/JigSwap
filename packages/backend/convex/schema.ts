@@ -348,6 +348,9 @@ export default defineSchema({
     // other members in place of a photo that is still pending/unscored; never exposed for a
     // rejected one. Absent on rows processed before it existed or whose decode failed.
     blurhash: v.optional(v.string()),
+    // The admin who decided this photo by hand (approve/reject of a pending or unscored photo).
+    // A manual decision is final: the re-screen backfill skips such rows.
+    moderatedBy: v.optional(v.id("users")),
 
     // --- Timestamps ---
     createdAt: v.number(),
@@ -474,6 +477,9 @@ export default defineSchema({
     // other members in place of a photo that is still pending/unscored; never exposed for a
     // rejected one. Absent on rows processed before it existed or whose decode failed.
     blurhash: v.optional(v.string()),
+    // The admin who decided this photo by hand (approve/reject of a pending or unscored photo).
+    // A manual decision is final: the re-screen backfill skips such rows.
+    moderatedBy: v.optional(v.id("users")),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -569,6 +575,8 @@ export default defineSchema({
       v.literal("photo_restored"),
       v.literal("photo_removal_confirmed"),
       v.literal("photo_auto_rejected"),
+      v.literal("photo_manually_approved"),
+      v.literal("photo_manually_rejected"),
       v.literal("role_granted"),
       v.literal("role_revoked"),
     ),

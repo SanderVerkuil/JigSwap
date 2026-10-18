@@ -13,6 +13,8 @@ type ModerationKind =
   | "photo_restored"
   | "photo_removal_confirmed"
   | "photo_auto_rejected"
+  | "photo_manually_approved"
+  | "photo_manually_rejected"
   | "role_granted"
   | "role_revoked";
 

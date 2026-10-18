@@ -9,6 +9,7 @@
  */
 
 import type * as admin_confirmPhotoRemoval from "../admin/confirmPhotoRemoval.js";
+import type * as admin_decideUncheckedPhoto from "../admin/decideUncheckedPhoto.js";
 import type * as admin_getModerationActivity from "../admin/getModerationActivity.js";
 import type * as admin_getModerationStats from "../admin/getModerationStats.js";
 import type * as admin_getPhotoScreeningHealth from "../admin/getPhotoScreeningHealth.js";
@@ -16,6 +17,7 @@ import type * as admin_getPuzzleDefinitionDetail from "../admin/getPuzzleDefinit
 import type * as admin_getUserDetail from "../admin/getUserDetail.js";
 import type * as admin_listPuzzleDefinitions from "../admin/listPuzzleDefinitions.js";
 import type * as admin_listRejectedPhotos from "../admin/listRejectedPhotos.js";
+import type * as admin_listUncheckedPhotos from "../admin/listUncheckedPhotos.js";
 import type * as admin_listUsers from "../admin/listUsers.js";
 import type * as admin_probePhotoScreening from "../admin/probePhotoScreening.js";
 import type * as admin_restorePhoto from "../admin/restorePhoto.js";
@@ -423,6 +425,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "admin/confirmPhotoRemoval": typeof admin_confirmPhotoRemoval;
+  "admin/decideUncheckedPhoto": typeof admin_decideUncheckedPhoto;
   "admin/getModerationActivity": typeof admin_getModerationActivity;
   "admin/getModerationStats": typeof admin_getModerationStats;
   "admin/getPhotoScreeningHealth": typeof admin_getPhotoScreeningHealth;
@@ -430,6 +433,7 @@ declare const fullApi: ApiFromModules<{
   "admin/getUserDetail": typeof admin_getUserDetail;
   "admin/listPuzzleDefinitions": typeof admin_listPuzzleDefinitions;
   "admin/listRejectedPhotos": typeof admin_listRejectedPhotos;
+  "admin/listUncheckedPhotos": typeof admin_listUncheckedPhotos;
   "admin/listUsers": typeof admin_listUsers;
   "admin/probePhotoScreening": typeof admin_probePhotoScreening;
   "admin/restorePhoto": typeof admin_restorePhoto;

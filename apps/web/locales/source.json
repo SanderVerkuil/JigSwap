@@ -3590,7 +3590,9 @@
         "photo_auto_rejected": "<strong>{actor}</strong> auto-flagged a photo on <strong>{target}</strong>",
         "photo_restored": "<strong>{actor}</strong> restored a photo on <strong>{target}</strong>",
         "role_granted": "<strong>{actor}</strong> made <strong>{target}</strong> an admin",
-        "role_revoked": "<strong>{actor}</strong> removed the admin role from <strong>{target}</strong>"
+        "role_revoked": "<strong>{actor}</strong> removed the admin role from <strong>{target}</strong>",
+        "photo_manually_approved": "<strong>{actor}</strong> approved an unchecked photo on <strong>{target}</strong>",
+        "photo_manually_rejected": "<strong>{actor}</strong> rejected an unchecked photo on <strong>{target}</strong>"
       },
       "activityEmpty": "No moderation activity yet.",
       "screening": {

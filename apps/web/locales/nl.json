@@ -3590,7 +3590,9 @@
         "photo_auto_rejected": "<strong>{actor}</strong> markeerde automatisch een foto bij <strong>{target}</strong>",
         "photo_restored": "<strong>{actor}</strong> herstelde een foto bij <strong>{target}</strong>",
         "role_granted": "<strong>{actor}</strong> maakte <strong>{target}</strong> beheerder",
-        "role_revoked": "<strong>{actor}</strong> trok de beheerdersrol van <strong>{target}</strong> in"
+        "role_revoked": "<strong>{actor}</strong> trok de beheerdersrol van <strong>{target}</strong> in",
+        "photo_manually_approved": "<strong>{actor}</strong> keurde een niet-gecontroleerde foto goed bij <strong>{target}</strong>",
+        "photo_manually_rejected": "<strong>{actor}</strong> wees een niet-gecontroleerde foto af bij <strong>{target}</strong>"
       },
       "activityEmpty": "Nog geen moderatieactiviteit.",
       "screening": {

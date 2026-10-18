@@ -94,30 +94,41 @@ const writeVerdict = async (
     updatedAt: Date.now(),
   });
   if (args.moderationStatus !== "rejected") return;
+  const title = await detachRejectedCompletionPhoto(ctx, row);
+  // Audit trail (no actorId = system). Target the completion aggregate.
+  await stampModerationAction(ctx, {
+    kind: "photo_auto_rejected",
+    targetLabel: title,
+    targetId: row.completionId,
+  });
+};
 
+/**
+ * The side effects of rejecting a completion photo (automated or by an admin): drop its id from
+ * the completions row's `photos` array (a direct system write that frees a cap slot and leaves
+ * updatedAt alone) and delete the blob. The sidecar survives as the audit record. Returns the
+ * label for the audit stamp (the completion's cached copy title).
+ */
+export const detachRejectedCompletionPhoto = async (
+  ctx: MutationCtx,
+  row: Doc<"completionImages">,
+): Promise<string> => {
   const completion = await ctx.db
     .query("completions")
     .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", row.completionId))
     .unique();
   if (completion) {
-    // Direct system write (see setModerationFile): remove the photo, don't touch updatedAt.
     await ctx.db.patch(completion._id, {
       photos: completion.photos.filter((id) => id !== row.fileId),
     });
   }
-  // Tolerate an already-deleted blob; don't fail the verdict over a missing file.
+  // Tolerate an already-deleted blob; don't fail the decision over a missing file.
   try {
     await ctx.storage.delete(row.fileId);
   } catch {
     // Nothing references it either way.
   }
-  // Audit trail (no actorId = system). Target the completion aggregate; label via the
-  // completion's cached copy snapshot.
-  await stampModerationAction(ctx, {
-    kind: "photo_auto_rejected",
-    targetLabel: completion?.copySnapshot?.title ?? "Completion photo",
-    targetId: row.completionId,
-  });
+  return completion?.copySnapshot?.title ?? "Completion photo";
 };
 
 // Record the classifier verdict. Only patches a row that still exists AND is still pending —

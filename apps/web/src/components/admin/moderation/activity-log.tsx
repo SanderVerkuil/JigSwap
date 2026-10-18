@@ -16,6 +16,7 @@ import {
   Eye,
   EyeOff,
   Flag,
+  ImageOff,
   Pencil,
   ShieldCheck,
   ShieldOff,
@@ -42,6 +43,8 @@ const KIND_META: Record<ActivityRow["kind"], [LucideIcon, string]> = {
   photo_removal_confirmed: [Trash2, "text-destructive"],
   photo_auto_rejected: [Flag, "text-jigsaw-warning"],
   photo_restored: [Undo2, "text-muted-foreground"],
+  photo_manually_approved: [CheckCircle, "text-jigsaw-success"],
+  photo_manually_rejected: [ImageOff, "text-destructive"],
   role_granted: [ShieldCheck, "text-jigsaw-success"],
   role_revoked: [ShieldOff, "text-destructive"],
 };
