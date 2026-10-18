@@ -148,6 +148,7 @@ import type * as conversation_revealMessageImage from "../conversation/revealMes
 import type * as conversation_searchPlaces from "../conversation/searchPlaces.js";
 import type * as conversation_sendLocation from "../conversation/sendLocation.js";
 import type * as conversation_sendStagedImages from "../conversation/sendStagedImages.js";
+import type * as conversation_setThreadMuted from "../conversation/setThreadMuted.js";
 import type * as conversation_sharedLocations from "../conversation/sharedLocations.js";
 import type * as conversation_stageMessageImage from "../conversation/stageMessageImage.js";
 import type * as conversation_startCopyConversation from "../conversation/startCopyConversation.js";
@@ -646,6 +647,7 @@ declare const fullApi: ApiFromModules<{
   "conversation/searchPlaces": typeof conversation_searchPlaces;
   "conversation/sendLocation": typeof conversation_sendLocation;
   "conversation/sendStagedImages": typeof conversation_sendStagedImages;
+  "conversation/setThreadMuted": typeof conversation_setThreadMuted;
   "conversation/sharedLocations": typeof conversation_sharedLocations;
   "conversation/stageMessageImage": typeof conversation_stageMessageImage;
   "conversation/startCopyConversation": typeof conversation_startCopyConversation;

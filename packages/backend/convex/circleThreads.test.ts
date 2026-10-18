@@ -768,6 +768,78 @@ describe("inbox, unread and mute", () => {
     expect(row.lastMessage).toBeNull();
     expect(JSON.stringify(row)).not.toContain("secret");
   });
+
+  test("a muted thread is left out of the badge and flagged in the inbox; setThreadMuted touches only the caller's row", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, carol, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    await post(t, "alice", threadId, "one");
+    const before = await participantRowsOf(t, threadId);
+
+    await as(t, "bob").mutation(
+      api.conversation.setThreadMuted.setThreadMuted,
+      {
+        threadId,
+        muted: true,
+      },
+    );
+    const after = await participantRowsOf(t, threadId);
+    for (const row of after) {
+      const was = before.find((b) => b._id === row._id)!;
+      if (row.memberId === bob) expect(row).toEqual({ ...was, muted: true });
+      else expect(row).toEqual(was);
+    }
+    expect(
+      await as(t, "bob").query(
+        api.conversation.getUnreadTotal.getUnreadTotal,
+        {},
+      ),
+    ).toBe(0);
+    const [row] = await inboxOf(t, "bob");
+    expect(row).toMatchObject({ muted: true, unreadCount: 1 });
+    expect(
+      await as(t, "carol").query(
+        api.conversation.getUnreadTotal.getUnreadTotal,
+        {},
+      ),
+    ).toBe(1);
+
+    await as(t, "bob").mutation(
+      api.conversation.setThreadMuted.setThreadMuted,
+      {
+        threadId,
+        muted: false,
+      },
+    );
+    expect(
+      await as(t, "bob").query(
+        api.conversation.getUnreadTotal.getUnreadTotal,
+        {},
+      ),
+    ).toBe(1);
+    expect((await inboxOf(t, "bob"))[0].muted).toBeUndefined();
+    void carol;
+  });
+
+  test("setThreadMuted is participants only", async () => {
+    const t = convexTest(schema, modules);
+    const { circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    await expectCode(
+      as(t, "dave").mutation(api.conversation.setThreadMuted.setThreadMuted, {
+        threadId,
+        muted: true,
+      }),
+      "NotParticipant",
+    );
+    await expectCode(
+      as(t, "dave").mutation(api.conversation.setThreadMuted.setThreadMuted, {
+        threadId: "nope",
+        muted: true,
+      }),
+      "ThreadNotFound",
+    );
+  });
 });
 
 describe("posting", () => {

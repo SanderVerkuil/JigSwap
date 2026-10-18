@@ -204,8 +204,10 @@ export const gateway = {
   // Conversation: threads, DMs, exchange chat, inbox.
   conversation: {
     openDmThread: api.conversation.openDmThread.openDmThread,
+    openCircleThread: api.conversation.openCircleThread.openCircleThread,
     postMessage: api.conversation.postMessage.postMessage,
     markThreadRead: api.conversation.markThreadRead.markThreadRead,
+    setThreadMuted: api.conversation.setThreadMuted.setThreadMuted,
     getMyInbox: api.conversation.getMyInbox.getMyInbox,
     getThreadMessages: api.conversation.getThreadMessages.getThreadMessages,
     listThreadMessages: api.conversation.listThreadMessages.listThreadMessages,
