@@ -721,3 +721,64 @@ describe("a block vetoes the circle reveal", () => {
     expect(nameOf(await project(t, privy, viewer))).toBe("Viewer");
   });
 });
+
+describe("a pending circle invitee is not a member", () => {
+  // Every pair below is private and non-mutual, so only the circle rule could reveal them.
+  test("an invited, not-yet-accepted member gets no reveal either way; accepting seats them", async () => {
+    const t = convexTest(schema, modules);
+    const { viewer, host, privy, stranger } = await seed(t);
+    // The contact rule for inviting: the inviter (host) and invitee are mutual followers.
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("follows", {
+        followerId: host,
+        followeeId: stranger,
+        createdAt: now,
+      });
+      await ctx.db.insert("follows", {
+        followerId: stranger,
+        followeeId: host,
+        createdAt: now,
+      });
+    });
+
+    const inviteId = await asHost(t).mutation(
+      api.sharing.inviteToCircle.inviteToCircle,
+      { circleId: CIRCLE, inviteeId: stranger, permission: "Exchange" },
+    );
+
+    // #182 stores the invite in circleInvites; it writes no seat and no junction row.
+    const stored = await t.run(async (ctx) => ({
+      invites: await ctx.db
+        .query("circleInvites")
+        .withIndex("by_invitee_status", (q) =>
+          q.eq("inviteeId", stranger).eq("status", "pending"),
+        )
+        .collect(),
+      junction: await ctx.db
+        .query("circleMembers")
+        .withIndex("by_member", (q) => q.eq("memberId", stranger))
+        .collect(),
+    }));
+    expect(stored.invites).toHaveLength(1);
+    expect(stored.junction).toHaveLength(0);
+
+    for (const [from, to, name] of [
+      [viewer, stranger, "Strange"],
+      [privy, stranger, "Strange"],
+      [stranger, privy, "Privy"],
+    ] as const) {
+      const p = await project(t, from, to);
+      expect(p.anonymous).toBe(true);
+      expect(JSON.stringify(p)).not.toContain(name);
+    }
+
+    await t
+      .withIdentity({ subject: "clerk_stranger" })
+      .mutation(api.sharing.acceptCircleInvite.acceptCircleInvite, {
+        inviteId,
+      });
+    expect(nameOf(await project(t, viewer, stranger))).toBe("Strange");
+    expect(nameOf(await project(t, stranger, privy))).toBe("Privy");
+  });
+});
