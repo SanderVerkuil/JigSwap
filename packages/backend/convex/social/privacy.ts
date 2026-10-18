@@ -188,7 +188,15 @@ const anonRefKey = (ctx: object): Promise<CryptoKey> => {
   const secret = process.env.ANON_REF_SECRET;
   if (secret !== undefined && secret.length >= ANON_REF_SECRET_MIN_LENGTH) {
     if (configuredKey?.secret !== secret) {
-      configuredKey = { secret, key: importHmacKey(encoder.encode(secret)) };
+      const entry = {
+        secret,
+        key: importHmacKey(encoder.encode(secret)),
+      };
+      // A rejected import must not stay cached: drop it so the next request retries.
+      entry.key.catch(() => {
+        if (configuredKey === entry) configuredKey = undefined;
+      });
+      configuredKey = entry;
     }
     return configuredKey.key;
   }

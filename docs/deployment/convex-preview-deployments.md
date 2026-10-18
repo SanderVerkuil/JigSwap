@@ -125,19 +125,22 @@ every such request. Pages keep working, but refs change on every response.
 Set it **before merging #178**. The production deploy runs right after CI passes on main,
 and setting the variable earlier is harmless because the old code never reads it.
 Run the commands from `packages/backend`. Use a different value for production than for
-dev and previews. Leave the value out of the command so the CLI prompts for it and the
-secret stays out of your shell history:
+dev and previews. Never put the value on the command line; pipe or redirect it in so the secret stays
+out of your shell history:
 
 ```bash
-openssl rand -base64 48            # one value for prod, one for dev + previews (64 chars each)
-
-npx convex env set --prod ANON_REF_SECRET                     # production (prompts for the value)
-npx convex env set ANON_REF_SECRET                            # the shared dev deployment
-npx convex env default set --type preview ANON_REF_SECRET     # default for NEW previews
+# Pipe a fresh value straight in, so it never lands in scrollback or shell history.
+# Use one value for prod and another for dev + previews.
+openssl rand -base64 48 | npx convex env set --prod ANON_REF_SECRET                  # production
+openssl rand -base64 48 > /tmp/anon-ref-secret && chmod 600 /tmp/anon-ref-secret   # dev + previews value
+npx convex env set ANON_REF_SECRET < /tmp/anon-ref-secret                            # the shared dev deployment
+npx convex env default set --type preview ANON_REF_SECRET < /tmp/anon-ref-secret     # default for NEW previews
+npx convex env default set --type dev ANON_REF_SECRET < /tmp/anon-ref-secret         # optional: new personal dev deployments
 
 # Existing previews predate the default (defaults apply only at creation), so set it on
 # each live one too, or remove and re-add the PR's `preview` label to recreate it:
-npx convex env set --deployment preview/<branch-with-slashes-as-dashes> ANON_REF_SECRET
+npx convex env set --deployment preview/<branch-with-slashes-as-dashes> ANON_REF_SECRET < /tmp/anon-ref-secret
+rm /tmp/anon-ref-secret
 
 # Check (names only, values are never printed):
 npx convex env list --prod --names-only
