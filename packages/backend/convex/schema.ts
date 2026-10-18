@@ -951,6 +951,9 @@ export default defineSchema({
     // "Ask for a review" (spec R.10): only then may an admin see an auto-rejected photo.
     reviewRequestedAt: v.optional(v.number()),
     reviewDecidedAt: v.optional(v.number()),
+    // A quarantined photo's review request "ends" for the sender like an upheld one (sender view
+    // only; no admin ever sees or decides it): set by a flip 24-72 h after the request.
+    senderReviewUpheldAt: v.optional(v.number()),
     // The admin who restored or upheld it on review.
     moderatedBy: v.optional(v.id("users")),
     // A quarantined photo at a point where a rejected one would be deleted (purge, block): kept

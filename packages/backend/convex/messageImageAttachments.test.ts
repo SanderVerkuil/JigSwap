@@ -938,6 +938,34 @@ describe("review appeal", () => {
       review: "requested",
     });
     expect(await reviewQueue(t)).toEqual([]);
+
+    // Like a rejected photo an admin upholds, it ends up "upheld" for the sender: a flip after a
+    // randomised 24-72 h, sender view only. The photo stays preserved and quarantined.
+    const [flip] = (
+      await t.run((ctx) =>
+        ctx.db.system.query("_scheduled_functions").collect(),
+      )
+    ).filter(
+      (job) =>
+        job.name ===
+        "conversation/requestImageReview:showQuarantinedReviewUpheld",
+    );
+    const delay = flip.scheduledTime - flip._creationTime;
+    expect(delay).toBeGreaterThanOrEqual(24 * 60 * 60_000 - 1000);
+    expect(delay).toBeLessThanOrEqual(72 * 60 * 60_000 + 1000);
+    await t.mutation(
+      internal.conversation.requestImageReview.showQuarantinedReviewUpheld,
+      { attachmentId: id },
+    );
+    expect((await outbox(t, threadId))[0]).toMatchObject({
+      status: "rejected",
+      review: "upheld",
+    });
+    const row = (await attachment(t, id))!;
+    expect(row.moderationStatus).toBe("quarantined");
+    expect(row.reviewDecidedAt).toBeUndefined();
+    expect(await blobExists(t, row.fileId)).toBe(true);
+    expect(await reviewQueue(t)).toEqual([]);
   });
 });
 

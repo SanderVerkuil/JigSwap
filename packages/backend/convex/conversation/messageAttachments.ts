@@ -483,8 +483,11 @@ export const pendingAttachmentViewOf = async (
     row.moderationStatus === "quarantined" ||
     row.moderationStatus === "removed"
   ) {
+    // An admin upheld it, or (quarantined: never shown to an admin) its sender-view flip ran.
     const reviewDecided =
-      row.moderationStatus === "rejected" && row.reviewDecidedAt !== undefined;
+      row.moderationStatus === "rejected"
+        ? row.reviewDecidedAt !== undefined
+        : row.senderReviewUpheldAt !== undefined;
     return {
       ...base,
       status: "rejected",
