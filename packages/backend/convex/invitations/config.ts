@@ -12,8 +12,25 @@ export const EMAIL_INVITE_TTL_MS = EMAIL_INVITE_TTL_DAYS * DAY;
 /** At most one invitation email per address in this window, across all inviters. */
 export const SEND_LOG_WINDOW_MS = 30 * DAY;
 
-// The existing-member path waits this long (uniformly random) so it takes about as long as a send.
-export const EXISTING_MEMBER_DELAY_MS = { min: 150, max: 400 } as const;
+// sendEmailInvite answers no sooner than RESPONSE_FLOOR_MS (+ up to RESPONSE_FLOOR_JITTER_MS)
+// after it started, whichever path it took after its first mutation (capped, existing member,
+// Clerk refusal, email sent, any failure), so the response time says nothing about the address.
+// The floor sits above a normal Clerk + render + email round trip.
+export const RESPONSE_FLOOR_MS = 2500;
+export const RESPONSE_FLOOR_JITTER_MS = 500;
+
+/** The instant sendEmailInvite may answer, for a call that started at `startedAt`. */
+export const responseFloorFrom = (
+  startedAt: number,
+  random: () => number = Math.random,
+): number =>
+  startedAt + RESPONSE_FLOOR_MS + random() * RESPONSE_FLOOR_JITTER_MS;
+
+/** Sleep until `until` (epoch ms); returns at once when it has passed. Replaced in tests. */
+export const waitUntil = async (until: number): Promise<void> => {
+  const ms = until - Date.now();
+  if (ms > 0) await new Promise((resolve) => setTimeout(resolve, ms));
+};
 
 // The same floor as ANON_REF_SECRET (social/privacy): a short key would let anyone holding the
 // send log test candidate addresses against it.

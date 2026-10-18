@@ -5,7 +5,13 @@ import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { FakeInvitationGateway } from "./invitations/adapters/fakeInvitationGateway";
 import { makeFakeInvitationGateway } from "./invitations/adapters/fakeInvitationGateway";
-import { emailHmacOf, SEND_LOG_WINDOW_MS } from "./invitations/config";
+import {
+  emailHmacOf,
+  RESPONSE_FLOOR_JITTER_MS,
+  RESPONSE_FLOOR_MS,
+  responseFloorFrom,
+  SEND_LOG_WINDOW_MS,
+} from "./invitations/config";
 import { RATE_LIMITS } from "./lib/rateLimits";
 import schema from "./schema";
 
@@ -25,6 +31,15 @@ vi.mock("./invitations/adapters/invitationGateway", async (orig) => ({
   },
 }));
 
+// The response floor's sleep is replaced, so tests run at full speed and can see what it was asked.
+const timing = vi.hoisted(() => ({
+  waitUntil: vi.fn(async (_until: number) => {}),
+}));
+vi.mock("./invitations/config", async (orig) => ({
+  ...(await orig<typeof import("./invitations/config")>()),
+  waitUntil: timing.waitUntil,
+}));
+
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 type T = TestConvex<typeof schema>;
 type Who = "alice" | "bob" | "carol";
@@ -42,6 +57,7 @@ let gateway: FakeInvitationGateway;
 beforeEach(() => {
   gateway = makeFakeInvitationGateway();
   gate.gateway = gateway;
+  timing.waitUntil.mockClear();
   fetchMock.mockClear();
   vi.stubGlobal("fetch", fetchMock);
   vi.stubEnv("INVITE_EMAIL_HMAC_KEY", HMAC_KEY);
@@ -392,14 +408,13 @@ describe("sendEmailInvite", () => {
     });
   });
 
-  test("the rate-limit count and the ref row commit even when a later step throws", async () => {
+  test("the rate-limit count and the ref row commit, and the answer is sent, when a later step throws", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
     gate.gateway = null;
 
-    await expect(send(t, "alice", NEW_ADDRESS)).rejects.toThrow(
-      "gateway factory exploded",
-    );
+    expect(await send(t, "alice", NEW_ADDRESS)).toEqual({ status: "sent" });
+    expect(logged.join("\n")).not.toContain("gateway factory exploded");
 
     const limits = await t.run((ctx) => ctx.db.query("rateLimits").collect());
     expect(limits.map((row) => [row.key.split(":")[0], row.count])).toEqual([
@@ -745,5 +760,113 @@ describe("expiry", () => {
     await settleDueJobs(t);
     expect(gateway.revoked).toEqual(["inv_fake_1"]);
     expect(gateway.deleted).toEqual(["inv_fake_1"]);
+  });
+});
+
+describe("the response floor", () => {
+  test("is RESPONSE_FLOOR_MS plus up to RESPONSE_FLOOR_JITTER_MS after the start", () => {
+    expect(RESPONSE_FLOOR_MS).toBe(2500);
+    expect(RESPONSE_FLOOR_JITTER_MS).toBe(500);
+    expect(responseFloorFrom(1000, () => 0)).toBe(3500);
+    expect(responseFloorFrom(1000, () => 0.5)).toBe(3750);
+    expect(responseFloorFrom(1000, () => 1)).toBe(4000);
+  });
+
+  test("waitUntil sleeps until the instant, and not at all once it has passed", async () => {
+    const { waitUntil } = await vi.importActual<
+      typeof import("./invitations/config")
+    >("./invitations/config");
+    let start = Date.now();
+    await waitUntil(start - 1000);
+    expect(Date.now() - start).toBeLessThan(20);
+    start = Date.now();
+    await waitUntil(start + 40);
+    expect(Date.now() - start).toBeGreaterThanOrEqual(35);
+  });
+
+  // Each setup leads sendEmailInvite down one path after its first mutation; every one must end in
+  // the same answer after the same floor.
+  const paths: [string, (t: T) => Promise<void>, string][] = [
+    ["emailed", async () => {}, NEW_ADDRESS],
+    ["existing member", async () => {}, "carol@example.com"],
+    [
+      "address capped",
+      async (t) => {
+        await send(t, "bob", NEW_ADDRESS);
+        timing.waitUntil.mockClear();
+      },
+      NEW_ADDRESS,
+    ],
+    [
+      "clerk exists",
+      async () => {
+        gateway.nextCreate = "exists";
+      },
+      NEW_ADDRESS,
+    ],
+    [
+      "clerk no_url",
+      async () => {
+        gateway.nextCreate = "no_url";
+      },
+      NEW_ADDRESS,
+    ],
+    [
+      "clerk error",
+      async () => {
+        gateway.nextCreate = "error";
+      },
+      NEW_ADDRESS,
+    ],
+    [
+      "send failed",
+      async () => {
+        fetchMock.mockImplementationOnce(
+          async () => new Response("no", { status: 500 }),
+        );
+      },
+      NEW_ADDRESS,
+    ],
+    [
+      "email unconfigured",
+      async () => {
+        vi.stubEnv("AHASEND_API_KEY", "");
+      },
+      NEW_ADDRESS,
+    ],
+    [
+      "a throw inside delivery",
+      async () => {
+        gate.gateway = null;
+      },
+      NEW_ADDRESS,
+    ],
+  ];
+
+  test.each(paths)(
+    "%s: answers sent after the floor",
+    async (_label, arrange, email) => {
+      const t = convexTest(schema, modules);
+      await seed(t);
+      await arrange(t);
+
+      const before = Date.now();
+      expect(await send(t, "alice", email)).toEqual({ status: "sent" });
+      const after = Date.now();
+
+      expect(timing.waitUntil).toHaveBeenCalledTimes(1);
+      const [until] = timing.waitUntil.mock.calls[0];
+      expect(until).toBeGreaterThanOrEqual(before + RESPONSE_FLOOR_MS);
+      expect(until).toBeLessThanOrEqual(
+        after + RESPONSE_FLOOR_MS + RESPONSE_FLOOR_JITTER_MS,
+      );
+    },
+  );
+
+  test("a refusal about the inviter or the input answers at once", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    expect(await codeOf(send(t, "alice", "not-an-email"))).toBe("InvalidEmail");
+    expect(timing.waitUntil).not.toHaveBeenCalled();
   });
 });

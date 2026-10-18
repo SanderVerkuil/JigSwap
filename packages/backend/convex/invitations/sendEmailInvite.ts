@@ -20,7 +20,8 @@ import {
   emailInviteKindValidator,
   emailInvitesEnabled,
   emailInvitesUnavailable,
-  EXISTING_MEMBER_DELAY_MS,
+  responseFloorFrom,
+  waitUntil,
 } from "./config";
 
 type Begun = {
@@ -40,8 +41,6 @@ const errorCodeOf = (error: unknown): string =>
       ? error.name
       : "unknown";
 
-const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 // Revoke and delete an invitation we created but won't use; failures go on the wide event.
 const retireQuietly = async (
   gateway: InvitationGateway,
@@ -54,8 +53,8 @@ const retireQuietly = async (
 };
 
 // Steps 5–8 of the spec, after the gate, the rate limit and the ref row have committed. Returns
-// the internal reason code for the wide event. Every path ends in the same answer to the inviter,
-// so nothing here throws for a reason tied to the address.
+// the internal reason code for the wide event. The caller answers the same, after the same floor,
+// whatever this returns or throws.
 const deliver = async (
   ctx: ActionCtx,
   kind: Kind,
@@ -77,8 +76,6 @@ const deliver = async (
       internal.invitations.emailInviteStore.applyExistingMember,
       { inviteRef: begun.ref, memberId: address.memberId },
     );
-    const { min, max } = EXISTING_MEMBER_DELAY_MS;
-    await pause(min + Math.random() * (max - min));
     return "existing_member";
   }
 
@@ -158,8 +155,9 @@ const deliver = async (
  * existing member gets the in-app path instead, an address capped in the last 30 days gets
  * nothing. Refusals are about the inviter or the input only: Unauthenticated, the household
  * errors (NotInHousehold, NotHouseholdAdmin), InvalidEmail, RateLimited (with retryAfterMs) and
- * EmailInvitesUnavailable when the feature is switched off. The address is never stored or
- * logged.
+ * EmailInvitesUnavailable when the feature is switched off. Every other outcome, a failure
+ * included, answers `sent` no sooner than the response floor (config.responseFloorFrom). The
+ * address is never stored or logged.
  */
 export const sendEmailInvite = action({
   args: { kind: emailInviteKindValidator, email: v.string() },
@@ -181,7 +179,16 @@ export const sendEmailInvite = action({
         { kind, email },
       );
       event.invite_ref = begun.ref;
-      event.reason = await deliver(ctx, kind, begun, event);
+      // From here on every outcome, a throw included, is the same answer after the same floor:
+      // neither the response nor its timing may depend on the address.
+      try {
+        event.reason = await deliver(ctx, kind, begun, event);
+      } catch (error) {
+        event.outcome = "error";
+        event.reason = "deliver_failed";
+        event.error = { code: errorCodeOf(error) };
+      }
+      await waitUntil(responseFloorFrom(startedAt));
       return { status: "sent" };
     } catch (error) {
       event.outcome = "error";
