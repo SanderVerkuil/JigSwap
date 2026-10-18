@@ -109,6 +109,38 @@ const leftEvents = (t: T) =>
       .collect(),
   );
 
+// The member acquires a copy and marks it OPEN (forLend): open copies are the ones the circle path
+// makes reachable in Browse.
+const acquireOpenCopy = async (
+  t: T,
+  clerkId: string,
+  puzzleAggregateId: string,
+) => {
+  const copyId = (await as(t, clerkId).mutation(
+    api.library.acquireCopy.acquireCopy,
+    { puzzleDefinitionId: puzzleAggregateId, condition: "good" },
+  )) as string;
+  await t.run(async (ctx) => {
+    const row = await ctx.db
+      .query("ownedPuzzles")
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", copyId))
+      .unique();
+    if (!row) throw new Error("seed: acquired copy not found");
+    await ctx.db.patch(row._id, {
+      availability: { forTrade: false, forSale: false, forLend: true },
+    });
+  });
+  return copyId;
+};
+
+const carolBrowses = async (t: T) =>
+  (
+    await asCarol(t).query(
+      api.library.browseOwnedPuzzles.browseOwnedPuzzles,
+      {},
+    )
+  ).ownedPuzzles;
+
 describe("sharing.leaveCircle", () => {
   test("a member leaves: seat and lookup row gone, MemberLeftCircle recorded", async () => {
     const t = convexTest(schema, modules);
@@ -224,5 +256,75 @@ describe("member cap", () => {
 
     await expectConvexCode(addToCircle(t, circleId, carol), "CircleFull");
     expect(await circleMembersOf(t, circleId)).toHaveLength(50);
+  });
+});
+
+// A departed member's copies must stop being reachable through the circle. The circle-aware policy
+// lets any OPEN copy through, so without withdrawing the share links a remaining member would keep
+// seeing a non-member's copy via the stale `circleCopyShares` row.
+describe("a departed member's circle shares are withdrawn", () => {
+  const setUp = async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, carol, puzzleAggregateId } = await seed(t);
+    const circleId = await createCircleForAlice(t);
+    // Bob is an Admin so he can share his own copy; Carol is a plain member.
+    await addToCircle(t, circleId, bob, "Admin");
+    await addToCircle(t, circleId, carol);
+    const bobsCopy = await acquireOpenCopy(t, "clerk_bob", puzzleAggregateId);
+    const alicesCopy = await acquireOpenCopy(
+      t,
+      "clerk_alice",
+      puzzleAggregateId,
+    );
+    await asBob(t).mutation(api.sharing.shareCopyToCircle.shareCopyToCircle, {
+      circleId,
+      copyId: bobsCopy,
+    });
+    await asAlice(t).mutation(api.sharing.shareCopyToCircle.shareCopyToCircle, {
+      circleId,
+      copyId: alicesCopy,
+    });
+    // Precondition: Carol reaches both copies through the circle only.
+    const before = (await carolBrowses(t)).map((c) => c.aggregateId);
+    expect(before).toContain(bobsCopy);
+    expect(before).toContain(alicesCopy);
+    return { t, alice, bob, circleId, bobsCopy, alicesCopy };
+  };
+
+  const sharesOf = (t: T, circleId: string) =>
+    t.run(async (ctx) =>
+      ctx.db
+        .query("circleCopyShares")
+        .withIndex("by_circle", (q) => q.eq("circleId", circleId))
+        .collect(),
+    );
+
+  test("on leave, only the leaver's shares go and their copy is no longer reachable", async () => {
+    const { t, circleId, bobsCopy, alicesCopy } = await setUp();
+
+    await asBob(t).mutation(api.sharing.leaveCircle.leaveCircle, { circleId });
+
+    expect((await sharesOf(t, circleId)).map((s) => s.copyId)).toEqual([
+      alicesCopy,
+    ]);
+    const after = (await carolBrowses(t)).map((c) => c.aggregateId);
+    expect(after).not.toContain(bobsCopy);
+    expect(after).toContain(alicesCopy);
+  });
+
+  test("on removal, the removed member's shares go too", async () => {
+    const { t, bob, circleId, bobsCopy, alicesCopy } = await setUp();
+
+    await asAlice(t).mutation(api.sharing.removeMember.removeMember, {
+      circleId,
+      memberId: bob,
+    });
+
+    expect((await sharesOf(t, circleId)).map((s) => s.copyId)).toEqual([
+      alicesCopy,
+    ]);
+    expect((await carolBrowses(t)).map((c) => c.aggregateId)).not.toContain(
+      bobsCopy,
+    );
   });
 });
