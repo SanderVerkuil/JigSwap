@@ -1,7 +1,13 @@
+import {
+  LIST_PANE_CLASS,
+  MESSAGES_FRAME_CLASS,
+  MESSAGES_IMMERSIVE_CLASS,
+} from "@/components/messaging/frame";
 import { ThreadList } from "@/components/messaging/thread-list";
 import { ThreadView } from "@/components/messaging/thread-view";
 import { AppNotFound } from "@/components/NotFound";
 import { pageTitle } from "@/lib/page-title";
+import { cn } from "@/lib/utils";
 import {
   createFileRoute,
   type ErrorComponentProps,
@@ -30,19 +36,19 @@ export const Route = createFileRoute("/_dashboard/messages/$threadId")({
   component: MessageThreadPage,
 });
 
-// Active-thread route: list + thread on desktop; on mobile just the thread
-// (the ThreadView header carries the back affordance to /messages).
-// Deliberately thin — all data access lives in the messaging components
-// (provisional layout, designer pass pending).
+// Active-thread route: list + thread in one frame on desktop; on mobile just
+// the thread, full-screen (the shell bars step aside — isImmersiveMobileRoute —
+// and the ThreadView header carries the back affordance to /messages).
+// Deliberately thin — all data access lives in the messaging components.
 function MessageThreadPage() {
   const { threadId } = Route.useParams();
 
   return (
-    <div className="flex h-[calc(100dvh-14rem)] min-h-[420px] gap-6">
-      <div className="hidden w-80 max-w-xs flex-col md:flex">
+    <div className={cn(MESSAGES_IMMERSIVE_CLASS, MESSAGES_FRAME_CLASS)}>
+      <div className={LIST_PANE_CLASS}>
         <ThreadList activeThreadId={threadId} />
       </div>
-      <div className="flex min-w-0 flex-1 flex-col md:border-l md:pl-6">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <ThreadView threadId={threadId} />
       </div>
     </div>

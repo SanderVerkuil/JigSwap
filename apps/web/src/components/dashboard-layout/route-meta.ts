@@ -220,3 +220,12 @@ export function getRouteMeta(pathname: string): ShellRouteMeta | undefined {
   }
   return best;
 }
+
+/**
+ * Routes that take over the whole phone screen: the open thread and the new-conversation pane
+ * (`/messages/<anything>`). Below md the mobile top bar and tab bar step aside there so the
+ * thread header and composer own the viewport (and the tab bar can't ride above the keyboard).
+ */
+export function isImmersiveMobileRoute(pathname: string): boolean {
+  return /^\/messages\/[^/]+/.test(pathname);
+}

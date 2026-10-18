@@ -203,6 +203,8 @@ export const gateway = {
     markThreadRead: api.conversation.markThreadRead.markThreadRead,
     getMyInbox: api.conversation.getMyInbox.getMyInbox,
     getThreadMessages: api.conversation.getThreadMessages.getThreadMessages,
+    listAttachableCopies:
+      api.conversation.listAttachableCopies.listAttachableCopies,
     getThreadByExchange:
       api.conversation.getThreadByExchange.getThreadByExchange,
     canMessage: api.conversation.canMessage.canMessage,

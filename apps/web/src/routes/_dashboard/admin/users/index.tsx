@@ -1,4 +1,5 @@
 import { QueueEmpty } from "@/components/admin/queue-empty";
+import { CommunityProfileAction } from "@/components/admin/users/community-profile-action";
 import { UserRoleAction } from "@/components/admin/users/user-role-action";
 import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -139,11 +140,19 @@ function AdminUsersPage() {
                     {user.ownedCopyCount}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <UserRoleAction
-                      userId={user._id}
-                      name={displayName(user)}
-                      role={user.role}
-                    />
+                    <div className="flex items-center justify-end gap-2">
+                      <CommunityProfileAction
+                        userId={user._id}
+                        name={displayName(user)}
+                        isActive={user.isActive}
+                        compact
+                      />
+                      <UserRoleAction
+                        userId={user._id}
+                        name={displayName(user)}
+                        role={user.role}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}
