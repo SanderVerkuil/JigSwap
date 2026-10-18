@@ -190,7 +190,7 @@ describe("ThreadView composer slot when blocked", () => {
     );
   });
 
-  it("frames the banner like the composer slot (padding, border, safe-area inset)", () => {
+  it("frames the banner like the composer slot (padding, border)", () => {
     renderThread(dmThread());
     const composerSlot = screen
       .getByRole("textbox")

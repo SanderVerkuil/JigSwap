@@ -14,9 +14,13 @@ import { useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 
 // The composer slot's frame, shared with MessageComposer so the banner keeps
-// the composer's card background, border, padding and safe-area inset.
+// the composer's card background, border and padding. No
+// env(safe-area-inset-bottom) pad (same call as the mobile tab bar): Chrome on
+// Android reports a non-zero bottom inset even while its own bottom chrome
+// already clears the system nav bar, which showed as extra padding below the
+// composer.
 export const COMPOSER_SLOT_CLASS =
-  "bg-card shrink-0 border-t px-3 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] md:px-4 md:pb-3";
+  "bg-card shrink-0 border-t px-3 pt-2.5 pb-2.5 md:px-4 md:pb-3";
 
 export function ComposerClosed({
   reason,
