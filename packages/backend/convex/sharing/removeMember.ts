@@ -9,6 +9,7 @@ import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { convexCircleRepository } from "./adapters/convexCircleRepository";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
+import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
 
 // Composition root for removing a member from a circle. The actor is derived from auth; the
@@ -24,6 +25,7 @@ export const removeMember = mutation({
     const removeMember = makeRemoveMember({
       circles: convexCircleRepository(ctx),
       events: inProcessEventPublisher(ctx),
+      clock: systemClock,
     });
 
     const result = await removeMember({

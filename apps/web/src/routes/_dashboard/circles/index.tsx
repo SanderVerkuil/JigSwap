@@ -1,4 +1,5 @@
 import { useUser } from "@/compat/clerk";
+import { LeaveCircleAction } from "@/components/circles/leave-circle-action";
 import {
   CoverChip,
   EmptyState,
@@ -236,6 +237,12 @@ function CircleRow({
           <Button variant="ghost" size="sm" onClick={onManage}>
             <Settings className="h-4 w-4" />
           </Button>
+        )}
+        {!circle.isOwnedByViewer && circle.aggregateId && (
+          <LeaveCircleAction
+            circleId={circle.aggregateId}
+            circleName={circle.name}
+          />
         )}
       </div>
     </Card>

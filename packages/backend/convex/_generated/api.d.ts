@@ -8,6 +8,11 @@
  * @module
  */
 
+import type {
+  ApiFromModules,
+  FilterApi,
+  FunctionReference,
+} from "convex/server";
 import type * as admin_confirmPhotoRemoval from "../admin/confirmPhotoRemoval.js";
 import type * as admin_getModerationActivity from "../admin/getModerationActivity.js";
 import type * as admin_getModerationStats from "../admin/getModerationStats.js";
@@ -132,9 +137,9 @@ import type * as exchange_confirmCompletion from "../exchange/confirmCompletion.
 import type * as exchange_decline from "../exchange/decline.js";
 import type * as exchange_errors from "../exchange/errors.js";
 import type * as exchange_getExchangeById from "../exchange/getExchangeById.js";
-import type * as exchange_getExchangeStats from "../exchange/getExchangeStats.js";
 import type * as exchange_getExchangesByOwner from "../exchange/getExchangesByOwner.js";
 import type * as exchange_getExchangesByRequester from "../exchange/getExchangesByRequester.js";
+import type * as exchange_getExchangeStats from "../exchange/getExchangeStats.js";
 import type * as exchange_getOfferableCopies from "../exchange/getOfferableCopies.js";
 import type * as exchange_getRequestDisclosure from "../exchange/getRequestDisclosure.js";
 import type * as exchange_getTradePartner from "../exchange/getTradePartner.js";
@@ -228,8 +233,8 @@ import type * as library_getCollectionsForOwnedPuzzle from "../library/getCollec
 import type * as library_getCopyInstanceView from "../library/getCopyInstanceView.js";
 import type * as library_getCopyLoanHistory from "../library/getCopyLoanHistory.js";
 import type * as library_getLentOutLoans from "../library/getLentOutLoans.js";
-import type * as library_getOwnedPuzzleWithCollectionStatus from "../library/getOwnedPuzzleWithCollectionStatus.js";
 import type * as library_getOwnedPuzzlesByOwner from "../library/getOwnedPuzzlesByOwner.js";
+import type * as library_getOwnedPuzzleWithCollectionStatus from "../library/getOwnedPuzzleWithCollectionStatus.js";
 import type * as library_getPuzzleDefinitionView from "../library/getPuzzleDefinitionView.js";
 import type * as library_getUserCollections from "../library/getUserCollections.js";
 import type * as library_listPhotoComments from "../library/listPhotoComments.js";
@@ -321,6 +326,7 @@ import type * as sharing_changePermission from "../sharing/changePermission.js";
 import type * as sharing_createCircle from "../sharing/createCircle.js";
 import type * as sharing_errors from "../sharing/errors.js";
 import type * as sharing_getCircle from "../sharing/getCircle.js";
+import type * as sharing_leaveCircle from "../sharing/leaveCircle.js";
 import type * as sharing_listMyCircles from "../sharing/listMyCircles.js";
 import type * as sharing_readViews from "../sharing/readViews.js";
 import type * as sharing_removeMember from "../sharing/removeMember.js";
@@ -346,8 +352,8 @@ import type * as social_editProfile from "../social/editProfile.js";
 import type * as social_errors from "../social/errors.js";
 import type * as social_establishMutualFollow from "../social/establishMutualFollow.js";
 import type * as social_featuredShelf from "../social/featuredShelf.js";
-import type * as social_followMember from "../social/followMember.js";
 import type * as social_followersYouKnow from "../social/followersYouKnow.js";
+import type * as social_followMember from "../social/followMember.js";
 import type * as social_getActivityFeed from "../social/getActivityFeed.js";
 import type * as social_getFollowRelation from "../social/getFollowRelation.js";
 import type * as social_getFollowRequesterPreview from "../social/getFollowRequesterPreview.js";
@@ -420,12 +426,6 @@ import type * as whatsNew_publications from "../whatsNew/publications.js";
 import type * as whatsNew_publishPending from "../whatsNew/publishPending.js";
 import type * as whatsNew_readState from "../whatsNew/readState.js";
 import type * as whatsNew_recordTourProgress from "../whatsNew/recordTourProgress.js";
-
-import type {
-  ApiFromModules,
-  FilterApi,
-  FunctionReference,
-} from "convex/server";
 
 declare const fullApi: ApiFromModules<{
   "admin/confirmPhotoRemoval": typeof admin_confirmPhotoRemoval;
@@ -741,6 +741,7 @@ declare const fullApi: ApiFromModules<{
   "sharing/createCircle": typeof sharing_createCircle;
   "sharing/errors": typeof sharing_errors;
   "sharing/getCircle": typeof sharing_getCircle;
+  "sharing/leaveCircle": typeof sharing_leaveCircle;
   "sharing/listMyCircles": typeof sharing_listMyCircles;
   "sharing/readViews": typeof sharing_readViews;
   "sharing/removeMember": typeof sharing_removeMember;
