@@ -18,6 +18,10 @@ import {
   SubmissionDetail,
   type PendingSubmission,
 } from "@/components/admin/moderation/submission-detail";
+import {
+  UncheckedDetail,
+  type UncheckedPhoto,
+} from "@/components/admin/moderation/unchecked-detail";
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { PageLoading } from "@/components/ui/loading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -33,7 +37,7 @@ import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Flag, History, Inbox } from "lucide-react";
+import { Flag, History, Inbox, ScanEye } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
@@ -48,6 +52,8 @@ export const Route = createFileRoute("/_dashboard/admin/moderation")({
 // The moderation console: KPI week row + three underline tabs. Submissions is
 // the live queue (list+detail split with approve / edit&approve / reject),
 // Flagged Images reviews the auto-rejected photos (restore / confirm removal),
+// Unchecked Photos lets an admin approve or reject photos the classifier has
+// not decided (pending / unscored),
 // and Activity Log lists the recent moderation stamps.
 function ModerationPage() {
   const t = useTranslations("admin.moderation");
@@ -59,6 +65,12 @@ function ModerationPage() {
   const { data: flagged } = useQuery(
     convexQuery(gateway.admin.listRejectedPhotos, {}),
   );
+  const { data: unchecked } = useQuery(
+    convexQuery(gateway.admin.listUncheckedPhotos, {}),
+  );
+  const decideUnchecked = useMutation({
+    mutationFn: useConvexMutation(gateway.admin.decideUncheckedPhoto),
+  });
   const approve = useMutation({
     mutationFn: useConvexMutation(gateway.catalog.approve),
   });
@@ -77,6 +89,9 @@ function ModerationPage() {
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedFlagId, setSelectedFlagId] = useState<string | null>(null);
+  const [selectedUncheckedKey, setSelectedUncheckedKey] = useState<
+    string | null
+  >(null);
   const [editOpen, setEditOpen] = useState(false);
   // The old code shared one busy flag across every moderation action to
   // disable the group; compose the mutations' pending states instead.
@@ -85,7 +100,8 @@ function ModerationPage() {
     reject.isPending ||
     update.isPending ||
     confirmRemoval.isPending ||
-    restorePhoto.isPending;
+    restorePhoto.isPending ||
+    decideUnchecked.isPending;
 
   // A pre-domain pending row has no aggregateId; it still lists (keyed by _id)
   // but its actions stay disabled — same rule as the previous queue.
@@ -185,6 +201,41 @@ function ModerationPage() {
     }
   };
 
+  // The unchecked-photos queue: same flow (act, toast the remaining count, select the neighbour).
+  const selectedUnchecked =
+    unchecked?.find((photo) => photo.key === selectedUncheckedKey) ??
+    unchecked?.[0];
+
+  const decide = async (
+    photo: UncheckedPhoto,
+    decision: "approve" | "reject",
+  ) => {
+    if (!unchecked) return;
+    try {
+      await decideUnchecked.mutateAsync({
+        source: photo.source,
+        imageId: photo.imageId,
+        decision,
+      });
+      toast.success(
+        t(
+          decision === "approve"
+            ? "toast.manualApproved"
+            : "toast.manualRejected",
+          {
+            title: photo.puzzleTitle,
+            count: unchecked.length - 1,
+          },
+        ),
+      );
+      const index = unchecked.findIndex((p) => p.key === photo.key);
+      const next = unchecked[index + 1] ?? unchecked[index - 1];
+      setSelectedUncheckedKey(next ? next.key : null);
+    } catch {
+      toast.error(t("error"));
+    }
+  };
+
   return (
     <div className="space-y-6">
       <AdminBanner />
@@ -202,6 +253,11 @@ function ModerationPage() {
             <Flag aria-hidden />
             {t("tabs.flagged")}
             <TabCount count={flagged?.length} />
+          </TabsTrigger>
+          <TabsTrigger value="unchecked" className={TAB_TRIGGER_CLASS}>
+            <ScanEye aria-hidden />
+            {t("tabs.unchecked")}
+            <TabCount count={unchecked?.length} />
           </TabsTrigger>
           <TabsTrigger value="activity" className={TAB_TRIGGER_CLASS}>
             <History aria-hidden />
@@ -304,6 +360,62 @@ function ModerationPage() {
                     busy={busy}
                     onConfirmRemoval={() => moderateFlag("remove")}
                     onRestore={() => moderateFlag("restore")}
+                  />
+                )
+              }
+            />
+          )}
+        </TabsContent>
+
+        <TabsContent value="unchecked">
+          {unchecked === undefined ? (
+            <PageLoading message={t("unchecked.loading")} />
+          ) : unchecked.length === 0 ? (
+            <QueueEmpty
+              title={tAdmin("queueEmpty.title")}
+              label={t("uncheckedEmpty")}
+            />
+          ) : (
+            <QueueList
+              items={unchecked}
+              selectedId={selectedUnchecked ? selectedUnchecked.key : null}
+              onSelect={setSelectedUncheckedKey}
+              getId={(photo) => photo.key}
+              renderRow={(photo) => (
+                <>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "size-2 shrink-0 rounded-full",
+                          photo.status === "unscored"
+                            ? "bg-jigsaw-warning"
+                            : "bg-muted-foreground",
+                        )}
+                        aria-hidden
+                      />
+                      <span className="truncate text-sm font-semibold">
+                        {t(`unchecked.status.${photo.status}`)}
+                      </span>
+                    </span>
+                    <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                      {photo.puzzleTitle}
+                      {photo.uploaderName && ` · ${photo.uploaderName}`}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {relativeTime(photo.uploadedAt)}
+                  </span>
+                </>
+              )}
+              detail={
+                selectedUnchecked && (
+                  <UncheckedDetail
+                    key={selectedUnchecked.key}
+                    photo={selectedUnchecked}
+                    busy={busy}
+                    onApprove={() => decide(selectedUnchecked, "approve")}
+                    onReject={() => decide(selectedUnchecked, "reject")}
                   />
                 )
               }

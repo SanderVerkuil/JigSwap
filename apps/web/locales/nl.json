@@ -3524,7 +3524,9 @@
         "edited": "“{title}” goedgekeurd (bewerkt) — nog {count} in de wachtrij.",
         "rejected": "“{title}” afgewezen — nog {count} in de wachtrij.",
         "removed": "Afbeelding verwijderd bij “{title}” — nog {count} in de wachtrij.",
-        "restored": "Foto hersteld bij “{title}” — nog {count} in de wachtrij."
+        "restored": "Foto hersteld bij “{title}” — nog {count} in de wachtrij.",
+        "manualApproved": "Foto goedgekeurd bij “{title}” — nog {count} in de wachtrij.",
+        "manualRejected": "Foto afgewezen bij “{title}” — nog {count} in de wachtrij."
       },
       "banner": {
         "pill": "ADMIN",
@@ -3540,7 +3542,8 @@
       "tabs": {
         "submissions": "Inzendingen",
         "flagged": "Gemarkeerde afbeeldingen",
-        "activity": "Activiteitenlog"
+        "activity": "Activiteitenlog",
+        "unchecked": "Niet-gecontroleerde foto's"
       },
       "detail": {
         "submitted": "Ingezonden",
@@ -3600,6 +3603,40 @@
         "missingToken": "Fotocontrole is niet ingesteld op deze deployment (HF_MODERATION_TOKEN ontbreekt). Nieuwe foto's blijven alleen zichtbaar voor de uploader totdat ze gecontroleerd kunnen worden.",
         "disabled": "Fotocontrole staat uit op deze deployment (MODERATION_PROVIDER=none). Nieuwe foto's worden zonder controle gepubliceerd.",
         "unscored": "{countLabel} {count, plural, one {foto kon} other {foto's konden}} nog niet worden gecontroleerd en {count, plural, one {is} other {zijn}} alleen zichtbaar voor de uploader. Voer de hercontrole uit het runbook voor eenmalige migraties uit zodra de controle werkt."
+      },
+      "uncheckedEmpty": "Er wachten geen foto's op controle.",
+      "unchecked": {
+        "loading": "Niet-gecontroleerde foto's laden…",
+        "reveal": "Beweeg eroverheen of tik om de foto te tonen",
+        "status": {
+          "pending": "Wordt gecontroleerd",
+          "unscored": "Kon niet worden gecontroleerd"
+        },
+        "source": {
+          "copy": "Foto van exemplaar",
+          "completion": "Foto van gelegde puzzel"
+        },
+        "reason": {
+          "missing_token": "Controle niet ingesteld",
+          "auth": "Aanbieder weigerde de inloggegevens",
+          "rate_limited": "Limiet van aanbieder bereikt",
+          "model_unavailable": "Model niet beschikbaar",
+          "provider_error": "Fout bij aanbieder",
+          "network": "Aanbieder niet bereikbaar",
+          "bad_response": "Onverwacht antwoord van aanbieder",
+          "missing_file": "Bestand ontbreekt",
+          "download_error": "Bestand kon niet worden gelezen",
+          "internal_error": "Interne fout",
+          "unknown": "Onbekend"
+        },
+        "onPuzzle": "Op puzzel",
+        "uploadedBy": "Geüpload door",
+        "statusLabel": "Status",
+        "reasonLabel": "Reden",
+        "approve": "Foto goedkeuren",
+        "reject": "Foto afwijzen",
+        "rejectArm": "Weet je het zeker?",
+        "hint": "Goedkeuren publiceert de foto voor andere leden. Afwijzen verbergt hem; een afgewezen foto van een exemplaar gaat naar Gemarkeerde afbeeldingen, een afgewezen foto van een gelegde puzzel wordt verwijderd."
       }
     },
     "contact": {
