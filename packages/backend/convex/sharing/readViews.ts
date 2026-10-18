@@ -43,7 +43,8 @@ export const toCircleDetail = async (
     row.memberships.map(async (m) => {
       // As the circle chat projects them (salt = the circle id): circle-mates are revealed by the
       // circle rule even when they blocked the viewer, so the list can't give a block away; a
-      // departed member is anonymous, so only the seat (id + departed) is surfaced.
+      // departed member is anonymous, so only the seat (membershipId + departed) is surfaced: no
+      // user _id, which would tie the anonymous seat back to the account.
       const projected = await projectCircleMember(
         ctx,
         viewerId,
@@ -52,15 +53,14 @@ export const toCircleDetail = async (
         row._id,
       );
       const user = projected.anonymous ? null : projected.member;
+      const departed = projected.anonymous && projected.departed === true;
       return {
         membershipId: m.id,
-        memberId: m.memberId,
+        ...(departed ? {} : { memberId: m.memberId }),
         name: user?.name,
         username: user?.username,
         avatar: user?.avatar,
-        ...(projected.anonymous && projected.departed
-          ? { departed: true }
-          : {}),
+        ...(departed ? { departed: true } : {}),
         permission: m.permission,
         joinedAt: m.joinedAt,
         isOwner: m.memberId === row.ownerId,

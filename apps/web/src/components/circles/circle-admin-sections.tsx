@@ -19,7 +19,7 @@ export const canManageCircle = (viewerPermission: CirclePermissionLevel) =>
 // a removal. Until the viewer's id is known, no row offers remove.
 export const memberRowControls = (
   viewerPermission: CirclePermissionLevel,
-  member: { memberId: string; isOwner: boolean },
+  member: { memberId?: string; isOwner: boolean },
   viewerId: string | undefined,
 ) => {
   const canEdit = canManageCircle(viewerPermission) && !member.isOwner;

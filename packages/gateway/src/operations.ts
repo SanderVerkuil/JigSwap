@@ -205,6 +205,9 @@ export const gateway = {
   conversation: {
     openDmThread: api.conversation.openDmThread.openDmThread,
     openCircleThread: api.conversation.openCircleThread.openCircleThread,
+    // The circle page's chat preview: the circle's thread id (null when there is none yet or the
+    // viewer can't read it yet; never creates one). Members only, CircleNotFound otherwise.
+    getCircleThreadId: api.conversation.getCircleThreadId.getCircleThreadId,
     postMessage: api.conversation.postMessage.postMessage,
     markThreadRead: api.conversation.markThreadRead.markThreadRead,
     setThreadMuted: api.conversation.setThreadMuted.setThreadMuted,
@@ -521,6 +524,10 @@ export const gateway = {
     shareCopyToCircle: api.sharing.shareCopyToCircle.shareCopyToCircle,
     myCircles: api.sharing.listMyCircles.listMyCircles,
     circle: api.sharing.getCircle.getCircle,
+    // The circle page's shared puzzles: members only (CircleNotFound otherwise), canViewCopy per
+    // copy, private copies left out; a bounded newest-first strip.
+    circleSharedCopies:
+      api.sharing.listCircleSharedCopies.listCircleSharedCopies,
     // Invitations: an Admin invites a contactable member, the invitee accepts or declines, the
     // inviter or any Admin revokes. A pending invite grants nothing until accepted.
     inviteToCircle: api.sharing.inviteToCircle.inviteToCircle,

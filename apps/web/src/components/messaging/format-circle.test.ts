@@ -197,8 +197,8 @@ describe("groupThreadMessages in a circle", () => {
 });
 
 describe("circle links", () => {
-  it("points the circle quick link at the circles page", () => {
-    expect(circleHref("circle 1")).toBe("/circles?circle=circle%201");
+  it("points the circle quick link at the circle's own page", () => {
+    expect(circleHref("circle 1")).toBe("/circles/circle%201");
   });
 
   it("links a revealed author's profile, never an anonymised one", () => {

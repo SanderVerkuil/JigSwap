@@ -5,6 +5,7 @@
 // Shared by the circles page button and the inbox's circle picker.
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
+import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -29,23 +30,26 @@ export function useOpenCircleChat() {
   return { open, pending: openCircleThread.isPending };
 }
 
-// The circles page's "Open group chat". Shown from sm up only: below that the
-// circle row has no room left (its name already collapses), so phones open a
-// circle chat from the inbox's New menu until the row is reworked.
+// The circles list's and the circle page's "Open group chat" (44px tall below
+// md, so it is a comfortable touch target on phones).
 export function OpenCircleChatButton({
   circleId,
   circleName,
+  variant = "outline",
+  className,
 }: {
   circleId: string;
   circleName: string;
+  variant?: "outline" | "brand";
+  className?: string;
 }) {
   const t = useTranslations("messages");
   const { open, pending } = useOpenCircleChat();
   return (
     <Button
-      variant="outline"
+      variant={variant}
       size="sm"
-      className="hidden sm:inline-flex"
+      className={cn("h-11 md:h-8", className)}
       disabled={pending}
       onClick={() => void open(circleId)}
       aria-label={t("circle.openGroupChatNamed", { circle: circleName })}

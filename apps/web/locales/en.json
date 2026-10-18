@@ -1957,6 +1957,17 @@
       "copyFallback": "Copy",
       "share": "Share",
       "close": "Close"
+    },
+    "page": {
+      "memberCount": "{count, plural, one {# member} other {# members}}",
+      "manage": "Manage",
+      "manageNamed": "Manage {circle}",
+      "chatTitle": "Group chat",
+      "chatEmpty": "No messages yet. Open the group chat to say hello.",
+      "chatError": "Couldn't load the latest messages.",
+      "sharedTitle": "Shared puzzles",
+      "sharedEmpty": "No puzzles have been shared in this circle yet.",
+      "sharedError": "Couldn't load the shared puzzles."
     }
   },
   "people": {

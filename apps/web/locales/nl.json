@@ -1957,6 +1957,17 @@
       "copyFallback": "Exemplaar",
       "share": "Delen",
       "close": "Sluiten"
+    },
+    "page": {
+      "memberCount": "{count, plural, one {# lid} other {# leden}}",
+      "manage": "Beheren",
+      "manageNamed": "{circle} beheren",
+      "chatTitle": "Groepschat",
+      "chatEmpty": "Nog geen berichten. Open de groepschat en zeg hallo.",
+      "chatError": "De nieuwste berichten konden niet worden geladen.",
+      "sharedTitle": "Gedeelde puzzels",
+      "sharedEmpty": "Er zijn nog geen puzzels gedeeld in deze kring.",
+      "sharedError": "De gedeelde puzzels konden niet worden geladen."
     }
   },
   "people": {

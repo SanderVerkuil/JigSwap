@@ -27,10 +27,10 @@ export const isCircleThread = (
   thread: AnyInboxThread,
 ): thread is CircleThread => thread.subject.kind === "circle";
 
-// The circle's page, for the circle thread's quick link. One helper so the link moves to the
-// dedicated /circles/$circleId page (G6b) in one place.
+// A circle's own page (/circles/$circleId): the circle thread's quick link and the circles list
+// rows both link here, through this one helper.
 export function circleHref(circleId: string): string {
-  return `/circles?circle=${encodeURIComponent(circleId)}`;
+  return `/circles/${encodeURIComponent(circleId)}`;
 }
 
 // A privacy-projected member as getMyInbox / listThreadMessages ship it.
