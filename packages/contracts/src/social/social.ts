@@ -163,7 +163,8 @@ export type ProjectedMember =
  */
 export interface ConnectionOfferView {
   readonly offerId: string;
-  readonly from: ProjectedMember;
+  /** Teaser-shaped: exactly what the invite landing (/members/$handle) already disclosed. */
+  readonly from: MemberTeaserIdentity;
   readonly source: "inviteLink" | "householdLink";
   readonly createdAt: number;
 }
@@ -187,6 +188,16 @@ export interface FollowersYouKnowView {
     slug?: string;
   }[];
 }
+
+/**
+ * The identity part of {@link PublicMemberTeaserView}: name, handle and avatar, never bio,
+ * location, stats or counts. Reused wherever a surface may show only what a member's own direct
+ * link would show (e.g. the inviter on a connection offer).
+ */
+export type MemberTeaserIdentity = Pick<
+  PublicMemberTeaserView,
+  "memberId" | "displayName" | "username" | "slug" | "avatar"
+>;
 
 /**
  * The unauthenticated "who is this member" read behind /members/$handle. Deliberately tiny:

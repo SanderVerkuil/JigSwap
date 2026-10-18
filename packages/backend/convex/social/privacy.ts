@@ -1,12 +1,35 @@
-import { normalizeMemberName, type ProjectedMember } from "@jigswap/contracts";
-import type { Id } from "../_generated/dataModel";
+import {
+  normalizeMemberName,
+  type MemberTeaserIdentity,
+  type ProjectedMember,
+} from "@jigswap/contracts";
+import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { householdMateIds } from "../household/memberships";
+import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { toMemberView } from "../identity/toMemberView";
 
 // Privacy chokepoint for surfacing other members inside a copy's history. The rules below run
 // SERVER-SIDE so a hidden member's real identity (id/name/username/avatar) never leaves the
 // database: a hidden member is reduced to an opaque, non-reversible `anonRef` before it is returned.
+
+/**
+ * What a member's own direct link (/members/$handle, getPublicMemberTeaser) discloses about them,
+ * whatever their profile visibility: display name, username, slug and avatar. Never bio, location,
+ * stats or counts. The avatar shows to any signed-in viewer, and to anonymous callers only with
+ * the member's shareAvatarPublicly consent.
+ */
+export const memberTeaserIdentityOf = (
+  user: Doc<"users">,
+  profile: Doc<"profiles"> | null,
+  viewerSignedIn: boolean,
+): MemberTeaserIdentity => ({
+  memberId: user._id,
+  displayName: memberDisplayNameOf(user, profile),
+  username: user.username,
+  slug: user.slug,
+  avatar: viewerSignedIn || user.shareAvatarPublicly ? user.avatar : undefined,
+});
 
 /** A member's profile visibility, defaulting to "public" when they have no profile row. */
 export const profileVisibilityOf = async (

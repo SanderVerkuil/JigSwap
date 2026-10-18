@@ -16,18 +16,7 @@ const offer = (from: ConnectionOfferView["from"]): ConnectionOfferView => ({
   createdAt: 0,
 });
 
-const ann = offer({
-  anonymous: false,
-  member: {
-    _id: "u1",
-    _creationTime: 0,
-    name: "Ann",
-    username: "ann",
-    isActive: true,
-    createdAt: 0,
-    updatedAt: 0,
-  },
-});
+const ann = offer({ memberId: "u1", displayName: "Ann", username: "ann" });
 
 const render = (
   offers: ConnectionOfferView[],
@@ -101,8 +90,8 @@ describe("ConnectionOfferList", () => {
     ]);
   });
 
-  it("uses the generic member label for an anonymous inviter", () => {
-    const html = render([offer({ anonymous: true, anonRef: "x" })]);
+  it("uses the generic member label for an inviter without a display name", () => {
+    const html = render([offer({ memberId: "u2" })]);
     expect(byTag(html, "p").map(textOf)).toEqual([
       "Puzzler invited you to JigSwap. Follow each other?",
     ]);

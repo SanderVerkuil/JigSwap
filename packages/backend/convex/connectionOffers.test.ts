@@ -22,6 +22,7 @@ const seed = (t: T) =>
         clerkId: `clerk_${who}`,
         email: `${who}@example.com`,
         name,
+        username: who,
         isActive: true,
         createdAt: now,
         updatedAt: now,
@@ -170,10 +171,7 @@ describe("the offer", () => {
     expect(offers).toEqual([
       {
         offerId,
-        from: {
-          anonymous: false,
-          member: expect.objectContaining({ _id: alice, name: "Alice" }),
-        },
+        from: { memberId: alice, displayName: "Alice", username: "alice" },
         source: "inviteLink",
         createdAt: expect.any(Number),
       },
@@ -181,6 +179,38 @@ describe("the offer", () => {
     expect(await listFor(t, "alice")).toEqual([]);
     expect(await listFor(t, "carol")).toEqual([]);
   });
+
+  test.each(["private", "public"] as const)(
+    "a %s inviter is shown teaser-shaped: never bio or location",
+    async (visibility) => {
+      const t = convexTest(schema, modules);
+      const { alice } = await seed(t);
+      await t.run(async (ctx) => {
+        await ctx.db.patch(alice, {
+          bio: "Secret bio",
+          location: "Utrecht",
+          avatar: "https://example.com/a.png",
+          slug: "alice-p",
+        });
+        const profile = await ctx.db
+          .query("profiles")
+          .withIndex("by_member", (q) => q.eq("memberId", alice))
+          .unique();
+        await ctx.db.patch(profile!._id, { visibility, bio: "Secret bio" });
+      });
+      await redeemAliceLink(t);
+
+      const [offer] = await listFor(t, "newbie");
+      expect(offer.from).toEqual({
+        memberId: alice,
+        displayName: "Alice",
+        username: "alice",
+        slug: "alice-p",
+        avatar: "https://example.com/a.png",
+      });
+      expect(JSON.stringify(offer)).not.toMatch(/Secret bio|Utrecht/);
+    },
+  );
 
   test("one pending offer per ordered pair", async () => {
     const t = convexTest(schema, modules);

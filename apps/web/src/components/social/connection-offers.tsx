@@ -34,7 +34,7 @@ export function ConnectionOffersStrip() {
   if (!offers || offers.length === 0) return null;
 
   const nameOf = (offer: ConnectionOfferView) =>
-    displayName(offer.from.anonymous ? null : offer.from.member);
+    displayName({ name: offer.from.displayName });
 
   const handleAccept = async (offer: ConnectionOfferView) => {
     try {
@@ -93,8 +93,9 @@ export function ConnectionOfferList({
         </div>
         <ul className="space-y-3">
           {offers.map((offer) => {
-            const member = offer.from.anonymous ? null : offer.from.member;
-            const name = displayName(member);
+            // displayName is resolved server-side; absent renders the generic member label.
+            const source = { name: offer.from.displayName };
+            const name = displayName(source);
             return (
               <li
                 key={offer.offerId}
@@ -102,11 +103,11 @@ export function ConnectionOfferList({
               >
                 <div className="flex min-w-0 items-center gap-2.5">
                   <Avatar className="size-9 shrink-0">
-                    {member?.avatar && (
-                      <AvatarImage src={member.avatar} alt={name} />
+                    {offer.from.avatar && (
+                      <AvatarImage src={offer.from.avatar} alt={name} />
                     )}
                     <AvatarFallback>
-                      <MemberInitial source={member} />
+                      <MemberInitial source={source} />
                     </AvatarFallback>
                   </Avatar>
                   <p className="min-w-0 text-sm">
