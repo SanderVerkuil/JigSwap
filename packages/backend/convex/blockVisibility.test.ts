@@ -192,6 +192,35 @@ describe("canViewCopy", () => {
   );
 
   test.each(DIRECTIONS)(
+    "%s: a private copy is not viewable through the exchange-party rule",
+    async (_, pair) => {
+      const t = convexTest(schema, modules);
+      const u = await seed(t);
+      // Private per-copy visibility (#155): only an exchange party may see it.
+      const copy = await seedOpenCopy(t, u.bob, {
+        availability: { forTrade: false, forSale: false, forLend: false },
+        visibility: "private",
+        visibilityAuthoritative: true,
+      });
+      await t.run((ctx) =>
+        ctx.db.insert("exchanges", {
+          aggregateId: "exch-private",
+          initiatorId: u.alice,
+          recipientId: u.bob,
+          type: "trade",
+          requestedPuzzleId: copy,
+          status: "accepted",
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        }),
+      );
+      expect(await viewable(t, u.alice, copy)).toBe(true);
+      await insertBlock(t, ...pair(u));
+      expect(await viewable(t, u.alice, copy)).toBe(false);
+    },
+  );
+
+  test.each(DIRECTIONS)(
     "%s: a circle-shared copy is not viewable",
     async (_, pair) => {
       const t = convexTest(schema, modules);
