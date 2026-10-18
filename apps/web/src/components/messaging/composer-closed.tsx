@@ -48,7 +48,7 @@ function BlockedByMe({ partner }: { partner: MemberView | null }) {
   const [confirming, setConfirming] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  // Exchange threads don't carry the partner yet: say so without a name; the
+  // No partner to name (anonymised to the viewer): say so without a name; the
   // "Privacy & safety" settings list still offers Unblock.
   if (!partner) return <p>{t("blockedBannerUnnamed")}</p>;
 

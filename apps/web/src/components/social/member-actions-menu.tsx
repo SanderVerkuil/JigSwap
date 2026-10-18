@@ -2,7 +2,8 @@
 
 // Overflow menu of actions on another member, shared by the thread header and
 // the member profile. `children` are the host's own items (e.g. thread quick
-// links); the safety items follow after a separator. The trigger is a 44px
+// links), ending in the host's own separator (so it can hide both per width);
+// the safety items follow. The trigger is a 44px
 // target below md and is named by `label`; destructive items carry text, not
 // colour alone. Focus returns to the trigger when the confirm dialog closes.
 import { BlockMemberDialog } from "@/components/social/block-member-dialog";
@@ -11,7 +12,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Id } from "@/gateway";
@@ -59,7 +59,6 @@ export function MemberActionsMenu({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           {children}
-          {children && <DropdownMenuSeparator />}
           {/* "Report {name}" (milestone A6) goes here, after Block. */}
           <DropdownMenuItem
             variant="destructive"

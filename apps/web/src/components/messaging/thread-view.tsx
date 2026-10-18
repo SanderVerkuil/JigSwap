@@ -37,7 +37,6 @@ import {
 } from "./format";
 import { MessageComposer } from "./message-composer";
 import { OlderMessagesSlot } from "./older-messages-slot";
-import { ThreadActions } from "./thread-actions";
 import { ThreadSubjectAvatar } from "./thread-list";
 import { threadPartner } from "./thread-partner";
 import { ThreadPuzzleStack } from "./thread-puzzle-stack";
@@ -336,7 +335,6 @@ export function ThreadView({
                       }
                     />
                   )}
-                  {thread && <ThreadActions thread={thread} />}
                 </div>
               </>
             )}

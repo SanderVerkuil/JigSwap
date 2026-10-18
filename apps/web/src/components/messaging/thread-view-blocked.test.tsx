@@ -65,21 +65,54 @@ const mara = {
   updatedAt: 0,
 };
 
-const dmThread = (
-  state?: { blocked: "byMe" } | { readOnly: true },
+type ThreadState = { blocked: "byMe" } | { readOnly: true };
+
+const threadOf = (
+  subject: InboxThread["subject"],
+  state?: ThreadState,
 ): InboxThread => ({
   threadId: "thread_1",
-  subject: {
-    kind: "dm",
-    otherMember: { anonymous: false, member: mara },
-    profileHandle: "mara",
-  },
+  subject,
   lastMessage: null,
   unreadCount: 0,
   contextCopies: [],
   updatedAt: 0,
   ...state,
 });
+
+const dmThread = (state?: ThreadState) =>
+  threadOf(
+    {
+      kind: "dm",
+      otherMember: { anonymous: false, member: mara },
+      profileHandle: "mara",
+    },
+    state,
+  );
+
+const exchangeThread = (state?: ThreadState) =>
+  threadOf(
+    {
+      kind: "exchange",
+      exchangeId: "exchange_1",
+      exchangeType: "trade",
+      puzzleTitle: "Night Harbour",
+      otherMember: { anonymous: false, member: mara },
+      profileHandle: "mara",
+    },
+    state,
+  );
+
+// The header's one overflow menu, opened; resolves to its items' names.
+const openThreadMenu = async () => {
+  const triggers = screen.getAllByRole("button", {
+    name: "Conversation options",
+  });
+  expect(triggers).toHaveLength(1);
+  fireEvent.keyDown(triggers[0]!, { key: "Enter" });
+  const items = await screen.findAllByRole("menuitem");
+  return items.map((item) => item.textContent);
+};
 
 const renderThread = (thread: InboxThread) => {
   const convexQueryClient = new ConvexQueryClient(
@@ -135,10 +168,6 @@ describe("ThreadView composer slot when blocked", () => {
     expect(screen.queryByRole("textbox")).toBeNull();
     // History stays readable.
     expect(screen.getByText("Earlier message")).toBeTruthy();
-    // Already blocked: the header offers no Block.
-    expect(
-      screen.queryByRole("button", { name: "Conversation actions" }),
-    ).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Unblock" }));
     expect(
@@ -184,16 +213,53 @@ describe("ThreadView composer slot when blocked", () => {
     },
   );
 
-  it("offers Block {name} in the header menu of an open thread", async () => {
+  it("offers Block {name} in the header's one overflow menu, after the quick links", async () => {
     renderThread(dmThread());
-    const trigger = screen.getByRole("button", {
-      name: "Conversation actions",
-    });
-    fireEvent.keyDown(trigger, { key: "Enter" });
-    const item = await screen.findByRole("menuitem", { name: "Block Mara" });
-    fireEvent.click(item);
+    expect(await openThreadMenu()).toEqual(["View profile", "Block Mara"]);
+    fireEvent.click(screen.getByRole("menuitem", { name: "Block Mara" }));
     expect(
       await screen.findByRole("alertdialog", { name: "Block Mara?" }),
     ).toBeTruthy();
+  });
+
+  it("byMe: the overflow menu keeps the quick links but offers no Block", async () => {
+    renderThread(dmThread({ blocked: "byMe" }));
+    expect(await openThreadMenu()).toEqual(["View profile"]);
+  });
+
+  it("offers Block {name} for an exchange thread's partner", async () => {
+    renderThread(exchangeThread());
+    expect(await openThreadMenu()).toEqual([
+      "View profile",
+      "View exchange",
+      "Block Mara",
+    ]);
+  });
+
+  it("byMe on an exchange thread names the partner in the banner", () => {
+    renderThread(exchangeThread({ blocked: "byMe" }));
+    expect(screen.getByRole("status").textContent).toContain(
+      "You blocked Mara.",
+    );
+    expect(screen.getByRole("button", { name: "Unblock" })).toBeTruthy();
+  });
+
+  it("byMe with an anonymised partner falls back to the unnamed banner", () => {
+    renderThread(
+      threadOf(
+        {
+          kind: "dm",
+          otherMember: { anonymous: true, anonRef: "anon_1" },
+          profileHandle: null,
+        },
+        { blocked: "byMe" },
+      ),
+    );
+    expect(screen.getByRole("status").textContent).toBe(
+      "You blocked this member. You can unblock them under Privacy & safety.",
+    );
+    expect(
+      screen.queryByRole("button", { name: "Conversation options" }),
+    ).toBeNull();
   });
 });
