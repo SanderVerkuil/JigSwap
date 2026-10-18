@@ -6,8 +6,12 @@ import type {
 } from "@jigswap/contracts";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
+import {
+  projectTradeParty,
+  tradePartyMemberView,
+} from "../exchange/tradeParty";
 import { requireMember } from "../identity/requireMember";
-import { projectMemberIdentity } from "../social/privacy";
+import { anonymousMemberOf, projectMemberIdentity } from "../social/privacy";
 import { viewableContextCopies } from "./copyCard";
 import {
   threadRowByAggregateId,
@@ -32,8 +36,8 @@ type ContextCopyResolver = ReturnType<typeof viewableContextCopies>;
 
 // What the thread is about. Exchange: the exchange's identity + type, the requested copy's
 // puzzle title (snapshot first, catalog row fallback — same as loanReadViews) and the trading
-// partner. DM: the other participant. Both project the other member through the privacy
-// chokepoint, salted with the thread id (stable within a thread, un-correlatable across threads). Null only for a corrupt exchange row (subject unresolvable);
+// partner, through the per-trade chokepoint (tradePartner). DM: the other participant, through the
+// privacy chokepoint. Both anonymise salted with the thread id (stable within a thread, un-correlatable across threads). Null only for a corrupt exchange row (subject unresolvable);
 // the caller drops the thread rather than fabricating a subject.
 const subjectOf = async (
   ctx: QueryCtx,
@@ -57,13 +61,40 @@ const subjectOf = async (
       exchangeId: exchange.aggregateId ?? (exchange._id as string),
       exchangeType: exchange.type,
       puzzleTitle: copy?.snapshot?.title ?? puzzle?.title ?? null,
-      ...(await projectedOther(ctx, me, partnerId, thread.aggregateId)),
+      ...(await tradePartner(ctx, me, exchange, partnerId, thread.aggregateId)),
     };
   }
   const otherId = thread.participants.find((p) => p !== me) ?? me;
   return {
     kind: "dm",
     ...(await projectedOther(ctx, me, otherId, thread.aggregateId)),
+  };
+};
+
+// The trading partner through the PER-TRADE chokepoint: revealed inside this exchange (limited view
+// when only the trade reveals them), else anonymous with the same thread-salted ref a DM subject
+// uses. The profile link only for an ordinarily visible partner: a trade reveal never unlocks it.
+const tradePartner = async (
+  ctx: QueryCtx,
+  me: Id<"users">,
+  exchange: Doc<"exchanges">,
+  partnerId: Id<"users">,
+  salt: string,
+): Promise<{ otherMember: ProjectedMember; profileHandle: string | null }> => {
+  const party = await projectTradeParty(ctx, me, exchange, partnerId);
+  const member = tradePartyMemberView(party);
+  const otherMember: ProjectedMember = member
+    ? { anonymous: false, member }
+    : {
+        ...anonymousMemberOf(partnerId, salt),
+        ...(party.state === "departed" ? { departed: true as const } : {}),
+      };
+  const linkable = party.state === "visible" || party.state === "self";
+  return {
+    otherMember,
+    profileHandle: linkable
+      ? await profileHandleOf(ctx, otherMember, partnerId)
+      : null,
   };
 };
 
