@@ -1,7 +1,7 @@
 import presenceTest from "@convex-dev/presence/test";
 import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import {
   APP_AWAY_ROOM,
@@ -334,5 +334,34 @@ describe("presence heartbeat rooms", () => {
     });
     expect(lines[0]).not.toContain(alice as string);
     expect(lines[0]).not.toContain("session-");
+  });
+});
+
+describe("account deletion", () => {
+  test("purges presence settings and every component presence row", async () => {
+    const { t, alice, bob } = await seed();
+    await heartbeat(t, "bob", bob, APP_AWAY_ROOM);
+    // An offline row (the component keeps its lastDisconnected) must go too.
+    const { sessionToken } = await heartbeat(t, "bob", bob, MESSAGES_ROOM);
+    await t.mutation(api.presence.disconnect, { sessionToken });
+    const before = await t.run((ctx) =>
+      presence.listUser(ctx, bob as string, false),
+    );
+    expect(before.map((room) => [room.roomId, room.online]).sort()).toEqual([
+      [APP_AWAY_ROOM, true],
+      [APP_ONLINE_ROOM, true],
+      [MESSAGES_ROOM, false],
+    ]);
+    await t.mutation(
+      internal.conversation.purgeMemberMessagingData.purgeMemberMessagingData,
+      { memberId: bob, phase: "presence" },
+    );
+    const left = await t.run(async (ctx) => ({
+      prefs: (await ctx.db.query("presencePreferences").collect()).map(
+        (row) => row.memberId,
+      ),
+      bobRooms: await presence.listUser(ctx, bob as string, false),
+    }));
+    expect(left).toEqual({ prefs: [alice], bobRooms: [] });
   });
 });
