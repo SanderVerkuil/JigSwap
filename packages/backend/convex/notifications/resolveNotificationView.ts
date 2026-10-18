@@ -10,6 +10,7 @@ import { projectTradeParty } from "../exchange/tradeParty";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { canViewCopy } from "../library/canViewCopy";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
+import { circleOfOpenInvite } from "../sharing/circleAccess";
 import {
   ADMIN_NOTIFICATION_TYPES,
   decideFollowBack,
@@ -515,17 +516,18 @@ const resolveSubject = async (
         ),
       };
     }
-    // The invitee sees the circle's live name; the link stays live while the invite is open.
+    // Only while the invite is still on offer to the viewer (the same rule as
+    // listMyCircleInvites) does it name the circle and deep-link the invite; otherwise it shows
+    // as unavailable with no name at all.
     case "circleInvite": {
       const invite = await loadCircleInvite(ctx, cache, subject.inviteId);
-      if (!invite || invite.inviteeId !== viewerId) {
-        return { available: false, context: {} };
-      }
-      const circle = await loadCircle(ctx, cache, invite.circleAggregateId);
-      return {
-        available: invite.status === "pending" && invite.expiresAt > Date.now(),
-        context: circle ? { circleName: circle.name } : {},
-      };
+      const circle =
+        invite && invite.inviteeId === viewerId
+          ? await circleOfOpenInvite(ctx, invite, Date.now())
+          : null;
+      return circle
+        ? { available: true, context: { circleName: circle.name } }
+        : { available: false, context: {} };
     }
     // Only a current member of the circle learns its live name.
     case "circle": {

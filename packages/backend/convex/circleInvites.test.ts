@@ -1186,7 +1186,68 @@ describe("circle invite notifications", () => {
     const [after] = await viewsOf(t, "carol");
     expect(after.href).toBe("/circles");
     expect(after.state).toBe("unavailable");
+    expect(after.context.circleName).toBeUndefined();
   });
+
+  for (const outcome of [
+    "revoked",
+    "declined",
+    "expired",
+    "blocked",
+    "demoted",
+  ] as const) {
+    test(`once the invite is ${outcome}, the notification names no circle, shows unavailable and isn't delivered`, async () => {
+      const t = convexTest(schema, modules);
+      const { alice, carol, circleId } = await seed(t);
+      await mutualFollow(t, alice, carol);
+      const inviteId = await invite(t, "alice", circleId, carol);
+      await flushScheduled(t);
+      const deliver = () =>
+        t.query(internal.notifications.resolveForDelivery.resolveForDelivery, {
+          recipientId: carol,
+          type: "circle_invite_received",
+          relatedId: inviteId,
+          actorId: alice,
+          subject: { kind: "circleInvite", inviteId },
+        });
+      // While on offer, email/push carry the live circle name.
+      expect((await deliver())?.params.circleName).toBe("Saturday Puzzlers");
+
+      if (outcome === "revoked") await revoke(t, "alice", inviteId);
+      else if (outcome === "declined") await decline(t, "carol", inviteId);
+      else if (outcome === "expired") await backdate(t, inviteId);
+      else if (outcome === "blocked") await block(t, alice, carol);
+      else {
+        // Demoted in the row directly, so the invite itself is still pending.
+        await t.run(async (ctx) => {
+          const row = await ctx.db
+            .query("circles")
+            .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", circleId))
+            .unique();
+          await ctx.db.patch(row!._id, {
+            memberships: row!.memberships.map((m) =>
+              m.memberId === alice
+                ? { ...m, permission: "ViewOnly" as const }
+                : m,
+            ),
+          });
+        });
+      }
+
+      const [view] = await viewsOf(t, "carol");
+      expect(view.context.circleName).toBeUndefined();
+      expect(view.state).toBe("unavailable");
+      expect(view.href).toBe("/circles");
+      expect(await deliver()).toBeNull();
+      // The invitee's own list agrees.
+      expect(
+        await as(t, "carol").query(
+          api.sharing.listMyCircleInvites.listMyCircleInvites,
+          {},
+        ),
+      ).toEqual([]);
+    });
+  }
 
   test("accepting notifies the inviter (actor = invitee, circle subject)", async () => {
     const t = convexTest(schema, modules);

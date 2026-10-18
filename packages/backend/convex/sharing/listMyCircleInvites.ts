@@ -2,14 +2,13 @@ import type { MyCircleInviteView } from "@jigswap/contracts";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { isBlockedEitherWay } from "../social/blocks";
 import { projectMemberIdentity } from "../social/privacy";
-import { circleByAggregateId, isCircleAdmin } from "./circleAccess";
+import { circleOfOpenInvite } from "./circleAccess";
 
 // The signed-in member's open circle invites, newest first: the circle's name and size, the
 // inviter (projected, salted per invite) and the offered seat. Never the member list or shared
-// copies: a pending invite grants nothing. Invites that accept would refuse anyway (circle gone,
-// inviter no longer an Admin, the pair now blocked) are left out rather than shown as dead ends.
+// copies: a pending invite grants nothing. Only invites still on offer (circleOfOpenInvite) are
+// listed; ones accept would refuse are left out rather than shown as dead ends.
 export const listMyCircleInvites = query({
   args: {},
   handler: async (ctx): Promise<MyCircleInviteView[]> => {
@@ -24,10 +23,8 @@ export const listMyCircleInvites = query({
 
     const views: { createdAt: number; view: MyCircleInviteView }[] = [];
     for (const invite of invites) {
-      if (invite.expiresAt <= now) continue;
-      const circle = await circleByAggregateId(ctx, invite.circleAggregateId);
-      if (!circle || !isCircleAdmin(circle, invite.inviterId)) continue;
-      if (await isBlockedEitherWay(ctx, viewerId, invite.inviterId)) continue;
+      const circle = await circleOfOpenInvite(ctx, invite, now);
+      if (!circle) continue;
       views.push({
         createdAt: invite.createdAt,
         view: {

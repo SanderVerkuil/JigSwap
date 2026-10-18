@@ -1,6 +1,7 @@
 import { SharingApplicationError, toCircleId } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { isBlockedEitherWay } from "../social/blocks";
 import { toCircleInvite } from "./adapters/convexCircleInviteRepository";
 import { toConvexError } from "./errors";
 
@@ -74,4 +75,25 @@ export const reinviteHeldOff = async (
     }
   }
   return held;
+};
+
+/**
+ * THE "is this invite still on offer" rule, shared by every surface that shows an invite to its
+ * invitee (listMyCircleInvites, the circle_invite_received notification and its email/push), so
+ * they never disagree: pending, not past expiresAt, its circle still there, its inviter still an
+ * Admin of it, and no block either way between invitee and inviter. Returns the circle when the
+ * invite is on offer, else null. These are exactly the conditions accept would refuse on.
+ */
+export const circleOfOpenInvite = async (
+  ctx: QueryCtx,
+  invite: Doc<"circleInvites">,
+  now: number,
+): Promise<Doc<"circles"> | null> => {
+  if (invite.status !== "pending" || invite.expiresAt <= now) return null;
+  const circle = await circleByAggregateId(ctx, invite.circleAggregateId);
+  if (!circle || !isCircleAdmin(circle, invite.inviterId)) return null;
+  if (await isBlockedEitherWay(ctx, invite.inviteeId, invite.inviterId)) {
+    return null;
+  }
+  return circle;
 };
