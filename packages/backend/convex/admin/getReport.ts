@@ -44,12 +44,15 @@ export const getReport = query({
             )?.attachmentId ?? null)
           : null;
     const attachment = attachmentId ? await ctx.db.get(attachmentId) : null;
-    if (attachment) {
+    if (attachment?.kind === "image") {
       photoUrl =
         attachment.moderationStatus !== "quarantined" &&
         attachment.hashCheckedAt !== undefined
           ? await ctx.storage.getUrl(attachment.fileId)
           : null;
+    } else if (attachment?.mapFileId) {
+      // A shared location: its rendered map preview (no third-party content, never screened).
+      photoUrl = await ctx.storage.getUrl(attachment.mapFileId);
     }
     // A removed message photo: its report-only evidence copy (the served blob is gone).
     if (report.evidenceFileId) {

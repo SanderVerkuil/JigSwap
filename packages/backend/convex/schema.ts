@@ -905,76 +905,110 @@ export default defineSchema({
   // deliverable AND its send was requested (deferred append, conversation/messageAttachments.ts).
   // Until then nothing about it reaches the other participant: no message, no lastMessage, no
   // unread, no notification. Moderation state lives here, never in the append-only history.
-  // `kind` is "image" only for now; "location" joins the union with location sharing.
-  messageAttachments: defineTable({
-    kind: v.literal("image"),
-    threadAggregateId: v.string(),
-    uploaderId: v.id("users"),
-    fileId: v.id("_storage"),
-    // A smaller rendition; not produced yet (the shared pipeline has no thumbnail step).
-    thumbFileId: v.optional(v.id("_storage")),
-    // Pixel size the client reported at staging (layout only: the aspect-ratio box).
-    width: v.optional(v.number()),
-    height: v.optional(v.number()),
-    byteSize: v.number(),
-    contentType: v.string(),
-    // The image-table lifecycle (incl. "unscored" and "quarantined"), plus:
-    // - "blurred": scored in the sensitive band (MESSAGE_IMAGE_BLUR_THRESHOLD up to the reject
-    //   threshold); delivered blurred with "Show". (A non-mutual sender's image is ALSO shown
-    //   blurred, but that is decided per viewer at read time, never stored.)
-    // - "removed": a moderator removed it after a report; its message is tombstoned.
-    // "unscored" (the classifier stayed unavailable through the retries) is delivered blurred
-    // and labelled "not checked"; it is never silently approved.
-    moderationStatus: v.union(
-      v.literal("pending"),
-      v.literal("approved"),
-      v.literal("blurred"),
-      v.literal("unscored"),
-      v.literal("rejected"),
-      v.literal("quarantined"),
-      v.literal("removed"),
+  // Discriminated on `kind`: "image" (a screened photo) or "location" (a shared place with its
+  // server-rendered map preview; conversation/sendLocation, no screening).
+  messageAttachments: defineTable(
+    v.union(
+      v.object({
+        kind: v.literal("image"),
+        threadAggregateId: v.string(),
+        uploaderId: v.id("users"),
+        fileId: v.id("_storage"),
+        // A smaller rendition; not produced yet (the shared pipeline has no thumbnail step).
+        thumbFileId: v.optional(v.id("_storage")),
+        // Pixel size the client reported at staging (layout only: the aspect-ratio box).
+        width: v.optional(v.number()),
+        height: v.optional(v.number()),
+        byteSize: v.number(),
+        contentType: v.string(),
+        // The image-table lifecycle (incl. "unscored" and "quarantined"), plus:
+        // - "blurred": scored in the sensitive band (MESSAGE_IMAGE_BLUR_THRESHOLD up to the reject
+        //   threshold); delivered blurred with "Show". (A non-mutual sender's image is ALSO shown
+        //   blurred, but that is decided per viewer at read time, never stored.)
+        // - "removed": a moderator removed it after a report; its message is tombstoned.
+        // "unscored" (the classifier stayed unavailable through the retries) is delivered blurred
+        // and labelled "not checked"; it is never silently approved.
+        moderationStatus: v.union(
+          v.literal("pending"),
+          v.literal("approved"),
+          v.literal("blurred"),
+          v.literal("unscored"),
+          v.literal("rejected"),
+          v.literal("quarantined"),
+          v.literal("removed"),
+        ),
+        moderationScore: v.optional(v.number()),
+        moderationLabel: v.optional(v.string()),
+        moderationReason: v.optional(v.string()),
+        moderationAttempts: v.optional(v.number()),
+        // Blurhash (lib/blurhash) of the clean image, from the pipeline's re-encode. Kept on removal
+        // so a removed photo can keep a placeholder; never exposed for a rejected/quarantined row.
+        blurhash: v.optional(v.string()),
+        // When the pipeline swapped the row to its re-encoded (EXIF/GPS-stripped) blob. Absent = still
+        // the upload as sent: the pipeline re-encodes on any attempt until it is set, and the photo is
+        // never delivered before it is.
+        reencodedAt: v.optional(v.number()),
+        // CSAM hash-check bookkeeping + publication gate (lib/imageModeration/hashCheckFields).
+        ...hashCheckFields,
+        // Set by sendStagedImages: the batch's request time (shared by up to 4 photos) and each
+        // photo's position in it; delivery is in this order. The caption rides on the batch's LAST
+        // photo.
+        sendRequestedAt: v.optional(v.number()),
+        sendIndex: v.optional(v.number()),
+        caption: v.optional(v.string()),
+        // The appended thread message (absent = not delivered). Set once, by the first appender.
+        messageId: v.optional(v.string()),
+        // An open report references it: its blobs are never deleted by expiry or removal.
+        evidenceHold: v.optional(v.boolean()),
+        // The sender was told their photo was not sent (message_image_rejected), once; rejected and
+        // quarantined photos get the same notice.
+        rejectionNotifiedAt: v.optional(v.number()),
+        // "Ask for a review" (spec R.10): only then may an admin see an auto-rejected photo.
+        reviewRequestedAt: v.optional(v.number()),
+        reviewDecidedAt: v.optional(v.number()),
+        // A quarantined photo's review request "ends" for the sender like an upheld one (sender view
+        // only; no admin ever sees or decides it): set by a flip 24 h - 7 d after the request.
+        senderReviewUpheldAt: v.optional(v.number()),
+        // The admin who restored or upheld it on review.
+        moderatedBy: v.optional(v.id("users")),
+        // A quarantined photo at a point where a rejected one would be deleted (purge, block): kept
+        // whole for the CSAM preservation, but gone for its sender just the same (every sender-facing
+        // read and mutation treats it as not found).
+        hiddenFromSender: v.optional(v.boolean()),
+        createdAt: v.number(),
+        updatedAt: v.number(),
+      }),
+      // A shared location (spec 2.4, R.5/R.6). `lat`/`lng` are stored already rounded by the
+      // domain SharedLocation (5 decimals when exact, the ~1 km grid when approximate): the raw
+      // device fix is never stored. `mapFileId` is the preview PNG rendered once at send time
+      // (conversation/renderLocationMap); `mapStatus` "failed" falls back to a text card. The
+      // message is appended once the render has settled (ready or failed).
+      v.object({
+        kind: v.literal("location"),
+        threadAggregateId: v.string(),
+        uploaderId: v.id("users"),
+        lat: v.number(),
+        lng: v.number(),
+        precision: v.union(v.literal("exact"), v.literal("approximate")),
+        label: v.optional(v.string()),
+        mapFileId: v.optional(v.id("_storage")),
+        mapStatus: v.union(
+          v.literal("pending"),
+          v.literal("ready"),
+          v.literal("failed"),
+        ),
+        caption: v.optional(v.string()),
+        // The appended location message (absent = render not settled yet). Set once.
+        messageId: v.optional(v.string()),
+        // An open report references it: its map blob is never deleted by removal.
+        evidenceHold: v.optional(v.boolean()),
+        // A moderator removed it after a report (its message is tombstoned, the map deleted).
+        removedAt: v.optional(v.number()),
+        createdAt: v.number(),
+        updatedAt: v.number(),
+      }),
     ),
-    moderationScore: v.optional(v.number()),
-    moderationLabel: v.optional(v.string()),
-    moderationReason: v.optional(v.string()),
-    moderationAttempts: v.optional(v.number()),
-    // Blurhash (lib/blurhash) of the clean image, from the pipeline's re-encode. Kept on removal
-    // so a removed photo can keep a placeholder; never exposed for a rejected/quarantined row.
-    blurhash: v.optional(v.string()),
-    // When the pipeline swapped the row to its re-encoded (EXIF/GPS-stripped) blob. Absent = still
-    // the upload as sent: the pipeline re-encodes on any attempt until it is set, and the photo is
-    // never delivered before it is.
-    reencodedAt: v.optional(v.number()),
-    // CSAM hash-check bookkeeping + publication gate (lib/imageModeration/hashCheckFields).
-    ...hashCheckFields,
-    // Set by sendStagedImages: the batch's request time (shared by up to 4 photos) and each
-    // photo's position in it; delivery is in this order. The caption rides on the batch's LAST
-    // photo.
-    sendRequestedAt: v.optional(v.number()),
-    sendIndex: v.optional(v.number()),
-    caption: v.optional(v.string()),
-    // The appended thread message (absent = not delivered). Set once, by the first appender.
-    messageId: v.optional(v.string()),
-    // An open report references it: its blobs are never deleted by expiry or removal.
-    evidenceHold: v.optional(v.boolean()),
-    // The sender was told their photo was not sent (message_image_rejected), once; rejected and
-    // quarantined photos get the same notice.
-    rejectionNotifiedAt: v.optional(v.number()),
-    // "Ask for a review" (spec R.10): only then may an admin see an auto-rejected photo.
-    reviewRequestedAt: v.optional(v.number()),
-    reviewDecidedAt: v.optional(v.number()),
-    // A quarantined photo's review request "ends" for the sender like an upheld one (sender view
-    // only; no admin ever sees or decides it): set by a flip 24 h - 7 d after the request.
-    senderReviewUpheldAt: v.optional(v.number()),
-    // The admin who restored or upheld it on review.
-    moderatedBy: v.optional(v.id("users")),
-    // A quarantined photo at a point where a rejected one would be deleted (purge, block): kept
-    // whole for the CSAM preservation, but gone for its sender just the same (every sender-facing
-    // read and mutation treats it as not found).
-    hiddenFromSender: v.optional(v.boolean()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
+  )
     .index("by_thread_uploader", ["threadAggregateId", "uploaderId"])
     .index("by_file", ["fileId"])
     .index("by_moderation_status", ["moderationStatus"])

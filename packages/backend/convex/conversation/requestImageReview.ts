@@ -3,6 +3,7 @@ import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { internalMutation, mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { asImage } from "./messageAttachments";
 
 // "Ask for a review" on one of the caller's photos the automated check stopped (spec 2.2, R.10):
 // only now may an admin see it (admin/listImageReviewRequests). Idempotent. A quarantined photo
@@ -13,7 +14,7 @@ export const requestImageReview = mutation({
   args: { attachmentId: v.id("messageAttachments") },
   handler: async (ctx, { attachmentId }): Promise<void> => {
     const me = (await requireMember(ctx)) as unknown as Id<"users">;
-    const row = await ctx.db.get(attachmentId);
+    const row = asImage(await ctx.db.get(attachmentId));
     if (
       !row ||
       row.hiddenFromSender ||
@@ -53,7 +54,7 @@ const QUARANTINE_REVIEW_SPREAD_MS = 6 * 24 * 60 * 60_000;
 export const showQuarantinedReviewUpheld = internalMutation({
   args: { attachmentId: v.id("messageAttachments") },
   handler: async (ctx, { attachmentId }) => {
-    const row = await ctx.db.get(attachmentId);
+    const row = asImage(await ctx.db.get(attachmentId));
     if (row?.moderationStatus !== "quarantined" || row.senderReviewUpheldAt) {
       return;
     }

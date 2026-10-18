@@ -10,6 +10,7 @@ import {
   recordCsamEscalation,
 } from "../lib/imageModeration/quarantine";
 import {
+  asImage,
   expireStagedAttachment,
   MESSAGE_IMAGE_BLUR_THRESHOLD,
   MESSAGE_PHOTO_LABEL,
@@ -26,7 +27,7 @@ import {
 export const getImageForModeration = internalQuery({
   args: { imageId: v.id("messageAttachments") },
   handler: async (ctx, { imageId }) => {
-    const row = await ctx.db.get(imageId);
+    const row = asImage(await ctx.db.get(imageId));
     if (!row) return null;
     return {
       fileId: row.fileId,
@@ -79,7 +80,7 @@ export const setModerationVerdict = internalMutation({
     moderationAttempts: v.optional(v.number()),
   },
   handler: async (ctx, { imageId, moderationStatus, ...verdict }) => {
-    const row = await ctx.db.get(imageId);
+    const row = asImage(await ctx.db.get(imageId));
     if (!row || row.moderationStatus !== "pending") return;
     // An admin restored this photo and sent it back only to be re-encoded: their approval is
     // final, unless the file itself turned out unreadable.

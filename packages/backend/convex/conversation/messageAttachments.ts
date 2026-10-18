@@ -58,8 +58,29 @@ export const MESSAGE_IMAGE_BLUR_THRESHOLD = 0.5;
 /** The audit label of a message photo (no content, no participants). */
 export const MESSAGE_PHOTO_LABEL = "Message photo";
 
-type Attachment = Doc<"messageAttachments">;
+/** A message photo row (the image variant of messageAttachments). */
+export type ImageAttachment = Extract<
+  Doc<"messageAttachments">,
+  { kind: "image" }
+>;
+/** A shared-location row (the location variant of messageAttachments). */
+export type LocationAttachment = Extract<
+  Doc<"messageAttachments">,
+  { kind: "location" }
+>;
+type Attachment = ImageAttachment;
 type Status = Attachment["moderationStatus"];
+
+/** The row when it is a message photo; null otherwise (missing, or a location). */
+export const asImage = (
+  row: Doc<"messageAttachments"> | null,
+): ImageAttachment | null => (row?.kind === "image" ? row : null);
+
+/** The blobs a row serves: a photo and its thumbnail, or a location's map preview. */
+const servedBlobsOf = (
+  row: Doc<"messageAttachments">,
+): (Id<"_storage"> | undefined)[] =>
+  row.kind === "image" ? [row.fileId, row.thumbFileId] : [row.mapFileId];
 
 /** Feature gate (spec R.12): no configured classifier means no message photos at all. */
 export const assertImagesAvailable = (): void => {
@@ -115,15 +136,16 @@ export const isDeliverable = (row: Attachment): boolean =>
   row.reencodedAt !== undefined;
 
 /**
- * Delete a photo's blobs, unless they must be kept: an open report's evidence hold, or a CSAM
- * escalation's preserved blob. Tolerates blobs that are already gone.
+ * Delete an attachment's served blobs (a photo's, or a location's map preview), unless they must
+ * be kept: an open report's evidence hold, or a CSAM escalation's preserved blob. Tolerates blobs
+ * that are already gone.
  */
 export const deleteAttachmentBlobs = async (
   ctx: MutationCtx,
-  row: Attachment,
+  row: Doc<"messageAttachments">,
 ): Promise<void> => {
   if (row.evidenceHold) return;
-  for (const fileId of [row.fileId, row.thumbFileId]) {
+  for (const fileId of servedBlobsOf(row)) {
     if (!fileId || !(await ctx.db.system.get(fileId))) continue;
     if (await isPreservedBlob(ctx, fileId)) continue;
     await ctx.storage.delete(fileId);
@@ -206,7 +228,7 @@ export const purgeUndeliveredAttachment = async (
   attachmentId: Id<"messageAttachments">,
   rule: "rejected" | "undelivered",
 ): Promise<void> => {
-  const row = await ctx.db.get(attachmentId);
+  const row = asImage(await ctx.db.get(attachmentId));
   if (!row || row.messageId !== undefined) return;
   const stopped =
     row.moderationStatus === "rejected" ||
@@ -299,7 +321,7 @@ export const settleSendBatch = async (
   ctx: MutationCtx,
   attachmentId: Id<"messageAttachments">,
 ): Promise<void> => {
-  const anchor = await ctx.db.get(attachmentId);
+  const anchor = asImage(await ctx.db.get(attachmentId));
   if (!anchor || anchor.sendRequestedAt === undefined) return;
   const batch = (
     await ctx.db
@@ -311,7 +333,10 @@ export const settleSendBatch = async (
       )
       .collect()
   )
-    .filter((row) => row.sendRequestedAt === anchor.sendRequestedAt)
+    .filter(
+      (row): row is Attachment =>
+        row.kind === "image" && row.sendRequestedAt === anchor.sendRequestedAt,
+    )
     .sort((a, b) => (a.sendIndex ?? 0) - (b.sendIndex ?? 0));
 
   const thread = await threadRowByAggregateId(ctx, anchor.threadAggregateId);
@@ -376,7 +401,12 @@ export const dropUndeliveredPairAttachments = async (
         )
         .collect();
       for (const row of rows) {
-        if (row.messageId === undefined && row.sendRequestedAt !== undefined) {
+        if (row.messageId !== undefined) continue;
+        if (row.kind === "location") {
+          // Its map is still rendering: never appended (renderLocationMap re-checks the block).
+          await deleteAttachmentBlobs(ctx, row);
+          await ctx.db.delete(row._id);
+        } else if (row.sendRequestedAt !== undefined) {
           await discardAttachment(ctx, row);
         }
       }
@@ -393,7 +423,7 @@ export const expireStagedAttachment = async (
   ctx: MutationCtx,
   attachmentId: Id<"messageAttachments">,
 ): Promise<void> => {
-  const row = await ctx.db.get(attachmentId);
+  const row = asImage(await ctx.db.get(attachmentId));
   if (
     !row ||
     row.messageId !== undefined ||
@@ -430,7 +460,7 @@ export const messageAttachmentViews = (ctx: QueryCtx, viewer: Id<"users">) => {
   return async (
     attachmentId: Id<"messageAttachments">,
   ): Promise<MessageAttachmentView> => {
-    const row = await ctx.db.get(attachmentId);
+    const row = asImage(await ctx.db.get(attachmentId));
     if (!row) return { status: "removed" };
     const size = {
       ...(row.width !== undefined && { w: row.width }),
@@ -496,7 +526,7 @@ const hasRevealed = async (
 export const hasOpenReport = async (
   ctx: QueryCtx,
   reporterId: Id<"users">,
-  row: Attachment,
+  row: Doc<"messageAttachments">,
 ): Promise<boolean> => {
   const targets: [Doc<"reports">["targetKind"], string][] = [
     ["attachment", row._id as string],

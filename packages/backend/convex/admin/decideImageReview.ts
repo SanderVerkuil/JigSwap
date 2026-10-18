@@ -3,6 +3,7 @@ import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import {
+  asImage,
   deleteAttachmentBlobs,
   MESSAGE_PHOTO_LABEL,
   settleSendBatch,
@@ -26,7 +27,7 @@ export const decideImageReview = mutation({
     const adminId = (await requireMember(ctx)) as unknown as Id<"users">;
     if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
 
-    const row = await ctx.db.get(attachmentId);
+    const row = asImage(await ctx.db.get(attachmentId));
     if (
       !row ||
       row.moderationStatus !== "rejected" ||

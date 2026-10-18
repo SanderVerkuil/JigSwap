@@ -7,6 +7,7 @@ import { requireMember } from "../identity/requireMember";
 import { enforceRateLimit } from "../lib/rateLimits";
 import { assertThreadNotBlocked } from "../social/blocks";
 import {
+  asImage,
   MAX_PHOTOS_PER_SEND,
   participantThreadOf,
   settleSendBatch,
@@ -55,7 +56,7 @@ export const sendStagedImages = mutation({
     }
     const rows = [];
     for (const id of ids) {
-      const row = await ctx.db.get(id);
+      const row = asImage(await ctx.db.get(id));
       if (
         !row ||
         row.hiddenFromSender ||
@@ -79,7 +80,7 @@ export const sendStagedImages = mutation({
             q.eq("threadAggregateId", args.threadId).eq("uploaderId", me),
           )
           .collect()
-      ).map((row) => row.sendRequestedAt),
+      ).map((row) => (row.kind === "image" ? row.sendRequestedAt : undefined)),
     );
     let sendRequestedAt = Date.now();
     while (used.has(sendRequestedAt)) sendRequestedAt += 1;

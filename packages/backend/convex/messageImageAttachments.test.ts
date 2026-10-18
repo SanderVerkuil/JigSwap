@@ -3,6 +3,7 @@ import { Jimp } from "jimp";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { asImage } from "./conversation/messageAttachments";
 import { RATE_LIMITS } from "./lib/rateLimits";
 import { EVIDENCE_MAX_ATTEMPTS } from "./reports/attachmentEvidence";
 import schema from "./schema";
@@ -204,7 +205,7 @@ const send = (
   });
 
 const attachment = (t: T, id: Id<"messageAttachments">) =>
-  t.run((ctx) => ctx.db.get(id));
+  t.run(async (ctx) => asImage(await ctx.db.get(id)));
 
 const messageRows = (t: T, threadId: string) =>
   t.run((ctx) =>

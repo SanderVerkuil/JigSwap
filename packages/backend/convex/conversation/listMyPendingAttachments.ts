@@ -6,6 +6,7 @@ import { requireMember } from "../identity/requireMember";
 import {
   participantThreadOf,
   pendingAttachmentViewOf,
+  type ImageAttachment,
 } from "./messageAttachments";
 
 // The caller's outbox for one thread (spec 2.2): their own photos that are not messages (yet),
@@ -24,7 +25,12 @@ export const listMyPendingAttachments = query({
       .collect();
     return Promise.all(
       rows
-        .filter((row) => row.messageId === undefined && !row.hiddenFromSender)
+        .filter(
+          (row): row is ImageAttachment =>
+            row.kind === "image" &&
+            row.messageId === undefined &&
+            !row.hiddenFromSender,
+        )
         .sort((a, b) => a.createdAt - b.createdAt)
         .map((row) => pendingAttachmentViewOf(ctx, row)),
     );

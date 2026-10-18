@@ -4,7 +4,7 @@ import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { enforceRateLimit } from "../lib/rateLimits";
 import { isBlockedEitherWay } from "../social/blocks";
-import { hasOpenReport, isDeliverable } from "./messageAttachments";
+import { asImage, hasOpenReport, isDeliverable } from "./messageAttachments";
 import { threadRowByAggregateId } from "./readModelHelpers";
 
 // "Show" on a blurred message photo (spec R.2): the thread read carries no URL for a blurred
@@ -22,7 +22,7 @@ export const revealMessageImage = mutation({
         code: "AttachmentNotFound",
         message: "Photo not found",
       });
-    const row = await ctx.db.get(attachmentId);
+    const row = asImage(await ctx.db.get(attachmentId));
     if (!row?.messageId || row.hiddenFromSender || !isDeliverable(row)) {
       throw notFound();
     }

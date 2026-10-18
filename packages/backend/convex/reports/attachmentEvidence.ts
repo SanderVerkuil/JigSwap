@@ -53,7 +53,9 @@ export const loadEvidenceSource = internalQuery({
   args: { attachmentId: v.id("messageAttachments") },
   handler: async (ctx, { attachmentId }) => {
     const row = await ctx.db.get(attachmentId);
-    return row ? { fileId: row.fileId } : null;
+    // A photo's blob, or a shared location's map preview (none when its render failed).
+    const fileId = row?.kind === "image" ? row.fileId : row?.mapFileId;
+    return fileId ? { fileId } : null;
   },
 });
 

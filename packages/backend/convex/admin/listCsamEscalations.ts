@@ -80,6 +80,8 @@ export const listCsamEscalations = query({
         )
         .take(HASH_CHECK_WAITING_CAP);
       for (const row of rows) {
+        // (A shared location is never hash-checked; the index holds only photos.)
+        if ("kind" in row && row.kind === "location") continue;
         if (!row.pendingHashes || row.moderationStatus === "quarantined") {
           continue;
         }
