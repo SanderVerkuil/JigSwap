@@ -9,8 +9,8 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 // Verdict-store tests for the completion-photo moderation pipeline. The store mutations are
 // called DIRECTLY via `internal.*` — but note convex-test DOES drain runAfter(0) jobs in the
-// background (real setTimeout), so the scheduled action runs during these tests and fails open
-// (env-less + non-image bytes: verdict-only approve, never "rejected", no file swap). The tests
+// background (real setTimeout), so the scheduled action runs during these tests and ends
+// "unscored" (env-less: no token; non-image bytes: no file swap; never "rejected"). The tests
 // stay deterministic by settling all scheduled jobs to a terminal state and resetting the
 // sidecar to "pending" before each direct verdict call, combined with setModerationVerdict's
 // first-wins-on-pending guard (a late re-run can never overwrite a decided verdict).
@@ -126,7 +126,7 @@ const settleScheduledJobs = async (t: TestConvex<typeof schema>) => {
 };
 
 // Attach one photo and return its sidecar row, reset to "pending": the background-drained
-// action fail-open-approves it (verdict-only — decode fails on non-image bytes, so no file
+// action marks it unscored (verdict-only — decode fails on non-image bytes, so no file
 // swap), so settle that job first, then re-open the sidecar so each test exercises the FIRST
 // verdict deterministically.
 const attachOne = async (
@@ -312,7 +312,7 @@ describe("rejected-photo read filtering", () => {
       api.solving.attachCompletionPhotos.attachCompletionPhotos,
       { completionId, storageIds: [approved, rejected, pending] },
     );
-    // Let the background drain finish (it fail-open-approves all three) before pinning the
+    // Let the background drain finish (it marks all three unscored) before pinning the
     // exact statuses, so none can be overwritten afterwards.
     await settleScheduledJobs(t);
     const images = await completionImagesFor(t, completionId);

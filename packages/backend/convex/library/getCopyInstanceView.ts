@@ -297,12 +297,16 @@ export const getCopyInstanceView = query({
       .withIndex("by_owned_puzzle", (q) => q.eq("ownedPuzzleId", args.copyId))
       .collect();
     // Moderation gate: include a photo iff it's approved (absent status == legacy == approved), OR
-    // it's the viewer's OWN pending upload (so they see their "pending review" photo). Rejected
-    // photos — and other members' pending photos — are excluded for everyone.
+    // it's the viewer's OWN pending/unscored upload (so they see their "pending review" photo; an
+    // unscored photo could not be checked yet and stays private until a re-screen). Rejected
+    // photos — and other members' pending/unscored photos — are excluded for everyone.
     const visibleImageRows = imageRows.filter((img) => {
       const status = img.moderationStatus ?? "approved";
       if (status === "approved") return true;
-      return status === "pending" && img.uploaderId === viewerId;
+      return (
+        (status === "pending" || status === "unscored") &&
+        img.uploaderId === viewerId
+      );
     });
     const galleryResolved = await Promise.all(
       visibleImageRows
@@ -323,12 +327,12 @@ export const getCopyInstanceView = query({
             uploaderName: memberDisplayNameOf(uploader) ?? null,
             takenAt: img.takenAt ?? null,
             createdAt: img.createdAt,
-            // Only "approved" or the viewer's own "pending" survive the filter above; an absent
-            // status is legacy => approved.
+            // Only "approved" or the viewer's own "pending"/"unscored" survive the filter above;
+            // both of the latter show as "pending" review. An absent status is legacy => approved.
             moderationStatus:
-              (img.moderationStatus ?? "approved") === "pending"
-                ? "pending"
-                : "approved",
+              (img.moderationStatus ?? "approved") === "approved"
+                ? "approved"
+                : "pending",
           };
         }),
     );
