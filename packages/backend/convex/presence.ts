@@ -37,10 +37,16 @@ export const heartbeat = mutation({
   },
 });
 
-// Room-token-scoped read used by the usePresence hook; the token is the capability.
+// The usePresence hook subscribes to this read, so it must exist, but it deliberately returns
+// NOTHING. The room token is not a real capability here: every member who heartbeats the shared
+// "messages" room receives the same token, so forwarding to presence.list would let any member
+// see who else is (or recently was) on /messages, private profiles included. Nothing in the UI
+// reads the roster; the notification gate uses presence.listUser server-side.
 export const list = query({
   args: { roomToken: v.string() },
-  handler: (ctx, { roomToken }) => presence.list(ctx, roomToken),
+  handler: async (): Promise<
+    { userId: string; online: boolean; lastDisconnected: number }[]
+  > => [],
 });
 
 // Graceful disconnect via sendBeacon; the session token is the capability (no auth context
