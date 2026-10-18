@@ -1,13 +1,12 @@
 "use client";
 
-// Active-thread pane of /messages/$threadId: the getThreadMessages
-// subscription (ascending), read receipts via markThreadRead, and the
-// composer. Reuses the inbox subscription for the header subject — Convex
-// dedupes it with the list pane. Messages render as author groups with day
-// separators (message-center redesign spec §5–§6, §9).
-//
-// TODO: only the newest page (50 messages) renders — the getThreadMessages
-// `before` cursor exists but a "load older messages" affordance is unbuilt.
+// Active-thread pane of /messages/$threadId: the listThreadMessages
+// paginated subscription (newest first, reversed to ascending for display;
+// older pages load on scroll-up with the scroll position anchored), read
+// receipts via markThreadRead, and the composer. Reuses the inbox
+// subscription for the header subject — Convex dedupes it with the list pane.
+// Messages render as author groups with day separators (message-center
+// redesign spec §5–§6, §9).
 import { Link } from "@/compat/link";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,14 +16,15 @@ import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import type { FunctionReturnType } from "convex/server";
+// sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
+import { usePaginatedQuery, type PaginatedQueryItem } from "convex/react";
 import {
   ChevronLeft,
   Info,
   MessageSquare,
   Puzzle as PuzzleIcon,
 } from "lucide-react";
-import { Fragment, useEffect, useRef } from "react";
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { useLocale, useNow, useTranslations } from "use-intl";
 import { MessageCopyCard } from "./copy-card";
 import {
@@ -35,13 +35,18 @@ import {
   type ThreadItem,
 } from "./format";
 import { MessageComposer } from "./message-composer";
+import { OlderMessagesSlot } from "./older-messages-slot";
 import { ThreadSubjectAvatar } from "./thread-list";
 import { ThreadPuzzleStack } from "./thread-puzzle-stack";
 import { ThreadQuickLinks } from "./thread-quick-links";
+import { anchoredScrollTop, type ScrollSnapshot } from "./thread-scroll";
 
-type ThreadMessage = FunctionReturnType<
-  typeof gateway.conversation.getThreadMessages
->[number];
+type ThreadMessage = PaginatedQueryItem<
+  typeof gateway.conversation.listThreadMessages
+>;
+
+// Messages per page: the first page and each older page loaded on scroll-up.
+const PAGE_SIZE = 20;
 
 // Live-region announcements quote at most this much of the message body.
 const ANNOUNCE_MAX = 140;
@@ -63,16 +68,25 @@ export function ThreadView({
   const { member } = useCurrentMember();
   const me = member?._id;
 
-  const { data: messages } = useQuery({
-    ...convexQuery(
-      gateway.conversation.getThreadMessages,
-      me ? { threadId } : "skip",
-    ),
-    // Stale/foreign thread ids must THROW so the $threadId route's
-    // errorComponent renders AppNotFound (TanStack returns errors in .error
-    // by default, which would leave the skeleton up forever).
-    throwOnError: true,
-  });
+  // Convex's reactive pagination, newest first: the first page grows as new
+  // messages arrive, older pages keep stable boundaries. Errors (stale or
+  // foreign thread ids) throw during render, so the $threadId route's
+  // errorComponent renders AppNotFound.
+  const {
+    results: newestFirst,
+    status,
+    loadMore,
+  } = usePaginatedQuery(
+    gateway.conversation.listThreadMessages,
+    me ? { threadId } : "skip",
+    { initialNumItems: PAGE_SIZE },
+  );
+  // Ascending for rendering; undefined while the first page loads.
+  const messages = useMemo(
+    () =>
+      status === "LoadingFirstPage" ? undefined : [...newestFirst].reverse(),
+    [newestFirst, status],
+  );
   const { data: inbox } = useQuery(
     convexQuery(gateway.conversation.getMyInbox, me ? {} : "skip"),
   );
@@ -101,11 +115,14 @@ export function ThreadView({
   const { mutateAsync: markThreadRead } = useMutation({
     mutationFn: useConvexMutation(gateway.conversation.markThreadRead),
   });
-  const messageCount = messages?.length;
+  const loaded = messages !== undefined;
   const newestIsMine = messages?.at(-1)?.isMine;
-  // Changes when a pending send is confirmed (pending-… → real id) even though
-  // the count doesn't: the confirmed group grows a time row, so follow again.
+  // Changes when a message arrives at the bottom and when a pending send is
+  // confirmed (pending-… → real id: the confirmed group grows a time row, so
+  // follow again) — but not when an older page is prepended, so neither the
+  // receipt nor the follow-scroll below fires on scroll-up loads.
   const newestId = messages?.at(-1)?.id;
+  const oldestId = messages?.[0]?.id;
 
   // Per-thread one-shot flags, reset when navigating between threads.
   const hasMarkedReadRef = useRef(false);
@@ -120,22 +137,55 @@ export function ThreadView({
     // unauthenticated. After the initial receipt, skip changes whose newest
     // message is our own (optimistic) send: only others' messages (including
     // system messages, never isMine) create unread state.
-    if (!me || messageCount === undefined) return;
+    if (!me || !loaded) return;
     if (hasMarkedReadRef.current && newestIsMine) return;
     hasMarkedReadRef.current = true;
     markThreadRead({ threadId }).catch(() => {
       // Non-fatal: the receipt catches up on the next message.
     });
-  }, [me, messageCount, newestIsMine, threadId, markThreadRead]);
+  }, [me, loaded, newestId, newestIsMine, threadId, markThreadRead]);
 
   const scrollerRef = useRef<HTMLOListElement>(null);
+  // Scroll anchoring for prepended older pages: the scroller as it was before
+  // the latest commit (refreshed on scroll and after every commit). When the
+  // oldest rendered message changed because a page was prepended, restore the
+  // position so the content the reader was looking at stays put. A layout
+  // effect, so the corrected position is what gets painted.
+  const scrollSnapshotRef = useRef<ScrollSnapshot | undefined>(undefined);
+  const recordScroll = () => {
+    const scroller = scrollerRef.current;
+    scrollSnapshotRef.current = scroller
+      ? {
+          oldestId,
+          scrollTop: scroller.scrollTop,
+          scrollHeight: scroller.scrollHeight,
+        }
+      : undefined;
+  };
+  useLayoutEffect(() => {
+    const scroller = scrollerRef.current;
+    if (
+      scroller &&
+      messages &&
+      oldestId !== scrollSnapshotRef.current?.oldestId
+    ) {
+      const top = anchoredScrollTop(
+        scrollSnapshotRef.current,
+        messages,
+        scroller.scrollHeight,
+      );
+      if (top !== undefined) scroller.scrollTop = top;
+    }
+    recordScroll();
+  });
+
   useEffect(() => {
     // Scroll rule: jump instantly to the newest message on first load; after
     // that, follow new messages only when the user is already near the bottom
     // or the newest message is their own send — never yank someone who
     // scrolled up to read history.
     const scroller = scrollerRef.current;
-    if (!scroller || messageCount === undefined) return;
+    if (!scroller || !loaded) return;
     if (!hasScrolledRef.current) {
       hasScrolledRef.current = true;
       scroller.scrollTop = scroller.scrollHeight;
@@ -152,7 +202,40 @@ export function ThreadView({
         behavior: reduceMotion ? "auto" : "smooth",
       });
     }
-  }, [messageCount, newestId, newestIsMine]);
+  }, [loaded, newestId, newestIsMine]);
+
+  // Infinite scroll-up: load the next older page when the sentinel at the top
+  // of the list comes into view (within 200px). Declared after the first-load
+  // jump above so the initial observation sees the list already scrolled to
+  // the bottom; re-observing on each status change keeps loading while a
+  // short thread still leaves the sentinel visible.
+  const sentinelRef = useRef<HTMLLIElement>(null);
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || status !== "CanLoadMore") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          loadMore(PAGE_SIZE);
+        }
+      },
+      { root: scrollerRef.current, rootMargin: "200px 0px 0px 0px" },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [status, loadMore]);
+
+  // A keyboard user who pressed "Load earlier messages" keeps focus on it
+  // while the page loads; when that was the last page the button gives way to
+  // the start-of-conversation marker, so hand focus to the history list.
+  const loadRequestedByButtonRef = useRef(false);
+  useLayoutEffect(() => {
+    if (status === "LoadingMore" || !loadRequestedByButtonRef.current) return;
+    loadRequestedByButtonRef.current = false;
+    if (status === "Exhausted" && document.activeElement === document.body) {
+      scrollerRef.current?.focus({ preventScroll: true });
+    }
+  }, [status]);
 
   // Thread switch: move focus to the header title so keyboard and screen-reader
   // users land in the new conversation (once per thread, after it renders).
@@ -286,8 +369,17 @@ export function ThreadView({
           // Keyboard users can scroll the history without a mouse.
           tabIndex={0}
           aria-label={title ?? t("threadFallbackTitle")}
+          onScroll={recordScroll}
           className="focus-visible:ring-ring flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 py-4 outline-none focus-visible:ring-2 focus-visible:ring-inset md:px-6"
         >
+          <OlderMessagesSlot
+            status={status}
+            sentinelRef={sentinelRef}
+            onLoadMore={() => {
+              loadRequestedByButtonRef.current = true;
+              loadMore(PAGE_SIZE);
+            }}
+          />
           {items.map((item) => (
             <ThreadItemView
               key={item.key}
