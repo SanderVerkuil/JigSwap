@@ -1317,13 +1317,59 @@
 <a name='L1252'></a><a href='#L1252'>1252</a>
 <a name='L1253'></a><a href='#L1253'>1253</a>
 <a name='L1254'></a><a href='#L1254'>1254</a>
-<a name='L1255'></a><a href='#L1255'>1255</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1255'></a><a href='#L1255'>1255</a>
+<a name='L1256'></a><a href='#L1256'>1256</a>
+<a name='L1257'></a><a href='#L1257'>1257</a>
+<a name='L1258'></a><a href='#L1258'>1258</a>
+<a name='L1259'></a><a href='#L1259'>1259</a>
+<a name='L1260'></a><a href='#L1260'>1260</a>
+<a name='L1261'></a><a href='#L1261'>1261</a>
+<a name='L1262'></a><a href='#L1262'>1262</a>
+<a name='L1263'></a><a href='#L1263'>1263</a>
+<a name='L1264'></a><a href='#L1264'>1264</a>
+<a name='L1265'></a><a href='#L1265'>1265</a>
+<a name='L1266'></a><a href='#L1266'>1266</a>
+<a name='L1267'></a><a href='#L1267'>1267</a>
+<a name='L1268'></a><a href='#L1268'>1268</a>
+<a name='L1269'></a><a href='#L1269'>1269</a>
+<a name='L1270'></a><a href='#L1270'>1270</a>
+<a name='L1271'></a><a href='#L1271'>1271</a>
+<a name='L1272'></a><a href='#L1272'>1272</a>
+<a name='L1273'></a><a href='#L1273'>1273</a>
+<a name='L1274'></a><a href='#L1274'>1274</a>
+<a name='L1275'></a><a href='#L1275'>1275</a>
+<a name='L1276'></a><a href='#L1276'>1276</a>
+<a name='L1277'></a><a href='#L1277'>1277</a>
+<a name='L1278'></a><a href='#L1278'>1278</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">114x</span>
+<span class="cline-any cline-yes">117x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2894,21 +2940,29 @@ export default defineSchema({
     // --- Async content moderation (image-moderation pipeline) ---
     // Lifecycle: a freshly uploaded photo is "pending" until the moderatePhoto Node action
     // re-encodes it (strips EXIF) and content-classifies it, then flips it to "approved" or
-    // "rejected". ABSENT means the row predates moderation and is treated as "approved" so legacy
-    // photos stay visible. The gallery only surfaces approved photos (plus the uploader's own
-    // pending ones).
+    // "rejected" — or "unscored" when the classifier could not check it (provider error / missing
+    // token) after its retries. ABSENT means the row predates moderation and is treated as
+    // "approved" so legacy photos stay visible. The gallery only surfaces approved photos (plus the
+    // uploader's own pending/unscored ones).
+    // "Checked &amp; clean" is approved WITH a moderationScore; approved without a score is unknown
+    // (legacy, provider "none", or the old fail-open pipeline) and is what the re-screen covers.
     moderationStatus: v.optional(
       v.union(
         v.literal("pending"),
         v.literal("approved"),
         v.literal("rejected"),
+        v.literal("unscored"),
       ),
     ),
-    // The classifier's NSFW score in [0,1] (null/absent when un-scored, e.g. provider "none" or
+    // The classifier's NSFW score in [0,1] (absent when un-scored, e.g. provider "none" or
     // missing token). Kept for auditability/threshold tuning.
     moderationScore: v.optional(v.number()),
     // The decisive label from the classifier (e.g. "nsfw"/"normal"), for diagnostics.
     moderationLabel: v.optional(v.string()),
+    // Why an "unscored" photo could not be checked (UnscoredReason), and how many classification
+    // attempts the pipeline made. Absent on rows decided before these existed.
+    moderationReason: v.optional(v.string()),
+    moderationAttempts: v.optional(v.number()),
 &nbsp;
     // --- Timestamps ---
     createdAt: v.number(),
@@ -3018,15 +3072,19 @@ export default defineSchema({
     completionId: v.string(), // Solving CompletionId aggregateId
     uploaderId: v.id("users"),
     fileId: v.id("_storage"),
+    // Same lifecycle as ownedPuzzleImages.moderationStatus (incl. "unscored").
     moderationStatus: v.optional(
       v.union(
         v.literal("pending"),
         v.literal("approved"),
         v.literal("rejected"),
+        v.literal("unscored"),
       ),
     ),
     moderationScore: v.optional(v.number()),
     moderationLabel: v.optional(v.string()),
+    moderationReason: v.optional(v.string()),
+    moderationAttempts: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -3243,6 +3301,17 @@ export default defineSchema({
     // without scanning the whole table.
     .index("by_requested_copy", ["requestedPuzzleId"])
     .index("by_offered_copy", ["offeredPuzzleId"]),
+&nbsp;
+  // Exchange: per-trade owner reveal. One APPEND-ONLY row per exchange, written the first time the
+  // OWNER (recipient) acts on it — accepts, or posts a member-authored message in its thread
+  // (exchange/tradeRevealSubscriber). From then on the requester sees the owner's limited trade card
+  // (name, handle, email, reviews received) INSIDE THIS TRADE ONLY; it never unlocks the owner's
+  // profile elsewhere. The owner seeing the requester needs no row (derived: the requester asked).
+  tradeReveals: defineTable({
+    exchangeId: v.id("exchanges"),
+    revealedAt: v.number(),
+    reason: v.union(v.literal("accepted"), v.literal("owner_replied")),
+  }).index("by_exchange", ["exchangeId"]),
 &nbsp;
   messages: defineTable({
     exchangeId: v.id("exchanges"),
@@ -3832,7 +3901,7 @@ export default defineSchema({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-18T07:29:43.550Z
+                at 2026-10-18T07:59:14.188Z
             </div>
         <script src="../prettify.js"></script>
         <script>
