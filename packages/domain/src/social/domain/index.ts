@@ -12,4 +12,5 @@ export * from "./identity-reveal";
 export * from "./invite-email";
 export * from "./ids";
 export * from "./photo-comment";
+export * from "./presence";
 export * from "./profile";
