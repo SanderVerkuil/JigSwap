@@ -46,7 +46,6 @@ vi.mock("@tanstack/react-router", () => ({
 const circle = (aggregateId: string | undefined, name: string) => ({
   _id: `row_${name}`,
   aggregateId,
-  ownerId: "u_anna",
   name,
   memberCount: 3,
   isOwnedByViewer: false,

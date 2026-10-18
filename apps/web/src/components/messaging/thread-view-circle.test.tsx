@@ -175,7 +175,6 @@ const circleThread: AnyInboxThread = {
 const CIRCLE_DETAIL = {
   _id: "circle_doc",
   aggregateId: "circle_1",
-  ownerId: "u_anna",
   name: "Puzzle Club",
   memberCount: 3,
   isOwnedByViewer: false,
