@@ -135,6 +135,19 @@ describe("getPresenceOf", () => {
     expect(await presenceOf(t, "alice", [bob])).toEqual([]);
   });
 
+  test("a deactivated (tombstoned) member is absent", async () => {
+    const { t, bob } = await seed();
+    await t.run((ctx) => ctx.db.patch(bob, { isActive: false }));
+    expect(await presenceOf(t, "alice", [bob])).toEqual([]);
+  });
+
+  test("a deleted member is absent, even with rows left behind", async () => {
+    const { t, bob } = await seed();
+    // Follows, settings and the component's online row all remain; only the user row is gone.
+    await t.run((ctx) => ctx.db.delete(bob));
+    expect(await presenceOf(t, "alice", [bob])).toEqual([]);
+  });
+
   test("a non-mutual follower sees nothing, even of a public profile", async () => {
     const t = setup();
     const alice = await seedMember(t, "alice");

@@ -16,8 +16,8 @@ export const MAX_PRESENCE_TARGETS = 50;
 // offline, hidden, invisible, not mutual, blocked either way, or not sharing are all simply
 // ABSENT, so none of those states can be told apart. Never returns lastDisconnected or any other
 // timestamp. Reads per target: their settings row, at most two follow-edge lookups and, only
-// when visible, the component's per-user room list (which changes on transitions, not on every
-// heartbeat, so subscribers aren't re-run per heartbeat).
+// when visible, their user row and the component's per-user room list (which changes on
+// transitions, not on every heartbeat, so subscribers aren't re-run per heartbeat).
 export const getPresenceOf = query({
   args: { memberIds: v.array(v.id("users")) },
   handler: async (ctx, { memberIds }): Promise<PresenceView[]> => {
@@ -48,6 +48,9 @@ export const getPresenceOf = query({
         viewerShare,
       });
       if (!visible) continue;
+      // A deleted or deactivated (tombstoned) member is never shown, whatever rows remain.
+      const target = await ctx.db.get(targetId);
+      if (!target || !target.isActive) continue;
       const rooms = await presence.listUser(ctx, targetId as string, true);
       const status = effectiveStatus({
         override: targetOverride,
