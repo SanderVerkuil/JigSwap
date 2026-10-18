@@ -9,6 +9,7 @@ import type { QueryCtx } from "../_generated/server";
 import { circleFloorOf } from "../conversation/readModelHelpers";
 import {
   isCurrentCircleMember,
+  projectCircleMember,
   projectThreadMember,
 } from "../conversation/threadMemberProjection";
 import { projectTradeParty } from "../exchange/tradeParty";
@@ -343,6 +344,31 @@ const resolveActor = async (
               actorId,
               circleThread.aggregateId,
             ),
+    );
+    if (!projected.anonymous) return revealedActor(user, profile, false);
+    return projected.departed ? DEPARTED : ANONYMOUS;
+  }
+
+  // An accepted circle invite's invitee, seen by a current member of that circle (the inviter, as
+  // long as they stay): projected like every other circle surface does a co-member. Once the
+  // viewer has left, the ordinary rules below decide.
+  const subject = row.subject as NotificationSubject | undefined;
+  if (
+    type === "circle_invite_accepted" &&
+    subject?.kind === "circle" &&
+    (await isCurrentCircleMember(ctx, subject.circleId, viewerId))
+  ) {
+    const projected = await memoized(
+      cache,
+      `circleMember:${subject.circleId}:${actorId}`,
+      () =>
+        projectCircleMember(
+          ctx,
+          viewerId,
+          actorId,
+          subject.circleId,
+          subject.circleId,
+        ),
     );
     if (!projected.anonymous) return revealedActor(user, profile, false);
     return projected.departed ? DEPARTED : ANONYMOUS;

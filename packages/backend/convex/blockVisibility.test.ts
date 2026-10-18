@@ -326,6 +326,46 @@ describe("profiles", () => {
     });
   });
 
+  test("in a shared circle the blocked side gets the blocker's identity-only teaser; the profile stays not found", async () => {
+    const t = convexTest(schema, modules);
+    const u = await seed(t);
+    await seedProfile(t, u.bob);
+    await insertBlock(t, u.bob, u.alice);
+    await t.run(async (ctx) => {
+      for (const memberId of [u.alice, u.bob]) {
+        await ctx.db.insert("circleMembers", {
+          circleAggregateId: "circle-1",
+          memberId,
+        });
+      }
+    });
+    const alice = as(t, "alice");
+    const teaser = await alice.query(
+      api.social.getPublicMemberTeaser.getPublicMemberTeaser,
+      { handle: "bob" },
+    );
+    expect(teaser).toMatchObject({
+      memberId: u.bob,
+      displayName: "Bobby",
+      puzzleCount: null,
+    });
+    expect(teaser).not.toHaveProperty("blockedByMe");
+    expect(JSON.stringify(teaser)).not.toContain("I like skies");
+    expect(
+      await alice.query(api.social.getPublicProfile.getPublicProfile, {
+        handle: "bob",
+      }),
+    ).toBeNull();
+    // Carol shares no circle with Bob: his block on her still reads as not found.
+    await insertBlock(t, u.bob, u.carol);
+    expect(
+      await as(t, "carol").query(
+        api.social.getPublicMemberTeaser.getPublicMemberTeaser,
+        { handle: "bob" },
+      ),
+    ).toBeNull();
+  });
+
   test.each(DIRECTIONS)(
     "%s: the follow relation stub keeps a private target's targetIsPrivate",
     async (_, pair) => {

@@ -19,6 +19,7 @@ import {
 } from "@/components/community/primitives";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { MemberInitial } from "@/components/members/member-initial";
+import { OpenCircleChatButton } from "@/components/messaging/open-circle-chat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -293,6 +294,12 @@ function CircleRow({
           value={circle.memberCount}
           label={t("membersLabel", { count: circle.memberCount })}
         />
+        {circle.aggregateId && (
+          <OpenCircleChatButton
+            circleId={circle.aggregateId}
+            circleName={circle.name}
+          />
+        )}
         {onManage && (
           <Button variant="ghost" size="sm" onClick={onManage}>
             <Settings className="h-4 w-4" />

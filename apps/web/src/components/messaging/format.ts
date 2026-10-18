@@ -7,20 +7,82 @@ import type { FunctionReturnType } from "convex/server";
 import { ConvexError } from "convex/values";
 
 // The web tier derives Convex view types from the gateway (not @jigswap/contracts directly).
-type AnyInboxThread = FunctionReturnType<
+// Every getMyInbox row: an exchange, DM or circle (group) thread.
+export type AnyInboxThread = FunctionReturnType<
   typeof gateway.conversation.getMyInbox
 >[number];
 
-// The messaging surfaces render exchange and DM threads. Circle group threads get their own UI
-// (G6); until then every getMyInbox subscription leaves them out through `select: pairThreads`.
+// A two-party (exchange or DM) thread: the subject carries the other member. The pair surfaces
+// (quick links, puzzle stack, partner actions) take this.
 export type InboxThread = AnyInboxThread & {
   subject: Exclude<AnyInboxThread["subject"], { kind: "circle" }>;
 };
 
-export const pairThreads = (inbox: readonly AnyInboxThread[]): InboxThread[] =>
-  inbox.filter(
-    (thread): thread is InboxThread => thread.subject.kind !== "circle",
-  );
+// A friend circle's group thread.
+export type CircleThread = AnyInboxThread & {
+  subject: Extract<AnyInboxThread["subject"], { kind: "circle" }>;
+};
+
+export const isCircleThread = (
+  thread: AnyInboxThread,
+): thread is CircleThread => thread.subject.kind === "circle";
+
+// The circle's page, for the circle thread's quick link. One helper so the link moves to the
+// dedicated /circles/$circleId page (G6b) in one place.
+export function circleHref(circleId: string): string {
+  return `/circles?circle=${encodeURIComponent(circleId)}`;
+}
+
+// A privacy-projected member as getMyInbox / listThreadMessages ship it.
+type ProjectedMember = CircleThread["subject"]["memberPreview"][number];
+
+// A projected member's label in the messaging surfaces: the revealed member's display name, else
+// the anonymous ("Deleted member" once departed) label. Never a real identity for a hidden member.
+export function projectedMemberLabel(
+  member: ProjectedMember,
+  t: Translator,
+  displayName: (source: MemberNameSource) => string,
+): string {
+  return member.anonymous
+    ? anonymousLabel(member, t)
+    : displayName(member.member);
+}
+
+// The /members/<handle> link of a message author in a circle thread: a revealed, active member
+// only (an anonymised member has no handle; the route resolves a username or an id).
+export function memberProfileHref(member: ProjectedMember): string | null {
+  if (member.anonymous || !member.member.isActive) return null;
+  return `/members/${encodeURIComponent(member.member.username ?? member.member._id)}`;
+}
+
+type SystemEvent = NonNullable<AnyInboxThread["lastMessage"]>["systemEvent"];
+
+// A circle thread's join/leave row: named only when the server sent the member (the viewer may
+// see them), "You joined" for the viewer's own join, otherwise generic. Leaving and removal read
+// the same (R.2 Q17), and who removed someone is never said.
+export function systemEventText(
+  event: NonNullable<SystemEvent>,
+  meId: string | undefined,
+  t: Translator,
+  displayName: (source: MemberNameSource) => string,
+): string {
+  const { member } = event;
+  if (!member || member.anonymous) {
+    return t(
+      event.kind === "joined" ? "circle.someoneJoined" : "circle.someoneLeft",
+    );
+  }
+  if (
+    event.kind === "joined" &&
+    meId !== undefined &&
+    member.member._id === meId
+  ) {
+    return t("circle.youJoined");
+  }
+  return t(event.kind === "joined" ? "circle.joined" : "circle.left", {
+    name: displayName(member.member),
+  });
+}
 
 // A `useTranslations("messages")` translator, loosened so these helpers can be
 // shared between the list rows, the thread header, and the nav badge.
@@ -56,13 +118,14 @@ export function anonymousLabel(
 
 // A thread's display title: the other member for a DM (an anonymised member
 // renders the app's anonymous label — never a real identity; a revealed one is
-// named via `displayName`, i.e. useMemberDisplayName), or "<Type>: <puzzle>"
-// for an exchange thread.
+// named via `displayName`, i.e. useMemberDisplayName), "<Type>: <puzzle>"
+// for an exchange thread, or the circle's name for a circle thread.
 export function threadSubjectTitle(
-  subject: InboxThread["subject"],
+  subject: AnyInboxThread["subject"],
   t: Translator,
   displayName: (source: MemberNameSource) => string,
 ): string {
+  if (subject.kind === "circle") return subject.name;
   if (subject.kind === "dm") {
     return subject.otherMember.anonymous
       ? anonymousLabel(subject.otherMember, t)
@@ -72,6 +135,48 @@ export function threadSubjectTitle(
     type: t(`exchangeType.${subject.exchangeType}`),
     title: subject.puzzleTitle ?? t("untitledPuzzle"),
   });
+}
+
+// A circle thread row's snippet (spec §6.1): the newest visible message with its
+// projected author ("Bas: …", "You: …"), a photo or location named by its
+// sender, a join/leave row as its system text, and a blocked author's message
+// as the placeholder (never its text). `removedLabel` names a moderator removal.
+export function circleSnippet(
+  last: AnyInboxThread["lastMessage"],
+  meId: string | undefined,
+  t: Translator,
+  displayName: (source: MemberNameSource) => string,
+  removedLabel: string,
+): string {
+  if (!last) return t("noMessages");
+  if (last.kind === "system") {
+    return last.systemEvent
+      ? systemEventText(last.systemEvent, meId, t, displayName)
+      : last.body;
+  }
+  if (last.authorBlockedByMe) return t("circle.blockedSnippet");
+  // Undefined for the viewer's own message.
+  const name = last.isMine
+    ? undefined
+    : last.author
+      ? projectedMemberLabel(last.author, t, displayName)
+      : t("otherMember");
+  const body = last.removed
+    ? removedLabel
+    : last.body.replace(/\s+/g, " ").trim();
+  if (!last.removed && last.kind === "location") {
+    return name === undefined
+      ? t("locations.youSharedALocation")
+      : t("locations.sharedALocation", { name });
+  }
+  if (!last.removed && last.kind === "image" && !body) {
+    return name === undefined
+      ? t("photos.youSentAPhoto")
+      : t("photos.sentAPhoto", { name });
+  }
+  return name === undefined
+    ? t("youPrefix", { body })
+    : t("circle.authorPrefix", { name, body });
 }
 
 const MINUTE = 60_000;
@@ -152,13 +257,25 @@ export function formatDayLabel(
   }).format(at);
 }
 
-// The fields grouping needs; ThreadMessageView satisfies it.
+// The fields grouping needs; ThreadMessageView satisfies it. `author` is set in
+// circle threads only, where others' messages come from several members.
 type GroupableMessage = {
   readonly id: string;
   readonly isMine: boolean;
   readonly kind: string;
   readonly sentAt: number;
+  readonly author?:
+    | { readonly anonymous: false; readonly member: { readonly _id: string } }
+    | { readonly anonymous: true; readonly anonRef: string };
 };
+
+// Who wrote a message, as far as grouping can tell: the projected author in a
+// circle thread (an anonymised one by its per-thread ref), else just the side.
+function authorKey(message: GroupableMessage): string {
+  const { author } = message;
+  if (!author) return message.isMine ? "mine" : "theirs";
+  return author.anonymous ? `anon:${author.anonRef}` : author.member._id;
+}
 
 export type ThreadItem<M extends GroupableMessage> =
   | { type: "day"; key: string; label: string }
@@ -170,7 +287,8 @@ const GROUP_GAP = 5 * MINUTE;
 
 // Lay out an ascending message list as day separators, standalone system
 // messages, and author groups: consecutive non-system messages by the same
-// author on the same local day, each ≤ 5 minutes after the previous one.
+// author on the same local day, each ≤ 5 minutes after the previous one. In a
+// DM "the same author" is the same side; in a circle thread, the same member.
 export function groupThreadMessages<M extends GroupableMessage>(
   messages: readonly M[],
   now: number,
@@ -202,6 +320,7 @@ export function groupThreadMessages<M extends GroupableMessage>(
       group &&
       previous &&
       previous.isMine === message.isMine &&
+      authorKey(previous) === authorKey(message) &&
       message.sentAt - previous.sentAt <= GROUP_GAP
     ) {
       group.messages.push(message);

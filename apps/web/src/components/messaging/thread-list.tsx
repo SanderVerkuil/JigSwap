@@ -14,32 +14,44 @@ import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeftRight, MessageSquare, User } from "lucide-react";
+import { ArrowLeftRight, BellOff, MessageSquare, User } from "lucide-react";
 import { useState } from "react";
 import { useLocale, useNow, useTranslations } from "use-intl";
+import { CircleThreadAvatar } from "./circle-thread-avatar";
 import { CoverTooltipProvider, RowCover } from "./cover-stack";
 import {
   anonymousLabel,
+  circleSnippet,
   copyOwnerHint,
   coverStackSummary,
   formatCompactTime,
   formatFullDateTime,
   formatUnreadCount,
-  pairThreads,
   threadSubjectTitle,
+  type AnyInboxThread,
   type InboxThread,
+  type Translator,
 } from "./format";
+import { NewConversationMenu } from "./new-conversation-menu";
 
 // Avatar chip for a thread subject: the member's avatar/initials for a
-// revealed DM partner, a generic person glyph for an anonymised one, and an
-// exchange icon chip for exchange threads.
+// revealed DM partner, a generic person glyph for an anonymised one, an
+// exchange icon chip for exchange threads, and the members for a circle.
 export function ThreadSubjectAvatar({
   subject,
   className = "size-10",
 }: {
-  subject: InboxThread["subject"];
+  subject: AnyInboxThread["subject"];
   className?: string;
 }) {
+  if (subject.kind === "circle") {
+    return (
+      <CircleThreadAvatar
+        members={subject.memberPreview}
+        className={className}
+      />
+    );
+  }
   if (subject.kind === "dm" && !subject.otherMember.anonymous) {
     return (
       // Decorative: the name always sits right next to it.
@@ -68,16 +80,18 @@ export function ThreadSubjectAvatar({
 }
 
 // The list pane: a md+ header ("Conversations", aligned with the thread
-// header's rule), then loading / error / empty / rows. Mobile shows just the
-// rows — the shell top bar already titles the page.
+// header's rule, and the New menu), then loading / error / empty / rows.
+// Mobile shows just the New menu above the rows — the shell top bar already
+// titles the page.
 export function ThreadList({ activeThreadId }: { activeThreadId?: string }) {
   const t = useTranslations("messages");
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="hidden h-14 shrink-0 items-center border-b px-4 md:flex">
-        <h2 className="font-heading text-base font-bold">
+      <div className="flex shrink-0 items-center justify-end pb-1 md:h-14 md:justify-between md:border-b md:pr-2 md:pb-0 md:pl-4">
+        <h2 className="font-heading hidden text-base font-bold md:block">
           {t("conversationsLabel")}
         </h2>
+        <NewConversationMenu />
       </div>
       {/* Desktop scrolls inside the frame; mobile scrolls the document. */}
       <div className="md:min-h-0 md:flex-1 md:overflow-y-auto">
@@ -98,10 +112,7 @@ function ThreadListBody({ activeThreadId }: { activeThreadId?: string }) {
     data: inbox,
     isError,
     refetch,
-  } = useQuery({
-    ...convexQuery(gateway.conversation.getMyInbox, me ? {} : "skip"),
-    select: pairThreads,
-  });
+  } = useQuery(convexQuery(gateway.conversation.getMyInbox, me ? {} : "skip"));
 
   if (isError) {
     return (
@@ -161,6 +172,7 @@ function ThreadListBody({ activeThreadId }: { activeThreadId?: string }) {
                 selected={thread.threadId === activeThreadId}
                 now={now}
                 locale={locale}
+                meId={me}
               />
             </li>
           ))}
@@ -172,16 +184,19 @@ function ThreadListBody({ activeThreadId }: { activeThreadId?: string }) {
 
 // One conversation: avatar, then two baseline-aligned lines — name + compact
 // time, snippet + unread badge. Fixed 68px so rows (and skeletons) line up.
+// A muted thread shows a bell-off before the time and a grey count.
 function ThreadRow({
   thread,
   selected,
   now,
   locale,
+  meId,
 }: {
-  thread: InboxThread;
+  thread: AnyInboxThread;
   selected: boolean;
   now: number;
   locale: string;
+  meId: string | undefined;
 }) {
   const t = useTranslations("messages");
   const tSafety = useTranslations("safety");
@@ -191,42 +206,26 @@ function ThreadRow({
   const [keyboardFocused, setKeyboardFocused] = useState(false);
 
   const unread = thread.unreadCount > 0;
-  const { contextCopies } = thread;
+  const muted = thread.muted === true;
+  // A muted thread's unread state doesn't call for attention.
+  const highlighted = unread && !muted;
   const last = thread.lastMessage;
   const isSystem = last?.kind === "system";
-  // A removed message has an empty body: name the removal instead.
-  const body = last?.removed
-    ? tSafety("messageRemoved")
-    : last?.body.replace(/\s+/g, " ").trim();
-  const mine = last?.isMine === true;
-  // A photo without a caption names the sender instead of an empty body.
-  const photoOnly = last?.kind === "image" && !last.removed && !body;
-  // A location always names the sharer (its caption is not the point).
-  const location = last?.kind === "location" && !last.removed;
-  const otherName = thread.subject.otherMember.anonymous
-    ? anonymousLabel(thread.subject.otherMember, t)
-    : displayName(thread.subject.otherMember.member);
-  const snippet =
-    body === undefined
-      ? t("noMessages")
-      : location
-        ? mine
-          ? t("locations.youSharedALocation")
-          : t("locations.sharedALocation", { name: otherName })
-        : photoOnly
-          ? mine
-            ? t("photos.youSentAPhoto")
-            : t("photos.sentAPhoto", {
-                name: thread.subject.otherMember.anonymous
-                  ? t("anonymous")
-                  : displayName(thread.subject.otherMember.member),
-              })
-          : mine
-            ? t("youPrefix", { body })
-            : body;
   const fullTime = formatFullDateTime(thread.updatedAt, locale);
   // muted-foreground on the selected tint is < 4.5:1; darken it there.
   const mutedText = selected ? "text-foreground/75" : "text-muted-foreground";
+  const subject = thread.subject;
+
+  const snippet =
+    subject.kind === "circle"
+      ? circleSnippet(last, meId, t, displayName, tSafety("messageRemoved"))
+      : pairSnippet(
+          thread as InboxThread,
+          t,
+          tSafety("messageRemoved"),
+          displayName,
+        );
+  const contextCopies = subject.kind === "circle" ? [] : thread.contextCopies;
 
   return (
     <Link
@@ -249,24 +248,30 @@ function ThreadRow({
           className="bg-primary absolute inset-y-3 left-0 w-[3px] rounded-full"
         />
       )}
-      <ThreadSubjectAvatar subject={thread.subject} />
+      <ThreadSubjectAvatar subject={subject} />
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
           <span
             className={cn(
               "text-foreground min-w-0 flex-1 truncate text-sm leading-5",
-              unread ? "font-bold" : "font-medium",
+              highlighted ? "font-bold" : "font-medium",
             )}
           >
-            {threadSubjectTitle(thread.subject, t, displayName)}
+            {threadSubjectTitle(subject, t, displayName)}
           </span>
+          {muted && (
+            <BellOff
+              aria-hidden
+              className={cn("size-3.5 shrink-0 self-center", mutedText)}
+            />
+          )}
           <time
             dateTime={new Date(thread.updatedAt).toISOString()}
             title={fullTime}
             aria-hidden
             className={cn(
               "shrink-0 text-xs leading-5 tabular-nums",
-              unread ? "text-primary-text font-semibold" : mutedText,
+              highlighted ? "text-primary-text font-semibold" : mutedText,
             )}
           >
             {formatCompactTime(thread.updatedAt, now, locale, t)}
@@ -274,7 +279,7 @@ function ThreadRow({
         </div>
         <div className="mt-0.5 flex items-center gap-2 text-[13px] leading-5">
           {/* The most recent puzzle; the label summarises all of them. */}
-          {contextCopies.length > 0 && (
+          {subject.kind !== "circle" && contextCopies.length > 0 && (
             <RowCover
               copy={contextCopies[0]}
               label={coverStackSummary(
@@ -287,7 +292,7 @@ function ThreadRow({
               describe={(copy) =>
                 `${copy.title} · ${copyOwnerHint(
                   copy.owner,
-                  thread.subject.otherMember,
+                  subject.otherMember,
                   t,
                   displayName,
                 )}`
@@ -298,7 +303,9 @@ function ThreadRow({
             className={cn(
               "min-w-0 flex-1 truncate",
               isSystem && "italic",
-              unread && !isSystem ? "text-foreground font-medium" : mutedText,
+              highlighted && !isSystem
+                ? "text-foreground font-medium"
+                : mutedText,
             )}
           >
             {snippet}
@@ -306,14 +313,20 @@ function ThreadRow({
           {unread && (
             <span
               aria-hidden
-              className="bg-primary text-primary-foreground inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1.5 text-[11px] font-bold"
+              className={cn(
+                "inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1.5 text-[11px] font-bold",
+                muted
+                  ? "bg-muted text-muted-foreground"
+                  : "bg-primary text-primary-foreground",
+              )}
             >
               {formatUnreadCount(thread.unreadCount)}
             </span>
           )}
         </div>
       </div>
-      {/* The visual time and pill are aria-hidden; announce the full forms instead. */}
+      {/* The visual time, bell and pill are aria-hidden; announce the full forms instead. */}
+      {muted && <span className="sr-only">{t("circle.muted")}</span>}
       {unread && (
         <span className="sr-only">
           {t("unreadCount", { count: thread.unreadCount })}
@@ -322,4 +335,44 @@ function ThreadRow({
       <span className="sr-only">{fullTime}</span>
     </Link>
   );
+}
+
+// An exchange or DM row's snippet: the newest message, "You: …" for the
+// viewer's own, a photo or location named by its sender.
+function pairSnippet(
+  thread: InboxThread,
+  t: Translator,
+  removedLabel: string,
+  displayName: ReturnType<typeof useMemberDisplayName>,
+): string {
+  const last = thread.lastMessage;
+  // A removed message has an empty body: name the removal instead.
+  const body = last?.removed
+    ? removedLabel
+    : last?.body.replace(/\s+/g, " ").trim();
+  const mine = last?.isMine === true;
+  // A photo without a caption names the sender instead of an empty body.
+  const photoOnly = last?.kind === "image" && !last.removed && !body;
+  // A location always names the sharer (its caption is not the point).
+  const location = last?.kind === "location" && !last.removed;
+  const otherName = thread.subject.otherMember.anonymous
+    ? anonymousLabel(thread.subject.otherMember, t)
+    : displayName(thread.subject.otherMember.member);
+  return body === undefined
+    ? t("noMessages")
+    : location
+      ? mine
+        ? t("locations.youSharedALocation")
+        : t("locations.sharedALocation", { name: otherName })
+      : photoOnly
+        ? mine
+          ? t("photos.youSentAPhoto")
+          : t("photos.sentAPhoto", {
+              name: thread.subject.otherMember.anonymous
+                ? t("anonymous")
+                : displayName(thread.subject.otherMember.member),
+            })
+        : mine
+          ? t("youPrefix", { body })
+          : body;
 }

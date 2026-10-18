@@ -87,6 +87,8 @@ export type LocationPickerProps = {
   threadId: string;
   /** The recipient's display name (consent copy, exact warning). */
   recipientName: string;
+  /** A circle thread: the consent names the circle and how many others see it. */
+  group?: { circle: string; others: number };
   /** The recipient is a mutual follower: "exact" may be offered for GPS. */
   exactCurrentLocation: boolean;
   /** The location was sent. */
@@ -110,7 +112,12 @@ export function LocationPicker({
   const t = useTranslations("messages.locations");
   const tCommon = useTranslations("common");
   const isMobile = useIsMobile();
-  const consent = t("consent", { name: props.recipientName });
+  const consent = props.group
+    ? t("consentGroup", {
+        count: props.group.others,
+        circle: props.group.circle,
+      })
+    : t("consent", { name: props.recipientName });
   const body = (
     <LocationPickerBody
       {...props}

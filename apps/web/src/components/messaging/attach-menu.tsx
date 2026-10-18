@@ -42,7 +42,8 @@ export function AttachMenu({
   triggerRef?: Ref<HTMLButtonElement>;
   photosAvailable: boolean;
   locationAvailable?: boolean;
-  onPuzzle: () => void;
+  /** Absent: "Attach a puzzle" isn't offered here. */
+  onPuzzle?: () => void;
   /** Must open the file picker synchronously (the user gesture). */
   onPhoto: () => void;
   onLocation?: () => void;
@@ -52,12 +53,16 @@ export function AttachMenu({
   const [open, setOpen] = useState(false);
 
   const options: AttachOption[] = [
-    {
-      key: "puzzle",
-      label: t("attachPuzzle"),
-      icon: Puzzle,
-      onSelect: onPuzzle,
-    },
+    ...(onPuzzle
+      ? [
+          {
+            key: "puzzle" as const,
+            label: t("attachPuzzle"),
+            icon: Puzzle,
+            onSelect: onPuzzle,
+          },
+        ]
+      : []),
     ...(photosAvailable
       ? [
           {
@@ -79,6 +84,9 @@ export function AttachMenu({
         ]
       : []),
   ];
+
+  // Nothing to attach in this thread: no "+" at all.
+  if (options.length === 0) return null;
 
   const trigger = (
     <Button

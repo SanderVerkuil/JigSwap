@@ -122,6 +122,11 @@ const pairThreadExists = (t: T, a: Id<"users">, b: Id<"users">) =>
         .first()) !== null,
   );
 
+const blockMember = (t: T, blockerId: Id<"users">, blockedId: Id<"users">) =>
+  t.run((ctx) =>
+    ctx.db.insert("blocks", { blockerId, blockedId, createdAt: Date.now() }),
+  );
+
 const unfollow = (t: T, follower: Id<"users">, followee: Id<"users">) =>
   t.run(async (ctx) => {
     const edge = await ctx.db
@@ -1077,6 +1082,24 @@ describe("sharing.listMyCircleInvites", () => {
 });
 
 describe("sharing.listCircleInvites", () => {
+  test("the inviter is named like any co-member, even when they blocked the viewing Admin", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, carol, circleId } = await seed(t);
+    await mutualFollow(t, bob, carol);
+    await invite(t, "bob", circleId, carol);
+    // Bob blocks Alice after inviting: the chokepoint would now hide him from her.
+    await blockMember(t, bob, alice);
+
+    const [forAlice] = await as(t, "alice").query(
+      api.sharing.listCircleInvites.listCircleInvites,
+      { circleId },
+    );
+    expect(forAlice.invitedBy).toMatchObject({
+      anonymous: false,
+      member: { name: "Bob" },
+    });
+  });
+
   test("Admins see the open invites with projected invitee and inviter", async () => {
     const t = convexTest(schema, modules);
     const { alice, carol, eve, circleId } = await seed(t);
@@ -1329,6 +1352,34 @@ describe("circle invite notifications", () => {
     const [view] = await viewsOf(t, "alice");
     expect(view.context.circleName).toBe("Saturday Puzzlers");
     expect(view.href).toBe("/circles");
+  });
+
+  test("the accepted invitee is named to the inviter while both are in the circle", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, carol, circleId } = await seed(t);
+    await mutualFollow(t, alice, carol);
+    const inviteId = await invite(t, "alice", circleId, carol);
+    await accept(t, "carol", inviteId);
+    await flushScheduled(t);
+    // No longer mutual, and Carol is private: only the circle rule names her now, even after she
+    // blocks Alice (as the members list and the chat do).
+    await unfollow(t, alice, carol);
+    await unfollow(t, carol, alice);
+    await blockMember(t, carol, alice);
+
+    const [named] = await viewsOf(t, "alice");
+    expect(named.actors[0]).toMatchObject({
+      anonymous: false,
+      memberId: carol,
+    });
+
+    // Once Carol is out of the circle, the ordinary rules decide: anonymous.
+    await as(t, "alice").mutation(api.sharing.removeMember.removeMember, {
+      circleId,
+      memberId: carol,
+    });
+    const [after] = await viewsOf(t, "alice");
+    expect(after.actors[0]).toEqual({ anonymous: true });
   });
 
   test("a private inviter who has since unfollowed is anonymous in the notification", async () => {

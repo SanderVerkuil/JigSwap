@@ -5,7 +5,11 @@ import { optionalActingMember } from "../identity/optionalActingMember";
 import { resolveMemberByHandle } from "../identity/resolveMemberByHandle";
 import { isCopyPrivate, seesPrivateCopiesOf } from "../library/copyVisibility";
 import { blockStateBetween } from "./blocks";
-import { memberTeaserIdentityOf, profileVisibilityOf } from "./privacy";
+import {
+  memberTeaserIdentityOf,
+  profileVisibilityOf,
+  shareACircle,
+} from "./privacy";
 
 // The UNAUTHENTICATED read behind /members/$handle. Deliberately tiny: identity fields only —
 // never bio, shelf, stats, or location. A private member IS disclosed by name on their own direct
@@ -31,11 +35,24 @@ export const getPublicMemberTeaser = query({
     ]);
 
     // Blocked (spec 2.6): the blocked side reads not-found; the blocker gets the identity only.
+    // Except inside a shared circle: the circle names its members to each other even across a
+    // block (§5.3), so a not-found here would give the block away. The blocked side then gets the
+    // identity-only teaser (no count), as the web shows for a profile it can't open.
     const block =
       viewer === null || viewer === memberId
         ? undefined
         : await blockStateBetween(ctx, viewer, memberId);
-    if (block === "byThem") return null;
+    if (block === "byThem") {
+      if (viewer === null || !(await shareACircle(ctx, viewer, memberId))) {
+        return null;
+      }
+      return {
+        ...memberTeaserIdentityOf(user, profile, true),
+        memberSince: user.createdAt,
+        visibility,
+        puzzleCount: null,
+      };
+    }
     if (block === "byMe") {
       return {
         ...memberTeaserIdentityOf(user, profile, true),

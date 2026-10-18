@@ -3,6 +3,7 @@ import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { projectCircleMember } from "./conversation/threadMemberProjection";
 import schema from "./schema";
 import {
   canSeeProfileContent,
@@ -691,8 +692,8 @@ describe("conversation surfaces for a circle-mate", () => {
   });
 });
 
-describe("a block vetoes the circle reveal", () => {
-  test("a circle-mate who blocked the viewer stays hidden from them, on the chokepoint and getCircle", async () => {
+describe("a block vetoes the circle reveal on the chokepoint only", () => {
+  test("a circle-mate who blocked the viewer is hidden by the chokepoint, but getCircle names them as the chat does", async () => {
     const t = convexTest(schema, modules);
     const { viewer, privy } = await seed(t);
     expect(nameOf(await project(t, viewer, privy))).toBe("Privy");
@@ -709,16 +710,54 @@ describe("a block vetoes the circle reveal", () => {
     expect(p).toEqual({ anonymous: true, anonRef: expect.any(String) });
     expect(JSON.stringify(p)).not.toContain("Privy");
 
+    // The members list projects current co-members like the circle chat (projectThreadMember):
+    // still named, identity only, so the blocked side can't infer the block from a nameless seat.
     const circle = await asViewer(t).query(api.sharing.getCircle.getCircle, {
       circleId: CIRCLE,
     });
     const seat = circle!.members.find((m) => m.memberId === privy)!;
-    expect(seat.name).toBeUndefined();
-    expect(seat.username).toBeUndefined();
-    expect(JSON.stringify(seat)).not.toContain("Privy");
+    expect(seat.name).toBe("Privy");
+    expect(seat.departed).toBeUndefined();
+    expect(JSON.stringify(circle)).not.toContain("Secret bio");
+    expect(JSON.stringify(circle)).not.toContain("Secret Town");
 
     // The blocker still sees whom they blocked (main's rule: they need the name to unblock).
     expect(nameOf(await project(t, privy, viewer))).toBe("Viewer");
+  });
+
+  test("getCircle keeps a departed member anonymous even as a current seat", async () => {
+    const t = convexTest(schema, modules);
+    const { gone } = await seed(t);
+    const circle = await asViewer(t).query(api.sharing.getCircle.getCircle, {
+      circleId: CIRCLE,
+    });
+    const seat = circle!.members.find((m) => m.memberId === gone)!;
+    expect(seat.departed).toBe(true);
+    expect(seat.name).toBeUndefined();
+  });
+});
+
+describe("projectCircleMember checks the viewer's membership itself", () => {
+  test("a viewer outside the circle gets the plain chokepoint, even for a co-member who blocked them", async () => {
+    const t = convexTest(schema, modules);
+    const { viewer, privy, stranger } = await seed(t);
+    const viaCircle = (viewerId: Id<"users">) =>
+      t.run((ctx) => projectCircleMember(ctx, viewerId, privy, CIRCLE, "salt"));
+
+    // A blocked current member still gets the circle reveal.
+    await t.run((ctx) =>
+      ctx.db.insert("blocks", {
+        blockerId: privy,
+        blockedId: viewer,
+        createdAt: Date.now(),
+      }),
+    );
+    expect(nameOf(await viaCircle(viewer))).toBe("Privy");
+
+    // A non-member asking about the same circle does not.
+    const p = await viaCircle(stranger);
+    expect(p.anonymous).toBe(true);
+    expect(JSON.stringify(p)).not.toContain("Privy");
   });
 });
 
