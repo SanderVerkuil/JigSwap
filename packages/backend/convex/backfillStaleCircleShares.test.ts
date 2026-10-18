@@ -275,6 +275,22 @@ describe("backfillStaleCircleShares", () => {
     expect(await remainingCopyIds(t)).toEqual(all);
   });
 
+  test("caps batchSize at 50 and floors it to a whole number", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 60; i++) {
+        await ctx.db.insert("circleCopyShares", {
+          circleId: CIRCLE,
+          copyId: `gone-${i}`,
+          sharedAt: 1000,
+        });
+      }
+    });
+
+    expect((await run(t, { dryRun: true, batchSize: 1000 })).scanned).toBe(50);
+    expect((await run(t, { dryRun: true, batchSize: 2.7 })).scanned).toBe(2);
+  });
+
   test("keeps a transferred share it cannot clear within the event scan cap (undetermined, not deleted)", async () => {
     const t = convexTest(schema, modules);
     await t.run(async (ctx) => {

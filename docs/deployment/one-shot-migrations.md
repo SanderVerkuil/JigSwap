@@ -270,7 +270,9 @@ owner is a member of that same circle. Running it before #184 is deployed is saf
 incomplete: transfers settling in between leave new stale rows, so run it (again) after.
 
 **What it does:** pages through `circleCopyShares` (25 rows per batch, `batchSize` overrides
-it, 1..100; each batch its own transaction, rescheduling itself until the table is exhausted).
+it, rounded down and clamped to 1..50 so a worst-case batch stays under Convex's
+per-transaction read limit; each batch its own transaction, rescheduling itself until the
+table is exhausted).
 A share row stores no sharer, so the rule derives it: only the copy's owner can share it, so
 the sharer is whoever owned the copy at `sharedAt`, and every ownership change is recorded in
 `copyCustodyEntries` (previous and new owner). Per share:

@@ -5,9 +5,12 @@ import { internalMutation, type MutationCtx } from "../_generated/server";
 
 // Shares per batch. Each costs one copy point read, the copy's custody entries after the share
 // (one per transfer, a handful at most) and, only for a share that looks stale, a BOUNDED scan of
-// later CopySharedToCircle events (RESHARE_SCAN_CAP rows). Worst case ~25 * 500 reads per batch,
-// well inside Convex's per-transaction read limits. `batchSize` overrides it (1..100).
+// later CopySharedToCircle events (RESHARE_SCAN_CAP rows). Worst case ~25 * 500 ≈ 12.5k documents
+// per batch at the default. `batchSize` overrides it, floored and clamped to 1..MAX: at the max the
+// worst case is ~50 * 500 ≈ 25k documents, still under Convex's per-transaction documents-read
+// limit, so a larger value could only fail the batch.
 export const BACKFILL_STALE_CIRCLE_SHARES_BATCH = 25;
+export const BACKFILL_STALE_CIRCLE_SHARES_MAX_BATCH = 50;
 
 // Most CopySharedToCircle events read when looking for a re-share by the current owner. Past the
 // cap the share is left alone and counted `undetermined` (never deleted on a guess).
@@ -98,7 +101,10 @@ export const backfillStaleCircleShares = internalMutation({
   ): Promise<Counts> => {
     const numItems = Math.max(
       1,
-      Math.min(100, batchSize ?? BACKFILL_STALE_CIRCLE_SHARES_BATCH),
+      Math.min(
+        BACKFILL_STALE_CIRCLE_SHARES_MAX_BATCH,
+        Math.floor(batchSize ?? BACKFILL_STALE_CIRCLE_SHARES_BATCH),
+      ),
     );
     const page = await ctx.db
       .query("circleCopyShares")
