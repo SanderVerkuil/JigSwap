@@ -544,3 +544,60 @@ describe("QR scan (unchanged)", () => {
     ).toEqual([]);
   });
 });
+
+describe("a block between the inviter and the new member", () => {
+  const insertBlock = (t: T, blockerId: Id<"users">, blockedId: Id<"users">) =>
+    t.run((ctx) =>
+      ctx.db.insert("blocks", { blockerId, blockedId, createdAt: Date.now() }),
+    );
+  const directions = [
+    [
+      "the inviter blocked",
+      (u: { alice: Id<"users">; newbie: Id<"users"> }) =>
+        [u.alice, u.newbie] as const,
+    ],
+    [
+      "the new member blocked",
+      (u: { alice: Id<"users">; newbie: Id<"users"> }) =>
+        [u.newbie, u.alice] as const,
+    ],
+  ] as const;
+
+  test.each(directions)(
+    "%s: redeeming offers nothing, and the signup is still recorded",
+    async (_, pair) => {
+      const t = convexTest(schema, modules);
+      const u = await seed(t);
+      const { token } = await as(t, "alice").mutation(
+        api.social.getMyInviteLink.getMyInviteLink,
+        {},
+      );
+      await insertBlock(t, ...pair(u));
+      const result = await as(t, "newbie").mutation(
+        api.social.redeemInvite.redeemInvite,
+        { token },
+      );
+      expect(result).toMatchObject({ redeemed: true, connection: "skipped" });
+      expect(
+        await t.run((ctx) => ctx.db.query("connectionOffers").collect()),
+      ).toHaveLength(0);
+      expect((await linkFor(t, token))?.signupsAttributed).toBe(1);
+    },
+  );
+
+  test.each(directions)(
+    "%s after the offer: accepting refuses generically and follows no one",
+    async (_, pair) => {
+      const t = convexTest(schema, modules);
+      const u = await seed(t);
+      const { offerId } = await redeemAliceLink(t);
+      await insertBlock(t, ...pair(u));
+      await expectUnavailable(accept(t, "newbie", offerId));
+      expect(await mutualEdges(t, u.alice, u.newbie)).toEqual({
+        ab: false,
+        ba: false,
+      });
+      expect((await offerRow(t, offerId))?.status).toBe("pending");
+    },
+  );
+});

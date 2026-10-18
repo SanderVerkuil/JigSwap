@@ -9,6 +9,7 @@ import { internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../_generated/server";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
+import { isBlockedEitherWay } from "./blocks";
 import { inDeclineCooldownEitherWay } from "./establishMutualFollow";
 import { areMutualFollowers } from "./privacy";
 
@@ -41,9 +42,9 @@ const rehydrate = (row: Doc<"connectionOffers">): ConnectionOffer =>
       : {}),
   });
 
-// Offer `toId` a connection with `fromId`. "skipped" when no offer may exist: a follow request
-// between them was declined inside the cooldown (a link must not even ask), or they already follow
-// each other. A still-open offer for the same ordered pair is reused (one pending per pair).
+// Offer `toId` a connection with `fromId`. "skipped" when no offer may exist: the pair is blocked
+// either way (spec 2.6), a follow request between them was declined inside the cooldown (a link
+// must not even ask), or they already follow each other. A still-open offer for the same ordered pair is reused (one pending per pair).
 export async function offerConnection(
   ctx: MutationCtx,
   args: {
@@ -54,7 +55,7 @@ export async function offerConnection(
   },
 ): Promise<"pending" | "skipped"> {
   const now = Date.now();
-  // TODO(blocks): when social/blocks.ts lands, skip the offer if isBlockedEitherWay(fromId, toId).
+  if (await isBlockedEitherWay(ctx, args.fromId, args.toId)) return "skipped";
   if (await inDeclineCooldownEitherWay(ctx, args.fromId, args.toId, now)) {
     return "skipped";
   }
