@@ -21,11 +21,13 @@ export interface RenderInviteEmailInput {
   readonly ctaUrl: string;
 }
 
+// A replacer function, so a name like "$'" is inserted literally, never as a replacement pattern.
 const withName = (template: string, name: string): string =>
-  template.replaceAll("{inviterName}", name);
+  template.replaceAll("{inviterName}", () => name);
 
 // Render the invitation email. React escapes the name in the HTML; the subject carries no member
-// text other than it.
+// text other than it. The From name is always the brand: the inviter is named inside, not in a
+// header the recipient's mail client shows as the sender.
 export const renderInviteEmail = async (
   input: RenderInviteEmailInput,
 ): Promise<RenderedEmail> => {
@@ -44,6 +46,6 @@ export const renderInviteEmail = async (
     subject: withName(copy.subject, name),
     html: await render(element),
     text: await render(element, { plainText: true }),
-    fromName: input.inviterName ? `${input.inviterName} | JigSwap` : "JigSwap",
+    fromName: "JigSwap",
   };
 };

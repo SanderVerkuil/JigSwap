@@ -59,7 +59,7 @@ describe("renderInviteEmail", () => {
       ctaUrl: URL,
     });
     expect(en.text).toContain(
-      "Anna invited you with this email address. If you ignore this email, nothing more happens: JigSwap keeps no copy of your address",
+      "Anna invited you with this email address. If you ignore this email, nothing more happens: JigSwap doesn't keep your email address, and the invitation stops working after 14 days.",
     );
     const nl = await renderInviteEmail({
       kind: "follow",
@@ -68,17 +68,34 @@ describe("renderInviteEmail", () => {
       ctaUrl: URL,
     });
     expect(nl.text).toContain("Anna heeft je met dit e-mailadres uitgenodigd.");
-    expect(nl.text).toContain("JigSwap bewaart je adres niet");
+    expect(nl.text).toContain(
+      "JigSwap bewaart je e-mailadres niet, en de uitnodiging werkt na 14 dagen niet meer.",
+    );
   });
 
-  it("carries the inviter in the From name", async () => {
+  it("always sends from the brand, never the inviter's name", async () => {
     const email = await renderInviteEmail({
       kind: "follow",
       locale: "en",
       inviterName: "Anna",
       ctaUrl: URL,
     });
-    expect(email.fromName).toBe("Anna | JigSwap");
+    expect(email.fromName).toBe("JigSwap");
+  });
+
+  it("inserts a name with $ patterns literally", async () => {
+    for (const inviterName of ["$'", "$&", "$`", "$$"]) {
+      const email = await renderInviteEmail({
+        kind: "follow",
+        locale: "en",
+        inviterName,
+        ctaUrl: URL,
+      });
+      expect(email.subject).toBe(`${inviterName} invited you to JigSwap`);
+      expect(email.text).toContain(
+        `${inviterName} invited you with this email address.`,
+      );
+    }
   });
 
   it("falls back to a generic label without an inviter name", async () => {

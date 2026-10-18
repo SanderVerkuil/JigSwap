@@ -56,8 +56,12 @@ export const INVITE_COPY: Record<
   },
 };
 
-/** Who sent it, and what happens if it is ignored: nothing, and no copy of the address is kept. */
+/**
+ * Who sent it, and what happens if it is ignored. It claims only what JigSwap itself does: it keeps
+ * no copy of the address (the send log holds a keyed hash, for the per-address cap). It says
+ * nothing about the sign-in provider, which holds the invitation until it is revoked or deleted.
+ */
 export const INVITE_FOOTER: Record<EmailLocale, string> = {
-  en: "{inviterName} invited you with this email address. If you ignore this email, nothing more happens: JigSwap keeps no copy of your address, and the invitation expires after 14 days.",
-  nl: "{inviterName} heeft je met dit e-mailadres uitgenodigd. Negeer je deze e-mail, dan gebeurt er verder niets: JigSwap bewaart je adres niet, en de uitnodiging verloopt na 14 dagen.",
+  en: "{inviterName} invited you with this email address. If you ignore this email, nothing more happens: JigSwap doesn't keep your email address, and the invitation stops working after 14 days.",
+  nl: "{inviterName} heeft je met dit e-mailadres uitgenodigd. Negeer je deze e-mail, dan gebeurt er verder niets: JigSwap bewaart je e-mailadres niet, en de uitnodiging werkt na 14 dagen niet meer.",
 };
