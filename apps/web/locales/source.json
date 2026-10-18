@@ -4786,6 +4786,7 @@
     "statusAuto": "Status: Automatic",
     "statusAway": "Status: Away",
     "statusInvisible": "Status: Appear offline",
+    "statusCurrent": "{label} (current)",
     "statusFailed": "Couldn't change your status. Try again.",
     "shareTitle": "Online status",
     "shareLabel": "Show when I'm online to people I follow mutually. If off, you won't see others' status either.",

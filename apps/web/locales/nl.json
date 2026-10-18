@@ -4786,6 +4786,7 @@
     "statusAuto": "Status: Automatisch",
     "statusAway": "Status: Afwezig",
     "statusInvisible": "Status: Offline weergeven",
+    "statusCurrent": "{label} (huidig)",
     "statusFailed": "Je status kon niet worden gewijzigd. Probeer het opnieuw.",
     "shareTitle": "Online-status",
     "shareLabel": "Laat zien wanneer ik online ben aan mensen die we wederzijds volgen. Als dit uit staat, zie jij ook niet of anderen online zijn.",

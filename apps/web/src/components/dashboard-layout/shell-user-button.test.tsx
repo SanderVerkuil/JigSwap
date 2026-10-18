@@ -110,13 +110,13 @@ describe("ShellUserButton status menu", () => {
     expect(screen.getByRole("button", { name: "manageAccount" })).toBeTruthy();
   });
 
-  it("offers the three statuses once sharing, with a check on the current one", () => {
+  it("offers the three statuses once sharing, marking the current one with a check and in its label", () => {
     mocks.settings = { share: true, override: "away" };
     renderButton();
     const items = statusItems();
     expect(items.map((item) => item.textContent)).toEqual([
       "Status: Automatic",
-      "Status: Away",
+      "Status: Away (current)",
       "Status: Appear offline",
     ]);
     expect(items.map((item) => item.querySelector("svg") !== null)).toEqual([
@@ -139,7 +139,7 @@ describe("ShellUserButton status menu", () => {
     mocks.settings = { share: true, override: "auto" };
     renderButton("nl");
     expect(statusItems().map((item) => item.textContent)).toEqual([
-      "Status: Automatisch",
+      "Status: Automatisch (huidig)",
       "Status: Afwezig",
       "Status: Offline weergeven",
     ]);

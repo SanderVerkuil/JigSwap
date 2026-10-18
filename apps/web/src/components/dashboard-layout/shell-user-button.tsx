@@ -163,7 +163,15 @@ export function ShellUserButton({
             STATUS_OPTIONS.map((option) => (
               <UserButton.Action
                 key={option.override}
-                label={tPresence(option.label)}
+                // The state is in the label itself: Clerk's labels are plain
+                // strings and the check icon alone isn't announced.
+                label={
+                  presence.override === option.override
+                    ? tPresence("statusCurrent", {
+                        label: tPresence(option.label),
+                      })
+                    : tPresence(option.label)
+                }
                 labelIcon={
                   presence.override === option.override ? (
                     <Check className="size-4" />
