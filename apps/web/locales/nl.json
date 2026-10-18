@@ -849,7 +849,7 @@
     "locations": {
       "attachLocation": "Locatie",
       "pickerTitle": "Locatie delen",
-      "consent": "Deel deze plek alleen met {name}. Diegene ziet hem op een kaart tot je het bericht verwijdert. Kies liever een openbare ontmoetingsplek dan je huisadres.",
+      "consent": "Deze plek delen met {name}? Diegene ziet hem op een kaart in dit gesprek. Kies liever een openbare ontmoetingsplek dan je huisadres.",
       "searchLabel": "Zoek een plek",
       "searchPlaceholder": "Station, café, straat…",
       "searching": "Zoeken…",

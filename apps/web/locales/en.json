@@ -849,7 +849,7 @@
     "locations": {
       "attachLocation": "Location",
       "pickerTitle": "Share a location",
-      "consent": "Share this spot with {name} only. They'll see it on a map until you delete the message. Pick a public meet-up place rather than your home address.",
+      "consent": "Share this spot with {name}? They'll see it on a map in this conversation. Pick a public meet-up place rather than your home address.",
       "searchLabel": "Search for a place",
       "searchPlaceholder": "Station, café, street…",
       "searching": "Searching…",

@@ -142,7 +142,7 @@ describe("Location in the composer's + menu", () => {
     ).toBeTruthy();
     expect(
       screen.getByText(
-        "Share this spot with Mara only. They'll see it on a map until you delete the message. Pick a public meet-up place rather than your home address.",
+        "Share this spot with Mara? They'll see it on a map in this conversation. Pick a public meet-up place rather than your home address.",
       ),
     ).toBeTruthy();
   });
