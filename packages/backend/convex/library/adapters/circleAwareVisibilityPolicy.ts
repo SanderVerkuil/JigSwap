@@ -9,7 +9,8 @@ import {
 } from "@jigswap/domain";
 
 // Cross-context wiring: a friend-circle-aware VisibilityPolicy that REPLACES DefaultVisibilityPolicy
-// in the Library reads. Circle I/O happens in the caller (collectCircleSharedCopies); the decision delegates to
+// in the Library reads. Circle I/O happens in the caller (collectCircleSharedCopies for the batched
+// path, isCircleSharedWithViewer for a single copy); the decision delegates to
 // Sharing's PURE VisibilityPolicy service (re-exported as SharingVisibilityPolicy to dodge the
 // flat-barrel name clash with this very Library port).
 //

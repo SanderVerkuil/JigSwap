@@ -9,7 +9,7 @@ import { householdMateIds } from "../household/memberships";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 import { profileVisibilityOf } from "../social/privacy";
-import { collectCircleSharedCopies } from "./circleSharedCopies";
+import { isCircleSharedWithViewer } from "./circleSharedCopies";
 import {
   categoryNameOf,
   communityOwnersOf,
@@ -22,9 +22,10 @@ import {
 // Auth-gated catalog detail read for a puzzle DEFINITION (not a single copy). Aggregates the
 // community's review-rating distribution, ownership/completion stats, the viewer's own ownership, and
 // a short list of REACHABLE available copies the viewer could acquire. The reachability gate —
-// owner profile PUBLIC, OR the copy is shared into a circle the viewer belongs to — is replicated
-// from browseOwnedPuzzles/circleSharedCopies so this matches Browse exactly. Returns null for an
-// unknown puzzle.
+// owner profile PUBLIC, OR the copy is shared into a circle the viewer belongs to — mirrors
+// browseOwnedPuzzles, but decides the circle clause per copy (isCircleSharedWithViewer, uncapped in
+// effect) where Browse uses the capped batched collector, so a copy shared long ago into a very busy
+// circle can appear here and not in Browse. Returns null for an unknown puzzle.
 export const getPuzzleDefinitionView = query({
   args: { puzzleId: v.id("puzzles") },
   handler: async (ctx, args): Promise<PuzzleDefinitionDetailView | null> => {
@@ -76,14 +77,8 @@ export const getPuzzleDefinitionView = query({
 
     // --- reachability gate (replicated from browseOwnedPuzzles/circleSharedCopies) --------------
     // An available copy is shown iff its owner's profile is PUBLIC, OR the copy is shared into a
-    // circle the viewer belongs to. The viewer's own copies are excluded.
-    const circleShared = (
-      await collectCircleSharedCopies(ctx, viewerId)
-    ).filter(isOpen);
-    const circleSharedIds = new Set(
-      circleShared.map((c) => c._id as unknown as string),
-    );
-
+    // circle the viewer belongs to. The viewer's own copies are excluded. The circle clause is
+    // checked per candidate copy (O(shares of that copy), #190), not via the batched collector.
     const visibilityCache = new Map<string, "public" | "private">();
     const ownerIsPublic = async (ownerId: Id<"users">): Promise<boolean> => {
       const key = ownerId as unknown as string;
@@ -102,8 +97,10 @@ export const getPuzzleDefinitionView = query({
 
     const reachable: Doc<"ownedPuzzles">[] = [];
     for (const copy of availableNotOwn) {
-      const id = copy._id as unknown as string;
-      if (circleSharedIds.has(id) || (await ownerIsPublic(copy.ownerId))) {
+      if (
+        (await ownerIsPublic(copy.ownerId)) ||
+        (await isCircleSharedWithViewer(ctx, viewerId, copy))
+      ) {
         reachable.push(copy);
       }
     }
