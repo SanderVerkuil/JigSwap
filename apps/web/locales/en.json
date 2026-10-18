@@ -3570,7 +3570,8 @@
         "submissions": "Submissions",
         "flagged": "Flagged Images",
         "activity": "Activity Log",
-        "unchecked": "Unchecked Photos"
+        "unchecked": "Unchecked Photos",
+        "hashMatches": "Hash matches"
       },
       "detail": {
         "submitted": "Submitted",
@@ -3622,7 +3623,9 @@
         "role_granted": "<strong>{actor}</strong> made <strong>{target}</strong> an admin",
         "role_revoked": "<strong>{actor}</strong> removed the admin role from <strong>{target}</strong>",
         "photo_manually_approved": "<strong>{actor}</strong> approved an unchecked photo on <strong>{target}</strong>",
-        "photo_manually_rejected": "<strong>{actor}</strong> rejected an unchecked photo on <strong>{target}</strong>"
+        "photo_manually_rejected": "<strong>{actor}</strong> rejected an unchecked photo on <strong>{target}</strong>",
+        "image_quarantined": "<strong>{actor}</strong> quarantined a photo after a known-abuse hash match (<strong>{target}</strong>)",
+        "csam_escalation_updated": "<strong>{actor}</strong> updated a hash-match escalation (<strong>{target}</strong>)"
       },
       "activityEmpty": "No moderation activity yet.",
       "screening": {
@@ -3664,6 +3667,34 @@
         "reject": "Reject Photo",
         "rejectArm": "Are you sure?",
         "hint": "Approving publishes the photo to other members. Rejecting hides it; a rejected copy photo moves to Flagged Images, a rejected completion photo is deleted."
+      },
+      "csam": {
+        "loading": "Loading hash matches…",
+        "empty": "No hash matches.",
+        "operatorNoteTitle": "What to do with a hash match",
+        "operatorNote": "These uploads matched a list of known child sexual abuse material. They are quarantined: nobody can see them, admins included, and the file is kept. Report each one to Meldpunt Offlimits (<link>meldpunt.offlimits.nl</link>) or the police, then mark it reported. Do not try to open, download or share the image.",
+        "notConfigured": "Hash matching is off on this deployment (CSAM_HASHCHECK_PROVIDER is not \"offlimits\").",
+        "missingConfig": "Hash matching is selected but not configured (not set: {vars}), so it is not running.",
+        "status": {
+          "open": "Open",
+          "reported": "Reported",
+          "closed": "Closed"
+        },
+        "table": {
+          "ownedPuzzleImages": "Copy photo",
+          "completionImages": "Completion photo"
+        },
+        "matched": "Matched {time} via {provider}",
+        "uploader": "Uploaded by {name}",
+        "reportedAt": "Reported {time}",
+        "noteLabel": "Report reference or note",
+        "notePlaceholder": "e.g. Meldpunt reference",
+        "markReported": "Mark reported",
+        "close": "Close",
+        "updated": "Escalation updated.",
+        "waiting": "Hash check unreachable: {countLabel} {count, plural, one {photo} other {photos}} waiting, unpublished (oldest {since}). They are re-checked automatically.",
+        "noteBy": "{name}, {time}",
+        "addNote": "Add note"
       }
     },
     "contact": {

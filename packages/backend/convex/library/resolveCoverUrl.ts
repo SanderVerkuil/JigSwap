@@ -1,5 +1,6 @@
 import type { Doc } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 
 // Canonical card-cover resolution for an owned copy, shared by every list read so cards look the
 // same everywhere: the copy's chosen-and-APPROVED cover photo if set, otherwise the puzzle's global
@@ -14,7 +15,11 @@ export const resolveCopyCoverUrl = async (
   let coverUrl: string | null = null;
   if (copy.coverImageId) {
     const img = await ctx.db.get(copy.coverImageId);
-    if (img && (img.moderationStatus ?? "approved") === "approved") {
+    if (
+      img &&
+      (img.moderationStatus ?? "approved") === "approved" &&
+      isHashCleared(img)
+    ) {
       coverUrl = await ctx.storage.getUrl(img.fileId);
     }
   }

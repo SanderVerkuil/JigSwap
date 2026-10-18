@@ -3,6 +3,7 @@ import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
+import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import { detachRejectedCompletionPhoto } from "../solving/completionModerationStore";
 import { stampModerationAction } from "./stampModerationAction";
 
@@ -48,6 +49,10 @@ export const decideUncheckedPhoto = mutation({
       ) {
         throw new ConvexError("Photo is already decided");
       }
+      // Never decide (and so never publish) a photo before its CSAM hash check has passed.
+      if (!isHashCleared(row)) {
+        throw new ConvexError("Photo has not passed the hash check yet");
+      }
       await ctx.db.patch(id, decided);
       const copy = await ctx.db.get(row.ownedPuzzleId);
       const title =
@@ -70,6 +75,9 @@ export const decideUncheckedPhoto = mutation({
       row.moderationStatus !== "unscored"
     ) {
       throw new ConvexError("Photo is already decided");
+    }
+    if (!isHashCleared(row)) {
+      throw new ConvexError("Photo has not passed the hash check yet");
     }
     await ctx.db.patch(id, decided);
     const title =

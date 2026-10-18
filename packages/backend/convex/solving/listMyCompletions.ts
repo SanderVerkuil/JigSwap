@@ -1,6 +1,7 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import {
   buildCopyViewContext,
   canViewCopyWithContext,
@@ -136,7 +137,7 @@ export const listMyCompletions = query({
 export type PhotoItem = { url: string; pending: boolean };
 
 // Resolve a completion's photos to displayable items. Photos whose moderation sidecar says
-// "rejected" are dropped — and ONLY those. Pending stays visible but flagged `pending: true`
+// "rejected" (or "quarantined") are dropped — and ONLY those. Pending stays visible but flagged `pending: true`
 // (these reads are self-facing: the viewer is the uploader, matching the copy-gallery precedent);
 // an ABSENT sidecar is a legacy photo, treated as approved (`pending: false`). Only domain rows
 // (aggregateId present) can have sidecars, so legacy rows skip the join. Storage ids that no
@@ -147,20 +148,25 @@ export const resolvePhotoItems = async (
 ): Promise<PhotoItem[]> => {
   if (row.photos.length === 0) return [];
   const completionId = row.aggregateId;
-  const statusByFile = new Map<string, string | undefined>();
+  const sidecarByFile = new Map<string, Doc<"completionImages">>();
   if (completionId) {
     const sidecars = await ctx.db
       .query("completionImages")
       .withIndex("by_completion", (q) => q.eq("completionId", completionId))
       .collect();
     for (const s of sidecars) {
-      statusByFile.set(s.fileId as string, s.moderationStatus);
+      sidecarByFile.set(s.fileId as string, s);
     }
   }
   const items = await Promise.all(
     row.photos.map(async (fileId): Promise<PhotoItem | null> => {
-      const status = statusByFile.get(fileId as string);
-      if (status === "rejected") return null;
+      const sidecar = sidecarByFile.get(fileId as string);
+      const status = sidecar?.moderationStatus;
+      // No URL before the CSAM hash check has passed, the uploader included (hashCheckFields).
+      if (sidecar && !isHashCleared(sidecar)) return null;
+      // A quarantined photo (CSAM hash match) is never served, its uploader included; the
+      // quarantine also drops it from `photos`, so this is defence in depth.
+      if (status === "rejected" || status === "quarantined") return null;
       const url = await ctx.storage.getUrl(fileId);
       if (!url) return null;
       // An unscored photo (could not be checked yet) reads as pending to its owner.

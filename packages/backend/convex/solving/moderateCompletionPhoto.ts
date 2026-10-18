@@ -3,7 +3,11 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
-import { runImageModeration } from "../lib/imageModeration/pipeline";
+import {
+  imageModerationSteps,
+  runHashRecheck,
+  runImageModeration,
+} from "../lib/imageModeration/pipeline";
 
 // Async image moderation for an uploaded completion photo, on the `completionImages` sidecar
 // table. Scheduled (runAfter 0) by `attachCompletionPhotos`, which inserts the sidecar as
@@ -11,25 +15,32 @@ import { runImageModeration } from "../lib/imageModeration/pipeline";
 // (`lib/imageModeration/pipeline.ts`). Table specifics stay in `completionModerationStore`: the
 // file swap also swaps the id inside the completions row's `photos` array, and a rejection also
 // removes the photo from the completion, deletes the blob and stamps the audit trail.
+const steps = imageModerationSteps({
+  event: "solving.moderateCompletionPhoto",
+  load: internal.solving.completionModerationStore.getImageForModeration,
+  // Business context: which completion / who uploaded.
+  describe: (row) => ({
+    completion_id: row.completionId,
+    uploader_id: row.uploaderId,
+  }),
+  setFile: internal.solving.completionModerationStore.setModerationFile,
+  setVerdict: internal.solving.completionModerationStore.setModerationVerdict,
+  quarantine: internal.solving.completionModerationStore.quarantineImage,
+  setHashCheck: internal.solving.completionModerationStore.setHashCheck,
+  retry: internal.solving.moderateCompletionPhoto.moderateCompletionPhoto,
+  recheck: internal.solving.moderateCompletionPhoto.recheckHashes,
+});
+
 export const moderateCompletionPhoto = internalAction({
   // `attempt` is 1-based; absent = the first attempt (the upload's schedule).
   args: { imageId: v.id("completionImages"), attempt: v.optional(v.number()) },
   handler: async (ctx, { imageId, attempt }): Promise<void> =>
-    runImageModeration(
-      ctx,
-      {
-        event: "solving.moderateCompletionPhoto",
-        load: internal.solving.completionModerationStore.getImageForModeration,
-        // Business context: which completion / who uploaded.
-        describe: (row) => ({
-          completion_id: row.completionId,
-          uploader_id: row.uploaderId,
-        }),
-        setFile: internal.solving.completionModerationStore.setModerationFile,
-        setVerdict:
-          internal.solving.completionModerationStore.setModerationVerdict,
-        retry: internal.solving.moderateCompletionPhoto.moderateCompletionPhoto,
-      },
-      { imageId, attempt: attempt ?? 1 },
-    ),
+    runImageModeration(ctx, steps, { imageId, attempt: attempt ?? 1 }),
+});
+
+// Re-check the stored hashes of a photo whose CSAM hash check was unavailable (backoff).
+export const recheckHashes = internalAction({
+  args: { imageId: v.id("completionImages"), attempt: v.optional(v.number()) },
+  handler: async (ctx, { imageId, attempt }): Promise<void> =>
+    runHashRecheck(ctx, steps, { imageId, attempt: attempt ?? 1 }),
 });

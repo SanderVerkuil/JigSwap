@@ -7,6 +7,12 @@ import {
   type MutationCtx,
 } from "../_generated/server";
 import { stampModerationAction } from "../admin/stampModerationAction";
+import {
+  applyHashCheckResult,
+  hashCheckResultArgs,
+  quarantineArgs,
+  recordCsamEscalation,
+} from "../lib/imageModeration/quarantine";
 import { needsRescreen } from "./adapters/photoModeration";
 
 // DB-facing helpers for the moderatePhoto Node action. A Node action (`"use node"`) has no direct
@@ -22,6 +28,8 @@ export const getImageForModeration = internalQuery({
       fileId: row.fileId,
       moderationStatus: row.moderationStatus,
       reencodedAt: row.reencodedAt,
+      hashCheckedAt: row.hashCheckedAt,
+      pendingHashes: row.pendingHashes,
       // Business context for the wide event (which copy / who uploaded / what kind of shot).
       ownedPuzzleId: row.ownedPuzzleId,
       uploaderId: row.uploaderId,
@@ -120,6 +128,41 @@ export const setModerationVerdict = internalMutation({
   },
 });
 
+// A CSAM hash match (lib/imageModeration/quarantine). FORCES the row to "quarantined" whatever
+// its status now (an admin decision or a retry may have landed while the check ran), points it at
+// the preserved blob, clears the copy's cover when it is this photo, and ALWAYS raises the
+// escalation, even when the row is gone (the uploader removed it meanwhile). The blob stays.
+export const quarantineImage = internalMutation({
+  args: { imageId: v.id("ownedPuzzleImages"), ...quarantineArgs },
+  handler: async (ctx, { imageId, ...match }) => {
+    const row = await ctx.db.get(imageId);
+    if (row) {
+      await ctx.db.patch(imageId, {
+        moderationStatus: "quarantined",
+        ...(match.fileId ? { fileId: match.fileId } : {}),
+        pendingHashes: undefined,
+        updatedAt: Date.now(),
+      });
+      const copy = await ctx.db.get(row.ownedPuzzleId);
+      if (copy?.coverImageId === imageId) {
+        await ctx.db.patch(copy._id, { coverImageId: undefined });
+      }
+    }
+    return recordCsamEscalation(ctx, {
+      table: "ownedPuzzleImages",
+      rowId: imageId,
+      ...match,
+    });
+  },
+});
+
+// Record the CSAM hash-check outcome (lib/imageModeration/quarantine.applyHashCheckResult).
+export const setHashCheck = internalMutation({
+  args: { imageId: v.id("ownedPuzzleImages"), ...hashCheckResultArgs },
+  handler: (ctx, { imageId, ...result }) =>
+    applyHashCheckResult(ctx, imageId, result),
+});
+
 // One page of rows for the re-screen: ids + file of the candidates, plus page bookkeeping.
 export const listRescreenCandidates = internalQuery({
   args: { paginationOpts: paginationOptsValidator },
@@ -129,9 +172,11 @@ export const listRescreenCandidates = internalQuery({
       .paginate(paginationOpts);
     return {
       scanned: page.page.length,
-      candidates: page.page
-        .filter(needsRescreen)
-        .map((row) => ({ imageId: row._id as string, fileId: row.fileId })),
+      candidates: page.page.filter(needsRescreen).map((row) => ({
+        imageId: row._id as string,
+        fileId: row.fileId,
+        uploaderId: row.uploaderId,
+      })),
       isDone: page.isDone,
       continueCursor: page.continueCursor,
     };

@@ -301,9 +301,33 @@ export const deleteUser = internalMutation({
 
     if (userRecord === null) {
       console.warn("can't delete user, does not exist", id);
-    } else {
-      await ctx.db.delete(userRecord._id);
+      return;
     }
+    // A member referenced by a CSAM escalation that is not closed yet is TOMBSTONED instead of
+    // hard-deleted: the row stays (deactivated, profile and contact fields cleared) so the
+    // escalation's uploader reference stays valid while the operator reports it. The escalation
+    // keeps its own identity snapshot. [LAWYER] A lawyer should confirm this retention against
+    // the GDPR erasure request and the Dutch preservation rules.
+    const escalations = await ctx.db
+      .query("csamEscalations")
+      .withIndex("by_uploader", (q) => q.eq("uploaderId", userRecord._id))
+      .collect();
+    if (escalations.some((e) => e.status !== "closed")) {
+      await ctx.db.patch(userRecord._id, {
+        isActive: false,
+        email: undefined,
+        name: undefined,
+        username: undefined,
+        slug: undefined,
+        avatar: undefined,
+        bio: undefined,
+        location: undefined,
+        searchableName: undefined,
+        updatedAt: Date.now(),
+      });
+      return;
+    }
+    await ctx.db.delete(userRecord._id);
   },
 });
 

@@ -7,6 +7,13 @@ import {
   type MutationCtx,
 } from "../_generated/server";
 import { stampModerationAction } from "../admin/stampModerationAction";
+import {
+  applyHashCheckResult,
+  hashCheckResultArgs,
+  isPreservedBlob,
+  quarantineArgs,
+  recordCsamEscalation,
+} from "../lib/imageModeration/quarantine";
 import { needsRescreen } from "../library/adapters/photoModeration";
 
 // DB-facing helpers for the moderateCompletionPhoto Node action, mirroring
@@ -26,6 +33,8 @@ export const getImageForModeration = internalQuery({
       fileId: row.fileId,
       moderationStatus: row.moderationStatus,
       reencodedAt: row.reencodedAt,
+      hashCheckedAt: row.hashCheckedAt,
+      pendingHashes: row.pendingHashes,
       // Business context for the wide event (which completion / who uploaded).
       completionId: row.completionId,
       uploaderId: row.uploaderId,
@@ -129,11 +138,14 @@ export const detachRejectedCompletionPhoto = async (
       photos: completion.photos.filter((id) => id !== row.fileId),
     });
   }
-  // Tolerate an already-deleted blob; don't fail the decision over a missing file.
-  try {
-    await ctx.storage.delete(row.fileId);
-  } catch {
-    // Nothing references it either way.
+  // Tolerate an already-deleted blob; don't fail the decision over a missing file. A blob
+  // preserved for a CSAM escalation (the same file re-attached) is never deleted.
+  if (!(await isPreservedBlob(ctx, row.fileId))) {
+    try {
+      await ctx.storage.delete(row.fileId);
+    } catch {
+      // Nothing references it either way.
+    }
   }
   return completion?.copySnapshot?.title ?? "Completion photo";
 };
@@ -164,6 +176,48 @@ export const setModerationVerdict = internalMutation({
   },
 });
 
+// A CSAM hash match (lib/imageModeration/quarantine). FORCES the sidecar to "quarantined"
+// whatever its status now, points it at the preserved blob, drops the uploaded blob's id from the
+// completions row's `photos` array (a direct system write that leaves updatedAt alone, like a
+// rejection), and ALWAYS raises the escalation, even when the sidecar is gone.
+export const quarantineImage = internalMutation({
+  args: { imageId: v.id("completionImages"), ...quarantineArgs },
+  handler: async (ctx, { imageId, ...match }) => {
+    const row = await ctx.db.get(imageId);
+    if (row) {
+      await ctx.db.patch(imageId, {
+        moderationStatus: "quarantined",
+        ...(match.fileId ? { fileId: match.fileId } : {}),
+        pendingHashes: undefined,
+        updatedAt: Date.now(),
+      });
+      const completion = await ctx.db
+        .query("completions")
+        .withIndex("by_aggregate_id", (q) =>
+          q.eq("aggregateId", row.completionId),
+        )
+        .unique();
+      if (completion) {
+        await ctx.db.patch(completion._id, {
+          photos: completion.photos.filter((id) => id !== row.fileId),
+        });
+      }
+    }
+    return recordCsamEscalation(ctx, {
+      table: "completionImages",
+      rowId: imageId,
+      ...match,
+    });
+  },
+});
+
+// Record the CSAM hash-check outcome (lib/imageModeration/quarantine.applyHashCheckResult).
+export const setHashCheck = internalMutation({
+  args: { imageId: v.id("completionImages"), ...hashCheckResultArgs },
+  handler: (ctx, { imageId, ...result }) =>
+    applyHashCheckResult(ctx, imageId, result),
+});
+
 // One page of sidecars for the re-screen (same candidate rule as the library: unscored, or
 // approved without a score). Completion photos that predate sidecars have no row and are not
 // covered.
@@ -175,9 +229,11 @@ export const listRescreenCandidates = internalQuery({
       .paginate(paginationOpts);
     return {
       scanned: page.page.length,
-      candidates: page.page
-        .filter(needsRescreen)
-        .map((row) => ({ imageId: row._id as string, fileId: row.fileId })),
+      candidates: page.page.filter(needsRescreen).map((row) => ({
+        imageId: row._id as string,
+        fileId: row.fileId,
+        uploaderId: row.uploaderId,
+      })),
       isDone: page.isDone,
       continueCursor: page.continueCursor,
     };

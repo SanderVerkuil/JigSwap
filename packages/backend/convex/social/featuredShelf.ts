@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import { canViewCopy } from "../library/canViewCopy";
 import { toOwnedCopyView } from "../library/mappers";
 
@@ -48,7 +49,11 @@ export const featuredShelf = query({
       let coverUrl: string | null = null;
       if (copy.coverImageId) {
         const img = await ctx.db.get(copy.coverImageId);
-        if (img && (img.moderationStatus ?? "approved") === "approved") {
+        if (
+          img &&
+          (img.moderationStatus ?? "approved") === "approved" &&
+          isHashCleared(img)
+        ) {
           coverUrl = await ctx.storage.getUrl(img.fileId);
         }
       }

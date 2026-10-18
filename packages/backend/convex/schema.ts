@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { hashCheckFields } from "./lib/imageModeration/hashCheckFields";
 
 // The proposable field diff, shared by puzzleChangeProposals.changes and .baseline. Mirrors the
 // domain PuzzleDefinitionChanges shape exactly (barcodes grouped: supplying the group replaces
@@ -342,6 +343,9 @@ export default defineSchema({
         v.literal("approved"),
         v.literal("rejected"),
         v.literal("unscored"),
+        // A CSAM hash-list match (lib/imageModeration/csamHashCheck): never delivered and never
+        // served to anyone (admins included); the blob is preserved. See csamEscalations.
+        v.literal("quarantined"),
       ),
     ),
     // The classifier's NSFW score in [0,1] (absent when un-scored, e.g. provider "none" or
@@ -364,13 +368,16 @@ export default defineSchema({
     // The admin who decided this photo by hand (approve/reject of a pending or unscored photo).
     // A manual decision is final: the re-screen backfill skips such rows.
     moderatedBy: v.optional(v.id("users")),
+    // CSAM hash-check bookkeeping + publication gate (lib/imageModeration/hashCheckFields).
+    ...hashCheckFields,
 
     // --- Timestamps ---
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_owned_puzzle", ["ownedPuzzleId"])
-    .index("by_moderation_status", ["moderationStatus"]),
+    .index("by_moderation_status", ["moderationStatus"])
+    .index("by_hash_check_pending", ["hashCheckPendingSince"]),
 
   // Named collections for organizing puzzles
   collections: defineTable({
@@ -480,6 +487,9 @@ export default defineSchema({
         v.literal("approved"),
         v.literal("rejected"),
         v.literal("unscored"),
+        // A CSAM hash-list match (lib/imageModeration/csamHashCheck): never delivered and never
+        // served to anyone (admins included); the blob is preserved. See csamEscalations.
+        v.literal("quarantined"),
       ),
     ),
     moderationScore: v.optional(v.number()),
@@ -497,11 +507,14 @@ export default defineSchema({
     // The admin who decided this photo by hand (approve/reject of a pending or unscored photo).
     // A manual decision is final: the re-screen backfill skips such rows.
     moderatedBy: v.optional(v.id("users")),
+    // CSAM hash-check bookkeeping + publication gate (lib/imageModeration/hashCheckFields).
+    ...hashCheckFields,
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_completion", ["completionId"])
-    .index("by_moderation_status", ["moderationStatus"]),
+    .index("by_moderation_status", ["moderationStatus"])
+    .index("by_hash_check_pending", ["hashCheckPendingSince"]),
 
   // One review per (member, puzzle definition). `rating` is optional ONLY to
   // hold migrated text-only legacy reviews (the old catalog form required text,
@@ -594,6 +607,8 @@ export default defineSchema({
       v.literal("photo_auto_rejected"),
       v.literal("photo_manually_approved"),
       v.literal("photo_manually_rejected"),
+      v.literal("image_quarantined"),
+      v.literal("csam_escalation_updated"),
       v.literal("role_granted"),
       v.literal("role_revoked"),
     ),
@@ -607,6 +622,54 @@ export default defineSchema({
     // Additive — Convex indexes existing rows automatically, no backfill.
     .index("by_actor", ["actorId", "at"])
     .index("by_target", ["targetId", "at"]),
+
+  // CSAM hash matches (lib/imageModeration/csamHashCheck), one row per quarantined image, for the
+  // operator to report to Meldpunt Offlimits or the police (DSA Art. 18). Metadata only: the
+  // image is never shown to anyone. `fileId` locates the PRESERVED blob for law enforcement; the
+  // app never serves or deletes a blob referenced here (preservation is the operator's legal
+  // call). `md5`/`sha1` are the matched hashes; `provider` the hash service that matched.
+  csamEscalations: defineTable({
+    table: v.union(
+      v.literal("ownedPuzzleImages"),
+      v.literal("completionImages"),
+    ),
+    rowId: v.string(),
+    uploaderId: v.id("users"),
+    // Who the uploader was AT MATCH TIME, so the report survives account deletion (the users
+    // row is only tombstoned while an escalation is not closed; see users.deleteUser).
+    uploaderSnapshot: v.optional(
+      v.object({
+        clerkId: v.string(),
+        email: v.optional(v.string()),
+        name: v.optional(v.string()),
+        username: v.optional(v.string()),
+      }),
+    ),
+    // Absent only when a later re-check matched after the photo's blob was already gone.
+    fileId: v.optional(v.id("_storage")),
+    md5: v.string(),
+    sha1: v.string(),
+    provider: v.string(),
+    // True when the match came from a later re-check of stored hashes, after the original upload
+    // had already been replaced by its re-encode: `fileId` then holds the re-encode.
+    originalDiscarded: v.optional(v.boolean()),
+    matchedAt: v.number(),
+    status: v.union(
+      v.literal("open"),
+      v.literal("reported"),
+      v.literal("closed"),
+    ),
+    reportedAt: v.optional(v.number()),
+    // Append-only operator notes (e.g. the report reference), each with its author and time.
+    notes: v.optional(
+      v.array(
+        v.object({ at: v.number(), actorId: v.id("users"), text: v.string() }),
+      ),
+    ),
+  })
+    .index("by_status", ["status", "matchedAt"])
+    .index("by_file", ["fileId"])
+    .index("by_uploader", ["uploaderId"]),
 
   // Community change proposals against APPROVED catalog definitions. `changes` is the exact
   // patch the definition receives on approval; `baseline` snapshots the changed fields' values
