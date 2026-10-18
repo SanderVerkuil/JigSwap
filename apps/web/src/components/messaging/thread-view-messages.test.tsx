@@ -55,19 +55,32 @@ const mara = {
   updatedAt: 0,
 };
 
-const dmThread = (blocked?: "byMe" | "byThem"): InboxThread => ({
+const threadOf = (subject: InboxThread["subject"]): InboxThread => ({
   threadId: "thread_1",
-  subject: {
-    kind: "dm",
-    otherMember: { anonymous: false, member: mara },
-    profileHandle: "mara",
-  },
+  subject,
   lastMessage: null,
   unreadCount: 0,
   contextCopies: [],
   updatedAt: 0,
-  ...(blocked ? { blocked } : {}),
 });
+
+const dmThread = () =>
+  threadOf({
+    kind: "dm",
+    otherMember: { anonymous: false, member: mara },
+    profileHandle: "mara",
+  });
+
+// Exchange threads carry the trading partner (otherMember) like a DM.
+const exchangeThread = () =>
+  threadOf({
+    kind: "exchange",
+    exchangeId: "exchange_1",
+    exchangeType: "trade",
+    puzzleTitle: "Night Harbour",
+    otherMember: { anonymous: false, member: mara },
+    profileHandle: "mara",
+  });
 
 const MESSAGES = [
   { id: "m1", authorId: "me", kind: "text", body: "My own message", sentAt: 1 },
@@ -167,6 +180,25 @@ describe("ThreadView message actions", () => {
     expect(dialog.querySelector("blockquote")?.textContent).toBe(
       "Mara's message",
     );
+    expect(
+      screen.getByRole("checkbox", { name: "Also block Mara" }),
+    ).toBeTruthy();
+  });
+
+  it("offers Also block {name} when reporting a message in an exchange thread", async () => {
+    renderThread(exchangeThread());
+    fireEvent.keyDown(
+      screen.getByRole("button", {
+        name: "More actions for message from Mara",
+      }),
+      { key: "Enter" },
+    );
+    fireEvent.click(
+      await screen.findByRole("menuitem", { name: "Report message" }),
+    );
+    expect(
+      await screen.findByRole("dialog", { name: "Report Mara" }),
+    ).toBeTruthy();
     expect(
       screen.getByRole("checkbox", { name: "Also block Mara" }),
     ).toBeTruthy();

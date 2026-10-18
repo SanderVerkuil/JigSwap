@@ -2,7 +2,8 @@
 
 // One report for the admin decision drawer (admin.getReport): who reported
 // whom and why, the evidence snapshot (the quoted thread excerpt with the
-// reported message highlighted), the Art. 16(2) notice when present, the
+// reported message highlighted; a message already removed by a moderator
+// shows as removed, never its body), the Art. 16(2) notice when present, the
 // photo when the target still exists, and the member's other reports. An
 // open report ends in the decide form; a decided one shows its outcome.
 // The server enforces isAdmin and validates the decision; the form only
@@ -55,6 +56,7 @@ const TEMPLATES = ["removal", "warning", "noViolation"] as const;
 export function ReportDetail({ report }: { report: ReportDetailView }) {
   const t = useTranslations("admin.moderation.reports");
   const tReasons = useTranslations("safety.report.reasons");
+  const tSafety = useTranslations("safety");
   const format = useFormatter();
   const relativeTime = useRelativeTime();
 
@@ -99,8 +101,10 @@ export function ReportDetail({ report }: { report: ReportDetailView }) {
         <section className="flex flex-col gap-1 rounded-md border p-3 text-sm">
           <h3 className="font-semibold">{t("illegalNotice")}</h3>
           <p>
-            {report.illegalNotice.notifierName} ·{" "}
-            {report.illegalNotice.notifierEmail}
+            {report.illegalNotice.notifierName}
+            {/* Absent when neither the notice nor the account has an email. */}
+            {report.illegalNotice.notifierEmail &&
+              ` · ${report.illegalNotice.notifierEmail}`}
           </p>
           {report.illegalNotice.goodFaith && (
             <p className="text-muted-foreground text-xs">{t("goodFaith")}</p>
@@ -166,9 +170,15 @@ export function ReportDetail({ report }: { report: ReportDetailView }) {
                       </Badge>
                     )}
                   </div>
-                  <p className="mt-1 break-words whitespace-pre-wrap">
-                    {message.body}
-                  </p>
+                  {message.removed ? (
+                    <p className="text-muted-foreground mt-1 italic">
+                      {tSafety("messageRemoved")}
+                    </p>
+                  ) : (
+                    <p className="mt-1 break-words whitespace-pre-wrap">
+                      {message.body}
+                    </p>
+                  )}
                 </li>
               );
             })}

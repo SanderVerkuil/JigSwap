@@ -96,6 +96,61 @@ describe("ReportDetail", () => {
     expect(current?.textContent).toContain("Otto (otto@example.com)");
   });
 
+  it("shows an evidence message removed by a moderator as removed, never its body", () => {
+    renderDetail(
+      report({
+        evidence: {
+          messages: [
+            {
+              messageId: "msg_1",
+              authorId: "user_reported",
+              kind: "text",
+              body: "",
+              sentAt: 1,
+              removed: true,
+            },
+            {
+              messageId: "msg_2",
+              authorId: "user_reported",
+              kind: "text",
+              body: "Get lost",
+              sentAt: 2,
+            },
+          ],
+        },
+      } as Partial<ReportDetailView>),
+    );
+    const items = screen.getAllByRole("listitem");
+    expect(items[0]!.textContent).toContain(
+      "This message was removed by a moderator.",
+    );
+    expect(items[1]!.textContent).toContain("Get lost");
+  });
+
+  it("names the notifier without a separator when the notice has no email", () => {
+    renderDetail(
+      report({
+        reason: "illegal",
+        illegalNotice: { notifierName: "Rita R.", goodFaith: true },
+      } as Partial<ReportDetailView>),
+    );
+    expect(screen.getByText("Rita R.").textContent).toBe("Rita R.");
+  });
+
+  it("names the notifier and their email when present", () => {
+    renderDetail(
+      report({
+        reason: "illegal",
+        illegalNotice: {
+          notifierName: "Rita R.",
+          notifierEmail: "rita@example.org",
+          goodFaith: true,
+        },
+      } as Partial<ReportDetailView>),
+    );
+    expect(screen.getByText("Rita R. · rita@example.org")).toBeTruthy();
+  });
+
   it("disables Remove for a user target", () => {
     renderDetail(report({ targetKind: "user", targetId: "user_reported" }));
     expect((removeRadio() as HTMLInputElement).disabled).toBe(true);
