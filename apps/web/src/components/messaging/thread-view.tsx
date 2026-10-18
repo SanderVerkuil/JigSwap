@@ -38,6 +38,7 @@ import {
 } from "./format";
 import { MessageActions } from "./message-actions";
 import { MessageComposer } from "./message-composer";
+import { locationAttachmentOf, MessageLocation } from "./message-location";
 import { MessagePhotos } from "./message-photos";
 import { OlderMessagesSlot } from "./older-messages-slot";
 import { PhotoOutbox } from "./photo-outbox";
@@ -308,13 +309,15 @@ export function ThreadView({
     const announcement =
       newest.kind === "image" && !text
         ? t("photos.sentAPhoto", { name })
-        : t("newMessageAnnouncement", {
-            name,
-            body:
-              text.length > ANNOUNCE_MAX
-                ? `${text.slice(0, ANNOUNCE_MAX - 1)}…`
-                : text,
-          });
+        : newest.kind === "location"
+          ? t("locations.sharedALocation", { name })
+          : t("newMessageAnnouncement", {
+              name,
+              body:
+                text.length > ANNOUNCE_MAX
+                  ? `${text.slice(0, ANNOUNCE_MAX - 1)}…`
+                  : text,
+            });
     // Clear first and set on the next frame, so a message identical to the
     // previous announcement is still read out.
     region.textContent = "";
@@ -529,6 +532,34 @@ function ThreadItemView({
         {message.body}
       </div>
     );
+    if (message.kind === "location" && !message.removed) {
+      // The map card carries the message's More menu (Report, Copy text of
+      // the caption); the caption bubble follows below.
+      const media = (
+        <MessageLocation
+          location={locationAttachmentOf(message.attachment)}
+          className={cn(pending && "opacity-70")}
+          onMediaLoad={onMediaLoad}
+        />
+      );
+      return (
+        <Fragment key={message.id}>
+          {own ? (
+            media
+          ) : (
+            <MessageActions
+              messageId={message.id}
+              body={message.body}
+              authorName={otherAuthor}
+              authorId={otherAuthorId}
+            >
+              {media}
+            </MessageActions>
+          )}
+          {message.body.trim() && bubble}
+        </Fragment>
+      );
+    }
     return (
       <Fragment key={message.id}>
         {message.copy && (

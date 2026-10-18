@@ -2,7 +2,8 @@
 
 // The composer's "+" (spec 3): a Radix menu opening upward on desktop, a short
 // bottom sheet of tiles on phones. The "+" turns into an X while open. Photo
-// is left out when photos are unavailable. The file input itself lives in the
+// is left out when photos are unavailable, Location when location sharing is
+// (no map key configured, or a thread probe still loading). The file input itself lives in the
 // composer, outside this menu, so iOS keeps the user gesture.
 import { Button } from "@/components/ui/button";
 import {
@@ -19,12 +20,12 @@ import {
 } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { ImageIcon, Plus, Puzzle, type LucideIcon } from "lucide-react";
+import { ImageIcon, MapPin, Plus, Puzzle, type LucideIcon } from "lucide-react";
 import { useState, type Ref } from "react";
 import { useTranslations } from "use-intl";
 
 type AttachOption = {
-  key: "puzzle" | "photo";
+  key: "puzzle" | "photo" | "location";
   label: string;
   icon: LucideIcon;
   onSelect: () => void;
@@ -33,14 +34,18 @@ type AttachOption = {
 export function AttachMenu({
   triggerRef,
   photosAvailable,
+  locationAvailable = false,
   onPuzzle,
   onPhoto,
+  onLocation,
 }: {
   triggerRef?: Ref<HTMLButtonElement>;
   photosAvailable: boolean;
+  locationAvailable?: boolean;
   onPuzzle: () => void;
   /** Must open the file picker synchronously (the user gesture). */
   onPhoto: () => void;
+  onLocation?: () => void;
 }) {
   const t = useTranslations("messages");
   const isMobile = useIsMobile();
@@ -63,7 +68,16 @@ export function AttachMenu({
           },
         ]
       : []),
-    // Location (a later PR) slots in here.
+    ...(locationAvailable && onLocation
+      ? [
+          {
+            key: "location" as const,
+            label: t("locations.attachLocation"),
+            icon: MapPin,
+            onSelect: onLocation,
+          },
+        ]
+      : []),
   ];
 
   const trigger = (

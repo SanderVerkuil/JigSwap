@@ -196,20 +196,29 @@ function ThreadRow({
   const mine = last?.isMine === true;
   // A photo without a caption names the sender instead of an empty body.
   const photoOnly = last?.kind === "image" && !last.removed && !body;
+  // A location always names the sharer (its caption is not the point).
+  const location = last?.kind === "location" && !last.removed;
+  const otherName = thread.subject.otherMember.anonymous
+    ? t("anonymous")
+    : displayName(thread.subject.otherMember.member);
   const snippet =
     body === undefined
       ? t("noMessages")
-      : photoOnly
+      : location
         ? mine
-          ? t("photos.youSentAPhoto")
-          : t("photos.sentAPhoto", {
-              name: thread.subject.otherMember.anonymous
-                ? t("anonymous")
-                : displayName(thread.subject.otherMember.member),
-            })
-        : mine
-          ? t("youPrefix", { body })
-          : body;
+          ? t("locations.youSharedALocation")
+          : t("locations.sharedALocation", { name: otherName })
+        : photoOnly
+          ? mine
+            ? t("photos.youSentAPhoto")
+            : t("photos.sentAPhoto", {
+                name: thread.subject.otherMember.anonymous
+                  ? t("anonymous")
+                  : displayName(thread.subject.otherMember.member),
+              })
+          : mine
+            ? t("youPrefix", { body })
+            : body;
   const fullTime = formatFullDateTime(thread.updatedAt, locale);
   // muted-foreground on the selected tint is < 4.5:1; darken it there.
   const mutedText = selected ? "text-foreground/75" : "text-muted-foreground";

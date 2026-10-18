@@ -345,4 +345,45 @@ describe("ThreadView photos", () => {
     const region = document.querySelector("[aria-live='polite']");
     await waitFor(() => expect(region?.textContent).toBe("Mara sent a photo"));
   });
+  const place = (id: string, sentAt: number, body = "") => ({
+    id,
+    isMine: false,
+    kind: "location",
+    body,
+    sentAt,
+    attachmentId: `att-${id}`,
+    attachment: {
+      kind: "location",
+      lat: 52.09074,
+      lng: 5.12142,
+      precision: "approximate",
+      label: "Domplein",
+      mapUrl: `https://files.test/${id}.png`,
+      openUrl: "https://www.openstreetmap.org/?mlat=52.09074&mlon=5.12142",
+    },
+  });
+
+  it("renders a shared location as its map card, with its caption and More menu", () => {
+    mocks.messages = [place("l1", 1_000, "See you here")];
+    setup();
+    expect(screen.getByRole("img", { name: "Map of Domplein" })).toBeTruthy();
+    expect(screen.getByText("Approximate area")).toBeTruthy();
+    expect(screen.getByText("See you here")).toBeTruthy();
+    expect(
+      screen.getAllByRole("button", {
+        name: "More actions for message from Mara",
+      }),
+    ).toHaveLength(1);
+  });
+
+  it("announces an arriving location as '{name} shared a location'", async () => {
+    mocks.messages = [MESSAGES[0]];
+    const { rerender } = setup();
+    mocks.messages = [MESSAGES[0], place("l1", 10, "Here")];
+    rerender();
+    const region = document.querySelector("[aria-live='polite']");
+    await waitFor(() =>
+      expect(region?.textContent).toBe("Mara shared a location"),
+    );
+  });
 });
