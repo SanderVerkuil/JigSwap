@@ -2,6 +2,7 @@
 
 import type { FunctionReference } from "convex/server";
 import { Jimp } from "jimp";
+import { internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
 import type { ActionCtx } from "../../_generated/server";
 import {
@@ -16,6 +17,12 @@ import {
 import { ingestToAxiom } from "../axiom";
 import { blurhashSampleSize, encodeBlurhash } from "../blurhash";
 import { logEvent, type WideEvent } from "../logEvent";
+import {
+  checkImageBytes,
+  checkImageSize,
+  INVALID_IMAGE_LABEL,
+  type ImageGuardFailure,
+} from "./guards";
 
 // The shared image-moderation pipeline behind every table of uploaded photos (copy photos,
 // completion photos, and later message attachments). Each table keeps a thin store module of
@@ -24,7 +31,11 @@ import { logEvent, type WideEvent } from "../logEvent";
 //
 // Per attempt:
 //   1. Load the row (skip when gone or no longer pending: first verdict wins, re-runs are no-ops).
-//   2. Download the blob.
+//   2. Input guards (lib/imageModeration/guards): the stored size before downloading the blob,
+//      then the magic bytes and the header's pixel count before any decode. A refused upload is
+//      "rejected" with label "invalid_image" (the guard's reason in moderationReason), never
+//      classified, and its blob is deleted. Never fails open. WebP passes the guards but jimp
+//      cannot decode it, so it takes step 3's fallback (see guards.ts for why it is kept).
 //   3. (first attempt only) Re-encode via jimp — PNG when it has transparency, else JPEG — which
 //      DROPS all EXIF/metadata, compute the blurhash from the same decode, swap the row to the
 //      clean blob (setFile) and delete the original. Best-effort: on a decode failure the original
@@ -207,6 +218,54 @@ export const runImageModeration = async <R extends ModerationRow>(
       return;
     }
 
+    // Refuse an upload that fails an input guard: reject it (first verdict wins), then delete
+    // the blob, but only when the row took this verdict and still points at it, so a blob a
+    // concurrent attempt already decided on is never touched. A store's own reject side effects
+    // may have deleted it already (completion photos), hence the existence check.
+    const refuse = async (reason: ImageGuardFailure) => {
+      event.input_guard = reason;
+      event.decision = "rejected";
+      await ctx.runMutation(steps.setVerdict, {
+        imageId,
+        moderationStatus: "rejected",
+        moderationLabel: INVALID_IMAGE_LABEL,
+        moderationReason: reason,
+        moderationAttempts: attempt,
+      });
+      const after = await ctx.runQuery(steps.load, { imageId });
+      if (
+        after?.moderationStatus !== "rejected" ||
+        after.fileId !== row.fileId
+      ) {
+        return;
+      }
+      const stillStored = await ctx.runQuery(
+        internal.lib.imageModeration.blobMetadata.getBlobSize,
+        { storageId: row.fileId },
+      );
+      if (stillStored === null) return;
+      try {
+        await ctx.storage.delete(row.fileId);
+      } catch (error) {
+        event.delete_original_error = errMsg(error);
+      }
+    };
+
+    // Size guard BEFORE the download. A missing blob falls through to the download step, which
+    // records it as unscored (missing_file) exactly as before.
+    const storedBytes = await ctx.runQuery(
+      internal.lib.imageModeration.blobMetadata.getBlobSize,
+      { storageId: row.fileId },
+    );
+    if (storedBytes !== null) {
+      event.stored_bytes = storedBytes;
+      const size = checkImageSize(storedBytes);
+      if (!size.ok) {
+        await refuse(size.reason);
+        return;
+      }
+    }
+
     let bytes: Uint8Array;
     let mime: string | undefined;
     try {
@@ -224,6 +283,16 @@ export const runImageModeration = async <R extends ModerationRow>(
       await finish(unscoredResult("download_error", true));
       return;
     }
+
+    // Type + decompression-bomb guards on the header, before anything decodes the bytes.
+    const guard = checkImageBytes(bytes);
+    if (!guard.ok) {
+      await refuse(guard.reason);
+      return;
+    }
+    event.image_format = guard.format;
+    event.image_width = guard.width;
+    event.image_height = guard.height;
 
     // Re-encode (strip EXIF/metadata) on the first attempt only — a retry finds the row already
     // pointing at the clean blob. Best-effort: on decode failure, classify the original.

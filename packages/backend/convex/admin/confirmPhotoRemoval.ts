@@ -32,7 +32,10 @@ export const confirmPhotoRemoval = mutation({
     if (copy?.coverImageId === imageId) {
       await ctx.db.patch(copy._id, { coverImageId: undefined });
     }
-    await ctx.storage.delete(row.fileId);
+    // An upload refused by the pipeline's input guards (invalid_image) has no blob left.
+    if (await ctx.db.system.get(row.fileId)) {
+      await ctx.storage.delete(row.fileId);
+    }
     await ctx.db.delete(imageId);
 
     await stampModerationAction(ctx, {
