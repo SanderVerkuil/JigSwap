@@ -7,7 +7,10 @@ import {
   internalQuery,
   type MutationCtx,
 } from "../_generated/server";
-import { deleteAttachmentBlobs } from "../conversation/messageAttachments";
+import {
+  deleteAttachmentBlobs,
+  deleteReveals,
+} from "../conversation/messageAttachments";
 import { logEvent } from "../lib/logEvent";
 
 // Evidence for a message photo a moderator removed (admin/decideReport, content_removed). A
@@ -197,6 +200,7 @@ export const recordEvidence = internalMutation({
       updatedAt: Date.now(),
     });
     await deleteAttachmentBlobs(ctx, { ...row, evidenceHold: undefined });
+    await deleteReveals(ctx, attachmentId);
   },
 });
 

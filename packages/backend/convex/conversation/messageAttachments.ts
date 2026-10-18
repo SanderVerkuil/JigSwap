@@ -130,6 +130,20 @@ export const deleteAttachmentBlobs = async (
   }
 };
 
+/** Delete every viewer's reveal of a photo (it is removed or purged: nothing left to reveal). */
+export const deleteReveals = async (
+  ctx: MutationCtx,
+  attachmentId: Id<"messageAttachments">,
+): Promise<void> => {
+  const reveals = await ctx.db
+    .query("messageImageReveals")
+    .withIndex("by_attachment_viewer", (q) =>
+      q.eq("attachmentId", attachmentId),
+    )
+    .collect();
+  for (const reveal of reveals) await ctx.db.delete(reveal._id);
+};
+
 /**
  * Clear a photo's evidence hold once no OPEN report references it any more (a report on the photo
  * itself, or on its image message). Called when a report is decided.
@@ -175,6 +189,7 @@ const discardAttachment = async (ctx: MutationCtx, row: Attachment) => {
     return;
   }
   await deleteAttachmentBlobs(ctx, row);
+  await deleteReveals(ctx, row._id);
   await ctx.db.delete(row._id);
 };
 

@@ -1668,6 +1668,25 @@ describe("removal evidence", () => {
     }
   });
 
+  test("a removed photo's reveal rows are deleted", async () => {
+    const t = convexTest(schema, modules);
+    const { id, carol, remove } = await removedPhoto(t);
+    // A reveal recorded before the removal.
+    await t.run((ctx) =>
+      ctx.db.insert("messageImageReveals", {
+        attachmentId: id,
+        viewerId: carol,
+        revealedAt: 1,
+      }),
+    );
+    const reveals = () =>
+      t.run((ctx) => ctx.db.query("messageImageReveals").collect());
+    expect(await reveals()).toHaveLength(1);
+    await remove();
+    await settleDueJobs(t);
+    expect(await reveals()).toEqual([]);
+  });
+
   test("a missing source blob is recorded as missing, and the hold is released", async () => {
     const t = convexTest(schema, modules);
     const { id, row, attachmentReport, remove } = await removedPhoto(t);
