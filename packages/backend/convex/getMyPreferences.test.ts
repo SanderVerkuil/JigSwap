@@ -42,7 +42,7 @@ describe("getMyPreferences", () => {
       {},
     );
 
-    expect(Object.keys(prefs)).toHaveLength(24);
+    expect(Object.keys(prefs)).toHaveLength(25);
     // The stored email wins; the absent inApp key falls back to its default (true).
     expect(prefs.trade_request).toEqual({
       inApp: true,

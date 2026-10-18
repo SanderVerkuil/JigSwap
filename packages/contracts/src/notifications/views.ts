@@ -27,6 +27,7 @@ export type NotificationViewType =
   | "follow_request_approved"
   | "household_invite_received"
   | "household_invite_accepted"
+  | "connection_offer_received"
   | "whats_new";
 
 /**

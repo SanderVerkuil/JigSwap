@@ -29,6 +29,7 @@ export type NotificationType =
   | "follow_request_approved" // Social: FollowRequestApproved — the requester's access was granted
   | "household_invite_received" // Household: HouseholdInviteSent — someone invited the member to their household
   | "household_invite_accepted" // Household: HouseholdInviteAccepted — the member's invite was accepted
+  | "connection_offer_received" // Social: ConnectionOffered — their inviter offers to follow each other
   | "whats_new"; // Product: a What's new entry marked `notify: true` was published (not a domain event)
 
 // All notification types, for iteration (e.g. seeding default preferences). Kept in sync with the
@@ -57,6 +58,7 @@ export const NOTIFICATION_TYPES: readonly NotificationType[] = [
   "follow_request_approved",
   "household_invite_received",
   "household_invite_accepted",
+  "connection_offer_received",
   "whats_new",
 ];
 

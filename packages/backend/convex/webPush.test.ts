@@ -79,6 +79,7 @@ describe("notificationUrl", () => {
     expect(notificationUrl("new_follower")).toBe("/people");
     expect(notificationUrl("follow_request_received")).toBe("/people");
     expect(notificationUrl("follow_request_approved")).toBe("/people");
+    expect(notificationUrl("connection_offer_received")).toBe("/people");
   });
 
   test("routes household invites to /household", () => {

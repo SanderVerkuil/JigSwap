@@ -1885,6 +1885,7 @@
       "follow_request_approved": "Follow request approved",
       "household_invite_received": "Household invites",
       "household_invite_accepted": "Household invite accepted",
+      "connection_offer_received": "Invitations to follow each other",
       "whats_new": "What's new"
     },
     "categories": {
@@ -2006,6 +2007,10 @@
         "title": "Invite accepted",
         "message": "{hasActorName, select, yes {{actorName} joined your household.} other {Someone joined your household.}}"
       },
+      "connection_offer_received": {
+        "title": "Follow each other?",
+        "message": "{hasActorName, select, yes {{actorName} invited you to JigSwap. Follow each other?} other {Someone invited you to JigSwap. Follow each other?}}"
+      },
       "whats_new": {
         "title": "New in JigSwap",
         "message": "See what's new in JigSwap."
@@ -2048,6 +2053,7 @@
       "follow_request_approved": "When a follow request you sent is approved.",
       "household_invite_received": "When someone invites you to their household.",
       "household_invite_accepted": "When someone accepts your household invite.",
+      "connection_offer_received": "When the person who invited you to JigSwap asks to follow each other.",
       "whats_new": "When a new feature or change to JigSwap is announced."
     },
     "pushServiceUnreachable": "Your browser couldn't reach its push service. Some privacy browsers block or remove it — Brave disables it by default (enable 'Use Google services for push messaging' in Settings), and de-Googled Chromium builds like Helium strip it out. Firefox, Chrome, or Edge will work.",
@@ -2191,6 +2197,9 @@
       },
       "household_invite_accepted": {
         "sentence": "<b>{actor}</b> joined your household."
+      },
+      "connection_offer_received": {
+        "sentence": "<b>{actor}</b> invited you to JigSwap. Follow each other?"
       }
     }
   },

@@ -124,6 +124,9 @@ export const notificationUrl = (type: string, relatedId?: string): string => {
     case "household_invite_received":
     case "household_invite_accepted":
       return "/household";
+    // A connection offer is answered in the People page's requests area.
+    case "connection_offer_received":
+      return "/people";
     // What's new: relatedId is the entry id; the page anchors each card as #entry-<id>.
     case "whats_new":
       return relatedId ? `/whats-new#entry-${relatedId}` : "/whats-new";

@@ -1885,6 +1885,7 @@
       "follow_request_approved": "Volgverzoek goedgekeurd",
       "household_invite_received": "Uitnodigingen voor een huishouden",
       "household_invite_accepted": "Uitnodiging voor huishouden geaccepteerd",
+      "connection_offer_received": "Uitnodigingen om elkaar te volgen",
       "whats_new": "Wat is er nieuw"
     },
     "categories": {
@@ -2006,6 +2007,10 @@
         "title": "Uitnodiging geaccepteerd",
         "message": "{hasActorName, select, yes {{actorName} is lid geworden van je huishouden.} other {Iemand is lid geworden van je huishouden.}}"
       },
+      "connection_offer_received": {
+        "title": "Elkaar volgen?",
+        "message": "{hasActorName, select, yes {{actorName} heeft je uitgenodigd voor JigSwap. Elkaar volgen?} other {Iemand heeft je uitgenodigd voor JigSwap. Elkaar volgen?}}"
+      },
       "whats_new": {
         "title": "Nieuw in JigSwap",
         "message": "Bekijk wat er nieuw is in JigSwap."
@@ -2048,6 +2053,7 @@
       "follow_request_approved": "Wanneer een volgverzoek dat je stuurde wordt goedgekeurd.",
       "household_invite_received": "Wanneer iemand je uitnodigt voor hun huishouden.",
       "household_invite_accepted": "Wanneer iemand je uitnodiging voor het huishouden accepteert.",
+      "connection_offer_received": "Wanneer degene die je voor JigSwap heeft uitgenodigd vraagt om elkaar te volgen.",
       "whats_new": "Wanneer een nieuwe functie of wijziging in JigSwap wordt aangekondigd."
     },
     "pushServiceUnreachable": "Je browser kon zijn pushdienst niet bereiken. Sommige privacybrowsers blokkeren of verwijderen die — Brave schakelt het standaard uit (zet 'Google-services voor pushberichten gebruiken' aan in Instellingen), en de-Googled Chromium-browsers zoals Helium verwijderen het. Firefox, Chrome of Edge werkt wel.",
@@ -2191,6 +2197,9 @@
       },
       "household_invite_accepted": {
         "sentence": "<b>{actor}</b> is lid geworden van je huishouden."
+      },
+      "connection_offer_received": {
+        "sentence": "<b>{actor}</b> heeft je uitgenodigd voor JigSwap. Elkaar volgen?"
       }
     }
   },
