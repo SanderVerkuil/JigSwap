@@ -25,8 +25,9 @@ const copyWith = (sharing: SharingSetting): Copy => {
     now: NOW,
   });
   if (!acquired.isOk) throw new Error("setup");
-  acquired.value.updateSharing(sharing, NOW);
-  return acquired.value;
+  // Rehydrated (not updateSharing) so a stored legacy combination — private yet offered, which
+  // updateSharing now rejects — can still be put in front of the policy.
+  return Copy.rehydrate({ ...acquired.value.toState(), sharing });
 };
 
 describe("DefaultVisibilityPolicy", () => {
@@ -43,12 +44,12 @@ describe("DefaultVisibilityPolicy", () => {
   // The owner-bypass branch must hold even for a PRIVATE copy that public visibility would
   // hide — proving the `viewer === copy.ownerId` short-circuit, not just public visibility.
   it("the owner can view their own private copy", () => {
-    const copy = copyWith(SharingSetting.private());
+    const copy = copyWith(SharingSetting.create({ visibility: "private" }));
     expect(policy.canView(owner, copy)).toBe(true);
   });
 
   it("a stranger cannot view a private, non-offered copy", () => {
-    const copy = copyWith(SharingSetting.private());
+    const copy = copyWith(SharingSetting.create({ visibility: "private" }));
     expect(policy.canView(viewer, copy)).toBe(false);
     expect(policy.canTransact(viewer, copy)).toBe(false);
   });
@@ -59,7 +60,7 @@ describe("DefaultVisibilityPolicy", () => {
     expect(policy.canTransact(viewer, copy)).toBe(false);
   });
 
-  it("a stranger can view and transact on a copy offered for exchange", () => {
+  it("a stranger can view and transact on a copy offered for exchange, even one stored private", () => {
     const copy = copyWith(
       SharingSetting.create({ visibility: "private", forSale: true }),
     );

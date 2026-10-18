@@ -46,4 +46,12 @@ describe("LibraryError factories", () => {
     expect(e.code).toBe("WrongMemberType");
     expect(e.message).toBe("A wishlist holds desired definitions, not copies");
   });
+
+  it("copyMustBeVisibleToOffer", () => {
+    const e = LibraryError.copyMustBeVisibleToOffer();
+    expect(e.code).toBe("CopyMustBeVisibleToOffer");
+    expect(e.message).toBe(
+      "A copy offered for swap, lend or sale must be visible",
+    );
+  });
 });

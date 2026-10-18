@@ -73,9 +73,9 @@ describe("Copy.acquire", () => {
     expect(acquisition.price).toBeUndefined();
   });
 
-  it("defaults to a private sharing setting (not available for any exchange)", () => {
+  it("defaults to a visible sharing setting (not available for any exchange)", () => {
     const copy = acquire();
-    expect(copy.sharing.visibility).toBe("private");
+    expect(copy.sharing.visibility).toBe("visible");
     expect(copy.sharing.isAvailableForAnyExchange()).toBe(false);
   });
 
@@ -160,6 +160,35 @@ describe("updateSharing", () => {
     expect(names(events)).toEqual(["CopyMadeUnavailable"]);
     expect(events[0]).toBeInstanceOf(CopyMadeUnavailable);
   });
+
+  it("makes a copy private (not offered)", () => {
+    const copy = acquire();
+    copy.pullEvents();
+    const result = copy.updateSharing(
+      SharingSetting.create({ visibility: "private" }),
+      LATER,
+    );
+    expect(result.isOk).toBe(true);
+    expect(copy.sharing.visibility).toBe("private");
+    expect(copy.toState().updatedAt).toBe(LATER);
+    expect(names(copy.pullEvents())).toEqual(["CopyMadeUnavailable"]);
+  });
+
+  it("rejects offering a private copy (CopyMustBeVisibleToOffer) and changes nothing", () => {
+    const copy = acquire();
+    copy.pullEvents();
+    const result = copy.updateSharing(
+      SharingSetting.create({ visibility: "private", forLend: true }),
+      LATER,
+    );
+    expect(result.isErr).toBe(true);
+    if (result.isErr)
+      expect(result.error.code).toBe("CopyMustBeVisibleToOffer");
+    expect(copy.sharing.visibility).toBe("visible");
+    expect(copy.sharing.isAvailableForAnyExchange()).toBe(false);
+    expect(copy.toState().updatedAt).toBe(NOW);
+    expect(copy.pullEvents()).toHaveLength(0);
+  });
 });
 
 describe("addImage", () => {
@@ -236,11 +265,12 @@ describe("Copy.transferTo", () => {
     });
   });
 
-  it("resets owner-specific fields: sharing private, acquisition trade, notes cleared", () => {
+  it("resets owner-specific fields: sharing to the visible default, acquisition trade, notes cleared", () => {
     const copy = owned();
     copy.transferTo(newOwner, LATER);
     const state = copy.toState();
     expect(state.sharing.isAvailableForAnyExchange()).toBe(false);
+    expect(state.sharing.visibility).toBe("visible");
     expect(state.acquisition.source).toBe("trade");
     expect(state.acquisition.date).toBe(LATER);
     expect(state.notes).toBeUndefined();
@@ -278,6 +308,13 @@ describe("Copy possession (lend / return)", () => {
     expect(state.ownerId).toBe(owner); // ownership is unchanged by a lend
     expect(state.sharing.isAvailableForAnyExchange()).toBe(false);
     expect(names(copy.pullEvents())).toEqual(["CopyLentOut"]);
+  });
+
+  it("lendOut keeps the owner's visibility choice", () => {
+    const copy = acquire();
+    copy.updateSharing(SharingSetting.create({ visibility: "private" }), NOW);
+    copy.lendOut(borrower, LATER);
+    expect(copy.sharing.visibility).toBe("private");
   });
 
   it("returnToOwner restores possession to the owner", () => {

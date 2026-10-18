@@ -17,7 +17,8 @@ export type LibraryErrorCode =
   | "NotBorrower"
   | "NotLender"
   | "EmptyAcquireBatch"
-  | "AcquireBatchTooLarge";
+  | "AcquireBatchTooLarge"
+  | "CopyMustBeVisibleToOffer";
 
 export class LibraryError extends DomainError {
   override readonly name = "LibraryError";
@@ -114,6 +115,14 @@ export class LibraryError extends DomainError {
     return new LibraryError(
       "AcquireBatchTooLarge",
       `At most ${max} puzzles can be added at once`,
+    );
+  }
+
+  // A copy offered for swap, lend or sale must be visible to the community.
+  static copyMustBeVisibleToOffer(): LibraryError {
+    return new LibraryError(
+      "CopyMustBeVisibleToOffer",
+      "A copy offered for swap, lend or sale must be visible",
     );
   }
 }
