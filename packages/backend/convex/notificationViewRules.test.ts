@@ -20,6 +20,7 @@ const hidden: ActorFacts = {
   isViewer: false,
   isPublic: false,
   mutualFollowers: false,
+  dmMessage: false,
 };
 
 describe("isActorRevealed", () => {

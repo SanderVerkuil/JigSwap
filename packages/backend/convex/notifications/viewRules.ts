@@ -71,9 +71,10 @@ export interface ActorFacts {
   /**
    * A message_received NOT provably from an exchange thread (a DM, or an unresolvable thread). Its
    * sender gets no initiator reveal: they are projected like everywhere in the thread itself
-   * (self / public / mutual), so a private sender stays anonymous. Fails closed.
+   * (self / public / mutual), so a private sender stays anonymous. Fails closed. Required so no
+   * caller can omit it and fall back to the initiator reveal.
    */
-  readonly dmMessage?: boolean;
+  readonly dmMessage: boolean;
 }
 
 /** Whether the viewer may see who the actor is. Deleted or deactivated actors are never shown. */

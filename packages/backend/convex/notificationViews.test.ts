@@ -616,6 +616,48 @@ describe("message_received", () => {
     });
   });
 
+  test("a ref-less DM message row never shows its stored name snapshot", async () => {
+    const s = await setup();
+    await s.t.run(async (ctx) => {
+      await ctx.db.insert("threads", {
+        aggregateId: "thread-p",
+        subjectKind: "dm",
+        participants: [s.viewer, s.priv],
+        participantsKey: [s.viewer, s.priv].sort().join("|"),
+        readReceipts: [],
+        createdAt: now,
+      });
+      await notify(ctx, s.viewer, {
+        type: "message_received",
+        relatedId: "thread-p",
+        params: { actorName: "Priv Snapshotname" },
+      });
+    });
+    const view = await onlyView(s);
+    expect(view.context).not.toHaveProperty("actorNameSnapshot");
+    expect(JSON.stringify(view)).not.toContain("Snapshotname");
+  });
+
+  test("a ref-less exchange-thread message row keeps its name snapshot", async () => {
+    const s = await setup();
+    await s.t.run(async (ctx) => {
+      await ctx.db.insert("threads", {
+        aggregateId: "thread-x",
+        subjectKind: "exchange",
+        participants: [s.viewer, s.mara],
+        participantsKey: [s.viewer, s.mara].sort().join("|"),
+        readReceipts: [],
+        createdAt: now,
+      });
+      await notify(ctx, s.viewer, {
+        type: "message_received",
+        relatedId: "thread-x",
+        params: { actorName: "Mara Display" },
+      });
+    });
+    expect((await onlyView(s)).context.actorNameSnapshot).toBe("Mara Display");
+  });
+
   test("a private sender of an unresolvable thread stays anonymous", async () => {
     const s = await setup();
     const view = await privSenderView(s, null);

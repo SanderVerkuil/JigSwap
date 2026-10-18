@@ -39,6 +39,7 @@ export type NotificationActorView =
       /**
        * Set when the actor's account is gone (users row missing or deactivated): render "Former
        * member". Absent for a LIVING member the viewer may not identify: render the generic label.
+       * It only tells a gone account from a private member and carries no identity of either.
        */
       departed?: true;
     }

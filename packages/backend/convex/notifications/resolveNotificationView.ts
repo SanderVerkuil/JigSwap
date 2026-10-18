@@ -598,8 +598,11 @@ export const resolveNotificationView = async (
     // snapshot left. Initiator types reveal their actor to the viewer anyway, and the snapshot was
     // written with the same display-name rules (never an email).
     // trade_request's snapshot names the requester to the owner, who always sees them.
+    // A DM message's sender is not initiator-revealed, so its snapshot never surfaces (fails
+    // closed, like dmMessage itself).
     ...(actorIds.length === 0 &&
     (INITIATOR_NOTIFICATION_TYPES.has(type) || type === "trade_request") &&
+    !dmMessage &&
     row.params?.actorName
       ? { actorNameSnapshot: row.params.actorName }
       : {}),
