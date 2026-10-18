@@ -1,5 +1,6 @@
 "use node";
 
+import { createHash } from "node:crypto";
 import type { FunctionReference } from "convex/server";
 import { Jimp } from "jimp";
 import { internal } from "../../_generated/api";
@@ -18,6 +19,12 @@ import {
 import { ingestToAxiom } from "../axiom";
 import { blurhashSampleSize, encodeBlurhash } from "../blurhash";
 import { logEvent, type WideEvent } from "../logEvent";
+import {
+  checkAllHashes,
+  makeCsamHashCheckPortFromEnv,
+  readCsamHashCheckConfig,
+  type ImageHashes,
+} from "./csamHashCheck";
 import {
   checkImageBytes,
   checkImageSize,
@@ -42,8 +49,12 @@ import {
 //      DROPS all EXIF/metadata, compute the blurhash from the same decode, swap the row to the
 //      clean blob (setFile) and delete the original. A decode failure is refused as
 //      "decode_failed", except WebP (see below).
-//   4. Classify the clean bytes via the configured PhotoModerationPort.
-//   5. Record the verdict (setVerdict), or re-schedule `retry` with backoff for a retryable
+//   4. CSAM hash check (lib/imageModeration/csamHashCheck), BEFORE the swap and classification:
+//      MD5 + SHA-1 of the ORIGINAL bytes (what hash lists match) and of the re-encode. A match
+//      calls the table's `quarantine` and stops: never classified, never delivered, the original
+//      blob kept. "unavailable" is logged and continues; "no_match" continues.
+//   5. Classify the clean bytes via the configured PhotoModerationPort.
+//   6. Record the verdict (setVerdict), or re-schedule `retry` with backoff for a retryable
 //      unscored result with attempts left.
 //
 // Why jimp (not sharp): Convex's Node runtime bundles the action; sharp ships a platform-specific
@@ -58,10 +69,18 @@ import {
 // one wide event (screening_outcome / unscored_reason) to the logs and Axiom. NEVER throws.
 //
 // ENV: see `library/adapters/photoModeration.ts` (MODERATION_PROVIDER, HF_MODERATION_TOKEN,
-// HF_MODERATION_MODEL, MODERATION_NSFW_THRESHOLD, SIGHTENGINE_*).
+// HF_MODERATION_MODEL, MODERATION_NSFW_THRESHOLD, SIGHTENGINE_*) and `./csamHashCheck.ts`
+// (CSAM_HASHCHECK_PROVIDER, OFFLIMITS_HCS_*). A blob preserved for a CSAM escalation is never
+// deleted, on any path.
 
 const errMsg = (e: unknown): string =>
   e instanceof Error ? e.message : String(e);
+
+/** Lowercase hex MD5 + SHA-1 of the bytes, the pair hash lists such as Offlimits HCS match on. */
+export const hashImageBytes = (bytes: Uint8Array): ImageHashes => ({
+  md5: createHash("md5").update(bytes).digest("hex"),
+  sha1: createHash("sha1").update(bytes).digest("hex"),
+});
 
 // Re-encode arbitrary image bytes to a metadata-free image. Either output (PNG/JPEG) drops all
 // EXIF/metadata. Format is alpha-aware: if the source has ANY transparent pixel we emit PNG so the
@@ -145,6 +164,17 @@ export interface ImageModerationSteps<R extends ModerationRow> {
     ModerationVerdictArgs,
     unknown
   >;
+  /**
+   * A CSAM hash match: flip the still-pending row to "quarantined", hide it wherever else the
+   * table references the blob (without deleting it), and raise the escalation
+   * (lib/imageModeration/quarantine). Receives the matched hashes and the provider name.
+   */
+  quarantine: FunctionReference<
+    "mutation",
+    "internal",
+    { imageId: string; md5: string; sha1: string; provider: string },
+    unknown
+  >;
   /** The calling action itself, re-scheduled for a retry. */
   retry: FunctionReference<
     "action",
@@ -176,6 +206,9 @@ export const runImageModeration = async <R extends ModerationRow>(
     nsfw_threshold: config.threshold,
     screening_config: config.status,
   };
+  const hashConfig = readCsamHashCheckConfig(process.env);
+  event.csam_hashcheck_provider = hashConfig.provider;
+  event.csam_hashcheck_config = hashConfig.status;
   const flush = async () => {
     event.duration_ms = Date.now() - startedAt;
     const line = logEvent(event);
@@ -206,6 +239,23 @@ export const runImageModeration = async <R extends ModerationRow>(
       moderationReason: result.reason ?? undefined,
       moderationAttempts: attempt,
     });
+  };
+
+  // Delete an original blob unless a CSAM escalation preserves it (the same file re-uploaded).
+  const deleteUnlessPreserved = async (fileId: Id<"_storage">) => {
+    const preserved = await ctx.runQuery(
+      internal.lib.imageModeration.quarantine.isBlobPreserved,
+      { storageId: fileId },
+    );
+    if (preserved) {
+      event.original_preserved = true;
+      return;
+    }
+    try {
+      await ctx.storage.delete(fileId);
+    } catch (error) {
+      event.delete_original_error = errMsg(error);
+    }
   };
 
   try {
@@ -248,11 +298,7 @@ export const runImageModeration = async <R extends ModerationRow>(
         { storageId: row.fileId },
       );
       if (stillStored === null) return;
-      try {
-        await ctx.storage.delete(row.fileId);
-      } catch (error) {
-        event.delete_original_error = errMsg(error);
-      }
+      await deleteUnlessPreserved(row.fileId);
     };
 
     // Size guard BEFORE the download. A missing blob falls through to the download step, which
@@ -321,6 +367,29 @@ export const runImageModeration = async <R extends ModerationRow>(
         await refuse("decode_failed");
         return;
       }
+
+      // CSAM hash check BEFORE the swap and classification. Only the outcome is logged.
+      const hashCheck = await checkAllHashes(
+        makeCsamHashCheckPortFromEnv(process.env),
+        encoded
+          ? [hashImageBytes(bytes), hashImageBytes(encoded.bytes)]
+          : [hashImageBytes(bytes)],
+      );
+      event.csam_hashcheck_status = hashCheck.status;
+      event.csam_hashcheck_reason = hashCheck.reason ?? null;
+      if (hashCheck.status === "match" && hashCheck.matched) {
+        event.decision = "quarantined";
+        await ctx.runMutation(steps.quarantine, {
+          imageId,
+          md5: hashCheck.matched.md5,
+          sha1: hashCheck.matched.sha1,
+          provider: hashConfig.provider,
+        });
+        return;
+      }
+      // Unavailable: continue to classification, but surface it at error level for alerting.
+      if (hashCheck.status === "unavailable") event.outcome = "error";
+
       const replacement = encoded
         ? encoded
         : mime !== "image/webp"
@@ -349,11 +418,7 @@ export const runImageModeration = async <R extends ModerationRow>(
           storedFileId = null;
           cleanBytes = replacement.bytes;
           mime = replacement.mime;
-          try {
-            await ctx.storage.delete(row.fileId);
-          } catch (error) {
-            event.delete_original_error = errMsg(error);
-          }
+          await deleteUnlessPreserved(row.fileId);
         } catch (error) {
           event.reencoded = false;
           event.swap_error = errMsg(error);

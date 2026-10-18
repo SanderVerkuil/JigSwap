@@ -7,6 +7,11 @@ import {
   type MutationCtx,
 } from "../_generated/server";
 import { stampModerationAction } from "../admin/stampModerationAction";
+import {
+  isPreservedBlob,
+  quarantineArgs,
+  recordCsamEscalation,
+} from "../lib/imageModeration/quarantine";
 import { needsRescreen } from "../library/adapters/photoModeration";
 
 // DB-facing helpers for the moderateCompletionPhoto Node action, mirroring
@@ -129,11 +134,14 @@ export const detachRejectedCompletionPhoto = async (
       photos: completion.photos.filter((id) => id !== row.fileId),
     });
   }
-  // Tolerate an already-deleted blob; don't fail the decision over a missing file.
-  try {
-    await ctx.storage.delete(row.fileId);
-  } catch {
-    // Nothing references it either way.
+  // Tolerate an already-deleted blob; don't fail the decision over a missing file. A blob
+  // preserved for a CSAM escalation (the same file re-attached) is never deleted.
+  if (!(await isPreservedBlob(ctx, row.fileId))) {
+    try {
+      await ctx.storage.delete(row.fileId);
+    } catch {
+      // Nothing references it either way.
+    }
   }
   return completion?.copySnapshot?.title ?? "Completion photo";
 };
@@ -161,6 +169,40 @@ export const setModerationVerdict = internalMutation({
     // First verdict wins: an absent status is legacy-approved, anything else is already decided.
     if (row.moderationStatus !== "pending") return;
     await writeVerdict(ctx, row, args);
+  },
+});
+
+// A CSAM hash match (lib/imageModeration/quarantine): flip a still-pending sidecar to
+// "quarantined" (first verdict wins), drop its id from the completions row's `photos` array so no
+// read of that array can reach it (a direct system write that leaves updatedAt alone, like a
+// rejection), and raise the escalation. Unlike a rejection the blob is NOT deleted.
+export const quarantineImage = internalMutation({
+  args: { imageId: v.id("completionImages"), ...quarantineArgs },
+  handler: async (ctx, { imageId, ...match }) => {
+    const row = await ctx.db.get(imageId);
+    if (!row || row.moderationStatus !== "pending") return;
+    await ctx.db.patch(imageId, {
+      moderationStatus: "quarantined",
+      updatedAt: Date.now(),
+    });
+    const completion = await ctx.db
+      .query("completions")
+      .withIndex("by_aggregate_id", (q) =>
+        q.eq("aggregateId", row.completionId),
+      )
+      .unique();
+    if (completion) {
+      await ctx.db.patch(completion._id, {
+        photos: completion.photos.filter((id) => id !== row.fileId),
+      });
+    }
+    await recordCsamEscalation(ctx, {
+      table: "completionImages",
+      rowId: imageId,
+      uploaderId: row.uploaderId,
+      fileId: row.fileId,
+      ...match,
+    });
   },
 });
 

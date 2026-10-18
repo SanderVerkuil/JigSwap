@@ -15,6 +15,7 @@ type ModerationKind =
   | "photo_auto_rejected"
   | "photo_manually_approved"
   | "photo_manually_rejected"
+  | "image_quarantined"
   | "role_granted"
   | "role_revoked";
 

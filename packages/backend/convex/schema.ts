@@ -333,6 +333,9 @@ export default defineSchema({
         v.literal("approved"),
         v.literal("rejected"),
         v.literal("unscored"),
+        // A CSAM hash-list match (lib/imageModeration/csamHashCheck): never delivered and never
+        // served to anyone (admins included); the blob is preserved. See csamEscalations.
+        v.literal("quarantined"),
       ),
     ),
     // The classifier's NSFW score in [0,1] (absent when un-scored, e.g. provider "none" or
@@ -471,6 +474,9 @@ export default defineSchema({
         v.literal("approved"),
         v.literal("rejected"),
         v.literal("unscored"),
+        // A CSAM hash-list match (lib/imageModeration/csamHashCheck): never delivered and never
+        // served to anyone (admins included); the blob is preserved. See csamEscalations.
+        v.literal("quarantined"),
       ),
     ),
     moderationScore: v.optional(v.number()),
@@ -585,6 +591,7 @@ export default defineSchema({
       v.literal("photo_auto_rejected"),
       v.literal("photo_manually_approved"),
       v.literal("photo_manually_rejected"),
+      v.literal("image_quarantined"),
       v.literal("role_granted"),
       v.literal("role_revoked"),
     ),
@@ -598,6 +605,34 @@ export default defineSchema({
     // Additive — Convex indexes existing rows automatically, no backfill.
     .index("by_actor", ["actorId", "at"])
     .index("by_target", ["targetId", "at"]),
+
+  // CSAM hash matches (lib/imageModeration/csamHashCheck), one row per quarantined image, for the
+  // operator to report to Meldpunt Offlimits or the police (DSA Art. 18). Metadata only: the
+  // image is never shown to anyone. `fileId` locates the PRESERVED blob for law enforcement; the
+  // app never serves or deletes a blob referenced here (preservation is the operator's legal
+  // call). `md5`/`sha1` are the matched hashes; `provider` the hash service that matched.
+  csamEscalations: defineTable({
+    table: v.union(
+      v.literal("ownedPuzzleImages"),
+      v.literal("completionImages"),
+    ),
+    rowId: v.string(),
+    uploaderId: v.id("users"),
+    fileId: v.id("_storage"),
+    md5: v.string(),
+    sha1: v.string(),
+    provider: v.string(),
+    matchedAt: v.number(),
+    status: v.union(
+      v.literal("open"),
+      v.literal("reported"),
+      v.literal("closed"),
+    ),
+    reportedAt: v.optional(v.number()),
+    note: v.optional(v.string()),
+  })
+    .index("by_status", ["status", "matchedAt"])
+    .index("by_file", ["fileId"]),
 
   // Community change proposals against APPROVED catalog definitions. `changes` is the exact
   // patch the definition receives on approval; `baseline` snapshots the changed fields' values

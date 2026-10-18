@@ -28,6 +28,7 @@ export const moderateCompletionPhoto = internalAction({
         setFile: internal.solving.completionModerationStore.setModerationFile,
         setVerdict:
           internal.solving.completionModerationStore.setModerationVerdict,
+        quarantine: internal.solving.completionModerationStore.quarantineImage,
         retry: internal.solving.moderateCompletionPhoto.moderateCompletionPhoto,
       },
       { imageId, attempt: attempt ?? 1 },

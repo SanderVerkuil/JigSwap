@@ -136,7 +136,7 @@ export const listMyCompletions = query({
 export type PhotoItem = { url: string; pending: boolean };
 
 // Resolve a completion's photos to displayable items. Photos whose moderation sidecar says
-// "rejected" are dropped — and ONLY those. Pending stays visible but flagged `pending: true`
+// "rejected" (or "quarantined") are dropped — and ONLY those. Pending stays visible but flagged `pending: true`
 // (these reads are self-facing: the viewer is the uploader, matching the copy-gallery precedent);
 // an ABSENT sidecar is a legacy photo, treated as approved (`pending: false`). Only domain rows
 // (aggregateId present) can have sidecars, so legacy rows skip the join. Storage ids that no
@@ -160,7 +160,9 @@ export const resolvePhotoItems = async (
   const items = await Promise.all(
     row.photos.map(async (fileId): Promise<PhotoItem | null> => {
       const status = statusByFile.get(fileId as string);
-      if (status === "rejected") return null;
+      // A quarantined photo (CSAM hash match) is never served, its uploader included; the
+      // quarantine also drops it from `photos`, so this is defence in depth.
+      if (status === "rejected" || status === "quarantined") return null;
       const url = await ctx.storage.getUrl(fileId);
       if (!url) return null;
       // An unscored photo (could not be checked yet) reads as pending to its owner.

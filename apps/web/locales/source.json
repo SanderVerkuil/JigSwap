@@ -3611,7 +3611,8 @@
         "role_granted": "<strong>{actor}</strong> made <strong>{target}</strong> an admin",
         "role_revoked": "<strong>{actor}</strong> removed the admin role from <strong>{target}</strong>",
         "photo_manually_approved": "<strong>{actor}</strong> approved an unchecked photo on <strong>{target}</strong>",
-        "photo_manually_rejected": "<strong>{actor}</strong> rejected an unchecked photo on <strong>{target}</strong>"
+        "photo_manually_rejected": "<strong>{actor}</strong> rejected an unchecked photo on <strong>{target}</strong>",
+        "image_quarantined": "<strong>{actor}</strong> quarantined a photo after a known-abuse hash match (<strong>{target}</strong>)"
       },
       "activityEmpty": "No moderation activity yet.",
       "screening": {

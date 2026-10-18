@@ -7,6 +7,10 @@ import {
   type MutationCtx,
 } from "../_generated/server";
 import { stampModerationAction } from "../admin/stampModerationAction";
+import {
+  quarantineArgs,
+  recordCsamEscalation,
+} from "../lib/imageModeration/quarantine";
 import { needsRescreen } from "./adapters/photoModeration";
 
 // DB-facing helpers for the moderatePhoto Node action. A Node action (`"use node"`) has no direct
@@ -117,6 +121,27 @@ export const setModerationVerdict = internalMutation({
     // First verdict wins: an absent status is legacy-approved, anything else is already decided.
     if (row.moderationStatus !== "pending") return;
     await writeVerdict(ctx, row, args);
+  },
+});
+
+// A CSAM hash match (lib/imageModeration/quarantine): flip a still-pending row to "quarantined"
+// (first verdict wins, like setModerationVerdict) and raise the escalation. The blob stays.
+export const quarantineImage = internalMutation({
+  args: { imageId: v.id("ownedPuzzleImages"), ...quarantineArgs },
+  handler: async (ctx, { imageId, ...match }) => {
+    const row = await ctx.db.get(imageId);
+    if (!row || row.moderationStatus !== "pending") return;
+    await ctx.db.patch(imageId, {
+      moderationStatus: "quarantined",
+      updatedAt: Date.now(),
+    });
+    await recordCsamEscalation(ctx, {
+      table: "ownedPuzzleImages",
+      rowId: imageId,
+      uploaderId: row.uploaderId,
+      fileId: row.fileId,
+      ...match,
+    });
   },
 });
 
