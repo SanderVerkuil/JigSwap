@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>8/8</span>
+                <span class='fraction'>13/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>6/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>3/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>5/5</span>
+                <span class='fraction'>10/10</span>
             </div>
         
             
@@ -93,7 +93,15 @@
 <a name='L28'></a><a href='#L28'>28</a>
 <a name='L29'></a><a href='#L29'>29</a>
 <a name='L30'></a><a href='#L30'>30</a>
-<a name='L31'></a><a href='#L31'>31</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -106,21 +114,29 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">513x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">552x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">513x</span>
+<span class="cline-any cline-yes">552x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">513x</span>
+<span class="cline-any cline-yes">552x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">513x</span>
-<span class="cline-any cline-yes">10400x</span>
+<span class="cline-any cline-yes">552x</span>
+<span class="cline-any cline-yes">527x</span>
+<span class="cline-any cline-yes">527x</span>
+<span class="cline-any cline-yes">10517x</span>
+<span class="cline-any cline-yes">10517x</span>
+<span class="cline-any cline-yes">10512x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">527x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import {
@@ -136,6 +152,8 @@ import type { QueryCtx } from "../../_generated/server";
 // (`joinedAt`, set when the seat was taken: an Admin's add or an accepted invite). The
 // `circleMembers` junction mirrors the same set but carries no timestamp, so it can't supply the
 // history floor; one indexed point read of the circle row gives both. No circle row = no circle.
+// A member whose account is gone or deactivated is left out, so a deleted member is never seeded
+// into, or re-added to, a thread.
 export const convexCircleRoster = (ctx: QueryCtx): CircleRoster =&gt; ({
   async membersOf(
     circleId: CircleId,
@@ -147,10 +165,16 @@ export const convexCircleRoster = (ctx: QueryCtx): CircleRoster =&gt; ({
       )
       .unique();
     if (!row) return null;
-    return row.memberships.map((m) =&gt; ({
-      memberId: toMemberId(m.memberId as string),
-      joinedAt: new Date(m.joinedAt),
-    }));
+    const members: CircleParticipant[] = [];
+    for (const m of row.memberships) {
+      const user = await ctx.db.get(m.memberId);
+      if (!user || user.isActive === false) continue;
+      members.push({
+        memberId: toMemberId(m.memberId as string),
+        joinedAt: new Date(m.joinedAt),
+      });
+    }
+    return members;
   },
 });
 &nbsp;</pre></td></tr></table></pre>
@@ -160,7 +184,7 @@ export const convexCircleRoster = (ctx: QueryCtx): CircleRoster =&gt; ({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-18T20:22:15.172Z
+                at 2026-10-18T20:28:50.674Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

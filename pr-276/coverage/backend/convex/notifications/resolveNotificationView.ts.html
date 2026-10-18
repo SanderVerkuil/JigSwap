@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">96.12% </span>
+                <span class="strong">95.72% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>223/232</span>
+                <span class='fraction'>224/234</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">91.44% </span>
+                <span class="strong">91.11% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>246/269</span>
+                <span class='fraction'>246/270</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">97.72% </span>
+                <span class="strong">98.18% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>215/220</span>
+                <span class='fraction'>216/220</span>
             </div>
         
             
@@ -865,7 +865,11 @@
 <a name='L800'></a><a href='#L800'>800</a>
 <a name='L801'></a><a href='#L801'>801</a>
 <a name='L802'></a><a href='#L802'>802</a>
-<a name='L803'></a><a href='#L803'>803</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L803'></a><a href='#L803'>803</a>
+<a name='L804'></a><a href='#L804'>804</a>
+<a name='L805'></a><a href='#L805'>805</a>
+<a name='L806'></a><a href='#L806'>806</a>
+<a name='L807'></a><a href='#L807'>807</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1321,6 +1325,13 @@
 <span class="cline-any cline-yes">24x</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">21x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">24x</span>
 <span class="cline-any cline-yes">21x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1655,9 +1666,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1675,7 +1683,7 @@
 import { COOLDOWN_MS, type NotificationSubject } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
-import { participantRowOf } from "../conversation/readModelHelpers";
+import { circleFloorOf } from "../conversation/readModelHelpers";
 import { projectTradeParty } from "../exchange/tradeParty";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { canViewCopy } from "../library/canViewCopy";
@@ -2123,6 +2131,13 @@ const resolveSubject = async (
       if (!thread || !isParticipant) {
         return { available: false, context: {} };
       }
+      // A circle thread is unavailable to anyone without a current seat and floor in it (an
+      // ex-member whose participant sync is pending or failed), like a former participant.
+      const circleFloor =
+        thread.subjectKind === "circle"
+          ? await circleFloorOf(ctx, thread, viewerId)
+          : undefined;
+      <span class="missing-if-branch" title="if path not taken" >I</span>if (circleFloor === null) <span class="cstat-no" title="statement not covered" >return { available: false, context: {} };</span>
       const last = await memoized(
         cache,
         `lastMessage:${thread.aggregateId}`,
@@ -2140,8 +2155,8 @@ const resolveSubject = async (
       // blocked (shown collapsed in the thread): then nothing of it is previewed.
       if (
         last &amp;&amp;
-        thread.subjectKind === "circle" &amp;&amp;
-        !(await circleMessagePreviewable(ctx, thread, viewerId, last))
+        circleFloor !== undefined &amp;&amp;
+        !(await circleMessagePreviewable(ctx, viewerId, last, circleFloor))
       ) {
         return { available: true, context: {}, decision: decideMessage(true) };
       }
@@ -2448,17 +2463,14 @@ export const resolveNotificationView = async (
 };
 &nbsp;
 // Whether a circle thread's message may be previewed to this member: sent strictly after their
-// joinedAt, and not by a member they blocked.
+// floor (circleFloorOf), and not by a member they blocked.
 const circleMessagePreviewable = async (
   ctx: QueryCtx,
-  thread: Doc&lt;"threads"&gt;,
   viewerId: Id&lt;"users"&gt;,
   message: Doc&lt;"threadMessages"&gt;,
+  floor: number,
 ): Promise&lt;boolean&gt; =&gt; {
-  const row = await participantRowOf(ctx, thread.aggregateId, viewerId);
-  <span class="missing-if-branch" title="if path not taken" >I</span>if (!row || (row.joinedAt !== undefined &amp;&amp; message.sentAt &lt;= row.joinedAt)) {
-<span class="cstat-no" title="statement not covered" >    return false;</span>
-  }
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (message.sentAt &lt;= floor) <span class="cstat-no" title="statement not covered" >return false;</span>
   <span class="missing-if-branch" title="if path not taken" >I</span>if (message.authorId === undefined) <span class="cstat-no" title="statement not covered" >return true;</span>
   const authorId = message.authorId;
   const blocked = await ctx.db
@@ -2476,7 +2488,7 @@ const circleMessagePreviewable = async (
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-18T20:22:15.172Z
+                at 2026-10-18T20:28:50.674Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
