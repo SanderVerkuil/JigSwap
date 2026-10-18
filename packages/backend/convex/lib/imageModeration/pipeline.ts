@@ -8,6 +8,7 @@ import type { Id } from "../../_generated/dataModel";
 import type { ActionCtx } from "../../_generated/server";
 import {
   makeModerationPortFromEnv,
+  nextRetryDelayMs,
   planModerationStep,
   readScreeningConfig,
   screeningLogFields,
@@ -39,7 +40,8 @@ import {
 //   1. Load the row (skip when gone or no longer pending: first verdict wins, re-runs are no-ops).
 //   2. Download the blob (an upload over HASH_MAX_BYTES is refused unread) and run the input
 //      guards (lib/imageModeration/guards): size, magic bytes, the header's pixel count, all
-//      before any decode. Then (first attempt only) re-encode in memory via jimp — PNG when it
+//      before any decode. Then (on any attempt until the row is marked `reencodedAt`) re-encode
+//      in memory via jimp — PNG when it
 //      has transparency, else JPEG — which DROPS all EXIF/metadata, plus the blurhash. A decode
 //      failure is refused as "decode_failed", except WebP, which jimp cannot decode: it is
 //      classified as uploaded and stored again as "image/webp" when the client claimed another
@@ -126,6 +128,8 @@ export const HASH_MAX_BYTES = 50 * 1024 * 1024;
 export type ModerationRow = {
   fileId: Id<"_storage">;
   moderationStatus?: string;
+  /** Set by `setFile` once the row holds its re-encoded blob (absent = still the upload). */
+  reencodedAt?: number;
   uploaderId: Id<"users">;
   hashCheckedAt?: number;
   pendingHashes?: ImageHashes[];
@@ -476,12 +480,13 @@ export const runImageModeration = async <R extends ModerationRow>(
       event.image_height = guard.height;
     }
 
-    // Re-encode (strip EXIF/metadata) on the first attempt only — a retry finds the row already
-    // pointing at the clean blob. In memory only: nothing is stored or deleted until the hash
+    // Re-encode (strip EXIF/metadata) on ANY attempt until the row is marked re-encoded, so a
+    // retry after a download or swap failure never classifies (and so never publishes) the
+    // original with its EXIF/GPS. In memory only: nothing is stored or deleted until the hash
     // check has passed. A decode failure is refused (a header that says JPEG/PNG/GIF over a body
     // that is not one is a polyglot or a corrupt file), except for WebP (see the header).
     let encoded: Awaited<ReturnType<typeof reencodeImage>> | null = null;
-    if (guard.ok && attempt === 1) {
+    if (guard.ok && row.reencodedAt === undefined) {
       try {
         encoded = await reencodeImage(bytes);
         event.reencoded = true;
@@ -555,7 +560,7 @@ export const runImageModeration = async <R extends ModerationRow>(
     // drop the original.
     let cleanBytes = bytes;
     const replacement =
-      attempt !== 1
+      row.reencodedAt !== undefined
         ? null
         : encoded
           ? encoded
@@ -590,7 +595,7 @@ export const runImageModeration = async <R extends ModerationRow>(
         event.reencoded = false;
         event.swap_error = errMsg(error);
         // If the new blob was stored but the row swap failed, it is orphaned (the row still
-        // references the original). Delete it best-effort before falling back.
+        // references the original). Delete it best-effort.
         if (storedFileId !== null) {
           try {
             await ctx.storage.delete(storedFileId);
@@ -598,6 +603,20 @@ export const runImageModeration = async <R extends ModerationRow>(
             event.orphan_cleanup_error = errMsg(cleanupError);
           }
         }
+        // Never classify (and so never publish) the original: retry the whole attempt, and
+        // once the retries are spent refuse it rather than approve it.
+        const delayMs = nextRetryDelayMs(attempt);
+        if (delayMs !== null) {
+          event.decision = "retry_scheduled";
+          event.retry_in_ms = delayMs;
+          await ctx.scheduler.runAfter(delayMs, steps.retry, {
+            imageId,
+            attempt: attempt + 1,
+          });
+        } else {
+          await refuse("decode_failed");
+        }
+        return;
       }
     }
 
