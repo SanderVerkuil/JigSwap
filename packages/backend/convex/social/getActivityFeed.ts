@@ -21,6 +21,7 @@ import {
   type CopyViewContext,
 } from "../library/canViewCopy";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
+import { blockedEitherWaySet } from "./blocks";
 import { areMutualFollowers, canSeeProfileContent } from "./privacy";
 
 // The activity-feed read: the acting member's own activity plus the activity of everyone they
@@ -85,6 +86,10 @@ export const getActivityFeed = query({
       .collect();
     const audience = new Set<string>([meId as string]);
     for (const f of followRows) audience.add(f.followeeId as string);
+    // Blocked actors drop out (spec 2.6), e.g. the counterparty of a shared exchange.
+    for (const id of await blockedEitherWaySet(ctx, meId)) {
+      audience.delete(id as string);
+    }
 
     // Pull the activity-bearing events. Convex has no OR over `name`, so query per-name via the
     // `by_name` index, bounded to a recent window and capped (newest-first) to avoid a full scan.

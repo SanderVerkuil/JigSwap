@@ -1,5 +1,6 @@
 import {
   makeAddMember,
+  SharingError,
   toCircleId,
   toMemberId,
   type MemberId,
@@ -8,6 +9,7 @@ import {
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { isBlockedEitherWay } from "../social/blocks";
 import { convexCircleRepository } from "./adapters/convexCircleRepository";
 import { membershipIdGenerator } from "./adapters/idGenerators";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
@@ -29,6 +31,11 @@ export const addMember = mutation({
   },
   handler: async (ctx, args) => {
     const actorId = await requireMember(ctx);
+    // A pair blocked either way can't be put in a circle together (spec 2.6): the generic
+    // not-allowed refusal, never a block-specific one.
+    if (await isBlockedEitherWay(ctx, actorId, args.memberId)) {
+      throw toConvexError(SharingError.notCircleAdmin());
+    }
 
     const addMember = makeAddMember({
       circles: convexCircleRepository(ctx),

@@ -244,12 +244,14 @@ describe("blocked pair is refused", () => {
         );
         await block(t, ids);
 
+        // The blocked pair's copies are unviewable for each other (canViewCopy), so the copy
+        // gate refuses first with its generic CopyNotFound.
         await expectCode(
           asAlice(t).mutation(
             api.conversation.startCopyConversation.startCopyConversation,
             { copyId, body: "hello again" },
           ),
-          "NotConnected",
+          "CopyNotFound",
         );
       });
 
@@ -663,6 +665,8 @@ describe("startCopyConversation hardening", () => {
   });
 
   test("a blocked pair is refused even with another connection clause, and no thread is opened", async () => {
+    // The blocked pair's copies are unviewable for each other (canViewCopy), so the copy gate
+    // refuses first with its generic CopyNotFound; assertPairNotBlocked backs it up.
     const t = convexTest(schema, modules);
     const { alice, bob } = await seed(t);
     await shareCircle(t, alice, bob);
@@ -674,7 +678,7 @@ describe("startCopyConversation hardening", () => {
         api.conversation.startCopyConversation.startCopyConversation,
         { copyId, body: "hello" },
       ),
-      "NotConnected",
+      "CopyNotFound",
     );
     expect(await t.run((ctx) => ctx.db.query("threads").collect())).toEqual([]);
   });

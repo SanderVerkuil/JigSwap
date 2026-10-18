@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { blockStateBetween } from "./blocks";
 import { areMutualFollowers } from "./privacy";
 import { toProfileView } from "./readViews";
 
@@ -22,6 +23,16 @@ export const getProfile = query({
       .withIndex("by_member", (q) => q.eq("memberId", target))
       .unique();
     if (!row) return null;
+    const block =
+      target === viewer
+        ? undefined
+        : await blockStateBetween(ctx, viewer, target);
+    if (block) {
+      // Blocked (spec 2.6): null for the blocked side; a stub without bio for the blocker.
+      return block === "byMe"
+        ? { ...toProfileView(row), bio: undefined, blockedByMe: true }
+        : null;
+    }
 
     // Visibility ACL: a private profile is visible only to its owner and to mutual followers.
     if (

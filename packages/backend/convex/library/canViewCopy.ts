@@ -1,6 +1,7 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { householdMateIds } from "../household/memberships";
+import { blockedEitherWaySet, isBlockedEitherWay } from "../social/blocks";
 import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
 import { isCircleSharedWithViewer } from "./circleSharedCopies";
 import { isCopyPrivate } from "./copyVisibility";
@@ -67,6 +68,9 @@ export interface CopyViewContext {
   // The other members of the viewer's household (empty when none): their copies are in the
   // viewer's library regardless of availability or profile visibility.
   readonly householdMateIds: ReadonlySet<Id<"users">>;
+  // Members blocked either way with the viewer: their copies are unviewable for the viewer
+  // (unless the viewer holds the copy), whatever household, circle or public rule would apply.
+  readonly blockedIds: ReadonlySet<Id<"users">>;
   readonly ownerVisibility: Map<Id<"users">, "public" | "private">;
   readonly mutualWithOwner: Map<Id<"users">, boolean>;
 }
@@ -78,6 +82,7 @@ export const buildCopyViewContext = async (
   return {
     viewerId,
     householdMateIds: await householdMateIds(ctx, viewerId),
+    blockedIds: await blockedEitherWaySet(ctx, viewerId),
     ownerVisibility: new Map(),
     mutualWithOwner: new Map(),
   };
@@ -98,6 +103,8 @@ export const buildCopyViewContext = async (
 //      that is live or went ahead — see EXCHANGE_STATUSES_REVEALING_COPY.
 // Rules 3 and 4 already require an OPEN copy, which is never private, so in practice this replaces
 // rule 6 with rule P for private copies. There is deliberately no admin rule here; admin surfaces use their own reads.
+// A block either way between viewer and owner vetoes every rule after 1-2, rule P included (the
+// holder keeps access).
 // VIEWING only: exchange proposals stay gated by the availability flags in the domain
 // (proposeExchange -> CopyNotAvailable), so rule 6 never makes a non-open copy exchangeable.
 export const canViewCopyWithContext = async (
@@ -108,6 +115,7 @@ export const canViewCopyWithContext = async (
   const viewerId = context.viewerId;
   if (copy.ownerId === viewerId) return true;
   if (copy.heldBy === viewerId) return true;
+  if (context.blockedIds.has(copy.ownerId)) return false;
   if (context.householdMateIds.has(copy.ownerId)) return true;
   if (isCopyPrivate(copy)) return isExchangePartyFor(ctx, viewerId, copy);
 
@@ -142,6 +150,7 @@ export const canViewCopy = async (
   copy: Doc<"ownedPuzzles">,
 ): Promise<boolean> => {
   if (copy.ownerId === viewerId || copy.heldBy === viewerId) return true;
+  if (await isBlockedEitherWay(ctx, viewerId, copy.ownerId)) return false;
   if (
     isOpen(copy) &&
     (await profileVisibilityOf(ctx, copy.ownerId)) === "public"

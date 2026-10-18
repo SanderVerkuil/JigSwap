@@ -4,6 +4,7 @@ import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { toMemberView } from "../identity/toMemberView";
+import { blockedEitherWaySet } from "../social/blocks";
 import { canViewCopy } from "./canViewCopy";
 
 // Read side: the discussion comments on a single shared PHOTO, newest first. Keyed by the
@@ -30,25 +31,29 @@ export const listPhotoComments = query({
       .withIndex("by_photo", (q) => q.eq("photoId", args.photoId))
       .order("desc")
       .collect();
+    // Authors blocked either way with the viewer drop out (spec 2.6).
+    const blockedIds = await blockedEitherWaySet(ctx, viewerId);
 
     return Promise.all(
-      rows.map(async (row): Promise<PhotoCommentView> => {
-        const author = await ctx.db.get(row.authorId);
-        return {
-          id: row.aggregateId ?? row._id,
-          author: author
-            ? toMemberView(author)
-            : {
-                _id: row.authorId,
-                _creationTime: 0,
-                isActive: false,
-                createdAt: 0,
-                updatedAt: 0,
-              },
-          text: row.text,
-          createdAt: row.createdAt,
-        };
-      }),
+      rows
+        .filter((row) => !blockedIds.has(row.authorId))
+        .map(async (row): Promise<PhotoCommentView> => {
+          const author = await ctx.db.get(row.authorId);
+          return {
+            id: row.aggregateId ?? row._id,
+            author: author
+              ? toMemberView(author)
+              : {
+                  _id: row.authorId,
+                  _creationTime: 0,
+                  isActive: false,
+                  createdAt: 0,
+                  updatedAt: 0,
+                },
+            text: row.text,
+            createdAt: row.createdAt,
+          };
+        }),
     );
   },
 });

@@ -426,3 +426,78 @@ describe("reputation.backfill", () => {
     expect(profileAgain?.reviewCount).toBe(2);
   });
 });
+
+describe("reputation and blocks", () => {
+  const insertBlock = (
+    t: TestConvex<typeof schema>,
+    blockerId: Id<"users">,
+    blockedId: Id<"users">,
+  ) =>
+    t.run((ctx) =>
+      ctx.db.insert("blocks", { blockerId, blockedId, createdAt: Date.now() }),
+    );
+
+  test.each([
+    ["the reviewer blocked the reviewee", true],
+    ["the reviewee blocked the reviewer", false],
+  ])(
+    "%s: the review is refused with the generic ExchangeNotCompleted",
+    async (_, reviewerBlocks) => {
+      const t = convexTest(schema, modules);
+      const { alice, bob, completed } = await seed(t);
+      if (reviewerBlocks) await insertBlock(t, alice, bob);
+      else await insertBlock(t, bob, alice);
+
+      await expectConvexCode(
+        asUser(t, "clerk_alice").mutation(
+          api.reputation.submitPartnerReview.submitPartnerReview,
+          {
+            exchangeId: completed.aggregateId,
+            revieweeId: bob,
+            rating: 5,
+            scores: goodScores,
+          },
+        ),
+        "ExchangeNotCompleted",
+      );
+      expect(
+        await t.run((ctx) => ctx.db.query("reviews").collect()),
+      ).toHaveLength(0);
+    },
+  );
+
+  test("listReviewsForMember leaves out a blocked reviewer and projects the rest", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, carol, completed } = await seed(t);
+    await asUser(t, "clerk_alice").mutation(
+      api.reputation.submitPartnerReview.submitPartnerReview,
+      {
+        exchangeId: completed.aggregateId,
+        revieweeId: bob,
+        rating: 5,
+        scores: goodScores,
+      },
+    );
+
+    // Carol (unblocked) sees alice's review with alice projected, never a raw reviewer id.
+    const forCarol = await asUser(t, "clerk_carol").query(
+      api.reputation.listReviewsForMember.listReviewsForMember,
+      { memberId: bob },
+    );
+    expect(forCarol).toHaveLength(1);
+    expect(forCarol[0]).not.toHaveProperty("reviewerId");
+    expect(forCarol[0]?.reviewer).toMatchObject({
+      anonymous: false,
+      member: { _id: alice },
+    });
+
+    // Once alice and carol are blocked (either way), alice's review is gone for carol.
+    await insertBlock(t, alice, carol);
+    expect(
+      await asUser(t, "clerk_carol").query(
+        api.reputation.listReviewsForMember.listReviewsForMember,
+        { memberId: bob },
+      ),
+    ).toEqual([]);
+  });
+});

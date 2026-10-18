@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { blockedEitherWaySet } from "./blocks";
 import { areMutualFollowers, profileVisibilityOf } from "./privacy";
 import { toFollowEdgeView } from "./readViews";
 
@@ -18,6 +19,9 @@ export const listFollowees = query({
   handler: async (ctx, args): Promise<FollowEdgeView[]> => {
     const viewer = (await requireMember(ctx)) as unknown as Id<"users">;
     const target = args.memberId ?? viewer;
+    // Blocked either way (spec 2.6): neither side sees the other, nor the other's follow graph.
+    const blockedIds = await blockedEitherWaySet(ctx, viewer);
+    if (blockedIds.has(target)) return [];
 
     if (
       target !== viewer &&
@@ -32,9 +36,11 @@ export const listFollowees = query({
       .withIndex("by_follower", (q) => q.eq("followerId", target))
       .collect();
     return Promise.all(
-      rows.map((r) =>
-        toFollowEdgeView(ctx, r.aggregateId, r.followeeId, r.createdAt),
-      ),
+      rows
+        .filter((r) => !blockedIds.has(r.followeeId))
+        .map((r) =>
+          toFollowEdgeView(ctx, r.aggregateId, r.followeeId, r.createdAt),
+        ),
     );
   },
 });

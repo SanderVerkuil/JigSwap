@@ -8,6 +8,7 @@ import {
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import { toMemberView } from "../identity/toMemberView";
+import { blockStateBetween } from "../social/blocks";
 import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
 
 // THE per-trade identity chokepoint. A trade reveal applies ONLY inside that one exchange (its
@@ -47,7 +48,13 @@ export type ProjectedTradeParty = {
   readonly user?: Doc<"users">;
 };
 
-type PartyFacts = { user: Doc<"users"> | null; visible: boolean };
+type PartyFacts = {
+  user: Doc<"users"> | null;
+  visible: boolean;
+  // The party blocked the viewer (spec 2.6): the trade reveals nothing about them, as
+  // projectMemberIdentity's byThem. A viewer who blocked the party keeps the ordinary rules.
+  blockedByThem: boolean;
+};
 
 /**
  * Optional per-request memo of the viewer-independent-of-trade facts (the party's row and whether
@@ -68,13 +75,17 @@ const loadPartyFacts = async (
     user.isActive &&
     ((await profileVisibilityOf(ctx, partyId)) === "public" ||
       (await areMutualFollowers(ctx, viewerId, partyId)));
-  return { user, visible };
+  const blockedByThem =
+    partyId !== viewerId &&
+    (await blockStateBetween(ctx, viewerId, partyId)) === "byThem";
+  return { user, visible, blockedByThem };
 };
 
 /**
  * How `viewerId` sees `partyId` (one of the exchange's two parties) inside this exchange.
  * departed = users row missing or `isActive === false`; visible = public profile or mutual
- * followers; tradeRevealed = revealed by this trade only; hidden = otherwise.
+ * followers; tradeRevealed = revealed by this trade only; hidden = otherwise, and always when the
+ * party blocked the viewer.
  */
 export const projectTradeParty = async (
   ctx: QueryCtx,
@@ -88,7 +99,10 @@ export const projectTradeParty = async (
     facts = loadPartyFacts(ctx, viewerId, partyId);
     memo?.set(partyId, facts);
   }
-  const { user, visible: partyVisible } = await facts;
+  const { user, visible: partyVisible, blockedByThem } = await facts;
+  if (blockedByThem && user !== null && user.isActive) {
+    return { state: "hidden" };
+  }
   // Only the requester looking at the owner needs the per-trade row.
   const ownerActed =
     viewerId === exchange.initiatorId &&

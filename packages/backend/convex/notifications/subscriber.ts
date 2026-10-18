@@ -7,6 +7,7 @@ import {
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
+import { isBlockedEitherWay } from "../social/blocks";
 import { makeNotify } from "./adapters/makeNotify";
 import { isViewingMessages } from "./presenceGate";
 
@@ -24,9 +25,35 @@ export const handleDomainEvent = async (
   const notify = makeNotify(ctx);
   const commands = await translate(ctx, event);
   for (const cmd of commands) {
+    // Blocks are silent (spec 2.6): nothing a member blocked either way with the recipient does
+    // reaches them. The one place every notification type passes through. Exception: the
+    // lifecycle of an exchange that was already under way continues after a block, so its
+    // notifications still arrive, but without the actor (their fallback copy names nobody).
+    if (
+      cmd.actorId !== undefined &&
+      (await isBlockedEitherWay(ctx, cmd.actorId, cmd.memberId))
+    ) {
+      if (!EXCHANGE_LIFECYCLE_TYPES.has(cmd.type)) continue;
+      const { actorId: _actor, ...withoutActor } = cmd;
+      await notify(withoutActor);
+      continue;
+    }
     await notify(cmd);
   }
 };
+
+// Exchange lifecycle notifications that keep flowing for a blocked pair (an accepted exchange
+// can still be completed, cancelled or disputed; a block declines or cancels pending
+// proposals). Proposal notifications aren't here: proposing is refused for a blocked pair. No
+// loan notification types exist yet; loan lifecycle types belong here when they do.
+const EXCHANGE_LIFECYCLE_TYPES: ReadonlySet<NotifyMemberCommand["type"]> =
+  new Set([
+    "trade_accepted",
+    "trade_declined",
+    "trade_cancelled",
+    "trade_completed",
+    "exchange_disputed",
+  ]);
 
 const asMember = (id: string): MemberId => toMemberId(id);
 

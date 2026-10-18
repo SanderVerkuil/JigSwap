@@ -2,6 +2,7 @@ import { makeInviteToHousehold, toMemberId } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { isBlockedEitherWay } from "../social/blocks";
 import { householdDeps } from "./adapters/deps";
 import { toConvexError } from "./errors";
 
@@ -12,7 +13,11 @@ export const inviteToHousehold = mutation({
   args: { inviteeId: v.id("users") },
   handler: async (ctx, args): Promise<string> => {
     const actorId = await requireMember(ctx);
-    if (!(await ctx.db.get(args.inviteeId))) {
+    // A pair blocked either way reads as a missing member (spec 2.6: generic, never block-specific).
+    if (
+      !(await ctx.db.get(args.inviteeId)) ||
+      (await isBlockedEitherWay(ctx, actorId, args.inviteeId))
+    ) {
       throw new ConvexError({
         code: "MemberNotFound",
         message: "No such member",

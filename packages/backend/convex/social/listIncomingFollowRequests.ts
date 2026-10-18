@@ -2,6 +2,7 @@ import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { toMemberView } from "../identity/toMemberView";
+import { blockedEitherWaySet } from "./blocks";
 
 // Read side: the acting member's pending incoming follow requests, joined with the
 // requester's member view and whether the member already follows them back (drives the
@@ -19,8 +20,10 @@ export const listIncomingFollowRequests = query({
       )
       .collect();
 
+    const blockedIds = await blockedEitherWaySet(ctx, me);
     const result = [];
     for (const row of pending) {
+      if (blockedIds.has(row.requesterId)) continue;
       // Skip deleted AND deactivated requesters (mirrors the teaser's gate): a deactivated
       // member must not render as an actionable request with a dead profile link.
       const user = await ctx.db.get(row.requesterId);

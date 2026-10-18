@@ -1,6 +1,7 @@
 import type { MemberView } from "@jigswap/contracts";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { blockedEitherWaySet } from "../social/blocks";
 import { profileVisibilityOf } from "../social/privacy";
 import { requireMember } from "./requireMember";
 import { toMemberView } from "./toMemberView";
@@ -22,10 +23,12 @@ export const listRecentPublicMembers = query({
       .order("desc")
       .take(SCAN_LIMIT);
 
+    // Members blocked either way with the viewer are never suggested (spec 2.6).
+    const blockedIds = await blockedEitherWaySet(ctx, viewerId);
     const results: MemberView[] = [];
     for (const u of candidates) {
       if (results.length >= LIMIT) break;
-      if (u._id === viewerId) continue;
+      if (u._id === viewerId || blockedIds.has(u._id)) continue;
       if (u.isActive === false) continue;
       if ((await profileVisibilityOf(ctx, u._id)) !== "public") continue;
       results.push(toMemberView(u));

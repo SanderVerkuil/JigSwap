@@ -4,6 +4,7 @@ import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
+import { isBlockedEitherWay } from "./blocks";
 import { knownFollowerIds } from "./knownFollowers";
 import { areMutualFollowers, profileVisibilityOf } from "./privacy";
 
@@ -31,6 +32,9 @@ export const followersYouKnow = query({
   handler: async (ctx, args): Promise<FollowersYouKnowView> => {
     const viewer = (await requireMember(ctx)) as unknown as Id<"users">;
     if (args.memberId === viewer) return { total: 0, members: [] };
+    if (await isBlockedEitherWay(ctx, viewer, args.memberId)) {
+      return { total: 0, members: [] };
+    }
 
     if (
       (await profileVisibilityOf(ctx, args.memberId)) === "private" &&

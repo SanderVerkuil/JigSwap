@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
+import { blockedEitherWaySet } from "../social/blocks";
 import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
 
 // Global search: the single read behind the ⌘K command palette. Given a term it returns a small
@@ -73,10 +74,12 @@ export const global = query({
         q.search("searchableName", term),
       )
       .take(PEOPLE_CANDIDATE_LIMIT);
+    // Members blocked either way with the searcher are never surfaced (spec 2.6).
+    const blockedIds = await blockedEitherWaySet(ctx, memberId);
     const people: GlobalSearchResults["people"] = [];
     for (const u of candidates) {
       if (people.length >= limit) break;
-      if (u._id === memberId) continue;
+      if (u._id === memberId || blockedIds.has(u._id)) continue;
       // Privacy chokepoint: only surface a member if their profile is public, or
       // they are a mutual follower of the searcher. Mirrors getProfile and the
       // custody-timeline projectMemberIdentity rules so a private member is not

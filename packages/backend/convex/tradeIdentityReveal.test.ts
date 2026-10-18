@@ -996,3 +996,32 @@ describe("getTradePartner", () => {
     expect(await card(t, "owner", ex)).toEqual({ state: "departed" });
   });
 });
+
+describe("a block between the trade parties", () => {
+  const card = async (t: T, who: string, exchangeId: string) =>
+    as(t, who).query(api.exchange.getTradePartner.getTradePartner, {
+      exchangeId: await docIdOf(t, exchangeId),
+    });
+  const insertBlock = (t: T, blockerId: Id<"users">, blockedId: Id<"users">) =>
+    t.run((ctx) =>
+      ctx.db.insert("blocks", { blockerId, blockedId, createdAt: 1 }),
+    );
+
+  test("the blocked party sees the blocker hidden in the trade; the blocker keeps the trade view", async () => {
+    const t = convexTest(schema, modules);
+    const w = await seed(t);
+    const ex = await propose(t, "requester", w.copy);
+    await act(t, "owner", "accept", ex);
+    // Both revealed by the trade before the block.
+    expect((await card(t, "requester", ex))?.state).toBe("revealed");
+    expect((await detail(t, "requester", ex))?.owner).not.toBeNull();
+
+    await insertBlock(t, w.owner, w.requester);
+
+    expect(await card(t, "requester", ex)).toEqual({ state: "hidden" });
+    expect((await detail(t, "requester", ex))?.owner).toBeNull();
+    // The blocker (byMe) keeps the ordinary trade rules.
+    expect((await card(t, "owner", ex))?.state).toBe("revealed");
+    expect((await detail(t, "owner", ex))?.requester).not.toBeNull();
+  });
+});

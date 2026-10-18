@@ -4,6 +4,7 @@ import { query } from "../_generated/server";
 import { optionalActingMember } from "../identity/optionalActingMember";
 import { resolveMemberByHandle } from "../identity/resolveMemberByHandle";
 import { isCopyPrivate, seesPrivateCopiesOf } from "../library/copyVisibility";
+import { blockStateBetween } from "./blocks";
 import { memberTeaserIdentityOf, profileVisibilityOf } from "./privacy";
 
 // The UNAUTHENTICATED read behind /members/$handle. Deliberately tiny: identity fields only —
@@ -28,6 +29,22 @@ export const getPublicMemberTeaser = query({
         .unique(),
       optionalActingMember(ctx),
     ]);
+
+    // Blocked (spec 2.6): the blocked side reads not-found; the blocker gets the identity only.
+    const block =
+      viewer === null || viewer === memberId
+        ? undefined
+        : await blockStateBetween(ctx, viewer, memberId);
+    if (block === "byThem") return null;
+    if (block === "byMe") {
+      return {
+        ...memberTeaserIdentityOf(user, profile, true),
+        memberSince: user.createdAt,
+        visibility,
+        puzzleCount: null,
+        blockedByMe: true,
+      };
+    }
 
     // Avatar (memberTeaserIdentityOf): any signed-in member may see it — the spec's interstitial
     // shows the person's full identity so the page feels human ("person feels present");

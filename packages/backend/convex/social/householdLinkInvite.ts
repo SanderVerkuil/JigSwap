@@ -2,12 +2,14 @@ import { ConvexError } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { membershipOf } from "../household/memberships";
+import { isBlockedEitherWay } from "./blocks";
 import { isNetworkLink } from "./inviteLinkRules";
 
 // Where an EXISTING member stands on a household invite link (the signed-in landing's Accept /
 // Decline). One resolver for the landing query and both mutations, so they can never disagree:
 // - "invalid": unknown, a network link, revoked, or the owner is no longer the admin of the
-//   household the link was minted for (left, or the household dissolved);
+//   household the link was minted for (left, or the household dissolved), or the inviter and the
+//   member are blocked either way (spec 2.6);
 // - "used" / "expired": single use and the 14-day expiry, checked server-side;
 // - "own-link": the inviter opened their own link;
 // - "already-in-household": the one-household rule (no Accept is offered);
@@ -49,6 +51,9 @@ export const resolveHouseholdLink = async (
     return { state: "expired" };
   }
   if (link.ownerId === memberId) return { state: "own-link" };
+  if (await isBlockedEitherWay(ctx, link.ownerId, memberId)) {
+    return { state: "invalid" };
+  }
   const owner = await membershipOf(ctx, link.ownerId);
   if (
     owner === null ||

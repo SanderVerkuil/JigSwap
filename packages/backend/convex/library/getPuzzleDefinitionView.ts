@@ -8,6 +8,7 @@ import { query } from "../_generated/server";
 import { householdMateIds } from "../household/memberships";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
+import { blockedEitherWaySet } from "../social/blocks";
 import { profileVisibilityOf } from "../social/privacy";
 import { isCircleSharedWithViewer } from "./circleSharedCopies";
 import {
@@ -95,8 +96,11 @@ export const getPuzzleDefinitionView = query({
       (c) => c.ownerId !== viewerId && isOpen(c),
     );
 
+    // Copies of members blocked either way with the viewer are never offered (spec 2.6).
+    const blockedIds = await blockedEitherWaySet(ctx, viewerId);
     const reachable: Doc<"ownedPuzzles">[] = [];
     for (const copy of availableNotOwn) {
+      if (blockedIds.has(copy.ownerId)) continue;
       if (
         (await ownerIsPublic(copy.ownerId)) ||
         (await isCircleSharedWithViewer(ctx, viewerId, copy))

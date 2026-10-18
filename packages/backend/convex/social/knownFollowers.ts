@@ -1,5 +1,6 @@
 import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { blockedEitherWaySet } from "./blocks";
 
 // Shared "followers you know" computation: the ids of members who follow `targetId` AND are
 // followed by `viewerId` — i.e. (viewer's following) ∩ (target's followers). This is
@@ -8,13 +9,17 @@ import type { QueryCtx } from "../_generated/server";
 // about accounts the viewer already trusts enough to follow. Reused by social/followersYouKnow
 // (profile social-proof row) and by identity/searchUsers (known-follower ranking tiebreak) — keep
 // this export clean and dependency-free (no privacy/visibility gating here; callers gate as needed).
+// Members blocked either way with the viewer are left out (spec 2.6).
 export const knownFollowerIds = async (
   ctx: QueryCtx,
   viewerId: Id<"users">,
   targetId: Id<"users">,
 ): Promise<Id<"users">[]> => {
   const viewerFollowing = await viewerFollowingSet(ctx, viewerId);
-  return knownFollowerIdsOf(ctx, viewerId, viewerFollowing, targetId);
+  const blockedIds = await blockedEitherWaySet(ctx, viewerId);
+  return (
+    await knownFollowerIdsOf(ctx, viewerId, viewerFollowing, targetId)
+  ).filter((id) => !blockedIds.has(id));
 };
 
 /** The count of `knownFollowerIds` — a trivial `.length`, exported so callers don't need the array. */

@@ -2,6 +2,7 @@ import { normalizeMemberName, type MemberView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { blockedEitherWaySet } from "../social/blocks";
 import {
   countKnownFollowersOf,
   viewerFollowingSet,
@@ -62,6 +63,8 @@ export const searchUsers = query({
     // Built ONCE per query (not per candidate) so ranking every candidate against this viewer
     // doesn't re-scan `follows` by_follower CANDIDATE_LIMIT times.
     const viewerFollowing = await viewerFollowingSet(ctx, viewerId);
+    // Members blocked either way with the searcher are never surfaced (spec 2.6).
+    const blockedIds = await blockedEitherWaySet(ctx, viewerId);
 
     const visible: {
       user: Doc<"users">;
@@ -69,6 +72,7 @@ export const searchUsers = query({
       knownCount: number;
     }[] = [];
     for (const u of candidates) {
+      if (blockedIds.has(u._id)) continue;
       // Privacy chokepoint: surface a member only if they are the searcher, their
       // profile is public, or they and the searcher are mutual followers. Mirrors
       // globalSearch and getProfile so a private member is not identifiable here.
