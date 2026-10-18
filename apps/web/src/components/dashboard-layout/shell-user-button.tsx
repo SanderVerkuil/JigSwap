@@ -19,6 +19,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Bell,
+  House,
   ListChecks,
   Shield,
   ShieldBan,
@@ -114,6 +115,14 @@ export function ShellUserButton({
             href="/admin"
           />
         )}
+        {/* The app's logos all point at /dashboard, so this is the signed-in
+            way back to the landing page. Clerk navigates client-side, which / does
+            not redirect (only a document load does; see lib/home-redirect). */}
+        <UserButton.Link
+          label={t("user.homepage")}
+          labelIcon={<House className="size-4" />}
+          href="/"
+        />
         <UserButton.Action label="manageAccount" />
         <UserButton.Action label="signOut" />
       </UserButton.MenuItems>

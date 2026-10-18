@@ -7,11 +7,26 @@ import { HowPreview } from "@/components/marketing/home/how-preview";
 import { Stats } from "@/components/marketing/home/stats";
 import { Sustain } from "@/components/marketing/home/sustain";
 import { Testimonial } from "@/components/marketing/home/testimonial";
+import { shouldRedirectHomeToDashboard } from "@/lib/home-redirect";
 import { globalStatsQuery } from "@/lib/marketing-queries";
 import { pageTitle } from "@/lib/page-title";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
+  // A signed-in visitor entering the site here lands on their dashboard. On the
+  // server this is the document load (root beforeLoad has resolved Clerk's
+  // userId), so the redirect is an HTTP one with no flash of the landing page;
+  // client-side navigation to / never redirects.
+  beforeLoad: ({ context }) => {
+    if (
+      shouldRedirectHomeToDashboard({
+        userId: context.userId,
+        isDocumentLoad: typeof window === "undefined",
+      })
+    ) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "home") }],
   }),

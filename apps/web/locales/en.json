@@ -3506,7 +3506,8 @@
       "fullWidth": "Full Width",
       "hideEmail": "Hide Email Address",
       "admin": "Admin",
-      "privacySafety": "Privacy & safety"
+      "privacySafety": "Privacy & safety",
+      "homepage": "JigSwap homepage"
     },
     "theme": {
       "toggle": "Toggle theme",
