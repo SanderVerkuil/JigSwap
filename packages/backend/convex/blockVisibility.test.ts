@@ -297,6 +297,28 @@ describe("profiles", () => {
     });
   });
 
+  test.each(DIRECTIONS)(
+    "%s: the follow relation stub keeps a private target's targetIsPrivate",
+    async (_, pair) => {
+      const t = convexTest(schema, modules);
+      const u = await seed(t);
+      await t.run((ctx) =>
+        ctx.db.insert("profiles", {
+          memberId: u.bob,
+          visibility: "private",
+          updatedAt: Date.now(),
+        }),
+      );
+      await insertBlock(t, ...pair(u));
+      expect(
+        await as(t, "alice").query(
+          api.social.getFollowRelation.getFollowRelation,
+          { memberId: u.bob },
+        ),
+      ).toMatchObject({ following: false, targetIsPrivate: true });
+    },
+  );
+
   test("the identity reads return the blocker as not found to the blocked side only", async () => {
     const t = convexTest(schema, modules);
     const u = await seed(t);

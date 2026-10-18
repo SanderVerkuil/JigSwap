@@ -24,13 +24,15 @@ export const getFollowRelation = query({
   }> => {
     const me = (await requireMember(ctx)) as unknown as Id<"users">;
 
-    // Blocked (spec 2.6): the relation a missing member reads as; the blocker also gets the flag.
+    // Blocked (spec 2.6): no follow edges or request either way; the blocker also gets the flag.
+    // targetIsPrivate stays the real value, so a private target's stub doesn't flip to public.
     const block = await blockStateBetween(ctx, me, args.memberId);
     if (block) {
       return {
         following: false,
         followsYou: false,
-        targetIsPrivate: false,
+        targetIsPrivate:
+          (await profileVisibilityOf(ctx, args.memberId)) === "private",
         pendingRequest: null,
         ...(block === "byMe" ? { blockedByMe: true as const } : {}),
       };
