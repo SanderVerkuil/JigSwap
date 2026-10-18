@@ -102,6 +102,19 @@ const anonRefOf = (targetId: string, salt: string): string =>
   cyrb53(`${targetId}:${salt}`);
 
 /**
+ * The anonymous projection of `targetId` under `salt`: exactly what projectMemberIdentity emits for
+ * a hidden member, for callers that decide visibility through another chokepoint (the per-trade
+ * rule) but must keep the same salted reference.
+ */
+export const anonymousMemberOf = (
+  targetId: Id<"users">,
+  salt: string,
+): Extract<ProjectedMember, { anonymous: true }> => ({
+  anonymous: true,
+  anonRef: anonRefOf(targetId, salt),
+});
+
+/**
  * THE privacy chokepoint. Project `targetId`'s identity for `viewerId`, salting any anonymisation
  * with `salt` (pass the copyId so the same hidden member is stable within a timeline but
  * un-correlatable across copies). Rules, in order:

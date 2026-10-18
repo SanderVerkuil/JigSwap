@@ -217,7 +217,7 @@ describe("getMyInbox", () => {
       expect(subject.puzzleTitle).toBe("Test Puzzle");
       expect(inbox[0].lastMessage?.kind).toBe("system");
       expect(inbox[0].lastMessage?.body).toBe("Exchange proposed");
-      expect(inbox[0].lastMessage?.authorId).toBeNull();
+      expect(inbox[0].lastMessage?.isMine).toBe(false);
     }
   });
 });
@@ -350,7 +350,7 @@ describe("getThreadMessages pagination", () => {
       { threadId, limit: 2 },
     );
     expect(latest.map((m) => m.body)).toEqual(["m2", "m3"]);
-    expect(latest.map((m) => m.authorId)).toEqual([alice, alice]);
+    expect(latest.map((m) => m.isMine)).toEqual([true, true]);
 
     const older = await asAlice(t).query(
       api.conversation.getThreadMessages.getThreadMessages,

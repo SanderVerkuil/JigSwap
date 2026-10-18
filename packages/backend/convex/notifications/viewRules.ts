@@ -68,6 +68,14 @@ export interface ActorFacts {
   /** The actor's profile visibility is public (an absent profile row counts as public). */
   readonly isPublic: boolean;
   readonly mutualFollowers: boolean;
+  /**
+   * A message_received whose sender the per-trade rule did not decide (a DM, or a thread /
+   * exchange that no longer resolves). Its sender gets no initiator reveal: they are projected
+   * like everywhere in the thread itself (self / public / mutual), so a private sender stays
+   * anonymous. Fails closed. Required so no caller can omit it and fall back to the initiator
+   * reveal.
+   */
+  readonly dmMessage: boolean;
 }
 
 /** Whether the viewer may see who the actor is. Deleted or deactivated actors are never shown. */
@@ -78,7 +86,7 @@ export const isActorRevealed = (
 ): boolean => {
   if (!facts.active) return false;
   if (facts.isViewer) return true;
-  if (INITIATOR_NOTIFICATION_TYPES.has(type)) return true;
+  if (INITIATOR_NOTIFICATION_TYPES.has(type) && !facts.dmMessage) return true;
   if (ADMIN_NOTIFICATION_TYPES.has(type) && viewerIsAdmin) return true;
   return facts.isPublic || facts.mutualFollowers;
 };

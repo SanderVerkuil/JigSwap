@@ -51,8 +51,8 @@ export interface DeliveryContent {
   /**
    * The actor is DEPARTED (deleted or deactivated): render the "Former member" label, never a
    * name. A privacy-hidden living actor (e.g. a private owner declining a trade before ever
-   * replying) is NOT flagged: it simply carries no actorName, so the renderer uses its generic,
-   * nameless copy.
+   * replying, or a private DM sender) is NOT flagged: it simply carries no actorName, so the
+   * renderer uses its generic, nameless copy.
    */
   readonly actorAnonymous: boolean;
   /** The in-app deep link (root-relative); null when the read model has none (use the fallback). */

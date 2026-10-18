@@ -145,7 +145,16 @@ export interface PhotoCommentView {
  */
 export type ProjectedMember =
   | { anonymous: false; member: MemberView }
-  | { anonymous: true; anonRef: string };
+  | {
+      anonymous: true;
+      anonRef: string;
+      /**
+       * Set when the member's account is gone (deleted or deactivated), so the UI can say "Former
+       * member" rather than the anonymous label. Carries no identity. Today only exchange-thread
+       * inbox subjects (the per-trade projection) set it.
+       */
+      departed?: true;
+    };
 
 /**
  * "Followers you know" social proof for a member profile: accounts the VIEWER follows who also

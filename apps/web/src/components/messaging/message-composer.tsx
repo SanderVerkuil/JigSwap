@@ -33,12 +33,8 @@ type PostMessageArgs = FunctionArgs<typeof gateway.conversation.postMessage>;
 // view holds; Convex reverts the patch when the mutation settles. Module-level
 // factory so the impure Date.now()/randomUUID calls stay out of render.
 const optimisticAppend =
-  (
-    me: string | undefined,
-    staged: MessageCopy | null,
-  ): OptimisticUpdate<PostMessageArgs> =>
+  (staged: MessageCopy | null): OptimisticUpdate<PostMessageArgs> =>
   (localStore, args) => {
-    if (!me) return;
     const current = localStore.getQuery(
       gateway.conversation.getThreadMessages,
       { threadId: args.threadId },
@@ -51,7 +47,7 @@ const optimisticAppend =
         ...current,
         {
           id: `pending-${crypto.randomUUID()}`,
-          authorId: me,
+          isMine: true,
           kind: args.kind,
           body: args.body,
           sentAt: Date.now(),
@@ -96,7 +92,7 @@ export function MessageComposer({
   const postMessage = useMutation({
     mutationFn: useConvexMutation(
       gateway.conversation.postMessage,
-    ).withOptimisticUpdate(optimisticAppend(me, staged)),
+    ).withOptimisticUpdate(optimisticAppend(staged)),
   });
 
   const send = async () => {

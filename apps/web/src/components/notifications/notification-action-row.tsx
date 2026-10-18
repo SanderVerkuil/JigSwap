@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { gateway, type Id } from "@/gateway";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
 import type {
@@ -80,6 +81,7 @@ export function NotificationActions({
 }) {
   const t = useTranslations("notifications.rich");
   const actorName = useActorName();
+  const displayName = useMemberDisplayName();
   const convex = useConvex();
   const act = useConvexMutation(gateway.notifications.act);
   const unfollow = useConvexMutation(gateway.social.unfollow);
@@ -100,7 +102,9 @@ export function NotificationActions({
   }, [pending]);
 
   const actor = view.actors[0];
-  const name = actorName(actor);
+  // A privacy-hidden (living) actor gets the generic member label, not "Former member".
+  const name =
+    actor?.anonymous && !actor.departed ? displayName(null) : actorName(actor);
   const memberId =
     actor && !actor.anonymous ? (actor.memberId as Id<"users">) : null;
   const { inline, overflow } = actionsFor(view, surface);

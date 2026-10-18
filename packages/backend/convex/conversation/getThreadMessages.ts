@@ -51,7 +51,7 @@ export const getThreadMessages = query({
     const cardOf = viewableCopyCards(ctx, me);
     return Promise.all(
       page.reverse().map(async (row) => {
-        const view = toThreadMessageView(row);
+        const view = toThreadMessageView(row, me);
         if (!row.copyId) return view;
         const copy = await cardOf(row.copyId);
         // A reference the reader can no longer follow (deleted, or no longer viewable) is

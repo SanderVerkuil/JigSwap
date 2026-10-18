@@ -20,6 +20,7 @@ const hidden: ActorFacts = {
   isViewer: false,
   isPublic: false,
   mutualFollowers: false,
+  dmMessage: false,
 };
 
 describe("isActorRevealed", () => {
@@ -65,6 +66,24 @@ describe("isActorRevealed", () => {
     expect(isActorRevealed(type, { ...hidden, isPublic: true }, false)).toBe(
       true,
     );
+  });
+
+  test("a DM message's private, non-mutual sender gets no initiator reveal", () => {
+    const dm = { ...hidden, dmMessage: true };
+    expect(isActorRevealed("message_received", dm, false)).toBe(false);
+    expect(
+      isActorRevealed("message_received", { ...dm, isPublic: true }, false),
+    ).toBe(true);
+    expect(
+      isActorRevealed(
+        "message_received",
+        { ...dm, mutualFollowers: true },
+        false,
+      ),
+    ).toBe(true);
+    expect(
+      isActorRevealed("message_received", { ...dm, isViewer: true }, false),
+    ).toBe(true);
   });
 
   test("a private, non-mutual actor on a non-initiator type is hidden", () => {

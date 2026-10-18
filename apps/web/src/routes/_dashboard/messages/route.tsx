@@ -75,9 +75,9 @@ function MessageToastWatcher() {
       if (
         previous &&
         thread.lastMessage &&
-        // System/lifecycle messages (authorId null) never notify — mirror the backend's MessagePosted guard.
-        thread.lastMessage.authorId !== null &&
-        thread.lastMessage.authorId !== member._id &&
+        // System/lifecycle messages never notify — mirror the backend's MessagePosted guard.
+        thread.lastMessage.kind !== "system" &&
+        !thread.lastMessage.isMine &&
         thread.threadId !== activeThreadId &&
         stamp > (previous.get(thread.threadId) ?? 0)
       ) {

@@ -2093,6 +2093,7 @@
       },
       "message_received": {
         "sentence": "<b>{actor}</b> sent you a message.",
+        "sentenceAnonymous": "You have a new message.",
         "actions": {
           "reply": "Reply",
           "replyAria": "Reply to {actor}"

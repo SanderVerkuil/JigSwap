@@ -443,6 +443,37 @@ describe("rich sentences", () => {
     },
   );
 
+  it.each([
+    ["en", "Unread, You have a new message."],
+    ["nl", "Ongelezen, Je hebt een nieuw bericht."],
+  ] as const)(
+    "a privacy-hidden message sender gets a nameless sentence, not 'Former member' (%s)",
+    (locale, text) => {
+      const { container } = renderItem(
+        base({
+          type: "message_received",
+          actors: [{ anonymous: true }],
+          href: "/messages/t1",
+        }),
+        { locale },
+      );
+      expect(rowLink(container)!.textContent).toBe(text);
+    },
+  );
+
+  it("a departed message sender is still a 'Former member'", () => {
+    const { container } = renderItem(
+      base({
+        type: "message_received",
+        actors: [{ anonymous: true, departed: true }],
+        href: "/messages/t1",
+      }),
+    );
+    expect(rowLink(container)!.textContent).toBe(
+      "Unread, Former member sent you a message.",
+    );
+  });
+
   it("has a chip label for every resolved state each actionable type can reach", () => {
     const reachable: Record<string, string[]> = {
       new_follower: ["following_each_other", "following", "requested"],

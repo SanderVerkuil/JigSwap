@@ -275,6 +275,8 @@ const resolveActor = async (
   viewerId: Id<"users">,
   row: Doc<"notifications">,
   actorId: Id<"users">,
+  /** For message_received: the exchange its (exchange) thread is about, when it resolves. */
+  messageExchange: Doc<"exchanges"> | null,
 ): Promise<ResolvedActor> => {
   const type = row.type;
   const user = await loadUser(ctx, cache, actorId);
@@ -282,9 +284,12 @@ const resolveActor = async (
   const profile = await loadProfile(ctx, cache, actorId);
   const isViewer = actorId === viewerId;
 
-  // Trade types: the per-trade rule for THAT exchange (only when both are its parties).
-  if (TRADE_NOTIFICATION_TYPES.has(type)) {
-    const exchange = await tradeExchangeOf(ctx, cache, row);
+  // Trade types, and a message in an exchange thread: the per-trade rule for THAT exchange (only
+  // when both are its parties).
+  const exchange = TRADE_NOTIFICATION_TYPES.has(type)
+    ? await tradeExchangeOf(ctx, cache, row)
+    : messageExchange;
+  if (exchange) {
     const isParty = (id: Id<"users">) =>
       exchange !== null &&
       (id === exchange.initiatorId || id === exchange.recipientId);
@@ -301,12 +306,21 @@ const resolveActor = async (
           return revealedActor(user, profile, false);
       }
     }
-    // Unresolvable exchange: fall through to the ordinary public / mutual rule (fails closed).
   }
+  // Unresolvable exchange (or not both its parties): the ordinary public / mutual rule (fails
+  // closed). A message's sender never gets the initiator reveal: a DM projects them like the
+  // thread does, and an exchange-thread message the per-trade rule did not decide fails closed.
+  const dmMessage = type === "message_received";
   // Only read the follow graph when the cheaper rules have not already decided.
   const preRevealed = isActorRevealed(
     type,
-    { active: true, isViewer, isPublic: false, mutualFollowers: false },
+    {
+      active: true,
+      isViewer,
+      isPublic: false,
+      mutualFollowers: false,
+      dmMessage,
+    },
     cache.viewerIsAdmin,
   );
   const isPublic = (profile?.visibility ?? "public") === "public";
@@ -318,7 +332,7 @@ const resolveActor = async (
   if (
     !isActorRevealed(
       type,
-      { active: true, isViewer, isPublic, mutualFollowers },
+      { active: true, isViewer, isPublic, mutualFollowers, dmMessage },
       cache.viewerIsAdmin,
     )
   ) {
@@ -532,10 +546,31 @@ export const resolveNotificationView = async (
   const subject = row.subject as NotificationSubject | undefined;
   const hasRefs = row.actorIds !== undefined || subject !== undefined;
 
+  // A message in an exchange thread is about that exchange: its sender is projected by the
+  // per-trade rule. Anything else (a DM, or a thread / exchange that no longer resolves) is a
+  // dmMessage: projected like the thread itself, never initiator-revealed (fails closed).
+  const messageThreadId =
+    subject?.kind === "thread" ? subject.threadId : row.relatedId;
+  const messageThread =
+    type === "message_received" && messageThreadId !== undefined
+      ? await loadThread(ctx, cache, messageThreadId)
+      : null;
+  const messageExchangeId =
+    messageThread?.subjectKind === "exchange"
+      ? messageThread.exchangeId
+      : undefined;
+  const messageExchange = messageExchangeId
+    ? await memoized(cache, `doc:${messageExchangeId}`, () =>
+        ctx.db.get(messageExchangeId),
+      )
+    : null;
+  const dmMessage = type === "message_received" && messageExchange === null;
   const actors = await Promise.all(
     actorIds
       .slice(0, MAX_ACTORS)
-      .map((id) => resolveActor(ctx, cache, viewerId, row, id)),
+      .map((id) =>
+        resolveActor(ctx, cache, viewerId, row, id, messageExchange),
+      ),
   );
   const firstActor = actors[0] ?? null;
 
@@ -582,8 +617,11 @@ export const resolveNotificationView = async (
     // snapshot left. Initiator types reveal their actor to the viewer anyway, and the snapshot was
     // written with the same display-name rules (never an email).
     // trade_request's snapshot names the requester to the owner, who always sees them.
+    // A DM message's sender is not initiator-revealed, so its snapshot never surfaces (fails
+    // closed, like dmMessage itself).
     ...(actorIds.length === 0 &&
     (INITIATOR_NOTIFICATION_TYPES.has(type) || type === "trade_request") &&
+    !dmMessage &&
     row.params?.actorName
       ? { actorNameSnapshot: row.params.actorName }
       : {}),
