@@ -33,7 +33,7 @@ const escalation = (
   matchedAt: NOW - 3_600_000,
   status: "open",
   reportedAt: null,
-  note: null,
+  notes: [],
   ...overrides,
 });
 
@@ -124,20 +124,25 @@ describe("CsamEscalationsPanel", () => {
     expect(onMark).toHaveBeenCalledWith("e1", "reported", "ref 42");
   });
 
-  it("a reported escalation can be closed; a closed one has no actions", () => {
+  it("a reported escalation shows its notes and can be closed; a closed one has no actions", () => {
     const onMark = vi.fn();
     render({
       onMark,
       data: data({
         escalations: [
-          escalation({ status: "reported", reportedAt: NOW, note: "ref 42" }),
+          escalation({
+            status: "reported",
+            reportedAt: NOW,
+            notes: [{ at: NOW, text: "ref 42", actorLabel: "bob" }],
+          }),
         ],
       }),
     });
     expect(container.textContent).toContain("ref 42");
+    expect(container.textContent).toContain("bob");
     expect(button("Mark reported")).toBeUndefined();
     act(() => button("Close")!.click());
-    expect(onMark).toHaveBeenCalledWith("e1", "closed");
+    expect(onMark).toHaveBeenCalledWith("e1", "closed", "");
 
     render({
       data: data({ escalations: [escalation({ status: "closed" })] }),

@@ -599,6 +599,7 @@ export default defineSchema({
       v.literal("photo_manually_approved"),
       v.literal("photo_manually_rejected"),
       v.literal("image_quarantined"),
+      v.literal("csam_escalation_updated"),
       v.literal("role_granted"),
       v.literal("role_revoked"),
     ),
@@ -650,7 +651,12 @@ export default defineSchema({
       v.literal("closed"),
     ),
     reportedAt: v.optional(v.number()),
-    note: v.optional(v.string()),
+    // Append-only operator notes (e.g. the report reference), each with its author and time.
+    notes: v.optional(
+      v.array(
+        v.object({ at: v.number(), actorId: v.id("users"), text: v.string() }),
+      ),
+    ),
   })
     .index("by_status", ["status", "matchedAt"])
     .index("by_file", ["fileId"])

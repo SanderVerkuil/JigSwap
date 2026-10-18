@@ -161,7 +161,7 @@ function EscalationRow({
   const t = useTranslations("admin.moderation.csam");
   const relativeTime = useRelativeTime();
   const noteId = useId();
-  const [note, setNote] = useState(escalation.note ?? "");
+  const [note, setNote] = useState("");
 
   return (
     <li className="space-y-2 border-b py-3 last:border-b-0">
@@ -194,7 +194,24 @@ function EscalationRow({
       <p className="font-mono text-xs break-all text-muted-foreground">
         MD5 {escalation.md5} · SHA-1 {escalation.sha1}
       </p>
-      {escalation.status === "open" ? (
+      {escalation.notes.length > 0 && (
+        <ul className="space-y-1">
+          {escalation.notes.map((n) => (
+            <li key={n.at} className="text-sm">
+              {n.text}{" "}
+              <span className="text-xs text-muted-foreground">
+                (
+                {t("noteBy", {
+                  name: n.actorLabel ?? "?",
+                  time: relativeTime(n.at),
+                })}
+                )
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {escalation.status !== "closed" && (
         <div className="flex flex-wrap items-end gap-2">
           <div className="min-w-48 flex-1 space-y-1">
             <label htmlFor={noteId} className="text-xs font-medium">
@@ -208,28 +225,38 @@ function EscalationRow({
               maxLength={2000}
             />
           </div>
-          <Button
-            size="sm"
-            disabled={busy}
-            onClick={() => onMark(escalation.id, "reported", note)}
-          >
-            {t("markReported")}
-          </Button>
-        </div>
-      ) : (
-        <>
-          {escalation.note && <p className="text-sm">{escalation.note}</p>}
-          {escalation.status === "reported" && (
+          {escalation.status === "open" ? (
             <Button
               size="sm"
-              variant="outline"
               disabled={busy}
-              onClick={() => onMark(escalation.id, "closed")}
+              onClick={() => onMark(escalation.id, "reported", note)}
             >
-              {t("close")}
+              {t("markReported")}
             </Button>
+          ) : (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={busy || note.trim() === ""}
+                onClick={() => {
+                  onMark(escalation.id, "reported", note);
+                  setNote("");
+                }}
+              >
+                {t("addNote")}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={busy}
+                onClick={() => onMark(escalation.id, "closed", note)}
+              >
+                {t("close")}
+              </Button>
+            </>
           )}
-        </>
+        </div>
       )}
     </li>
   );

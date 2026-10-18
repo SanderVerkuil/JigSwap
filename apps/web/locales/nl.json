@@ -3613,7 +3613,8 @@
         "role_revoked": "<strong>{actor}</strong> trok de beheerdersrol van <strong>{target}</strong> in",
         "photo_manually_approved": "<strong>{actor}</strong> keurde een niet-gecontroleerde foto goed bij <strong>{target}</strong>",
         "photo_manually_rejected": "<strong>{actor}</strong> wees een niet-gecontroleerde foto af bij <strong>{target}</strong>",
-        "image_quarantined": "<strong>{actor}</strong> zette een foto in quarantaine na een hash-match met bekend misbruikmateriaal (<strong>{target}</strong>)"
+        "image_quarantined": "<strong>{actor}</strong> zette een foto in quarantaine na een hash-match met bekend misbruikmateriaal (<strong>{target}</strong>)",
+        "csam_escalation_updated": "<strong>{actor}</strong> werkte een hash-match-escalatie bij (<strong>{target}</strong>)"
       },
       "activityEmpty": "Nog geen moderatieactiviteit.",
       "screening": {
@@ -3680,7 +3681,9 @@
         "markReported": "Markeer als gemeld",
         "close": "Sluiten",
         "updated": "Escalatie bijgewerkt.",
-        "waiting": "Hash-check onbereikbaar: {countLabel} {count, plural, one {foto wacht} other {foto's wachten}}, niet gepubliceerd (oudste {since}). Ze worden automatisch opnieuw gecontroleerd."
+        "waiting": "Hash-check onbereikbaar: {countLabel} {count, plural, one {foto wacht} other {foto's wachten}}, niet gepubliceerd (oudste {since}). Ze worden automatisch opnieuw gecontroleerd.",
+        "noteBy": "{name}, {time}",
+        "addNote": "Notitie toevoegen"
       }
     },
     "contact": {

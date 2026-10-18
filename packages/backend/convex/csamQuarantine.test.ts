@@ -275,7 +275,7 @@ describe("hash match on a copy photo", () => {
         "id",
         "md5",
         "matchedAt",
-        "note",
+        "notes",
         "provider",
         "reportedAt",
         "sha1",
@@ -449,31 +449,51 @@ describe("admin escalation functions", () => {
     expect((await escalations(t))[0].status).toBe("open");
   });
 
-  test("marking reported stamps reportedAt once and keeps the note", async () => {
+  test("open -> reported -> closed only; notes are append-only; every update is stamped with the admin (L1)", async () => {
     vi.stubGlobal("fetch", routedFetch("match"));
     const t = convexTest(schema, modules);
-    const { copy } = await seed(t);
+    const { bob, copy } = await seed(t);
     await addCopyPhoto(t, copy);
     const [escalation] = await escalations(t);
+    const mark = (status: "open" | "reported" | "closed", note?: string) =>
+      asAdmin(t).mutation(api.admin.markCsamEscalation.markCsamEscalation, {
+        id: escalation._id,
+        status,
+        ...(note === undefined ? {} : { note }),
+      });
 
-    await asAdmin(t).mutation(api.admin.markCsamEscalation.markCsamEscalation, {
-      id: escalation._id,
-      status: "reported",
-      note: "  Meldpunt ref 1234 ",
-    });
+    // Closing before reporting, and skipping back, are refused.
+    await expect(mark("closed")).rejects.toThrow("Cannot go from open");
+    await mark("reported", "  Meldpunt ref 1234 ");
     const reported = (await escalations(t))[0];
     expect(reported.status).toBe("reported");
-    expect(reported.note).toBe("Meldpunt ref 1234");
     expect(reported.reportedAt).toBeGreaterThan(0);
+    expect(reported.notes).toEqual([
+      { at: expect.any(Number), actorId: bob, text: "Meldpunt ref 1234" },
+    ]);
+    await expect(mark("open")).rejects.toThrow("Cannot go from reported");
 
-    await asAdmin(t).mutation(api.admin.markCsamEscalation.markCsamEscalation, {
-      id: escalation._id,
-      status: "closed",
-    });
+    // Same status + note appends; nothing is ever replaced.
+    await mark("reported", "police informed");
+    await mark("closed");
+    await expect(mark("open")).rejects.toThrow("Cannot go from closed");
     const closed = (await escalations(t))[0];
     expect(closed.status).toBe("closed");
     expect(closed.reportedAt).toBe(reported.reportedAt);
-    expect(closed.note).toBe("Meldpunt ref 1234");
+    expect(closed.notes?.map((n) => n.text)).toEqual([
+      "Meldpunt ref 1234",
+      "police informed",
+    ]);
+
+    const stamps = await t.run((ctx) =>
+      ctx.db.query("moderationActions").collect(),
+    );
+    const updates = stamps.filter(
+      (st) => st.kind === "csam_escalation_updated",
+    );
+    expect(updates).toHaveLength(3);
+    expect(updates.every((st) => st.actorId === bob)).toBe(true);
+    expect(updates.every((st) => st.targetId === escalation._id)).toBe(true);
 
     const listed = await asAdmin(t).query(
       api.admin.listCsamEscalations.listCsamEscalations,

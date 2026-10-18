@@ -3613,7 +3613,8 @@
         "role_revoked": "<strong>{actor}</strong> removed the admin role from <strong>{target}</strong>",
         "photo_manually_approved": "<strong>{actor}</strong> approved an unchecked photo on <strong>{target}</strong>",
         "photo_manually_rejected": "<strong>{actor}</strong> rejected an unchecked photo on <strong>{target}</strong>",
-        "image_quarantined": "<strong>{actor}</strong> quarantined a photo after a known-abuse hash match (<strong>{target}</strong>)"
+        "image_quarantined": "<strong>{actor}</strong> quarantined a photo after a known-abuse hash match (<strong>{target}</strong>)",
+        "csam_escalation_updated": "<strong>{actor}</strong> updated a hash-match escalation (<strong>{target}</strong>)"
       },
       "activityEmpty": "No moderation activity yet.",
       "screening": {
@@ -3680,7 +3681,9 @@
         "markReported": "Mark reported",
         "close": "Close",
         "updated": "Escalation updated.",
-        "waiting": "Hash check unreachable: {countLabel} {count, plural, one {photo} other {photos}} waiting, unpublished (oldest {since}). They are re-checked automatically."
+        "waiting": "Hash check unreachable: {countLabel} {count, plural, one {photo} other {photos}} waiting, unpublished (oldest {since}). They are re-checked automatically.",
+        "noteBy": "{name}, {time}",
+        "addNote": "Add note"
       }
     },
     "contact": {

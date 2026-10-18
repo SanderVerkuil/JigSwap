@@ -51,7 +51,16 @@ export const listCsamEscalations = query({
           matchedAt: row.matchedAt,
           status: row.status,
           reportedAt: row.reportedAt ?? null,
-          note: row.note ?? null,
+          notes: await Promise.all(
+            (row.notes ?? []).map(async (n) => {
+              const actor = await ctx.db.get(n.actorId);
+              return {
+                at: n.at,
+                text: n.text,
+                actorLabel: actor ? adminMemberLabelOf(actor) : null,
+              };
+            }),
+          ),
         });
       }
     }

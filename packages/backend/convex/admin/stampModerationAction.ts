@@ -16,6 +16,7 @@ type ModerationKind =
   | "photo_manually_approved"
   | "photo_manually_rejected"
   | "image_quarantined"
+  | "csam_escalation_updated"
   | "role_granted"
   | "role_revoked";
 
