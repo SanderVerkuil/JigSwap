@@ -1402,7 +1402,7 @@
   "terms": {
     "title": "Algemene Voorwaarden",
     "lastUpdated": "Laatst bijgewerkt",
-    "effectiveDate": "2 juli 2026",
+    "effectiveDate": "18 oktober 2026",
     "introduction": "Deze algemene voorwaarden ('Voorwaarden') zijn van toepassing op je gebruik van JigSwap, een communityplatform voor legpuzzelliefhebbers, beheerd door Sander Verkuil. JigSwap is een hobbyproject, geen commerciële marktplaats. Door een account aan te maken of JigSwap te gebruiken ga je akkoord met deze Voorwaarden.",
     "acceptance": {
       "title": "Akkoord met de Voorwaarden",
@@ -1449,6 +1449,20 @@
         "De dienst scrapen of proberen ongeoorloofd toegang te krijgen tot accounts of systemen",
         "Je voordoen als een andere persoon of een ander lid"
       ]
+    },
+    "moderation": {
+      "title": "Moderatie",
+      "description": "Dit onderdeel legt uit hoe we JigSwap veilig houden en hoe we omgaan met inhoud en leden die deze Voorwaarden schenden.",
+      "screeningTitle": "Automatische controle",
+      "screening": "Elke foto die je uploadt — naar je bibliotheek, een gelegde puzzel of een bericht — wordt automatisch gecontroleerd door een veiligheidsdienst voordat anderen hem kunnen zien. Een foto die de controle tegenhoudt wordt niet gepubliceerd of bezorgd; een foto die als mogelijk gevoelig wordt aangemerkt, of die niet gecontroleerd kon worden, wordt vervaagd getoond totdat de kijker ervoor kiest hem te zien. Denk je dat de controle zich vergist, dan kun je vragen of een mens hem beoordeelt (zie hieronder).",
+      "reportingTitle": "Melden",
+      "reporting": "Gebruik Melden bij een bericht, foto, profiel of puzzel om ons te wijzen op inhoud of gedrag dat deze Voorwaarden schendt. Om illegale inhoud te melden kies je die reden en geef je je naam, je e-mailadres en een verklaring dat je de melding te goeder trouw doet. Het lid dat je meldt hoort niet wie de melding heeft gedaan.",
+      "decisionsTitle": "Onze besluiten",
+      "decisions": "Een moderator bekijkt elke melding en besluit of de inhoud wordt verwijderd, het lid een waarschuwing krijgt of er niets gebeurt. Wie de melding deed hoort de uitkomst. Als we je inhoud verwijderen of je een waarschuwing geven, sturen we je een motivering: wat we deden, waarom, of daar een automatisch hulpmiddel bij betrokken was en hoe je om een herbeoordeling vraagt.",
+      "reviewTitle": "Om een herbeoordeling vragen",
+      "review": "Ben je het niet eens met een besluit, reageer dan via de contactpagina en een mens bekijkt het opnieuw. Deze herbeoordeling is vrijwillig en doet niets af aan je andere rechten, waaronder naar de rechter stappen.",
+      "blockingTitle": "Blokkeren",
+      "blocking": "Je kunt elk lid blokkeren. Een geblokkeerd lid kan je geen berichten meer sturen, je niet volgen en geen ruil voorstellen, en krijgt daar geen melding van. Geaccepteerde ruilen kunnen nog worden afgerond. Je kunt de blokkering altijd opheffen in je instellingen onder Privacy en veiligheid."
     },
     "trading": {
       "title": "Ruilen, verkopen en uitlenen",

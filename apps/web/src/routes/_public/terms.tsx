@@ -53,6 +53,25 @@ function TermsOfServicePage() {
         { type: "list", items: list("userConduct.prohibited") },
       ],
     },
+    // DSA Art. 14: how moderation works, including automated tools. [LAWYER] A lawyer should
+    // review this section (the review route is voluntary: Art. 20 does not apply at our size).
+    {
+      id: "t-moderation",
+      heading: t("moderation.title"),
+      blocks: [
+        { type: "p", text: t("moderation.description") },
+        { type: "sub", text: t("moderation.screeningTitle") },
+        { type: "p", text: t("moderation.screening") },
+        { type: "sub", text: t("moderation.reportingTitle") },
+        { type: "p", text: t("moderation.reporting") },
+        { type: "sub", text: t("moderation.decisionsTitle") },
+        { type: "p", text: t("moderation.decisions") },
+        { type: "sub", text: t("moderation.reviewTitle") },
+        { type: "p", text: t("moderation.review") },
+        { type: "sub", text: t("moderation.blockingTitle") },
+        { type: "p", text: t("moderation.blocking") },
+      ],
+    },
     {
       id: "t-trading",
       heading: t("trading.title"),

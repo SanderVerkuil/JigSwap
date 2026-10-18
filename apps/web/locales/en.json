@@ -1402,7 +1402,7 @@
   "terms": {
     "title": "Terms of Service",
     "lastUpdated": "Last Updated",
-    "effectiveDate": "2 July 2026",
+    "effectiveDate": "18 October 2026",
     "introduction": "These Terms of Service ('Terms') govern your use of JigSwap, a community platform for jigsaw puzzle enthusiasts, run by Sander Verkuil. JigSwap is a hobby project, not a commercial marketplace. By creating an account or using JigSwap, you agree to these Terms.",
     "acceptance": {
       "title": "Acceptance of Terms",
@@ -1449,6 +1449,20 @@
         "Scraping the service or attempting to gain unauthorised access to accounts or systems",
         "Impersonating another person or member"
       ]
+    },
+    "moderation": {
+      "title": "Moderation",
+      "description": "This section explains how we keep JigSwap safe and how we handle content and members that break these Terms.",
+      "screeningTitle": "Automated screening",
+      "screening": "Every photo you upload — to your library, a finished puzzle or a message — is checked automatically by a content-safety service before others can see it. A photo the check flags is not published or delivered; a photo it marks as possibly sensitive, or could not check, is shown blurred until the viewer chooses to see it. If you think the check got it wrong, you can ask for a person to review it (see below).",
+      "reportingTitle": "Reporting",
+      "reporting": "Use Report on a message, photo, profile or puzzle to tell us about content or behaviour that breaks these Terms. To report illegal content, choose that reason and give your name, your email address and a statement that your report is made in good faith. The member you report is not told who reported them.",
+      "decisionsTitle": "Our decisions",
+      "decisions": "A moderator reviews each report and decides whether to remove the content, warn the member, or take no action. The person who reported is told the outcome. If we remove your content or warn you, we send you a statement of reasons: what we did, why, whether an automated tool was involved, and how to ask for a review.",
+      "reviewTitle": "Asking for a review",
+      "review": "If you disagree with a decision, reply via the contact page and a person will look at it again. This review is voluntary and does not affect your other rights, including going to court.",
+      "blockingTitle": "Blocking",
+      "blocking": "You can block any member. A blocked member can no longer message you, follow you or propose trades, and is not notified. Trades already accepted can still be completed. You can unblock them at any time from your Privacy & safety settings."
     },
     "trading": {
       "title": "Swaps, Sales, and Loans",
