@@ -457,6 +457,68 @@ describe("sharing.deleteCircle", () => {
     expect((await rowsOf(t, circleId)).circles).toHaveLength(1);
     expect(await deletedEvents(t)).toHaveLength(0);
   });
+
+  test("a second delete answers CircleNotFound", async () => {
+    const t = convexTest(schema, modules);
+    const { circleId } = await seed(t);
+    await deleteCircle(t, "alice", circleId);
+
+    expect((await errorDataOf(deleteCircle(t, "alice", circleId))).code).toBe(
+      "CircleNotFound",
+    );
+    expect(await deletedEvents(t)).toHaveLength(1);
+  });
+
+  test("members linked only by the circle can no longer message each other", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, carol, circleId } = await seed(t);
+    const canMessage = (who: Who, recipientId: Id<"users">) =>
+      as(t, who).query(api.conversation.canMessage.canMessage, {
+        recipientId,
+      });
+    // Precondition: no follow edge and no thread between Bob and Carol, only the circle.
+    expect(await canMessage("bob", carol)).toBe(true);
+    expect(await canMessage("carol", bob)).toBe(true);
+
+    await deleteCircle(t, "alice", circleId);
+
+    expect(await canMessage("bob", carol)).toBe(false);
+    expect(await canMessage("carol", bob)).toBe(false);
+  });
+
+  test("global search stops returning the circle; it never surfaces the shared copy", async () => {
+    const t = convexTest(schema, modules);
+    const { circleId } = await seed(t);
+    const copyId = await shareAlicesCopy(t, circleId);
+    const search = async (who: Who, term: string) =>
+      as(t, who).query(api.search.globalSearch.global, { term });
+    const mentionsCopy = (results: unknown) =>
+      JSON.stringify(results).includes(copyId);
+
+    for (const who of ["bob", "carol"] as const) {
+      const before = await search(who, "saturday");
+      expect(before.circles.map((c) => c.name)).toEqual([NAME]);
+      expect(mentionsCopy(await search(who, "mountain"))).toBe(false);
+    }
+
+    await deleteCircle(t, "alice", circleId);
+
+    for (const who of ["bob", "carol"] as const) {
+      expect((await search(who, "saturday")).circles).toEqual([]);
+      const puzzles = await search(who, "mountain");
+      expect(mentionsCopy(puzzles)).toBe(false);
+      // Only the public catalog entry can match, never a copy page.
+      for (const p of puzzles.puzzles) expect(p.href).toMatch(/^\/puzzles\//);
+    }
+  });
+
+  test("sharing/purgeDeletedCircle is internal, never client-callable", () => {
+    // @ts-expect-error purgeDeletedCircle is an internalMutation, so the public api must not expose it
+    void api.sharing.purgeDeletedCircle.purgeDeletedCircle;
+    expect(
+      internal.sharing.purgeDeletedCircle.purgeDeletedCircle,
+    ).toBeDefined();
+  });
 });
 
 describe("circle_deleted notifications", () => {
@@ -510,6 +572,23 @@ describe("circle_deleted notifications", () => {
       href: "/circles",
       state: "unavailable",
     });
+  });
+
+  test("a member who left before the deletion is not told", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, carol, circleId } = await seed(t);
+    await as(t, "carol").mutation(api.sharing.leaveCircle.leaveCircle, {
+      circleId,
+    });
+
+    await deleteCircle(t, "alice", circleId);
+    await flushScheduled(t);
+
+    const types = async (id: Id<"users">) =>
+      (await notificationsOf(t, id)).map((row) => row.type);
+    expect(await types(bob)).toContain("circle_deleted");
+    expect(await types(carol)).not.toContain("circle_deleted");
+    expect((await deletedEvents(t))[0].payload.memberIds).toEqual([bob]);
   });
 
   test("push delivery carries the snapshotted name (in-app/push only, never email)", async () => {
