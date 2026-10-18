@@ -4,6 +4,7 @@ import { ConvexError, type Value } from "convex/values";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
+import type { MutationCtx } from "./_generated/server";
 import { convexThreadRepository } from "./conversation/adapters/convexThreadRepository";
 import { LAST_MESSAGE_BODY_MAX } from "./conversation/adapters/threadMapper";
 import { BACKFILL_PARTICIPANT_STATE_BATCH } from "./conversation/backfillParticipantState";
@@ -155,6 +156,30 @@ const stripDenormalised = (t: T, threadId: string) =>
       });
     }
   });
+
+// The repository over a ctx whose db logs every write as "<op>:<first arg>".
+const recordingRepository = (ctx: MutationCtx) => {
+  const log: string[] = [];
+  const db = new Proxy(ctx.db, {
+    get(target, prop, receiver) {
+      const value: unknown = Reflect.get(target, prop, receiver);
+      if (
+        typeof value === "function" &&
+        (prop === "insert" ||
+          prop === "patch" ||
+          prop === "replace" ||
+          prop === "delete")
+      ) {
+        return (...args: unknown[]) => {
+          log.push(`${prop}:${String(args[0])}`);
+          return (value as (...a: unknown[]) => unknown).apply(target, args);
+        };
+      }
+      return value;
+    },
+  });
+  return { repository: convexThreadRepository({ ...ctx, db }), log };
+};
 
 describe("post path", () => {
   test("increments unread for the other participant only, and stamps activity + lastMessage", async () => {
@@ -355,6 +380,49 @@ describe("fallback scan read cap", () => {
   });
 });
 
+describe("markThreadRead on a pre-backfill row", () => {
+  test("moves the legacy receipt onto the caller's row and leaves the thread row untouched", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+    const threadId = await openDm(t, bob);
+    await post(t, asAlice, threadId, "one");
+    await tick();
+    await asBob(t).mutation(api.conversation.markThreadRead.markThreadRead, {
+      threadId,
+    });
+    await post(t, asAlice, threadId, "two");
+    await stripDenormalised(t, threadId);
+
+    const threadBefore = await threadRow(t, threadId);
+    const legacyReceipt = threadBefore.readReceipts?.find(
+      (r) => r.memberId === bob,
+    )?.lastReadAt;
+    expect(legacyReceipt).toBeDefined();
+    const aliceBefore = await participantRow(t, threadId, alice);
+    expect(
+      await asBob(t).query(api.conversation.getUnreadTotal.getUnreadTotal, {}),
+    ).toBe(1);
+
+    await tick();
+    await asBob(t).mutation(api.conversation.markThreadRead.markThreadRead, {
+      threadId,
+    });
+
+    const bobAfter = await participantRow(t, threadId, bob);
+    expect(bobAfter.lastReadAt).toBeGreaterThan(legacyReceipt!);
+    expect(bobAfter.unreadCount).toBe(0);
+    expect(canonical(await threadRow(t, threadId))).toBe(
+      canonical(threadBefore),
+    );
+    expect(canonical(await participantRow(t, threadId, alice))).toBe(
+      canonical(aliceBefore),
+    );
+    expect(
+      await asBob(t).query(api.conversation.getUnreadTotal.getUnreadTotal, {}),
+    ).toBe(0);
+  });
+});
+
 describe("receipt-only save", () => {
   test("writes nothing but the reader's participant row", async () => {
     const t = convexTest(schema, modules);
@@ -365,29 +433,7 @@ describe("receipt-only save", () => {
 
     await tick();
     const writes = await t.run(async (ctx) => {
-      const log: string[] = [];
-      const db = new Proxy(ctx.db, {
-        get(target, prop, receiver) {
-          const value: unknown = Reflect.get(target, prop, receiver);
-          if (
-            typeof value === "function" &&
-            (prop === "insert" ||
-              prop === "patch" ||
-              prop === "replace" ||
-              prop === "delete")
-          ) {
-            return (...args: unknown[]) => {
-              log.push(`${prop}:${String(args[0])}`);
-              return (value as (...a: unknown[]) => unknown).apply(
-                target,
-                args,
-              );
-            };
-          }
-          return value;
-        },
-      });
-      const repository = convexThreadRepository({ ...ctx, db });
+      const { repository, log } = recordingRepository(ctx);
       const thread = await repository.findById(toThreadId(threadId));
       if (!thread) throw new Error("thread not found");
       if (!thread.markRead(toMemberId(bob), new Date()).isOk) {
@@ -397,6 +443,30 @@ describe("receipt-only save", () => {
       return log;
     });
     expect(writes).toEqual([`patch:${bobRow._id}`]);
+  });
+
+  test("an unchanged receipt (same instant, unread already 0) writes nothing", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+    const threadId = await openDm(t, bob);
+    await post(t, asAlice, threadId, "one");
+    const at = new Date(Date.now() + 10);
+
+    const markAt = () =>
+      t.run(async (ctx) => {
+        const { repository, log } = recordingRepository(ctx);
+        const thread = await repository.findById(toThreadId(threadId));
+        if (!thread) throw new Error("thread not found");
+        if (!thread.markRead(toMemberId(bob), at).isOk) {
+          throw new Error("markRead failed");
+        }
+        await repository.save(thread);
+        return log;
+      });
+
+    expect(await markAt()).toHaveLength(1);
+    expect((await participantRow(t, threadId, bob)).unreadCount).toBe(0);
+    expect(await markAt()).toEqual([]);
   });
 });
 
