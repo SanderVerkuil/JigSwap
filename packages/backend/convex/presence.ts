@@ -11,6 +11,14 @@ export const MESSAGES_ROOM = "messages";
 
 export const presence = new Presence(components.presence);
 
+// Bounds on the client-supplied heartbeat interval. The component sets the session deadline to
+// interval × 2.5, so an unbounded value would keep a session online forever (or, for NaN or a
+// negative number, hand the disconnect worker a deadline it can never settle).
+export const MIN_HEARTBEAT_INTERVAL_MS = 5_000;
+export const MAX_HEARTBEAT_INTERVAL_MS = 60_000;
+// The usePresence hook's sessionId is JSON of [uuid, roomId, userId], well under this.
+const MAX_SESSION_ID_LENGTH = 200;
+
 // Heartbeat from the messages layout. The member id comes from auth — the client-supplied
 // userId is only validated against it so the shared usePresence hook keeps working; nobody can
 // heartbeat someone else into invisibility of notifications.
@@ -27,13 +35,24 @@ export const heartbeat = mutation({
       throw new ConvexError("Unknown presence room");
     if (userId !== (memberId as string))
       throw new ConvexError("Presence user mismatch");
-    return presence.heartbeat(
+    if (
+      !Number.isFinite(interval) ||
+      interval < MIN_HEARTBEAT_INTERVAL_MS ||
+      interval > MAX_HEARTBEAT_INTERVAL_MS
+    )
+      throw new ConvexError("Invalid presence interval");
+    if (sessionId.length === 0 || sessionId.length > MAX_SESSION_ID_LENGTH)
+      throw new ConvexError("Invalid presence session");
+    const { sessionToken } = await presence.heartbeat(
       ctx,
       roomId,
       memberId as string,
       sessionId,
       interval,
     );
+    // The room token is shared by every member in the room; withhold it so it can never become
+    // a roster capability again (the hook then subscribes `list` with "", which returns []).
+    return { roomToken: "", sessionToken };
   },
 });
 

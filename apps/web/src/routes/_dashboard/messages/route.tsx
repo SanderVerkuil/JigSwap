@@ -42,7 +42,8 @@ function MessagesLayout() {
 // (hooks can't be conditional).
 function MessagesPresence({ memberId }: { memberId: string }) {
   // 30 s keeps heartbeat calls low; a tab that vanishes without unloading
-  // still drops out of the room after 2.5 intervals.
+  // still drops out of the room after 2.5 intervals (75 s worst case, during
+  // which new messages send no bell, email or push).
   usePresence(gateway.presence, "messages", memberId, 30_000);
   return null;
 }
