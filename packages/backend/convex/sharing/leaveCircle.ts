@@ -1,4 +1,9 @@
-import { makeLeaveCircle, toCircleId, type MemberId } from "@jigswap/domain";
+import {
+  makeLeaveCircle,
+  SharingApplicationError,
+  toCircleId,
+  type MemberId,
+} from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
@@ -22,10 +27,19 @@ export const leaveCircle = mutation({
       clock: systemClock,
     });
 
+    const circleId = toCircleId(args.circleId);
     const result = await leaveCircle({
-      circleId: toCircleId(args.circleId),
+      circleId,
       memberId: memberId as MemberId,
     });
-    if (result.isErr) throw toConvexError(result.error);
+    if (result.isErr) {
+      // A non-member gets exactly the not-found error, so this path can't be used to probe which
+      // circle ids exist.
+      throw toConvexError(
+        result.error.code === "NotAMember"
+          ? SharingApplicationError.circleNotFound(circleId)
+          : result.error,
+      );
+    }
   },
 });

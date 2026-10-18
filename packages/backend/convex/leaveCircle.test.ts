@@ -196,15 +196,35 @@ describe("sharing.leaveCircle", () => {
     expect(await leftEvents(t)).toHaveLength(0);
   });
 
-  test("a non-member gets NotAMember", async () => {
+  test("a non-member gets the same error as for a circle that doesn't exist", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
     const circleId = await createCircleForAlice(t);
 
-    await expectConvexCode(
-      asCarol(t).mutation(api.sharing.leaveCircle.leaveCircle, { circleId }),
-      "NotAMember",
-    );
+    const errorOf = (id: string) =>
+      asCarol(t)
+        .mutation(api.sharing.leaveCircle.leaveCircle, { circleId: id })
+        .then(
+          () => {
+            throw new Error("expected leaveCircle to fail");
+          },
+          (e: unknown) => {
+            expect(e).toBeInstanceOf(ConvexError);
+            return (e as ConvexError<Value>).data;
+          },
+        );
+
+    const existing = dataOf({ data: await errorOf(circleId) });
+    expect(existing).toEqual({
+      code: "CircleNotFound",
+      message: `Circle ${circleId} could not be found`,
+    });
+    // Same shape for a made-up id: only the echoed id differs.
+    const missing = dataOf({ data: await errorOf("no-such-circle") });
+    expect(missing).toEqual({
+      code: "CircleNotFound",
+      message: "Circle no-such-circle could not be found",
+    });
     expect(await leftEvents(t)).toHaveLength(0);
   });
 
