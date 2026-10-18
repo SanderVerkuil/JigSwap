@@ -425,6 +425,38 @@ describe("account deletion: email invitations", () => {
     expect(gate.gateway?.deleted).toEqual(["inv_alice_1"]);
   });
 
+  test("the pending in-app invite an email invitation made is withdrawn", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("householdInvites", {
+        aggregateId: "hh-invite-1",
+        householdId: "hh_1",
+        inviterId: s.alice,
+        inviteeId: s.carol,
+        status: "pending",
+        createdAt: now,
+        viaEmail: true,
+      });
+      await ctx.db.insert("emailInvites", {
+        aggregateId: "ref-alice-hh",
+        kind: "household",
+        inviterId: s.alice,
+        householdId: "hh_1",
+        fallback: { householdInviteId: "hh-invite-1" },
+        createdAt: now,
+        expiresAt: now + 14 * 24 * 60 * 60_000,
+      });
+    });
+
+    await deleteAlice(t);
+
+    expect(
+      await t.run((ctx) => ctx.db.query("householdInvites").collect()),
+    ).toEqual([]);
+  });
+
   test("her emailInvite rate-limit counter goes with the others", async () => {
     const t = convexTest(schema, modules);
     const s = await seed(t);

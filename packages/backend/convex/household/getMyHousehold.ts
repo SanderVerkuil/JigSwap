@@ -64,7 +64,11 @@ export const getMyHousehold = query({
         .collect();
       pendingInvites = await Promise.all(
         invites
-          .filter((invite) => invite.status === "pending")
+          // An email invitation's in-app invite (viaEmail) is listed only as that invitation
+          // (invitations/listMyEmailInvites), never by name: see householdInvites.viaEmail.
+          .filter(
+            (invite) => invite.status === "pending" && invite.viaEmail !== true,
+          )
           .map(async (invite) => ({
             inviteId: invite.aggregateId,
             invitee: await personView(ctx, invite.inviteeId),

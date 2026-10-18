@@ -23,7 +23,29 @@ export const inviteToHousehold = mutation({
         message: "No such member",
       });
     }
-    const result = await makeInviteToHousehold(householdDeps(ctx))({
+    // The admin's email invitation may already have reached this member (a pending viaEmail
+    // invite, hidden from their pending list). Answering DuplicateInvite would reveal whose
+    // address it was, so the admin takes that invite over instead: it is listed by name from now on.
+    const deps = householdDeps(ctx);
+    const household = await deps.households.findByMember(actorId);
+    if (household?.isAdmin(actorId)) {
+      const viaEmail = (
+        await ctx.db
+          .query("householdInvites")
+          .withIndex("by_invitee_status", (q) =>
+            q.eq("inviteeId", args.inviteeId).eq("status", "pending"),
+          )
+          .collect()
+      ).find(
+        (row) =>
+          row.viaEmail === true && row.householdId === (household.id as string),
+      );
+      if (viaEmail !== undefined) {
+        await ctx.db.patch(viaEmail._id, { viaEmail: undefined });
+        return viaEmail.aggregateId;
+      }
+    }
+    const result = await makeInviteToHousehold(deps)({
       actorId,
       inviteeId: toMemberId(args.inviteeId),
     });
