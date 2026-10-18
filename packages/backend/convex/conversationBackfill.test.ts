@@ -169,7 +169,7 @@ const messagesOf = (t: TestConvex<typeof schema>, aggregateId: string) =>
   );
 
 const receiptOf = (thread: Doc<"threads">, memberId: Id<"users">) =>
-  thread.readReceipts.find((receipt) => receipt.memberId === memberId)
+  thread.readReceipts?.find((receipt) => receipt.memberId === memberId)
     ?.lastReadAt;
 
 describe("conversation backfill", () => {

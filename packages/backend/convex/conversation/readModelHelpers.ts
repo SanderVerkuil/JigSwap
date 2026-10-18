@@ -16,6 +16,13 @@ export const threadRowByAggregateId = (
     .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", threadAggregateId))
     .unique();
 
+// The message columns a DTO is built from: a `threadMessages` row or a thread's denormalized
+// `lastMessage` summary.
+type MessageFields = Pick<
+  Doc<"threadMessages">,
+  "messageId" | "authorId" | "kind" | "body" | "sentAt"
+>;
+
 /**
  * Message row -> DTO for viewer `me`. Authorship is viewer-relative (`isMine`); the raw author id
  * never leaves the server (it would de-anonymise a hidden member). A system message's absent
@@ -24,7 +31,7 @@ export const threadRowByAggregateId = (
  * client-supplied string (never screened or ownership-checked), so it must never reach a renderer.
  */
 export const toThreadMessageView = (
-  row: Doc<"threadMessages">,
+  row: MessageFields,
   me: Id<"users">,
 ): ThreadMessageView => ({
   id: row.messageId,
@@ -41,6 +48,19 @@ export const toThreadMessageView = (
 export const UNREAD_SCAN_CAP = 50;
 
 /**
+ * The member's read receipt: their participant row's `lastReadAt`, falling back to the legacy
+ * `threads.readReceipts` entry until conversation/backfillParticipantState has run. 0 = never read.
+ */
+export const lastReadAtOf = (
+  thread: Doc<"threads">,
+  me: Id<"users">,
+  participant?: Doc<"threadParticipants">,
+): number =>
+  participant?.lastReadAt ??
+  thread.readReceipts?.find((receipt) => receipt.memberId === me)?.lastReadAt ??
+  0;
+
+/**
  * The caller's unread count for one thread: messages with `sentAt` strictly after their read
  * receipt (no receipt = everything) that they did not author, counted newest-first until
  * {@link UNREAD_SCAN_CAP} qualifying messages are found — a return of 50 means "50 or more".
@@ -49,10 +69,9 @@ export const unreadCountOf = async (
   ctx: QueryCtx,
   thread: Doc<"threads">,
   me: Id<"users">,
+  participant?: Doc<"threadParticipants">,
 ): Promise<number> => {
-  const lastReadAt =
-    thread.readReceipts.find((receipt) => receipt.memberId === me)
-      ?.lastReadAt ?? 0;
+  const lastReadAt = lastReadAtOf(thread, me, participant);
   const newestFirst = ctx.db
     .query("threadMessages")
     .withIndex("by_thread_sent", (q) =>
@@ -67,6 +86,18 @@ export const unreadCountOf = async (
   }
   return count;
 };
+
+/**
+ * A participant's unread count: the denormalized `unreadCount` on their row, falling back to the
+ * {@link unreadCountOf} scan for rows conversation/backfillParticipantState has not reached.
+ */
+export const participantUnreadCountOf = async (
+  ctx: QueryCtx,
+  thread: Doc<"threads">,
+  participant: Doc<"threadParticipants">,
+): Promise<number> =>
+  participant.unreadCount ??
+  unreadCountOf(ctx, thread, participant.memberId, participant);
 
 /**
  * Whether a thread's subject would render in the inbox: DMs always do; an exchange thread's

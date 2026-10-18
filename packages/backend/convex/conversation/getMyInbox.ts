@@ -14,9 +14,9 @@ import { requireMember } from "../identity/requireMember";
 import { anonymousMemberOf, projectMemberIdentity } from "../social/privacy";
 import { viewableContextCopies } from "./copyCard";
 import {
+  participantUnreadCountOf,
   threadRowByAggregateId,
   toThreadMessageView,
-  unreadCountOf,
 } from "./readModelHelpers";
 
 // Context-copy bounds. Message references are read through by_thread_copy_sent, so plain messages
@@ -210,19 +210,23 @@ const contextCopiesOf = async (
 const toInboxThreadView = async (
   ctx: QueryCtx,
   thread: Doc<"threads">,
+  membership: Doc<"threadParticipants">,
   me: Id<"users">,
   resolveCopy: ContextCopyResolver,
   budget: ProbeBudget,
 ): Promise<InboxThreadView | null> => {
   const subject = await subjectOf(ctx, thread, me);
   if (!subject) return null;
-  const last = await ctx.db
-    .query("threadMessages")
-    .withIndex("by_thread_sent", (q) =>
-      q.eq("threadAggregateId", thread.aggregateId),
-    )
-    .order("desc")
-    .first();
+  // The denormalized summary; rows the backfill has not reached fall back to reading the message.
+  const last =
+    thread.lastMessage ??
+    (await ctx.db
+      .query("threadMessages")
+      .withIndex("by_thread_sent", (q) =>
+        q.eq("threadAggregateId", thread.aggregateId),
+      )
+      .order("desc")
+      .first());
   const contextCopies = await contextCopiesOf(
     ctx,
     thread,
@@ -234,7 +238,7 @@ const toInboxThreadView = async (
     threadId: thread.aggregateId,
     subject,
     lastMessage: last ? toThreadMessageView(last, me) : null,
-    unreadCount: await unreadCountOf(ctx, thread, me),
+    unreadCount: await participantUnreadCountOf(ctx, thread, membership),
     contextCopies,
     updatedAt: thread.lastMessageAt ?? thread.createdAt,
   };
@@ -252,15 +256,19 @@ export const getMyInbox = query({
       .withIndex("by_member", (q) => q.eq("memberId", me))
       .collect();
 
-    // v1 scaling assumption: per-thread point reads + a capped unread scan per inbox render;
-    // when this gets hot, denormalize unreadCount onto threadParticipants instead.
+    // Per-thread point reads; the last message and unread count are denormalized (the thread's
+    // lastMessage, the membership's unreadCount), so no per-row message scans once backfilled.
     const threads: Doc<"threads">[] = [];
+    const membershipOf = new Map<string, Doc<"threadParticipants">>();
     for (const membership of memberships) {
       const thread = await threadRowByAggregateId(
         ctx,
         membership.threadAggregateId,
       );
-      if (thread) threads.push(thread);
+      if (thread) {
+        threads.push(thread);
+        membershipOf.set(thread.aggregateId, membership);
+      }
     }
     // Newest activity first, so the context-copy probe budget is spent on the top of the inbox.
     const activityOf = (thread: Doc<"threads">) =>
@@ -274,6 +282,7 @@ export const getMyInbox = query({
       const view = await toInboxThreadView(
         ctx,
         thread,
+        membershipOf.get(thread.aggregateId)!,
         me,
         resolveCopy,
         budget,

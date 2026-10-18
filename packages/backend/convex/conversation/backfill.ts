@@ -127,7 +127,9 @@ export const run = internalMutation({
 
       // Raise (never lower) both parties' receipts to the newest legacy instant, and the
       // denormalized lastMessageAt likewise — a newer live message must stay newest/unread.
-      const receipts = thread.readReceipts.map((receipt) => ({ ...receipt }));
+      const receipts = (thread.readReceipts ?? []).map((receipt) => ({
+        ...receipt,
+      }));
       let receiptsChanged = false;
       for (const memberId of [exchange.initiatorId, exchange.recipientId]) {
         const receipt = receipts.find((r) => r.memberId === memberId);

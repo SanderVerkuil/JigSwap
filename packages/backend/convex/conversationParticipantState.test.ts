@@ -1,0 +1,367 @@
+import { toMemberId, toMessageId, toThreadId } from "@jigswap/domain";
+import { convexTest, type TestConvex } from "convex-test";
+import { describe, expect, test } from "vitest";
+import { api } from "./_generated/api";
+import type { Doc, Id } from "./_generated/dataModel";
+import { convexThreadRepository } from "./conversation/adapters/convexThreadRepository";
+import { LAST_MESSAGE_BODY_MAX } from "./conversation/adapters/threadMapper";
+import { UNREAD_SCAN_CAP } from "./conversation/readModelHelpers";
+import schema from "./schema";
+
+// Bundle every Convex module for the in-memory runtime, excluding test files.
+const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
+
+type T = TestConvex<typeof schema>;
+
+const seed = (t: T) =>
+  t.run(async (ctx) => {
+    const now = Date.now();
+    const mkUser = (clerkId: string) =>
+      ctx.db.insert("users", {
+        clerkId,
+        email: `${clerkId}@example.com`,
+        name: clerkId,
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    const alice = await mkUser("clerk_alice");
+    const bob = await mkUser("clerk_bob");
+    const carol = await mkUser("clerk_carol");
+    // A mutual follow between alice and bob so the ConnectionPolicy allows their DM.
+    await ctx.db.insert("follows", {
+      followerId: alice,
+      followeeId: bob,
+      createdAt: 1,
+    });
+    await ctx.db.insert("follows", {
+      followerId: bob,
+      followeeId: alice,
+      createdAt: 2,
+    });
+    return { alice, bob, carol };
+  });
+
+const asAlice = (t: T) => t.withIdentity({ subject: "clerk_alice" });
+const asBob = (t: T) => t.withIdentity({ subject: "clerk_bob" });
+
+// Message sentAt and receipts are Date.now() millis; yield a few real milliseconds between
+// time-ordered actions so every instant in a test is strictly increasing.
+const tick = () => new Promise((resolve) => setTimeout(resolve, 3));
+
+const openDm = (t: T, bob: Id<"users">) =>
+  asAlice(t).mutation(api.conversation.openDmThread.openDmThread, {
+    recipientId: bob,
+  });
+
+const post = async (
+  t: T,
+  as: (t: T) => ReturnType<T["withIdentity"]>,
+  threadId: string,
+  body: string,
+  kind: "text" | "image" = "text",
+) => {
+  await tick();
+  await as(t).mutation(api.conversation.postMessage.postMessage, {
+    threadId,
+    kind,
+    body,
+  });
+};
+
+// A service-authored system message, posted through the repository as the subscriber would.
+const postSystem = async (t: T, threadId: string, body: string) => {
+  await tick();
+  await t.run(async (ctx) => {
+    const repository = convexThreadRepository(ctx);
+    const thread = await repository.findById(toThreadId(threadId));
+    if (!thread) throw new Error("thread not found");
+    const posted = thread.postSystemMessage({
+      id: toMessageId(crypto.randomUUID()),
+      body,
+      sentAt: new Date(),
+    });
+    if (!posted.isOk) throw new Error("postSystemMessage failed");
+    await repository.save(thread);
+  });
+};
+
+const threadRow = (t: T, threadId: string) =>
+  t.run(async (ctx) => {
+    const row = await ctx.db
+      .query("threads")
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", threadId))
+      .unique();
+    if (!row) throw new Error("thread row missing");
+    return row;
+  });
+
+const participantRow = (t: T, threadId: string, memberId: Id<"users">) =>
+  t.run(async (ctx) => {
+    const row = await ctx.db
+      .query("threadParticipants")
+      .withIndex("by_thread_member", (q) =>
+        q.eq("threadAggregateId", threadId).eq("memberId", memberId),
+      )
+      .unique();
+    if (!row) throw new Error("participant row missing");
+    return row;
+  });
+
+// Convex sorts keys and strips undefined on write: compare documents in a canonical form.
+const canonical = (value: unknown): string =>
+  JSON.stringify(value, (_key, v: unknown) =>
+    v && typeof v === "object" && !Array.isArray(v)
+      ? Object.fromEntries(
+          Object.entries(v as Record<string, unknown>).sort(([a], [b]) =>
+            a < b ? -1 : a > b ? 1 : 0,
+          ),
+        )
+      : v,
+  );
+
+// Turn a thread back into its pre-denormalisation shape: no lastMessage, receipts on the thread
+// row, participant rows without state. The reads must then fall back to the old computation.
+const stripDenormalised = (t: T, threadId: string) =>
+  t.run(async (ctx) => {
+    const thread = await ctx.db
+      .query("threads")
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", threadId))
+      .unique();
+    if (!thread) throw new Error("thread row missing");
+    const rows = await ctx.db
+      .query("threadParticipants")
+      .withIndex("by_thread", (q) => q.eq("threadAggregateId", threadId))
+      .collect();
+    await ctx.db.patch(thread._id, {
+      lastMessage: undefined,
+      readReceipts: rows
+        .filter(
+          (r): r is Doc<"threadParticipants"> & { lastReadAt: number } =>
+            r.lastReadAt !== undefined,
+        )
+        .map((r) => ({ memberId: r.memberId, lastReadAt: r.lastReadAt })),
+    });
+    for (const row of rows) {
+      await ctx.db.patch(row._id, {
+        lastReadAt: undefined,
+        unreadCount: undefined,
+        lastActivityAt: undefined,
+      });
+    }
+  });
+
+describe("post path", () => {
+  test("increments unread for the other participant only, and stamps activity + lastMessage", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+    const threadId = await openDm(t, bob);
+
+    const fresh = await participantRow(t, threadId, bob);
+    expect(fresh.unreadCount).toBe(0);
+    expect(fresh.lastReadAt).toBeUndefined();
+    expect(fresh.lastActivityAt).toBe((await threadRow(t, threadId)).createdAt);
+
+    await post(t, asAlice, threadId, "one");
+    await post(t, asAlice, threadId, "two");
+
+    const thread = await threadRow(t, threadId);
+    const bobRow = await participantRow(t, threadId, bob);
+    const aliceRow = await participantRow(t, threadId, alice);
+    expect(bobRow.unreadCount).toBe(2);
+    expect(aliceRow.unreadCount).toBe(0);
+    expect(bobRow.lastActivityAt).toBe(thread.lastMessageAt);
+    expect(aliceRow.lastActivityAt).toBe(thread.lastMessageAt);
+    expect(thread.lastMessage).toMatchObject({
+      authorId: alice,
+      kind: "text",
+      body: "two",
+      sentAt: thread.lastMessageAt,
+    });
+    expect(thread.readReceipts).toBeUndefined();
+  });
+
+  test("a system message increments every participant's unread", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+    const threadId = await openDm(t, bob);
+    await post(t, asAlice, threadId, "hi");
+    await postSystem(t, threadId, "exchange shipped");
+
+    expect((await participantRow(t, threadId, alice)).unreadCount).toBe(1);
+    expect((await participantRow(t, threadId, bob)).unreadCount).toBe(2);
+    const thread = await threadRow(t, threadId);
+    expect(thread.lastMessage?.kind).toBe("system");
+    expect(thread.lastMessage?.authorId).toBeUndefined();
+  });
+
+  test("unread is capped at UNREAD_SCAN_CAP", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+    const threadId = await openDm(t, bob);
+    const row = await participantRow(t, threadId, bob);
+    await t.run((ctx) =>
+      ctx.db.patch(row._id, { unreadCount: UNREAD_SCAN_CAP - 1 }),
+    );
+
+    await post(t, asAlice, threadId, "forty-nine plus one");
+    expect((await participantRow(t, threadId, bob)).unreadCount).toBe(
+      UNREAD_SCAN_CAP,
+    );
+    await post(t, asAlice, threadId, "and another");
+    expect((await participantRow(t, threadId, bob)).unreadCount).toBe(
+      UNREAD_SCAN_CAP,
+    );
+  });
+
+  test("a pre-backfill row without unreadCount derives it by the scan, including the new message", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+    const threadId = await openDm(t, bob);
+    await post(t, asAlice, threadId, "old one");
+    await post(t, asAlice, threadId, "old two");
+    await asBob(t).mutation(api.conversation.markThreadRead.markThreadRead, {
+      threadId,
+    });
+    await post(t, asAlice, threadId, "after read");
+    await stripDenormalised(t, threadId);
+
+    await post(t, asAlice, threadId, "newest");
+    // Scan: "after read" and "newest" are past bob's legacy receipt; alice authored all of them.
+    expect((await participantRow(t, threadId, bob)).unreadCount).toBe(2);
+    expect((await participantRow(t, threadId, alice)).unreadCount).toBe(0);
+  });
+
+  test("lastMessage truncates long bodies and blanks image bodies", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+    const threadId = await openDm(t, bob);
+
+    const long = "x".repeat(LAST_MESSAGE_BODY_MAX + 500);
+    await post(t, asAlice, threadId, long);
+    expect((await threadRow(t, threadId)).lastMessage?.body).toBe(
+      "x".repeat(LAST_MESSAGE_BODY_MAX),
+    );
+
+    await post(t, asAlice, threadId, "https://example.com/i.png", "image");
+    const thread = await threadRow(t, threadId);
+    expect(thread.lastMessage?.kind).toBe("image");
+    expect(thread.lastMessage?.body).toBe("");
+  });
+});
+
+describe("markThreadRead", () => {
+  test("resets only the caller's row and leaves the thread row untouched", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+    const threadId = await openDm(t, bob);
+    await post(t, asAlice, threadId, "one");
+    await post(t, asBob, threadId, "reply");
+    await post(t, asAlice, threadId, "two");
+
+    const threadBefore = await threadRow(t, threadId);
+    const aliceBefore = await participantRow(t, threadId, alice);
+    expect(aliceBefore.unreadCount).toBe(1);
+    expect((await participantRow(t, threadId, bob)).unreadCount).toBe(2);
+
+    await tick();
+    await asBob(t).mutation(api.conversation.markThreadRead.markThreadRead, {
+      threadId,
+    });
+
+    const bobAfter = await participantRow(t, threadId, bob);
+    expect(bobAfter.unreadCount).toBe(0);
+    expect(bobAfter.lastReadAt).toBeGreaterThan(threadBefore.lastMessageAt!);
+    expect(canonical(await participantRow(t, threadId, alice))).toBe(
+      canonical(aliceBefore),
+    );
+    expect(canonical(await threadRow(t, threadId))).toBe(
+      canonical(threadBefore),
+    );
+  });
+});
+
+describe("receipt-only save", () => {
+  test("writes nothing but the reader's participant row", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+    const threadId = await openDm(t, bob);
+    await post(t, asAlice, threadId, "one");
+    const bobRow = await participantRow(t, threadId, bob);
+
+    await tick();
+    const writes = await t.run(async (ctx) => {
+      const log: string[] = [];
+      const db = new Proxy(ctx.db, {
+        get(target, prop, receiver) {
+          const value: unknown = Reflect.get(target, prop, receiver);
+          if (
+            typeof value === "function" &&
+            (prop === "insert" ||
+              prop === "patch" ||
+              prop === "replace" ||
+              prop === "delete")
+          ) {
+            return (...args: unknown[]) => {
+              log.push(`${prop}:${String(args[0])}`);
+              return (value as (...a: unknown[]) => unknown).apply(
+                target,
+                args,
+              );
+            };
+          }
+          return value;
+        },
+      });
+      const repository = convexThreadRepository({ ...ctx, db });
+      const thread = await repository.findById(toThreadId(threadId));
+      if (!thread) throw new Error("thread not found");
+      if (!thread.markRead(toMemberId(bob), new Date()).isOk) {
+        throw new Error("markRead failed");
+      }
+      await repository.save(thread);
+      return log;
+    });
+    expect(writes).toEqual([`patch:${bobRow._id}`]);
+  });
+});
+
+describe("read fallback parity", () => {
+  test("inbox and unread total are the same with and without the denormalised fields", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+    const threadId = await openDm(t, bob);
+    await post(t, asAlice, threadId, "one");
+    await post(t, asBob, threadId, "reply");
+    await tick();
+    await asBob(t).mutation(api.conversation.markThreadRead.markThreadRead, {
+      threadId,
+    });
+    await post(t, asAlice, threadId, "two");
+    await post(t, asAlice, threadId, "three");
+
+    const read = async () => ({
+      aliceInbox: await asAlice(t).query(
+        api.conversation.getMyInbox.getMyInbox,
+        {},
+      ),
+      bobInbox: await asBob(t).query(
+        api.conversation.getMyInbox.getMyInbox,
+        {},
+      ),
+      bobTotal: await asBob(t).query(
+        api.conversation.getUnreadTotal.getUnreadTotal,
+        {},
+      ),
+    });
+
+    const denormalised = await read();
+    expect(denormalised.bobInbox[0].unreadCount).toBe(2);
+    expect(denormalised.bobTotal).toBe(2);
+    expect(denormalised.aliceInbox[0].unreadCount).toBe(1);
+    expect(denormalised.bobInbox[0].lastMessage?.body).toBe("three");
+
+    await stripDenormalised(t, threadId);
+    expect(await read()).toEqual(denormalised);
+  });
+});

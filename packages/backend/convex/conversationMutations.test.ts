@@ -302,14 +302,15 @@ describe("markThreadRead", () => {
       threadId,
     });
 
-    const row = await t.run((ctx) =>
+    // Receipts persist on the participant rows (threads.readReceipts is no longer written).
+    const rows = await t.run((ctx) =>
       ctx.db
-        .query("threads")
-        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", threadId))
-        .unique(),
+        .query("threadParticipants")
+        .withIndex("by_thread", (q) => q.eq("threadAggregateId", threadId))
+        .collect(),
     );
     const receiptOf = (memberId: Id<"users">) =>
-      row?.readReceipts.find((r) => r.memberId === memberId) ?? null;
+      rows.find((r) => r.memberId === memberId)?.lastReadAt ?? null;
     expect(receiptOf(bob)).not.toBeNull();
     expect(receiptOf(alice)).toBeNull();
   });

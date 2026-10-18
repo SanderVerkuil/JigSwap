@@ -120,7 +120,7 @@ describe("convexThreadRepository", () => {
     );
   });
 
-  test("saves messages incrementally without duplicates and tracks lastMessageAt", async () => {
+  test("appends messages across load-mutate-save cycles without duplicates and tracks lastMessageAt", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob } = await seed(t);
     const a = toMemberId(alice);
@@ -143,8 +143,17 @@ describe("convexThreadRepository", () => {
     expect(afterFirst[0].authorId).toBe(alice);
     expect(afterFirst[0].kind).toBe("text");
 
-    postText(thread, b, "second", 2_000);
-    await t.run((ctx) => convexThreadRepository(ctx).save(thread));
+    // A fresh unit of work: the reloaded aggregate carries no history, only what it appends.
+    const hydratedMessages = await t.run(async (ctx) => {
+      const repository = convexThreadRepository(ctx);
+      const reloaded = await repository.findById(thread.id);
+      if (!reloaded) throw new Error("thread not found");
+      const before = reloaded.messages.length;
+      postText(reloaded, b, "second", 2_000);
+      await repository.save(reloaded);
+      return before;
+    });
+    expect(hydratedMessages).toBe(0);
 
     const { messages, row } = await t.run(async (ctx) => ({
       messages: await ctx.db
@@ -165,7 +174,7 @@ describe("convexThreadRepository", () => {
     expect(row?.lastMessageAt).toBe(2_000);
   });
 
-  test("system message round-trips: null author, kind survives, no stored authorId", async () => {
+  test("system message persists: null author, kind survives, no stored authorId", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob } = await seed(t);
     const thread = openDm(toMemberId(alice), toMemberId(bob));
@@ -190,24 +199,10 @@ describe("convexThreadRepository", () => {
     expect(raw).toHaveLength(1);
     expect(raw[0].kind).toBe("system");
     expect(raw[0].authorId).toBeUndefined();
-
-    // t.run results must be Convex values, so unwrap the aggregate to plain data inside.
-    const roundTripped = await t.run(async (ctx) => {
-      const found = await convexThreadRepository(ctx).findById(thread.id);
-      return found === null
-        ? null
-        : found.messages.map((m) => ({
-            authorId: m.authorId,
-            kind: m.kind,
-            body: m.body,
-          }));
-    });
-    expect(roundTripped).toEqual([
-      { authorId: null, kind: "system", body: "exchange shipped" },
-    ]);
+    expect(raw[0].body).toBe("exchange shipped");
   });
 
-  test("a message's copy reference round-trips; plain messages store none", async () => {
+  test("a message's copy reference persists; plain messages store none", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob, copyId } = await seed(t);
     const thread = openDm(toMemberId(alice), toMemberId(bob));
@@ -232,12 +227,6 @@ describe("convexThreadRepository", () => {
         .collect(),
     );
     expect(raw.map((r) => r.copyId)).toEqual([copyId, undefined]);
-
-    const roundTripped = await t.run(async (ctx) => {
-      const found = await convexThreadRepository(ctx).findById(thread.id);
-      return found?.messages.map((m) => m.copyId ?? null) ?? null;
-    });
-    expect(roundTripped).toEqual([copyId, null]);
   });
 
   test("re-saving prunes a stale hand-inserted participant row back to the aggregate's set", async () => {
@@ -320,7 +309,7 @@ describe("convexThreadRepository", () => {
     expect(ba).toBe(dmThread.id);
   });
 
-  test("findByExchange and findById round-trip full state including read receipts", async () => {
+  test("findByExchange and findById round-trip state including read receipts, without history", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob, exchangeAggregateId } = await seed(t);
     const a = toMemberId(alice);
@@ -365,7 +354,8 @@ describe("convexThreadRepository", () => {
     expect(byId?.participants.slice().sort()).toEqual(
       [a as string, b as string].sort(),
     );
-    expect(byId?.messages).toEqual([{ body: "hello", sentAt: 3_000 }]);
+    // Append-only aggregate: history is never hydrated.
+    expect(byId?.messages).toEqual([]);
     expect(byId?.lastReadAtB).toBe(5_000);
     expect(byId?.lastReadAtA).toBeNull();
   });

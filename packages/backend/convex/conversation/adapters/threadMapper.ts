@@ -1,28 +1,38 @@
 import {
   Thread,
-  toCopyId,
   toMemberId,
-  toMessageId,
   toThreadId,
   type ExchangeId,
   type MemberId,
   type MessageState,
+  type ReadReceipt,
   type ThreadState,
   type ThreadSubject,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 
-// ACL between the persisted `threads`/`threadMessages` rows and the Thread aggregate. Schema
-// shape stops here and never ripples into the domain.
+// ACL between the persisted `threads`/`threadMessages`/`threadParticipants` rows and the Thread
+// aggregate. Schema shape stops here and never ripples into the domain.
 
 // The insert/patch payload for the thread row (minus Convex-managed `_id`/`_creationTime`). The
 // FK column `exchangeId` is excluded because the mapper is pure and cannot resolve the real
 // `exchanges._id` from the subject's aggregateId — the repository resolves and supplies it, along
-// with the row-lifecycle columns `createdAt`/`lastMessageAt` (neither lives on the aggregate).
+// with the row-lifecycle columns `createdAt`/`lastMessageAt`/`lastMessage` (none lives on the
+// aggregate). Read receipts are not part of it: they persist on the participant rows.
 export type ThreadRow = Omit<
   Doc<"threads">,
-  "_id" | "_creationTime" | "exchangeId" | "createdAt" | "lastMessageAt"
+  | "_id"
+  | "_creationTime"
+  | "exchangeId"
+  | "createdAt"
+  | "lastMessageAt"
+  | "lastMessage"
+  | "readReceipts"
 >;
+
+// The inbox summary keeps at most this many characters of the newest message's body. The inbox
+// row shows a one-line, ellipsised snippet, so 280 is ample.
+export const LAST_MESSAGE_BODY_MAX = 280;
 
 // The insert payload for one message companion row (messages are append-only; never patched).
 export type ThreadMessageRow = Omit<
@@ -48,10 +58,6 @@ export const toThreadRow = (thread: Thread): ThreadRow => {
       (memberId) => memberId as unknown as Id<"users">,
     ),
     participantsKey: participantsKeyOf(state.participants),
-    readReceipts: state.readReceipts.map((receipt) => ({
-      memberId: receipt.memberId as unknown as Id<"users">,
-      lastReadAt: receipt.lastReadAt.getTime(),
-    })),
   };
 };
 
@@ -75,24 +81,57 @@ export const toMessageRow = (
   }),
 });
 
+// Message row -> the thread's denormalized `lastMessage` summary: body truncated to
+// LAST_MESSAGE_BODY_MAX, and blank for `image` rows (their body is an unverified client string that
+// must never reach a renderer).
+export const toLastMessage = (
+  row: ThreadMessageRow,
+): NonNullable<Doc<"threads">["lastMessage"]> => ({
+  messageId: row.messageId,
+  ...(row.authorId !== undefined && { authorId: row.authorId }),
+  kind: row.kind,
+  body: row.kind === "image" ? "" : row.body.slice(0, LAST_MESSAGE_BODY_MAX),
+  sentAt: row.sentAt,
+  ...(row.copyId !== undefined && { copyId: row.copyId }),
+});
+
 // Rows -> aggregate state. `exchangeId` is the OUTBOUND aggregateId, supplied by the repository
 // after mapping the stored FK `_id` back to it; it MUST be present for an exchange-kind row — a
 // row claiming an exchange subject without one is corrupt, and silently hydrating it as a DM
 // would erase the subject, so we refuse loudly instead.
+// History never hydrates: the aggregate holds only the messages appended in this unit of work.
+// Receipts come from the participant rows' `lastReadAt`, falling back to the legacy
+// `threads.readReceipts` entry for members whose row has none yet (pre-backfill).
 export const toDomain = (
   row: Doc<"threads">,
-  messages: readonly Doc<"threadMessages">[],
+  participantRows: readonly Doc<"threadParticipants">[],
   exchangeId: ExchangeId | undefined,
 ): ThreadState => ({
   id: toThreadId(row.aggregateId),
   subject: toSubject(row, exchangeId),
   participants: row.participants.map((userId) => toMemberId(userId as string)),
-  messages: messages.map(toMessageState),
-  readReceipts: row.readReceipts.map((receipt) => ({
-    memberId: toMemberId(receipt.memberId as string),
-    lastReadAt: new Date(receipt.lastReadAt),
-  })),
+  messages: [],
+  readReceipts: toReadReceipts(row, participantRows),
 });
+
+const toReadReceipts = (
+  row: Doc<"threads">,
+  participantRows: readonly Doc<"threadParticipants">[],
+): ReadReceipt[] => {
+  const lastReadAt = new Map<string, number>();
+  for (const receipt of row.readReceipts ?? []) {
+    lastReadAt.set(receipt.memberId as string, receipt.lastReadAt);
+  }
+  for (const participant of participantRows) {
+    if (participant.lastReadAt !== undefined) {
+      lastReadAt.set(participant.memberId as string, participant.lastReadAt);
+    }
+  }
+  return [...lastReadAt].map(([memberId, at]) => ({
+    memberId: toMemberId(memberId),
+    lastReadAt: new Date(at),
+  }));
+};
 
 const toSubject = (
   row: Doc<"threads">,
@@ -106,13 +145,3 @@ const toSubject = (
   }
   return { kind: "exchange", exchangeId };
 };
-
-const toMessageState = (row: Doc<"threadMessages">): MessageState => ({
-  id: toMessageId(row.messageId),
-  authorId:
-    row.authorId === undefined ? null : toMemberId(row.authorId as string),
-  kind: row.kind,
-  body: row.body,
-  sentAt: new Date(row.sentAt),
-  ...(row.copyId !== undefined && { copyId: toCopyId(row.copyId as string) }),
-});
