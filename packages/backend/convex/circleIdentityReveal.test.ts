@@ -499,3 +499,50 @@ describe("departed members are never revealed, by any rule", () => {
     expect(JSON.stringify(seat)).not.toContain("PubGone");
   });
 });
+
+describe("the circle-reveal view is identity only", () => {
+  test("it carries exactly the identity keys (no bio, location, preferredLanguage)", async () => {
+    const t = convexTest(schema, modules);
+    const { viewer } = await seed(t);
+    const full = await t.run(async (ctx) => {
+      const now = Date.now();
+      const id = await ctx.db.insert("users", {
+        clerkId: "clerk_full",
+        email: "full@example.com",
+        name: "Fully",
+        username: "fully",
+        avatar: "https://example.com/a.png",
+        bio: "Bio",
+        location: "Town",
+        preferredLanguage: "nl",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("profiles", {
+        memberId: id,
+        visibility: "private",
+        updatedAt: now,
+      });
+      await ctx.db.insert("circleMembers", {
+        circleAggregateId: CIRCLE,
+        memberId: id,
+      });
+      return id;
+    });
+
+    const p = await project(t, viewer, full);
+    expect(p.anonymous).toBe(false);
+    if (p.anonymous) return;
+    expect(Object.keys(p.member).sort()).toEqual([
+      "_creationTime",
+      "_id",
+      "avatar",
+      "createdAt",
+      "isActive",
+      "name",
+      "updatedAt",
+      "username",
+    ]);
+  });
+});

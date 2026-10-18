@@ -196,8 +196,9 @@ export const anonymousMemberOf = (
  *      to unblock.
  *   3. target's profile is public -> revealed.
  *   4. viewer and target are mutual followers -> revealed.
- *   5. viewer and target are currently in the same circle -> revealed, IDENTITY ONLY (`bio`/
- *      `location` omitted). Product decision (#152): sharing a circle counts as a
+ *   5. viewer and target are currently in the same circle -> revealed, IDENTITY ONLY: name,
+ *      username and avatar (the circle member list always showed the avatar), never `bio`,
+ *      `location` or `preferredLanguage`. Product decision (#152): sharing a circle counts as a
  *      reveal. It never unlocks profile content (canSeeProfileContent is unchanged).
  *   6. otherwise -> anonymous.
  * Rules 3-4 are `isRevealedByOrdinaryRules`. In the anonymous branch the returned object carries
@@ -238,6 +239,7 @@ export const projectMemberIdentity = async (
     const {
       bio: _bio,
       location: _location,
+      preferredLanguage: _preferredLanguage,
       ...identity
     } = toMemberView(target);
     return { anonymous: false, member: identity };
