@@ -2,6 +2,7 @@ import type { ConnectionOfferView } from "@jigswap/contracts";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { isBlockedEitherWay } from "./blocks";
 import { memberTeaserIdentityOf } from "./privacy";
 
 // Read side: the acting member's open connection offers (pending and not yet expired), newest
@@ -25,7 +26,9 @@ export const listMyConnectionOffers = query({
     const result: ConnectionOfferView[] = [];
     for (const row of pending) {
       if (row.expiresAt <= now) continue;
-      // TODO(blocks): when social/blocks.ts lands, skip the offer if isBlockedEitherWay(fromId, me).
+      // A block either way since the offer (spec 2.6): the offer is gone for the recipient, the
+      // same as acceptConnection's generic refusal.
+      if (await isBlockedEitherWay(ctx, row.fromId, me)) continue;
       const inviter = await ctx.db.get(row.fromId);
       if (inviter === null || !inviter.isActive) continue;
       const profile = await ctx.db

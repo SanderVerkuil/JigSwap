@@ -907,6 +907,61 @@ describe("notifications", () => {
     },
   );
   test.each(DIRECTIONS)(
+    "%s: an invite-link connection offer (#197) is not notified",
+    async (_, pair) => {
+      const t = convexTest(schema, modules);
+      const u = await seed(t);
+      await insertBlock(t, ...pair(u));
+      const offered = await t.run(async (ctx) => {
+        const eventId = await ctx.db.insert("domainEvents", {
+          name: "ConnectionOffered",
+          payload: { offerId: "offer-1", fromId: u.bob, toId: u.alice },
+          occurredAt: Date.now(),
+          context: "social",
+        });
+        await handleDomainEvent(
+          ctx,
+          (await ctx.db.get(eventId)) as Doc<"domainEvents">,
+        );
+        return (
+          await ctx.db
+            .query("notifications")
+            .filter((q) => q.eq(q.field("userId"), u.alice))
+            .collect()
+        ).filter((n) => n.type === "connection_offer_received");
+      });
+      expect(offered).toEqual([]);
+    },
+  );
+
+  test.each(DIRECTIONS)(
+    "%s: a pending connection offer drops out of the recipient's list",
+    async (_, pair) => {
+      const t = convexTest(schema, modules);
+      const u = await seed(t);
+      await t.run((ctx) =>
+        ctx.db.insert("connectionOffers", {
+          aggregateId: "offer-1",
+          fromId: u.bob,
+          toId: u.alice,
+          source: "inviteLink",
+          status: "pending",
+          createdAt: Date.now(),
+          expiresAt: Date.now() + 86_400_000,
+        }),
+      );
+      const list = () =>
+        as(t, "alice").query(
+          api.social.listMyConnectionOffers.listMyConnectionOffers,
+          {},
+        );
+      expect(await list()).toHaveLength(1);
+      await insertBlock(t, ...pair(u));
+      expect(await list()).toEqual([]);
+    },
+  );
+
+  test.each(DIRECTIONS)(
     "%s: a dispute on an accepted exchange still notifies, without the actor",
     async (_, pair) => {
       const t = convexTest(schema, modules);
