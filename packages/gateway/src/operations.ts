@@ -513,6 +513,9 @@ export const gateway = {
     // Manual review of photos the classifier has not decided (pending / unscored).
     listUncheckedPhotos: api.admin.listUncheckedPhotos.listUncheckedPhotos,
     decideUncheckedPhoto: api.admin.decideUncheckedPhoto.decideUncheckedPhoto,
+    // CSAM hash matches (metadata only, never an image) and the operator's "reported" mark.
+    listCsamEscalations: api.admin.listCsamEscalations.listCsamEscalations,
+    markCsamEscalation: api.admin.markCsamEscalation.markCsamEscalation,
     // Admin users directory (read-only v1 — no user actions). Paginated; an optional
     // `search` arg switches to the by_searchable_name index. Rows are AdminUserView
     // DTOs whose `role` is the display-only Clerk mirror (authz stays JWT-based).

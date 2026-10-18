@@ -1,5 +1,6 @@
 import { ActivityLog } from "@/components/admin/moderation/activity-log";
 import { AdminBanner } from "@/components/admin/moderation/admin-banner";
+import { CsamEscalationsPanel } from "@/components/admin/moderation/csam-escalations";
 import {
   EditApproveDialog,
   type EditApproveValues,
@@ -37,7 +38,7 @@ import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Flag, History, Inbox, ScanEye } from "lucide-react";
+import { Flag, History, Inbox, ScanEye, ShieldAlert } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
@@ -53,8 +54,8 @@ export const Route = createFileRoute("/_dashboard/admin/moderation")({
 // the live queue (list+detail split with approve / edit&approve / reject),
 // Flagged Images reviews the auto-rejected photos (restore / confirm removal),
 // Unchecked Photos lets an admin approve or reject photos the classifier has
-// not decided (pending / unscored),
-// and Activity Log lists the recent moderation stamps.
+// not decided (pending / unscored), Hash matches lists the CSAM hash-list matches to report
+// (metadata only, never an image), and Activity Log lists the recent moderation stamps.
 function ModerationPage() {
   const t = useTranslations("admin.moderation");
   const tAdmin = useTranslations("admin");
@@ -70,6 +71,12 @@ function ModerationPage() {
   );
   const decideUnchecked = useMutation({
     mutationFn: useConvexMutation(gateway.admin.decideUncheckedPhoto),
+  });
+  const { data: csam } = useQuery(
+    convexQuery(gateway.admin.listCsamEscalations, {}),
+  );
+  const markCsam = useMutation({
+    mutationFn: useConvexMutation(gateway.admin.markCsamEscalation),
   });
   const approve = useMutation({
     mutationFn: useConvexMutation(gateway.catalog.approve),
@@ -101,7 +108,8 @@ function ModerationPage() {
     update.isPending ||
     confirmRemoval.isPending ||
     restorePhoto.isPending ||
-    decideUnchecked.isPending;
+    decideUnchecked.isPending ||
+    markCsam.isPending;
 
   // A pre-domain pending row has no aggregateId; it still lists (keyed by _id)
   // but its actions stay disabled — same rule as the previous queue.
@@ -258,6 +266,15 @@ function ModerationPage() {
             <ScanEye aria-hidden />
             {t("tabs.unchecked")}
             <TabCount count={unchecked?.length} />
+          </TabsTrigger>
+          <TabsTrigger value="hashMatches" className={TAB_TRIGGER_CLASS}>
+            <ShieldAlert aria-hidden />
+            {t("tabs.hashMatches")}
+            <TabCount
+              count={
+                csam?.escalations.filter((e) => e.status === "open").length
+              }
+            />
           </TabsTrigger>
           <TabsTrigger value="activity" className={TAB_TRIGGER_CLASS}>
             <History aria-hidden />
@@ -419,6 +436,26 @@ function ModerationPage() {
                   />
                 )
               }
+            />
+          )}
+        </TabsContent>
+
+        <TabsContent value="hashMatches">
+          {csam === undefined ? (
+            <PageLoading message={t("csam.loading")} />
+          ) : (
+            <CsamEscalationsPanel
+              data={csam}
+              emptyTitle={tAdmin("queueEmpty.title")}
+              busy={busy}
+              onMark={async (id, status, note) => {
+                try {
+                  await markCsam.mutateAsync({ id, status, note });
+                  toast.success(t("csam.updated"));
+                } catch {
+                  toast.error(t("error"));
+                }
+              }}
             />
           )}
         </TabsContent>

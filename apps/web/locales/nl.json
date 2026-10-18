@@ -3559,7 +3559,8 @@
         "submissions": "Inzendingen",
         "flagged": "Gemarkeerde afbeeldingen",
         "activity": "Activiteitenlog",
-        "unchecked": "Niet-gecontroleerde foto's"
+        "unchecked": "Niet-gecontroleerde foto's",
+        "hashMatches": "Hash-matches"
       },
       "detail": {
         "submitted": "Ingezonden",
@@ -3654,6 +3655,31 @@
         "reject": "Foto afwijzen",
         "rejectArm": "Weet je het zeker?",
         "hint": "Goedkeuren publiceert de foto voor andere leden. Afwijzen verbergt hem; een afgewezen foto van een exemplaar gaat naar Gemarkeerde afbeeldingen, een afgewezen foto van een gelegde puzzel wordt verwijderd."
+      },
+      "csam": {
+        "loading": "Hash-matches laden…",
+        "empty": "Geen hash-matches.",
+        "operatorNoteTitle": "Wat te doen bij een hash-match",
+        "operatorNote": "Deze uploads kwamen overeen met een lijst van bekend beeldmateriaal van seksueel misbruik van kinderen. Ze staan in quarantaine: niemand kan ze zien, ook beheerders niet, en het bestand blijft bewaard. Meld elke match bij Meldpunt Offlimits (<link>meldpunt.offlimits.nl</link>) of de politie en markeer hem daarna als gemeld. Probeer de afbeelding niet te openen, te downloaden of te delen.",
+        "notConfigured": "Hash-matching staat uit op deze omgeving (CSAM_HASHCHECK_PROVIDER is niet \"offlimits\").",
+        "missingConfig": "Hash-matching is gekozen maar niet ingesteld (ontbreekt: {vars}), dus het draait niet.",
+        "status": {
+          "open": "Open",
+          "reported": "Gemeld",
+          "closed": "Gesloten"
+        },
+        "table": {
+          "ownedPuzzleImages": "Foto bij exemplaar",
+          "completionImages": "Foto bij voltooiing"
+        },
+        "matched": "Match {time} via {provider}",
+        "uploader": "Geüpload door {name}",
+        "reportedAt": "Gemeld {time}",
+        "noteLabel": "Meldingskenmerk of notitie",
+        "notePlaceholder": "bijv. kenmerk van het Meldpunt",
+        "markReported": "Markeer als gemeld",
+        "close": "Sluiten",
+        "updated": "Escalatie bijgewerkt."
       }
     },
     "contact": {
