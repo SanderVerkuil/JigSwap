@@ -259,3 +259,69 @@ dry runs); the line with `"isDone":true` carries the whole run's totals. Follow 
 3. In the dashboard data view, every `ownedPuzzles` row has `visibilityAuthoritative: true`; rows
    an owner made private still read `visibility: "private"`.
 4. Spot-check a member's profile as a mutual follower: the same copies are listed as before.
+
+## `sharing/backfillStaleCircleShares` — remove circle shares left behind by ownership transfers
+
+**When:** once per deployment, after #184 (a `CopyOwnershipTransferred` deletes the copy's
+circle shares in the same transaction) is deployed there. Before #184 a settled sale or swap
+left the copy's `circleCopyShares` rows in place, so members of the previous owner's circles
+kept reaching the new owner's copy. #185 makes most of these harmless, but not when the new
+owner is a member of that same circle. Running it before #184 is deployed is safe but
+incomplete: transfers settling in between leave new stale rows, so run it (again) after.
+
+**What it does:** pages through `circleCopyShares` (25 rows per batch, `batchSize` overrides
+it, 1..100; each batch its own transaction, rescheduling itself until the table is exhausted).
+A share row stores no sharer, so the rule derives it: only the copy's owner can share it, so
+the sharer is whoever owned the copy at `sharedAt`, and every ownership change is recorded in
+`copyCustodyEntries` (previous and new owner). Per share:
+
+- the copy no longer exists -> deleted, counted `dangling` (copy deletion never withdrew
+  shares; the link points at nothing).
+- no transfer after `sharedAt` -> the sharer still owns it, `kept`.
+- the first transfer after `sharedAt` names the sharer; the copy came back to that member
+  -> `kept`.
+- the current owner shared it into the same circle again after the last transfer (a
+  `CopySharedToCircle` event for that circle and copy in `domainEvents`) -> `kept`.
+- otherwise the current owner never shared it into this circle -> deleted, counted `stale`.
+
+When the re-share check cannot finish within its bounded scan (500 later share events) the
+row is left alone and counted `undetermined`; it never deletes on a guess. It only deletes
+`circleCopyShares` rows; copies, circles, memberships and events are untouched.
+
+**Safe to re-run:** yes. Deleted rows are gone and every remaining row gets the same verdict
+again, so a second run deletes 0 rows.
+
+**Commands:**
+
+```bash
+cd packages/backend
+
+# dev: dry run (counts only, deletes nothing), then the real run
+npx convex run sharing/backfillStaleCircleShares:backfillStaleCircleShares '{"dryRun":true}'
+npx convex run sharing/backfillStaleCircleShares:backfillStaleCircleShares '{}'
+
+# prod: same, after dev looks right
+npx convex run --prod sharing/backfillStaleCircleShares:backfillStaleCircleShares '{"dryRun":true}'
+npx convex run --prod sharing/backfillStaleCircleShares:backfillStaleCircleShares '{}'
+```
+
+The command returns the FIRST batch's `{ scanned, stale, dangling, kept, undetermined }`; the
+remaining batches run as scheduled functions. Each batch logs a line
+`sharing/backfillStaleCircleShares batch {...,"totals":{...},"isDone":...}` (prefixed
+`(dry run)` for dry runs); the line with `"isDone":true` carries the whole run's totals.
+Follow it with `npx convex logs` (add `--prod` for prod) or in the dashboard Logs.
+
+**Verify:**
+
+1. The real run's final `totals.stale` and `totals.dangling` match the dry run's.
+2. Run the dry run again: its final totals show `"stale":0` and `"dangling":0`.
+3. `totals.undetermined` is 0. If not, those rows were kept; check them by hand in the
+   dashboard (the copy's `copyCustodyEntries` by `_id`, and whether its current owner shared
+   it into that circle) and delete them there if stale.
+4. Spot-check a copy that changed hands before #184: it has no `circleCopyShares` row for the
+   previous owner's circles, and a member of such a circle with no other path to it (not
+   mutual with the new owner, no shared household) no longer sees it on Browse.
+
+**Rollback:** none needed and none possible from the backfill itself. A wrongly removed share
+is restored by its owner sharing the copy into the circle again (`sharing/shareCopyToCircle`
+recreates the row).
