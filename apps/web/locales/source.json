@@ -1898,7 +1898,10 @@
       "household_invite_received": "Household invites",
       "household_invite_accepted": "Household invite accepted",
       "connection_offer_received": "Invitations to follow each other",
-      "whats_new": "What's new"
+      "whats_new": "What's new",
+      "report_decided": "Report outcomes",
+      "content_removed": "Content removed",
+      "member_warned": "Moderator warnings"
     },
     "categories": {
       "trades": {
@@ -1920,6 +1923,10 @@
       "product": {
         "title": "Product updates",
         "description": "New features and changes to JigSwap"
+      },
+      "safety": {
+        "title": "Safety",
+        "description": "Outcomes of reports you filed, and moderation of your messages and photos"
       },
       "admin": {
         "title": "Admin",
@@ -2026,6 +2033,18 @@
       "whats_new": {
         "title": "New in JigSwap",
         "message": "See what's new in JigSwap."
+      },
+      "report_decided": {
+        "title": "Report reviewed",
+        "message": "We reviewed a report you filed."
+      },
+      "content_removed": {
+        "title": "Content removed",
+        "message": "A moderator removed some of your content.{hasReason, select, yes { Reason: {reason}} other {}}"
+      },
+      "member_warned": {
+        "title": "Warning from a moderator",
+        "message": "A moderator sent you a warning.{hasReason, select, yes { Reason: {reason}} other {}}"
       }
     },
     "pushDeviceTitle": "Push on this device",
@@ -2066,7 +2085,10 @@
       "household_invite_received": "When someone invites you to their household.",
       "household_invite_accepted": "When someone accepts your household invite.",
       "connection_offer_received": "When the person who invited you to JigSwap asks to follow each other.",
-      "whats_new": "When a new feature or change to JigSwap is announced."
+      "whats_new": "When a new feature or change to JigSwap is announced.",
+      "report_decided": "When a moderator decides on a report you filed.",
+      "content_removed": "When a moderator removes one of your messages or photos after a report.",
+      "member_warned": "When a moderator warns you after a report."
     },
     "pushServiceUnreachable": "Your browser couldn't reach its push service. Some privacy browsers block or remove it — Brave disables it by default (enable 'Use Google services for push messaging' in Settings), and de-Googled Chromium builds like Helium strip it out. Firefox, Chrome, or Edge will work.",
     "rich": {
@@ -2212,6 +2234,15 @@
       },
       "connection_offer_received": {
         "sentence": "<b>{actor}</b> invited you to JigSwap. Follow each other?"
+      },
+      "report_decided": {
+        "sentence": "{decision, select, dismissed {We reviewed your report and found no violation, so no action was taken.} content_removed {We reviewed your report and removed the content.} warned {We reviewed your report and warned the member.} other {We reviewed your report.}}"
+      },
+      "content_removed": {
+        "sentence": "{restricted, select, photo {A moderator removed one of your photos} other {A moderator removed one of your messages}} for {ground, select, spam_scam {spam or scam} harassment_hate {harassment or hate} sexual {sexual or inappropriate content} fake_trade {a fake trade or no-show} illegal {illegal content} other {breaking the community rules}}. This was decided by a person, not automatically. Reply via the contact page to request a review."
+      },
+      "member_warned": {
+        "sentence": "A moderator warned you for {ground, select, spam_scam {spam or scam} harassment_hate {harassment or hate} sexual {sexual or inappropriate content} fake_trade {a fake trade or no-show} illegal {illegal content} other {breaking the community rules}}. This was decided by a person, not automatically. Reply via the contact page to request a review."
       }
     }
   },
@@ -3646,7 +3677,10 @@
         "photo_manually_approved": "<strong>{actor}</strong> approved an unchecked photo on <strong>{target}</strong>",
         "photo_manually_rejected": "<strong>{actor}</strong> rejected an unchecked photo on <strong>{target}</strong>",
         "image_quarantined": "<strong>{actor}</strong> quarantined a photo after a known-abuse hash match (<strong>{target}</strong>)",
-        "csam_escalation_updated": "<strong>{actor}</strong> updated a hash-match escalation (<strong>{target}</strong>)"
+        "csam_escalation_updated": "<strong>{actor}</strong> updated a hash-match escalation (<strong>{target}</strong>)",
+        "report_dismissed": "<strong>{actor}</strong> dismissed a report about <strong>{target}</strong>",
+        "report_content_removed": "<strong>{actor}</strong> removed reported content from <strong>{target}</strong>",
+        "report_warned": "<strong>{actor}</strong> warned <strong>{target}</strong> after a report"
       },
       "activityEmpty": "No moderation activity yet.",
       "screening": {

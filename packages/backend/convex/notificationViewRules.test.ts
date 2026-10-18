@@ -415,6 +415,10 @@ describe("legacyNotificationHref (mirror of the web's notificationHref)", () => 
     ["connection_offer_received", "o", "/people"],
     ["whats_new", "e1", "/whats-new#entry-e1"],
     ["whats_new", undefined, "/whats-new"],
+    // Report outcomes carry everything in params: no destination (relatedId is the report id).
+    ["report_decided", "r1", null],
+    ["content_removed", "r1", null],
+    ["member_warned", "r1", null],
   ] as const)("%s (%s) -> %s", (type, relatedId, href) => {
     expect(legacyNotificationHref(type, relatedId)).toBe(href);
   });

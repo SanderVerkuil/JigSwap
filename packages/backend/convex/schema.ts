@@ -611,6 +611,9 @@ export default defineSchema({
       v.literal("csam_escalation_updated"),
       v.literal("role_granted"),
       v.literal("role_revoked"),
+      v.literal("report_dismissed"),
+      v.literal("report_content_removed"),
+      v.literal("report_warned"),
     ),
     targetLabel: v.string(), // denormalized display title at decision time
     targetId: v.string(),
@@ -982,6 +985,9 @@ export default defineSchema({
       v.literal("household_invite_accepted"),
       v.literal("connection_offer_received"),
       v.literal("whats_new"),
+      v.literal("report_decided"),
+      v.literal("content_removed"),
+      v.literal("member_warned"),
     ),
     // Legacy pre-rendered English copy. Optional since notifications went structured: new rows
     // store `params` and the edges render copy (web via i18n keys, email via @jigswap/email).

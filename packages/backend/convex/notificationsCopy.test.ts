@@ -25,6 +25,19 @@ describe("renderNotificationText", () => {
         reason: "duplicate",
       }).message,
     ).toBe('Your suggested edit to "Sky" was declined: duplicate');
+    expect(
+      renderNotificationText("report_decided", { decision: "dismissed" })
+        .message,
+    ).toBe("We reviewed your report and took no action");
+    expect(
+      renderNotificationText("content_removed", {
+        restricted: "photo",
+        reason: "Nudity",
+      }).message,
+    ).toBe("A moderator removed your photo: Nudity");
+    expect(
+      renderNotificationText("member_warned", { reason: "Rude" }).message,
+    ).toBe("A moderator warned you: Rude");
   });
 
   it("falls back gracefully when params are missing", () => {

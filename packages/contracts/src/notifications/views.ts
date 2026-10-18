@@ -28,7 +28,10 @@ export type NotificationViewType =
   | "household_invite_received"
   | "household_invite_accepted"
   | "connection_offer_received"
-  | "whats_new";
+  | "whats_new"
+  | "report_decided"
+  | "content_removed"
+  | "member_warned";
 
 /**
  * A member who caused the notification. Anonymous (deleted, deactivated, or not visible to the
@@ -90,8 +93,23 @@ export interface NotificationViewContext {
   puzzleTitle?: string;
   thumbnailUrl?: string;
   goalTitle?: string;
-  /** Moderator-entered rejection reason (proposal_rejected). */
+  /**
+   * Moderator-entered reason: the rejection reason (proposal_rejected), or the statement of reasons
+   * (content_removed, member_warned).
+   */
   reason?: string;
+  /** The moderator's decision on a report the viewer filed (report_decided). */
+  reportDecision?: "dismissed" | "content_removed" | "warned";
+  /** What was removed (content_removed). */
+  restrictedContent?: "message" | "photo";
+  /** The report reason the decision rests on (content_removed, member_warned). */
+  ground?:
+    | "spam_scam"
+    | "harassment_hate"
+    | "sexual"
+    | "fake_trade"
+    | "illegal"
+    | "other";
   /** Star rating 1-5 (review_received). */
   rating?: number;
   /** The exchange's live status (trade types), when the viewer is still a party to it. */

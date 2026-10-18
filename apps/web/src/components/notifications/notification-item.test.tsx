@@ -414,6 +414,40 @@ describe("NotificationItem rendering", () => {
     expect(screen.getByText("Reason: Duplicate")).toBeTruthy();
   });
 
+  it("renders report outcomes with the decision, ground and statement of reasons, no actor", () => {
+    const { container } = renderItem(
+      base({
+        type: "content_removed",
+        actors: [],
+        actorCount: 0,
+        href: null,
+        context: {
+          restrictedContent: "photo",
+          ground: "sexual",
+          reason: "Nudity",
+        },
+      }),
+    );
+    expect(container.textContent).toContain(
+      "A moderator removed one of your photos for sexual or inappropriate content. This was decided by a person, not automatically. Reply via the contact page to request a review.",
+    );
+    expect(screen.getByText("Reason: Nudity")).toBeTruthy();
+    cleanup();
+    const decided = renderItem(
+      base({
+        type: "report_decided",
+        actors: [],
+        actorCount: 0,
+        href: null,
+        context: { reportDecision: "dismissed" },
+      }),
+      { locale: "nl" },
+    );
+    expect(decided.container.textContent).toContain(
+      "We hebben je melding beoordeeld en geen overtreding gevonden, dus er is niets veranderd.",
+    );
+  });
+
   it("popover: only the primary follow-request actions, no overflow, no mark-read", () => {
     const view = base({
       type: "follow_request_received",

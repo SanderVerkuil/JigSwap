@@ -8,6 +8,9 @@ import {
   Inbox,
   Lightbulb,
   MessageSquare,
+  ShieldAlert,
+  ShieldCheck,
+  ShieldX,
   Sparkles,
   Star,
   Target,
@@ -45,7 +48,10 @@ export type NotificationType =
   | "household_invite_received"
   | "household_invite_accepted"
   | "connection_offer_received"
-  | "whats_new";
+  | "whats_new"
+  | "report_decided"
+  | "content_removed"
+  | "member_warned";
 
 export const NOTIFICATION_TYPES: NotificationType[] = [
   "trade_request",
@@ -73,6 +79,9 @@ export const NOTIFICATION_TYPES: NotificationType[] = [
   "household_invite_accepted",
   "connection_offer_received",
   "whats_new",
+  "report_decided",
+  "content_removed",
+  "member_warned",
 ];
 
 // Types only admins ever receive; hidden from non-admin preference matrices.
@@ -82,7 +91,13 @@ export const ADMIN_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = new Set([
 ]);
 
 export type NotificationCategoryKey =
-  "trades" | "messages" | "social" | "submissions" | "product" | "admin";
+  | "trades"
+  | "messages"
+  | "social"
+  | "submissions"
+  | "product"
+  | "safety"
+  | "admin";
 
 export interface NotificationCategory {
   readonly key: NotificationCategoryKey;
@@ -132,6 +147,11 @@ export const NOTIFICATION_CATEGORIES: readonly NotificationCategory[] = [
   },
   // Product news gets its own row so members can mute it without muting social activity.
   { key: "product", types: ["whats_new"] },
+  // Report outcomes and moderation of the member's own content (DSA notices).
+  {
+    key: "safety",
+    types: ["report_decided", "content_removed", "member_warned"],
+  },
   {
     key: "admin",
     types: ["admin_proposal_filed", "admin_definition_submitted"],
@@ -259,6 +279,12 @@ export function notificationIcon(type: string): LucideIcon {
       return House;
     case "whats_new":
       return Sparkles;
+    case "report_decided":
+      return ShieldCheck;
+    case "content_removed":
+      return ShieldX;
+    case "member_warned":
+      return ShieldAlert;
     default:
       return Bell;
   }
@@ -281,7 +307,10 @@ export function notificationAccent(type: string): string {
     case "puzzle_rejected":
     case "photo_removed":
     case "proposal_rejected":
+    case "content_removed":
       return "text-destructive";
+    case "member_warned":
+      return "text-jigsaw-warning";
     case "review_received":
     case "goal_achieved":
       return "text-yellow-600 dark:text-yellow-400";

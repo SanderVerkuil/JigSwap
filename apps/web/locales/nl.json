@@ -1898,7 +1898,10 @@
       "household_invite_received": "Uitnodigingen voor een huishouden",
       "household_invite_accepted": "Uitnodiging voor huishouden geaccepteerd",
       "connection_offer_received": "Uitnodigingen om elkaar te volgen",
-      "whats_new": "Wat is er nieuw"
+      "whats_new": "Wat is er nieuw",
+      "report_decided": "Uitkomst van meldingen",
+      "content_removed": "Inhoud verwijderd",
+      "member_warned": "Waarschuwingen van moderators"
     },
     "categories": {
       "trades": {
@@ -1920,6 +1923,10 @@
       "product": {
         "title": "Productupdates",
         "description": "Nieuwe functies en wijzigingen in JigSwap"
+      },
+      "safety": {
+        "title": "Veiligheid",
+        "description": "Uitkomsten van je meldingen en moderatie van je berichten en foto's"
       },
       "admin": {
         "title": "Beheer",
@@ -2026,6 +2033,18 @@
       "whats_new": {
         "title": "Nieuw in JigSwap",
         "message": "Bekijk wat er nieuw is in JigSwap."
+      },
+      "report_decided": {
+        "title": "Melding beoordeeld",
+        "message": "We hebben een melding van je beoordeeld."
+      },
+      "content_removed": {
+        "title": "Inhoud verwijderd",
+        "message": "Een moderator heeft inhoud van je verwijderd.{hasReason, select, yes { Reden: {reason}} other {}}"
+      },
+      "member_warned": {
+        "title": "Waarschuwing van een moderator",
+        "message": "Een moderator heeft je een waarschuwing gestuurd.{hasReason, select, yes { Reden: {reason}} other {}}"
       }
     },
     "pushDeviceTitle": "Push op dit apparaat",
@@ -2066,7 +2085,10 @@
       "household_invite_received": "Wanneer iemand je uitnodigt voor hun huishouden.",
       "household_invite_accepted": "Wanneer iemand je uitnodiging voor het huishouden accepteert.",
       "connection_offer_received": "Wanneer degene die je voor JigSwap heeft uitgenodigd vraagt om elkaar te volgen.",
-      "whats_new": "Wanneer een nieuwe functie of wijziging in JigSwap wordt aangekondigd."
+      "whats_new": "Wanneer een nieuwe functie of wijziging in JigSwap wordt aangekondigd.",
+      "report_decided": "Wanneer een moderator een besluit neemt over een melding die je hebt gedaan.",
+      "content_removed": "Wanneer een moderator na een melding een bericht of foto van je verwijdert.",
+      "member_warned": "Wanneer een moderator je na een melding waarschuwt."
     },
     "pushServiceUnreachable": "Je browser kon zijn pushdienst niet bereiken. Sommige privacybrowsers blokkeren of verwijderen die — Brave schakelt het standaard uit (zet 'Google-services voor pushberichten gebruiken' aan in Instellingen), en de-Googled Chromium-browsers zoals Helium verwijderen het. Firefox, Chrome of Edge werkt wel.",
     "rich": {
@@ -2212,6 +2234,15 @@
       },
       "connection_offer_received": {
         "sentence": "<b>{actor}</b> heeft je uitgenodigd voor JigSwap. Elkaar volgen?"
+      },
+      "report_decided": {
+        "sentence": "{decision, select, dismissed {We hebben je melding beoordeeld en geen overtreding gevonden, dus er is niets veranderd.} content_removed {We hebben je melding beoordeeld en de inhoud verwijderd.} warned {We hebben je melding beoordeeld en het lid gewaarschuwd.} other {We hebben je melding beoordeeld.}}"
+      },
+      "content_removed": {
+        "sentence": "{restricted, select, photo {Een moderator heeft een foto van je verwijderd} other {Een moderator heeft een bericht van je verwijderd}} wegens {ground, select, spam_scam {spam of oplichting} harassment_hate {intimidatie of haat} sexual {seksuele of ongepaste inhoud} fake_trade {een nepruil of niet komen opdagen} illegal {illegale inhoud} other {het overtreden van de communityregels}}. Dit besluit is door een mens genomen, niet automatisch. Reageer via de contactpagina om een herbeoordeling te vragen."
+      },
+      "member_warned": {
+        "sentence": "Een moderator heeft je gewaarschuwd wegens {ground, select, spam_scam {spam of oplichting} harassment_hate {intimidatie of haat} sexual {seksuele of ongepaste inhoud} fake_trade {een nepruil of niet komen opdagen} illegal {illegale inhoud} other {het overtreden van de communityregels}}. Dit besluit is door een mens genomen, niet automatisch. Reageer via de contactpagina om een herbeoordeling te vragen."
       }
     }
   },
@@ -3646,7 +3677,10 @@
         "photo_manually_approved": "<strong>{actor}</strong> keurde een niet-gecontroleerde foto goed bij <strong>{target}</strong>",
         "photo_manually_rejected": "<strong>{actor}</strong> wees een niet-gecontroleerde foto af bij <strong>{target}</strong>",
         "image_quarantined": "<strong>{actor}</strong> zette een foto in quarantaine na een hash-match met bekend misbruikmateriaal (<strong>{target}</strong>)",
-        "csam_escalation_updated": "<strong>{actor}</strong> werkte een hash-match-escalatie bij (<strong>{target}</strong>)"
+        "csam_escalation_updated": "<strong>{actor}</strong> werkte een hash-match-escalatie bij (<strong>{target}</strong>)",
+        "report_dismissed": "<strong>{actor}</strong> wees een melding over <strong>{target}</strong> af",
+        "report_content_removed": "<strong>{actor}</strong> verwijderde gemelde inhoud van <strong>{target}</strong>",
+        "report_warned": "<strong>{actor}</strong> waarschuwde <strong>{target}</strong> na een melding"
       },
       "activityEmpty": "Nog geen moderatieactiviteit.",
       "screening": {
