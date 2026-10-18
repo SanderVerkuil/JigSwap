@@ -165,14 +165,28 @@ patterns:
   synchronous reactions in the same transaction (e.g. marking a transferred copy unavailable,
   recomputing goal progress), then (2) appends each event to the `domainEvents` table and schedules
   `events/dispatch.ts` via `ctx.scheduler.runAfter(0)`. The dispatcher fans events to async
-  subscribers (trade reveal, Notifications, Conversation, Custody, Library transfer, Library loan),
-  each in its own sub-transaction, and stamps `processedAt` once all succeed. Convex does **not**
+  subscribers (trade reveal, Notifications, Conversation, Custody + Library transfer as one unit,
+  Library loan) that react to the event name, each in its own sub-transaction, and stamps `processedAt` once all succeed. Convex does **not**
   retry a scheduled mutation on an application error, so a throwing subscriber is caught: its
   writes roll back, the others commit, and it is logged as an `events.dispatch` error wide event
   (forwarded to Axiom). Idempotent subscribers (`retry: true`) are re-dispatched with backoff up to
   5 passes; the rest give up at once. A given-up event gets `failedAt` (index `by_failed`),
   `failedHandlers` and `lastError`, and needs an operator. Alert on it in Axiom with
   `['jigswap'] | where event == "events.dispatch" and outcome == "error" and will_retry == false`.
+
+  **Replaying a `failedAt` event (manual).** Every handler in `failedHandlers` rolled back in full
+  (its own sub-transaction), so re-running it cannot duplicate its own writes; handlers in
+  `completedHandlers` already committed and must never re-run. After fixing the cause:
+  1. Check the current state still warrants the effect: `ownershipTransfer` (custody + library
+     transfer) only if the copy is still owned by the previous owner; `openLoan` only if the copy
+     is not already lent; `notifications` / `conversation` will land late (with today's
+     timestamp), so skip them when that would confuse members.
+  2. In the Convex dashboard, patch the `domainEvents` row: unset `failedAt`, `attempts` and
+     `lastError`; remove the handlers you want re-run from `failedHandlers` (leave any you chose to
+     skip); leave `completedHandlers` untouched.
+  3. Run `events/dispatch:dispatch` with `{ "eventId": "<id>" }` (dashboard Functions tab or
+     `npx convex run`). It runs only the handlers that are neither completed nor failed; a new
+     failure is logged and recorded as usual.
 
 ### 1.6 The TanStack Start web app
 
