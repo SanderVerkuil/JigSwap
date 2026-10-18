@@ -1539,6 +1539,38 @@ export default defineSchema({
     .index("by_invitee_status", ["inviteeId", "status"])
     .index("by_household", ["householdId"]),
 
+  // Email invitations (#222, invitations/): the inviter's local reference for one invitation sent by
+  // email to someone who is not on JigSwap yet. It stores NO email address, so the pending list
+  // reads "Invitation sent {createdAt}" whether or not the address had an account. aggregateId is
+  // the opaque ref carried in the Clerk invitation's public metadata. One row per send, kept for
+  // 14 days (a scheduled expireEmailInvite at expiresAt; reads check expiresAt too). fallback holds
+  // the in-app invite made instead when the address already belonged to a member.
+  emailInvites: defineTable({
+    aggregateId: v.string(),
+    kind: v.union(v.literal("follow"), v.literal("household")),
+    inviterId: v.id("users"),
+    householdId: v.optional(v.string()), // HouseholdId, household invites only
+    clerkInvitationId: v.optional(v.string()),
+    fallback: v.optional(
+      v.object({
+        connectionOfferId: v.optional(v.string()),
+        householdInviteId: v.optional(v.string()),
+      }),
+    ),
+    createdAt: v.number(),
+    expiresAt: v.number(),
+  })
+    .index("by_aggregate_id", ["aggregateId"])
+    .index("by_inviter", ["inviterId", "kind", "createdAt"]),
+
+  // The per-address cap for invitation emails (1 per 30 days across all inviters). The address is
+  // kept only as HMAC-SHA256(INVITE_EMAIL_HMAC_KEY, address), with no member id; each row is
+  // deleted 30 days after sentAt.
+  emailInviteSendLog: defineTable({
+    emailHmac: v.string(),
+    sentAt: v.number(),
+  }).index("by_hmac", ["emailHmac", "sentAt"]),
+
   // The durable domain-event log: every context's events are appended here, then an async
   // dispatcher (scheduled per insert) routes each to its subscribers and stamps processedAt.
   // WHY durable: decouples subscribers (Notifications, future Insights/Social) from the emitting

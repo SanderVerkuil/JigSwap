@@ -25,6 +25,8 @@ export const RATE_LIMITS = {
   locationSearch: { windowMs: HOUR, max: 60 },
   // Picker map views (each pan, zoom or tap re-renders the view from MapTiler tiles).
   locationPicker: { windowMs: HOUR, max: 60 },
+  // Email invitations (invitations/sendEmailInvite), follow and household together.
+  emailInvite: { windowMs: DAY, max: 10 },
 } as const satisfies Record<string, { windowMs: number; max: number }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

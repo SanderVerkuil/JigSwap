@@ -177,6 +177,21 @@ export interface ConnectionOfferView {
   readonly createdAt: number;
 }
 
+/** What an email invitation is for: following each other, or joining the inviter's household. */
+export type EmailInviteKind = "follow" | "household";
+
+/**
+ * One of the viewer's own pending email invitations (invitations.listMyEmailInvites). It never
+ * carries the address or who it reached, whether or not that person already has an account: the
+ * pending list reads "Invitation sent {createdAt}". `inviteRef` is what revokeEmailInvite takes.
+ */
+export interface EmailInviteView {
+  readonly inviteRef: string;
+  readonly kind: EmailInviteKind;
+  readonly createdAt: number;
+  readonly expiresAt: number;
+}
+
 /**
  * "Followers you know" social proof for a member profile: accounts the VIEWER follows who also
  * follow the target member (viewer's following ∩ target's followers) — deliberately NOT plain
