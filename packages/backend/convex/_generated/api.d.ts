@@ -14,6 +14,7 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as admin_confirmPhotoRemoval from "../admin/confirmPhotoRemoval.js";
+import type * as admin_decideImageReview from "../admin/decideImageReview.js";
 import type * as admin_decideReport from "../admin/decideReport.js";
 import type * as admin_decideUncheckedPhoto from "../admin/decideUncheckedPhoto.js";
 import type * as admin_deleteCopyPhoto from "../admin/deleteCopyPhoto.js";
@@ -24,6 +25,7 @@ import type * as admin_getPuzzleDefinitionDetail from "../admin/getPuzzleDefinit
 import type * as admin_getReport from "../admin/getReport.js";
 import type * as admin_getUserDetail from "../admin/getUserDetail.js";
 import type * as admin_listCsamEscalations from "../admin/listCsamEscalations.js";
+import type * as admin_listImageReviewRequests from "../admin/listImageReviewRequests.js";
 import type * as admin_listPuzzleDefinitions from "../admin/listPuzzleDefinitions.js";
 import type * as admin_listRejectedPhotos from "../admin/listRejectedPhotos.js";
 import type * as admin_listReports from "../admin/listReports.js";
@@ -130,6 +132,7 @@ import type * as conversation_moderateMessageImage from "../conversation/moderat
 import type * as conversation_openDmThread from "../conversation/openDmThread.js";
 import type * as conversation_postMessage from "../conversation/postMessage.js";
 import type * as conversation_readModelHelpers from "../conversation/readModelHelpers.js";
+import type * as conversation_requestImageReview from "../conversation/requestImageReview.js";
 import type * as conversation_sendStagedImages from "../conversation/sendStagedImages.js";
 import type * as conversation_stageMessageImage from "../conversation/stageMessageImage.js";
 import type * as conversation_startCopyConversation from "../conversation/startCopyConversation.js";
@@ -478,6 +481,7 @@ import type * as whatsNew_recordTourProgress from "../whatsNew/recordTourProgres
 
 declare const fullApi: ApiFromModules<{
   "admin/confirmPhotoRemoval": typeof admin_confirmPhotoRemoval;
+  "admin/decideImageReview": typeof admin_decideImageReview;
   "admin/decideReport": typeof admin_decideReport;
   "admin/decideUncheckedPhoto": typeof admin_decideUncheckedPhoto;
   "admin/deleteCopyPhoto": typeof admin_deleteCopyPhoto;
@@ -488,6 +492,7 @@ declare const fullApi: ApiFromModules<{
   "admin/getReport": typeof admin_getReport;
   "admin/getUserDetail": typeof admin_getUserDetail;
   "admin/listCsamEscalations": typeof admin_listCsamEscalations;
+  "admin/listImageReviewRequests": typeof admin_listImageReviewRequests;
   "admin/listPuzzleDefinitions": typeof admin_listPuzzleDefinitions;
   "admin/listRejectedPhotos": typeof admin_listRejectedPhotos;
   "admin/listReports": typeof admin_listReports;
@@ -594,6 +599,7 @@ declare const fullApi: ApiFromModules<{
   "conversation/openDmThread": typeof conversation_openDmThread;
   "conversation/postMessage": typeof conversation_postMessage;
   "conversation/readModelHelpers": typeof conversation_readModelHelpers;
+  "conversation/requestImageReview": typeof conversation_requestImageReview;
   "conversation/sendStagedImages": typeof conversation_sendStagedImages;
   "conversation/stageMessageImage": typeof conversation_stageMessageImage;
   "conversation/startCopyConversation": typeof conversation_startCopyConversation;

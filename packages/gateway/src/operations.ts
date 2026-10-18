@@ -219,14 +219,15 @@ export const gateway = {
       api.conversation.getCopyConversation.getCopyConversation,
     startCopyConversation:
       api.conversation.startCopyConversation.startCopyConversation,
-    // Message photos: upload URL, stage (claim the blob), send up to 4 with a caption, and the
-    // sender's outbox of undelivered photos.
+    // Message photos: upload URL, stage (claim the blob), send up to 4 with a caption, the
+    // sender's outbox of undelivered photos, and "ask for a review" of a stopped one.
     generateMessageUploadUrl:
       api.conversation.generateMessageUploadUrl.generateMessageUploadUrl,
     stageMessageImage: api.conversation.stageMessageImage.stageMessageImage,
     sendStagedImages: api.conversation.sendStagedImages.sendStagedImages,
     listMyPendingAttachments:
       api.conversation.listMyPendingAttachments.listMyPendingAttachments,
+    requestImageReview: api.conversation.requestImageReview.requestImageReview,
   },
 
   // Chain-of-Custody: a Copy's provenance (original owner -> each settled transfer -> current
@@ -560,6 +561,11 @@ export const gateway = {
     listReports: api.admin.listReports.listReports,
     getReport: api.admin.getReport.getReport,
     decideReport: api.admin.decideReport.decideReport,
+    // Message photos the automated check rejected whose sender asked for a review (the only
+    // unreported DM photos an admin may see), and the restore / uphold decision.
+    listImageReviewRequests:
+      api.admin.listImageReviewRequests.listImageReviewRequests,
+    decideImageReview: api.admin.decideImageReview.decideImageReview,
     // Admin users directory (read-only v1 — no user actions). Paginated; an optional
     // `search` arg switches to the by_searchable_name index. Rows are AdminUserView
     // DTOs whose `role` is the display-only Clerk mirror (authz stays JWT-based).
