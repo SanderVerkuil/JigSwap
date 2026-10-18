@@ -51,6 +51,9 @@ vi.mock("@/components/social/member-tile", () => ({
   MemberTileSkeleton: () => null,
 }));
 vi.mock("@/components/social/qr-dialog", () => ({ QrDialog: () => null }));
+vi.mock("@/components/social/email-invite", () => ({
+  EmailInvite: () => null,
+}));
 
 // Mirrors the desktop dashboard shell: the page scrolls inside one region, not the window.
 function makeRouter() {
