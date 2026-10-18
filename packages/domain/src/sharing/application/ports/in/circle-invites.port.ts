@@ -38,3 +38,10 @@ export type RevokeCircleInvite = (cmd: CircleInviteCommand) => Outcome<void>;
 export type ExpireCircleInvite = (cmd: {
   readonly inviteId: CircleInviteId;
 }) => Promise<boolean>;
+
+// System-driven: withdraw the pending invites a member sent to a circle they left or stopped being
+// an Admin of. Resolves to how many were withdrawn.
+export type WithdrawInvitesFrom = (cmd: {
+  readonly circleId: CircleId;
+  readonly inviterId: MemberId;
+}) => Promise<number>;

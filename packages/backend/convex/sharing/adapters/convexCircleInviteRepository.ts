@@ -25,6 +25,9 @@ export const toCircleInvite = (row: Doc<"circleInvites">): CircleInvite =>
     ...(row.decidedAt === undefined
       ? {}
       : { decidedAt: new Date(row.decidedAt) }),
+    ...(row.revokedBy === undefined
+      ? {}
+      : { revokedBy: toMemberId(row.revokedBy) }),
   });
 
 // Driven adapter for CircleInviteRepository over `circleInvites`.
@@ -88,6 +91,9 @@ export const convexCircleInviteRepository = (
         ...(state.decidedAt === undefined
           ? {}
           : { decidedAt: state.decidedAt.getTime() }),
+        ...(state.revokedBy === undefined
+          ? {}
+          : { revokedBy: state.revokedBy as unknown as Id<"users"> }),
       };
       const existing = await rowById(state.id);
       if (existing) await ctx.db.patch(existing._id, row);

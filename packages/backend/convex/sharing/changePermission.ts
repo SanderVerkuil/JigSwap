@@ -9,7 +9,10 @@ import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { convexCircleRepository } from "./adapters/convexCircleRepository";
-import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
+import {
+  inProcessEventPublisher,
+  withdrawInvitesFrom,
+} from "./adapters/inProcessEventPublisher";
 import { toConvexError } from "./errors";
 
 // Composition root for changing a member's permission within a circle. The actor is derived from
@@ -32,12 +35,18 @@ export const changePermission = mutation({
       events: inProcessEventPublisher(ctx),
     });
 
+    const circleId = toCircleId(args.circleId);
+    const memberId = toMemberId(args.memberId);
     const result = await changePermission({
-      circleId: toCircleId(args.circleId),
+      circleId,
       actorId: actorId as MemberId,
-      memberId: toMemberId(args.memberId),
+      memberId,
       permission: args.permission as PermissionLevel,
     });
     if (result.isErr) throw toConvexError(result.error);
+    // A member who is no longer an Admin can't stand behind their pending invites any more.
+    if (args.permission !== "Admin") {
+      await withdrawInvitesFrom(ctx, circleId, memberId);
+    }
   },
 });

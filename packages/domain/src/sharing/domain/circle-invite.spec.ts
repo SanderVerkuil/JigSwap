@@ -199,6 +199,7 @@ describe("CircleInvite", () => {
       const invite = issue(admin);
       expect(invite.revoke(admin, circle(), NOW).isOk).toBe(true);
       expect(invite.status).toBe("revoked");
+      expect(invite.toState().revokedBy).toBe(admin);
       expect(invite.toState().decidedAt).toEqual(NOW);
       expect(invite.pullEvents()).toEqual([
         new CircleInviteRevoked(inviteId, circleId, admin, NOW),
@@ -253,6 +254,30 @@ describe("CircleInvite", () => {
       expect(codeOf(issue().revoke(owner, circle(), EXPIRES))).toBe(
         "InviteExpired",
       );
+    });
+  });
+
+  describe("withdraw", () => {
+    it("revokes a pending invite with no revoker, recording CircleInviteRevoked(null)", () => {
+      const invite = issue(admin);
+      expect(invite.withdraw(EXPIRES).isOk).toBe(true);
+      expect(invite.status).toBe("revoked");
+      expect(invite.toState().decidedAt).toEqual(EXPIRES);
+      expect(invite.toState().revokedBy).toBeUndefined();
+      expect(invite.pullEvents()).toEqual([
+        new CircleInviteRevoked(inviteId, circleId, null, EXPIRES),
+      ]);
+      // A system withdrawal holds no re-invite off.
+      expect(invite.holdsOffReinviteAt(EXPIRES)).toBe(false);
+    });
+
+    it("refuses an invite that is no longer pending", () => {
+      const decided = issue();
+      decided.decline(invitee, NOW);
+      decided.pullEvents();
+      expect(codeOf(decided.withdraw(NOW))).toBe("InviteNotPending");
+      expect(decided.status).toBe("declined");
+      expect(decided.pullEvents()).toEqual([]);
     });
   });
 

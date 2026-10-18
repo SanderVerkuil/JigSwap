@@ -1144,6 +1144,9 @@ export default defineSchema({
     createdAt: v.number(),
     expiresAt: v.number(),
     decidedAt: v.optional(v.number()),
+    // The member who revoked it; absent when the system withdrew it (its inviter left or lost
+    // Admin), which holds off no re-invite.
+    revokedBy: v.optional(v.id("users")),
   })
     .index("by_aggregate_id", ["aggregateId"])
     .index("by_invitee_status", ["inviteeId", "status"])

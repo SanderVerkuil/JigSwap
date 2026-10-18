@@ -29,6 +29,7 @@ import { makeExpireCircleInvite } from "./expire-circle-invite";
 import { makeInviteToCircle } from "./invite-to-circle";
 import { makeRemoveMember } from "./remove-member";
 import { makeRevokeCircleInvite } from "./revoke-circle-invite";
+import { makeWithdrawInvitesFrom } from "./withdraw-invites-from";
 
 const owner = toMemberId("owner");
 const admin = toMemberId("admin");
@@ -422,6 +423,44 @@ describe("Sharing circle-invite use cases", () => {
       await decline(inviteId);
       events.published.length = 0;
       expect(codeOf(await revoke(inviteId, owner))).toBe("InviteNotPending");
+      expect(events.published).toEqual([]);
+    });
+  });
+
+  describe("makeWithdrawInvitesFrom", () => {
+    const withdraw = (inviterId: typeof owner) =>
+      makeWithdrawInvitesFrom(deps)({ circleId, inviterId });
+
+    it("withdraws only that inviter's pending invites, publishing one revoke each", async () => {
+      const other = toMemberId("other");
+      policy.allowContact(admin, other);
+      const fromAdmin = await invited(invitee, admin);
+      const fromAdminToo = await invited(other, admin);
+      const third = toMemberId("third");
+      policy.allowContact(owner, third);
+      const fromOwner = await invited(third, owner);
+
+      expect(await withdraw(admin)).toBe(2);
+
+      for (const id of [fromAdmin, fromAdminToo]) {
+        expect((await invites.findById(id))?.status).toBe("revoked");
+      }
+      expect((await invites.findById(fromOwner))?.status).toBe("pending");
+      expect(events.names()).toEqual([
+        "CircleInviteRevoked",
+        "CircleInviteRevoked",
+      ]);
+      // The withdrawn invitee can be invited again straight away.
+      expect((await invite(invitee, owner)).isOk).toBe(true);
+    });
+
+    it("leaves decided invites alone and publishes nothing when none are pending", async () => {
+      const declined = await invited(invitee, admin);
+      await decline(declined);
+      events.published.length = 0;
+
+      expect(await withdraw(admin)).toBe(0);
+      expect((await invites.findById(declined))?.status).toBe("declined");
       expect(events.published).toEqual([]);
     });
   });

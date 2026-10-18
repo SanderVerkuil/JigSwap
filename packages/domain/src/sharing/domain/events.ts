@@ -92,13 +92,14 @@ export class CircleInviteDeclined implements DomainEvent {
   ) {}
 }
 
-// The inviter or an Admin withdrew a pending invite.
+// The inviter or an Admin withdrew a pending invite (`revokedBy`), or the system did because its
+// inviter left or lost Admin (`revokedBy` null).
 export class CircleInviteRevoked implements DomainEvent {
   readonly name = "CircleInviteRevoked";
   constructor(
     readonly inviteId: CircleInviteId,
     readonly circleId: CircleId,
-    readonly revokedBy: MemberId,
+    readonly revokedBy: MemberId | null,
     readonly occurredAt: Date,
   ) {}
 }

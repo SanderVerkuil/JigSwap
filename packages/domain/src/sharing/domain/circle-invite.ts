@@ -14,7 +14,7 @@ import { PermissionLevel } from "./permission-level";
 // How long an unanswered circle invite stays open.
 export const CIRCLE_INVITE_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 
-// After the invitee declines or an invite is revoked, the same (circle, invitee) can't be invited
+// After the invitee declines or a member revokes an invite, the same (circle, invitee) can't be invited
 // again for this long, so an Admin can't keep re-sending an invite someone turned down.
 export const CIRCLE_REINVITE_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -32,6 +32,8 @@ export interface CircleInviteState {
   readonly createdAt: Date;
   readonly expiresAt: Date;
   readonly decidedAt?: Date;
+  // Who revoked it; absent when the system withdrew it (its inviter lost the standing to invite).
+  readonly revokedBy?: MemberId;
 }
 
 // An invitation to join a circle: pending → accepted | declined | revoked | expired. A pending
@@ -115,11 +117,13 @@ export class CircleInvite {
   }
 
   // Whether this decided invite still holds off a new invite to the same invitee at `now`: it was
-  // declined or revoked less than CIRCLE_REINVITE_COOLDOWN_MS ago.
+  // declined, or revoked by a member, less than CIRCLE_REINVITE_COOLDOWN_MS ago. A system
+  // withdrawal (see withdraw) holds nothing off: the invitee did nothing and nobody chose to.
   holdsOffReinviteAt(now: Date): boolean {
-    const { status, decidedAt } = this.state;
+    const { status, decidedAt, revokedBy } = this.state;
     return (
-      (status === "declined" || status === "revoked") &&
+      (status === "declined" ||
+        (status === "revoked" && revokedBy !== undefined)) &&
       decidedAt !== undefined &&
       now.getTime() < decidedAt.getTime() + CIRCLE_REINVITE_COOLDOWN_MS
     );
@@ -170,8 +174,23 @@ export class CircleInvite {
     const open = this.guardOpen(now);
     if (open.isErr) return open;
     this.decide("revoked", now);
+    this.state = { ...this.state, revokedBy: actor };
     this.record(
       new CircleInviteRevoked(this.state.id, this.state.circleId, actor, now),
+    );
+    return ok(undefined);
+  }
+
+  // The system withdraws a pending invite whose inviter can no longer stand behind it (they left,
+  // were removed, or lost Admin). Recorded as a revoke with no revoker, so it frees its seat
+  // under the cap and the ex-inviter can't act on it any more.
+  withdraw(now: Date): Result<void, SharingError> {
+    if (this.state.status !== "pending") {
+      return err(SharingError.inviteNotPending());
+    }
+    this.decide("revoked", now);
+    this.record(
+      new CircleInviteRevoked(this.state.id, this.state.circleId, null, now),
     );
     return ok(undefined);
   }

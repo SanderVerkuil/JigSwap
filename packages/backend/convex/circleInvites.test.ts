@@ -631,17 +631,23 @@ describe("sharing.acceptCircleInvite", () => {
     }
   });
 
-  test("an inviter who is no longer an Admin can't bring anyone in", async () => {
+  test("an inviter who is no longer an Admin can't bring anyone in (even if the invite survived)", async () => {
     const t = convexTest(schema, modules);
     const { bob, carol, circleId, inviteId } = await invited(t, "bob");
-    await as(t, "alice").mutation(
-      api.sharing.changePermission.changePermission,
-      {
-        circleId,
-        memberId: bob,
-        permission: "ViewOnly",
-      },
-    );
+    // Demote Bob directly in the row, bypassing changePermission's withdrawal, so the invite is
+    // still pending: accept must re-check the inviter's standing on its own.
+    await t.run(async (ctx) => {
+      const row = await ctx.db
+        .query("circles")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", circleId))
+        .unique();
+      await ctx.db.patch(row!._id, {
+        memberships: row!.memberships.map((m) =>
+          m.memberId === bob ? { ...m, permission: "ViewOnly" as const } : m,
+        ),
+      });
+    });
+    expect((await inviteRow(t, inviteId))?.status).toBe("pending");
 
     await expectConvexCode(accept(t, "carol", inviteId), "InviteNotFound");
     expect((await isSeated(t, circleId, carol)).seat).toBeNull();
@@ -719,6 +725,71 @@ describe("sharing.revokeCircleInvite", () => {
     // Revoked is final.
     await expectConvexCode(accept(t, "carol", toCarol), "InviteNotPending");
     await expectConvexCode(revoke(t, "alice", toCarol), "InviteNotPending");
+  });
+});
+
+describe("an inviter who leaves, is removed or loses Admin", () => {
+  for (const exit of ["leaves", "is removed", "is demoted"] as const) {
+    test(`${exit}: their pending invites are withdrawn in the same transaction`, async () => {
+      const t = convexTest(schema, modules);
+      const { alice, bob, carol, eve, circleId } = await seed(t);
+      await mutualFollow(t, bob, carol);
+      await mutualFollow(t, alice, eve);
+      await mutualFollow(t, alice, carol);
+      const fromBob = await invite(t, "bob", circleId, carol);
+      const fromAlice = await invite(t, "alice", circleId, eve);
+
+      if (exit === "leaves") {
+        await as(t, "bob").mutation(api.sharing.leaveCircle.leaveCircle, {
+          circleId,
+        });
+      } else if (exit === "is removed") {
+        await as(t, "alice").mutation(api.sharing.removeMember.removeMember, {
+          circleId,
+          memberId: bob,
+        });
+      } else {
+        await as(t, "alice").mutation(
+          api.sharing.changePermission.changePermission,
+          { circleId, memberId: bob, permission: "Exchange" },
+        );
+      }
+
+      const row = await inviteRow(t, fromBob);
+      expect(row?.status).toBe("revoked");
+      expect(row?.revokedBy).toBeUndefined();
+      expect((await inviteRow(t, fromAlice))?.status).toBe("pending");
+      // The seat is free again and the list no longer shows it.
+      expect(
+        (
+          await as(t, "alice").query(
+            api.sharing.listCircleInvites.listCircleInvites,
+            { circleId },
+          )
+        ).map((i) => i.inviteId),
+      ).toEqual([fromAlice]);
+      // Carol can't join on it, and the ex-inviter can't act on it any more.
+      await expectConvexCode(accept(t, "carol", fromBob), "InviteNotPending");
+      await expectConvexCode(revoke(t, "bob", fromBob), "InviteNotPending");
+      // A withdrawal holds no re-invite off: another Admin can invite Carol straight away.
+      expect(await invite(t, "alice", circleId, carol)).not.toBe(fromBob);
+    });
+  }
+
+  test("a permission change that keeps Admin leaves the invites alone", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, carol, dave, circleId } = await seed(t);
+    await mutualFollow(t, bob, carol);
+    const fromBob = await invite(t, "bob", circleId, carol);
+    await as(t, "alice").mutation(
+      api.sharing.changePermission.changePermission,
+      {
+        circleId,
+        memberId: dave,
+        permission: "Admin",
+      },
+    );
+    expect((await inviteRow(t, fromBob))?.status).toBe("pending");
   });
 });
 
