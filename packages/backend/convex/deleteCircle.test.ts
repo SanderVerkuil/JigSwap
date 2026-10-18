@@ -5,6 +5,7 @@ import { describe, expect, test } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
+import { MAX_CONFIRM_NAME_LENGTH } from "./sharing/deleteCircle";
 import { PURGE_BATCH_SIZE } from "./sharing/purgeDeletedCircle";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -436,6 +437,25 @@ describe("sharing.deleteCircle", () => {
     ).toBe(0);
     await flushScheduled(t);
     expect(await rowsOf(t, circleId)).toEqual(before);
+  });
+
+  test("a confirmName over the cap is refused as ConfirmationMismatch, for anyone, without reads", async () => {
+    const t = convexTest(schema, modules);
+    const { circleId } = await seed(t);
+    const tooLong = NAME + "x".repeat(MAX_CONFIRM_NAME_LENGTH);
+    expect(MAX_CONFIRM_NAME_LENGTH).toBe(100);
+
+    for (const [who, id] of [
+      ["alice", circleId],
+      ["dave", circleId],
+      ["dave", "no-such-circle"],
+    ] as const) {
+      expect((await errorDataOf(deleteCircle(t, who, id, tooLong))).code).toBe(
+        "ConfirmationMismatch",
+      );
+    }
+    expect((await rowsOf(t, circleId)).circles).toHaveLength(1);
+    expect(await deletedEvents(t)).toHaveLength(0);
   });
 });
 

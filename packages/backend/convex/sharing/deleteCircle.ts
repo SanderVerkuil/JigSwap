@@ -1,6 +1,7 @@
 import {
   makeDeleteCircle,
   SharingApplicationError,
+  SharingError,
   toCircleId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
@@ -10,6 +11,10 @@ import { convexCircleRepository } from "./adapters/convexCircleRepository";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
+
+// The longest confirmName worth comparing. Circle names have no length limit of their own yet, so
+// this is the cap the review set (100); anything longer can't be a name we'd accept here.
+export const MAX_CONFIRM_NAME_LENGTH = 100;
 
 // Composition root for deleting a circle. Only the owner may, by typing the circle's exact name as
 // `confirmName`. In this transaction the circle, its memberships and its invites go and
@@ -21,6 +26,11 @@ export const deleteCircle = mutation({
   },
   handler: async (ctx, args) => {
     const actorId = await requireMember(ctx);
+    // Refuse an oversized confirmation before any read. The answer is independent of the circle id,
+    // so it reveals nothing about which circles exist.
+    if (args.confirmName.length > MAX_CONFIRM_NAME_LENGTH) {
+      throw toConvexError(SharingError.confirmationMismatch());
+    }
 
     const deleteCircleUseCase = makeDeleteCircle({
       circles: convexCircleRepository(ctx),
