@@ -40,13 +40,14 @@ export const blockMember = mutation({
         message: "You can't block yourself",
       });
     }
+    // Before the existence check, so probing member ids is throttled too.
+    await enforceRateLimit(ctx, "blockToggle", blockerId);
     if ((await ctx.db.get(blockedId)) === null) {
       throw new ConvexError({
         code: "MemberNotFound",
         message: "Member not found",
       });
     }
-    await enforceRateLimit(ctx, "blockToggle", blockerId);
 
     const existing = await ctx.db
       .query("blocks")

@@ -558,6 +558,40 @@ describe("blockMember rules", () => {
     );
   });
 
+  test("the rate limit applies before the member-exists check", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+    const gone = await t.run(async (ctx) => {
+      const id = await ctx.db.insert("users", {
+        clerkId: "clerk_gone",
+        email: "gone@example.com",
+        name: "gone",
+        isActive: true,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      await ctx.db.delete(id);
+      return id;
+    });
+    await expectCode(
+      asAlice(t).mutation(api.social.blockMember.blockMember, {
+        memberId: gone,
+      }),
+      "MemberNotFound",
+    );
+    for (let i = 0; i < RATE_LIMITS.blockToggle.max; i++) {
+      await asAlice(t).mutation(api.social.blockMember.blockMember, {
+        memberId: bob,
+      });
+    }
+    await expectCode(
+      asAlice(t).mutation(api.social.blockMember.blockMember, {
+        memberId: gone,
+      }),
+      "RateLimited",
+    );
+  });
+
   test("block and unblock share the blockToggle rate limit", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob } = await seed(t);
