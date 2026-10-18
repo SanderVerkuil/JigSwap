@@ -32,6 +32,11 @@ export type ExchangeParties = {
   readonly ownerState: ExchangePartyState;
   /** Party ids the viewer may NOT see (never contains the viewer). */
   readonly hidden: ReadonlySet<Id<"users">>;
+  /**
+   * Party ids the viewer MAY see (the parties not in `hidden`). Anyone outside it — a hidden party,
+   * or a non-party such as a household mate whose copy was offered — never has their id emitted.
+   */
+  readonly visible: ReadonlySet<Id<"users">>;
 };
 
 // The contract has no "self": the viewer's own party is simply visible.
@@ -50,12 +55,16 @@ export const projectExchangeParties = async (
   const hidden = new Set<Id<"users">>();
   if (requester.state === "hidden") hidden.add(e.initiatorId);
   if (owner.state === "hidden") hidden.add(e.recipientId);
+  const visible = new Set(
+    [e.initiatorId, e.recipientId].filter((id) => !hidden.has(id)),
+  );
   return {
     requester: tradePartyMemberView(requester),
     owner: tradePartyMemberView(owner),
     requesterState: contractStateOf(requester),
     ownerState: contractStateOf(owner),
     hidden,
+    visible,
   };
 };
 
@@ -89,12 +98,14 @@ export const toExchangeFields = (
  * `library/mappers.ts` `toOwnedCopyView` and `getCopyInstanceView`. `salePrice` is NOT owner-only:
  * it is the public asking price for a copy listed for sale (and intrinsic to the exchange), so it is
  * always carried. Each copy is gated independently — pass the acting member as `viewerId`.
- * `ownerId` is OMITTED when the copy's owner is in `hidden` (a party anonymous to the viewer).
+ * `ownerId` is emitted ONLY when the copy's owner is in `visible` (a party the viewer may see): it
+ * is omitted for a party anonymous to the viewer AND for a non-party owner (a requester may offer a
+ * household mate's co-managed copy; the mate takes no part in the trade).
  */
 export const toOwnedPuzzleView = (
   c: Doc<"ownedPuzzles"> | null,
   viewerId: Id<"users">,
-  hidden: ReadonlySet<Id<"users">>,
+  visible: ReadonlySet<Id<"users">>,
 ): ExchangeOwnedPuzzleView | null => {
   if (!c) return null;
   const viewerIsOwner = c.ownerId === viewerId;
@@ -105,7 +116,7 @@ export const toOwnedPuzzleView = (
     puzzleId: c.puzzleId,
     puzzleDefinitionId: c.puzzleDefinitionId,
     snapshot: c.snapshot,
-    ...(hidden.has(c.ownerId) ? {} : { ownerId: c.ownerId }),
+    ...(visible.has(c.ownerId) ? { ownerId: c.ownerId } : {}),
     condition: c.condition,
     missingPiecesCount: c.missingPiecesCount,
     // Owner-only personal fields: only surfaced when the viewer owns this copy.
@@ -187,13 +198,13 @@ export const enrichExchangeSummary = async (
     requestedOwnedPuzzle: toOwnedPuzzleView(
       requestedOwnedPuzzle,
       viewerId,
-      parties.hidden,
+      parties.visible,
     ),
     requestedPuzzle: toPuzzleView(requestedPuzzle),
     offeredOwnedPuzzle: toOwnedPuzzleView(
       offeredOwnedPuzzle,
       viewerId,
-      parties.hidden,
+      parties.visible,
     ),
     offeredPuzzle: toPuzzleView(offeredPuzzle),
   };

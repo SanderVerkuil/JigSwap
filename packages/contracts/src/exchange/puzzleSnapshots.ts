@@ -45,7 +45,10 @@ export interface ExchangeOwnedPuzzleView extends ConvexSystemFields {
     pieceCount: number;
     thumbnail?: string;
   };
-  /** Omitted when the copy's owner is anonymous to the viewer (see ExchangeFields' PRIVACY note). */
+  /**
+   * Present only when the copy's owner is a party the viewer may see: omitted for an anonymous party
+   * (see ExchangeFields' PRIVACY note) and for a non-party owner (an offered household mate's copy).
+   */
   ownerId?: string;
   condition: "new_sealed" | "like_new" | "good" | "fair" | "poor";
   missingPiecesCount?: number;
