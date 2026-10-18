@@ -87,6 +87,33 @@ describe("app scroll restoration", () => {
     expect(region().scrollTop).toBe(0);
   });
 
+  // In-page view switches (tabs, filters) opt out of the reset per navigation.
+  it("keeps the region's position on a search-only change with resetScroll: false", async () => {
+    scrollRegion(600);
+    await act(async () => {
+      await router.navigate({
+        to: "/a",
+        search: { tab: "find" },
+        resetScroll: false,
+      } as never);
+    });
+    expect(router.state.resolvedLocation?.search).toEqual({ tab: "find" });
+    expect(region().scrollTop).toBe(600);
+  });
+
+  it("still resets the region on a route change after a search-only change", async () => {
+    scrollRegion(600);
+    await act(async () => {
+      await router.navigate({
+        to: "/a",
+        search: { tab: "find" },
+        resetScroll: false,
+      } as never);
+    });
+    await go(() => router.history.push("/b"), "/b");
+    expect(region().scrollTop).toBe(0);
+  });
+
   it("restores the region's position on back", async () => {
     scrollRegion(600);
     await go(() => router.history.push("/b"), "/b");
