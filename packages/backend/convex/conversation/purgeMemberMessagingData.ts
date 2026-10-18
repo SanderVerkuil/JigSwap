@@ -16,6 +16,12 @@ import { removeForDeletedMember } from "./messageAttachments";
 //   attachments  their photos and locations (conversation/messageAttachments removeForDeletedMember)
 //   reveals      their own taps on "Show"
 //   gpsViews     their recent current-location picker views (self-expiring after 15 minutes)
+//   circleParticipants  their seats in circle group threads: the participant row (read receipt,
+//                unread, mute) goes and they leave the thread's participant set, so no later save
+//                re-creates the row. Their circle messages stay, shown as "deleted member". No
+//                "left" row is posted: their circle memberships are not removed by this purge.
+//                Exchange/DM participant rows are kept: the pair thread stays readable for the
+//                other party, and its participant set and pair key (one DM per pair) need both.
 //   blocksOut    the blocks they placed
 //   blocksIn     the blocks placed on them
 //   reports      the reports they FILED are anonymised (reports ABOUT them are kept until their
@@ -55,6 +61,7 @@ const PHASES = [
   "attachments",
   "reveals",
   "gpsViews",
+  "circleParticipants",
   "blocksOut",
   "blocksIn",
   "reports",
@@ -88,6 +95,7 @@ const phaseValidator = v.union(
   v.literal("attachments"),
   v.literal("reveals"),
   v.literal("gpsViews"),
+  v.literal("circleParticipants"),
   v.literal("blocksOut"),
   v.literal("blocksIn"),
   v.literal("reports"),
@@ -247,6 +255,28 @@ const runPhase = async (
         .withIndex("by_member_thread", (q) => q.eq("memberId", memberId))
         .paginate(opts);
       for (const row of page.page) await ctx.db.delete(row._id);
+      return page;
+    }
+    case "circleParticipants": {
+      const page = await ctx.db
+        .query("threadParticipants")
+        .withIndex("by_member", (q) => q.eq("memberId", memberId))
+        .paginate(opts);
+      for (const row of page.page) {
+        const thread = await ctx.db
+          .query("threads")
+          .withIndex("by_aggregate_id", (q) =>
+            q.eq("aggregateId", row.threadAggregateId),
+          )
+          .unique();
+        if (thread && thread.subjectKind !== "circle") continue;
+        if (thread) {
+          await ctx.db.patch(thread._id, {
+            participants: thread.participants.filter((id) => id !== memberId),
+          });
+        }
+        await ctx.db.delete(row._id);
+      }
       return page;
     }
     case "blocksOut": {

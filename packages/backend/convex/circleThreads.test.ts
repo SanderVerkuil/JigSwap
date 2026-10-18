@@ -932,3 +932,53 @@ describe("message notifications", () => {
     expect(toBob.params?.actorName).toBeUndefined();
   });
 });
+
+describe("account deletion", () => {
+  test("a deleted member's circle participant rows go; their DM rows stay", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    await post(t, "bob", threadId, "hello");
+    const dmId = await t.run(async (ctx) => {
+      const aggregateId = crypto.randomUUID();
+      await ctx.db.insert("threads", {
+        aggregateId,
+        subjectKind: "dm",
+        participants: [alice, bob],
+        participantsKey: [alice, bob].sort().join("|"),
+        createdAt: Date.now(),
+      });
+      for (const memberId of [alice, bob]) {
+        await ctx.db.insert("threadParticipants", {
+          threadAggregateId: aggregateId,
+          memberId,
+        });
+      }
+      return aggregateId;
+    });
+
+    await t.mutation(
+      internal.conversation.purgeMemberMessagingData.purgeMemberMessagingData,
+      { memberId: bob },
+    );
+    await flush(t);
+
+    expect(
+      (await participantRowsOf(t, threadId)).map((r) => r.memberId),
+    ).not.toContain(bob);
+    const thread = await t.run((ctx) =>
+      ctx.db
+        .query("threads")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", threadId))
+        .unique(),
+    );
+    expect(thread!.participants).not.toContain(bob);
+    expect((await participantRowsOf(t, dmId)).map((r) => r.memberId)).toContain(
+      bob,
+    );
+    // Their message stays for the circle.
+    expect((await messagesOf(t, "alice", threadId)).map((m) => m.body)).toEqual(
+      ["hello"],
+    );
+  });
+});
