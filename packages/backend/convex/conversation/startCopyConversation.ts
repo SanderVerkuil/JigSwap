@@ -1,4 +1,5 @@
 import {
+  ConversationApplicationError,
   makeOpenDmThread,
   makePostMessage,
   toCopyId,
@@ -11,6 +12,7 @@ import { requireMember } from "../identity/requireMember";
 import { enforceRateLimit } from "../lib/rateLimits";
 import { canViewCopy } from "../library/canViewCopy";
 import { assertPairNotBlocked } from "../social/blocks";
+import { projectMemberIdentity } from "../social/privacy";
 import { convexConnectionPolicy } from "./adapters/connectionPolicy";
 import { convexThreadRepository } from "./adapters/convexThreadRepository";
 import { messageIdGenerator, threadIdGenerator } from "./adapters/idGenerators";
@@ -25,6 +27,9 @@ import { toConvexError } from "./errors";
 // (shared with postMessage); the copy exists and the caller may view it (CopyNotFound, no
 // existence leak); the pair isn't blocked either way (NotConnected); then the use cases' own rules — not
 // yourself (DmRequiresTwoParticipants), the ConnectionPolicy (NotConnected), one DM per pair.
+// An owner anonymous to the caller is refused with the policy's own NotConnected before the DM is
+// touched (mirrors getCopyConversation's `ownerHidden`): landing in the per-pair DM would tie
+// copies to one hidden owner.
 // The recipient is derived from the copy, never client-supplied. Returns the thread's id.
 export const startCopyConversation = mutation({
   args: { copyId: v.id("ownedPuzzles"), body: v.string() },
@@ -44,6 +49,16 @@ export const startCopyConversation = mutation({
     }
 
     await assertPairNotBlocked(ctx, me, copy.ownerId);
+
+    const owner = await projectMemberIdentity(
+      ctx,
+      me as unknown as Id<"users">,
+      copy.ownerId,
+      copy._id,
+    );
+    if (owner.anonymous) {
+      throw toConvexError(ConversationApplicationError.notConnected());
+    }
 
     const threads = convexThreadRepository(ctx);
     const opened = await makeOpenDmThread({
