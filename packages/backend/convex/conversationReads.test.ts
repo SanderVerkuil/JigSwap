@@ -469,6 +469,15 @@ describe("legacy image messages", () => {
         sentAt: Date.now(),
       }),
     );
+    // A legacy row predates the denormalised `lastMessage`, so its thread carries none: the
+    // inbox reads the newest row through the fallback (as the backfill would).
+    await t.run(async (ctx) => {
+      const thread = await ctx.db
+        .query("threads")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", threadId))
+        .unique();
+      if (thread) await ctx.db.patch(thread._id, { lastMessage: undefined });
+    });
     return { threadId };
   };
 
