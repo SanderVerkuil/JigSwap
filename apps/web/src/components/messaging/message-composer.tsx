@@ -85,8 +85,9 @@ export function MessageComposer({
   // phones the attach button, so the keyboard doesn't pop up unasked.
   const focusAfterAttachChange = () =>
     (isMobile ? attachButtonRef : textareaRef).current?.focus();
-  // A NotConnected refusal means no reply can get through: close the composer
-  // with the same neutral text a blocked member sees (never naming a block).
+  // A CannotReply (or NotConnected) refusal means no reply can get through:
+  // close the composer with the same neutral text a read-only thread shows
+  // (never naming a block).
   // Keyed by thread so moving to another thread reopens the composer.
   const [closedThreadId, setClosedThreadId] = useState<string | null>(null);
 
@@ -116,7 +117,7 @@ export function MessageComposer({
       // Give the text back unless the user already started typing a new one.
       setBody((current) => current || trimmed);
       const code = conversationErrorCode(err);
-      if (code === "NotConnected") {
+      if (code === "CannotReply" || code === "NotConnected") {
         setClosedThreadId(threadId);
         return;
       }

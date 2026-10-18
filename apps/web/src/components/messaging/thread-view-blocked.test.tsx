@@ -65,7 +65,9 @@ const mara = {
   updatedAt: 0,
 };
 
-const dmThread = (blocked?: "byMe" | "byThem"): InboxThread => ({
+const dmThread = (
+  state?: { blocked: "byMe" } | { readOnly: true },
+): InboxThread => ({
   threadId: "thread_1",
   subject: {
     kind: "dm",
@@ -76,7 +78,7 @@ const dmThread = (blocked?: "byMe" | "byThem"): InboxThread => ({
   unreadCount: 0,
   contextCopies: [],
   updatedAt: 0,
-  ...(blocked ? { blocked } : {}),
+  ...state,
 });
 
 const renderThread = (thread: InboxThread) => {
@@ -127,7 +129,7 @@ afterEach(cleanup);
 
 describe("ThreadView composer slot when blocked", () => {
   it("byMe: replaces the composer with the blocked banner and Unblock", async () => {
-    renderThread(dmThread("byMe"));
+    renderThread(dmThread({ blocked: "byMe" }));
     const status = screen.getByRole("status");
     expect(status.textContent).toContain("You blocked Mara.");
     expect(screen.queryByRole("textbox")).toBeNull();
@@ -150,8 +152,8 @@ describe("ThreadView composer slot when blocked", () => {
     );
   });
 
-  it("byThem: shows the neutral can't-reply text and never mentions a block", () => {
-    renderThread(dmThread("byThem"));
+  it("readOnly: shows the neutral can't-reply text and never mentions a block", () => {
+    renderThread(dmThread({ readOnly: true }));
     const status = screen.getByRole("status");
     expect(status.textContent).toBe("You can't reply to this conversation.");
     expect(status.textContent).not.toMatch(/block/i);
@@ -159,25 +161,28 @@ describe("ThreadView composer slot when blocked", () => {
     expect(screen.getByText("Earlier message")).toBeTruthy();
   });
 
-  it("closes the composer with the neutral text when a send fails with NotConnected", async () => {
-    mocks.mutation.mockImplementation(async (name) => {
-      if (name === POST) throw new ConvexError({ code: "NotConnected" });
-      return null;
-    });
-    renderThread(dmThread());
-    fireEvent.change(screen.getByRole("textbox"), {
-      target: { value: "Hello?" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+  it.each(["CannotReply", "NotConnected"])(
+    "closes the composer with the neutral text when a send fails with %s",
+    async (code) => {
+      mocks.mutation.mockImplementation(async (name) => {
+        if (name === POST) throw new ConvexError({ code });
+        return null;
+      });
+      renderThread(dmThread());
+      fireEvent.change(screen.getByRole("textbox"), {
+        target: { value: "Hello?" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Send message" }));
 
-    await waitFor(() =>
-      expect(screen.getByRole("status").textContent).toBe(
-        "You can't reply to this conversation.",
-      ),
-    );
-    expect(screen.queryByRole("textbox")).toBeNull();
-    expect(screen.queryByRole("alert")).toBeNull();
-  });
+      await waitFor(() =>
+        expect(screen.getByRole("status").textContent).toBe(
+          "You can't reply to this conversation.",
+        ),
+      );
+      expect(screen.queryByRole("textbox")).toBeNull();
+      expect(screen.queryByRole("alert")).toBeNull();
+    },
+  );
 
   it("offers Block {name} in the header menu of an open thread", async () => {
     renderThread(dmThread());

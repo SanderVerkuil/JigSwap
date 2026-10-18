@@ -402,8 +402,8 @@ export function ThreadView({
         className="sr-only"
       />
 
-      {/* A blocked pair's thread stays readable; only the composer closes. */}
-      {thread?.blocked ? (
+      {/* A blocked (byMe) or read-only thread stays readable; only the composer closes. */}
+      {thread && (thread.blocked === "byMe" || thread.readOnly) ? (
         <ComposerClosed
           reason={thread.blocked === "byMe" ? "blockedByMe" : "cantReply"}
           partner={threadPartner(thread)}

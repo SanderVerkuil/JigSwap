@@ -1,9 +1,9 @@
 "use client";
 
 // What sits in the composer's slot when the viewer can't reply (spec 2.6). The
-// blocker sees "You blocked {name}." with Unblock; everyone else (blocked by
-// the other side, or a send refused with NotConnected) sees the neutral "You
-// can't reply to this conversation.", which never mentions a block. Same
+// blocker sees "You blocked {name}." with Unblock; everyone else (a readOnly
+// thread, or a send refused with CannotReply / NotConnected) sees the neutral
+// "You can't reply to this conversation.", which never mentions a block. Same
 // border and height as the composer so the thread doesn't jump.
 import { BlockMemberDialog } from "@/components/social/block-member-dialog";
 import { Button } from "@/components/ui/button";
