@@ -31,7 +31,8 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
         subject: event.data.id,
       });
       if (existingUser && event.type === "user.created") {
-        console.warn("Overwriting user", event.data.id, "with", event.data);
+        // The id only: the payload carries the addresses and any invitation metadata.
+        console.warn("Overwriting user", event.data.id);
       }
       console.log("creating/updating user", event.data.id);
       await ctx.runMutation(internal.users.updateOrCreateUser, {

@@ -713,6 +713,15 @@ describe("sign-up through an email invitation", () => {
     await postUserEvent(t, "user.created", metadata);
     await postUserEvent(t, "user.created", metadata);
     expect(await offers(t)).toHaveLength(1);
+
+    // The redelivery's "Overwriting user" warning names the id only: no address, no invite ref.
+    const warned = vi
+      .mocked(console.warn)
+      .mock.calls.map((args) => args.map(String).join(" "))
+      .join("\n");
+    expect(warned).toContain("Overwriting user clerk_newbie");
+    expect(warned).not.toContain("newbie@example.org");
+    expect(warned).not.toContain(row.aggregateId);
   });
 });
 
