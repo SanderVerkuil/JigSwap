@@ -3,9 +3,12 @@
 // Overflow menu of actions on another member, shared by the thread header and
 // the member profile. `children` are the host's own items (e.g. thread quick
 // links), ending in the host's own separator (so it can hide both per width);
-// the safety items follow. The trigger is a 44px
+// the safety items (Report, then Block) follow. With `blocked` (the viewer
+// already blocked them) only Report stays: Unblock lives elsewhere, and the
+// report dialog drops "Also block". The trigger is a 44px
 // target below md and is named by `label`; destructive items carry text, not
 // colour alone. Focus returns to the trigger when the confirm dialog closes.
+import { ReportDialog } from "@/components/safety/report-dialog";
 import { BlockMemberDialog } from "@/components/social/block-member-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { Id } from "@/gateway";
 import { cn } from "@/lib/utils";
-import { Ban, type LucideIcon } from "lucide-react";
+import { Ban, Flag, type LucideIcon } from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "use-intl";
 
@@ -26,6 +29,7 @@ export function MemberActionsMenu({
   label,
   icon: Icon,
   onBlocked,
+  blocked = false,
   className,
   children,
 }: {
@@ -36,11 +40,14 @@ export function MemberActionsMenu({
   label: string;
   icon: LucideIcon;
   onBlocked?: () => void;
+  /** The viewer already blocked this member: offer Report only. */
+  blocked?: boolean;
   className?: string;
   children?: ReactNode;
 }) {
   const t = useTranslations("safety");
   const [confirming, setConfirming] = useState(false);
+  const [reporting, setReporting] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   return (
@@ -59,15 +66,23 @@ export function MemberActionsMenu({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           {children}
-          {/* "Report {name}" (milestone A6) goes here, after Block. */}
           <DropdownMenuItem
-            variant="destructive"
             className="min-h-11 md:min-h-0"
-            onSelect={() => setConfirming(true)}
+            onSelect={() => setReporting(true)}
           >
-            <Ban aria-hidden />
-            {t("blockName", { name })}
+            <Flag aria-hidden />
+            {t("reportName", { name })}
           </DropdownMenuItem>
+          {!blocked && (
+            <DropdownMenuItem
+              variant="destructive"
+              className="min-h-11 md:min-h-0"
+              onSelect={() => setConfirming(true)}
+            >
+              <Ban aria-hidden />
+              {t("blockName", { name })}
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
       <BlockMemberDialog
@@ -77,6 +92,16 @@ export function MemberActionsMenu({
         open={confirming}
         onOpenChange={setConfirming}
         onDone={onBlocked}
+        returnFocusRef={triggerRef}
+      />
+      <ReportDialog
+        target={{ kind: "user", id: memberId }}
+        name={name}
+        // No "Also block" for a member the viewer already blocked.
+        memberId={blocked ? undefined : memberId}
+        open={reporting}
+        onOpenChange={setReporting}
+        onBlocked={onBlocked}
         returnFocusRef={triggerRef}
       />
     </>

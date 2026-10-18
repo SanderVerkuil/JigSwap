@@ -2,6 +2,7 @@ import { useUser } from "@/compat/clerk";
 import {
   ADMIN_NOTIFICATION_TYPES,
   EMAIL_ELIGIBLE_TYPES,
+  MANDATORY_IN_APP_TYPES,
   NOTIFICATION_CATEGORIES,
   NOTIFICATION_CHANNELS,
   NOTIFICATION_TYPES,
@@ -56,9 +57,13 @@ function controllableTypes(
   types: readonly NotificationType[],
   channel: NotificationChannel,
 ): readonly NotificationType[] {
-  return channel === "email"
-    ? types.filter((type) => EMAIL_ELIGIBLE_TYPES.has(type))
-    : types;
+  if (channel === "email") {
+    return types.filter((type) => EMAIL_ELIGIBLE_TYPES.has(type));
+  }
+  if (channel === "inApp") {
+    return types.filter((type) => !MANDATORY_IN_APP_TYPES.has(type));
+  }
+  return types;
 }
 
 // The 13×3 type×channel preference grid, card-free. It's a single aligned matrix at every
@@ -202,12 +207,24 @@ export function ChannelMatrix({
                           <span className="text-muted-foreground line-clamp-2 text-xs">
                             {t(`typeDesc.${type}`)}
                           </span>
+                          {MANDATORY_IN_APP_TYPES.has(type) && (
+                            <span
+                              id={`mandatory-${type}`}
+                              className="text-muted-foreground text-xs italic"
+                            >
+                              {t("mandatoryInApp")}
+                            </span>
+                          )}
                         </span>
                       </span>
                       {NOTIFICATION_CHANNELS.map((channel) => {
                         const emailUnavailable =
                           channel === "email" &&
                           !EMAIL_ELIGIBLE_TYPES.has(type);
+                        // Legally required notices: always on in-app.
+                        const mandatory =
+                          channel === "inApp" &&
+                          MANDATORY_IN_APP_TYPES.has(type);
                         return (
                           <div
                             role="gridcell"
@@ -216,9 +233,13 @@ export function ChannelMatrix({
                           >
                             <Switch
                               checked={
-                                !emailUnavailable && row[channel] === true
+                                mandatory ||
+                                (!emailUnavailable && row[channel] === true)
                               }
-                              disabled={emailUnavailable}
+                              disabled={emailUnavailable || mandatory}
+                              aria-describedby={
+                                mandatory ? `mandatory-${type}` : undefined
+                              }
                               onCheckedChange={(checked) =>
                                 onToggle(type, channel, checked)
                               }
@@ -226,7 +247,9 @@ export function ChannelMatrix({
                               title={
                                 emailUnavailable
                                   ? t("emailUnavailable")
-                                  : undefined
+                                  : mandatory
+                                    ? t("mandatoryInApp")
+                                    : undefined
                               }
                             />
                           </div>

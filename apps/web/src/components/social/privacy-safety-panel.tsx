@@ -2,10 +2,11 @@
 
 // "Privacy & safety" page inside Clerk's profile modal (shell-user-button): the
 // caller's own "Blocked members" list (social/listMyBlocks, newest first), each
-// row with Unblock behind a confirm. Self-contained like
+// row with Unblock behind a confirm, then "Your reports". Self-contained like
 // NotificationPreferencesPanel: no route dependencies.
 import { useUser } from "@/compat/clerk";
 import { MemberInitial } from "@/components/members/member-initial";
+import { MyReports } from "@/components/safety/my-reports";
 import { BlockMemberDialog } from "@/components/social/block-member-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -69,6 +70,8 @@ export function PrivacySafetyPanel() {
           </ul>
         )}
       </section>
+
+      <MyReports />
 
       {target && (
         <BlockMemberDialog

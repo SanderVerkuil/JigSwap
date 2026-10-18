@@ -8,6 +8,7 @@ import { useCurrentMember } from "@/components/dashboard-home/use-current-member
 import { TradePartnerCard } from "@/components/exchange/trade-partner-card";
 import { ThreadView } from "@/components/messaging/thread-view";
 import { LeaveReviewDialog } from "@/components/reputation/leave-review-dialog";
+import { ExchangeReportMenu } from "@/components/safety/exchange-report-menu";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
@@ -479,6 +480,14 @@ function ExchangeDetail({
           <MessageCircle className="h-4 w-4" />
           {t("message")}
         </Button>
+
+        {partner && (
+          <ExchangeReportMenu
+            exchangeId={exchange.aggregateId ?? exchange._id}
+            partnerId={partnerId}
+            partnerName={displayName(partner)}
+          />
+        )}
       </div>
 
       {chatOpen && (

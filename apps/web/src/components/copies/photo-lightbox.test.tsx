@@ -135,3 +135,27 @@ describe("PhotoLightbox zoom", () => {
     expect(button("Zoom out").disabled).toBe(true);
   });
 });
+
+describe("PhotoLightbox report", () => {
+  const approved = gallery.map((p) => ({
+    ...p,
+    moderationStatus: "approved" as const,
+  }));
+  const reportButton = () =>
+    [...document.querySelectorAll("button")].find(
+      (el) => el.textContent === "Report photo",
+    );
+
+  it("offers Report photo on someone else's approved photo", () => {
+    render({ gallery: approved });
+    const trigger = reportButton();
+    expect(trigger).toBeTruthy();
+    click(trigger!);
+    expect(document.body.textContent).toContain("Reporting a photo from Sam");
+  });
+
+  it("hides Report photo from the copy's manager", () => {
+    render({ gallery: approved, canSetCover: true });
+    expect(reportButton()).toBeUndefined();
+  });
+});

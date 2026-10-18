@@ -2244,7 +2244,8 @@
       "member_warned": {
         "sentence": "A moderator warned you for {ground, select, spam_scam {spam or scam} harassment_hate {harassment or hate} sexual {sexual or inappropriate content} fake_trade {a fake trade or no-show} illegal {illegal content} other {breaking the community rules}}. This was decided by a person, not automatically. Reply via the contact page to request a review."
       }
-    }
+    },
+    "mandatoryInApp": "Always on: legally required notices"
   },
   "solving": {
     "title": "Solving",
@@ -3624,7 +3625,8 @@
         "flagged": "Flagged Images",
         "activity": "Activity Log",
         "unchecked": "Unchecked Photos",
-        "hashMatches": "Hash matches"
+        "hashMatches": "Hash matches",
+        "reports": "Reports"
       },
       "detail": {
         "submitted": "Submitted",
@@ -3751,6 +3753,100 @@
         "waiting": "Hash check unreachable: {countLabel} {count, plural, one {photo} other {photos}} waiting, unpublished (oldest {since}). They are re-checked automatically.",
         "noteBy": "{name}, {time}",
         "addNote": "Add note"
+      },
+      "reports": {
+        "statusFilter": "Report status",
+        "loading": "Loading reports…",
+        "loadMore": "Load more",
+        "empty": {
+          "open": "No open reports.",
+          "actioned": "No actioned reports yet.",
+          "dismissed": "No dismissed reports yet."
+        },
+        "statuses": {
+          "open": "Open",
+          "actioned": "Actioned",
+          "dismissed": "Dismissed"
+        },
+        "kinds": {
+          "user": "Member",
+          "message": "Message",
+          "copy": "Puzzle copy",
+          "photo": "Photo",
+          "exchange": "Trade"
+        },
+        "reportedArrow": "reported",
+        "openCount": "{count, plural, one {# open report against this member} other {# open reports against this member}}",
+        "detailTitle": "Report",
+        "detailDescription": "The evidence for this report and the decision form.",
+        "reason": "Reason",
+        "targetKind": "Target",
+        "reporter": "Reporter",
+        "reported": "Reported member",
+        "filed": "Filed",
+        "status": "Status",
+        "details": "Reporter's details",
+        "illegalNotice": "Illegal content notice",
+        "goodFaith": "Good-faith statement confirmed.",
+        "photo": "Reported photo",
+        "photoGone": "This photo no longer exists.",
+        "evidence": "Thread excerpt at filing time",
+        "reportedMessage": "Reported",
+        "system": "System",
+        "deletedMember": "Deleted member",
+        "otherParticipant": "Other participant",
+        "otherReports": "{count, plural, =0 {No other reports against this member} one {# other report against this member} other {# other reports against this member}}",
+        "decisions": {
+          "dismissed": "Dismissed",
+          "warned": "Member warned",
+          "content_removed": "Content removed"
+        },
+        "decidedBy": "Decided by {name}",
+        "decisionLegend": "Decision",
+        "decide": {
+          "dismissed": "Dismiss",
+          "warned": "Warn member",
+          "content_removed": "Remove content"
+        },
+        "removeUnavailable": "Content can only be removed for message and photo reports.",
+        "statementLabel": "Statement of reasons (sent to the member)",
+        "statementHint": "{count}/{max} characters. Required: what was restricted, the ground, and how to ask for a review.",
+        "templateNames": {
+          "removal": "Removal template",
+          "warning": "Warning template",
+          "noViolation": "No-violation template"
+        },
+        "templateContent": {
+          "user": "your conduct on JigSwap",
+          "message": "your message",
+          "copy": "your puzzle copy",
+          "photo": "your photo",
+          "exchange": "your conduct in a trade"
+        },
+        "grounds": {
+          "spam_scam": "spam and scams",
+          "harassment_hate": "harassment and hate",
+          "sexual": "sexual or inappropriate content",
+          "fake_trade": "fake trades and no-shows",
+          "illegal": "illegal content",
+          "other": "respectful behaviour"
+        },
+        "templates": {
+          "removal": "We removed {content} because it breaks our community guidelines on {ground}. If you think we got this wrong, you can ask for a review via the contact page.",
+          "warning": "We're warning you about {content}: it breaks our community guidelines on {ground}. Nothing was removed this time. If you think we got this wrong, you can ask for a review via the contact page.",
+          "noViolation": "We reviewed a report about {content} and found no breach of our community guidelines on {ground}. Nothing was restricted. You can ask for a review via the contact page."
+        },
+        "submit": {
+          "none": "Choose a decision",
+          "dismissed": "Dismiss report",
+          "warned": "Warn member",
+          "content_removed": "Remove content"
+        },
+        "removeConfirmTitle": "Remove this content?",
+        "removeConfirmBody": "Both members will see it as removed by a moderator, and the author gets your statement of reasons. This can't be undone.",
+        "cancel": "Cancel",
+        "decided": "Decision saved",
+        "decideError": "Couldn't save the decision. Please try again."
       }
     },
     "contact": {
@@ -4285,6 +4381,63 @@
     "unblocked": "Unblocked {name}",
     "unblockError": "Couldn't unblock {name}. Please try again.",
     "unblockName": "Unblock {name}",
-    "undo": "Undo"
+    "undo": "Undo",
+    "report": {
+      "title": "Report {name}",
+      "description": "Tell us what's wrong. Reports are private: only our moderators see them.",
+      "reportingMember": "Reporting {name}",
+      "reportingPhoto": "Reporting a photo from {name}",
+      "reasonLegend": "Why are you reporting this?",
+      "reasons": {
+        "spam_scam": "Spam or scam",
+        "harassment_hate": "Harassment or hate",
+        "sexual": "Sexual or inappropriate content",
+        "fake_trade": "Fake trade or no-show",
+        "illegal": "Illegal content",
+        "other": "Something else"
+      },
+      "detailsLabel": "Details (optional)",
+      "detailsCounter": "{count}/{max}",
+      "alsoBlock": "Also block {name}",
+      "goodFaith": "I confirm in good faith that this information is accurate and complete.",
+      "notifierIncluded": "Your name and email from your account are included with this notice, as the law requires.",
+      "submit": "Send report",
+      "submitting": "Sending…",
+      "doneTitle": "Report sent",
+      "doneBody": "Thanks — we've received your report. {name} won't know who reported them. We'll review it and let you know what we decided.",
+      "done": "Done",
+      "errors": {
+        "rateLimited": "You've sent a lot of reports today. Try again tomorrow.",
+        "notFound": "This can't be reported any more. It may have been removed.",
+        "detailsTooLong": "Details can be at most 1000 characters.",
+        "illegalNoticeRequired": "Confirm the good-faith statement to report illegal content.",
+        "illegalNoticeIncomplete": "Add a name and email to your account to report illegal content.",
+        "generic": "Couldn't send your report. Please try again."
+      }
+    },
+    "messageActions": "More actions for message from {name}",
+    "copyText": "Copy text",
+    "textCopied": "Text copied",
+    "copyFailed": "Couldn't copy the text.",
+    "reportMessage": "Report message",
+    "messageRemoved": "This message was removed by a moderator.",
+    "otherMember": "the other member",
+    "reportName": "Report {name}",
+    "reportMember": "Report member",
+    "reportPhoto": "Report photo",
+    "exchangeActions": "Trade actions",
+    "myReports": {
+      "title": "Your reports",
+      "empty": "You haven't reported anything.",
+      "underReview": "Under review",
+      "handled": "Handled",
+      "target": {
+        "user": "A member",
+        "message": "A message",
+        "copy": "A puzzle copy",
+        "photo": "A photo",
+        "exchange": "A trade"
+      }
+    }
   }
 }

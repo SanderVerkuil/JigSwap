@@ -179,6 +179,7 @@ function ThreadRow({
   locale: string;
 }) {
   const t = useTranslations("messages");
+  const tSafety = useTranslations("safety");
   const displayName = useMemberDisplayName();
   // Keyboard (focus-visible) focus on the row: the row's cover lifts and
   // names itself, as hovering it does.
@@ -188,7 +189,10 @@ function ThreadRow({
   const { contextCopies } = thread;
   const last = thread.lastMessage;
   const isSystem = last?.kind === "system";
-  const body = last?.body.replace(/\s+/g, " ").trim();
+  // A removed message has an empty body: name the removal instead.
+  const body = last?.removed
+    ? tSafety("messageRemoved")
+    : last?.body.replace(/\s+/g, " ").trim();
   const snippet =
     body === undefined
       ? t("noMessages")

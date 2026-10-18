@@ -236,25 +236,30 @@ describe("ThreadView composer slot when blocked", () => {
     },
   );
 
-  it("offers Block {name} in the header's one overflow menu, after the quick links", async () => {
+  it("offers Report and Block {name} in the header's one overflow menu, after the quick links", async () => {
     renderThread(dmThread());
-    expect(await openThreadMenu()).toEqual(["View profile", "Block Mara"]);
+    expect(await openThreadMenu()).toEqual([
+      "View profile",
+      "Report Mara",
+      "Block Mara",
+    ]);
     fireEvent.click(screen.getByRole("menuitem", { name: "Block Mara" }));
     expect(
       await screen.findByRole("alertdialog", { name: "Block Mara?" }),
     ).toBeTruthy();
   });
 
-  it("byMe: the overflow menu keeps the quick links but offers no Block", async () => {
+  it("byMe: the overflow menu keeps the quick links and Report but offers no Block", async () => {
     renderThread(dmThread({ blocked: "byMe" }));
-    expect(await openThreadMenu()).toEqual(["View profile"]);
+    expect(await openThreadMenu()).toEqual(["View profile", "Report Mara"]);
   });
 
-  it("offers Block {name} for an exchange thread's partner", async () => {
+  it("offers Report and Block {name} for an exchange thread's partner", async () => {
     renderThread(exchangeThread());
     expect(await openThreadMenu()).toEqual([
       "View profile",
       "View exchange",
+      "Report Mara",
       "Block Mara",
     ]);
   });
