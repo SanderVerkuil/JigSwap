@@ -4,6 +4,7 @@ import { query } from "../_generated/server";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { optionalActingMember } from "../identity/optionalActingMember";
 import { resolveMemberByHandle } from "../identity/resolveMemberByHandle";
+import { isCopyPrivate, seesPrivateCopiesOf } from "../library/copyVisibility";
 import { profileVisibilityOf } from "./privacy";
 
 // The UNAUTHENTICATED read behind /members/$handle. Deliberately tiny: identity fields only —
@@ -43,7 +44,10 @@ export const getPublicMemberTeaser = query({
         .query("ownedPuzzles")
         .withIndex("by_owner", (q) => q.eq("ownerId", memberId))
         .take(1001);
-      puzzleCount = copies.length;
+      // Private copies count only for the member themself and their household.
+      puzzleCount = (await seesPrivateCopiesOf(ctx, viewer, memberId))
+        ? copies.length
+        : copies.filter((copy) => !isCopyPrivate(copy)).length;
     }
 
     return {

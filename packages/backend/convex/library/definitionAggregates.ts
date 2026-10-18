@@ -6,6 +6,7 @@ import type { CopyOfferSwapType } from "@jigswap/contracts";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { profileVisibilityOf } from "../social/privacy";
+import { isCopyPrivate } from "./copyVisibility";
 
 const MS_PER_DAY = 86_400_000;
 
@@ -38,6 +39,19 @@ export const isOpen = (copy: Doc<"ownedPuzzles">): boolean =>
   copy.availability.forTrade ||
   copy.availability.forSale ||
   copy.availability.forLend;
+
+/** Distinct owners of a definition's copies, counting a PRIVATE copy (library/copyVisibility) only
+ * when `seesPrivateOf(ownerId)` — the viewer is that owner or in their household. The unauthenticated
+ * public reads pass nothing, so private copies never count there. */
+export const communityOwnersOf = (
+  ownedCopies: Doc<"ownedPuzzles">[],
+  seesPrivateOf: (ownerId: Id<"users">) => boolean = () => false,
+): number =>
+  new Set(
+    ownedCopies
+      .filter((c) => !isCopyPrivate(c) || seesPrivateOf(c.ownerId))
+      .map((c) => c.ownerId as unknown as string),
+  ).size;
 
 /** Availability priority -> swapType: forTrade -> "swap", forLend -> "lend", forSale -> "sale". */
 export const swapTypeOf = (copy: Doc<"ownedPuzzles">): CopyOfferSwapType => {

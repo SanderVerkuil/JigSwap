@@ -223,6 +223,7 @@ import type * as library_browseOwnedPuzzles from "../library/browseOwnedPuzzles.
 import type * as library_canViewCopy from "../library/canViewCopy.js";
 import type * as library_changeCopyCondition from "../library/changeCopyCondition.js";
 import type * as library_circleSharedCopies from "../library/circleSharedCopies.js";
+import type * as library_copyVisibility from "../library/copyVisibility.js";
 import type * as library_createCollection from "../library/createCollection.js";
 import type * as library_createPersonalCategory from "../library/createPersonalCategory.js";
 import type * as library_definitionAggregates from "../library/definitionAggregates.js";
@@ -640,6 +641,7 @@ declare const fullApi: ApiFromModules<{
   "library/canViewCopy": typeof library_canViewCopy;
   "library/changeCopyCondition": typeof library_changeCopyCondition;
   "library/circleSharedCopies": typeof library_circleSharedCopies;
+  "library/copyVisibility": typeof library_copyVisibility;
   "library/createCollection": typeof library_createCollection;
   "library/createPersonalCategory": typeof library_createPersonalCategory;
   "library/definitionAggregates": typeof library_definitionAggregates;

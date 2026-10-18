@@ -244,8 +244,17 @@ export default defineSchema({
       forLend: v.boolean(),
     }),
     // The SharingSetting's visibility axis (who can SEE the copy), orthogonal to the
-    // availability flags (what it can be USED for). Optional; legacy rows are unset.
+    // availability flags (what it can be USED for). Optional; legacy rows are unset. Convex has no
+    // column defaults: the "visible" default lives in the create paths (domain SharingSetting.newCopy)
+    // and in library/copyVisibility.effectiveCopyVisibility. NEVER read this column directly to
+    // decide who may see a copy — always go through effectiveCopyVisibility.
     visibility: v.optional(v.union(v.literal("private"), v.literal("visible"))),
+    // Rollout marker: true when `visibility` was written by an authoritative source (the domain
+    // repository on any save, or the one-shot backfill library/backfillCopyVisibility). Rows without
+    // it predate the per-copy privacy toggle: their stored "private" was the old domain default, not
+    // an owner's choice, so effectiveCopyVisibility treats them as "visible" until backfilled. Can be
+    // dropped (and the helper simplified) once the backfill has run on every deployment.
+    visibilityAuthoritative: v.optional(v.boolean()),
     salePrice: v.optional(
       v.object({
         amount: v.number(),

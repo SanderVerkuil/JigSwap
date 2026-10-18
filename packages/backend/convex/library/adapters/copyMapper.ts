@@ -12,6 +12,7 @@ import {
   type CopyState,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
+import { effectiveCopyVisibility } from "../copyVisibility";
 
 // ACL between the persisted `ownedPuzzles` (+ `ownedPuzzleImages`) rows and the Copy aggregate.
 // Schema shape stops here and never ripples into the domain.
@@ -115,7 +116,10 @@ export const toRow = (copy: Copy): OwnedPuzzleRow => {
       forSale: sharing.forSale,
       forLend: sharing.forLend,
     },
+    // The domain value is authoritative (a load already resolved it through
+    // effectiveCopyVisibility), so every save stamps the rollout marker with it.
     visibility: sharing.visibility,
+    visibilityAuthoritative: true,
     salePrice: sharing.salePrice
       ? {
           amount: sharing.salePrice.amountCents,
@@ -137,15 +141,16 @@ export const toRow = (copy: Copy): OwnedPuzzleRow => {
   };
 };
 
-// The SharingSetting consolidates the availability flags + a (new, optional) visibility column.
-// Legacy rows lack the visibility column; default them to "private" (not publicly visible) so a
-// pre-domain copy is never silently exposed.
+// The SharingSetting consolidates the availability flags + the (optional) visibility column. The
+// visibility is the EFFECTIVE one (library/copyVisibility): a legacy row's untrusted stored
+// "private" (the old domain default, never an owner's choice) loads as "visible", so a later save
+// can't resurrect it as an authoritative private.
 const sharingFromRow = (
   row: Doc<"ownedPuzzles">,
   salePrice: Price | undefined,
 ): SharingSetting =>
   SharingSetting.create({
-    visibility: row.visibility ?? "private",
+    visibility: effectiveCopyVisibility(row),
     forTrade: row.availability.forTrade,
     forSale: row.availability.forSale,
     forLend: row.availability.forLend,

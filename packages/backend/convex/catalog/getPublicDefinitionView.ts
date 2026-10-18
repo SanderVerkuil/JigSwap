@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { query } from "../_generated/server";
 import {
   categoryNameOf,
+  communityOwnersOf,
   completionStatsOf,
   publicAvailabilityOf,
   ratingBreakdownOf,
@@ -33,9 +34,8 @@ export const getPublicDefinitionView = query({
       .query("ownedPuzzles")
       .withIndex("by_puzzle", (q) => q.eq("puzzleId", args.puzzleId))
       .collect();
-    const communityOwners = new Set(
-      owned.map((c) => c.ownerId as unknown as string),
-    ).size;
+    // No viewer: private copies never count.
+    const communityOwners = communityOwnersOf(owned);
     const availability = await publicAvailabilityOf(ctx, owned);
     const { totalCompletions, avgCompletionDays } = await completionStatsOf(
       ctx,

@@ -151,8 +151,9 @@ describe("library.acquireCopy", () => {
       pieceCount: 1000,
       thumbnail: undefined,
     });
-    // A freshly acquired copy is private and not offered for any exchange.
-    expect(row?.visibility).toBe("private");
+    // A freshly acquired copy is visible (an authoritative value, marker set) and not offered.
+    expect(row?.visibility).toBe("visible");
+    expect(row?.visibilityAuthoritative).toBe(true);
     expect(row?.availability).toEqual({
       forTrade: false,
       forSale: false,

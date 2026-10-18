@@ -5,12 +5,14 @@ import type {
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { householdMateIds } from "../household/memberships";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 import { profileVisibilityOf } from "../social/privacy";
 import { collectCircleSharedCopies } from "./circleSharedCopies";
 import {
   categoryNameOf,
+  communityOwnersOf,
   completionStatsOf,
   isOpen,
   ratingBreakdownOf,
@@ -58,8 +60,11 @@ export const getPuzzleDefinitionView = query({
       .withIndex("by_puzzle", (q) => q.eq("puzzleId", args.puzzleId))
       .collect();
 
-    const distinctOwners = new Set(
-      owned.map((c) => c.ownerId as unknown as string),
+    // Owners count: private copies only count for the viewer's own and their household's.
+    const mates = await householdMateIds(ctx, viewerId);
+    const communityOwners = communityOwnersOf(
+      owned,
+      (ownerId) => ownerId === viewerId || mates.has(ownerId),
     );
 
     // --- completions of the definition (totalCompletions, avgCompletionDays) --------------------
@@ -177,7 +182,7 @@ export const getPuzzleDefinitionView = query({
       definition,
       rating,
       stats: {
-        communityOwners: distinctOwners.size,
+        communityOwners,
         totalCompletions,
         avgCompletionDays,
         availableToSwap,

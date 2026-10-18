@@ -20,6 +20,7 @@ import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 import { projectMemberIdentity } from "../social/privacy";
 import { canViewCopy } from "./canViewCopy";
+import { effectiveCopyVisibility } from "./copyVisibility";
 import { ratingBreakdownOf } from "./definitionAggregates";
 
 // Solve duration in whole MINUTES: the stored, explicit `completionTimeMinutes` ALWAYS wins (it's
@@ -408,6 +409,7 @@ export const getCopyInstanceView = query({
         // alongside the sale/acquisition price the DTO already never carries for them.
         notes: viewerCanManage ? copy.notes : undefined,
         availability: copy.availability,
+        visibility: effectiveCopyVisibility(copy),
         acquisitionDate: viewerCanManage ? copy.acquisitionDate : undefined,
         acquisitionSource: viewerCanManage ? copy.acquisitionSource : undefined,
         difficulty: puzzle?.difficulty,

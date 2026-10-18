@@ -3,6 +3,7 @@ import type { QueryCtx } from "../_generated/server";
 import { householdMateIds } from "../household/memberships";
 import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
 import { collectCircleSharedCopies } from "./circleSharedCopies";
+import { isCopyPrivate } from "./copyVisibility";
 
 // A copy is "open" iff at least one exchange-availability flag is set (identical to
 // browseOwnedPuzzles/getPuzzleDefinitionView).
@@ -50,11 +51,12 @@ export const buildCopyViewContext = async (
 //   5. the owner is in the viewer's household (any household permission — "view" still views); OR
 //   6. the viewer and the owner are MUTUAL followers (both follow edges) — friends see the whole
 //      library, open or not, whatever the owner's profile visibility.
+// ...EXCEPT that a PRIVATE copy (effectiveCopyVisibility — the owner's per-copy toggle) stops after
+// rules 1, 2 and 5: only its owner, its current holder and the owner's household may see it. Rules
+// 3 and 4 already require an OPEN copy, which is never private, so in practice this removes rule 6
+// for private copies. There is deliberately no admin rule here; admin surfaces use their own reads.
 // VIEWING only: exchange proposals stay gated by the availability flags in the domain
 // (proposeExchange -> CopyNotAvailable), so rule 6 never makes a non-open copy exchangeable.
-// The per-copy `ownedPuzzles.visibility` field is deliberately NOT consulted: no UI sets it and
-// the domain default for a newly acquired copy is "private", so honouring it would hide nearly
-// every copy. Whether it should become a real per-copy privacy toggle is an open product question.
 export const canViewCopyWithContext = async (
   ctx: QueryCtx,
   copy: Doc<"ownedPuzzles">,
@@ -64,6 +66,7 @@ export const canViewCopyWithContext = async (
   if (copy.ownerId === viewerId) return true;
   if (copy.heldBy === viewerId) return true;
   if (context.householdMateIds.has(copy.ownerId)) return true;
+  if (isCopyPrivate(copy)) return false;
 
   if (isOpen(copy)) {
     let visibility = context.ownerVisibility.get(copy.ownerId);
