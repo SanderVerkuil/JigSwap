@@ -2,6 +2,13 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { hashCheckFields } from "./lib/imageModeration/hashCheckFields";
 
+// A circle thread's join/leave fact (threadMessages.systemEvent and its lastMessage summary).
+// There is deliberately no "removed" kind and no remover: removal and leaving render alike.
+const systemEventValidator = v.object({
+  kind: v.union(v.literal("joined"), v.literal("left")),
+  memberId: v.id("users"),
+});
+
 // The proposable field diff, shared by puzzleChangeProposals.changes and .baseline. Mirrors the
 // domain PuzzleDefinitionChanges shape exactly (barcodes grouped: supplying the group replaces
 // all three values, same as updatePuzzleDefinition).
@@ -824,12 +831,19 @@ export default defineSchema({
 
   // Conversation context. One row per Thread aggregate; messages are companion rows (long chats
   // must not brush the document size limit). participantsKey = the two user _ids sorted and
-  // joined with "|" — every thread is a pair in v1, and this backs both the one-DM-per-pair rule
-  // and the ConnectionPolicy's "existing thread between the pair" check.
+  // joined with "|" for exchange/DM pairs — this backs both the one-DM-per-pair rule and the
+  // ConnectionPolicy's "existing thread between the pair" check. A circle thread (one per friend
+  // circle, participants = its members, at most 50) keys as `circle:<circleId>` instead, so it
+  // never matches a pair key.
   threads: defineTable({
     aggregateId: v.string(),
-    subjectKind: v.union(v.literal("exchange"), v.literal("dm")),
+    subjectKind: v.union(
+      v.literal("exchange"),
+      v.literal("dm"),
+      v.literal("circle"),
+    ),
     exchangeId: v.optional(v.id("exchanges")), // set iff subjectKind === "exchange"
+    circleId: v.optional(v.string()), // the CircleId aggregateId, set iff subjectKind === "circle"
     participants: v.array(v.id("users")),
     participantsKey: v.string(),
     // DEPRECATED: read receipts now live on threadParticipants.lastReadAt. No longer written;
@@ -858,12 +872,15 @@ export default defineSchema({
         copyId: v.optional(v.id("ownedPuzzles")),
         // Set when a moderator removed this message (body then empty, no copyId).
         removed: v.optional(v.literal(true)),
+        // A circle thread's join/leave row: who joined or left (rendered per viewer).
+        systemEvent: v.optional(systemEventValidator),
       }),
     ),
     createdAt: v.number(),
   })
     .index("by_aggregate_id", ["aggregateId"])
     .index("by_exchange", ["exchangeId"])
+    .index("by_circle", ["circleId"])
     .index("by_subject_participants", ["subjectKind", "participantsKey"])
     .index("by_participants_key", ["participantsKey"]),
 
@@ -892,6 +909,10 @@ export default defineSchema({
     // and drop the copy card. The stored body stays for the report evidence trail.
     removedAt: v.optional(v.number()),
     removedReason: v.optional(v.string()),
+    // A circle thread's join/leave system row: the member who joined or left (leaving and removal
+    // alike; the remover is never stored). Each viewer's read projects the member through their
+    // own identity rules, so no name is snapshotted. Absent on every other message.
+    systemEvent: v.optional(systemEventValidator),
   })
     .index("by_thread_sent", ["threadAggregateId", "sentAt"])
     // Copy-referencing messages of a thread, grouped per copy (rows without a copyId sort first
@@ -1066,6 +1087,11 @@ export default defineSchema({
     unreadCount: v.optional(v.number()),
     // The thread's lastMessageAt (createdAt while empty), copied for by_member_activity.
     lastActivityAt: v.optional(v.number()),
+    // Circle threads: the member's history floor (they see only messages sent strictly after it),
+    // their circle join time. Absent on exchange/DM rows (no floor). A re-join is a fresh row.
+    joinedAt: v.optional(v.number()),
+    // The member muted the thread: left out of the shell's unread badge. Absent = not muted.
+    muted: v.optional(v.boolean()),
   })
     .index("by_member", ["memberId"])
     .index("by_thread", ["threadAggregateId"])

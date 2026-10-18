@@ -1,5 +1,6 @@
 import {
   Thread,
+  toCircleId,
   toMemberId,
   toThreadId,
   type ExchangeId,
@@ -48,25 +49,51 @@ export const participantsKeyOf = (participants: readonly MemberId[]): string =>
     .sort()
     .join("|");
 
-// Aggregate -> thread row payload (without the repository-filled columns). Circle threads have
-// no storage yet: the schema's `circle` subjectKind, `circleId` column and participant joinedAt
-// arrive with the circle threads backend (G4), so persisting one is refused loudly until then.
+// A circle thread's participantsKey: one per circle, and never equal to a pair key (no user id
+// contains ":"), so the pair lookups (one DM per pair, the ConnectionPolicy) never match it.
+export const circleParticipantsKeyOf = (circleId: string): string =>
+  `circle:${circleId}`;
+
+// Aggregate -> thread row payload (without the repository-filled columns). A circle thread
+// carries its CircleId in `circleId` and keys on the circle rather than on its (moving) members;
+// its members' joinedAt persist on their participant rows (participantJoinedAtOf).
 export const toThreadRow = (thread: Thread): ThreadRow => {
   const state: ThreadState = thread.toState();
+  const participants = thread.participants.map(
+    (memberId) => memberId as unknown as Id<"users">,
+  );
   if (state.subject.kind === "circle") {
-    throw new Error(
-      `thread ${state.id as string} has a circle subject, which is not persisted yet (G4)`,
-    );
+    const circleId = state.subject.circleId as string;
+    return {
+      aggregateId: state.id as string,
+      subjectKind: "circle",
+      circleId,
+      participants,
+      participantsKey: circleParticipantsKeyOf(circleId),
+    };
   }
   return {
     aggregateId: state.id as string,
     subjectKind: state.subject.kind,
-    participants: thread.participants.map(
-      (memberId) => memberId as unknown as Id<"users">,
-    ),
+    participants,
     participantsKey: participantsKeyOf(thread.participants),
   };
 };
+
+// The joinedAt (epoch millis) each current participant's row is inserted with: their circle
+// history floor. Absent for exchange/DM participants, which have none.
+export const participantJoinedAtOf = (
+  thread: Thread,
+): ReadonlyMap<string, number> =>
+  new Map(
+    thread
+      .toState()
+      .participants.flatMap((p) =>
+        p.joinedAt === undefined
+          ? []
+          : [[p.memberId as string, p.joinedAt.getTime()] as const],
+      ),
+  );
 
 // Message state -> companion row. A system message's null author maps to the column being absent.
 export const toMessageRow = (
@@ -89,6 +116,12 @@ export const toMessageRow = (
   // The domain's opaque attachmentRef is the messageAttachments row id; absent stays absent.
   ...(message.attachmentRef !== undefined && {
     attachmentId: message.attachmentRef as Id<"messageAttachments">,
+  }),
+  ...(message.systemEvent !== undefined && {
+    systemEvent: {
+      kind: message.systemEvent.kind,
+      memberId: message.systemEvent.memberId as unknown as Id<"users">,
+    },
   }),
 });
 
@@ -121,6 +154,7 @@ export const toLastMessage = (
   ...(row.removedAt !== undefined
     ? { removed: true as const }
     : row.copyId !== undefined && { copyId: row.copyId }),
+  ...(row.systemEvent !== undefined && { systemEvent: row.systemEvent }),
 });
 
 // Rows -> aggregate state. `exchangeId` is the OUTBOUND aggregateId, supplied by the repository
@@ -134,16 +168,28 @@ export const toDomain = (
   row: Doc<"threads">,
   participantRows: readonly Doc<"threadParticipants">[],
   exchangeId: ExchangeId | undefined,
-): ThreadState => ({
-  id: toThreadId(row.aggregateId),
-  subject: toSubject(row, exchangeId),
-  // Stored exchange/DM participants carry no joinedAt: their floor is the thread's start.
-  participants: row.participants.map((userId) => ({
-    memberId: toMemberId(userId as string),
-  })),
-  messages: [],
-  readReceipts: toReadReceipts(row, participantRows),
-});
+): ThreadState => {
+  const joinedAtOf = new Map(
+    participantRows.flatMap((p) =>
+      p.joinedAt === undefined ? [] : [[p.memberId as string, p.joinedAt]],
+    ),
+  );
+  return {
+    id: toThreadId(row.aggregateId),
+    subject: toSubject(row, exchangeId),
+    // A circle participant's joinedAt is on their row; exchange/DM rows carry none (their floor
+    // is the thread's start).
+    participants: row.participants.map((userId) => {
+      const joinedAt = joinedAtOf.get(userId as string);
+      return {
+        memberId: toMemberId(userId as string),
+        ...(joinedAt !== undefined && { joinedAt: new Date(joinedAt) }),
+      };
+    }),
+    messages: [],
+    readReceipts: toReadReceipts(row, participantRows),
+  };
+};
 
 const toReadReceipts = (
   row: Doc<"threads">,
@@ -169,6 +215,14 @@ const toSubject = (
   exchangeId: ExchangeId | undefined,
 ): ThreadSubject => {
   if (row.subjectKind === "dm") return { kind: "dm" };
+  if (row.subjectKind === "circle") {
+    if (row.circleId === undefined) {
+      throw new Error(
+        `threads row ${row.aggregateId} has subjectKind "circle" but no circleId; refusing to hydrate`,
+      );
+    }
+    return { kind: "circle", circleId: toCircleId(row.circleId) };
+  }
   if (exchangeId === undefined) {
     throw new Error(
       `threads row ${row.aggregateId} has subjectKind "exchange" but no exchangeId; refusing to hydrate`,
