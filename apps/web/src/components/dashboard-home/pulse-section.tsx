@@ -14,7 +14,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useRelativeTime } from "@/hooks/use-relative-time";
-import { useMemberDisplayName } from "@/lib/member-display-name";
+import {
+  useMemberDisplayName,
+  usePartyDisplayName,
+} from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
@@ -75,7 +78,7 @@ function ExchangeTimelineRow({
   isLast: boolean;
 }) {
   const t = useTranslations("dashboard.pulse.inMotion");
-  const displayName = useMemberDisplayName();
+  const partyName = usePartyDisplayName();
 
   const incoming = exchange.userRole === "owner";
   // On an exchange the REQUESTED puzzle belongs to the owner; the OFFERED one
@@ -89,7 +92,10 @@ function ExchangeTimelineRow({
   const primary = mineTitle ?? theirsTitle;
   const secondary = mineTitle ? theirsTitle : undefined;
   const counterparty = incoming ? exchange.requester : exchange.owner;
-  const who = counterparty ? displayName(counterparty) : "";
+  const who = partyName(
+    counterparty,
+    incoming ? exchange.requesterState : exchange.ownerState,
+  );
 
   const KindIcon = exchange.type === "loan" ? Package : ArrowLeftRight;
 

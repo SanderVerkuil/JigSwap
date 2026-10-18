@@ -6,6 +6,7 @@ import type {
 import { COOLDOWN_MS, type NotificationSubject } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { projectTradeParty } from "../exchange/tradeParty";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { canViewCopy } from "../library/canViewCopy";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
@@ -21,6 +22,7 @@ import {
   isActorSubjectType,
   messagePreviewOf,
   notificationHref,
+  TRADE_NOTIFICATION_TYPES,
   UNAVAILABLE,
   withoutActionsWhenGrouped,
   type ViewDecision,
@@ -219,18 +221,88 @@ type ResolvedActor = {
 };
 
 const ANONYMOUS: ResolvedActor = { view: { anonymous: true }, handle: null };
+const DEPARTED: ResolvedActor = {
+  view: { anonymous: true, departed: true },
+  handle: null,
+};
+
+const revealedActor = (
+  user: Doc<"users">,
+  profile: Doc<"profiles"> | null,
+  tradeRevealed: boolean,
+): ResolvedActor => {
+  const handle = user.slug ?? user.username ?? user._id;
+  const name = memberDisplayNameOf(user, profile);
+  return {
+    view: {
+      anonymous: false,
+      memberId: user._id,
+      ...(name !== undefined ? { name } : {}),
+      // A member revealed by the trade only gets the limited card: no avatar.
+      ...(!tradeRevealed && user.avatar !== undefined
+        ? { avatar: user.avatar }
+        : {}),
+      handle,
+      ...(tradeRevealed ? { tradeRevealed: true as const } : {}),
+    },
+    handle,
+  };
+};
+
+// The exchange a trade notification is about: its subject (aggregateId), else its relatedId (the
+// exchange `_id`, on rows written before refs).
+const tradeExchangeOf = async (
+  ctx: QueryCtx,
+  cache: NotificationViewCache,
+  row: Doc<"notifications">,
+): Promise<Doc<"exchanges"> | null> => {
+  const subject = row.subject as NotificationSubject | undefined;
+  if (subject?.kind === "exchange") {
+    return loadExchange(ctx, cache, subject.exchangeId);
+  }
+  const docId =
+    row.relatedId !== undefined
+      ? ctx.db.normalizeId("exchanges", row.relatedId)
+      : null;
+  return docId
+    ? memoized(cache, `doc:${docId}`, () => ctx.db.get(docId))
+    : null;
+};
 
 const resolveActor = async (
   ctx: QueryCtx,
   cache: NotificationViewCache,
   viewerId: Id<"users">,
-  type: NotificationView["type"],
+  row: Doc<"notifications">,
   actorId: Id<"users">,
 ): Promise<ResolvedActor> => {
+  const type = row.type;
   const user = await loadUser(ctx, cache, actorId);
-  if (!user || !user.isActive) return ANONYMOUS;
+  if (!user || !user.isActive) return DEPARTED;
   const profile = await loadProfile(ctx, cache, actorId);
   const isViewer = actorId === viewerId;
+
+  // Trade types: the per-trade rule for THAT exchange (only when both are its parties).
+  if (TRADE_NOTIFICATION_TYPES.has(type)) {
+    const exchange = await tradeExchangeOf(ctx, cache, row);
+    const isParty = (id: Id<"users">) =>
+      exchange !== null &&
+      (id === exchange.initiatorId || id === exchange.recipientId);
+    if (exchange && isParty(actorId) && isParty(viewerId)) {
+      const party = await projectTradeParty(ctx, viewerId, exchange, actorId);
+      switch (party.state) {
+        case "departed":
+          return DEPARTED;
+        case "hidden":
+          return ANONYMOUS;
+        case "tradeRevealed":
+          return revealedActor(user, profile, true);
+        default:
+          return revealedActor(user, profile, false);
+      }
+    }
+    // Unresolvable exchange: fall through to the ordinary public / mutual rule (fails closed).
+  }
   // Only read the follow graph when the cheaper rules have not already decided.
   const preRevealed = isActorRevealed(
     type,
@@ -252,18 +324,7 @@ const resolveActor = async (
   ) {
     return ANONYMOUS;
   }
-  const handle = user.slug ?? user.username ?? user._id;
-  const name = memberDisplayNameOf(user, profile);
-  return {
-    view: {
-      anonymous: false,
-      memberId: user._id,
-      ...(name !== undefined ? { name } : {}),
-      ...(user.avatar !== undefined ? { avatar: user.avatar } : {}),
-      handle,
-    },
-    handle,
-  };
+  return revealedActor(user, profile, false);
 };
 
 // --- subject resolution ---
@@ -474,7 +535,7 @@ export const resolveNotificationView = async (
   const actors = await Promise.all(
     actorIds
       .slice(0, MAX_ACTORS)
-      .map((id) => resolveActor(ctx, cache, viewerId, type, id)),
+      .map((id) => resolveActor(ctx, cache, viewerId, row, id)),
   );
   const firstActor = actors[0] ?? null;
 
@@ -520,8 +581,9 @@ export const resolveNotificationView = async (
     // A row without actor refs (pre-refs, or the backfill could not derive one) has only the name
     // snapshot left. Initiator types reveal their actor to the viewer anyway, and the snapshot was
     // written with the same display-name rules (never an email).
+    // trade_request's snapshot names the requester to the owner, who always sees them.
     ...(actorIds.length === 0 &&
-    INITIATOR_NOTIFICATION_TYPES.has(type) &&
+    (INITIATOR_NOTIFICATION_TYPES.has(type) || type === "trade_request") &&
     row.params?.actorName
       ? { actorNameSnapshot: row.params.actorName }
       : {}),

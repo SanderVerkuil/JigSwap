@@ -50,8 +50,15 @@ const bold = (chunks: ReactNode) => (
 /** The notification's sentence, actor and subject in bold. Legacy rows fall back to the N0 copy. */
 export function NotificationSentence({ view }: { view: NotificationView }) {
   const t = useTranslations("notifications");
-  const actorName = useActorName();
+  const memberName = useActorName();
+  const displayName = useMemberDisplayName();
   const { type, actors, actorCount, context } = view;
+  // An anonymous, not-departed trade party is a living member hidden by privacy (e.g. an owner who
+  // declined without replying), not a former one: name them with the generic member label.
+  const actorName = (actor: NotificationActorView | undefined) =>
+    type.startsWith("trade_") && actor?.anonymous && !actor.departed
+      ? displayName(null)
+      : memberName(actor);
 
   if (LEGACY_ONLY.has(type) || (!ACTORLESS.has(type) && actors.length === 0)) {
     // Ref-less (pre-N2) row: only the stored params snapshot is left; the server exposes the

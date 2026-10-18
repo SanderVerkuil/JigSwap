@@ -266,6 +266,62 @@ describe("NotificationItem rendering", () => {
     expect(screen.getByText("Puzzler")).toBeTruthy();
   });
 
+  it.each([
+    ["en", "Puzzler declined your trade for Starry Night."],
+    ["nl", "Puzzelaar"],
+  ] as const)(
+    "names a privacy-hidden trade_declined actor generically, not 'Former member' (%s)",
+    (locale, text) => {
+      const { container } = renderItem(
+        base({
+          type: "trade_declined",
+          actors: [{ anonymous: true }],
+          href: "/trades?exchange=ex_1",
+          context: { puzzleTitle: "Starry Night" },
+        }),
+        { locale },
+      );
+      const sentence = rowLink(container)!.textContent;
+      expect(sentence).toContain(text);
+      expect(sentence).not.toMatch(/Former member|Voormalig lid/);
+    },
+  );
+
+  it.each([
+    ["en", "Former member declined your trade for Starry Night."],
+    ["nl", "Voormalig lid"],
+  ] as const)(
+    "names a departed trade_declined actor 'Former member' (%s)",
+    (locale, text) => {
+      const { container } = renderItem(
+        base({
+          type: "trade_declined",
+          actors: [{ anonymous: true, departed: true }],
+          href: "/trades?exchange=ex_1",
+          context: { puzzleTitle: "Starry Night" },
+        }),
+        { locale },
+      );
+      expect(rowLink(container)!.textContent).toContain(text);
+    },
+  );
+
+  it("never links a trade-revealed actor's profile: the row opens the trade", () => {
+    const { container } = renderItem(
+      base({
+        type: "trade_accepted",
+        actors: [{ ...mara, tradeRevealed: true }],
+        href: "/trades?exchange=ex_1",
+        context: { puzzleTitle: "Starry Night" },
+      }),
+    );
+    expect(container.querySelector('a[href^="/members/"]')).toBeNull();
+    expect(rowLink(container)!.getAttribute("href")).toBe(
+      "/trades?exchange=ex_1",
+    );
+    expect(container.querySelector("img")).toBeNull();
+  });
+
   it("an unread row without a destination is a stretched mark-read button", () => {
     const { container, onOpen } = renderItem(
       base({ actors: [{ anonymous: true }], href: null }),

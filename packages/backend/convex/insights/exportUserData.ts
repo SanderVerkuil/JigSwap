@@ -1,5 +1,6 @@
-import type { Id } from "../_generated/dataModel";
-import { query } from "../_generated/server";
+import type { Doc, Id } from "../_generated/dataModel";
+import { query, type QueryCtx } from "../_generated/server";
+import { projectTradeParty, type TradePartyMemo } from "../exchange/tradeParty";
 import { requireMember } from "../identity/requireMember";
 import { onboardingRowOf } from "../onboarding/memberOnboarding";
 
@@ -7,6 +8,31 @@ import { onboardingRowOf } from "../onboarding/memberOnboarding";
 // with a very large history is capped so the export stays a single, bounded query return. The UI
 // download is "most of your data" rather than a guaranteed-complete archive when capped.
 const EXPORT_LIMIT = 5000;
+
+// Exchange rows as the exporting member may see them: a counterparty who is hidden from them in
+// that trade (a private owner who has not accepted or replied to it yet — exchange/tradeParty) has
+// their raw id OMITTED, exactly like the exchange views. Counterparty facts are memoized, so a long
+// history costs a few reads per partner plus one point read per exchange.
+const exportableExchanges = async (
+  ctx: QueryCtx,
+  userId: Id<"users">,
+  rows: Doc<"exchanges">[],
+) => {
+  const memo: TradePartyMemo = new Map();
+  const out = [];
+  for (const row of rows) {
+    const { initiatorId, recipientId, ...rest } = row;
+    const hidden = async (party: Id<"users">) =>
+      (await projectTradeParty(ctx, userId, row, party, memo)).state ===
+      "hidden";
+    out.push({
+      ...rest,
+      ...((await hidden(initiatorId)) ? {} : { initiatorId }),
+      ...((await hidden(recipientId)) ? {} : { recipientId }),
+    });
+  }
+  return out;
+};
 
 // Insights read query: a JSON-serialisable bundle of the member's own data for a client-side
 // download (GDPR-style export). Read-only; resolves a few FK ids (puzzle titles) where cheap.
@@ -113,7 +139,10 @@ export const exportUserData = query({
       reviewsGiven,
       puzzleReviews,
       copyReviews,
-      exchanges: [...exchangesA, ...exchangesB],
+      exchanges: await exportableExchanges(ctx, userId, [
+        ...exchangesA,
+        ...exchangesB,
+      ]),
       // Quick start choices (skipped steps, dismissals), or null when never set.
       quickStart,
     };

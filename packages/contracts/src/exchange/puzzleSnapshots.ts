@@ -24,7 +24,8 @@ export interface ExchangePuzzleView extends ConvexSystemFields {
   image?: string;
   searchableText?: string;
   status: "pending" | "approved" | "rejected" | "disabled";
-  submittedBy: string;
+  /** Omitted when the submitter is a party anonymous to the viewer (see ExchangeFields' PRIVACY note). */
+  submittedBy?: string;
   createdAt: number;
   updatedAt: number;
 }
@@ -44,7 +45,8 @@ export interface ExchangeOwnedPuzzleView extends ConvexSystemFields {
     pieceCount: number;
     thumbnail?: string;
   };
-  ownerId: string;
+  /** Omitted when the copy's owner is anonymous to the viewer (see ExchangeFields' PRIVACY note). */
+  ownerId?: string;
   condition: "new_sealed" | "like_new" | "good" | "fair" | "poor";
   missingPiecesCount?: number;
   notes?: string;

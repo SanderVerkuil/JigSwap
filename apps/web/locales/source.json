@@ -646,6 +646,10 @@
       "completed": "Completed",
       "cancelled": "Cancelled",
       "disputed": "Disputed"
+    },
+    "partner": {
+      "hiddenNote": "Their details appear once they accept or reply.",
+      "reviewsHeading": "Reviews received"
     }
   },
   "tradeRequest": {
@@ -666,6 +670,10 @@
     "priceLabel": "Your offer (EUR)",
     "pricePlaceholder": "e.g. 15.00",
     "priceInvalid": "Enter an amount above zero, like 15 or 15.50.",
+    "revealNotice": {
+      "title": "Your name, handle, email address and the reviews you've received will be visible to the owner of this puzzle, for this trade only.",
+      "profilePrivate": "Your profile itself stays private."
+    },
     "cancel": "Cancel",
     "submit": "Send request",
     "submitting": "Sending...",

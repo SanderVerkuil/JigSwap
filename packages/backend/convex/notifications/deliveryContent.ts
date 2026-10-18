@@ -49,8 +49,10 @@ export interface DeliveryContent {
    */
   readonly params: Record<string, string>;
   /**
-   * The actor resolved anonymous (deleted or deactivated; every actor-bearing delivered type is
-   * otherwise revealed to its recipient): render the "Former member" label, never a name.
+   * The actor is DEPARTED (deleted or deactivated): render the "Former member" label, never a
+   * name. A privacy-hidden living actor (e.g. a private owner declining a trade before ever
+   * replying) is NOT flagged: it simply carries no actorName, so the renderer uses its generic,
+   * nameless copy.
    */
   readonly actorAnonymous: boolean;
   /** The in-app deep link (root-relative); null when the read model has none (use the fallback). */
@@ -82,7 +84,8 @@ export const deliveryContentOf = (
 
   return {
     params,
-    actorAnonymous: hasActorRef && actor?.anonymous === true,
+    actorAnonymous:
+      hasActorRef && actor?.anonymous === true && actor.departed === true,
     href: view.href,
   };
 };

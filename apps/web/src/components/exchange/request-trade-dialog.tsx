@@ -26,6 +26,7 @@ import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import type { MemberNameSource } from "@jigswap/contracts";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
+import { Eye } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
@@ -37,10 +38,11 @@ import {
   type ProposeType,
 } from "./request-trade";
 
-// The copy being requested, normalized by each surface (browse card, copy page).
+// The copy being requested, normalized by each surface (browse card, copy page). `ownerId` is
+// absent when the owner is anonymous to the viewer; propose then derives the recipient server-side.
 export interface RequestableCopy {
   copyId: string;
-  ownerId: string;
+  ownerId?: string;
   owner: (MemberNameSource & { avatar?: string }) | null | undefined;
   title: string;
   pieceCount?: number;
@@ -103,6 +105,16 @@ function RequestTradeForm({
     ),
   );
 
+  // Sending always shows the owner the requester's trade card; this adds whether their profile is
+  // private (undefined = loading or failed, null = nothing to add). Submit waits for it so the
+  // notice is always on screen before a request goes out.
+  const { data: disclosure } = useQuery(
+    convexQuery(gateway.exchange.requestDisclosure, {
+      requestedPuzzleId: copy.copyId as Id<"ownedPuzzles">,
+    }),
+  );
+  const disclosureLoaded = disclosure !== undefined;
+
   const ownerName = displayName(copy.owner);
   const priceCents = parsePriceCents(price);
   const ready =
@@ -111,10 +123,10 @@ function RequestTradeForm({
     type === "loan";
 
   const handleSubmit = async () => {
-    if (!type || !ready) return;
+    if (!type || !ready || !disclosureLoaded) return;
     try {
       await propose.mutateAsync({
-        recipientId: copy.ownerId as Id<"users">,
+        ...(copy.ownerId ? { recipientId: copy.ownerId as Id<"users"> } : {}),
         type,
         requestedPuzzleId: copy.copyId as Id<"ownedPuzzles">,
         ...(type === "trade"
@@ -237,13 +249,33 @@ function RequestTradeForm({
             )}
           </div>
         )}
+
+        {disclosureLoaded && (
+          <div
+            role="note"
+            className="border-primary/25 bg-jigsaw-primary-tint flex gap-3 rounded-lg border p-3 text-sm"
+          >
+            <Eye className="text-primary mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            <div className="space-y-1">
+              <p className="font-medium">{t("revealNotice.title")}</p>
+              {disclosure?.profilePrivate && (
+                <p className="text-muted-foreground">
+                  {t("revealNotice.profilePrivate")}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <DialogFooter>
         <Button variant="ghost" onClick={onDone} disabled={propose.isPending}>
           {t("cancel")}
         </Button>
-        <Button onClick={handleSubmit} disabled={!ready || propose.isPending}>
+        <Button
+          onClick={handleSubmit}
+          disabled={!ready || !disclosureLoaded || propose.isPending}
+        >
           {propose.isPending ? t("submitting") : t("submit")}
         </Button>
       </DialogFooter>

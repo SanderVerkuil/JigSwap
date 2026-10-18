@@ -21,9 +21,12 @@ export const allowedProposeTypes = (
   ...(availability.forLend ? (["loan"] as const) : []),
 ];
 
-/** Whether to offer "Request trade": a known viewer who isn't the owner, on an available copy. */
+/**
+ * Whether to offer "Request trade": a known viewer who isn't the owner, on an available copy. An
+ * absent `ownerId` means the owner is anonymous to the viewer, so never the viewer themselves.
+ */
 export const canRequestTrade = (
-  copy: { ownerId: string; availability: Availability },
+  copy: { ownerId?: string; availability: Availability },
   viewerId: string | undefined,
 ): boolean =>
   viewerId !== undefined &&
