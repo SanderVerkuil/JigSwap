@@ -547,3 +547,41 @@ describe("blockMember rules", () => {
     );
   });
 });
+
+describe("startCopyConversation hardening", () => {
+  test("counts toward the messagePost rate limit shared with postMessage", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+    await followMutually(t, alice, bob);
+    const copyId = await seedSaleCopy(t, bob);
+    const start = () =>
+      asAlice(t).mutation(
+        api.conversation.startCopyConversation.startCopyConversation,
+        { copyId, body: "is this still available?" },
+      );
+    let threadId = "";
+    for (let i = 0; i < RATE_LIMITS.messagePost.max; i++) {
+      threadId = await start();
+    }
+
+    await expectCode(start(), "RateLimited");
+    await expectCode(post(t, "alice", threadId), "RateLimited");
+  });
+
+  test("a blocked pair is refused even with another connection clause, and no thread is opened", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+    await shareCircle(t, alice, bob);
+    const copyId = await seedSaleCopy(t, bob);
+    await insertBlock(t, bob, alice);
+
+    await expectCode(
+      asAlice(t).mutation(
+        api.conversation.startCopyConversation.startCopyConversation,
+        { copyId, body: "hello" },
+      ),
+      "NotConnected",
+    );
+    expect(await t.run((ctx) => ctx.db.query("threads").collect())).toEqual([]);
+  });
+});
