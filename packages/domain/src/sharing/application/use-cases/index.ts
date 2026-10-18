@@ -4,6 +4,7 @@ export * from "./change-permission";
 export * from "./circle-invite-deps";
 export * from "./create-circle";
 export * from "./decline-circle-invite";
+export * from "./delete-circle";
 export * from "./expire-circle-invite";
 export * from "./invite-to-circle";
 export * from "./leave-circle";

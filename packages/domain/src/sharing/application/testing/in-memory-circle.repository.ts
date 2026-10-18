@@ -21,6 +21,10 @@ export class InMemoryCircleRepository implements CircleRepository {
     this.store.set(circle.id, circle.toState());
   }
 
+  async delete(circle: Circle): Promise<void> {
+    this.store.delete(circle.id);
+  }
+
   // Test helper: how many circles are currently stored.
   size(): number {
     return this.store.size;

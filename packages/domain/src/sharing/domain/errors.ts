@@ -19,7 +19,9 @@ export type SharingErrorCode =
   | "InviteExpired"
   | "InviteNotDue"
   | "InviteNotAccepted"
-  | "CannotRevokeInvite";
+  | "CannotRevokeInvite"
+  | "NotCircleOwner"
+  | "ConfirmationMismatch";
 
 export class SharingError extends DomainError {
   override readonly name = "SharingError";
@@ -138,6 +140,22 @@ export class SharingError extends DomainError {
     return new SharingError(
       "CannotRevokeInvite",
       "Only the inviter or a circle admin may revoke this invite",
+    );
+  }
+
+  // Only the circle's owner may delete it; an Admin seat is not enough.
+  static notCircleOwner(): SharingError {
+    return new SharingError(
+      "NotCircleOwner",
+      "Only the circle owner may delete the circle",
+    );
+  }
+
+  // Deleting a circle needs its exact name typed back, a guard against accidental or scripted calls.
+  static confirmationMismatch(): SharingError {
+    return new SharingError(
+      "ConfirmationMismatch",
+      "The confirmation does not match the circle's name",
     );
   }
 }
