@@ -9,6 +9,8 @@
 // redesign spec §5–§6, §9).
 import { Link } from "@/compat/link";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
+import { MemberInitial } from "@/components/members/member-initial";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, type Id } from "@/gateway";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -20,12 +22,23 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { usePaginatedQuery, type PaginatedQueryItem } from "convex/react";
 import {
   ChevronLeft,
+  EyeOff,
   Info,
   MessageSquare,
   Puzzle as PuzzleIcon,
+  UserRound,
 } from "lucide-react";
-import { Fragment, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import {
+  Fragment,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useLocale, useNow, useTranslations } from "use-intl";
+import { CircleThreadHeader } from "./circle-thread-header";
 import { ComposerClosed } from "./composer-closed";
 import { MessageCopyCard } from "./copy-card";
 import {
@@ -33,9 +46,13 @@ import {
   formatFullDateTime,
   formatMessageTime,
   groupThreadMessages,
-  pairThreads,
+  isCircleThread,
+  memberProfileHref,
+  projectedMemberLabel,
   segmentMessages,
+  systemEventText,
   threadSubjectTitle,
+  type InboxThread,
   type ThreadItem,
 } from "./format";
 import { MessageActions } from "./message-actions";
@@ -97,10 +114,9 @@ export function ThreadView({
       status === "LoadingFirstPage" ? undefined : [...newestFirst].reverse(),
     [newestFirst, status],
   );
-  const { data: inbox } = useQuery({
-    ...convexQuery(gateway.conversation.getMyInbox, me ? {} : "skip"),
-    select: pairThreads,
-  });
+  const { data: inbox } = useQuery(
+    convexQuery(gateway.conversation.getMyInbox, me ? {} : "skip"),
+  );
   // My photos here that aren't messages yet (being checked, or stopped).
   const { data: pendingPhotos } = useQuery(
     convexQuery(
@@ -111,20 +127,25 @@ export function ThreadView({
   const outboxCount =
     pendingPhotos?.filter((photo) => photo.sendRequested).length ?? 0;
   const thread = inbox?.find((row) => row.threadId === threadId);
+  // A circle (group) thread, or the two-party (DM / exchange) thread.
+  const circleThread = thread && isCircleThread(thread) ? thread : undefined;
+  const pairThread =
+    thread && !circleThread ? (thread as InboxThread) : undefined;
   const title = thread
     ? threadSubjectTitle(thread.subject, t, displayName)
     : undefined;
   // Who wrote the other side's messages, for screen readers: the DM or trading
   // partner's display name, the anonymous label when they're anonymised, and a
-  // generic label until the inbox row has loaded.
-  const otherMember = thread?.subject.otherMember;
+  // generic label until the inbox row has loaded. Circle threads name each
+  // message's own author instead.
+  const otherMember = pairThread?.subject.otherMember;
   const otherAuthor = !otherMember
     ? t("otherMember")
     : otherMember.anonymous
       ? anonymousLabel(otherMember, t)
       : displayName(otherMember.member);
   // The other side's author, for their messages' Report: absent when anonymised.
-  const otherAuthorId = thread ? threadPartner(thread)?._id : undefined;
+  const otherAuthorId = pairThread ? threadPartner(pairThread)?._id : undefined;
   // The attach picker's "their puzzles" tab, named for the DM or trading
   // partner; absent for an anonymised member (the backend lists none of their
   // copies).
@@ -305,22 +326,33 @@ export function ThreadView({
     if (!previous || previous.threadId !== threadId) return;
     if (!newest || newest.id === previous.id) return;
     if (newest.kind === "system" || newest.isMine) return;
+    // A member the viewer blocked stays collapsed, so it isn't read out either.
+    if (newest.authorBlockedByMe) return;
     const text = newest.body.replace(/\s+/g, " ").trim();
     const region = liveRegionRef.current;
     if (!region) return;
-    const name = title ?? t("threadFallbackTitle");
+    const body =
+      text.length > ANNOUNCE_MAX ? `${text.slice(0, ANNOUNCE_MAX - 1)}…` : text;
+    // In a circle thread the author is named per message: "Bas in Puzzle Club: …".
+    const circleName = circleThread ? title : undefined;
+    const name =
+      circleName !== undefined
+        ? newest.author
+          ? projectedMemberLabel(newest.author, t, displayName)
+          : t("otherMember")
+        : (title ?? t("threadFallbackTitle"));
     const announcement =
       newest.kind === "image" && !text
         ? t("photos.sentAPhoto", { name })
         : newest.kind === "location"
           ? t("locations.sharedALocation", { name })
-          : t("newMessageAnnouncement", {
-              name,
-              body:
-                text.length > ANNOUNCE_MAX
-                  ? `${text.slice(0, ANNOUNCE_MAX - 1)}…`
-                  : text,
-            });
+          : circleName !== undefined
+            ? t("circle.announcement", {
+                author: name,
+                circle: circleName,
+                body,
+              })
+            : t("newMessageAnnouncement", { name, body });
     // Clear first and set on the next frame, so a message identical to the
     // previous announcement is still read out.
     region.textContent = "";
@@ -328,7 +360,7 @@ export function ThreadView({
       region.textContent = announcement;
     });
     return () => cancelAnimationFrame(frame);
-  }, [messages, newest, threadId, title, t]);
+  }, [messages, newest, threadId, title, circleThread, displayName, t]);
 
   const items =
     messages === undefined
@@ -346,11 +378,24 @@ export function ThreadView({
                 <Skeleton className="size-9 shrink-0 rounded-full" />
                 <Skeleton className="h-4 w-36" />
               </>
+            ) : circleThread ? (
+              <CircleThreadHeader
+                thread={circleThread}
+                heading={
+                  <Heading
+                    ref={headingRef}
+                    tabIndex={-1}
+                    className="font-heading decoration-primary-text/60 min-w-0 truncate text-base leading-5 font-bold underline-offset-4 outline-none focus-visible:underline"
+                  >
+                    {title}
+                  </Heading>
+                }
+              />
             ) : (
               <>
-                {thread && (
+                {pairThread && (
                   <ThreadSubjectAvatar
-                    subject={thread.subject}
+                    subject={pairThread.subject}
                     className="size-9"
                   />
                 )}
@@ -364,15 +409,15 @@ export function ThreadView({
                   {title ?? t("threadFallbackTitle")}
                 </Heading>
                 {/* The conversation's puzzles, right beside the name. */}
-                {thread && <ThreadPuzzleStack thread={thread} />}
+                {pairThread && <ThreadPuzzleStack thread={pairThread} />}
                 <div className="ml-auto flex shrink-0 items-center">
-                  {thread && (
+                  {pairThread && (
                     <ThreadQuickLinks
-                      thread={thread}
+                      thread={pairThread}
                       compact={
-                        thread.subject.kind === "exchange" &&
-                        thread.subject.profileHandle !== null &&
-                        thread.contextCopies.length > 0
+                        pairThread.subject.kind === "exchange" &&
+                        pairThread.subject.profileHandle !== null &&
+                        pairThread.contextCopies.length > 0
                       }
                     />
                   )}
@@ -430,6 +475,8 @@ export function ThreadView({
               locale={locale}
               otherAuthor={otherAuthor}
               otherAuthorId={otherAuthorId as Id<"users"> | undefined}
+              circle={circleThread !== undefined}
+              meId={me}
               onMediaLoad={onMediaLoad}
             />
           ))}
@@ -450,13 +497,20 @@ export function ThreadView({
       {thread && (thread.blocked === "byMe" || thread.readOnly) ? (
         <ComposerClosed
           reason={thread.blocked === "byMe" ? "blockedByMe" : "cantReply"}
-          partner={threadPartner(thread)}
+          partner={pairThread ? threadPartner(pairThread) : null}
         />
       ) : (
         <MessageComposer
           threadId={threadId}
           recipientName={title}
           theirsLabel={theirsLabel}
+          {...(circleThread && {
+            placeholder: t("circle.composerPlaceholder", {
+              circle: circleThread.subject.name,
+            }),
+            // listAttachableCopies has nothing for circle threads yet.
+            canAttachCopy: false,
+          })}
         />
       )}
     </div>
@@ -480,21 +534,28 @@ export function BackToInboxLink() {
 
 // One laid-out thread item: a day separator, a centered system line, or an
 // author group of bubbles (copy cards sit beside — never inside — a bubble)
-// with the group's time once under the last bubble.
+// with the group's time once under the last bubble. In a circle thread a run
+// of others' messages is headed by its author (avatar + name), and a run from
+// a member the viewer blocked is collapsed until they choose Show.
 function ThreadItemView({
   item,
   locale,
   otherAuthor,
   otherAuthorId,
+  circle,
+  meId,
   onMediaLoad,
 }: {
   item: ThreadItem<ThreadMessage>;
   locale: string;
   otherAuthor: string;
   otherAuthorId: Id<"users"> | undefined;
+  circle: boolean;
+  meId: string | undefined;
   onMediaLoad: () => void;
 }) {
   const t = useTranslations("messages");
+  const displayName = useMemberDisplayName();
   if (item.type === "day") {
     return (
       <li className="flex items-center gap-3 py-1">
@@ -510,11 +571,165 @@ function ThreadItemView({
     return (
       <li className="text-muted-foreground mx-auto max-w-sm text-center text-xs">
         <Info className="mr-1 inline size-3.5 align-[-0.2em]" aria-hidden />
-        {item.message.body}
+        {item.message.systemEvent
+          ? systemEventText(item.message.systemEvent, meId, t, displayName)
+          : item.message.body}
       </li>
     );
   }
 
+  const { own, messages } = item;
+  // A circle thread names each run's author; a DM or exchange has one other side.
+  const runAuthor = circle && !own ? messages[0].author : undefined;
+  if (circle && !own) {
+    const name = runAuthor
+      ? projectedMemberLabel(runAuthor, t, displayName)
+      : t("otherMember");
+    const id =
+      runAuthor && !runAuthor.anonymous
+        ? (runAuthor.member._id as Id<"users">)
+        : undefined;
+    return (
+      <CircleRun
+        item={item}
+        author={runAuthor}
+        authorName={name}
+        blocked={messages[0].authorBlockedByMe === true}
+      >
+        {(hideMedia) => (
+          <GroupBody
+            item={item}
+            locale={locale}
+            authorName={name}
+            authorId={id}
+            hideMedia={hideMedia}
+            onMediaLoad={onMediaLoad}
+          />
+        )}
+      </CircleRun>
+    );
+  }
+  return (
+    <li
+      className={cn("flex flex-col gap-0.5", own ? "items-end" : "items-start")}
+    >
+      {/* Bubble side and colour carry authorship visually; say it too. */}
+      <span className="sr-only">{own ? t("you") : otherAuthor}:</span>
+      <GroupBody
+        item={item}
+        locale={locale}
+        authorName={otherAuthor}
+        authorId={otherAuthorId}
+        hideMedia={false}
+        onMediaLoad={onMediaLoad}
+      />
+    </li>
+  );
+}
+
+type GroupItem = Extract<ThreadItem<ThreadMessage>, { type: "group" }>;
+
+// A circle run of another member's messages: their 24px avatar and name above
+// the first bubble (a profile link unless anonymised; the tap target grows to
+// 44px on phones), then the bubbles. A run from a member the viewer blocked
+// shows one collapsed placeholder; Show reveals the text, while photos and
+// locations stay collapsed.
+function CircleRun({
+  item,
+  author,
+  authorName,
+  blocked,
+  children,
+}: {
+  item: GroupItem;
+  author: ThreadMessage["author"];
+  authorName: string;
+  blocked: boolean;
+  children: (hideMedia: boolean) => ReactNode;
+}) {
+  const t = useTranslations("messages");
+  const [revealed, setRevealed] = useState(false);
+  const href = author ? memberProfileHref(author) : null;
+  const avatar = (
+    <Avatar aria-hidden className="size-6">
+      {author && !author.anonymous && author.member.avatar && (
+        <AvatarImage src={author.member.avatar} alt="" />
+      )}
+      <AvatarFallback className="text-[10px]">
+        {author && !author.anonymous ? (
+          <MemberInitial source={author.member} />
+        ) : (
+          <UserRound className="size-[55%]" aria-hidden />
+        )}
+      </AvatarFallback>
+    </Avatar>
+  );
+  const label = (
+    <>
+      {avatar}
+      <span className="text-muted-foreground truncate text-xs font-semibold">
+        {authorName}
+      </span>
+    </>
+  );
+  return (
+    <li className="flex flex-col items-start gap-0.5">
+      {href ? (
+        <Link
+          href={href}
+          className="focus-visible:ring-ring relative flex h-8 max-w-full items-center gap-2 rounded-full pr-2 outline-none hover:underline focus-visible:ring-2 max-md:before:absolute max-md:before:inset-x-0 max-md:before:-inset-y-1.5"
+        >
+          {label}
+        </Link>
+      ) : (
+        <span className="flex h-8 max-w-full items-center gap-2 pr-2">
+          {label}
+        </span>
+      )}
+      {/* The name above already says who wrote it; screen readers hear it there. */}
+      <div className="flex w-full flex-col items-start gap-0.5 pl-8">
+        {blocked && !revealed ? (
+          <div className="bg-muted/60 text-muted-foreground flex max-w-[min(80%,30rem)] items-center gap-2 rounded-2xl border border-dashed px-3.5 py-2 text-sm">
+            <EyeOff aria-hidden className="size-4 shrink-0" />
+            <span>{t("circle.blocked", { count: item.messages.length })}</span>
+            <span aria-hidden>·</span>
+            <button
+              type="button"
+              onClick={() => setRevealed(true)}
+              className="text-foreground focus-visible:ring-ring relative rounded-sm font-medium underline-offset-2 outline-none hover:underline focus-visible:ring-2 max-md:before:absolute max-md:before:-inset-x-2 max-md:before:-inset-y-3"
+            >
+              {t("circle.show")}
+            </button>
+          </div>
+        ) : (
+          children(blocked)
+        )}
+      </div>
+    </li>
+  );
+}
+
+// An author group's bubbles, cards and media, with the group's time under the
+// last bubble. `hideMedia` keeps photos and locations collapsed (a blocked
+// member's run after Show).
+function GroupBody({
+  item,
+  locale,
+  authorName,
+  authorId,
+  hideMedia,
+  onMediaLoad,
+}: {
+  item: GroupItem;
+  locale: string;
+  authorName: string;
+  authorId: Id<"users"> | undefined;
+  hideMedia: boolean;
+  onMediaLoad: () => void;
+}) {
+  const t = useTranslations("messages");
+  const otherAuthor = authorName;
+  const otherAuthorId = authorId;
   const { own, messages } = item;
   const last = messages[messages.length - 1];
   const lastPending = last.id.startsWith("pending-");
@@ -538,7 +753,9 @@ function ThreadItemView({
     if (message.kind === "location" && !message.removed) {
       // The map card carries the message's More menu (Report, Copy text of
       // the caption); the caption bubble follows below.
-      const media = (
+      const media = hideMedia ? (
+        <CollapsedMedia label={t("circle.blockedLocation")} />
+      ) : (
         <MessageLocation
           location={locationAttachmentOf(message.attachment)}
           className={cn(pending && "opacity-70")}
@@ -596,11 +813,7 @@ function ThreadItemView({
   };
 
   return (
-    <li
-      className={cn("flex flex-col gap-0.5", own ? "items-end" : "items-start")}
-    >
-      {/* Bubble side and colour carry authorship visually; say it too. */}
-      <span className="sr-only">{own ? t("you") : otherAuthor}:</span>
+    <>
       {segmentMessages(messages).map((segment) => {
         if (segment.type === "message") {
           return renderMessage(
@@ -612,7 +825,9 @@ function ThreadItemView({
         const single = segment.messages.length === 1;
         const reportable = (message: ThreadMessage) =>
           !own && !message.removed && message.attachmentId !== undefined;
-        const media = (
+        const media = hideMedia ? (
+          <CollapsedMedia label={t("circle.blockedPhoto")} />
+        ) : (
           <MessagePhotos
             messages={segment.messages}
             own={own}
@@ -685,7 +900,17 @@ function ThreadItemView({
           {formatMessageTime(last.sentAt, locale)}
         </time>
       )}
-    </li>
+    </>
+  );
+}
+
+// A blocked member's photo or location after Show: still collapsed.
+function CollapsedMedia({ label }: { label: string }) {
+  return (
+    <div className="bg-muted/60 text-muted-foreground flex items-center gap-2 rounded-2xl border border-dashed px-3.5 py-2 text-sm">
+      <EyeOff aria-hidden className="size-4 shrink-0" />
+      {label}
+    </div>
   );
 }
 

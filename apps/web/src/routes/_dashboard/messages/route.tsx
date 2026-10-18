@@ -1,6 +1,5 @@
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import {
-  pairThreads,
   threadSubjectTitle,
   type Translator,
 } from "@/components/messaging/format";
@@ -61,10 +60,9 @@ function MessageToastWatcher() {
   const navigate = useNavigate();
   const { member } = useCurrentMember();
   const { threadId: activeThreadId } = useParams({ strict: false });
-  const { data: inbox } = useQuery({
-    ...convexQuery(gateway.conversation.getMyInbox, member?._id ? {} : "skip"),
-    select: pairThreads,
-  });
+  const { data: inbox } = useQuery(
+    convexQuery(gateway.conversation.getMyInbox, member?._id ? {} : "skip"),
+  );
   const lastSeen = React.useRef<Map<string, number> | null>(null);
 
   React.useEffect(() => {
@@ -80,6 +78,9 @@ function MessageToastWatcher() {
         // System/lifecycle messages never notify — mirror the backend's MessagePosted guard.
         thread.lastMessage.kind !== "system" &&
         !thread.lastMessage.isMine &&
+        // A muted thread stays quiet; a member the viewer blocked never pings them.
+        !thread.muted &&
+        !thread.lastMessage.authorBlockedByMe &&
         thread.threadId !== activeThreadId &&
         stamp > (previous.get(thread.threadId) ?? 0)
       ) {
