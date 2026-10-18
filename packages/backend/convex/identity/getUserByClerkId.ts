@@ -2,13 +2,13 @@ import type { MemberView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
-import { blockStateBetween } from "../social/blocks";
 import { requireMember } from "./requireMember";
 import { toMemberView } from "./toMemberView";
 
-// Identity read (thin adapter): resolve a member by Clerk subject. Authenticated members only;
-// most callers use it only to obtain the member _id. Emits the PII-free MemberView. A member who
-// blocked the viewer reads as not found (null), as getUserById.
+// Identity read (thin adapter): resolve the SIGNED-IN member by their own Clerk subject. Every
+// caller looks up itself to obtain its member _id. Any other member's Clerk id reads as not found
+// (null): this read applies no profile-visibility rules, so it must never return someone else's
+// MemberView (bio, location) — use getUserById for other members (#282).
 export const getUserByClerkId = query({
   args: { clerkId: v.string() },
   handler: async (ctx, args): Promise<MemberView | null> => {
@@ -17,10 +17,7 @@ export const getUserByClerkId = query({
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
       .unique();
-    if (!user) return null;
-    if ((await blockStateBetween(ctx, viewer, user._id)) === "byThem") {
-      return null;
-    }
+    if (!user || user._id !== viewer) return null;
     return toMemberView(user);
   },
 });
