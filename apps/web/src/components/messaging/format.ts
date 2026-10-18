@@ -198,6 +198,45 @@ export function groupThreadMessages<M extends GroupableMessage>(
   return items;
 }
 
+// Photos sent within this gap of each other (same author) share a gallery.
+const PHOTO_RUN_GAP = MINUTE;
+// A gallery is a 2x2 grid at most.
+const PHOTO_RUN_MAX = 4;
+
+export type MessageSegment<M extends GroupableMessage> =
+  { type: "message"; message: M } | { type: "photos"; messages: M[] };
+
+// Split one author group into the segments it renders as: each photo message
+// joins the preceding photo when it follows within a minute (galleries of up
+// to 4); every other message stands alone.
+export function segmentMessages<M extends GroupableMessage>(
+  messages: readonly M[],
+): MessageSegment<M>[] {
+  const segments: MessageSegment<M>[] = [];
+  let run: Extract<MessageSegment<M>, { type: "photos" }> | undefined;
+  for (const message of messages) {
+    if (message.kind !== "image") {
+      run = undefined;
+      segments.push({ type: "message", message });
+      continue;
+    }
+    const previous = run?.messages.at(-1);
+    if (
+      run &&
+      previous &&
+      run.messages.length < PHOTO_RUN_MAX &&
+      previous.isMine === message.isMine &&
+      message.sentAt - previous.sentAt <= PHOTO_RUN_GAP
+    ) {
+      run.messages.push(message);
+      continue;
+    }
+    run = { type: "photos", messages: [message] };
+    segments.push(run);
+  }
+  return segments;
+}
+
 export type InboxContextCopy = InboxThread["contextCopies"][number];
 
 export type ThreadQuickLink = {
