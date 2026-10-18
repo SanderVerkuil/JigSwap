@@ -289,6 +289,26 @@ describe("copy mutation use cases", () => {
       expect(events.published).toHaveLength(0);
     });
 
+    it.each([{ forTrade: true }, { forSale: true }, { forLend: true }])(
+      "rejects a private setting that offers the copy (%o) and saves nothing",
+      async (flags) => {
+        const result = await run()({
+          actingMemberId: alice,
+          copyId,
+          visibility: "private",
+          ...flags,
+        });
+        expect(result.isErr).toBe(true);
+        if (result.isErr) {
+          expect(result.error.code).toBe("CopyMustBeVisibleToOffer");
+        }
+        expect(events.published).toHaveLength(0);
+        const stored = await copies.findById(copyId);
+        expect(stored?.sharing.visibility).toBe("visible");
+        expect(stored?.sharing.isAvailableForAnyExchange()).toBe(false);
+      },
+    );
+
     it("allows withdrawing availability even when reserved (not making available)", async () => {
       reservations.reserve(copyId);
       const result = await run()({

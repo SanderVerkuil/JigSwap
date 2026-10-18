@@ -456,6 +456,11 @@ export interface CopyInstanceView {
     condition: CopyCondition;
     notes?: string;
     availability: CopyAvailability;
+    /**
+     * The copy's EFFECTIVE visibility (an offered copy is always "visible"). "private" means only
+     * the owner, the current holder and the owner's household can see it.
+     */
+    visibility: "private" | "visible";
     acquisitionDate?: number;
     acquisitionSource?: "bought_new" | "bought_used" | "trade" | "gift";
     /** The puzzle definition's difficulty, when set. */

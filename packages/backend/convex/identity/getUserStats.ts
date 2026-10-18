@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { query } from "../_generated/server";
+import { isCopyPrivate, seesPrivateCopiesOf } from "../library/copyVisibility";
 import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
 import { requireMember } from "./requireMember";
 
@@ -15,10 +16,13 @@ const STATS_COLLECTION_CAP = 5000;
 
 // Shared aggregate-stat computation, factored out so other reads (getPublicProfile) can reuse the
 // exact same owned/trades/rating math without duplicating a whole query or re-deriving the
-// visibility ACL, which stays the caller's responsibility.
+// visibility ACL, which stays the caller's responsibility. `puzzlesOwned` counts the member's
+// PRIVATE copies only when `includePrivateCopies` (the viewer is the member or a household mate —
+// library/copyVisibility.seesPrivateCopiesOf); everyone else gets the count of visible copies.
 export const computeMemberStats = async (
   ctx: QueryCtx,
   userId: Id<"users">,
+  opts: { includePrivateCopies: boolean },
 ): Promise<{
   puzzlesOwned: number;
   tradesCompleted: number;
@@ -53,7 +57,9 @@ export const computeMemberStats = async (
       : 0;
 
   return {
-    puzzlesOwned: puzzlesOwned.length,
+    puzzlesOwned: opts.includePrivateCopies
+      ? puzzlesOwned.length
+      : puzzlesOwned.filter((copy) => !isCopyPrivate(copy)).length,
     tradesCompleted: tradesAsRequester.length + tradesAsOwner.length,
     averageRating: Math.round(averageRating * 10) / 10,
     totalReviews: reviews.length,
@@ -82,7 +88,9 @@ export const getUserStats = query({
     }
 
     const { puzzlesOwned, tradesCompleted, averageRating, totalReviews } =
-      await computeMemberStats(ctx, args.userId);
+      await computeMemberStats(ctx, args.userId, {
+        includePrivateCopies: await seesPrivateCopiesOf(ctx, viewer, target),
+      });
 
     return {
       puzzlesOwned,

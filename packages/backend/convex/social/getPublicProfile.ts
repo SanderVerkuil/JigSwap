@@ -8,6 +8,7 @@ import { computeMemberStats } from "../identity/getUserStats";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { optionalActingMember } from "../identity/optionalActingMember";
 import { resolveMemberByHandle } from "../identity/resolveMemberByHandle";
+import { seesPrivateCopiesOf } from "../library/copyVisibility";
 import {
   areMutualFollowers,
   profileVisibilityOf,
@@ -57,7 +58,11 @@ export const getPublicProfile = query({
       followers,
       following,
     ] = await Promise.all([
-      computeMemberStats(ctx, memberId),
+      // Private copies count only for the member themself and their household.
+      seesPrivateCopiesOf(ctx, viewerId, memberId).then(
+        (includePrivateCopies) =>
+          computeMemberStats(ctx, memberId, { includePrivateCopies }),
+      ),
       // Coarse, capped count — same spirit as getPublicMemberTeaser's puzzleCount: a huge
       // follower/following list can't blow the Convex read limit and 500 this unauthenticated page.
       ctx.db

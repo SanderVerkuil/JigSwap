@@ -4,6 +4,7 @@ import type {
 } from "@jigswap/contracts";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
+import { effectiveCopyVisibility } from "./copyVisibility";
 import {
   toOwnedCopyCompletionView,
   toOwnedCopyImageView,
@@ -102,7 +103,7 @@ export const getOwnedPuzzleWithCollectionStatus = query({
       missingPiecesCount: ownedPuzzle.missingPiecesCount,
       notes: ownedPuzzle.notes,
       availability: ownedPuzzle.availability,
-      visibility: ownedPuzzle.visibility,
+      visibility: effectiveCopyVisibility(ownedPuzzle),
       salePrice: ownedPuzzle.salePrice,
       acquisitionDate: ownedPuzzle.acquisitionDate,
       acquisitionSource: ownedPuzzle.acquisitionSource,

@@ -1,4 +1,4 @@
-import { DomainEvent, ok, Result } from "../../shared-kernel";
+import { DomainEvent, err, ok, Result } from "../../shared-kernel";
 import { Acquisition } from "./acquisition";
 import { CatalogSnapshot } from "./catalog-snapshot";
 import { Condition } from "./condition";
@@ -88,7 +88,7 @@ export class Copy {
     return this.state.sharing;
   }
 
-  // Mint a brand-new copy: owner, condition, acquisition, default (private) sharing; records
+  // Mint a brand-new copy: owner, condition, acquisition, default (visible, not offered) sharing; records
   // CopyAcquired. The snapshot is supplied by the application layer via the CatalogSnapshotProvider.
   static acquire(props: AcquireCopyProps): Result<Copy, LibraryError> {
     const state: CopyState = {
@@ -100,7 +100,7 @@ export class Copy {
       condition: props.condition,
       missingPiecesCount: props.missingPiecesCount,
       notes: props.notes,
-      sharing: SharingSetting.private(),
+      sharing: SharingSetting.newCopy(),
       acquisition: props.acquisition ?? Acquisition.unknown(),
       images: [],
       createdAt: props.now,
@@ -130,11 +130,15 @@ export class Copy {
   }
 
   // Replace the whole sharing setting. Emits CopyMadeAvailable/Unavailable so subscribers
-  // (and the Exchange context's read model) can react to availability changes.
+  // (and the Exchange context's read model) can react to availability changes. Rejects a private
+  // setting that offers the copy for any exchange (CopyMustBeVisibleToOffer), leaving it unchanged.
   updateSharing(
     setting: SharingSetting,
     now: Date,
   ): Result<void, LibraryError> {
+    if (setting.offersWhilePrivate()) {
+      return err(LibraryError.copyMustBeVisibleToOffer());
+    }
     this.state = { ...this.state, sharing: setting, updatedAt: now };
     if (setting.isAvailableForAnyExchange()) {
       this.record(
@@ -153,7 +157,7 @@ export class Copy {
   }
 
   // Settle an exchange: the SAME physical copy changes hands. Owner-scoped facts reset (sharing
-  // back to private so the new owner decides availability; acquisition becomes a trade; personal
+  // back to the new-copy default — visible, not offered — so the new owner decides availability; acquisition becomes a trade; personal
   // notes drop), while the physical record (condition, snapshot, missing pieces, images) carries
   // over. The stable copy id keeps the chain-of-custody coherent across successive owners.
   transferTo(newOwner: OwnerId, now: Date): Result<void, LibraryError> {
@@ -162,7 +166,7 @@ export class Copy {
       ...this.state,
       ownerId: newOwner,
       heldBy: newOwner,
-      sharing: SharingSetting.private(),
+      sharing: SharingSetting.newCopy(),
       acquisition: Acquisition.create({ source: "trade", date: now }),
       notes: undefined,
       updatedAt: now,
@@ -174,12 +178,13 @@ export class Copy {
   }
 
   // Lend the copy out: possession passes to the borrower (ownership unchanged) and it leaves the
-  // market for the loan's duration. Driven by the loan use case; the owner stays this.state.ownerId.
+  // market for the loan's duration (offers withdrawn, the owner's visibility choice kept). Driven by
+  // the loan use case; the owner stays this.state.ownerId.
   lendOut(borrower: OwnerId, now: Date): Result<void, LibraryError> {
     this.state = {
       ...this.state,
       heldBy: borrower,
-      sharing: SharingSetting.private(),
+      sharing: this.state.sharing.withoutOffers(),
       updatedAt: now,
     };
     this.record(new CopyLentOut(this.id, borrower, now));

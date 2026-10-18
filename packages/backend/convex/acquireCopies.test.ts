@@ -108,7 +108,7 @@ describe("library.acquireCopies", () => {
     ).rejects.toThrow("Unauthenticated");
   });
 
-  test("adds one private, unoffered copy per definition, owned by the caller", async () => {
+  test("adds one visible, unoffered copy per definition, owned by the caller", async () => {
     const t = convexTest(schema, modules);
     const { alice, approved, alicePending } = await seed(t);
 
@@ -123,7 +123,8 @@ describe("library.acquireCopies", () => {
     for (const id of [approved[0], alicePending]) {
       const row = byDefinition.get(id);
       expect(row?.condition).toBe("good");
-      expect(row?.visibility).toBe("private");
+      expect(row?.visibility).toBe("visible");
+      expect(row?.visibilityAuthoritative).toBe(true);
       expect(row?.availability).toEqual({
         forTrade: false,
         forSale: false,
@@ -164,7 +165,7 @@ describe("library.acquireCopies", () => {
     expect(byDefinition.get(approved[0])?.visibility).toBe("visible");
     for (const id of [approved[1], approved[2]]) {
       expect(byDefinition.get(id)?.availability.forTrade).toBe(false);
-      expect(byDefinition.get(id)?.visibility).toBe("private");
+      expect(byDefinition.get(id)?.visibility).toBe("visible");
     }
   });
 

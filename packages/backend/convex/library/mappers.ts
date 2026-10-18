@@ -9,6 +9,7 @@ import type {
   OwnedCopyView,
 } from "@jigswap/contracts";
 import type { Doc } from "../_generated/dataModel";
+import { effectiveCopyVisibility } from "./copyVisibility";
 
 // Row -> view DTO mappers for the Personal Library reads. Pure functions so the mapping is
 // unit-testable and `tsc` enforces it against the contracts shapes.
@@ -75,7 +76,8 @@ export const toOwnedCopyView = (
   // Owner-only personal fields: only surfaced when the viewer owns the copy.
   notes: opts?.includeOwnerOnly ? row.notes : undefined,
   availability: row.availability,
-  visibility: row.visibility,
+  // The EFFECTIVE visibility (never the raw column — a legacy stored "private" is not a choice).
+  visibility: effectiveCopyVisibility(row),
   // Public asking price for a copy listed for sale — always carried.
   salePrice: row.salePrice,
   acquisitionDate: opts?.includeOwnerOnly ? row.acquisitionDate : undefined,

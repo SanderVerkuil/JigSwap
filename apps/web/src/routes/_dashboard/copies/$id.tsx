@@ -273,10 +273,12 @@ function CopyInstanceDetail({
     if (!copy.viewerCanManage || copy.aggregateId == null) return;
     try {
       await updateSharing.mutateAsync(
-        availabilityToSharing(copy.aggregateId, {
-          ...availability,
-          [flag]: !availability[flag],
-        }),
+        availabilityToSharing(
+          copy.aggregateId,
+          { ...availability, [flag]: !availability[flag] },
+          // Keep the owner's visibility choice; turning an offer on makes it visible.
+          snapshot.visibility,
+        ),
       );
     } catch {
       toast.error(t("editCopy.editFailed"));

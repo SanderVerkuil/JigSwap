@@ -1,6 +1,12 @@
 import type { CollectionView } from "@jigswap/contracts";
 import { ConvexError, v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import {
+  buildCopyViewContext,
+  canViewCopyWithContext,
+  type CopyViewContext,
+} from "./canViewCopy";
 import { toCollectionView } from "./mappers";
 
 // Library read (collections are a Personal Library concern): a member's collections with their
@@ -54,21 +60,41 @@ export const getUserCollections = query({
       });
     }
 
-    const views = await Promise.all(
-      collections.map(async (collection) => {
-        const members = await ctx.db
-          .query("collectionMembers")
-          .withIndex("by_collection", (q) =>
-            q.eq("collectionId", collection._id),
-          )
-          .collect();
-        return toCollectionView(collection, members.length, {
+    // Another member's collection counts only the member copies getCollectionById would show this
+    // viewer (THE copy gate — so a private copy in a public collection is neither listed nor
+    // counted); the viewer's own collections keep the raw member count. Sequential: the copy-view
+    // context's memos aren't safe to share across a Promise.all.
+    let context: CopyViewContext | null = null;
+    const views = [];
+    for (const collection of collections) {
+      const members = await ctx.db
+        .query("collectionMembers")
+        .withIndex("by_collection", (q) => q.eq("collectionId", collection._id))
+        .collect();
+      let count = members.length;
+      if (collection.userId !== currentUser._id) {
+        context ??= await buildCopyViewContext(
+          ctx,
+          currentUser._id as Id<"users">,
+        );
+        count = 0;
+        for (const member of members) {
+          const copy = member.ownedPuzzleId
+            ? await ctx.db.get(member.ownedPuzzleId)
+            : null;
+          if (copy && (await canViewCopyWithContext(ctx, copy, context))) {
+            count += 1;
+          }
+        }
+      }
+      views.push(
+        toCollectionView(collection, count, {
           // personalNotes is owner-only: surface it only on the acting member's OWN collections
           // (the public-collection set may include OTHER members' collections under includePublic).
           includeOwnerOnly: collection.userId === currentUser._id,
-        });
-      }),
-    );
+        }),
+      );
+    }
 
     return views.sort((a, b) => {
       if (a.isDefault && !b.isDefault) return -1;

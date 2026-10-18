@@ -27,6 +27,10 @@ import { Check, ImageOff } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
+import {
+  CopyVisibilityControl,
+  type CopyVisibility,
+} from "./copy-visibility-control";
 
 type CopyInstanceView = NonNullable<
   FunctionReturnType<typeof gateway.library.getCopyInstanceView>
@@ -73,6 +77,11 @@ export function EditCopyDialog({
     snapshot.condition as ConditionValue,
   );
   const [availability, setAvailability] = useState(snapshot.availability);
+  const [visibility, setVisibility] = useState<CopyVisibility>(
+    snapshot.visibility,
+  );
+  const offered =
+    availability.forTrade || availability.forLend || availability.forSale;
   const [notes, setNotes] = useState(snapshot.notes ?? "");
   // `null` => catalogue/global image; otherwise a gallery image id.
   const [coverImageId, setCoverImageId] = useState<string | null>(
@@ -103,12 +112,17 @@ export function EditCopyDialog({
         availability.forTrade !== snapshot.availability.forTrade ||
         availability.forLend !== snapshot.availability.forLend ||
         availability.forSale !== snapshot.availability.forSale;
-      if (domainEditable && availabilityChanged) {
-        ops.push(
-          updateSharing.mutateAsync(
-            availabilityToSharing(aggregateId, availability),
-          ),
+      // One write for the sharing setting (availability + visibility); availabilityToSharing
+      // forces "visible" whenever an offer is on.
+      if (domainEditable) {
+        const sharing = availabilityToSharing(
+          aggregateId,
+          availability,
+          visibility,
         );
+        if (availabilityChanged || sharing.visibility !== snapshot.visibility) {
+          ops.push(updateSharing.mutateAsync(sharing));
+        }
       }
 
       const trimmedNotes = notes.trim();
@@ -165,7 +179,24 @@ export function EditCopyDialog({
             <Label>{t("availability")}</Label>
             <AvailabilityChips
               value={availability}
-              onChange={setAvailability}
+              onChange={(next) => {
+                setAvailability(next);
+                // An offer makes the copy visible: reflect it in the form right away.
+                if (next.forTrade || next.forLend || next.forSale) {
+                  setVisibility("visible");
+                }
+              }}
+            />
+          </div>
+
+          {/* Visibility */}
+          <div className="space-y-2">
+            <Label>{t("editCopy.visibility.label")}</Label>
+            <CopyVisibilityControl
+              value={offered ? "visible" : visibility}
+              onChange={setVisibility}
+              offered={offered}
+              disabled={!domainEditable}
             />
           </div>
 

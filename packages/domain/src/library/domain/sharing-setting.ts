@@ -9,7 +9,8 @@ export type ExchangeAvailabilityKind = "trade" | "sale" | "lend";
 // (private / friend-circle / visible / lendable / swappable / tradeable). This VO
 // consolidates today's fragmented availability into ONE place by splitting that model into
 // two orthogonal axes:
-//   - `visibility`  -> who can SEE the copy: "private" (only owner) | "visible" (public).
+//   - `visibility`  -> who can SEE the copy: "private" (only the owner, plus whoever physically
+//     holds it and the owner's household — enforced by the read-side gate) | "visible".
 //   - the exchange-availability flags below -> what it can be USED for (lendable/swappable/
 //     tradeable), each of which also implies the copy is at least visible.
 // NOTE: the "friend-circle" level is Phase 6 (Friend Circles); it plugs in later as a third
@@ -26,9 +27,10 @@ export class SharingSetting {
     readonly salePrice?: Price,
   ) {}
 
-  // The safe default for a freshly acquired Copy: private, not offered for anything.
-  static private(): SharingSetting {
-    return new SharingSetting("private", false, false, false);
+  // The default for a freshly acquired Copy (and for a copy arriving with a new owner): visible
+  // to the community, not offered for anything. The owner may make it private afterwards.
+  static newCopy(): SharingSetting {
+    return new SharingSetting("visible", false, false, false);
   }
 
   static create(props: {
@@ -58,6 +60,18 @@ export class SharingSetting {
       case "lend":
         return this.forLend;
     }
+  }
+
+  // The same visibility with every exchange offer (and the sale price) withdrawn: the copy leaves
+  // the market but keeps who-can-see-it as the owner chose.
+  withoutOffers(): SharingSetting {
+    return new SharingSetting(this.visibility, false, false, false);
+  }
+
+  // A copy offered for exchange must be visible: an offer nobody can see is meaningless. Checked
+  // on write by Copy.updateSharing (CopyMustBeVisibleToOffer).
+  offersWhilePrivate(): boolean {
+    return this.visibility === "private" && this.isAvailableForAnyExchange();
   }
 
   // Offered for at least one kind of exchange.

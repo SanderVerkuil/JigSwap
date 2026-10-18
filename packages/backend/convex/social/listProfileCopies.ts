@@ -12,6 +12,7 @@ import {
   canViewCopyWithContext,
   type CopyViewContext,
 } from "../library/canViewCopy";
+import { seesPrivateCopiesOf } from "../library/copyVisibility";
 import { toPublicCopyView } from "../library/mappers";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
 import { canSeeProfileContent, seesFullLibrary } from "./privacy";
@@ -29,6 +30,10 @@ import { canSeeProfileContent, seesFullLibrary } from "./privacy";
 // open ones (any availability flag) for `filter: "available"`. Everyone else (one-way follower,
 // stranger on a public profile) gets today's listings-only view whatever `filter` says.
 //
+// PRIVATE copies (the owner's per-copy toggle, see library/copyVisibility) are part of "all" only for
+// the member themself and their household; a mutual follower's "all" drops them in the index scan
+// too (an open copy is never private, so "available" is unaffected).
+//
 // For a listings-only viewer, the page is pre-filtered in the index scan to the only copies
 // canViewCopy can pass for them (open, or currently held by the viewer) so pages stay full; a page
 // can still come back short when only circle-shared copies survive the gate.
@@ -45,6 +50,8 @@ export const listProfileCopies = query({
     }
     const isOwner = viewerId === args.memberId;
     const fullLibrary = await seesFullLibrary(ctx, viewerId, args.memberId);
+    const seesPrivate =
+      fullLibrary && (await seesPrivateCopiesOf(ctx, viewerId, args.memberId));
 
     const base = ctx.db
       .query("ownedPuzzles")
@@ -58,11 +65,24 @@ export const listProfileCopies = query({
         q.eq(q.field("availability.forSale"), true),
         q.eq(q.field("availability.forLend"), true),
       );
+    // Mirrors effectiveCopyVisibility's "private" case (not offered + marker + stored private) as
+    // its negation, so a mutual follower's pages stay full. canViewCopy below stays the real gate.
+    const notPrivate = (
+      q: FilterBuilder<NamedTableInfo<DataModel, "ownedPuzzles">>,
+    ) =>
+      q.or(
+        open(q),
+        q.neq(q.field("visibilityAuthoritative"), true),
+        q.neq(q.field("visibility"), "private"),
+        q.eq(q.field("heldBy"), viewerId),
+      );
     const scoped = !fullLibrary
       ? base.filter((q) => q.or(open(q), q.eq(q.field("heldBy"), viewerId)))
       : args.filter === "available"
         ? base.filter(open)
-        : base;
+        : seesPrivate
+          ? base
+          : base.filter(notPrivate);
     const result = await scoped.paginate(args.paginationOpts);
 
     // Sequential: the context's ownerVisibility memo isn't safe to share across a Promise.all.
