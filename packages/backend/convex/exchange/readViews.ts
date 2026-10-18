@@ -122,11 +122,9 @@ export const toOwnedPuzzleView = (
   };
 };
 
-// `submittedBy` is OMITTED when the catalog submitter is a party anonymous to the viewer (the owner
-// often submitted the definition of the copy they own).
+// The catalog submitter (`submittedBy`) is never carried: it is an unrelated member's raw id.
 export const toPuzzleView = (
   p: Doc<"puzzles"> | null,
-  hidden: ReadonlySet<Id<"users">>,
 ): ExchangePuzzleView | null =>
   p
     ? {
@@ -150,7 +148,6 @@ export const toPuzzleView = (
         image: p.image,
         searchableText: p.searchableText,
         status: p.status,
-        ...(hidden.has(p.submittedBy) ? {} : { submittedBy: p.submittedBy }),
         createdAt: p.createdAt,
         updatedAt: p.updatedAt,
       }
@@ -192,12 +189,12 @@ export const enrichExchangeSummary = async (
       viewerId,
       parties.hidden,
     ),
-    requestedPuzzle: toPuzzleView(requestedPuzzle, parties.hidden),
+    requestedPuzzle: toPuzzleView(requestedPuzzle),
     offeredOwnedPuzzle: toOwnedPuzzleView(
       offeredOwnedPuzzle,
       viewerId,
       parties.hidden,
     ),
-    offeredPuzzle: toPuzzleView(offeredPuzzle, parties.hidden),
+    offeredPuzzle: toPuzzleView(offeredPuzzle),
   };
 };
