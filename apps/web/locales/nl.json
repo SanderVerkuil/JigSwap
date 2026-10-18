@@ -4273,6 +4273,7 @@
     "blockError": "{name} blokkeren is niet gelukt. Probeer het opnieuw.",
     "blockName": "{name} blokkeren",
     "cantReply": "Je kunt niet meer reageren in dit gesprek.",
+    "moreActions": "Meer acties voor {name}",
     "rateLimited": "Je hebt veel wijzigingen gedaan. Probeer het later opnieuw.",
     "threadActions": "Gespreksacties",
     "unblock": "Deblokkeren",

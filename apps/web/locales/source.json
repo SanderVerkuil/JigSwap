@@ -4273,6 +4273,7 @@
     "blockError": "Couldn't block {name}. Please try again.",
     "blockName": "Block {name}",
     "cantReply": "You can't reply to this conversation.",
+    "moreActions": "More actions for {name}",
     "rateLimited": "You've made a lot of changes. Try again later.",
     "threadActions": "Conversation actions",
     "unblock": "Unblock",
