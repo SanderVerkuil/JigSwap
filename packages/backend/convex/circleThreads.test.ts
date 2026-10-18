@@ -356,8 +356,9 @@ describe("circle deletion", () => {
       const keptHeld = await ctx.db.get(held);
       expect(keptHeld?.evidenceHold).toBe(true);
       expect(
-        keptHeld && (await ctx.db.system.get(keptHeld.fileId as never)),
-      ).not.toBeNull();
+        keptHeld?.kind === "image" &&
+          (await ctx.db.system.get(keptHeld.fileId)),
+      ).toBeTruthy();
       expect(await ctx.db.get(quarantined)).not.toBeNull();
     });
     expect(await storedMessagesOf(t, threadId)).toHaveLength(0);
@@ -390,3 +391,326 @@ describe("circle deletion", () => {
     expect(await participantRowsOf(t, threadId)).toHaveLength(0);
   });
 });
+
+// A member's floor (joinedAt) in the thread.
+const floorOf = async (t: T, threadId: string, memberId: Id<"users">) => {
+  const row = (await participantRowsOf(t, threadId)).find(
+    (r) => r.memberId === memberId,
+  );
+  if (row?.joinedAt === undefined) throw new Error("no floor");
+  return row.joinedAt;
+};
+
+const insertMessage = (
+  t: T,
+  threadId: string,
+  authorId: Id<"users">,
+  body: string,
+  sentAt: number,
+) =>
+  t.run((ctx) =>
+    ctx.db.insert("threadMessages", {
+      threadAggregateId: threadId,
+      messageId: crypto.randomUUID(),
+      authorId,
+      kind: "text",
+      body,
+      sentAt,
+    }),
+  );
+
+const block = (t: T, blockerId: Id<"users">, blockedId: Id<"users">) =>
+  t.run((ctx) =>
+    ctx.db.insert("blocks", { blockerId, blockedId, createdAt: Date.now() }),
+  );
+
+const leave = async (t: T, clerkId: string, circleId: string) => {
+  await as(t, clerkId).mutation(api.sharing.leaveCircle.leaveCircle, {
+    circleId,
+  });
+  await flush(t);
+};
+
+describe("the joinedAt history floor", () => {
+  test("a new member sees only messages sent strictly after they joined, plus their own 'joined' row", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, dave, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    await post(t, "alice", threadId, "before dave");
+    await join(t, circleId, dave);
+    await flush(t);
+    const floor = await floorOf(t, threadId, dave);
+    // Boundary: a row at exactly the floor is hidden, one a millisecond later is shown.
+    await insertMessage(t, threadId, alice, "at the floor", floor);
+    await insertMessage(t, threadId, alice, "just after", floor + 1);
+
+    const daveSees = await messagesOf(t, "dave", threadId);
+    expect(daveSees.map((m) => m.body)).toEqual([
+      "member_joined",
+      "just after",
+    ]);
+    expect(daveSees[0].systemEvent).toMatchObject({
+      kind: "joined",
+      member: { anonymous: false, member: { _id: dave } },
+    });
+
+    // Alice, a member since before, sees everything.
+    expect((await messagesOf(t, "alice", threadId)).map((m) => m.body)).toEqual(
+      [
+        "before dave",
+        // Same instant as the join row; the later insert sorts after it.
+        "member_joined",
+        "at the floor",
+        "just after",
+      ],
+    );
+
+    // The paginated read applies the same floor and exemption.
+    const page = await as(t, "dave").query(
+      api.conversation.listThreadMessages.listThreadMessages,
+      { threadId, paginationOpts: { numItems: 10, cursor: null } },
+    );
+    expect(page.page.map((m) => m.body)).toEqual([
+      "just after",
+      "member_joined",
+    ]);
+  });
+
+  test("the join-row exemption is only the viewer's own join row at their floor", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, carol, dave, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    await join(t, circleId, dave);
+    await flush(t);
+    const floor = await floorOf(t, threadId, dave);
+    // Someone else's join row at dave's exact floor stays hidden from dave.
+    await t.run((ctx) =>
+      ctx.db.insert("threadMessages", {
+        threadAggregateId: threadId,
+        messageId: "other-join",
+        kind: "system",
+        body: "member_joined",
+        sentAt: floor,
+        systemEvent: { kind: "joined", memberId: carol },
+      }),
+    );
+    void alice;
+    const daveSees = await messagesOf(t, "dave", threadId);
+    expect(daveSees).toHaveLength(1);
+    expect(daveSees[0].systemEvent?.member).toMatchObject({
+      member: { _id: dave },
+    });
+    // A "before" cursor at or below the floor yields nothing, not even the join row.
+    expect(
+      await as(t, "dave").query(
+        api.conversation.getThreadMessages.getThreadMessages,
+        { threadId, before: floor },
+      ),
+    ).toEqual([]);
+  });
+
+  test("a removed member loses the thread: reads are refused and it leaves their inbox", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    await post(t, "alice", threadId, "hello");
+    expect((await inboxOf(t, "bob")).map((r) => r.threadId)).toEqual([
+      threadId,
+    ]);
+
+    await as(t, "alice").mutation(api.sharing.removeMember.removeMember, {
+      circleId,
+      memberId: bob,
+    });
+    // Refused even before the async sync has run (the circle membership is already gone).
+    await expectCode(messagesOf(t, "bob", threadId), "NotParticipant");
+    expect(await inboxOf(t, "bob")).toEqual([]);
+    await flush(t);
+    await expectCode(messagesOf(t, "bob", threadId), "NotParticipant");
+    await expectCode(
+      as(t, "bob").query(
+        api.conversation.listThreadMessages.listThreadMessages,
+        {
+          threadId,
+          paginationOpts: { numItems: 10, cursor: null },
+        },
+      ),
+      "NotParticipant",
+    );
+    expect(await inboxOf(t, "bob")).toEqual([]);
+    expect(
+      await as(t, "bob").query(
+        api.conversation.getUnreadTotal.getUnreadTotal,
+        {},
+      ),
+    ).toBe(0);
+  });
+
+  test("re-joining gives a fresh floor: what was said while away stays hidden", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    await post(t, "alice", threadId, "while bob was in");
+    await leave(t, "bob", circleId);
+    await post(t, "alice", threadId, "while bob was away");
+    await join(t, circleId, bob);
+    await flush(t);
+    await post(t, "alice", threadId, "after bob came back");
+
+    const bodies = (await messagesOf(t, "bob", threadId)).map((m) => m.body);
+    expect(bodies).toEqual(["member_joined", "after bob came back"]);
+  });
+});
+
+describe("join/leave rows and projection", () => {
+  test("a co-member is named; a former member who isn't otherwise visible is 'a member'; the remover never appears", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, carol, dave, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    await join(t, circleId, dave);
+    await flush(t);
+    await post(t, "carol", threadId, "hi all");
+    await as(t, "alice").mutation(api.sharing.removeMember.removeMember, {
+      circleId,
+      memberId: carol,
+    });
+    await flush(t);
+
+    const bobSees = await messagesOf(t, "bob", threadId);
+    const [joined, hi, left] = bobSees;
+    // Dave is a current co-member: named.
+    expect(joined.systemEvent).toMatchObject({
+      kind: "joined",
+      member: { anonymous: false, member: { _id: dave } },
+    });
+    // Carol has left and is private, not followed: her row says "a member", her message is anonymous.
+    expect(left.systemEvent).toEqual({ kind: "left" });
+    expect(hi.author).toMatchObject({ anonymous: true });
+    expect(hi.isMine).toBe(false);
+    // Nothing in the payload names who removed her.
+    const json = JSON.stringify(bobSees);
+    expect(json).not.toContain(carol);
+    expect(json).not.toContain("alice");
+    void bob;
+  });
+
+  test("a former member the viewer can see by the ordinary rules stays named", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, carol, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("follows", {
+        followerId: bob,
+        followeeId: carol,
+        createdAt: now,
+      });
+      await ctx.db.insert("follows", {
+        followerId: carol,
+        followeeId: bob,
+        createdAt: now,
+      });
+    });
+    await leave(t, "carol", circleId);
+    const [left] = await messagesOf(t, "bob", threadId);
+    expect(left.systemEvent).toMatchObject({
+      kind: "left",
+      member: { anonymous: false, member: { _id: carol } },
+    });
+  });
+
+  test("authors carry `author`; the viewer's own messages keep isMine", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    await post(t, "alice", threadId, "mine");
+    const [own] = await messagesOf(t, "alice", threadId);
+    expect(own.isMine).toBe(true);
+    expect(own.author).toMatchObject({ member: { _id: alice } });
+    const [seenByBob] = await messagesOf(t, "bob", threadId);
+    expect(seenByBob.isMine).toBe(false);
+    expect(seenByBob.author).toMatchObject({
+      anonymous: false,
+      member: { _id: alice },
+    });
+  });
+});
+
+
+describe("inbox, unread and mute", () => {
+  test("a circle thread appears in the inbox only once it has a message for the viewer, or they opened it", async () => {
+    const t = convexTest(schema, modules);
+    const { dave, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    // Opened but empty: not listed for anyone yet (Alice never read it).
+    expect(await inboxOf(t, "alice")).toEqual([]);
+    // A join row alone doesn't list it either.
+    await join(t, circleId, dave);
+    await flush(t);
+    expect(await inboxOf(t, "bob")).toEqual([]);
+    // Reading it lists it for the reader.
+    await as(t, "bob").mutation(
+      api.conversation.markThreadRead.markThreadRead,
+      {
+        threadId,
+      },
+    );
+    expect((await inboxOf(t, "bob")).map((r) => r.threadId)).toEqual([
+      threadId,
+    ]);
+    expect(await inboxOf(t, "carol")).toEqual([]);
+    // A message lists it for everyone.
+    await post(t, "alice", threadId, "welcome");
+    const [row] = await inboxOf(t, "carol");
+    expect(row.subject).toMatchObject({
+      kind: "circle",
+      circleId,
+      name: "Puzzle Club",
+      memberCount: 4,
+    });
+    if (row.subject.kind !== "circle") throw new Error("unreachable");
+    expect(row.subject.memberPreview).toHaveLength(3);
+    expect(row.subject.memberPreview[0]).toMatchObject({ anonymous: false });
+    expect(row.lastMessage).toMatchObject({ body: "welcome", isMine: false });
+    expect(row.lastMessage?.author).toMatchObject({ anonymous: false });
+    expect(row.unreadCount).toBe(1);
+    expect(row.contextCopies).toEqual([]);
+  });
+
+  test("a new member never sees a pre-join snippet as the inbox's last message", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, dave, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    await post(t, "alice", threadId, "secret from before");
+    await join(t, circleId, dave);
+    await flush(t);
+    // Force the stored summary back onto the pre-join message (as if posts raced the join row).
+    const floor = await floorOf(t, threadId, dave);
+    await t.run(async (ctx) => {
+      const thread = await ctx.db
+        .query("threads")
+        .withIndex("by_circle", (q) => q.eq("circleId", circleId))
+        .unique();
+      await ctx.db.patch(thread!._id, {
+        lastMessage: {
+          messageId: "x",
+          authorId: alice,
+          kind: "text",
+          body: "secret from before",
+          sentAt: floor - 1,
+        },
+      });
+    });
+    await as(t, "dave").mutation(
+      api.conversation.markThreadRead.markThreadRead,
+      {
+        threadId,
+      },
+    );
+    const [row] = await inboxOf(t, "dave");
+    expect(row.lastMessage).toBeNull();
+    expect(JSON.stringify(row)).not.toContain("secret");
+  });
+});
+
+

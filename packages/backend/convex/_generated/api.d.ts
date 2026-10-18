@@ -152,6 +152,7 @@ import type * as conversation_sharedLocations from "../conversation/sharedLocati
 import type * as conversation_stageMessageImage from "../conversation/stageMessageImage.js";
 import type * as conversation_startCopyConversation from "../conversation/startCopyConversation.js";
 import type * as conversation_subscriber from "../conversation/subscriber.js";
+import type * as conversation_threadMemberProjection from "../conversation/threadMemberProjection.js";
 import type * as custody_getCopyCustodyTimeline from "../custody/getCopyCustodyTimeline.js";
 import type * as custody_subscriber from "../custody/subscriber.js";
 import type * as docs_listDocFeedback from "../docs/listDocFeedback.js";
@@ -649,6 +650,7 @@ declare const fullApi: ApiFromModules<{
   "conversation/stageMessageImage": typeof conversation_stageMessageImage;
   "conversation/startCopyConversation": typeof conversation_startCopyConversation;
   "conversation/subscriber": typeof conversation_subscriber;
+  "conversation/threadMemberProjection": typeof conversation_threadMemberProjection;
   "custody/getCopyCustodyTimeline": typeof custody_getCopyCustodyTimeline;
   "custody/subscriber": typeof custody_subscriber;
   "docs/listDocFeedback": typeof docs_listDocFeedback;

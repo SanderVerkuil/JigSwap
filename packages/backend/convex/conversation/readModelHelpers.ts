@@ -1,10 +1,15 @@
 import type { ThreadMessageView } from "@jigswap/contracts";
+import { ConvexError } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { isUnattachedMedia } from "./adapters/threadMapper";
 import { viewableCopyCards } from "./copyCard";
 import { messageAttachmentViews } from "./messageAttachments";
 import { locationAttachmentViewOf } from "./sharedLocations";
+import {
+  isCurrentCircleMember,
+  threadMemberProjector,
+} from "./threadMemberProjection";
 
 // Shared row->DTO mapping and unread logic for the conversation read models. Read models page
 // the companion `threadMessages` rows via `by_thread_sent` directly and NEVER hydrate the Thread
@@ -19,6 +24,96 @@ export const threadRowByAggregateId = (
     .query("threads")
     .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", threadAggregateId))
     .unique();
+
+/** The member's participant row in a thread, or null. */
+export const participantRowOf = (
+  ctx: QueryCtx,
+  threadAggregateId: string,
+  memberId: Id<"users">,
+): Promise<Doc<"threadParticipants"> | null> =>
+  ctx.db
+    .query("threadParticipants")
+    .withIndex("by_thread_member", (q) =>
+      q.eq("threadAggregateId", threadAggregateId).eq("memberId", memberId),
+    )
+    .first();
+
+/**
+ * The thread a member may read, and their history floor in it: ThreadNotFound for no thread,
+ * NotParticipant for anyone who isn't one of its participants. A circle thread additionally
+ * requires a CURRENT circle membership (the participant set follows the circle asynchronously,
+ * so a member who just left or was removed is refused even before the sync ran), and its
+ * `floor` is the member's joinedAt: they see only messages sent strictly after it. Exchange/DM
+ * threads have no floor.
+ */
+export const readableThreadOf = async (
+  ctx: QueryCtx,
+  threadAggregateId: string,
+  me: Id<"users">,
+): Promise<{ thread: Doc<"threads">; floor: number | undefined }> => {
+  const thread = await threadRowByAggregateId(ctx, threadAggregateId);
+  if (!thread) {
+    throw new ConvexError({
+      code: "ThreadNotFound",
+      message: "Thread not found",
+    });
+  }
+  const notParticipant = new ConvexError({
+    code: "NotParticipant",
+    message: "Only participants may read a thread",
+  });
+  if (!thread.participants.includes(me)) throw notParticipant;
+  if (thread.subjectKind !== "circle") return { thread, floor: undefined };
+  const participant = await participantRowOf(ctx, threadAggregateId, me);
+  if (
+    !participant ||
+    thread.circleId === undefined ||
+    !(await isCurrentCircleMember(ctx, thread.circleId, me))
+  ) {
+    throw notParticipant;
+  }
+  return { thread, floor: participant.joinedAt };
+};
+
+/**
+ * The viewer's own "joined" row(s) in a circle thread: the join/leave row naming them, sent at
+ * exactly their floor. The strict `sentAt > joinedAt` floor hides it, and this is the ONE
+ * exemption, so a joiner sees "You joined" above the history they may read. An index point range
+ * on the floor instant; any other row sent at that instant stays hidden.
+ */
+export const ownJoinRowsAt = async (
+  ctx: QueryCtx,
+  threadAggregateId: string,
+  me: Id<"users">,
+  floor: number,
+): Promise<Doc<"threadMessages">[]> =>
+  (
+    await ctx.db
+      .query("threadMessages")
+      .withIndex("by_thread_sent", (q) =>
+        q.eq("threadAggregateId", threadAggregateId).eq("sentAt", floor),
+      )
+      .collect()
+  ).filter(
+    (row) =>
+      row.kind === "system" &&
+      row.systemEvent?.kind === "joined" &&
+      row.systemEvent.memberId === me,
+  );
+
+/** The members the viewer blocked (their own block rows, never the reverse direction). */
+export const blockedByMeSet = async (
+  ctx: QueryCtx,
+  me: Id<"users">,
+): Promise<Set<Id<"users">>> =>
+  new Set(
+    (
+      await ctx.db
+        .query("blocks")
+        .withIndex("by_blocker", (q) => q.eq("blockerId", me))
+        .collect()
+    ).map((row) => row.blockedId),
+  );
 
 // The message columns a DTO is built from.
 type MessageFields = Pick<
@@ -151,23 +246,88 @@ export const participantUnreadCountOf = async (
 export const subjectRenders = async (
   ctx: QueryCtx,
   thread: Doc<"threads">,
+): Promise<boolean> => {
+  if (thread.subjectKind === "circle") {
+    return (
+      thread.circleId !== undefined &&
+      (await circleRowOf(ctx, thread.circleId)) !== null
+    );
+  }
+  return (
+    thread.subjectKind !== "exchange" ||
+    (thread.exchangeId !== undefined &&
+      (await ctx.db.get(thread.exchangeId)) !== null)
+  );
+};
+
+/** A circle's row by its CircleId aggregateId, or null once it is deleted. */
+export const circleRowOf = (
+  ctx: QueryCtx,
+  circleId: string,
+): Promise<Doc<"circles"> | null> =>
+  ctx.db
+    .query("circles")
+    .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", circleId))
+    .unique();
+
+/**
+ * Whether a thread the member has a participant row in belongs in their inbox and badge: its
+ * subject renders (subjectRenders) and, for a circle thread, they are still a current member
+ * (a leaver's row is deleted by the async sync; this closes the gap before it runs).
+ */
+export const inboxListable = async (
+  ctx: QueryCtx,
+  thread: Doc<"threads">,
+  me: Id<"users">,
 ): Promise<boolean> =>
-  thread.subjectKind !== "exchange" ||
-  (thread.exchangeId !== undefined &&
-    (await ctx.db.get(thread.exchangeId)) !== null);
+  (await subjectRenders(ctx, thread)) &&
+  (thread.subjectKind !== "circle" ||
+    (thread.circleId !== undefined &&
+      (await isCurrentCircleMember(ctx, thread.circleId, me))));
+
+/**
+ * A thread's lastMessage summary as `me` may see it: in a circle thread only a message sent
+ * strictly after their joinedAt (`floor`), or their own "joined" row at it; otherwise null, so a
+ * new member never sees a snippet from before they joined. Exchange/DM summaries pass through.
+ */
+export const visibleLastMessage = (
+  summary: NonNullable<Doc<"threads">["lastMessage"]> | null,
+  me: Id<"users">,
+  floor: number | undefined,
+): NonNullable<Doc<"threads">["lastMessage"]> | null => {
+  if (!summary || floor === undefined || summary.sentAt > floor) return summary;
+  const ownJoin =
+    summary.sentAt === floor &&
+    summary.systemEvent?.kind === "joined" &&
+    summary.systemEvent.memberId === me;
+  return ownJoin ? summary : null;
+};
 
 /**
  * Per-request mapper from a message row to the reader's DTO. A copy reference surfaces as a card
  * only while the reader may view the copy; otherwise as `copyUnavailable`, never revealing
  * anything about the copy. An image message carries its photo as this reader may see it
- * (messageAttachmentViews), a location message its place (locationAttachmentViewOf). Shared by
+ * (messageAttachmentViews), a location message its place (locationAttachmentViewOf). In a circle
+ * thread each message also carries its projected `author` (projectThreadMember), the
+ * `authorBlockedByMe` flag, and a join/leave row its `systemEvent` (circleDecorations). Shared by
  * getThreadMessages and listThreadMessages.
  */
-export const threadMessageViewOf = (ctx: QueryCtx, me: Id<"users">) => {
+export const threadMessageViewOf = (
+  ctx: QueryCtx,
+  me: Id<"users">,
+  thread: Doc<"threads">,
+) => {
   const cardOf = viewableCopyCards(ctx, me);
   const attachmentOf = messageAttachmentViews(ctx, me);
+  const decorate =
+    thread.subjectKind === "circle"
+      ? circleDecorations(ctx, me, thread)
+      : undefined;
   return async (row: Doc<"threadMessages">): Promise<ThreadMessageView> => {
-    const base = toThreadMessageView(row, me);
+    const base = {
+      ...toThreadMessageView(row, me),
+      ...(decorate && (await decorate(row))),
+    };
     const attached =
       row.attachmentId !== undefined && row.removedAt === undefined
         ? row.attachmentId
@@ -190,5 +350,48 @@ export const threadMessageViewOf = (ctx: QueryCtx, me: Id<"users">) => {
     return copy
       ? { ...view, copy }
       : { ...view, copyUnavailable: true as const };
+  };
+};
+
+type CircleDecoration = Pick<
+  ThreadMessageView,
+  "author" | "authorBlockedByMe" | "systemEvent"
+>;
+
+/**
+ * The circle-thread fields of a message DTO, for viewer `me` (a current member: the read gate ran
+ * first). `author`: the author through projectThreadMember. `authorBlockedByMe`: the viewer
+ * blocked the author (the blocked side is never told). `systemEvent`: who joined or left, named
+ * only when the viewer could otherwise see them (projectThreadMember reveals them: a current
+ * co-member, or the ordinary rules), else no member ("A member joined/left"). The remover of a
+ * removed member is never stored, so it can't leak. Also used for the inbox's lastMessage.
+ */
+export const circleDecorations = (
+  ctx: QueryCtx,
+  me: Id<"users">,
+  thread: Doc<"threads">,
+) => {
+  const project = threadMemberProjector(ctx, me, thread);
+  let blocked: Promise<Set<Id<"users">>> | undefined;
+  return async (
+    row: Pick<Doc<"threadMessages">, "authorId" | "systemEvent">,
+  ): Promise<CircleDecoration> => {
+    if (row.systemEvent !== undefined) {
+      const member = await project(row.systemEvent.memberId);
+      return {
+        systemEvent: {
+          kind: row.systemEvent.kind,
+          ...(!member.anonymous && { member }),
+        },
+      };
+    }
+    if (row.authorId === undefined) return {};
+    blocked ??= blockedByMeSet(ctx, me);
+    return {
+      author: await project(row.authorId),
+      ...((await blocked).has(row.authorId) && {
+        authorBlockedByMe: true as const,
+      }),
+    };
   };
 };
