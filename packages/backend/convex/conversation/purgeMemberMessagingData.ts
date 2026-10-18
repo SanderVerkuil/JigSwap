@@ -2,7 +2,10 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../_generated/server";
-import { withdrawFallback } from "../invitations/fallbacks";
+import {
+  deleteNotificationsAbout as deleteInviteNotificationsAbout,
+  withdrawFallback,
+} from "../invitations/fallbacks";
 import { logEvent } from "../lib/logEvent";
 import { RATE_LIMITS, type RateLimitName } from "../lib/rateLimits";
 import { removeForDeletedMember } from "./messageAttachments";
@@ -21,6 +24,8 @@ import { removeForDeletedMember } from "./messageAttachments";
 //   invitesIn    the circle invites they received } notifications pointing at them, so the other
 //   offersOut    the connection offers they made  } party has nothing left to open (like
 //   offersIn     the connection offers made them  } purgeDeletedCircle, nothing is announced)
+//   householdInvitesOut  the household invites they sent     } deleted whatever their status, with
+//   householdInvitesIn   the household invites they received } the invitee's notification about it
 //   followsOut   their edges to the people they follow } deleted whatever their status, with
 //   followsIn    the edges of the people following them } the follow notifications naming them
 //   requestsOut  the follow requests they sent          } in the other party's inbox (a grouped
@@ -57,6 +62,8 @@ const PHASES = [
   "invitesIn",
   "offersOut",
   "offersIn",
+  "householdInvitesOut",
+  "householdInvitesIn",
   "followsOut",
   "followsIn",
   "requestsOut",
@@ -88,6 +95,8 @@ const phaseValidator = v.union(
   v.literal("invitesIn"),
   v.literal("offersOut"),
   v.literal("offersIn"),
+  v.literal("householdInvitesOut"),
+  v.literal("householdInvitesIn"),
   v.literal("followsOut"),
   v.literal("followsIn"),
   v.literal("requestsOut"),
@@ -304,6 +313,33 @@ const runPhase = async (
         .withIndex("by_to_status", (q) => q.eq("toId", memberId))
         .paginate(opts);
       for (const row of page.page) await deleteOffer(ctx, row);
+      return page;
+    }
+    case "householdInvitesOut":
+    case "householdInvitesIn": {
+      // Every household invite they sent or received, whatever its status, with the
+      // household_invite_received notification about it in the invitee's inbox. Membership itself
+      // is not touched here.
+      const page = await (
+        phase === "householdInvitesOut"
+          ? ctx.db
+              .query("householdInvites")
+              .withIndex("by_inviter", (q) => q.eq("inviterId", memberId))
+          : ctx.db
+              .query("householdInvites")
+              .withIndex("by_invitee_status", (q) =>
+                q.eq("inviteeId", memberId),
+              )
+      ).paginate(opts);
+      for (const row of page.page) {
+        await deleteInviteNotificationsAbout(
+          ctx,
+          row.inviteeId,
+          "household_invite_received",
+          row.aggregateId,
+        );
+        await ctx.db.delete(row._id);
+      }
       return page;
     }
     case "followsOut": {

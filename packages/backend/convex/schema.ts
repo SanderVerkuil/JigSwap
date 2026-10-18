@@ -1548,7 +1548,9 @@ export default defineSchema({
   })
     .index("by_aggregate_id", ["aggregateId"])
     .index("by_invitee_status", ["inviteeId", "status"])
-    .index("by_household", ["householdId"]),
+    .index("by_household", ["householdId"])
+    // Account deletion (conversation/purgeMemberMessagingData householdInvitesOut).
+    .index("by_inviter", ["inviterId"]),
 
   // Email invitations (#222, invitations/): the inviter's local reference for one invitation sent by
   // email to someone who is not on JigSwap yet. It stores NO email address, so the pending list

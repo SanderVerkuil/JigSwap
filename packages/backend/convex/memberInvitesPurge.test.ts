@@ -480,3 +480,57 @@ describe("account deletion: email invitations", () => {
     ).toBeNull();
   });
 });
+
+describe("account deletion: household invites", () => {
+  test("every household invite she sent or received goes, with the invitee's notification; others stay", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const invite = (
+        aggregateId: string,
+        inviterId: Id<"users">,
+        inviteeId: Id<"users">,
+        status: "pending" | "accepted" | "declined",
+      ) =>
+        ctx.db.insert("householdInvites", {
+          aggregateId,
+          householdId: "hh_1",
+          inviterId,
+          inviteeId,
+          status,
+          createdAt: now,
+        });
+      await invite("hh-alice-carol", s.alice, s.carol, "pending");
+      await invite("hh-alice-bob", s.alice, s.bob, "declined");
+      await invite("hh-bob-alice", s.bob, s.alice, "accepted");
+      await invite("hh-bob-carol", s.bob, s.carol, "pending");
+      for (const inviteId of ["hh-alice-carol", "hh-bob-carol"]) {
+        await ctx.db.insert("notifications", {
+          userId: s.carol,
+          type: "household_invite_received",
+          title: "Household invite",
+          message: "Household invite",
+          isRead: false,
+          createdAt: now,
+          subject: { kind: "householdInvite", inviteId },
+        });
+      }
+    });
+
+    await deleteAlice(t);
+
+    const left = await t.run(async (ctx) => ({
+      invites: (await ctx.db.query("householdInvites").collect()).map(
+        (row) => row.aggregateId,
+      ),
+      notifications: (await ctx.db.query("notifications").collect())
+        .filter((row) => row.type === "household_invite_received")
+        .map((row) =>
+          row.subject?.kind === "householdInvite" ? row.subject.inviteId : "",
+        ),
+    }));
+    expect(left.invites).toEqual(["hh-bob-carol"]);
+    expect(left.notifications).toEqual(["hh-bob-carol"]);
+  });
+});
