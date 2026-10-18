@@ -263,8 +263,9 @@ export const anonymousMemberOf = async (
  *      Checked before every reveal rule, so a departed member is never named (matching
  *      notifications, which render them "Former member"). Then: the target blocked the viewer ->
  *      anonymous, also before every reveal rule below (a block vetoes the circle reveal too). When
- *      the VIEWER blocked the target they are revealed: the blocker chose them and needs the name
- *      to unblock.
+ *      the VIEWER blocked the target they are revealed, IDENTITY ONLY (as rule 5): the blocker
+ *      needs the name to unblock, and a block never unlocks `bio`, `location` or
+ *      `preferredLanguage` (#280).
  *   3. target's profile is public -> revealed.
  *   4. viewer and target are mutual followers -> revealed.
  *   5. viewer and target are currently in the same circle -> revealed, IDENTITY ONLY: name,
@@ -299,8 +300,15 @@ export const projectMemberIdentity = async (
   if (block === "byThem") {
     return { anonymous: true, anonRef: await anonRefOf(ctx, targetId, salt) };
   }
-  if (block === "byMe")
-    return { anonymous: false, member: toMemberView(target) };
+  if (block === "byMe") {
+    const {
+      bio: _bio,
+      location: _location,
+      preferredLanguage: _preferredLanguage,
+      ...identity
+    } = toMemberView(target);
+    return { anonymous: false, member: identity };
+  }
 
   if (await isRevealedByOrdinaryRules(ctx, viewerId, targetId)) {
     return { anonymous: false, member: toMemberView(target) };
