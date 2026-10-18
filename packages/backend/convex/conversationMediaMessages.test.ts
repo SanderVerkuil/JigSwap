@@ -18,6 +18,9 @@ import {
 import { toThreadMessageView } from "./conversation/readModelHelpers";
 import schema from "./schema";
 
+// The author of the mapped rows, as the viewing member (`isMine` is viewer-relative).
+const ALICE = "alice" as Id<"users">;
+
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
@@ -46,9 +49,9 @@ describe("threadMapper: media rows", () => {
         attachmentId: "att-1",
       });
 
-      expect(toThreadMessageView(row)).toEqual({
+      expect(toThreadMessageView(row, ALICE)).toEqual({
         id: "m-1",
-        authorId: "alice",
+        isMine: true,
         kind,
         body: "the box, unopened",
         sentAt: 1_000,
@@ -63,7 +66,7 @@ describe("threadMapper: media rows", () => {
       mediaState({ kind: "text", body: "hi", attachmentRef: undefined }),
     );
     expect(row).not.toHaveProperty("attachmentId");
-    expect(toThreadMessageView(row)).not.toHaveProperty("attachmentId");
+    expect(toThreadMessageView(row, ALICE)).not.toHaveProperty("attachmentId");
   });
 
   test.each(["image", "location"] as const)(
@@ -109,8 +112,10 @@ describe("threadMapper: media rows", () => {
         attachmentRef: undefined,
       }),
     );
-    expect(toThreadMessageView(legacy).body).toBe("");
-    expect(toThreadMessageView(legacy)).not.toHaveProperty("attachmentId");
+    expect(toThreadMessageView(legacy, ALICE).body).toBe("");
+    expect(toThreadMessageView(legacy, ALICE)).not.toHaveProperty(
+      "attachmentId",
+    );
     expect(toLastMessage(legacy).body).toBe("");
   });
 });
