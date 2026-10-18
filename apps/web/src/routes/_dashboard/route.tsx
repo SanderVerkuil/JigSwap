@@ -1,5 +1,6 @@
 import { DashboardShell } from "@/components/dashboard-layout/shell";
 import { AppNotFound } from "@/components/NotFound";
+import { AppPresence } from "@/components/presence/app-presence";
 import { InviteRedeemer } from "@/components/social/invite-redeemer";
 import { CompletionFollowUpProvider } from "@/components/solving/completion-follow-up-provider";
 import { DurationPromptProvider } from "@/components/solving/duration-prompt-provider";
@@ -48,6 +49,8 @@ function DashboardLayout() {
           {/* Above the Outlet so a running tour survives its own page changes. */}
           <TourProvider>
             <InviteRedeemer />
+            {/* Online/away heartbeats for opted-in members (renders nothing). */}
+            <AppPresence />
             {/* Inside both prompt providers: it yields to their prompts (surface-busy signal). */}
             <WhatsNewHighlight />
             <Outlet />
