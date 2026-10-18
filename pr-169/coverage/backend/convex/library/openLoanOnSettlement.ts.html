@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">88.88% </span>
+                <span class="strong">81.81% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>8/9</span>
+                <span class='fraction'>9/11</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">83.33% </span>
+                <span class="strong">75% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>5/6</span>
+                <span class='fraction'>6/8</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>7/7</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
@@ -100,7 +100,11 @@
 <a name='L35'></a><a href='#L35'>35</a>
 <a name='L36'></a><a href='#L36'>36</a>
 <a name='L37'></a><a href='#L37'>37</a>
-<a name='L38'></a><a href='#L38'>38</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -111,31 +115,35 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">57x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">68x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1629x</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { makeOpenLoan, toCopyId, toOwnerId } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
@@ -145,6 +153,7 @@ import { convexLoanRepository } from "./adapters/convexLoanRepository";
 import { libraryEventPublisher } from "./adapters/eventPublisher";
 import { loanIdGenerator } from "./adapters/idGenerators";
 import { systemClock } from "./adapters/systemClock";
+import { toConvexError } from "./errors";
 &nbsp;
 // Library's reaction to a settled LEND (Exchange's PossessionTransferred): open an open-ended Loan
 // and move possession of the copy to the borrower. Ownership stays with the lender (the copy owner).
@@ -152,7 +161,7 @@ export const handleDomainEvent = async (
   ctx: MutationCtx,
   event: Doc&lt;"domainEvents"&gt;,
 ): Promise&lt;void&gt; =&gt; {
-  if (event.name !== "PossessionTransferred") return;
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (event.name !== "PossessionTransferred") <span class="cstat-no" title="statement not covered" >return;</span>
   const p = event.payload as Record&lt;string, unknown&gt;;
 &nbsp;
   const copyRow = await ctx.db.get(p.copyId as Id&lt;"ownedPuzzles"&gt;);
@@ -165,7 +174,7 @@ export const handleDomainEvent = async (
     events: libraryEventPublisher(ctx),
     clock: systemClock,
   });
-  await openLoan({
+  const opened = await openLoan({
     copyId: toCopyId(copyRow.aggregateId),
     borrowerId: toOwnerId(p.borrower as string),
     expectedReturn:
@@ -173,6 +182,9 @@ export const handleDomainEvent = async (
         ? undefined
         : new Date(p.expectedReturn as number),
   });
+  // A refusal (copy vanished, lend to self) contradicts a settled lend: throw so dispatch logs and
+  // records it instead of the loan silently never opening.
+  if (opened.isErr) throw toConvexError(opened.error);
 };
 &nbsp;</pre></td></tr></table></pre>
 
@@ -181,7 +193,7 @@ export const handleDomainEvent = async (
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-18T09:48:03.443Z
+                at 2026-10-18T14:50:46.896Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
