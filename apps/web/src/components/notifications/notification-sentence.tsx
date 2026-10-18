@@ -53,10 +53,10 @@ export function NotificationSentence({ view }: { view: NotificationView }) {
   const memberName = useActorName();
   const displayName = useMemberDisplayName();
   const { type, actors, actorCount, context } = view;
-  // An anonymous trade party is a living member hidden by privacy (e.g. an owner who declined
-  // without replying), not a former one: name them with the generic member label.
+  // An anonymous, not-departed trade party is a living member hidden by privacy (e.g. an owner who
+  // declined without replying), not a former one: name them with the generic member label.
   const actorName = (actor: NotificationActorView | undefined) =>
-    type.startsWith("trade_") && actor?.anonymous
+    type.startsWith("trade_") && actor?.anonymous && !actor.departed
       ? displayName(null)
       : memberName(actor);
 
