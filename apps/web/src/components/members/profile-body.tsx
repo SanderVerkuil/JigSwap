@@ -70,7 +70,16 @@ function firstNameOf(displayName: string): string {
   return displayName.split(/\s+/)[0] || displayName;
 }
 
-export function ProfileBody({
+type ProfileBodyProps = Parameters<typeof ProfileBodyContent>[0];
+
+// `/members/$handle` stays mounted when only the handle changes (a link to
+// another member, Back/Forward), so per-profile UI state such as an open dialog
+// would carry over to the next profile. Keying on the member scopes it.
+export function ProfileBody(props: ProfileBodyProps) {
+  return <ProfileBodyContent key={props.profile.hero.memberId} {...props} />;
+}
+
+function ProfileBodyContent({
   profile,
   shelf,
   viewer,
@@ -415,7 +424,11 @@ function FollowersYouKnowRow({ memberId }: { memberId: Id<"users"> }) {
           </DialogHeader>
           <ul className="flex flex-col gap-3">
             {data.members.map((member) => (
-              <FollowersYouKnowListItem key={member.memberId} member={member} />
+              <FollowersYouKnowListItem
+                key={member.memberId}
+                member={member}
+                onNavigate={() => setOpen(false)}
+              />
             ))}
           </ul>
           {extraCount > 0 && (
@@ -431,8 +444,10 @@ function FollowersYouKnowRow({ memberId }: { memberId: Id<"users"> }) {
 
 function FollowersYouKnowListItem({
   member,
+  onNavigate,
 }: {
   member: FollowersYouKnowMember;
+  onNavigate: () => void;
 }) {
   const displayName = useMemberDisplayName();
   const name = displayName({ name: member.displayName });
@@ -441,6 +456,7 @@ function FollowersYouKnowListItem({
       <Link
         to="/members/$handle"
         params={{ handle: member.slug ?? member.username ?? member.memberId }}
+        onClick={onNavigate}
         className="flex items-center gap-3 hover:underline"
       >
         <Avatar className="size-8">
