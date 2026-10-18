@@ -13,6 +13,9 @@ import {
 // pagination over `by_thread_sent`, NEWEST FIRST (the client reverses for display): the first page
 // grows as new messages arrive while later page boundaries stay put. Rows map exactly as in
 // getThreadMessages; the Thread aggregate is never hydrated.
+
+// A page holds 1 to MAX_PAGE_SIZE messages, whatever the client asks for.
+const MAX_PAGE_SIZE = 100;
 export const listThreadMessages = query({
   args: { threadId: v.string(), paginationOpts: paginationOptsValidator },
   handler: async (ctx, args): Promise<PaginationResult<ThreadMessageView>> => {
@@ -37,7 +40,13 @@ export const listThreadMessages = query({
         q.eq("threadAggregateId", args.threadId),
       )
       .order("desc")
-      .paginate(args.paginationOpts);
+      .paginate({
+        ...args.paginationOpts,
+        numItems: Math.min(
+          MAX_PAGE_SIZE,
+          Math.max(1, Math.floor(args.paginationOpts.numItems)),
+        ),
+      });
     return {
       ...result,
       page: await Promise.all(result.page.map(threadMessageViewOf(ctx, me))),

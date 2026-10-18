@@ -507,6 +507,27 @@ describe("listThreadMessages", () => {
     expect(after.page.map((m) => m.body)).toEqual(["new", "old"]);
   });
 
+  test("clamps the page size to 1..100", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+    const threadId = await openDm(t, bob);
+    await t.run(async (ctx) => {
+      for (let i = 1; i <= 105; i++) {
+        await ctx.db.insert("threadMessages", {
+          threadAggregateId: threadId,
+          messageId: `bulk-${i}`,
+          authorId: alice,
+          kind: "text",
+          body: `bulk-${i}`,
+          sentAt: i,
+        });
+      }
+    });
+    expect((await page(t, threadId, 1000, null)).page).toHaveLength(100);
+    expect((await page(t, threadId, 0, null)).page).toHaveLength(1);
+    expect((await page(t, threadId, -5, null)).page).toHaveLength(1);
+  });
+
   test("refuses a non-participant and an unknown thread", async () => {
     const t = convexTest(schema, modules);
     const { bob } = await seed(t);
