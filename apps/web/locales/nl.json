@@ -1909,7 +1909,7 @@
       "members": "Leden",
       "owner": "Eigenaar",
       "shareCopy": "Een exemplaar delen",
-      "shareDescription": "Gedeelde exemplaren worden zichtbaar voor kringleden op het zichtbaarheidsniveau <scope>friendCircle</scope>, ook als ze verder privé zijn.",
+      "shareDescription": "Gedeelde exemplaren worden zichtbaar voor kringleden op het zichtbaarheidsniveau <scope>friendCircle</scope>. Een exemplaar dat je op privé hebt gezet, blijft privé.",
       "chooseCopy": "Kies een van je exemplaren…",
       "copyFallback": "Exemplaar",
       "share": "Delen",

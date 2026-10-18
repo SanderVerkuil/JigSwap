@@ -1909,7 +1909,7 @@
       "members": "Members",
       "owner": "Owner",
       "shareCopy": "Share a copy",
-      "shareDescription": "Shared copies become visible to circle members at the <scope>friendCircle</scope> visibility scope, even if otherwise private.",
+      "shareDescription": "Shared copies become visible to circle members at the <scope>friendCircle</scope> visibility scope. A copy you've marked private stays private.",
       "chooseCopy": "Choose one of your copies…",
       "copyFallback": "Copy",
       "share": "Share",
