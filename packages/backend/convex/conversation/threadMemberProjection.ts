@@ -23,32 +23,26 @@ export const isCurrentCircleMember = async (
     .first()) !== null;
 
 /**
- * Project a member who appears in a thread (an author, a join/leave subject, the inbox avatar
- * stack) for `viewerId`, salted with the thread id. In a circle thread, a target who is a CURRENT
- * member of the circle is always revealed, identity only, as the circle rule (#152) does, and
- * that holds even when the target blocked the viewer: anonymising them there would tell the
- * blocked side about the block (Q8). The caller must already have gated the viewer as a current
- * member. Everyone else, a former member included, falls through to projectMemberIdentity
- * (departed members stay "Former member", and the ordinary rules may anonymise).
+ * Project a member of circle `circleId` for `viewerId` (a current member: the caller gates that),
+ * salted with `salt`. A target who is a CURRENT member of the circle is always revealed, identity
+ * only, as the circle rule (#152) does, and that holds even when the target blocked the viewer:
+ * anonymising them there would tell the blocked side about the block (Q8). Everyone else, a
+ * former member included, falls through to projectMemberIdentity (departed members stay "Former
+ * member", and the ordinary rules may anonymise). Shared by the circle chat and getCircle, so the
+ * members list and the chat always name the same people.
  */
-export const projectThreadMember = async (
+export const projectCircleMember = async (
   ctx: QueryCtx,
   viewerId: Id<"users">,
   targetId: Id<"users">,
-  thread: Doc<"threads">,
+  circleId: string,
+  salt: string,
 ): Promise<ProjectedMember> => {
-  const projected = await projectMemberIdentity(
-    ctx,
-    viewerId,
-    targetId,
-    thread.aggregateId,
-  );
+  const projected = await projectMemberIdentity(ctx, viewerId, targetId, salt);
   if (
     !projected.anonymous ||
     projected.departed ||
-    thread.subjectKind !== "circle" ||
-    thread.circleId === undefined ||
-    !(await isCurrentCircleMember(ctx, thread.circleId, targetId))
+    !(await isCurrentCircleMember(ctx, circleId, targetId))
   ) {
     return projected;
   }
@@ -63,6 +57,27 @@ export const projectThreadMember = async (
   } = toMemberView(target);
   return { anonymous: false, member: identity };
 };
+
+/**
+ * Project a member who appears in a thread (an author, a join/leave subject, the inbox avatar
+ * stack) for `viewerId`, salted with the thread id. In a circle thread this is
+ * {@link projectCircleMember}; in any other thread, projectMemberIdentity.
+ */
+export const projectThreadMember = async (
+  ctx: QueryCtx,
+  viewerId: Id<"users">,
+  targetId: Id<"users">,
+  thread: Doc<"threads">,
+): Promise<ProjectedMember> =>
+  thread.subjectKind === "circle" && thread.circleId !== undefined
+    ? projectCircleMember(
+        ctx,
+        viewerId,
+        targetId,
+        thread.circleId,
+        thread.aggregateId,
+      )
+    : projectMemberIdentity(ctx, viewerId, targetId, thread.aggregateId);
 
 /**
  * Per-request memo of {@link projectThreadMember} for one viewer and thread: a page of messages
