@@ -5,7 +5,8 @@
 // shows on hover / focus-within; below md it is always visible (a 44px
 // target), so long-press (which opens the same menu) is never the only path
 // (WCAG 2.5.1). The caller renders this only for others' non-system,
-// non-removed messages.
+// non-removed messages. On a photo message, Report targets the photo
+// (targetKind attachment) and Copy text appears only when it has a caption.
 import { ReportDialog } from "@/components/safety/report-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +28,7 @@ export function MessageActions({
   body,
   authorName,
   authorId,
+  attachmentId,
   children,
 }: {
   messageId: string;
@@ -35,6 +37,8 @@ export function MessageActions({
   authorName: string;
   /** The author's member id, when the viewer may know who they are. */
   authorId?: Id<"users">;
+  /** A photo message's attachment: the report is about the photo. */
+  attachmentId?: string;
   /** The message bubble. */
   children: ReactNode;
 }) {
@@ -83,25 +87,31 @@ export function MessageActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem
-            className="min-h-11 md:min-h-0"
-            onSelect={() => void copyText()}
-          >
-            <Copy aria-hidden />
-            {t("copyText")}
-          </DropdownMenuItem>
+          {body.trim() && (
+            <DropdownMenuItem
+              className="min-h-11 md:min-h-0"
+              onSelect={() => void copyText()}
+            >
+              <Copy aria-hidden />
+              {t("copyText")}
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem
             variant="destructive"
             className="min-h-11 md:min-h-0"
             onSelect={() => setReporting(true)}
           >
             <Flag aria-hidden />
-            {t("reportMessage")}
+            {attachmentId ? t("reportPhoto") : t("reportMessage")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <ReportDialog
-        target={{ kind: "message", id: messageId, snippet: body }}
+        target={
+          attachmentId
+            ? { kind: "attachment", id: attachmentId }
+            : { kind: "message", id: messageId, snippet: body }
+        }
         name={authorName}
         memberId={authorId}
         open={reporting}
