@@ -1234,7 +1234,7 @@
       },
       "clerk": {
         "title": "Clerk",
-        "description": "Onze authenticatieprovider, met EU-dataresidentie. Clerk bewaart je inloggegevens en basisaccountgegevens (naam, e-mailadres, avatar) en verzorgt het inloggen. Als je je account verwijdert, krijgen wij daar bericht van via Clerk en verwijderen we je accountrecord."
+        "description": "Onze authenticatieprovider, met EU-dataresidentie. Clerk bewaart je inloggegevens en basisaccountgegevens (naam, e-mailadres, avatar) en verzorgt het inloggen. Als je je account verwijdert, krijgen wij daar bericht van via Clerk en verwijderen we je accountrecord. Als een lid je per e-mail uitnodigt, sturen we je één uitnodiging en bewaren we geen kopie van je adres; onze inlogdienst bewaart de uitnodiging tot die na 14 dagen verloopt."
       },
       "vercel": {
         "title": "Vercel",
@@ -1439,7 +1439,8 @@
         "Behandel andere leden met respect",
         "Beschrijf je puzzels eerlijk, inclusief de staat en ontbrekende stukjes",
         "Kom uitwisselingen na die je bent aangegaan",
-        "Meld problemen of verdacht gedrag via het contactformulier"
+        "Meld problemen of verdacht gedrag via het contactformulier",
+        "Nodig alleen mensen uit die je kent, en alleen op een adres dat ze je zelf hebben gegeven"
       ],
       "prohibitedTitle": "Wat niet mag:",
       "prohibited": [

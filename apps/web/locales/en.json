@@ -1234,7 +1234,7 @@
       },
       "clerk": {
         "title": "Clerk",
-        "description": "Our authentication provider, with EU data residency. Clerk stores your sign-in credentials and core account details (name, email address, avatar) and handles signing in. When you delete your account, Clerk notifies us and we remove your account record."
+        "description": "Our authentication provider, with EU data residency. Clerk stores your sign-in credentials and core account details (name, email address, avatar) and handles signing in. When you delete your account, Clerk notifies us and we remove your account record. When a member invites you by email, we send you one invitation and keep no copy of your address; our sign-in provider holds the invitation until it expires after 14 days."
       },
       "vercel": {
         "title": "Vercel",
@@ -1439,7 +1439,8 @@
         "Treat other members with respect",
         "Describe your puzzles honestly, including condition and missing pieces",
         "Follow through on exchanges you agree to",
-        "Report problems or suspicious behaviour via the contact form"
+        "Report problems or suspicious behaviour via the contact form",
+        "Only invite people you know, and only to an address they gave you"
       ],
       "prohibitedTitle": "What is not allowed:",
       "prohibited": [
