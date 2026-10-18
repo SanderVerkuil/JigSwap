@@ -2,6 +2,7 @@ import { useUser } from "@/compat/clerk";
 import { MyCircleInvitations } from "@/components/circles/circle-invitations";
 import { CircleInvitePicker } from "@/components/circles/circle-invite-picker";
 import { CirclePendingInvites } from "@/components/circles/circle-pending-invites";
+import { DeleteCircleAction } from "@/components/circles/delete-circle-action";
 import { LeaveCircleAction } from "@/components/circles/leave-circle-action";
 import {
   CoverChip,
@@ -495,6 +496,20 @@ function ManageCircleDialog({
                 </Button>
               </div>
             </section>
+
+            {/* Owner only: delete the whole circle, confirmed by its name */}
+            {detail.members.some(
+              (m: CircleMemberView) =>
+                m.isOwner && m.memberId === convexUser?._id,
+            ) && (
+              <section className="border-t pt-4">
+                <DeleteCircleAction
+                  circleId={circleId}
+                  circleName={detail.name}
+                  onDeleted={onClose}
+                />
+              </section>
+            )}
           </div>
         )}
 

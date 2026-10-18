@@ -1690,6 +1690,12 @@
     "leaveConfirmTitle": "{circle} verlaten?",
     "leaveConfirmBody": "Je verliest de toegang tot deze kring en de puzzels die erin gedeeld zijn. Een beheerder kan je opnieuw uitnodigen.",
     "leaveError": "Kon de kring niet verlaten. Probeer het opnieuw.",
+    "delete": "Kring verwijderen",
+    "deleteConfirmTitle": "{circle} verwijderen?",
+    "deleteConfirmBody": "Hiermee verdwijnt de kring voor iedereen: leden, uitnodigingen en de puzzels die erin gedeeld zijn. Gedeelde puzzels blijven in de bibliotheek van hun eigenaar. Dit kan niet ongedaan worden gemaakt.",
+    "deleteConfirmLabel": "Typ {circle} om te bevestigen",
+    "deleted": "Kring verwijderd",
+    "deleteError": "Kon de kring niet verwijderen. Probeer het opnieuw.",
     "invitations": {
       "title": "Uitnodigingen",
       "invitedBy": "Uitgenodigd door {name}",

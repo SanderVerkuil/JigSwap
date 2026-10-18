@@ -1690,6 +1690,12 @@
     "leaveConfirmTitle": "Leave {circle}?",
     "leaveConfirmBody": "You'll lose access to this circle and the puzzles shared in it. An admin can invite you again.",
     "leaveError": "Couldn't leave the circle. Please try again.",
+    "delete": "Delete circle",
+    "deleteConfirmTitle": "Delete {circle}?",
+    "deleteConfirmBody": "This removes the circle for everyone: members, invitations and the puzzles shared in it. Shared puzzles stay in their owners' libraries. This can't be undone.",
+    "deleteConfirmLabel": "Type {circle} to confirm",
+    "deleted": "Circle deleted",
+    "deleteError": "Couldn't delete the circle. Please try again.",
     "invitations": {
       "title": "Invitations",
       "invitedBy": "Invited by {name}",
