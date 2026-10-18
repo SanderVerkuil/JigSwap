@@ -296,6 +296,53 @@ describe("visibility of unscored photos", () => {
     expect(await galleryOf(t, "bob", copy)).toEqual([]);
   });
 
+  test("other members get a blurhash placeholder only: no URL, storage id or row id", async () => {
+    const t = convexTest(schema, modules);
+    const { copy } = await seed(t);
+    const { row } = await addPhoto(t, copy); // no token => unscored
+    // Computed during the re-encode: a 4x3 blurhash (size flag "L").
+    expect(row.blurhash).toMatch(/^L.{27}$/);
+
+    const view = await asBob(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    expect(view?.gallery).toEqual([]);
+    expect(view?.pendingPhotos).toEqual([
+      { blurhash: row.blurhash, createdAt: row.createdAt },
+    ]);
+    const url = await t.run((ctx) => ctx.storage.getUrl(row.fileId));
+    const json = JSON.stringify(view);
+    expect(json).not.toContain(row.fileId);
+    expect(json).not.toContain(row._id);
+    expect(json).not.toContain(url!);
+
+    // The uploader sees the real photo in the gallery, not a placeholder.
+    const mine = await asAlice(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    expect(mine?.pendingPhotos).toEqual([]);
+    expect(mine?.gallery[0].url).toBe(url);
+  });
+
+  test("a rejected photo leaves no placeholder for anyone", async () => {
+    vi.stubEnv("HF_MODERATION_TOKEN", "hf_test");
+    vi.stubGlobal("fetch", hfReplies({ nsfw: 0.99 }));
+    const t = convexTest(schema, modules);
+    const { copy } = await seed(t);
+    const { row } = await addPhoto(t, copy);
+    expect(row.moderationStatus).toBe("rejected");
+    for (const who of [asAlice, asBob]) {
+      const view = await who(t).query(
+        api.library.getCopyInstanceView.getCopyInstanceView,
+        { copyId: copy },
+      );
+      expect(view?.gallery).toEqual([]);
+      expect(view?.pendingPhotos).toEqual([]);
+    }
+  });
+
   test("an unscored cover does not render as the copy's cover", async () => {
     const t = convexTest(schema, modules);
     const { copy } = await seed(t);
@@ -349,6 +396,11 @@ describe("visibility of unscored photos", () => {
     );
     expect(profile.page).toHaveLength(1);
     expect(profile.page[0].photoUrls).toEqual([]);
+    // ...but it shows up as a blurhash placeholder (no URL).
+    expect(profile.page[0].pendingPhotos).toEqual([
+      { blurhash: sidecar.blurhash },
+    ]);
+    expect(sidecar.blurhash).toMatch(/^L/);
   });
 });
 
