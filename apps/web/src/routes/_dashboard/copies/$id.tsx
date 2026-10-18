@@ -527,7 +527,7 @@ function CopyInstanceDetail({
               icon={<Clock className="h-3.5 w-3.5" />}
               label={t("inYourLibrary")}
               value={
-                copy.viewerIsOwner
+                copy.acquiredByViewerAt !== null
                   ? ownedDuration(copy.acquiredByViewerAt)
                   : "—"
               }

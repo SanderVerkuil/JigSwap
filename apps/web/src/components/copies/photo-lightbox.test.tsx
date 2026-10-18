@@ -34,7 +34,7 @@ const photo = (id: string): Photo =>
     id,
     url: `https://example.test/${id}.jpg`,
     createdAt: 1,
-    uploaderName: "Sam",
+    uploader: { anonymous: false, member: { name: "Sam" } },
   }) as unknown as Photo;
 
 const gallery = [photo("p1"), photo("p2")];
