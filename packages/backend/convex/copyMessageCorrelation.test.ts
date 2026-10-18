@@ -74,12 +74,17 @@ const seed = (t: TestConvex<typeof schema>) =>
 const asViewer = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_viewer" });
 
-const seedDm = (t: TestConvex<typeof schema>, a: Id<"users">, b: Id<"users">) =>
+const seedDm = (
+  t: TestConvex<typeof schema>,
+  a: Id<"users">,
+  b: Id<"users">,
+  subjectKind: "dm" | "exchange" = "dm",
+) =>
   t.run(async (ctx) => {
     const aggregateId = crypto.randomUUID();
     await ctx.db.insert("threads", {
       aggregateId,
-      subjectKind: "dm",
+      subjectKind,
       participants: [a, b],
       participantsKey: [a, b].sort().join("|"),
       readReceipts: [],
@@ -158,9 +163,12 @@ describe("copy-page messaging with an anonymous owner (#154)", () => {
     expect(JSON.stringify([a, b])).not.toContain(dmId);
   });
 
-  test("startCopyConversation is refused for either copy and creates no thread", async () => {
+  test("startCopyConversation is refused for either copy even when the policy allows the pair", async () => {
     const t = convexTest(schema, modules);
-    const { hiddenA, hiddenB } = await seed(t);
+    const { viewer, hidden, hiddenA, hiddenB } = await seed(t);
+    // An exchange thread makes the pair "connected" for the ConnectionPolicy, so only the
+    // anonymous-owner gate stops a DM from being opened here.
+    await seedDm(t, viewer, hidden, "exchange");
 
     for (const copyId of [hiddenA, hiddenB]) {
       await expectConvexCode(
@@ -171,7 +179,10 @@ describe("copy-page messaging with an anonymous owner (#154)", () => {
         "NotConnected",
       );
     }
-    expect(await threadCount(t)).toBe(0);
+    const kinds = await t.run(async (ctx) =>
+      (await ctx.db.query("threads").collect()).map((th) => th.subjectKind),
+    );
+    expect(kinds).toEqual(["exchange"]);
     expect(await messageCount(t)).toBe(0);
   });
 
