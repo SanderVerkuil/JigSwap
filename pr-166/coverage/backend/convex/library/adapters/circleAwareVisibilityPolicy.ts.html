@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">48.27% </span>
+                <span class="strong">51.72% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>14/29</span>
+                <span class='fraction'>15/29</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">38.88% </span>
+                <span class="strong">44.44% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>7/18</span>
+                <span class='fraction'>8/18</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">55% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>10/20</span>
+                <span class='fraction'>11/20</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -132,7 +132,10 @@
 <a name='L67'></a><a href='#L67'>67</a>
 <a name='L68'></a><a href='#L68'>68</a>
 <a name='L69'></a><a href='#L69'>69</a>
-<a name='L70'></a><a href='#L70'>70</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -155,30 +158,33 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">79x</span>
-<span class="cline-any cline-yes">38x</span>
-<span class="cline-any cline-yes">38x</span>
-<span class="cline-any cline-yes">22x</span>
-<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">83x</span>
+<span class="cline-any cline-yes">254x</span>
+<span class="cline-any cline-yes">254x</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">79x</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">83x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">79x</span>
+<span class="cline-any cline-yes">83x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">31x</span>
+<span class="cline-any cline-yes">47x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">38x</span>
+<span class="cline-any cline-yes">254x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -212,7 +218,8 @@
 } from "@jigswap/domain";
 &nbsp;
 // Cross-context wiring: a friend-circle-aware VisibilityPolicy that REPLACES DefaultVisibilityPolicy
-// in the Library reads. Circle I/O happens in the caller (collectCircleSharedCopies); the decision delegates to
+// in the Library reads. Circle I/O happens in the caller (collectCircleSharedCopies for the batched
+// path, isCircleSharedWithViewer for a single copy); the decision delegates to
 // Sharing's PURE VisibilityPolicy service (re-exported as SharingVisibilityPolicy to dodge the
 // flat-barrel name clash with this very Library port).
 //
@@ -221,16 +228,18 @@
 // (#181 — never merely any circle the two happen to share). The returned policy is then a pure,
 // synchronous function of those precomputed facts.
 &nbsp;
-// Map a Library Copy's SharingSetting to a Sharing VisibilityScope. The current SharingSetting has
-// no explicit "friendCircle" value; a private-but-circle-shared copy is treated as friendCircle so
-// circle members gain view. Public/availability behaviour is preserved exactly.
+// Map a Library Copy's SharingSetting to a Sharing VisibilityScope. The copy's visibility is the
+// EFFECTIVE one (copyMapper -&gt; effectiveCopyVisibility): a legacy row's untrusted stored "private"
+// loads as "visible", so "private" here is always the owner's per-copy choice. That maps to the
+// "private" scope — no circle visibility — matching canViewCopy's isCopyPrivate early return.
+// Public/availability behaviour is preserved exactly.
 const scopeOf = (copy: Copy): VisibilityScope =&gt; {
   const sharing = copy.sharing;
   if (sharing.isAvailableFor("trade")) return "tradeable";
   if (sharing.isAvailableFor("sale")) return "tradeable";
   if (sharing.isAvailableFor("lend")) return "lendable";
-  <span class="missing-if-branch" title="else path not taken" >E</span>if (sharing.visibility === "visible") return "visible";
-<span class="cstat-no" title="statement not covered" >  return "friendCircle"; // private copies fall back to circle-scoped visibility</span>
+  if (sharing.visibility === "visible") return "visible";
+  return "private";
 };
 &nbsp;
 // The transaction kind a Library Copy is offered for (if any), to gate Sharing's transact check.
@@ -277,7 +286,7 @@ export const makeCircleAwareVisibilityPolicy = (
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-18T11:19:28.454Z
+                at 2026-10-18T11:49:15.245Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
