@@ -670,3 +670,74 @@ describe("the joinedAt floor", () => {
     expect(await scheduled(t, "maybeEmailThreadDigest")).toEqual([]);
   });
 });
+
+describe("blocking: circle threads vs DMs", () => {
+  const block = (t: T, blockerId: Id<"users">, blockedId: Id<"users">) =>
+    t.run((ctx) =>
+      ctx.db.insert("blocks", { blockerId, blockedId, createdAt: Date.now() }),
+    );
+  // Post, then land a block before the post's notification dispatch runs.
+  const postThenBlock = async (
+    t: T,
+    clerkId: string,
+    threadId: string,
+    blockerId: Id<"users">,
+    blockedId: Id<"users">,
+  ) => {
+    await as(t, clerkId).mutation(api.conversation.postMessage.postMessage, {
+      threadId,
+      kind: "text",
+      body: "hi",
+    });
+    await block(t, blockerId, blockedId);
+    await flush(t);
+  };
+
+  test("circle: the blocker's message still reaches the member they blocked, named, on every allowed channel", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, threadId } = await seed(t);
+    await enableEmail(t, "bob", "circle_message_received");
+    await postThenBlock(t, "alice", threadId, alice, bob);
+    const [row] = await rowsOf(t, bob);
+    expect(row).toMatchObject({
+      type: "circle_message_received",
+      actorIds: [alice],
+    });
+    expect(await pushesTo(t, bob)).toHaveLength(1);
+    const [view] = await viewsOf(t, "bob");
+    expect(view.actors[0]).toMatchObject({ anonymous: false, memberId: alice });
+    expect(
+      (await scheduled(t, "maybeEmailThreadDigest")).filter(
+        (job) => (job.args[0] as { memberId: string }).memberId === bob,
+      ),
+    ).toHaveLength(1);
+  });
+
+  test("circle: the blocked member's message never reaches the blocker on any channel", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, carol, threadId } = await seed(t);
+    await enableEmail(t, "alice", "circle_message_received");
+    await postThenBlock(t, "bob", threadId, alice, bob);
+    expect(await rowsOf(t, alice)).toEqual([]);
+    expect(await pushesTo(t, alice)).toEqual([]);
+    expect(await scheduled(t, "maybeEmailThreadDigest")).toEqual([]);
+    // Carol, uninvolved, hears from Bob.
+    expect(await rowsOf(t, carol)).toHaveLength(1);
+  });
+
+  test("DM: a block either way silences the message, whoever blocked", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+    const dm = await openDm(t, "alice", bob);
+    // Alice blocks Bob right after writing to him: Bob hears nothing.
+    await postThenBlock(t, "alice", dm, alice, bob);
+    expect(await rowsOf(t, bob)).toEqual([]);
+
+    const t2 = convexTest(schema, modules);
+    const s2 = await seed(t2);
+    const dm2 = await openDm(t2, "alice", s2.bob);
+    // Bob blocks Alice just as she writes: he hears nothing either.
+    await postThenBlock(t2, "alice", dm2, s2.bob, s2.alice);
+    expect(await rowsOf(t2, s2.bob)).toEqual([]);
+  });
+});
