@@ -695,7 +695,9 @@ describe("blocking inside a circle", () => {
         .withIndex("by_user", (q) => q.eq("userId", alice))
         .collect(),
     );
-    expect(notified.filter((n) => n.type === "message_received")).toEqual([]);
+    expect(
+      notified.filter((n) => n.type === "circle_message_received"),
+    ).toEqual([]);
   });
 });
 
@@ -905,7 +907,7 @@ describe("message notifications", () => {
     const { alice, bob, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await block(t, alice, bob);
-    // Bob opted in to message emails: a circle thread still sends him none.
+    // Bob opted in to DM message emails: a circle thread still sends him none.
     await as(t, "bob").mutation(
       api.notifications.updateNotificationPreference
         .updateNotificationPreference,
@@ -921,7 +923,7 @@ describe("message notifications", () => {
             .query("notifications")
             .withIndex("by_user", (q) => q.eq("userId", userId))
             .collect()
-        ).filter((n) => n.type === "message_received"),
+        ).filter((n) => n.type === "circle_message_received"),
       );
     // Bob (blocked) hears from Alice as before; Alice (the blocker) hears nothing from Bob.
     const toBob = await messageRows(bob);
@@ -968,7 +970,7 @@ describe("message notifications", () => {
               .query("notifications")
               .withIndex("by_user", (q) => q.eq("userId", userId))
               .collect()
-          ).filter((n) => n.type === "message_received").length,
+          ).filter((n) => n.type === "circle_message_received").length,
       );
     expect(await count(bob)).toBe(0);
     expect(await count(carol)).toBeGreaterThan(0);
@@ -1026,7 +1028,7 @@ describe("message notifications", () => {
             .query("notifications")
             .withIndex("by_user", (q) => q.eq("userId", userId))
             .collect()
-        ).filter((n) => n.type === "message_received"),
+        ).filter((n) => n.type === "circle_message_received"),
       );
     expect(await notified(dave)).toEqual([]);
     const [toBob] = await notified(bob);

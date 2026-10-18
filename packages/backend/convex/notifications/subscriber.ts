@@ -55,7 +55,9 @@ const blocksSilence = async (
 ): Promise<boolean> => {
   const actorId = cmd.actorId!;
   const threadId =
-    cmd.type === "message_received" && cmd.subject?.kind === "thread"
+    (cmd.type === "message_received" ||
+      cmd.type === "circle_message_received") &&
+    cmd.subject?.kind === "thread"
       ? cmd.subject.threadId
       : undefined;
   if (threadId !== undefined) {
@@ -333,14 +335,25 @@ const translate = async (
       // A circle thread notifies only members who can see the message: a current seat (an
       // ex-member whose participant sync is pending or failed gets nothing) and a floor before it
       // (the later of their row's and seat's joinedAt; a row without one fails closed). A blocked
-      // author's message is dropped for the blocker below (handleDomainEvent).
+      // author's message is dropped for the blocker below (handleDomainEvent). A member who muted
+      // the thread gets nothing from it on any channel.
       const circle = thread.subjectKind === "circle";
       const floorOf = circle
         ? await circleFloors(ctx, thread)
         : new Map<string, number>();
+      const mutedBy = new Set<string>();
+      for (const row of await ctx.db
+        .query("threadParticipants")
+        .withIndex("by_thread", (q) =>
+          q.eq("threadAggregateId", thread.aggregateId),
+        )
+        .collect()) {
+        if (row.muted === true) mutedBy.add(row.memberId as string);
+      }
       const recipients = thread.participants.filter(
         (participant) =>
           (participant as string) !== authorId &&
+          !mutedBy.has(participant as string) &&
           (!circle ||
             (floorOf.get(participant as string) ?? Infinity) <
               event.occurredAt),
@@ -354,13 +367,19 @@ const translate = async (
           absent.push(participant);
         }
       }
+      // A circle thread's messages are their own type, and never emailed one by one: email
+      // comes only as the delayed per-thread digest (armed in handleDomainEvent).
       return absent.map((participant) => ({
-        ...cmd(participant, "message_received", thread.aggregateId, author, {
-          actor: authorId,
-          subject: { kind: "thread", threadId: thread.aggregateId },
-        }),
-        // No per-message email in a circle thread: one per message to every absent member is a
-        // cost and spam vector. In-app and push only, until G5's delayed digest replaces this.
+        ...cmd(
+          participant,
+          circle ? "circle_message_received" : "message_received",
+          thread.aggregateId,
+          author,
+          {
+            actor: authorId,
+            subject: { kind: "thread", threadId: thread.aggregateId },
+          },
+        ),
         ...(circle && { channels: CIRCLE_MESSAGE_CHANNELS }),
       }));
     }
