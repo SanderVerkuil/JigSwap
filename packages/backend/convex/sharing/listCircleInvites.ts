@@ -2,12 +2,15 @@ import type { CircleInviteView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { projectCircleMember } from "../conversation/threadMemberProjection";
 import { requireMember } from "../identity/requireMember";
 import { projectMemberIdentity } from "../social/privacy";
 import { openInvitesOf, requireCircleAdmin } from "./circleAccess";
 
 // A circle's open invites, newest first, for its Admins only (anyone else: CircleNotFound). The
-// invitee and the inviter are projected through the privacy chokepoint, salted per invite.
+// invitee (not a member yet) is projected through the privacy chokepoint; the inviter as the
+// circle's other surfaces project a co-member (projectCircleMember: named while a current member,
+// even across a block, so the list can't give a block away). Both salted per invite.
 export const listCircleInvites = query({
   args: { circleId: v.string() },
   handler: async (ctx, args): Promise<CircleInviteView[]> => {
@@ -24,10 +27,11 @@ export const listCircleInvites = query({
           invite.inviteeId,
           invite.aggregateId,
         ),
-        invitedBy: await projectMemberIdentity(
+        invitedBy: await projectCircleMember(
           ctx,
           viewerId,
           invite.inviterId,
+          args.circleId,
           invite.aggregateId,
         ),
         createdAt: invite.createdAt,

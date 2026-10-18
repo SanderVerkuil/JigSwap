@@ -122,6 +122,11 @@ const pairThreadExists = (t: T, a: Id<"users">, b: Id<"users">) =>
         .first()) !== null,
   );
 
+const blockMember = (t: T, blockerId: Id<"users">, blockedId: Id<"users">) =>
+  t.run((ctx) =>
+    ctx.db.insert("blocks", { blockerId, blockedId, createdAt: Date.now() }),
+  );
+
 const unfollow = (t: T, follower: Id<"users">, followee: Id<"users">) =>
   t.run(async (ctx) => {
     const edge = await ctx.db
@@ -1077,6 +1082,24 @@ describe("sharing.listMyCircleInvites", () => {
 });
 
 describe("sharing.listCircleInvites", () => {
+  test("the inviter is named like any co-member, even when they blocked the viewing Admin", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, carol, circleId } = await seed(t);
+    await mutualFollow(t, bob, carol);
+    await invite(t, "bob", circleId, carol);
+    // Bob blocks Alice after inviting: the chokepoint would now hide him from her.
+    await blockMember(t, bob, alice);
+
+    const [forAlice] = await as(t, "alice").query(
+      api.sharing.listCircleInvites.listCircleInvites,
+      { circleId },
+    );
+    expect(forAlice.invitedBy).toMatchObject({
+      anonymous: false,
+      member: { name: "Bob" },
+    });
+  });
+
   test("Admins see the open invites with projected invitee and inviter", async () => {
     const t = convexTest(schema, modules);
     const { alice, carol, eve, circleId } = await seed(t);
