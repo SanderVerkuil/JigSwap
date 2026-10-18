@@ -73,7 +73,7 @@ als er iets misgaat, geen enkele, zodat je het veilig opnieuw kunt proberen.
 > **Niet gevonden?** Klik op **Een nieuwe puzzel registreren** (of op je
 > zoekterm gevolgd door **registreren**) om hem aan te maken. Als je klaar bent,
 > ga je terug naar het keuzescherm, waar je nieuwe puzzel staat als
-> **In afwachting van beoordeling**.
+> **Wacht op controle**.
 
 ## Een gloednieuwe puzzel aan de catalogus bijdragen
 

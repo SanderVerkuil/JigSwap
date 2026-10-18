@@ -22,7 +22,7 @@
     "removeOption": "Verwijder {option} optie",
     "removeOptionButton": "knop om optie te verwijderen",
     "inputTag": "invoertag",
-    "photoPendingReview": "Wordt gecontroleerd"
+    "photoPendingReview": "Wacht op controle"
   },
   "notFound": {
     "title": "Pagina Niet Gevonden",
@@ -343,8 +343,8 @@
     "selectPuzzleDescription": "Zoek naar een bestaande puzzel of maak een nieuwe",
     "searchPuzzle": "Zoek naar een puzzel",
     "searchPlaceholder": "Zoek puzzels...",
-    "yourPendingSubmissions": "Jouw inzendingen (in afwachting van beoordeling)",
-    "pendingReview": "In afwachting van beoordeling",
+    "yourPendingSubmissions": "Jouw inzendingen (wachten op controle)",
+    "pendingReview": "Wacht op controle",
     "noPuzzlesFound": "Geen puzzels gevonden",
     "createNewPuzzle": "Nieuwe Puzzel Maken",
     "createNewPuzzleDescription": "Maak een nieuwe puzzel die nog niet bestaat",
@@ -3669,7 +3669,7 @@
       "currentCover": "Huidige omslag",
       "coverUpdated": "Omslag bijgewerkt",
       "coverFailed": "Kon de omslag niet bijwerken",
-      "pendingReview": "Wordt beoordeeld",
+      "pendingReview": "Wacht op controle",
       "removePhoto": "Foto verwijderen",
       "confirmRemove": "Verwijderen",
       "photoRemoved": "Foto verwijderd",
@@ -3707,7 +3707,7 @@
       }
     },
     "photoCover": "Omslag",
-    "photoPending": "Wordt beoordeeld"
+    "photoPending": "Wacht op controle"
   },
   "copyOwner": {
     "label": "Eigenaar",

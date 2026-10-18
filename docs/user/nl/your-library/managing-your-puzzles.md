@@ -71,9 +71,9 @@ Klik op een foto in de fotostrook om de lightbox te openen. Daarin kun je:
 Elke foto die je uploadt, wordt automatisch gecontroleerd voordat andere leden
 hem kunnen zien. Tot die tijd:
 
-- Zie je je foto gewoon, gemarkeerd met **Wordt beoordeeld**.
+- Zie je je foto gewoon, gemarkeerd met **Wacht op controle**.
 - Zien andere leden in plaats daarvan een vervaagde plaatsaanduiding met
-  **Wordt beoordeeld**.
+  **Wacht op controle**.
 
 Alleen goedgekeurde foto's kunnen als omslag worden gebruikt.
 
