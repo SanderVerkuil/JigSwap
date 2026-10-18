@@ -12,7 +12,7 @@ import { convexHouseholdRepository } from "../household/adapters/convexHousehold
 import { toConvexError as toHouseholdConvexError } from "../household/errors";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
-import { enforceRateLimit } from "../lib/rateLimits";
+import { chargeClerkInviteBudget, enforceRateLimit } from "../lib/rateLimits";
 import { toConvexError as toSocialConvexError } from "../social/errors";
 import {
   EMAIL_INVITE_TTL_MS,
@@ -135,6 +135,12 @@ export const applyExistingMember = internalMutation({
     });
     if (fallback !== undefined) await ctx.db.patch(row._id, { fallback });
   },
+});
+
+/** Step 7, first: one creation off the deployment-wide Clerk budget, or false when it is spent. */
+export const chargeClerkInvite = internalMutation({
+  args: {},
+  handler: async (ctx): Promise<boolean> => chargeClerkInviteBudget(ctx),
 });
 
 /**

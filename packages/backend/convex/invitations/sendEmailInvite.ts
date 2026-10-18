@@ -84,6 +84,16 @@ const deliver = async (
     return "email_unconfigured";
   }
 
+  // Clerk's invitation limit is application-wide: stay inside our own share of it.
+  if (
+    !(await ctx.runMutation(
+      internal.invitations.emailInviteStore.chargeClerkInvite,
+      {},
+    ))
+  ) {
+    return "clerk_budget";
+  }
+
   const gateway = makeInvitationGatewayFromEnv();
   const baseUrl = process.env["EMAIL_BASE_URL"] ?? "https://jigswap.site";
   let created: CreateInvitationResult;

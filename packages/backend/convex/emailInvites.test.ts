@@ -12,7 +12,10 @@ import {
   responseFloorFrom,
   SEND_LOG_WINDOW_MS,
 } from "./invitations/config";
-import { RATE_LIMITS } from "./lib/rateLimits";
+import {
+  CLERK_INVITES_HOURLY_CAP_DEFAULT,
+  RATE_LIMITS,
+} from "./lib/rateLimits";
 import schema from "./schema";
 
 // Email invitations (#222, spec E.1): sendEmailInvite, listMyEmailInvites, revokeEmailInvite,
@@ -417,10 +420,41 @@ describe("sendEmailInvite", () => {
     expect(logged.join("\n")).not.toContain("gateway factory exploded");
 
     const limits = await t.run((ctx) => ctx.db.query("rateLimits").collect());
-    expect(limits.map((row) => [row.key.split(":")[0], row.count])).toEqual([
-      ["emailInvite", 1],
-    ]);
+    expect(
+      limits
+        .filter((row) => row.key.startsWith("emailInvite:"))
+        .map((row) => row.count),
+    ).toEqual([1]);
     expect(await rowsOf(t)).toHaveLength(1);
+  });
+
+  test("the deployment-wide Clerk budget: over it, no Clerk call and no email, still sent", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    expect(CLERK_INVITES_HOURLY_CAP_DEFAULT).toBe(60);
+    vi.stubEnv("CLERK_INVITES_HOURLY_CAP", "2");
+
+    await send(t, "alice", "one@example.org");
+    await send(t, "bob", "two@example.org");
+    // An existing member's address doesn't reach Clerk, so it costs nothing.
+    await send(t, "bob", "carol@example.com");
+    expect(await send(t, "carol", "three@example.org")).toEqual({
+      status: "sent",
+    });
+
+    expect(gateway.created.map((input) => input.email)).toEqual([
+      "one@example.org",
+      "two@example.org",
+    ]);
+    expect(sentEmails()).toHaveLength(2);
+    expect(
+      logged.some(
+        (line) =>
+          line.includes('"rateLimit.refused"') &&
+          line.includes('"clerkInvites:global:hour"'),
+      ),
+    ).toBe(true);
+    expect(await list(t, "carol")).toHaveLength(1);
   });
 
   test("a Clerk failure still answers sent, and sends nothing", async () => {
@@ -831,6 +865,15 @@ describe("the response floor", () => {
       "email unconfigured",
       async () => {
         vi.stubEnv("AHASEND_API_KEY", "");
+      },
+      NEW_ADDRESS,
+    ],
+    [
+      "clerk budget spent",
+      async (t) => {
+        vi.stubEnv("CLERK_INVITES_HOURLY_CAP", "1");
+        await send(t, "bob", "spends-it@example.org");
+        timing.waitUntil.mockClear();
       },
       NEW_ADDRESS,
     ],
