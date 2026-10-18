@@ -2,6 +2,7 @@ import type { DomainEventPublisher, SharingDomainEvent } from "@jigswap/domain";
 import type { Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
 import { makeEventPublisher } from "../../events/makeEventPublisher";
+import { deleteCircleSharesOfCopy } from "./circleCopyShares";
 
 // Driven adapter for the DomainEventPublisher port, built per-mutation with `ctx`. It durably
 // records + schedules ALL sharing events (for async subscribers like Notifications) while KEEPING
@@ -65,12 +66,6 @@ const withdrawMemberShares = async (
   for (const copy of copies) {
     const copyId = copy.aggregateId;
     if (!copyId) continue; // legacy rows without an aggregate id can't have been shared
-    const share = await ctx.db
-      .query("circleCopyShares")
-      .withIndex("by_circle_copy", (q) =>
-        q.eq("circleId", circleId).eq("copyId", copyId),
-      )
-      .unique();
-    if (share) await ctx.db.delete(share._id);
+    await deleteCircleSharesOfCopy(ctx, copyId, circleId);
   }
 };
