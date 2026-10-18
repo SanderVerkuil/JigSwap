@@ -30,7 +30,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { gateway, Id } from "@/gateway";
-import { useMemberDisplayName } from "@/lib/member-display-name";
 import type { FunctionReturnType } from "convex/server";
 import {
   Check,
@@ -52,9 +51,12 @@ export { PuzzleViewProvider, usePuzzleView };
 
 // Owned-copy view DTO this card renders, derived from the library read it is fed by (ids surface as
 // opaque strings; the card re-casts `_id` to `Id<"ownedPuzzles">` once at the callback boundary).
-type OwnedPuzzleData = FunctionReturnType<
-  typeof gateway.library.ownedByOwner
->[number];
+// The owner is left out: Browse's owner is privacy-projected, so the caller resolves the label
+// (`ownerLabel`) and the card never needs the owner's id or identity.
+type OwnedPuzzleData = Omit<
+  FunctionReturnType<typeof gateway.library.ownedByOwner>[number],
+  "owner" | "ownerId"
+>;
 
 interface PuzzleCardProps {
   puzzle: OwnedPuzzleData;
@@ -85,7 +87,8 @@ interface PuzzleCardProps {
   onStartSolve?: (puzzleId: Id<"ownedPuzzles">) => void;
   solveInProgress?: boolean;
   isSelected?: boolean;
-  showOwner?: boolean;
+  /** The owner's already-resolved label (e.g. "Former member" for a departed owner); shown when set. */
+  ownerLabel?: string;
   showActions?: boolean;
   showAvailability?: boolean;
   showCollectionDropdown?: boolean;
@@ -281,7 +284,7 @@ export function PuzzleCard({
   onStartSolve,
   solveInProgress = false,
   isSelected = false,
-  showOwner = false,
+  ownerLabel,
   showActions = true,
   showAvailability = true,
   showCollectionDropdown = false,
@@ -289,7 +292,6 @@ export function PuzzleCard({
   className = "",
 }: PuzzleCardProps) {
   const t = useTranslations("puzzles");
-  const displayName = useMemberDisplayName();
   const tCompletions = useTranslations("solving.completions");
 
   // Early return if no puzzle data
@@ -357,12 +359,10 @@ export function PuzzleCard({
         </div>
       )}
 
-      {showOwner && puzzle.owner && (
+      {ownerLabel && (
         <div className="flex items-center gap-2 mb-2">
           <User className="h-3 w-3 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">
-            {displayName(puzzle.owner)}
-          </span>
+          <span className="text-xs text-muted-foreground">{ownerLabel}</span>
         </div>
       )}
     </>

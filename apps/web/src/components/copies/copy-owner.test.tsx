@@ -132,6 +132,15 @@ describe("CopyOwner", () => {
     expect(fallback(html).childNodes.map((n) => n.nodeName)).toEqual(["svg"]);
   });
 
+  it('shows a departed owner as "Former member" without a link', () => {
+    const html = render({
+      owner: { anonymous: true, anonRef: "x2", departed: true },
+      viewerIsOwner: false,
+    });
+    expect(anchors(html)).toHaveLength(0);
+    expect(textOf(parse(html))).toBe("Former member");
+  });
+
   it("names an anonymised housemate owner from the household view, unlinked", () => {
     const html = render({
       owner: anonymous,

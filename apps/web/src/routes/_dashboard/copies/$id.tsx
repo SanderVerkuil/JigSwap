@@ -32,7 +32,10 @@ import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
 import { formatCompletionDate } from "@/lib/completion-format";
 import { durationParts } from "@/lib/humanize-duration";
-import { useMemberDisplayName } from "@/lib/member-display-name";
+import {
+  useMemberDisplayName,
+  useProjectedMemberName,
+} from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -1440,12 +1443,14 @@ function CommentRow({
 }
 
 // Render a ProjectedMember inline: a revealed member shows their name; an
-// anonymised one shows the i18n "Anonymous user" label — never a real name.
+// anonymised one shows the i18n "Anonymous user" label ("Former member" for a
+// departed account) — never a real name.
 function ProjectedName({ member }: { member: ProjectedMember }) {
   const t = useTranslations("copyInstance");
-  const displayName = useMemberDisplayName();
-  if (member.anonymous) {
-    return <span className="font-semibold">{t("anonymousUser")}</span>;
-  }
-  return <span className="font-semibold">{displayName(member.member)}</span>;
+  const projectedName = useProjectedMemberName();
+  return (
+    <span className="font-semibold">
+      {projectedName(member, t("anonymousUser"))}
+    </span>
+  );
 }

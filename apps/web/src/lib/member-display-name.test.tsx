@@ -8,6 +8,7 @@ import nl from "../../locales/nl.json";
 import {
   useMemberDisplayName,
   usePartyDisplayName,
+  useProjectedMemberName,
 } from "./member-display-name";
 
 function Name({ source }: { source: MemberNameSource | null }) {
@@ -79,6 +80,43 @@ describe("usePartyDisplayName", () => {
     expect(
       render(<PartyName source={{ name: "Mara" }} state="tradeRevealed" />),
     ).toBe("Mara");
+  });
+});
+
+type Projected = Parameters<ReturnType<typeof useProjectedMemberName>>[0];
+
+function ProjectedName({ member }: { member: Projected }) {
+  const projectedName = useProjectedMemberName();
+  return <>{projectedName(member, "Anonymous user")}</>;
+}
+
+describe("useProjectedMemberName", () => {
+  it("renders a revealed member's display name", () => {
+    expect(
+      render(
+        <ProjectedName
+          member={{ anonymous: false, member: { name: "Mara Jansen" } }}
+        />,
+      ),
+    ).toBe("Mara Jansen");
+  });
+
+  it("renders the caller's anonymous label for a hidden member", () => {
+    expect(render(<ProjectedName member={{ anonymous: true }} />)).toBe(
+      "Anonymous user",
+    );
+  });
+
+  it('renders "Former member" for a departed account', () => {
+    expect(
+      render(<ProjectedName member={{ anonymous: true, departed: true }} />),
+    ).toBe("Former member");
+    expect(
+      render(
+        <ProjectedName member={{ anonymous: true, departed: true }} />,
+        "nl",
+      ),
+    ).toBe("Voormalig lid");
   });
 });
 

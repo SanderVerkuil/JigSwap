@@ -1,7 +1,10 @@
 import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { gateway } from "@/gateway";
-import { useMemberDisplayName } from "@/lib/member-display-name";
+import {
+  useMemberDisplayName,
+  useProjectedMemberName,
+} from "@/lib/member-display-name";
 import { Link } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { useTranslations } from "use-intl";
@@ -26,12 +29,15 @@ export function CopyOwner({
 }) {
   const t = useTranslations("copyOwner");
   const displayName = useMemberDisplayName();
+  const projectedName = useProjectedMemberName();
 
   const revealed = owner.anonymous ? null : owner.member;
   const source =
     revealed ?? (householdOwner ? { name: householdOwner.name } : null);
   const avatar = revealed?.avatar ?? householdOwner?.avatar;
-  const name = source ? displayName(source) : t("anonymous");
+  const name = source
+    ? displayName(source)
+    : projectedName(owner, t("anonymous"));
 
   return (
     <span className="inline-flex min-w-0 items-center gap-2">

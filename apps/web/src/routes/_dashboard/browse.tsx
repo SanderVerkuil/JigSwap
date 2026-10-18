@@ -21,6 +21,7 @@ import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { gateway, Id } from "@/gateway";
 import { validateBrowseSearch } from "@/lib/browse-search";
+import { useProjectedMemberName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
@@ -53,6 +54,8 @@ function BrowsePage() {
   const t = useTranslations("puzzles");
   const tCommon = useTranslations("common");
   const tBrowse = useTranslations("browse");
+  const tCopyOwner = useTranslations("copyOwner");
+  const projectedName = useProjectedMemberName();
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [query, setQuery] = useState<QueryBuilderState>(EMPTY_QUERY);
@@ -187,40 +190,47 @@ function BrowsePage() {
               : undefined
           }
         >
-          {shownPuzzles.map((puzzle) => (
-            <PuzzleCard
-              key={puzzle._id}
-              puzzle={puzzle}
-              variant="browse"
-              showOwner={true}
-              onView={(ownedPuzzleId) =>
-                navigate({
-                  to: "/copies/$id",
-                  params: { id: ownedPuzzleId },
-                })
-              }
-              onRequestExchange={
-                canRequestTrade(puzzle, convexUser?._id)
-                  ? () =>
-                      setRequestCopy({
-                        copyId: puzzle._id,
-                        ownerId: puzzle.ownerId,
-                        owner: puzzle.owner,
-                        title: puzzle.puzzle?.title ?? "",
-                        pieceCount: puzzle.puzzle?.pieceCount,
-                        coverUrl: puzzle.coverUrl,
-                        availability: puzzle.availability,
-                      })
-                  : undefined
-              }
-              onMessage={
-                isOwnCopy(puzzle.ownerId, convexUser?._id)
-                  ? undefined
-                  : (ownedPuzzleId) => navigate(copyMessageRoute(ownedPuzzleId))
-              }
-              onFavorite={() => toast(tBrowse("favoritesComingSoon"))}
-            />
-          ))}
+          {shownPuzzles.map((puzzle) => {
+            // The owner is privacy-projected: `ownerId` is present only when the owner is revealed.
+            // An anonymised owner can still receive a trade request (propose derives the recipient
+            // server-side, #144) but can't be messaged from here (the copy page applies the same rule).
+            const { ownerId, owner } = puzzle;
+            return (
+              <PuzzleCard
+                key={puzzle._id}
+                puzzle={puzzle}
+                variant="browse"
+                ownerLabel={projectedName(owner, tCopyOwner("anonymous"))}
+                onView={(ownedPuzzleId) =>
+                  navigate({
+                    to: "/copies/$id",
+                    params: { id: ownedPuzzleId },
+                  })
+                }
+                onRequestExchange={
+                  canRequestTrade(puzzle, convexUser?._id)
+                    ? () =>
+                        setRequestCopy({
+                          copyId: puzzle._id,
+                          ...(ownerId !== undefined ? { ownerId } : {}),
+                          owner: owner.anonymous ? null : owner.member,
+                          title: puzzle.puzzle?.title ?? "",
+                          pieceCount: puzzle.puzzle?.pieceCount,
+                          coverUrl: puzzle.coverUrl,
+                          availability: puzzle.availability,
+                        })
+                    : undefined
+                }
+                onMessage={
+                  ownerId === undefined || isOwnCopy(ownerId, convexUser?._id)
+                    ? undefined
+                    : (ownedPuzzleId) =>
+                        navigate(copyMessageRoute(ownedPuzzleId))
+                }
+                onFavorite={() => toast(tBrowse("favoritesComingSoon"))}
+              />
+            );
+          })}
         </PuzzleViewProvider>
       )}
 

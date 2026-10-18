@@ -42,7 +42,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
-import { useMemberDisplayName } from "@/lib/member-display-name";
+import { useProjectedMemberName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -72,9 +72,24 @@ interface CircleMemberView {
   name?: string;
   username?: string;
   avatar?: string;
+  // The account is gone or deactivated: no name/username/avatar; render "Former member".
+  departed?: boolean;
   permission: CirclePermissionLevel;
   joinedAt: number;
   isOwner: boolean;
+}
+
+// A circle seat's label: the member's display name, or "Former member" for a departed account (the
+// server omits its identity). The seat itself stays manageable (an admin can still remove it).
+function useCircleSeatName() {
+  const projectedName = useProjectedMemberName();
+  return (member: CircleMemberView) =>
+    projectedName(
+      member.departed
+        ? { anonymous: true, departed: true }
+        : { anonymous: false, member },
+      "",
+    );
 }
 
 export const Route = createFileRoute("/_dashboard/circles/")({
@@ -294,7 +309,7 @@ function CircleRow({
 // from the (member-gated) circle detail read; while it loads we hold the space
 // with a skeleton so rows don't jump.
 function CircleAvatarStack({ circleId }: { circleId: string }) {
-  const displayName = useMemberDisplayName();
+  const seatName = useCircleSeatName();
   const { data: detail, isPending } = useQuery(
     convexQuery(gateway.sharing.circle, { circleId }),
   );
@@ -315,7 +330,7 @@ function CircleAvatarStack({ circleId }: { circleId: string }) {
           style={{ marginLeft: i === 0 ? 0 : -10 }}
         >
           {member.avatar && (
-            <AvatarImage src={member.avatar} alt={displayName(member)} />
+            <AvatarImage src={member.avatar} alt={seatName(member)} />
           )}
           <AvatarFallback className="text-xs">
             <MemberInitial source={member} />
@@ -336,7 +351,7 @@ function ManageCircleDialog({
   onClose: () => void;
 }) {
   const t = useTranslations("circles");
-  const displayName = useMemberDisplayName();
+  const seatName = useCircleSeatName();
   const { data: detail, isPending: detailPending } = useQuery(
     convexQuery(gateway.sharing.circle, { circleId }),
   );
@@ -441,9 +456,7 @@ function ManageCircleDialog({
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="text-sm font-medium">
-                        {displayName(member)}
-                      </p>
+                      <p className="text-sm font-medium">{seatName(member)}</p>
                       {member.isOwner && (
                         <Badge variant="outline" className="text-xs">
                           {t("manage.owner")}
