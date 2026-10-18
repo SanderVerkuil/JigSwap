@@ -11,6 +11,7 @@ import { messageIdGenerator } from "./adapters/idGenerators";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { toConvexError } from "./errors";
 import { participantRowOf } from "./readModelHelpers";
+import { deleteTypingRowOf } from "./typingIndicators";
 
 // The circle events this subscriber reacts to (events/dispatch registers it for exactly these).
 export const CIRCLE_MEMBERSHIP_EVENTS = [
@@ -20,8 +21,8 @@ export const CIRCLE_MEMBERSHIP_EVENTS = [
 
 // Mirrors circle membership into the circle's thread: a member with a seat is a participant whose
 // floor is the seat's join time, posted as a "joined" row; a member without one (left, removed, or
-// whose account is gone) is not, posted as a "left" row, and their participant row goes. No
-// thread yet: nothing to do (it is created lazily, seeded from the roster).
+// whose account is gone) is not, posted as a "left" row, and their participant and typing rows
+// go. No thread yet: nothing to do (it is created lazily, seeded from the roster).
 //
 // Convergent: whichever event arrives, the thread is brought to what the circle says NOW, so a
 // retry, a replay, or events run late or out of order all end in the same state. A participant
@@ -66,6 +67,7 @@ export const handleCircleMembershipEvent = async (
 
   if (!seat) {
     if (participant) await apply("left", leftAt);
+    await deleteTypingRowOf(ctx, thread.aggregateId, p.memberId as Id<"users">);
     return;
   }
   const seatJoinedAt = seat.joinedAt.getTime();

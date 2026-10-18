@@ -1105,6 +1105,25 @@ export default defineSchema({
     .index("by_thread_member", ["threadAggregateId", "memberId"])
     .index("by_member_activity", ["memberId", "lastActivityAt"]),
 
+  // "Is typing" in a thread (conversation/setTyping, spec 4.3): at most one row per (thread,
+  // member), patched in place and throttled server-side on `writtenAt`. clearTyping only unsets
+  // `typingAt`, so the row (and its throttle) survives a stop. Readers treat a `typingAt` older
+  // than TYPING_TTL_MS as stale; rows go on send, on leaving a circle, on circle deletion and on
+  // account deletion, never by a sweeper (a stale row is bounded and harmless).
+  typingIndicators: defineTable({
+    threadAggregateId: v.string(),
+    memberId: v.id("users"),
+    // When the member last signalled typing; absent once they stopped (clearTyping).
+    typingAt: v.optional(v.number()),
+    // The row's last write (set or clear): the throttle clock.
+    writtenAt: v.number(),
+  })
+    .index("by_thread", ["threadAggregateId"])
+    .index("by_thread_member", ["threadAggregateId", "memberId"])
+    // setTyping's per-member cap (the member's latest write, any thread) and the account-deletion
+    // purge.
+    .index("by_member", ["memberId", "writtenAt"]),
+
   reviews: defineTable({
     // PartnerReview aggregate identity. Optional so pre-existing rows still validate; the new
     // Reputation functions set+use it (backfill stamps legacy rows). Legacy code ignores it.

@@ -13,6 +13,7 @@ import {
   settleSendBatch,
   UNDELIVERED_ATTACHMENT_TTL_MS,
 } from "./messageAttachments";
+import { deleteTypingRowOf } from "./typingIndicators";
 
 const notFound = () =>
   new ConvexError({ code: "AttachmentNotFound", message: "Photo not found" });
@@ -23,7 +24,8 @@ const notFound = () =>
 // messageAttachments.ts), which may be right away. Every photo must be the caller's, staged in
 // this thread and not sent yet; anything else is the same generic AttachmentNotFound, so the
 // result never tells a rejected or quarantined photo from a missing one (a quarantined photo
-// hidden from its sender answers exactly like a deleted rejected one).
+// hidden from its sender answers exactly like a deleted rejected one). Sending clears the
+// caller's typing row (they typed the caption), as postMessage does.
 export const sendStagedImages = mutation({
   args: {
     threadId: v.string(),
@@ -101,5 +103,6 @@ export const sendStagedImages = mutation({
       });
     }
     await settleSendBatch(ctx, rows[0]._id);
+    await deleteTypingRowOf(ctx, args.threadId, me);
   },
 });

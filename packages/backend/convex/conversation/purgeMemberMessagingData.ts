@@ -26,6 +26,7 @@ import { removeForDeletedMember } from "./messageAttachments";
 //                "left" row is posted: their circle memberships are not removed by this purge.
 //                Exchange/DM participant rows are kept: the pair thread stays readable for the
 //                other party, and its participant set and pair key (one DM per pair) need both.
+//   typing       their typing indicators, in every thread kind
 //   blocksOut    the blocks they placed
 //   blocksIn     the blocks placed on them
 //   reports      the reports they FILED are anonymised (reports ABOUT them are kept until their
@@ -66,6 +67,7 @@ const PHASES = [
   "reveals",
   "gpsViews",
   "circleParticipants",
+  "typing",
   "blocksOut",
   "blocksIn",
   "reports",
@@ -100,6 +102,7 @@ const phaseValidator = v.union(
   v.literal("reveals"),
   v.literal("gpsViews"),
   v.literal("circleParticipants"),
+  v.literal("typing"),
   v.literal("blocksOut"),
   v.literal("blocksIn"),
   v.literal("reports"),
@@ -281,6 +284,14 @@ const runPhase = async (
         }
         await ctx.db.delete(row._id);
       }
+      return page;
+    }
+    case "typing": {
+      const page = await ctx.db
+        .query("typingIndicators")
+        .withIndex("by_member", (q) => q.eq("memberId", memberId))
+        .paginate(opts);
+      for (const row of page.page) await ctx.db.delete(row._id);
       return page;
     }
     case "blocksOut": {

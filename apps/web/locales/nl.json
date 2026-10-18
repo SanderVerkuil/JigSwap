@@ -802,6 +802,11 @@
     },
     "tooLong": "Dat bericht is te lang (maximaal 4.000 tekens).",
     "typeMessage": "Typ je bericht…",
+    "typing": {
+      "one": "{name} typt…",
+      "two": "{a} en {b} typen…",
+      "several": "Meerdere mensen typen…"
+    },
     "unreadCount": "{count, plural, one {# ongelezen bericht} other {# ongelezen berichten}}",
     "untitledPuzzle": "Naamloze puzzel",
     "you": "Jij",

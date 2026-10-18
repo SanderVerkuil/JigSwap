@@ -19,6 +19,7 @@ import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
 import { threadRowByAggregateId } from "./readModelHelpers";
 import { isCurrentCircleMember } from "./threadMemberProjection";
+import { deleteTypingRowOf } from "./typingIndicators";
 
 // A copy may be attached to a message in a thread iff it exists, is OWNED by one of the thread's
 // participants, and EVERY participant may view it right now (canViewCopy) — so an attachment
@@ -63,7 +64,8 @@ const isAttachable = async (
 // else gets the use case's own ThreadNotFound / NotParticipant. In a circle thread the author must
 // also still be in the circle (defence in depth over the async participant sync; a member who
 // just left or was removed gets the same NotParticipant), and no pair-block refusal applies.
-// Returns the message id.
+// A successful post deletes the author's typing row in the same transaction. Returns the
+// message id.
 export const postMessage = mutation({
   args: {
     threadId: v.string(),
@@ -125,6 +127,11 @@ export const postMessage = mutation({
         args.copyId === undefined ? undefined : toCopyId(args.copyId as string),
     });
     if (result.isErr) throw toConvexError(result.error);
+    await deleteTypingRowOf(
+      ctx,
+      args.threadId,
+      authorId as unknown as Id<"users">,
+    );
     return result.value as string;
   },
 });

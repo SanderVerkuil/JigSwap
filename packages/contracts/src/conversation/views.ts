@@ -303,3 +303,21 @@ export interface InboxThreadView {
    */
   readonly readOnly?: true;
 }
+
+/**
+ * How long a typing signal lives: the server stops returning a typer whose signal is older, and
+ * the client hides an entry once its `ageMs` plus the time since it arrived reaches it. Shared so
+ * the two can't drift.
+ */
+export const TYPING_TTL_MS = 6_000;
+
+/**
+ * One other participant who is typing in a thread (conversation/getTyping), as the viewer may
+ * see them. `ageMs` is how long ago their indicator was refreshed, measured on the server when
+ * the query ran: the client hides the entry once `ageMs` plus its own elapsed time reaches
+ * {@link TYPING_TTL_MS}, so no clock comparison between the two is needed.
+ */
+export interface TypingView {
+  readonly member: ProjectedMember;
+  readonly ageMs: number;
+}
