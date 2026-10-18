@@ -133,6 +133,7 @@ import type * as conversation_openDmThread from "../conversation/openDmThread.js
 import type * as conversation_postMessage from "../conversation/postMessage.js";
 import type * as conversation_readModelHelpers from "../conversation/readModelHelpers.js";
 import type * as conversation_requestImageReview from "../conversation/requestImageReview.js";
+import type * as conversation_revealMessageImage from "../conversation/revealMessageImage.js";
 import type * as conversation_sendStagedImages from "../conversation/sendStagedImages.js";
 import type * as conversation_stageMessageImage from "../conversation/stageMessageImage.js";
 import type * as conversation_startCopyConversation from "../conversation/startCopyConversation.js";
@@ -600,6 +601,7 @@ declare const fullApi: ApiFromModules<{
   "conversation/postMessage": typeof conversation_postMessage;
   "conversation/readModelHelpers": typeof conversation_readModelHelpers;
   "conversation/requestImageReview": typeof conversation_requestImageReview;
+  "conversation/revealMessageImage": typeof conversation_revealMessageImage;
   "conversation/sendStagedImages": typeof conversation_sendStagedImages;
   "conversation/stageMessageImage": typeof conversation_stageMessageImage;
   "conversation/startCopyConversation": typeof conversation_startCopyConversation;

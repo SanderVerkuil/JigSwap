@@ -636,8 +636,13 @@ describe("blur, per viewer", () => {
     await send(t, threadId, [id]);
     expect((await attachment(t, id))!.moderationStatus).toBe("blurred");
     const [forBob] = await threadOf(t, asBob, threadId);
-    expect(forBob.attachment).toMatchObject({ status: "blurred" });
-    expect(forBob.attachment!.url).toEqual(expect.any(String));
+    // Blurred means no URL at all until Bob taps Show (revealMessageImage).
+    expect(forBob.attachment).toEqual({
+      status: "blurred",
+      w: 800,
+      h: 600,
+      blurhash: expect.any(String),
+    });
     const [forAlice] = await threadOf(t, asAlice, threadId);
     expect(forAlice.attachment).toMatchObject({ status: "ready" });
   });
@@ -699,13 +704,81 @@ describe("blur, per viewer", () => {
         .first();
       await ctx.db.delete(edge!._id);
     });
-    expect((await threadOf(t, asBob, threadId))[0].attachment!.status).toBe(
-      "blurred",
-    );
+    const [blurred] = await threadOf(t, asBob, threadId);
+    expect(blurred.attachment!.status).toBe("blurred");
+    expect(blurred.attachment).not.toHaveProperty("url");
     expect((await attachment(t, id))!.moderationStatus).toBe("approved");
     expect((await threadOf(t, asAlice, threadId))[0].attachment!.status).toBe(
       "ready",
     );
+  });
+});
+
+describe("revealing a blurred photo", () => {
+  const blurredPhoto = async (t: T) => {
+    fakes.score = 0.6;
+    const ctx = await openThread(t);
+    const id = await stage(t, ctx.threadId);
+    await settleDueJobs(t);
+    await send(t, ctx.threadId, [id]);
+    return { ...ctx, id };
+  };
+  const reveal = (
+    as: (t: T) => ReturnType<T["withIdentity"]>,
+    t: T,
+    attachmentId: Id<"messageAttachments">,
+  ) =>
+    as(t).mutation(api.conversation.revealMessageImage.revealMessageImage, {
+      attachmentId,
+    });
+
+  test("a tap returns the URL, and the reveal sticks for that viewer only", async () => {
+    const t = convexTest(schema, modules);
+    const { id, threadId } = await blurredPhoto(t);
+    const { url } = await reveal(asBob, t, id);
+    expect(url).toEqual(expect.any(String));
+    const [forBob] = await threadOf(t, asBob, threadId);
+    expect(forBob.attachment).toMatchObject({
+      status: "ready",
+      revealed: true,
+      url,
+    });
+    const reveals = await t.run((ctx) =>
+      ctx.db.query("messageImageReveals").collect(),
+    );
+    expect(reveals).toHaveLength(1);
+    // Revealing again records nothing new.
+    await reveal(asBob, t, id);
+    expect(
+      await t.run((ctx) => ctx.db.query("messageImageReveals").collect()),
+    ).toHaveLength(1);
+  });
+
+  test("participants only, delivered photos only, not in a blocked pair, rate limited", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, id, threadId } = await blurredPhoto(t);
+    await expect(reveal(asCarol, t, id)).rejects.toThrow(/AttachmentNotFound/);
+    const staged = await stage(t, threadId);
+    await settleDueJobs(t);
+    await expect(reveal(asBob, t, staged)).rejects.toThrow(
+      /AttachmentNotFound/,
+    );
+    await t.run((ctx) =>
+      ctx.db.insert("rateLimits", {
+        key: `imageReveal:${bob}`,
+        windowStart: Date.now(),
+        count: RATE_LIMITS.imageReveal.max,
+      }),
+    );
+    await expect(reveal(asBob, t, id)).rejects.toThrow(/RateLimited/);
+    await t.run(async (ctx) => {
+      await ctx.db.insert("blocks", {
+        blockerId: alice,
+        blockedId: bob,
+        createdAt: 1,
+      });
+    });
+    await expect(reveal(asBob, t, id)).rejects.toThrow(/AttachmentNotFound/);
   });
 });
 

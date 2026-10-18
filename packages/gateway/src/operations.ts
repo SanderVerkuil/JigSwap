@@ -228,6 +228,8 @@ export const gateway = {
     listMyPendingAttachments:
       api.conversation.listMyPendingAttachments.listMyPendingAttachments,
     requestImageReview: api.conversation.requestImageReview.requestImageReview,
+    // "Show" on a blurred message photo: its URL, after the participant's tap.
+    revealMessageImage: api.conversation.revealMessageImage.revealMessageImage,
   },
 
   // Chain-of-Custody: a Copy's provenance (original owner -> each settled transfer -> current

@@ -44,10 +44,11 @@ export interface ThreadMessageView {
 }
 
 /**
- * A delivered message photo for one reader. `ready`: show it. `blurred`: show it behind "Show"
- * (sensitive band, not checked, a sender who is not the reader's mutual follower, or a photo the
- * reader reported); decided per reader. `removed`: a moderator removed it (placeholder only).
- * `url`/`thumbUrl` are present only for ready and blurred photos.
+ * A delivered message photo for one reader. `ready`: show it. `blurred`: show the blurhash behind
+ * "Show" (sensitive band, not checked, a sender who is not the reader's mutual follower, or a
+ * photo the reader reported); decided per reader, and carrying NO url: the tap calls
+ * conversation.revealMessageImage. Once revealed it comes back `ready` with `revealed: true`.
+ * `removed`: a moderator removed it (placeholder only). `url`/`thumbUrl` only when `ready`.
  */
 export interface MessageAttachmentView {
   readonly status: "ready" | "blurred" | "removed";
@@ -59,6 +60,8 @@ export interface MessageAttachmentView {
   readonly blurhash?: string;
   /** The automated check could not run: label the blur "Not checked". */
   readonly notChecked?: true;
+  /** A photo that would be blurred, shown because this reader tapped Show earlier. */
+  readonly revealed?: true;
 }
 
 /**

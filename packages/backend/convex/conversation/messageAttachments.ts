@@ -273,8 +273,11 @@ export const expireStagedAttachment = async (
  * Per-request resolver from an image message's attachment id to the viewer's attachment view.
  * URLs only for a deliverable, hash-cleared photo; never for a quarantined, rejected or removed
  * one. "blurred" is per viewer: the sensitive band, "not checked" (unscored), a sender who is not
- * the viewer's mutual follower (spec R.2), or a photo the viewer has an open report on. The
- * uploader sees their own photo unblurred. Callers have already checked participation.
+ * the viewer's mutual follower (spec R.2), or a photo the viewer has an open report on. A blurred
+ * view carries NO URL (only the blurhash and size): the viewer gets it by tapping Show
+ * (revealMessageImage), after which the photo is served to them directly (`revealed`), except
+ * while they have an open report on it. The uploader sees their own photo unblurred. Callers have
+ * already checked participation.
  */
 export const messageAttachmentViews = (ctx: QueryCtx, viewer: Id<"users">) => {
   const mutualWith = new Map<Id<"users">, Promise<boolean>>();
@@ -307,25 +310,49 @@ export const messageAttachmentViews = (ctx: QueryCtx, viewer: Id<"users">) => {
         : { status: "removed" };
     }
     const notChecked = row.moderationStatus === "unscored";
-    const blurred =
-      row.uploaderId !== viewer &&
-      (row.moderationStatus !== "approved" ||
-        !(await isMutual(row.uploaderId)) ||
-        (await hasOpenReport(ctx, viewer, row._id)));
+    const placeholder = {
+      ...size,
+      ...(row.blurhash !== undefined && { blurhash: row.blurhash }),
+      ...(notChecked && { notChecked: true as const }),
+    };
+    let revealed = false;
+    if (row.uploaderId !== viewer) {
+      if (await hasOpenReport(ctx, viewer, row._id)) {
+        return { status: "blurred", ...placeholder };
+      }
+      const blurred =
+        row.moderationStatus !== "approved" ||
+        !(await isMutual(row.uploaderId));
+      if (blurred) {
+        revealed = await hasRevealed(ctx, viewer, row._id);
+        if (!revealed) return { status: "blurred", ...placeholder };
+      }
+    }
     const url = await ctx.storage.getUrl(row.fileId);
     const thumbUrl = row.thumbFileId
       ? await ctx.storage.getUrl(row.thumbFileId)
       : null;
     return {
-      status: blurred ? "blurred" : "ready",
+      status: "ready",
       ...(url !== null && { url }),
       ...(thumbUrl !== null && { thumbUrl }),
-      ...size,
-      ...(row.blurhash !== undefined && { blurhash: row.blurhash }),
-      ...(notChecked && { notChecked: true as const }),
+      ...placeholder,
+      ...(revealed && { revealed: true as const }),
     };
   };
 };
+
+const hasRevealed = async (
+  ctx: QueryCtx,
+  viewerId: Id<"users">,
+  attachmentId: Id<"messageAttachments">,
+): Promise<boolean> =>
+  (await ctx.db
+    .query("messageImageReveals")
+    .withIndex("by_attachment_viewer", (q) =>
+      q.eq("attachmentId", attachmentId).eq("viewerId", viewerId),
+    )
+    .first()) !== null;
 
 const hasOpenReport = async (
   ctx: QueryCtx,

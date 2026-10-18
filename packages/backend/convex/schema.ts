@@ -963,6 +963,15 @@ export default defineSchema({
     .index("by_review_requested", ["reviewRequestedAt"])
     .index("by_hash_check_pending", ["hashCheckPendingSince"]),
 
+  // A participant tapped "Show" on a blurred message photo (conversation/revealMessageImage).
+  // Blurred photos carry no URL in the thread read; once a viewer has revealed one, the read
+  // serves its URL to that viewer, so it doesn't re-blur on every render. Per viewer, never shared.
+  messageImageReveals: defineTable({
+    attachmentId: v.id("messageAttachments"),
+    viewerId: v.id("users"),
+    revealedAt: v.number(),
+  }).index("by_attachment_viewer", ["attachmentId", "viewerId"]),
+
   // Member-lookup projection of threads.participants, kept in sync by the repository on every
   // save (same pattern as circleMembers — Convex cannot index embedded arrays). Also the
   // per-member conversation state, so a read receipt patches only the reader's row. The state

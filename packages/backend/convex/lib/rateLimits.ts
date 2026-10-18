@@ -15,6 +15,8 @@ export const RATE_LIMITS = {
   imageStage: { windowMs: HOUR, max: 20 },
   // Upload URLs for message photos: each staged photo needs one, plus retries of failed uploads.
   imageUploadUrl: { windowMs: HOUR, max: 40 },
+  // Taps on "Show" for a blurred message photo (each hands out its URL).
+  imageReveal: { windowMs: HOUR, max: 120 },
   locationSend: { windowMs: DAY, max: 20 },
   circleInvite: { windowMs: DAY, max: 30 },
 } as const satisfies Record<string, { windowMs: number; max: number }>;
