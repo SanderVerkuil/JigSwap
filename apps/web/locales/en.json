@@ -21,7 +21,8 @@
     "backToHome": "← Back to Home",
     "removeOption": "Remove {option} option",
     "removeOptionButton": "button to remove option",
-    "inputTag": "input tag"
+    "inputTag": "input tag",
+    "photoPendingReview": "Pending review"
   },
   "notFound": {
     "title": "Page Not Found",

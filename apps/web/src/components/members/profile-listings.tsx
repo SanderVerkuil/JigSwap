@@ -4,6 +4,7 @@ import { Image } from "@/compat/image";
 import { Link } from "@/compat/link";
 import { SegmentedPills } from "@/components/add-puzzle/segmented-pills";
 import { SectionHead } from "@/components/dashboard-home/section-head";
+import { PendingPhotoPlaceholder } from "@/components/photos/pending-photo-placeholder";
 import { Button } from "@/components/ui/button";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { gateway, Id } from "@/gateway";
@@ -189,7 +190,8 @@ export function ProfileCompletionsSection({
                   <p className="truncate text-sm font-semibold">{title}</p>
                 )}
                 <p className="text-muted-foreground text-xs">{meta}</p>
-                {completion.photoUrls.length > 0 && (
+                {(completion.photoUrls.length > 0 ||
+                  completion.pendingPhotos.length > 0) && (
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
                     {completion.photoUrls.map((url) => (
                       <a
@@ -207,6 +209,14 @@ export function ProfileCompletionsSection({
                           className="h-11 w-11 rounded-md border bg-muted object-cover"
                         />
                       </a>
+                    ))}
+                    {completion.pendingPhotos.map((pending, i) => (
+                      <PendingPhotoPlaceholder
+                        key={`pending-${i}`}
+                        blurhash={pending.blurhash}
+                        compact
+                        className="h-11 w-11 rounded-md border"
+                      />
                     ))}
                   </div>
                 )}
