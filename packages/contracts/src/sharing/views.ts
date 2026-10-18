@@ -35,6 +35,9 @@ export interface CircleSummaryView {
   memberCount: number;
   // Whether the signed-in viewer owns this circle (surfaces admin affordances in the UI).
   isOwnedByViewer: boolean;
+  // The signed-in viewer's own seat permission here ("Admin" for the owner); the UI shows each
+  // manage control only where this level lets the viewer use it.
+  viewerPermission: CirclePermissionLevel;
   createdAt: number;
 }
 

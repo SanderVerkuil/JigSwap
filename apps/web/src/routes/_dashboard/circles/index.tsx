@@ -1,8 +1,11 @@
 import { useUser } from "@/compat/clerk";
+import {
+  canManageCircle,
+  CircleDeleteSection,
+  CircleInviteSection,
+  memberRowControls,
+} from "@/components/circles/circle-admin-sections";
 import { MyCircleInvitations } from "@/components/circles/circle-invitations";
-import { CircleInvitePicker } from "@/components/circles/circle-invite-picker";
-import { CirclePendingInvites } from "@/components/circles/circle-pending-invites";
-import { DeleteCircleAction } from "@/components/circles/delete-circle-action";
 import { LeaveCircleAction } from "@/components/circles/leave-circle-action";
 import {
   CoverChip,
@@ -55,6 +58,7 @@ interface CircleSummaryView {
   name: string;
   memberCount: number;
   isOwnedByViewer: boolean;
+  viewerPermission: CirclePermissionLevel;
   createdAt: number;
 }
 
@@ -186,7 +190,7 @@ function CirclesPage() {
               circle={circle}
               gradientIndex={index}
               onManage={
-                circle.isOwnedByViewer && circle.aggregateId
+                canManageCircle(circle.viewerPermission) && circle.aggregateId
                   ? () => setManageCircleId(circle.aggregateId!)
                   : undefined
               }
@@ -424,7 +428,13 @@ function ManageCircleDialog({
                   <div className="flex items-center gap-2">
                     <Select
                       value={member.permission}
-                      disabled={member.isOwner}
+                      disabled={
+                        !memberRowControls(
+                          detail.viewerPermission,
+                          member,
+                          convexUser?._id,
+                        ).canChangePermission
+                      }
                       onValueChange={(value: CirclePermissionLevel) =>
                         handlePermission(member, value)
                       }
@@ -440,7 +450,11 @@ function ManageCircleDialog({
                         ))}
                       </SelectContent>
                     </Select>
-                    {!member.isOwner && (
+                    {memberRowControls(
+                      detail.viewerPermission,
+                      member,
+                      convexUser?._id,
+                    ).canRemove && (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -454,62 +468,56 @@ function ManageCircleDialog({
               ))}
             </section>
 
-            {/* Invite: members join only by accepting */}
-            <section className="space-y-3">
-              <h3 className="font-medium">{t("invite.title")}</h3>
-              <CircleInvitePicker circleId={circleId} />
-              <CirclePendingInvites circleId={circleId} />
-            </section>
+            <CircleInviteSection
+              circleId={circleId}
+              viewerPermission={detail.viewerPermission}
+            />
 
             {/* Share a copy — surface the friend-circle VisibilityScope */}
-            <section className="space-y-3">
-              <h3 className="font-medium">{t("manage.shareCopy")}</h3>
-              <p className="text-xs text-muted-foreground">
-                {t.rich("manage.shareDescription", {
-                  scope: (chunks) => (
-                    <span className="font-medium">{chunks}</span>
-                  ),
-                })}
-              </p>
-              <div className="flex items-center gap-2">
-                <Select value={shareCopyId} onValueChange={setShareCopyId}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder={t("manage.chooseCopy")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(myCopies ?? [])
-                      .filter((copy) => copy.aggregateId)
-                      .map((copy) => (
-                        <SelectItem
-                          key={copy._id}
-                          value={copy.aggregateId as string}
-                        >
-                          {copy.puzzle?.title ??
-                            copy.snapshot?.title ??
-                            t("manage.copyFallback")}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-                <Button onClick={handleShare} disabled={!shareCopyId}>
-                  {t("manage.share")}
-                </Button>
-              </div>
-            </section>
-
-            {/* Owner only: delete the whole circle, confirmed by its name */}
-            {detail.members.some(
-              (m: CircleMemberView) =>
-                m.isOwner && m.memberId === convexUser?._id,
-            ) && (
-              <section className="border-t pt-4">
-                <DeleteCircleAction
-                  circleId={circleId}
-                  circleName={detail.name}
-                  onDeleted={onClose}
-                />
+            {/* Admin only, read live: a viewer who loses Admin loses it at once */}
+            {canManageCircle(detail.viewerPermission) && (
+              <section className="space-y-3">
+                <h3 className="font-medium">{t("manage.shareCopy")}</h3>
+                <p className="text-xs text-muted-foreground">
+                  {t.rich("manage.shareDescription", {
+                    scope: (chunks) => (
+                      <span className="font-medium">{chunks}</span>
+                    ),
+                  })}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Select value={shareCopyId} onValueChange={setShareCopyId}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder={t("manage.chooseCopy")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(myCopies ?? [])
+                        .filter((copy) => copy.aggregateId)
+                        .map((copy) => (
+                          <SelectItem
+                            key={copy._id}
+                            value={copy.aggregateId as string}
+                          >
+                            {copy.puzzle?.title ??
+                              copy.snapshot?.title ??
+                              t("manage.copyFallback")}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={handleShare} disabled={!shareCopyId}>
+                    {t("manage.share")}
+                  </Button>
+                </div>
               </section>
             )}
+
+            <CircleDeleteSection
+              circleId={circleId}
+              circleName={detail.name}
+              isOwnedByViewer={detail.isOwnedByViewer}
+              onDeleted={onClose}
+            />
           </div>
         )}
 

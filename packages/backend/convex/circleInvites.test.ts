@@ -793,6 +793,67 @@ describe("an inviter who leaves, is removed or loses Admin", () => {
   });
 });
 
+// The web shows a non-owner Admin the same manage controls as the owner, except Delete; these pin
+// that the server still refuses what only the owner's seat allows.
+describe("a non-owner Admin", () => {
+  test("can't remove the owner, demote the owner or delete the circle", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, circleId } = await seed(t);
+
+    await expectConvexCode(
+      as(t, "bob").mutation(api.sharing.removeMember.removeMember, {
+        circleId,
+        memberId: alice,
+      }),
+      "CannotRemoveOwner",
+    );
+    await expectConvexCode(
+      as(t, "bob").mutation(api.sharing.changePermission.changePermission, {
+        circleId,
+        memberId: alice,
+        permission: "ViewOnly",
+      }),
+      "CannotRemoveOwner",
+    );
+    await expectConvexCode(
+      as(t, "bob").mutation(api.sharing.deleteCircle.deleteCircle, {
+        circleId,
+        confirmName: "Saturday Puzzlers",
+      }),
+      "NotCircleOwner",
+    );
+    const row = await t.run((ctx) =>
+      ctx.db
+        .query("circles")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", circleId))
+        .unique(),
+    );
+    expect(row?.memberships.find((m) => m.memberId === alice)?.permission).toBe(
+      "Admin",
+    );
+  });
+
+  test("demotes another Admin, whose pending invites are then withdrawn", async () => {
+    const t = convexTest(schema, modules);
+    const { carol, dave, circleId } = await seed(t);
+    await as(t, "alice").mutation(
+      api.sharing.changePermission.changePermission,
+      { circleId, memberId: dave, permission: "Admin" },
+    );
+    await mutualFollow(t, dave, carol);
+    const fromDave = await invite(t, "dave", circleId, carol);
+
+    await as(t, "bob").mutation(api.sharing.changePermission.changePermission, {
+      circleId,
+      memberId: dave,
+      permission: "Exchange",
+    });
+
+    expect((await inviteRow(t, fromDave))?.status).toBe("revoked");
+    await expectConvexCode(accept(t, "carol", fromDave), "InviteNotPending");
+  });
+});
+
 describe("sharing.expireCircleInvite (scheduled)", () => {
   test("flips a due pending invite to expired", async () => {
     const t = convexTest(schema, modules);
