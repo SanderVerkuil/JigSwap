@@ -14,6 +14,7 @@ import {
   PRESENCE_ROOMS,
 } from "./presence";
 import schema from "./schema";
+import { INVISIBLE_VIEWERS_SEE_OTHERS } from "./social/getPresenceOf";
 
 // Presence visibility (spec 5.1): getPresenceOf shows a member as online/away only to a mutual
 // follower, both sharing, not blocked either way, target not invisible. Everything else is absent.
@@ -221,6 +222,18 @@ describe("getPresenceOf", () => {
     const { t, bob } = await seed();
     await share(t, "alice", false);
     expect(await presenceOf(t, "alice", [bob])).toEqual([]);
+  });
+
+  test("a viewer appearing offline still sees others (INVISIBLE_VIEWERS_SEE_OTHERS)", async () => {
+    const { t, bob } = await seed();
+    await as(t, "alice").mutation(
+      api.social.setPresencePreferences.setPresencePreferences,
+      { override: "invisible" },
+    );
+    expect(INVISIBLE_VIEWERS_SEE_OTHERS).toBe(true);
+    expect(await presenceOf(t, "alice", [bob])).toEqual([
+      { memberId: bob, status: "online" },
+    ]);
   });
 
   test("the viewer is never in their own result", async () => {

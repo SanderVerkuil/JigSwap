@@ -13,6 +13,13 @@ import { areMutualFollowers } from "./privacy";
 /** The most members one call may ask about (a circle's member cap). */
 export const MAX_PRESENCE_TARGETS = 50;
 
+/**
+ * Whether a viewer who chose "Appear offline" still sees other members' status. The spec
+ * (5.1, Q11) bases reciprocity on sharing only, so they do. Flip this to `false` to make
+ * appearing offline also mean seeing nobody (a pending product decision).
+ */
+export const INVISIBLE_VIEWERS_SEE_OTHERS = true;
+
 // Which of these members the viewer may see as online or away (spec 5.1). Members who are
 // offline, hidden, invisible, not mutual, blocked either way, or not sharing are all simply
 // ABSENT, so none of those states can be told apart. Never returns lastDisconnected or any other
@@ -32,10 +39,13 @@ export const getPresenceOf = query({
     }
     // A deactivated or tombstoned viewer sees nobody.
     if (!(await isActiveMember(ctx, viewerId))) return [];
-    const viewerShare = (await findPresencePreferences(ctx, viewerId))?.share;
+    const viewerPrefs = await findPresencePreferences(ctx, viewerId);
+    const viewerShare = viewerPrefs?.share;
     // Reciprocity is a canSeePresence clause too; checking it first spares a non-sharing
     // viewer every per-target read.
     if (viewerShare !== true) return [];
+    if (!INVISIBLE_VIEWERS_SEE_OTHERS && viewerPrefs?.override === "invisible")
+      return [];
     const blocked = await blockedEitherWaySet(ctx, viewerId);
 
     const views: PresenceView[] = [];
