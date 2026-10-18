@@ -44,6 +44,7 @@ export const MAX_STATEMENT_OF_REASONS = 2000;
 export const REMOVABLE_TARGETS: ReadonlySet<string> = new Set([
   "message",
   "photo",
+  "attachment",
 ]);
 
 const DECISIONS: readonly Decision[] = [
@@ -112,7 +113,8 @@ export function ReportDetail({ report }: { report: ReportDetailView }) {
         </section>
       )}
 
-      {report.targetKind === "photo" && (
+      {(report.targetKind === "photo" ||
+        report.targetKind === "attachment") && (
         <section className="flex flex-col gap-1">
           <h3 className="text-xs tracking-wider text-muted-foreground uppercase">
             {t("photo")}

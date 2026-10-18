@@ -27,7 +27,8 @@ const copyTitleOf = async (
 };
 
 /**
- * A one-line summary of what was reported: the message's snapshotted text, the copy's (or the
+ * A one-line summary of what was reported: the message's snapshotted text (a message photo's
+ * caption), the copy's (or the
  * photo's copy's, or the exchange's requested copy's) puzzle title. Null when there is nothing
  * to show (a user target, or the target is gone).
  */
@@ -39,6 +40,13 @@ export const targetSummaryOf = async (
     case "message": {
       const snapshot = report.evidence.messages?.find(
         (m) => m.messageId === report.targetId,
+      );
+      return snapshot ? (messagePreviewOf(snapshot.body) ?? null) : null;
+    }
+    case "attachment": {
+      // The photo's caption, as snapshotted with its message.
+      const snapshot = report.evidence.messages?.find(
+        (m) => m.attachmentId === report.targetId,
       );
       return snapshot ? (messagePreviewOf(snapshot.body) ?? null) : null;
     }

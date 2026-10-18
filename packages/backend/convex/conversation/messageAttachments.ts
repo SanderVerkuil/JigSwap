@@ -292,8 +292,9 @@ export const expireStagedAttachment = async (
 /**
  * Per-request resolver from an image message's attachment id to the viewer's attachment view.
  * URLs only for a deliverable, hash-cleared photo; never for a quarantined, rejected or removed
- * one. "blurred" is per viewer: the sensitive band, "not checked" (unscored), or a sender who is
- * not the viewer's mutual follower (spec R.2). The uploader sees their own photo unblurred. Callers have already checked participation.
+ * one. "blurred" is per viewer: the sensitive band, "not checked" (unscored), a sender who is not
+ * the viewer's mutual follower (spec R.2), or a photo the viewer has an open report on. The
+ * uploader sees their own photo unblurred. Callers have already checked participation.
  */
 export const messageAttachmentViews = (ctx: QueryCtx, viewer: Id<"users">) => {
   const mutualWith = new Map<Id<"users">, Promise<boolean>>();
@@ -329,7 +330,8 @@ export const messageAttachmentViews = (ctx: QueryCtx, viewer: Id<"users">) => {
     const blurred =
       row.uploaderId !== viewer &&
       (row.moderationStatus !== "approved" ||
-        !(await isMutual(row.uploaderId)));
+        !(await isMutual(row.uploaderId)) ||
+        (await hasOpenReport(ctx, viewer, row._id)));
     const url = await ctx.storage.getUrl(row.fileId);
     const thumbUrl = row.thumbFileId
       ? await ctx.storage.getUrl(row.thumbFileId)
@@ -344,6 +346,22 @@ export const messageAttachmentViews = (ctx: QueryCtx, viewer: Id<"users">) => {
     };
   };
 };
+
+const hasOpenReport = async (
+  ctx: QueryCtx,
+  reporterId: Id<"users">,
+  attachmentId: Id<"messageAttachments">,
+): Promise<boolean> =>
+  (await ctx.db
+    .query("reports")
+    .withIndex("by_reporter_target", (q) =>
+      q
+        .eq("reporterId", reporterId)
+        .eq("targetKind", "attachment")
+        .eq("targetId", attachmentId as string),
+    )
+    .filter((q) => q.eq(q.field("status"), "open"))
+    .first()) !== null;
 
 /**
  * The uploader's outbox view of one undelivered photo. A quarantined photo is shown exactly like

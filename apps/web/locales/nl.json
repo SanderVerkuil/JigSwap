@@ -3851,7 +3851,8 @@
           "message": "Bericht",
           "copy": "Puzzelexemplaar",
           "photo": "Foto",
-          "exchange": "Ruil"
+          "exchange": "Ruil",
+          "attachment": "Foto in bericht"
         },
         "reportedArrow": "meldde",
         "openCount": "{count, plural, one {# open melding tegen dit lid} other {# open meldingen tegen dit lid}}",
@@ -3899,7 +3900,8 @@
           "message": "je bericht",
           "copy": "je puzzelexemplaar",
           "photo": "je foto",
-          "exchange": "je gedrag bij een ruil"
+          "exchange": "je gedrag bij een ruil",
+          "attachment": "je foto in een bericht"
         },
         "grounds": {
           "spam_scam": "spam en oplichting",
@@ -4514,7 +4516,8 @@
         "message": "Een bericht",
         "copy": "Een puzzelexemplaar",
         "photo": "Een foto",
-        "exchange": "Een ruil"
+        "exchange": "Een ruil",
+        "attachment": "Een foto in een bericht"
       }
     }
   }

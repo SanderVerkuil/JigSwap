@@ -1592,17 +1592,19 @@ export default defineSchema({
   // DSA notice-and-action (spec 2.5): a member's report about another member or their content.
   // Filing never changes the target; an admin decides it (admin/decideReport), which may tombstone
   // a message or remove a photo. `targetId` is the target's canonical id string: users / copy /
-  // photo `_id`, the threadMessages `messageId`, or the exchange aggregateId (raw `_id` fallback).
+  // photo / attachment `_id`, the threadMessages `messageId`, or the exchange aggregateId (raw
+  // `_id` fallback).
   // `evidence` is snapshotted at filing time so later edits or removal can't destroy it.
   reports: defineTable({
     reporterId: v.id("users"),
-    // An "attachment" kind arrives with message image attachments.
     targetKind: v.union(
       v.literal("user"),
       v.literal("message"),
       v.literal("copy"),
       v.literal("photo"),
       v.literal("exchange"),
+      // A message photo (messageAttachments `_id`).
+      v.literal("attachment"),
     ),
     targetId: v.string(),
     reportedUserId: v.id("users"),
@@ -1640,6 +1642,8 @@ export default defineSchema({
             body: v.string(),
             sentAt: v.number(),
             copyId: v.optional(v.id("ownedPuzzles")),
+            // The media message's attachment (image rows), held while the report is open.
+            attachmentId: v.optional(v.id("messageAttachments")),
             // Already moderator-removed when the report was filed: body "" and no copyId.
             removed: v.optional(v.literal(true)),
           }),

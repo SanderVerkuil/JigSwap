@@ -6,6 +6,7 @@ import {
   isUnattachedMedia,
   participantsKeyOf,
 } from "../conversation/adapters/threadMapper";
+import { isDeliverable } from "../conversation/messageAttachments";
 import { requireMember } from "../identity/requireMember";
 import { enforceRateLimit } from "../lib/rateLimits";
 import { canViewCopy } from "../library/canViewCopy";
@@ -107,6 +108,7 @@ export const fileReport = mutation({
       status: "open",
       createdAt: Date.now(),
     });
+    await holdReportedAttachments(ctx, target.evidence, target.targetId);
     return { reportId };
   },
 });
@@ -164,6 +166,8 @@ const resolveTarget = async (
   switch (kind) {
     case "message":
       return messageTarget(ctx, reporterId, targetId);
+    case "attachment":
+      return attachmentTarget(ctx, reporterId, targetId);
     case "user": {
       const userId = ctx.db.normalizeId("users", targetId);
       const user = userId ? await ctx.db.get(userId) : null;
@@ -259,6 +263,37 @@ const canReportMember = async (
   return false;
 };
 
+// A delivered message photo the reporter can see (a participant of its thread): its message's
+// evidence, with the attachment id in the snapshot. Undelivered, removed, rejected and
+// quarantined photos are not reportable (the reporter never saw them).
+const attachmentTarget = async (
+  ctx: MutationCtx,
+  reporterId: Id<"users">,
+  targetId: string,
+): Promise<Target | null> => {
+  const attachmentId = ctx.db.normalizeId("messageAttachments", targetId);
+  const row = attachmentId ? await ctx.db.get(attachmentId) : null;
+  if (!row?.messageId || !isDeliverable(row)) return null;
+  const target = await messageTarget(ctx, reporterId, row.messageId);
+  if (!target || target.reportedUserId !== row.uploaderId) return null;
+  return { ...target, targetId: row._id };
+};
+
+// Filing holds the reported photo (an attachment report, or a message report on an image message)
+// as evidence: no expiry, removal or appeal outcome deletes its blobs while it is held (spec 2.5).
+const holdReportedAttachments = async (
+  ctx: MutationCtx,
+  evidence: Evidence,
+  targetId: string,
+) => {
+  const target = evidence.messages?.find(
+    (m) => m.messageId === targetId || m.attachmentId === targetId,
+  );
+  if (target?.attachmentId) {
+    await ctx.db.patch(target.attachmentId, { evidenceHold: true });
+  }
+};
+
 // A message the reporter can read (a participant of its thread), authored by someone. The
 // evidence is the message plus up to EVIDENCE_PRECEDING_MESSAGES before it, ascending. A message
 // a moderator already removed is snapshotted as removed, with an empty body and no copy. A media
@@ -300,6 +335,9 @@ const messageTarget = async (
       body: removed || isUnattachedMedia(row) ? "" : row.body,
       sentAt: row.sentAt,
       ...(row.copyId !== undefined && !removed ? { copyId: row.copyId } : {}),
+      ...(row.attachmentId !== undefined && !removed
+        ? { attachmentId: row.attachmentId }
+        : {}),
       ...(removed ? { removed: true as const } : {}),
     };
   });

@@ -3851,7 +3851,8 @@
           "message": "Message",
           "copy": "Puzzle copy",
           "photo": "Photo",
-          "exchange": "Trade"
+          "exchange": "Trade",
+          "attachment": "Message photo"
         },
         "reportedArrow": "reported",
         "openCount": "{count, plural, one {# open report against this member} other {# open reports against this member}}",
@@ -3899,7 +3900,8 @@
           "message": "your message",
           "copy": "your puzzle copy",
           "photo": "your photo",
-          "exchange": "your conduct in a trade"
+          "exchange": "your conduct in a trade",
+          "attachment": "your photo in a message"
         },
         "grounds": {
           "spam_scam": "spam and scams",
@@ -4514,7 +4516,8 @@
         "message": "A message",
         "copy": "A puzzle copy",
         "photo": "A photo",
-        "exchange": "A trade"
+        "exchange": "A trade",
+        "attachment": "A message photo"
       }
     }
   }
