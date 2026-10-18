@@ -85,11 +85,13 @@ const blocksSilence = async (
 
 const CIRCLE_MESSAGE_CHANNELS: readonly Channel[] = ["inApp", "push"];
 
-// Each current circle member's floor in the thread: the later of their participant row's and
-// their seat's joinedAt. Members without a seat, or with a row lacking joinedAt, are absent.
+// Each current circle member's floor in the thread, from its participant rows: the later of
+// their row's and their seat's joinedAt. Members without a seat, or with a row lacking joinedAt,
+// are absent.
 const circleFloors = async (
   ctx: MutationCtx,
   thread: Doc<"threads">,
+  rows: readonly Doc<"threadParticipants">[],
 ): Promise<Map<string, number>> => {
   const floors = new Map<string, number>();
   if (thread.circleId === undefined) return floors;
@@ -101,12 +103,7 @@ const circleFloors = async (
   const seatOf = new Map(
     (circle?.memberships ?? []).map((m) => [m.memberId as string, m.joinedAt]),
   );
-  for (const row of await ctx.db
-    .query("threadParticipants")
-    .withIndex("by_thread", (q) =>
-      q.eq("threadAggregateId", thread.aggregateId),
-    )
-    .collect()) {
+  for (const row of rows) {
     const seat = seatOf.get(row.memberId as string);
     if (seat !== undefined && row.joinedAt !== undefined) {
       floors.set(row.memberId as string, Math.max(seat, row.joinedAt));
@@ -345,19 +342,22 @@ const translate = async (
       // (the later of their row's and seat's joinedAt; a row without one fails closed). A blocked
       // author's message is dropped for the blocker below (handleDomainEvent). A member who muted
       // the thread gets nothing from it on any channel.
-      const circle = thread.subjectKind === "circle";
-      const floorOf = circle
-        ? await circleFloors(ctx, thread)
-        : new Map<string, number>();
-      const mutedBy = new Set<string>();
-      for (const row of await ctx.db
+      // One scan of the participant rows serves both the floors and the mutes.
+      const rows = await ctx.db
         .query("threadParticipants")
         .withIndex("by_thread", (q) =>
           q.eq("threadAggregateId", thread.aggregateId),
         )
-        .collect()) {
-        if (row.muted === true) mutedBy.add(row.memberId as string);
-      }
+        .collect();
+      const circle = thread.subjectKind === "circle";
+      const floorOf = circle
+        ? await circleFloors(ctx, thread, rows)
+        : new Map<string, number>();
+      const mutedBy = new Set(
+        rows
+          .filter((row) => row.muted === true)
+          .map((row) => row.memberId as string),
+      );
       const recipients = thread.participants.filter(
         (participant) =>
           (participant as string) !== authorId &&
