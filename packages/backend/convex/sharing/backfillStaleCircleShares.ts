@@ -24,6 +24,9 @@ type Counts = {
   undetermined: number;
 };
 
+// Opaque ids of a share, logged so an operator can find (or re-create) the row. No member ids.
+type ShareRef = { shareId: string; circleId: string; copyId: string };
+
 type Verdict = "stale" | "dangling" | "kept" | "undetermined";
 
 // The share row stores no sharer, so it is derived: shareCopyToCircle only lets the copy's OWNER
@@ -117,12 +120,21 @@ export const backfillStaleCircleShares = internalMutation({
       kept: 0,
       undetermined: 0,
     };
+    const deletedRows: ShareRef[] = [];
+    const undeterminedRows: ShareRef[] = [];
     for (const share of page.page) {
       batch.scanned++;
       const verdict = await judge(ctx, share);
       batch[verdict]++;
+      const ref: ShareRef = {
+        shareId: share._id,
+        circleId: share.circleId,
+        copyId: share.copyId,
+      };
+      if (verdict === "undetermined") undeterminedRows.push(ref);
       if (!dryRun && (verdict === "stale" || verdict === "dangling")) {
         await ctx.db.delete(share._id);
+        deletedRows.push(ref);
       }
     }
 
@@ -135,7 +147,13 @@ export const backfillStaleCircleShares = internalMutation({
     };
     console.log(
       `sharing/backfillStaleCircleShares${dryRun ? " (dry run)" : ""} batch`,
-      JSON.stringify({ ...batch, totals: runTotals, isDone: page.isDone }),
+      JSON.stringify({
+        ...batch,
+        totals: runTotals,
+        isDone: page.isDone,
+        ...(deletedRows.length > 0 ? { deletedRows } : {}),
+        ...(undeterminedRows.length > 0 ? { undeterminedRows } : {}),
+      }),
     );
 
     if (!page.isDone) {

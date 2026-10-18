@@ -311,19 +311,28 @@ The command returns the FIRST batch's `{ scanned, stale, dangling, kept, undeter
 remaining batches run as scheduled functions. Each batch logs a line
 `sharing/backfillStaleCircleShares batch {...,"totals":{...},"isDone":...}` (prefixed
 `(dry run)` for dry runs); the line with `"isDone":true` carries the whole run's totals.
-Follow it with `npx convex logs` (add `--prod` for prod) or in the dashboard Logs.
+A batch line also lists the rows it acted on as opaque ids `{ shareId, circleId, copyId }`
+(no member ids, names or emails): `undeterminedRows` on every run, and `deletedRows` on a
+real run only. Follow it with `npx convex logs` (add `--prod` for prod) or in the dashboard
+Logs, and keep the real run's lines: they are the only record of what was deleted.
 
 **Verify:**
 
 1. The real run's final `totals.stale` and `totals.dangling` match the dry run's.
 2. Run the dry run again: its final totals show `"stale":0` and `"dangling":0`.
-3. `totals.undetermined` is 0. If not, those rows were kept; check them by hand in the
-   dashboard (the copy's `copyCustodyEntries` by `_id`, and whether its current owner shared
-   it into that circle) and delete them there if stale.
-4. Spot-check a copy that changed hands before #184: it has no `circleCopyShares` row for the
+3. `totals.undetermined` is 0. If not, those rows were kept; take each from
+   `undeterminedRows` and check it by hand in the dashboard (the `ownedPuzzles` row whose
+   `aggregateId` is `copyId`, that row's `copyCustodyEntries` by its `_id`, and whether its
+   current owner shared it into `circleId`), then delete the `circleCopyShares` row `shareId`
+   there if stale.
+4. The real run's `deletedRows` add up to `totals.stale + totals.dangling`, and none of
+   those `shareId`s is still in `circleCopyShares`.
+5. Spot-check a copy that changed hands before #184: it has no `circleCopyShares` row for the
    previous owner's circles, and a member of such a circle with no other path to it (not
    mutual with the new owner, no shared household) no longer sees it on Browse.
 
 **Rollback:** none needed and none possible from the backfill itself. A wrongly removed share
-is restored by its owner sharing the copy into the circle again (`sharing/shareCopyToCircle`
-recreates the row).
+is found in the real run's `deletedRows` (its `circleId` and `copyId`) and restored by the
+copy's owner sharing it into that circle again (`sharing/shareCopyToCircle` recreates the
+row), or by re-inserting a `circleCopyShares` row with that `circleId` and `copyId` in the
+dashboard (`sharedAt` = now).

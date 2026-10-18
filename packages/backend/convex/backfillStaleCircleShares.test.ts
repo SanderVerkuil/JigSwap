@@ -1,5 +1,5 @@
 import { convexTest, type TestConvex } from "convex-test";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { internal } from "./_generated/api";
 import schema from "./schema";
 import { RESHARE_SCAN_CAP } from "./sharing/backfillStaleCircleShares";
@@ -201,6 +201,41 @@ const remainingCopyIds = (t: T) =>
       .sort(),
   );
 
+type LoggedRow = { shareId: string; circleId: string; copyId: string };
+
+// Run `fn` while capturing the backfill's batch log lines; returns their parsed JSON payloads.
+const captureBatchLogs = async (fn: () => Promise<unknown>) => {
+  const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+  try {
+    await fn();
+    return spy.mock.calls
+      .filter((c) =>
+        String(c[0]).startsWith("sharing/backfillStaleCircleShares"),
+      )
+      .map(
+        (c) =>
+          JSON.parse(String(c[1])) as {
+            deletedRows?: LoggedRow[];
+            undeterminedRows?: LoggedRow[];
+          },
+      );
+  } finally {
+    spy.mockRestore();
+  }
+};
+
+const shareRows = (t: T) =>
+  t.run(async (ctx) =>
+    (await ctx.db.query("circleCopyShares").collect()).map((s) => ({
+      shareId: s._id as string,
+      circleId: s.circleId,
+      copyId: s.copyId,
+    })),
+  );
+
+const byShareId = (a: LoggedRow, b: LoggedRow) =>
+  a.shareId.localeCompare(b.shareId);
+
 const run = async (
   t: T,
   args: { dryRun?: boolean; batchSize?: number } = {},
@@ -275,6 +310,31 @@ describe("backfillStaleCircleShares", () => {
     expect(await remainingCopyIds(t)).toEqual(all);
   });
 
+  test("logs the opaque ids of deleted rows on a real run only, and nothing identifying", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const before = await shareRows(t);
+
+    const dry = await captureBatchLogs(() =>
+      run(t, { dryRun: true, batchSize: 2 }),
+    );
+    expect(dry.flatMap((l) => l.deletedRows ?? [])).toEqual([]);
+
+    const real = await captureBatchLogs(() => run(t, { batchSize: 2 }));
+    const kept = new Set(
+      await shareRows(t).then((r) => r.map((x) => x.shareId)),
+    );
+    const deleted = before.filter((r) => !kept.has(r.shareId));
+    expect(deleted).toHaveLength(STALE + 1);
+    expect(real.flatMap((l) => l.deletedRows ?? []).sort(byShareId)).toEqual(
+      deleted.sort(byShareId),
+    );
+    // Opaque ids only: no member ids, clerk ids or emails.
+    const text = JSON.stringify(real);
+    expect(text).not.toContain("clerk_");
+    expect(text).not.toContain("@example.com");
+  });
+
   test("caps batchSize at 50 and floors it to a whole number", async () => {
     const t = convexTest(schema, modules);
     await t.run(async (ctx) => {
@@ -346,13 +406,21 @@ describe("backfillStaleCircleShares", () => {
       }
     });
 
-    expect(await run(t)).toEqual({
-      scanned: 1,
-      stale: 0,
-      dangling: 0,
-      kept: 0,
-      undetermined: 1,
-    });
+    const [busy] = await shareRows(t);
+    for (const dryRun of [true, false]) {
+      let first: unknown;
+      const logs = await captureBatchLogs(async () => {
+        first = await run(t, { dryRun });
+      });
+      expect(first).toEqual({
+        scanned: 1,
+        stale: 0,
+        dangling: 0,
+        kept: 0,
+        undetermined: 1,
+      });
+      expect(logs.flatMap((l) => l.undeterminedRows ?? [])).toEqual([busy]);
+    }
     expect(await remainingCopyIds(t)).toEqual(["copy-busy"]);
   });
 });
