@@ -1,4 +1,5 @@
 import { convexTest, type TestConvex } from "convex-test";
+import { ConvexError } from "convex/values";
 import { Jimp } from "jimp";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
@@ -93,6 +94,9 @@ const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
 const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
+const asAdmin = (t: TestConvex<typeof schema>) =>
+  t.withIdentity({ subject: "clerk_bob", metadata: { role: "admin" } });
+
 // A real (unique) JPEG so the jimp re-encode step runs for real.
 const storeJpeg = async (t: TestConvex<typeof schema>) => {
   const image = new Jimp({
@@ -345,5 +349,43 @@ describe("visibility of unscored photos", () => {
     );
     expect(profile.page).toHaveLength(1);
     expect(profile.page[0].photoUrls).toEqual([]);
+  });
+});
+
+describe("getPhotoScreeningHealth", () => {
+  test("admin only", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await expect(
+      asAlice(t).query(
+        api.admin.getPhotoScreeningHealth.getPhotoScreeningHealth,
+        {},
+      ),
+    ).rejects.toThrow(ConvexError);
+  });
+
+  test("reports missing_token and the unscored counts, never the token", async () => {
+    const t = convexTest(schema, modules);
+    const { copy } = await seed(t);
+    await addPhoto(t, copy); // no token => unscored
+    const health = await asAdmin(t).query(
+      api.admin.getPhotoScreeningHealth.getPhotoScreeningHealth,
+      {},
+    );
+    expect(health).toMatchObject({
+      status: "missing_token",
+      provider: "huggingface",
+      tokenConfigured: false,
+      unscoredCopyPhotos: 1,
+      unscoredCompletionPhotos: 0,
+    });
+
+    vi.stubEnv("HF_MODERATION_TOKEN", "hf_secret_value");
+    const ok = await asAdmin(t).query(
+      api.admin.getPhotoScreeningHealth.getPhotoScreeningHealth,
+      {},
+    );
+    expect(ok.status).toBe("ok");
+    expect(JSON.stringify(ok)).not.toContain("hf_secret_value");
   });
 });

@@ -3543,7 +3543,13 @@
         "role_granted": "<strong>{actor}</strong> maakte <strong>{target}</strong> beheerder",
         "role_revoked": "<strong>{actor}</strong> trok de beheerdersrol van <strong>{target}</strong> in"
       },
-      "activityEmpty": "Nog geen moderatieactiviteit."
+      "activityEmpty": "Nog geen moderatieactiviteit.",
+      "screening": {
+        "title": "Fotocontrole vraagt aandacht",
+        "missingToken": "Fotocontrole is niet ingesteld op deze deployment (HF_MODERATION_TOKEN ontbreekt). Nieuwe foto's blijven alleen zichtbaar voor de uploader totdat ze gecontroleerd kunnen worden.",
+        "disabled": "Fotocontrole staat uit op deze deployment (MODERATION_PROVIDER=none). Nieuwe foto's worden zonder controle gepubliceerd.",
+        "unscored": "{countLabel} {count, plural, one {foto kon} other {foto's konden}} nog niet worden gecontroleerd en {count, plural, one {is} other {zijn}} alleen zichtbaar voor de uploader. Voer de hercontrole uit het runbook voor eenmalige migraties uit zodra de controle werkt."
+      }
     },
     "contact": {
       "loading": "Berichten laden…",

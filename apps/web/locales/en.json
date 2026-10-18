@@ -3543,7 +3543,13 @@
         "role_granted": "<strong>{actor}</strong> made <strong>{target}</strong> an admin",
         "role_revoked": "<strong>{actor}</strong> removed the admin role from <strong>{target}</strong>"
       },
-      "activityEmpty": "No moderation activity yet."
+      "activityEmpty": "No moderation activity yet.",
+      "screening": {
+        "title": "Photo screening needs attention",
+        "missingToken": "Screening is not configured on this deployment (HF_MODERATION_TOKEN is not set). New photos stay visible to their uploader only until they can be checked.",
+        "disabled": "Screening is turned off on this deployment (MODERATION_PROVIDER=none). New photos are published without a check.",
+        "unscored": "{countLabel} {count, plural, one {photo} other {photos}} could not be checked yet and {count, plural, one {is} other {are}} visible to the uploader only. Once screening works, run the re-screen from the one-shot migrations runbook."
+      }
     },
     "contact": {
       "loading": "Loading messages…",
