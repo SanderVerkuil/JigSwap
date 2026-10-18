@@ -1,7 +1,7 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { canViewCopy } from "./library/canViewCopy";
 import { handleDomainEvent } from "./notifications/subscriber";
@@ -846,7 +846,7 @@ describe("households and circles", () => {
       );
       await insertBlock(t, ...pair(u));
       await expectCode(
-        as(t, "alice").mutation(api.sharing.addMember.addMember, {
+        as(t, "alice").mutation(internal.sharing.addMember.addMember, {
           circleId,
           memberId: u.bob,
           permission: "ViewOnly",
@@ -854,7 +854,7 @@ describe("households and circles", () => {
         "NotCircleAdmin",
       );
       // An unblocked member can still be added.
-      await as(t, "alice").mutation(api.sharing.addMember.addMember, {
+      await as(t, "alice").mutation(internal.sharing.addMember.addMember, {
         circleId,
         memberId: u.carol,
         permission: "ViewOnly",
