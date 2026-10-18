@@ -1,3 +1,4 @@
+import presenceTest from "@convex-dev/presence/test";
 import { Notification, toMemberId, toNotificationId } from "@jigswap/domain";
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
@@ -8,6 +9,8 @@ import {
   pushChannel,
 } from "./notifications/adapters/channels/pushChannel";
 import { renderNotificationText } from "./notifications/copy";
+import { DIGEST_COOLDOWN_MS } from "./notifications/threadDigest";
+import { MESSAGES_ROOM } from "./presence";
 import schema from "./schema";
 
 // Circle thread and DM notifications (G5): the circle_message_received type, mute, per-thread
@@ -446,5 +449,224 @@ describe("circle push copy", () => {
       title: "New messages",
       message: "New messages in your circle",
     });
+  });
+});
+
+describe("circle email digest", () => {
+  const seatOf = (t: T, threadId: string, memberId: Id<"users">) =>
+    t.run((ctx) =>
+      ctx.db
+        .query("threadParticipants")
+        .withIndex("by_thread_member", (q) =>
+          q.eq("threadAggregateId", threadId).eq("memberId", memberId),
+        )
+        .unique(),
+    );
+  const fire = async (t: T, threadId: string, memberId: Id<"users">) => {
+    await t.mutation(
+      internal.notifications.threadDigest.maybeEmailThreadDigest,
+      {
+        threadId,
+        memberId,
+      },
+    );
+    await flush(t);
+  };
+  const digestsTo = async (t: T, memberId: Id<"users">) =>
+    (await emailsTo(t, memberId)).filter((job) =>
+      (job.args[0] as { idempotencyKey: string }).idempotencyKey.startsWith(
+        "digest:",
+      ),
+    );
+  const armed = async (t: T, memberId: Id<"users">) =>
+    (await scheduled(t, "maybeEmailThreadDigest")).filter(
+      (job) => (job.args[0] as { memberId: string }).memberId === memberId,
+    );
+
+  test("the first unread message arms one digest 30 minutes out; firing sends exactly one email", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, carol, threadId } = await seed(t);
+    await enableEmail(t, "bob", "circle_message_received");
+    const before = Date.now();
+    await post(t, "alice", threadId, "one");
+    await post(t, "carol", threadId, "two");
+
+    expect(await armed(t, bob)).toHaveLength(1);
+    // Carol kept circle email off (the default): nothing is armed for her.
+    expect(await armed(t, carol)).toEqual([]);
+    const seat = await seatOf(t, threadId, bob);
+    expect(seat?.emailPendingUntil).toBeGreaterThanOrEqual(
+      before + 30 * 60 * 1000,
+    );
+
+    await fire(t, threadId, bob);
+    const [digest, ...more] = await digestsTo(t, bob);
+    expect(more).toEqual([]);
+    expect(digest.args[0]).toMatchObject({
+      type: "circle_message_received",
+      relatedId: threadId,
+      subject: { kind: "thread", threadId },
+      params: {},
+    });
+    // The digest names no author.
+    expect((digest.args[0] as { actorId?: string }).actorId).toBeUndefined();
+    expect((await seatOf(t, threadId, bob))?.emailPendingUntil).toBeUndefined();
+
+    // A duplicate fire, or more messages before Bob reads, send nothing more.
+    await fire(t, threadId, bob);
+    await post(t, "alice", threadId, "three");
+    expect(await armed(t, bob)).toHaveLength(1);
+    expect(await digestsTo(t, bob)).toHaveLength(1);
+  });
+
+  test("skipped when the member read the thread before it fired", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, threadId } = await seed(t);
+    await enableEmail(t, "bob", "circle_message_received");
+    await post(t, "alice", threadId, "one");
+    await as(t, "bob").mutation(
+      api.conversation.markThreadRead.markThreadRead,
+      {
+        threadId,
+      },
+    );
+    await fire(t, threadId, bob);
+    expect(await digestsTo(t, bob)).toEqual([]);
+  });
+
+  test("skipped when the member muted the thread after it was armed", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, threadId } = await seed(t);
+    await enableEmail(t, "bob", "circle_message_received");
+    await post(t, "alice", threadId, "one");
+    await mute(t, "bob", threadId);
+    await fire(t, threadId, bob);
+    expect(await digestsTo(t, bob)).toEqual([]);
+  });
+
+  test("skipped when the member left the circle", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, circleId, threadId } = await seed(t);
+    await enableEmail(t, "bob", "circle_message_received");
+    await post(t, "alice", threadId, "one");
+    await as(t, "bob").mutation(api.sharing.leaveCircle.leaveCircle, {
+      circleId,
+    });
+    await flush(t);
+    await fire(t, threadId, bob);
+    expect(await digestsTo(t, bob)).toEqual([]);
+  });
+
+  test("skipped when the member switched circle email off again", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, threadId } = await seed(t);
+    await enableEmail(t, "bob", "circle_message_received");
+    await post(t, "alice", threadId, "one");
+    await as(t, "bob").mutation(
+      api.notifications.updateNotificationPreference
+        .updateNotificationPreference,
+      { type: "circle_message_received", channel: "email", enabled: false },
+    );
+    await fire(t, threadId, bob);
+    expect(await digestsTo(t, bob)).toEqual([]);
+  });
+
+  test("skipped when the member is on /messages when it fires", async () => {
+    const t = convexTest(schema, modules);
+    presenceTest.register(t);
+    const { bob, threadId } = await seed(t);
+    await enableEmail(t, "bob", "circle_message_received");
+    await post(t, "alice", threadId, "one");
+    expect(await armed(t, bob)).toHaveLength(1);
+    await as(t, "bob").mutation(api.presence.heartbeat, {
+      roomId: MESSAGES_ROOM,
+      userId: bob as string,
+      sessionId: "session-bob",
+      interval: 30_000,
+    });
+    await fire(t, threadId, bob);
+    expect(await digestsTo(t, bob)).toEqual([]);
+  });
+
+  test("at most one digest per thread per 6 hours, even after a read", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, threadId } = await seed(t);
+    await enableEmail(t, "bob", "circle_message_received");
+    const read = () =>
+      as(t, "bob").mutation(api.conversation.markThreadRead.markThreadRead, {
+        threadId,
+      });
+    await post(t, "alice", threadId, "one");
+    await fire(t, threadId, bob);
+    expect(await digestsTo(t, bob)).toHaveLength(1);
+
+    // Bob reads; a new message inside the cooldown arms nothing, and a stray fire sends nothing.
+    await read();
+    await post(t, "alice", threadId, "two");
+    expect(await armed(t, bob)).toHaveLength(1);
+    await fire(t, threadId, bob);
+    expect(await digestsTo(t, bob)).toHaveLength(1);
+
+    // Six hours on (the stored clock moved back), the next unread message digests again.
+    const seat = await seatOf(t, threadId, bob);
+    await t.run((ctx) =>
+      ctx.db.patch(seat!._id, {
+        lastEmailedAt: Date.now() - DIGEST_COOLDOWN_MS - 1,
+        lastReadAt: Date.now() - 1,
+      }),
+    );
+    await post(t, "carol", threadId, "three");
+    expect(await armed(t, bob)).toHaveLength(2);
+    await fire(t, threadId, bob);
+    expect(await digestsTo(t, bob)).toHaveLength(2);
+  });
+
+  test("DMs keep their per-message email and never arm a digest", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+    await enableEmail(t, "bob", "message_received");
+    const dm = await openDm(t, "alice", bob);
+    await post(t, "alice", dm, "one");
+    await post(t, "alice", dm, "two");
+    const emails = await emailsTo(t, bob);
+    expect(emails).toHaveLength(2);
+    expect(await armed(t, bob)).toEqual([]);
+  });
+});
+
+describe("the joinedAt floor", () => {
+  test("a member who joined after a message was posted gets no notification of it on any channel", async () => {
+    const t = convexTest(schema, modules);
+    const { dave, threadId } = await seed(t);
+    await as(t, "dave").mutation(
+      api.notifications.updateNotificationPreference
+        .updateNotificationPreference,
+      { type: "circle_message_received", channel: "email", enabled: true },
+    );
+    await as(t, "alice").mutation(api.conversation.postMessage.postMessage, {
+      threadId,
+      kind: "text",
+      body: "before dave",
+    });
+    // Dave lands in the thread (floor after the post) before the post's dispatch runs.
+    await t.run(async (ctx) => {
+      const thread = await ctx.db
+        .query("threads")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", threadId))
+        .unique();
+      await ctx.db.patch(thread!._id, {
+        participants: [...thread!.participants, dave],
+      });
+      await ctx.db.insert("threadParticipants", {
+        threadAggregateId: threadId,
+        memberId: dave,
+        joinedAt: Date.now() + 1,
+        unreadCount: 0,
+      });
+    });
+    await flush(t);
+    expect(await rowsOf(t, dave)).toEqual([]);
+    expect(await pushesTo(t, dave)).toEqual([]);
+    expect(await scheduled(t, "maybeEmailThreadDigest")).toEqual([]);
   });
 });

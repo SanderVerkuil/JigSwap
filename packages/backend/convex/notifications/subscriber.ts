@@ -11,6 +11,7 @@ import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { blockStateBetween, isBlockedEitherWay } from "../social/blocks";
 import { makeNotify } from "./adapters/makeNotify";
 import { isViewingMessages } from "./presenceGate";
+import { armThreadDigest } from "./threadDigest";
 
 // The Notifications subscriber: the bridge from other contexts' event LANGUAGE to member-facing
 // notifications. Given a recorded domainEvents row, it enriches via DB reads (to resolve the right
@@ -41,6 +42,13 @@ export const handleDomainEvent = async (
       continue;
     }
     await notify(cmd);
+    // A circle message is never emailed on its own: it may arm the member's delayed digest.
+    if (
+      cmd.type === "circle_message_received" &&
+      cmd.subject?.kind === "thread"
+    ) {
+      await armThreadDigest(ctx, cmd.subject.threadId, cmd.memberId);
+    }
   }
 };
 
