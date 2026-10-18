@@ -233,7 +233,10 @@ const translate = async (
       if (authorId === null || authorId === undefined) return [];
       const thread = await loadThread(ctx, p.threadId as string);
       if (!thread) return [];
-      const author = await memberName(ctx, authorId);
+      // No name snapshot for a DM: the sender may be anonymous to the recipient (resolved at read
+      // and send time through the privacy rules), so a stored name must never be there to leak.
+      const author =
+        thread.subjectKind === "dm" ? {} : await memberName(ctx, authorId);
       const recipients = thread.participants.filter(
         (participant) => (participant as string) !== authorId,
       );

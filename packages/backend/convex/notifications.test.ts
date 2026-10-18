@@ -188,7 +188,8 @@ describe("message_received notifications", () => {
 
     const bobNotes = await messageNotesFor(t, bob);
     expect(bobNotes).toHaveLength(1);
-    expect(bobNotes[0].params?.actorName).toBe("clerk_alice");
+    // No name snapshot for a DM: the sender is resolved through the privacy rules at read time.
+    expect(bobNotes[0].params?.actorName).toBeUndefined();
     expect(bobNotes[0].relatedId).toBe(threadId);
     // The author never gets notified about their own message.
     expect(await messageNotesFor(t, alice)).toHaveLength(0);
@@ -221,6 +222,8 @@ describe("message_received notifications", () => {
     const bobNotes = await messageNotesFor(t, bob);
     expect(bobNotes).toHaveLength(1);
     expect(bobNotes[0].relatedId).toBe(thread!.aggregateId);
+    // Exchange threads keep the name snapshot.
+    expect(bobNotes[0].params?.actorName).toBe("clerk_alice");
     expect(await messageNotesFor(t, alice)).toHaveLength(0);
   });
 });

@@ -562,6 +562,66 @@ describe("message_received", () => {
     expect(view.context.messagePreview).toHaveLength(80);
   });
 
+  // The sender's identity in a DM follows the thread's own privacy rule; an exchange thread keeps
+  // the initiator reveal; a thread that no longer resolves fails closed.
+  const privSenderView = async (
+    s: Setup,
+    subjectKind: "dm" | "exchange" | null,
+  ) => {
+    await s.t.run(async (ctx) => {
+      if (subjectKind !== null) {
+        await ctx.db.insert("threads", {
+          aggregateId: "thread-p",
+          subjectKind,
+          participants: [s.viewer, s.priv],
+          participantsKey: [s.viewer, s.priv].sort().join("|"),
+          readReceipts: [],
+          createdAt: now,
+        });
+      }
+      await notify(ctx, s.viewer, {
+        type: "message_received",
+        actorIds: [s.priv],
+        actorCount: 1,
+        subject: { kind: "thread", threadId: "thread-p" },
+        relatedId: "thread-p",
+      });
+    });
+    return onlyView(s);
+  };
+
+  test("a private, non-mutual DM sender is anonymous (not departed); mutual reveals", async () => {
+    const s = await setup();
+    const view = await privSenderView(s, "dm");
+    expect(view.actors).toEqual([{ anonymous: true }]);
+    expect(JSON.stringify(view)).not.toContain(s.priv as string);
+    expect(JSON.stringify(view)).not.toContain("priv-slug");
+
+    await s.t.run(async (ctx) => {
+      await follow(ctx, s.priv, s.viewer);
+      await follow(ctx, s.viewer, s.priv);
+    });
+    expect((await onlyView(s)).actors[0]).toMatchObject({
+      anonymous: false,
+      memberId: s.priv,
+    });
+  });
+
+  test("a private sender in an exchange thread keeps the initiator reveal", async () => {
+    const s = await setup();
+    const view = await privSenderView(s, "exchange");
+    expect(view.actors[0]).toMatchObject({
+      anonymous: false,
+      memberId: s.priv,
+    });
+  });
+
+  test("a private sender of an unresolvable thread stays anonymous", async () => {
+    const s = await setup();
+    const view = await privSenderView(s, null);
+    expect(view.actors).toEqual([{ anonymous: true }]);
+  });
+
   test("a former participant gets no preview, no reply and no thread link", async () => {
     const s = await setup();
     await seedThread(s, [s.other, s.mara]);

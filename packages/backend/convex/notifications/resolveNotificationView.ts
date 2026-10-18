@@ -275,6 +275,7 @@ const resolveActor = async (
   viewerId: Id<"users">,
   row: Doc<"notifications">,
   actorId: Id<"users">,
+  dmMessage: boolean,
 ): Promise<ResolvedActor> => {
   const type = row.type;
   const user = await loadUser(ctx, cache, actorId);
@@ -306,7 +307,13 @@ const resolveActor = async (
   // Only read the follow graph when the cheaper rules have not already decided.
   const preRevealed = isActorRevealed(
     type,
-    { active: true, isViewer, isPublic: false, mutualFollowers: false },
+    {
+      active: true,
+      isViewer,
+      isPublic: false,
+      mutualFollowers: false,
+      dmMessage,
+    },
     cache.viewerIsAdmin,
   );
   const isPublic = (profile?.visibility ?? "public") === "public";
@@ -318,7 +325,7 @@ const resolveActor = async (
   if (
     !isActorRevealed(
       type,
-      { active: true, isViewer, isPublic, mutualFollowers },
+      { active: true, isViewer, isPublic, mutualFollowers, dmMessage },
       cache.viewerIsAdmin,
     )
   ) {
@@ -532,10 +539,19 @@ export const resolveNotificationView = async (
   const subject = row.subject as NotificationSubject | undefined;
   const hasRefs = row.actorIds !== undefined || subject !== undefined;
 
+  // A message's sender is revealed by the initiator rule only inside an exchange thread; a DM (or a
+  // thread that no longer resolves) projects them like the thread itself does.
+  const messageThreadId =
+    subject?.kind === "thread" ? subject.threadId : row.relatedId;
+  const dmMessage =
+    type === "message_received" &&
+    (messageThreadId === undefined ||
+      (await loadThread(ctx, cache, messageThreadId))?.subjectKind !==
+        "exchange");
   const actors = await Promise.all(
     actorIds
       .slice(0, MAX_ACTORS)
-      .map((id) => resolveActor(ctx, cache, viewerId, row, id)),
+      .map((id) => resolveActor(ctx, cache, viewerId, row, id, dmMessage)),
   );
   const firstActor = actors[0] ?? null;
 
