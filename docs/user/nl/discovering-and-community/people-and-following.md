@@ -67,18 +67,44 @@ details
 > uitnodigingslink kunt delen. Heb je er nog geen, dan vraagt JigSwap je er een
 > in te stellen.
 
+### Per e-mail
+
+Nodig een vriend uit die nog niet op JigSwap zit.
+
+1. Ga naar **Mensen → Mensen vinden**. Vul onder **Nog niet op JigSwap?** het
+   **E-mailadres** in. (De stap **Vind je puzzelmaatjes** van
+   [Snel instellen](/docs/getting-started/dashboard) biedt hetzelfde
+   formulier.)
+2. Klik op **Uitnodigen per e-mail**. Je ziet **Uitnodiging verstuurd**.
+
+Je vriend krijgt één e-mail, in jouw taal, waarin staat dat je hem of haar
+uitnodigt om elkaar te volgen. Die is 14 dagen geldig. Er volgen geen
+herinneringen, en JigSwap bewaart het adres niet.
+
+- **Verstuurde uitnodigingen** laat zien wanneer je elke uitnodiging hebt
+  verstuurd en wanneer die verloopt. Wil je er een annuleren, klik dan op
+  **Intrekken** en bevestig.
+- Je kunt maximaal 10 uitnodigingen per e-mail per dag versturen. Een adres
+  krijgt hooguit één uitnodigingsmail per 30 dagen.
+
 ### Als iemand jou heeft uitgenodigd
 
-Heb je je aangemeld via iemands uitnodigingslink, dan staat er op je dashboard
-en bij **Mensen** een kaart **Uitnodigingen** die laat zien wie je heeft
-uitgenodigd:
+Heb je je aangemeld via iemands uitnodigingslink of uitnodiging per e-mail,
+dan staat er op je dashboard en bij **Mensen** een kaart **Uitnodigingen** die
+laat zien wie je heeft uitgenodigd, bijvoorbeeld "Sam heeft je uitgenodigd om
+elkaar te volgen":
 
 - **Elkaar volgen**: jij en degene die je uitnodigde volgen elkaar nu. Die
   krijgt een melding dat je hem of haar bent gaan volgen.
 - **Niet nu**: er verandert niets, en degene die je uitnodigde hoort er niets
   van.
 
-De uitnodiging verloopt na 30 dagen als je niet reageert.
+Niemand volgt iemand totdat je **Elkaar volgen** kiest. De uitnodiging
+verloopt na 30 dagen als je niet reageert.
+
+Heb je al een account en nodigt iemand jouw e-mailadres uit, dan krijg je geen
+e-mail. De uitnodiging komt dan in JigSwap bij je binnen, als dezelfde kaart
+**Uitnodigingen**.
 
 ## Opmerkingen & beoordelingen
 

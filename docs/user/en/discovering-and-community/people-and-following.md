@@ -65,16 +65,40 @@ details, see
 > **Note:** You need a username before you can share your QR code or invite
 > link. JigSwap asks you to set one if you haven't yet.
 
+### By email
+
+Invite a friend who isn't on JigSwap yet.
+
+1. Go to **People → Find people**. Under **Not on JigSwap yet?**, enter their
+   **Email address**. (The **Find your people** step of
+   [Quick setup](/docs/getting-started/dashboard) offers the same form.)
+2. Click **Invite by email**. You see **Invitation sent**.
+
+Your friend gets one email, in your language, saying you invited them to
+follow each other. It's valid for 14 days. No reminders follow, and JigSwap
+keeps no copy of the address.
+
+- **Sent invitations** shows when you sent each invitation and when it
+  expires. To cancel one, click **Revoke** and confirm.
+- You can send up to 10 email invitations a day. An address gets at most one
+  invitation email every 30 days.
+
 ### When someone invited you
 
-If you signed up through someone's invite link, an **Invitations** card on your
-dashboard and on **People** says who invited you:
+If you signed up through someone's invite link or email invitation, an
+**Invitations** card on your dashboard and on **People** says who invited you,
+for example "Sam invited you to follow each other":
 
 - **Follow each other**: you and the inviter now follow each other. They're
   notified that you followed them.
 - **Not now**: nothing changes, and the inviter isn't told.
 
-The invitation expires after 30 days if you don't answer.
+Nobody follows anyone until you choose **Follow each other**. The invitation
+expires after 30 days if you don't answer.
+
+If you already have an account and someone invites your email address, you
+don't get an email. The invitation reaches you in JigSwap instead, as the same
+**Invitations** card.
 
 ## Comments & reviews
 
