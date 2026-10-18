@@ -416,4 +416,68 @@ describe("a departed member's circle shares are withdrawn", () => {
       bobsCopy,
     ]);
   });
+
+  test("a copy the leaver owns but a housemate holds still has its link removed", async () => {
+    const { t, circleId, bobsCopy, alicesCopy } = await setUp();
+    const housemate = await mkUser(t, "clerk_housemate");
+    await t.run(async (ctx) => {
+      const row = await ctx.db
+        .query("ownedPuzzles")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", bobsCopy))
+        .unique();
+      if (!row) throw new Error("seed: Bob's copy not found");
+      await ctx.db.patch(row._id, { heldBy: housemate });
+    });
+
+    await asBob(t).mutation(api.sharing.leaveCircle.leaveCircle, { circleId });
+
+    expect((await sharesOf(t, circleId)).map((s) => s.copyId)).toEqual([
+      alicesCopy,
+    ]);
+  });
+
+  test("after leaving, the circle and another member's copy shared in it are out of reach", async () => {
+    const { t, circleId, alicesCopy } = await setUp();
+    const alicesCopyRowId = await t.run(async (ctx) => {
+      const row = await ctx.db
+        .query("ownedPuzzles")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", alicesCopy))
+        .unique();
+      if (!row) throw new Error("seed: Alice's copy not found");
+      return row._id;
+    });
+    const bobSeesAlicesCopy = async () =>
+      (await asBob(t).query(
+        api.library.getCopyInstanceView.getCopyInstanceView,
+        {
+          copyId: alicesCopyRowId,
+        },
+      )) !== null;
+    // Alice's profile is private and they don't follow each other: the circle is Bob's only path.
+    expect(await bobSeesAlicesCopy()).toBe(true);
+
+    await asBob(t).mutation(api.sharing.leaveCircle.leaveCircle, { circleId });
+
+    expect(
+      (await asBob(t).query(api.sharing.listMyCircles.listMyCircles, {})).map(
+        (c) => c.aggregateId,
+      ),
+    ).not.toContain(circleId);
+    expect(await bobSeesAlicesCopy()).toBe(false);
+  });
+
+  test("an admin can add a member back after they leave", async () => {
+    const { t, bob, circleId } = await setUp();
+    await asBob(t).mutation(api.sharing.leaveCircle.leaveCircle, { circleId });
+
+    await addToCircle(t, circleId, bob);
+
+    expect(
+      (await asBob(t).query(api.sharing.listMyCircles.listMyCircles, {})).map(
+        (c) => c.aggregateId,
+      ),
+    ).toContain(circleId);
+    const links = await circleMembersOf(t, circleId);
+    expect(links.filter((l) => l.memberId === bob)).toHaveLength(1);
+  });
 });
