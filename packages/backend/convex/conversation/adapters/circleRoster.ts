@@ -11,6 +11,8 @@ import type { QueryCtx } from "../../_generated/server";
 // (`joinedAt`, set when the seat was taken: an Admin's add or an accepted invite). The
 // `circleMembers` junction mirrors the same set but carries no timestamp, so it can't supply the
 // history floor; one indexed point read of the circle row gives both. No circle row = no circle.
+// A member whose account is gone or deactivated is left out, so a deleted member is never seeded
+// into, or re-added to, a thread.
 export const convexCircleRoster = (ctx: QueryCtx): CircleRoster => ({
   async membersOf(
     circleId: CircleId,
@@ -22,9 +24,15 @@ export const convexCircleRoster = (ctx: QueryCtx): CircleRoster => ({
       )
       .unique();
     if (!row) return null;
-    return row.memberships.map((m) => ({
-      memberId: toMemberId(m.memberId as string),
-      joinedAt: new Date(m.joinedAt),
-    }));
+    const members: CircleParticipant[] = [];
+    for (const m of row.memberships) {
+      const user = await ctx.db.get(m.memberId);
+      if (!user || user.isActive === false) continue;
+      members.push({
+        memberId: toMemberId(m.memberId as string),
+        joinedAt: new Date(m.joinedAt),
+      });
+    }
+    return members;
   },
 });

@@ -1148,3 +1148,76 @@ describe("the floor fails closed", () => {
     ]);
   });
 });
+
+describe("re-join sync races", () => {
+  test("a re-join whose 'left' never synced refreshes the row: fresh floor, 'left' then 'joined'", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    const old = await floorOf(t, threadId, bob);
+    const rejoinedAt = old + 10_000;
+    // Bob left and re-joined, but neither event has been mirrored into the thread yet.
+    await t.run(async (ctx) => {
+      const circle = await ctx.db
+        .query("circles")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", circleId))
+        .unique();
+      await ctx.db.patch(circle!._id, {
+        memberships: circle!.memberships.map((m) =>
+          m.memberId === bob ? { ...m, joinedAt: rejoinedAt } : m,
+        ),
+      });
+    });
+    const dispatchEvent = async (name: string, occurredAt: number) => {
+      const eventId = await t.run((ctx) =>
+        ctx.db.insert("domainEvents", {
+          name,
+          payload: { circleId, memberId: bob, reason: "left" },
+          occurredAt,
+          context: "sharing",
+        }),
+      );
+      await t.mutation(internal.events.dispatch.dispatch, { eventId });
+      await flush(t);
+    };
+    // Out of order: the "joined" first, then the late "left".
+    await dispatchEvent("MemberJoinedCircle", rejoinedAt);
+    await dispatchEvent("MemberLeftCircle", old + 5_000);
+
+    expect(await floorOf(t, threadId, bob)).toBe(rejoinedAt);
+    const rows = (await storedMessagesOf(t, threadId)).map(
+      (m) => m.systemEvent,
+    );
+    expect(rows).toEqual([
+      { kind: "left", memberId: bob },
+      { kind: "joined", memberId: bob },
+    ]);
+    // Run again in the other order: nothing changes.
+    await dispatchEvent("MemberLeftCircle", old + 5_000);
+    await dispatchEvent("MemberJoinedCircle", rejoinedAt);
+    expect(await storedMessagesOf(t, threadId)).toHaveLength(2);
+  });
+
+  test("a deactivated member is never seeded into, or re-added to, the thread", async () => {
+    const t = convexTest(schema, modules);
+    const { carol, circleId } = await seed(t);
+    await t.run((ctx) => ctx.db.patch(carol, { isActive: false }));
+    const threadId = await open(t, "alice", circleId);
+    expect(
+      (await participantRowsOf(t, threadId)).map((r) => r.memberId),
+    ).not.toContain(carol);
+    const eventId = await t.run((ctx) =>
+      ctx.db.insert("domainEvents", {
+        name: "MemberJoinedCircle",
+        payload: { circleId, memberId: carol },
+        occurredAt: Date.now(),
+        context: "sharing",
+      }),
+    );
+    await t.mutation(internal.events.dispatch.dispatch, { eventId });
+    await flush(t);
+    expect(
+      (await participantRowsOf(t, threadId)).map((r) => r.memberId),
+    ).not.toContain(carol);
+  });
+});
