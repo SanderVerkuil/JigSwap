@@ -10,7 +10,9 @@ export type SharingErrorCode =
   | "AlreadyMember"
   | "NotAMember"
   | "CannotRemoveOwner"
-  | "DuplicatePermission";
+  | "DuplicatePermission"
+  | "OwnerCannotLeave"
+  | "CircleFull";
 
 export class SharingError extends DomainError {
   override readonly name = "SharingError";
@@ -59,6 +61,22 @@ export class SharingError extends DomainError {
     return new SharingError(
       "DuplicatePermission",
       "That member already holds the requested permission level",
+    );
+  }
+
+  // The owner's seat is permanent, so the owner cannot walk out of their own circle either.
+  static ownerCannotLeave(): SharingError {
+    return new SharingError(
+      "OwnerCannotLeave",
+      "The circle owner cannot leave the circle",
+    );
+  }
+
+  // The circle already holds MAX_CIRCLE_MEMBERS seats (owner included), so no one else can join.
+  static circleFull(): SharingError {
+    return new SharingError(
+      "CircleFull",
+      "This circle has reached its member limit",
     );
   }
 }

@@ -4,10 +4,15 @@ import {
   CircleCreated,
   CopySharedToCircle,
   MemberJoinedCircle,
+  MemberLeftCircle,
+  MemberLeftCircleReason,
 } from "./events";
 import { CircleId, CopyId, MemberId, MembershipId } from "./ids";
 import { Membership } from "./membership";
 import { canManageMembers, PermissionLevel } from "./permission-level";
+
+// The most seats a circle may hold, the owner's included.
+export const MAX_CIRCLE_MEMBERS = 50;
 
 // Input to create(): a new private group and its first (owner) membership.
 export interface CreateCircleProps {
@@ -87,7 +92,7 @@ export class Circle {
   }
 
   // Add a member at a permission level. Only an Admin actor may do so; the member must not already
-  // belong. Emits MemberJoinedCircle.
+  // belong and the circle must have a free seat. Emits MemberJoinedCircle.
   addMember(
     actor: MemberId,
     membershipId: MembershipId,
@@ -98,6 +103,9 @@ export class Circle {
     const gate = this.requireAdmin(actor);
     if (gate.isErr) return err(gate.error);
     if (this.isMember(memberId)) return err(SharingError.alreadyMember());
+    if (this.memberships.length >= MAX_CIRCLE_MEMBERS) {
+      return err(SharingError.circleFull());
+    }
 
     this.memberships.push(
       Membership.create(membershipId, memberId, permission, now),
@@ -107,10 +115,11 @@ export class Circle {
   }
 
   // Remove a member. Only an Admin actor may do so; the target must be a member and must not be the
-  // owner (the owner's seat is permanent).
+  // owner (the owner's seat is permanent). Emits MemberLeftCircle with reason "removed".
   removeMember(
     actor: MemberId,
     memberId: MemberId,
+    now: Date,
   ): Result<void, SharingError> {
     const gate = this.requireAdmin(actor);
     if (gate.isErr) return err(gate.error);
@@ -118,7 +127,18 @@ export class Circle {
       return err(SharingError.cannotRemoveOwner());
     if (!this.isMember(memberId)) return err(SharingError.notAMember());
 
-    this.memberships = this.memberships.filter((m) => m.memberId !== memberId);
+    this.dropMember(memberId, "removed", now);
+    return ok(undefined);
+  }
+
+  // A member walks out of the circle on their own. Any member may leave except the owner, whose
+  // seat is permanent. Emits MemberLeftCircle with reason "left".
+  leave(memberId: MemberId, now: Date): Result<void, SharingError> {
+    if (memberId === this.state.ownerId)
+      return err(SharingError.ownerCannotLeave());
+    if (!this.isMember(memberId)) return err(SharingError.notAMember());
+
+    this.dropMember(memberId, "left", now);
     return ok(undefined);
   }
 
@@ -188,6 +208,15 @@ export class Circle {
       return err(SharingError.notCircleAdmin());
     }
     return ok(undefined);
+  }
+
+  private dropMember(
+    memberId: MemberId,
+    reason: MemberLeftCircleReason,
+    now: Date,
+  ): void {
+    this.memberships = this.memberships.filter((m) => m.memberId !== memberId);
+    this.record(new MemberLeftCircle(this.state.id, memberId, reason, now));
   }
 
   private record(event: DomainEvent): void {

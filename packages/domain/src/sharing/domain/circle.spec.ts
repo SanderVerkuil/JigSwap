@@ -5,7 +5,8 @@ import {
   toMemberId,
   toMembershipId,
 } from "../../shared-kernel";
-import { Circle } from "./circle";
+import { Circle, MAX_CIRCLE_MEMBERS } from "./circle";
+import { MemberLeftCircle } from "./events";
 import { MembershipId } from "./ids";
 
 const owner = toMemberId("owner");
@@ -124,6 +125,46 @@ describe("Circle", () => {
       expect(circle.members).toHaveLength(2);
     });
 
+    it("seats members up to MAX_CIRCLE_MEMBERS (owner included), then refuses with CircleFull", () => {
+      const circle = newCircle();
+      for (let i = 1; i < MAX_CIRCLE_MEMBERS - 1; i += 1) {
+        circle.addMember(
+          owner,
+          membershipId(),
+          toMemberId(`m-${i}`),
+          "ViewOnly",
+          NOW,
+        );
+      }
+      expect(circle.members).toHaveLength(MAX_CIRCLE_MEMBERS - 1);
+
+      // The 50th seat is still free.
+      const last = circle.addMember(
+        owner,
+        membershipId(),
+        alice,
+        "ViewOnly",
+        NOW,
+      );
+      expect(last.isOk).toBe(true);
+      expect(circle.members).toHaveLength(50);
+      circle.pullEvents();
+
+      // The 51st is refused, nothing is seated and nothing is recorded.
+      const result = circle.addMember(
+        owner,
+        membershipId(),
+        bob,
+        "ViewOnly",
+        NOW,
+      );
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("CircleFull");
+      expect(circle.isMember(bob)).toBe(false);
+      expect(circle.members).toHaveLength(50);
+      expect(circle.pullEvents()).toHaveLength(0);
+    });
+
     it("lets a promoted admin add further members", () => {
       const circle = newCircle();
       circle.addMember(owner, membershipId(), alice, "Admin", NOW);
@@ -145,10 +186,29 @@ describe("Circle", () => {
       const circle = newCircle();
       circle.addMember(owner, membershipId(), alice, "ViewOnly", NOW);
 
-      const result = circle.removeMember(owner, alice);
+      circle.pullEvents();
+      const result = circle.removeMember(owner, alice, NOW);
       expect(result.isOk).toBe(true);
       expect(circle.isMember(alice)).toBe(false);
       expect(circle.isMember(owner)).toBe(true); // only the target is dropped
+    });
+
+    it("records MemberLeftCircle with reason removed", () => {
+      const circle = newCircle();
+      circle.addMember(owner, membershipId(), alice, "ViewOnly", NOW);
+      circle.pullEvents();
+
+      circle.removeMember(owner, alice, NOW);
+
+      const events = circle.pullEvents();
+      expect(events).toHaveLength(1);
+      const event = events[0] as MemberLeftCircle;
+      expect(event).toBeInstanceOf(MemberLeftCircle);
+      expect(event.name).toBe("MemberLeftCircle");
+      expect(event.circleId).toBe(circleId);
+      expect(event.memberId).toBe(alice);
+      expect(event.reason).toBe("removed");
+      expect(event.occurredAt).toBe(NOW);
     });
 
     it("rejects a non-admin actor", () => {
@@ -156,25 +216,89 @@ describe("Circle", () => {
       circle.addMember(owner, membershipId(), alice, "ViewOnly", NOW);
       circle.addMember(owner, membershipId(), bob, "ViewOnly", NOW);
 
-      const result = circle.removeMember(alice, bob);
+      circle.pullEvents();
+
+      const result = circle.removeMember(alice, bob, NOW);
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("NotCircleAdmin");
       expect(circle.isMember(bob)).toBe(true);
+      expect(circle.pullEvents()).toHaveLength(0);
     });
 
     it("refuses to remove the owner", () => {
       const circle = newCircle();
-      const result = circle.removeMember(owner, owner);
+      circle.pullEvents();
+      const result = circle.removeMember(owner, owner, NOW);
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("CannotRemoveOwner");
       expect(circle.isMember(owner)).toBe(true);
+      expect(circle.pullEvents()).toHaveLength(0);
     });
 
     it("rejects removing a non-member", () => {
       const circle = newCircle();
-      const result = circle.removeMember(owner, alice);
+      circle.pullEvents();
+      const result = circle.removeMember(owner, alice, NOW);
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("NotAMember");
+      expect(circle.pullEvents()).toHaveLength(0);
+    });
+  });
+
+  describe("leave", () => {
+    it("lets a member leave and records MemberLeftCircle with reason left", () => {
+      const circle = newCircle();
+      circle.addMember(owner, membershipId(), alice, "ViewOnly", NOW);
+      circle.addMember(owner, membershipId(), bob, "ViewOnly", NOW);
+      circle.pullEvents();
+
+      const result = circle.leave(alice, NOW);
+
+      expect(result.isOk).toBe(true);
+      expect(circle.isMember(alice)).toBe(false);
+      // Only the leaver goes.
+      expect(circle.isMember(bob)).toBe(true);
+      expect(circle.isMember(owner)).toBe(true);
+      const events = circle.pullEvents();
+      expect(events).toHaveLength(1);
+      const event = events[0] as MemberLeftCircle;
+      expect(event).toBeInstanceOf(MemberLeftCircle);
+      expect(event.circleId).toBe(circleId);
+      expect(event.memberId).toBe(alice);
+      expect(event.reason).toBe("left");
+      expect(event.occurredAt).toBe(NOW);
+    });
+
+    it("lets an admin who is not the owner leave", () => {
+      const circle = newCircle();
+      circle.addMember(owner, membershipId(), alice, "Admin", NOW);
+
+      expect(circle.leave(alice, NOW).isOk).toBe(true);
+      expect(circle.isMember(alice)).toBe(false);
+    });
+
+    it("refuses to let the owner leave", () => {
+      const circle = newCircle();
+      circle.pullEvents();
+
+      const result = circle.leave(owner, NOW);
+
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("OwnerCannotLeave");
+      expect(circle.isMember(owner)).toBe(true);
+      expect(circle.pullEvents()).toHaveLength(0);
+    });
+
+    it("rejects a non-member", () => {
+      const circle = newCircle();
+      circle.pullEvents();
+
+      const result = circle.leave(stranger, NOW);
+
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("NotAMember");
+      expect(circle.members).toHaveLength(1);
+      expect(circle.pullEvents()).toHaveLength(0);
     });
   });
 

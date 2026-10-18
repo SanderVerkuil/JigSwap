@@ -26,6 +26,23 @@ export class MemberJoinedCircle implements DomainEvent {
   ) {}
 }
 
+// Why a member stopped being part of a circle: they walked out ("left") or an Admin took them out
+// ("removed").
+export type MemberLeftCircleReason = "left" | "removed";
+
+// A member stopped being part of a circle, by leaving or by an Admin's removal. Drives the
+// circle-copy read model (their shares into the circle are withdrawn) and, later, circle chat and
+// invitation flows.
+export class MemberLeftCircle implements DomainEvent {
+  readonly name = "MemberLeftCircle";
+  constructor(
+    readonly circleId: CircleId,
+    readonly memberId: MemberId,
+    readonly reason: MemberLeftCircleReason,
+    readonly occurredAt: Date,
+  ) {}
+}
+
 // A copy was shared into a circle (made visible to that circle's members). Carries the copy id so
 // Library/Insights need not reload anything to react.
 export class CopySharedToCircle implements DomainEvent {
@@ -38,4 +55,4 @@ export class CopySharedToCircle implements DomainEvent {
 }
 
 export type SharingDomainEvent =
-  CircleCreated | MemberJoinedCircle | CopySharedToCircle;
+  CircleCreated | MemberJoinedCircle | MemberLeftCircle | CopySharedToCircle;

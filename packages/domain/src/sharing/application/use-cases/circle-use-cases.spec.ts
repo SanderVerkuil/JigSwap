@@ -11,6 +11,7 @@ import {
 import { makeAddMember } from "./add-member";
 import { makeChangePermission } from "./change-permission";
 import { makeCreateCircle } from "./create-circle";
+import { makeLeaveCircle } from "./leave-circle";
 import { makeRemoveMember } from "./remove-member";
 import { makeShareCopyToCircle } from "./share-copy-to-circle";
 
@@ -30,6 +31,7 @@ describe("Sharing circle use cases", () => {
   let createCircle: ReturnType<typeof makeCreateCircle>;
   let addMember: ReturnType<typeof makeAddMember>;
   let removeMember: ReturnType<typeof makeRemoveMember>;
+  let leaveCircle: ReturnType<typeof makeLeaveCircle>;
   let changePermission: ReturnType<typeof makeChangePermission>;
   let shareCopy: ReturnType<typeof makeShareCopyToCircle>;
 
@@ -47,7 +49,8 @@ describe("Sharing circle use cases", () => {
       clock,
     });
     addMember = makeAddMember({ circles, membershipIds, events, clock });
-    removeMember = makeRemoveMember({ circles, events });
+    removeMember = makeRemoveMember({ circles, events, clock });
+    leaveCircle = makeLeaveCircle({ circles, events, clock });
     changePermission = makeChangePermission({ circles, events });
     shareCopy = makeShareCopyToCircle({ circles, events, clock });
   });
@@ -148,7 +151,7 @@ describe("Sharing circle use cases", () => {
   });
 
   describe("makeRemoveMember", () => {
-    it("removes a member by an admin", async () => {
+    it("removes a member by an admin and publishes MemberLeftCircle", async () => {
       const circleId = await openCircle();
       await addMember({
         circleId,
@@ -156,6 +159,7 @@ describe("Sharing circle use cases", () => {
         memberId: alice,
         permission: "ViewOnly",
       });
+      events.published.length = 0;
 
       const result = await removeMember({
         circleId,
@@ -165,6 +169,12 @@ describe("Sharing circle use cases", () => {
 
       expect(result.isOk).toBe(true);
       expect((await circles.findById(circleId))?.isMember(alice)).toBe(false);
+      expect(events.names()).toEqual(["MemberLeftCircle"]);
+      expect(events.published[0]).toMatchObject({
+        memberId: alice,
+        reason: "removed",
+        occurredAt: NOW,
+      });
     });
 
     it("refuses to remove the owner", async () => {
@@ -184,6 +194,61 @@ describe("Sharing circle use cases", () => {
       const result = await removeMember({
         circleId: missingCircle,
         actorId: owner,
+        memberId: alice,
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("CircleNotFound");
+    });
+  });
+
+  describe("makeLeaveCircle", () => {
+    it("takes the member out and publishes MemberLeftCircle", async () => {
+      const circleId = await openCircle();
+      await addMember({
+        circleId,
+        actorId: owner,
+        memberId: alice,
+        permission: "ViewOnly",
+      });
+      events.published.length = 0;
+
+      const result = await leaveCircle({ circleId, memberId: alice });
+
+      expect(result.isOk).toBe(true);
+      expect((await circles.findById(circleId))?.isMember(alice)).toBe(false);
+      expect(events.names()).toEqual(["MemberLeftCircle"]);
+      expect(events.published[0]).toMatchObject({
+        circleId,
+        memberId: alice,
+        reason: "left",
+        occurredAt: NOW,
+      });
+    });
+
+    it("refuses the owner and writes nothing", async () => {
+      const circleId = await openCircle();
+      events.published.length = 0;
+
+      const result = await leaveCircle({ circleId, memberId: owner });
+
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("OwnerCannotLeave");
+      expect((await circles.findById(circleId))?.isMember(owner)).toBe(true);
+      expect(events.published).toHaveLength(0);
+    });
+
+    it("rejects a non-member", async () => {
+      const circleId = await openCircle();
+
+      const result = await leaveCircle({ circleId, memberId: bob });
+
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("NotAMember");
+    });
+
+    it("returns CircleNotFound for an unknown circle", async () => {
+      const result = await leaveCircle({
+        circleId: missingCircle,
         memberId: alice,
       });
       expect(result.isErr).toBe(true);

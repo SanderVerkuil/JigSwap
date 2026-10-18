@@ -1,4 +1,4 @@
-import { DomainEventPublisher, err, ok } from "../../../shared-kernel";
+import { Clock, DomainEventPublisher, err, ok } from "../../../shared-kernel";
 import { SharingApplicationError } from "../errors";
 import {
   RemoveMember,
@@ -9,10 +9,11 @@ import { CircleRepository } from "../ports/out/circle.repository";
 export interface RemoveMemberDeps {
   readonly circles: CircleRepository;
   readonly events: DomainEventPublisher;
+  readonly clock: Clock;
 }
 
 // Transaction script: load the circle (CircleNotFound if missing), delegate the admin-gated removal
-// (which also refuses to remove the owner) to the aggregate, persist. Removal records no event.
+// (which also refuses to remove the owner) to the aggregate, persist, publish MemberLeftCircle.
 export const makeRemoveMember =
   (deps: RemoveMemberDeps): RemoveMember =>
   async (cmd: RemoveMemberCommand) => {
@@ -20,7 +21,11 @@ export const makeRemoveMember =
     if (!circle)
       return err(SharingApplicationError.circleNotFound(cmd.circleId));
 
-    const result = circle.removeMember(cmd.actorId, cmd.memberId);
+    const result = circle.removeMember(
+      cmd.actorId,
+      cmd.memberId,
+      deps.clock.now(),
+    );
     if (result.isErr) return err(result.error);
 
     await deps.circles.save(circle);
