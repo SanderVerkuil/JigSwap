@@ -180,7 +180,8 @@ const isPairBlocked = async (
   row: LocationAttachment,
 ): Promise<boolean> => {
   const thread = await threadRowByAggregateId(ctx, row.threadAggregateId);
-  if (!thread) return false;
+  // Exchange/DM threads only: a block inside a circle removes nobody from its thread (spec 5.3).
+  if (!thread || thread.subjectKind === "circle") return false;
   for (const other of thread.participants) {
     if (
       other !== row.uploaderId &&

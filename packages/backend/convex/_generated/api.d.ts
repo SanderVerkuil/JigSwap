@@ -104,6 +104,7 @@ import type * as catalog_withdrawChangeProposal from "../catalog/withdrawChangeP
 import type * as contact_listContactMessages from "../contact/listContactMessages.js";
 import type * as contact_markContactMessageHandled from "../contact/markContactMessageHandled.js";
 import type * as contact_submitContactMessage from "../contact/submitContactMessage.js";
+import type * as conversation_adapters_circleRoster from "../conversation/adapters/circleRoster.js";
 import type * as conversation_adapters_connectionPolicy from "../conversation/adapters/connectionPolicy.js";
 import type * as conversation_adapters_convexThreadRepository from "../conversation/adapters/convexThreadRepository.js";
 import type * as conversation_adapters_idGenerators from "../conversation/adapters/idGenerators.js";
@@ -116,6 +117,7 @@ import type * as conversation_attachmentModerationStore from "../conversation/at
 import type * as conversation_backfill from "../conversation/backfill.js";
 import type * as conversation_backfillParticipantState from "../conversation/backfillParticipantState.js";
 import type * as conversation_canMessage from "../conversation/canMessage.js";
+import type * as conversation_circleSubscriber from "../conversation/circleSubscriber.js";
 import type * as conversation_copyCard from "../conversation/copyCard.js";
 import type * as conversation_countLegacyImageMessages from "../conversation/countLegacyImageMessages.js";
 import type * as conversation_errors from "../conversation/errors.js";
@@ -133,8 +135,10 @@ import type * as conversation_locationStore from "../conversation/locationStore.
 import type * as conversation_markThreadRead from "../conversation/markThreadRead.js";
 import type * as conversation_messageAttachments from "../conversation/messageAttachments.js";
 import type * as conversation_moderateMessageImage from "../conversation/moderateMessageImage.js";
+import type * as conversation_openCircleThread from "../conversation/openCircleThread.js";
 import type * as conversation_openDmThread from "../conversation/openDmThread.js";
 import type * as conversation_postMessage from "../conversation/postMessage.js";
+import type * as conversation_purgeCircleThread from "../conversation/purgeCircleThread.js";
 import type * as conversation_purgeMemberMessagingData from "../conversation/purgeMemberMessagingData.js";
 import type * as conversation_readModelHelpers from "../conversation/readModelHelpers.js";
 import type * as conversation_renderLocationMap from "../conversation/renderLocationMap.js";
@@ -144,10 +148,12 @@ import type * as conversation_revealMessageImage from "../conversation/revealMes
 import type * as conversation_searchPlaces from "../conversation/searchPlaces.js";
 import type * as conversation_sendLocation from "../conversation/sendLocation.js";
 import type * as conversation_sendStagedImages from "../conversation/sendStagedImages.js";
+import type * as conversation_setThreadMuted from "../conversation/setThreadMuted.js";
 import type * as conversation_sharedLocations from "../conversation/sharedLocations.js";
 import type * as conversation_stageMessageImage from "../conversation/stageMessageImage.js";
 import type * as conversation_startCopyConversation from "../conversation/startCopyConversation.js";
 import type * as conversation_subscriber from "../conversation/subscriber.js";
+import type * as conversation_threadMemberProjection from "../conversation/threadMemberProjection.js";
 import type * as custody_getCopyCustodyTimeline from "../custody/getCopyCustodyTimeline.js";
 import type * as custody_subscriber from "../custody/subscriber.js";
 import type * as docs_listDocFeedback from "../docs/listDocFeedback.js";
@@ -597,6 +603,7 @@ declare const fullApi: ApiFromModules<{
   "contact/listContactMessages": typeof contact_listContactMessages;
   "contact/markContactMessageHandled": typeof contact_markContactMessageHandled;
   "contact/submitContactMessage": typeof contact_submitContactMessage;
+  "conversation/adapters/circleRoster": typeof conversation_adapters_circleRoster;
   "conversation/adapters/connectionPolicy": typeof conversation_adapters_connectionPolicy;
   "conversation/adapters/convexThreadRepository": typeof conversation_adapters_convexThreadRepository;
   "conversation/adapters/idGenerators": typeof conversation_adapters_idGenerators;
@@ -609,6 +616,7 @@ declare const fullApi: ApiFromModules<{
   "conversation/backfill": typeof conversation_backfill;
   "conversation/backfillParticipantState": typeof conversation_backfillParticipantState;
   "conversation/canMessage": typeof conversation_canMessage;
+  "conversation/circleSubscriber": typeof conversation_circleSubscriber;
   "conversation/copyCard": typeof conversation_copyCard;
   "conversation/countLegacyImageMessages": typeof conversation_countLegacyImageMessages;
   "conversation/errors": typeof conversation_errors;
@@ -626,8 +634,10 @@ declare const fullApi: ApiFromModules<{
   "conversation/markThreadRead": typeof conversation_markThreadRead;
   "conversation/messageAttachments": typeof conversation_messageAttachments;
   "conversation/moderateMessageImage": typeof conversation_moderateMessageImage;
+  "conversation/openCircleThread": typeof conversation_openCircleThread;
   "conversation/openDmThread": typeof conversation_openDmThread;
   "conversation/postMessage": typeof conversation_postMessage;
+  "conversation/purgeCircleThread": typeof conversation_purgeCircleThread;
   "conversation/purgeMemberMessagingData": typeof conversation_purgeMemberMessagingData;
   "conversation/readModelHelpers": typeof conversation_readModelHelpers;
   "conversation/renderLocationMap": typeof conversation_renderLocationMap;
@@ -637,10 +647,12 @@ declare const fullApi: ApiFromModules<{
   "conversation/searchPlaces": typeof conversation_searchPlaces;
   "conversation/sendLocation": typeof conversation_sendLocation;
   "conversation/sendStagedImages": typeof conversation_sendStagedImages;
+  "conversation/setThreadMuted": typeof conversation_setThreadMuted;
   "conversation/sharedLocations": typeof conversation_sharedLocations;
   "conversation/stageMessageImage": typeof conversation_stageMessageImage;
   "conversation/startCopyConversation": typeof conversation_startCopyConversation;
   "conversation/subscriber": typeof conversation_subscriber;
+  "conversation/threadMemberProjection": typeof conversation_threadMemberProjection;
   "custody/getCopyCustodyTimeline": typeof custody_getCopyCustodyTimeline;
   "custody/subscriber": typeof custody_subscriber;
   "docs/listDocFeedback": typeof docs_listDocFeedback;

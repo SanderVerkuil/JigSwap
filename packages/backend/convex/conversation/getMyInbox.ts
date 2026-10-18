@@ -16,10 +16,16 @@ import { anonymousMemberOf, projectMemberIdentity } from "../social/privacy";
 import { toLastMessage } from "./adapters/threadMapper";
 import { viewableContextCopies } from "./copyCard";
 import {
+  circleDecorations,
+  circleFloorOf,
+  circleRowOf,
+  inboxListable,
   participantUnreadCountOf,
   threadRowByAggregateId,
   toLastMessageView,
+  visibleLastMessage,
 } from "./readModelHelpers";
+import { threadMemberProjector } from "./threadMemberProjection";
 
 // Context-copy bounds. Message references are read through by_thread_copy_sent, so plain messages
 // are never scanned for them. That index groups rows per copy (copyId, then sentAt), so each
@@ -35,6 +41,57 @@ const CONTEXT_PROBE_BUDGET = 1000;
 const LOWEST_COPY_ID = "" as Id<"ownedPuzzles">;
 
 type ContextCopyResolver = ReturnType<typeof viewableContextCopies>;
+
+// How many other members a circle row's avatar stack shows.
+const CIRCLE_MEMBER_PREVIEW = 3;
+
+type LastMessageSummary = NonNullable<Doc<"threads">["lastMessage"]>;
+
+// A circle thread's subject: the circle's name and member count, and up to three other members
+// for the avatar stack: the visible last message's author first, then other current
+// participants. All through projectThreadMember (current co-members are named by the circle
+// rule). Null once the circle is gone (its thread is being purged).
+const circleSubjectOf = async (
+  ctx: QueryCtx,
+  thread: Doc<"threads">,
+  me: Id<"users">,
+  last: LastMessageSummary | null,
+): Promise<InboxThreadSubjectView | null> => {
+  const circle =
+    thread.circleId === undefined
+      ? null
+      : await circleRowOf(ctx, thread.circleId);
+  if (!circle || thread.circleId === undefined) return null;
+  const project = threadMemberProjector(ctx, me, thread);
+  const previewIds: Id<"users">[] = [];
+  for (const id of [
+    ...(last?.authorId !== undefined ? [last.authorId] : []),
+    ...thread.participants,
+  ]) {
+    if (previewIds.length >= CIRCLE_MEMBER_PREVIEW) break;
+    if (id !== me && !previewIds.includes(id)) previewIds.push(id);
+  }
+  return {
+    kind: "circle",
+    circleId: thread.circleId,
+    name: circle.name,
+    memberCount: circle.memberships.length,
+    memberPreview: await Promise.all(previewIds.map(project)),
+  };
+};
+
+// Q21: a circle thread shows in a member's inbox only once it has something for them, which the
+// row they already hold says without any message read: they opened it (a read receipt), or a
+// message they can see arrived since they joined (unread, which skips join/leave rows, rows
+// before their floor and authors they blocked), or the visible last message is member-authored
+// (also covers their own post). A thread holding only join/leave rows stays out.
+const circleRowShows = (
+  membership: Doc<"threadParticipants">,
+  last: LastMessageSummary | null,
+): boolean =>
+  membership.lastReadAt !== undefined ||
+  (membership.unreadCount ?? 0) > 0 ||
+  last?.authorId !== undefined;
 
 // What the thread is about. Exchange: the exchange's identity + type, the requested copy's
 // puzzle title (snapshot first, catalog row fallback — same as loanReadViews) and the trading
@@ -219,10 +276,9 @@ const toInboxThreadView = async (
   resolveCopy: ContextCopyResolver,
   budget: ProbeBudget,
 ): Promise<InboxThreadView | null> => {
-  const subject = await subjectOf(ctx, thread, me);
-  if (!subject) return null;
   // The denormalized summary; rows the backfill has not reached fall back to reading the message,
-  // summarised the same way (so the preview never carries an attachment ref).
+  // summarised the same way (so the preview never carries an attachment ref). In a circle thread
+  // it is floored at the member's joinedAt.
   const newestRow = thread.lastMessage
     ? null
     : await ctx.db
@@ -232,8 +288,40 @@ const toInboxThreadView = async (
         )
         .order("desc")
         .first();
-  const last =
-    thread.lastMessage ?? (newestRow ? toLastMessage(newestRow) : null);
+  const floor =
+    thread.subjectKind === "circle"
+      ? await circleFloorOf(ctx, thread, me)
+      : undefined;
+  if (floor === null) return null;
+  const last = visibleLastMessage(
+    thread.lastMessage ?? (newestRow ? toLastMessage(newestRow) : null),
+    me,
+    floor,
+  );
+  if (thread.subjectKind === "circle") {
+    if (!circleRowShows(membership, last)) return null;
+    const subject = await circleSubjectOf(ctx, thread, me, last);
+    if (!subject) return null;
+    return {
+      threadId: thread.aggregateId,
+      subject,
+      lastMessage: last
+        ? {
+            ...toLastMessageView(last, me),
+            ...(await circleDecorations(ctx, me, thread)(last)),
+          }
+        : null,
+      unreadCount: await participantUnreadCountOf(ctx, thread, membership),
+      // Message-referenced copies are not listed for a circle: they would span history from
+      // before the member joined.
+      contextCopies: [],
+      updatedAt: thread.lastMessageAt ?? thread.createdAt,
+      ...(membership.muted === true && { muted: true as const }),
+      // No block flags: a block between two members never makes a circle thread read-only.
+    };
+  }
+  const subject = await subjectOf(ctx, thread, me);
+  if (!subject) return null;
   const contextCopies = await contextCopiesOf(
     ctx,
     thread,
@@ -252,6 +340,7 @@ const toInboxThreadView = async (
     unreadCount: await participantUnreadCountOf(ctx, thread, membership),
     contextCopies,
     updatedAt: thread.lastMessageAt ?? thread.createdAt,
+    ...(membership.muted === true && { muted: true as const }),
     // Only the blocker learns of the block; the blocked side just sees a read-only thread.
     ...(blocked === "byMe" ? { blocked } : {}),
     ...(blocked === "byThem" ? { readOnly: true as const } : {}),
@@ -279,7 +368,11 @@ export const getMyInbox = query({
         ctx,
         membership.threadAggregateId,
       );
-      if (thread) {
+      if (
+        thread &&
+        (thread.subjectKind !== "circle" ||
+          (await inboxListable(ctx, thread, me)))
+      ) {
         threads.push(thread);
         membershipOf.set(thread.aggregateId, membership);
       }
@@ -303,7 +396,7 @@ export const getMyInbox = query({
       );
       if (view) {
         views.push(view);
-      } else {
+      } else if (thread.subjectKind !== "circle") {
         console.warn(
           `getMyInbox: dropping thread ${thread.aggregateId} — exchange subject no longer resolves`,
         );

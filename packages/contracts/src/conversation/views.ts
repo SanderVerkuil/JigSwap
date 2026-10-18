@@ -15,6 +15,27 @@ export interface ThreadMessageView {
    * no author id ever crosses the wire — a hidden member's raw id would de-anonymise them.
    */
   readonly isMine: boolean;
+  /**
+   * Circle threads only (they have many participants, so `isMine` alone can't say who wrote it):
+   * the author, privacy-projected for the viewer. A current co-member is always named (the circle
+   * reveal); a former member falls back to the ordinary rules and may be anonymous. Absent on
+   * system messages and in exchange/DM threads, where the subject's `otherMember` names them.
+   */
+  readonly author?: ProjectedMember;
+  /**
+   * Circle threads only: the viewer blocked this message's author. Render it collapsed ("Message
+   * from a member you blocked · Show"). Never set for the blocked side.
+   */
+  readonly authorBlockedByMe?: true;
+  /**
+   * A circle thread's join/leave row (kind "system"): `member` is who joined or left, present only
+   * when the viewer could otherwise see them; absent means render "A member joined/left". Leaving
+   * and removal are not told apart, and who removed someone is never said.
+   */
+  readonly systemEvent?: {
+    readonly kind: "joined" | "left";
+    readonly member?: ProjectedMember;
+  };
   readonly kind: "text" | "image" | "location" | "system";
   /** Text: the message. Media (image/location): the optional caption, "" when none. */
   readonly body: string;
@@ -185,7 +206,8 @@ export type CopyConversationView =
 /**
  * What an inbox thread is ABOUT. Exchange threads carry the exchange's identity and a cached
  * puzzle title for the list row; DM threads carry the other participant, privacy-projected
- * ({@link ProjectedMember}) so a hidden member's real identity never crosses the wire.
+ * ({@link ProjectedMember}) so a hidden member's real identity never crosses the wire. Circle
+ * threads carry the friend circle (one group thread per circle).
  */
 export type InboxThreadSubjectView =
   | {
@@ -216,6 +238,19 @@ export type InboxThreadSubjectView =
        * account is inactive.
        */
       readonly profileHandle: string | null;
+    }
+  | {
+      readonly kind: "circle";
+      /** The circle's CircleId aggregateId. */
+      readonly circleId: string;
+      readonly name: string;
+      /** The circle's current member count (the viewer included). */
+      readonly memberCount: number;
+      /**
+       * Up to 3 other members for the row's avatar stack: the latest message's author first (when
+       * the viewer may see that message), then other current members. Privacy-projected.
+       */
+      readonly memberPreview: readonly ProjectedMember[];
     };
 
 /**
@@ -233,7 +268,11 @@ export interface InboxThreadView {
   /** The Thread aggregateId — also what a message notification's relatedId carries. */
   readonly threadId: string;
   readonly subject: InboxThreadSubjectView;
-  /** The newest message, null while the thread is empty. */
+  /**
+   * The newest message, null while the thread is empty. In a circle thread: the newest message the
+   * viewer may see (never one from before they joined, so null until one arrives), with its
+   * `author` for "Anna: …".
+   */
   readonly lastMessage: ThreadMessageView | null;
   /**
    * Messages newer than the caller's read receipt, authored by someone else. Counting stops at
@@ -249,6 +288,8 @@ export interface InboxThreadView {
   readonly contextCopies: readonly InboxThreadContextCopy[];
   /** Inbox ordering instant: the newest message's sentAt, or the thread's creation. */
   readonly updatedAt: number;
+  /** Set when the caller muted this thread: show a grey count; it is left out of the shell badge. */
+  readonly muted?: true;
   /**
    * "byMe" when the caller blocked the other participant (also when both did). The thread stays
    * listed but is read-only. Never says the other side blocked the caller; that surfaces only as

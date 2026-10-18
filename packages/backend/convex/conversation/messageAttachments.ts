@@ -18,6 +18,7 @@ import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
 import { participantsKeyOf } from "./adapters/threadMapper";
 import { threadRowByAggregateId } from "./readModelHelpers";
+import { isCurrentCircleMember } from "./threadMemberProjection";
 
 // Message image attachments (spec 2.1/2.2, R.1-R.3, R.10, R.12): the shared rules behind staging
 // (stageMessageImage), sending (sendStagedImages), the pipeline's verdicts
@@ -92,7 +93,11 @@ export const assertImagesAvailable = (): void => {
   }
 };
 
-/** The participant check every attachment mutation shares; the thread row when it passes. */
+/**
+ * The participant check every attachment mutation shares; the thread row when it passes. In a
+ * circle thread the member must also still be in the circle (the participant set follows it
+ * asynchronously), else the same NotParticipant.
+ */
 export const participantThreadOf = async (
   ctx: QueryCtx,
   threadId: string,
@@ -105,7 +110,12 @@ export const participantThreadOf = async (
       message: "Thread not found",
     });
   }
-  if (!thread.participants.includes(memberId)) {
+  if (
+    !thread.participants.includes(memberId) ||
+    (thread.subjectKind === "circle" &&
+      (thread.circleId === undefined ||
+        !(await isCurrentCircleMember(ctx, thread.circleId, memberId))))
+  ) {
     throw new ConvexError({
       code: "NotParticipant",
       message: "Only participants may post to a thread",
@@ -167,6 +177,29 @@ export const deleteReveals = async (
 };
 
 /**
+ * Delete an attachment whose thread is gone (a deleted circle's purge kept it only for an open
+ * report's evidence hold), with its blobs and reveals, once nothing holds it: nothing can reach it
+ * any more. True when it was deleted. A held row, a live thread's row, and a quarantined photo
+ * (csamEscalations.rowId points at it; the CSAM preservation owns it) are left alone.
+ */
+export const deleteIfOrphaned = async (
+  ctx: MutationCtx,
+  row: Doc<"messageAttachments">,
+): Promise<boolean> => {
+  if (row.evidenceHold) return false;
+  if (row.kind === "image" && row.moderationStatus === "quarantined") {
+    return false;
+  }
+  if ((await threadRowByAggregateId(ctx, row.threadAggregateId)) !== null) {
+    return false;
+  }
+  await deleteAttachmentBlobs(ctx, row);
+  if (row.kind === "image") await deleteReveals(ctx, row._id);
+  await ctx.db.delete(row._id);
+  return true;
+};
+
+/**
  * Clear a photo's evidence hold once no OPEN report references it any more (a report on the photo
  * itself, or on its image message). Called when a report is decided.
  */
@@ -192,6 +225,7 @@ export const releaseEvidenceHold = async (
       .first();
     if (open) return;
   }
+  if (await deleteIfOrphaned(ctx, { ...row, evidenceHold: undefined })) return;
   await ctx.db.patch(attachmentId, {
     evidenceHold: undefined,
     updatedAt: Date.now(),
@@ -431,8 +465,11 @@ export const settleSendBatch = async (
     .sort((a, b) => (a.sendIndex ?? 0) - (b.sendIndex ?? 0));
 
   const thread = await threadRowByAggregateId(ctx, anchor.threadAggregateId);
+  // The pair-block rule is for exchange/DM threads only: a block between two circle members
+  // removes neither from the circle's thread (spec 5.3), so their photos are delivered.
   const blocked =
     thread !== null &&
+    thread.subjectKind !== "circle" &&
     (
       await Promise.all(
         thread.participants

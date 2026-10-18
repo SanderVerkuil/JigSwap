@@ -11,6 +11,7 @@ import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
 import { UNREAD_SCAN_CAP, unreadCountOf } from "../readModelHelpers";
 import {
+  participantJoinedAtOf,
   participantsKeyOf,
   toDomain,
   toLastMessage,
@@ -115,10 +116,12 @@ export const convexThreadRepository = (ctx: MutationCtx): ThreadRepository => {
       return row ? hydrate(row) : null;
     },
 
-    // Circle threads are not stored yet (G4 adds the `by_circle` index and the `circle`
-    // subjectKind), so no circle ever has a thread here.
-    async findByCircle(_circleId: CircleId): Promise<Thread | null> {
-      return null;
+    async findByCircle(circleId: CircleId): Promise<Thread | null> {
+      const row = await ctx.db
+        .query("threads")
+        .withIndex("by_circle", (q) => q.eq("circleId", circleId as string))
+        .first();
+      return row ? hydrate(row) : null;
     },
 
     async save(thread: Thread): Promise<void> {
@@ -183,6 +186,14 @@ export const convexThreadRepository = (ctx: MutationCtx): ThreadRepository => {
       // Participant rows: synced exactly to the aggregate's set (insert missing, delete stale and
       // duplicates), and carrying each member's state. A changed receipt patches only that
       // member's row; appended messages bump every row's activity and every non-author's unread.
+      // A circle member's row is inserted with their joinedAt (history floor) and deleted when
+      // they leave, so a re-join is a fresh row. Circle unread leaves out what the member can't
+      // or needn't see: rows at or before their floor, join/leave rows, and members they blocked.
+      const joinedAtOf = participantJoinedAtOf(thread);
+      const isCircle = state.subject.kind === "circle";
+      const blockersOfAuthor = isCircle
+        ? await blockersAmong(ctx, appended, participants)
+        : new Set<string>();
       const receiptOf = new Map(
         state.readReceipts.map((r) => [
           r.memberId as string,
@@ -216,8 +227,14 @@ export const convexThreadRepository = (ctx: MutationCtx): ThreadRepository => {
         }
         if (newest !== undefined) {
           patch.lastActivityAt = lastMessageAt;
+          const floor = participantRow?.joinedAt ?? joinedAtOf.get(memberId);
           const incoming = appended.filter(
-            (m) => (m.authorId as string | undefined) !== memberId,
+            (m) =>
+              (m.authorId as string | undefined) !== memberId &&
+              (!isCircle ||
+                ((floor === undefined || m.sentAt > floor) &&
+                  m.systemEvent === undefined &&
+                  !blockersOfAuthor.has(`${memberId}|${m.authorId}`))),
           ).length;
           // A brand-new row starts at 0. A pre-backfill row without a count derives it once by
           // the capped scan, which already includes the messages inserted above.
@@ -239,6 +256,9 @@ export const convexThreadRepository = (ctx: MutationCtx): ThreadRepository => {
             memberId: memberId as unknown as Id<"users">,
             unreadCount: 0,
             lastActivityAt: lastMessageAt ?? createdAt,
+            ...(joinedAtOf.has(memberId) && {
+              joinedAt: joinedAtOf.get(memberId),
+            }),
             ...patch,
           });
         } else if (Object.keys(patch).length > 0) {
@@ -247,4 +267,32 @@ export const convexThreadRepository = (ctx: MutationCtx): ThreadRepository => {
       }
     },
   };
+};
+
+// The (participant, author) pairs among the appended messages where the participant blocked the
+// author, keyed `${participantId}|${authorId}`: such a message is never unread for its blocker.
+// One by_pair point read per (participant, distinct author), at most 50 per author.
+const blockersAmong = async (
+  ctx: MutationCtx,
+  appended: readonly ThreadMessageRow[],
+  participants: readonly MemberId[],
+): Promise<Set<string>> => {
+  const pairs = new Set<string>();
+  const authors = new Set(
+    appended.flatMap((m) => (m.authorId === undefined ? [] : [m.authorId])),
+  );
+  for (const authorId of authors) {
+    for (const memberId of participants) {
+      const blockerId = memberId as unknown as Id<"users">;
+      if (blockerId === authorId) continue;
+      const block = await ctx.db
+        .query("blocks")
+        .withIndex("by_pair", (q) =>
+          q.eq("blockerId", blockerId).eq("blockedId", authorId),
+        )
+        .first();
+      if (block) pairs.add(`${memberId}|${authorId}`);
+    }
+  }
+  return pairs;
 };

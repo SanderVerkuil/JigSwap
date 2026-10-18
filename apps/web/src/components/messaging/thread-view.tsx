@@ -33,6 +33,7 @@ import {
   formatFullDateTime,
   formatMessageTime,
   groupThreadMessages,
+  pairThreads,
   segmentMessages,
   threadSubjectTitle,
   type ThreadItem,
@@ -96,9 +97,10 @@ export function ThreadView({
       status === "LoadingFirstPage" ? undefined : [...newestFirst].reverse(),
     [newestFirst, status],
   );
-  const { data: inbox } = useQuery(
-    convexQuery(gateway.conversation.getMyInbox, me ? {} : "skip"),
-  );
+  const { data: inbox } = useQuery({
+    ...convexQuery(gateway.conversation.getMyInbox, me ? {} : "skip"),
+    select: pairThreads,
+  });
   // My photos here that aren't messages yet (being checked, or stopped).
   const { data: pendingPhotos } = useQuery(
     convexQuery(

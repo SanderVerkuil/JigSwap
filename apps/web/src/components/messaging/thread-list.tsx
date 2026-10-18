@@ -25,6 +25,7 @@ import {
   formatCompactTime,
   formatFullDateTime,
   formatUnreadCount,
+  pairThreads,
   threadSubjectTitle,
   type InboxThread,
 } from "./format";
@@ -97,7 +98,10 @@ function ThreadListBody({ activeThreadId }: { activeThreadId?: string }) {
     data: inbox,
     isError,
     refetch,
-  } = useQuery(convexQuery(gateway.conversation.getMyInbox, me ? {} : "skip"));
+  } = useQuery({
+    ...convexQuery(gateway.conversation.getMyInbox, me ? {} : "skip"),
+    select: pairThreads,
+  });
 
   if (isError) {
     return (

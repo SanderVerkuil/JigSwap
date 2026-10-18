@@ -10,6 +10,7 @@ import {
 import {
   clearLocationCoordinates,
   deleteAttachmentBlobs,
+  deleteIfOrphaned,
   deleteReveals,
 } from "../conversation/messageAttachments";
 import { logEvent } from "../lib/logEvent";
@@ -202,6 +203,10 @@ export const recordEvidence = internalMutation({
       evidenceHold: undefined,
       updatedAt: Date.now(),
     });
+    // A deleted circle's attachment, kept only for this hold: the row goes too (its caption,
+    // blurhash and size, or a location's coordinates), unless it is quarantined.
+    if (await deleteIfOrphaned(ctx, { ...row, evidenceHold: undefined }))
+      return;
     await deleteAttachmentBlobs(ctx, { ...row, evidenceHold: undefined });
     await deleteReveals(ctx, attachmentId);
     // A removed location keeps nothing that places anyone: with its map copied (or known to be

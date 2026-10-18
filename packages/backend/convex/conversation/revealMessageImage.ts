@@ -3,15 +3,18 @@ import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { enforceRateLimit } from "../lib/rateLimits";
-import { isBlockedEitherWay } from "../social/blocks";
+import { blockStateBetween, isBlockedEitherWay } from "../social/blocks";
 import { asImage, hasOpenReport, isDeliverable } from "./messageAttachments";
-import { threadRowByAggregateId } from "./readModelHelpers";
+import { circleFloorOf, threadRowByAggregateId } from "./readModelHelpers";
 
 // "Show" on a blurred message photo (spec R.2): the thread read carries no URL for a blurred
 // photo, so the tap fetches it here. Same gates as serving it at all: a participant of its thread,
 // a delivered, deliverable, hash-cleared photo whose message wasn't removed, the pair not blocked
 // either way, and no open report by the viewer on the photo or its message (it stays blurred for
-// them); anything else is the same generic AttachmentNotFound. Rate limited. The
+// them); anything else is the same generic AttachmentNotFound. In a circle thread: the viewer must
+// hold a current seat and the message must be past their floor (circleFloorOf); and only the
+// viewer's OWN block on the uploader vetoes it (it stays collapsed for the blocker), never the
+// uploader's block on the viewer, which would tell the blocked member about it. Rate limited. The
 // reveal is recorded for this viewer, so later reads serve the photo to them directly.
 export const revealMessageImage = mutation({
   args: { attachmentId: v.id("messageAttachments") },
@@ -32,12 +35,19 @@ export const revealMessageImage = mutation({
       .withIndex("by_message_id", (q) => q.eq("messageId", messageId))
       .first();
     const thread = await threadRowByAggregateId(ctx, row.threadAggregateId);
+    const circle = thread?.subjectKind === "circle";
+    const floor =
+      thread && circle ? await circleFloorOf(ctx, thread, me) : undefined;
     if (
       !message ||
       message.removedAt !== undefined ||
       !thread?.participants.includes(me) ||
+      floor === null ||
+      (floor !== undefined && message.sentAt <= floor) ||
       (row.uploaderId !== me &&
-        (await isBlockedEitherWay(ctx, me, row.uploaderId))) ||
+        (circle
+          ? (await blockStateBetween(ctx, me, row.uploaderId)) === "byMe"
+          : await isBlockedEitherWay(ctx, me, row.uploaderId))) ||
       // A photo the viewer reported stays blurred for them (spec 2.5).
       (await hasOpenReport(ctx, me, row))
     ) {
