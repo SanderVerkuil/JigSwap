@@ -1201,6 +1201,10 @@
         "title": "Sightengine",
         "description": "Fotocontrole (ter vervanging van Hugging Face). Sightengine wordt beheerd door Kozelo SAS in Parijs, Frankrijk. Elke foto die je uploadt wordt naar de veiligheidsdienst van Sightengine gestuurd. Die controleert de foto op expliciete inhoud en geeft een score terug; de afbeelding wordt alleen verwerkt om dat resultaat te geven. De datacenters van Sightengine staan vooral in de Europese Unie, maar afhankelijk van de beschikbaarheid kan de verwerking ook in Canada of de Verenigde Staten plaatsvinden."
       },
+      "maptiler": {
+        "title": "MapTiler",
+        "description": "Kaarten en plekken zoeken voor gedeelde locaties. MapTiler wordt beheerd door MapTiler AG in Zwitserland. Als je een plek zoekt of een locatie deelt in een bericht, sturen onze servers je zoektekst en de coördinaten van de kaart naar MapTiler, dat ze alleen gebruikt om plekken te vinden en kaartafbeeldingen terug te geven. MapTiler wordt nooit vanuit jouw browser of die van de ontvanger benaderd en ziet je IP-adres dus nooit. De kaartafbeelding van een gedeelde locatie bewaren we zelf."
+      },
       "axiom": {
         "title": "Axiom",
         "description": "Technische logs. Onze technische logregels (bijvoorbeeld dat een fotocontrole is uitgevoerd en hoe die afliep, met interne account- en record-ID's) worden naar Axiom gestuurd en opgeslagen in de EU-regio van Axiom. Deze logs bevatten geen berichten en geen foto's."

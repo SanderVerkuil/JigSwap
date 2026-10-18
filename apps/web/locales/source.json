@@ -1201,6 +1201,10 @@
         "title": "Sightengine",
         "description": "Photo screening (replacing Hugging Face). Sightengine is operated by Kozelo SAS in Paris, France. Each photo you upload is sent to its content-safety service, which checks it for explicit content and returns a score; it processes the image only to return that result. Sightengine's data centres are mainly in the European Union, but depending on availability it may also process images in Canada or the United States."
       },
+      "maptiler": {
+        "title": "MapTiler",
+        "description": "Maps and place search for shared locations. MapTiler is operated by MapTiler AG in Switzerland. When you search for a place or share a location in a message, our servers send your search text and the coordinates of the map to MapTiler, which uses them only to find places and to return map images. MapTiler is never contacted from your browser or the recipient's, so it never sees your IP address. The map image of a shared location is stored with us."
+      },
       "axiom": {
         "title": "Axiom",
         "description": "Technical logs. Our technical event logs (for example, that a photo check ran and how it ended, with internal account and record identifiers) are sent to Axiom and stored in its EU region. These logs do not contain your messages or your photos."
