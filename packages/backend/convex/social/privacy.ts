@@ -8,7 +8,7 @@ import type { QueryCtx } from "../_generated/server";
 import { householdMateIds } from "../household/memberships";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { toMemberView } from "../identity/toMemberView";
-import { isBlockedEitherWay } from "./blocks";
+import { blockStateBetween, isBlockedEitherWay } from "./blocks";
 
 // Privacy chokepoint for surfacing other members inside a copy's history. The rules below run
 // SERVER-SIDE so a hidden member's real identity (id/name/username/avatar) never leaves the
@@ -144,7 +144,8 @@ export const anonymousMemberOf = (
  * with `salt` (pass the copyId so the same hidden member is stable within a timeline but
  * un-correlatable across copies). Rules, in order:
  *   1. target IS the viewer -> revealed (even if the viewer's own profile is private).
- *   2. target user row missing, or the pair is blocked either way -> anonymous.
+ *   2. target user row missing, or the target blocked the viewer -> anonymous. When the VIEWER
+ *      blocked the target they are revealed: the blocker chose them and needs the name to unblock.
  *   3. target's profile is public -> revealed.
  *   4. viewer and target are mutual followers -> revealed.
  *   5. otherwise -> anonymous.
@@ -164,9 +165,13 @@ export const projectMemberIdentity = async (
   }
 
   const target = await ctx.db.get(targetId);
-  if (!target || (await isBlockedEitherWay(ctx, viewerId, targetId))) {
+  if (!target) return { anonymous: true, anonRef: anonRefOf(targetId, salt) };
+  const block = await blockStateBetween(ctx, viewerId, targetId);
+  if (block === "byThem") {
     return { anonymous: true, anonRef: anonRefOf(targetId, salt) };
   }
+  if (block === "byMe")
+    return { anonymous: false, member: toMemberView(target) };
 
   if ((await profileVisibilityOf(ctx, targetId)) === "public") {
     return { anonymous: false, member: toMemberView(target) };

@@ -113,21 +113,35 @@ const expectCode = async (promise: Promise<unknown>, code: string) => {
 };
 
 describe("projectMemberIdentity", () => {
-  test.each(DIRECTIONS)(
-    "%s: the other member is anonymous, self stays revealed",
-    async (_, pair) => {
-      const t = convexTest(schema, modules);
-      const u = await seed(t);
-      await insertBlock(t, ...pair(u));
-      await t.run(async (ctx) => {
-        const other = await projectMemberIdentity(ctx, u.alice, u.bob, "salt");
-        expect(other.anonymous).toBe(true);
-        expect(other).not.toHaveProperty("member");
-        const self = await projectMemberIdentity(ctx, u.alice, u.alice, "salt");
-        expect(self.anonymous).toBe(false);
+  test("blocked by the target: the target is anonymous, self stays revealed", async () => {
+    const t = convexTest(schema, modules);
+    const u = await seed(t);
+    await insertBlock(t, u.bob, u.alice);
+    await t.run(async (ctx) => {
+      const other = await projectMemberIdentity(ctx, u.alice, u.bob, "salt");
+      expect(other.anonymous).toBe(true);
+      expect(other).not.toHaveProperty("member");
+      const self = await projectMemberIdentity(ctx, u.alice, u.alice, "salt");
+      expect(self.anonymous).toBe(false);
+    });
+  });
+
+  test("the blocker still sees who they blocked, even when that profile is private", async () => {
+    const t = convexTest(schema, modules);
+    const u = await seed(t);
+    await t.run(async (ctx) => {
+      await ctx.db.insert("profiles", {
+        memberId: u.bob,
+        visibility: "private",
+        updatedAt: Date.now(),
       });
-    },
-  );
+    });
+    await insertBlock(t, u.alice, u.bob);
+    await t.run(async (ctx) => {
+      const other = await projectMemberIdentity(ctx, u.alice, u.bob, "salt");
+      expect(other.anonymous).toBe(false);
+    });
+  });
 
   test("an unblocked public member is still revealed", async () => {
     const t = convexTest(schema, modules);
