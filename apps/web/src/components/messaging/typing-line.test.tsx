@@ -1,11 +1,15 @@
 // @vitest-environment happy-dom
+import { gateway } from "@/gateway";
+import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import type { ProjectedMember, TypingView } from "@jigswap/contracts";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, render, screen } from "@testing-library/react";
+import { ConvexReactClient } from "convex/react";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
-import { TypingLineView } from "./typing-line";
+import { TypingLine, TypingLineView } from "./typing-line";
 
 const member = (name: string): ProjectedMember => ({
   anonymous: false,
@@ -133,5 +137,88 @@ describe("TypingLineView", () => {
       vi.advanceTimersByTime(1);
     });
     expect(line().textContent).toBe("");
+  });
+});
+
+describe("TypingLine", () => {
+  let visibility: DocumentVisibilityState = "visible";
+  const setVisibility = (state: DocumentVisibilityState) => {
+    visibility = state;
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+  };
+
+  beforeEach(() => {
+    visibility = "visible";
+    vi.spyOn(document, "visibilityState", "get").mockImplementation(
+      () => visibility,
+    );
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  // A query client whose getTyping for thread_1 already holds Anna; any other
+  // query never resolves.
+  const renderWithData = () => {
+    const convexQueryClient = new ConvexQueryClient(
+      new ConvexReactClient("https://example.convex.cloud"),
+    );
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          queryKeyHashFn: convexQueryClient.hashFn(),
+          staleTime: Infinity,
+          retry: false,
+          queryFn: () => new Promise<never>(() => {}),
+        },
+      },
+    });
+    queryClient.setQueryData(
+      convexQuery(gateway.conversation.getTyping, { threadId: "thread_1" })
+        .queryKey,
+      [typer("Anna")],
+    );
+    render(
+      <QueryClientProvider client={queryClient}>
+        <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+          <TypingLine threadId="thread_1" />
+        </IntlProvider>
+      </QueryClientProvider>,
+    );
+    return { queryClient };
+  };
+
+  const observed = (queryClient: QueryClient) =>
+    queryClient
+      .getQueryCache()
+      .find({
+        queryKey: convexQuery(gateway.conversation.getTyping, {
+          threadId: "thread_1",
+        }).queryKey,
+      })
+      ?.getObserversCount() ?? 0;
+
+  it("shows getTyping's typers while the tab is visible", () => {
+    const { queryClient } = renderWithData();
+    expect(line().textContent).toBe("Anna is typing…");
+    expect(observed(queryClient)).toBe(1);
+  });
+
+  it("drops the subscription and shows nothing while the tab is hidden", () => {
+    const { queryClient } = renderWithData();
+    setVisibility("hidden");
+    expect(line().textContent).toBe("");
+    expect(observed(queryClient)).toBe(0);
+
+    setVisibility("visible");
+    expect(line().textContent).toBe("Anna is typing…");
+    expect(observed(queryClient)).toBe(1);
+  });
+
+  it("never subscribes when it mounts in a hidden tab", () => {
+    visibility = "hidden";
+    const { queryClient } = renderWithData();
+    expect(line().textContent).toBe("");
+    expect(observed(queryClient)).toBe(0);
   });
 });

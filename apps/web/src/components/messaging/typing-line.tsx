@@ -7,22 +7,40 @@
 // the server is needed. The line always keeps its height so the thread doesn't
 // jump, animates its dots only when motion is welcome, and is aria-hidden:
 // screen readers hear new messages (the thread's live region), not typing.
+// It subscribes to getTyping only while the tab is visible (spec 4.3): a
+// hidden tab costs no re-runs.
 import { gateway } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { convexQuery } from "@convex-dev/react-query";
 import { TYPING_TTL_MS, type TypingView } from "@jigswap/contracts";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useTranslations } from "use-intl";
 import { anonymousLabel } from "./format";
 
 const NO_TYPERS: readonly TypingView[] = [];
 
+const subscribeToVisibility = (onChange: () => void) => {
+  document.addEventListener("visibilitychange", onChange);
+  return () => document.removeEventListener("visibilitychange", onChange);
+};
+const tabVisible = () => document.visibilityState === "visible";
+// The server render subscribes to nothing.
+const tabVisibleOnServer = () => false;
+
 export function TypingLine({ threadId }: { threadId: string }) {
-  const { data } = useQuery(
-    convexQuery(gateway.conversation.getTyping, { threadId }),
+  const visible = useSyncExternalStore(
+    subscribeToVisibility,
+    tabVisible,
+    tabVisibleOnServer,
   );
-  return <TypingLineView typers={data ?? NO_TYPERS} />;
+  const { data } = useQuery(
+    convexQuery(
+      gateway.conversation.getTyping,
+      visible ? { threadId } : "skip",
+    ),
+  );
+  return <TypingLineView typers={visible ? (data ?? NO_TYPERS) : NO_TYPERS} />;
 }
 
 // The typers still live now: each entry's server age plus the time since this
