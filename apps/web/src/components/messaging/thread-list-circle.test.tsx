@@ -33,6 +33,11 @@ vi.mock("@/components/dashboard-home/use-current-member", () => ({
 
 vi.mock("@tanstack/react-router", () => ({ useNavigate: () => vi.fn() }));
 
+// The one-time presence prompt has its own tests (presence-sharing.test.tsx).
+vi.mock("@/components/presence/presence-sharing", () => ({
+  PresenceSharePrompt: () => null,
+}));
+
 const person = (id: string, name: string) => ({
   anonymous: false as const,
   member: {

@@ -4783,6 +4783,7 @@
   "presence": {
     "online": "Online",
     "away": "Afwezig",
+    "onlineCount": "{count} online",
     "statusAuto": "Status: Automatisch",
     "statusAway": "Status: Afwezig",
     "statusInvisible": "Status: Offline weergeven",
