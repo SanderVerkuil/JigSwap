@@ -18,18 +18,19 @@ Already shipped, not redone by this plan:
 - Blocking and reporting (attachments spec A1–A6): #167–#172. Photos and locations (PRs 9–13): #176, #227–#230, including the account-deletion messaging purge.
 - The #160 `isMine` message contract; the account-deletion purges #237, #247.
 
-Remaining work (issues #251–#258), shipped as one linear `gh stack`, bottom to top:
+Remaining work (issues #251–#258, #266), shipped as one linear `gh stack`, bottom to top:
 
-| #   | Issue | PR                                                                                                                                                                                |
-| --- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| G3  | #251  | conversation domain: circle subject, participant entries with `joinedAt`, add/remove, join/leave system events, `openCircleThread` / `syncCircleParticipant`, `CircleRoster` port |
-| G4  | #252  | circle threads backend (schema, sync on circle events, deletion purge, joinedAt floor, `projectThreadMember`, blocking in circles, mute, inbox subject, contracts)                |
-| G5  | #253  | per-thread grouping of `message_received`, push tag + throttle, `circle_message_received` with delayed email digest, mute on all channels                                         |
-| G6  | #254  | circle chat web UI                                                                                                                                                                |
-| G7  | #255  | typing indicators, backend + web                                                                                                                                                  |
-| G8  | #256  | presence visibility rule, preferences, rooms, `getPresenceOf`                                                                                                                     |
-| G9  | #257  | presence web UI                                                                                                                                                                   |
-| G10 | #258  | privacy page, user guide, What's new                                                                                                                                              |
+| #   | Issue | PR                                                                                                                                                                                                                                      |
+| --- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| G3  | #251  | conversation domain: circle subject, participant entries with `joinedAt`, add/remove, join/leave system events, `openCircleThread` / `syncCircleParticipant`, `CircleRoster` port                                                       |
+| G4  | #252  | circle threads backend (schema, sync on circle events, deletion purge, joinedAt floor, `projectThreadMember`, blocking in circles, mute, inbox subject, contracts)                                                                      |
+| G5  | #253  | per-thread grouping of `message_received`, push tag + throttle, `circle_message_received` with delayed email digest, mute on all channels                                                                                               |
+| G6  | #254  | circle chat web UI                                                                                                                                                                                                                      |
+| G6b | #266  | circle detail page `/circles/$circleId`: header with members, shared puzzles (through `canViewCopy`), latest chat preview (joinedAt floor, blocks), link into the chat, existing manage/leave/invite actions; non-members get not-found |
+| G7  | #255  | typing indicators, backend + web                                                                                                                                                                                                        |
+| G8  | #256  | presence visibility rule, preferences, rooms, `getPresenceOf`                                                                                                                                                                           |
+| G9  | #257  | presence web UI                                                                                                                                                                                                                         |
+| G10 | #258  | privacy page, user guide, What's new                                                                                                                                                                                                    |
 
 Account-deletion purges of the new rows ship with the PR that introduces each table (G4 participant rows, G7 typing rows, G8 presence preferences and component rows), rather than in G10.
 
