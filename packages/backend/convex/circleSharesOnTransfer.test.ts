@@ -2,6 +2,7 @@ import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { collectCircleSharedCopies } from "./library/circleSharedCopies";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -202,7 +203,7 @@ describe("circle shares on ownership transfer", () => {
 
   test("shares go even when the new owner is in the same circle (they never chose to share it)", async () => {
     const t = convexTest(schema, modules);
-    const { alice, mia, noah, puzzleAggregateId } = await seed(t);
+    const { alice, mia, noah, puzzleId, puzzleAggregateId } = await seed(t);
 
     const circleId = (await asAlice(t).mutation(
       api.sharing.createCircle.createCircle,
@@ -210,6 +211,10 @@ describe("circle shares on ownership transfer", () => {
     )) as string;
     await seatInCircle(t, circleId, mia);
     await seatInCircle(t, circleId, noah);
+    const miaCircleShared = () =>
+      t.run(async (ctx) =>
+        (await collectCircleSharedCopies(ctx, mia)).map((c) => c._id),
+      );
 
     const copyAggregateId = (await asAlice(t).mutation(
       api.library.acquireCopy.acquireCopy,
@@ -222,9 +227,20 @@ describe("circle shares on ownership transfer", () => {
       copyId: copyAggregateId,
     });
     expect(await sharesOf(t, copyAggregateId)).toHaveLength(1);
+    expect(await miaCircleShared()).toContain(copy);
 
     await settleSaleToNoah(t, copy, alice);
     expect((await rowOf(t, copyAggregateId)).ownerId).toBe(noah);
+    await t.run(async (ctx) => ctx.db.patch(copy, { availability: OPEN }));
+
+    // Sharing Noah's circle gives Mia no path by itself: only copies Noah shares into it are
+    // reachable, and he never shared this one. Noah is private, not mutual, not in her household,
+    // so no other rule lets her see it either.
+    expect(await miaCircleShared()).not.toContain(copy);
+    const after = await miaReach(t, copy, puzzleId);
+    expect(after.instance).toBeNull();
+    expect(after.inBrowse).toBe(false);
+    expect(after.inDefinition).toBe(false);
     expect(await sharesOf(t, copyAggregateId)).toEqual([]);
   });
 });
