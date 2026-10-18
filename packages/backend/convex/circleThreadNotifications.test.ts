@@ -207,3 +207,147 @@ describe("mute", () => {
     expect(await emailsTo(t, bob)).toEqual([]);
   });
 });
+
+const viewsOf = async (t: T, clerkId: string) =>
+  (
+    await as(t, clerkId).query(
+      api.notifications.listMyNotificationViews.listMyNotificationViews,
+      { paginationOpts: { numItems: 20, cursor: null } },
+    )
+  ).page;
+
+describe("per-thread in-app grouping", () => {
+  test("messages in one circle thread merge into one unread row: distinct authors newest first, counted once", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, carol, dave, circleId, threadId } = await seed(t);
+    await as(t, "alice").mutation(internal.sharing.addMember.addMember, {
+      circleId,
+      memberId: dave,
+      permission: "ViewOnly",
+    });
+    await flush(t);
+    await post(t, "alice", threadId, "one");
+    await post(t, "carol", threadId, "two");
+    await post(t, "alice", threadId, "three");
+    await post(t, "dave", threadId, "four");
+
+    const [row, ...rest] = await rowsOf(t, bob);
+    expect(rest).toEqual([]);
+    expect(row).toMatchObject({
+      type: "circle_message_received",
+      groupKey: `thread:${threadId}`,
+      actorIds: [dave, alice, carol],
+      actorCount: 3,
+      isRead: false,
+    });
+
+    // Bob sees every author named through the circle rule, and the circle's name.
+    const [view] = await viewsOf(t, "bob");
+    expect(view.actorCount).toBe(3);
+    expect(view.actors.map((a) => !a.anonymous && a.memberId)).toEqual([
+      dave,
+      alice,
+      carol,
+    ]);
+    expect(view.context.circleName).toBe("Puzzle Club");
+    expect(view.href).toBe(`/messages/${threadId}`);
+    // A grouped row offers no inline reply.
+    expect(view.availableActions).toEqual([]);
+  });
+
+  test("a merge re-surfaces the thread's row above newer notifications; a read row opens a new group", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, threadId } = await seed(t);
+    await post(t, "alice", threadId, "one");
+    const [first] = await rowsOf(t, bob);
+    // Something else lands on top of it.
+    await t.run((ctx) =>
+      ctx.db.insert("notifications", {
+        aggregateId: "other",
+        userId: bob,
+        type: "goal_achieved",
+        isRead: false,
+        createdAt: Date.now(),
+      }),
+    );
+    await post(t, "carol", threadId, "two");
+    let rows = await rowsOf(t, bob);
+    expect(rows.map((r) => r.aggregateId)).toEqual([
+      first.aggregateId,
+      "other",
+    ]);
+
+    await as(t, "bob").mutation(
+      api.notifications.markNotificationRead.markNotificationRead,
+      { notificationId: first.aggregateId! },
+    );
+    await post(t, "alice", threadId, "three");
+    rows = await rowsOf(t, bob);
+    expect(rows).toHaveLength(3);
+    expect(rows[0]).toMatchObject({ isRead: false, actorCount: 1 });
+  });
+
+  test("two threads never share a row", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, threadId } = await seed(t);
+    const dm = await openDm(t, "alice", bob);
+    await post(t, "alice", threadId, "in the club");
+    await post(t, "alice", dm, "just us");
+    const rows = await rowsOf(t, bob);
+    expect(rows.map((r) => r.groupKey).sort()).toEqual(
+      [`thread:${dm}`, `thread:${threadId}`].sort(),
+    );
+  });
+
+  test("DM messages group into one unread row per thread", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+    const dm = await openDm(t, "alice", bob);
+    await post(t, "alice", dm, "one");
+    await post(t, "alice", dm, "two");
+    await post(t, "alice", dm, "three");
+    const [row, ...rest] = await rowsOf(t, bob);
+    expect(rest).toEqual([]);
+    expect(row).toMatchObject({
+      type: "message_received",
+      groupKey: `thread:${dm}`,
+      actorIds: [alice],
+      actorCount: 1,
+    });
+    // One actor: the reply action stays.
+    const [view] = await viewsOf(t, "bob");
+    expect(view.availableActions).toEqual(["reply_message"]);
+  });
+});
+
+describe("author projection", () => {
+  test("an author who is no longer a co-member, and not otherwise visible, stays anonymous", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, threadId, circleId } = await seed(t);
+    await post(t, "carol", threadId, "bye soon");
+    await post(t, "alice", threadId, "ok");
+    await as(t, "carol").mutation(api.sharing.leaveCircle.leaveCircle, {
+      circleId,
+    });
+    await flush(t);
+    const [view] = await viewsOf(t, "bob");
+    expect(view.actorCount).toBe(2);
+    expect(view.actors[0]).toMatchObject({ anonymous: false, memberId: alice });
+    expect(view.actors[1]).toEqual({ anonymous: true });
+    expect(JSON.stringify(view)).not.toContain("carol");
+  });
+
+  test("once the viewer has left, a co-member is no longer revealed by the circle", async () => {
+    const t = convexTest(schema, modules);
+    const { threadId, circleId } = await seed(t);
+    await post(t, "carol", threadId, "hi");
+    await as(t, "bob").mutation(api.sharing.leaveCircle.leaveCircle, {
+      circleId,
+    });
+    await flush(t);
+    const [view] = await viewsOf(t, "bob");
+    expect(view.actors).toEqual([{ anonymous: true }]);
+    expect(view.context.circleName).toBeUndefined();
+    expect(view.href).toBe("/messages");
+  });
+});

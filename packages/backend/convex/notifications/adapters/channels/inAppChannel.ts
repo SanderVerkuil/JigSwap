@@ -1,13 +1,37 @@
-import type { Notification } from "@jigswap/domain";
+import type { Notification, NotificationState } from "@jigswap/domain";
 import type { Doc, Id } from "../../../_generated/dataModel";
 import type { MutationCtx } from "../../../_generated/server";
 import { convexNotificationRepository } from "../convexNotificationRepository";
 import { toRow } from "../notificationMapper";
 
-// Write-time grouping (new_follower only): a new follower joins the recipient's unread
-// new_follower row if it absorbed an actor within the window, instead of adding a row.
+// Write-time grouping: a new follower joins the recipient's unread new_follower row if it absorbed
+// an actor within the window, and a message joins the recipient's unread row for its thread
+// (`thread:<threadId>`, DMs and circle threads alike, no window: one unread row per thread),
+// instead of adding a row.
 const NEW_FOLLOWER_GROUP = "new_follower";
 export const GROUP_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+const MESSAGE_TYPES: ReadonlySet<string> = new Set([
+  "message_received",
+  "circle_message_received",
+]);
+
+// The group a notification joins and how long an unread row stays open to it; null = ungrouped.
+const groupOf = (
+  state: NotificationState,
+): { key: string; windowMs: number } | null => {
+  if (state.actorId === undefined) return null;
+  if (state.type === "new_follower") {
+    return { key: NEW_FOLLOWER_GROUP, windowMs: GROUP_WINDOW_MS };
+  }
+  if (MESSAGE_TYPES.has(state.type) && state.subject?.kind === "thread") {
+    return {
+      key: `thread:${state.subject.threadId}`,
+      windowMs: Number.POSITIVE_INFINITY,
+    };
+  }
+  return null;
+};
 // The stored actor ids are capped; actorCount keeps counting past it.
 export const MAX_GROUPED_ACTOR_IDS = 10;
 
@@ -18,7 +42,8 @@ export const inAppChannel =
   (ctx: MutationCtx) =>
   async (notification: Notification): Promise<void> => {
     const state = notification.toState();
-    if (state.type !== "new_follower" || state.actorId === undefined) {
+    const group = groupOf(state);
+    if (group === null || state.actorId === undefined) {
       await convexNotificationRepository(ctx).save(notification);
       return;
     }
@@ -29,16 +54,13 @@ export const inAppChannel =
     const open = await ctx.db
       .query("notifications")
       .withIndex("by_user_group", (q) =>
-        q
-          .eq("userId", userId)
-          .eq("groupKey", NEW_FOLLOWER_GROUP)
-          .eq("isRead", false),
+        q.eq("userId", userId).eq("groupKey", group.key).eq("isRead", false),
       )
       .collect();
     const lastTouched = (row: Doc<"notifications">) =>
       row.updatedAt ?? row.createdAt;
     const target = open
-      .filter((row) => now - lastTouched(row) <= GROUP_WINDOW_MS)
+      .filter((row) => now - lastTouched(row) <= group.windowMs)
       .reduce<Doc<"notifications"> | null>(
         (newest, row) =>
           !newest || lastTouched(row) > lastTouched(newest) ? row : newest,
@@ -49,7 +71,7 @@ export const inAppChannel =
       // A fresh notification (new aggregateId), so a plain insert; it opens a new group.
       await ctx.db.insert("notifications", {
         ...toRow(notification),
-        groupKey: NEW_FOLLOWER_GROUP,
+        groupKey: group.key,
       });
       return;
     }
@@ -73,7 +95,7 @@ export const inAppChannel =
     await ctx.db.delete(_id);
     await ctx.db.insert("notifications", {
       ...kept,
-      // The newest follower's snapshot (name for legacy renderers), matching actorIds[0].
+      // The newest actor's snapshot (name for legacy renderers), matching actorIds[0].
       ...(state.params !== undefined
         ? { params: state.params as Record<string, string> }
         : {}),
