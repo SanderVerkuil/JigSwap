@@ -229,9 +229,11 @@ export const listRescreenCandidates = internalQuery({
       .paginate(paginationOpts);
     return {
       scanned: page.page.length,
-      candidates: page.page
-        .filter(needsRescreen)
-        .map((row) => ({ imageId: row._id as string, fileId: row.fileId })),
+      candidates: page.page.filter(needsRescreen).map((row) => ({
+        imageId: row._id as string,
+        fileId: row.fileId,
+        uploaderId: row.uploaderId,
+      })),
       isDone: page.isDone,
       continueCursor: page.continueCursor,
     };

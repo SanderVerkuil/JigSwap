@@ -245,7 +245,7 @@ export const imageModerationSteps = <R extends ModerationRow>(
  * delete the blob the row pointed at. Afterwards the wide event carries ONLY the escalation id:
  * no row, uploader or image ids, no decision label.
  */
-const preserveAndQuarantine = async (
+export const preserveAndQuarantine = async (
   ctx: ActionCtx,
   quarantine: ImageModerationSteps<ModerationRow>["quarantine"],
   event: WideEvent,

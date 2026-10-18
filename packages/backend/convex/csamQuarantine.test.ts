@@ -935,3 +935,62 @@ describe("unavailable hash check: stored hashes, re-checks, held unpublished (M1
     expect(row.pendingHashes).toBeUndefined();
   });
 });
+
+describe("re-screen hash-checks legacy and unscored photos (M6)", () => {
+  test("a legacy photo that matches is quarantined and never classified", async () => {
+    const fetchMock = routedFetch("match");
+    vi.stubGlobal("fetch", fetchMock);
+    const t = convexTest(schema, modules);
+    const { alice, copy } = await seed(t);
+    const upload = await storeJpeg(t);
+    const now = Date.now();
+    // Legacy: no moderation status, no hash-check fields (predates the gate).
+    const imageId = await t.run((ctx) =>
+      ctx.db.insert("ownedPuzzleImages", {
+        ownedPuzzleId: copy,
+        uploaderId: alice,
+        fileId: upload.fileId,
+        createdAt: now,
+        updatedAt: now,
+      }),
+    );
+
+    const batch = await t.action(
+      internal.library.rescreenPhotos.rescreenPhotos,
+      { table: "copy" },
+    );
+
+    expect(batch.quarantined).toBe(1);
+    expect(callsTo(fetchMock, HF_HOST)).toHaveLength(0);
+    const row = await t.run((ctx) => ctx.db.get(imageId));
+    expect(row?.moderationStatus).toBe("quarantined");
+    expect(await blobExists(t, upload.fileId)).toBe(false);
+    const [escalation] = await escalations(t);
+    expect(escalation).toMatchObject({ rowId: imageId, md5: upload.md5 });
+    expect(await blobExists(t, escalation.fileId!)).toBe(true);
+  });
+
+  test("unavailable does not hold up the re-screen", async () => {
+    const fetchMock = routedFetch(503);
+    vi.stubGlobal("fetch", fetchMock);
+    const t = convexTest(schema, modules);
+    const { alice, copy } = await seed(t);
+    const upload = await storeJpeg(t);
+    const now = Date.now();
+    await t.run((ctx) =>
+      ctx.db.insert("ownedPuzzleImages", {
+        ownedPuzzleId: copy,
+        uploaderId: alice,
+        fileId: upload.fileId,
+        createdAt: now,
+        updatedAt: now,
+      }),
+    );
+    const batch = await t.action(
+      internal.library.rescreenPhotos.rescreenPhotos,
+      { table: "copy" },
+    );
+    expect(batch.approved).toBe(1);
+    expect(await escalations(t)).toEqual([]);
+  });
+});

@@ -1,7 +1,18 @@
+"use node";
+
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { internalAction, type ActionCtx } from "../_generated/server";
+import {
+  checkAllHashes,
+  makeCsamHashCheckPortFromEnv,
+  readCsamHashCheckConfig,
+} from "../lib/imageModeration/csamHashCheck";
+import {
+  hashImageBytes,
+  preserveAndQuarantine,
+} from "../lib/imageModeration/pipeline";
 import { logEvent, type WideEvent } from "../lib/logEvent";
 import {
   makeModerationPortFromEnv,
@@ -37,6 +48,8 @@ const totalsValidator = v.object({
   rejected: v.number(),
   unscored: v.number(),
   skipped: v.number(),
+  // CSAM hash matches found by the re-screen (quarantined, never classified).
+  quarantined: v.optional(v.number()),
 });
 type Totals = typeof totalsValidator.type;
 
@@ -47,6 +60,7 @@ const ZERO: Totals = {
   rejected: 0,
   unscored: 0,
   skipped: 0,
+  quarantined: 0,
 };
 
 const addTotals = (a: Totals, b: Totals): Totals => ({
@@ -56,11 +70,16 @@ const addTotals = (a: Totals, b: Totals): Totals => ({
   rejected: a.rejected + b.rejected,
   unscored: a.unscored + b.unscored,
   skipped: a.skipped + b.skipped,
+  quarantined: (a.quarantined ?? 0) + (b.quarantined ?? 0),
 });
 
 type Page = {
   scanned: number;
-  candidates: { imageId: string; fileId: Id<"_storage"> }[];
+  candidates: {
+    imageId: string;
+    fileId: Id<"_storage">;
+    uploaderId: Id<"users">;
+  }[];
   isDone: boolean;
   continueCursor: string;
 };
@@ -171,6 +190,14 @@ export const rescreenPhotos = internalAction({
     let stop: "config" | "backoff" | null = null;
     if (!args.dryRun) {
       const port = makeModerationPortFromEnv(process.env);
+      // Legacy and unscored photos never went through the CSAM hash check: check them first.
+      const hashPort = makeCsamHashCheckPortFromEnv(process.env);
+      const hashProvider = readCsamHashCheckConfig(process.env).provider;
+      const quarantine =
+        args.table === "copy"
+          ? internal.library.moderationStore.quarantineImage
+          : internal.solving.completionModerationStore.quarantineImage;
+
       for (const candidate of page.candidates) {
         const blob = await ctx.storage.get(candidate.fileId);
         if (!blob) {
@@ -178,6 +205,35 @@ export const rescreenPhotos = internalAction({
           continue;
         }
         const bytes = new Uint8Array(await blob.arrayBuffer());
+        // Hash check BEFORE classifying. A match quarantines (re-stored as a new blob, always
+        // escalated, never classified). Unavailable is counted and the row is classified anyway:
+        // these photos are already published, and holding them back is the live pipeline's job.
+        const hashCheck = await checkAllHashes(hashPort, [
+          hashImageBytes(bytes),
+        ]);
+        if (hashCheck.status === "match" && hashCheck.matched) {
+          await preserveAndQuarantine(
+            ctx,
+            quarantine,
+            { event: "library.rescreenPhotos.match", outcome: "success" },
+            {
+              imageId: candidate.imageId,
+              bytes,
+              uploadedFileId: candidate.fileId,
+              uploaderId: candidate.uploaderId,
+              matched: hashCheck.matched,
+              provider: hashProvider,
+              originalDiscarded: false,
+            },
+          );
+          batch.quarantined = (batch.quarantined ?? 0) + 1;
+          continue;
+        }
+        // no_match is not recorded: these rows predate the publication gate and stay served.
+        if (hashCheck.status === "unavailable") {
+          event.hash_check_unavailable =
+            ((event.hash_check_unavailable as number | undefined) ?? 0) + 1;
+        }
         const result = await port.classify(bytes, blob.type || undefined);
         if (result.status === "unscored") {
           batch.unscored++;
