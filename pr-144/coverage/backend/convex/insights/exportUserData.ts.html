@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>36/36</span>
+                <span class='fraction'>35/35</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">71.42% </span>
+                <span class="strong">60% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>10/14</span>
+                <span class='fraction'>6/10</span>
             </div>
         
             
@@ -212,7 +212,8 @@
 <a name='L147'></a><a href='#L147'>147</a>
 <a name='L148'></a><a href='#L148'>148</a>
 <a name='L149'></a><a href='#L149'>149</a>
-<a name='L150'></a><a href='#L150'>150</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L150'></a><a href='#L150'>150</a>
+<a name='L151'></a><a href='#L151'>151</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -232,19 +233,20 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -317,7 +319,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7x</span>
@@ -343,7 +345,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -363,37 +365,38 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
+import { projectTradeParty, type TradePartyMemo } from "../exchange/tradeParty";
 import { requireMember } from "../identity/requireMember";
 import { onboardingRowOf } from "../onboarding/memberOnboarding";
-import { projectMemberIdentity } from "../social/privacy";
 &nbsp;
 // Per-context cap on rows pulled into a single export. Convex queries have a read budget; a member
 // with a very large history is capped so the export stays a single, bounded query return. The UI
 // download is "most of your data" rather than a guaranteed-complete archive when capped.
 const EXPORT_LIMIT = 5000;
 &nbsp;
-// Exchange rows as the exporting member may see them: a counterparty who is anonymous to them (a
-// private owner who has not accepted or replied yet — the staged trade reveal) has their raw id
-// OMITTED, exactly like the exchange views (exchange/readViews.ts). Resolved once per distinct
-// counterparty, so a long history costs a few reads per partner, not per exchange.
+// Exchange rows as the exporting member may see them: a counterparty who is hidden from them in
+// that trade (a private owner who has not accepted or replied to it yet — exchange/tradeParty) has
+// their raw id OMITTED, exactly like the exchange views. Counterparty facts are memoized, so a long
+// history costs a few reads per partner plus one point read per exchange.
 const exportableExchanges = async (
   ctx: QueryCtx,
   userId: Id&lt;"users"&gt;,
   rows: Doc&lt;"exchanges"&gt;[],
 ) =&gt; {
-  const hidden = new Map&lt;Id&lt;"users"&gt;, boolean&gt;();
-  for (const e of rows) {
-    for (const party of [e.initiatorId, e.recipientId]) {
-      if (party === userId || hidden.has(party)) continue;
-      const projected = await projectMemberIdentity(ctx, userId, party, e._id);
-      hidden.set(party, projected.anonymous);
-    }
+  const memo: TradePartyMemo = new Map();
+  const out = [];
+  for (const row of rows) {
+    const { initiatorId, recipientId, ...rest } = row;
+    const hidden = async (party: Id&lt;"users"&gt;) =&gt;
+      (await projectTradeParty(ctx, userId, row, party, memo)).state ===
+      "hidden";
+    out.push({
+      ...rest,
+      ...((await hidden(initiatorId)) ? <span class="branch-0 cbranch-no" title="branch not covered" >{} : {</span> initiatorId }),
+      ...((await hidden(recipientId)) ? {} : { recipientId }),
+    });
   }
-  return rows.map(({ initiatorId, recipientId, ...rest }) =&gt; ({
-    ...rest,
-    ...(hidden.get(initiatorId) ? <span class="branch-0 cbranch-no" title="branch not covered" >{} : {</span> initiatorId }),
-    ...(hidden.get(recipientId) ? {} : { recipientId }),
-  }));
+  return out;
 };
 &nbsp;
 // Insights read query: a JSON-serialisable bundle of the member's own data for a client-side
@@ -517,7 +520,7 @@ export const exportUserData = query({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-10-18T00:01:19.979Z
+                at 2026-10-18T07:00:18.122Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
