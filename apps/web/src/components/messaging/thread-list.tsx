@@ -32,6 +32,7 @@ import {
   type InboxThread,
   type Translator,
 } from "./format";
+import { NewConversationMenu } from "./new-conversation-menu";
 
 // Avatar chip for a thread subject: the member's avatar/initials for a
 // revealed DM partner, a generic person glyph for an anonymised one, an
@@ -79,16 +80,18 @@ export function ThreadSubjectAvatar({
 }
 
 // The list pane: a md+ header ("Conversations", aligned with the thread
-// header's rule), then loading / error / empty / rows. Mobile shows just the
-// rows — the shell top bar already titles the page.
+// header's rule, and the New menu), then loading / error / empty / rows.
+// Mobile shows just the New menu above the rows — the shell top bar already
+// titles the page.
 export function ThreadList({ activeThreadId }: { activeThreadId?: string }) {
   const t = useTranslations("messages");
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="hidden h-14 shrink-0 items-center border-b px-4 md:flex">
-        <h2 className="font-heading text-base font-bold">
+      <div className="flex shrink-0 items-center justify-end pb-1 md:h-14 md:justify-between md:border-b md:pr-2 md:pb-0 md:pl-4">
+        <h2 className="font-heading hidden text-base font-bold md:block">
           {t("conversationsLabel")}
         </h2>
+        <NewConversationMenu />
       </div>
       {/* Desktop scrolls inside the frame; mobile scrolls the document. */}
       <div className="md:min-h-0 md:flex-1 md:overflow-y-auto">

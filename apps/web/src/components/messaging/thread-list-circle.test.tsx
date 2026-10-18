@@ -177,4 +177,11 @@ describe("ThreadList circle rows", () => {
     expect(within(link).queryByText("Muted")).toBeNull();
     expect(within(link).getByText("Mara").className).toContain("font-bold");
   });
+
+  it("offers a New menu above the list", () => {
+    renderList([dmThread]);
+    expect(
+      screen.getByRole("button", { name: "New conversation" }),
+    ).toBeTruthy();
+  });
 });
