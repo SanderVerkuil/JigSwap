@@ -6,6 +6,7 @@ import { canViewCopy } from "./library/canViewCopy";
 import {
   collectCircleSharedCopies,
   isCircleSharedWithViewer,
+  MAX_SHARES_READ_PER_COPY,
 } from "./library/circleSharedCopies";
 import schema from "./schema";
 
@@ -207,5 +208,99 @@ describe("single-copy circle check == batched collector (#190)", () => {
         expect(result.canView).toBe(c.expected && availability.forTrade);
       });
     }
+  }
+});
+
+// Route B: the copy has more shares than MAX_SHARES_READ_PER_COPY (owner-inflated with solo circles),
+// so the single-copy check probes the viewer's own circles. It must still agree with the collector.
+const overCapCases: Case[] = [
+  {
+    name: "viewer and owner both seated in A",
+    sharedInto: ["A"],
+    circles: (ctx, u) =>
+      mkCircle(ctx, "A", u.owner, [u.owner, u.viewer], [u.owner, u.viewer]),
+    expected: true,
+  },
+  {
+    name: "owner left A",
+    sharedInto: ["A"],
+    circles: (ctx, u) => mkCircle(ctx, "A", u.viewer, [u.viewer], [u.viewer]),
+    expected: false,
+  },
+  {
+    name: "junction rows for both but no circles row",
+    sharedInto: ["A"],
+    circles: (ctx, u) =>
+      mkCircle(ctx, "A", u.owner, [], [u.owner, u.viewer], false),
+    expected: false,
+  },
+  {
+    name: "viewer listed in A without a junction row",
+    sharedInto: ["A"],
+    circles: (ctx, u) =>
+      mkCircle(ctx, "A", u.owner, [u.owner, u.viewer], [u.owner]),
+    expected: false,
+  },
+];
+
+describe("over the per-copy share cap: viewer-circle route == batched collector (#190)", () => {
+  for (const c of overCapCases) {
+    test(c.name, async () => {
+      const t = convexTest(schema, modules);
+      const result = await t.run(async (ctx) => {
+        const owner = await mkUser(ctx, "clerk_owner");
+        const viewer = await mkUser(ctx, "clerk_viewer");
+        await ctx.db.insert("profiles", {
+          memberId: owner,
+          displayName: "Owner",
+          visibility: "private",
+          updatedAt: NOW,
+        });
+        const puzzle = await ctx.db.insert("puzzles", {
+          aggregateId: "def-1",
+          title: "Lighthouse",
+          brand: "Ravensburger",
+          pieceCount: 1000,
+          status: "approved",
+          submittedBy: owner,
+          createdAt: NOW,
+          updatedAt: NOW,
+        });
+        const copy = await ctx.db.insert("ownedPuzzles", {
+          aggregateId: "copy-1",
+          puzzleId: puzzle,
+          ownerId: owner,
+          condition: "good",
+          availability: OPEN,
+          createdAt: NOW,
+          updatedAt: NOW,
+        });
+        for (let i = 0; i < MAX_SHARES_READ_PER_COPY + 1; i++) {
+          await mkCircle(ctx, `solo-${i}`, owner, [owner], [owner]);
+          await ctx.db.insert("circleCopyShares", {
+            circleId: `solo-${i}`,
+            copyId: "copy-1",
+            sharedAt: NOW,
+          });
+        }
+        for (const circleId of c.sharedInto) {
+          await ctx.db.insert("circleCopyShares", {
+            circleId,
+            copyId: "copy-1",
+            sharedAt: NOW,
+          });
+        }
+        await c.circles(ctx, { owner, viewer });
+        const row = (await ctx.db.get(copy))!;
+        return {
+          single: await isCircleSharedWithViewer(ctx, viewer, row),
+          batched: (await collectCircleSharedCopies(ctx, viewer)).some(
+            (r) => r._id === copy,
+          ),
+        };
+      });
+      expect(result.single).toBe(result.batched);
+      expect(result.single).toBe(c.expected);
+    });
   }
 });
