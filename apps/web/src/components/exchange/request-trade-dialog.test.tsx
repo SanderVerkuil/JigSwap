@@ -52,7 +52,7 @@ const renderDialog = (
     disclosure,
   }: {
     locale?: "en" | "nl";
-    disclosure?: { revealsRequester: boolean } | null;
+    disclosure?: { profilePrivate: boolean } | null;
   } = {},
 ) => {
   const convexQueryClient = new ConvexQueryClient(
@@ -99,63 +99,51 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
+const EN_NOTICE =
+  "Your name, handle, email address and the reviews you've received will be visible to the owner of this puzzle, for this trade only.";
+const NL_NOTICE =
+  "Je naam, gebruikersnaam, e-mailadres en de reviews die je hebt gekregen worden zichtbaar voor de eigenaar van deze puzzel, alleen voor deze ruil.";
+
 describe("RequestTradeDialog identity disclosure", () => {
-  it("shows the reveal notice (en) and hides the general line when sending reveals the requester", () => {
-    renderDialog(copy(), { disclosure: { revealsRequester: true } });
-    const note = screen.getByRole("note");
-    expect(note.textContent).toContain(
-      "Your name and profile will be visible to the owner of this puzzle.",
-    );
-    expect(note.textContent).toContain(
-      "Your profile is private, but the owner needs to know who they're trading with.",
-    );
-    expect(
-      screen.queryByText("The owner will see who sent this request."),
-    ).toBeNull();
-    expect(submit().disabled).toBe(false);
-  });
-
-  it("shows the reveal notice in Dutch", () => {
-    renderDialog(copy(), {
-      locale: "nl",
-      disclosure: { revealsRequester: true },
-    });
-    expect(screen.getByRole("note").textContent).toContain(
-      "Je naam en profiel worden zichtbaar voor de eigenaar van deze puzzel.",
-    );
-    expect(
-      screen.queryByText("De eigenaar ziet wie deze aanvraag heeft gestuurd."),
-    ).toBeNull();
-  });
-
   it.each([
-    ["en", "The owner will see who sent this request."],
-    ["nl", "De eigenaar ziet wie deze aanvraag heeft gestuurd."],
+    ["en", EN_NOTICE, "Your profile itself stays private."],
+    ["nl", NL_NOTICE, "Je profiel zelf blijft privé."],
   ] as const)(
-    "shows only the general line when nothing new is revealed (%s)",
-    (locale, line) => {
-      renderDialog(copy(), {
-        locale,
-        disclosure: { revealsRequester: false },
-      });
-      expect(screen.queryByRole("note")).toBeNull();
-      expect(screen.getByText(line)).toBeTruthy();
+    "always shows the trade-card notice, plus the private line for a private profile (%s)",
+    (locale, notice, privateLine) => {
+      renderDialog(copy(), { locale, disclosure: { profilePrivate: true } });
+      const note = screen.getByRole("note");
+      expect(note.textContent).toContain(notice);
+      expect(note.textContent).toContain(privateLine);
     },
   );
 
-  it("shows neither while the disclosure loads, and holds submit until it has", () => {
+  it.each([
+    ["a public profile", { profilePrivate: false }],
+    ["a null disclosure", null],
+  ] as const)(
+    "shows the notice without the private line for %s, and allows submit",
+    (_label, disclosure) => {
+      renderDialog(copy(), { disclosure });
+      const note = screen.getByRole("note");
+      expect(note.textContent).toContain(EN_NOTICE);
+      expect(note.textContent).not.toContain(
+        "Your profile itself stays private.",
+      );
+      expect(submit().disabled).toBe(false);
+    },
+  );
+
+  it("shows nothing while the disclosure loads, and holds submit until it has", () => {
     renderDialog(copy());
     expect(screen.queryByRole("note")).toBeNull();
-    expect(
-      screen.queryByText("The owner will see who sent this request."),
-    ).toBeNull();
     expect(submit().disabled).toBe(true);
   });
 });
 
 describe("RequestTradeDialog propose", () => {
   it("names the owner as recipient when their id is known", async () => {
-    renderDialog(copy(), { disclosure: { revealsRequester: false } });
+    renderDialog(copy(), { disclosure: { profilePrivate: false } });
     fireEvent.click(submit());
     await waitFor(() => expect(mocks.mutation).toHaveBeenCalledOnce());
     expect(mocks.mutation).toHaveBeenCalledWith(PROPOSE, {
@@ -167,7 +155,7 @@ describe("RequestTradeDialog propose", () => {
 
   it("omits the recipient for an anonymous owner and names them generically", async () => {
     renderDialog(copy({ ownerId: undefined, owner: null }), {
-      disclosure: { revealsRequester: true },
+      disclosure: { profilePrivate: true },
     });
     expect(screen.getByText("Owned by Puzzler")).toBeTruthy();
     fireEvent.click(submit());

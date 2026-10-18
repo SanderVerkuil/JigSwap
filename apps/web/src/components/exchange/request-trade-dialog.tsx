@@ -105,15 +105,15 @@ function RequestTradeForm({
     ),
   );
 
-  // Whether sending reveals the viewer's identity to the owner (undefined = still loading). Submit
-  // waits for it so a private member always sees the notice before their request goes out.
+  // Sending always shows the owner the requester's trade card; this adds whether their profile is
+  // private (undefined = loading or failed, null = nothing to add). Submit waits for it so the
+  // notice is always on screen before a request goes out.
   const { data: disclosure } = useQuery(
     convexQuery(gateway.exchange.requestDisclosure, {
       requestedPuzzleId: copy.copyId as Id<"ownedPuzzles">,
     }),
   );
   const disclosureLoaded = disclosure !== undefined;
-  const revealsRequester = disclosure?.revealsRequester === true;
 
   const ownerName = displayName(copy.owner);
   const priceCents = parsePriceCents(price);
@@ -180,11 +180,6 @@ function RequestTradeForm({
                 {t("ownedBy", { name: ownerName })}
               </span>
             </div>
-            {disclosureLoaded && !revealsRequester && (
-              <p className="text-muted-foreground mt-1 text-xs">
-                {t("ownerSeesSender")}
-              </p>
-            )}
           </div>
         </div>
 
@@ -255,7 +250,7 @@ function RequestTradeForm({
           </div>
         )}
 
-        {revealsRequester && (
+        {disclosureLoaded && (
           <div
             role="note"
             className="border-primary/25 bg-jigsaw-primary-tint flex gap-3 rounded-lg border p-3 text-sm"
@@ -263,7 +258,11 @@ function RequestTradeForm({
             <Eye className="text-primary mt-0.5 h-4 w-4 shrink-0" aria-hidden />
             <div className="space-y-1">
               <p className="font-medium">{t("revealNotice.title")}</p>
-              <p className="text-muted-foreground">{t("revealNotice.body")}</p>
+              {disclosure?.profilePrivate && (
+                <p className="text-muted-foreground">
+                  {t("revealNotice.profilePrivate")}
+                </p>
+              )}
             </div>
           </div>
         )}
