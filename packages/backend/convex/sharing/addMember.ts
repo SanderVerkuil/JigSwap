@@ -16,8 +16,9 @@ import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
 
-// Composition root for adding a member to a circle. The actor is derived from auth; the aggregate
-// gates the add on the actor holding Admin. `circleId` is the domain CircleId aggregateId;
+// Composition root for adding a member to a circle. The actor comes from the caller's identity
+// (in practice only tests, via withIdentity: no server-side caller has one); the aggregate gates
+// the add on the actor holding Admin. `circleId` is the domain CircleId aggregateId;
 // `memberId` is the target user's _id (the resolved MemberId).
 // INTERNAL: members join only by accepting an invite (inviteToCircle / acceptCircleInvite), never
 // by being added blindly, so no client can reach this.
