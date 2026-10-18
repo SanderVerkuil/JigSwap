@@ -1263,7 +1263,7 @@
         "description": "Under the GDPR we need a legal reason for each use of your data. Ours are:",
         "items": [
           "Performing our agreement with you: everything needed to run the service you signed up for — your account, library, exchanges, and messages, including the photos and locations you attach to them",
-          "Legitimate interests: keeping JigSwap secure, preventing abuse, screening uploaded photos, handling reports and blocks, operational logging, and understanding usage so we can improve the service",
+          "Legitimate interests: keeping JigSwap secure, preventing abuse, screening uploaded photos, handling reports and blocks, showing typing indicators and, when you choose to share it, your online status, operational logging, and understanding usage so we can improve the service",
           "Consent: where we ask you first, such as browser push notifications",
           "Legal obligations: handling notices of illegal content and explaining our moderation decisions under the EU Digital Services Act, and the rare cases where we must keep or share data because the law requires it"
         ]
@@ -1322,6 +1322,37 @@
         "The map preview of a shared location is rendered once, on our servers, when you send it (see MapTiler above)"
       ]
     },
+    "groups": {
+      "title": "Group Chats in Circles",
+      "description": "Every friend circle has a group chat. What you write there is shared with the circle's members:",
+      "items": [
+        "A circle's group chat is visible only to the circle's current members",
+        "A new member sees only the messages sent after they joined, not the earlier ones. This also applies when someone rejoins",
+        "When you leave a circle or are removed, you lose access to its chat. The messages you sent stay in the chat for the members, as part of the group's conversation",
+        "Members of a circle see each other's name and avatar in the chat, even when a profile is private",
+        "If you block a member you share a circle with, their messages are hidden for you. They still see yours and are not told about the block",
+        "New messages notify members in the app and by push, combined into one notification per conversation and without the message text. Muting a chat stops all its notifications",
+        "Circle chats never send an email per message. Email is off by default; if you turn it on, you get one short summary about 30 minutes after a message you haven't read, at most once every 6 hours per chat",
+        "If someone reports a message in a group chat, the copy we keep for moderators can include earlier messages from other members (see Blocking and Reporting)"
+      ]
+    },
+    "presence": {
+      "title": "Online Status and Typing",
+      "description": "Two features show what you are doing right now. Neither shows when you were last online.",
+      "onlineTitle": "Online status",
+      "onlineItems": [
+        "Online status is off until you choose to share it. You can switch it off at any time on your Privacy & safety page",
+        "Only members you follow each other with can see your status, and only if they share theirs too: if you don't share yours, you don't see anyone else's. Being in the same circle does not make your status visible",
+        "Your status is online, away or offline, worked out while JigSwap is open in your browser. We never show when you were last online, and we don't keep a history of when you were online",
+        "With Appear offline, you look offline to everyone and others don't see you typing"
+      ],
+      "typingTitle": "Typing indicators",
+      "typingItems": [
+        "While you type in a conversation, the other people in it see that you are typing for a few seconds. In a circle's group chat, that includes members you don't follow each other with",
+        "It is never shown between you and a member you blocked or who blocked you",
+        "It is not sent while you appear offline"
+      ]
+    },
     "safety": {
       "title": "Blocking and Reporting",
       "description": "You can block a member and report content or members that break the rules.",
@@ -1348,6 +1379,8 @@
         "Content removed after a report: a copy is kept as evidence for 6 months after the decision, then deleted",
         "Reports: kept for 12 months after the decision. After that, the reporter's identity, the details they wrote and the copied messages are deleted; only the decision itself remains. Longer only when a report is escalated to law enforcement",
         "Blocks: for as long as the block is active",
+        "Online status: your sharing choice, for as long as your account exists. To work out your status we also keep when your last session in JigSwap ended; it is never shown to anyone and is deleted with your account",
+        "Typing: when you last typed in a conversation, kept until you next send a message there, leave the conversation, or delete your account",
         "Map images in the location picker: deleted after about 10 minutes; the rounded centre of a map around your current position: 15 minutes",
         "Technical logs (Axiom): 30 days. Logs never contain message text, captions, coordinates or report text"
       ],
@@ -1357,6 +1390,7 @@
         "Your photos and map images are deleted. Only a blurred colour placeholder remains in the conversation, labelled \"Photo no longer available\"",
         "The coordinates and place names of locations you shared are deleted",
         "Your blocks (and blocks others placed on you) are deleted",
+        "Your online status settings and the records behind your online status and typing indicators are deleted",
         "Reports you filed stay with us for moderation, but without your name or contact details",
         "Reports about you are kept until their 12-month retention ends",
         "A photo or location that is part of an open report is kept until that report is decided"
@@ -1461,7 +1495,7 @@
         "A personal library to track the copies you own, their condition, and photos of them",
         "Logging completions (when you finished a puzzle and how long it took) and organising copies into collections",
         "Exchanges between members — swaps, sales, and loans — with messaging to arrange them",
-        "Circles (private groups of friends) for sharing part of your library, plus member profiles and follows",
+        "Circles (private groups of friends) for sharing part of your library and chatting together in a group chat, plus member profiles and follows",
         "Personal insights and statistics about your puzzling, including a download of your own data"
       ]
     },
@@ -1508,7 +1542,7 @@
       "reviewTitle": "Asking for a review",
       "review": "If you disagree with a decision, reply via the contact page and a person will look at it again. This review is voluntary and does not affect your other rights, including going to court.",
       "blockingTitle": "Blocking",
-      "blocking": "You can block any member. A blocked member can no longer message you, follow you or propose trades, and is not notified. Trades already accepted can still be completed. You can unblock them at any time from your Privacy & safety settings."
+      "blocking": "You can block any member. A blocked member can no longer message you, follow you or propose trades, and is not notified. Trades already accepted can still be completed. If you share a circle, you both stay in it: their messages in its group chat are hidden for you, and they are not told. You can unblock them at any time from your Privacy & safety settings."
     },
     "trading": {
       "title": "Swaps, Sales, and Loans",
@@ -1526,7 +1560,7 @@
       "description": "Different things on JigSwap belong to different people:",
       "yourContent": {
         "title": "Your content",
-        "description": "Photos, reviews, comments, and other content you post remain yours. By posting, you give us a non-exclusive licence to store and display that content so the service can work — for example, showing your puzzle photos to the members you have shared them with. Puzzles you add to the shared catalog become part of the community catalog that all members can use. Uploaded photos pass through an automated safety check before other members can see them (see the Privacy Policy for details)."
+        "description": "Photos, reviews, comments, and other content you post remain yours. By posting, you give us a non-exclusive licence to store and display that content so the service can work — for example, showing your puzzle photos to the members you have shared them with. Messages you post in a circle's group chat stay visible to its members after you leave the circle. Puzzles you add to the shared catalog become part of the community catalog that all members can use. Uploaded photos pass through an automated safety check before other members can see them (see the Privacy Policy for details)."
       },
       "platform": {
         "title": "The platform and puzzle artwork",

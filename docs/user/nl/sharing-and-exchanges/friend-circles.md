@@ -1,7 +1,7 @@
 ---
 title: Vriendenkringen
 order: 3
-summary: "Maak privégroepen, nodig leden uit, stel rechten in en deel exemplaren."
+summary: "Maak privégroepen, nodig leden uit, stel rechten in, deel exemplaren en chat samen."
 ---
 
 # Vriendenkringen
@@ -22,6 +22,37 @@ ja te zeggen: leden worden uitgenodigd en doen pas mee als ze accepteren.
 Je bent de **Eigenaar** van de kring en de eerste beheerder. Elke kring op de
 pagina toont je rol (**Eigenaar** of **Lid**), het aantal leden en hun avatars.
 Beheerders krijgen ook een instellingenknop die het beheervenster opent.
+
+## De pagina van een kring
+
+Klik op **Kringen** op een kring om de eigen pagina ervan te openen. Daarop
+staan:
+
+- de naam van de kring, je rol en de avatars van de leden, met **Beheren** voor
+  beheerders en **Kring verlaten** voor leden;
+- **Groepschat**: de nieuwste berichten, en **Groepschat openen** om mee te
+  praten;
+- **Gedeelde puzzels**: de puzzels die het laatst in de kring zijn gedeeld.
+  Klik op een puzzel om hem te openen.
+
+Alleen leden kunnen de pagina van een kring openen. Voor anderen bestaat hij
+niet.
+
+## Groepschat
+
+Elke kring heeft een groepschat voor zijn leden. Klik bij de kring op
+**Groepschat openen**, op **Kringen** of op de pagina van de kring.
+
+- Alleen huidige leden kunnen erin lezen en schrijven.
+- Nieuwe leden zien de berichten van na het moment dat ze erbij kwamen, niet
+  de eerdere.
+- Verlaat je de kring of word je verwijderd, dan verlies je de toegang tot de
+  chat. De berichten die je stuurde, blijven er staan voor de anderen.
+- Heb je iemand in de kring geblokkeerd, dan worden diens berichten voor jou
+  ingeklapt. Diegene ziet die van jou gewoon en krijgt niets te horen.
+
+Over dempen, typen, online status en meldingen lees je meer bij
+[Berichten](/docs/staying-informed/messages#groepschats-in-kringen).
 
 ## Leden uitnodigen
 
@@ -87,13 +118,19 @@ Delen stopt automatisch:
 Leden van dezelfde kring zien elkaars naam en avatar, ook als een profiel privé
 is. Bio's, locaties en privéprofielen blijven verborgen.
 
+Samen in een kring zitten laat niet zien of iemand online is: dat zien alleen
+mensen die elkaar volgen en allebei hun online status delen. Wel ziet iedereen
+in de chat van de kring wanneer iemand daar typt.
+
 ## Een kring verlaten
 
 1. Klik op de pagina **Kringen** bij de kring op **Kring verlaten**.
 2. Bevestig.
 
-Je verliest de toegang tot de kring en de puzzels die erin gedeeld zijn. Een
-beheerder kan je opnieuw uitnodigen. De eigenaar kan een kring niet verlaten;
+Je verliest de toegang tot de kring, de groepschat en de puzzels die erin
+gedeeld zijn. Je berichten blijven in de chat staan. Een beheerder kan je
+opnieuw uitnodigen; je ziet dan alleen berichten van na het moment dat je
+opnieuw meedeed. De eigenaar kan een kring niet verlaten;
 die kan hem wel verwijderen.
 
 ## Een kring verwijderen
@@ -105,6 +142,6 @@ Alleen de eigenaar kan een kring verwijderen.
    naam klopt.
 3. Klik op **Kring verwijderen**.
 
-Hiermee verdwijnt de kring voor iedereen: leden, uitnodigingen en de puzzels
-die erin gedeeld zijn. Gedeelde puzzels blijven in de bibliotheek van hun
+Hiermee verdwijnt de kring voor iedereen: leden, uitnodigingen, de groepschat
+met zijn berichten en de puzzels die erin gedeeld zijn. Gedeelde puzzels blijven in de bibliotheek van hun
 eigenaar. Leden krijgen een melding. Dit kan niet ongedaan worden gemaakt.

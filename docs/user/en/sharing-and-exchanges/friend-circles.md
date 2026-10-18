@@ -1,7 +1,7 @@
 ---
 title: Friend Circles
 order: 3
-summary: "Create private groups, invite members, set permissions, and share copies."
+summary: "Create private groups, invite members, set permissions, share copies, and chat together."
 ---
 
 # Friend Circles
@@ -22,6 +22,34 @@ yes: members are invited and join only when they accept.
 You are the circle's **Owner** and its first admin. Each circle on the page
 shows your role (**Owner** or **Member**), the member count and avatars. Admins
 also get a settings button that opens the manage dialog.
+
+## The circle page
+
+Click a circle on **Circles** to open its own page. It shows:
+
+- the circle's name, your role and the members' avatars, with **Manage** for
+  admins and **Leave circle** for members;
+- **Group chat**: the latest messages, and **Open group chat** to join the
+  conversation;
+- **Shared puzzles**: the most recent puzzles shared in the circle. Click one
+  to open it.
+
+Only members can open a circle's page. For anyone else, it doesn't exist.
+
+## Group chat
+
+Every circle has a group chat for its members. Click **Open group chat** on
+the circle, on **Circles** or on its page.
+
+- Only current members can read and write in it.
+- New members see messages sent after they joined, not the earlier ones.
+- If you leave or are removed, you lose access to the chat. The messages you
+  sent stay in it for the others.
+- If you blocked someone in the circle, their messages are collapsed for you.
+  They still see yours, and they aren't told.
+
+For muting, typing, online status and notifications, see
+[Messages](/docs/staying-informed/messages#circle-group-chats).
 
 ## Invite members
 
@@ -84,13 +112,18 @@ Shares end automatically:
 Members of the same circle see each other's names and avatars, even when a
 profile is private. Bios, locations and private profiles stay hidden.
 
+Being in the same circle doesn't show whether someone is online: only people
+who follow each other and both share their online status see that. Everyone in
+the circle's chat does see when someone is typing there.
+
 ## Leave a circle
 
 1. On **Circles**, click **Leave circle** on the circle.
 2. Confirm.
 
-You lose access to the circle and the puzzles shared in it. An admin can
-invite you again. The owner can't leave a circle; they can delete it instead.
+You lose access to the circle, its group chat and the puzzles shared in it.
+Your messages stay in the chat. An admin can invite you again; you then see
+only messages sent after you rejoined. The owner can't leave a circle; they can delete it instead.
 
 ## Delete a circle
 
@@ -101,6 +134,6 @@ Only the owner can delete a circle.
    matches.
 3. Click **Delete circle**.
 
-This removes the circle for everyone: members, invitations and the puzzles
-shared in it. Shared puzzles stay in their owners' libraries. Members get a
+This removes the circle for everyone: members, invitations, the group chat and
+its messages, and the puzzles shared in it. Shared puzzles stay in their owners' libraries. Members get a
 notification. This can't be undone.

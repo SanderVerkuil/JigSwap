@@ -1,16 +1,16 @@
 ---
 title: Messages
 order: 2
-summary: "Chat with other members, attach puzzles, photos and locations, and find older messages."
+summary: "Chat with other members and your circles, attach puzzles, photos and locations, see who's typing or online, and find older messages."
 ---
 
 # Messages
 
 **Where:** **Community → Messages** (`/messages`).
 
-Messages is where you talk to other members one on one: about a puzzle you
-spotted, a trade you're working out, or where to meet up. Each conversation is
-with one member, and every exchange has its own conversation too.
+Messages is where you talk to other members: one on one about a puzzle you
+spotted, a trade you're working out, or where to meet up, or together in the
+group chat of a friend circle. Every exchange has its own conversation too.
 
 ## Who you can message
 
@@ -39,6 +39,11 @@ Each row in the inbox shows:
 - A count of unread messages, if there are any.
 - The cover of the latest puzzle the conversation is about, when there is one.
 
+A circle's group chat shows the circle name with up to two member avatars, and
+its preview starts with the name of whoever wrote last (for example
+"Bas: Who has the Wasgij?"). A muted conversation shows a bell with a line
+through it, and its unread count is grey.
+
 ## Start a conversation
 
 **From a member's profile or their tile on People:**
@@ -57,6 +62,141 @@ Each row in the inbox shows:
 If you already have a conversation with the owner, JigSwap takes you straight
 to it. You can't message about your own puzzle, and some owners keep their
 profile private, in which case you can't message them from their puzzle.
+
+**With a friend circle:**
+
+1. Click **Open group chat** on the circle, on **Circles** or on the circle's
+   own page. Or, in Messages, click **New**, choose **Circle chat** and pick
+   the circle.
+2. Write your message and send it.
+
+A circle's chat shows up in your inbox once someone has written in it, or once
+you've opened it.
+
+## Circle group chats
+
+Every friend circle has one group chat for all its members. See
+[Friend Circles](/docs/sharing-and-exchanges/friend-circles) for creating
+circles and inviting people.
+
+### Who can read it
+
+- Only the circle's current members can read and write in its chat.
+- When you join, you see the messages sent after you joined, not the earlier
+  ones. This also applies when you rejoin: messages from while you were away
+  stay hidden.
+- The chat shows a short line when someone joins or leaves, such as
+  "Anna joined" or "Anna is no longer in the circle". Leaving and being removed
+  look the same, and the chat never says who removed someone. If you can't
+  otherwise see who it was, it reads "A member joined" or "A member left".
+- Each run of messages shows the writer's name and avatar. Members of the same
+  circle always see each other's names.
+
+### Members and options
+
+Click the member count under the circle name (for example **6 members**) to
+open the members panel. It lists everyone in the circle with their role, with
+a report button next to each member, plus **Mute conversation** and
+**Leave circle**.
+
+The **Conversation options** menu (**⋯**) in the header has **Mute
+conversation**, **Members**, **Open circle**, **Report a member…** and
+**Leave circle**. **Circle** in the header opens the circle's page.
+
+### Mute a chat
+
+Choose **Mute conversation** to stop all notifications from that conversation:
+in-app, email and push. New messages still arrive, but the unread count is
+grey and isn't added to the Messages badge. Choose **Unmute conversation**
+to turn notifications back on.
+
+### Leave or be removed
+
+When you leave a circle, or an admin removes you:
+
+- the chat disappears from your inbox, and you can no longer read it;
+- the messages you sent stay in the chat for the other members.
+
+Messages from someone who left stay in the chat too. You see their name only
+if you could see it outside the circle, for example because you follow each
+other; otherwise they show as **Anonymous user**.
+
+The owner can't leave a circle; they can delete it, which also deletes its
+chat.
+
+### Blocking someone in a circle
+
+Blocking a member doesn't remove either of you from a circle you share. In
+that circle's chat:
+
+- Their messages are collapsed for you as "Message from a member you blocked".
+  Click **Show** to read the text; their photos stay collapsed.
+- Their messages don't count as unread and don't notify you.
+- They still see your messages as usual, and they aren't told about the block.
+- You don't see each other typing or online.
+
+If you'd rather not be in the group with them, you can leave the circle.
+
+### Notifications from circle chats
+
+- New messages in a conversation are combined into one notification, such as
+  "**Anna** and 2 others wrote in **Puzzle Club**."
+- Push notifications for circle messages are on by default (once you've
+  enabled push on this device), and arrive at most once every 2 minutes per
+  chat. They don't show the message text.
+- Circle chats never send an email per message. If you turn on email for
+  **Circle messages** in your
+  [notification preferences](/docs/staying-informed/notifications), you get
+  one short summary about 30 minutes after a message you haven't read, at most
+  once every 6 hours per chat. Email is off by default.
+
+## See who's typing
+
+While someone writes in a conversation you're in, a line above the message box
+says so: "Anna is typing…", "Anna and Bas are typing…" or "Several people are
+typing…". It disappears a few seconds after they stop, or when they send.
+
+- Everyone in the conversation sees it, including circle members you don't
+  follow each other with.
+- It's never shown between you and a member you blocked or who blocked you.
+- While you **Appear offline**, others don't see you typing.
+
+## Online status
+
+You can let mutual followers see when you're online. It's off until you choose
+to share it.
+
+**Turn it on or off:** the first time you open Messages, a card asks whether
+you want to share your online status. Choose **Share** or **Not now**. You
+can change this at any time with the **Online status** setting on
+**Privacy & safety** (open your account menu → **Manage account** →
+**Privacy & safety**).
+
+**Who sees it:** someone can see your status only when all of these are true:
+
+- you both share your online status;
+- you follow each other;
+- neither of you has blocked the other;
+- you're not appearing offline.
+
+Sharing works both ways: if you don't share yours, you don't see anyone
+else's. Circle members you don't follow each other with don't see your status,
+even in the circle chat. JigSwap never shows when you were last online, and
+doesn't keep a history of when you were online.
+
+**Where it shows:** a green dot on a member's avatar means online, a
+half-filled dot means away. You see it on conversations in your inbox, in the
+conversation header, and in a circle's members panel, where the header also
+counts who's online, such as "6 members · 2 online". The count includes only
+members who are online (not away) and whose status you can see.
+
+**Set your status:** open your account menu and choose your status:
+
+- **Automatic**: you show as online while JigSwap is open, as away after
+  5 minutes without activity, and as offline when the tab is hidden or closed.
+- **Away**: you show as away while you're on JigSwap.
+- **Appear offline**: you show as offline to everyone, and others don't see
+  you typing. You can still see the status of others who share theirs.
 
 ## Read a conversation
 
