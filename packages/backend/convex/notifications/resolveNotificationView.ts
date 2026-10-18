@@ -6,6 +6,7 @@ import type {
 import { COOLDOWN_MS, type NotificationSubject } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { participantRowOf } from "../conversation/readModelHelpers";
 import { projectTradeParty } from "../exchange/tradeParty";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { canViewCopy } from "../library/canViewCopy";
@@ -465,6 +466,16 @@ const resolveSubject = async (
             .order("desc")
             .first(),
       );
+      // A circle thread's newest message may be one this member can't see (sent before their
+      // current joinedAt, e.g. while they were away before a re-join) or one from a member they
+      // blocked (shown collapsed in the thread): then nothing of it is previewed.
+      if (
+        last &&
+        thread.subjectKind === "circle" &&
+        !(await circleMessagePreviewable(ctx, thread, viewerId, last))
+      ) {
+        return { available: true, context: {}, decision: decideMessage(true) };
+      }
       const preview =
         last && last.kind === "text" && last.removedAt === undefined
           ? messagePreviewOf(last.body)
@@ -765,4 +776,27 @@ export const resolveNotificationView = async (
       : {}),
     availableActions: [...decision.availableActions],
   };
+};
+
+// Whether a circle thread's message may be previewed to this member: sent strictly after their
+// joinedAt, and not by a member they blocked.
+const circleMessagePreviewable = async (
+  ctx: QueryCtx,
+  thread: Doc<"threads">,
+  viewerId: Id<"users">,
+  message: Doc<"threadMessages">,
+): Promise<boolean> => {
+  const row = await participantRowOf(ctx, thread.aggregateId, viewerId);
+  if (!row || (row.joinedAt !== undefined && message.sentAt <= row.joinedAt)) {
+    return false;
+  }
+  if (message.authorId === undefined) return true;
+  const authorId = message.authorId;
+  const blocked = await ctx.db
+    .query("blocks")
+    .withIndex("by_pair", (q) =>
+      q.eq("blockerId", viewerId).eq("blockedId", authorId),
+    )
+    .first();
+  return blocked === null;
 };

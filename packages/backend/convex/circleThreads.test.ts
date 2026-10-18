@@ -895,6 +895,29 @@ describe("posting", () => {
 });
 
 describe("message notifications", () => {
+  test("a circle notification never previews a message from a member the viewer blocked", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, circleId } = await seed(t);
+    const threadId = await open(t, "alice", circleId);
+    await block(t, alice, bob);
+    await post(t, "carol", threadId, "from carol");
+    await flush(t);
+    await post(t, "bob", threadId, "bob secret");
+    await flush(t);
+    const views = await as(t, "alice").query(
+      api.notifications.listMyNotificationViews.listMyNotificationViews,
+      { paginationOpts: { numItems: 10, cursor: null } },
+    );
+    expect(views.page).toHaveLength(1);
+    expect(JSON.stringify(views.page)).not.toContain("bob secret");
+    // Carol, who blocked nobody, sees the newest message previewed.
+    const carolViews = await as(t, "carol").query(
+      api.notifications.listMyNotificationViews.listMyNotificationViews,
+      { paginationOpts: { numItems: 10, cursor: null } },
+    );
+    expect(JSON.stringify(carolViews.page)).toContain("bob secret");
+  });
+
   test("a member who joined after a message was posted is not notified about it", async () => {
     const t = convexTest(schema, modules);
     const { bob, dave, circleId } = await seed(t);
