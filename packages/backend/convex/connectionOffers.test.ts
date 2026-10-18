@@ -123,6 +123,15 @@ const notificationTypes = (t: T, userId: Id<"users">) =>
     ).map((n) => n.type),
   );
 
+// The new member's connection_offer_received notification views.
+const offerNotificationViews = async (t: T) =>
+  (
+    await as(t, "newbie").query(
+      api.notifications.listMyNotificationViews.listMyNotificationViews,
+      { paginationOpts: { numItems: 10, cursor: null } },
+    )
+  ).page.filter((v) => v.type === "connection_offer_received");
+
 const accept = (t: T, who: Who, offerId: string) =>
   as(t, who).mutation(api.social.acceptConnection.acceptConnection, {
     offerId,
@@ -150,17 +159,38 @@ describe("the offer", () => {
     // The inviter learns nothing until the offer is accepted.
     expect(await notificationTypes(t, alice)).toEqual([]);
 
-    const views = await as(t, "newbie").query(
-      api.notifications.listMyNotificationViews.listMyNotificationViews,
-      { paginationOpts: { numItems: 10, cursor: null } },
-    );
-    expect(views.page).toHaveLength(1);
-    expect(views.page[0].href).toBe("/people");
-    expect(views.page[0].actors[0]).toMatchObject({
-      anonymous: false,
-      name: "Alice",
-    });
+    const [view] = await offerNotificationViews(t);
+    expect(view.href).toBe("/people");
+    expect(view.state).toBe("informational");
+    // Identity only, exactly like the landing: never bio or location.
+    expect(view.actors).toEqual([
+      { anonymous: false, memberId: alice, name: "Alice", handle: "alice" },
+    ]);
   });
+
+  test.each(["accept", "decline", "expire"] as const)(
+    "once the offer is answered (%s), the notification is unavailable and names nobody",
+    async (outcome) => {
+      const t = convexTest(schema, modules);
+      await seed(t);
+      const { offerId } = await redeemAliceLink(t);
+      await flushScheduled(t);
+      if (outcome === "accept") await accept(t, "newbie", offerId);
+      if (outcome === "decline") await decline(t, "newbie", offerId);
+      if (outcome === "expire") {
+        const row = await offerRow(t, offerId);
+        await t.run((ctx) =>
+          ctx.db.patch(row!._id, { expiresAt: Date.now() - 1 }),
+        );
+      }
+
+      const [view] = await offerNotificationViews(t);
+      expect(view.state).toBe("unavailable");
+      expect(view.actors).toEqual([]);
+      expect(view.actorCount).toBe(0);
+      expect(JSON.stringify(view)).not.toMatch(/Alice|alice/);
+    },
+  );
 
   test("lists the open offer with the inviter revealed, for the recipient only", async () => {
     const t = convexTest(schema, modules);

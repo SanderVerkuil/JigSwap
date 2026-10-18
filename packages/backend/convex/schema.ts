@@ -955,7 +955,8 @@ export default defineSchema({
     actorIds: v.optional(v.array(v.id("users"))),
     actorCount: v.optional(v.number()),
     // What the notification is about (mirrors the domain NotificationSubject). Exchange, thread,
-    // follow request, invite, household, review, proposal and whats-new ids are opaque aggregate
+    // follow request, invite, household, review, proposal, whats-new and connection-offer ids are
+    // opaque aggregate
     // ids; puzzle/copy/goal are the Convex `_id`s every producer already holds.
     subject: v.optional(
       v.union(
@@ -973,6 +974,7 @@ export default defineSchema({
           proposalId: v.string(),
         }),
         v.object({ kind: v.literal("whatsNew"), entryId: v.string() }),
+        v.object({ kind: v.literal("connectionOffer"), offerId: v.string() }),
       ),
     ),
     // Grouping (write-time merge of e.g. new_follower rows): the group a row belongs to and the

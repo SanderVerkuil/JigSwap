@@ -13,4 +13,5 @@ export type NotificationSubject =
   | { readonly kind: "goal"; readonly goalId: string }
   | { readonly kind: "review"; readonly reviewId: string }
   | { readonly kind: "changeProposal"; readonly proposalId: string }
-  | { readonly kind: "whatsNew"; readonly entryId: string };
+  | { readonly kind: "whatsNew"; readonly entryId: string }
+  | { readonly kind: "connectionOffer"; readonly offerId: string };

@@ -460,7 +460,10 @@ const translate = async (
           "connection_offer_received",
           p.offerId as string,
           await memberName(ctx, p.fromId as string),
-          { actor: p.fromId as string },
+          {
+            actor: p.fromId as string,
+            subject: { kind: "connectionOffer", offerId: p.offerId as string },
+          },
         ),
       ];
     }

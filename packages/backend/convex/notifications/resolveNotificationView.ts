@@ -199,6 +199,18 @@ const loadHouseholdInvite = (
       .first(),
   );
 
+const loadConnectionOffer = (
+  ctx: QueryCtx,
+  cache: NotificationViewCache,
+  id: string,
+) =>
+  memoized(cache, `connectionOffer:${id}`, () =>
+    ctx.db
+      .query("connectionOffers")
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", id))
+      .unique(),
+  );
+
 const loadDoc = <T extends "puzzles" | "ownedPuzzles" | "goals">(
   ctx: QueryCtx,
   cache: NotificationViewCache,
@@ -506,6 +518,18 @@ const resolveSubject = async (
     }
     // Household, review, change proposal and what's-new subjects carry nothing to resolve live:
     // their context is the params snapshot and their link is static.
+    // Only while the offer is still open to the viewer (pending and unexpired, the same rule as
+    // listMyConnectionOffers). Once declined, expired or accepted it is unavailable, and the view
+    // drops the inviter's identity (see resolveNotificationView).
+    case "connectionOffer": {
+      const offer = await loadConnectionOffer(ctx, cache, subject.offerId);
+      const open =
+        offer !== null &&
+        offer.toId === viewerId &&
+        offer.status === "pending" &&
+        offer.expiresAt > Date.now();
+      return { available: open, context: {} };
+    }
     default:
       return { available: true, context: {} };
   }
@@ -578,6 +602,12 @@ export const resolveNotificationView = async (
     ? await resolveSubject(ctx, cache, viewerId, row, subject)
     : null;
 
+  // A connection offer names its inviter only while it is open: once it is answered or expired the
+  // row stays as an unavailable, nameless "someone invited you" (no actor, no avatar, no handle).
+  const hideActors =
+    subject?.kind === "connectionOffer" && subjectFacts?.available === false;
+  const shownActors = hideActors ? [] : actors;
+
   let decision: ViewDecision = INFORMATIONAL;
   if (subjectFacts && !subjectFacts.available) {
     decision = UNAVAILABLE;
@@ -631,8 +661,8 @@ export const resolveNotificationView = async (
     type,
     isRead: row.isRead,
     createdAt: row.updatedAt ?? row.createdAt,
-    actors: actors.map((a) => a.view),
-    actorCount,
+    actors: shownActors.map((a) => a.view),
+    actorCount: hideActors ? 0 : actorCount,
     context,
     href: notificationHref({
       type,
