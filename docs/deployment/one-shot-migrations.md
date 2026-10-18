@@ -207,3 +207,55 @@ running `totals` (`scanned`, `candidates`, `approved`, `rejected`, `unscored`,
 `disabled`) and `unscored_reason`. Alert when the share of `unscored` outcomes is high,
 for example more than 20% over an hour:
 `['jigswap'] | where event in ("library.moderatePhoto","solving.moderateCompletionPhoto") | summarize unscored=countif(screening_outcome=="unscored"), total=count() by bin(_time, 1h)`.
+
+---
+
+## `library/backfillCopyVisibility` — per-copy visibility becomes authoritative
+
+**When:** any time after the per-copy visibility toggle (the `ownedPuzzles.visibilityAuthoritative`
+marker, `library/copyVisibility.effectiveCopyVisibility` and the "Visible to the community /
+Private" control) is deployed there. There is no ordering pressure in either direction: until a row
+carries the marker, the read side treats it as visible whatever `visibility` it stores (a stored
+`"private"` on such a row was the old domain default, never an owner's choice), and every domain
+save already writes the marker. So before the backfill nothing is hidden that wasn't before, and
+after it nothing changes either — it only turns the legacy rows' implicit "visible" into an explicit,
+stored one, so a follow-up can drop the marker.
+
+**What it does:** pages through `ownedPuzzles` (100 rows per batch, each batch its own
+transaction, rescheduling itself until the table is exhausted) and, for every row WITHOUT
+`visibilityAuthoritative`, writes `visibility: "visible"` and `visibilityAuthoritative: true`.
+Rows that already carry the marker — written by the domain repository, so possibly an owner who
+made a copy private before the backfill ran — are skipped and never overwritten. It writes only
+those two fields (not `updatedAt`: this is not an owner edit).
+
+**Safe to re-run:** yes. Marked rows are skipped, so a second run patches 0 rows.
+
+**Commands:**
+
+```bash
+cd packages/backend
+
+# dev: dry run (counts only, writes nothing), then the real run
+npx convex run library/backfillCopyVisibility:backfillCopyVisibility '{"dryRun":true}'
+npx convex run library/backfillCopyVisibility:backfillCopyVisibility '{}'
+
+# prod: same, after dev looks right
+npx convex run --prod library/backfillCopyVisibility:backfillCopyVisibility '{"dryRun":true}'
+npx convex run --prod library/backfillCopyVisibility:backfillCopyVisibility '{}'
+```
+
+The command returns the FIRST batch's `{ scanned, patched, skipped, wasPrivate }` (`wasPrivate`
+counts the patched rows that stored the old `"private"` default); the remaining batches run as
+scheduled functions. Each batch logs a line
+`library/backfillCopyVisibility batch {...,"totals":{...},"isDone":...}` (prefixed `(dry run)` for
+dry runs); the line with `"isDone":true` carries the whole run's totals. Follow it with
+`npx convex logs` (add `--prod` for prod) or in the dashboard Logs.
+
+**Verify:**
+
+1. The real run's final `totals.patched` matches the dry run's final `totals.patched` (give or take
+   copies saved in between, which already carry the marker).
+2. Run the dry run again: its final totals show `"patched":0`.
+3. In the dashboard data view, every `ownedPuzzles` row has `visibilityAuthoritative: true`; rows
+   an owner made private still read `visibility: "private"`.
+4. Spot-check a member's profile as a mutual follower: the same copies are listed as before.

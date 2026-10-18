@@ -219,6 +219,7 @@ import type * as library_addCopyImage from "../library/addCopyImage.js";
 import type * as library_addCopyPhoto from "../library/addCopyPhoto.js";
 import type * as library_addCopyToCollection from "../library/addCopyToCollection.js";
 import type * as library_backfill from "../library/backfill.js";
+import type * as library_backfillCopyVisibility from "../library/backfillCopyVisibility.js";
 import type * as library_browseOwnedPuzzles from "../library/browseOwnedPuzzles.js";
 import type * as library_canViewCopy from "../library/canViewCopy.js";
 import type * as library_changeCopyCondition from "../library/changeCopyCondition.js";
@@ -637,6 +638,7 @@ declare const fullApi: ApiFromModules<{
   "library/addCopyPhoto": typeof library_addCopyPhoto;
   "library/addCopyToCollection": typeof library_addCopyToCollection;
   "library/backfill": typeof library_backfill;
+  "library/backfillCopyVisibility": typeof library_backfillCopyVisibility;
   "library/browseOwnedPuzzles": typeof library_browseOwnedPuzzles;
   "library/canViewCopy": typeof library_canViewCopy;
   "library/changeCopyCondition": typeof library_changeCopyCondition;
