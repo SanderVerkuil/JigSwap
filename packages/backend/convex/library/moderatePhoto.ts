@@ -5,6 +5,7 @@ import { Jimp } from "jimp";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
 import { ingestToAxiom } from "../lib/axiom";
+import { blurhashSampleSize, encodeBlurhash } from "../lib/blurhash";
 import { logEvent, type WideEvent } from "../lib/logEvent";
 import {
   makeModerationPortFromEnv,
@@ -45,10 +46,14 @@ const errMsg = (e: unknown): string =>
 // EXIF/metadata. Format is alpha-aware: if the source has ANY transparent pixel we emit PNG so the
 // transparency is preserved — a JPEG would flatten the alpha to black (jimp has no WebP encoder).
 // Opaque images emit JPEG (smaller). Returns the bytes plus the mime so the caller stores the blob
-// with the matching content type.
+// with the matching content type, and the image's blurhash (lib/blurhash) from the same decode.
 export const reencodeImage = async (
   input: Uint8Array,
-): Promise<{ bytes: Uint8Array; mime: "image/png" | "image/jpeg" }> => {
+): Promise<{
+  bytes: Uint8Array;
+  mime: "image/png" | "image/jpeg";
+  blurhash: string;
+}> => {
   const image = await Jimp.read(Buffer.from(input));
   // bitmap.data is RGBA; a single non-opaque pixel means the image carries real transparency.
   const data = image.bitmap.data;
@@ -59,12 +64,18 @@ export const reencodeImage = async (
       break;
     }
   }
-  if (hasAlpha) {
-    const out = await image.getBuffer("image/png");
-    return { bytes: new Uint8Array(out), mime: "image/png" };
-  }
-  const out = await image.getBuffer("image/jpeg", { quality: 90 });
-  return { bytes: new Uint8Array(out), mime: "image/jpeg" };
+  const out = hasAlpha
+    ? await image.getBuffer("image/png")
+    : await image.getBuffer("image/jpeg", { quality: 90 });
+  // Encode the placeholder from a small sample (resize mutates, so it runs after the re-encode).
+  const sample = blurhashSampleSize(image.bitmap.width, image.bitmap.height);
+  image.resize({ w: sample.width, h: sample.height });
+  const blurhash = encodeBlurhash(image.bitmap);
+  return {
+    bytes: new Uint8Array(out),
+    mime: hasAlpha ? "image/png" : "image/jpeg",
+    blurhash,
+  };
 };
 
 export const moderatePhoto = internalAction({
@@ -170,8 +181,11 @@ export const moderatePhoto = internalAction({
         // unreferenced. There is no storage GC, so we must delete it ourselves.
         let storedFileId: string | null = null;
         try {
-          const { bytes: encoded, mime: encodedMime } =
-            await reencodeImage(bytes);
+          const {
+            bytes: encoded,
+            mime: encodedMime,
+            blurhash,
+          } = await reencodeImage(bytes);
           cleanBytes = encoded;
           mime = encodedMime;
           event.reencoded = true;
@@ -183,7 +197,7 @@ export const moderatePhoto = internalAction({
           storedFileId = newFileId;
           await ctx.runMutation(
             internal.library.moderationStore.setModerationFile,
-            { imageId, fileId: newFileId },
+            { imageId, fileId: newFileId, blurhash },
           );
           // Swap succeeded: the row now points at the clean blob, so it is no longer the one to
           // clean up on failure; drop the original instead (best-effort).

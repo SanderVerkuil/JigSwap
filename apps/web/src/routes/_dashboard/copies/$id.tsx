@@ -19,6 +19,7 @@ import { ImageEditorDialog } from "@/components/image-editor/image-editor-dialog
 import { EmptyState } from "@/components/library/empty-state";
 import { MemberInitial } from "@/components/members/member-initial";
 import { copyMessageRoute } from "@/components/messaging/copy-conversation";
+import { PendingPhotoPlaceholder } from "@/components/photos/pending-photo-placeholder";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
 import { StartSolveDialog } from "@/components/solving/start-solve-dialog";
@@ -674,10 +675,13 @@ function CopyInstanceDetail({
         <SectionHead
           icon={<ImagePlus className="h-4 w-4" />}
           title={t("photos")}
-          meta={t("photosCount", { count: gallery.length })}
+          meta={t("photosCount", {
+            count: gallery.length + copy.pendingPhotos.length,
+          })}
         />
         <PhotoStrip
           gallery={gallery}
+          pendingPhotos={copy.pendingPhotos}
           canAdd={copy.viewerCanManage}
           copyId={copyId}
           coverImageId={snapshot.coverImageId}
@@ -905,11 +909,13 @@ function SectionHead({
 
 function PhotoStrip({
   gallery,
+  pendingPhotos,
   canAdd,
   copyId,
   coverImageId,
 }: {
   gallery: CopyInstanceView["gallery"];
+  pendingPhotos: CopyInstanceView["pendingPhotos"];
   canAdd: boolean;
   copyId: string;
   coverImageId: string | null;
@@ -1008,6 +1014,14 @@ function PhotoStrip({
           )}
         </button>
       ))}
+      {/* Other members' photos still being screened: a blurred placeholder, not openable. */}
+      {pendingPhotos.map((pending, i) => (
+        <PendingPhotoPlaceholder
+          key={`pending-${pending.createdAt}-${i}`}
+          blurhash={pending.blurhash}
+          className="aspect-[4/3] w-[210px] shrink-0 rounded-lg shadow-sm"
+        />
+      ))}
       {canAdd && (
         <label
           className={cn(
@@ -1036,7 +1050,7 @@ function PhotoStrip({
           />
         </label>
       )}
-      {gallery.length === 0 && !canAdd && (
+      {gallery.length === 0 && pendingPhotos.length === 0 && !canAdd && (
         <p className="text-muted-foreground text-sm">{t("noPhotos")}</p>
       )}
       {gallery.length > 0 && (

@@ -369,6 +369,9 @@ importers:
       '@uiw/react-color-wheel':
         specifier: ^2.10.3
         version: 2.10.3(@babel/runtime@7.29.7)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      blurhash:
+        specifier: ^2.0.5
+        version: 2.0.5
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -556,6 +559,9 @@ importers:
       '@jigswap/email':
         specifier: workspace:^
         version: link:../email
+      blurhash:
+        specifier: ^2.0.5
+        version: 2.0.5
       cheerio:
         specifier: ^1.2.0
         version: 1.2.0
@@ -4097,6 +4103,9 @@ packages:
 
   blueimp-canvas-to-blob@3.29.0:
     resolution: {integrity: sha512-0pcSSGxC0QxT+yVkivxIqW0Y4VlO2XSDPofBAqoJ1qJxgH9eiUDLv50Rixij2cDuEfx4M6DpD9UGZpRhT5Q8qg==}
+
+  blurhash@2.0.5:
+    resolution: {integrity: sha512-cRygWd7kGBQO3VEhPiTgq4Wc43ctsM+o46urrmPOiuAe+07fzlSB9OJVdpgDL0jPqXUVQ9ht7aq7kxOeJHRK+w==}
 
   bmp-ts@1.0.9:
     resolution: {integrity: sha512-cTEHk2jLrPyi+12M3dhpEbnnPOsaZuq7C45ylbbQIiWgDFZq4UVYPEY5mlqjvsj/6gJv9qX5sa+ebDzLXT28Vw==}
@@ -10636,6 +10645,8 @@ snapshots:
       require-from-string: 2.0.2
 
   blueimp-canvas-to-blob@3.29.0: {}
+
+  blurhash@2.0.5: {}
 
   bmp-ts@1.0.9: {}
 

@@ -6,6 +6,7 @@ import type {
   CopyPhoto,
   CopyReviewEntry,
   CopyTransferEntry,
+  PendingPhotoPlaceholder,
   ProjectedMember,
 } from "@jigswap/contracts";
 import { resolveHouseholdCopyPermission } from "@jigswap/domain";
@@ -339,6 +340,22 @@ export const getCopyInstanceView = query({
     const gallery: CopyPhoto[] = galleryResolved.filter(
       (p): p is CopyPhoto => p != null,
     );
+    // Other members' photos still being screened: a blurhash placeholder only (lib/blurhash, 4x3,
+    // too coarse to reveal content) — never a URL, storage id or row id. Rejected photos are not
+    // listed at all, so a rejection leaves no trace for other viewers.
+    const pendingPhotos: PendingPhotoPlaceholder[] = imageRows
+      .filter((img) => {
+        const status = img.moderationStatus ?? "approved";
+        return (
+          (status === "pending" || status === "unscored") &&
+          img.uploaderId !== viewerId
+        );
+      })
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .map((img) => ({
+        blurhash: img.blurhash ?? null,
+        createdAt: img.createdAt,
+      }));
 
     // --- Cover resolution. --------------------------------------------------------------------
     // The copy may pin one of its own photos as the cover; resolve it to a URL. Falls back to the
@@ -406,6 +423,7 @@ export const getCopyInstanceView = query({
       stats,
       community,
       gallery,
+      pendingPhotos,
     };
   },
 });

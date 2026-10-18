@@ -130,8 +130,11 @@ export const moderateCompletionPhoto = internalAction({
         // unreferenced. There is no storage GC, so delete it ourselves to avoid orphaning it.
         let storedFileId: string | null = null;
         try {
-          const { bytes: encoded, mime: encodedMime } =
-            await reencodeImage(bytes);
+          const {
+            bytes: encoded,
+            mime: encodedMime,
+            blurhash,
+          } = await reencodeImage(bytes);
           cleanBytes = encoded;
           mime = encodedMime;
           event.reencoded = true;
@@ -143,7 +146,7 @@ export const moderateCompletionPhoto = internalAction({
           storedFileId = newFileId;
           await ctx.runMutation(
             internal.solving.completionModerationStore.setModerationFile,
-            { imageId, fileId: newFileId },
+            { imageId, fileId: newFileId, blurhash },
           );
           // Swap succeeded: the sidecar + completions row now point at the clean blob; drop the
           // original instead (best-effort).

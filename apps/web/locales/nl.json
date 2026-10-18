@@ -21,7 +21,8 @@
     "backToHome": "← Terug naar Home",
     "removeOption": "Verwijder {option} optie",
     "removeOptionButton": "knop om optie te verwijderen",
-    "inputTag": "invoertag"
+    "inputTag": "invoertag",
+    "photoPendingReview": "Wordt gecontroleerd"
   },
   "notFound": {
     "title": "Pagina Niet Gevonden",

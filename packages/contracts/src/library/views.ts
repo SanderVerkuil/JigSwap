@@ -390,6 +390,16 @@ export interface CopyPhoto {
 }
 
 /**
+ * A photo that exists but may not be shown yet (it is still being screened). Carries only a
+ * low-detail blurhash (null when none was computed) so the UI can render a blurred "pending
+ * review" tile; deliberately no URL, storage id or row id.
+ */
+export interface PendingPhotoPlaceholder {
+  blurhash: string | null;
+  createdAt: number;
+}
+
+/**
  * The privacy-gated detail view of a single owned copy, as returned by
  * `library.getCopyInstanceView`. `owner` and every participant in `since`/`before` are projected
  * server-side. `since`/`before` are each ascending by `occurredAt`.
@@ -476,6 +486,12 @@ export interface CopyInstanceView {
   community: CopyInstanceCommunity;
   /** Resolved gallery photos for this copy, newest first. */
   gallery: CopyPhoto[];
+  /**
+   * Other members' photos of this copy that are still being screened (pending or unscored),
+   * newest first: placeholders only, never a URL or id. The viewer's own such photos are in
+   * `gallery` (with "pending"); rejected photos appear in neither.
+   */
+  pendingPhotos: PendingPhotoPlaceholder[];
 }
 
 // --- Catalog puzzle-DEFINITION detail page -----------------------------------------------------

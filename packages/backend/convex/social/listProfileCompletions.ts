@@ -89,7 +89,7 @@ export const listProfileCompletions = query({
         endDate: row.endDate ?? row.startDate,
         completionTimeMinutes: row.completionTimeMinutes,
         datePrecision: row.datePrecision ?? ("day" as const),
-        photoUrls: await approvedPhotoUrls(ctx, row),
+        ...(await profilePhotos(ctx, row)),
         thumbnailUrl,
         link,
       });
@@ -168,27 +168,37 @@ const pageDatedThenUndated = async (
 };
 
 // Approved photos only: unlike the self-facing log (which shows pending with a badge), a profile is
-// seen by others, so a photo awaiting moderation stays hidden. No sidecar = legacy = approved.
-const approvedPhotoUrls = async (
+// seen by others, so a photo awaiting moderation is never shown — it surfaces only as a blurhash
+// placeholder (lib/blurhash: no URL, no id). Rejected photos appear in neither list. No sidecar =
+// legacy = approved.
+const profilePhotos = async (
   ctx: QueryCtx,
   row: Pick<Doc<"completions">, "aggregateId" | "photos">,
-): Promise<string[]> => {
-  if (row.photos.length === 0) return [];
-  const statusByFile = new Map<string, string | undefined>();
+): Promise<{
+  photoUrls: string[];
+  pendingPhotos: { blurhash: string | null }[];
+}> => {
+  if (row.photos.length === 0) return { photoUrls: [], pendingPhotos: [] };
+  const sidecarByFile = new Map<string, Doc<"completionImages">>();
   const completionId = row.aggregateId;
   if (completionId) {
     const sidecars = await ctx.db
       .query("completionImages")
       .withIndex("by_completion", (q) => q.eq("completionId", completionId))
       .collect();
-    for (const s of sidecars)
-      statusByFile.set(s.fileId as string, s.moderationStatus);
+    for (const s of sidecars) sidecarByFile.set(s.fileId as string, s);
   }
-  const urls = await Promise.all(
-    row.photos.map(async (fileId) => {
-      const status = statusByFile.get(fileId as string) ?? "approved";
-      return status === "approved" ? await ctx.storage.getUrl(fileId) : null;
-    }),
-  );
-  return urls.filter((url): url is string => url !== null);
+  const photoUrls: string[] = [];
+  const pendingPhotos: { blurhash: string | null }[] = [];
+  for (const fileId of row.photos) {
+    const sidecar = sidecarByFile.get(fileId as string);
+    const status = sidecar?.moderationStatus ?? "approved";
+    if (status === "approved") {
+      const url = await ctx.storage.getUrl(fileId);
+      if (url) photoUrls.push(url);
+    } else if (status === "pending" || status === "unscored") {
+      pendingPhotos.push({ blurhash: sidecar?.blurhash ?? null });
+    }
+  }
+  return { photoUrls, pendingPhotos };
 };
