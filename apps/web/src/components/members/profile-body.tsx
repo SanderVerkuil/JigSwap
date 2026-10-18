@@ -17,6 +17,7 @@ import {
 } from "@/components/members/profile-listings";
 import { toPlankBox, type ShelfCopy } from "@/components/profile/to-plank-box";
 import { FollowButton } from "@/components/social/follow-button";
+import { MemberActionsMenu } from "@/components/social/member-actions-menu";
 import { MessageButton } from "@/components/social/message-button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +35,7 @@ import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouter } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import {
   AtSign,
@@ -43,6 +44,7 @@ import {
   Heart,
   Lock,
   MapPin,
+  MoreHorizontal,
   Mountain,
   Puzzle,
   Sparkles,
@@ -240,6 +242,7 @@ function HeroSection({
       <HeroActions
         viewer={viewer}
         memberId={hero.memberId as Id<"users">}
+        name={name}
         locked={hero.visibility === "private"}
         returnToHref={returnToHref}
       />
@@ -250,11 +253,13 @@ function HeroSection({
 function HeroActions({
   viewer,
   memberId,
+  name,
   locked,
   returnToHref,
 }: {
   viewer: ProfileViewer;
   memberId: Id<"users">;
+  name: string;
   locked: boolean;
   returnToHref?: string;
 }) {
@@ -268,11 +273,16 @@ function HeroActions({
   if (viewer === "member") {
     // Locked (private, non-mutual): follow-only — messaging is connection-gated
     // and the request lives in the private card. Unlocked: Follow + Message.
-    if (locked) return null;
+    // Either way the overflow menu (Block) sits at the end.
     return (
       <div className="flex shrink-0 flex-wrap items-center gap-2">
-        <FollowButton memberId={memberId} />
-        <MessageButton memberId={memberId} />
+        {!locked && (
+          <>
+            <FollowButton memberId={memberId} />
+            <MessageButton memberId={memberId} />
+          </>
+        )}
+        <ProfileMenu memberId={memberId} name={name} />
       </div>
     );
   }
@@ -284,6 +294,28 @@ function HeroActions({
         <SignUpLink returnToHref={returnToHref}>{t("follow")}</SignUpLink>
       </Button>
     </div>
+  );
+}
+
+// The signed-in member's overflow menu on someone else's profile.
+function ProfileMenu({
+  memberId,
+  name,
+}: {
+  memberId: Id<"users">;
+  name: string;
+}) {
+  const t = useTranslations("safety");
+  const router = useRouter();
+  return (
+    <MemberActionsMenu
+      memberId={memberId}
+      name={name}
+      label={t("moreActions", { name })}
+      icon={MoreHorizontal}
+      // Re-run the route loader so the page reflects the block.
+      onBlocked={() => void router.invalidate()}
+    />
   );
 }
 

@@ -7,6 +7,7 @@
 // top bar so both open the same menu instead of hard-navigating to /profile.
 import { UserButton, useUser } from "@/compat/clerk";
 import { NotificationPreferencesPanel } from "@/components/notifications/notification-preferences-panel";
+import { PrivacySafetyPanel } from "@/components/social/privacy-safety-panel";
 import { Switch } from "@/components/ui/switch";
 import { UnreadDot } from "@/components/whats-new/badges";
 import { useWhatsNewUnreadCount } from "@/components/whats-new/use-whats-new-state";
@@ -20,6 +21,7 @@ import {
   Bell,
   ListChecks,
   Shield,
+  ShieldBan,
   SlidersHorizontal,
   Sparkles,
   User,
@@ -129,6 +131,13 @@ export function ShellUserButton({
         url="notifications"
       >
         <NotificationPreferencesPanel />
+      </UserButton.UserProfilePage>
+      <UserButton.UserProfilePage
+        label={t("user.privacySafety")}
+        labelIcon={<ShieldBan className="size-4" />}
+        url="privacy-safety"
+      >
+        <PrivacySafetyPanel />
       </UserButton.UserProfilePage>
     </UserButton>
   );
