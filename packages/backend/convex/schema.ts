@@ -367,7 +367,8 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_owned_puzzle", ["ownedPuzzleId"])
-    .index("by_moderation_status", ["moderationStatus"]),
+    .index("by_moderation_status", ["moderationStatus"])
+    .index("by_hash_check_pending", ["hashCheckPendingSince"]),
 
   // Named collections for organizing puzzles
   collections: defineTable({
@@ -503,7 +504,8 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_completion", ["completionId"])
-    .index("by_moderation_status", ["moderationStatus"]),
+    .index("by_moderation_status", ["moderationStatus"])
+    .index("by_hash_check_pending", ["hashCheckPendingSince"]),
 
   // One review per (member, puzzle definition). `rating` is optional ONLY to
   // hold migrated text-only legacy reviews (the old catalog form required text,
@@ -623,7 +625,8 @@ export default defineSchema({
     ),
     rowId: v.string(),
     uploaderId: v.id("users"),
-    fileId: v.id("_storage"),
+    // Absent only when a later re-check matched after the photo's blob was already gone.
+    fileId: v.optional(v.id("_storage")),
     md5: v.string(),
     sha1: v.string(),
     provider: v.string(),

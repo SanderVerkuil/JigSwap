@@ -46,7 +46,7 @@ export const recordCsamEscalation = async (
     table: QuarantinedTable;
     rowId: string;
     uploaderId: Id<"users">;
-    fileId: Id<"_storage">;
+    fileId?: Id<"_storage">;
     md5: string;
     sha1: string;
     provider: string;
@@ -55,10 +55,13 @@ export const recordCsamEscalation = async (
 ): Promise<Id<"csamEscalations">> => {
   // One escalation per preserved blob: a row re-pointed at an already-preserved blob (see
   // getPreservedHashes) joins the existing escalation instead of raising a second one.
-  const existing = await ctx.db
-    .query("csamEscalations")
-    .withIndex("by_file", (q) => q.eq("fileId", args.fileId))
-    .first();
+  const fileId = args.fileId;
+  const existing = fileId
+    ? await ctx.db
+        .query("csamEscalations")
+        .withIndex("by_file", (q) => q.eq("fileId", fileId))
+        .first()
+    : null;
   if (existing) return existing._id;
   const escalationId = await ctx.db.insert("csamEscalations", {
     ...args,
@@ -108,7 +111,8 @@ export const isBlobPreserved = internalQuery({
  * and whether the original upload had already been discarded (a match on re-check).
  */
 export const quarantineArgs = {
-  fileId: v.id("_storage"),
+  // Absent only when a re-check matched after the row's blob was already gone.
+  fileId: v.optional(v.id("_storage")),
   uploaderId: v.id("users"),
   md5: v.string(),
   sha1: v.string(),

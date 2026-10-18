@@ -37,7 +37,14 @@ const escalation = (
 });
 
 const data = (overrides: Partial<CsamEscalations> = {}): CsamEscalations => ({
-  hashCheck: { provider: "offlimits", status: "ok", missingVars: [] },
+  hashCheck: {
+    provider: "offlimits",
+    status: "ok",
+    missingVars: [],
+    waitingPhotos: 0,
+    oldestWaitingSince: null,
+    waitingCap: 200,
+  },
   escalations: [escalation()],
   ...overrides,
 });
@@ -144,11 +151,33 @@ describe("CsamEscalationsPanel", () => {
           provider: "offlimits",
           status: "missing_config",
           missingVars: ["OFFLIMITS_HCS_PASSWORD"],
+          waitingPhotos: 0,
+          oldestWaitingSince: null,
+          waitingCap: 200,
         },
         escalations: [],
       }),
     });
     expect(container.textContent).toContain("OFFLIMITS_HCS_PASSWORD");
     expect(container.textContent).toContain("No hash matches.");
+  });
+
+  it("shows how many photos wait unpublished for an unreachable hash check", () => {
+    render({
+      data: data({
+        hashCheck: {
+          provider: "offlimits",
+          status: "ok",
+          missingVars: [],
+          waitingPhotos: 3,
+          oldestWaitingSince: NOW - 2 * 3_600_000,
+          waitingCap: 200,
+        },
+      }),
+    });
+    expect(container.textContent).toContain(
+      "Hash check unreachable: 3 photos waiting",
+    );
+    expect(container.textContent).toContain("2 hours ago");
   });
 });

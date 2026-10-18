@@ -139,7 +139,7 @@ export const quarantineImage = internalMutation({
     if (row) {
       await ctx.db.patch(imageId, {
         moderationStatus: "quarantined",
-        fileId: match.fileId,
+        ...(match.fileId ? { fileId: match.fileId } : {}),
         pendingHashes: undefined,
         updatedAt: Date.now(),
       });

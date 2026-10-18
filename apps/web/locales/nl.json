@@ -3679,7 +3679,8 @@
         "notePlaceholder": "bijv. kenmerk van het Meldpunt",
         "markReported": "Markeer als gemeld",
         "close": "Sluiten",
-        "updated": "Escalatie bijgewerkt."
+        "updated": "Escalatie bijgewerkt.",
+        "waiting": "Hash-check onbereikbaar: {countLabel} {count, plural, one {foto wacht} other {foto's wachten}}, niet gepubliceerd (oudste {since}). Ze worden automatisch opnieuw gecontroleerd."
       }
     },
     "contact": {

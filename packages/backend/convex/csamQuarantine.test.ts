@@ -478,10 +478,11 @@ describe("admin escalation functions", () => {
       api.admin.listCsamEscalations.listCsamEscalations,
       {},
     );
-    expect(listed.hashCheck).toEqual({
+    expect(listed.hashCheck).toMatchObject({
       provider: "offlimits",
       status: "ok",
       missingVars: [],
+      waitingPhotos: 0,
     });
     expect(listed.escalations.map((e) => e.status)).toEqual(["closed"]);
     expect(JSON.stringify(listed)).not.toContain("s3cret-pass");
@@ -812,5 +813,125 @@ describe("preserved blobs can never be re-used (H1)", () => {
     );
     expect(detail).not.toBeNull();
     expect(JSON.stringify(detail)).not.toContain(preservedId);
+  });
+});
+
+describe("unavailable hash check: stored hashes, re-checks, held unpublished (M1)", () => {
+  const unavailableUpload = async (t: TestConvex<typeof schema>) => {
+    vi.stubGlobal("fetch", routedFetch(503));
+    const seeded = await seed(t);
+    const { row, upload } = await addCopyPhoto(t, seeded.copy);
+    return { ...seeded, row, upload };
+  };
+
+  test("the hashes of the original and the re-encode are stored and a re-check is scheduled in ~15 min", async () => {
+    const t = convexTest(schema, modules);
+    const { row, upload } = await unavailableUpload(t);
+
+    expect(row.hashCheckedAt).toBeUndefined();
+    expect(row.hashCheckPendingSince).toBeGreaterThan(0);
+    expect(row.pendingHashes).toHaveLength(2);
+    expect(row.pendingHashes![0]).toEqual({
+      md5: upload.md5,
+      sha1: upload.sha1,
+    });
+    // The original was still replaced by its re-encode (no indefinite retention).
+    expect(await blobExists(t, upload.fileId)).toBe(false);
+    const jobs = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect(),
+    );
+    const recheck = jobs.find(
+      (j) => j.state.kind === "pending" && j.name.includes("recheckHashes"),
+    );
+    expect(recheck?.args[0]).toEqual({ imageId: row._id, attempt: 1 });
+    expect(recheck!.scheduledTime - Date.now()).toBeGreaterThan(14 * 60_000);
+
+    const listed = await asAdmin(t).query(
+      api.admin.listCsamEscalations.listCsamEscalations,
+      {},
+    );
+    expect(listed.hashCheck.waitingPhotos).toBe(1);
+    expect(listed.hashCheck.oldestWaitingSince).toBe(row.hashCheckPendingSince);
+  });
+
+  test("a later match quarantines the re-encode, records the discarded original, and stops waiting", async () => {
+    const t = convexTest(schema, modules);
+    const { row } = await unavailableUpload(t);
+    vi.stubGlobal("fetch", routedFetch("match"));
+
+    await t.action(internal.library.moderatePhoto.recheckHashes, {
+      imageId: row._id,
+      attempt: 1,
+    });
+
+    const after = await t.run((ctx) => ctx.db.get(row._id));
+    expect(after?.moderationStatus).toBe("quarantined");
+    expect(after?.fileId).not.toBe(row.fileId);
+    expect(await blobExists(t, row.fileId)).toBe(false);
+    expect(await blobExists(t, after!.fileId)).toBe(true);
+    const [escalation] = await escalations(t);
+    expect(escalation).toMatchObject({
+      fileId: after!.fileId,
+      originalDiscarded: true,
+    });
+    const listed = await asAdmin(t).query(
+      api.admin.listCsamEscalations.listCsamEscalations,
+      {},
+    );
+    expect(listed.hashCheck.waitingPhotos).toBe(0);
+  });
+
+  test("a later no_match publishes the photo", async () => {
+    const t = convexTest(schema, modules);
+    const { row, copy } = await unavailableUpload(t);
+    vi.stubGlobal("fetch", routedFetch("no_match"));
+
+    await t.action(internal.library.moderatePhoto.recheckHashes, {
+      imageId: row._id,
+      attempt: 1,
+    });
+
+    const after = await t.run((ctx) => ctx.db.get(row._id));
+    expect(after?.hashCheckedAt).toBeGreaterThan(0);
+    expect(after?.pendingHashes).toBeUndefined();
+    const view = await asBob(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
+    );
+    expect(view?.gallery).toHaveLength(1);
+  });
+
+  test("still unavailable: backs off (doubling, capped at 24 h)", async () => {
+    const t = convexTest(schema, modules);
+    const { row } = await unavailableUpload(t);
+
+    await t.action(internal.library.moderatePhoto.recheckHashes, {
+      imageId: row._id,
+      attempt: 9,
+    });
+
+    const jobs = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect(),
+    );
+    const next = jobs.find(
+      (j) =>
+        j.state.kind === "pending" &&
+        j.name.includes("recheckHashes") &&
+        (j.args[0] as { attempt: number }).attempt === 10,
+    );
+    expect(next).toBeDefined();
+    const delay = next!.scheduledTime - Date.now();
+    expect(delay).toBeGreaterThan(23 * 3_600_000);
+    expect(delay).toBeLessThanOrEqual(24 * 3_600_000);
+  });
+
+  test("provider none: hashCheckedAt is set at once, nothing waits", async () => {
+    vi.stubEnv("CSAM_HASHCHECK_PROVIDER", "none");
+    vi.stubGlobal("fetch", routedFetch("match"));
+    const t = convexTest(schema, modules);
+    const { copy } = await seed(t);
+    const { row } = await addCopyPhoto(t, copy);
+    expect(row.hashCheckedAt).toBeGreaterThan(0);
+    expect(row.pendingHashes).toBeUndefined();
   });
 });

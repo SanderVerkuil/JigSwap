@@ -88,6 +88,14 @@ export function CsamEscalationsPanel({
         </div>
       )}
 
+      {hashCheck.waitingPhotos > 0 && (
+        <WaitingNotice
+          count={hashCheck.waitingPhotos}
+          capped={hashCheck.waitingPhotos >= hashCheck.waitingCap}
+          since={hashCheck.oldestWaitingSince}
+        />
+      )}
+
       {escalations.length === 0 ? (
         <QueueEmpty title={emptyTitle} label={t("empty")} />
       ) : (
@@ -102,6 +110,37 @@ export function CsamEscalationsPanel({
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+function WaitingNotice({
+  count,
+  capped,
+  since,
+}: {
+  count: number;
+  capped: boolean;
+  since: number | null;
+}) {
+  const t = useTranslations("admin.moderation.csam");
+  const relativeTime = useRelativeTime();
+  return (
+    <div
+      role="status"
+      className="flex gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-sm"
+    >
+      <TriangleAlert
+        className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400"
+        aria-hidden
+      />
+      <p className="text-muted-foreground">
+        {t("waiting", {
+          count,
+          countLabel: capped ? `${count}+` : String(count),
+          since: since === null ? "" : relativeTime(since),
+        })}
+      </p>
     </div>
   );
 }

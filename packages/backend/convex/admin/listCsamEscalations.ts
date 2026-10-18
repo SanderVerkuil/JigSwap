@@ -8,6 +8,9 @@ import { readCsamHashCheckConfig } from "../lib/imageModeration/csamHashCheck";
 // At most this many escalations per status are listed (newest first).
 export const CSAM_ESCALATION_LIST_LIMIT = 100;
 
+// Per table, the waiting-for-hash-check count stops here (the tab then shows "N+").
+export const HASH_CHECK_WAITING_CAP = 200;
+
 // Admin-only list of CSAM hash matches for the operator to report (lib/imageModeration/
 // quarantine). METADATA ONLY: never an image URL, thumbnail, blurhash or storage id. The image is
 // never shown to anyone, admins included. Also reports whether hash matching is configured on
@@ -43,6 +46,39 @@ export const listCsamEscalations = query({
         });
       }
     }
-    return { hashCheck: readCsamHashCheckConfig(process.env), escalations };
+    // Photos held unpublished because the hash check was unavailable (stored hashes awaiting a
+    // re-check), across both image tables: a count (capped) and the oldest wait.
+    let waitingPhotos = 0;
+    let oldestWaitingSince: number | null = null;
+    for (const table of ["ownedPuzzleImages", "completionImages"] as const) {
+      const rows = await ctx.db
+        .query(table)
+        .withIndex("by_hash_check_pending", (q) =>
+          q.gt("hashCheckPendingSince", 0),
+        )
+        .take(HASH_CHECK_WAITING_CAP);
+      for (const row of rows) {
+        if (!row.pendingHashes || row.moderationStatus === "quarantined") {
+          continue;
+        }
+        waitingPhotos += 1;
+        const since = row.hashCheckPendingSince ?? null;
+        if (
+          since !== null &&
+          (oldestWaitingSince === null || since < oldestWaitingSince)
+        ) {
+          oldestWaitingSince = since;
+        }
+      }
+    }
+    return {
+      hashCheck: {
+        ...readCsamHashCheckConfig(process.env),
+        waitingPhotos,
+        oldestWaitingSince,
+        waitingCap: HASH_CHECK_WAITING_CAP,
+      },
+      escalations,
+    };
   },
 });

@@ -3679,7 +3679,8 @@
         "notePlaceholder": "e.g. Meldpunt reference",
         "markReported": "Mark reported",
         "close": "Close",
-        "updated": "Escalation updated."
+        "updated": "Escalation updated.",
+        "waiting": "Hash check unreachable: {countLabel} {count, plural, one {photo} other {photos}} waiting, unpublished (oldest {since}). They are re-checked automatically."
       }
     },
     "contact": {

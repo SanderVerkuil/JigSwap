@@ -144,7 +144,7 @@ export type ModerationVerdictArgs = {
 /** What a table's `quarantine` step receives (lib/imageModeration/quarantine.quarantineArgs). */
 export type QuarantineArgs = {
   imageId: string;
-  fileId: Id<"_storage">;
+  fileId?: Id<"_storage">;
   uploaderId: Id<"users">;
   md5: string;
   sha1: string;
@@ -204,7 +204,40 @@ export interface ImageModerationSteps<R extends ModerationRow> {
     { imageId: string; attempt?: number },
     unknown
   >;
+  /** The table's hash re-check action (runs `runHashRecheck`), scheduled while unavailable. */
+  recheck: FunctionReference<
+    "action",
+    "internal",
+    { imageId: string; attempt?: number },
+    unknown
+  >;
 }
+
+/**
+ * Backoff for re-checking the STORED hashes of a photo whose hash check was "unavailable": 15
+ * minutes after the upload, doubling up to 24 hours, then every 24 hours for as long as the row
+ * is still waiting. Meanwhile the photo stays unpublished (no hashCheckedAt => no URL).
+ */
+export const HASH_RECHECK_DELAYS_MS: readonly number[] = [
+  15 * 60_000,
+  30 * 60_000,
+  60 * 60_000,
+  2 * 60 * 60_000,
+  4 * 60 * 60_000,
+  8 * 60 * 60_000,
+  16 * 60 * 60_000,
+  24 * 60 * 60_000,
+];
+
+/** The delay before re-check `attempt` (1-based). */
+export const hashRecheckDelayMs = (attempt: number): number =>
+  HASH_RECHECK_DELAYS_MS[attempt - 1] ??
+  HASH_RECHECK_DELAYS_MS[HASH_RECHECK_DELAYS_MS.length - 1];
+
+/** Declare a table's steps once (typed, so `describe` sees the row type), for both actions. */
+export const imageModerationSteps = <R extends ModerationRow>(
+  steps: ImageModerationSteps<R>,
+): ImageModerationSteps<R> => steps;
 
 /**
  * Preserve matched bytes and quarantine: store them again as a NEW blob (never served, so no URL
@@ -219,7 +252,7 @@ const preserveAndQuarantine = async (
   args: {
     imageId: string;
     bytes: Uint8Array;
-    uploadedFileId: Id<"_storage">;
+    uploadedFileId: Id<"_storage"> | null;
     uploaderId: Id<"users">;
     matched: ImageHashes;
     provider: string;
@@ -246,7 +279,9 @@ const preserveAndQuarantine = async (
     throw error;
   }
   // Best-effort: the uploaded blob may already be gone (the uploader removed the photo).
-  await ctx.storage.delete(args.uploadedFileId).catch(() => {});
+  if (args.uploadedFileId) {
+    await ctx.storage.delete(args.uploadedFileId).catch(() => {});
+  }
   for (const key of Object.keys(event)) {
     if (key !== "event" && key !== "outcome" && key !== "attempt") {
       delete event[key];
@@ -460,8 +495,9 @@ export const runImageModeration = async <R extends ModerationRow>(
     }
 
     // CSAM hash check until the row has passed one, BEFORE any refusal, swap or classification.
-    // Only the outcome is logged, never the hashes.
-    if (row.hashCheckedAt === undefined) {
+    // Only the outcome is logged, never the hashes. Once "unavailable" has stored the hashes,
+    // the scheduled re-check (runHashRecheck) owns the outcome.
+    if (row.hashCheckedAt === undefined && row.pendingHashes === undefined) {
       const variants = encoded
         ? [hashImageBytes(bytes), hashImageBytes(encoded.bytes)]
         : [hashImageBytes(bytes)];
@@ -489,8 +525,25 @@ export const runImageModeration = async <R extends ModerationRow>(
           status: "no_match",
         });
       }
-      // Unavailable: the gate stays closed; surface it at error level for alerting.
-      if (hashCheck.status === "unavailable") event.outcome = "error";
+      // Unavailable: the gate stays closed. Keep the hashes (of the original AND the re-encode,
+      // since the original is deleted after the swap below) and re-check them later. Surface it
+      // at error level for alerting.
+      if (hashCheck.status === "unavailable") {
+        event.outcome = "error";
+        if (refusal === null) {
+          await ctx.runMutation(steps.setHashCheck, {
+            imageId,
+            status: "unavailable",
+            hashes: variants,
+          });
+          const delayMs = hashRecheckDelayMs(1);
+          await ctx.scheduler.runAfter(delayMs, steps.recheck, {
+            imageId,
+            attempt: 1,
+          });
+          event.hash_recheck_in_ms = delayMs;
+        }
+      }
     }
 
     if (refusal !== null) {
@@ -564,5 +617,100 @@ export const runImageModeration = async <R extends ModerationRow>(
     event.error = { stage: "record", message: errMsg(error) };
   } finally {
     await flush();
+  }
+};
+
+/**
+ * Re-check the STORED hashes of a photo whose hash check was "unavailable" (1-based `attempt`).
+ * no_match opens the publication gate; unavailable re-schedules with HASH_RECHECK_DELAYS_MS; a
+ * match quarantines exactly like the live pipeline, preserving the blob the row holds now (the
+ * re-encode: the original was deleted after the swap, which the escalation records as
+ * `originalDiscarded`). Never throws.
+ */
+export const runHashRecheck = async <R extends ModerationRow>(
+  ctx: ActionCtx,
+  steps: ImageModerationSteps<R>,
+  { imageId, attempt }: { imageId: string; attempt: number },
+): Promise<void> => {
+  const startedAt = Date.now();
+  const hashConfig = readCsamHashCheckConfig(process.env);
+  const event: WideEvent = {
+    event: `${steps.event}.hashRecheck`,
+    outcome: "success",
+    image_id: imageId,
+    attempt,
+    csam_hashcheck_provider: hashConfig.provider,
+    csam_hashcheck_config: hashConfig.status,
+  };
+  try {
+    const row = await ctx.runQuery(steps.load, { imageId });
+    if (
+      !row ||
+      row.moderationStatus === "quarantined" ||
+      row.hashCheckedAt !== undefined ||
+      !row.pendingHashes
+    ) {
+      event.result = "skipped";
+      return;
+    }
+    const hashCheck = await checkAllHashes(
+      makeCsamHashCheckPortFromEnv(process.env),
+      row.pendingHashes,
+    );
+    event.csam_hashcheck_status = hashCheck.status;
+    event.csam_hashcheck_reason = hashCheck.reason ?? null;
+    if (hashCheck.status === "match" && hashCheck.matched) {
+      const blob = await ctx.storage.get(row.fileId).catch(() => null);
+      const bytes = blob ? new Uint8Array(await blob.arrayBuffer()) : null;
+      if (bytes) {
+        await preserveAndQuarantine(ctx, steps.quarantine, event, {
+          imageId,
+          bytes,
+          uploadedFileId: row.fileId,
+          uploaderId: row.uploaderId,
+          matched: hashCheck.matched,
+          provider: hashConfig.provider,
+          originalDiscarded: row.pendingHashes.length > 1,
+        });
+        return;
+      }
+      // The blob is gone too: escalate on the hashes alone.
+      const escalationId = await ctx.runMutation(steps.quarantine, {
+        imageId,
+        uploaderId: row.uploaderId,
+        md5: hashCheck.matched.md5,
+        sha1: hashCheck.matched.sha1,
+        provider: hashConfig.provider,
+        originalDiscarded: true,
+      });
+      for (const key of Object.keys(event)) {
+        if (key !== "event" && key !== "outcome" && key !== "attempt") {
+          delete event[key];
+        }
+      }
+      event.csam_hashcheck_status = "match";
+      event.escalation_id = escalationId;
+      return;
+    }
+    if (hashCheck.status === "no_match") {
+      await ctx.runMutation(steps.setHashCheck, {
+        imageId,
+        status: "no_match",
+      });
+      return;
+    }
+    event.outcome = "error";
+    const delayMs = hashRecheckDelayMs(attempt + 1);
+    await ctx.scheduler.runAfter(delayMs, steps.recheck, {
+      imageId,
+      attempt: attempt + 1,
+    });
+    event.hash_recheck_in_ms = delayMs;
+  } catch (error) {
+    event.outcome = "error";
+    event.error = { stage: "recheck", message: errMsg(error) };
+  } finally {
+    event.duration_ms = Date.now() - startedAt;
+    await ingestToAxiom(logEvent(event));
   }
 };
