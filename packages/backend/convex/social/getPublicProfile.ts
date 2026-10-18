@@ -9,6 +9,7 @@ import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { optionalActingMember } from "../identity/optionalActingMember";
 import { resolveMemberByHandle } from "../identity/resolveMemberByHandle";
 import { seesPrivateCopiesOf } from "../library/copyVisibility";
+import { blockStateBetween } from "./blocks";
 import {
   areMutualFollowers,
   profileVisibilityOf,
@@ -42,6 +43,31 @@ export const getPublicProfile = query({
     ]);
 
     const isSelf = viewerId !== null && viewerId === memberId;
+    // Blocked (spec 2.6): the blocked side reads not-found; the blocker gets an identity stub.
+    const block =
+      viewerId === null || isSelf
+        ? undefined
+        : await blockStateBetween(ctx, viewerId, memberId);
+    if (block === "byThem") return null;
+    if (block === "byMe") {
+      return {
+        locked: true,
+        blockedByMe: true,
+        hero: {
+          memberId,
+          displayName: memberDisplayNameOf(user, profile),
+          username: user.username,
+          slug: user.slug,
+          avatar: user.avatar,
+          memberSince: user.createdAt,
+          rating: 0,
+          reviewCount: 0,
+          followerCount: 0,
+          followingCount: 0,
+          visibility,
+        },
+      };
+    }
     const isMutual =
       !isSelf &&
       viewerId !== null &&

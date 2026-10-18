@@ -18,6 +18,11 @@ export interface ProfileView extends ConvexSystemFields {
    */
   visibility: "public" | "private";
   updatedAt: number;
+  /**
+   * Set when the viewer blocked this member: a stub (no bio) so the UI can offer Unblock. A
+   * member who blocked the viewer reads as null instead.
+   */
+  blockedByMe?: true;
 }
 
 /**
@@ -235,6 +240,11 @@ export interface PublicMemberTeaserView {
   visibility: "public" | "private";
   /** Owned-copy count; null for private profiles. */
   puzzleCount: number | null;
+  /**
+   * Set when the viewer blocked this member (identity only, puzzleCount null) so the UI can offer
+   * Unblock. A member who blocked the viewer reads as null instead.
+   */
+  blockedByMe?: true;
 }
 
 /**
@@ -341,4 +351,13 @@ export type PublicProfileView =
        */
       libraryScope: "all" | "available";
     }
-  | { locked: true; hero: PublicProfileHero };
+  | {
+      locked: true;
+      hero: PublicProfileHero;
+      /**
+       * Set when the viewer blocked this member: a stub whose hero carries only identity (name,
+       * avatar, handle; counts and rating zeroed, no location) so the UI can offer Unblock. A
+       * member who blocked the viewer reads as null instead.
+       */
+      blockedByMe?: true;
+    };
