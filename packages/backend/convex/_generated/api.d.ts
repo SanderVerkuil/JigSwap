@@ -14,19 +14,24 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as admin_confirmPhotoRemoval from "../admin/confirmPhotoRemoval.js";
+import type * as admin_decideReport from "../admin/decideReport.js";
 import type * as admin_decideUncheckedPhoto from "../admin/decideUncheckedPhoto.js";
+import type * as admin_deleteCopyPhoto from "../admin/deleteCopyPhoto.js";
 import type * as admin_getModerationActivity from "../admin/getModerationActivity.js";
 import type * as admin_getModerationStats from "../admin/getModerationStats.js";
 import type * as admin_getPhotoScreeningHealth from "../admin/getPhotoScreeningHealth.js";
 import type * as admin_getPuzzleDefinitionDetail from "../admin/getPuzzleDefinitionDetail.js";
+import type * as admin_getReport from "../admin/getReport.js";
 import type * as admin_getUserDetail from "../admin/getUserDetail.js";
 import type * as admin_listCsamEscalations from "../admin/listCsamEscalations.js";
 import type * as admin_listPuzzleDefinitions from "../admin/listPuzzleDefinitions.js";
 import type * as admin_listRejectedPhotos from "../admin/listRejectedPhotos.js";
+import type * as admin_listReports from "../admin/listReports.js";
 import type * as admin_listUncheckedPhotos from "../admin/listUncheckedPhotos.js";
 import type * as admin_listUsers from "../admin/listUsers.js";
 import type * as admin_markCsamEscalation from "../admin/markCsamEscalation.js";
 import type * as admin_probePhotoScreening from "../admin/probePhotoScreening.js";
+import type * as admin_reportViews from "../admin/reportViews.js";
 import type * as admin_restorePhoto from "../admin/restorePhoto.js";
 import type * as admin_roleChange from "../admin/roleChange.js";
 import type * as admin_setUserRole from "../admin/setUserRole.js";
@@ -311,6 +316,8 @@ import type * as onboarding_quickStartFacts from "../onboarding/quickStartFacts.
 import type * as onboarding_recordQuickStart from "../onboarding/recordQuickStart.js";
 import type * as presence from "../presence.js";
 import type * as puzzles from "../puzzles.js";
+import type * as reports_fileReport from "../reports/fileReport.js";
+import type * as reports_listMyReports from "../reports/listMyReports.js";
 import type * as reputation_adapters_convexExchangeCompletionPort from "../reputation/adapters/convexExchangeCompletionPort.js";
 import type * as reputation_adapters_convexPartnerReviewRepository from "../reputation/adapters/convexPartnerReviewRepository.js";
 import type * as reputation_adapters_convexReputationProfileRepository from "../reputation/adapters/convexReputationProfileRepository.js";
@@ -450,19 +457,24 @@ import type * as whatsNew_recordTourProgress from "../whatsNew/recordTourProgres
 
 declare const fullApi: ApiFromModules<{
   "admin/confirmPhotoRemoval": typeof admin_confirmPhotoRemoval;
+  "admin/decideReport": typeof admin_decideReport;
   "admin/decideUncheckedPhoto": typeof admin_decideUncheckedPhoto;
+  "admin/deleteCopyPhoto": typeof admin_deleteCopyPhoto;
   "admin/getModerationActivity": typeof admin_getModerationActivity;
   "admin/getModerationStats": typeof admin_getModerationStats;
   "admin/getPhotoScreeningHealth": typeof admin_getPhotoScreeningHealth;
   "admin/getPuzzleDefinitionDetail": typeof admin_getPuzzleDefinitionDetail;
+  "admin/getReport": typeof admin_getReport;
   "admin/getUserDetail": typeof admin_getUserDetail;
   "admin/listCsamEscalations": typeof admin_listCsamEscalations;
   "admin/listPuzzleDefinitions": typeof admin_listPuzzleDefinitions;
   "admin/listRejectedPhotos": typeof admin_listRejectedPhotos;
+  "admin/listReports": typeof admin_listReports;
   "admin/listUncheckedPhotos": typeof admin_listUncheckedPhotos;
   "admin/listUsers": typeof admin_listUsers;
   "admin/markCsamEscalation": typeof admin_markCsamEscalation;
   "admin/probePhotoScreening": typeof admin_probePhotoScreening;
+  "admin/reportViews": typeof admin_reportViews;
   "admin/restorePhoto": typeof admin_restorePhoto;
   "admin/roleChange": typeof admin_roleChange;
   "admin/setUserRole": typeof admin_setUserRole;
@@ -747,6 +759,8 @@ declare const fullApi: ApiFromModules<{
   "onboarding/recordQuickStart": typeof onboarding_recordQuickStart;
   presence: typeof presence;
   puzzles: typeof puzzles;
+  "reports/fileReport": typeof reports_fileReport;
+  "reports/listMyReports": typeof reports_listMyReports;
   "reputation/adapters/convexExchangeCompletionPort": typeof reputation_adapters_convexExchangeCompletionPort;
   "reputation/adapters/convexPartnerReviewRepository": typeof reputation_adapters_convexPartnerReviewRepository;
   "reputation/adapters/convexReputationProfileRepository": typeof reputation_adapters_convexReputationProfileRepository;

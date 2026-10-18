@@ -1475,6 +1475,82 @@ export default defineSchema({
     completedAt: v.optional(v.number()),
   }).index("by_entry", ["entryId"]),
 
+  // DSA notice-and-action (spec 2.5): a member's report about another member or their content.
+  // Filing never changes the target; an admin decides it (admin/decideReport), which may tombstone
+  // a message or remove a photo. `targetId` is the target's canonical id string: users / copy /
+  // photo `_id`, the threadMessages `messageId`, or the exchange aggregateId (raw `_id` fallback).
+  // `evidence` is snapshotted at filing time so later edits or removal can't destroy it.
+  reports: defineTable({
+    reporterId: v.id("users"),
+    // An "attachment" kind arrives with message image attachments.
+    targetKind: v.union(
+      v.literal("user"),
+      v.literal("message"),
+      v.literal("copy"),
+      v.literal("photo"),
+      v.literal("exchange"),
+    ),
+    targetId: v.string(),
+    reportedUserId: v.id("users"),
+    reason: v.union(
+      v.literal("spam_scam"),
+      v.literal("harassment_hate"),
+      v.literal("sexual"),
+      v.literal("fake_trade"),
+      v.literal("illegal"),
+      v.literal("other"),
+    ),
+    details: v.optional(v.string()), // <= 1000 characters
+    // DSA Art. 16(2) notice elements; present iff reason === "illegal".
+    illegalNotice: v.optional(
+      v.object({
+        notifierName: v.string(),
+        notifierEmail: v.string(),
+        goodFaith: v.literal(true),
+      }),
+    ),
+    evidence: v.object({
+      // message target: up to 10 preceding messages of the thread plus the target, ascending.
+      messages: v.optional(
+        v.array(
+          v.object({
+            messageId: v.string(),
+            authorId: v.optional(v.id("users")),
+            kind: v.union(
+              v.literal("text"),
+              v.literal("image"),
+              v.literal("system"),
+            ),
+            body: v.string(),
+            sentAt: v.number(),
+            copyId: v.optional(v.id("ownedPuzzles")),
+          }),
+        ),
+      ),
+    }),
+    status: v.union(
+      v.literal("open"),
+      v.literal("actioned"),
+      v.literal("dismissed"),
+    ),
+    decision: v.optional(
+      v.union(
+        v.literal("dismissed"),
+        v.literal("content_removed"),
+        v.literal("warned"),
+      ),
+    ),
+    statementOfReasons: v.optional(v.string()),
+    decidedBy: v.optional(v.id("users")),
+    decidedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_status_created", ["status", "createdAt"])
+    .index("by_target", ["targetKind", "targetId"])
+    .index("by_reporter_target", ["reporterId", "targetKind", "targetId"])
+    .index("by_reporter_created", ["reporterId", "createdAt"])
+    .index("by_reported_user", ["reportedUserId", "createdAt"]),
+
   // Fixed-window rate limit counters (lib/rateLimits). One row per key ("<limit>:<memberId>"),
   // reset in place when its window has passed, so the table stays bounded without a cleanup job.
   rateLimits: defineTable({
