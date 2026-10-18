@@ -14,6 +14,18 @@ import { ThreadView } from "./thread-view";
 
 const mocks = vi.hoisted(() => ({
   mutation: vi.fn<(name: string, args: unknown) => Promise<unknown>>(),
+  // The thread's messages, ascending; served newest-first as one exhausted page.
+  messages: [] as unknown[],
+}));
+
+// ThreadView pages listThreadMessages through Convex's usePaginatedQuery (#174).
+vi.mock("convex/react", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("convex/react")>()),
+  usePaginatedQuery: () => ({
+    results: [...mocks.messages].reverse(),
+    status: "Exhausted",
+    loadMore: () => {},
+  }),
 }));
 
 vi.mock("@/compat/link", () => ({
@@ -82,25 +94,26 @@ const exchangeThread = () =>
     profileHandle: "mara",
   });
 
+// #160: messages carry viewer-relative `isMine`, never a raw author id.
 const MESSAGES = [
-  { id: "m1", authorId: "me", kind: "text", body: "My own message", sentAt: 1 },
+  { id: "m1", isMine: true, kind: "text", body: "My own message", sentAt: 1 },
   {
     id: "m2",
-    authorId: "member_mara",
+    isMine: false,
     kind: "text",
     body: "Mara's message",
     sentAt: 2,
   },
   {
     id: "m3",
-    authorId: null,
+    isMine: false,
     kind: "system",
     body: "Trade accepted",
     sentAt: 3,
   },
   {
     id: "m4",
-    authorId: "member_mara",
+    isMine: false,
     kind: "text",
     body: "",
     sentAt: 4,
@@ -122,12 +135,7 @@ const renderThread = (thread: InboxThread) => {
       },
     },
   });
-  queryClient.setQueryData(
-    convexQuery(gateway.conversation.getThreadMessages, {
-      threadId: thread.threadId,
-    }).queryKey,
-    MESSAGES,
-  );
+  mocks.messages = MESSAGES;
   queryClient.setQueryData(
     convexQuery(gateway.conversation.getMyInbox, {}).queryKey,
     [thread],
