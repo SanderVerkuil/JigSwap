@@ -275,7 +275,8 @@ const resolveActor = async (
   viewerId: Id<"users">,
   row: Doc<"notifications">,
   actorId: Id<"users">,
-  dmMessage: boolean,
+  /** For message_received: the exchange its (exchange) thread is about, when it resolves. */
+  messageExchange: Doc<"exchanges"> | null,
 ): Promise<ResolvedActor> => {
   const type = row.type;
   const user = await loadUser(ctx, cache, actorId);
@@ -283,9 +284,12 @@ const resolveActor = async (
   const profile = await loadProfile(ctx, cache, actorId);
   const isViewer = actorId === viewerId;
 
-  // Trade types: the per-trade rule for THAT exchange (only when both are its parties).
-  if (TRADE_NOTIFICATION_TYPES.has(type)) {
-    const exchange = await tradeExchangeOf(ctx, cache, row);
+  // Trade types, and a message in an exchange thread: the per-trade rule for THAT exchange (only
+  // when both are its parties).
+  const exchange = TRADE_NOTIFICATION_TYPES.has(type)
+    ? await tradeExchangeOf(ctx, cache, row)
+    : messageExchange;
+  if (exchange) {
     const isParty = (id: Id<"users">) =>
       exchange !== null &&
       (id === exchange.initiatorId || id === exchange.recipientId);
@@ -302,8 +306,11 @@ const resolveActor = async (
           return revealedActor(user, profile, false);
       }
     }
-    // Unresolvable exchange: fall through to the ordinary public / mutual rule (fails closed).
   }
+  // Unresolvable exchange (or not both its parties): the ordinary public / mutual rule (fails
+  // closed). A message's sender never gets the initiator reveal: a DM projects them like the
+  // thread does, and an exchange-thread message the per-trade rule did not decide fails closed.
+  const dmMessage = type === "message_received";
   // Only read the follow graph when the cheaper rules have not already decided.
   const preRevealed = isActorRevealed(
     type,
@@ -539,19 +546,31 @@ export const resolveNotificationView = async (
   const subject = row.subject as NotificationSubject | undefined;
   const hasRefs = row.actorIds !== undefined || subject !== undefined;
 
-  // A message's sender is revealed by the initiator rule only inside an exchange thread; a DM (or a
-  // thread that no longer resolves) projects them like the thread itself does.
+  // A message in an exchange thread is about that exchange: its sender is projected by the
+  // per-trade rule. Anything else (a DM, or a thread / exchange that no longer resolves) is a
+  // dmMessage: projected like the thread itself, never initiator-revealed (fails closed).
   const messageThreadId =
     subject?.kind === "thread" ? subject.threadId : row.relatedId;
-  const dmMessage =
-    type === "message_received" &&
-    (messageThreadId === undefined ||
-      (await loadThread(ctx, cache, messageThreadId))?.subjectKind !==
-        "exchange");
+  const messageThread =
+    type === "message_received" && messageThreadId !== undefined
+      ? await loadThread(ctx, cache, messageThreadId)
+      : null;
+  const messageExchangeId =
+    messageThread?.subjectKind === "exchange"
+      ? messageThread.exchangeId
+      : undefined;
+  const messageExchange = messageExchangeId
+    ? await memoized(cache, `doc:${messageExchangeId}`, () =>
+        ctx.db.get(messageExchangeId),
+      )
+    : null;
+  const dmMessage = type === "message_received" && messageExchange === null;
   const actors = await Promise.all(
     actorIds
       .slice(0, MAX_ACTORS)
-      .map((id) => resolveActor(ctx, cache, viewerId, row, id, dmMessage)),
+      .map((id) =>
+        resolveActor(ctx, cache, viewerId, row, id, messageExchange),
+      ),
   );
   const firstActor = actors[0] ?? null;
 

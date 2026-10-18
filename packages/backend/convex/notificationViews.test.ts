@@ -562,17 +562,53 @@ describe("message_received", () => {
     expect(view.context.messagePreview).toHaveLength(80);
   });
 
-  // The sender's identity in a DM follows the thread's own privacy rule; an exchange thread keeps
-  // the initiator reveal; a thread that no longer resolves fails closed.
-  const privSenderView = async (
-    s: Setup,
-    subjectKind: "dm" | "exchange" | null,
-  ) => {
+  // The sender's identity in a DM follows the thread's own privacy rule; in an exchange thread the
+  // per-trade rule; a thread (or its exchange) that no longer resolves fails closed.
+  type SenderThread =
+    | "dm"
+    | "missing"
+    // exchange thread; `viewerRole` is the viewer's side of the trade (priv is the other party)
+    | { viewerRole: "owner" | "requester"; exchangeRow: boolean };
+  const privSenderView = async (s: Setup, thread: SenderThread) => {
     await s.t.run(async (ctx) => {
-      if (subjectKind !== null) {
+      await ctx.db.patch(s.priv, { avatar: "https://img/priv.png" });
+      if (thread !== "missing") {
+        let exchangeId: Id<"exchanges"> | undefined;
+        if (thread !== "dm") {
+          const puzzleId = await ctx.db.insert("puzzles", {
+            title: "Catalog Title",
+            pieceCount: 1000,
+            status: "approved",
+            submittedBy: s.viewer,
+            createdAt: now,
+            updatedAt: now,
+          });
+          const owner = thread.viewerRole === "owner" ? s.viewer : s.priv;
+          const requester = owner === s.viewer ? s.priv : s.viewer;
+          const copyId = await ctx.db.insert("ownedPuzzles", {
+            puzzleId,
+            ownerId: owner,
+            condition: "good",
+            availability: { forTrade: true, forSale: false, forLend: false },
+            createdAt: now,
+            updatedAt: now,
+          });
+          exchangeId = await ctx.db.insert("exchanges", {
+            aggregateId: "ex-p",
+            initiatorId: requester,
+            recipientId: owner,
+            type: "trade",
+            requestedPuzzleId: copyId,
+            status: "proposed",
+            createdAt: now,
+            updatedAt: now,
+          });
+          if (!thread.exchangeRow) await ctx.db.delete(exchangeId);
+        }
         await ctx.db.insert("threads", {
           aggregateId: "thread-p",
-          subjectKind,
+          subjectKind: thread === "dm" ? "dm" : "exchange",
+          ...(exchangeId ? { exchangeId } : {}),
           participants: [s.viewer, s.priv],
           participantsKey: [s.viewer, s.priv].sort().join("|"),
           readReceipts: [],
@@ -607,13 +643,53 @@ describe("message_received", () => {
     });
   });
 
-  test("a private sender in an exchange thread keeps the initiator reveal", async () => {
+  test("in an exchange thread the owner sees the private requester limited: no avatar", async () => {
     const s = await setup();
-    const view = await privSenderView(s, "exchange");
+    const view = await privSenderView(s, {
+      viewerRole: "owner",
+      exchangeRow: true,
+    });
     expect(view.actors[0]).toMatchObject({
       anonymous: false,
       memberId: s.priv,
+      tradeRevealed: true,
     });
+    expect(view.actors[0]).not.toHaveProperty("avatar");
+  });
+
+  test("in an exchange thread the requester sees a private owner only after the owner acted", async () => {
+    const s = await setup();
+    const before = await privSenderView(s, {
+      viewerRole: "requester",
+      exchangeRow: true,
+    });
+    expect(before.actors).toEqual([{ anonymous: true }]);
+    expect(JSON.stringify(before)).not.toContain(s.priv as string);
+
+    await s.t.run(async (ctx) => {
+      const exchange = await ctx.db.query("exchanges").unique();
+      await ctx.db.insert("tradeReveals", {
+        exchangeId: exchange!._id,
+        reason: "owner_replied",
+        revealedAt: now,
+      });
+    });
+    const after = (await onlyView(s)).actors[0];
+    expect(after).toMatchObject({
+      anonymous: false,
+      memberId: s.priv,
+      tradeRevealed: true,
+    });
+    expect(after).not.toHaveProperty("avatar");
+  });
+
+  test("a private sender of an exchange thread whose exchange is gone stays anonymous", async () => {
+    const s = await setup();
+    const view = await privSenderView(s, {
+      viewerRole: "owner",
+      exchangeRow: false,
+    });
+    expect(view.actors).toEqual([{ anonymous: true }]);
   });
 
   test("a ref-less DM message row never shows its stored name snapshot", async () => {
@@ -638,12 +714,39 @@ describe("message_received", () => {
     expect(JSON.stringify(view)).not.toContain("Snapshotname");
   });
 
-  test("a ref-less exchange-thread message row keeps its name snapshot", async () => {
+  test("a ref-less exchange-thread message row keeps its snapshot only while its exchange resolves", async () => {
     const s = await setup();
-    await s.t.run(async (ctx) => {
+    const exchangeId = await s.t.run(async (ctx) => {
+      const puzzleId = await ctx.db.insert("puzzles", {
+        title: "Catalog Title",
+        pieceCount: 1000,
+        status: "approved",
+        submittedBy: s.viewer,
+        createdAt: now,
+        updatedAt: now,
+      });
+      const copyId = await ctx.db.insert("ownedPuzzles", {
+        puzzleId,
+        ownerId: s.viewer,
+        condition: "good",
+        availability: { forTrade: true, forSale: false, forLend: false },
+        createdAt: now,
+        updatedAt: now,
+      });
+      const exchangeId = await ctx.db.insert("exchanges", {
+        aggregateId: "ex-x",
+        initiatorId: s.mara,
+        recipientId: s.viewer,
+        type: "trade",
+        requestedPuzzleId: copyId,
+        status: "proposed",
+        createdAt: now,
+        updatedAt: now,
+      });
       await ctx.db.insert("threads", {
         aggregateId: "thread-x",
         subjectKind: "exchange",
+        exchangeId,
         participants: [s.viewer, s.mara],
         participantsKey: [s.viewer, s.mara].sort().join("|"),
         readReceipts: [],
@@ -654,13 +757,17 @@ describe("message_received", () => {
         relatedId: "thread-x",
         params: { actorName: "Mara Display" },
       });
+      return exchangeId;
     });
     expect((await onlyView(s)).context.actorNameSnapshot).toBe("Mara Display");
+
+    await s.t.run((ctx) => ctx.db.delete(exchangeId));
+    expect((await onlyView(s)).context).not.toHaveProperty("actorNameSnapshot");
   });
 
   test("a private sender of an unresolvable thread stays anonymous", async () => {
     const s = await setup();
-    const view = await privSenderView(s, null);
+    const view = await privSenderView(s, "missing");
     expect(view.actors).toEqual([{ anonymous: true }]);
   });
 

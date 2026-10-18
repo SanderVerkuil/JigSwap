@@ -69,10 +69,11 @@ export interface ActorFacts {
   readonly isPublic: boolean;
   readonly mutualFollowers: boolean;
   /**
-   * A message_received NOT provably from an exchange thread (a DM, or an unresolvable thread). Its
-   * sender gets no initiator reveal: they are projected like everywhere in the thread itself
-   * (self / public / mutual), so a private sender stays anonymous. Fails closed. Required so no
-   * caller can omit it and fall back to the initiator reveal.
+   * A message_received whose sender the per-trade rule did not decide (a DM, or a thread /
+   * exchange that no longer resolves). Its sender gets no initiator reveal: they are projected
+   * like everywhere in the thread itself (self / public / mutual), so a private sender stays
+   * anonymous. Fails closed. Required so no caller can omit it and fall back to the initiator
+   * reveal.
    */
   readonly dmMessage: boolean;
 }
