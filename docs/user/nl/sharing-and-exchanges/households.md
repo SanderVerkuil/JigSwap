@@ -52,6 +52,27 @@ Wie de link opent, kan de uitnodiging accepteren of weigeren. Een nieuw lid dat
 zich via de link aanmeldt, vindt de uitnodiging op de eigen pagina
 **Huishouden**. Er wordt niets gedeeld tot diegene accepteert.
 
+### Uitnodigen per e-mail
+
+1. Vul op **Huishouden**, naast **Uitnodigen met een link**, het
+   **E-mailadres** van de persoon in.
+2. Klik op **Uitnodigen per e-mail**. Je ziet **Uitnodiging verstuurd**.
+
+Diegene krijgt één e-mail, in jouw taal, met de uitnodiging om bij je
+huishouden te komen. Die is 14 dagen geldig. Er volgen geen herinneringen, en
+JigSwap bewaart het adres niet. Onder **Verstuurde uitnodigingen** zie je
+wanneer elke uitnodiging is verstuurd en wanneer die verloopt. Wil je er een
+annuleren, klik dan op **Intrekken** en bevestig.
+
+Je kunt maximaal 10 uitnodigingen per e-mail per dag versturen. Een adres
+krijgt hooguit één uitnodigingsmail per 30 dagen.
+
+Meldt diegene zich via de e-mail aan, dan wacht de uitnodiging op de eigen
+pagina **Huishouden**. Er wordt niets gedeeld tot diegene accepteert, en door
+mee te doen gaat niemand elkaar volgen. Heeft diegene al een account, dan komt
+er geen e-mail: de uitnodiging komt in JigSwap binnen als een gewone
+uitnodiging voor een huishouden.
+
 ## Een uitnodiging accepteren of weigeren
 
 1. Open de melding van de uitnodiging, of ga naar **Huishouden**. Uitnodigingen

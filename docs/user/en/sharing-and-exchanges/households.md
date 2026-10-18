@@ -46,6 +46,26 @@ When someone opens the link, they can accept or decline the invitation. A new
 member who signs up through the link finds the invitation on their
 **Household** page. Nothing is shared until they accept.
 
+### Invite by email
+
+1. On **Household**, next to **Invite with a link**, enter the person's
+   **Email address**.
+2. Click **Invite by email**. You see **Invitation sent**.
+
+They get one email, in your language, inviting them to join your household.
+It's valid for 14 days. No reminders follow, and JigSwap keeps no copy of the
+address. Under **Sent invitations** you see when each invitation was sent and
+when it expires. To cancel one, click **Revoke** and confirm.
+
+You can send up to 10 email invitations a day. An address gets at most one
+invitation email every 30 days.
+
+When they sign up through the email, the invitation waits on their
+**Household** page. Nothing is shared until they accept, and joining doesn't
+make anyone follow each other. If they already have an account, they don't
+get an email: the invitation reaches them in JigSwap as a regular household
+invite.
+
 ## Accept or decline an invitation
 
 1. Open the invitation notification, or go to **Household**. Invitations are
