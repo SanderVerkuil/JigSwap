@@ -5,7 +5,7 @@ import { deleteAttachmentBlobs, deleteReveals } from "./messageAttachments";
 /**
  * One batch of a deleted circle's thread purge (sharing/purgeDeletedCircle), deleting at most
  * `budget` rows and returning how many it deleted: the messages first, then the attachments,
- * then the participant rows, and the thread row last, once nothing hangs off it. A return equal to
+ * then the typing and participant rows, and the thread row last, once nothing hangs off it. A return equal to
  * `budget` means there may be more; the caller reschedules.
  *
  * Attachments an open report holds (`evidenceHold`) are kept whole, blobs included: with the
@@ -49,6 +49,14 @@ export const purgeCircleThreadBatch = async (
     .take(budget - deleted);
   for (const attachment of attachments) await deleteAttachment(ctx, attachment);
   deleted += attachments.length;
+  if (deleted >= budget) return deleted;
+
+  const typing = await ctx.db
+    .query("typingIndicators")
+    .withIndex("by_thread", (q) => q.eq("threadAggregateId", threadId))
+    .take(budget - deleted);
+  for (const row of typing) await ctx.db.delete(row._id);
+  deleted += typing.length;
   if (deleted >= budget) return deleted;
 
   const participants = await ctx.db

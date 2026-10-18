@@ -397,3 +397,72 @@ describe("the bandwidth wide event", () => {
     expect(typingLines()).toEqual([]);
   });
 });
+
+// Drain chained scheduled jobs (the account-deletion purge runs one phase per job).
+const settleDueJobs = async (t: T) => {
+  for (let i = 0; i < 200; i++) {
+    await t.finishInProgressScheduledFunctions();
+    const jobs = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect(),
+    );
+    const busy = jobs.some(
+      (job) =>
+        job.state.kind === "inProgress" ||
+        (job.state.kind === "pending" && job.scheduledTime <= Date.now()),
+    );
+    if (!busy) return;
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+};
+
+describe("cleanup", () => {
+  test("leaving or being removed from the circle deletes the member's typing row", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, circleId, circleThreadId } = await seed(t);
+    for (const who of ["alice", "bob", "carol"] as const) {
+      await setTyping(t, who, circleThreadId);
+    }
+
+    await as(t, "carol").mutation(api.sharing.leaveCircle.leaveCircle, {
+      circleId,
+    });
+    await as(t, "alice").mutation(api.sharing.removeMember.removeMember, {
+      circleId,
+      memberId: bob,
+    });
+    await flush(t);
+    expect(
+      (await typingRows(t, circleThreadId)).map((r) => r.memberId),
+    ).toEqual([alice]);
+  });
+
+  test("deleting the circle purges its thread's typing rows", async () => {
+    const t = convexTest(schema, modules);
+    const { circleId, circleThreadId } = await seed(t);
+    for (const who of ["alice", "bob", "carol"] as const) {
+      await setTyping(t, who, circleThreadId);
+    }
+
+    await as(t, "alice").mutation(api.sharing.deleteCircle.deleteCircle, {
+      circleId,
+      confirmName: "Puzzle Club",
+    });
+    await flush(t);
+    expect(await typingRows(t)).toEqual([]);
+  });
+
+  test("account deletion purges the member's typing rows in every thread, and only theirs", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, dmId, circleThreadId } = await seed(t);
+    await setTyping(t, "alice", dmId);
+    await setTyping(t, "alice", circleThreadId);
+    await setTyping(t, "bob", circleThreadId);
+
+    await t.mutation(
+      internal.conversation.purgeMemberMessagingData.purgeMemberMessagingData,
+      { memberId: alice },
+    );
+    await settleDueJobs(t);
+    expect((await typingRows(t)).map((r) => r.memberId)).toEqual([bob]);
+  });
+});

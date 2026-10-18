@@ -13,10 +13,10 @@ export const PURGE_BATCH_SIZE = 200;
 // themselves until none remain. It is hygiene, not access control: every reader gates on
 // membership, which is already gone, so these rows are unreachable while they wait.
 //
-// The circle thread (conversation/purgeCircleThread): its messages, attachments and participant
-// rows, then the thread row. Attachments under an open report's `evidenceHold` (and quarantined
-// photos) are kept, detached from the deleted thread and reachable only through their report;
-// report snapshots are never touched. Typing rows don't exist yet (G7 adds them and their purge).
+// The circle thread (conversation/purgeCircleThread): its messages, attachments, typing and
+// participant rows, then the thread row. Attachments under an open report's `evidenceHold` (and
+// quarantined photos) are kept, detached from the deleted thread and reachable only through their
+// report; report snapshots are never touched.
 export const purgeDeletedCircle = internalMutation({
   args: { circleId: v.string() },
   handler: async (ctx, args): Promise<number> => {
