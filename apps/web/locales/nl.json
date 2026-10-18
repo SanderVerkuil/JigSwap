@@ -4779,5 +4779,22 @@
         "attachment": "Een foto in een bericht"
       }
     }
+  },
+  "presence": {
+    "online": "Online",
+    "away": "Afwezig",
+    "onlineCount": "{count} online",
+    "statusAuto": "Status: Automatisch",
+    "statusAway": "Status: Afwezig",
+    "statusInvisible": "Status: Offline weergeven",
+    "statusCurrent": "{label} (huidig)",
+    "statusFailed": "Je status kon niet worden gewijzigd. Probeer het opnieuw.",
+    "shareTitle": "Online-status",
+    "shareLabel": "Laat zien wanneer ik online ben aan mensen die we wederzijds volgen. Als dit uit staat, zie jij ook niet of anderen online zijn.",
+    "saveFailed": "Je keuze kon niet worden opgeslagen. Probeer het opnieuw.",
+    "promptTitle": "Laten zien wanneer je online bent?",
+    "promptBody": "Mensen die je volgt en die jou terugvolgen zien wanneer je online of afwezig bent, en jij ziet dat van hen. Je kunt dit altijd wijzigen bij Privacy en veiligheid.",
+    "promptShare": "Delen",
+    "promptNotNow": "Niet nu"
   }
 }

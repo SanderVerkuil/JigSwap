@@ -4779,5 +4779,22 @@
         "attachment": "A message photo"
       }
     }
+  },
+  "presence": {
+    "online": "Online",
+    "away": "Away",
+    "onlineCount": "{count} online",
+    "statusAuto": "Status: Automatic",
+    "statusAway": "Status: Away",
+    "statusInvisible": "Status: Appear offline",
+    "statusCurrent": "{label} (current)",
+    "statusFailed": "Couldn't change your status. Try again.",
+    "shareTitle": "Online status",
+    "shareLabel": "Show when I'm online to people I follow mutually. If off, you won't see others' status either.",
+    "saveFailed": "Couldn't save your choice. Try again.",
+    "promptTitle": "Show when you're online?",
+    "promptBody": "People who follow you back will see when you're online or away, and you'll see theirs. You can change this anytime in Privacy & safety.",
+    "promptShare": "Share",
+    "promptNotNow": "Not now"
   }
 }

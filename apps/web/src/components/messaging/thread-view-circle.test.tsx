@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { gateway } from "@/gateway";
+import { gateway, type Id } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -213,6 +213,7 @@ const renderThread = (
   thread: AnyInboxThread,
   messages: unknown[],
   locale: "en" | "nl" = "en",
+  presence?: { memberId: string; status: "online" | "away" }[],
 ) => {
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
@@ -236,6 +237,19 @@ const renderThread = (
     convexQuery(gateway.sharing.circle, { circleId: "circle_1" }).queryKey,
     CIRCLE_DETAIL,
   );
+  if (presence) {
+    // The viewer shares; one batched read for the members other than "me".
+    queryClient.setQueryData(
+      convexQuery(gateway.social.presenceSettings, {}).queryKey,
+      { share: true, override: "auto" },
+    );
+    queryClient.setQueryData(
+      convexQuery(gateway.social.presenceOf, {
+        memberIds: ["u_anna" as Id<"users">],
+      }).queryKey,
+      presence,
+    );
+  }
   render(
     <QueryClientProvider client={queryClient}>
       <IntlProvider
@@ -350,6 +364,51 @@ describe("ThreadView in a circle thread", () => {
     expect(
       screen.queryByRole("menuitem", { name: "Attach a puzzle" }),
     ).toBeNull();
+  });
+});
+
+describe("ThreadView circle presence", () => {
+  it("adds '· N online' and the member's dot in the panel", async () => {
+    renderThread(circleThread, CIRCLE_MESSAGES, "en", [
+      { memberId: "u_anna", status: "online" },
+    ]);
+    fireEvent.click(
+      screen.getByRole("button", { name: "6 members · 1 online" }),
+    );
+    const panel = await screen.findByRole("dialog", { name: "Members (3)" });
+    expect(
+      within(panel)
+        .getAllByRole("listitem")
+        .map(
+          (row) =>
+            row
+              .querySelector("[data-presence]")
+              ?.getAttribute("data-presence") ?? null,
+        ),
+    ).toEqual(["online", null, null]);
+  });
+
+  it("says it in Dutch", () => {
+    renderThread(circleThread, CIRCLE_MESSAGES, "nl", [
+      { memberId: "u_anna", status: "online" },
+    ]);
+    expect(
+      screen.getByRole("button", { name: "6 leden · 1 online" }),
+    ).toBeTruthy();
+  });
+
+  it("counts only Online, so an Away member shows a dot but no count", async () => {
+    renderThread(circleThread, CIRCLE_MESSAGES, "en", [
+      { memberId: "u_anna", status: "away" },
+    ]);
+    fireEvent.click(screen.getByRole("button", { name: "6 members" }));
+    const panel = await screen.findByRole("dialog", { name: "Members (3)" });
+    expect(within(panel).getByText("Away")).toBeTruthy();
+  });
+
+  it("shows just the member count when nobody is visible", () => {
+    renderThread(circleThread, CIRCLE_MESSAGES, "en", []);
+    expect(screen.getByRole("button", { name: "6 members" })).toBeTruthy();
   });
 });
 

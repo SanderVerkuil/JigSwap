@@ -26,6 +26,11 @@ vi.mock("@/compat/clerk", () => ({
   useUser: () => ({ user: { id: "user_me" } }),
 }));
 
+// The presence-sharing toggle reads the member's settings (left loading here).
+vi.mock("@/components/dashboard-home/use-current-member", () => ({
+  useCurrentMember: () => ({ member: { _id: "member_me" } }),
+}));
+
 vi.mock("@convex-dev/react-query", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@convex-dev/react-query")>()),
   useConvexMutation:

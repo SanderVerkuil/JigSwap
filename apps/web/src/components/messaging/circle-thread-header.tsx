@@ -7,9 +7,17 @@
 // right-side sheet on desktop and a bottom sheet on phones; it lists the
 // circle's members (getCircle: members only, projected by the circle rule),
 // with Mute and Leave at the bottom. Leave uses the circles page's confirm.
+// Presence: one batched getPresenceOf subscription for the circle's members
+// feeds both the "· N online" count and the members' dots; the backend returns
+// only members the viewer may see (mutual followers who both share).
 import { Link } from "@/compat/link";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { MemberInitial } from "@/components/members/member-initial";
+import { PresenceDot } from "@/components/presence/presence-dot";
+import {
+  usePresenceOf,
+  type PresenceStatus,
+} from "@/components/presence/use-presence";
 import { ReportDialog } from "@/components/safety/report-dialog";
 import {
   AlertDialog,
@@ -85,13 +93,24 @@ export function CircleThreadHeader({
 }) {
   const t = useTranslations("messages");
   const tCircles = useTranslations("circles");
+  const tPresence = useTranslations("presence");
   const { subject } = thread;
+  const { member: me } = useCurrentMember();
   const [membersOpen, setMembersOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
   const { muted, toggle, pending } = useThreadMute(thread);
   const { data: detail } = useCircleDetail(subject.circleId);
   // The owner can't leave their own circle (they delete it instead).
   const canLeave = detail ? !detail.isOwnedByViewer : false;
+  const presence = usePresenceOf(
+    detail?.members
+      .map((member) => member.memberId)
+      .filter((memberId) => memberId !== me?._id) ?? [],
+  );
+  // "N online" counts Online only: an Away member isn't online.
+  const onlineCount = [...presence.values()].filter(
+    (status) => status === "online",
+  ).length;
   const MuteIcon = muted ? Bell : BellOff;
 
   return (
@@ -106,6 +125,8 @@ export function CircleThreadHeader({
           className="text-muted-foreground hover:text-foreground focus-visible:ring-ring relative w-fit rounded-sm text-left text-xs leading-4 outline-none hover:underline focus-visible:ring-2 max-md:before:absolute max-md:before:-inset-x-2 max-md:before:-inset-y-3"
         >
           {t("circle.memberCount", { count: subject.memberCount })}
+          {onlineCount > 0 &&
+            ` · ${tPresence("onlineCount", { count: onlineCount })}`}
         </button>
       </div>
       <div className="ml-auto flex shrink-0 items-center gap-1">
@@ -178,6 +199,7 @@ export function CircleThreadHeader({
         onOpenChange={setMembersOpen}
         canLeave={canLeave}
         onLeave={() => setLeaveOpen(true)}
+        presence={presence}
       />
       <LeaveCircleDialog
         circleId={subject.circleId}
@@ -198,6 +220,7 @@ export function CircleMembersSheet({
   onOpenChange,
   canLeave,
   onLeave,
+  presence,
 }: {
   thread: CircleThread;
   detail: CircleDetail | null | undefined;
@@ -205,6 +228,8 @@ export function CircleMembersSheet({
   onOpenChange: (open: boolean) => void;
   canLeave: boolean;
   onLeave: () => void;
+  /** Statuses of the members the viewer may see (absent = show no dot). */
+  presence?: ReadonlyMap<string, PresenceStatus>;
 }) {
   const t = useTranslations("messages");
   const tCircles = useTranslations("circles");
@@ -246,7 +271,15 @@ export function CircleMembersSheet({
           ) : (
             <ul role="list" className="flex flex-col">
               {detail.members.map((member) => (
-                <MemberRow key={member.membershipId} member={member} />
+                <MemberRow
+                  key={member.membershipId}
+                  member={member}
+                  presence={
+                    member.memberId === undefined
+                      ? undefined
+                      : presence?.get(member.memberId)
+                  }
+                />
               ))}
             </ul>
           )}
@@ -277,9 +310,15 @@ export function CircleMembersSheet({
   );
 }
 
-// One member: avatar (with the slot G9's presence dot takes), name (a profile
-// link unless the account is gone), role badge, and Report for others.
-function MemberRow({ member }: { member: CircleMember }) {
+// One member: avatar with their presence dot, name (a profile link unless the
+// account is gone), role badge, and Report for others.
+function MemberRow({
+  member,
+  presence,
+}: {
+  member: CircleMember;
+  presence: PresenceStatus | undefined;
+}) {
   const t = useTranslations("messages");
   const tCircles = useTranslations("circles");
   const tSafety = useTranslations("safety");
@@ -307,7 +346,7 @@ function MemberRow({ member }: { member: CircleMember }) {
 
   return (
     <li className="flex min-h-12 items-center gap-3 rounded-lg px-2 py-1">
-      {/* Relative so G9 can pin the presence dot to the avatar's corner. */}
+      {/* Relative so the presence dot pins to the avatar's corner. */}
       <span className="relative shrink-0">
         <Avatar aria-hidden className="size-9">
           {member.avatar && <AvatarImage src={member.avatar} alt="" />}
@@ -315,6 +354,7 @@ function MemberRow({ member }: { member: CircleMember }) {
             <MemberInitial source={member} />
           </AvatarFallback>
         </Avatar>
+        <PresenceDot status={presence} />
       </span>
       <div className="flex min-w-0 flex-1 items-center gap-2">
         {profileHref && !isMe ? (
