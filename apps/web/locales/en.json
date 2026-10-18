@@ -1074,7 +1074,7 @@
   "privacy": {
     "title": "Privacy Policy",
     "lastUpdated": "Last Updated",
-    "effectiveDate": "2 July 2026",
+    "effectiveDate": "18 October 2026",
     "introduction": "This Privacy Policy explains what personal data JigSwap collects, why we collect it, and what your rights are. JigSwap is run by Sander Verkuil, who is the controller for the processing described here. We aim to collect as little as possible and to be transparent about the rest.",
     "informationWeCollect": {
       "title": "Information We Collect",
@@ -1137,15 +1137,23 @@
       "vercel": {
         "title": "Vercel",
         "description": "Our hosting provider. The JigSwap web application is served through Vercel's global edge network. Vercel delivers the site to your browser; your personal data itself lives in the EU-hosted services above."
+      },
+      "huggingface": {
+        "title": "Hugging Face",
+        "description": "Photo screening. Each photo you upload is sent to a content-safety model hosted by Hugging Face, which checks it for explicit content and returns a score. Hugging Face processes the image only to return that result. Hugging Face is based in the United States, so this processing may take place outside the European Union."
+      },
+      "axiom": {
+        "title": "Axiom",
+        "description": "Technical logs. Our technical event logs (for example, that a photo check ran and how it ended, with internal account and record identifiers) are sent to Axiom and stored in its EU region. These logs do not contain your messages or your photos."
       }
     },
     "photos": {
       "title": "Photos You Upload",
-      "description": "Photos you add to your library go through an automatic pipeline before other members can see them:",
+      "description": "Photos you add to your library or to a finished puzzle go through an automatic pipeline before other members can see them:",
       "steps": [
         "The image is re-encoded, which strips hidden metadata such as EXIF data — including any embedded location",
         "An automated content-safety check screens the image; for this we currently use a model hosted by Hugging Face, which processes the image for this purpose only",
-        "Until this finishes, the photo is visible only to you"
+        "Until this finishes, the photo is visible only to you. If the check cannot be completed (for example because the screening service is unavailable), the photo stays visible only to you until it has been checked"
       ]
     },
     "analytics": {
@@ -3583,7 +3591,13 @@
         "role_granted": "<strong>{actor}</strong> made <strong>{target}</strong> an admin",
         "role_revoked": "<strong>{actor}</strong> removed the admin role from <strong>{target}</strong>"
       },
-      "activityEmpty": "No moderation activity yet."
+      "activityEmpty": "No moderation activity yet.",
+      "screening": {
+        "title": "Photo screening needs attention",
+        "missingToken": "Screening is not configured on this deployment (HF_MODERATION_TOKEN is not set). New photos stay visible to their uploader only until they can be checked.",
+        "disabled": "Screening is turned off on this deployment (MODERATION_PROVIDER=none). New photos are published without a check.",
+        "unscored": "{countLabel} {count, plural, one {photo} other {photos}} could not be checked yet and {count, plural, one {is} other {are}} visible to the uploader only. Once screening works, run the re-screen from the one-shot migrations runbook."
+      }
     },
     "contact": {
       "loading": "Loading messages…",

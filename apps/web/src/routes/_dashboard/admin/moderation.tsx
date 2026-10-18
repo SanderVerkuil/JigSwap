@@ -11,6 +11,7 @@ import {
 } from "@/components/admin/moderation/flag-detail";
 import { KpiRow } from "@/components/admin/moderation/kpi-row";
 import { QueueList } from "@/components/admin/moderation/queue-list";
+import { ScreeningHealth } from "@/components/admin/moderation/screening-health";
 import { severityBand } from "@/components/admin/moderation/severity";
 import {
   SubmissionCover,
@@ -187,6 +188,7 @@ function ModerationPage() {
   return (
     <div className="space-y-6">
       <AdminBanner />
+      <ScreeningHealth />
       <KpiRow />
 
       <Tabs defaultValue="submissions" className="gap-4">

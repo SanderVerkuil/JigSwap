@@ -321,21 +321,29 @@ export default defineSchema({
     // --- Async content moderation (image-moderation pipeline) ---
     // Lifecycle: a freshly uploaded photo is "pending" until the moderatePhoto Node action
     // re-encodes it (strips EXIF) and content-classifies it, then flips it to "approved" or
-    // "rejected". ABSENT means the row predates moderation and is treated as "approved" so legacy
-    // photos stay visible. The gallery only surfaces approved photos (plus the uploader's own
-    // pending ones).
+    // "rejected" — or "unscored" when the classifier could not check it (provider error / missing
+    // token) after its retries. ABSENT means the row predates moderation and is treated as
+    // "approved" so legacy photos stay visible. The gallery only surfaces approved photos (plus the
+    // uploader's own pending/unscored ones).
+    // "Checked & clean" is approved WITH a moderationScore; approved without a score is unknown
+    // (legacy, provider "none", or the old fail-open pipeline) and is what the re-screen covers.
     moderationStatus: v.optional(
       v.union(
         v.literal("pending"),
         v.literal("approved"),
         v.literal("rejected"),
+        v.literal("unscored"),
       ),
     ),
-    // The classifier's NSFW score in [0,1] (null/absent when un-scored, e.g. provider "none" or
+    // The classifier's NSFW score in [0,1] (absent when un-scored, e.g. provider "none" or
     // missing token). Kept for auditability/threshold tuning.
     moderationScore: v.optional(v.number()),
     // The decisive label from the classifier (e.g. "nsfw"/"normal"), for diagnostics.
     moderationLabel: v.optional(v.string()),
+    // Why an "unscored" photo could not be checked (UnscoredReason), and how many classification
+    // attempts the pipeline made. Absent on rows decided before these existed.
+    moderationReason: v.optional(v.string()),
+    moderationAttempts: v.optional(v.number()),
 
     // --- Timestamps ---
     createdAt: v.number(),
@@ -445,15 +453,19 @@ export default defineSchema({
     completionId: v.string(), // Solving CompletionId aggregateId
     uploaderId: v.id("users"),
     fileId: v.id("_storage"),
+    // Same lifecycle as ownedPuzzleImages.moderationStatus (incl. "unscored").
     moderationStatus: v.optional(
       v.union(
         v.literal("pending"),
         v.literal("approved"),
         v.literal("rejected"),
+        v.literal("unscored"),
       ),
     ),
     moderationScore: v.optional(v.number()),
     moderationLabel: v.optional(v.string()),
+    moderationReason: v.optional(v.string()),
+    moderationAttempts: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

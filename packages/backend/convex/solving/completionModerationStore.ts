@@ -1,6 +1,13 @@
+import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
-import { internalMutation, internalQuery } from "../_generated/server";
+import type { Doc, Id } from "../_generated/dataModel";
+import {
+  internalMutation,
+  internalQuery,
+  type MutationCtx,
+} from "../_generated/server";
 import { stampModerationAction } from "../admin/stampModerationAction";
+import { needsRescreen } from "../library/adapters/photoModeration";
 
 // DB-facing helpers for the moderateCompletionPhoto Node action, mirroring
 // `library/moderationStore.ts` but typed to the `completionImages` sidecar table. A Node action
@@ -57,63 +64,122 @@ export const setModerationFile = internalMutation({
   },
 });
 
+type Verdict = {
+  imageId: Id<"completionImages">;
+  moderationStatus: "approved" | "rejected" | "unscored";
+  moderationScore?: number;
+  moderationLabel?: string;
+  moderationReason?: string;
+  moderationAttempts?: number;
+};
+
+// Write a verdict onto a sidecar the caller has already decided may take it. On a transition INTO
+// rejected this deliberately does MORE than the library's verdict (library photos live solely in
+// their own table): it also drops the id from the completions row's `photos` array (freeing a cap
+// slot), deletes the blob, and stamps the audit row — the sidecar itself survives as the audit
+// record.
+const writeVerdict = async (
+  ctx: MutationCtx,
+  row: Doc<"completionImages">,
+  args: Verdict,
+) => {
+  await ctx.db.patch(args.imageId, {
+    moderationStatus: args.moderationStatus,
+    moderationScore: args.moderationScore,
+    moderationLabel: args.moderationLabel,
+    moderationReason: args.moderationReason,
+    moderationAttempts: args.moderationAttempts,
+    updatedAt: Date.now(),
+  });
+  if (args.moderationStatus !== "rejected") return;
+
+  const completion = await ctx.db
+    .query("completions")
+    .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", row.completionId))
+    .unique();
+  if (completion) {
+    // Direct system write (see setModerationFile): remove the photo, don't touch updatedAt.
+    await ctx.db.patch(completion._id, {
+      photos: completion.photos.filter((id) => id !== row.fileId),
+    });
+  }
+  // Tolerate an already-deleted blob; don't fail the verdict over a missing file.
+  try {
+    await ctx.storage.delete(row.fileId);
+  } catch {
+    // Nothing references it either way.
+  }
+  // Audit trail (no actorId = system). Target the completion aggregate; label via the
+  // completion's cached copy snapshot.
+  await stampModerationAction(ctx, {
+    kind: "photo_auto_rejected",
+    targetLabel: completion?.copySnapshot?.title ?? "Completion photo",
+    targetId: row.completionId,
+  });
+};
+
 // Record the classifier verdict. Only patches a row that still exists AND is still pending —
 // FIRST VERDICT WINS. A re-run (retried or concurrently drained action) on a decided row is a
-// full no-op; in particular a late fail-open approve can never overwrite a rejection. On the
-// pending→rejected transition this deliberately does MORE than the library's verdict mutation
-// (library photos live solely in their own table): it also drops the id from the completions
-// row's `photos` array (freeing a cap slot), deletes the blob, and stamps the audit row — the
-// sidecar itself survives as the audit record.
+// full no-op; in particular a late "unscored" can never overwrite a rejection or an approval, and
+// the reject side effects can never run twice.
 export const setModerationVerdict = internalMutation({
   args: {
     imageId: v.id("completionImages"),
     moderationStatus: v.union(
-      v.literal("pending"),
       v.literal("approved"),
       v.literal("rejected"),
+      v.literal("unscored"),
     ),
     moderationScore: v.optional(v.number()),
     moderationLabel: v.optional(v.string()),
+    moderationReason: v.optional(v.string()),
+    moderationAttempts: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const row = await ctx.db.get(args.imageId);
     if (!row) return;
     // First verdict wins: an absent status is legacy-approved, anything else is already decided.
     if (row.moderationStatus !== "pending") return;
-    await ctx.db.patch(args.imageId, {
-      moderationStatus: args.moderationStatus,
-      moderationScore: args.moderationScore,
-      moderationLabel: args.moderationLabel,
-      updatedAt: Date.now(),
-    });
-    // The row was pending, so this is always the transition INTO rejected — the guard above
-    // already makes double-stamping/double-deleting impossible.
-    if (args.moderationStatus !== "rejected") return;
+    await writeVerdict(ctx, row, args);
+  },
+});
 
-    const completion = await ctx.db
-      .query("completions")
-      .withIndex("by_aggregate_id", (q) =>
-        q.eq("aggregateId", row.completionId),
-      )
-      .unique();
-    if (completion) {
-      // Direct system write (see setModerationFile): remove the photo, don't touch updatedAt.
-      await ctx.db.patch(completion._id, {
-        photos: completion.photos.filter((id) => id !== row.fileId),
-      });
-    }
-    // Tolerate an already-deleted blob; don't fail the verdict over a missing file.
-    try {
-      await ctx.storage.delete(row.fileId);
-    } catch {
-      // Nothing references it either way.
-    }
-    // Audit trail: this is the single place the pipeline writes "rejected" (no actorId = system).
-    // Target the completion aggregate; label via the completion's cached copy snapshot.
-    await stampModerationAction(ctx, {
-      kind: "photo_auto_rejected",
-      targetLabel: completion?.copySnapshot?.title ?? "Completion photo",
-      targetId: row.completionId,
+// One page of sidecars for the re-screen (same candidate rule as the library: unscored, or
+// approved without a score). Completion photos that predate sidecars have no row and are not
+// covered.
+export const listRescreenCandidates = internalQuery({
+  args: { paginationOpts: paginationOptsValidator },
+  handler: async (ctx, { paginationOpts }) => {
+    const page = await ctx.db
+      .query("completionImages")
+      .paginate(paginationOpts);
+    return {
+      scanned: page.page.length,
+      candidates: page.page
+        .filter(needsRescreen)
+        .map((row) => ({ imageId: row._id as string, fileId: row.fileId })),
+      isDone: page.isDone,
+      continueCursor: page.continueCursor,
+    };
+  },
+});
+
+// Apply a scored re-screen verdict while the sidecar still needs one (see the library twin).
+export const applyRescreenVerdict = internalMutation({
+  args: {
+    imageId: v.id("completionImages"),
+    moderationStatus: v.union(v.literal("approved"), v.literal("rejected")),
+    moderationScore: v.number(),
+    moderationLabel: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const row = await ctx.db.get(args.imageId);
+    if (!row || !needsRescreen(row)) return false;
+    await writeVerdict(ctx, row, {
+      ...args,
+      moderationReason: undefined,
+      moderationAttempts: (row.moderationAttempts ?? 0) + 1,
     });
+    return true;
   },
 });

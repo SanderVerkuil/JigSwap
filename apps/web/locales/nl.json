@@ -1074,7 +1074,7 @@
   "privacy": {
     "title": "Privacybeleid",
     "lastUpdated": "Laatst bijgewerkt",
-    "effectiveDate": "2 juli 2026",
+    "effectiveDate": "18 oktober 2026",
     "introduction": "Dit privacybeleid legt uit welke persoonsgegevens JigSwap verzamelt, waarom we dat doen en welke rechten je hebt. JigSwap wordt beheerd door Sander Verkuil, die de verwerkingsverantwoordelijke is voor de verwerking die hier wordt beschreven. We willen zo min mogelijk verzamelen en transparant zijn over de rest.",
     "informationWeCollect": {
       "title": "Welke gegevens we verzamelen",
@@ -1137,15 +1137,23 @@
       "vercel": {
         "title": "Vercel",
         "description": "Onze hostingprovider. De JigSwap-webapplicatie wordt geleverd via het wereldwijde edge-netwerk van Vercel. Vercel bezorgt de site bij je browser; je persoonsgegevens zelf staan in de EU-gehoste diensten hierboven."
+      },
+      "huggingface": {
+        "title": "Hugging Face",
+        "description": "Fotocontrole. Elke foto die je uploadt wordt naar een veiligheidsmodel gestuurd dat wordt gehost door Hugging Face. Dat controleert de foto op expliciete inhoud en geeft een score terug. Hugging Face verwerkt de afbeelding alleen om dat resultaat te geven. Hugging Face is gevestigd in de Verenigde Staten, dus deze verwerking kan buiten de Europese Unie plaatsvinden."
+      },
+      "axiom": {
+        "title": "Axiom",
+        "description": "Technische logs. Onze technische logregels (bijvoorbeeld dat een fotocontrole is uitgevoerd en hoe die afliep, met interne account- en record-ID's) worden naar Axiom gestuurd en opgeslagen in de EU-regio van Axiom. Deze logs bevatten geen berichten en geen foto's."
       }
     },
     "photos": {
       "title": "Foto's die je uploadt",
-      "description": "Foto's die je aan je bibliotheek toevoegt doorlopen een automatisch proces voordat andere leden ze kunnen zien:",
+      "description": "Foto's die je aan je bibliotheek of aan een gelegde puzzel toevoegt doorlopen een automatisch proces voordat andere leden ze kunnen zien:",
       "steps": [
         "De afbeelding wordt opnieuw gecodeerd, waardoor verborgen metadata zoals EXIF-gegevens — inclusief een eventuele locatie — wordt verwijderd",
         "Een automatische veiligheidscontrole beoordeelt de afbeelding; hiervoor gebruiken we op dit moment een model dat wordt gehost door Hugging Face, dat de afbeelding uitsluitend voor dit doel verwerkt",
-        "Totdat dit klaar is, is de foto alleen voor jou zichtbaar"
+        "Totdat dit klaar is, is de foto alleen voor jou zichtbaar. Als de controle niet kan worden uitgevoerd (bijvoorbeeld omdat de controledienst niet bereikbaar is), blijft de foto alleen voor jou zichtbaar totdat hij is gecontroleerd"
       ]
     },
     "analytics": {
@@ -3583,7 +3591,13 @@
         "role_granted": "<strong>{actor}</strong> maakte <strong>{target}</strong> beheerder",
         "role_revoked": "<strong>{actor}</strong> trok de beheerdersrol van <strong>{target}</strong> in"
       },
-      "activityEmpty": "Nog geen moderatieactiviteit."
+      "activityEmpty": "Nog geen moderatieactiviteit.",
+      "screening": {
+        "title": "Fotocontrole vraagt aandacht",
+        "missingToken": "Fotocontrole is niet ingesteld op deze deployment (HF_MODERATION_TOKEN ontbreekt). Nieuwe foto's blijven alleen zichtbaar voor de uploader totdat ze gecontroleerd kunnen worden.",
+        "disabled": "Fotocontrole staat uit op deze deployment (MODERATION_PROVIDER=none). Nieuwe foto's worden zonder controle gepubliceerd.",
+        "unscored": "{countLabel} {count, plural, one {foto kon} other {foto's konden}} nog niet worden gecontroleerd en {count, plural, one {is} other {zijn}} alleen zichtbaar voor de uploader. Voer de hercontrole uit het runbook voor eenmalige migraties uit zodra de controle werkt."
+      }
     },
     "contact": {
       "loading": "Berichten laden…",

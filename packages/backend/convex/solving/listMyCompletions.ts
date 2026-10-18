@@ -163,7 +163,8 @@ export const resolvePhotoItems = async (
       if (status === "rejected") return null;
       const url = await ctx.storage.getUrl(fileId);
       if (!url) return null;
-      return { url, pending: status === "pending" };
+      // An unscored photo (could not be checked yet) reads as pending to its owner.
+      return { url, pending: status === "pending" || status === "unscored" };
     }),
   );
   return items.filter((item): item is PhotoItem => item !== null);
