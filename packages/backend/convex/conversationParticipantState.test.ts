@@ -245,6 +245,22 @@ describe("post path", () => {
       "x".repeat(LAST_MESSAGE_BODY_MAX),
     );
 
+    // An emoji (a surrogate pair) straddling the boundary is kept whole, never split.
+    const emoji = "\u{1F9E9}";
+    await post(
+      t,
+      asAlice,
+      threadId,
+      "y".repeat(LAST_MESSAGE_BODY_MAX - 1) + emoji + "tail",
+    );
+    const straddled = (await threadRow(t, threadId)).lastMessage?.body ?? "";
+    expect(straddled).toBe("y".repeat(LAST_MESSAGE_BODY_MAX - 1) + emoji);
+    expect(Array.from(straddled)).toHaveLength(LAST_MESSAGE_BODY_MAX);
+    // No lone surrogate anywhere (a split pair would leave one).
+    expect(straddled).not.toMatch(
+      /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/,
+    );
+
     await post(t, asAlice, threadId, "https://example.com/i.png", "image");
     const thread = await threadRow(t, threadId);
     expect(thread.lastMessage?.kind).toBe("image");

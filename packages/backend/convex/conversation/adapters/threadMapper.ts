@@ -30,7 +30,7 @@ export type ThreadRow = Omit<
   | "readReceipts"
 >;
 
-// The inbox summary keeps at most this many characters of the newest message's body. The inbox
+// The inbox summary keeps at most this many code points of the newest message's body. The inbox
 // row shows a one-line, ellipsised snippet, so 280 is ample.
 export const LAST_MESSAGE_BODY_MAX = 280;
 
@@ -82,15 +82,19 @@ export const toMessageRow = (
 });
 
 // Message row -> the thread's denormalized `lastMessage` summary: body truncated to
-// LAST_MESSAGE_BODY_MAX, and blank for `image` rows (their body is an unverified client string that
-// must never reach a renderer).
+// LAST_MESSAGE_BODY_MAX code points (never splitting a surrogate pair, which would be invalid
+// Unicode and could fail the write), and blank for `image` rows (their body is an unverified client
+// string that must never reach a renderer).
 export const toLastMessage = (
   row: ThreadMessageRow,
 ): NonNullable<Doc<"threads">["lastMessage"]> => ({
   messageId: row.messageId,
   ...(row.authorId !== undefined && { authorId: row.authorId }),
   kind: row.kind,
-  body: row.kind === "image" ? "" : row.body.slice(0, LAST_MESSAGE_BODY_MAX),
+  body:
+    row.kind === "image"
+      ? ""
+      : Array.from(row.body).slice(0, LAST_MESSAGE_BODY_MAX).join(""),
   sentAt: row.sentAt,
   ...(row.copyId !== undefined && { copyId: row.copyId }),
 });
