@@ -97,6 +97,20 @@ describe("makeNotifyMember", () => {
     expect(delivery.delivered).toEqual([]);
   });
 
+  it("always delivers a mandatory type in-app, even when the member disabled it", async () => {
+    const pref = NotificationPreference.createDefault(prefId(), alice, NOW);
+    pref.disable("content_removed", "inApp", NOW);
+    pref.disable("content_removed", "push", NOW);
+    pref.pullEvents();
+    await preferences.save(pref);
+
+    const notifyMember = makeNotifyMember(deps);
+    const result = await notifyMember(cmd({ type: "content_removed" }));
+
+    expect(result.isOk).toBe(true);
+    expect(delivery.delivered.map((d) => d.channel)).toEqual(["inApp"]);
+  });
+
   it("delivers email when the member opts into the email channel", async () => {
     const pref = NotificationPreference.createDefault(prefId(), alice, NOW);
     pref.enable("trade_request", "email", NOW);

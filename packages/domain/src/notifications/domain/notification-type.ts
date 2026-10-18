@@ -87,3 +87,11 @@ export const EMAIL_ELIGIBLE_TYPES: ReadonlySet<NotificationType> = new Set([
   "follow_request_received",
   "follow_request_approved",
 ]);
+
+// Types the member cannot switch off in-app: the DSA Art. 17 statement of reasons must reach the
+// member whose content a moderator restricted, whatever their preferences say. Other channels
+// (push/email) still follow the preference.
+export const MANDATORY_IN_APP_TYPES: ReadonlySet<NotificationType> = new Set([
+  "content_removed",
+  "member_warned",
+]);

@@ -9,6 +9,7 @@ import {
   Channel,
   CHANNELS,
   EMAIL_ELIGIBLE_TYPES,
+  MANDATORY_IN_APP_TYPES,
   MemberId,
   Notification,
   NotificationId,
@@ -49,8 +50,9 @@ export const makeNotifyMember =
     const candidates: readonly Channel[] = cmd.channels ?? CHANNELS;
     const allowed = candidates.filter(
       (channel) =>
-        (channel !== "email" || EMAIL_ELIGIBLE_TYPES.has(cmd.type)) &&
-        preference.allows(cmd.type, channel),
+        (channel === "inApp" && MANDATORY_IN_APP_TYPES.has(cmd.type)) ||
+        ((channel !== "email" || EMAIL_ELIGIBLE_TYPES.has(cmd.type)) &&
+          preference.allows(cmd.type, channel)),
     );
 
     const created: NotificationId[] = [];
